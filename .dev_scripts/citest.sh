@@ -1,4 +1,4 @@
-pip install -r requirements/runtime.txt
+pip install -r requirements.txt
 pip install -r requirements/tests.txt
 
 

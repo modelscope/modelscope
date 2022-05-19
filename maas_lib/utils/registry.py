@@ -1,5 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+
 import inspect
+from email.policy import default
 
 from maas_lib.utils.logger import get_logger
 
@@ -15,10 +17,10 @@ class Registry(object):
 
     def __init__(self, name: str):
         self._name = name
-        self._modules = dict()
+        self._modules = {default_group: {}}
 
     def __repr__(self):
-        format_str = self.__class__.__name__ + f'({self._name})\n'
+        format_str = self.__class__.__name__ + f' ({self._name})\n'
         for group_name, group in self._modules.items():
             format_str += f'group_name={group_name}, '\
                 f'modules={list(group.keys())}\n'
@@ -64,10 +66,23 @@ class Registry(object):
             module_name = module_cls.__name__
 
         if module_name in self._modules[group_key]:
-            raise KeyError(f'{module_name} is already registered in'
+            raise KeyError(f'{module_name} is already registered in '
                            f'{self._name}[{group_key}]')
 
         self._modules[group_key][module_name] = module_cls
+
+        if module_name in self._modules[default_group]:
+            if id(self._modules[default_group][module_name]) == id(module_cls):
+                return
+            else:
+                logger.warning(f'{module_name} is already registered in '
+                               f'{self._name}[{default_group}] and will '
+                               'be overwritten')
+                logger.warning(f'{self._modules[default_group][module_name]}'
+                               'to {module_cls}')
+        # also register module in the default group for faster access
+        # only by module name
+        self._modules[default_group][module_name] = module_cls
 
     def register_module(self,
                         group_key: str = default_group,
@@ -165,12 +180,15 @@ def build_from_cfg(cfg,
         for name, value in default_args.items():
             args.setdefault(name, value)
 
+    if group_key is None:
+        group_key = default_group
+
     obj_type = args.pop('type')
     if isinstance(obj_type, str):
         obj_cls = registry.get(obj_type, group_key=group_key)
         if obj_cls is None:
             raise KeyError(f'{obj_type} is not in the {registry.name}'
-                           f'registry group {group_key}')
+                           f' registry group {group_key}')
     elif inspect.isclass(obj_type) or inspect.isfunction(obj_type):
         obj_cls = obj_type
     else:

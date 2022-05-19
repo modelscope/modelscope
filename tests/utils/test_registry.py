@@ -10,8 +10,10 @@ class RegistryTest(unittest.TestCase):
     def test_register_class_no_task(self):
         MODELS = Registry('models')
         self.assertTrue(MODELS.name == 'models')
-        self.assertTrue(MODELS.modules == {})
-        self.assertEqual(len(MODELS.modules), 0)
+        self.assertTrue(default_group in MODELS.modules)
+        self.assertTrue(MODELS.modules[default_group] == {})
+
+        self.assertEqual(len(MODELS.modules), 1)
 
         @MODELS.register_module(module_name='cls-resnet')
         class ResNetForCls(object):
@@ -47,7 +49,7 @@ class RegistryTest(unittest.TestCase):
         self.assertTrue(Tasks.object_detection in MODELS.modules)
         self.assertTrue(MODELS.get('DETR', Tasks.object_detection) is DETR)
 
-        self.assertEqual(len(MODELS.modules), 3)
+        self.assertEqual(len(MODELS.modules), 4)
 
     def test_list(self):
         MODELS = Registry('models')

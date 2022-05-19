@@ -123,6 +123,7 @@ class HTTPStorage(Storage):
     """HTTP and HTTPS storage."""
 
     def read(self, url):
+        # TODO @wenmeng.zwm add progress bar if file is too large
         r = requests.get(url)
         r.raise_for_status()
         return r.content

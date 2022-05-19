@@ -1,1 +1,2 @@
 -r requirements/runtime.txt
+-r requirements/pipeline.txt

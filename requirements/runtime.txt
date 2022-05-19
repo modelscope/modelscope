@@ -1,5 +1,8 @@
 addict
 numpy
+opencv-python-headless
+Pillow
 pyyaml
 requests
+transformers
 yapf

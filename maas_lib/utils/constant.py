@@ -6,6 +6,7 @@ class Fields(object):
     """
     image = 'image'
     video = 'video'
+    cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
     multi_modal = 'multi_modal'
@@ -18,12 +19,41 @@ class Tasks(object):
     This should be used to register models, pipelines, trainers.
     """
     # vision tasks
+    image_to_text = 'image-to-text'
+    pose_estimation = 'pose-estimation'
     image_classfication = 'image-classification'
+    image_tagging = 'image-tagging'
     object_detection = 'object-detection'
+    image_segmentation = 'image-segmentation'
+    image_editing = 'image-editing'
+    image_generation = 'image-generation'
+    image_matting = 'image-matting'
 
     # nlp tasks
     sentiment_analysis = 'sentiment-analysis'
-    fill_mask = 'fill-mask'
+    text_classification = 'text-classification'
+    relation_extraction = 'relation-extraction'
+    zero_shot = 'zero-shot'
+    translation = 'translation'
+    token_classificatio = 'token-classification'
+    conversational = 'conversational'
+    text_generation = 'text-generation'
+    table_question_answ = 'table-question-answering'
+    feature_extraction = 'feature-extraction'
+    sentence_similarity = 'sentence-similarity'
+    fill_mask = 'fill-mask '
+    summarization = 'summarization'
+    question_answering = 'question-answering'
+
+    # audio tasks
+    auto_speech_recognition = 'auto-speech-recognition'
+    text_to_speech = 'text-to-speech'
+    speech_signal_process = 'speech-signal-process'
+
+    # multi-media
+    image_captioning = 'image-captioning'
+    visual_grounding = 'visual-grounding'
+    text_to_image_synthesis = 'text-to-image-synthesis'
 
 
 class InputFields(object):

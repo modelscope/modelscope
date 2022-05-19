@@ -9,7 +9,7 @@ class Fields(object):
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
-    multi_modal = 'multi_modal'
+    multi_modal = 'multi-modal'
 
 
 class Tasks(object):
@@ -21,7 +21,7 @@ class Tasks(object):
     # vision tasks
     image_to_text = 'image-to-text'
     pose_estimation = 'pose-estimation'
-    image_classfication = 'image-classification'
+    image_classification = 'image-classification'
     image_tagging = 'image-tagging'
     object_detection = 'object-detection'
     image_segmentation = 'image-segmentation'

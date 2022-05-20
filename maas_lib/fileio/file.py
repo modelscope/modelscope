@@ -75,7 +75,7 @@ class LocalStorage(Storage):
         """Write data to a given ``filepath`` with 'wb' mode.
 
         Note:
-            ``put`` will create a directory if the directory of ``filepath``
+            ``write`` will create a directory if the directory of ``filepath``
             does not exist.
 
         Args:
@@ -95,7 +95,7 @@ class LocalStorage(Storage):
         """Write data to a given ``filepath`` with 'w' mode.
 
         Note:
-            ``put_text`` will create a directory if the directory of
+            ``write_text`` will create a directory if the directory of
             ``filepath`` does not exist.
 
         Args:
@@ -291,7 +291,7 @@ class File(object):
         """Write data to a given ``filepath`` with 'wb' mode.
 
         Note:
-            ``put`` will create a directory if the directory of ``filepath``
+            ``write`` will create a directory if the directory of ``filepath``
             does not exist.
 
         Args:
@@ -306,7 +306,7 @@ class File(object):
         """Write data to a given ``filepath`` with 'w' mode.
 
         Note:
-            ``put_text`` will create a directory if the directory of
+            ``write_text`` will create a directory if the directory of
             ``filepath`` does not exist.
 
         Args:

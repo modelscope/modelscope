@@ -60,7 +60,7 @@ class LoadImage:
         return repr_str
 
 
-def load_image(image_path_or_url: str) -> Image:
+def load_image(image_path_or_url: str) -> Image.Image:
     """ simple interface to load an image from file or url
 
     Args:

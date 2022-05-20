@@ -21,12 +21,12 @@ class SequenceClassificationModel(Model):
                  **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)
         # Predictor.__init__(self, *args, **kwargs)
-        """initilize the sequence classification model from the `model_dir` path
+        """initilize the sequence classification model from the `model_dir` path.
 
         Args:
-            model_dir (str): the model path
+            model_dir (str): the model path.
             model_cls (Optional[Any], optional): model loader, if None, use the
-                default loader to load model weights, by default None
+                default loader to load model weights, by default None.
         """
 
         super().__init__(model_dir, model_cls, *args, **kwargs)

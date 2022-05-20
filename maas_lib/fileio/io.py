@@ -114,8 +114,8 @@ def dumps(obj, format, **kwargs):
         format (str, optional): Same as file_format :func:`load`.
 
     Examples:
-        >>> dumps('hello world', 'json')  # disk
-        >>> dumps('hello world', 'yaml')  # oss
+        >>> dumps('hello world', 'json')  # json
+        >>> dumps('hello world', 'yaml')  # yaml
 
     Returns:
         bool: True for success, False otherwise.

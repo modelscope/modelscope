@@ -7,7 +7,7 @@ import zipfile
 
 from maas_lib.fileio import File
 from maas_lib.models.nlp import SequenceClassificationModel
-from maas_lib.pipelines import SequenceClassificationPipeline
+from maas_lib.pipelines import SequenceClassificationPipeline, pipeline
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
 
 
@@ -40,8 +40,11 @@ class SequenceClassificationTest(unittest.TestCase):
             model = SequenceClassificationModel(path)
             preprocessor = SequenceClassificationPreprocessor(
                 path, first_sequence='sentence', second_sequence=None)
-            pipeline = SequenceClassificationPipeline(model, preprocessor)
-            self.predict(pipeline)
+            pipeline1 = SequenceClassificationPipeline(model, preprocessor)
+            self.predict(pipeline1)
+            pipeline2 = pipeline(
+                'text-classification', model=model, preprocessor=preprocessor)
+            print(pipeline2('Hello world!'))
 
 
 if __name__ == '__main__':

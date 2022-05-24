@@ -28,6 +28,7 @@ def build_pipeline(cfg: ConfigDict,
 
 def pipeline(task: str = None,
              model: Union[str, Model] = None,
+             preprocessor=None,
              config_file: str = None,
              pipeline_name: str = None,
              framework: str = None,
@@ -39,6 +40,7 @@ def pipeline(task: str = None,
     Args:
         task (str): Task name defining which pipeline will be returned.
         model (str or obj:`Model`): model name or model object.
+        preprocessor: preprocessor object.
         config_file (str, optional): path to config file.
         pipeline_name (str, optional): pipeline class name or alias name.
         framework (str, optional): framework type.
@@ -55,11 +57,23 @@ def pipeline(task: str = None,
     >>> resnet = Model.from_pretrained('Resnet')
     >>> p = pipeline('image-classification', model=resnet)
     """
-    if task is not None and model is None and pipeline_name is None:
-        # get default pipeline for this task
-        assert task in PIPELINES.modules, f'No pipeline is registerd for Task {task}'
-        pipeline_name = list(PIPELINES.modules[task].keys())[0]
+    if task is not None and pipeline_name is None:
+        if model is None or isinstance(model, Model):
+            # get default pipeline for this task
+            assert task in PIPELINES.modules, f'No pipeline is registerd for Task {task}'
+            pipeline_name = list(PIPELINES.modules[task].keys())[0]
+            cfg = dict(type=pipeline_name, **kwargs)
+            if model is not None:
+                cfg['model'] = model
+            if preprocessor is not None:
+                cfg['preprocessor'] = preprocessor
+        else:
+            assert isinstance(model, str), \
+                f'model should be either str or Model, but got {type(model)}'
+            # TODO @wenmeng.zwm determine pipeline_name according to task and model
+    elif pipeline_name is not None:
+        cfg = dict(type=pipeline_name)
+    else:
+        raise ValueError('task or pipeline_name is required')
 
-    if pipeline_name is not None:
-        cfg = dict(type=pipeline_name, **kwargs)
-        return build_pipeline(cfg, task_name=task)
+    return build_pipeline(cfg, task_name=task)

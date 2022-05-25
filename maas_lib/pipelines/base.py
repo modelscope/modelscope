@@ -25,10 +25,10 @@ class Pipeline(ABC):
 
     def __call__(self, input: Union[Input, List[Input]], *args,
                  **post_kwargs) -> Dict[str, Any]:
-        # moodel provider should leave it as it is
+        # model provider should leave it as it is
         # maas library developer will handle this function
 
-        # simple show case, need to support iterator type for both tensorflow and pytorch
+        # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)
         if isinstance(input, list):
             output = []

@@ -118,7 +118,7 @@ class Registry(object):
                 module_cls=module_cls)
             return module_cls
 
-        # if module_cls is None, should return a dectorator function
+        # if module_cls is None, should return a decorator function
         def _register(module_cls):
             self._register_module(
                 group_key=group_key,

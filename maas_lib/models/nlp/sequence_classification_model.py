@@ -21,7 +21,7 @@ class SequenceClassificationModel(Model):
                  **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)
         # Predictor.__init__(self, *args, **kwargs)
-        """initilize the sequence classification model from the `model_dir` path.
+        """initialize the sequence classification model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.

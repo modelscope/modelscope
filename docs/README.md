@@ -1,23 +1,17 @@
 ## maintain docs
-1. install requirements needed to build docs
+1. build docs
     ```shell
-    # in maas_lib root dir
-    pip install requirements/docs.txt
+    # in root directory:
+    make docs
     ```
 
-2. build docs
-    ```shell
-    # in maas_lib/docs dir
-    bash build_docs.sh
-    ```
-
-3. doc string format
+2. doc string format
 
     We adopt the google style docstring format as the standard, please refer to the following documents.
     1. Google Python style guide docstring [link](http://google.github.io/styleguide/pyguide.html#381-docstrings)
     2. Google docstring example [link](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
     3. sample：torch.nn.modules.conv [link](https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#Conv1d)
-    4. load fucntion as an example：
+    4. load function as an example：
 
     ```python
     def load(file, file_format=None, **kwargs):

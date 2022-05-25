@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'maas_lib'
-copyright = '2022-2023, Alibaba PAI'
+copyright = '2022-2023, Alibaba MaaS'
 author = 'maas_lib Authors'
 version_file = '../../maas_lib/version.py'
 

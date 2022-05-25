@@ -39,13 +39,13 @@ class SequenceClassificationPipeline(Pipeline):
         }
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
-        """process the predict results
+        """process the prediction results
 
         Args:
             inputs (Dict[str, Any]): _description_
 
         Returns:
-            Dict[str, str]: the predict results
+            Dict[str, str]: the prediction results
         """
 
         probs = inputs['probabilities']

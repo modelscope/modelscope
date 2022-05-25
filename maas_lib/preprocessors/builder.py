@@ -10,7 +10,7 @@ PREPROCESSORS = Registry('preprocessors')
 def build_preprocessor(cfg: ConfigDict,
                        field_name: str = None,
                        default_args: dict = None):
-    """ build preprocesor given model config dict
+    """ build preprocessor given model config dict
 
     Args:
         cfg (:obj:`ConfigDict`): config dict for model object.

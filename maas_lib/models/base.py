@@ -26,4 +26,4 @@ class Model(ABC):
 
     @classmethod
     def from_pretrained(cls, model_name_or_path: str, *model_args, **kwargs):
-        raise NotImplementedError('from_preatrained has not been implemented')
+        raise NotImplementedError('from_pretrained has not been implemented')

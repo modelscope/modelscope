@@ -162,10 +162,10 @@ if __name__ == '__main__':
         description='',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Alibaba PAI team',
+        author='Alibaba MaaS team',
         author_email='maas_lib@list.alibaba-inc.com',
         keywords='',
-        url='https://github.com/alibaba/EasyCV.git',
+        url='TBD',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
         classifiers=[

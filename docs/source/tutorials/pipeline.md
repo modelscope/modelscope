@@ -63,7 +63,7 @@ pipeline函数支持传入实例化的预处理对象、模型对象，从而支
 wget https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com/release/easynlp_modelzoo/alibaba-pai/bert-base-sst2.zip && unzip bert-base-sst2.zip
 ```
 
-创建tokenzier和模型
+创建tokenizer和模型
 ```python
 >>> from maas_lib.models.nlp import SequenceClassificationModel
 >>> path = 'bert-base-sst2'

@@ -1,3 +1,4 @@
+import os.path as osp
 from typing import Any, Dict, List, Tuple, Union
 
 import cv2
@@ -23,8 +24,9 @@ logger = get_logger()
     Tasks.image_matting, module_name=Tasks.image_matting)
 class ImageMatting(Pipeline):
 
-    def __init__(self, model_path: str):
-        super().__init__()
+    def __init__(self, model: str):
+        super().__init__(model=model)
+        model_path = osp.join(self.model, 'matting_person.pb')
 
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True

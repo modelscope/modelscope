@@ -1,4 +1,5 @@
 addict
+https://maashub.oss-cn-hangzhou.aliyuncs.com/releases/maas_hub-0.1.0.dev0-py2.py3-none-any.whl
 numpy
 opencv-python-headless
 Pillow

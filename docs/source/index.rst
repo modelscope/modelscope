@@ -11,6 +11,7 @@ MaasLib doc
    :maxdepth: 2
    :caption: USER GUIDE
 
+   quick_start.md
    develop.md
 
 .. toctree::

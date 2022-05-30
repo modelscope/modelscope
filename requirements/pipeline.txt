@@ -1,5 +1,6 @@
-http://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com/release/package/whl/easynlp-0.0.3-py2.py3-none-any.whl
+#https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com/release/package/whl/easynlp-0.0.4-py2.py3-none-any.whl
 tensorflow
-torch==1.9.1
-torchaudio==0.9.1
-torchvision==0.10.1
+#--find-links https://download.pytorch.org/whl/torch_stable.html
+torch<1.10,>=1.8.0
+torchaudio
+torchvision

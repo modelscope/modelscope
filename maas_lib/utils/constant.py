@@ -62,3 +62,9 @@ class InputFields(object):
     img = 'img'
     text = 'text'
     audio = 'audio'
+
+
+# configuration filename
+# in order to avoid conflict with huggingface
+# config file we use maas_config instead
+CONFIGFILE = 'maas_config.json'

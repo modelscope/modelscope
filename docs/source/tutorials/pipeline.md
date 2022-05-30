@@ -11,6 +11,9 @@
 * 指定特定预处理、特定模型进行推理
 * 不同场景推理任务示例
 
+## 环境准备
+详细步骤可以参考 [快速开始](../quick_start.md)
+
 ## Pipeline基本用法
 
 1. pipeline函数支持指定特定任务名称，加载任务默认模型，创建对应Pipeline对象
@@ -21,7 +24,7 @@
    ```shell
    wget http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/matting_person.pb
    ```
-   执行python命令
+   执行如下python代码
    ```python
    >>> from maas_lib.pipelines import pipeline
    >>> img_matting = pipeline(task='image-matting', model_path='matting_person.pb')
@@ -36,7 +39,7 @@
 
    pipeline对象也支持传入一个列表输入，返回对应输出列表，每个元素对应输入样本的返回结果
    ```python
-   results = img_matting(
+   >>> results = img_matting(
        [
            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png',
            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png',
@@ -46,8 +49,8 @@
 
    如果pipeline对应有一些后处理参数，也支持通过调用时候传入.
    ```python
-   pipe = pipeline(task_name)
-   result = pipe(input, post_process_args)
+   >>> pipe = pipeline(task_name)
+   >>> result = pipe(input, post_process_args)
    ```
 
 ## 指定预处理、模型进行推理

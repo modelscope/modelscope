@@ -113,26 +113,39 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                 if line.startswith('http'):
                     print('skip http requirements %s' % line)
                     continue
-                if line and not line.startswith('#'):
+                if line and not line.startswith('#') and not line.startswith(
+                        '--'):
                     for info in parse_line(line):
                         yield info
+                elif line and line.startswith('--find-links'):
+                    eles = line.split()
+                    for e in eles:
+                        e = e.strip()
+                        if 'http' in e:
+                            info = dict(dependency_links=e)
+                            yield info
 
     def gen_packages_items():
+        items = []
+        deps_link = []
         if exists(require_fpath):
             for info in parse_require_file(require_fpath):
-                parts = [info['package']]
-                if with_version and 'version' in info:
-                    parts.extend(info['version'])
-                if not sys.version.startswith('3.4'):
-                    # apparently package_deps are broken in 3.4
-                    platform_deps = info.get('platform_deps')
-                    if platform_deps is not None:
-                        parts.append(';' + platform_deps)
-                item = ''.join(parts)
-                yield item
+                if 'dependency_links' not in info:
+                    parts = [info['package']]
+                    if with_version and 'version' in info:
+                        parts.extend(info['version'])
+                    if not sys.version.startswith('3.4'):
+                        # apparently package_deps are broken in 3.4
+                        platform_deps = info.get('platform_deps')
+                        if platform_deps is not None:
+                            parts.append(';' + platform_deps)
+                    item = ''.join(parts)
+                    items.append(item)
+                else:
+                    deps_link.append(info['dependency_links'])
+        return items, deps_link
 
-    packages = list(gen_packages_items())
-    return packages
+    return gen_packages_items()
 
 
 def pack_resource():
@@ -155,7 +168,7 @@ if __name__ == '__main__':
     # write_version_py()
     pack_resource()
     os.chdir('package')
-    install_requires = parse_requirements('requirements.txt')
+    install_requires, deps_link = parse_requirements('requirements.txt')
     setup(
         name='maas-lib',
         version=get_version(),
@@ -180,4 +193,5 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         tests_require=parse_requirements('requirements/tests.txt'),
         install_requires=install_requires,
+        dependency_links=deps_link,
         zip_safe=False)

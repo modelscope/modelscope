@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional, Union
 
 import numpy as np
-import torch
 
 from maas_lib.utils.constant import Tasks
 from ..base import Model
@@ -26,6 +25,7 @@ class SequenceClassificationModel(Model):
         super().__init__(model_dir, *args, **kwargs)
         from easynlp.appzoo import SequenceClassification
         from easynlp.core.predictor import get_model_predictor
+        import torch
         self.model = get_model_predictor(
             model_dir=self.model_dir,
             model_cls=SequenceClassification,

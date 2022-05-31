@@ -1,17 +1,53 @@
 # 快速开始
 
-## 环境准备
+## python环境配置
+首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境
 
-方式一： whl包安装， 执行如下命令
+安装完成后，执行如下命令为maas library创建对应的python环境。
 ```shell
-pip install http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/release/maas_lib-0.1.0-py3-none-any.whl
+conda create -n maas python=3.6
+conda activate maas
+```
+检查python和pip命令是否切换到conda环境下。
+```shell
+which python
+# ~/workspace/anaconda3/envs/maas/bin/python
+
+which pip
+# ~/workspace/anaconda3/envs/maas/bin/pip
+```
+注： 本项目只支持`python3`环境，请勿使用python2环境。
+
+## 第三方依赖安装
+
+MaaS Library支持tensorflow，pytorch两大深度学习框架进行模型训练、推理， 在Python 3.6+,  Pytorch 1.8+, Tensorflow 2.6上测试可运行，用户可以根据所选模型对应的计算框架进行安装，可以参考如下链接进行安装所需框架:
+
+* [Pytorch安装指导](https://pytorch.org/get-started/locally/)
+* [Tensorflow安装指导](https://www.tensorflow.org/install/pip)
+
+
+## MaaS library 安装
+
+注： 如果在安装过程中遇到错误，请前往[常见问题](faq.md)查找解决方案。
+
+### pip安装
+```shell
+pip install -r http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/release/maas/maas.txt
 ```
 
-方式二： 源码环境指定， 适合本地开发调试使用，修改源码后可以直接执行
+安装成功后，可以执行如下命令进行验证安装是否正确
+```shell
+python -c "from maas_lib.pipelines import pipeline;print(pipeline('image-matting',model='damo/image-matting-person')('http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'))"
+```
+
+
+### 使用源码
+
+适合本地开发调试使用，修改源码后可以直接执行
 ```shell
 git clone git@gitlab.alibaba-inc.com:Ali-MaaS/MaaS-lib.git maaslib
-git fetch origin release/0.1
-git checkout release/0.1
+git fetch origin master
+git checkout master
 
 cd maaslib
 
@@ -22,7 +58,11 @@ pip install -r requirements.txt
 export PYTHONPATH=`pwd`
 ```
 
-备注： mac arm cpu暂时由于依赖包版本问题会导致requirements暂时无法安装，请使用mac intel cpu， linux cpu/gpu机器测试。
+安装成功后，可以执行如下命令进行验证安装是否正确
+```shell
+python -c "from maas_lib.pipelines import pipeline;print(pipeline('image-matting',model='damo/image-matting-person')('http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'))"
+```
+
 
 
 ## 训练
@@ -34,31 +74,22 @@ to be done
 to be done
 
 ## 推理
-to be done
-<!-- pipeline函数提供了简洁的推理接口，示例如下
 
-注： 这里提供的接口是完成和modelhub打通后的接口，暂时不支持使用。pipeline使用示例请参考 [pipelien tutorial](tutorials/pipeline.md)给出的示例。
+pipeline函数提供了简洁的推理接口，示例如下， 更多pipeline介绍和示例请参考[pipeline使用教程](tutorials/pipeline.md)
 
 ```python
 import cv2
+import os.path as osp
 from maas_lib.pipelines import pipeline
+from maas_lib.utils.constant import Tasks
 
 # 根据任务名创建pipeline
-img_matting = pipeline('image-matting')
+img_matting = pipeline(
+    Tasks.image_matting, model='damo/image-matting-person')
 
-# 根据任务和模型名创建pipeline
-img_matting = pipeline('image-matting', model='damo/image-matting-person')
-
-# 自定义模型和预处理创建pipeline
-model = Model.from_pretrained('damo/xxx')
-preprocessor = Preprocessor.from_pretrained(cfg)
-img_matting = pipeline('image-matting', model=model, preprocessor=preprocessor)
-
-# 推理
 result = img_matting(
-                'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-            )
-
-# 保存结果图片
+    'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
+)
 cv2.imwrite('result.png', result['output_png'])
-``` -->
+print(f'result file path is {osp.abspath("result.png")}')
+```

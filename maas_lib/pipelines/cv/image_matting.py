@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Tuple, Union
 import cv2
 import numpy as np
 import PIL
-import tensorflow as tf
 from cv2 import COLOR_GRAY2RGB
 
 from maas_lib.pipelines.base import Input
@@ -13,9 +12,6 @@ from maas_lib.utils.constant import Tasks
 from maas_lib.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
-
-if tf.__version__ >= '2.0':
-    tf = tf.compat.v1
 
 logger = get_logger()
 
@@ -26,6 +22,9 @@ class ImageMatting(Pipeline):
 
     def __init__(self, model: str):
         super().__init__(model=model)
+        import tensorflow as tf
+        if tf.__version__ >= '2.0':
+            tf = tf.compat.v1
         model_path = osp.join(self.model, 'matting_person.pb')
 
         config = tf.ConfigProto(allow_soft_placement=True)

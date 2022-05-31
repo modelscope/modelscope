@@ -2,3 +2,4 @@
 
 from .base import Model
 from .builder import MODELS, build_model
+from .nlp import SequenceClassificationModel

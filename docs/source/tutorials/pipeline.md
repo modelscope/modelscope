@@ -17,13 +17,6 @@
 ## Pipeline基本用法
 
 1. pipeline函数支持指定特定任务名称，加载任务默认模型，创建对应Pipeline对象
-   注： 当前还未与modelhub进行打通，需要手动下载模型，创建pipeline时需要指定本地模型路径，未来会支持指定模型名称从远端仓库
-   拉取模型并初始化。
-
-   下载模型文件
-   ```shell
-   wget http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/matting_person.pb
-   ```
    执行如下python代码
    ```python
    >>> from maas_lib.pipelines import pipeline

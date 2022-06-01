@@ -20,7 +20,7 @@ which pip
 
 ## 第三方依赖安装
 
-MaaS Library支持tensorflow，pytorch两大深度学习框架进行模型训练、推理， 在Python 3.6+,  Pytorch 1.8+, Tensorflow 2.6上测试可运行，用户可以根据所选模型对应的计算框架进行安装，可以参考如下链接进行安装所需框架:
+MaaS Library目前支持tensorflow，pytorch两大深度学习框架进行模型训练、推理， 在Python 3.6+,  Pytorch 1.8+, Tensorflow 2.6上测试可运行，用户可以根据所选模型对应的计算框架进行安装，可以参考如下链接进行安装所需框架:
 
 * [Pytorch安装指导](https://pytorch.org/get-started/locally/)
 * [Tensorflow安装指导](https://www.tensorflow.org/install/pip)
@@ -41,7 +41,7 @@ python -c "from maas_lib.pipelines import pipeline;print(pipeline('image-matting
 ```
 
 
-### 使用源码
+### 使用源码安装
 
 适合本地开发调试使用，修改源码后可以直接执行
 ```shell
@@ -64,7 +64,6 @@ python -c "from maas_lib.pipelines import pipeline;print(pipeline('image-matting
 ```
 
 
-
 ## 训练
 
 to be done
@@ -84,12 +83,33 @@ from maas_lib.pipelines import pipeline
 from maas_lib.utils.constant import Tasks
 
 # 根据任务名创建pipeline
-img_matting = pipeline(
-    Tasks.image_matting, model='damo/image-matting-person')
+img_matting = pipeline(Tasks.image_matting, model='damo/image-matting-person')
 
+# 直接提供图像文件的url作为pipeline推理的输入
 result = img_matting(
     'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
 )
 cv2.imwrite('result.png', result['output_png'])
-print(f'result file path is {osp.abspath("result.png")}')
+print(f'Output written to {osp.abspath("result.png")}')
+
+```
+
+此外，pipeline接口也能接收Dataset作为输入，上面的代码同样可以实现为
+```python
+import cv2
+import os.path as osp
+from maas_lib.pipelines import pipeline
+from maas_lib.utils.constant import Tasks
+from ali_maas_datasets import PyDataset
+
+# 使用图像url构建PyDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
+input_location = [
+    'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
+]
+dataset = PyDataset.load(input_location, target='image')
+img_matting = pipeline(Tasks.image_matting, model='damo/image-matting-person')
+# 输入为PyDataset时，输出的结果为迭代器
+result = img_matting(dataset)
+cv2.imwrite('result.png', next(result)['output_png'])
+print(f'Output written to {osp.abspath("result.png")}')
 ```

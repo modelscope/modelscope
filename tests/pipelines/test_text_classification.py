@@ -42,7 +42,7 @@ class SequenceClassificationTest(unittest.TestCase):
 
         with zipfile.ZipFile(cache_path_str, 'r') as zipf:
             zipf.extractall(cache_path.parent)
-        path = r'.cache/easynlp/bert-base-sst2'
+        path = r'.cache/easynlp/'
         model = SequenceClassificationModel(path)
         preprocessor = SequenceClassificationPreprocessor(
             path, first_sequence='sentence', second_sequence=None)
@@ -74,7 +74,7 @@ class SequenceClassificationTest(unittest.TestCase):
 
         with zipfile.ZipFile(cache_path_str, 'r') as zipf:
             zipf.extractall(cache_path.parent)
-        path = r'.cache/easynlp/bert-base-sst2'
+        path = r'.cache/easynlp/'
         model = SequenceClassificationModel(path)
         preprocessor = SequenceClassificationPreprocessor(
             path, first_sequence='sentence', second_sequence=None)

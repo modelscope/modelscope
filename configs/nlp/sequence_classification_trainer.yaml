@@ -51,7 +51,7 @@ train:
   num_steps: 100000
 
 evaluation: # [being used]
-  model_path: .cache/easynlp/bert-base-sst2
+  model_path: .cache/easynlp/
   max_sequence_length: 128
   batch_size: 32
   metrics:

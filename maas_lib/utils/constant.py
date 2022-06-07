@@ -38,6 +38,7 @@ class Tasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    dialog_generation = 'dialog-generation'
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'
     sentence_similarity = 'sentence-similarity'

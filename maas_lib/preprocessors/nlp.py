@@ -10,7 +10,10 @@ from maas_lib.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 
-__all__ = ['Tokenize', 'SequenceClassificationPreprocessor']
+__all__ = [
+    'Tokenize', 'SequenceClassificationPreprocessor',
+    'DialogGenerationPreprocessor'
+]
 
 
 @PREPROCESSORS.register_module(Fields.nlp)
@@ -89,3 +92,31 @@ class SequenceClassificationPreprocessor(Preprocessor):
         rst['token_type_ids'].append(feature['token_type_ids'])
 
         return rst
+
+
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space')
+class DialogGenerationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+
+        pass
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        return None

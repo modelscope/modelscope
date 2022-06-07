@@ -67,10 +67,12 @@ def pipeline(task: str = None,
 
     if pipeline_name is None:
         # get default pipeline for this task
-        assert task in PIPELINES.modules, f'No pipeline is registerd for Task {task}'
+        assert task in PIPELINES.modules, f'No pipeline is registered for Task {task}'
         pipeline_name = get_default_pipeline(task)
 
     cfg = ConfigDict(type=pipeline_name)
+    if kwargs:
+        cfg.update(kwargs)
 
     if model:
         assert isinstance(model, (str, Model)), \

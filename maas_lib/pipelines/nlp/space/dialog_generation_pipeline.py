@@ -22,28 +22,29 @@ class DialogGenerationPipeline(Model):
         """
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        pass
+        self.model = model
+        self.tokenizer = preprocessor.tokenizer
 
-    def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        """return the result by the model
+    def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
+        """process the prediction results
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            inputs (Dict[str, Any]): _description_
 
         Returns:
-            Dict[str, np.ndarray]: results
-                Example:
-                    {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
-                    }
+            Dict[str, str]: the prediction results
         """
-        from numpy import array, float32
 
-        return {
-            'predictions': array([1]),  # lable 0-negative 1-positive
-            'probabilities': array([[0.11491239, 0.8850876]], dtype=float32),
-            'logits': array([[-0.53860897, 1.5029076]],
-                            dtype=float32)  # true value
-        }
+        vocab_size = len(self.tokenizer.vocab)
+        pred_list = inputs['predictions']
+        pred_ids = pred_list[0][0].cpu().numpy().tolist()
+        for j in range(len(pred_ids)):
+            if pred_ids[j] >= vocab_size:
+                pred_ids[j] = 100
+        pred = self.tokenizer.convert_ids_to_tokens(pred_ids)
+        pred_string = ''.join(pred).replace(
+            '##',
+            '').split('[SEP]')[0].replace('[CLS]',
+                                          '').replace('[SEP]',
+                                                      '').replace('[UNK]', '')
+        return {'pred_string': pred_string}

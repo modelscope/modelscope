@@ -84,7 +84,7 @@ class Pipeline(ABC):
 
     def _process_single(self, input: Input, *args,
                         **post_kwargs) -> Dict[str, Any]:
-        out = self.preprocess(input)
+        out = self.preprocess(input, **post_kwargs)
         out = self.forward(out)
         out = self.postprocess(out, **post_kwargs)
         return out

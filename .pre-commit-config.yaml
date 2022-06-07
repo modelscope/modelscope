@@ -1,9 +1,9 @@
 repos:
-  - repo: https://gitlab.com/pycqa/flake8.git
-    rev: 3.8.3
-    hooks:
-      - id: flake8
-        exclude: thirdparty/|examples/
+#  - repo: https://gitlab.com/pycqa/flake8.git
+#    rev: 3.8.3
+#    hooks:
+#      - id: flake8
+#        exclude: thirdparty/|examples/
   - repo: https://github.com/timothycrosley/isort
     rev: 4.3.21
     hooks:

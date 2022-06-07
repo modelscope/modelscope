@@ -37,30 +37,31 @@ dialog_case = [{
 }]
 
 
+def merge(info, result):
+    return info
+
+
 class DialogGenerationTest(unittest.TestCase):
 
     def test_run(self):
-        for item in dialog_case:
-            q = item['user']
-            a = item['sys']
-            print('user:{}'.format(q))
-            print('sys:{}'.format(a))
 
-        # preprocessor = DialogGenerationPreprocessor()
-        # # data = DialogGenerationData()
-        # model = DialogGenerationModel(path, preprocessor.tokenizer)
-        # pipeline = DialogGenerationPipeline(model, preprocessor)
-        #
-        # history_dialog = []
-        # for item in dialog_case:
-        #     user_question = item['user']
-        #     print('user: {}'.format(user_question))
-        #
-        # pipeline(user_question)
-        #
-        # sys_answer, history_dialog = pipeline()
-        #
-        # print('sys : {}'.format(sys_answer))
+        modeldir = '/Users/yangliu/Desktop/space-dialog-generation'
+
+        preprocessor = DialogGenerationPreprocessor()
+        model = DialogGenerationModel(
+            model_dir=modeldir, preprocessor.tokenizer)
+        pipeline = DialogGenerationPipeline(model, preprocessor)
+
+        history_dialog = {}
+        for step in range(0, len(dialog_case)):
+            user_question = dialog_case[step]['user']
+            print('user: {}'.format(user_question))
+
+            history_dialog_info = merge(history_dialog_info,
+                                        result) if step > 0 else {}
+            result = pipeline(user_question, history=history_dialog_info)
+
+            print('sys : {}'.format(result['pred_answer']))
 
 
 if __name__ == '__main__':

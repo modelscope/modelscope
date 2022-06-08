@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional
 from maas_lib.utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
+from .model.generator import Generator
+from .model.model_base import ModelBase
 
 __all__ = ['DialogGenerationModel']
 
@@ -21,7 +23,14 @@ class DialogGenerationModel(Model):
 
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
-        pass
+        self.text_field = kwargs.pop('text_field')
+        self.config = kwargs.pop('config')
+        self.generator = Generator.create(self.config, reader=self.text_field)
+        self.model = ModelBase.create(
+            model_dir=model_dir,
+            config=self.config,
+            reader=self.text_field,
+            generator=self.generator)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model

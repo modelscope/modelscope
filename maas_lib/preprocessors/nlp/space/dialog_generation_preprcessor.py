@@ -5,10 +5,11 @@ import uuid
 from typing import Any, Dict, Union
 
 from maas_lib.data.nlp.space.fields.gen_field import MultiWOZBPETextField
+from maas_lib.utils.config import Config
 from maas_lib.utils.constant import Fields, InputFields
 from maas_lib.utils.type_assert import type_assert
-from ..base import Preprocessor
-from ..builder import PREPROCESSORS
+from ...base import Preprocessor
+from ...builder import PREPROCESSORS
 
 __all__ = ['DialogGenerationPreprocessor']
 
@@ -25,10 +26,10 @@ class DialogGenerationPreprocessor(Preprocessor):
         super().__init__(*args, **kwargs)
 
         self.model_dir: str = model_dir
-
-        self.text_field = MultiWOZBPETextField(model_dir=self.model_dir)
-
-        pass
+        self.config = Config.from_file(
+            os.path.join(self.model_dir, 'configuration.json'))
+        self.text_field = MultiWOZBPETextField(
+            self.model_dir, config=self.config)
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:

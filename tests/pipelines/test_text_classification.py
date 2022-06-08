@@ -29,6 +29,12 @@ class SequenceClassificationTest(unittest.TestCase):
 
         print(data)
 
+    def printDataset(self, dataset: PyDataset):
+        for i, r in enumerate(dataset):
+            if i > 10:
+                break
+            print(r)
+
     def test_run(self):
         model_url = 'https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com' \
                     '/release/easynlp_modelzoo/alibaba-pai/bert-base-sst2.zip'
@@ -53,7 +59,7 @@ class SequenceClassificationTest(unittest.TestCase):
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         print(pipeline2('Hello world!'))
 
-    def test_run_modelhub(self):
+    def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained('damo/bert-base-sst2')
         preprocessor = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
@@ -62,6 +68,13 @@ class SequenceClassificationTest(unittest.TestCase):
             model=model,
             preprocessor=preprocessor)
         self.predict(pipeline_ins)
+
+    def test_run_with_model_name(self):
+        text_classification = pipeline(
+            task=Tasks.text_classification, model='damo/bert-base-sst2')
+        result = text_classification(
+            PyDataset.load('glue', name='sst2', target='sentence'))
+        self.printDataset(result)
 
     def test_run_with_dataset(self):
         model = Model.from_pretrained('damo/bert-base-sst2')
@@ -74,10 +87,7 @@ class SequenceClassificationTest(unittest.TestCase):
         # TODO: rename parameter as dataset_name and subset_name
         dataset = PyDataset.load('glue', name='sst2', target='sentence')
         result = text_classification(dataset)
-        for i, r in enumerate(result):
-            if i > 10:
-                break
-            print(r)
+        self.printDataset(result)
 
 
 if __name__ == '__main__':

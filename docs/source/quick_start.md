@@ -95,12 +95,13 @@ print(f'Output written to {osp.abspath("result.png")}')
 ```
 
 此外，pipeline接口也能接收Dataset作为输入，上面的代码同样可以实现为
+
 ```python
 import cv2
 import os.path as osp
 from maas_lib.pipelines import pipeline
 from maas_lib.utils.constant import Tasks
-from ali_maas_datasets import PyDataset
+from pydatasets import PyDataset
 
 # 使用图像url构建PyDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
 input_location = [

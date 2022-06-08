@@ -4,8 +4,8 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Tuple, Union
 
-from ali_maas_datasets import PyDataset
 from maas_hub.snapshot_download import snapshot_download
+from pydatasets import PyDataset
 
 from maas_lib.models import Model
 from maas_lib.pipelines import util

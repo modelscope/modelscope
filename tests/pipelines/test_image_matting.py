@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 import cv2
-from ali_maas_datasets import PyDataset
+from pydatasets import PyDataset
 
 from maas_lib.fileio import File
 from maas_lib.pipelines import pipeline, util

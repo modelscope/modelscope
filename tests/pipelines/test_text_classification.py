@@ -5,7 +5,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from ali_maas_datasets import PyDataset
+from pydatasets import PyDataset
 
 from maas_lib.fileio import File
 from maas_lib.models import Model

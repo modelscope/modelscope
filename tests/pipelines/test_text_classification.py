@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import tempfile
+import os
+import shutil
 import unittest
 import zipfile
 from pathlib import Path
@@ -9,12 +10,20 @@ from ali_maas_datasets import PyDataset
 from maas_lib.fileio import File
 from maas_lib.models import Model
 from maas_lib.models.nlp import SequenceClassificationModel
-from maas_lib.pipelines import SequenceClassificationPipeline, pipeline
+from maas_lib.pipelines import SequenceClassificationPipeline, pipeline, util
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
 from maas_lib.utils.constant import Tasks
 
 
 class SequenceClassificationTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.model_id = 'damo/bert-base-sst2'
+        # switch to False if downloading everytime is not desired
+        purge_cache = True
+        if purge_cache:
+            shutil.rmtree(
+                util.get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def predict(self, pipeline_ins: SequenceClassificationPipeline):
         from easynlp.appzoo import load_dataset
@@ -60,7 +69,7 @@ class SequenceClassificationTest(unittest.TestCase):
         print(pipeline2('Hello world!'))
 
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained('damo/bert-base-sst2')
+        model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
@@ -71,13 +80,13 @@ class SequenceClassificationTest(unittest.TestCase):
 
     def test_run_with_model_name(self):
         text_classification = pipeline(
-            task=Tasks.text_classification, model='damo/bert-base-sst2')
+            task=Tasks.text_classification, model=self.model_id)
         result = text_classification(
             PyDataset.load('glue', name='sst2', target='sentence'))
         self.printDataset(result)
 
     def test_run_with_dataset(self):
-        model = Model.from_pretrained('damo/bert-base-sst2')
+        model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         text_classification = pipeline(

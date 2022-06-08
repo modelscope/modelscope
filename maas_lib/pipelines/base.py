@@ -2,16 +2,15 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from multiprocessing.sharedctypes import Value
 from typing import Any, Dict, Generator, List, Tuple, Union
 
 from ali_maas_datasets import PyDataset
 from maas_hub.snapshot_download import snapshot_download
 
 from maas_lib.models import Model
+from maas_lib.pipelines import util
 from maas_lib.preprocessors import Preprocessor
 from maas_lib.utils.config import Config
-from maas_lib.utils.constant import CONFIGFILE
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
@@ -31,7 +30,7 @@ class Pipeline(ABC):
         """ Base class for pipeline.
 
         If config_file is provided, model and preprocessor will be
-        instantiated from corresponding config. Otherwise model
+        instantiated from corresponding config. Otherwise, model
         and preprocessor will be constructed separately.
 
         Args:
@@ -44,7 +43,11 @@ class Pipeline(ABC):
 
         if isinstance(model, str):
             if not osp.exists(model):
-                model = snapshot_download(model)
+                cache_path = util.get_model_cache_dir(model)
+                if osp.exists(cache_path):
+                    model = cache_path
+                else:
+                    model = snapshot_download(model)
 
             if is_model_name(model):
                 self.model = Model.from_pretrained(model)
@@ -61,7 +64,7 @@ class Pipeline(ABC):
 
     def __call__(self, input: Union[Input, List[Input]], *args,
                  **post_kwargs) -> Union[Dict[str, Any], Generator]:
-        # moodel provider should leave it as it is
+        # model provider should leave it as it is
         # maas library developer will handle this function
 
         # simple showcase, need to support iterator type for both tensorflow and pytorch

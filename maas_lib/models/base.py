@@ -8,6 +8,7 @@ from maas_hub.file_download import model_file_download
 from maas_hub.snapshot_download import snapshot_download
 
 from maas_lib.models.builder import build_model
+from maas_lib.pipelines import util
 from maas_lib.utils.config import Config
 from maas_lib.utils.constant import CONFIGFILE
 
@@ -39,8 +40,9 @@ class Model(ABC):
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
-
-            local_model_dir = snapshot_download(model_name_or_path)
+            cache_path = util.get_model_cache_dir(model_name_or_path)
+            local_model_dir = cache_path if osp.exists(
+                cache_path) else snapshot_download(model_name_or_path)
             # else:
             #     raise ValueError(
             #         'Remote model repo {model_name_or_path} does not exists')

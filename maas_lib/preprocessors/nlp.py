@@ -89,3 +89,61 @@ class SequenceClassificationPreprocessor(Preprocessor):
         rst['token_type_ids'].append(feature['token_type_ids'])
 
         return rst
+
+
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm')
+class TextGenerationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data using the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+        from sofa import PalmTokenizer
+
+        super().__init__(*args, **kwargs)
+
+        self.model_dir: str = model_dir
+        self.first_sequence: str = kwargs.pop('first_sequence',
+                                              'first_sequence')
+        self.second_sequence: str = kwargs.pop('second_sequence',
+                                               'second_sequence')
+        self.sequence_length: int = kwargs.pop('sequence_length', 128)
+        self.tokenizer = PalmTokenizer.from_pretrained(model_dir)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        import torch
+
+        new_data = {self.first_sequence: data}
+        # preprocess the data for the model input
+
+        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
+
+        max_seq_length = self.sequence_length
+
+        text_a = new_data.get(self.first_sequence, None)
+        text_b = new_data.get(self.second_sequence, None)
+        feature = self.tokenizer(
+            text_a,
+            text_b,
+            padding='max_length',
+            truncation=True,
+            max_length=max_seq_length)
+
+        rst['input_ids'].append(feature['input_ids'])
+        rst['attention_mask'].append(feature['attention_mask'])
+        rst['token_type_ids'].append(feature['token_type_ids'])
+
+        return {k: torch.tensor(v) for k, v in rst.items()}

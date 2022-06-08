@@ -1,2 +1,3 @@
 -r requirements/runtime.txt
 -r requirements/pipeline.txt
+-r requirements/nlp.txt

@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from typing import Union
+from typing import List, Union
 
 import json
 from maas_hub.file_download import model_file_download
@@ -10,7 +10,7 @@ from maas_lib.models.base import Model
 from maas_lib.utils.config import Config, ConfigDict
 from maas_lib.utils.constant import CONFIGFILE, Tasks
 from maas_lib.utils.registry import Registry, build_from_cfg
-from .base import Pipeline
+from .base import InputModel, Pipeline
 from .util import is_model_name
 
 PIPELINES = Registry('pipelines')
@@ -32,7 +32,7 @@ def build_pipeline(cfg: ConfigDict,
 
 
 def pipeline(task: str = None,
-             model: Union[str, Model] = None,
+             model: Union[InputModel, List[InputModel]] = None,
              preprocessor=None,
              config_file: str = None,
              pipeline_name: str = None,
@@ -75,8 +75,8 @@ def pipeline(task: str = None,
         cfg.update(kwargs)
 
     if model:
-        assert isinstance(model, (str, Model)), \
-            f'model should be either str or Model, but got {type(model)}'
+        assert isinstance(model, (str, Model, List)), \
+            f'model should be either (list of) str or Model, but got {type(model)}'
         cfg.model = model
 
     if preprocessor is not None:

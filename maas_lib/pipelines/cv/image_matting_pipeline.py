@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Tuple, Union
 import cv2
 import numpy as np
 import PIL
-from cv2 import COLOR_GRAY2RGB
 
 from maas_lib.pipelines.base import Input
 from maas_lib.preprocessors import load_image
@@ -18,7 +17,7 @@ logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.image_matting, module_name=Tasks.image_matting)
-class ImageMatting(Pipeline):
+class ImageMattingPipeline(Pipeline):
 
     def __init__(self, model: str):
         super().__init__(model=model)

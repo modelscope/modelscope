@@ -6,12 +6,12 @@ from maas_lib.utils.constant import Tasks
 from ..base import Model
 from ..builder import MODELS
 
-__all__ = ['SequenceClassificationModel']
+__all__ = ['BertForSequenceClassification']
 
 
 @MODELS.register_module(
     Tasks.text_classification, module_name=r'bert-sentiment-analysis')
-class SequenceClassificationModel(Model):
+class BertForSequenceClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)

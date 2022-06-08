@@ -9,7 +9,7 @@ from pydatasets import PyDataset
 
 from maas_lib.fileio import File
 from maas_lib.models import Model
-from maas_lib.models.nlp import SequenceClassificationModel
+from maas_lib.models.nlp import BertForSequenceClassification
 from maas_lib.pipelines import SequenceClassificationPipeline, pipeline, util
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
 from maas_lib.utils.constant import Tasks
@@ -59,7 +59,7 @@ class SequenceClassificationTest(unittest.TestCase):
         with zipfile.ZipFile(cache_path_str, 'r') as zipf:
             zipf.extractall(cache_path.parent)
         path = r'.cache/easynlp/'
-        model = SequenceClassificationModel(path)
+        model = BertForSequenceClassification(path)
         preprocessor = SequenceClassificationPreprocessor(
             path, first_sequence='sentence', second_sequence=None)
         pipeline1 = SequenceClassificationPipeline(model, preprocessor)

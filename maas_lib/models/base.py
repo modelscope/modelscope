@@ -50,7 +50,7 @@ class Model(ABC):
         cfg = Config.from_file(osp.join(local_model_dir, CONFIGFILE))
         task_name = cfg.task
         model_cfg = cfg.model
-        # TODO @wenmeng.zwm may should mannually initialize model after model building
+        # TODO @wenmeng.zwm may should manually initialize model after model building
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
         model_cfg.model_dir = local_model_dir

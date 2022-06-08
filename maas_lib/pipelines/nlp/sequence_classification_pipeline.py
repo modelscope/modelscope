@@ -5,7 +5,7 @@ from typing import Any, Dict, Union
 import json
 import numpy as np
 
-from maas_lib.models.nlp import SequenceClassificationModel
+from maas_lib.models.nlp import BertForSequenceClassification
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
 from maas_lib.utils.constant import Tasks
 from ...models import Model
@@ -20,18 +20,20 @@ __all__ = ['SequenceClassificationPipeline']
 class SequenceClassificationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[SequenceClassificationModel, str],
+                 model: Union[BertForSequenceClassification, str],
                  preprocessor: SequenceClassificationPreprocessor = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
         Args:
-            model (SequenceClassificationModel): a model instance
+            model (BertForSequenceClassification): a model instance
             preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
         """
+        assert isinstance(model, str) or isinstance(model, BertForSequenceClassification), \
+            'model must be a single str or BertForSequenceClassification'
         sc_model = model if isinstance(
             model,
-            SequenceClassificationModel) else Model.from_pretrained(model)
+            BertForSequenceClassification) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = SequenceClassificationPreprocessor(
                 sc_model.model_dir,

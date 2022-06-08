@@ -1,1 +1,1 @@
-from .image_matting import ImageMatting
+from .image_matting_pipeline import ImageMattingPipeline

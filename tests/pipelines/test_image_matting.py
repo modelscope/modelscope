@@ -7,9 +7,10 @@ import unittest
 import cv2
 
 from maas_lib.fileio import File
-from maas_lib.pipelines import pipeline, util
+from maas_lib.pipelines import pipeline
 from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.constant import Tasks
+from maas_lib.utils.hub import get_model_cache_dir
 
 
 class ImageMattingTest(unittest.TestCase):
@@ -20,7 +21,7 @@ class ImageMattingTest(unittest.TestCase):
         purge_cache = True
         if purge_cache:
             shutil.rmtree(
-                util.get_model_cache_dir(self.model_id), ignore_errors=True)
+                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def test_run(self):
         model_path = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs' \
@@ -52,6 +53,15 @@ class ImageMattingTest(unittest.TestCase):
 
     def test_run_modelhub(self):
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
+
+        result = img_matting(
+            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
+        )
+        cv2.imwrite('result.png', result['output_png'])
+        print(f'Output written to {osp.abspath("result.png")}')
+
+    def test_run_modelhub_default_model(self):
+        img_matting = pipeline(Tasks.image_matting)
 
         result = img_matting(
             'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'

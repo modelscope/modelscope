@@ -71,12 +71,18 @@ TODO
     * Feature
         ```shell
         [to #AONE_ID] feat: commit title
+
+        Link: https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/8949062
+
         * commit msg1
         * commit msg2
         ```
     * Bugfix
         ```shell
         [to #AONE_ID] fix: commit title
+
+        Link: https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/8949062
+
         * commit msg1
         * commit msg2
         ```

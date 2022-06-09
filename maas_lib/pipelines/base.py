@@ -6,11 +6,11 @@ from typing import Any, Dict, Generator, List, Union
 
 from maas_hub.snapshot_download import snapshot_download
 
-from maas_lib.models import Model
-from maas_lib.pipelines import util
+from maas_lib.models.base import Model
 from maas_lib.preprocessors import Preprocessor
 from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.config import Config
+from maas_lib.utils.hub import get_model_cache_dir
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
@@ -26,7 +26,7 @@ class Pipeline(ABC):
     def initiate_single_model(self, model):
         if isinstance(model, str):
             if not osp.exists(model):
-                cache_path = util.get_model_cache_dir(model)
+                cache_path = get_model_cache_dir(model)
                 model = cache_path if osp.exists(
                     cache_path) else snapshot_download(model)
             return Model.from_pretrained(model) if is_model_name(

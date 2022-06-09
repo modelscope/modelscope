@@ -8,6 +8,7 @@ import PIL
 
 from maas_lib.pipelines import Pipeline, pipeline
 from maas_lib.pipelines.builder import PIPELINES
+from maas_lib.pipelines.default import add_default_pipeline_info
 from maas_lib.utils.constant import Tasks
 from maas_lib.utils.logger import get_logger
 from maas_lib.utils.registry import default_group
@@ -75,6 +76,7 @@ class CustomPipelineTest(unittest.TestCase):
                 return inputs
 
         self.assertTrue('custom-image' in PIPELINES.modules[default_group])
+        add_default_pipeline_info(Tasks.image_tagging, 'custom-image')
         pipe = pipeline(pipeline_name='custom-image')
         pipe2 = pipeline(Tasks.image_tagging)
         self.assertTrue(type(pipe) is type(pipe2))

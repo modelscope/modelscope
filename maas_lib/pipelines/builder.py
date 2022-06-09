@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from typing import List, Union
+from typing import Union
 
 import json
 from maas_hub.file_download import model_file_download
@@ -10,7 +10,8 @@ from maas_lib.models.base import Model
 from maas_lib.utils.config import Config, ConfigDict
 from maas_lib.utils.constant import CONFIGFILE, Tasks
 from maas_lib.utils.registry import Registry, build_from_cfg
-from .base import InputModel, Pipeline
+from .base import Pipeline
+from .default import DEFAULT_MODEL_FOR_PIPELINE, get_default_pipeline_info
 from .util import is_model_name
 
 PIPELINES = Registry('pipelines')
@@ -32,7 +33,7 @@ def build_pipeline(cfg: ConfigDict,
 
 
 def pipeline(task: str = None,
-             model: Union[InputModel, List[InputModel]] = None,
+             model: Union[str, Model] = None,
              preprocessor=None,
              config_file: str = None,
              pipeline_name: str = None,
@@ -67,23 +68,19 @@ def pipeline(task: str = None,
 
     if pipeline_name is None:
         # get default pipeline for this task
-        assert task in PIPELINES.modules, f'No pipeline is registered for Task {task}'
-        pipeline_name = get_default_pipeline(task)
+        pipeline_name, default_model_repo = get_default_pipeline_info(task)
+        if model is None:
+            model = default_model_repo
 
-    cfg = ConfigDict(type=pipeline_name)
+    assert isinstance(model, (type(None), str, Model)), \
+        f'model should be either None, str or Model, but got {type(model)}'
+
+    cfg = ConfigDict(type=pipeline_name, model=model)
+
     if kwargs:
         cfg.update(kwargs)
-
-    if model:
-        assert isinstance(model, (str, Model, List)), \
-            f'model should be either (list of) str or Model, but got {type(model)}'
-        cfg.model = model
 
     if preprocessor is not None:
         cfg.preprocessor = preprocessor
 
     return build_pipeline(cfg, task_name=task)
-
-
-def get_default_pipeline(task):
-    return list(PIPELINES.modules[task].keys())[0]

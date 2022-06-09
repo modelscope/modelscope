@@ -11,6 +11,7 @@ from maas_lib.utils.constant import Tasks
 
 class ImageCaptionTest(unittest.TestCase):
 
+    @unittest.skip('skip long test')
     def test_run(self):
         model = 'https://ofa-beijing.oss-cn-beijing.aliyuncs.com/checkpoints/caption_large_best_clean.pt'
 

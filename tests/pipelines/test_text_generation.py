@@ -15,6 +15,7 @@ class TextGenerationTest(unittest.TestCase):
     input1 = "今日天气类型='晴'&温度变化趋势='大幅上升'&最低气温='28℃'&最高气温='31℃'&体感='湿热'"
     input2 = "今日天气类型='多云'&体感='舒适'&最低气温='26℃'&最高气温='30℃'"
 
+    @unittest.skip('skip temporarily to save test time')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
         preprocessor = TextGenerationPreprocessor(
@@ -39,6 +40,10 @@ class TextGenerationTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.text_generation, model=self.model_id)
+        print(pipeline_ins(self.input2))
+
+    def test_run_with_default_model(self):
+        pipeline_ins = pipeline(task=Tasks.text_generation)
         print(pipeline_ins(self.input2))
 
 

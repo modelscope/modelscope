@@ -100,6 +100,12 @@ class Registry(object):
             >>> class SwinTransformerDefaultGroup:
             >>>     pass
 
+            >>> class SwinTransformer2:
+            >>>     pass
+            >>> MODELS.register_module('image-classification',
+                                        module_name='SwinT2',
+                                        module_cls=SwinTransformer2)
+
         Args:
             group_key: Group name of which module will be registered,
                 default group name is 'default'

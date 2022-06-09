@@ -7,10 +7,11 @@ from pathlib import Path
 from maas_lib.fileio import File
 from maas_lib.models import Model
 from maas_lib.models.nlp import BertForSequenceClassification
-from maas_lib.pipelines import SequenceClassificationPipeline, pipeline, util
+from maas_lib.pipelines import SequenceClassificationPipeline, pipeline
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
 from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.constant import Tasks
+from maas_lib.utils.hub import get_model_cache_dir
 
 
 class SequenceClassificationTest(unittest.TestCase):
@@ -21,7 +22,7 @@ class SequenceClassificationTest(unittest.TestCase):
         purge_cache = True
         if purge_cache:
             shutil.rmtree(
-                util.get_model_cache_dir(self.model_id), ignore_errors=True)
+                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def predict(self, pipeline_ins: SequenceClassificationPipeline):
         from easynlp.appzoo import load_dataset
@@ -79,6 +80,12 @@ class SequenceClassificationTest(unittest.TestCase):
     def test_run_with_model_name(self):
         text_classification = pipeline(
             task=Tasks.text_classification, model=self.model_id)
+        result = text_classification(
+            PyDataset.load('glue', name='sst2', target='sentence'))
+        self.printDataset(result)
+
+    def test_run_with_default_model(self):
+        text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
             PyDataset.load('glue', name='sst2', target='sentence'))
         self.printDataset(result)

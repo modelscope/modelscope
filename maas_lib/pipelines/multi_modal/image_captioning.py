@@ -2,10 +2,6 @@ from typing import Any, Dict
 
 import numpy as np
 import torch
-from fairseq import checkpoint_utils, tasks, utils
-from ofa.models.ofa import OFAModel
-from ofa.tasks.mm_tasks import CaptionTask
-from ofa.utils.eval_utils import eval_caption
 from PIL import Image
 
 from maas_lib.pipelines.base import Input
@@ -24,6 +20,8 @@ class ImageCaptionPipeline(Pipeline):
     def __init__(self, model: str, bpe_dir: str):
         super().__init__()
         # turn on cuda if GPU is available
+        from fairseq import checkpoint_utils, tasks, utils
+        from ofa.tasks.mm_tasks import CaptionTask
 
         tasks.register_task('caption', CaptionTask)
         use_cuda = False
@@ -106,6 +104,8 @@ class ImageCaptionPipeline(Pipeline):
         return sample
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        from ofa.utils.eval_utils import eval_caption
+
         results, _ = eval_caption(self.task, self.generator, self.models,
                                   input)
         return {

@@ -2,14 +2,14 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, Generator, List, Union
 
 from maas_hub.snapshot_download import snapshot_download
-from pydatasets import PyDataset
 
 from maas_lib.models import Model
 from maas_lib.pipelines import util
 from maas_lib.preprocessors import Preprocessor
+from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.config import Config
 from .util import is_model_name
 

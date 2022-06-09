@@ -5,10 +5,10 @@ import tempfile
 import unittest
 
 import cv2
-from pydatasets import PyDataset
 
 from maas_lib.fileio import File
 from maas_lib.pipelines import pipeline, util
+from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.constant import Tasks
 
 

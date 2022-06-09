@@ -1,13 +1,14 @@
 import unittest
 
 import datasets as hfdata
-from pydatasets import PyDataset
+
+from maas_lib.pydatasets import PyDataset
 
 
 class PyDatasetTest(unittest.TestCase):
 
     def setUp(self):
-        # ds1 initiazed from in memory json
+        # ds1 initialized from in memory json
         self.json_data = {
             'dummy': [{
                 'a': i,

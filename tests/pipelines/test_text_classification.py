@@ -1,17 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 import shutil
 import unittest
 import zipfile
 from pathlib import Path
-
-from pydatasets import PyDataset
 
 from maas_lib.fileio import File
 from maas_lib.models import Model
 from maas_lib.models.nlp import BertForSequenceClassification
 from maas_lib.pipelines import SequenceClassificationPipeline, pipeline, util
 from maas_lib.preprocessors import SequenceClassificationPreprocessor
+from maas_lib.pydatasets import PyDataset
 from maas_lib.utils.constant import Tasks
 
 

@@ -101,7 +101,7 @@ import cv2
 import os.path as osp
 from maas_lib.pipelines import pipeline
 from maas_lib.utils.constant import Tasks
-from pydatasets import PyDataset
+from maas_lib.pydatasets import PyDataset
 
 # 使用图像url构建PyDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
 input_location = [

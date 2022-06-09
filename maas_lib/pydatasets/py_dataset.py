@@ -11,7 +11,7 @@ logger = get_logger()
 
 class PyDataset:
     _hf_ds = None  # holds the underlying HuggingFace Dataset
-    """A PyDataset backed by hugging face datasets."""
+    """A PyDataset backed by hugging face Dataset."""
 
     def __init__(self, hf_ds: Dataset):
         self._hf_ds = hf_ds
@@ -52,7 +52,7 @@ class PyDataset:
                                    Mapping[str, Union[str,
                                                       Sequence[str]]]]] = None
     ) -> 'PyDataset':
-        """Load a pydataset from the MaaS Hub, Hugging Face Hub, urls, or a local dataset.
+        """Load a PyDataset from the MaaS Hub, Hugging Face Hub, urls, or a local dataset.
             Args:
 
                 path (str): Path or name of the dataset.
@@ -64,7 +64,7 @@ class PyDataset:
                 split (str, optional): Which split of the data to load.
 
             Returns:
-                pydataset (obj:`PyDataset`): PyDataset object for a certain dataset.
+                PyDataset (obj:`PyDataset`): PyDataset object for a certain dataset.
             """
         if isinstance(path, str):
             dataset = load_dataset(

@@ -4,9 +4,9 @@ import os
 import tempfile
 import unittest
 
-from maas_lib.fileio import File
-from maas_lib.pipelines import pipeline
-from maas_lib.utils.constant import Tasks
+from modelscope.fileio import File
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
 
 
 class ImageCaptionTest(unittest.TestCase):

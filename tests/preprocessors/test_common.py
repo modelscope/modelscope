@@ -2,7 +2,7 @@
 
 import unittest
 
-from maas_lib.preprocessors import PREPROCESSORS, Compose, Preprocessor
+from modelscope.preprocessors import PREPROCESSORS, Compose, Preprocessor
 
 
 class ComposeTest(unittest.TestCase):

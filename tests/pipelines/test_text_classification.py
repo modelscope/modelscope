@@ -4,14 +4,14 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from maas_lib.fileio import File
-from maas_lib.models import Model
-from maas_lib.models.nlp import BertForSequenceClassification
-from maas_lib.pipelines import SequenceClassificationPipeline, pipeline
-from maas_lib.preprocessors import SequenceClassificationPreprocessor
-from maas_lib.pydatasets import PyDataset
-from maas_lib.utils.constant import Tasks
-from maas_lib.utils.hub import get_model_cache_dir
+from modelscope.fileio import File
+from modelscope.models import Model
+from modelscope.models.nlp import BertForSequenceClassification
+from modelscope.pipelines import SequenceClassificationPipeline, pipeline
+from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.pydatasets import PyDataset
+from modelscope.utils.constant import Tasks
+from modelscope.utils.hub import get_model_cache_dir
 
 
 class SequenceClassificationTest(unittest.TestCase):

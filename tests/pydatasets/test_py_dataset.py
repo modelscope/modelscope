@@ -2,7 +2,7 @@ import unittest
 
 import datasets as hfdata
 
-from maas_lib.pydatasets import PyDataset
+from modelscope.pydatasets import PyDataset
 
 
 class PyDatasetTest(unittest.TestCase):

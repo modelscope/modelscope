@@ -1,7 +1,7 @@
-maas_lib
-========
+modelscope
+==========
 
 .. toctree::
    :maxdepth: 4
 
-   maas_lib
+   modelscope

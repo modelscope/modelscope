@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from maas_lib.fileio import dump, load
-from maas_lib.utils.config import Config
+from modelscope.fileio import dump, load
+from modelscope.utils.config import Config
 
 obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}
 

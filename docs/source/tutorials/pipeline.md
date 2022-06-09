@@ -19,7 +19,7 @@
 1. pipeline函数支持指定特定任务名称，加载任务默认模型，创建对应Pipeline对象
    执行如下python代码
    ```python
-   >>> from maas_lib.pipelines import pipeline
+   >>> from modelscope.pipelines import pipeline
    >>> img_matting = pipeline(task='image-matting', model='damo/image-matting-person')
    ```
 
@@ -65,8 +65,8 @@ wget https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com/release/easynlp_modelz
 
 创建tokenizer和模型
 ```python
->>> from maas_lib.models import Model
->>> from maas_lib.preprocessors import SequenceClassificationPreprocessor
+>>> from modelscope.models import Model
+>>> from modelscope.preprocessors import SequenceClassificationPreprocessor
 >>> model = Model.from_pretrained('damo/bert-base-sst2')
 >>> tokenizer = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
@@ -74,7 +74,7 @@ wget https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com/release/easynlp_modelz
 
 使用tokenizer和模型对象创建pipeline
 ```python
->>> from maas_lib.pipelines import pipeline
+>>> from modelscope.pipelines import pipeline
 >>> semantic_cls = pipeline('text-classification', model=model,   preprocessor=tokenizer)
 >>> semantic_cls("Hello world!")
 ```

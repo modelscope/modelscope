@@ -1,11 +1,11 @@
-.. maas_lib documentation file,
+.. modelscope documentation file,
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-MaasLib DOCUMENTATION
+ModelScope DOCUMENTATION
 =======================================
 
-MaasLib doc
+ModelScope doc
 
 .. toctree::
    :maxdepth: 2
@@ -30,11 +30,11 @@ MaasLib doc
    :maxdepth: 10
    :caption: API Doc
 
-   api/maas_lib.preprocessors
-   api/maas_lib.models
-   api/maas_lib.pipelines
-   api/maas_lib.fileio
-   api/maas_lib.utils
+   api/modelscope.preprocessors
+   api/modelscope.models
+   api/modelscope.pipelines
+   api/modelscope.fileio
+   api/modelscope.utils
 
 
 Indices and tables

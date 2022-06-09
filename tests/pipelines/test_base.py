@@ -6,12 +6,11 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 import PIL
 
-from maas_lib.pipelines import Pipeline, pipeline
-from maas_lib.pipelines.builder import PIPELINES
-from maas_lib.pipelines.default import add_default_pipeline_info
-from maas_lib.utils.constant import Tasks
-from maas_lib.utils.logger import get_logger
-from maas_lib.utils.registry import default_group
+from modelscope.pipelines import Pipeline, pipeline
+from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
+from modelscope.utils.constant import Tasks
+from modelscope.utils.logger import get_logger
+from modelscope.utils.registry import default_group
 
 logger = get_logger()
 
@@ -54,7 +53,7 @@ class CustomPipelineTest(unittest.TestCase):
 
                 """
                 if not isinstance(input, PIL.Image.Image):
-                    from maas_lib.preprocessors import load_image
+                    from modelscope.preprocessors import load_image
                     data_dict = {'img': load_image(input), 'url': input}
                 else:
                     data_dict = {'img': input}

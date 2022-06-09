@@ -4,8 +4,8 @@ import unittest
 
 import cv2
 
-from maas_lib.pipelines import pipeline
-from maas_lib.utils.constant import Tasks
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
 
 
 def all_file(file_dir):

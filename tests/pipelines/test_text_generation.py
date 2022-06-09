@@ -3,11 +3,11 @@ import unittest
 
 from maas_hub.snapshot_download import snapshot_download
 
-from maas_lib.models import Model
-from maas_lib.models.nlp import PalmForTextGenerationModel
-from maas_lib.pipelines import TextGenerationPipeline, pipeline
-from maas_lib.preprocessors import TextGenerationPreprocessor
-from maas_lib.utils.constant import Tasks
+from modelscope.models import Model
+from modelscope.models.nlp import PalmForTextGenerationModel
+from modelscope.pipelines import TextGenerationPipeline, pipeline
+from modelscope.preprocessors import TextGenerationPreprocessor
+from modelscope.utils.constant import Tasks
 
 
 class TextGenerationTest(unittest.TestCase):

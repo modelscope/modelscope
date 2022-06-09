@@ -1,1 +1,1 @@
-recursive-include maas_lib/configs *.py
+recursive-include modelscope/configs *.py

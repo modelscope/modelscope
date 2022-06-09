@@ -2,9 +2,9 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from maas_lib.fileio import File
-from maas_lib.trainers import build_trainer
-from maas_lib.utils.logger import get_logger
+from modelscope.fileio import File
+from modelscope.trainers import build_trainer
+from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 

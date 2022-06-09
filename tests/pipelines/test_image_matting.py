@@ -6,11 +6,11 @@ import unittest
 
 import cv2
 
-from maas_lib.fileio import File
-from maas_lib.pipelines import pipeline
-from maas_lib.pydatasets import PyDataset
-from maas_lib.utils.constant import Tasks
-from maas_lib.utils.hub import get_model_cache_dir
+from modelscope.fileio import File
+from modelscope.pipelines import pipeline
+from modelscope.pydatasets import PyDataset
+from modelscope.utils.constant import Tasks
+from modelscope.utils.hub import get_model_cache_dir
 
 
 class ImageMattingTest(unittest.TestCase):

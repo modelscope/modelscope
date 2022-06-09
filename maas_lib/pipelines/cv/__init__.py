@@ -1,1 +1,2 @@
+from .image_cartoon_pipeline import ImageCartoonPipeline
 from .image_matting_pipeline import ImageMattingPipeline

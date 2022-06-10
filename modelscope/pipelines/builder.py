@@ -23,7 +23,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_generation: ('palm', 'damo/nlp_palm_text-generation_chinese'),
     Tasks.image_captioning: ('ofa', None),
     Tasks.image_generation:
-    ('cv_unet_person-image-cartoon', 'damo/cv_unet_image-matting_damo'),
+    ('person-image-cartoon',
+     'damo/cv_unet_person-image-cartoon_compound-models'),
 }
 
 

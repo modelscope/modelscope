@@ -25,20 +25,19 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name='cv_unet_person-image-cartoon')
+    Tasks.image_generation, module_name='person-image-cartoon')
 class ImageCartoonPipeline(Pipeline):
 
     def __init__(self, model: str):
         super().__init__(model=model)
-
-        self.facer = FaceAna(model)
+        self.facer = FaceAna(self.model)
         self.sess_anime_head = self.load_sess(
-            os.path.join(model, 'cartoon_anime_h.pb'), 'model_anime_head')
+            os.path.join(self.model, 'cartoon_anime_h.pb'), 'model_anime_head')
         self.sess_anime_bg = self.load_sess(
-            os.path.join(model, 'cartoon_anime_bg.pb'), 'model_anime_bg')
+            os.path.join(self.model, 'cartoon_anime_bg.pb'), 'model_anime_bg')
 
         self.box_width = 288
-        global_mask = cv2.imread(os.path.join(model, 'alpha.jpg'))
+        global_mask = cv2.imread(os.path.join(self.model, 'alpha.jpg'))
         global_mask = cv2.resize(
             global_mask, (self.box_width, self.box_width),
             interpolation=cv2.INTER_AREA)

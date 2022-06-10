@@ -11,6 +11,7 @@ from modelscope.preprocessors import Preprocessor
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.config import Config
 from modelscope.utils.hub import get_model_cache_dir
+from modelscope.utils.logger import get_logger
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
@@ -20,11 +21,15 @@ InputModel = Union[str, Model]
 output_keys = [
 ]  # 对于不同task的pipeline，规定标准化的输出key，用以对接postprocess,同时也用来标准化postprocess后输出的key
 
+logger = get_logger()
+
 
 class Pipeline(ABC):
 
     def initiate_single_model(self, model):
-        if isinstance(model, str):
+        logger.info(f'initiate model from {model}')
+        # TODO @wenmeng.zwm replace model.startswith('damo/') with get_model
+        if isinstance(model, str) and model.startswith('damo/'):
             if not osp.exists(model):
                 cache_path = get_model_cache_dir(model)
                 model = cache_path if osp.exists(
@@ -34,10 +39,11 @@ class Pipeline(ABC):
         elif isinstance(model, Model):
             return model
         else:
-            if model:
+            if model and not isinstance(model, str):
                 raise ValueError(
                     f'model type for single model is either str or Model, but got type {type(model)}'
                 )
+            return model
 
     def initiate_multiple_models(self, input_models: List[InputModel]):
         models = []

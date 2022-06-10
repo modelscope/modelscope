@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from typing import Union
+from typing import List, Union
 
 import json
 from maas_hub.file_download import model_file_download
@@ -44,7 +44,7 @@ def build_pipeline(cfg: ConfigDict,
 
 
 def pipeline(task: str = None,
-             model: Union[str, Model] = None,
+             model: Union[str, List[str], Model, List[Model]] = None,
              preprocessor=None,
              config_file: str = None,
              pipeline_name: str = None,
@@ -56,7 +56,7 @@ def pipeline(task: str = None,
 
     Args:
         task (str): Task name defining which pipeline will be returned.
-        model (str or obj:`Model`): model name or model object.
+        model (str or List[str] or obj:`Model` or obj:list[`Model`]): (list of) model name or model object.
         preprocessor: preprocessor object.
         config_file (str, optional): path to config file.
         pipeline_name (str, optional): pipeline class name or alias name.
@@ -68,23 +68,42 @@ def pipeline(task: str = None,
 
     Examples:
     ```python
+    >>> # Using default model for a task
     >>> p = pipeline('image-classification')
-    >>> p = pipeline('text-classification', model='distilbert-base-uncased')
-    >>>  # Using model object
+    >>> # Using pipeline with a model name
+    >>> p = pipeline('text-classification', model='damo/distilbert-base-uncased')
+    >>> # Using pipeline with a model object
     >>> resnet = Model.from_pretrained('Resnet')
     >>> p = pipeline('image-classification', model=resnet)
+    >>> # Using pipeline with a list of model names
+    >>> p = pipeline('audio-kws', model=['damo/audio-tts', 'damo/auto-tts2'])
     """
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
     if pipeline_name is None:
         # get default pipeline for this task
-        pipeline_name, default_model_repo = get_default_pipeline_info(task)
+        if isinstance(model, str) \
+           or (isinstance(model, list) and isinstance(model[0], str)):
+
+            # if is_model_name(model):
+            if (isinstance(model, str) and model.startswith('damo/')) \
+               or (isinstance(model, list) and model[0].startswith('damo/')) \
+               or (isinstance(model, str) and osp.exists(model)):
+                # TODO @wenmeng.zwm  add support when model is a str of modelhub address
+                # read pipeline info from modelhub configuration file.
+                pipeline_name, default_model_repo = get_default_pipeline_info(
+                    task)
+            else:
+                pipeline_name = get_pipeline_by_model_name(task, model)
+        else:
+            pipeline_name, default_model_repo = get_default_pipeline_info(task)
+
         if model is None:
             model = default_model_repo
 
-    assert isinstance(model, (type(None), str, Model)), \
-        f'model should be either None, str or Model, but got {type(model)}'
+    assert isinstance(model, (type(None), str, Model, list)), \
+        f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
     cfg = ConfigDict(type=pipeline_name, model=model)
 
@@ -134,3 +153,19 @@ def get_default_pipeline_info(task):
     else:
         pipeline_name, default_model = DEFAULT_MODEL_FOR_PIPELINE[task]
     return pipeline_name, default_model
+
+
+def get_pipeline_by_model_name(task: str, model: Union[str, List[str]]):
+    """ Get pipeline name by task name and model name
+
+    Args:
+        task (str): task name.
+        model (str| list[str]): model names
+    """
+    if isinstance(model, str):
+        model_key = model
+    else:
+        model_key = '_'.join(model)
+    assert model_key in PIPELINES.modules[task], \
+        f'pipeline for task {task} model {model_key} not found.'
+    return model_key

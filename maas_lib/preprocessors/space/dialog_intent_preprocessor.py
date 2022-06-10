@@ -44,6 +44,4 @@ class DialogIntentPreprocessor(Preprocessor):
             Dict[str, Any]: the preprocessed data
         """
 
-        # idx = self.text_field.get_ids(data)
-
-        return {'user_idx': idx}
+        return self.text_field.preprocessor(data)

@@ -1,11 +1,13 @@
-import os
-from os.path import join, exists, abspath
-import sys
-import json
 import glob
+import os
+import sys
+from os.path import abspath, exists, join
+
+import json
 
 SRC_DIR = abspath('./')
 SHARED_LIBRARY_NAME = 'libseglink.so'
+
 
 def build_op():
     build_dir = join(SRC_DIR, 'cpp/build')
@@ -15,7 +17,8 @@ def build_op():
     if not exists('Makefile'):
         os.system('cmake -DCMAKE_BUILD_TYPE=Release ..')
     os.system('make -j16')
-    os.system('cp %s %s' % (SHARED_LIBRARY_NAME, join(SRC_DIR, SHARED_LIBRARY_NAME)))
+    os.system('cp %s %s' %
+              (SHARED_LIBRARY_NAME, join(SRC_DIR, SHARED_LIBRARY_NAME)))
     print('Building complete')
 
 
@@ -24,10 +27,11 @@ def clean_op():
     print('Deleting recursively: %s' % build_dir)
     os.system('rm -rI %s' % build_dir)
     os.system('rm %s' % join(SRC_DIR, SHARED_LIBRARY_NAME))
-    
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print('Usage: python3 manage.py <function-name>')
     else:
         fn_name = sys.argv[1]
-        eval(fn_name + "()")
+        eval(fn_name + '()')

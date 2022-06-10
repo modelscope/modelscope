@@ -1,6 +1,5 @@
 import numpy as np
 
-
 from . import merge_quadrangle_n9
 
 if __name__ == '__main__':

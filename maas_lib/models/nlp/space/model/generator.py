@@ -7,9 +7,6 @@ import math
 import numpy as np
 import torch
 
-from .gen_unified_transformer import GenUnifiedTransformer
-from .unified_transformer import UnifiedTransformer
-
 
 def repeat(var, times):
     if isinstance(var, list):

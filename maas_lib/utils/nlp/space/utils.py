@@ -7,6 +7,30 @@ import numpy as np
 from . import ontology
 
 
+def max_lens(X):
+    lens = [len(X)]
+    while isinstance(X[0], list):
+        lens.append(max(map(len, X)))
+        X = [x for xs in X for x in xs]
+    return lens
+
+
+def list2np(X: object, padding: object = 0, dtype: object = 'int64') -> object:
+    shape = max_lens(X)
+    ret = np.full(shape, padding, dtype=np.int32)
+
+    if len(shape) == 1:
+        ret = np.array(X)
+    elif len(shape) == 2:
+        for i, x in enumerate(X):
+            ret[i, :len(x)] = np.array(x)
+    elif len(shape) == 3:
+        for i, xs in enumerate(X):
+            for j, x in enumerate(xs):
+                ret[i, j, :len(x)] = np.array(x)
+    return ret.astype(dtype)
+
+
 def clean_replace(s, r, t, forward=True, backward=False):
 
     def clean_replace_single(s, r, t, forward, backward, sidx=0):

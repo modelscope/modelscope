@@ -1,18 +1,17 @@
 from typing import Any, Dict, Optional
 
-from maas_lib.trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
+from maas_lib.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
 from maas_lib.utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
 from .model.generator import Generator
 from .model.model_base import ModelBase
 
-__all__ = ['DialogGenerationModel']
+__all__ = ['DialogIntentModel']
 
 
-@MODELS.register_module(
-    Tasks.dialog_generation, module_name=r'space-generation')
-class DialogGenerationModel(Model):
+@MODELS.register_module(Tasks.dialog_intent, module_name=r'space-intent')
+class DialogIntentModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
@@ -42,12 +41,11 @@ class DialogGenerationModel(Model):
             array = torch.tensor(array)
             return array.cuda() if self.config.use_gpu else array
 
-        self.trainer = MultiWOZTrainer(
+        self.trainer = IntentTrainer(
             model=self.model,
             to_tensor=to_tensor,
             config=self.config,
-            reader=self.text_field,
-            evaluator=None)
+            reader=self.text_field)
         self.trainer.load()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -68,36 +66,4 @@ class DialogGenerationModel(Model):
         from numpy import array, float32
         import torch
 
-        turn_1 = {
-            'user': [
-                13, 1045, 2052, 2066, 1037, 10095, 2013, 3002, 2198, 1005,
-                1055, 2267, 2000, 10733, 12570, 21713, 4487, 15474, 1012, 7
-            ]
-        }
-        old_pv_turn_1 = {}
-
-        turn_2 = {
-            'user':
-            [13, 1045, 2215, 2000, 2681, 2044, 2459, 1024, 2321, 1012, 7]
-        }
-        old_pv_turn_2 = {
-            'labels': [[
-                13, 1045, 2052, 2066, 1037, 10095, 2013, 3002, 2198, 1005,
-                1055, 2267, 2000, 10733, 12570, 21713, 4487, 15474, 1012, 7
-            ]],
-            'resp': [
-                14, 1045, 2052, 2022, 3407, 2000, 2393, 2007, 2115, 5227, 1010,
-                2079, 2017, 2031, 1037, 2051, 2017, 2052, 2066, 2000, 2681,
-                2030, 7180, 2011, 1029, 8
-            ],
-            'bspn': [
-                15, 43, 7688, 10733, 12570, 21713, 4487, 15474, 6712, 3002,
-                2198, 1005, 1055, 2267, 9
-            ],
-            'db': [19, 24, 21, 20],
-            'aspn': [16, 43, 48, 2681, 7180, 10]
-        }
-
-        pv_turn = self.trainer.forward(turn=turn_2, old_pv_turn=old_pv_turn_2)
-
-        return pv_turn
+        return {}

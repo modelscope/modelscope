@@ -7,8 +7,8 @@ from transformers import AutoTokenizer
 
 from maas_lib.utils.constant import Fields, InputFields
 from maas_lib.utils.type_assert import type_assert
-from ..base import Preprocessor
-from ..builder import PREPROCESSORS
+from .base import Preprocessor
+from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize',

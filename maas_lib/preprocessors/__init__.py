@@ -4,5 +4,6 @@ from .base import Preprocessor
 from .builder import PREPROCESSORS, build_preprocessor
 from .common import Compose
 from .image import LoadImage, load_image
-from .nlp.nlp import *  # noqa F403
-from .nlp.space.dialog_generation_preprcessor import *  # noqa F403
+from .nlp import *  # noqa F403
+from .space.dialog_generation_preprocessor import *  # noqa F403
+from .space.dialog_intent_preprocessor import *  # noqa F403

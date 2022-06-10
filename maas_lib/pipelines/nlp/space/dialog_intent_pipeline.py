@@ -1,20 +1,19 @@
 from typing import Any, Dict, Optional
 
-from maas_lib.models.nlp import DialogGenerationModel
-from maas_lib.preprocessors import DialogGenerationPreprocessor
+from maas_lib.models.nlp import DialogIntentModel
+from maas_lib.preprocessors import DialogIntentPreprocessor
 from maas_lib.utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import PIPELINES
 
-__all__ = ['DialogGenerationPipeline']
+__all__ = ['DialogIntentPipeline']
 
 
-@PIPELINES.register_module(
-    Tasks.dialog_generation, module_name=r'space-generation')
-class DialogGenerationPipeline(Model):
+@PIPELINES.register_module(Tasks.dialog_intent, module_name=r'space-intent')
+class DialogIntentPipeline(Model):
 
-    def __init__(self, model: DialogGenerationModel,
-                 preprocessor: DialogGenerationPreprocessor, **kwargs):
+    def __init__(self, model: DialogIntentModel,
+                 preprocessor: DialogIntentPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
         Args:

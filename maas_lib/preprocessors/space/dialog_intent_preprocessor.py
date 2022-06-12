@@ -43,5 +43,7 @@ class DialogIntentPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
+        samples = self.text_field.preprocessor([data])
+        samples, _ = self.text_field.collate_fn_multi_turn(samples)
 
-        return self.text_field.preprocessor(data)
+        return samples

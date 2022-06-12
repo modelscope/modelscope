@@ -506,6 +506,28 @@ class IntentTrainer(Trainer):
         self.save_and_log_message(
             report_for_unlabeled_data, cur_valid_metric=-accuracy)
 
+    def forward(self, batch):
+        outputs, labels = [], []
+        pred, true = [], []
+
+        with torch.no_grad():
+            batch = type(batch)(
+                map(lambda kv: (kv[0], self.to_tensor(kv[1])), batch.items()))
+            result = self.model.infer(inputs=batch)
+            result = {
+                name: result[name].cpu().detach().numpy()
+                for name in result
+            }
+            intent_probs = result['intent_probs']
+            if self.can_norm:
+                pred += [intent_probs]
+                true += batch['intent_label'].cpu().detach().tolist()
+            else:
+                pred += np.argmax(intent_probs, axis=1).tolist()
+                true += batch['intent_label'].cpu().detach().tolist()
+
+        return {'pred': pred}
+
     def infer(self, data_iter, num_batches=None, ex_data_iter=None):
         """
         Inference interface.

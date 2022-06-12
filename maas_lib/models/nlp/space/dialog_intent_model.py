@@ -65,5 +65,7 @@ class DialogIntentModel(Model):
         """
         from numpy import array, float32
         import torch
+        print('--forward--')
+        result = self.trainer.forward(input)
 
-        return {}
+        return result

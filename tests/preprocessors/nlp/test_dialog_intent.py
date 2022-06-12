@@ -2,11 +2,10 @@
 
 import unittest
 
-from tests.case.nlp.dialog_intent_case import test_case
-
 from maas_lib.preprocessors import DialogIntentPreprocessor
 from maas_lib.utils.constant import Fields, InputFields
 from maas_lib.utils.logger import get_logger
+from tests.case.nlp.dialog_intent_case import test_case
 
 logger = get_logger()
 

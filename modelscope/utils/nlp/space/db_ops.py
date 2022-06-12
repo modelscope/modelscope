@@ -202,7 +202,7 @@ class MultiWozDB(object):
                             ':'
                         )  # raise error if time value is not xx:xx format
                         v = int(h) * 60 + int(m)
-                    except:
+                    except Exception:
                         match = False
                         break
                     time = int(db_ent[s].split(':')[0]) * 60 + int(
@@ -243,7 +243,12 @@ class MultiWozDB(object):
 
         flag = True
         for key, val in constraints.items():
-            if val == '' or val == 'dontcare' or val == 'not mentioned' or val == "don't care" or val == 'dont care' or val == "do n't care":
+            if val == '' \
+                    or val == 'dontcare' \
+                    or val == 'not mentioned' \
+                    or val == "don't care" \
+                    or val == 'dont care' \
+                    or val == "do n't care":
                 pass
             else:
                 if flag:
@@ -270,7 +275,7 @@ class MultiWozDB(object):
         try:  # "select * from attraction  where name = 'queens college'"
             print(sql_query)
             return self.sql_dbs[domain].execute(sql_query).fetchall()
-        except:
+        except Exception:
             return []  # TODO test it
 
 

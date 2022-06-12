@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from modelscope.preprocessors.space.fields.intent_field import \
     IntentBPETextField
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields, InputFields
+from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
@@ -15,7 +14,7 @@ from ..builder import PREPROCESSORS
 __all__ = ['DialogIntentPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-intent')
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space')
 class DialogIntentPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

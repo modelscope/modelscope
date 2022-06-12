@@ -1,6 +1,10 @@
-from typing import Any, Dict, Optional
+import os
+from typing import Any, Dict
 
+from modelscope.preprocessors.space.fields.intent_field import \
+    IntentBPETextField
 from modelscope.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
+from modelscope.utils.config import Config
 from modelscope.utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
@@ -10,7 +14,7 @@ from .model.model_base import ModelBase
 __all__ = ['DialogIntentModel']
 
 
-@MODELS.register_module(Tasks.dialog_intent, module_name=r'space-intent')
+@MODELS.register_module(Tasks.dialog_intent, module_name=r'space')
 class DialogIntentModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -24,8 +28,14 @@ class DialogIntentModel(Model):
 
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
-        self.text_field = kwargs.pop('text_field')
-        self.config = kwargs.pop('config')
+        self.config = kwargs.pop(
+            'config',
+            Config.from_file(
+                os.path.join(self.model_dir, 'configuration.json')))
+        self.text_field = kwargs.pop(
+            'text_field',
+            IntentBPETextField(self.model_dir, config=self.config))
+
         self.generator = Generator.create(self.config, reader=self.text_field)
         self.model = ModelBase.create(
             model_dir=model_dir,
@@ -63,9 +73,8 @@ class DialogIntentModel(Model):
                         'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
                     }
         """
-        from numpy import array, float32
-        import torch
-        print('--forward--')
-        result = self.trainer.forward(input)
+        import numpy as np
+        pred = self.trainer.forward(input)
+        pred = np.squeeze(pred[0], 0)
 
-        return result
+        return {'pred': pred}

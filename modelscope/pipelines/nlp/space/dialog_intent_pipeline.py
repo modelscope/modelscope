@@ -9,7 +9,7 @@ from ...builder import PIPELINES
 __all__ = ['DialogIntentPipeline']
 
 
-@PIPELINES.register_module(Tasks.dialog_intent, module_name=r'space-intent')
+@PIPELINES.register_module(Tasks.dialog_intent, module_name=r'space')
 class DialogIntentPipeline(Pipeline):
 
     def __init__(self, model: DialogIntentModel,
@@ -34,5 +34,10 @@ class DialogIntentPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
+        import numpy as np
+        pred = inputs['pred']
+        pos = np.where(pred == np.max(pred))
 
-        return inputs
+        result = {'pred': pred, 'label': pos[0]}
+
+        return result

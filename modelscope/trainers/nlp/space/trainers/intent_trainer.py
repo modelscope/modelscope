@@ -508,7 +508,6 @@ class IntentTrainer(Trainer):
             report_for_unlabeled_data, cur_valid_metric=-accuracy)
 
     def forward(self, batch):
-        outputs, labels = [], []
         pred, true = [], []
 
         with torch.no_grad():
@@ -522,12 +521,10 @@ class IntentTrainer(Trainer):
             intent_probs = result['intent_probs']
             if self.can_norm:
                 pred += [intent_probs]
-                true += batch['intent_label'].cpu().detach().tolist()
             else:
                 pred += np.argmax(intent_probs, axis=1).tolist()
-                true += batch['intent_label'].cpu().detach().tolist()
 
-        return {'pred': pred}
+        return pred
 
     def infer(self, data_iter, num_batches=None, ex_data_iter=None):
         """

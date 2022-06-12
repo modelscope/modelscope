@@ -6,9 +6,9 @@ import unittest
 
 from tests.case.nlp.dialog_generation_case import test_case
 
-from maas_lib.models.nlp import DialogGenerationModel
-from maas_lib.pipelines import DialogGenerationPipeline, pipeline
-from maas_lib.preprocessors import DialogGenerationPreprocessor
+from modelscope.models.nlp import DialogGenerationModel
+from modelscope.pipelines import DialogGenerationPipeline, pipeline
+from modelscope.preprocessors import DialogGenerationPreprocessor
 
 
 def merge(info, result):

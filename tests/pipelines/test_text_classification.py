@@ -1,20 +1,28 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import tempfile
+import shutil
 import unittest
 import zipfile
 from pathlib import Path
 
-from ali_maas_datasets import PyDataset
-
-from maas_lib.fileio import File
-from maas_lib.models import Model
-from maas_lib.models.nlp import SequenceClassificationModel
-from maas_lib.pipelines import SequenceClassificationPipeline, pipeline
-from maas_lib.preprocessors import SequenceClassificationPreprocessor
-from maas_lib.utils.constant import Tasks
+from modelscope.fileio import File
+from modelscope.models import Model
+from modelscope.models.nlp import BertForSequenceClassification
+from modelscope.pipelines import SequenceClassificationPipeline, pipeline
+from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.pydatasets import PyDataset
+from modelscope.utils.constant import Tasks
+from modelscope.utils.hub import get_model_cache_dir
 
 
 class SequenceClassificationTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.model_id = 'damo/bert-base-sst2'
+        # switch to False if downloading everytime is not desired
+        purge_cache = True
+        if purge_cache:
+            shutil.rmtree(
+                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def predict(self, pipeline_ins: SequenceClassificationPipeline):
         from easynlp.appzoo import load_dataset
@@ -28,6 +36,12 @@ class SequenceClassificationTest(unittest.TestCase):
         print(results)
 
         print(data)
+
+    def printDataset(self, dataset: PyDataset):
+        for i, r in enumerate(dataset):
+            if i > 10:
+                break
+            print(r)
 
     def test_run(self):
         model_url = 'https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com' \
@@ -44,7 +58,7 @@ class SequenceClassificationTest(unittest.TestCase):
         with zipfile.ZipFile(cache_path_str, 'r') as zipf:
             zipf.extractall(cache_path.parent)
         path = r'.cache/easynlp/'
-        model = SequenceClassificationModel(path)
+        model = BertForSequenceClassification(path)
         preprocessor = SequenceClassificationPreprocessor(
             path, first_sequence='sentence', second_sequence=None)
         pipeline1 = SequenceClassificationPipeline(model, preprocessor)
@@ -53,8 +67,8 @@ class SequenceClassificationTest(unittest.TestCase):
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         print(pipeline2('Hello world!'))
 
-    def test_run_modelhub(self):
-        model = Model.from_pretrained('damo/bert-base-sst2')
+    def test_run_with_model_from_modelhub(self):
+        model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
@@ -63,8 +77,21 @@ class SequenceClassificationTest(unittest.TestCase):
             preprocessor=preprocessor)
         self.predict(pipeline_ins)
 
+    def test_run_with_model_name(self):
+        text_classification = pipeline(
+            task=Tasks.text_classification, model=self.model_id)
+        result = text_classification(
+            PyDataset.load('glue', name='sst2', target='sentence'))
+        self.printDataset(result)
+
+    def test_run_with_default_model(self):
+        text_classification = pipeline(task=Tasks.text_classification)
+        result = text_classification(
+            PyDataset.load('glue', name='sst2', target='sentence'))
+        self.printDataset(result)
+
     def test_run_with_dataset(self):
-        model = Model.from_pretrained('damo/bert-base-sst2')
+        model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         text_classification = pipeline(
@@ -74,10 +101,7 @@ class SequenceClassificationTest(unittest.TestCase):
         # TODO: rename parameter as dataset_name and subset_name
         dataset = PyDataset.load('glue', name='sst2', target='sentence')
         result = text_classification(dataset)
-        for i, r in enumerate(result):
-            if i > 10:
-                break
-            print(r)
+        self.printDataset(result)
 
 
 if __name__ == '__main__':

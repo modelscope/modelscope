@@ -5,7 +5,7 @@ import unittest
 
 from requests import HTTPError
 
-from maas_lib.fileio.file import File, HTTPStorage, LocalStorage
+from modelscope.fileio.file import File, HTTPStorage, LocalStorage
 
 
 class FileTest(unittest.TestCase):

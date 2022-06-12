@@ -1,3 +1,3 @@
-yapf -r -i maas_lib/ configs/ tests/ setup.py
-isort -rc maas_lib/ configs/ tests/ setup.py
-flake8 maas_lib/ configs/ tests/ setup.py
+yapf -r -i modelscope/ configs/ tests/ setup.py
+isort -rc modelscope/ configs/ tests/ setup.py
+flake8 modelscope/ configs/ tests/ setup.py

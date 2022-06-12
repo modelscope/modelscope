@@ -2,7 +2,7 @@
 
 import unittest
 
-from maas_lib.trainers import build_trainer
+from modelscope.trainers import build_trainer
 
 
 class DummyTrainerTest(unittest.TestCase):

@@ -2,7 +2,7 @@
 import tempfile
 import unittest
 
-from maas_lib.fileio.io import dump, dumps, load
+from modelscope.fileio.io import dump, dumps, load
 
 
 class FileIOTest(unittest.TestCase):

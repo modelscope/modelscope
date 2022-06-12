@@ -12,7 +12,7 @@ def readme():
     return content
 
 
-version_file = 'maas_lib/version.py'
+version_file = 'modelscope/version.py'
 
 
 def get_git_hash():
@@ -155,8 +155,8 @@ def pack_resource():
         shutil.rmtree(root_dir)
     os.makedirs(root_dir)
 
-    proj_dir = root_dir + 'maas_lib/'
-    shutil.copytree('./maas_lib', proj_dir)
+    proj_dir = root_dir + 'modelscope/'
+    shutil.copytree('./modelscope', proj_dir)
     shutil.copytree('./configs', proj_dir + 'configs')
     shutil.copytree('./requirements', 'package/requirements')
     shutil.copy('./requirements.txt', 'package/requirements.txt')
@@ -170,13 +170,13 @@ if __name__ == '__main__':
     os.chdir('package')
     install_requires, deps_link = parse_requirements('requirements.txt')
     setup(
-        name='maas-lib',
+        name='model-scope',
         version=get_version(),
         description='',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Alibaba MaaS team',
-        author_email='maas_lib@list.alibaba-inc.com',
+        author='Alibaba ModelScope team',
+        author_email='modelscope@list.alibaba-inc.com',
         keywords='',
         url='TBD',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),

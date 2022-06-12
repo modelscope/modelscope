@@ -1,18 +1,27 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import os.path as osp
+import shutil
 import tempfile
 import unittest
 
 import cv2
-from ali_maas_datasets import PyDataset
 
-from maas_lib.fileio import File
-from maas_lib.pipelines import pipeline
-from maas_lib.utils.constant import Tasks
+from modelscope.fileio import File
+from modelscope.pipelines import pipeline
+from modelscope.pydatasets import PyDataset
+from modelscope.utils.constant import Tasks
+from modelscope.utils.hub import get_model_cache_dir
 
 
 class ImageMattingTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.model_id = 'damo/image-matting-person'
+        # switch to False if downloading everytime is not desired
+        purge_cache = True
+        if purge_cache:
+            shutil.rmtree(
+                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def test_run(self):
         model_path = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs' \
@@ -36,16 +45,23 @@ class ImageMattingTest(unittest.TestCase):
         # input_location = '/dir/to/images'
 
         dataset = PyDataset.load(input_location, target='image')
-        img_matting = pipeline(
-            Tasks.image_matting, model='damo/image-matting-person')
+        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
         # note that for dataset output, the inference-output is a Generator that can be iterated.
         result = img_matting(dataset)
         cv2.imwrite('result.png', next(result)['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
     def test_run_modelhub(self):
-        img_matting = pipeline(
-            Tasks.image_matting, model='damo/image-matting-person')
+        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
+
+        result = img_matting(
+            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
+        )
+        cv2.imwrite('result.png', result['output_png'])
+        print(f'Output written to {osp.abspath("result.png")}')
+
+    def test_run_modelhub_default_model(self):
+        img_matting = pipeline(Tasks.image_matting)
 
         result = img_matting(
             'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'

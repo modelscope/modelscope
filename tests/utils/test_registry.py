@@ -1,8 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
-from maas_lib.utils.constant import Tasks
-from maas_lib.utils.registry import Registry, build_from_cfg, default_group
+from modelscope.utils.constant import Tasks
+from modelscope.utils.registry import Registry, build_from_cfg, default_group
 
 
 class RegistryTest(unittest.TestCase):

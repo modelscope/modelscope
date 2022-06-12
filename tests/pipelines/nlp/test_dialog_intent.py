@@ -6,10 +6,10 @@ import unittest
 
 from tests.case.nlp.dialog_intent_case import test_case
 
-from maas_lib.models.nlp import DialogIntentModel
-from maas_lib.pipelines import DialogIntentPipeline, pipeline
-from maas_lib.preprocessors import DialogIntentPreprocessor
-from maas_lib.utils.constant import Tasks
+from modelscope.models.nlp import DialogIntentModel
+from modelscope.pipelines import DialogIntentPipeline, pipeline
+from modelscope.preprocessors import DialogIntentPreprocessor
+from modelscope.utils.constant import Tasks
 
 
 class DialogGenerationTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class DialogGenerationTest(unittest.TestCase):
         # pipeline1 = pipeline(task=Tasks.dialog_intent, model=model, preprocessor=preprocessor)
 
         for item in test_case:
-            pipeline1(item)
+            print(pipeline1(item))
 
 
 if __name__ == '__main__':

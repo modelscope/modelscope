@@ -18,10 +18,10 @@ import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
-project = 'maas_lib'
-copyright = '2022-2023, Alibaba MaaS'
-author = 'maas_lib Authors'
-version_file = '../../maas_lib/version.py'
+project = 'modelscope'
+copyright = '2022-2023, Alibaba ModelScope'
+author = 'modelscope Authors'
+version_file = '../../modelscope/version.py'
 
 
 def get_version():
@@ -88,7 +88,7 @@ html_static_path = ['_static']
 
 # -- Options for HTMLHelp output ---------------------------------------------
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'maas_lib_doc'
+htmlhelp_basename = 'modelscope_doc'
 
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code

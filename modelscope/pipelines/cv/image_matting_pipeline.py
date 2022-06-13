@@ -7,7 +7,7 @@ import PIL
 
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
-from modelscope.utils.constant import TF_GRAPH_FILE, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
@@ -24,7 +24,7 @@ class ImageMattingPipeline(Pipeline):
         import tensorflow as tf
         if tf.__version__ >= '2.0':
             tf = tf.compat.v1
-        model_path = osp.join(self.model, TF_GRAPH_FILE)
+        model_path = osp.join(self.model, 'matting_person.pb')
 
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True

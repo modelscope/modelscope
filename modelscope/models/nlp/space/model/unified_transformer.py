@@ -202,11 +202,11 @@ class UnifiedTransformer(ModelBase):
     def _refactor_feature(self, features):
         features = self.pooler(features) if self.with_pool else features
         batch_size = features.size(0) // 2
-        features = torch.cat([
-            features[:batch_size].unsqueeze(1),
-            features[batch_size:].unsqueeze(1)
-        ],
-                             dim=1)
+        features = \
+            torch.cat(
+                [features[:batch_size].unsqueeze(1), features[batch_size:].unsqueeze(1)],
+                dim=1
+            )
         features = F.normalize(features, dim=-1, p=2)
         return features
 

@@ -148,7 +148,7 @@ class Trainer(object):
                          self.batch_size_nolabel)
         self.logger.info('  Total optimization steps = %d', num_training_steps)
         self.logger.info('  Total warmup steps = %d', num_warmup_steps)
-        self.logger.info(f'************************************')
+        self.logger.info('************************************')
 
     def train(self,
               train_label_iter,
@@ -298,10 +298,10 @@ class Trainer(object):
                     f"Loaded train state from '{train_file}' with (epoch-{self.epoch} "
                     f'best_valid_metric={self.best_valid_metric:.3f})')
             else:
-                self.logger.info(f'Loaded no train state')
+                self.logger.info('Loaded no train state')
 
         if self.func_model.init_checkpoint is None:
-            self.logger.info(f'Loaded no model !!!')
+            self.logger.info('Loaded no model !!!')
             return
 
         _load_model_state()
@@ -324,8 +324,8 @@ class IntentTrainer(Trainer):
         k = 3
         y_pred_topk = np.sort(y_pred, axis=1)[:, -k:]
         y_pred_topk /= y_pred_topk.sum(axis=1, keepdims=True)
-        y_pred_uncertainty = -(y_pred_topk *
-                               np.log(y_pred_topk)).sum(1) / np.log(k)
+        y_pred_uncertainty =\
+            -(y_pred_topk * np.log(y_pred_topk)).sum(1) / np.log(k)
 
         # 选择阈值，划分高、低置信度两部分
         # print(np.sort(y_pred_uncertainty)[-100:].tolist())
@@ -368,8 +368,9 @@ class IntentTrainer(Trainer):
                 right += 1
 
         # 输出修正后的准确率
-        acc_final = (acc_confident * len(y_pred_confident) +
-                     right) / len(y_pred)
+        acc_final = \
+            (acc_confident * len(y_pred_confident) + right) / \
+            len(y_pred)
         if len(y_pred_unconfident):
             message += '   new unconfident acc: %s' % (
                 right / len(y_pred_unconfident))
@@ -508,7 +509,7 @@ class IntentTrainer(Trainer):
             report_for_unlabeled_data, cur_valid_metric=-accuracy)
 
     def forward(self, batch):
-        pred, true = [], []
+        pred = []
 
         with torch.no_grad():
             batch = type(batch)(
@@ -808,10 +809,10 @@ class IntentTrainer(Trainer):
                     f"Loaded train state from '{train_file}' with (epoch-{self.epoch} "
                     f'best_valid_metric={self.best_valid_metric:.3f})')
             else:
-                self.logger.info(f'Loaded no train state')
+                self.logger.info('Loaded no train state')
 
         if self.func_model.init_checkpoint is None:
-            self.logger.info(f'Loaded no model !!!')
+            self.logger.info('Loaded no model !!!')
             return
 
         if self.do_train:

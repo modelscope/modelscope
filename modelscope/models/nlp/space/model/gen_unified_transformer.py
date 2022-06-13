@@ -129,9 +129,9 @@ class GenUnifiedTransformer(UnifiedTransformer):
         enc_out = src_embed
 
         cache = {}
-        for l, layer in enumerate(self.layers):
-            cache[f'layer_{l}'] = {}
-            enc_out = layer(enc_out, mask, cache[f'layer_{l}'])
+        for _l, layer in enumerate(self.layers):
+            cache[f'layer_{_l}'] = {}
+            enc_out = layer(enc_out, mask, cache[f'layer_{_l}'])
 
         state['cache'] = cache
         state['mask'] = mask[:, :1]
@@ -176,9 +176,9 @@ class GenUnifiedTransformer(UnifiedTransformer):
         mask = self._join_mask(enc_mask, dec_mask)
 
         cache = {}
-        for l, layer in enumerate(self.layers):
-            cache[f'layer_{l}'] = {}
-            enc_out = layer(enc_out, mask, cache[f'layer_{l}'])
+        for _l, layer in enumerate(self.layers):
+            cache[f'layer_{_l}'] = {}
+            enc_out = layer(enc_out, mask, cache[f'layer_{_l}'])
 
         state['cache'] = cache
         state['mask'] = mask[:, -1:]  # state["mask"] = mask[:, :1]
@@ -220,8 +220,8 @@ class GenUnifiedTransformer(UnifiedTransformer):
         mask = torch.cat([mask, 1 - pred_mask], dim=2)
 
         # shape: [batch_size, 1, hidden_dim]
-        for l, layer in enumerate(self.layers):
-            pred_embed = layer(pred_embed, mask, cache[f'layer_{l}'])
+        for _l, layer in enumerate(self.layers):
+            pred_embed = layer(pred_embed, mask, cache[f'layer_{_l}'])
 
         # shape: [batch_size, vocab_size]
         pred_probs = self._dec_head(dec_embed=pred_embed[:, 0])

@@ -117,15 +117,15 @@ class Trainer(object):
         decoded = {}
         eos_a_id = self.reader.eos_a_id
         eos_r_id = self.reader.eos_r_id
-        eos_b_id = self.reader.eos_b_id
+        # eos_b_id = self.reader.eos_b_id
 
         # eos_r may not exists if gpt2 generated repetitive words.
         if eos_r_id in generated:
             eos_r_idx = generated.index(eos_r_id)
         else:
             eos_r_idx = len(generated) - 1
-            self.logger.info('eos_r not in generated: ' +
-                             self.tokenizer.decode(generated))
+            msg = 'eos_r not in generated: ' + self.tokenizer.decode(generated)
+            self.logger.info(msg)
 
         if self.reader.use_true_curr_aspn:  # only predict resp
             decoded['resp'] = generated[:eos_r_idx + 1]
@@ -173,8 +173,10 @@ class Trainer(object):
         ]
         optimizer = AdamW(optimizer_grouped_parameters, lr=self.lr)
 
-        num_training_steps = self.reader.set_stats['train']['num_training_steps_per_epoch'] * \
-                             self.num_epochs // self.gradient_accumulation_steps
+        num_training_steps = \
+            self.reader.set_stats['train']['num_training_steps_per_epoch'] \
+            * self.num_epochs \
+            // self.gradient_accumulation_steps
         num_warmup_steps = self.warmup_steps if self.warmup_steps >= 0 else int(
             num_training_steps * 0.1)
         lr_scheduler = get_linear_schedule_with_warmup(
@@ -198,10 +200,10 @@ class Trainer(object):
         self.logger.info('  Batch size  = %d', self.batch_size)
         self.logger.info('  Gradient Accumulation steps = %d',
                          self.gradient_accumulation_steps)
-        self.logger.info(
-            '  Total optimization steps = %d',
-            set_stats['num_training_steps_per_epoch'] * self.num_epochs //
-            self.gradient_accumulation_steps)
+        steps = set_stats[
+            'num_training_steps_per_epoch'] * self.num_epochs // self.gradient_accumulation_steps
+        msg = '  Total optimization steps = %d' % steps
+        self.logger.info(msg)
 
         # begin training
         num_epochs = self.num_epochs - self.epoch
@@ -346,10 +348,10 @@ class Trainer(object):
                     f"Loaded train state from '{train_file}' with (epoch-{self.epoch} "
                     f'best_valid_metric={self.best_valid_metric:.3f})')
             else:
-                self.logger.info(f'Loaded no train state')
+                self.logger.info('Loaded no train state')
 
         if self.func_model.init_checkpoint is None:
-            self.logger.info(f'Loaded no model !!!')
+            self.logger.info('Loaded no model !!!')
             return
 
         if self.do_train:
@@ -388,8 +390,9 @@ class MultiWOZTrainer(Trainer):
         self.epoch += 1
         self.batch_metrics_tracker.clear()
         self.token_metrics_tracker.clear()
-        num_training_steps = self.reader.set_stats['train']['num_training_steps_per_epoch'] // \
-                             self.gradient_accumulation_steps  # similar to the original num_batches
+        num_training_steps = \
+            self.reader.set_stats['train']['num_training_steps_per_epoch'] // \
+            self.gradient_accumulation_steps  # similar to the original num_batches
 
         self.model.zero_grad()
         data_iterator = self.reader.get_data_iterator(all_batches=train_data)
@@ -417,8 +420,9 @@ class MultiWOZTrainer(Trainer):
                     metrics = {}
 
                     token_num = torch.sum(token_num)
-                    token_nll = torch.sum(nll) * (batch_size /
-                                                  self.gpu) / token_num
+                    token_nll = \
+                        torch.sum(nll) * (batch_size / self.gpu) / \
+                        token_num
                     nll = torch.mean(nll)
                     metrics['token_num'] = token_num
                     metrics['token_nll'] = token_nll
@@ -567,10 +571,11 @@ class MultiWOZTrainer(Trainer):
                             assert len(turn['db']) == 4
                             book_result = turn['db'][2]
                             assert isinstance(db_result, str)
-                            db = [self.reader.sos_db_id] + \
-                                 self.tokenizer.convert_tokens_to_ids([db_result]) + \
-                                 [book_result] + \
-                                 [self.reader.eos_db_id]
+                            db = \
+                                [self.reader.sos_db_id] + \
+                                self.tokenizer.convert_tokens_to_ids([db_result]) + \
+                                [book_result] + \
+                                [self.reader.eos_db_id]
                             prompt_id = self.reader.sos_a_id
 
                         prev_input = torch.tensor(bspn_gen + db)
@@ -694,10 +699,11 @@ class MultiWOZTrainer(Trainer):
                 self.tokenizer.decode(bspn_gen), ['[taxi]'])
             print(db_result)
             book_result = 21
-            db = [self.reader.sos_db_id] + \
-                 self.tokenizer.convert_tokens_to_ids([db_result]) + \
-                 [book_result] + \
-                 [self.reader.eos_db_id]
+            db = \
+                [self.reader.sos_db_id] + \
+                self.tokenizer.convert_tokens_to_ids([db_result]) + \
+                [book_result] + \
+                [self.reader.eos_db_id]
             prompt_id = self.reader.sos_a_id
 
             prev_input = torch.tensor(bspn_gen + db)

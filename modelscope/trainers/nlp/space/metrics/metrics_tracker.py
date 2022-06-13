@@ -19,9 +19,9 @@ class MetricsTracker(object):
             if val is not None:
                 val = float(val)  # [val] -> val
                 self.metrics_val[key] = val
-                avg_val = (self.metrics_avg.get(key, 0) * self.num_samples +
-                           val * num_samples) / (
-                               self.num_samples + num_samples)
+                avg_val = \
+                    (self.metrics_avg.get(key, 0) * self.num_samples + val * num_samples) / \
+                    (self.num_samples + num_samples)
                 self.metrics_avg[key] = avg_val
         self.num_samples += num_samples
 

@@ -1,9 +1,9 @@
-import logging
 from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
                     Union)
 
 from datasets import Dataset, load_dataset
 
+from modelscope.utils.constant import Hubs
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -41,17 +41,17 @@ class PyDataset:
         return dataset
 
     @staticmethod
-    def load(
-        path: Union[str, list],
-        target: Optional[str] = None,
-        version: Optional[str] = None,
-        name: Optional[str] = None,
-        split: Optional[str] = None,
-        data_dir: Optional[str] = None,
-        data_files: Optional[Union[str, Sequence[str],
-                                   Mapping[str, Union[str,
-                                                      Sequence[str]]]]] = None
-    ) -> 'PyDataset':
+    def load(path: Union[str, list],
+             target: Optional[str] = None,
+             version: Optional[str] = None,
+             name: Optional[str] = None,
+             split: Optional[str] = None,
+             data_dir: Optional[str] = None,
+             data_files: Optional[Union[str, Sequence[str],
+                                        Mapping[str,
+                                                Union[str,
+                                                      Sequence[str]]]]] = None,
+             hub: Optional[Hubs] = None) -> 'PyDataset':
         """Load a PyDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
             Args:
 
@@ -62,10 +62,15 @@ class PyDataset:
                 data_dir (str, optional): Defining the data_dir of the dataset configuration. I
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
+                hub (Hubs, optional): When loading from a remote hub, where it is from
 
             Returns:
                 PyDataset (obj:`PyDataset`): PyDataset object for a certain dataset.
             """
+        if Hubs.modelscope == hub:
+            # TODO: parse data meta information from modelscope hub
+            # and possibly download data files to local (and update path)
+            print('getting data from modelscope hub')
         if isinstance(path, str):
             dataset = load_dataset(
                 path,

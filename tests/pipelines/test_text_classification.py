@@ -10,7 +10,7 @@ from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.pipelines import SequenceClassificationPipeline, pipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.pydatasets import PyDataset
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import Hubs, Tasks
 from modelscope.utils.hub import get_model_cache_dir
 
 
@@ -81,13 +81,15 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(
             task=Tasks.text_classification, model=self.model_id)
         result = text_classification(
-            PyDataset.load('glue', name='sst2', target='sentence'))
+            PyDataset.load(
+                'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
         self.printDataset(result)
 
     def test_run_with_default_model(self):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
-            PyDataset.load('glue', name='sst2', target='sentence'))
+            PyDataset.load(
+                'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
         self.printDataset(result)
 
     def test_run_with_dataset(self):
@@ -97,9 +99,9 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         # loaded from huggingface dataset
-        # TODO: add load_from parameter (an enum) LOAD_FROM.hugging_face
         # TODO: rename parameter as dataset_name and subset_name
-        dataset = PyDataset.load('glue', name='sst2', target='sentence')
+        dataset = PyDataset.load(
+            'glue', name='sst2', target='sentence', hub=Hubs.huggingface)
         result = text_classification(dataset)
         self.printDataset(result)
 

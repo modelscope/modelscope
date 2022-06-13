@@ -59,14 +59,30 @@ class Tasks(object):
 
 
 class InputFields(object):
-    """ Names for input data fileds in the input data for pipelines
+    """ Names for input data fields in the input data for pipelines
     """
     img = 'img'
     text = 'text'
     audio = 'audio'
 
 
+class Hubs(object):
+    """ Source from which an entity (such as a Dataset or Model) is stored
+    """
+    modelscope = 'modelscope'
+    huggingface = 'huggingface'
+
+
 # configuration filename
 # in order to avoid conflict with huggingface
 # config file we use maas_config instead
 CONFIGFILE = 'maas_config.json'
+
+README_FILE = 'README.md'
+TF_SAVED_MODEL_FILE = 'saved_model.pb'
+TF_GRAPH_FILE = 'tf_graph.pb'
+TF_CHECKPOINT_FOLDER = 'tf_ckpts'
+TF_CHECKPOINT_FILE = 'checkpoint'
+TORCH_MODEL_FILE = 'pytorch_model.bin'
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'

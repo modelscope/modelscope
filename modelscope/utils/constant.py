@@ -30,6 +30,7 @@ class Tasks(object):
     image_matting = 'image-matting'
 
     # nlp tasks
+    nli = 'nli'
     sentiment_analysis = 'sentiment-analysis'
     text_classification = 'text-classification'
     relation_extraction = 'relation-extraction'

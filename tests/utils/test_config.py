@@ -14,25 +14,25 @@ obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}
 class ConfigTest(unittest.TestCase):
 
     def test_json(self):
-        config_file = 'configs/examples/config.json'
+        config_file = 'configs/examples/configuration.json'
         cfg = Config.from_file(config_file)
         self.assertEqual(cfg.a, 1)
         self.assertEqual(cfg.b, obj['b'])
 
     def test_yaml(self):
-        config_file = 'configs/examples/config.yaml'
+        config_file = 'configs/examples/configuration.yaml'
         cfg = Config.from_file(config_file)
         self.assertEqual(cfg.a, 1)
         self.assertEqual(cfg.b, obj['b'])
 
     def test_py(self):
-        config_file = 'configs/examples/config.py'
+        config_file = 'configs/examples/configuration.py'
         cfg = Config.from_file(config_file)
         self.assertEqual(cfg.a, 1)
         self.assertEqual(cfg.b, obj['b'])
 
     def test_dump(self):
-        config_file = 'configs/examples/config.py'
+        config_file = 'configs/examples/configuration.py'
         cfg = Config.from_file(config_file)
         self.assertEqual(cfg.a, 1)
         self.assertEqual(cfg.b, obj['b'])
@@ -53,7 +53,7 @@ class ConfigTest(unittest.TestCase):
                 self.assertEqual(yaml_str, infile.read())
 
     def test_to_dict(self):
-        config_file = 'configs/examples/config.json'
+        config_file = 'configs/examples/configuration.json'
         cfg = Config.from_file(config_file)
         d = cfg.to_dict()
         print(d)

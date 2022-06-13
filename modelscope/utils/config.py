@@ -74,17 +74,17 @@ class Config:
         {'c': [1, 2, 3], 'd': 'dd'}
         >>> cfg.b.d
         'dd'
-        >>> cfg = Config.from_file('configs/examples/config.json')
+        >>> cfg = Config.from_file('configs/examples/configuration.json')
         >>> cfg.filename
-       'configs/examples/config.json'
+       'configs/examples/configuration.json'
         >>> cfg.b
         {'c': [1, 2, 3], 'd': 'dd'}
-        >>> cfg = Config.from_file('configs/examples/config.py')
+        >>> cfg = Config.from_file('configs/examples/configuration.py')
         >>> cfg.filename
-        "configs/examples/config.py"
-        >>> cfg = Config.from_file('configs/examples/config.yaml')
+        "configs/examples/configuration.py"
+        >>> cfg = Config.from_file('configs/examples/configuration.yaml')
         >>> cfg.filename
-        "configs/examples/config.yaml"
+        "configs/examples/configuration.yaml"
     """
 
     @staticmethod

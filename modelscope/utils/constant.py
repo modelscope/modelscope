@@ -4,8 +4,8 @@
 class Fields(object):
     """ Names for different application fields
     """
-    image = 'image'
-    video = 'video'
+    # image = 'image'
+    # video = 'video'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
@@ -72,6 +72,4 @@ class Hubs(object):
 
 
 # configuration filename
-# in order to avoid conflict with huggingface
-# config file we use maas_config instead
-CONFIGFILE = 'maas_config.json'
+CONFIGFILE = 'configuration.json'

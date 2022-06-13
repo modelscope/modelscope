@@ -18,6 +18,7 @@ PIPELINES = Registry('pipelines')
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
     Tasks.image_matting: ('image-matting', 'damo/image-matting-person'),
+    Tasks.nli: ('nli', 'damo/nlp_structbert_nli_chinese-base'),
     Tasks.text_classification:
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
     Tasks.text_generation: ('palm', 'damo/nlp_palm_text-generation_chinese'),

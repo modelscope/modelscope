@@ -16,14 +16,15 @@ from modelscope.utils.hub import get_model_cache_dir
 class ImageMattingTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/image-matting-person'
+        self.model_id = 'damo/cv_unet_image-matting_damo'
         # switch to False if downloading everytime is not desired
         purge_cache = True
         if purge_cache:
             shutil.rmtree(
                 get_model_cache_dir(self.model_id), ignore_errors=True)
 
-    def test_run(self):
+    @unittest.skip('deprecated, download model from model hub instead')
+    def test_run_with_direct_file_download(self):
         model_path = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs' \
                      '.com/data/test/maas/image_matting/matting_person.pb'
         with tempfile.TemporaryDirectory() as tmp_dir:

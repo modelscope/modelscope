@@ -325,13 +325,15 @@ class BasicTokenizer(object):
         # as is Japanese Hiragana and Katakana. Those alphabets are used to write
         # space-separated words, so they are not treated specially and handled
         # like the all of the other languages.
-        if ((cp >= 0x4E00 and cp <= 0x9FFF) or (cp >= 0x3400 and cp <= 0x4DBF)
-                or (cp >= 0x20000 and cp <= 0x2A6DF)
-                or (cp >= 0x2A700 and cp <= 0x2B73F)
-                or (cp >= 0x2B740 and cp <= 0x2B81F)
-                or (cp >= 0x2B820 and cp <= 0x2CEAF)
-                or (cp >= 0xF900 and cp <= 0xFAFF)
-                or (cp >= 0x2F800 and cp <= 0x2FA1F)):
+        tmp = (cp >= 0x4E00 and cp <= 0x9FFF)
+        tmp = tmp or (cp >= 0x3400 and cp <= 0x4DBF)
+        tmp = tmp or (cp >= 0x20000 and cp <= 0x2A6DF)
+        tmp = tmp or (cp >= 0x2A700 and cp <= 0x2B73F)
+        tmp = tmp or (cp >= 0x2B740 and cp <= 0x2B81F)
+        tmp = tmp or (cp >= 0x2B820 and cp <= 0x2CEAF)
+        tmp = tmp or (cp >= 0xF900 and cp <= 0xFAFF)
+        tmp = tmp or (cp >= 0x2F800 and cp <= 0x2FA1F)
+        if tmp:
             return True
 
         return False
@@ -441,8 +443,11 @@ def _is_punctuation(char):
     # Characters such as "^", "$", and "`" are not in the Unicode
     # Punctuation class but we treat them as punctuation anyways, for
     # consistency.
-    if ((cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64)
-            or (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126)):
+    tmp = (cp >= 33 and cp <= 47)
+    tmp = tmp or (cp >= 58 and cp <= 64)
+    tmp = tmp or (cp >= 91 and cp <= 96)
+    tmp = tmp or (cp >= 123 and cp <= 126)
+    if tmp:
         return True
     cat = unicodedata.category(char)
     if cat.startswith('P'):
@@ -589,7 +594,7 @@ class GPT2Tokenizer(object):
                     j = word.index(first, i)
                     new_word.extend(word[i:j])
                     i = j
-                except:
+                except Exception:
                     new_word.extend(word[i:])
                     break
 
@@ -625,8 +630,10 @@ class GPT2Tokenizer(object):
     def convert_tokens_to_ids(self, tokens):
         """ Converts a sequence of tokens into ids using the vocab. """
         ids = []
-        if isinstance(tokens, str) or (sys.version_info[0] == 2
-                                       and isinstance(tokens, unicode)):
+        python_version_3 = isinstance(tokens, str)
+        python_version_2 = (
+            sys.version_info[0] == 2 and isinstance(tokens, unicode))
+        if python_version_3 or python_version_2:
             if tokens in self.special_tokens:
                 return self.special_tokens[tokens]
             else:

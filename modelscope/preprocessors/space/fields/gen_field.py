@@ -171,7 +171,7 @@ class BPETextField(object):
             src_token.append(list(chain(*utts))[-self.max_len:])
 
             # Position ids
-            pos = [list(range(l)) for l in utt_lens]
+            pos = [list(range(utt_len)) for utt_len in utt_lens]
             src_pos.append(list(chain(*pos))[-self.max_len:])
 
             # Turn ids
@@ -205,15 +205,15 @@ class BPETextField(object):
             understand = [self.understand_ids for _ in samples]
             understand_token = np.array(understand).astype('int64')
             batch['understand_token'] = understand_token
-            batch['understand_mask'] = (understand_token !=
-                                        self.pad_id).astype('int64')
+            batch['understand_mask'] = \
+                (understand_token != self.pad_id).astype('int64')
 
         if self.policy_ids and self.policy:
             policy = [self.policy_ids for _ in samples]
             policy_token = np.array(policy).astype('int64')
             batch['policy_token'] = policy_token
-            batch['policy_mask'] = (policy_token !=
-                                    self.pad_id).astype('int64')
+            batch['policy_mask'] = \
+                (policy_token != self.pad_id).astype('int64')
 
         if 'tgt' in samples[0]:
             tgt = [sp['tgt'] for sp in samples]
@@ -421,7 +421,7 @@ class MultiWOZBPETextField(BPETextField):
             try:
                 log_str += 'turn num:%d, dial num: %d, batch num: %d last batch len: %d\n' % (
                     k, len(turn_bucket[k]), len(batches), len(batches[-1]))
-            except:
+            except Exception:
                 log_str += 'turn num:%d, dial num: %d, batch num: %d last batch len: %d\n' % (
                     k, len(turn_bucket[k]), len(batches), 0.0)
             # print("turn num:%d, dial num:v%d, batch num: %d, "%(k, len(turn_bucket[k]), len(batches)))
@@ -520,7 +520,7 @@ class MultiWOZBPETextField(BPETextField):
                             ns) is not str else ns
                         if ns == "'s":
                             continue
-                    except:
+                    except Exception:
                         continue
                 if not constraint_dict.get(domain):
                     constraint_dict[domain] = {}
@@ -670,10 +670,9 @@ class MultiWOZBPETextField(BPETextField):
                     pv_turn['aspn'] + pv_turn['resp']
                 ]
             else:
-                pv_context = pv_turn['labels'] + [
-                    pv_turn['bspn'] + pv_turn['db'] + pv_turn['aspn'] +
-                    pv_turn['resp']
-                ]
+                pv_info = pv_turn['bspn'] + pv_turn['db'] + pv_turn[
+                    'aspn'] + pv_turn['resp']
+                pv_context = pv_turn['labels'] + [pv_info]
 
             # prompt response, add sos_r
             inputs['src'] = pv_context + [context]

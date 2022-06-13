@@ -46,8 +46,8 @@ def clean_replace(s, r, t, forward=True, backward=False):
             return s, -1
 
         if forward:
-            while idx_r < len(s) and (s[idx_r].isalpha()
-                                      or s[idx_r].isdigit()):
+            while \
+                    idx_r < len(s) and (s[idx_r].isalpha() or s[idx_r].isdigit()):
                 idx_r += 1
         elif idx_r != len(s) and (s[idx_r].isalpha() or s[idx_r].isdigit()):
             return s, -1
@@ -122,13 +122,15 @@ class MultiWOZVocab(object):
             self._word2idx[word] = idx
 
     def construct(self):
-        l = sorted(self._freq_dict.keys(), key=lambda x: -self._freq_dict[x])
+        freq_dict_sorted = sorted(
+            self._freq_dict.keys(), key=lambda x: -self._freq_dict[x])
         print('Vocabulary size including oov: %d' %
-              (len(l) + len(self._idx2word)))
-        if len(l) + len(self._idx2word) < self.vocab_size:
+              (len(freq_dict_sorted) + len(self._idx2word)))
+        if len(freq_dict_sorted) + len(self._idx2word) < self.vocab_size:
             logging.warning(
                 'actual label set smaller than that configured: {}/{}'.format(
-                    len(l) + len(self._idx2word), self.vocab_size))
+                    len(freq_dict_sorted) + len(self._idx2word),
+                    self.vocab_size))
         for word in ontology.all_domains + ['general']:
             word = '[' + word + ']'
             self._add_to_vocab(word)
@@ -137,10 +139,10 @@ class MultiWOZVocab(object):
             self._add_to_vocab(word)
         for word in ontology.all_slots:
             self._add_to_vocab(word)
-        for word in l:
+        for word in freq_dict_sorted:
             if word.startswith('[value_') and word.endswith(']'):
                 self._add_to_vocab(word)
-        for word in l:
+        for word in freq_dict_sorted:
             self._add_to_vocab(word)
         self.vocab_size_oov = len(self._idx2word)
 
@@ -192,13 +194,13 @@ class MultiWOZVocab(object):
         else:
             return self._idx2word[idx] + '(o)'
 
-    def sentence_decode(self, index_list, eos=None, indicate_oov=False):
-        l = [self.decode(_, indicate_oov) for _ in index_list]
-        if not eos or eos not in l:
-            return ' '.join(l)
-        else:
-            idx = l.index(eos)
-            return ' '.join(l[:idx])
-
-    def nl_decode(self, l, eos=None):
-        return [self.sentence_decode(_, eos) + '\n' for _ in l]
+    # def sentence_decode(self, index_list, eos=None, indicate_oov=False):
+    #     l = [self.decode(_, indicate_oov) for _ in index_list]
+    #     if not eos or eos not in l:
+    #         return ' '.join(l)
+    #     else:
+    #         idx = l.index(eos)
+    #         return ' '.join(l[:idx])
+    #
+    # def nl_decode(self, l, eos=None):
+    #     return [self.sentence_decode(_, eos) + '\n' for _ in l]

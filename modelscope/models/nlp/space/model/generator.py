@@ -201,9 +201,6 @@ class BeamSearch(Generator):
         predictions = torch.cat([predictions, preds.unsqueeze(2)], dim=2)
         state = repeat(state, beam_size)
 
-        parent_idx_list = []
-        pred_list = []
-
         if max_gen_len is None:
             max_gen_len = self.max_gen_len
         for step in range(2, max_gen_len + 1):
@@ -229,11 +226,11 @@ class BeamSearch(Generator):
             pre_eos_mask = (1 - torch.not_equal(pre_ids, eos_id).float()) + \
                            (1 - torch.not_equal(pre_ids, self.pad_id).float())
 
-            scores = scores * (1 - pre_eos_mask) + \
-                     pre_eos_mask.repeat(1, 1, self.vocab_size) * scores_after_end
+            scores = scores * (1 - pre_eos_mask) + pre_eos_mask.repeat(
+                1, 1, self.vocab_size) * scores_after_end
             if self.length_average:
-                scaled_value = pre_eos_mask + (1 - pre_eos_mask) * (1 -
-                                                                    1 / step)
+                scaled_value = \
+                    pre_eos_mask + (1 - pre_eos_mask) * (1 - 1 / step)
                 sequence_scores = sequence_scores.unsqueeze(2) * scaled_value
                 scaled_value = pre_eos_mask + (1 - pre_eos_mask) * (1 / step)
                 scores = scores * scaled_value

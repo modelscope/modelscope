@@ -31,8 +31,8 @@ class NLIPipeline(Pipeline):
         """
         assert isinstance(model, str) or isinstance(model, SbertForNLI), \
             'model must be a single str or SbertForNLI'
-        sc_model = model if isinstance(model,
-                                       SbertForNLI) else SbertForNLI(model)
+        sc_model = model if isinstance(
+            model, SbertForNLI) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = NLIPreprocessor(
                 sc_model.model_dir,

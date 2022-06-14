@@ -714,7 +714,7 @@ def decode_batch(all_nodes, all_links, all_reg, image_size, anchor_sizes):
             batch_segments[image_id] = np.vstack(
                 (batch_segments[image_id],
                  np.array((max_count - batch_segments_counts[image_id]) 
-                           * [(OFFSET_DIM) * [0.0]])))
+                          * [(OFFSET_DIM) * [0.0]])))
             batch_group_indices[image_id] = np.hstack(
                 (batch_group_indices[image_id],
                  np.array(

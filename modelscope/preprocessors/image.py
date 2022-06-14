@@ -9,7 +9,7 @@ from modelscope.utils.constant import Fields
 from .builder import PREPROCESSORS
 
 
-@PREPROCESSORS.register_module(Fields.image)
+@PREPROCESSORS.register_module(Fields.cv)
 class LoadImage:
     """Load an image from file or url.
     Added or updated keys are "filename", "img", "img_shape",

@@ -4,8 +4,8 @@
 class Fields(object):
     """ Names for different application fields
     """
-    image = 'image'
-    video = 'video'
+    # image = 'image'
+    # video = 'video'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
@@ -73,15 +73,4 @@ class Hubs(object):
 
 
 # configuration filename
-# in order to avoid conflict with huggingface
-# config file we use maas_config instead
-CONFIGFILE = 'maas_config.json'
-
-README_FILE = 'README.md'
-TF_SAVED_MODEL_FILE = 'saved_model.pb'
-TF_GRAPH_FILE = 'tf_graph.pb'
-TF_CHECKPOINT_FOLDER = 'tf_ckpts'
-TF_CHECKPOINT_FILE = 'checkpoint'
-TORCH_MODEL_FILE = 'pytorch_model.bin'
-TENSORFLOW = 'tensorflow'
-PYTORCH = 'pytorch'
+CONFIGFILE = 'configuration.json'

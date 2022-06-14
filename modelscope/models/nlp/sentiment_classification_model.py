@@ -55,7 +55,7 @@ class SbertForSentimentClassification(Model):
         self.model_dir = model_dir
 
         self.model = SbertTextClassifier.from_pretrained(
-            model_dir, num_labels=3)
+            model_dir, num_labels=2)
         self.model.eval()
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:

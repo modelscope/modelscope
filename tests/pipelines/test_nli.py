@@ -15,6 +15,7 @@ class NLITest(unittest.TestCase):
     sentence1 = '四川商务职业学院和四川财经职业学院哪个好？'
     sentence2 = '四川商务职业学院商务管理在哪个校区？'
 
+    @unittest.skip('skip temporarily to save test time')
     def test_run_from_local(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = NLIPreprocessor(cache_path)

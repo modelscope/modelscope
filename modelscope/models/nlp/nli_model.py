@@ -16,7 +16,7 @@ from ..builder import MODELS
 __all__ = ['SbertForNLI']
 
 
-class TextClassifier(SbertPreTrainedModel):
+class SbertTextClassifier(SbertPreTrainedModel):
 
     def __init__(self, config):
         super().__init__(config)
@@ -53,7 +53,8 @@ class SbertForNLI(Model):
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
 
-        self.model = TextClassifier.from_pretrained(model_dir, num_labels=3)
+        self.model = SbertTextClassifier.from_pretrained(
+            model_dir, num_labels=3)
         self.model.eval()
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:

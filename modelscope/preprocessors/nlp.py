@@ -28,8 +28,7 @@ class Tokenize(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.sentiment_classification,
-    module_name=r'sbert-sentiment-classification')
+    Fields.nlp, module_name=r'sbert-sentiment-classification')
 class SentimentClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

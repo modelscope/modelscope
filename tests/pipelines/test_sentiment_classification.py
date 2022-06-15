@@ -11,8 +11,8 @@ from modelscope.utils.constant import Tasks
 
 
 class SentimentClassificationTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
-    sentence1 = '四川商务职业学院和四川财经职业学院哪个好？'
+    model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
+    sentence1 = '启动的时候很大声音，然后就会听到1.2秒的卡察的声音，类似齿轮摩擦的声音'
 
     def test_run_from_local(self):
         cache_path = snapshot_download(self.model_id)
@@ -22,7 +22,9 @@ class SentimentClassificationTest(unittest.TestCase):
         pipeline1 = SentimentClassificationPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
-            Tasks.sentence_similarity, model=model, preprocessor=tokenizer)
+            Tasks.sentiment_classification,
+            model=model,
+            preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1:{pipeline1(input=self.sentence1)}')
         print()
@@ -33,18 +35,18 @@ class SentimentClassificationTest(unittest.TestCase):
         model = Model.from_pretrained(self.model_id)
         tokenizer = SentimentClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
-            task=Tasks.sentence_similarity,
+            task=Tasks.sentiment_classification,
             model=model,
             preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence1))
 
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
-            task=Tasks.sentence_similarity, model=self.model_id)
+            task=Tasks.sentiment_classification, model=self.model_id)
         print(pipeline_ins(input=self.sentence1))
 
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.sentence_similarity)
+        pipeline_ins = pipeline(task=Tasks.sentiment_classification)
         print(pipeline_ins(input=self.sentence1))
 
 

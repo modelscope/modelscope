@@ -31,6 +31,7 @@ class Tasks(object):
 
     # nlp tasks
     sentiment_analysis = 'sentiment-analysis'
+    sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'

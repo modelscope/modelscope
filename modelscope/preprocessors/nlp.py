@@ -10,7 +10,10 @@ from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 
-__all__ = ['Tokenize', 'SequenceClassificationPreprocessor']
+__all__ = [
+    'Tokenize', 'SequenceClassificationPreprocessor',
+    'TextGenerationPreprocessor'
+]
 
 
 @PREPROCESSORS.register_module(Fields.nlp)
@@ -28,7 +31,7 @@ class Tokenize(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'bert-sentiment-analysis')
+    Fields.nlp, module_name=r'bert-sequence-classification')
 class SequenceClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -48,21 +51,42 @@ class SequenceClassificationPreprocessor(Preprocessor):
         self.sequence_length = kwargs.pop('sequence_length', 128)
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
+        print(f'this is the tokenzier {self.tokenizer}')
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, tuple))
+    def __call__(self, data: Union[str, tuple]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
+            data (str or tuple):
+            sentence1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+            or
+            (sentence1, sentence2)
+                sentence1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+                sentence2 (str): a sentence
+                    Example:
+                        'you are so beautiful.'
 
         Returns:
             Dict[str, Any]: the preprocessed data
         """
 
-        new_data = {self.first_sequence: data}
+        if not isinstance(data, tuple):
+            data = (
+                data,
+                None,
+            )
+
+        sentence1, sentence2 = data
+        new_data = {
+            self.first_sequence: sentence1,
+            self.second_sequence: sentence2
+        }
+
         # preprocess the data for the model input
 
         rst = {

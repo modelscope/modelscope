@@ -668,6 +668,11 @@ class MultiWOZTrainer(Trainer):
 
         return
 
+    def _get_turn_doamin(self, constraint_ids, bspn_gen_ids):
+        # constraint_token = self.tokenizer.convert_ids_to_tokens(constraint_ids)
+        # bspn_token = self.tokenizer.convert_ids_to_tokens(bspn_gen_ids)
+        return []
+
     def forward(self, turn, old_pv_turn):
         with torch.no_grad():
             first_turn = True if len(old_pv_turn) == 0 else False
@@ -678,7 +683,6 @@ class MultiWOZTrainer(Trainer):
             batch = type(batch)(
                 map(lambda kv: (kv[0], self.to_tensor(kv[1])), batch.items()))
             pv_turn = {}
-            print(batch)
 
             outputs = self.func_model.infer(
                 inputs=batch,
@@ -687,29 +691,24 @@ class MultiWOZTrainer(Trainer):
                 max_gen_len=60)
             generated_bs = outputs[0].cpu().numpy().tolist()
             bspn_gen = self.decode_generated_bspn(generated_bs)
-            bspn_token = self.tokenizer.convert_ids_to_tokens(bspn_gen)
-            print(bspn_gen)
-            print(bspn_token)
-            turn_domain = []
-            for item in bspn_token:
-                if item.startswith('[') and item.endswith(']'):
-                    turn_domain.append(item)
+
+            turn_domain = self._get_turn_doamin(old_pv_turn['constraint_ids'],
+                                                bspn_gen)
             print(turn_domain)
+
             db_result = self.reader.bspan_to_DBpointer(
-                self.tokenizer.decode(bspn_gen), ['[taxi]'])
+                self.tokenizer.decode(bspn_gen), turn_domain)
             print(db_result)
-            book_result = 21
+            assert len(turn['db']) == 3
+            assert isinstance(db_result, str)
             db = \
                 [self.reader.sos_db_id] + \
                 self.tokenizer.convert_tokens_to_ids([db_result]) + \
-                [book_result] + \
                 [self.reader.eos_db_id]
             prompt_id = self.reader.sos_a_id
-
             prev_input = torch.tensor(bspn_gen + db)
             if self.func_model.use_gpu:
                 prev_input = prev_input.cuda()
-
             outputs_db = self.func_model.infer(
                 inputs=batch,
                 start_id=prompt_id,
@@ -727,5 +726,6 @@ class MultiWOZTrainer(Trainer):
             pv_turn['bspn'] = decoded['bspn']
             pv_turn['db'] = None
             pv_turn['aspn'] = None
+            pv_turn['constraint_ids'] = bspn_gen
 
         return pv_turn

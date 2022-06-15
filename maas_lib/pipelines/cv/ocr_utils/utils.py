@@ -99,7 +99,7 @@ def polygon2rbox(polygon):
     return [c_x, c_y, w, h, theta]
 
     
-def point_line_dist(px,py,x1,y1,x2,y2):
+def point_line_dist(px, py, x1, y1, x2, y2):
     eps = 1e-6
     dx = x2 - x1
     dy = y2 - y1

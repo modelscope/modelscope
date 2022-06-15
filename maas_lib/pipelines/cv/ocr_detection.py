@@ -162,9 +162,9 @@ class OCRDetection(Pipeline):
             0, np.minimum(polygons[:, 1::2] * scale_y, orig_h - 1))
         polygons = np.round(polygons).astype(np.int32)
 
-        # lanms
-        dt_n9 = np.array([o + [utils.cal_width(o)] for o in polygons.tolist()])
-        dt_nms = lanms.merge_quadrangle_n9(dt_n9.astype('float32'), 0.3)
+        # nms
+        dt_n9 = [o + [utils.cal_width(o)] for o in polygons.tolist()]
+        dt_nms = utils.nms_polygon(dt_n9)
         dt_polygons = np.array([o[:8] for o in dt_nms])
 
         # visualize dt_polygons in image

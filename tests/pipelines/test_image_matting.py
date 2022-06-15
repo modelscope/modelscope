@@ -11,6 +11,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import get_model_cache_dir
+from modelscope.utils.test_utils import test_level
 
 
 class ImageMattingTest(unittest.TestCase):
@@ -38,6 +39,7 @@ class ImageMattingTest(unittest.TestCase):
             )
             cv2.imwrite('result.png', result['output_png'])
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_dataset(self):
         input_location = [
             'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
@@ -52,6 +54,7 @@ class ImageMattingTest(unittest.TestCase):
         cv2.imwrite('result.png', next(result)['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
 
@@ -61,6 +64,7 @@ class ImageMattingTest(unittest.TestCase):
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         img_matting = pipeline(Tasks.image_matting)
 

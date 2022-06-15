@@ -7,6 +7,11 @@ import sys
 import unittest
 from fnmatch import fnmatch
 
+from modelscope.utils.logger import get_logger
+from modelscope.utils.test_utils import set_test_level, test_level
+
+logger = get_logger()
+
 
 def gather_test_cases(test_dir, pattern, list_tests):
     case_list = []
@@ -49,5 +54,9 @@ if __name__ == '__main__':
         '--pattern', default='test_*.py', help='test file pattern')
     parser.add_argument(
         '--test_dir', default='tests', help='directory to be tested')
+    parser.add_argument(
+        '--level', default=0, help='2 -- all, 1 -- p1, 0 -- p0')
     args = parser.parse_args()
+    set_test_level(args.level)
+    logger.info(f'TEST LEVEL: {test_level()}')
     main(args)

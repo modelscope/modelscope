@@ -8,6 +8,7 @@ import cv2
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class ImageCartoonTest(unittest.TestCase):
@@ -36,10 +37,12 @@ class ImageCartoonTest(unittest.TestCase):
         img_cartoon = pipeline(Tasks.image_generation, model=model_dir)
         self.pipeline_inference(img_cartoon, self.test_image)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub(self):
         img_cartoon = pipeline(Tasks.image_generation, model=self.model_id)
         self.pipeline_inference(img_cartoon, self.test_image)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         img_cartoon = pipeline(Tasks.image_generation)
         self.pipeline_inference(img_cartoon, self.test_image)

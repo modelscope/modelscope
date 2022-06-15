@@ -7,6 +7,7 @@ import unittest
 from modelscope.fileio import File
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class ImageCaptionTest(unittest.TestCase):

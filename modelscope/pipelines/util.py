@@ -1,14 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 import os.path as osp
 from typing import List, Union
 
-import json
 from maas_hub.file_download import model_file_download
-from matplotlib.pyplot import get
 
 from modelscope.utils.config import Config
-from modelscope.utils.constant import CONFIGFILE
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -29,14 +26,14 @@ def is_model_name(model: Union[str, List]):
 
     def is_model_name_impl(model):
         if osp.exists(model):
-            cfg_file = osp.join(model, CONFIGFILE)
+            cfg_file = osp.join(model, ModelFile.CONFIGURATION)
             if osp.exists(cfg_file):
                 return is_config_has_model(cfg_file)
             else:
                 return False
         else:
             try:
-                cfg_file = model_file_download(model, CONFIGFILE)
+                cfg_file = model_file_download(model, ModelFile.CONFIGURATION)
                 return is_config_has_model(cfg_file)
             except Exception:
                 return False

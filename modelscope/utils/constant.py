@@ -71,5 +71,16 @@ class Hubs(object):
     huggingface = 'huggingface'
 
 
-# configuration filename
-CONFIGFILE = 'configuration.json'
+class ModelFile(object):
+    CONFIGURATION = 'configuration.json'
+    README = 'README.md'
+    TF_SAVED_MODEL_FILE = 'saved_model.pb'
+    TF_GRAPH_FILE = 'tf_graph.pb'
+    TF_CHECKPOINT_FOLDER = 'tf_ckpts'
+    TF_CKPT_PREFIX = 'ckpt-'
+    TORCH_MODEL_FILE = 'pytorch_model.pt'
+    TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
+
+
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'

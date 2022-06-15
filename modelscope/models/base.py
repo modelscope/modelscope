@@ -2,14 +2,13 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Union
 
-from maas_hub.file_download import model_file_download
 from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
-from modelscope.utils.constant import CONFIGFILE
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.hub import get_model_cache_dir
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
@@ -47,7 +46,8 @@ class Model(ABC):
             #     raise ValueError(
             #         'Remote model repo {model_name_or_path} does not exists')
 
-        cfg = Config.from_file(osp.join(local_model_dir, CONFIGFILE))
+        cfg = Config.from_file(
+            osp.join(local_model_dir, ModelFile.CONFIGURATION))
         task_name = cfg.task
         model_cfg = cfg.model
         # TODO @wenmeng.zwm may should manually initialize model after model building

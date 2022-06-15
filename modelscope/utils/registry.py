@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
-from email.policy import default
 
 from modelscope.utils.logger import get_logger
 

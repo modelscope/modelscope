@@ -3,7 +3,7 @@
 import unittest
 from typing import List, Union
 
-from maas_lib.utils.type_assert import type_assert
+from modelscope.utils.type_assert import type_assert
 
 
 class type_assertTest(unittest.TestCase):

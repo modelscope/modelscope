@@ -2,9 +2,9 @@
 
 import unittest
 
-from maas_lib.preprocessors import build_preprocessor
-from maas_lib.utils.constant import Fields, InputFields
-from maas_lib.utils.logger import get_logger
+from modelscope.preprocessors import build_preprocessor
+from modelscope.utils.constant import Fields, InputFields
+from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 

@@ -18,10 +18,10 @@ import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
-project = 'maas_lib'
-copyright = '2022-2023, Alibaba MaaS'
-author = 'maas_lib Authors'
-version_file = '../../maas_lib/version.py'
+project = 'modelscope'
+copyright = '2022-2023, Alibaba ModelScope'
+author = 'modelscope Authors'
+version_file = '../../modelscope/version.py'
 
 
 def get_version():
@@ -76,7 +76,7 @@ exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_theme_options = {}
 
@@ -88,7 +88,7 @@ html_static_path = ['_static']
 
 # -- Options for HTMLHelp output ---------------------------------------------
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'maas_lib_doc'
+htmlhelp_basename = 'modelscope_doc'
 
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code

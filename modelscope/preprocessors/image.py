@@ -4,12 +4,12 @@ from typing import Dict, Union
 
 from PIL import Image, ImageOps
 
-from maas_lib.fileio import File
-from maas_lib.utils.constant import Fields
+from modelscope.fileio import File
+from modelscope.utils.constant import Fields
 from .builder import PREPROCESSORS
 
 
-@PREPROCESSORS.register_module(Fields.image)
+@PREPROCESSORS.register_module(Fields.cv)
 class LoadImage:
     """Load an image from file or url.
     Added or updated keys are "filename", "img", "img_shape",

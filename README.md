@@ -1,6 +1,6 @@
 # Introduction
 
-MaaS library is targeted to support training, evaluation and inference for the state of the art models provided by Mind and further support third-party models provided by users outside alibaba.
+ModelScope library is targeted to support training, evaluation and inference for the state of the art models provided by Mind and further support third-party models provided by users outside alibaba.
 
 # Design doc
 

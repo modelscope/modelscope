@@ -7,7 +7,7 @@ import sys
 import types
 from importlib import import_module
 
-from maas_lib.utils.logger import get_logger
+from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 

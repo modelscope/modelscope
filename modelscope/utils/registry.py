@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
-from email.policy import default
 
-from maas_lib.utils.logger import get_logger
+from modelscope.utils.logger import get_logger
 
 default_group = 'default'
 logger = get_logger()
@@ -100,6 +99,12 @@ class Registry(object):
             >>> class SwinTransformerDefaultGroup:
             >>>     pass
 
+            >>> class SwinTransformer2:
+            >>>     pass
+            >>> MODELS.register_module('image-classification',
+                                        module_name='SwinT2',
+                                        module_cls=SwinTransformer2)
+
         Args:
             group_key: Group name of which module will be registered,
                 default group name is 'default'
@@ -168,7 +173,7 @@ def build_from_cfg(cfg,
                 '`cfg` or `default_args` must contain the key "type", '
                 f'but got {cfg}\n{default_args}')
     if not isinstance(registry, Registry):
-        raise TypeError('registry must be an maas_lib.Registry object, '
+        raise TypeError('registry must be an modelscope.Registry object, '
                         f'but got {type(registry)}')
     if not (isinstance(default_args, dict) or default_args is None):
         raise TypeError('default_args must be a dict or None, '

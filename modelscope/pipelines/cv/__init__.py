@@ -1,2 +1,2 @@
-from .image_matting import ImageMatting
-from .ocr_detection import OCRDetection
+from .image_cartoon_pipeline import ImageCartoonPipeline
+from .image_matting_pipeline import ImageMattingPipeline

@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from maas_lib.utils.config import ConfigDict
-from maas_lib.utils.registry import Registry, build_from_cfg
+from modelscope.utils.config import ConfigDict
+from modelscope.utils.registry import Registry, build_from_cfg
 
 MODELS = Registry('models')
 

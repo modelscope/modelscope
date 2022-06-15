@@ -12,7 +12,7 @@ def readme():
     return content
 
 
-version_file = 'maas_lib/version.py'
+version_file = 'modelscope/version.py'
 
 
 def get_git_hash():
@@ -113,26 +113,39 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                 if line.startswith('http'):
                     print('skip http requirements %s' % line)
                     continue
-                if line and not line.startswith('#'):
+                if line and not line.startswith('#') and not line.startswith(
+                        '--'):
                     for info in parse_line(line):
                         yield info
+                elif line and line.startswith('--find-links'):
+                    eles = line.split()
+                    for e in eles:
+                        e = e.strip()
+                        if 'http' in e:
+                            info = dict(dependency_links=e)
+                            yield info
 
     def gen_packages_items():
+        items = []
+        deps_link = []
         if exists(require_fpath):
             for info in parse_require_file(require_fpath):
-                parts = [info['package']]
-                if with_version and 'version' in info:
-                    parts.extend(info['version'])
-                if not sys.version.startswith('3.4'):
-                    # apparently package_deps are broken in 3.4
-                    platform_deps = info.get('platform_deps')
-                    if platform_deps is not None:
-                        parts.append(';' + platform_deps)
-                item = ''.join(parts)
-                yield item
+                if 'dependency_links' not in info:
+                    parts = [info['package']]
+                    if with_version and 'version' in info:
+                        parts.extend(info['version'])
+                    if not sys.version.startswith('3.4'):
+                        # apparently package_deps are broken in 3.4
+                        platform_deps = info.get('platform_deps')
+                        if platform_deps is not None:
+                            parts.append(';' + platform_deps)
+                    item = ''.join(parts)
+                    items.append(item)
+                else:
+                    deps_link.append(info['dependency_links'])
+        return items, deps_link
 
-    packages = list(gen_packages_items())
-    return packages
+    return gen_packages_items()
 
 
 def pack_resource():
@@ -142,8 +155,8 @@ def pack_resource():
         shutil.rmtree(root_dir)
     os.makedirs(root_dir)
 
-    proj_dir = root_dir + 'maas_lib/'
-    shutil.copytree('./maas_lib', proj_dir)
+    proj_dir = root_dir + 'modelscope/'
+    shutil.copytree('./modelscope', proj_dir)
     shutil.copytree('./configs', proj_dir + 'configs')
     shutil.copytree('./requirements', 'package/requirements')
     shutil.copy('./requirements.txt', 'package/requirements.txt')
@@ -155,15 +168,15 @@ if __name__ == '__main__':
     # write_version_py()
     pack_resource()
     os.chdir('package')
-    install_requires = parse_requirements('requirements.txt')
+    install_requires, deps_link = parse_requirements('requirements.txt')
     setup(
-        name='maas-lib',
+        name='model-scope',
         version=get_version(),
         description='',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Alibaba MaaS team',
-        author_email='maas_lib@list.alibaba-inc.com',
+        author='Alibaba ModelScope team',
+        author_email='modelscope@list.alibaba-inc.com',
         keywords='',
         url='TBD',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
@@ -180,4 +193,5 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         tests_require=parse_requirements('requirements/tests.txt'),
         install_requires=install_requires,
+        dependency_links=deps_link,
         zip_safe=False)

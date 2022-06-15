@@ -17,9 +17,9 @@ from typing import Dict
 import addict
 from yapf.yapflib.yapf_api import FormatCode
 
-from maas_lib.utils.logger import get_logger
-from maas_lib.utils.pymod import (import_modules, import_modules_from_file,
-                                  validate_py_syntax)
+from modelscope.utils.logger import get_logger
+from modelscope.utils.pymod import (import_modules, import_modules_from_file,
+                                    validate_py_syntax)
 
 if platform.system() == 'Windows':
     import regex as re  # type: ignore
@@ -74,17 +74,17 @@ class Config:
         {'c': [1, 2, 3], 'd': 'dd'}
         >>> cfg.b.d
         'dd'
-        >>> cfg = Config.from_file('configs/examples/config.json')
+        >>> cfg = Config.from_file('configs/examples/configuration.json')
         >>> cfg.filename
-       'configs/examples/config.json'
+       'configs/examples/configuration.json'
         >>> cfg.b
         {'c': [1, 2, 3], 'd': 'dd'}
-        >>> cfg = Config.from_file('configs/examples/config.py')
+        >>> cfg = Config.from_file('configs/examples/configuration.py')
         >>> cfg.filename
-        "configs/examples/config.py"
-        >>> cfg = Config.from_file('configs/examples/config.yaml')
+        "configs/examples/configuration.py"
+        >>> cfg = Config.from_file('configs/examples/configuration.yaml')
         >>> cfg.filename
-        "configs/examples/config.yaml"
+        "configs/examples/configuration.yaml"
     """
 
     @staticmethod
@@ -117,7 +117,7 @@ class Config:
                 # delete imported module
                 del sys.modules[module_nanme]
             elif filename.endswith(('.yml', '.yaml', '.json')):
-                from maas_lib.fileio import load
+                from modelscope.fileio import load
                 cfg_dict = load(tmp_cfg_file.name)
             # close temp file
             tmp_cfg_file.close()
@@ -364,7 +364,7 @@ class Config:
             file (str, optional): Path of the output file where the config
                 will be dumped. Defaults to None.
         """
-        from maas_lib.fileio import dump
+        from modelscope.fileio import dump
         cfg_dict = super(Config, self).__getattribute__('_cfg_dict').to_dict()
         if file is None:
             if self.filename is None or self.filename.endswith('.py'):

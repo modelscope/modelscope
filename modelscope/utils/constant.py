@@ -4,8 +4,8 @@
 class Fields(object):
     """ Names for different application fields
     """
-    image = 'image'
-    video = 'video'
+    # image = 'image'
+    # video = 'video'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
@@ -13,7 +13,7 @@ class Fields(object):
 
 
 class Tasks(object):
-    """ Names for tasks supported by maas lib.
+    """ Names for tasks supported by modelscope.
 
     Holds the standard task name to use for identifying different tasks.
     This should be used to register models, pipelines, trainers.
@@ -58,8 +58,30 @@ class Tasks(object):
 
 
 class InputFields(object):
-    """ Names for input data fileds in the input data for pipelines
+    """ Names for input data fields in the input data for pipelines
     """
     img = 'img'
     text = 'text'
     audio = 'audio'
+
+
+class Hubs(object):
+    """ Source from which an entity (such as a Dataset or Model) is stored
+    """
+    modelscope = 'modelscope'
+    huggingface = 'huggingface'
+
+
+class ModelFile(object):
+    CONFIGURATION = 'configuration.json'
+    README = 'README.md'
+    TF_SAVED_MODEL_FILE = 'saved_model.pb'
+    TF_GRAPH_FILE = 'tf_graph.pb'
+    TF_CHECKPOINT_FOLDER = 'tf_ckpts'
+    TF_CKPT_PREFIX = 'ckpt-'
+    TORCH_MODEL_FILE = 'pytorch_model.pt'
+    TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
+
+
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'

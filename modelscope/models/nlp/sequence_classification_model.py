@@ -1,43 +1,34 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 
 import numpy as np
-import torch
 
-from maas_lib.utils.constant import Tasks
+from modelscope.utils.constant import Tasks
 from ..base import Model
 from ..builder import MODELS
 
-__all__ = ['SequenceClassificationModel']
+__all__ = ['BertForSequenceClassification']
 
 
 @MODELS.register_module(
     Tasks.text_classification, module_name=r'bert-sentiment-analysis')
-class SequenceClassificationModel(Model):
+class BertForSequenceClassification(Model):
 
-    def __init__(self,
-                 model_dir: str,
-                 model_cls: Optional[Any] = None,
-                 *args,
-                 **kwargs):
+    def __init__(self, model_dir: str, *args, **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)
         # Predictor.__init__(self, *args, **kwargs)
         """initialize the sequence classification model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
-            model_cls (Optional[Any], optional): model loader, if None, use the
-                default loader to load model weights, by default None.
         """
 
-        super().__init__(model_dir, model_cls, *args, **kwargs)
-
+        super().__init__(model_dir, *args, **kwargs)
         from easynlp.appzoo import SequenceClassification
         from easynlp.core.predictor import get_model_predictor
-        self.model_dir = model_dir
-        model_cls = SequenceClassification if not model_cls else model_cls
+        import torch
         self.model = get_model_predictor(
-            model_dir=model_dir,
-            model_cls=model_cls,
+            model_dir=self.model_dir,
+            model_cls=SequenceClassification,
             input_keys=[('input_ids', torch.LongTensor),
                         ('attention_mask', torch.LongTensor),
                         ('token_type_ids', torch.LongTensor)],
@@ -59,4 +50,3 @@ class SequenceClassificationModel(Model):
                     }
         """
         return self.model.predict(input)
-        ...

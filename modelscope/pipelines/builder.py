@@ -24,8 +24,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_generation:
     ('person-image-cartoon',
      'damo/cv_unet_person-image-cartoon_compound-models'),
-    Tasks.fill_mask:
-    ('sbert')
+    Tasks.fill_mask: ('sbert', 'damo/nlp_structbert_fill-mask_chinese-large'),
+    Tasks.fill_mask: ('veco', 'damo/nlp_veco_fill-mask_large')
 }
 
 

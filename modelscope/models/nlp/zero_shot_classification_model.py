@@ -1,6 +1,7 @@
 from typing import Any, Dict
-import torch
+
 import numpy as np
+import torch
 
 from modelscope.utils.constant import Tasks
 from ..base import Model
@@ -10,7 +11,8 @@ __all__ = ['BertForZeroShotClassification']
 
 
 @MODELS.register_module(
-    Tasks.zero_shot_classification, module_name=r'bert-zero-shot-classification')
+    Tasks.zero_shot_classification,
+    module_name=r'bert-zero-shot-classification')
 class BertForZeroShotClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -40,6 +42,6 @@ class BertForZeroShotClassification(Model):
         """
         with torch.no_grad():
             outputs = self.model(**input)
-        logits = outputs["logits"].numpy()
+        logits = outputs['logits'].numpy()
         res = {'logits': logits}
         return res

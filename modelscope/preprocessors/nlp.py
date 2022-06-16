@@ -12,8 +12,7 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor',
-    "ZeroShotClassificationPreprocessor"
+    'TextGenerationPreprocessor', 'ZeroShotClassificationPreprocessor'
 ]
 
 
@@ -190,8 +189,8 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
         from sofa import SbertTokenizer
         self.model_dir: str = model_dir
         self.sequence_length = kwargs.pop('sequence_length', 512)
-        self.candidate_labels = kwargs.pop("candidate_labels")
-        self.hypothesis_template = kwargs.pop('hypothesis_template', "{}")
+        self.candidate_labels = kwargs.pop('candidate_labels')
+        self.hypothesis_template = kwargs.pop('hypothesis_template', '{}')
         self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
 
     @type_assert(object, str)
@@ -206,7 +205,8 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-        pairs = [[data, self.hypothesis_template.format(label)] for label in self.candidate_labels]
+        pairs = [[data, self.hypothesis_template.format(label)]
+                 for label in self.candidate_labels]
 
         features = self.tokenizer(
             pairs,
@@ -214,7 +214,5 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
             truncation=True,
             max_length=self.sequence_length,
             return_tensors='pt',
-            truncation_strategy='only_first'
-        )
+            truncation_strategy='only_first')
         return features
-

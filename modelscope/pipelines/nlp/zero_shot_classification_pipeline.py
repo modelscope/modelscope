@@ -4,6 +4,7 @@ from typing import Any, Dict, Union
 
 import json
 import numpy as np
+from scipy.special import softmax
 
 from modelscope.models.nlp import BertForZeroShotClassification
 from modelscope.preprocessors import ZeroShotClassificationPreprocessor
@@ -11,7 +12,6 @@ from modelscope.utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
-from scipy.special import softmax
 
 __all__ = ['ZeroShotClassificationPipeline']
 
@@ -39,16 +39,15 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         self.entailment_id = 0
         self.contradiction_id = 2
-        self.candidate_labels = kwargs.pop("candidate_labels")
-        self.hypothesis_template = kwargs.pop('hypothesis_template', "{}")
+        self.candidate_labels = kwargs.pop('candidate_labels')
+        self.hypothesis_template = kwargs.pop('hypothesis_template', '{}')
         self.multi_label = kwargs.pop('multi_label', False)
 
         if preprocessor is None:
             preprocessor = ZeroShotClassificationPreprocessor(
                 sc_model.model_dir,
                 candidate_labels=self.candidate_labels,
-                hypothesis_template=self.hypothesis_template
-            )
+                hypothesis_template=self.hypothesis_template)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -72,7 +71,7 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         reversed_index = list(reversed(scores.argsort()))
         result = {
-            "labels": [self.candidate_labels[i] for i in reversed_index],
-            "scores": [scores[i].item() for i in reversed_index],
+            'labels': [self.candidate_labels[i] for i in reversed_index],
+            'scores': [scores[i].item() for i in reversed_index],
         }
         return result

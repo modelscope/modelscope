@@ -12,8 +12,7 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor',
-    'FillMaskPreprocessor'
+    'TextGenerationPreprocessor', 'FillMaskPreprocessor'
 ]
 
 
@@ -173,8 +172,7 @@ class TextGenerationPreprocessor(Preprocessor):
         return {k: torch.tensor(v) for k, v in rst.items()}
 
 
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'sbert')
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'sbert')
 class FillMaskPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -190,7 +188,8 @@ class FillMaskPreprocessor(Preprocessor):
                                               'first_sequence')
         self.sequence_length = kwargs.pop('sequence_length', 128)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_dir, use_fast=False)
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:
@@ -205,15 +204,11 @@ class FillMaskPreprocessor(Preprocessor):
             Dict[str, Any]: the preprocessed data
         """
         import torch
-        
+
         new_data = {self.first_sequence: data}
         # preprocess the data for the model input
 
-        rst = {
-            'input_ids': [],
-            'attention_mask': [],
-            'token_type_ids': []
-        }
+        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
 
         max_seq_length = self.sequence_length
 
@@ -230,4 +225,3 @@ class FillMaskPreprocessor(Preprocessor):
         rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
-

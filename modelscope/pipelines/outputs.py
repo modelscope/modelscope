@@ -69,6 +69,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_generation: ['text'],
 
+    # fill mask result for single sample
+    # {
+    #   "text": "this is the text which masks filled by model."
+    # }
+    Tasks.fill_mask: ['text'],
+
     # ============ audio tasks ===================
 
     # ============ multi-modal tasks ===================

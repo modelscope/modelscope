@@ -23,82 +23,110 @@ class FillMaskTest(unittest.TestCase):
 
     ori_texts = {
         'zh':
-        f'段誉轻挥折扇，摇了摇头，说道：“你师父是你的师父，你师父可不是我的师父。'
-        f'你师父差得动你，你师父可差不动我。',
+        '段誉轻挥折扇，摇了摇头，说道：“你师父是你的师父，你师父可不是我的师父。'
+        '你师父差得动你，你师父可差不动我。',
         'en':
-        f'Everything in what you call reality is really just a r'
-        f'eflection of your consciousness. Your whole universe is'
-        f'just a mirror reflection of your story.'
+        'Everything in what you call reality is really just a reflection of your '
+        'consciousness. Your whole universe is just a mirror reflection of your story.'
     }
 
     test_inputs = {
         'zh':
-        f'段誉轻[MASK]折扇，摇了摇[MASK]，[MASK]道：“你师父是你的[MASK][MASK]'
-        f'，你师父可不是[MASK]的师父。你师父差得动你，你师父可[MASK]不动我。',
+        '段誉轻[MASK]折扇，摇了摇[MASK]，[MASK]道：“你师父是你的[MASK][MASK]，你'
+        '师父可不是[MASK]的师父。你师父差得动你，你师父可[MASK]不动我。',
         'en':
-        f'Everything in [MASK] you call reality is really [MASK] a '
-        f'reflection of your [MASK]. Your whole universe is just a '
-        f'mirror [MASK] of your story.'
+        'Everything in [MASK] you call reality is really [MASK] a reflection of your '
+        '[MASK]. Your [MASK] universe is just a mirror [MASK] of your story.'
     }
 
-    #def test_run(self):
-    #    # sbert
-    #    for language in ["zh", "en"]:
-    #        model_dir = snapshot_download(self.model_id_sbert[language])
-    #        preprocessor = FillMaskPreprocessor(
-    #            model_dir, first_sequence='sentence', second_sequence=None)
-    #        model = MaskedLanguageModel(model_dir)
-    #        pipeline1 = FillMaskPipeline(model, preprocessor)
-    #        pipeline2 = pipeline(
-    #            Tasks.fill_mask, model=model, preprocessor=preprocessor)
-    #        ori_text = self.ori_texts[language]
-    #        test_input = self.test_inputs[language]
-    #        print(
-    #            f'ori_text: {ori_text}\ninput: {test_input}\npipeline1: '
-    #            f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}'
-    #        )
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_by_direct_model_download(self):
+        # sbert
+        for language in ['zh', 'en']:
+            model_dir = snapshot_download(self.model_id_sbert[language])
+            preprocessor = FillMaskPreprocessor(
+                model_dir, first_sequence='sentence', second_sequence=None)
+            model = MaskedLanguageModel(model_dir)
+            pipeline1 = FillMaskPipeline(model, preprocessor)
+            pipeline2 = pipeline(
+                Tasks.fill_mask, model=model, preprocessor=preprocessor)
+            ori_text = self.ori_texts[language]
+            test_input = self.test_inputs[language]
+            print(
+                f'\nori_text: {ori_text}\ninput: {test_input}\npipeline1: '
+                f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n'
+            )
 
-    ## veco
-    #model_dir = snapshot_download(self.model_id_veco)
-    #preprocessor = FillMaskPreprocessor(
-    #    model_dir, first_sequence='sentence', second_sequence=None)
-    #model = MaskedLanguageModel(model_dir)
-    #pipeline1 = FillMaskPipeline(model, preprocessor)
-    #pipeline2 = pipeline(
-    #    Tasks.fill_mask, model=model, preprocessor=preprocessor)
-    #for language in ["zh", "en"]:
-    #    ori_text = self.ori_texts[language]
-    #    test_input = self.test_inputs["zh"].replace("[MASK]", "<mask>")
-    #    print(
-    #        f'ori_text: {ori_text}\ninput: {test_input}\npipeline1: '
-    #        f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}'
+        # veco
+        model_dir = snapshot_download(self.model_id_veco)
+        preprocessor = FillMaskPreprocessor(
+            model_dir, first_sequence='sentence', second_sequence=None)
+        model = MaskedLanguageModel(model_dir)
+        pipeline1 = FillMaskPipeline(model, preprocessor)
+        pipeline2 = pipeline(
+            Tasks.fill_mask, model=model, preprocessor=preprocessor)
+        for language in ['zh', 'en']:
+            ori_text = self.ori_texts[language]
+            test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
+            print(
+                f'\nori_text: {ori_text}\ninput: {test_input}\npipeline1: '
+                f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n'
+            )
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        for language in ['zh']:
+        # sbert
+        for language in ['zh', 'en']:
             print(self.model_id_sbert[language])
             model = Model.from_pretrained(self.model_id_sbert[language])
-            print('model', model.model_dir)
             preprocessor = FillMaskPreprocessor(
                 model.model_dir,
                 first_sequence='sentence',
                 second_sequence=None)
             pipeline_ins = pipeline(
                 task=Tasks.fill_mask, model=model, preprocessor=preprocessor)
-            print(pipeline_ins(self.test_inputs[language]))
+            print(
+                f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+                f'{pipeline_ins(self.test_inputs[language])}\n')
 
-    #def test_run_with_model_name(self):
-    ## veco
-    #pipeline_ins = pipeline(
-    #    task=Tasks.fill_mask, model=self.model_id_veco)
-    #for language in ["zh", "en"]:
-    #    input_ = self.test_inputs[language].replace("[MASK]", "<mask>")
-    #    print(pipeline_ins(input_))
+        # veco
+        model = Model.from_pretrained(self.model_id_veco)
+        preprocessor = FillMaskPreprocessor(
+            model.model_dir, first_sequence='sentence', second_sequence=None)
+        pipeline_ins = pipeline(
+            Tasks.fill_mask, model=model, preprocessor=preprocessor)
+        for language in ['zh', 'en']:
+            ori_text = self.ori_texts[language]
+            test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
+            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                  f'{pipeline_ins(test_input)}\n')
 
-    ## structBert
-    #for language in ["zh"]:
-    #    pipeline_ins = pipeline(
-    #        task=Tasks.fill_mask, model=self.model_id_sbert[language])
-    #    print(pipeline_ins(self_test_inputs[language]))
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_model_name(self):
+        # veco
+        pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_veco)
+        for language in ['zh', 'en']:
+            ori_text = self.ori_texts[language]
+            test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
+            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                  f'{pipeline_ins(test_input)}\n')
+
+        # structBert
+        language = 'zh'
+        pipeline_ins = pipeline(
+            task=Tasks.fill_mask, model=self.model_id_sbert[language])
+        print(
+            f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+            f'{pipeline_ins(self.test_inputs[language])}\n')
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_default_model(self):
+        pipeline_ins = pipeline(task=Tasks.fill_mask)
+        language = 'en'
+        ori_text = self.ori_texts[language]
+        test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
+        print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+              f'{pipeline_ins(test_input)}\n')
 
 
 if __name__ == '__main__':

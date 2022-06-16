@@ -24,6 +24,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_generation:
     ('person-image-cartoon',
      'damo/cv_unet_person-image-cartoon_compound-models'),
+    Tasks.fill_mask:
+    ('sbert')
 }
 
 

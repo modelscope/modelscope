@@ -42,7 +42,7 @@ class Tasks(object):
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'
     sentence_similarity = 'sentence-similarity'
-    fill_mask = 'fill-mask '
+    fill_mask = 'fill-mask'
     summarization = 'summarization'
     question_answering = 'question-answering'
 

@@ -12,7 +12,8 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor'
+    'TextGenerationPreprocessor',
+    'FillMaskPreprocessor'
 ]
 
 
@@ -169,5 +170,64 @@ class TextGenerationPreprocessor(Preprocessor):
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
         rst['token_type_ids'].append(feature['token_type_ids'])
+        return {k: torch.tensor(v) for k, v in rst.items()}
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=r'sbert')
+class FillMaskPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+        from sofa.utils.backend import AutoTokenizer
+        self.model_dir = model_dir
+        self.first_sequence: str = kwargs.pop('first_sequence',
+                                              'first_sequence')
+        self.sequence_length = kwargs.pop('sequence_length', 128)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        import torch
+        
+        new_data = {self.first_sequence: data}
+        # preprocess the data for the model input
+
+        rst = {
+            'input_ids': [],
+            'attention_mask': [],
+            'token_type_ids': []
+        }
+
+        max_seq_length = self.sequence_length
+
+        text_a = new_data[self.first_sequence]
+        feature = self.tokenizer(
+            text_a,
+            padding='max_length',
+            truncation=True,
+            max_length=max_seq_length,
+            return_token_type_ids=True)
+
+        rst['input_ids'].append(feature['input_ids'])
+        rst['attention_mask'].append(feature['attention_mask'])
+        rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
+

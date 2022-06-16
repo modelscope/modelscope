@@ -15,7 +15,7 @@ from modelscope.utils.logger import get_logger
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-Input = Union[str, PyDataset, 'PIL.Image.Image', 'numpy.ndarray']
+Input = Union[str, PyDataset, Dict, 'PIL.Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
 output_keys = [

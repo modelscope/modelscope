@@ -1,7 +1,13 @@
 all_domains = [
     'restaurant', 'hotel', 'attraction', 'train', 'taxi', 'police', 'hospital'
 ]
+all_domains_with_bracket = ['[{}]'.format(item) for item in all_domains]
 db_domains = ['restaurant', 'hotel', 'attraction', 'train']
+placeholder_tokens = [
+    '<go_r>', '<go_b>', '<go_a>', '<go_d>', '<eos_u>', '<eos_r>', '<eos_b>',
+    '<eos_a>', '<eos_d>', '<eos_q>', '<sos_u>', '<sos_r>', '<sos_b>',
+    '<sos_a>', '<sos_d>', '<sos_q>'
+]
 
 normlize_slot_names = {
     'car type': 'car',

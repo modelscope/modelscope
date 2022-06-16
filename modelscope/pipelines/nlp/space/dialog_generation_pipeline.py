@@ -24,6 +24,7 @@ class DialogGenerationPipeline(Pipeline):
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model = model
+        self.preprocessor = preprocessor
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
         """process the prediction results
@@ -34,17 +35,12 @@ class DialogGenerationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
+        sys_rsp = self.preprocessor.text_field.tokenizer.convert_ids_to_tokens(
+            inputs['resp'])
+        assert len(sys_rsp) > 2
+        sys_rsp = sys_rsp[1:len(sys_rsp) - 1]
+        # sys_rsp = self.preprocessor.text_field.tokenizer.
 
-        vocab_size = len(self.tokenizer.vocab)
-        pred_list = inputs['predictions']
-        pred_ids = pred_list[0][0].cpu().numpy().tolist()
-        for j in range(len(pred_ids)):
-            if pred_ids[j] >= vocab_size:
-                pred_ids[j] = 100
-        pred = self.tokenizer.convert_ids_to_tokens(pred_ids)
-        pred_string = ''.join(pred).replace(
-            '##',
-            '').split('[SEP]')[0].replace('[CLS]',
-                                          '').replace('[SEP]',
-                                                      '').replace('[UNK]', '')
-        return {'pred_string': pred_string}
+        inputs['sys'] = sys_rsp
+
+        return inputs

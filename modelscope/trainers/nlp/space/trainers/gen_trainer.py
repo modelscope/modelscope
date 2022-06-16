@@ -13,6 +13,7 @@ import torch
 from tqdm import tqdm
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
+import modelscope.utils.nlp.space.ontology as ontology
 from ..metrics.metrics_tracker import MetricsTracker
 
 
@@ -668,10 +669,45 @@ class MultiWOZTrainer(Trainer):
 
         return
 
-    def _get_turn_doamin(self, constraint_ids, bspn_gen_ids):
-        # constraint_token = self.tokenizer.convert_ids_to_tokens(constraint_ids)
-        # bspn_token = self.tokenizer.convert_ids_to_tokens(bspn_gen_ids)
-        return []
+    def _get_turn_domain(self, old_pv_turn, bspn_gen_ids, first_turn):
+
+        def _get_slots(constraint):
+            domain_name = ''
+            slots = {}
+            for item in constraint:
+                if item in ontology.placeholder_tokens:
+                    continue
+                if item in ontology.all_domains_with_bracket:
+                    domain_name = item
+                    slots[domain_name] = set()
+                else:
+                    assert domain_name in ontology.all_domains_with_bracket
+                    slots[domain_name].add(item)
+            return slots
+
+        turn_domain = []
+        if first_turn and len(bspn_gen_ids) == 0:
+            turn_domain = ['[general]']
+            return turn_domain
+
+        bspn_token = self.tokenizer.convert_ids_to_tokens(bspn_gen_ids)
+        turn_slots = _get_slots(bspn_token)
+        if first_turn:
+            return list(turn_slots.keys())
+
+        assert 'bspn' in old_pv_turn
+        pv_bspn_token = self.tokenizer.convert_ids_to_tokens(
+            old_pv_turn['bspn'])
+        pv_turn_slots = _get_slots(pv_bspn_token)
+        for domain, value in turn_slots.items():
+            pv_value = pv_turn_slots[
+                domain] if domain in pv_turn_slots else set()
+            if len(value - pv_value) > 0 or len(pv_value - value):
+                turn_domain.append(domain)
+        if len(turn_domain) == 0:
+            turn_domain = list(turn_slots.keys())
+
+        return turn_domain
 
     def forward(self, turn, old_pv_turn):
         with torch.no_grad():
@@ -692,14 +728,11 @@ class MultiWOZTrainer(Trainer):
             generated_bs = outputs[0].cpu().numpy().tolist()
             bspn_gen = self.decode_generated_bspn(generated_bs)
 
-            turn_domain = self._get_turn_doamin(old_pv_turn['constraint_ids'],
-                                                bspn_gen)
-            print(turn_domain)
+            turn_domain = self._get_turn_domain(old_pv_turn, bspn_gen,
+                                                first_turn)
 
             db_result = self.reader.bspan_to_DBpointer(
                 self.tokenizer.decode(bspn_gen), turn_domain)
-            print(db_result)
-            assert len(turn['db']) == 3
             assert isinstance(db_result, str)
             db = \
                 [self.reader.sos_db_id] + \
@@ -718,14 +751,11 @@ class MultiWOZTrainer(Trainer):
             generated_ar = outputs_db[0].cpu().numpy().tolist()
             decoded = self.decode_generated_act_resp(generated_ar)
             decoded['bspn'] = bspn_gen
-            print(decoded)
-            print(self.tokenizer.convert_ids_to_tokens(decoded['resp']))
 
-            pv_turn['labels'] = None
+            pv_turn['labels'] = inputs['labels']
             pv_turn['resp'] = decoded['resp']
             pv_turn['bspn'] = decoded['bspn']
-            pv_turn['db'] = None
-            pv_turn['aspn'] = None
-            pv_turn['constraint_ids'] = bspn_gen
+            pv_turn['db'] = db
+            pv_turn['aspn'] = decoded['aspn']
 
         return pv_turn

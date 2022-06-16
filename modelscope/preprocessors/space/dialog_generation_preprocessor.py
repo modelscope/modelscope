@@ -32,8 +32,8 @@ class DialogGenerationPreprocessor(Preprocessor):
         self.text_field = MultiWOZBPETextField(
             self.model_dir, config=self.config)
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, Dict)
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -45,6 +45,7 @@ class DialogGenerationPreprocessor(Preprocessor):
             Dict[str, Any]: the preprocessed data
         """
 
-        idx = self.text_field.get_ids(data)
+        user_ids = self.text_field.get_ids(data['user_input'])
+        data['user'] = user_ids
 
-        return {'user_idx': idx}
+        return data

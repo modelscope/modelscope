@@ -4,16 +4,17 @@ import os.path as osp
 import tempfile
 import unittest
 
+from maas_hub.snapshot_download import snapshot_download
+
+from modelscope.models import Model
 from modelscope.models.nlp import DialogGenerationModel
 from modelscope.pipelines import DialogGenerationPipeline, pipeline
 from modelscope.preprocessors import DialogGenerationPreprocessor
-
-
-def merge(info, result):
-    return info
+from modelscope.utils.constant import Tasks
 
 
 class DialogGenerationTest(unittest.TestCase):
+    model_id = 'damo/nlp_space_dialog-generation'
     test_case = {
         'sng0073': {
             'goal': {
@@ -91,30 +92,58 @@ class DialogGenerationTest(unittest.TestCase):
         }
     }
 
+    @unittest.skip('test with snapshot_download')
     def test_run(self):
 
-        modeldir = '/Users/yangliu/Desktop/space-dialog-generation'
+        cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-generation'
+        # cache_path = snapshot_download(self.model_id)
 
-        preprocessor = DialogGenerationPreprocessor(model_dir=modeldir)
+        preprocessor = DialogGenerationPreprocessor(model_dir=cache_path)
         model = DialogGenerationModel(
-            model_dir=modeldir,
+            model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)
-        print(model.forward(None))
-        # pipeline = DialogGenerationPipeline(
-        #     model=model, preprocessor=preprocessor)
+        pipelines = [
+            DialogGenerationPipeline(model=model, preprocessor=preprocessor),
+            pipeline(
+                task=Tasks.dialog_generation,
+                model=model,
+                preprocessor=preprocessor)
+        ]
 
-        # history_dialog_info = {}
-        # for step, item in enumerate(test_case['sng0073']['log']):
-        #     user_question = item['user']
-        #     print('user: {}'.format(user_question))
-        #
-        #     # history_dialog_info = merge(history_dialog_info,
-        #     #                             result) if step > 0 else {}
-        #     result = pipeline(user_question, history=history_dialog_info)
-        #     #
-        #     # print('sys : {}'.format(result['pred_answer']))
-        print('test')
+        result = {}
+        for step, item in enumerate(self.test_case['sng0073']['log']):
+            user = item['user']
+            print('user: {}'.format(user))
+
+            result = pipelines[step % 2]({
+                'user_input': user,
+                'history': result
+            })
+            print('sys : {}'.format(result['sys']))
+
+    def test_run_with_model_from_modelhub(self):
+        model = Model.from_pretrained(self.model_id)
+        preprocessor = DialogGenerationPreprocessor(model_dir=model.model_dir)
+
+        pipelines = [
+            DialogGenerationPipeline(model=model, preprocessor=preprocessor),
+            pipeline(
+                task=Tasks.dialog_generation,
+                model=model,
+                preprocessor=preprocessor)
+        ]
+
+        result = {}
+        for step, item in enumerate(self.test_case['sng0073']['log']):
+            user = item['user']
+            print('user: {}'.format(user))
+
+            result = pipelines[step % 2]({
+                'user_input': user,
+                'history': result
+            })
+            print('sys : {}'.format(result['sys']))
 
 
 if __name__ == '__main__':

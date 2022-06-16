@@ -26,8 +26,8 @@ def rboxes_to_polygons(rboxes):
 
 
 def cal_width(box):
-    return (point_dist(box[0], box[1], box[2], box[3]) +
-            point_dist(box[4], box[5], box[6], box[7])) / 2
+    return (point_dist(box[0], box[1], box[2], box[3])
+            + point_dist(box[4], box[5], box[6], box[7])) / 2
 
 
 def point_dist(x1, y1, x2, y2):
@@ -60,8 +60,8 @@ def nms_python(boxes):
                 score_b = b[8]
                 rbox_a = polygon2rbox(a[:8])
                 rbox_b = polygon2rbox(b[:8])
-                if point_in_rbox(rbox_a[:2], rbox_b) or point_in_rbox(rbox_b[:2],
-                                                                      rbox_a):
+                if point_in_rbox(rbox_a[:2], rbox_b) or point_in_rbox(
+                        rbox_b[:2], rbox_a):
                     if score_a > score_b:
                         nms_flag[j] = False
     boxes_nms = []
@@ -77,8 +77,8 @@ def point_in_rbox(c, rbox):
     w, h = rbox[2], rbox[3]
     theta = rbox[4]
     dist_x = np.abs((cx1 - cx0) * np.cos(theta) + (cy1 - cy0) * np.sin(theta))
-    dist_y = np.abs((cx1 - cx0) * (-1.0) * np.sin(theta) + (cy1 -
-                                                            cy0) * np.cos(theta))
+    dist_y = np.abs((cx1 - cx0) * (-1.0) * np.sin(theta)
+                    + (cy1 - cy0) * np.cos(theta))
     return ((dist_x < w / 2.0) and (dist_y < h / 2.0))
 
 
@@ -87,8 +87,8 @@ def polygon2rbox(polygon):
     y1, y2, y3, y4 = polygon[1], polygon[3], polygon[5], polygon[7]
     c_x = (x1 + x2 + x3 + x4) / 4
     c_y = (y1 + y2 + y3 + y4) / 4
-    w1 = line_dist(x1, y1, x2, y2)
-    w2 = line_dist(x3, y3, x4, y4)
+    w1 = point_dist(x1, y1, x2, y2)
+    w2 = point_dist(x3, y3, x4, y4)
     h1 = point_line_dist(c_x, c_y, x1, y1, x2, y2)
     h2 = point_line_dist(c_x, c_y, x3, y3, x4, y4)
     h = h1 + h2

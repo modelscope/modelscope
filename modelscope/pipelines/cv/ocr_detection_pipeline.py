@@ -1,5 +1,6 @@
 import math
 import os
+import os.path as osp
 import sys
 from typing import Any, Dict, List, Tuple, Union
 
@@ -9,13 +10,13 @@ import PIL
 import tensorflow as tf
 import tf_slim as slim
 
-from maas_lib.pipelines.base import Input
-from maas_lib.preprocessors import load_image
-from maas_lib.utils.constant import Tasks
-from maas_lib.utils.logger import get_logger
+from modelscope.pipelines.base import Input
+from modelscope.preprocessors import load_image
+from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
-from .ocr_utils import lanms, model_resnet_mutex_v4_linewithchar, ops, utils
+from .ocr_utils import model_resnet_mutex_v4_linewithchar, ops, utils
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
@@ -32,11 +33,14 @@ OFFSET_VARIANCE = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 @PIPELINES.register_module(
     Tasks.ocr_detection, module_name=Tasks.ocr_detection)
-class OCRDetection(Pipeline):
+class OCRDetectionPipeline(Pipeline):
 
-    def __init__(self, model_path: str):
+    def __init__(self, model: str):
         super().__init__()
-
+        # print("self.model: ", self.model)
+        model_path = osp.join(
+            osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
+            'checkpoint-80000')
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         self._session = tf.Session(config=config)
@@ -164,7 +168,7 @@ class OCRDetection(Pipeline):
 
         # nms
         dt_n9 = [o + [utils.cal_width(o)] for o in polygons.tolist()]
-        dt_nms = utils.nms_polygon(dt_n9)
+        dt_nms = utils.nms_python(dt_n9)
         dt_polygons = np.array([o[:8] for o in dt_nms])
 
         # visualize dt_polygons in image

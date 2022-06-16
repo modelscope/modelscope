@@ -5,4 +5,4 @@ from .builder import PREPROCESSORS, build_preprocessor
 from .common import Compose
 from .image import LoadImage, load_image
 from .nlp import *  # noqa F403
-from .nlp import TextGenerationPreprocessor
+from .nlp import TextGenerationPreprocessor, ZeroShotClassificationPreprocessor

@@ -147,3 +147,49 @@ class TextGenerationPreprocessor(Preprocessor):
         rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=r'bert-zero-shot-classification')
+class ZeroShotClassificationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+
+        from sofa import SbertTokenizer
+        self.model_dir: str = model_dir
+        self.sequence_length = kwargs.pop('sequence_length', 512)
+        self.candidate_labels = kwargs.pop("candidate_labels")
+        self.hypothesis_template = kwargs.pop('hypothesis_template', "{}")
+        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        pairs = [[data, self.hypothesis_template.format(label)] for label in self.candidate_labels]
+
+        features = self.tokenizer(
+            pairs,
+            padding=True,
+            truncation=True,
+            max_length=self.sequence_length,
+            return_tensors='pt',
+            truncation_strategy='only_first'
+        )
+        return features
+

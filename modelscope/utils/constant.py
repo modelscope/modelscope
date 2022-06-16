@@ -51,7 +51,7 @@ class Tasks(object):
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
 
-    # multi-media
+    # multi-modal tasks
     image_captioning = 'image-captioning'
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'

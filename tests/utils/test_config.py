@@ -1,11 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
-import os.path as osp
 import tempfile
 import unittest
-from pathlib import Path
 
-from modelscope.fileio import dump, load
 from modelscope.utils.config import Config
 
 obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}

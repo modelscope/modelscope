@@ -12,10 +12,11 @@ from modelscope.pydatasets import PyDataset
 from modelscope.utils.config import Config
 from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.logger import get_logger
+from .outputs import TASK_OUTPUTS
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-Input = Union[str, PyDataset, 'PIL.Image.Image', 'numpy.ndarray']
+Input = Union[str, tuple, PyDataset, 'PIL.Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
 output_keys = [
@@ -106,7 +107,24 @@ class Pipeline(ABC):
         out = self.preprocess(input)
         out = self.forward(out)
         out = self.postprocess(out, **post_kwargs)
+        self._check_output(out)
         return out
+
+    def _check_output(self, input):
+        # this attribute is dynamically attached by registry
+        # when cls is registered in registry using task name
+        task_name = self.group_key
+        if task_name not in TASK_OUTPUTS:
+            logger.warning(f'task {task_name} output keys are missing')
+            return
+        output_keys = TASK_OUTPUTS[task_name]
+        missing_keys = []
+        for k in output_keys:
+            if k not in input:
+                missing_keys.append(k)
+        if len(missing_keys) > 0:
+            raise ValueError(f'expected output keys are {output_keys}, '
+                             f'those {missing_keys} are missing')
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
         """ Provide default implementation based on preprocess_cfg and user can reimplement it
@@ -125,4 +143,14 @@ class Pipeline(ABC):
 
     @abstractmethod
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """ If current pipeline support model reuse, common postprocess
+            code should be write here.
+
+        Args:
+            inputs:  input data
+
+        Return:
+            dict of results:  a dict containing outputs of model, each
+                output should have the standard output name.
+        """
         raise NotImplementedError('postprocess')

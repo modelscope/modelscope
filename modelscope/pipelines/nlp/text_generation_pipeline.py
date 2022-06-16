@@ -56,4 +56,4 @@ class TextGenerationPipeline(Pipeline):
             '').split('[SEP]')[0].replace('[CLS]',
                                           '').replace('[SEP]',
                                                       '').replace('[UNK]', '')
-        return {'pred_string': pred_string}
+        return {'text': pred_string}

@@ -8,13 +8,29 @@
 #       For reference:
 #           https://docs.docker.com/develop/develop-images/build_enhancements/
 
-#ARG BASE_IMAGE=reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04
-#FROM ${BASE_IMAGE} as dev-base
+# ARG BASE_IMAGE=reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04
+# FROM ${BASE_IMAGE} as dev-base
 
-FROM reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04 as dev-base
+# FROM reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04 as dev-base
+FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-devel
+# FROM pytorch/pytorch:1.10.0-cuda11.3-cudnn8-runtime
 # config pip source
 RUN mkdir /root/.pip
 COPY docker/rcfiles/pip.conf.tsinghua  /root/.pip/pip.conf
+COPY docker/rcfiles/sources.list.aliyun /etc/apt/sources.list
+
+# Install essential Ubuntu packages
+RUN apt-get update &&\
+    apt-get install -y software-properties-common \
+    build-essential \
+    git \
+    wget \
+    vim \
+    curl \
+    zip \
+    zlib1g-dev \
+    unzip \
+    pkg-config
 
 # install modelscope and its python env
 WORKDIR /opt/modelscope

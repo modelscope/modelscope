@@ -6,7 +6,8 @@ DOCKER_FULL_NAME          = $(DOCKER_REGISTRY)/$(DOCKER_ORG)/$(DOCKER_IMAGE)
 # CUDA_VERSION              = 11.3
 # CUDNN_VERSION             = 8
 BASE_RUNTIME              = reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04
-BASE_DEVEL                = reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04
+# BASE_DEVEL                = reg.docker.alibaba-inc.com/pai-dlc/pytorch-training:1.10PAI-gpu-py36-cu113-ubuntu18.04
+BASE_DEVEL                = pytorch/pytorch:1.10.0-cuda11.3-cudnn8-devel
 
 
 MODELSCOPE_VERSION           = $(shell git describe --tags --always)

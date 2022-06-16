@@ -3,21 +3,20 @@
 import os.path as osp
 from typing import List, Union
 
-import json
-from maas_hub.file_download import model_file_download
-
 from modelscope.models.base import Model
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import CONFIGFILE, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline
-from .util import is_model_name
 
 PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
-    Tasks.image_matting: ('image-matting', 'damo/image-matting-person'),
+    Tasks.sentence_similarity:
+    ('sbert-base-chinese-sentence-similarity',
+     'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting_damo'),
     Tasks.text_classification:
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
     Tasks.zero_shot_classification:

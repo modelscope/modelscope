@@ -34,13 +34,62 @@ make linter
 ```
 
 ## 2. Test
-### 2.1 Unit test
+
+### 2.1 Test level
+
+There are mainly three test levels:
+
+* level 0: tests for basic interface and function of framework, such as `tests/trainers/test_trainer_base.py`
+* level 1: important functional test which test end2end workflow, such as `tests/pipelines/test_image_matting.py`
+* level 2: scenario tests for all the implemented modules such as model, pipeline in different algorithm filed.
+
+Default test level is 0, which will only run those cases of level 0, you can set test level
+via environment variable `TEST_LEVEL`. For more details, you can refer to [test-doc](https://alidocs.dingtalk.com/i/nodes/mdvQnONayjBJKLXy1Bp38PY2MeXzp5o0?dontjump=true&nav=spaces&navQuery=spaceId%3Dnb9XJNlZxbgrOXyA)
+
+
 ```bash
+# run all tests
+TEST_LEVEL=2 make test
+
+# run important functional tests
+TEST_LEVEL=1 make test
+
+# run core UT and basic functional tests
 make test
 ```
 
-### 2.2 Test data
-TODO
+When writing test cases, you should assign a test level for your test case using
+following code. If left default, the test level will be 0, it will run in each
+test stage.
+
+File test_module.py
+```python
+from modelscope.utils.test_utils import test_level
+
+class ImageCartoonTest(unittest.TestCase):
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_by_direct_model_download(self):
+        pass
+```
+
+### 2.2 Run tests
+
+1. Run your own single test case to test your self-implemented function. You can run your
+test file directly, if it fails to run, pls check if variable `TEST_LEVEL`
+exists in the environment and unset it.
+```bash
+python tests/path/to/your_test.py
+```
+
+2. Remember to run core tests in local environment before start a codereview, by default it will
+only run test cases with level 0.
+```bash
+make tests
+```
+
+3. After you start a code review, ci tests will be triggered which will run test cases with level 1
+
+4. Daily regression tests will run all cases at 0 am each day using master branch.
 
 ## Code Review
 

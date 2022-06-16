@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
-from email.policy import default
 
 from modelscope.utils.logger import get_logger
 
@@ -70,6 +69,7 @@ class Registry(object):
                            f'{self._name}[{group_key}]')
 
         self._modules[group_key][module_name] = module_cls
+        module_cls.group_key = group_key
 
         if module_name in self._modules[default_group]:
             if id(self._modules[default_group][module_name]) == id(module_cls):

@@ -12,7 +12,8 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor'
+    'TextGenerationPreprocessor',
+    "ZeroShotClassificationPreprocessor"
 ]
 
 

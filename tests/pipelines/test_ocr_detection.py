@@ -15,8 +15,6 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
-sys.path.append('/mnt/workspace/ocr-icgn-master/MaaS-lib')
-
 
 class OCRDetectionTest(unittest.TestCase):
 

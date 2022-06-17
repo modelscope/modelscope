@@ -73,7 +73,7 @@ class FillMaskTest(unittest.TestCase):
                 f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n'
             )
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         # sbert
         for language in ['zh', 'en']:
@@ -101,7 +101,7 @@ class FillMaskTest(unittest.TestCase):
             print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
                   f'{pipeline_ins(test_input)}\n')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         # veco
         pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_veco)
@@ -119,7 +119,7 @@ class FillMaskTest(unittest.TestCase):
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.fill_mask)
         language = 'en'

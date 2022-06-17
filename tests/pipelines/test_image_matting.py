@@ -34,16 +34,12 @@ class ImageMattingTest(unittest.TestCase):
                 ofile.write(File.read(model_path))
             img_matting = pipeline(Tasks.image_matting, model=tmp_dir)
 
-            result = img_matting(
-                'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-            )
+            result = img_matting('data/test/images/image_matting.png')
             cv2.imwrite('result.png', result['output_png'])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_dataset(self):
-        input_location = [
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        ]
+        input_location = ['data/test/images/image_matting.png']
         # alternatively:
         # input_location = '/dir/to/images'
 
@@ -58,9 +54,7 @@ class ImageMattingTest(unittest.TestCase):
     def test_run_modelhub(self):
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
 
-        result = img_matting(
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        )
+        result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
@@ -68,9 +62,7 @@ class ImageMattingTest(unittest.TestCase):
     def test_run_modelhub_default_model(self):
         img_matting = pipeline(Tasks.image_matting)
 
-        result = img_matting(
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        )
+        result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 

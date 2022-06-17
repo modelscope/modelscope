@@ -80,8 +80,7 @@ class CustomPipelineTest(unittest.TestCase):
         pipe2 = pipeline(dummy_task)
         self.assertTrue(type(pipe) is type(pipe2))
 
-        img_url = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.' \
-                  'aliyuncs.com/data/test/images/image1.jpg'
+        img_url = 'data/test/images/image1.jpg'
         output = pipe(img_url)
         self.assertEqual(output['filename'], img_url)
         self.assertEqual(output['output_png'].shape, (318, 512, 3))

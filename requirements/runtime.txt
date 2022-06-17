@@ -7,6 +7,7 @@ opencv-python-headless
 Pillow>=6.2.0
 pyyaml
 requests
+scipy
 tokenizers<=0.10.3
 transformers<=4.16.2
 yapf

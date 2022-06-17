@@ -84,6 +84,12 @@ TASK_OUTPUTS = {
 
     # ============ audio tasks ===================
 
+    # audio processed for single file in PCM format
+    # {
+    #   "output_pcm": np.array with shape(samples,) and dtype float32
+    # }
+    Tasks.speech_signal_process: ['output_pcm'],
+
     # ============ multi-modal tasks ===================
 
     # image caption result for single sample

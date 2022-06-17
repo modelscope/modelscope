@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+from .audio import LinearAECAndFbank
 from .base import Preprocessor
 from .builder import PREPROCESSORS, build_preprocessor
 from .common import Compose

@@ -13,7 +13,13 @@ PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
-    Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting_damo'),
+    Tasks.word_segmentation:
+    ('structbert-chinese-word-segmentation',
+     'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.sentence_similarity:
+    ('sbert-base-chinese-sentence-similarity',
+     'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting'),
     Tasks.text_classification:
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
     Tasks.text_generation: ('palm', 'damo/nlp_palm_text-generation_chinese'),

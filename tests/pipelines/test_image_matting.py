@@ -17,7 +17,7 @@ from modelscope.utils.test_utils import test_level
 class ImageMattingTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/cv_unet_image-matting_damo'
+        self.model_id = 'damo/cv_unet_image-matting'
         # switch to False if downloading everytime is not desired
         purge_cache = True
         if purge_cache:

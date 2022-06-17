@@ -20,16 +20,24 @@ class Model(ABC):
         self.model_dir = model_dir
 
     def __call__(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        return self.post_process(self.forward(input))
+        return self.postprocess(self.forward(input))
 
     @abstractmethod
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         pass
 
-    def post_process(self, input: Dict[str, Tensor],
-                     **kwargs) -> Dict[str, Tensor]:
-        # model specific postprocess, implementation is optional
-        # will be called in Pipeline and evaluation loop(in the future)
+    def postprocess(self, input: Dict[str, Tensor],
+                    **kwargs) -> Dict[str, Tensor]:
+        """ Model specific postprocess and convert model output to
+        standard model outputs.
+
+        Args:
+            inputs:  input data
+
+        Return:
+            dict of results:  a dict containing outputs of model, each
+                output should have the standard output name.
+        """
         return input
 
     @classmethod

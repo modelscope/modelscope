@@ -4,7 +4,7 @@ import unittest
 from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models import Model
-from modelscope.models.nlp import PalmForTextGenerationModel
+from modelscope.models.nlp import PalmForTextGeneration
 from modelscope.pipelines import TextGenerationPipeline, pipeline
 from modelscope.preprocessors import TextGenerationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -21,7 +21,7 @@ class TextGenerationTest(unittest.TestCase):
         cache_path = snapshot_download(self.model_id)
         preprocessor = TextGenerationPreprocessor(
             cache_path, first_sequence='sentence', second_sequence=None)
-        model = PalmForTextGenerationModel(
+        model = PalmForTextGeneration(
             cache_path, tokenizer=preprocessor.tokenizer)
         pipeline1 = TextGenerationPipeline(model, preprocessor)
         pipeline2 = pipeline(

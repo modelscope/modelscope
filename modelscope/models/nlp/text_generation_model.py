@@ -4,11 +4,11 @@ from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['PalmForTextGenerationModel']
+__all__ = ['PalmForTextGeneration']
 
 
 @MODELS.register_module(Tasks.text_generation, module_name=r'palm')
-class PalmForTextGenerationModel(Model):
+class PalmForTextGeneration(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the text generation model from the `model_dir` path.

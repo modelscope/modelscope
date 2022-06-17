@@ -42,8 +42,7 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
 class OCRDetectionPipeline(Pipeline):
 
     def __init__(self, model: str):
-        super().__init__()
-        # print("self.model: ", self.model)
+        super().__init__(model=model)
         model_path = osp.join(
             osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
             'checkpoint-80000')

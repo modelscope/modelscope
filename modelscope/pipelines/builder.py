@@ -13,6 +13,9 @@ PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
+    Tasks.word_segmentation:
+    ('structbert-chinese-word-segmentation',
+     'damo/nlp_structbert_word-segmentation_chinese-base'),
     Tasks.sentence_similarity:
     ('sbert-base-chinese-sentence-similarity',
      'damo/nlp_structbert_sentence-similarity_chinese-base'),

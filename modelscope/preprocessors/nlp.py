@@ -12,7 +12,7 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor'
+    'TextGenerationPreprocessor', 'TokenClassifcationPreprocessor'
 ]
 
 
@@ -171,3 +171,51 @@ class TextGenerationPreprocessor(Preprocessor):
         rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=r'bert-token-classification')
+class TokenClassifcationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+
+        from sofa import SbertTokenizer
+        self.model_dir: str = model_dir
+        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        # preprocess the data for the model input
+
+        text = data.replace(' ', '').strip()
+        tokens = []
+        for token in text:
+            token = self.tokenizer.tokenize(token)
+            tokens.extend(token)
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
+        attention_mask = [1] * len(input_ids)
+        token_type_ids = [0] * len(input_ids)
+        return {
+            'text': text,
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'token_type_ids': token_type_ids
+        }

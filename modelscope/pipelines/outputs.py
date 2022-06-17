@@ -69,6 +69,19 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_generation: ['text'],
 
+    # word segmentation result for single sample
+    # {
+    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
+    # }
+    Tasks.word_segmentation: ['output'],
+
+    # sentence similarity result for single sample
+    #   {
+    #       "labels": "1",
+    #       "scores": 0.9
+    #   }
+    Tasks.sentence_similarity: ['scores', 'labels'],
+
     # ============ audio tasks ===================
 
     # ============ multi-modal tasks ===================

@@ -16,10 +16,9 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('weight_init_method', 'xavier',
                            'Weight initialization method')
 
-LIB_NAME = 'seglink'
-
 # constants
 OFFSET_DIM = 6
+RBOX_DIM = 5
 
 N_LOCAL_LINKS = 8
 N_CROSS_LINKS = 4
@@ -556,6 +555,98 @@ def get_combined_polygon(rboxes, resize_size):
     return combined_polygon
 
 
+def combine_segs(segs):
+    segs = np.asarray(segs)
+    assert segs.ndim == 2, 'invalid segs ndim'
+    assert segs.shape[-1] == 6, 'invalid segs shape'
+
+    if len(segs) == 1:
+        cx = segs[0, 0]
+        cy = segs[0, 1]
+        w = segs[0, 2]
+        h = segs[0, 3]
+        theta_sin = segs[0, 4]
+        theta_cos = segs[0, 5]
+        theta = np.arctan2(theta_sin, theta_cos)
+        return np.array([cx, cy, w, h, theta])
+
+    # find the best straight line fitting all center points: y = kx + b
+    cxs = segs[:, 0]
+    cys = segs[:, 1]
+
+    theta_coss = segs[:, 4]
+    theta_sins = segs[:, 5]
+
+    bar_theta = np.arctan2(theta_sins.sum(), theta_coss.sum())
+    k = np.tan(bar_theta)
+    b = np.mean(cys - k * cxs)
+
+    proj_xs = (k * cys + cxs - k * b) / (k**2 + 1)
+    proj_ys = (k * k * cys + k * cxs + b) / (k**2 + 1)
+    proj_points = np.stack((proj_xs, proj_ys), -1)
+
+    # find the max distance
+    max_dist = -1
+    idx1 = -1
+    idx2 = -1
+
+    for i in range(len(proj_points)):
+        point1 = proj_points[i, :]
+        for j in range(i + 1, len(proj_points)):
+            point2 = proj_points[j, :]
+            dist = np.sqrt(np.sum((point1 - point2)**2))
+            if dist > max_dist:
+                idx1 = i
+                idx2 = j
+                max_dist = dist
+    assert idx1 >= 0 and idx2 >= 0
+    # the bbox: bcx, bcy, bw, bh, average_theta
+    seg1 = segs[idx1, :]
+    seg2 = segs[idx2, :]
+    bcx, bcy = (seg1[:2] + seg2[:2]) / 2.0
+    bh = np.mean(segs[:, 3])
+    bw = max_dist + (seg1[2] + seg2[2]) / 2.0
+    return bcx, bcy, bw, bh, bar_theta
+
+
+def combine_segments_batch(segments_batch, group_indices_batch,
+                           segment_counts_batch):
+    batch_size = 1
+    combined_rboxes_batch = []
+    combined_counts_batch = []
+    for image_id in range(batch_size):
+        group_count = segment_counts_batch[image_id]
+        segments = segments_batch[image_id, :, :]
+        group_indices = group_indices_batch[image_id, :]
+        combined_rboxes = []
+        for i in range(group_count):
+            segments_group = segments[np.where(group_indices == i)[0], :]
+            if segments_group.shape[0] > 0:
+                combined_rbox = combine_segs(segments_group)
+                combined_rboxes.append(combined_rbox)
+        combined_rboxes_batch.append(combined_rboxes)
+        combined_counts_batch.append(len(combined_rboxes))
+
+    max_count = np.max(combined_counts_batch)
+    for image_id in range(batch_size):
+        if not combined_counts_batch[image_id] == max_count:
+            combined_rboxes_batch[image_id] = np.vstack(
+                (combined_rboxes_batch[image_id],
+                 np.array((max_count - combined_counts_batch[image_id]) *
+                          [(RBOX_DIM) * [0.0]])))
+
+    return np.asarray(combined_rboxes_batch,
+                      np.float32), np.asarray(combined_counts_batch, np.int32)
+
+
+# combine_segments rewrite in python version
+def combine_segments_python(segments, group_indices, segment_counts):
+    combined_rboxes, combined_counts = tf.py_func(
+        combine_segments_batch, [segments, group_indices, segment_counts],
+        [tf.float32, tf.int32])
+    return combined_rboxes, combined_counts
+
+
 # decode_segments_links rewrite in python version
 def get_coord(offsets, map_size, offsets_defaults):
     if offsets < offsets_defaults[1][0]:
@@ -637,9 +728,9 @@ def get_neighbours(l_idx, x, y, map_size, offsets_defaults):
     return neighbours_offsets
 
 
-def decode_segments_links_(image_size, all_nodes, all_links, all_reg,
-                           anchor_sizes):
-    batch_size = FLAGS.test_batch_size
+def decode_segments_links_python(image_size, all_nodes, all_links, all_reg,
+                                 anchor_sizes):
+    batch_size = 1  # FLAGS.test_batch_size
     # offsets = 12285 #768
     all_nodes_flat = tf.concat(
         [tf.reshape(o, [batch_size, -1, N_SEG_CLASSES]) for o in all_nodes],
@@ -743,11 +834,11 @@ def decode_image(image_node_scores, image_link_scores, image_reg, image_size,
             offsets_default_link += map_size[i][0] * map_size[i][1] * (
                 N_LOCAL_LINKS + N_CROSS_LINKS)
 
-    image_group_indices_all = decode_image_by_mutex(image_node_scores,
-                                                    image_link_scores,
-                                                    FLAGS.node_threshold,
-                                                    FLAGS.link_threshold,
-                                                    map_size, offsets_defaults)
+    image_group_indices_all = decode_image_by_join(image_node_scores,
+                                                   image_link_scores,
+                                                   FLAGS.node_threshold,
+                                                   FLAGS.link_threshold,
+                                                   map_size, offsets_defaults)
     image_group_indices_all -= 1
     image_group_indices = image_group_indices_all[np.where(
         image_group_indices_all >= 0)[0]]
@@ -760,8 +851,8 @@ def decode_image(image_node_scores, image_link_scores, image_reg, image_size,
         encoded_cy = image_reg[offsets, 1]
         encoded_width = image_reg[offsets, 2]
         encoded_height = image_reg[offsets, 3]
-        encoded_theta_sin = image_reg[offsets, 4]
-        encoded_theta_cos = image_reg[offsets, 5]
+        encoded_theta_cos = image_reg[offsets, 4]
+        encoded_theta_sin = image_reg[offsets, 5]
 
         l_idx, x, y = get_coord(offsets, map_size, offsets_defaults)
         rs = anchor_sizes[l_idx]
@@ -770,16 +861,16 @@ def decode_image(image_node_scores, image_link_scores, image_reg, image_size,
         image_segments[i, 1] = encoded_cy * rs + (2**(2 + l_idx)) * (y + 0.5)
         image_segments[i, 2] = np.exp(encoded_width) * rs - eps
         image_segments[i, 3] = np.exp(encoded_height) * rs - eps
-        image_segments[i, 4] = encoded_theta_sin
-        image_segments[i, 5] = encoded_theta_cos
+        image_segments[i, 4] = encoded_theta_cos
+        image_segments[i, 5] = encoded_theta_sin
         # image_segments[i, 6] = image_node_scores[offsets, POS_LABEL]
 
     return image_segments, image_group_indices, image_segments_counts, image_group_indices_all
 
 
-def decode_image_by_join(node_scores, link_scores_raw, node_threshold,
+def decode_image_by_join(node_scores, link_scores, node_threshold,
                          link_threshold, map_size, offsets_defaults):
-    link_scores = get_link8(link_scores_raw, map_size)
+    # link_scores = get_link8(link_scores_raw, map_size)
     node_mask = node_scores[:, POS_LABEL] >= node_threshold
     link_mask = link_scores[:, POS_LABEL] >= link_threshold
     group_mask = np.zeros_like(node_mask, np.int32) - 1
@@ -1041,17 +1132,3 @@ def decode_image_by_mutex(node_scores, link_scores, node_threshold,
     # print(pos_link)
     # print(mut_link)
     return mask
-
-
-oplib = load_oplib(LIB_NAME)
-
-# map C++ operators to python objects
-sample_crop_bbox = oplib.sample_crop_bbox
-# decode_local_rboxes = oplib.decode_local_rboxes
-decode_segments_links = oplib.decode_segments_links
-combine_segments = oplib.combine_segments
-combine_segments_filter = oplib.combine_segments_filter
-clip_rboxes = oplib.clip_rboxes
-polygons_to_rboxes = oplib.polygons_to_rboxes
-detection_mask = oplib.detection_mask
-project_polygons = oplib.project_polygons

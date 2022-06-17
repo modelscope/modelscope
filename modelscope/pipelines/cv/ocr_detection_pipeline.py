@@ -30,6 +30,12 @@ OFFSET_DIM = 6
 WORD_POLYGON_DIM = 8
 OFFSET_VARIANCE = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
+FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_float('node_threshold', 0.4,
+                          'Confidence threshold for nodes')
+tf.app.flags.DEFINE_float('link_threshold', 0.6,
+                          'Confidence threshold for links')
+
 
 @PIPELINES.register_module(
     Tasks.ocr_detection, module_name=Tasks.ocr_detection)
@@ -41,6 +47,7 @@ class OCRDetectionPipeline(Pipeline):
         model_path = osp.join(
             osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
             'checkpoint-80000')
+
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         self._session = tf.Session(config=config)
@@ -66,31 +73,18 @@ class OCRDetectionPipeline(Pipeline):
             reg_maps = tf.multiply(reg_maps, OFFSET_VARIANCE)
 
             cls_prob = tf.nn.softmax(tf.reshape(cls_maps, [-1, 2]))
-            cls_pos_prob = cls_prob[:, model_resnet_mutex_v4_linewithchar.
-                                    POS_LABEL]
-            cls_pos_prob_maps = tf.reshape(cls_pos_prob,
-                                           tf.shape(cls_maps)[:3])
-            node_labels = tf.cast(
-                tf.greater_equal(cls_pos_prob_maps, 0.4), tf.int32)
 
             lnk_prob_pos = tf.nn.softmax(tf.reshape(lnk_maps, [-1, 4])[:, :2])
-            lnk_pos_prob_pos = lnk_prob_pos[:,
-                                            model_resnet_mutex_v4_linewithchar.
-                                            POS_LABEL]
-            lnk_shape = tf.shape(lnk_maps)
-            lnk_pos_prob_maps = tf.reshape(
-                lnk_pos_prob_pos,
-                [lnk_shape[0], lnk_shape[1], lnk_shape[2], -1])
-            link_labels = tf.cast(
-                tf.greater_equal(lnk_pos_prob_maps, 0.6), tf.int32)
+            lnk_prob_mut = tf.nn.softmax(tf.reshape(lnk_maps, [-1, 4])[:, 2:])
+            lnk_prob = tf.concat([lnk_prob_pos, lnk_prob_mut], axis=1)
 
-            all_nodes.append(node_labels)
-            all_links.append(link_labels)
+            all_nodes.append(cls_prob)
+            all_links.append(lnk_prob)
             all_reg.append(reg_maps)
 
         # decode segments and links
         image_size = tf.shape(self.input_images)[1:3]
-        segments, group_indices, segment_counts, _ = ops.decode_segments_links(
+        segments, group_indices, segment_counts, _ = ops.decode_segments_links_python(
             image_size,
             all_nodes,
             all_links,
@@ -98,7 +92,7 @@ class OCRDetectionPipeline(Pipeline):
             anchor_sizes=list(detector.anchor_sizes))
 
         # combine segments
-        combined_rboxes, combined_counts = ops.combine_segments_filter(
+        combined_rboxes, combined_counts = ops.combine_segments_python(
             segments, group_indices, segment_counts)
         self.output['combined_rboxes'] = combined_rboxes
         self.output['combined_counts'] = combined_counts
@@ -136,7 +130,7 @@ class OCRDetectionPipeline(Pipeline):
         orig_size = tf.stack([max(h, w), max(h, w)])
         self.output['orig_size'] = orig_size
         self.output['resize_size'] = resize_size
-        self.output['orig_image'] = tf.convert_to_tensor(img)
+        # self.output['orig_image'] = tf.convert_to_tensor(img)
 
         result = {'img': np.expand_dims(img_pad_resize, axis=0)}
         return result

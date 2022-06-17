@@ -477,8 +477,9 @@ def smooth_l1_loss(offsets, gt_offsets, scope=None):
         diff = tf.abs(offsets - gt_offsets)
         lesser_mask = tf.cast(tf.less(diff, 1.0), tf.float32)
         larger_mask = 1.0 - lesser_mask
-        losses = (0.5 * tf.square(diff)) * lesser_mask + (diff -
-                                                          0.5) * larger_mask
+        losses = (
+            0.5 * tf.square(diff)
+        ) * lesser_mask + (diff - 0.5) * larger_mask
         return tf.reduce_sum(losses, 1)
 
 
@@ -632,8 +633,9 @@ def combine_segments_batch(segments_batch, group_indices_batch,
         if not combined_counts_batch[image_id] == max_count:
             combined_rboxes_batch[image_id] = np.vstack(
                 (combined_rboxes_batch[image_id],
-                 np.array((max_count - combined_counts_batch[image_id]) *
-                          [(RBOX_DIM) * [0.0]])))
+                 np.array((
+                     max_count - combined_counts_batch[image_id]
+                 ) * [(RBOX_DIM) * [0.0]])))
 
     return np.asarray(combined_rboxes_batch,
                       np.float32), np.asarray(combined_counts_batch, np.int32)
@@ -719,8 +721,8 @@ def get_neighbours(l_idx, x, y, map_size, offsets_defaults):
                     map_size[l_idx][1] * y + x) * N_LOCAL_LINKS + link_idx
             else:
                 neighbours_offset_link = offsets_defaults[l_idx][1] + (
-                    map_size[l_idx][1] * y + x) * (N_LOCAL_LINKS +
-                                                   N_CROSS_LINKS) + link_idx
+                    map_size[l_idx][1] * y + x
+                ) * (N_LOCAL_LINKS + N_CROSS_LINKS) + link_idx
             neighbours_offsets.append(
                 [neighbours_offset_node, neighbours_offset_link, link_idx])
         link_idx += 1
@@ -804,8 +806,9 @@ def decode_batch(all_nodes, all_links, all_reg, image_size, anchor_sizes):
         if not batch_segments_counts[image_id] == max_count:
             batch_segments[image_id] = np.vstack(
                 (batch_segments[image_id],
-                 np.array((max_count - batch_segments_counts[image_id]) *
-                          [(OFFSET_DIM) * [0.0]])))
+                 np.array((
+                     max_count - batch_segments_counts[image_id]
+                 ) * [(OFFSET_DIM) * [0.0]])))
             batch_group_indices[image_id] = np.hstack(
                 (batch_group_indices[image_id],
                  np.array(
@@ -1007,8 +1010,9 @@ def decode_image_by_mutex(node_scores, link_scores, node_threshold,
 
     link_mask_th = link_max >= link_threshold
     link_mask = get_link_mask(node_mask, offsets_defaults, link_max)
-    offsets_link_max = np.argsort(-(link_max * link_mask *
-                                    link_mask_th))[:len(offsets_pos_list) * 8]
+    offsets_link_max = np.argsort(-(
+        link_max * link_mask * link_mask_th
+    ))[:len(offsets_pos_list) * 8]
 
     group_mask = np.zeros_like(node_mask, dtype=np.int32) - 1
     mutex_mask = len(node_mask) * [[]]

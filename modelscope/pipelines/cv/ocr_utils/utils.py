@@ -26,13 +26,9 @@ def rboxes_to_polygons(rboxes):
 
 
 def cal_width(box):
-    return (
-        point_dist(
-            box[0], box[1], box[2], box[3]
-        ) + point_dist(
-            box[4], box[5], box[6], box[7]
-        )
-    ) / 2
+    pd1 = point_dist(box[0], box[1], box[2], box[3])
+    pd2 = point_dist(box[4], box[5], box[6], box[7])
+    return (pd1 + pd2) / 2
 
 
 def point_dist(x1, y1, x2, y2):
@@ -82,9 +78,7 @@ def point_in_rbox(c, rbox):
     w, h = rbox[2], rbox[3]
     theta = rbox[4]
     dist_x = np.abs((cx1 - cx0) * np.cos(theta) + (cy1 - cy0) * np.sin(theta))
-    dist_y = np.abs(
-        (cx1 - cx0) * (-1.0) * np.sin(theta) + (cy1 - cy0) * np.cos(theta)
-    )
+    dist_y = np.abs(-(cx1 - cx0) * np.sin(theta) + (cy1 - cy0) * np.cos(theta))
     return ((dist_x < w / 2.0) and (dist_y < h / 2.0))
 
 

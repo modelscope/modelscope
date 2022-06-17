@@ -7,14 +7,14 @@ import unittest
 from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models import Model
-from modelscope.models.nlp import DialogGenerationModel
-from modelscope.pipelines import DialogGenerationPipeline, pipeline
-from modelscope.preprocessors import DialogGenerationPreprocessor
+from modelscope.models.nlp import DialogModelingModel
+from modelscope.pipelines import DialogModelingPipeline, pipeline
+from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
 
 
-class DialogGenerationTest(unittest.TestCase):
-    model_id = 'damo/nlp_space_dialog-generation'
+class DialogModelingTest(unittest.TestCase):
+    model_id = 'damo/nlp_space_dialog-modeling'
     test_case = {
         'sng0073': {
             'goal': {
@@ -92,21 +92,21 @@ class DialogGenerationTest(unittest.TestCase):
         }
     }
 
-    @unittest.skip('test with snapshot_download')
+    # @unittest.skip('test with snapshot_download')
     def test_run(self):
 
-        cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-generation'
-        # cache_path = snapshot_download(self.model_id)
+        # cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-modeling'
+        cache_path = snapshot_download(self.model_id)
 
-        preprocessor = DialogGenerationPreprocessor(model_dir=cache_path)
-        model = DialogGenerationModel(
+        preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
+        model = DialogModelingModel(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)
         pipelines = [
-            DialogGenerationPipeline(model=model, preprocessor=preprocessor),
+            DialogModelingPipeline(model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_generation,
+                task=Tasks.dialog_modeling,
                 model=model,
                 preprocessor=preprocessor)
         ]

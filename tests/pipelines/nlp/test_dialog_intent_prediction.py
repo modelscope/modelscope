@@ -5,13 +5,13 @@ from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models import Model
 from modelscope.models.nlp import DialogIntentModel
-from modelscope.pipelines import DialogIntentPipeline, pipeline
-from modelscope.preprocessors import DialogIntentPreprocessor
+from modelscope.pipelines import DialogIntentPredictionPipeline, pipeline
+from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
 
 
-class DialogGenerationTest(unittest.TestCase):
-    model_id = 'damo/nlp_space_dialog-intent'
+class DialogIntentPredictionTest(unittest.TestCase):
+    model_id = 'damo/nlp_space_dialog-intent-prediction'
     test_case = [
         'How do I locate my card?',
         'I still have not received my new card, I ordered over a week ago.'
@@ -20,16 +20,17 @@ class DialogGenerationTest(unittest.TestCase):
     @unittest.skip('test with snapshot_download')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
-        preprocessor = DialogIntentPreprocessor(model_dir=cache_path)
+        preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
         model = DialogIntentModel(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)
 
         pipelines = [
-            DialogIntentPipeline(model=model, preprocessor=preprocessor),
+            DialogIntentPredictionPipeline(
+                model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_intent,
+                task=Tasks.dialog_intent_prediction,
                 model=model,
                 preprocessor=preprocessor)
         ]
@@ -39,12 +40,14 @@ class DialogGenerationTest(unittest.TestCase):
 
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = DialogIntentPreprocessor(model_dir=model.model_dir)
+        preprocessor = DialogIntentPredictionPreprocessor(
+            model_dir=model.model_dir)
 
         pipelines = [
-            DialogIntentPipeline(model=model, preprocessor=preprocessor),
+            DialogIntentPredictionPipeline(
+                model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_intent,
+                task=Tasks.dialog_intent_prediction,
                 model=model,
                 preprocessor=preprocessor)
         ]

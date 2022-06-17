@@ -1,9 +1,9 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from modelscope.preprocessors.space.fields.intent_field import \
-    IntentBPETextField
-from modelscope.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
+from modelscope.preprocessors.space.fields.gen_field import \
+    MultiWOZBPETextField
+from modelscope.trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Tasks
 from ...base import Model, Tensor
@@ -11,11 +11,11 @@ from ...builder import MODELS
 from .model.generator import Generator
 from .model.model_base import ModelBase
 
-__all__ = ['DialogIntentModel']
+__all__ = ['DialogModelingModel']
 
 
-@MODELS.register_module(Tasks.dialog_intent, module_name=r'space')
-class DialogIntentModel(Model):
+@MODELS.register_module(Tasks.dialog_modeling, module_name=r'space-modeling')
+class DialogModelingModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
@@ -34,8 +34,7 @@ class DialogIntentModel(Model):
                 os.path.join(self.model_dir, 'configuration.json')))
         self.text_field = kwargs.pop(
             'text_field',
-            IntentBPETextField(self.model_dir, config=self.config))
-
+            MultiWOZBPETextField(self.model_dir, config=self.config))
         self.generator = Generator.create(self.config, reader=self.text_field)
         self.model = ModelBase.create(
             model_dir=model_dir,
@@ -51,11 +50,12 @@ class DialogIntentModel(Model):
             array = torch.tensor(array)
             return array.cuda() if self.config.use_gpu else array
 
-        self.trainer = IntentTrainer(
+        self.trainer = MultiWOZTrainer(
             model=self.model,
             to_tensor=to_tensor,
             config=self.config,
-            reader=self.text_field)
+            reader=self.text_field,
+            evaluator=None)
         self.trainer.load()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -73,8 +73,10 @@ class DialogIntentModel(Model):
                         'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
                     }
         """
-        import numpy as np
-        pred = self.trainer.forward(input)
-        pred = np.squeeze(pred[0], 0)
 
-        return {'pred': pred}
+        turn = {'user': input['user']}
+        old_pv_turn = input['history']
+
+        pv_turn = self.trainer.forward(turn=turn, old_pv_turn=old_pv_turn)
+
+        return pv_turn

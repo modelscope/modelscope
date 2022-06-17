@@ -1,9 +1,9 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.gen_field import \
-    MultiWOZBPETextField
-from modelscope.trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
+from modelscope.preprocessors.space.fields.intent_field import \
+    IntentBPETextField
+from modelscope.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Tasks
 from ...base import Model, Tensor
@@ -11,12 +11,12 @@ from ...builder import MODELS
 from .model.generator import Generator
 from .model.model_base import ModelBase
 
-__all__ = ['DialogGenerationModel']
+__all__ = ['DialogIntentModel']
 
 
 @MODELS.register_module(
-    Tasks.dialog_generation, module_name=r'space-generation')
-class DialogGenerationModel(Model):
+    Tasks.dialog_intent_prediction, module_name=r'space-intent')
+class DialogIntentModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
@@ -35,7 +35,8 @@ class DialogGenerationModel(Model):
                 os.path.join(self.model_dir, 'configuration.json')))
         self.text_field = kwargs.pop(
             'text_field',
-            MultiWOZBPETextField(self.model_dir, config=self.config))
+            IntentBPETextField(self.model_dir, config=self.config))
+
         self.generator = Generator.create(self.config, reader=self.text_field)
         self.model = ModelBase.create(
             model_dir=model_dir,
@@ -51,12 +52,11 @@ class DialogGenerationModel(Model):
             array = torch.tensor(array)
             return array.cuda() if self.config.use_gpu else array
 
-        self.trainer = MultiWOZTrainer(
+        self.trainer = IntentTrainer(
             model=self.model,
             to_tensor=to_tensor,
             config=self.config,
-            reader=self.text_field,
-            evaluator=None)
+            reader=self.text_field)
         self.trainer.load()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -74,10 +74,8 @@ class DialogGenerationModel(Model):
                         'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
                     }
         """
+        import numpy as np
+        pred = self.trainer.forward(input)
+        pred = np.squeeze(pred[0], 0)
 
-        turn = {'user': input['user']}
-        old_pv_turn = input['history']
-
-        pv_turn = self.trainer.forward(turn=turn, old_pv_turn=old_pv_turn)
-
-        return pv_turn
+        return {'pred': pred}

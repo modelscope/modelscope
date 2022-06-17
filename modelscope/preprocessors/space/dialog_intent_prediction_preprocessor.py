@@ -1,22 +1,21 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.gen_field import \
-    MultiWOZBPETextField
+from modelscope.preprocessors.space.fields.intent_field import \
+    IntentBPETextField
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields, InputFields
+from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
 
-__all__ = ['DialogGenerationPreprocessor']
+__all__ = ['DialogIntentPredictionPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-generation')
-class DialogGenerationPreprocessor(Preprocessor):
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-intent')
+class DialogIntentPredictionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -29,11 +28,11 @@ class DialogGenerationPreprocessor(Preprocessor):
         self.model_dir: str = model_dir
         self.config = Config.from_file(
             os.path.join(self.model_dir, 'configuration.json'))
-        self.text_field = MultiWOZBPETextField(
+        self.text_field = IntentBPETextField(
             self.model_dir, config=self.config)
 
-    @type_assert(object, Dict)
-    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -44,8 +43,7 @@ class DialogGenerationPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
+        samples = self.text_field.preprocessor([data])
+        samples, _ = self.text_field.collate_fn_multi_turn(samples)
 
-        user_ids = self.text_field.get_ids(data['user_input'])
-        data['user'] = user_ids
-
-        return data
+        return samples

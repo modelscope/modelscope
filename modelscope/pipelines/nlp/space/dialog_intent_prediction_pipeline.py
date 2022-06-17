@@ -1,19 +1,20 @@
 from typing import Any, Dict, Optional
 
 from modelscope.models.nlp import DialogIntentModel
-from modelscope.preprocessors import DialogIntentPreprocessor
+from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
 from ...base import Input, Pipeline
 from ...builder import PIPELINES
 
-__all__ = ['DialogIntentPipeline']
+__all__ = ['DialogIntentPredictionPipeline']
 
 
-@PIPELINES.register_module(Tasks.dialog_intent, module_name=r'space')
-class DialogIntentPipeline(Pipeline):
+@PIPELINES.register_module(
+    Tasks.dialog_intent_prediction, module_name=r'space-intent')
+class DialogIntentPredictionPipeline(Pipeline):
 
     def __init__(self, model: DialogIntentModel,
-                 preprocessor: DialogIntentPreprocessor, **kwargs):
+                 preprocessor: DialogIntentPredictionPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
         Args:

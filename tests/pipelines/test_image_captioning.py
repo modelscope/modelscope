@@ -7,11 +7,12 @@ import unittest
 from modelscope.fileio import File
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class ImageCaptionTest(unittest.TestCase):
 
-    @unittest.skip('skip long test')
+    @unittest.skip('skip before model is restored in model hub')
     def test_run(self):
         model = 'https://ofa-beijing.oss-cn-beijing.aliyuncs.com/checkpoints/caption_large_best_clean.pt'
 
@@ -26,9 +27,7 @@ class ImageCaptionTest(unittest.TestCase):
             img_captioning = pipeline(
                 Tasks.image_captioning, model=ofile.name, bpe_dir=bpe_dir)
 
-            result = img_captioning(
-                'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-            )
+            result = img_captioning('data/test/images/image_matting.png')
             print(result['caption'])
 
 

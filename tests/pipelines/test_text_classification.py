@@ -12,6 +12,7 @@ from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import Hubs, Tasks
 from modelscope.utils.hub import get_model_cache_dir
+from modelscope.utils.test_utils import test_level
 
 
 class SequenceClassificationTest(unittest.TestCase):
@@ -43,6 +44,7 @@ class SequenceClassificationTest(unittest.TestCase):
                 break
             print(r)
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
         model_url = 'https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com' \
                     '/release/easynlp_modelzoo/alibaba-pai/bert-base-sst2.zip'
@@ -67,6 +69,7 @@ class SequenceClassificationTest(unittest.TestCase):
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         print(pipeline2('Hello world!'))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(
@@ -77,6 +80,7 @@ class SequenceClassificationTest(unittest.TestCase):
             preprocessor=preprocessor)
         self.predict(pipeline_ins)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         text_classification = pipeline(
             task=Tasks.text_classification, model=self.model_id)
@@ -85,6 +89,7 @@ class SequenceClassificationTest(unittest.TestCase):
                 'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
         self.printDataset(result)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_default_model(self):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
@@ -92,6 +97,7 @@ class SequenceClassificationTest(unittest.TestCase):
                 'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
         self.printDataset(result)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_dataset(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(

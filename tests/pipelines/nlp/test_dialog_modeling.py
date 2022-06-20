@@ -92,10 +92,9 @@ class DialogModelingTest(unittest.TestCase):
         }
     }
 
-    # @unittest.skip('test with snapshot_download')
+    @unittest.skip('test with snapshot_download')
     def test_run(self):
 
-        # cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-modeling'
         cache_path = snapshot_download(self.model_id)
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
@@ -124,12 +123,12 @@ class DialogModelingTest(unittest.TestCase):
 
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = DialogGenerationPreprocessor(model_dir=model.model_dir)
+        preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)
 
         pipelines = [
-            DialogGenerationPipeline(model=model, preprocessor=preprocessor),
+            DialogModelingPipeline(model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_generation,
+                task=Tasks.dialog_modeling,
                 model=model,
                 preprocessor=preprocessor)
         ]

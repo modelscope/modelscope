@@ -1,4 +1,4 @@
-from .audio import *  # noqa F403
+from .audio import LinearAECPipeline
 from .base import Pipeline
 from .builder import pipeline
 from .cv import *  # noqa F403

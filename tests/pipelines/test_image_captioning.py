@@ -27,9 +27,7 @@ class ImageCaptionTest(unittest.TestCase):
             img_captioning = pipeline(
                 Tasks.image_captioning, model=ofile.name, bpe_dir=bpe_dir)
 
-            result = img_captioning(
-                'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-            )
+            result = img_captioning('data/test/images/image_matting.png')
             print(result['caption'])
 
 

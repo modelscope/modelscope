@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Dict
 
 from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor

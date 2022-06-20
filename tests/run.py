@@ -7,6 +7,12 @@ import sys
 import unittest
 from fnmatch import fnmatch
 
+# NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
+#         A segmentation fault may be raise by pytorch cpp library
+#         if 'import tensorflow' in front of 'import torch'.
+#         Puting a 'import torch' here can bypass this incompatibility.
+import torch
+
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import set_test_level, test_level
 

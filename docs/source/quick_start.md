@@ -25,6 +25,10 @@ ModelScope Library目前支持tensorflow，pytorch两大深度学习框架进行
 * [Pytorch安装指导](https://pytorch.org/get-started/locally/)
 * [Tensorflow安装指导](https://www.tensorflow.org/install/pip)
 
+部分第三方依赖库需要提前安装numpy
+```
+pip install numpy
+```
 
 ## ModelScope library 安装
 

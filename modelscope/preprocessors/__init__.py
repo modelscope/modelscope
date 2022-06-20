@@ -8,3 +8,4 @@ from .image import LoadImage, load_image
 from .nlp import *  # noqa F403
 from .space.dialog_intent_prediction_preprocessor import *  # noqa F403
 from .space.dialog_modeling_preprocessor import *  # noqa F403
+from .text_to_speech import *  # noqa F403

@@ -24,6 +24,7 @@ wheels/
 .installed.cfg
 *.egg
 /package
+/temp
 MANIFEST
 
 # PyInstaller
@@ -123,3 +124,7 @@ replace.sh
 
 # Pytorch
 *.pth
+
+
+# audio
+*.wav

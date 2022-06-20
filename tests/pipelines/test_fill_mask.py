@@ -6,7 +6,7 @@ import unittest
 from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models import Model
-from modelscope.models.nlp import MaskedLanguageModel
+from modelscope.models.nlp import StructBertForMaskedLM, VecoForMaskedLM
 from modelscope.pipelines import FillMaskPipeline, pipeline
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
@@ -39,14 +39,14 @@ class FillMaskTest(unittest.TestCase):
         '[MASK]. Your [MASK] universe is just a mirror [MASK] of your story.'
     }
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         # sbert
         for language in ['zh', 'en']:
             model_dir = snapshot_download(self.model_id_sbert[language])
             preprocessor = FillMaskPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
-            model = MaskedLanguageModel(model_dir)
+            model = StructBertForMaskedLM(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
             pipeline2 = pipeline(
                 Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -61,7 +61,7 @@ class FillMaskTest(unittest.TestCase):
         model_dir = snapshot_download(self.model_id_veco)
         preprocessor = FillMaskPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
-        model = MaskedLanguageModel(model_dir)
+        model = VecoForMaskedLM(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)

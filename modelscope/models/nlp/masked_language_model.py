@@ -6,12 +6,12 @@ from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['MaskedLanguageModel']
+__all__ = [
+    'StructBertForMaskedLM', 'VecoForMaskedLM', 'AliceMindBaseForMaskedLM'
+]
 
 
-@MODELS.register_module(Tasks.fill_mask, module_name=r'sbert')
-@MODELS.register_module(Tasks.fill_mask, module_name=r'veco')
-class MaskedLanguageModel(Model):
+class AliceMindBaseForMaskedLM(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         from sofa.utils.backend import AutoConfig, AutoModelForMaskedLM
@@ -30,15 +30,19 @@ class MaskedLanguageModel(Model):
 
         Returns:
             Dict[str, np.ndarray]: results
-                Example:
-                    {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
-                    }
         """
         rst = self.model(
             input_ids=inputs['input_ids'],
             attention_mask=inputs['attention_mask'],
             token_type_ids=inputs['token_type_ids'])
         return {'logits': rst['logits'], 'input_ids': inputs['input_ids']}
+
+
+@MODELS.register_module(Tasks.fill_mask, module_name=r'sbert')
+class StructBertForMaskedLM(AliceMindBaseForMaskedLM):
+    pass
+
+
+@MODELS.register_module(Tasks.fill_mask, module_name=r'veco')
+class VecoForMaskedLM(AliceMindBaseForMaskedLM):
+    pass

@@ -129,7 +129,6 @@ class OCRDetectionPipeline(Pipeline):
         orig_size = tf.stack([max(h, w), max(h, w)])
         self.output['orig_size'] = orig_size
         self.output['resize_size'] = resize_size
-        # self.output['orig_image'] = tf.convert_to_tensor(img)
 
         result = {'img': np.expand_dims(img_pad_resize, axis=0)}
         return result
@@ -163,12 +162,6 @@ class OCRDetectionPipeline(Pipeline):
         dt_n9 = [o + [utils.cal_width(o)] for o in polygons.tolist()]
         dt_nms = utils.nms_python(dt_n9)
         dt_polygons = np.array([o[:8] for o in dt_nms])
-
-        # visualize dt_polygons in image
-        # image = inputs['orig_image']
-        # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        # image = utils.draw_polygons(image, dt_polygons)
-        # cv2.imwrite('./ocr_detection_visu.jpg', image)
 
         result = {'det_polygons': dt_polygons}
         return result

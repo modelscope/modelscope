@@ -29,17 +29,6 @@ class OCRDetectionTest(unittest.TestCase):
         print('ocr detection results: ')
         print(result)
 
-    @unittest.skip('deprecated, download model from model hub instead')
-    def test_run_by_direct_model_download(self):
-        model_dir = './assets'
-        if not os.path.exists(model_dir):
-            os.system(
-                'wget http://duguang-database.oss-cn-hangzhou-zmf.aliyuncs.com'
-                '/model_zoo/ocr_detection_line_level_v0531/assets.zip')
-            os.system('unzip assets.zip')
-        ocr_detection = pipeline(Tasks.ocr_detection, model=model_dir)
-        self.pipeline_inference(ocr_detection, self.test_image)
-
     @unittest.skip('deprecated')
     def test_run_modelhub(self):
         ocr_detection = pipeline(Tasks.ocr_detection, model=self.model_id)

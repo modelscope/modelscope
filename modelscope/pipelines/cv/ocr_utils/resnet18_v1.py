@@ -1,17 +1,3 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
 """Contains definitions for the original form of Residual Networks.
 The 'v1' residual networks (ResNets) implemented in this module were proposed
 by:
@@ -43,11 +29,7 @@ ResNet-101 for semantic segmentation into 21 classes:
                                                 global_pool=False,
                                                 output_stride=16)
 """
-# from __future__ import absolute_import
-# from __future__ import division
-# from __future__ import print_function
 import tensorflow as tf
-# from tensorflow.contrib import slim
 import tf_slim as slim
 
 from . import resnet_utils
@@ -257,20 +239,7 @@ def resnet_v1(inputs,
                 end_points['pool4'] = end_points['resnet_v1_18/block5/unit_2']
                 end_points['pool5'] = end_points['resnet_v1_18/block6/unit_2']
                 end_points['pool6'] = net
-                # if global_pool:
-                #     # Global average pooling.
-                #     net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
-                # if num_classes is not None:
-                #     net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
-                #                       normalizer_fn=None, scope='logits')
-                # if spatial_squeeze:
-                #     logits = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-                # else:
-                #     logits = net
-                # # Convert end_points_collection into a dictionary of end_points.
-                # end_points = slim.utils.convert_collection_to_dict(end_points_collection)
-                # if num_classes is not None:
-                #     end_points['predictions'] = slim.softmax(logits, scope='predictions')
+
                 return net, end_points
 
 

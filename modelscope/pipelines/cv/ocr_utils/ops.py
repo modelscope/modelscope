@@ -79,10 +79,8 @@ def _nn_variable(name, shape, init_method, collection=None, **kwargs):
     elif init_method == 'xavier':
         if len(shape) == 4:
             initializer = tf.keras.initializers.glorot_normal()
-            # initializer = tf.contrib.layers.xavier_initializer_conv2d()
         else:
             initializer = tf.keras.initializers.glorot_normal()
-            # initializer = tf.contrib.layers.xavier_initializer()
     elif isinstance(init_method, tuple):
         assert (len(init_method) == 2)
         initializer = tf.truncated_normal_initializer(init_method[0],
@@ -142,7 +140,6 @@ def conv2d(x,
         yc = tf.nn.conv2d(
             input_padded, kernel, [1, stride, stride, 1], padding='VALID')
         # add bias
-        # print(^^^^^^^^^^^^^^^^^^^^^^^,bias)
         if bias is True:
             bias = _nn_variable(
                 'bias', [n_out],
@@ -527,13 +524,11 @@ def get_combined_polygon(rboxes, resize_size):
             np.array(utils.rboxes_to_polygons(rboxes)[i, :], np.int32),
             (-1, 1, 2))
         cv2.drawContours(img, [segment], 0, (255, 255, 255), -1)
-    # cv2.imwrite('/home/xixing.tj/visu/visu_mask/full_mask.jpg', img)
     img2gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(img2gray, 127, 255, cv2.THRESH_BINARY)
     im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
                                                 cv2.CHAIN_APPROX_SIMPLE)
     if len(contours) > 0:
-        # print(len(contours))
         cnt = contours[0]
         max_area = cv2.contourArea(cnt)
         # get max_area
@@ -543,12 +538,6 @@ def get_combined_polygon(rboxes, resize_size):
                 max_area = cv2.contourArea(cont)
         rect = cv2.minAreaRect(cnt)
         combined_polygon = np.array(cv2.boxPoints(rect)).reshape(-1)
-        print(combined_polygon)
-        # visu approx polygon
-        # img = np.zeros((image_h, image_w, 3), np.uint8)
-        # cv2.drawContours(img, [approx], 0, (255,255,255), -1)
-        # cv2.imwrite('/home/xixing.tj/visu/visu_mask/approx_mask.jpg', img)
-        # input()
     else:
         combined_polygon = np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -747,11 +736,6 @@ def decode_segments_links_python(image_size, all_nodes, all_links, all_reg,
             all_nodes_flat, all_links_flat, all_reg_flat, image_size,
             tf.constant(anchor_sizes)
         ], [tf.float32, tf.int32, tf.int32, tf.int32])
-    # TO DO: tf.set_shape(xixing.tj)
-    # segments.set_shape([batch_size, offsets, OFFSET_DIM])
-    # group_indices.set_shape([batch_size, offsets])
-    # segment_counts.set_shape([batch_size])
-    # group_indices_all.set_shape([batch_size, offsets])
     return segments, group_indices, segment_counts, group_indices_all
 
 
@@ -772,11 +756,6 @@ def decode_segments_links_train(image_size, all_nodes, all_links, all_reg,
             all_nodes_flat, all_links_flat, all_reg_flat, image_size,
             tf.constant(anchor_sizes)
         ], [tf.float32, tf.int32, tf.int32, tf.int32])
-    # TO DO: tf.set_shape(xixing.tj)
-    # segments.set_shape([batch_size, offsets, OFFSET_DIM])
-    # group_indices.set_shape([batch_size, offsets])
-    # segment_counts.set_shape([batch_size])
-    # group_indices_all.set_shape([batch_size, offsets])
     return segments, group_indices, segment_counts, group_indices_all
 
 
@@ -793,10 +772,6 @@ def decode_batch(all_nodes, all_links, all_reg, image_size, anchor_sizes):
         image_segments, image_group_indices, image_segments_counts, image_group_indices_all = decode_image(
             image_node_scores, image_link_scores, image_reg, image_size,
             anchor_sizes)
-        # print(image_segments.shape)
-        # print(image_group_indices.shape)
-        # print(image_segments_counts)
-        # print(image_group_indices_all.shape)
         batch_segments.append(image_segments)
         batch_group_indices.append(image_group_indices)
         batch_segments_counts.append(image_segments_counts)
@@ -865,20 +840,16 @@ def decode_image(image_node_scores, image_link_scores, image_reg, image_size,
         image_segments[i, 3] = np.exp(encoded_height) * rs - eps
         image_segments[i, 4] = encoded_theta_cos
         image_segments[i, 5] = encoded_theta_sin
-        # image_segments[i, 6] = image_node_scores[offsets, POS_LABEL]
 
     return image_segments, image_group_indices, image_segments_counts, image_group_indices_all
 
 
 def decode_image_by_join(node_scores, link_scores, node_threshold,
                          link_threshold, map_size, offsets_defaults):
-    # link_scores = get_link8(link_scores_raw, map_size)
     node_mask = node_scores[:, POS_LABEL] >= node_threshold
     link_mask = link_scores[:, POS_LABEL] >= link_threshold
     group_mask = np.zeros_like(node_mask, np.int32) - 1
     offsets_pos = np.where(node_mask == 1)[0]
-
-    # print(len(offsets_pos))
 
     def find_parent(point):
         return group_mask[point]
@@ -971,7 +942,6 @@ def get_link_mask(node_mask, offsets_defaults, link_max):
 
 def get_link8(link_scores_raw, map_size):
     # link[i-1] -local- start -16- end -cross- link[i]
-    # print(link_scores_raw.shape)
     link8_mask = np.zeros((link_scores_raw.shape[0]))
     for i in range(N_DET_LAYERS):
         if i == 0:
@@ -997,15 +967,11 @@ def get_link8(link_scores_raw, map_size):
 def decode_image_by_mutex(node_scores, link_scores, node_threshold,
                           link_threshold, map_size, offsets_defaults):
     node_mask = node_scores[:, POS_LABEL] >= node_threshold
-    # link_scores = get_link8(link_scores_raw, map_size)
-    # print(link_scores.shape)
     link_pos = link_scores[:, POS_LABEL]
     link_mut = link_scores[:, MUT_LABEL]
     link_max = np.max(np.vstack((link_pos, link_mut)), axis=0)
-    # link_sum = link_pos + link_mut
 
     offsets_pos_list = np.where(node_mask == 1)[0].tolist()
-    # offsets_link_pos_list = np.where(link_mask == 1)[0].tolist()
 
     link_mask_th = link_max >= link_threshold
     link_mask = get_link_mask(node_mask, offsets_defaults, link_max)
@@ -1121,7 +1087,6 @@ def decode_image_by_mutex(node_scores, link_scores, node_threshold,
                 link_pos_value = link_pos[noffsets[1]]
                 link_mut_value = link_mut[noffsets[1]]
                 node_cls = node_mask[noffsets[0]]
-                # node_score = node_scores[noffsets[0], POS_LABEL]
                 if node_cls and (link_pos_value > link_mut_value):
                     pos_link += 1
                     join(offsets, noffsets[0])
@@ -1130,7 +1095,4 @@ def decode_image_by_mutex(node_scores, link_scores, node_threshold,
                     disjoin(offsets, noffsets[0])
 
     mask = get_all()
-    # print(len(offsets_pos_list))
-    # print(pos_link)
-    # print(mut_link)
     return mask

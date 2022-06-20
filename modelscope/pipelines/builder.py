@@ -22,7 +22,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting'),
     Tasks.text_classification:
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
-    Tasks.text_generation: ('palm', 'damo/nlp_palm_text-generation_chinese'),
+    Tasks.text_generation: ('palm2.0',
+                            'damo/nlp_palm2.0_text-generation_chinese-base'),
     Tasks.image_captioning: ('ofa', None),
     Tasks.image_generation:
     ('person-image-cartoon',

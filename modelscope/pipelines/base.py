@@ -16,7 +16,7 @@ from .outputs import TASK_OUTPUTS
 from .util import is_model_name
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-Input = Union[str, PyDataset, Dict, tuple, 'PIL.Image.Image', 'numpy.ndarray']
+Input = Union[str, tuple, dict, PyDataset, 'PIL.Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
 output_keys = [

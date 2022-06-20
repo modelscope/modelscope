@@ -1,7 +1,5 @@
 from typing import Any, Dict, Optional, Union
 
-import numpy as np
-
 from modelscope.models import Model
 from modelscope.models.nlp import StructBertForTokenClassification
 from modelscope.preprocessors import TokenClassifcationPreprocessor

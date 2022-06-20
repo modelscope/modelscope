@@ -40,7 +40,7 @@ class Tasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
-    dialog_modeling = 'dialog_modeling'
+    dialog_modeling = 'dialog-modeling'
     dialog_intent_prediction = 'dialog-intent-prediction'
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'

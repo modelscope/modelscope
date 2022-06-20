@@ -169,8 +169,8 @@ class MultiWOZVocab(object):
         if include_oov:
             if self._word2idx.get(word, None) is None:
                 raise ValueError(
-                    'Unknown word: %s. Vocabulary should include oovs here.' %
-                    word)
+                    'Unknown word: %s. Vocabulary should include oovs here.'
+                    % word)
             return self._word2idx[word]
         else:
             word = '<unk>' if word not in self._word2idx else word

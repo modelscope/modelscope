@@ -115,17 +115,15 @@ class SequenceClassificationPreprocessor(Preprocessor):
         return rst
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm')
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm2.0')
 class TextGenerationPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
         """preprocess the data using the vocab.txt from the `model_dir` path
 
         Args:
             model_dir (str): model path
         """
-        from sofa import PalmTokenizer
-
         super().__init__(*args, **kwargs)
 
         self.model_dir: str = model_dir
@@ -134,7 +132,7 @@ class TextGenerationPreprocessor(Preprocessor):
         self.second_sequence: str = kwargs.pop('second_sequence',
                                                'second_sequence')
         self.sequence_length: int = kwargs.pop('sequence_length', 128)
-        self.tokenizer = PalmTokenizer.from_pretrained(model_dir)
+        self.tokenizer = tokenizer
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:
@@ -153,7 +151,7 @@ class TextGenerationPreprocessor(Preprocessor):
         new_data = {self.first_sequence: data}
         # preprocess the data for the model input
 
-        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
+        rst = {'input_ids': [], 'attention_mask': []}
 
         max_seq_length = self.sequence_length
 
@@ -168,7 +166,6 @@ class TextGenerationPreprocessor(Preprocessor):
 
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
 

@@ -7,7 +7,7 @@ from ..builder import MODELS
 __all__ = ['PalmForTextGeneration']
 
 
-@MODELS.register_module(Tasks.text_generation, module_name=r'palm')
+@MODELS.register_module(Tasks.text_generation, module_name=r'palm2.0')
 class PalmForTextGeneration(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -18,35 +18,26 @@ class PalmForTextGeneration(Model):
             model_cls (Optional[Any], optional): model loader, if None, use the
                 default loader to load model weights, by default None.
         """
-        from sofa import PalmTokenizer
-
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
 
-        from sofa.models.palm import PalmForConditionalGeneration, TextGenerator
-        tokenizer = kwargs.pop('tokenizer',
-                               PalmTokenizer.from_pretrained(model_dir))
+        from sofa.models.palm_v2 import PalmForConditionalGeneration, Translator
         model = PalmForConditionalGeneration.from_pretrained(model_dir)
-        self.generator = TextGenerator(model, tokenizer)
+        self.tokenizer = model.tokenizer
+        self.generator = Translator(model)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            input (Dict[str, Tensor]): the preprocessed data
 
         Returns:
-            Dict[str, np.ndarray]: results
+            Dict[str, Tensor]: results
                 Example:
                     {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
+                        'predictions': Tensor([[1377, 4959, 2785, 6392...])]), # tokens need to be decode by tokenizer
                     }
         """
 
-        encoder_inputs = [
-            input['input_ids'], input['token_type_ids'],
-            input['attention_mask']
-        ]
-        return self.generator(encoder_inputs)
+        return self.generator(**input)

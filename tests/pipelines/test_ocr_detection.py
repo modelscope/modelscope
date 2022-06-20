@@ -20,19 +20,12 @@ class OCRDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_resnet18_ocr-detection-line-level_damo'
-        self.test_image = \
-            'https://duguang-image-viewer.oss-cn-hangzhou-zmf.aliyuncs.com/' \
-            'xixing.tj/165391027548/TB1bKwlHpXXXXc1XXXXXXXXXXXX_%21%210-item_pic.jpg.jpg'
+        self.test_image = 'data/test/images/ocr_detection.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)
         print('ocr detection results: ')
         print(result)
-
-    @unittest.skip('deprecated')
-    def test_run_modelhub(self):
-        ocr_detection = pipeline(Tasks.ocr_detection, model=self.model_id)
-        self.pipeline_inference(ocr_detection, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub_default_model(self):

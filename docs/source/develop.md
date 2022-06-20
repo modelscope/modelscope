@@ -34,13 +34,111 @@ make linter
 ```
 
 ## 2. Test
-### 2.1 Unit test
+
+### 2.1 Test level
+
+There are mainly three test levels:
+
+* level 0: tests for basic interface and function of framework, such as `tests/trainers/test_trainer_base.py`
+* level 1: important functional test which test end2end workflow, such as `tests/pipelines/test_image_matting.py`
+* level 2: scenario tests for all the implemented modules such as model, pipeline in different algorithm filed.
+
+Default test level is 0, which will only run those cases of level 0, you can set test level
+via environment variable `TEST_LEVEL`. For more details, you can refer to [test-doc](https://alidocs.dingtalk.com/i/nodes/mdvQnONayjBJKLXy1Bp38PY2MeXzp5o0?dontjump=true&nav=spaces&navQuery=spaceId%3Dnb9XJNlZxbgrOXyA)
+
+
 ```bash
+# run all tests
+TEST_LEVEL=2 make test
+
+# run important functional tests
+TEST_LEVEL=1 make test
+
+# run core UT and basic functional tests
 make test
 ```
 
-### 2.2 Test data
-TODO
+When writing test cases, you should assign a test level for your test case using
+following code. If left default, the test level will be 0, it will run in each
+test stage.
+
+File test_module.py
+```python
+from modelscope.utils.test_utils import test_level
+
+class ImageCartoonTest(unittest.TestCase):
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_by_direct_model_download(self):
+        pass
+```
+
+### 2.2 Run tests
+
+1. Run your own single test case to test your self-implemented function. You can run your
+test file directly, if it fails to run, pls check if variable `TEST_LEVEL`
+exists in the environment and unset it.
+```bash
+python tests/path/to/your_test.py
+```
+
+2. Remember to run core tests in local environment before start a codereview, by default it will
+only run test cases with level 0.
+```bash
+make tests
+```
+
+3. After you start a code review, ci tests will be triggered which will run test cases with level 1
+
+4. Daily regression tests will run all cases at 0 am each day using master branch.
+
+### 2.3 Test data storage
+
+As we need a lot of data for testing, including images, videos, models. We use git lfs
+to store those large files.
+
+1. install git-lfs
+for mac
+```bash
+brew install git-lfs
+git lfs install
+```
+
+for centos, please download rpm from git-lfs github release [website](https://github.com/git-lfs/git-lfs/releases/tag/v3.2.0)
+```bash
+wget http://101374-public.oss-cn-hangzhou-zmf.aliyuncs.com/git-lfs-3.2.0-1.el7.x86_64.rpm
+sudo rpm -ivh git-lfs-3.2.0-1.el7.x86_64.rpm
+git lfs install
+```
+
+for ubuntu
+```bash
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt-get install git-lfs
+git lfs install
+```
+
+2. track your data type using git lfs, for example, to track png files
+```bash
+git lfs track "*.png"
+```
+
+3. add your test files to `data/test/` folder, you can make directories if you need.
+```bash
+git add data/test/test.png
+```
+
+4. commit your test data to remote branch
+```bash
+git commit -m "xxx"
+```
+
+To pull data from remote repo, just as the same way you pull git files.
+```bash
+git pull origin branch_name
+```
+
+
+
 
 ## Code Review
 
@@ -92,4 +190,23 @@ TODO
 ## Build pip package
 ```bash
 make whl
+```
+
+## Build docker
+
+build develop docker
+```bash
+sudo make -f Makefile.docker devel-image
+```
+
+push develop docker, passwd pls ask wenmeng.zwm
+```bash
+sudo docker login --username=mass_test@test.aliyunid.com registry.cn-shanghai.aliyuncs.com
+Password:
+sudo make -f Makefile.docker devel-push
+```
+
+To build runtime image, just replace `devel` with `runtime` in the upper commands.
+```bash
+udo make -f Makefile.docker runtime-image runtime-push
 ```

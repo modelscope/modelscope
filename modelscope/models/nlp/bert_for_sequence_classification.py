@@ -1,5 +1,7 @@
+import os
 from typing import Any, Dict
 
+import json
 import numpy as np
 
 from modelscope.utils.constant import Tasks
@@ -34,6 +36,11 @@ class BertForSequenceClassification(Model):
                         ('token_type_ids', torch.LongTensor)],
             output_keys=['predictions', 'probabilities', 'logits'])
 
+        self.label_path = os.path.join(self.model_dir, 'label_mapping.json')
+        with open(self.label_path) as f:
+            self.label_mapping = json.load(f)
+        self.id2label = {idx: name for name, idx in self.label_mapping.items()}
+
     def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         """return the result by the model
 
@@ -50,3 +57,13 @@ class BertForSequenceClassification(Model):
                     }
         """
         return self.model.predict(input)
+
+    def postprocess(self, inputs: Dict[str, np.ndarray],
+                    **kwargs) -> Dict[str, np.ndarray]:
+        # N x num_classes
+        probs = inputs['probabilities']
+        result = {
+            'probs': probs,
+        }
+
+        return result

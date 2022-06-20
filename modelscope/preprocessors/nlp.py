@@ -11,8 +11,8 @@ from .base import Preprocessor
 from .builder import PREPROCESSORS
 
 __all__ = [
-    'Tokenize',
-    'SequenceClassificationPreprocessor',
+    'Tokenize', 'SequenceClassificationPreprocessor',
+    'TextGenerationPreprocessor', 'TokenClassifcationPreprocessor'
 ]
 
 
@@ -31,7 +31,7 @@ class Tokenize(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'bert-sentiment-analysis')
+    Fields.nlp, module_name=r'bert-sequence-classification')
 class SequenceClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -51,21 +51,42 @@ class SequenceClassificationPreprocessor(Preprocessor):
         self.sequence_length = kwargs.pop('sequence_length', 128)
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
+        print(f'this is the tokenzier {self.tokenizer}')
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, tuple))
+    def __call__(self, data: Union[str, tuple]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
+            data (str or tuple):
+            sentence1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+            or
+            (sentence1, sentence2)
+                sentence1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+                sentence2 (str): a sentence
+                    Example:
+                        'you are so beautiful.'
 
         Returns:
             Dict[str, Any]: the preprocessed data
         """
 
-        new_data = {self.first_sequence: data}
+        if not isinstance(data, tuple):
+            data = (
+                data,
+                None,
+            )
+
+        sentence1, sentence2 = data
+        new_data = {
+            self.first_sequence: sentence1,
+            self.second_sequence: sentence2
+        }
+
         # preprocess the data for the model input
 
         rst = {
@@ -94,17 +115,15 @@ class SequenceClassificationPreprocessor(Preprocessor):
         return rst
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm')
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm2.0')
 class TextGenerationPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
         """preprocess the data using the vocab.txt from the `model_dir` path
 
         Args:
             model_dir (str): model path
         """
-        from sofa import PalmTokenizer
-
         super().__init__(*args, **kwargs)
 
         self.model_dir: str = model_dir
@@ -113,7 +132,7 @@ class TextGenerationPreprocessor(Preprocessor):
         self.second_sequence: str = kwargs.pop('second_sequence',
                                                'second_sequence')
         self.sequence_length: int = kwargs.pop('sequence_length', 128)
-        self.tokenizer = PalmTokenizer.from_pretrained(model_dir)
+        self.tokenizer = tokenizer
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:
@@ -132,7 +151,7 @@ class TextGenerationPreprocessor(Preprocessor):
         new_data = {self.first_sequence: data}
         # preprocess the data for the model input
 
-        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
+        rst = {'input_ids': [], 'attention_mask': []}
 
         max_seq_length = self.sequence_length
 
@@ -147,6 +166,53 @@ class TextGenerationPreprocessor(Preprocessor):
 
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=r'bert-token-classification')
+class TokenClassifcationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+
+        from sofa import SbertTokenizer
+        self.model_dir: str = model_dir
+        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        # preprocess the data for the model input
+
+        text = data.replace(' ', '').strip()
+        tokens = []
+        for token in text:
+            token = self.tokenizer.tokenize(token)
+            tokens.extend(token)
+        input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+        input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
+        attention_mask = [1] * len(input_ids)
+        token_type_ids = [0] * len(input_ids)
+        return {
+            'text': text,
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'token_type_ids': token_type_ids
+        }

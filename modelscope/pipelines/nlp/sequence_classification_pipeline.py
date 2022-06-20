@@ -1,8 +1,5 @@
-import os
-import uuid
 from typing import Any, Dict, Union
 
-import json
 import numpy as np
 
 from modelscope.models.nlp import BertForSequenceClassification
@@ -41,50 +38,29 @@ class SequenceClassificationPipeline(Pipeline):
                 second_sequence=None)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
-        from easynlp.utils import io
-        self.label_path = os.path.join(sc_model.model_dir,
-                                       'label_mapping.json')
-        with io.open(self.label_path) as f:
-            self.label_mapping = json.load(f)
-        self.label_id_to_name = {
-            idx: name
-            for name, idx in self.label_mapping.items()
-        }
+        assert hasattr(self.model, 'id2label'), \
+            'id2label map should be initalizaed in init function.'
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+    def postprocess(self,
+                    inputs: Dict[str, Any],
+                    topk: int = 5) -> Dict[str, str]:
         """process the prediction results
 
         Args:
-            inputs (Dict[str, Any]): _description_
+            inputs (Dict[str, Any]): input data dict
+            topk (int): return topk classification result.
 
         Returns:
             Dict[str, str]: the prediction results
         """
+        # NxC np.ndarray
+        probs = inputs['probs'][0]
+        num_classes = probs.shape[0]
+        topk = min(topk, num_classes)
+        top_indices = np.argpartition(probs, -topk)[-topk:]
+        cls_ids = top_indices[np.argsort(probs[top_indices])]
+        probs = probs[cls_ids].tolist()
 
-        probs = inputs['probabilities']
-        logits = inputs['logits']
-        predictions = np.argsort(-probs, axis=-1)
-        preds = predictions[0]
-        b = 0
-        new_result = list()
-        for pred in preds:
-            new_result.append({
-                'pred': self.label_id_to_name[pred],
-                'prob': float(probs[b][pred]),
-                'logit': float(logits[b][pred])
-            })
-        new_results = list()
-        new_results.append({
-            'id':
-            inputs['id'][b] if 'id' in inputs else str(uuid.uuid4()),
-            'output':
-            new_result,
-            'predictions':
-            new_result[0]['pred'],
-            'probabilities':
-            ','.join([str(t) for t in inputs['probabilities'][b]]),
-            'logits':
-            ','.join([str(t) for t in inputs['logits'][b]])
-        })
+        cls_names = [self.model.id2label[cid] for cid in cls_ids]
 
-        return new_results[0]
+        return {'scores': probs, 'labels': cls_names}

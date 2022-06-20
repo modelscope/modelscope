@@ -1,12 +1,13 @@
 addict
 datasets
 easydict
-https://maashub.oss-cn-hangzhou.aliyuncs.com/releases/maas_hub-0.1.0.dev0-py2.py3-none-any.whl
+https://mindscope.oss-cn-hangzhou.aliyuncs.com/sdklib/maas_hub-0.2.4.dev0-py3-none-any.whl
 numpy
 opencv-python-headless
-Pillow
+Pillow>=6.2.0
 pyyaml
 requests
+scipy
 tokenizers<=0.10.3
 transformers<=4.16.2
 yapf

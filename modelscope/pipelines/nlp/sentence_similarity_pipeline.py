@@ -1,8 +1,5 @@
-import os
-import uuid
 from typing import Any, Dict, Union
 
-import json
 import numpy as np
 
 from modelscope.models.nlp import SbertForSentenceSimilarity

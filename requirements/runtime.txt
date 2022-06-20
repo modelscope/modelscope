@@ -1,7 +1,7 @@
 addict
 datasets
 easydict
-https://mindscope.oss-cn-hangzhou.aliyuncs.com/sdklib/maas_hub-0.2.2.dev0-py3-none-any.whl
+https://mindscope.oss-cn-hangzhou.aliyuncs.com/sdklib/maas_hub-0.2.4.dev0-py3-none-any.whl
 numpy
 opencv-python-headless
 Pillow>=6.2.0

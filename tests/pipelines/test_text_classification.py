@@ -11,7 +11,6 @@ from modelscope.pipelines import SequenceClassificationPipeline, pipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import Hubs, Tasks
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.test_utils import test_level
 
 
@@ -19,11 +18,6 @@ class SequenceClassificationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/bert-base-sst2'
-        # switch to False if downloading everytime is not desired
-        purge_cache = True
-        if purge_cache:
-            shutil.rmtree(
-                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     def predict(self, pipeline_ins: SequenceClassificationPipeline):
         from easynlp.appzoo import load_dataset

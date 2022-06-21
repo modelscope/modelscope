@@ -2,8 +2,7 @@
 import os.path as osp
 from typing import List, Union
 
-from maas_hub.file_download import model_file_download
-
+from modelscope.hub.file_download import model_file_download
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger

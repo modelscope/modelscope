@@ -24,7 +24,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
     Tasks.text_generation: ('palm2.0',
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
-    Tasks.image_captioning: ('ofa', None),
+    Tasks.image_captioning: ('ofa', 'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:
     ('person-image-cartoon',
      'damo/cv_unet_person-image-cartoon_compound-models'),

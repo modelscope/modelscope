@@ -39,18 +39,32 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         self.entailment_id = 0
         self.contradiction_id = 2
-        self.candidate_labels = kwargs.pop('candidate_labels')
-        self.hypothesis_template = kwargs.pop('hypothesis_template', '{}')
-        self.multi_label = kwargs.pop('multi_label', False)
 
         if preprocessor is None:
             preprocessor = ZeroShotClassificationPreprocessor(
-                sc_model.model_dir,
-                candidate_labels=self.candidate_labels,
-                hypothesis_template=self.hypothesis_template)
+                sc_model.model_dir)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_parameters(self, **kwargs):
+        preprocess_params = {}
+        postprocess_params = {}
+
+        if 'candidate_labels' in kwargs:
+            candidate_labels = kwargs.pop('candidate_labels')
+            preprocess_params['candidate_labels'] = candidate_labels
+            postprocess_params['candidate_labels'] = candidate_labels
+        else:
+            raise ValueError('You must include at least one label.')
+        preprocess_params['hypothesis_template'] = kwargs.pop(
+            'hypothesis_template', '{}')
+
+        postprocess_params['multi_label'] = kwargs.pop('multi_label', False)
+        return preprocess_params, {}, postprocess_params
+
+    def postprocess(self,
+                    inputs: Dict[str, Any],
+                    candidate_labels,
+                    multi_label=False) -> Dict[str, Any]:
         """process the prediction results
 
         Args:
@@ -61,8 +75,7 @@ class ZeroShotClassificationPipeline(Pipeline):
         """
 
         logits = inputs['logits']
-
-        if self.multi_label or len(self.candidate_labels) == 1:
+        if multi_label or len(candidate_labels) == 1:
             logits = logits[..., [self.contradiction_id, self.entailment_id]]
             scores = softmax(logits, axis=-1)[..., 1]
         else:
@@ -71,7 +84,7 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         reversed_index = list(reversed(scores.argsort()))
         result = {
-            'labels': [self.candidate_labels[i] for i in reversed_index],
+            'labels': [candidate_labels[i] for i in reversed_index],
             'scores': [scores[i].item() for i in reversed_index],
         }
         return result

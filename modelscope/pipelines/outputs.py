@@ -54,6 +54,13 @@ TASK_OUTPUTS = {
     # }
     Tasks.pose_estimation: ['poses', 'boxes'],
 
+    # ocr detection result for single sample
+    # {
+    #   "det_polygons": np.array with shape [num_text, 8], each box is
+    #       [x1, y1, x2, y2, x3, y3, x4, y4]
+    # }
+    Tasks.ocr_detection: ['det_polygons'],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample
@@ -75,7 +82,26 @@ TASK_OUTPUTS = {
     # }
     Tasks.fill_mask: ['text'],
 
+    # word segmentation result for single sample
+    # {
+    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
+    # }
+    Tasks.word_segmentation: ['output'],
+
+    # sentence similarity result for single sample
+    #   {
+    #       "labels": "1",
+    #       "scores": 0.9
+    #   }
+    Tasks.sentence_similarity: ['scores', 'labels'],
+
     # ============ audio tasks ===================
+
+    # audio processed for single file in PCM format
+    # {
+    #   "output_pcm": np.array with shape(samples,) and dtype float32
+    # }
+    Tasks.speech_signal_process: ['output_pcm'],
 
     # ============ multi-modal tasks ===================
 

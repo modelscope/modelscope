@@ -67,7 +67,6 @@ class Registry(object):
         if module_name in self._modules[group_key]:
             raise KeyError(f'{module_name} is already registered in '
                            f'{self._name}[{group_key}]')
-
         self._modules[group_key][module_name] = module_cls
         module_cls.group_key = group_key
 

@@ -17,7 +17,7 @@ from modelscope.utils.test_utils import test_level
 class ImageMattingTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/cv_unet_image-matting_damo'
+        self.model_id = 'damo/cv_unet_image-matting'
         # switch to False if downloading everytime is not desired
         purge_cache = True
         if purge_cache:
@@ -34,16 +34,12 @@ class ImageMattingTest(unittest.TestCase):
                 ofile.write(File.read(model_path))
             img_matting = pipeline(Tasks.image_matting, model=tmp_dir)
 
-            result = img_matting(
-                'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-            )
+            result = img_matting('data/test/images/image_matting.png')
             cv2.imwrite('result.png', result['output_png'])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_dataset(self):
-        input_location = [
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        ]
+        input_location = ['data/test/images/image_matting.png']
         # alternatively:
         # input_location = '/dir/to/images'
 
@@ -58,9 +54,7 @@ class ImageMattingTest(unittest.TestCase):
     def test_run_modelhub(self):
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
 
-        result = img_matting(
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        )
+        result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
@@ -68,11 +62,20 @@ class ImageMattingTest(unittest.TestCase):
     def test_run_modelhub_default_model(self):
         img_matting = pipeline(Tasks.image_matting)
 
-        result = img_matting(
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-        )
+        result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_modelscope_dataset(self):
+        dataset = PyDataset.load('beans', split='train', target='image')
+        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
+        result = img_matting(dataset)
+        for i in range(10):
+            cv2.imwrite(f'result_{i}.png', next(result)['output_png'])
+        print(
+            f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'
+        )
 
 
 if __name__ == '__main__':

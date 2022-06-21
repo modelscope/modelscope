@@ -5,7 +5,6 @@ from typing import Any, Dict
 import numpy as np
 import scipy.io.wavfile as wav
 import torch
-import torchaudio.compliance.kaldi as kaldi
 from numpy.ctypeslib import ndpointer
 
 from modelscope.utils.constant import Fields
@@ -123,6 +122,8 @@ class Feature:
         if self.feat_type == 'raw':
             return utt
         elif self.feat_type == 'fbank':
+            # have to use local import before modelscope framework supoort lazy loading
+            import torchaudio.compliance.kaldi as kaldi
             if len(utt.shape) == 1:
                 utt = utt.unsqueeze(0)
             feat = kaldi.fbank(utt, **self.fbank_config)

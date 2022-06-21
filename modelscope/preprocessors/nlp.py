@@ -53,12 +53,12 @@ class SequenceClassificationPreprocessor(Preprocessor):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
         print(f'this is the tokenzier {self.tokenizer}')
 
-    @type_assert(object, (str, tuple))
-    def __call__(self, data: Union[str, tuple]) -> Dict[str, Any]:
+    @type_assert(object, (str, tuple, Dict))
+    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
-            data (str or tuple):
+            data (str or tuple, Dict):
             sentence1 (str): a sentence
                     Example:
                         'you are so handsome.'
@@ -70,22 +70,31 @@ class SequenceClassificationPreprocessor(Preprocessor):
                 sentence2 (str): a sentence
                     Example:
                         'you are so beautiful.'
+            or
+            {field1: field_value1, field2: field_value2}
+            field1 (str): field name, default 'first_sequence'
+            field_value1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+
+            field2 (str): field name, default 'second_sequence'
+            field_value2 (str): a sentence
+                Example:
+                    'you are so beautiful.'
 
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-
-        if not isinstance(data, tuple):
-            data = (
-                data,
-                None,
-            )
-
-        sentence1, sentence2 = data
-        new_data = {
-            self.first_sequence: sentence1,
-            self.second_sequence: sentence2
-        }
+        if isinstance(data, str):
+            new_data = {self.first_sequence: data}
+        elif isinstance(data, tuple):
+            sentence1, sentence2 = data
+            new_data = {
+                self.first_sequence: sentence1,
+                self.second_sequence: sentence2
+            }
+        else:
+            new_data = data
 
         # preprocess the data for the model input
 
@@ -115,17 +124,15 @@ class SequenceClassificationPreprocessor(Preprocessor):
         return rst
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm')
+@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm2.0')
 class TextGenerationPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
         """preprocess the data using the vocab.txt from the `model_dir` path
 
         Args:
             model_dir (str): model path
         """
-        from sofa import PalmTokenizer
-
         super().__init__(*args, **kwargs)
 
         self.model_dir: str = model_dir
@@ -134,7 +141,7 @@ class TextGenerationPreprocessor(Preprocessor):
         self.second_sequence: str = kwargs.pop('second_sequence',
                                                'second_sequence')
         self.sequence_length: int = kwargs.pop('sequence_length', 128)
-        self.tokenizer = PalmTokenizer.from_pretrained(model_dir)
+        self.tokenizer = tokenizer
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:
@@ -153,7 +160,7 @@ class TextGenerationPreprocessor(Preprocessor):
         new_data = {self.first_sequence: data}
         # preprocess the data for the model input
 
-        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
+        rst = {'input_ids': [], 'attention_mask': []}
 
         max_seq_length = self.sequence_length
 
@@ -168,7 +175,6 @@ class TextGenerationPreprocessor(Preprocessor):
 
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
 
         return {k: torch.tensor(v) for k, v in rst.items()}
 

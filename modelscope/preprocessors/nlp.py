@@ -53,12 +53,12 @@ class SequenceClassificationPreprocessor(Preprocessor):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
         print(f'this is the tokenzier {self.tokenizer}')
 
-    @type_assert(object, (str, tuple))
-    def __call__(self, data: Union[str, tuple]) -> Dict[str, Any]:
+    @type_assert(object, (str, tuple, Dict))
+    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
-            data (str or tuple):
+            data (str or tuple, Dict):
             sentence1 (str): a sentence
                     Example:
                         'you are so handsome.'
@@ -70,22 +70,31 @@ class SequenceClassificationPreprocessor(Preprocessor):
                 sentence2 (str): a sentence
                     Example:
                         'you are so beautiful.'
+            or
+            {field1: field_value1, field2: field_value2}
+            field1 (str): field name, default 'first_sequence'
+            field_value1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+
+            field2 (str): field name, default 'second_sequence'
+            field_value2 (str): a sentence
+                Example:
+                    'you are so beautiful.'
 
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-
-        if not isinstance(data, tuple):
-            data = (
-                data,
-                None,
-            )
-
-        sentence1, sentence2 = data
-        new_data = {
-            self.first_sequence: sentence1,
-            self.second_sequence: sentence2
-        }
+        if isinstance(data, str):
+            new_data = {self.first_sequence: data}
+        elif isinstance(data, tuple):
+            sentence1, sentence2 = data
+            new_data = {
+                self.first_sequence: sentence1,
+                self.second_sequence: sentence2
+            }
+        else:
+            new_data = data
 
         # preprocess the data for the model input
 

@@ -66,6 +66,17 @@ class ImageMattingTest(unittest.TestCase):
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_modelscope_dataset(self):
+        dataset = PyDataset.load('beans', split='train', target='image')
+        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
+        result = img_matting(dataset)
+        for i in range(10):
+            cv2.imwrite(f'result_{i}.png', next(result)['output_png'])
+        print(
+            f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

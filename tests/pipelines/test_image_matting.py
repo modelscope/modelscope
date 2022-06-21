@@ -10,7 +10,6 @@ from modelscope.fileio import File
 from modelscope.pipelines import pipeline
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import ModelFile, Tasks
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.test_utils import test_level
 
 
@@ -18,11 +17,6 @@ class ImageMattingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_unet_image-matting'
-        # switch to False if downloading everytime is not desired
-        purge_cache = True
-        if purge_cache:
-            shutil.rmtree(
-                get_model_cache_dir(self.model_id), ignore_errors=True)
 
     @unittest.skip('deprecated, download model from model hub instead')
     def test_run_with_direct_file_download(self):

@@ -4,12 +4,10 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Dict, Union
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
-from modelscope.utils.hub import get_model_cache_dir
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 
@@ -47,9 +45,7 @@ class Model(ABC):
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
-            cache_path = get_model_cache_dir(model_name_or_path)
-            local_model_dir = cache_path if osp.exists(
-                cache_path) else snapshot_download(model_name_or_path)
+            local_model_dir = snapshot_download(model_name_or_path)
             # else:
             #     raise ValueError(
             #         'Remote model repo {model_name_or_path} does not exists')

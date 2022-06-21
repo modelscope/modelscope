@@ -4,13 +4,11 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Union
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.preprocessors import Preprocessor
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.config import Config
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.logger import get_logger
 from .outputs import TASK_OUTPUTS
 from .util import is_model_name
@@ -32,9 +30,7 @@ class Pipeline(ABC):
         # TODO @wenmeng.zwm replace model.startswith('damo/') with get_model
         if isinstance(model, str) and model.startswith('damo/'):
             if not osp.exists(model):
-                cache_path = get_model_cache_dir(model)
-                model = cache_path if osp.exists(
-                    cache_path) else snapshot_download(model)
+                model = snapshot_download(model)
             return Model.from_pretrained(model) if is_model_name(
                 model) else model
         elif isinstance(model, Model):

@@ -1,13 +1,16 @@
 addict
 datasets
 easydict
-https://mindscope.oss-cn-hangzhou.aliyuncs.com/sdklib/maas_hub-0.2.4.dev0-py3-none-any.whl
+filelock>=3.3.0
 numpy
 opencv-python-headless
 Pillow>=6.2.0
 pyyaml
 requests
+requests==2.27.1
 scipy
+setuptools==58.0.4
 tokenizers<=0.10.3
+tqdm>=4.64.0
 transformers<=4.16.2
 yapf

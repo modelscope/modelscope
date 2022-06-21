@@ -86,7 +86,11 @@ class SequenceClassificationTest(unittest.TestCase):
             task=Tasks.text_classification, model=self.model_id)
         result = text_classification(
             PyDataset.load(
-                'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
+                'glue',
+                subset_name='sst2',
+                split='train',
+                target='sentence',
+                hub=Hubs.huggingface))
         self.printDataset(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -94,7 +98,11 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
             PyDataset.load(
-                'glue', name='sst2', target='sentence', hub=Hubs.huggingface))
+                'glue',
+                subset_name='sst2',
+                split='train',
+                target='sentence',
+                hub=Hubs.huggingface))
         self.printDataset(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -105,9 +113,21 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         # loaded from huggingface dataset
-        # TODO: rename parameter as dataset_name and subset_name
         dataset = PyDataset.load(
-            'glue', name='sst2', target='sentence', hub=Hubs.huggingface)
+            'glue',
+            subset_name='sst2',
+            split='train',
+            target='sentence',
+            hub=Hubs.huggingface)
+        result = text_classification(dataset)
+        self.printDataset(result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_modelscope_dataset(self):
+        text_classification = pipeline(task=Tasks.text_classification)
+        # loaded from modelscope dataset
+        dataset = PyDataset.load(
+            'squad', split='train', target='context', hub=Hubs.modelscope)
         result = text_classification(dataset)
         self.printDataset(result)
 

@@ -24,6 +24,7 @@ wheels/
 .installed.cfg
 *.egg
 /package
+/temp
 MANIFEST
 
 # PyInstaller
@@ -104,7 +105,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-data
 .vscode
 .idea
 
@@ -124,3 +124,7 @@ replace.sh
 
 # Pytorch
 *.pth
+
+
+# audio
+*.wav

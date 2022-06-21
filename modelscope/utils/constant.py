@@ -28,9 +28,11 @@ class Tasks(object):
     image_editing = 'image-editing'
     image_generation = 'image-generation'
     image_matting = 'image-matting'
+    ocr_detection = 'ocr-detection'
 
     # nlp tasks
     zero_shot_classification = 'zero-shot-classification'
+    word_segmentation = 'word-segmentation'
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'

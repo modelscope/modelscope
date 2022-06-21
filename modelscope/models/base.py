@@ -62,4 +62,6 @@ class Model(ABC):
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
         model_cfg.model_dir = local_model_dir
+        for k, v in kwargs.items():
+            model_cfg.k = v
         return build_model(model_cfg, task_name)

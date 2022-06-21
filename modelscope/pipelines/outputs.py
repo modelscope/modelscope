@@ -54,6 +54,13 @@ TASK_OUTPUTS = {
     # }
     Tasks.pose_estimation: ['poses', 'boxes'],
 
+    # ocr detection result for single sample
+    # {
+    #   "det_polygons": np.array with shape [num_text, 8], each box is
+    #       [x1, y1, x2, y2, x3, y3, x4, y4]
+    # }
+    Tasks.ocr_detection: ['det_polygons'],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample

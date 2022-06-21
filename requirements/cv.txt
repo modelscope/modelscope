@@ -1,1 +1,2 @@
 easydict
+tf_slim

@@ -2,8 +2,6 @@
 import io
 from typing import Any, Dict, Union
 
-import ttsfrd
-
 from modelscope.fileio import File
 from modelscope.models.audio.tts.frontend import GenericTtsFrontend
 from modelscope.models.base import Model

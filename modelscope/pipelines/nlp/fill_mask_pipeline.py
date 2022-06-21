@@ -1,7 +1,8 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from modelscope.models import Model
-from modelscope.models.nlp import AliceMindBaseForMaskedLM
+from modelscope.models.nlp.masked_language_model import \
+    AliceMindBaseForMaskedLM
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
 from ..base import Pipeline, Tensor
@@ -15,7 +16,7 @@ __all__ = ['FillMaskPipeline']
 class FillMaskPipeline(Pipeline):
 
     def __init__(self,
-                 model: AliceMindBaseForMaskedLM,
+                 model: Union[AliceMindBaseForMaskedLM, str],
                  preprocessor: Optional[FillMaskPreprocessor] = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction

@@ -180,7 +180,7 @@ class TextGenerationPreprocessor(Preprocessor):
         return {k: torch.tensor(v) for k, v in rst.items()}
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'sbert')
+@PREPROCESSORS.register_module(Fields.nlp)
 class FillMaskPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

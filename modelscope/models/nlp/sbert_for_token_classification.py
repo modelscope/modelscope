@@ -24,10 +24,10 @@ class SbertForTokenClassification(Model):
         """
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
-        from sofa import SbertConfig, SbertForTokenClassification
-        self.model = SbertForTokenClassification.from_pretrained(
+        import sofa
+        self.model = sofa.SbertForTokenClassification.from_pretrained(
             self.model_dir)
-        self.config = SbertConfig.from_pretrained(self.model_dir)
+        self.config = sofa.SbertConfig.from_pretrained(self.model_dir)
 
     def forward(self, input: Dict[str,
                                   Any]) -> Dict[str, Union[str, np.ndarray]]:
@@ -46,7 +46,7 @@ class SbertForTokenClassification(Model):
                     }
         """
         input_ids = torch.tensor(input['input_ids']).unsqueeze(0)
-        return self.model(input_ids)
+        return {**self.model(input_ids), 'text': input['text']}
 
     def postprocess(self, input: Dict[str, Tensor], **kwargs) -> Dict[str, Tensor]:
         logits = input["logits"]

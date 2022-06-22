@@ -20,6 +20,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     ('sbert-base-chinese-sentence-similarity',
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
     Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting'),
+    Tasks.nli: ('nlp_structbert_nli_chinese-base',
+                'damo/nlp_structbert_nli_chinese-base'),
     Tasks.text_classification:
     ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
     Tasks.text_generation: ('palm2.0',

@@ -11,8 +11,7 @@ from ..builder import PIPELINES
 __all__ = ['FillMaskPipeline']
 
 
-@PIPELINES.register_module(Tasks.fill_mask, module_name=r'sbert')
-@PIPELINES.register_module(Tasks.fill_mask, module_name=r'veco')
+@PIPELINES.register_module(Tasks.fill_mask, module_name=r'fill_mask')
 class FillMaskPipeline(Pipeline):
 
     def __init__(self,

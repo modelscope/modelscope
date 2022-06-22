@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Union
 
+from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.nlp.masked_language_model import \
     AliceMindBaseForMaskedLM
@@ -11,7 +12,7 @@ from ..builder import PIPELINES
 __all__ = ['FillMaskPipeline']
 
 
-@PIPELINES.register_module(Tasks.fill_mask, module_name=r'fill_mask')
+@PIPELINES.register_module(Tasks.fill_mask, module_name=Pipelines.fill_mask)
 class FillMaskPipeline(Pipeline):
 
     def __init__(self,

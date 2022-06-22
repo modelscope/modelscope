@@ -45,6 +45,7 @@ class Pipelines(object):
     word_segmentation = 'word-segmentation'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
+    fill_mask = 'fill-mask'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'

@@ -7,6 +7,7 @@ from modelscope.models.nlp import SbertForZeroShotClassification
 from modelscope.pipelines import ZeroShotClassificationPipeline, pipeline
 from modelscope.preprocessors import ZeroShotClassificationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class ZeroShotClassificationTest(unittest.TestCase):
@@ -15,7 +16,8 @@ class ZeroShotClassificationTest(unittest.TestCase):
     labels = ['文化', '体育', '娱乐', '财经', '家居', '汽车', '教育', '科技', '军事']
     template = '这篇文章的标题是{}'
 
-    def test_run_from_local(self):
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = ZeroShotClassificationPreprocessor(cache_path)
         model = SbertForZeroShotClassification(cache_path, tokenizer=tokenizer)
@@ -36,6 +38,7 @@ class ZeroShotClassificationTest(unittest.TestCase):
             f'pipeline2: {pipeline2(self.sentence,candidate_labels=self.labels,hypothesis_template=self.template)}'
         )
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         tokenizer = ZeroShotClassificationPreprocessor(model.model_dir)
@@ -45,11 +48,13 @@ class ZeroShotClassificationTest(unittest.TestCase):
             preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence, candidate_labels=self.labels))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.zero_shot_classification, model=self.model_id)
         print(pipeline_ins(input=self.sentence, candidate_labels=self.labels))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.zero_shot_classification)
         print(pipeline_ins(input=self.sentence, candidate_labels=self.labels))

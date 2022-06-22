@@ -1,3 +1,4 @@
+from .fill_mask_pipeline import *  # noqa F403
 from .nli_pipeline import *  # noqa F403
 from .sentence_similarity_pipeline import *  # noqa F403
 from .sentiment_classification_pipeline import *  # noqa F403

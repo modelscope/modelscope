@@ -38,6 +38,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_unet_person-image-cartoon_compound-models'),
     Tasks.ocr_detection: ('ocr-detection',
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
+    Tasks.fill_mask: ('veco', 'damo/nlp_veco_fill-mask_large')
 }
 
 

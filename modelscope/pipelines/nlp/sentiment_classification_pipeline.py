@@ -70,7 +70,7 @@ class SentimentClassificationPipeline(Pipeline):
         new_result = list()
         for pred in preds:
             new_result.append({
-                'pred': self.label_id_to_name[pred],
+                'pred': self.model.id2label[pred],
                 'prob': float(probs[b][pred]),
                 'logit': float(logits[b][pred])
             })

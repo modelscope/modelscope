@@ -26,6 +26,12 @@ class SbertForZeroShotClassification(Model):
         from sofa import SbertForSequenceClassification
         self.model = SbertForSequenceClassification.from_pretrained(model_dir)
 
+    def train(self):
+        return self.model.train()
+
+    def eval(self):
+        return self.model.eval()
+    
     def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         """return the result by the model
 

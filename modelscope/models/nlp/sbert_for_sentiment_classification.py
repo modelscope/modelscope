@@ -1,13 +1,14 @@
 from modelscope.utils.constant import Tasks
 from .sbert_for_sequence_classification import SbertForSequenceClassificationBase
 from ..builder import MODELS
+from modelscope.metainfo import Models
 
 __all__ = ['SbertForSentimentClassification']
 
 
 @MODELS.register_module(
     Tasks.sentiment_classification,
-    module_name=r'sbert-sentiment-classification')
+    module_name=Models.structbert)
 class SbertForSentimentClassification(SbertForSequenceClassificationBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):

@@ -44,7 +44,7 @@ class ZeroShotClassificationPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = ZeroShotClassificationPreprocessor(
                 sc_model.model_dir)
-        model.eval()
+        sc_model.eval()
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
     def _sanitize_parameters(self, **kwargs):

@@ -1,7 +1,7 @@
 import os
 import uuid
 from typing import Any, Dict, Union
-
+import torch
 import json
 import numpy as np
 from scipy.special import softmax
@@ -44,6 +44,7 @@ class ZeroShotClassificationPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = ZeroShotClassificationPreprocessor(
                 sc_model.model_dir)
+        model.eval()
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
     def _sanitize_parameters(self, **kwargs):
@@ -61,6 +62,11 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         postprocess_params['multi_label'] = kwargs.pop('multi_label', False)
         return preprocess_params, {}, postprocess_params
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self,
                     inputs: Dict[str, Any],

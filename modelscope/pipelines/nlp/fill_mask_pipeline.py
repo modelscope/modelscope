@@ -1,4 +1,6 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Any
+
+import torch
 
 from ...models import Model
 from ...models.nlp.masked_language_model import \
@@ -35,6 +37,7 @@ class FillMaskPipeline(Pipeline):
                 fill_mask_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=None)
+        fill_mask_model.eval()
         super().__init__(model=fill_mask_model, preprocessor=preprocessor, **kwargs)
         self.preprocessor = preprocessor
         self.tokenizer = preprocessor.tokenizer
@@ -60,6 +63,11 @@ class FillMaskPipeline(Pipeline):
                 '<unk>': ' '
             }
         }
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """process the prediction results

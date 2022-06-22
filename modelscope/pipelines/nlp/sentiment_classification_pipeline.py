@@ -1,7 +1,7 @@
 import os
 import uuid
 from typing import Any, Dict, Union
-
+import torch
 import json
 import numpy as np
 
@@ -43,8 +43,14 @@ class SentimentClassificationPipeline(Pipeline):
                 sc_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=second_sequence)
+        sc_model.eval()
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
         assert len(sc_model.id2label) > 0
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results

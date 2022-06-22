@@ -1,7 +1,7 @@
 from typing import Any, Dict, Union
 
 import numpy as np
-
+import torch
 from ...metainfo import Pipelines
 from ...models.nlp import SbertForSentenceSimilarity
 from ...preprocessors import SequenceClassificationPreprocessor
@@ -39,10 +39,16 @@ class SentenceSimilarityPipeline(Pipeline):
                 sc_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=second_sequence)
+        sc_model.eval()
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
         assert hasattr(self.model, 'id2label'), \
             'id2label map should be initalizaed in init function.'
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results

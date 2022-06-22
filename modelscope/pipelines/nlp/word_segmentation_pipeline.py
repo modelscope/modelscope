@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional, Union
-
+import torch
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SbertForTokenClassification
@@ -30,11 +30,17 @@ class WordSegmentationPipeline(Pipeline):
             SbertForTokenClassification) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TokenClassifcationPreprocessor(model.model_dir)
+        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = preprocessor.tokenizer
         self.config = model.config
         assert len(self.config.id2label) > 0
         self.id2label = self.config.id2label
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results

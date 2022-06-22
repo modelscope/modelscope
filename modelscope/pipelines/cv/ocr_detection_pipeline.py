@@ -55,13 +55,6 @@ class OCRDetectionPipeline(Pipeline):
         self.output = {}
 
         with tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            global_step = tf.get_variable(
-                'global_step', [],
-                initializer=tf.constant_initializer(0),
-                dtype=tf.int64,
-                trainable=False)
-            variable_averages = tf.train.ExponentialMovingAverage(
-                0.997, global_step)
 
             # detector
             detector = model_resnet_mutex_v4_linewithchar.SegLinkDetector()
@@ -104,8 +97,7 @@ class OCRDetectionPipeline(Pipeline):
         with self._session.as_default() as sess:
             logger.info(f'loading model from {model_path}')
             # load model
-            model_loader = tf.train.Saver(
-                variable_averages.variables_to_restore())
+            model_loader = tf.train.Saver()
             model_loader.restore(sess, model_path)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:

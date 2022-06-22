@@ -33,6 +33,7 @@ class Tasks(object):
     # nlp tasks
     word_segmentation = 'word-segmentation'
     nli = 'nli'
+    sentiment_classification = 'sentiment-classification'
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'

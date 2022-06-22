@@ -2,6 +2,7 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
+from modelscope.metainfo import Pipelines
 from modelscope.models.nlp import SbertForSentenceSimilarity
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -13,8 +14,7 @@ __all__ = ['SentenceSimilarityPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.sentence_similarity,
-    module_name=r'sbert-base-chinese-sentence-similarity')
+    Tasks.sentence_similarity, module_name=Pipelines.sentence_similarity)
 class SentenceSimilarityPipeline(Pipeline):
 
     def __init__(self,

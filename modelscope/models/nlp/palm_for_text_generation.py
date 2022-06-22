@@ -1,5 +1,6 @@
 from typing import Dict
 
+from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
@@ -7,7 +8,7 @@ from ..builder import MODELS
 __all__ = ['PalmForTextGeneration']
 
 
-@MODELS.register_module(Tasks.text_generation, module_name=r'palm2.0')
+@MODELS.register_module(Tasks.text_generation, module_name=Models.palm2_0)
 class PalmForTextGeneration(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

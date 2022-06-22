@@ -10,6 +10,7 @@ import PIL
 import tensorflow as tf
 import tf_slim as slim
 
+from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import ModelFile, Tasks
@@ -38,7 +39,7 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
 
 
 @PIPELINES.register_module(
-    Tasks.ocr_detection, module_name=Tasks.ocr_detection)
+    Tasks.ocr_detection, module_name=Pipelines.ocr_detection)
 class OCRDetectionPipeline(Pipeline):
 
     def __init__(self, model: str):

@@ -8,6 +8,7 @@ from sofa import SbertModel
 from sofa.models.sbert.modeling_sbert import SbertPreTrainedModel
 from torch import nn
 
+from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
@@ -38,8 +39,7 @@ class SbertTextClassifier(SbertPreTrainedModel):
 
 
 @MODELS.register_module(
-    Tasks.sentence_similarity,
-    module_name=r'sbert-base-chinese-sentence-similarity')
+    Tasks.sentence_similarity, module_name=Models.structbert)
 class SbertForSentenceSimilarity(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

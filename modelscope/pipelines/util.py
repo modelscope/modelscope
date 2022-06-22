@@ -2,8 +2,8 @@
 import os.path as osp
 from typing import List, Union
 
-from maas_hub.file_download import model_file_download
-
+from modelscope.hub.api import HubApi
+from modelscope.hub.file_download import model_file_download
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
@@ -20,31 +20,63 @@ def is_config_has_model(cfg_file):
         return False
 
 
-def is_model_name(model: Union[str, List]):
-    """ whether model is a valid modelhub path
+def is_official_hub_path(path: Union[str, List]):
+    """ Whether path is a official hub name or a valid local
+    path to official hub directory.
     """
 
-    def is_model_name_impl(model):
-        if osp.exists(model):
-            cfg_file = osp.join(model, ModelFile.CONFIGURATION)
+    def is_official_hub_impl(path):
+        if osp.exists(path):
+            cfg_file = osp.join(path, ModelFile.CONFIGURATION)
+            return osp.exists(cfg_file)
+        else:
+            try:
+                _ = HubApi().get_model(path)
+                return True
+            except Exception:
+                return False
+
+    if isinstance(path, str):
+        return is_official_hub_impl(path)
+    else:
+        results = [is_official_hub_impl(m) for m in path]
+        all_true = all(results)
+        any_true = any(results)
+        if any_true and not all_true:
+            raise ValueError(
+                f'some model are hub address, some are not, model list: {path}'
+            )
+
+        return all_true
+
+
+def is_model(path: Union[str, List]):
+    """ whether path is a valid modelhub path and containing model config
+    """
+
+    def is_modelhub_path_impl(path):
+        if osp.exists(path):
+            cfg_file = osp.join(path, ModelFile.CONFIGURATION)
             if osp.exists(cfg_file):
                 return is_config_has_model(cfg_file)
             else:
                 return False
         else:
             try:
-                cfg_file = model_file_download(model, ModelFile.CONFIGURATION)
+                cfg_file = model_file_download(path, ModelFile.CONFIGURATION)
                 return is_config_has_model(cfg_file)
             except Exception:
                 return False
 
-    if isinstance(model, str):
-        return is_model_name_impl(model)
+    if isinstance(path, str):
+        return is_modelhub_path_impl(path)
     else:
-        results = [is_model_name_impl(m) for m in model]
+        results = [is_modelhub_path_impl(m) for m in path]
         all_true = all(results)
         any_true = any(results)
         if any_true and not all_true:
-            raise ValueError('some model are hub address, some are not')
+            raise ValueError(
+                f'some models are hub address, some are not, model list: {path}'
+            )
 
         return all_true

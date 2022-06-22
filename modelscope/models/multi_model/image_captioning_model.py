@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from PIL import Image
 
+from modelscope.metainfo import Models
 from modelscope.utils.constant import ModelFile, Tasks
 from ..base import Model
 from ..builder import MODELS
@@ -10,8 +11,7 @@ from ..builder import MODELS
 __all__ = ['OfaForImageCaptioning']
 
 
-@MODELS.register_module(
-    Tasks.image_captioning, module_name=r'ofa-image-captioning')
+@MODELS.register_module(Tasks.image_captioning, module_name=Models.ofa)
 class OfaForImageCaptioning(Model):
 
     def __init__(self, model_dir, *args, **kwargs):

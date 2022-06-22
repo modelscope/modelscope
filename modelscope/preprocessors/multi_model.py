@@ -4,11 +4,11 @@ from typing import Any, Dict, Union
 
 import numpy as np
 import torch
-from maas_hub.snapshot_download import snapshot_download
 from PIL import Image
 
+from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields, ModelFile
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
@@ -20,7 +20,7 @@ __all__ = [
 
 
 @PREPROCESSORS.register_module(
-    Fields.multi_modal, module_name=r'ofa-image-caption')
+    Fields.multi_modal, module_name=Preprocessors.ofa_image_caption)
 class OfaImageCaptionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -34,9 +34,7 @@ class OfaImageCaptionPreprocessor(Preprocessor):
         if osp.exists(model_dir):
             local_model_dir = model_dir
         else:
-            cache_path = get_model_cache_dir(model_dir)
-            local_model_dir = cache_path if osp.exists(
-                cache_path) else snapshot_download(model_dir)
+            local_model_dir = snapshot_download(model_dir)
         local_model = osp.join(local_model_dir, ModelFile.TORCH_MODEL_FILE)
         bpe_dir = local_model_dir
 

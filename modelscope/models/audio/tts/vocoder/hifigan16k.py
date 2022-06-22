@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from scipy.io.wavfile import write
 
+from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.audio.tts_exceptions import \
@@ -36,7 +37,7 @@ class AttrDict(dict):
         self.__dict__ = self
 
 
-@MODELS.register_module(Tasks.text_to_speech, module_name=r'hifigan16k')
+@MODELS.register_module(Tasks.text_to_speech, module_name=Models.hifigan16k)
 class Hifigan16k(Model):
 
     def __init__(self, model_dir, *args, **kwargs):

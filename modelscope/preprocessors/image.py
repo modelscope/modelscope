@@ -5,11 +5,12 @@ from typing import Dict, Union
 from PIL import Image, ImageOps
 
 from modelscope.fileio import File
+from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields
 from .builder import PREPROCESSORS
 
 
-@PREPROCESSORS.register_module(Fields.cv)
+@PREPROCESSORS.register_module(Fields.cv, Preprocessors.load_image)
 class LoadImage:
     """Load an image from file or url.
     Added or updated keys are "filename", "img", "img_shape",

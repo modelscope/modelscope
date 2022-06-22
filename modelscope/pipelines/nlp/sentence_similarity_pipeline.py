@@ -20,6 +20,8 @@ class SentenceSimilarityPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: SequenceClassificationPreprocessor = None,
+                 first_sequence="first_sequence",
+                 second_sequence="second_sequence",
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp sentence similarity pipeline for prediction
 
@@ -35,14 +37,14 @@ class SentenceSimilarityPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = SequenceClassificationPreprocessor(
                 sc_model.model_dir,
-                first_sequence='first_sequence',
-                second_sequence='second_sequence')
+                first_sequence=first_sequence,
+                second_sequence=second_sequence)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
         assert hasattr(self.model, 'id2label'), \
             'id2label map should be initalizaed in init function.'
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

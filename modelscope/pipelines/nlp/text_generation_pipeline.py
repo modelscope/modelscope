@@ -1,10 +1,10 @@
 from typing import Dict, Optional, Union
 
-from modelscope.metainfo import Pipelines
-from modelscope.models import Model
-from modelscope.models.nlp import PalmForTextGeneration
-from modelscope.preprocessors import TextGenerationPreprocessor
-from modelscope.utils.constant import Tasks
+from ...metainfo import Pipelines
+from ...models import Model
+from ...models.nlp import PalmForTextGeneration
+from ...preprocessors import TextGenerationPreprocessor
+from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
 
@@ -36,7 +36,7 @@ class TextGenerationPipeline(Pipeline):
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = model.tokenizer
 
-    def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Tensor], **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

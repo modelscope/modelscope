@@ -14,9 +14,9 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'PalmTextGenerationPreprocessor', 'SbertZeroShotClassificationPreprocessor',
-    'SbertTokenClassifcationPreprocessor', 'SbertNLIPreprocessor',
-    'SbertSentimentClassificationPreprocessor', 'FillMaskPreprocessor'
+    'TextGenerationPreprocessor', 'ZeroShotClassificationPreprocessor',
+    'TokenClassifcationPreprocessor', 'NLIPreprocessor',
+    'SentimentClassificationPreprocessor', 'FillMaskPreprocessor'
 ]
 
 
@@ -35,8 +35,8 @@ class Tokenize(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.sbert_nli_tokenizer)
-class SbertNLIPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.nli_tokenizer)
+class NLIPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -105,8 +105,8 @@ class SbertNLIPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.sbert_sen_cls_tokenizer)
-class SbertSentimentClassificationPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.sen_cls_tokenizer)
+class SentimentClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -264,7 +264,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
-class PalmTextGenerationPreprocessor(Preprocessor):
+class TextGenerationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
         """preprocess the data using the vocab.txt from the `model_dir` path
@@ -374,8 +374,8 @@ class FillMaskPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.sbert_zero_shot_cls_tokenizer)
-class SbertZeroShotClassificationPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.zero_shot_cls_tokenizer)
+class ZeroShotClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -418,8 +418,8 @@ class SbertZeroShotClassificationPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.sbert_token_cls_tokenizer)
-class SbertTokenClassifcationPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.token_cls_tokenizer)
+class TokenClassifcationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path

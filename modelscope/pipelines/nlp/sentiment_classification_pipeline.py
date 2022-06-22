@@ -5,24 +5,27 @@ from typing import Any, Dict, Union
 import json
 import numpy as np
 
-from modelscope.models.nlp import SbertForSentimentClassification
-from modelscope.preprocessors import SentimentClassificationPreprocessor
-from modelscope.utils.constant import Tasks
+from ...models.nlp import SbertForSentimentClassification
+from ...preprocessors import SentimentClassificationPreprocessor
+from ...utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
+from ...metainfo import Pipelines
 
 __all__ = ['SentimentClassificationPipeline']
 
 
 @PIPELINES.register_module(
     Tasks.sentiment_classification,
-    module_name=r'sbert-sentiment-classification')
+    module_name=Pipelines.sentiment_classification)
 class SentimentClassificationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[SbertForSentimentClassification, str],
                  preprocessor: SentimentClassificationPreprocessor = None,
+                 first_sequence="first_sequence",
+                 second_sequence="second_sequence",
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -38,20 +41,12 @@ class SentimentClassificationPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = SentimentClassificationPreprocessor(
                 sc_model.model_dir,
-                first_sequence='first_sequence',
-                second_sequence='second_sequence')
+                first_sequence=first_sequence,
+                second_sequence=second_sequence)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
+        assert len(sc_model.id2label) > 0
 
-        self.label_path = os.path.join(sc_model.model_dir,
-                                       'label_mapping.json')
-        with open(self.label_path) as f:
-            self.label_mapping = json.load(f)
-        self.label_id_to_name = {
-            idx: name
-            for name, idx in self.label_mapping.items()
-        }
-
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

@@ -19,6 +19,12 @@ class MaskedLMModelBase(Model):
     def build_model(self):
         raise NotImplementedError()
 
+    @property
+    def config(self):
+        if hasattr(self.model, "config"):
+            return self.model.config
+        return None
+
     def forward(self, inputs: Dict[str, Tensor]) -> Dict[str, np.ndarray]:
         """return the result by the model
 

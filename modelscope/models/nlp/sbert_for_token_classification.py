@@ -2,18 +2,17 @@ from typing import Any, Dict, Union
 
 import numpy as np
 import torch
-from sofa import SbertConfig, SbertForTokenClassification
 
 from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForTokenClassification']
+__all__ = ['SbertForTokenClassification']
 
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.structbert)
-class StructBertForTokenClassification(Model):
+class SbertForTokenClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the word segmentation model from the `model_dir` path.
@@ -25,6 +24,7 @@ class StructBertForTokenClassification(Model):
         """
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
+        from sofa import SbertConfig, SbertForTokenClassification
         self.model = SbertForTokenClassification.from_pretrained(
             self.model_dir)
         self.config = SbertConfig.from_pretrained(self.model_dir)

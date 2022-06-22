@@ -1,27 +1,31 @@
-import os
 import uuid
 from typing import Any, Dict, Union
 
-import json
+import uuid
+from typing import Any, Dict, Union
+
 import numpy as np
 
-from modelscope.models.nlp import SbertForNLI
-from modelscope.preprocessors import NLIPreprocessor
-from modelscope.utils.constant import Tasks
-from ...models import Model
-from ..base import Input, Pipeline
+from ..base import Pipeline
 from ..builder import PIPELINES
+from ...metainfo import Pipelines
+from ...models import Model
+from ...models.nlp import SbertForNLI
+from ...preprocessors import NLIPreprocessor
+from ...utils.constant import Tasks
 
 __all__ = ['NLIPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.nli, module_name=r'nlp_structbert_nli_chinese-base')
+    Tasks.nli, module_name=Pipelines.nli)
 class NLIPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[SbertForNLI, str],
                  preprocessor: NLIPreprocessor = None,
+                 first_sequence="first_sequence",
+                 second_sequence="second_sequence",
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -36,20 +40,12 @@ class NLIPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = NLIPreprocessor(
                 sc_model.model_dir,
-                first_sequence='first_sequence',
-                second_sequence='second_sequence')
+                first_sequence=first_sequence,
+                second_sequence=second_sequence)
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
+        assert len(sc_model.id2label) > 0
 
-        self.label_path = os.path.join(sc_model.model_dir,
-                                       'label_mapping.json')
-        with open(self.label_path) as f:
-            self.label_mapping = json.load(f)
-        self.label_id_to_name = {
-            idx: name
-            for name, idx in self.label_mapping.items()
-        }
-
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

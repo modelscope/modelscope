@@ -27,6 +27,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_structbert_sentiment-classification_chinese-base'),
     Tasks.text_classification: ('bert-sentiment-analysis',
                                 'damo/bert-base-sst2'),
+    Tasks.zero_shot_classification:
+    ('bert-zero-shot-classification',
+     'damo/nlp_structbert_zero-shot-classification_chinese-base'),
     Tasks.text_generation: ('palm2.0',
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
     Tasks.image_captioning: ('ofa', 'damo/ofa_image-caption_coco_large_en'),

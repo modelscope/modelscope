@@ -31,6 +31,7 @@ class Tasks(object):
     ocr_detection = 'ocr-detection'
 
     # nlp tasks
+    zero_shot_classification = 'zero-shot-classification'
     word_segmentation = 'word-segmentation'
     nli = 'nli'
     sentiment_classification = 'sentiment-classification'

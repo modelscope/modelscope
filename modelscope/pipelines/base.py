@@ -4,13 +4,11 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Union
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.preprocessors import Preprocessor
 from modelscope.pydatasets import PyDataset
 from modelscope.utils.config import Config
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.logger import get_logger
 from .outputs import TASK_OUTPUTS
 from .util import is_model_name
@@ -32,9 +30,7 @@ class Pipeline(ABC):
         # TODO @wenmeng.zwm replace model.startswith('damo/') with get_model
         if isinstance(model, str) and model.startswith('damo/'):
             if not osp.exists(model):
-                cache_path = get_model_cache_dir(model)
-                model = cache_path if osp.exists(
-                    cache_path) else snapshot_download(model)
+                model = snapshot_download(model)
             return Model.from_pretrained(model) if is_model_name(
                 model) else model
         elif isinstance(model, Model):
@@ -80,7 +76,7 @@ class Pipeline(ABC):
         self.preprocessor = preprocessor
 
     def __call__(self, input: Union[Input, List[Input]], *args,
-                 **post_kwargs) -> Union[Dict[str, Any], Generator]:
+                 **kwargs) -> Union[Dict[str, Any], Generator]:
         # model provider should leave it as it is
         # modelscope library developer will handle this function
 
@@ -89,24 +85,41 @@ class Pipeline(ABC):
         if isinstance(input, list):
             output = []
             for ele in input:
-                output.append(self._process_single(ele, *args, **post_kwargs))
+                output.append(self._process_single(ele, *args, **kwargs))
 
         elif isinstance(input, PyDataset):
-            return self._process_iterator(input, *args, **post_kwargs)
+            return self._process_iterator(input, *args, **kwargs)
 
         else:
-            output = self._process_single(input, *args, **post_kwargs)
+            output = self._process_single(input, *args, **kwargs)
         return output
 
-    def _process_iterator(self, input: Input, *args, **post_kwargs):
+    def _process_iterator(self, input: Input, *args, **kwargs):
         for ele in input:
-            yield self._process_single(ele, *args, **post_kwargs)
+            yield self._process_single(ele, *args, **kwargs)
 
-    def _process_single(self, input: Input, *args,
-                        **post_kwargs) -> Dict[str, Any]:
-        out = self.preprocess(input)
-        out = self.forward(out)
-        out = self.postprocess(out, **post_kwargs)
+    def _sanitize_parameters(self, **pipeline_parameters):
+        """
+        this method should sanitize the keyword args to preprocessor params,
+        forward params and postprocess params on '__call__' or '_process_single' method
+        considering to be a normal classmethod with default implementation / output
+
+        Returns:
+            Dict[str, str]:  preprocess_params = {}
+            Dict[str, str]:  forward_params = {}
+            Dict[str, str]:  postprocess_params = pipeline_parameters
+        """
+        # raise NotImplementedError("_sanitize_parameters not implemented")
+        return {}, {}, pipeline_parameters
+
+    def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
+
+        # sanitize the parameters
+        preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
+            **kwargs)
+        out = self.preprocess(input, **preprocess_params)
+        out = self.forward(out, **forward_params)
+        out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out
 
@@ -126,23 +139,25 @@ class Pipeline(ABC):
             raise ValueError(f'expected output keys are {output_keys}, '
                              f'those {missing_keys} are missing')
 
-    def preprocess(self, inputs: Input) -> Dict[str, Any]:
+    def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         """ Provide default implementation based on preprocess_cfg and user can reimplement it
         """
         assert self.preprocessor is not None, 'preprocess method should be implemented'
         assert not isinstance(self.preprocessor, List),\
             'default implementation does not support using multiple preprocessors.'
-        return self.preprocessor(inputs)
+        return self.preprocessor(inputs, **preprocess_params)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
         """ Provide default implementation using self.model and user can reimplement it
         """
         assert self.model is not None, 'forward method should be implemented'
         assert not self.has_multiple_models, 'default implementation does not support multiple models in a pipeline.'
-        return self.model(inputs)
+        return self.model(inputs, **forward_params)
 
     @abstractmethod
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, Any]:
         """ If current pipeline support model reuse, common postprocess
             code should be write here.
 

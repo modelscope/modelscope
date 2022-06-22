@@ -13,7 +13,7 @@ import torch
 from tqdm import tqdm
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
-import modelscope.utils.nlp.space.ontology as ontology
+from .....utils.nlp.space import ontology
 from ..metrics.metrics_tracker import MetricsTracker
 
 

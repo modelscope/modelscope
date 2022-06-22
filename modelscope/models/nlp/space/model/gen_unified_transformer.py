@@ -3,7 +3,7 @@ IntentUnifiedTransformer
 """
 import torch
 
-from modelscope.models.nlp.space.model.unified_transformer import \
+from .unified_transformer import \
     UnifiedTransformer
 
 

@@ -3,11 +3,11 @@
 import os
 from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.intent_field import \
+from .fields.intent_field import \
     IntentBPETextField
-from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields
-from modelscope.utils.type_assert import type_assert
+from ...utils.config import Config
+from ...utils.constant import Fields
+from ...utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
 

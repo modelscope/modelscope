@@ -14,10 +14,10 @@ import json
 import numpy as np
 from tqdm import tqdm
 
-from modelscope.preprocessors.space.tokenizer import Tokenizer
-from modelscope.utils.nlp.space import ontology, utils
-from modelscope.utils.nlp.space.scores import hierarchical_set_score
-from modelscope.utils.nlp.space.utils import list2np
+from ..tokenizer import Tokenizer
+from ....utils.nlp.space import ontology, utils
+from ....utils.nlp.space.scores import hierarchical_set_score
+from ....utils.nlp.space.utils import list2np
 
 
 class BPETextField(object):

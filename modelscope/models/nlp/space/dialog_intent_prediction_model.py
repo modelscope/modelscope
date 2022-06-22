@@ -1,11 +1,11 @@
 import os
 from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.intent_field import \
+from ....preprocessors.space.fields.intent_field import \
     IntentBPETextField
-from modelscope.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
-from modelscope.utils.config import Config
-from modelscope.utils.constant import Tasks
+from ....trainers.nlp.space.trainers.intent_trainer import IntentTrainer
+from ....utils.config import Config
+from ....utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
 from .model.generator import Generator

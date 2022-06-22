@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.gen_field import \
+from .fields.gen_field import \
     MultiWOZBPETextField
-from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields, InputFields
-from modelscope.utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
+from ...utils.config import Config
+from ...utils.constant import Fields
+from ...utils.type_assert import type_assert
 
 __all__ = ['DialogModelingPreprocessor']
 

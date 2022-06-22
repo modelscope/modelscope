@@ -2,10 +2,10 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
-from modelscope.metainfo import Pipelines
-from modelscope.models.nlp import SbertForSentenceSimilarity
-from modelscope.preprocessors import SequenceClassificationPreprocessor
-from modelscope.utils.constant import Tasks
+from ...metainfo import Pipelines
+from ...models.nlp import SbertForSentenceSimilarity
+from ...preprocessors import SequenceClassificationPreprocessor
+from ...utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
@@ -18,7 +18,7 @@ __all__ = ['SentenceSimilarityPipeline']
 class SentenceSimilarityPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[SbertForSentenceSimilarity, str],
+                 model: Union[Model, str],
                  preprocessor: SequenceClassificationPreprocessor = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp sentence similarity pipeline for prediction

@@ -5,26 +5,25 @@ import numpy as np
 from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
+from ...metainfo import Models
 
-__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM']
+__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM', 'MaskedLMModelBase']
 
 
-class AliceMindBaseForMaskedLM(Model):
+class MaskedLMModelBase(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        from sofa.utils.backend import AutoConfig, AutoModelForMaskedLM
-        self.model_dir = model_dir
         super().__init__(model_dir, *args, **kwargs)
+        self.model = self.build_model()
 
-        self.config = AutoConfig.from_pretrained(model_dir)
-        self.model = AutoModelForMaskedLM.from_pretrained(
-            model_dir, config=self.config)
+    def build_model(self):
+        raise NotImplementedError()
 
     def forward(self, inputs: Dict[str, Tensor]) -> Dict[str, np.ndarray]:
         """return the result by the model
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            inputs (Dict[str, Any]): the preprocessed data
 
         Returns:
             Dict[str, np.ndarray]: results
@@ -36,15 +35,17 @@ class AliceMindBaseForMaskedLM(Model):
         return {'logits': rst['logits'], 'input_ids': inputs['input_ids']}
 
 
-@MODELS.register_module(Tasks.fill_mask, module_name=r'sbert')
-class StructBertForMaskedLM(AliceMindBaseForMaskedLM):
-    # The StructBert for MaskedLM uses the same underlying model structure
-    # as the base model class.
-    pass
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)
+class StructBertForMaskedLM(MaskedLMModelBase):
+
+    def build_model(self):
+        from sofa import SbertForMaskedLM
+        return SbertForMaskedLM.from_pretrained(self.model_dir)
 
 
-@MODELS.register_module(Tasks.fill_mask, module_name=r'veco')
-class VecoForMaskedLM(AliceMindBaseForMaskedLM):
-    # The Veco for MaskedLM uses the same underlying model structure
-    # as the base model class.
-    pass
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.veco)
+class VecoForMaskedLM(MaskedLMModelBase):
+
+    def build_model(self):
+        from sofa import VecoForMaskedLM
+        return VecoForMaskedLM.from_pretrained(self.model_dir)

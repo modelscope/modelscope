@@ -7,9 +7,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modelscope.models.nlp.space.model.model_base import ModelBase
-from modelscope.models.nlp.space.modules.embedder import Embedder
-from modelscope.models.nlp.space.modules.transformer_block import \
+from .model_base import ModelBase
+from ..modules.embedder import Embedder
+from ..modules.transformer_block import \
     TransformerBlock
 
 

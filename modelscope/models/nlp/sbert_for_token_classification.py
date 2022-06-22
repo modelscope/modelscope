@@ -46,10 +46,11 @@ class StructBertForTokenClassification(Model):
                     }
         """
         input_ids = torch.tensor(input['input_ids']).unsqueeze(0)
-        output = self.model(input_ids)
-        logits = output.logits
+        return self.model(input_ids)
+
+    def postprocess(self, input: Dict[str, Tensor], **kwargs) -> Dict[str, Tensor]:
+        logits = input["logits"]
         pred = torch.argmax(logits[0], dim=-1)
         pred = pred.numpy()
-
         rst = {'predictions': pred, 'logits': logits, 'text': input['text']}
         return rst

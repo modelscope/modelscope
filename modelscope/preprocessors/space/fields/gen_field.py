@@ -8,10 +8,10 @@ from itertools import chain
 
 import numpy as np
 
-from modelscope.preprocessors.space.tokenizer import Tokenizer
-from modelscope.utils.nlp.space import ontology, utils
-from modelscope.utils.nlp.space.db_ops import MultiWozDB
-from modelscope.utils.nlp.space.utils import list2np
+from ..tokenizer import Tokenizer
+from ....utils.nlp.space import ontology, utils
+from ....utils.nlp.space.db_ops import MultiWozDB
+from ....utils.nlp.space.utils import list2np
 
 
 class BPETextField(object):

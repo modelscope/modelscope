@@ -1,11 +1,11 @@
 import os
 from typing import Any, Dict, Optional
 
-from modelscope.preprocessors.space.fields.gen_field import \
+from ....preprocessors.space.fields.gen_field import \
     MultiWOZBPETextField
-from modelscope.trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
-from modelscope.utils.config import Config
-from modelscope.utils.constant import Tasks
+from ....trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
+from ....utils.config import Config
+from ....utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
 from .model.generator import Generator

@@ -5,17 +5,18 @@ from typing import Any, Dict, Union
 
 from transformers import AutoTokenizer
 
-from modelscope.metainfo import Preprocessors
-from modelscope.utils.constant import Fields, InputFields
-from modelscope.utils.type_assert import type_assert
+from ..metainfo import Preprocessors
+from ..metainfo import Models
+from ..utils.constant import Fields, InputFields
+from ..utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor', 'ZeroShotClassificationPreprocessor',
-    'TokenClassifcationPreprocessor', 'NLIPreprocessor',
-    'SentimentClassificationPreprocessor', 'FillMaskPreprocessor'
+    'PalmTextGenerationPreprocessor', 'SbertZeroShotClassificationPreprocessor',
+    'SbertTokenClassifcationPreprocessor', 'SbertNLIPreprocessor',
+    'SbertSentimentClassificationPreprocessor', 'FillMaskPreprocessor'
 ]
 
 
@@ -34,8 +35,8 @@ class Tokenize(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'nlp_structbert_nli_chinese-base')
-class NLIPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.sbert_nli_tokenizer)
+class SbertNLIPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -104,8 +105,8 @@ class NLIPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'sbert-sentiment-classification')
-class SentimentClassificationPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.sbert_sen_cls_tokenizer)
+class SbertSentimentClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -263,7 +264,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
-class TextGenerationPreprocessor(Preprocessor):
+class PalmTextGenerationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
         """preprocess the data using the vocab.txt from the `model_dir` path
@@ -373,8 +374,8 @@ class FillMaskPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'bert-zero-shot-classification')
-class ZeroShotClassificationPreprocessor(Preprocessor):
+    Fields.nlp, module_name=Preprocessors.sbert_zero_shot_cls_tokenizer)
+class SbertZeroShotClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -418,7 +419,7 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sbert_token_cls_tokenizer)
-class TokenClassifcationPreprocessor(Preprocessor):
+class SbertTokenClassifcationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path

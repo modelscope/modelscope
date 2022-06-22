@@ -6,8 +6,8 @@ import json
 import numpy as np
 from scipy.special import softmax
 
-from modelscope.models.nlp import BertForZeroShotClassification
-from modelscope.preprocessors import ZeroShotClassificationPreprocessor
+from modelscope.models.nlp import SbertForZeroShotClassification
+from modelscope.preprocessors import SbertZeroShotClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
@@ -22,8 +22,8 @@ __all__ = ['ZeroShotClassificationPipeline']
 class ZeroShotClassificationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[BertForZeroShotClassification, str],
-                 preprocessor: ZeroShotClassificationPreprocessor = None,
+                 model: Union[SbertForZeroShotClassification, str],
+                 preprocessor: SbertZeroShotClassificationPreprocessor = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -31,11 +31,11 @@ class ZeroShotClassificationPipeline(Pipeline):
             model (SbertForSentimentClassification): a model instance
             preprocessor (SentimentClassificationPreprocessor): a preprocessor instance
         """
-        assert isinstance(model, str) or isinstance(model, BertForZeroShotClassification), \
+        assert isinstance(model, str) or isinstance(model, SbertForZeroShotClassification), \
             'model must be a single str or BertForZeroShotClassification'
         sc_model = model if isinstance(
             model,
-            BertForZeroShotClassification) else Model.from_pretrained(model)
+            SbertForZeroShotClassification) else Model.from_pretrained(model)
 
         self.entailment_id = 0
         self.contradiction_id = 2

@@ -13,8 +13,9 @@ class Models(object):
 
     # nlp models
     bert = 'bert'
-    palm2_0 = 'palm2.0'
+    palm = 'palm_v2'
     structbert = 'structbert'
+    veco = 'veco'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'
@@ -85,6 +86,9 @@ class Preprocessors(object):
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
+    sbert_nli_tokenizer = 'sbert-nli-tokenizer'
+    sbert_sen_cls_tokenizer = 'sbert-sen-cls-tokenizer'
+    sbert_zero_shot_cls_tokenizer = 'sbert-zero-shot-cls-tokenizer'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

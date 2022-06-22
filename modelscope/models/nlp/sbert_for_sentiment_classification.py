@@ -1,17 +1,17 @@
-from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from .sbert_for_sequence_classification import SbertForSequenceClassificationBase
 from ..builder import MODELS
 
-__all__ = ['SbertForSentenceSimilarity']
+__all__ = ['SbertForSentimentClassification']
 
 
 @MODELS.register_module(
-    Tasks.sentence_similarity, module_name=Models.structbert)
-class SbertForSentenceSimilarity(SbertForSequenceClassificationBase):
+    Tasks.sentiment_classification,
+    module_name=r'sbert-sentiment-classification')
+class SbertForSentimentClassification(SbertForSequenceClassificationBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """initialize the sentence similarity model from the `model_dir` path.
+        """initialize the text generation model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
@@ -19,5 +19,4 @@ class SbertForSentenceSimilarity(SbertForSequenceClassificationBase):
                 default loader to load model weights, by default None.
         """
         super().__init__(model_dir, *args, **kwargs)
-        self.model_dir = model_dir
         assert self.model.config.num_labels == 2

@@ -4,6 +4,7 @@ from typing import Any, Dict
 import json
 import numpy as np
 
+from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from ..base import Model
 from ..builder import MODELS
@@ -11,8 +12,7 @@ from ..builder import MODELS
 __all__ = ['BertForSequenceClassification']
 
 
-@MODELS.register_module(
-    Tasks.text_classification, module_name=r'bert-sentiment-analysis')
+@MODELS.register_module(Tasks.text_classification, module_name=Models.bert)
 class BertForSequenceClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

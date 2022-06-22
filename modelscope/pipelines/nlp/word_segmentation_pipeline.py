@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional, Union
 
+from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.nlp import StructBertForTokenClassification
 from modelscope.preprocessors import TokenClassifcationPreprocessor
@@ -11,8 +12,7 @@ __all__ = ['WordSegmentationPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.word_segmentation,
-    module_name=r'structbert-chinese-word-segmentation')
+    Tasks.word_segmentation, module_name=Pipelines.word_segmentation)
 class WordSegmentationPipeline(Pipeline):
 
     def __init__(self,

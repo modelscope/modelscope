@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import PIL
 
+from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import ModelFile, Tasks
@@ -16,7 +17,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_matting, module_name=Tasks.image_matting)
+    Tasks.image_matting, module_name=Pipelines.image_matting)
 class ImageMattingPipeline(Pipeline):
 
     def __init__(self, model: str):

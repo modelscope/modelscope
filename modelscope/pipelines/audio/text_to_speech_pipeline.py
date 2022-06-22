@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 
+from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.audio.tts.am import SambertNetHifi16k
 from modelscope.models.audio.tts.vocoder import Hifigan16k
@@ -15,7 +16,7 @@ __all__ = ['TextToSpeechSambertHifigan16kPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.text_to_speech, module_name=r'tts-sambert-hifigan-16k')
+    Tasks.text_to_speech, module_name=Pipelines.sambert_hifigan_16k_tts)
 class TextToSpeechSambertHifigan16kPipeline(Pipeline):
 
     def __init__(self,

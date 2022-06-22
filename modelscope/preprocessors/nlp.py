@@ -5,6 +5,7 @@ from typing import Any, Dict, Union
 
 from transformers import AutoTokenizer
 
+from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields, InputFields
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
@@ -167,7 +168,7 @@ class SentimentClassificationPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'bert-sequence-classification')
+    Fields.nlp, module_name=Preprocessors.bert_seq_cls_tokenizer)
 class SequenceClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -260,7 +261,8 @@ class SequenceClassificationPreprocessor(Preprocessor):
         return rst
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'palm2.0')
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
 class TextGenerationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
@@ -415,7 +417,7 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=r'bert-token-classification')
+    Fields.nlp, module_name=Preprocessors.sbert_token_cls_tokenizer)
 class TokenClassifcationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

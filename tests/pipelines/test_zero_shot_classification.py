@@ -4,7 +4,7 @@ import unittest
 from maas_hub.snapshot_download import snapshot_download
 
 from modelscope.models import Model
-from modelscope.models.nlp import BertForZeroShotClassification
+from modelscope.models.nlp import SbertForZeroShotClassification
 from modelscope.pipelines import ZeroShotClassificationPipeline, pipeline
 from modelscope.preprocessors import ZeroShotClassificationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -19,7 +19,7 @@ class ZeroShotClassificationTest(unittest.TestCase):
     def test_run_from_local(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = ZeroShotClassificationPreprocessor(cache_path)
-        model = BertForZeroShotClassification(cache_path, tokenizer=tokenizer)
+        model = SbertForZeroShotClassification(cache_path, tokenizer=tokenizer)
         pipeline1 = ZeroShotClassificationPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(

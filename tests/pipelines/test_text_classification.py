@@ -38,31 +38,6 @@ class SequenceClassificationTest(unittest.TestCase):
                 break
             print(r)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run(self):
-        model_url = 'https://atp-modelzoo-sh.oss-cn-shanghai.aliyuncs.com' \
-                    '/release/easynlp_modelzoo/alibaba-pai/bert-base-sst2.zip'
-        cache_path_str = r'.cache/easynlp/bert-base-sst2.zip'
-        cache_path = Path(cache_path_str)
-
-        if not cache_path.exists():
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-            cache_path.touch(exist_ok=True)
-            with cache_path.open('wb') as ofile:
-                ofile.write(File.read(model_url))
-
-        with zipfile.ZipFile(cache_path_str, 'r') as zipf:
-            zipf.extractall(cache_path.parent)
-        path = r'.cache/easynlp/'
-        model = BertForSequenceClassification(path)
-        preprocessor = SequenceClassificationPreprocessor(
-            path, first_sequence='sentence', second_sequence=None)
-        pipeline1 = SequenceClassificationPipeline(model, preprocessor)
-        self.predict(pipeline1)
-        pipeline2 = pipeline(
-            Tasks.text_classification, model=model, preprocessor=preprocessor)
-        print(pipeline2('Hello world!'))
-
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)

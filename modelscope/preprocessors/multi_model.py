@@ -7,6 +7,7 @@ import torch
 from PIL import Image
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields, ModelFile
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
@@ -19,7 +20,7 @@ __all__ = [
 
 
 @PREPROCESSORS.register_module(
-    Fields.multi_modal, module_name=r'ofa-image-caption')
+    Fields.multi_modal, module_name=Preprocessors.ofa_image_caption)
 class OfaImageCaptionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

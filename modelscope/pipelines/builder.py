@@ -3,32 +3,39 @@
 import os.path as osp
 from typing import List, Union
 
+from attr import has
+
+from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.hub import read_config
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline
+from .util import is_official_hub_path
 
 PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
     Tasks.word_segmentation:
-    ('structbert-chinese-word-segmentation',
+    (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
     Tasks.sentence_similarity:
-    ('sbert-base-chinese-sentence-similarity',
+    (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
-    Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting'),
-    Tasks.text_classification:
-    ('bert-sentiment-analysis', 'damo/bert-base-sst2'),
-    Tasks.text_generation: ('palm2.0',
+    Tasks.image_matting:
+    (Pipelines.image_matting, 'damo/cv_unet_image-matting'),
+    Tasks.text_classification: (Pipelines.sentiment_analysis,
+                                'damo/bert-base-sst2'),
+    Tasks.text_generation: (Pipelines.text_generation,
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
-    Tasks.image_captioning: ('ofa', 'damo/ofa_image-caption_coco_large_en'),
+    Tasks.image_captioning: (Pipelines.image_caption,
+                             'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:
-    ('person-image-cartoon',
+    (Pipelines.person_image_cartoon,
      'damo/cv_unet_person-image-cartoon_compound-models'),
-    Tasks.ocr_detection: ('ocr-detection',
+    Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
 }
 
@@ -86,29 +93,39 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
+    assert isinstance(model, (type(None), str, Model, list)), \
+        f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
+
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \
            or (isinstance(model, list) and isinstance(model[0], str)):
-
-            # if is_model_name(model):
-            if (isinstance(model, str) and model.startswith('damo/')) \
-               or (isinstance(model, list) and model[0].startswith('damo/')) \
-               or (isinstance(model, str) and osp.exists(model)):
-                # TODO @wenmeng.zwm  add support when model is a str of modelhub address
-                # read pipeline info from modelhub configuration file.
-                pipeline_name, default_model_repo = get_default_pipeline_info(
-                    task)
+            if is_official_hub_path(model):
+                # read config file from hub and parse
+                cfg = read_config(model) if isinstance(
+                    model, str) else read_config(model[0])
+                assert hasattr(
+                    cfg,
+                    'pipeline'), 'pipeline config is missing from config file.'
+                pipeline_name = cfg.pipeline.type
             else:
+                # used for test case, when model is str and is not hub path
                 pipeline_name = get_pipeline_by_model_name(task, model)
+        elif isinstance(model, Model) or \
+                (isinstance(model, list) and isinstance(model[0], Model)):
+            # get pipeline info from Model object
+            first_model = model[0] if isinstance(model, list) else model
+            if not hasattr(first_model, 'pipeline'):
+                # model is instantiated by user, we should parse config again
+                cfg = read_config(first_model.model_dir)
+                assert hasattr(
+                    cfg,
+                    'pipeline'), 'pipeline config is missing from config file.'
+                first_model.pipeline = cfg.pipeline
+            pipeline_name = first_model.pipeline.type
         else:
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
-
-        if model is None:
             model = default_model_repo
-
-    assert isinstance(model, (type(None), str, Model, list)), \
-        f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
     cfg = ConfigDict(type=pipeline_name, model=model)
 

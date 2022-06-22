@@ -3,6 +3,7 @@ import shutil
 import unittest
 
 from modelscope.fileio import File
+from modelscope.metainfo import Pipelines
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
@@ -42,7 +43,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
         aec = pipeline(
             Tasks.speech_signal_process,
             model=self.model_id,
-            pipeline_name=r'speech_dfsmn_aec_psm_16k')
+            pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
         aec(input, output_path='output.wav')
 
 

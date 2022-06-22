@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MultiLabelBinarizer
 
+from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
@@ -26,7 +27,8 @@ def multi_label_symbol_to_sequence(my_classes, my_symbol):
     return one_hot.fit_transform(sequences)
 
 
-@MODELS.register_module(Tasks.text_to_speech, module_name=r'sambert_hifi_16k')
+@MODELS.register_module(
+    Tasks.text_to_speech, module_name=Models.sambert_hifi_16k)
 class SambertNetHifi16k(Model):
 
     def __init__(self,

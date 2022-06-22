@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Union
 
+from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.nlp import PalmForTextGeneration
 from modelscope.preprocessors import TextGenerationPreprocessor
@@ -10,7 +11,8 @@ from ..builder import PIPELINES
 __all__ = ['TextGenerationPipeline']
 
 
-@PIPELINES.register_module(Tasks.text_generation, module_name=r'palm2.0')
+@PIPELINES.register_module(
+    Tasks.text_generation, module_name=Pipelines.text_generation)
 class TextGenerationPipeline(Pipeline):
 
     def __init__(self,

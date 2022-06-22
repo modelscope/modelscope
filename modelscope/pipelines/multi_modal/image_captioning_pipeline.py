@@ -1,5 +1,6 @@
 from typing import Any, Dict, Union
 
+from modelscope.metainfo import Pipelines
 from modelscope.preprocessors import OfaImageCaptionPreprocessor, Preprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
@@ -9,7 +10,8 @@ from ..builder import PIPELINES
 logger = get_logger()
 
 
-@PIPELINES.register_module(Tasks.image_captioning, module_name='ofa')
+@PIPELINES.register_module(
+    Tasks.image_captioning, module_name=Pipelines.image_caption)
 class ImageCaptionPipeline(Pipeline):
 
     def __init__(self,

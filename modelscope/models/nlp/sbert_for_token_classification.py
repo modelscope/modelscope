@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from sofa import SbertConfig, SbertForTokenClassification
 
+from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
@@ -11,9 +12,7 @@ from ..builder import MODELS
 __all__ = ['StructBertForTokenClassification']
 
 
-@MODELS.register_module(
-    Tasks.word_segmentation,
-    module_name=r'structbert-chinese-word-segmentation')
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.structbert)
 class StructBertForTokenClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

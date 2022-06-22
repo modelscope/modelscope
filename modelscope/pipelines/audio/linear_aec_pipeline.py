@@ -7,6 +7,7 @@ import scipy.io.wavfile as wav
 import torch
 import yaml
 
+from modelscope.metainfo import Pipelines
 from modelscope.preprocessors.audio import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
 from ..base import Pipeline
@@ -39,7 +40,8 @@ def initialize_config(module_cfg):
 
 
 @PIPELINES.register_module(
-    Tasks.speech_signal_process, module_name=r'speech_dfsmn_aec_psm_16k')
+    Tasks.speech_signal_process,
+    module_name=Pipelines.speech_dfsmn_aec_psm_16k)
 class LinearAECPipeline(Pipeline):
     r"""AEC Inference Pipeline only support 16000 sample rate.
 

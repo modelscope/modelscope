@@ -3,6 +3,7 @@ import io
 from typing import Any, Dict, Union
 
 from modelscope.fileio import File
+from modelscope.metainfo import Preprocessors
 from modelscope.models.audio.tts.frontend import GenericTtsFrontend
 from modelscope.models.base import Model
 from modelscope.utils.audio.tts_exceptions import *  # noqa F403
@@ -10,11 +11,11 @@ from modelscope.utils.constant import Fields
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 
-__all__ = ['TextToTacotronSymbols', 'text_to_tacotron_symbols']
+__all__ = ['TextToTacotronSymbols']
 
 
 @PREPROCESSORS.register_module(
-    Fields.audio, module_name=r'text_to_tacotron_symbols')
+    Fields.audio, module_name=Preprocessors.text_to_tacotron_symbols)
 class TextToTacotronSymbols(Preprocessor):
     """extract tacotron symbols from text.
 

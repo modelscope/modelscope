@@ -13,7 +13,7 @@ class Models(object):
 
     # nlp models
     bert = 'bert'
-    palm2_0 = 'palm2.0'
+    palm = 'palm-v2'
     structbert = 'structbert'
 
     # audio models

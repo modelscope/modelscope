@@ -1,7 +1,8 @@
-from ...utils.constant import Tasks
-from .sbert_for_sequence_classification import SbertForSequenceClassificationBase
-from ..builder import MODELS
 from ...metainfo import Models
+from ...utils.constant import Tasks
+from ..builder import MODELS
+from .sbert_for_sequence_classification import \
+    SbertForSequenceClassificationBase
 
 __all__ = ['SbertForNLI']
 
@@ -17,5 +18,6 @@ class SbertForNLI(SbertForSequenceClassificationBase):
             model_cls (Optional[Any], optional): model loader, if None, use the
                 default loader to load model weights, by default None.
         """
-        super().__init__(model_dir, *args, model_args={"num_labels": 3}, **kwargs)
+        super().__init__(
+            model_dir, *args, model_args={'num_labels': 3}, **kwargs)
         assert self.model.config.num_labels == 3

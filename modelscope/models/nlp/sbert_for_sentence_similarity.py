@@ -1,7 +1,8 @@
 from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
-from .sbert_for_sequence_classification import SbertForSequenceClassificationBase
 from ..builder import MODELS
+from .sbert_for_sequence_classification import \
+    SbertForSequenceClassificationBase
 
 __all__ = ['SbertForSentenceSimilarity']
 
@@ -18,6 +19,7 @@ class SbertForSentenceSimilarity(SbertForSequenceClassificationBase):
             model_cls (Optional[Any], optional): model loader, if None, use the
                 default loader to load model weights, by default None.
         """
-        super().__init__(model_dir, *args, model_args={"num_labels": 2}, **kwargs)
+        super().__init__(
+            model_dir, *args, model_args={'num_labels': 2}, **kwargs)
         self.model_dir = model_dir
         assert self.model.config.num_labels == 2

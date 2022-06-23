@@ -1,5 +1,7 @@
-from typing import Dict, Optional, Union, Any
+from typing import Any, Dict, Optional, Union
+
 import torch
+
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import PalmForTextGeneration
@@ -42,7 +44,8 @@ class TextGenerationPipeline(Pipeline):
         with torch.no_grad():
             return super().forward(inputs, **forward_params)
 
-    def postprocess(self, inputs: Dict[str, Tensor], **postprocess_params) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Tensor],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

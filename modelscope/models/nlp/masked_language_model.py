@@ -2,10 +2,10 @@ from typing import Any, Dict, Optional, Union
 
 import numpy as np
 
+from ...metainfo import Models
 from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
-from ...metainfo import Models
 
 __all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM', 'MaskedLMModelBase']
 
@@ -27,7 +27,7 @@ class MaskedLMModelBase(Model):
 
     @property
     def config(self):
-        if hasattr(self.model, "config"):
+        if hasattr(self.model, 'config'):
             return self.model.config
         return None
 

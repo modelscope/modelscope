@@ -3,8 +3,7 @@ IntentUnifiedTransformer
 """
 import torch
 
-from .unified_transformer import \
-    UnifiedTransformer
+from .unified_transformer import UnifiedTransformer
 
 
 class GenUnifiedTransformer(UnifiedTransformer):

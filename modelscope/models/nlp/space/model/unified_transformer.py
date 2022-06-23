@@ -7,10 +7,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .model_base import ModelBase
 from ..modules.embedder import Embedder
-from ..modules.transformer_block import \
-    TransformerBlock
+from ..modules.transformer_block import TransformerBlock
+from .model_base import ModelBase
 
 
 class UnifiedTransformer(ModelBase):

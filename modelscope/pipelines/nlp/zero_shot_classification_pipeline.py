@@ -1,16 +1,17 @@
 import os
 import uuid
 from typing import Any, Dict, Union
-import torch
+
 import json
 import numpy as np
+import torch
 from scipy.special import softmax
 
+from ...metainfo import Pipelines
+from ...models import Model
 from ...models.nlp import SbertForZeroShotClassification
 from ...preprocessors import ZeroShotClassificationPreprocessor
 from ...utils.constant import Tasks
-from ...models import Model
-from ...metainfo import Pipelines
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
 

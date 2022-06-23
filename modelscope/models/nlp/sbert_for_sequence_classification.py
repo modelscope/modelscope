@@ -1,11 +1,13 @@
-from torch import nn
-from typing import Any, Dict
-from ..base import Model
-import numpy as np
-import json
 import os
+from typing import Any, Dict
+
+import json
+import numpy as np
 import torch
-from sofa.models.sbert.modeling_sbert import SbertPreTrainedModel, SbertModel
+from sofa.models.sbert.modeling_sbert import SbertModel, SbertPreTrainedModel
+from torch import nn
+
+from ..base import Model
 
 
 class SbertTextClassfier(SbertPreTrainedModel):
@@ -27,9 +29,7 @@ class SbertTextClassfier(SbertPreTrainedModel):
         pooled_output = outputs[1]
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
-        return {
-            "logits": logits
-        }
+        return {'logits': logits}
 
 
 class SbertForSequenceClassificationBase(Model):
@@ -38,13 +38,17 @@ class SbertForSequenceClassificationBase(Model):
         super().__init__(model_dir, *args, **kwargs)
         if model_args is None:
             model_args = {}
-        self.model = SbertTextClassfier.from_pretrained(model_dir, **model_args)
+        self.model = SbertTextClassfier.from_pretrained(
+            model_dir, **model_args)
         self.id2label = {}
         self.label_path = os.path.join(self.model_dir, 'label_mapping.json')
         if os.path.exists(self.label_path):
             with open(self.label_path) as f:
                 self.label_mapping = json.load(f)
-            self.id2label = {idx: name for name, idx in self.label_mapping.items()}
+            self.id2label = {
+                idx: name
+                for name, idx in self.label_mapping.items()
+            }
 
     def train(self):
         return self.model.train()
@@ -59,7 +63,7 @@ class SbertForSequenceClassificationBase(Model):
         return self.model.forward(input_ids, token_type_ids)
 
     def postprocess(self, input, **kwargs):
-        logits = input["logits"]
+        logits = input['logits']
         probs = logits.softmax(-1).numpy()
         pred = logits.argmax(-1).numpy()
         logits = logits.numpy()

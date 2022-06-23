@@ -5,8 +5,7 @@ from typing import Any, Dict, Union
 
 from transformers import AutoTokenizer
 
-from ..metainfo import Preprocessors
-from ..metainfo import Models
+from ..metainfo import Models, Preprocessors
 from ..utils.constant import Fields, InputFields
 from ..utils.type_assert import type_assert
 from .base import Preprocessor

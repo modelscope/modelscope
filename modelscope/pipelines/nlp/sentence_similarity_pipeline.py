@@ -2,11 +2,12 @@ from typing import Any, Dict, Union
 
 import numpy as np
 import torch
+
 from ...metainfo import Pipelines
+from ...models import Model
 from ...models.nlp import SbertForSentenceSimilarity
 from ...preprocessors import SequenceClassificationPreprocessor
 from ...utils.constant import Tasks
-from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
 
@@ -20,8 +21,8 @@ class SentenceSimilarityPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: SequenceClassificationPreprocessor = None,
-                 first_sequence="first_sequence",
-                 second_sequence="second_sequence",
+                 first_sequence='first_sequence',
+                 second_sequence='second_sequence',
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp sentence similarity pipeline for prediction
 
@@ -50,7 +51,8 @@ class SentenceSimilarityPipeline(Pipeline):
         with torch.no_grad():
             return super().forward(inputs, **forward_params)
 
-    def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

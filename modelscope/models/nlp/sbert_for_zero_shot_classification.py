@@ -3,16 +3,15 @@ from typing import Any, Dict
 import numpy as np
 
 from modelscope.utils.constant import Tasks
+from ...metainfo import Models
 from ..base import Model
 from ..builder import MODELS
-from ...metainfo import Models
 
 __all__ = ['SbertForZeroShotClassification']
 
 
 @MODELS.register_module(
-    Tasks.zero_shot_classification,
-    module_name=Models.structbert)
+    Tasks.zero_shot_classification, module_name=Models.structbert)
 class SbertForZeroShotClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -31,7 +30,7 @@ class SbertForZeroShotClassification(Model):
 
     def eval(self):
         return self.model.eval()
-    
+
     def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         """return the result by the model
 

@@ -14,8 +14,7 @@ import torch
 from tqdm import tqdm
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
-from ..metrics.metrics_tracker import \
-    MetricsTracker
+from ..metrics.metrics_tracker import MetricsTracker
 
 
 def get_logger(log_path, name='default'):

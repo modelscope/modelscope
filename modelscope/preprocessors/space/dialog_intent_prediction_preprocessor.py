@@ -3,13 +3,12 @@
 import os
 from typing import Any, Dict
 
-from .fields.intent_field import \
-    IntentBPETextField
 from ...utils.config import Config
 from ...utils.constant import Fields
 from ...utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
+from .fields.intent_field import IntentBPETextField
 
 __all__ = ['DialogIntentPredictionPreprocessor']
 

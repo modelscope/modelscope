@@ -1,15 +1,14 @@
-from typing import Dict, Optional, Union, Any
+from typing import Any, Dict, Optional, Union
 
 import torch
 
+from ...metainfo import Pipelines
 from ...models import Model
-from ...models.nlp.masked_language_model import \
-    MaskedLMModelBase
+from ...models.nlp.masked_language_model import MaskedLMModelBase
 from ...preprocessors import FillMaskPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
-from ...metainfo import Pipelines
 
 __all__ = ['FillMaskPipeline']
 
@@ -20,7 +19,7 @@ class FillMaskPipeline(Pipeline):
     def __init__(self,
                  model: Union[MaskedLMModelBase, str],
                  preprocessor: Optional[FillMaskPreprocessor] = None,
-                 first_sequence="sentense",
+                 first_sequence='sentense',
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction
 
@@ -38,7 +37,8 @@ class FillMaskPipeline(Pipeline):
                 first_sequence=first_sequence,
                 second_sequence=None)
         fill_mask_model.eval()
-        super().__init__(model=fill_mask_model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=fill_mask_model, preprocessor=preprocessor, **kwargs)
         self.preprocessor = preprocessor
         self.tokenizer = preprocessor.tokenizer
         self.mask_id = {'veco': 250001, 'sbert': 103}

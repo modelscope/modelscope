@@ -1,31 +1,28 @@
 import uuid
 from typing import Any, Dict, Union
-import torch
-import uuid
-from typing import Any, Dict, Union
 
 import numpy as np
+import torch
 
-from ..base import Pipeline
-from ..builder import PIPELINES
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SbertForNLI
 from ...preprocessors import NLIPreprocessor
 from ...utils.constant import Tasks
+from ..base import Pipeline
+from ..builder import PIPELINES
 
 __all__ = ['NLIPipeline']
 
 
-@PIPELINES.register_module(
-    Tasks.nli, module_name=Pipelines.nli)
+@PIPELINES.register_module(Tasks.nli, module_name=Pipelines.nli)
 class NLIPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[SbertForNLI, str],
                  preprocessor: NLIPreprocessor = None,
-                 first_sequence="first_sequence",
-                 second_sequence="second_sequence",
+                 first_sequence='first_sequence',
+                 second_sequence='second_sequence',
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -51,7 +48,8 @@ class NLIPipeline(Pipeline):
         with torch.no_grad():
             return super().forward(inputs, **forward_params)
 
-    def postprocess(self, inputs: Dict[str, Any], **postprocess_params) -> Dict[str, str]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

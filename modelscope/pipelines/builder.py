@@ -31,9 +31,6 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_structbert_sentiment-classification_chinese-base'),
     Tasks.text_classification: ('bert-sentiment-analysis',
                                 'damo/bert-base-sst2'),
-    Tasks.zero_shot_classification:
-    (Pipelines.zero_shot_classification,
-     'damo/nlp_structbert_zero-shot-classification_chinese-base'),
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,

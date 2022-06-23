@@ -32,7 +32,6 @@ class Tasks(object):
     action_recognition = 'action-recognition'
 
     # nlp tasks
-    zero_shot_classification = 'zero-shot-classification'
     word_segmentation = 'word-segmentation'
     nli = 'nli'
     sentiment_classification = 'sentiment-classification'

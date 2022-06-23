@@ -7,5 +7,5 @@ from .builder import MODELS, build_model
 from .multi_model import OfaForImageCaptioning
 from .nlp import (BertForSequenceClassification, SbertForNLI,
                   SbertForSentenceSimilarity, SbertForSentimentClassification,
-                  SbertForTokenClassification, SbertForZeroShotClassification,
-                  StructBertForMaskedLM, VecoForMaskedLM)
+                  SbertForTokenClassification, StructBertForMaskedLM,
+                  VecoForMaskedLM)

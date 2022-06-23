@@ -48,7 +48,6 @@ class Pipelines(object):
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
-    zero_shot_classification = 'zero-shot-classification'
     fill_mask = 'fill-mask'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -95,7 +94,6 @@ class Preprocessors(object):
     token_cls_tokenizer = 'token-cls-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
     sen_cls_tokenizer = 'sen-cls-tokenizer'
-    zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

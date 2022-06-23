@@ -78,7 +78,7 @@ class Registry(object):
                                f'{self._name}[{default_group}] and will '
                                'be overwritten')
                 logger.warning(f'{self._modules[default_group][module_name]}'
-                               'to {module_cls}')
+                               f'to {module_cls}')
         # also register module in the default group for faster access
         # only by module name
         self._modules[default_group][module_name] = module_cls

@@ -7,7 +7,7 @@ from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM', 'MaskedLanguageModelBase']
+__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM']
 
 
 class MaskedLanguageModelBase(Model):

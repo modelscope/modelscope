@@ -1,9 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
 from typing import List, Union
-
-from attr import has
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
@@ -44,7 +41,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_unet_person-image-cartoon_compound-models'),
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
-    Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask_large'),
+    Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
 }

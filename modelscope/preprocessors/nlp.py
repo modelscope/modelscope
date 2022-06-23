@@ -313,7 +313,6 @@ class TextGenerationPreprocessor(Preprocessor):
 
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
-        # rst['token_type_ids'].append(feature['token_type_ids'])
         return {k: torch.tensor(v) for k, v in rst.items()}
 
 

@@ -6,6 +6,7 @@ from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 NEAREND_MIC_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/nearend_mic.wav'
 FAREND_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/farend_speech.wav'
@@ -33,6 +34,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
         # A temporary hack to provide c++ lib. Download it first.
         download(AEC_LIB_URL, AEC_LIB_FILE)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run(self):
         download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
         download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)

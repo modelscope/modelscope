@@ -1,7 +1,5 @@
-import time
 import unittest
 
-import json
 import tensorflow as tf
 # NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
 #         A segmentation fault may be raise by pytorch cpp library
@@ -10,21 +8,20 @@ import tensorflow as tf
 import torch
 from scipy.io.wavfile import write
 
-from modelscope.fileio import File
 from modelscope.metainfo import Pipelines, Preprocessors
-from modelscope.models import Model, build_model
-from modelscope.models.audio.tts.am import SambertNetHifi16k
-from modelscope.models.audio.tts.vocoder import AttrDict, Hifigan16k
+from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.preprocessors import build_preprocessor
-from modelscope.utils.constant import Fields, InputFields, Tasks
+from modelscope.utils.constant import Fields
 from modelscope.utils.logger import get_logger
+from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
 class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline(self):
         lang_type = 'pinyin'
         text = '明天天气怎么样'

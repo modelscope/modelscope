@@ -13,7 +13,7 @@ class Models(object):
 
     # nlp models
     bert = 'bert'
-    palm = 'palm_v2'
+    palm = 'palm-v2'
     structbert = 'structbert'
     veco = 'veco'
 

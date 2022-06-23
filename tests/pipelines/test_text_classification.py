@@ -1,12 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import shutil
 import unittest
-import zipfile
-from pathlib import Path
 
-from modelscope.fileio import File
 from modelscope.models import Model
-from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.pipelines import SequenceClassificationPipeline, pipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.pydatasets import PyDataset
@@ -62,7 +58,7 @@ class SequenceClassificationTest(unittest.TestCase):
                 hub=Hubs.huggingface))
         self.printDataset(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
@@ -74,7 +70,7 @@ class SequenceClassificationTest(unittest.TestCase):
                 hub=Hubs.huggingface))
         self.printDataset(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_dataset(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = SequenceClassificationPreprocessor(

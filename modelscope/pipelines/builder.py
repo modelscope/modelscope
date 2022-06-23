@@ -49,6 +49,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask_large')
+    Tasks.action_recognition: (Pipelines.action_recognition,
+                               'damo/cv_TAdaConv_action-recognition'),
 }
 
 

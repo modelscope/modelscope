@@ -33,8 +33,6 @@ class ImgPreprocessor(Preprocessor):
 
 class PyDatasetTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 2,
-                         'skip test due to dataset api problem')
     def test_ds_basic(self):
         ms_ds_full = PyDataset.load('squad')
         ms_ds_full_hf = hfdata.load_dataset('squad')

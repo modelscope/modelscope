@@ -47,10 +47,12 @@ class Pipelines(object):
     word_segmentation = 'word-segmentation'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
-    sentiment_classification = "sentiment-classification"
-    zero_shot_classification = "zero-shot-classification"
-    fill_mask = "fill-mask"
-    nli = "nli"
+    sentiment_classification = 'sentiment-classification'
+    zero_shot_classification = 'zero-shot-classification'
+    fill_mask = 'fill-mask'
+    nli = 'nli'
+    dialog_intent_prediction = 'dialog-intent-prediction'
+    dialog_modeling = 'dialog-modeling'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'

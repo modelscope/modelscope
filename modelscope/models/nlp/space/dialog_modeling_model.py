@@ -1,8 +1,7 @@
 import os
 from typing import Any, Dict, Optional
 
-from ....preprocessors.space.fields.gen_field import \
-    MultiWOZBPETextField
+from ....preprocessors.space.fields.gen_field import MultiWOZBPETextField
 from ....trainers.nlp.space.trainers.gen_trainer import MultiWOZTrainer
 from ....utils.config import Config
 from ....utils.constant import Tasks
@@ -14,7 +13,7 @@ from .model.model_base import ModelBase
 __all__ = ['DialogModelingModel']
 
 
-@MODELS.register_module(Tasks.dialog_modeling, module_name=r'space-modeling')
+@MODELS.register_module(Tasks.dialog_modeling, module_name=r'space')
 class DialogModelingModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

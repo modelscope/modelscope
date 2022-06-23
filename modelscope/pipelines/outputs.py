@@ -101,6 +101,20 @@ TASK_OUTPUTS = {
     #   }
     Tasks.sentence_similarity: ['scores', 'labels'],
 
+    # sentiment classification result for single sample
+    #   {
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #   }
+    Tasks.sentiment_classification: ['scores', 'labels'],
+
+    # nli result for single sample
+    #   {
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #   }
+    Tasks.nli: ['scores', 'labels'],
+
     # ============ audio tasks ===================
 
     # audio processed for single file in PCM format

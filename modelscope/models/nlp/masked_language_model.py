@@ -2,7 +2,8 @@ from typing import Any, Dict, Optional, Union
 
 import numpy as np
 
-from ...utils.constant import Tasks
+from modelscope.metainfo import Models
+from modelscope.utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
@@ -36,14 +37,14 @@ class AliceMindBaseForMaskedLM(Model):
         return {'logits': rst['logits'], 'input_ids': inputs['input_ids']}
 
 
-@MODELS.register_module(Tasks.fill_mask, module_name=r'sbert')
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)
 class StructBertForMaskedLM(AliceMindBaseForMaskedLM):
     # The StructBert for MaskedLM uses the same underlying model structure
     # as the base model class.
     pass
 
 
-@MODELS.register_module(Tasks.fill_mask, module_name=r'veco')
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.veco)
 class VecoForMaskedLM(AliceMindBaseForMaskedLM):
     # The Veco for MaskedLM uses the same underlying model structure
     # as the base model class.

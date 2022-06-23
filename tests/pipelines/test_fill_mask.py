@@ -10,7 +10,6 @@ from modelscope.models.nlp import StructBertForMaskedLM, VecoForMaskedLM
 from modelscope.pipelines import FillMaskPipeline, pipeline
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.test_utils import test_level
 
 

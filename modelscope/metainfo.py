@@ -15,6 +15,7 @@ class Models(object):
     bert = 'bert'
     palm = 'palm-v2'
     structbert = 'structbert'
+    veco = 'veco'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'

@@ -33,22 +33,22 @@ DIALOG_ACT = 'Dialog_Act'
 
 utter1 = {
     'User-1':
-        "I'd really like to take my client out to a nice restaurant that serves indian food."
+    "I'd really like to take my client out to a nice restaurant that serves indian food."
 }
 history_states1 = [
     {},
 ]
 utter2 = {
     'User-1':
-        "I'd really like to take my client out to a nice restaurant that serves indian food.",
+    "I'd really like to take my client out to a nice restaurant that serves indian food.",
     'System-1':
-        'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
+    'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
     'Dialog_Act-1': {
         'Restaurant-Inform': [['choice', 'many'], ['food', 'Indian'],
                               ['pricerange', 'that price range']]
     },
     'User-2':
-        'I am looking for an expensive indian restaurant in the area of centre.',
+    'I am looking for an expensive indian restaurant in the area of centre.',
 }
 
 history_states2 = [{}, {
@@ -77,11 +77,11 @@ history_states2 = [{}, {
                 'reference': 'JXVKZ7KV'
             }],
             'day':
-                'sunday',
+            'sunday',
             'people':
-                '6',
+            '6',
             'stay':
-                '4'
+            '4'
         },
         'semi': {
             'area': '',
@@ -144,25 +144,26 @@ history_states2 = [{}, {
 
 utter3 = {
     'User-1':
-        "I'd really like to take my client out to a nice restaurant that serves indian food.",
+    "I'd really like to take my client out to a nice restaurant that serves indian food.",
     'System-1':
-        'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
+    'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
     'Dialog_Act-1': {
         'Restaurant-Inform': [['choice', 'many'], ['food', 'Indian'],
                               ['pricerange', 'that price range']]
     },
     'User-2':
-        'I am looking for an expensive indian restaurant in the area of centre.',
+    'I am looking for an expensive indian restaurant in the area of centre.',
     'System-2':
-        'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant '
-        'in the center of town. I can book a table for you, if you like.',
+    'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant '
+    'in the center of town. I can book a table for you, if you like.',
     'Dialog_Act-2': {
         'Restaurant-Recommend': [['area', 'center of town'],
                                  ['food', 'Indian'],
                                  ['name', 'Saffron Brasserie'],
                                  ['pricerange', 'expensive']]
     },
-    'User-3': 'Sure thing, please book for 6 people at 19:30 on Saturday.'
+    'User-3':
+    'Sure thing, please book for 6 people at 19:30 on Saturday.'
 }
 
 history_states3 = [{}, {
@@ -191,11 +192,11 @@ history_states3 = [{}, {
                 'reference': 'JXVKZ7KV'
             }],
             'day':
-                'sunday',
+            'sunday',
             'people':
-                '6',
+            '6',
             'stay':
-                '4'
+            '4'
         },
         'semi': {
             'area': '',
@@ -255,96 +256,95 @@ history_states3 = [{}, {
         }
     }
 }, {}, {
-           'attraction': {
-               'book': {
-                   'booked': []
-               },
-               'semi': {
-                   'area': '',
-                   'name': '',
-                   'type': ''
-               }
-           },
-           'hospital': {
-               'book': {
-                   'booked': []
-               },
-               'semi': {
-                   'department': ''
-               }
-           },
-           'hotel': {
-               'book': {
-                   'booked': [{
-                       'name': 'alexander bed and breakfast',
-                       'reference': 'JXVKZ7KV'
-                   }],
-                   'day':
-                       'sunday',
-                   'people':
-                       '6',
-                   'stay':
-                       '4'
-               },
-               'semi': {
-                   'area': '',
-                   'internet': 'yes',
-                   'name': 'alexander bed and breakfast',
-                   'parking': 'yes',
-                   'pricerange': 'cheap',
-                   'stars': '',
-                   'type': 'guesthouse'
-               }
-           },
-           'police': {
-               'book': {
-                   'booked': []
-               },
-               'semi': {}
-           },
-           'restaurant': {
-               'book': {
-                   'booked': [{
-                       'name': 'ask',
-                       'reference': 'Y2Y8QYBY'
-                   }],
-                   'day': 'sunday',
-                   'people': '6',
-                   'time': '18:45'
-               },
-               'semi': {
-                   'area': 'centre',
-                   'food': 'italian',
-                   'name': 'ask',
-                   'pricerange': 'cheap'
-               }
-           },
-           'taxi': {
-               'book': {
-                   'booked': []
-               },
-               'semi': {
-                   'arriveBy': '',
-                   'departure': '',
-                   'destination': '',
-                   'leaveAt': ''
-               }
-           },
-           'train': {
-               'book': {
-                   'booked': [],
-                   'people': ''
-               },
-               'semi': {
-                   'arriveBy': '',
-                   'day': '',
-                   'departure': '',
-                   'destination': '',
-                   'leaveAt': ''
-               }
-           }
-       }, {}
-                   ]
+    'attraction': {
+        'book': {
+            'booked': []
+        },
+        'semi': {
+            'area': '',
+            'name': '',
+            'type': ''
+        }
+    },
+    'hospital': {
+        'book': {
+            'booked': []
+        },
+        'semi': {
+            'department': ''
+        }
+    },
+    'hotel': {
+        'book': {
+            'booked': [{
+                'name': 'alexander bed and breakfast',
+                'reference': 'JXVKZ7KV'
+            }],
+            'day':
+            'sunday',
+            'people':
+            '6',
+            'stay':
+            '4'
+        },
+        'semi': {
+            'area': '',
+            'internet': 'yes',
+            'name': 'alexander bed and breakfast',
+            'parking': 'yes',
+            'pricerange': 'cheap',
+            'stars': '',
+            'type': 'guesthouse'
+        }
+    },
+    'police': {
+        'book': {
+            'booked': []
+        },
+        'semi': {}
+    },
+    'restaurant': {
+        'book': {
+            'booked': [{
+                'name': 'ask',
+                'reference': 'Y2Y8QYBY'
+            }],
+            'day': 'sunday',
+            'people': '6',
+            'time': '18:45'
+        },
+        'semi': {
+            'area': 'centre',
+            'food': 'italian',
+            'name': 'ask',
+            'pricerange': 'cheap'
+        }
+    },
+    'taxi': {
+        'book': {
+            'booked': []
+        },
+        'semi': {
+            'arriveBy': '',
+            'departure': '',
+            'destination': '',
+            'leaveAt': ''
+        }
+    },
+    'train': {
+        'book': {
+            'booked': [],
+            'people': ''
+        },
+        'semi': {
+            'arriveBy': '',
+            'day': '',
+            'departure': '',
+            'destination': '',
+            'leaveAt': ''
+        }
+    }
+}, {}]
 
 
 class DSTProcessor(object):
@@ -474,7 +474,7 @@ class multiwoz22Processor(DSTProcessor):
             '(\d{2})(:\d{2}) ?p\.?m\.?', lambda x: str(
                 int(x.groups()[0]) + 12
                 if int(x.groups()[0]) < 12 else int(x.groups()[0])) + x.groups(
-            )[1], text)
+                )[1], text)
         text = re.sub('(^| )24:(\d{2})', r'\g<1>00:\2',
                       text)  # Correct times that use 24 as hour
         return text
@@ -765,7 +765,8 @@ class multiwoz22Processor(DSTProcessor):
             if delexicalize_sys_utts and is_sys_utt:
                 inform_dict = {slot: 'none' for slot in slot_list}
                 for slot in slot_list:
-                    if (str(dialog_id), str(turn_itr), slot) in sys_inform_dict:
+                    if (str(dialog_id), str(turn_itr),
+                            slot) in sys_inform_dict:
                         inform_dict[slot] = sys_inform_dict[(str(dialog_id),
                                                              str(turn_itr),
                                                              slot)]
@@ -802,7 +803,8 @@ class multiwoz22Processor(DSTProcessor):
                             if s in booked_slots:
                                 value_label = booked_slots[s]
                             # Remember modified slots and entire dialog state
-                            if cs in slot_list and cumulative_labels[cs] != value_label:
+                            if cs in slot_list and cumulative_labels[
+                                    cs] != value_label:
                                 modified_slots[cs] = value_label
                                 cumulative_labels[cs] = value_label
 
@@ -884,13 +886,13 @@ class multiwoz22Processor(DSTProcessor):
 
                 (informed_value, referred_slot, usr_utt_tok_label,
                  class_type) = self.get_turn_label(
-                    value_label,
-                    inform_label,
-                    sys_utt_tok,
-                    usr_utt_tok,
-                    slot,
-                    diag_seen_slots_value_dict,
-                    slot_last_occurrence=True)
+                     value_label,
+                     inform_label,
+                     sys_utt_tok,
+                     usr_utt_tok,
+                     slot,
+                     diag_seen_slots_value_dict,
+                     slot_last_occurrence=True)
 
                 inform_dict[slot] = informed_value
 
@@ -902,7 +904,8 @@ class multiwoz22Processor(DSTProcessor):
                 # since correct slot assignment can not be guaranteed anymore.
                 if label_value_repetitions and slot in diag_seen_slots_dict:
                     if class_type == 'copy_value' and list(
-                            diag_seen_slots_value_dict.values()).count(value_label) > 1:
+                            diag_seen_slots_value_dict.values()).count(
+                                value_label) > 1:
                         class_type = 'none'
                         usr_utt_tok_label = [0 for _ in usr_utt_tok_label]
 
@@ -914,14 +917,15 @@ class multiwoz22Processor(DSTProcessor):
                         if swap_utterances:
                             new_hst_utt_tok_label_dict[
                                 slot] = usr_utt_tok_label + sys_utt_tok_label + new_hst_utt_tok_label_dict[
-                                slot]
+                                    slot]
                         else:
                             new_hst_utt_tok_label_dict[
                                 slot] = sys_utt_tok_label + usr_utt_tok_label + new_hst_utt_tok_label_dict[
-                                slot]
+                                    slot]
                     else:
                         new_hst_utt_tok_label_dict[slot] = [
-                            0 for _ in sys_utt_tok_label + usr_utt_tok_label + new_hst_utt_tok_label_dict[slot]
+                            0 for _ in sys_utt_tok_label + usr_utt_tok_label
+                            + new_hst_utt_tok_label_dict[slot]
                         ]
 
                 # For now, we map all occurences of unpointable slot values
@@ -933,7 +937,8 @@ class multiwoz22Processor(DSTProcessor):
                     class_type_dict[slot] = 'none'
                     referral_dict[slot] = 'none'
                     if analyze:
-                        if slot not in diag_seen_slots_dict or value_label != diag_seen_slots_value_dict[slot]:
+                        if slot not in diag_seen_slots_dict or value_label != diag_seen_slots_value_dict[
+                                slot]:
                             print('(%s): %s, ' % (slot, value_label), end='')
                 elif slot in diag_seen_slots_dict and class_type == diag_seen_slots_dict[slot] \
                         and class_type != 'copy_value' and class_type != 'inform':
@@ -1192,7 +1197,7 @@ def convert_examples_to_features(examples,
             if slot_value_dropout == 0.0 or joint_label == 0:
                 tokens.extend(sub_tokens)
             else:
-                rn_list = np.random.random_sample((len(sub_tokens),))
+                rn_list = np.random.random_sample((len(sub_tokens), ))
                 for rn, sub_token in zip(rn_list, sub_tokens):
                     if rn > slot_value_dropout:
                         tokens.append(sub_token)

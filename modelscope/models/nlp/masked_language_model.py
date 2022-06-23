@@ -19,6 +19,12 @@ class MaskedLMModelBase(Model):
     def build_model(self):
         raise NotImplementedError()
 
+    def train(self):
+        return self.model.train()
+
+    def eval(self):
+        return self.model.eval()
+
     @property
     def config(self):
         if hasattr(self.model, "config"):

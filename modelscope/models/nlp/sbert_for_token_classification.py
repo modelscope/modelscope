@@ -29,6 +29,12 @@ class SbertForTokenClassification(Model):
             self.model_dir)
         self.config = sofa.SbertConfig.from_pretrained(self.model_dir)
 
+    def train(self):
+        return self.model.train()
+
+    def eval(self):
+        return self.model.eval()
+    
     def forward(self, input: Dict[str,
                                   Any]) -> Dict[str, Union[str, np.ndarray]]:
         """return the result by the model

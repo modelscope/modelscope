@@ -29,6 +29,7 @@ class Tasks(object):
     image_generation = 'image-generation'
     image_matting = 'image-matting'
     ocr_detection = 'ocr-detection'
+    action_recognition = 'action-recognition'
 
     # nlp tasks
     zero_shot_classification = 'zero-shot-classification'
@@ -48,7 +49,6 @@ class Tasks(object):
     dialog_intent_prediction = 'dialog-intent-prediction'
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'
-    sentence_similarity = 'sentence-similarity'
     fill_mask = 'fill-mask'
     summarization = 'summarization'
     question_answering = 'question-answering'

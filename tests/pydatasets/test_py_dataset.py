@@ -33,6 +33,7 @@ class ImgPreprocessor(Preprocessor):
 
 class PyDatasetTest(unittest.TestCase):
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_basic(self):
         ms_ds_full = PyDataset.load('squad')
         ms_ds_full_hf = hfdata.load_dataset('squad')
@@ -82,7 +83,7 @@ class PyDatasetTest(unittest.TestCase):
             drop_remainder=True)
         print(next(iter(tf_dataset)))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_img(self):
         ms_image_train = PyDataset.from_hf_dataset(
@@ -94,7 +95,7 @@ class PyDatasetTest(unittest.TestCase):
         dataloader = torch.utils.data.DataLoader(pt_dataset, batch_size=5)
         print(next(iter(dataloader)))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_tf
     def test_to_tf_dataset_img(self):
         import tensorflow as tf

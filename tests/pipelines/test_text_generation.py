@@ -68,7 +68,7 @@ class TextGenerationTest(unittest.TestCase):
             pipeline_ins = pipeline(task=Tasks.text_generation, model=model_id)
             print(pipeline_ins(input))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_generation)
         print(pipeline_ins(self.input_zh))

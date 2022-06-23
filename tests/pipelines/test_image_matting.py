@@ -52,7 +52,7 @@ class ImageMattingTest(unittest.TestCase):
         cv2.imwrite('result.png', result['output_png'])
         print(f'Output written to {osp.abspath("result.png")}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         img_matting = pipeline(Tasks.image_matting)
 

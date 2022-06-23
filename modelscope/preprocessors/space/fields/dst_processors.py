@@ -255,95 +255,95 @@ history_states3 = [{}, {
         }
     }
 }, {}, {
-                       'attraction': {
-                           'book': {
-                               'booked': []
-                           },
-                           'semi': {
-                               'area': '',
-                               'name': '',
-                               'type': ''
-                           }
-                       },
-                       'hospital': {
-                           'book': {
-                               'booked': []
-                           },
-                           'semi': {
-                               'department': ''
-                           }
-                       },
-                       'hotel': {
-                           'book': {
-                               'booked': [{
-                                   'name': 'alexander bed and breakfast',
-                                   'reference': 'JXVKZ7KV'
-                               }],
-                               'day':
-                                   'sunday',
-                               'people':
-                                   '6',
-                               'stay':
-                                   '4'
-                           },
-                           'semi': {
-                               'area': '',
-                               'internet': 'yes',
-                               'name': 'alexander bed and breakfast',
-                               'parking': 'yes',
-                               'pricerange': 'cheap',
-                               'stars': '',
-                               'type': 'guesthouse'
-                           }
-                       },
-                       'police': {
-                           'book': {
-                               'booked': []
-                           },
-                           'semi': {}
-                       },
-                       'restaurant': {
-                           'book': {
-                               'booked': [{
-                                   'name': 'ask',
-                                   'reference': 'Y2Y8QYBY'
-                               }],
-                               'day': 'sunday',
-                               'people': '6',
-                               'time': '18:45'
-                           },
-                           'semi': {
-                               'area': 'centre',
-                               'food': 'italian',
-                               'name': 'ask',
-                               'pricerange': 'cheap'
-                           }
-                       },
-                       'taxi': {
-                           'book': {
-                               'booked': []
-                           },
-                           'semi': {
-                               'arriveBy': '',
-                               'departure': '',
-                               'destination': '',
-                               'leaveAt': ''
-                           }
-                       },
-                       'train': {
-                           'book': {
-                               'booked': [],
-                               'people': ''
-                           },
-                           'semi': {
-                               'arriveBy': '',
-                               'day': '',
-                               'departure': '',
-                               'destination': '',
-                               'leaveAt': ''
-                           }
-                       }
-                   }, {}
+           'attraction': {
+               'book': {
+                   'booked': []
+               },
+               'semi': {
+                   'area': '',
+                   'name': '',
+                   'type': ''
+               }
+           },
+           'hospital': {
+               'book': {
+                   'booked': []
+               },
+               'semi': {
+                   'department': ''
+               }
+           },
+           'hotel': {
+               'book': {
+                   'booked': [{
+                       'name': 'alexander bed and breakfast',
+                       'reference': 'JXVKZ7KV'
+                   }],
+                   'day':
+                       'sunday',
+                   'people':
+                       '6',
+                   'stay':
+                       '4'
+               },
+               'semi': {
+                   'area': '',
+                   'internet': 'yes',
+                   'name': 'alexander bed and breakfast',
+                   'parking': 'yes',
+                   'pricerange': 'cheap',
+                   'stars': '',
+                   'type': 'guesthouse'
+               }
+           },
+           'police': {
+               'book': {
+                   'booked': []
+               },
+               'semi': {}
+           },
+           'restaurant': {
+               'book': {
+                   'booked': [{
+                       'name': 'ask',
+                       'reference': 'Y2Y8QYBY'
+                   }],
+                   'day': 'sunday',
+                   'people': '6',
+                   'time': '18:45'
+               },
+               'semi': {
+                   'area': 'centre',
+                   'food': 'italian',
+                   'name': 'ask',
+                   'pricerange': 'cheap'
+               }
+           },
+           'taxi': {
+               'book': {
+                   'booked': []
+               },
+               'semi': {
+                   'arriveBy': '',
+                   'departure': '',
+                   'destination': '',
+                   'leaveAt': ''
+               }
+           },
+           'train': {
+               'book': {
+                   'booked': [],
+                   'people': ''
+               },
+               'semi': {
+                   'arriveBy': '',
+                   'day': '',
+                   'departure': '',
+                   'destination': '',
+                   'leaveAt': ''
+               }
+           }
+       }, {}
                    ]
 
 
@@ -921,8 +921,7 @@ class multiwoz22Processor(DSTProcessor):
                                 slot]
                     else:
                         new_hst_utt_tok_label_dict[slot] = [
-                            0 for _ in sys_utt_tok_label + usr_utt_tok_label
-                                       + new_hst_utt_tok_label_dict[slot]
+                            0 for _ in sys_utt_tok_label + usr_utt_tok_label + new_hst_utt_tok_label_dict[slot]
                         ]
 
                 # For now, we map all occurences of unpointable slot values

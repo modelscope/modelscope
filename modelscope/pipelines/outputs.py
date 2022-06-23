@@ -45,6 +45,12 @@ TASK_OUTPUTS = {
     Tasks.image_matting: ['output_png'],
     Tasks.image_generation: ['output_png'],
 
+    # action recognition result for single video
+    # {
+    #   "output_label": "abseiling"
+    # }
+    Tasks.action_recognition: ['output_label'],
+
     # pose estimation result for single sample
     # {
     #   "poses": np.array with shape [num_pose, num_keypoint, 3],

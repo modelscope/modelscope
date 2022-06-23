@@ -37,6 +37,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_unet_person-image-cartoon_compound-models'),
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
+    Tasks.action_recognition: (Pipelines.action_recognition,
+                               'damo/cv_TAdaConv_action-recognition'),
 }
 
 

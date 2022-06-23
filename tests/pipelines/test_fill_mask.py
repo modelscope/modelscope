@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import shutil
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -14,10 +12,10 @@ from modelscope.utils.test_utils import test_level
 
 class FillMaskTest(unittest.TestCase):
     model_id_sbert = {
-        'zh': 'damo/nlp_structbert_fill-mask-chinese_large',
-        'en': 'damo/nlp_structbert_fill-mask-english_large'
+        'zh': 'damo/nlp_structbert_fill-mask_chinese-large',
+        'en': 'damo/nlp_structbert_fill-mask_english-large'
     }
-    model_id_veco = 'damo/nlp_veco_fill-mask_large'
+    model_id_veco = 'damo/nlp_veco_fill-mask-large'
 
     ori_texts = {
         'zh':

@@ -16,7 +16,7 @@ class SentenceSimilarityTest(unittest.TestCase):
     sentence1 = '今天气温比昨天高么？'
     sentence2 = '今天湿度比昨天高么？'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = SequenceClassificationPreprocessor(cache_path)
@@ -32,7 +32,7 @@ class SentenceSimilarityTest(unittest.TestCase):
             f'sentence1: {self.sentence1}\nsentence2: {self.sentence2}\n'
             f'pipeline1: {pipeline2(input=(self.sentence1, self.sentence2))}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         tokenizer = SequenceClassificationPreprocessor(model.model_dir)
@@ -48,7 +48,7 @@ class SentenceSimilarityTest(unittest.TestCase):
             task=Tasks.sentence_similarity, model=self.model_id)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.sentence_similarity)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))

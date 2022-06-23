@@ -5,7 +5,6 @@ import unittest
 import PIL
 
 from modelscope.preprocessors import load_image
-from modelscope.utils.logger import get_logger
 
 
 class ImagePreprocessorTest(unittest.TestCase):

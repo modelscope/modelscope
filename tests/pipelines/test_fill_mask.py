@@ -3,8 +3,7 @@ import os
 import shutil
 import unittest
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import StructBertForMaskedLM, VecoForMaskedLM
 from modelscope.pipelines import FillMaskPipeline, pipeline

@@ -7,10 +7,10 @@ from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM', 'MaskedLMModelBase']
+__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM', 'MaskedLanguageModelBase']
 
 
-class MaskedLMModelBase(Model):
+class MaskedLanguageModelBase(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
@@ -48,7 +48,7 @@ class MaskedLMModelBase(Model):
 
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)
-class StructBertForMaskedLM(MaskedLMModelBase):
+class StructBertForMaskedLM(MaskedLanguageModelBase):
 
     def build_model(self):
         from sofa import SbertForMaskedLM
@@ -56,7 +56,7 @@ class StructBertForMaskedLM(MaskedLMModelBase):
 
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.veco)
-class VecoForMaskedLM(MaskedLMModelBase):
+class VecoForMaskedLM(MaskedLanguageModelBase):
 
     def build_model(self):
         from sofa import VecoForMaskedLM

@@ -154,7 +154,8 @@ utter3 = {
     'User-2':
         'I am looking for an expensive indian restaurant in the area of centre.',
     'System-2':
-        'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant in the center of town. I can book a table for you, if you like.',
+        'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant '
+        'in the center of town. I can book a table for you, if you like.',
     'Dialog_Act-2': {
         'Restaurant-Recommend': [['area', 'center of town'],
                                  ['food', 'Indian'],
@@ -342,7 +343,8 @@ history_states3 = [{}, {
                                'leaveAt': ''
                            }
                        }
-                   }, {}]
+                   }, {}
+                   ]
 
 
 class DSTProcessor(object):
@@ -379,7 +381,8 @@ class DSTProcessor(object):
 
     def _convert_inputs_to_utterances(self, inputs: dict,
                                       history_states: list):
-        """This method is to generate the utterances with user, sys, dialog_acts and metadata, while metadata is from the history_states or the output from the inference pipline"""
+        """This method is to generate the utterances with user, sys, dialog_acts and metadata,
+         while metadata is from the history_states or the output from the inference pipline"""
 
         utterances = []
         user_inputs = []
@@ -426,8 +429,8 @@ class DSTProcessor(object):
             if isinstance(item, dict):
                 for a in item:
                     aa = a.lower().split('-')
-                    if aa[1] == 'inform' or aa[1] == 'recommend' or aa[
-                        1] == 'select' or aa[1] == 'book':
+                    if aa[1] == 'inform' or aa[1] == 'recommend' or \
+                            aa[1] == 'select' or aa[1] == 'book':
                         for i in item[a]:
                             s = i[0].lower()
                             v = i[1].lower().strip()
@@ -507,8 +510,8 @@ class multiwoz22Processor(DSTProcessor):
                 if isinstance(acts[d][t]['dialog_act'], dict):
                     for a in acts[d][t]['dialog_act']:
                         aa = a.lower().split('-')
-                        if aa[1] == 'inform' or aa[1] == 'recommend' or aa[
-                            1] == 'select' or aa[1] == 'book':
+                        if aa[1] == 'inform' or aa[1] == 'recommend' \
+                                or aa[1] == 'select' or aa[1] == 'book':
                             for i in acts[d][t]['dialog_act'][a]:
                                 s = i[0].lower()
                                 v = i[1].lower().strip()
@@ -762,8 +765,7 @@ class multiwoz22Processor(DSTProcessor):
             if delexicalize_sys_utts and is_sys_utt:
                 inform_dict = {slot: 'none' for slot in slot_list}
                 for slot in slot_list:
-                    if (str(dialog_id), str(turn_itr),
-                        slot) in sys_inform_dict:
+                    if (str(dialog_id), str(turn_itr), slot) in sys_inform_dict:
                         inform_dict[slot] = sys_inform_dict[(str(dialog_id),
                                                              str(turn_itr),
                                                              slot)]
@@ -800,8 +802,7 @@ class multiwoz22Processor(DSTProcessor):
                             if s in booked_slots:
                                 value_label = booked_slots[s]
                             # Remember modified slots and entire dialog state
-                            if cs in slot_list and cumulative_labels[
-                                cs] != value_label:
+                            if cs in slot_list and cumulative_labels[cs] != value_label:
                                 modified_slots[cs] = value_label
                                 cumulative_labels[cs] = value_label
 
@@ -901,8 +902,7 @@ class multiwoz22Processor(DSTProcessor):
                 # since correct slot assignment can not be guaranteed anymore.
                 if label_value_repetitions and slot in diag_seen_slots_dict:
                     if class_type == 'copy_value' and list(
-                            diag_seen_slots_value_dict.values()).count(
-                        value_label) > 1:
+                            diag_seen_slots_value_dict.values()).count(value_label) > 1:
                         class_type = 'none'
                         usr_utt_tok_label = [0 for _ in usr_utt_tok_label]
 
@@ -934,11 +934,10 @@ class multiwoz22Processor(DSTProcessor):
                     class_type_dict[slot] = 'none'
                     referral_dict[slot] = 'none'
                     if analyze:
-                        if slot not in diag_seen_slots_dict or value_label != diag_seen_slots_value_dict[
-                            slot]:
+                        if slot not in diag_seen_slots_dict or value_label != diag_seen_slots_value_dict[slot]:
                             print('(%s): %s, ' % (slot, value_label), end='')
-                elif slot in diag_seen_slots_dict and class_type == diag_seen_slots_dict[
-                    slot] and class_type != 'copy_value' and class_type != 'inform':
+                elif slot in diag_seen_slots_dict and class_type == diag_seen_slots_dict[slot] \
+                        and class_type != 'copy_value' and class_type != 'inform':
                     # If slot has seen before and its class type did not change, label this slot a not present,
                     # assuming that the slot has not actually been mentioned in this turn.
                     # Exceptions are copy_value and inform. If a seen slot has been tagged as copy_value or inform,

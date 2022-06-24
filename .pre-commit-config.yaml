@@ -3,7 +3,7 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
-        exclude: thirdparty/|examples/|modelscope/preprocessors/space/fields/dst_processors.py
+        exclude: thirdparty/|examples/
   - repo: https://github.com/timothycrosley/isort
     rev: 4.3.21
     hooks:

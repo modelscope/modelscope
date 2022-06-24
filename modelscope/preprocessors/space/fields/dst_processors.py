@@ -456,26 +456,26 @@ class multiwoz22Processor(DSTProcessor):
         super().__init__()
 
     def normalize_time(self, text):
-        text = re.sub('(\d{1})(a\.?m\.?|p\.?m\.?)', r'\1 \2',
+        text = re.sub(r'(\d{1})(a\.?m\.?|p\.?m\.?)', r'\1 \2',
                       text)  # am/pm without space
-        text = re.sub('(^| )(\d{1,2}) (a\.?m\.?|p\.?m\.?)', r'\1\2:00 \3',
+        text = re.sub(r'(^| )(\d{1,2}) (a\.?m\.?|p\.?m\.?)', r'\1\2:00 \3',
                       text)  # am/pm short to long form
         text = re.sub(
-            '(^| )(at|from|by|until|after) ?(\d{1,2}) ?(\d{2})([^0-9]|$)',
+            r'(^| )(at|from|by|until|after) ?(\d{1,2}) ?(\d{2})([^0-9]|$)',
             r'\1\2 \3:\4\5', text)  # Missing separator
-        text = re.sub('(^| )(\d{2})[;.,](\d{2})', r'\1\2:\3',
+        text = re.sub(r'(^| )(\d{2})[;.,](\d{2})', r'\1\2:\3',
                       text)  # Wrong separator
-        text = re.sub('(^| )(at|from|by|until|after) ?(\d{1,2})([;., ]|$)',
+        text = re.sub(r'(^| )(at|from|by|until|after) ?(\d{1,2})([;., ]|$)',
                       r'\1\2 \3:00\4', text)  # normalize simple full hour time
-        text = re.sub('(^| )(\d{1}:\d{2})', r'\g<1>0\2',
+        text = re.sub(r'(^| )(\d{1}:\d{2})', r'\g<1>0\2',
                       text)  # Add missing leading 0
         # Map 12 hour times to 24 hour times
-        text = re.sub(
-            '(\d{2})(:\d{2}) ?p\.?m\.?', lambda x: str(
-                int(x.groups()[0]) + 12
-                if int(x.groups()[0]) < 12 else int(x.groups()[0])) + x.groups(
-                )[1], text)
-        text = re.sub('(^| )24:(\d{2})', r'\g<1>00:\2',
+        text = \
+            re.sub(
+                r'(\d{2})(:\d{2}) ?p\.?m\.?',
+                lambda x: str(int(x.groups()[0]) + 12
+                              if int(x.groups()[0]) < 12 else int(x.groups()[0])) + x.groups()[1], text)
+        text = re.sub(r'(^| )24:(\d{2})', r'\g<1>00:\2',
                       text)  # Correct times that use 24 as hour
         return text
 
@@ -562,7 +562,7 @@ class multiwoz22Processor(DSTProcessor):
         utt_lower = convert_to_unicode(utt).lower()
         utt_lower = self.normalize_text(utt_lower)
         utt_tok = [
-            tok for tok in map(str.strip, re.split('(\W+)', utt_lower))
+            tok for tok in map(str.strip, re.split(r'(\W+)', utt_lower))
             if len(tok) > 0
         ]
         return utt_tok
@@ -584,7 +584,7 @@ class multiwoz22Processor(DSTProcessor):
         find_pos = []
         found = False
         label_list = [
-            item for item in map(str.strip, re.split('(\W+)', value_label))
+            item for item in map(str.strip, re.split(r'(\W+)', value_label))
             if len(item) > 0
         ]
         len_label = len(label_list)
@@ -635,11 +635,11 @@ class multiwoz22Processor(DSTProcessor):
     def is_in_list(self, tok, value):
         found = False
         tok_list = [
-            item for item in map(str.strip, re.split('(\W+)', tok))
+            item for item in map(str.strip, re.split(r'(\W+)', tok))
             if len(item) > 0
         ]
         value_list = [
-            item for item in map(str.strip, re.split('(\W+)', value))
+            item for item in map(str.strip, re.split(r'(\W+)', value))
             if len(item) > 0
         ]
         tok_len = len(tok_list)

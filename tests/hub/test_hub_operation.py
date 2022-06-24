@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import os.path as osp
 import subprocess
 import tempfile
 import unittest
@@ -8,7 +7,6 @@ import uuid
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.hub.utils.utils import get_gitlab_domain
 

@@ -2,21 +2,39 @@
 
 import os
 import os.path as osp
-from typing import List, Union
+from typing import List, Optional, Union
 
-from numpy import deprecate
+from requests import HTTPError
 
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.hub.utils.utils import get_cache_dir
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 
 
-# temp solution before the hub-cache is in place
-@deprecate
-def get_model_cache_dir(model_id: str):
-    return os.path.join(get_cache_dir(), model_id)
+def create_model_if_not_exist(
+        api,
+        model_id: str,
+        chinese_name: str,
+        visibility: Optional[int] = 5,  # 1-private, 5-public
+        license: Optional[str] = 'apache-2.0',
+        revision: Optional[str] = 'master'):
+    exists = True
+    try:
+        api.get_model(model_id=model_id, revision=revision)
+    except HTTPError:
+        exists = False
+    if exists:
+        print(f'model {model_id} already exists, skip creation.')
+        return False
+    else:
+        api.create_model(
+            model_id=model_id,
+            chinese_name=chinese_name,
+            visibility=visibility,
+            license=license)
+        print(f'model {model_id} successfully created.')
+        return True
 
 
 def read_config(model_id_or_path: str):

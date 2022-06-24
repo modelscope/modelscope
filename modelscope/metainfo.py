@@ -13,8 +13,9 @@ class Models(object):
 
     # nlp models
     bert = 'bert'
-    palm2_0 = 'palm2.0'
+    palm = 'palm-v2'
     structbert = 'structbert'
+    veco = 'veco'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'
@@ -39,12 +40,14 @@ class Pipelines(object):
     image_matting = 'unet-image-matting'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
+    action_recognition = 'TAdaConv_action-recognition'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
+    fill_mask = 'fill-mask'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'

@@ -82,6 +82,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_generation: ['text'],
 
+    # fill mask result for single sample
+    # {
+    #   "text": "this is the text which masks filled by model."
+    # }
+    Tasks.fill_mask: ['text'],
+
     # word segmentation result for single sample
     # {
     #   "output": "今天 天气 不错 ， 适合 出去 游玩"

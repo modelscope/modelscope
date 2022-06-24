@@ -6,3 +6,16 @@ DEFAULT_MODELSCOPE_GROUP = 'damo'
 MODEL_ID_SEPARATOR = '/'
 
 LOGGER_NAME = 'ModelScopeHub'
+
+
+class Licenses(object):
+    APACHE_V2 = 'Apache License 2.0'
+    GPL = 'GPL'
+    LGPL = 'LGPL'
+    MIT = 'MIT'
+
+
+class ModelVisibility(object):
+    PRIVATE = 1
+    INTERNAL = 3
+    PUBLIC = 5

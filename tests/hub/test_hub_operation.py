@@ -4,7 +4,8 @@ import tempfile
 import unittest
 import uuid
 
-from modelscope.hub.api import HubApi
+from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
@@ -31,8 +32,8 @@ class HubOperationTest(unittest.TestCase):
         self.api.create_model(
             model_id=self.model_id,
             chinese_name=model_chinese_name,
-            visibility=5,  # 1-private, 5-public
-            license='apache-2.0')
+            visibility=ModelVisibility.PUBLIC,
+            license=Licenses.APACHE_V2)
         temporary_dir = tempfile.mkdtemp()
         self.model_dir = os.path.join(temporary_dir, self.model_name)
         repo = Repository(self.model_dir, clone_from=self.model_id)

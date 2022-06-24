@@ -39,6 +39,7 @@ class FillMaskPipeline(Pipeline):
         fill_mask_model.eval()
         super().__init__(
             model=fill_mask_model, preprocessor=preprocessor, **kwargs)
+
         self.preprocessor = preprocessor
         self.tokenizer = preprocessor.tokenizer
         self.mask_id = {'veco': 250001, 'sbert': 103}
@@ -94,6 +95,7 @@ class FillMaskPipeline(Pipeline):
         pred_strings = []
         for ids in rst_ids:  # batch
             # TODO vocab size is not stable
+
             if self.model.config.vocab_size == 21128:  # zh bert
                 pred_string = self.tokenizer.convert_ids_to_tokens(ids)
                 pred_string = ''.join(pred_string)

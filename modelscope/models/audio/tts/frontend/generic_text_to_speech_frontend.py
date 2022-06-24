@@ -20,7 +20,6 @@ class GenericTtsFrontend(Model):
     def __init__(self, model_dir='.', lang_type='pinyin', *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
         import ttsfrd
-
         frontend = ttsfrd.TtsFrontendEngine()
         zip_file = os.path.join(model_dir, 'resource.zip')
         self._res_path = os.path.join(model_dir, 'resource')

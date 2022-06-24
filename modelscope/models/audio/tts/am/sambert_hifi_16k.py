@@ -18,7 +18,7 @@ __all__ = ['SambertNetHifi16k']
 
 
 def multi_label_symbol_to_sequence(my_classes, my_symbol):
-    one_hot = MultiLabelBinarizer(my_classes)
+    one_hot = MultiLabelBinarizer(classes=my_classes)
     tokens = my_symbol.strip().split(' ')
     sequences = []
     for token in tokens:

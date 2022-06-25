@@ -1,32 +1,48 @@
-from typing import Any, Dict
+# Copyright (c) Alibaba, Inc. and its affiliates.
+import os.path as osp
+from typing import Any, Dict, Union
 
 import numpy as np
 import torch
 from PIL import Image
 
-from modelscope.pipelines.base import Input
-from modelscope.preprocessors import load_image
-from modelscope.utils.constant import Tasks
-from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
+from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Preprocessors
+from modelscope.utils.constant import Fields, ModelFile
+from modelscope.utils.type_assert import type_assert
+from .base import Preprocessor
+from .builder import PREPROCESSORS
+from .image import load_image
 
-logger = get_logger()
+__all__ = [
+    'OfaImageCaptionPreprocessor',
+]
 
 
-@PIPELINES.register_module(Tasks.image_captioning, module_name='ofa')
-class ImageCaptionPipeline(Pipeline):
-    # TODO: refine using modelhub
-    def __init__(self, model: str, bpe_dir: str):
-        super().__init__()
-        # turn on cuda if GPU is available
+@PREPROCESSORS.register_module(
+    Fields.multi_modal, module_name=Preprocessors.ofa_image_caption)
+class OfaImageCaptionPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+
+        if osp.exists(model_dir):
+            local_model_dir = model_dir
+        else:
+            local_model_dir = snapshot_download(model_dir)
+        local_model = osp.join(local_model_dir, ModelFile.TORCH_MODEL_FILE)
+        bpe_dir = local_model_dir
+
         from fairseq import checkpoint_utils, tasks, utils
         from ofa.tasks.mm_tasks import CaptionTask
 
         tasks.register_task('caption', CaptionTask)
-        use_cuda = False
-        # use fp16 only when GPU is available
-        use_fp16 = False
+
         overrides = {
             'bpe_dir': bpe_dir,
             'eval_cider': False,
@@ -35,21 +51,9 @@ class ImageCaptionPipeline(Pipeline):
             'no_repeat_ngram_size': 3,
             'seed': 7
         }
-        models, cfg, task = checkpoint_utils.load_model_ensemble_and_task(
-            utils.split_paths(model), arg_overrides=overrides)
-
-        # Move models to GPU
-        for model in models:
-            model.eval()
-            if use_cuda:
-                model.cuda()
-            if use_fp16:
-                model.half()
-            model.prepare_for_inference_(cfg)
-        self.models = models
-        # Initialize generator
-        self.generator = task.build_generator(models, cfg.generation)
-
+        model, cfg, task = checkpoint_utils.load_model_ensemble_and_task(
+            utils.split_paths(local_model), arg_overrides=overrides)
+        del model
         # Initialize transform
         from torchvision import transforms
         mean = [0.5, 0.5, 0.5]
@@ -69,7 +73,8 @@ class ImageCaptionPipeline(Pipeline):
         self.eos_item = torch.LongTensor([task.src_dict.eos()])
         self.pad_idx = task.src_dict.pad()
 
-    def preprocess(self, input: Input) -> Dict[str, Any]:
+    @type_assert(object, (str, tuple, Image.Image))
+    def __call__(self, data: Union[str, tuple]) -> Dict[str, Any]:
 
         def encode_text(text, length=None, append_bos=False, append_eos=False):
             s = self.task.tgt_dict.encode_line(
@@ -84,11 +89,11 @@ class ImageCaptionPipeline(Pipeline):
                 s = torch.cat([s, self.eos_item])
             return s
 
-        if isinstance(input, Image.Image):
-            patch_image = self.patch_resize_transform(input).unsqueeze(0)
+        if isinstance(data, Image.Image):
+            patch_image = self.patch_resize_transform(data).unsqueeze(0)
         else:
             patch_image = self.patch_resize_transform(
-                load_image(input)).unsqueeze(0)
+                load_image(data)).unsqueeze(0)
         patch_mask = torch.tensor([True])
         text = 'what does the image describe?'
         src_text = encode_text(
@@ -105,17 +110,3 @@ class ImageCaptionPipeline(Pipeline):
             }
         }
         return sample
-
-    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        from ofa.utils.eval_utils import eval_caption
-
-        results, _ = eval_caption(self.task, self.generator, self.models,
-                                  input)
-        return {
-            'image_id': results[0]['image_id'],
-            'caption': results[0]['caption']
-        }
-
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        # What should we do here ?
-        return inputs

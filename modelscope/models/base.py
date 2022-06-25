@@ -4,12 +4,13 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Dict, Union
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
-from modelscope.utils.hub import get_model_cache_dir
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 
@@ -47,21 +48,25 @@ class Model(ABC):
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
-            cache_path = get_model_cache_dir(model_name_or_path)
-            local_model_dir = cache_path if osp.exists(
-                cache_path) else snapshot_download(model_name_or_path)
-            # else:
-            #     raise ValueError(
-            #         'Remote model repo {model_name_or_path} does not exists')
-
+            local_model_dir = snapshot_download(model_name_or_path)
+        logger.info(f'initialize model from {local_model_dir}')
         cfg = Config.from_file(
             osp.join(local_model_dir, ModelFile.CONFIGURATION))
         task_name = cfg.task
         model_cfg = cfg.model
+        assert hasattr(
+            cfg, 'pipeline'), 'pipeline config is missing from config file.'
+        pipeline_cfg = cfg.pipeline
         # TODO @wenmeng.zwm may should manually initialize model after model building
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
+
         model_cfg.model_dir = local_model_dir
+
         for k, v in kwargs.items():
             model_cfg.k = v
-        return build_model(model_cfg, task_name)
+        model = build_model(model_cfg, task_name)
+
+        # dynamically add pipeline info to model for pipeline inference
+        model.pipeline = pipeline_cfg
+        return model

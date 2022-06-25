@@ -45,6 +45,12 @@ TASK_OUTPUTS = {
     Tasks.image_matting: ['output_png'],
     Tasks.image_generation: ['output_png'],
 
+    # action recognition result for single video
+    # {
+    #   "output_label": "abseiling"
+    # }
+    Tasks.action_recognition: ['output_label'],
+
     # pose estimation result for single sample
     # {
     #   "poses": np.array with shape [num_pose, num_keypoint, 3],
@@ -53,6 +59,13 @@ TASK_OUTPUTS = {
     #       [x1, y1, x2, y2]
     # }
     Tasks.pose_estimation: ['poses', 'boxes'],
+
+    # ocr detection result for single sample
+    # {
+    #   "det_polygons": np.array with shape [num_text, 8], each box is
+    #       [x1, y1, x2, y2, x3, y3, x4, y4]
+    # }
+    Tasks.ocr_detection: ['det_polygons'],
 
     # ============ nlp tasks ===================
 
@@ -69,6 +82,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_generation: ['text'],
 
+    # fill mask result for single sample
+    # {
+    #   "text": "this is the text which masks filled by model."
+    # }
+    Tasks.fill_mask: ['text'],
+
     # word segmentation result for single sample
     # {
     #   "output": "今天 天气 不错 ， 适合 出去 游玩"
@@ -81,6 +100,20 @@ TASK_OUTPUTS = {
     #       "scores": 0.9
     #   }
     Tasks.sentence_similarity: ['scores', 'labels'],
+
+    # sentiment classification result for single sample
+    #   {
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #   }
+    Tasks.sentiment_classification: ['scores', 'labels'],
+
+    # nli result for single sample
+    #   {
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #   }
+    Tasks.nli: ['scores', 'labels'],
 
     # ============ audio tasks ===================
 

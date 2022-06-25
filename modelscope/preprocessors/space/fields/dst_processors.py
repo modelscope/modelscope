@@ -154,14 +154,16 @@ utter3 = {
     'User-2':
     'I am looking for an expensive indian restaurant in the area of centre.',
     'System-2':
-    'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant in the center of town. I can book a table for you, if you like.',
+    'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant '
+    'in the center of town. I can book a table for you, if you like.',
     'Dialog_Act-2': {
         'Restaurant-Recommend': [['area', 'center of town'],
                                  ['food', 'Indian'],
                                  ['name', 'Saffron Brasserie'],
                                  ['pricerange', 'expensive']]
     },
-    'User-3': 'Sure thing, please book for 6 people at 19:30 on Saturday.'
+    'User-3':
+    'Sure thing, please book for 6 people at 19:30 on Saturday.'
 }
 
 history_states3 = [{}, {
@@ -346,7 +348,6 @@ history_states3 = [{}, {
 
 
 class DSTProcessor(object):
-
     ACTS_DICT = {
         'taxi-depart': 'taxi-departure',
         'taxi-dest': 'taxi-destination',
@@ -380,7 +381,8 @@ class DSTProcessor(object):
 
     def _convert_inputs_to_utterances(self, inputs: dict,
                                       history_states: list):
-        """This method is to generate the utterances with user, sys, dialog_acts and metadata, while metadata is from the history_states or the output from the inference pipline"""
+        """This method is to generate the utterances with user, sys, dialog_acts and metadata,
+         while metadata is from the history_states or the output from the inference pipline"""
 
         utterances = []
         user_inputs = []
@@ -427,8 +429,8 @@ class DSTProcessor(object):
             if isinstance(item, dict):
                 for a in item:
                     aa = a.lower().split('-')
-                    if aa[1] == 'inform' or aa[1] == 'recommend' or aa[
-                            1] == 'select' or aa[1] == 'book':
+                    if aa[1] == 'inform' or aa[1] == 'recommend' or \
+                            aa[1] == 'select' or aa[1] == 'book':
                         for i in item[a]:
                             s = i[0].lower()
                             v = i[1].lower().strip()
@@ -443,7 +445,7 @@ class DSTProcessor(object):
                             if key not in s_dict:
                                 s_dict[key] = list([v])
                             # ... Option 2: Keep last informed value
-                            #s_dict[key] = list([v])
+                            # s_dict[key] = list([v])
 
         return s_dict
 
@@ -454,26 +456,26 @@ class multiwoz22Processor(DSTProcessor):
         super().__init__()
 
     def normalize_time(self, text):
-        text = re.sub('(\d{1})(a\.?m\.?|p\.?m\.?)', r'\1 \2',
+        text = re.sub(r'(\d{1})(a\.?m\.?|p\.?m\.?)', r'\1 \2',
                       text)  # am/pm without space
-        text = re.sub('(^| )(\d{1,2}) (a\.?m\.?|p\.?m\.?)', r'\1\2:00 \3',
+        text = re.sub(r'(^| )(\d{1,2}) (a\.?m\.?|p\.?m\.?)', r'\1\2:00 \3',
                       text)  # am/pm short to long form
         text = re.sub(
-            '(^| )(at|from|by|until|after) ?(\d{1,2}) ?(\d{2})([^0-9]|$)',
+            r'(^| )(at|from|by|until|after) ?(\d{1,2}) ?(\d{2})([^0-9]|$)',
             r'\1\2 \3:\4\5', text)  # Missing separator
-        text = re.sub('(^| )(\d{2})[;.,](\d{2})', r'\1\2:\3',
+        text = re.sub(r'(^| )(\d{2})[;.,](\d{2})', r'\1\2:\3',
                       text)  # Wrong separator
-        text = re.sub('(^| )(at|from|by|until|after) ?(\d{1,2})([;., ]|$)',
+        text = re.sub(r'(^| )(at|from|by|until|after) ?(\d{1,2})([;., ]|$)',
                       r'\1\2 \3:00\4', text)  # normalize simple full hour time
-        text = re.sub('(^| )(\d{1}:\d{2})', r'\g<1>0\2',
+        text = re.sub(r'(^| )(\d{1}:\d{2})', r'\g<1>0\2',
                       text)  # Add missing leading 0
         # Map 12 hour times to 24 hour times
-        text = re.sub(
-            '(\d{2})(:\d{2}) ?p\.?m\.?', lambda x: str(
-                int(x.groups()[0]) + 12
-                if int(x.groups()[0]) < 12 else int(x.groups()[0])) + x.groups(
-                )[1], text)
-        text = re.sub('(^| )24:(\d{2})', r'\g<1>00:\2',
+        text = \
+            re.sub(
+                r'(\d{2})(:\d{2}) ?p\.?m\.?',
+                lambda x: str(int(x.groups()[0]) + 12
+                              if int(x.groups()[0]) < 12 else int(x.groups()[0])) + x.groups()[1], text)
+        text = re.sub(r'(^| )24:(\d{2})', r'\g<1>00:\2',
                       text)  # Correct times that use 24 as hour
         return text
 
@@ -508,8 +510,8 @@ class multiwoz22Processor(DSTProcessor):
                 if isinstance(acts[d][t]['dialog_act'], dict):
                     for a in acts[d][t]['dialog_act']:
                         aa = a.lower().split('-')
-                        if aa[1] == 'inform' or aa[1] == 'recommend' or aa[
-                                1] == 'select' or aa[1] == 'book':
+                        if aa[1] == 'inform' or aa[1] == 'recommend' \
+                                or aa[1] == 'select' or aa[1] == 'book':
                             for i in acts[d][t]['dialog_act'][a]:
                                 s = i[0].lower()
                                 v = i[1].lower().strip()
@@ -524,7 +526,7 @@ class multiwoz22Processor(DSTProcessor):
                                 if key not in s_dict:
                                     s_dict[key] = list([v])
                                 # ... Option 2: Keep last informed value
-                                #s_dict[key] = list([v])
+                                # s_dict[key] = list([v])
         return s_dict
 
     # This should only contain label normalizations. All other mappings should
@@ -560,7 +562,7 @@ class multiwoz22Processor(DSTProcessor):
         utt_lower = convert_to_unicode(utt).lower()
         utt_lower = self.normalize_text(utt_lower)
         utt_tok = [
-            tok for tok in map(str.strip, re.split('(\W+)', utt_lower))
+            tok for tok in map(str.strip, re.split(r'(\W+)', utt_lower))
             if len(tok) > 0
         ]
         return utt_tok
@@ -582,7 +584,7 @@ class multiwoz22Processor(DSTProcessor):
         find_pos = []
         found = False
         label_list = [
-            item for item in map(str.strip, re.split('(\W+)', value_label))
+            item for item in map(str.strip, re.split(r'(\W+)', value_label))
             if len(item) > 0
         ]
         len_label = len(label_list)
@@ -633,11 +635,11 @@ class multiwoz22Processor(DSTProcessor):
     def is_in_list(self, tok, value):
         found = False
         tok_list = [
-            item for item in map(str.strip, re.split('(\W+)', tok))
+            item for item in map(str.strip, re.split(r'(\W+)', tok))
             if len(item) > 0
         ]
         value_list = [
-            item for item in map(str.strip, re.split('(\W+)', value))
+            item for item in map(str.strip, re.split(r'(\W+)', value))
             if len(item) > 0
         ]
         tok_len = len(tok_list)
@@ -938,8 +940,8 @@ class multiwoz22Processor(DSTProcessor):
                         if slot not in diag_seen_slots_dict or value_label != diag_seen_slots_value_dict[
                                 slot]:
                             print('(%s): %s, ' % (slot, value_label), end='')
-                elif slot in diag_seen_slots_dict and class_type == diag_seen_slots_dict[
-                        slot] and class_type != 'copy_value' and class_type != 'inform':
+                elif slot in diag_seen_slots_dict and class_type == diag_seen_slots_dict[slot] \
+                        and class_type != 'copy_value' and class_type != 'inform':
                     # If slot has seen before and its class type did not change, label this slot a not present,
                     # assuming that the slot has not actually been mentioned in this turn.
                     # Exceptions are copy_value and inform. If a seen slot has been tagged as copy_value or inform,
@@ -1262,7 +1264,7 @@ def convert_examples_to_features(examples,
 
     def _get_start_end_pos(class_type, token_label_ids, max_seq_length):
         if class_type == 'copy_value' and 1 not in token_label_ids:
-            #logger.warn("copy_value label, but token_label not detected. Setting label to 'none'.")
+            # logger.warn("copy_value label, but token_label not detected. Setting label to 'none'.")
             class_type = 'none'
         start_pos = 0
         end_pos = 0

@@ -3,9 +3,10 @@ import shutil
 import unittest
 
 from modelscope.fileio import File
+from modelscope.metainfo import Pipelines
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import get_model_cache_dir
+from modelscope.utils.test_utils import test_level
 
 NEAREND_MIC_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/nearend_mic.wav'
 FAREND_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/farend_speech.wav'
@@ -30,14 +31,10 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/speech_dfsmn_aec_psm_16k'
-        # switch to False if downloading everytime is not desired
-        purge_cache = True
-        if purge_cache:
-            shutil.rmtree(
-                get_model_cache_dir(self.model_id), ignore_errors=True)
         # A temporary hack to provide c++ lib. Download it first.
         download(AEC_LIB_URL, AEC_LIB_FILE)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run(self):
         download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
         download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
@@ -48,7 +45,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
         aec = pipeline(
             Tasks.speech_signal_process,
             model=self.model_id,
-            pipeline_name=r'speech_dfsmn_aec_psm_16k')
+            pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
         aec(input, output_path='output.wav')
 
 

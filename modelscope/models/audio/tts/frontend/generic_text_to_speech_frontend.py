@@ -2,8 +2,7 @@ import os
 import zipfile
 from typing import Any, Dict, List
 
-import ttsfrd
-
+from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.audio.tts_exceptions import (
@@ -15,11 +14,12 @@ __all__ = ['GenericTtsFrontend']
 
 
 @MODELS.register_module(
-    Tasks.text_to_speech, module_name=r'generic_tts_frontend')
+    Tasks.text_to_speech, module_name=Models.generic_tts_frontend)
 class GenericTtsFrontend(Model):
 
     def __init__(self, model_dir='.', lang_type='pinyin', *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
+        import ttsfrd
         frontend = ttsfrd.TtsFrontendEngine()
         zip_file = os.path.join(model_dir, 'resource.zip')
         self._res_path = os.path.join(model_dir, 'resource')

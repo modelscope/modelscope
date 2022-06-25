@@ -11,7 +11,7 @@ from .model.model_base import ModelBase
 __all__ = ['DialogStateTrackingModel']
 
 
-@MODELS.register_module(Tasks.dialog_state_tracking, module_name=r'space-dst')
+@MODELS.register_module(Tasks.dialog_state_tracking, module_name=r'space')
 class DialogStateTrackingModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

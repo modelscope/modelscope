@@ -1,16 +1,20 @@
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
-from modelscope.models import Model
-from modelscope.models.nlp import PalmForTextGeneration
-from modelscope.preprocessors import TextGenerationPreprocessor
-from modelscope.utils.constant import Tasks
+import torch
+
+from ...metainfo import Pipelines
+from ...models import Model
+from ...models.nlp import PalmForTextGeneration
+from ...preprocessors import TextGenerationPreprocessor
+from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
 
 __all__ = ['TextGenerationPipeline']
 
 
-@PIPELINES.register_module(Tasks.text_generation, module_name=r'palm2.0')
+@PIPELINES.register_module(
+    Tasks.text_generation, module_name=Pipelines.text_generation)
 class TextGenerationPipeline(Pipeline):
 
     def __init__(self,
@@ -31,10 +35,17 @@ class TextGenerationPipeline(Pipeline):
                 model.tokenizer,
                 first_sequence='sentence',
                 second_sequence=None)
+        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = model.tokenizer
 
-    def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
+
+    def postprocess(self, inputs: Dict[str, Tensor],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

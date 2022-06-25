@@ -1,1 +1,1 @@
-from .image_caption_pipeline import ImageCaptionPipeline
+from .image_captioning_pipeline import ImageCaptionPipeline

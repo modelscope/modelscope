@@ -3,15 +3,16 @@ from typing import Any, Dict, Optional
 from modelscope.models.nlp import DialogModelingModel
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
-from ...base import Pipeline, Tensor
-from ...builder import PIPELINES
+from ...metainfo import Pipelines
+from ..base import Pipeline, Tensor
+from ..builder import PIPELINES
 
-__all__ = ['DialogStateTrackingPipeline']
+__all__ = ['DialogModelingPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.dialog_state_tracking, module_name=r'space-dst')
-class DialogStateTrackingPipeline(Pipeline):
+    Tasks.dialog_modeling, module_name=Pipelines.dialog_modeling)
+class DialogModelingPipeline(Pipeline):
 
     def __init__(self, model: DialogModelingModel,
                  preprocessor: DialogModelingPreprocessor, **kwargs):

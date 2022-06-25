@@ -1,13 +1,14 @@
 from typing import Dict
 
-from modelscope.utils.constant import Tasks
+from ...metainfo import Models
+from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
 __all__ = ['PalmForTextGeneration']
 
 
-@MODELS.register_module(Tasks.text_generation, module_name=r'palm2.0')
+@MODELS.register_module(Tasks.text_generation, module_name=Models.palm)
 class PalmForTextGeneration(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -19,12 +20,17 @@ class PalmForTextGeneration(Model):
                 default loader to load model weights, by default None.
         """
         super().__init__(model_dir, *args, **kwargs)
-        self.model_dir = model_dir
 
         from sofa.models.palm_v2 import PalmForConditionalGeneration, Translator
         model = PalmForConditionalGeneration.from_pretrained(model_dir)
         self.tokenizer = model.tokenizer
         self.generator = Translator(model)
+
+    def train(self):
+        return self.generator.train()
+
+    def eval(self):
+        return self.generator.eval()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model

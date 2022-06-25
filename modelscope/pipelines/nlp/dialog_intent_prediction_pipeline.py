@@ -1,16 +1,18 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from modelscope.models.nlp import DialogIntentModel
-from modelscope.preprocessors import DialogIntentPredictionPreprocessor
-from modelscope.utils.constant import Tasks
-from ...base import Input, Pipeline
-from ...builder import PIPELINES
+from ...metainfo import Pipelines
+from ...models.nlp import DialogIntentModel
+from ...preprocessors import DialogIntentPredictionPreprocessor
+from ...utils.constant import Tasks
+from ..base import Pipeline
+from ..builder import PIPELINES
 
 __all__ = ['DialogIntentPredictionPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.dialog_intent_prediction, module_name=r'space-intent')
+    Tasks.dialog_intent_prediction,
+    module_name=Pipelines.dialog_intent_prediction)
 class DialogIntentPredictionPipeline(Pipeline):
 
     def __init__(self, model: DialogIntentModel,

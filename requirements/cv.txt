@@ -1,1 +1,3 @@
+decord>=0.6.0
 easydict
+tf_slim

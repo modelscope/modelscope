@@ -1,0 +1,1 @@
+from .image_captioning_model import OfaForImageCaptioning

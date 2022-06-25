@@ -2,6 +2,7 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
+from modelscope.metainfo import Pipelines
 from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -13,7 +14,7 @@ __all__ = ['SequenceClassificationPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.text_classification, module_name=r'bert-sentiment-analysis')
+    Tasks.text_classification, module_name=Pipelines.sentiment_analysis)
 class SequenceClassificationPipeline(Pipeline):
 
     def __init__(self,

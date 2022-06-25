@@ -1,11 +1,10 @@
 import os
 from typing import Any, Dict
 
-from modelscope.preprocessors.space.fields.intent_field import \
-    IntentBPETextField
-from modelscope.trainers.nlp.space.trainers.intent_trainer import IntentTrainer
-from modelscope.utils.config import Config
-from modelscope.utils.constant import Tasks
+from ....preprocessors.space.fields.intent_field import IntentBPETextField
+from ....trainers.nlp.space.trainers.intent_trainer import IntentTrainer
+from ....utils.config import Config
+from ....utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
 from .model.generator import Generator
@@ -14,8 +13,7 @@ from .model.model_base import ModelBase
 __all__ = ['DialogIntentModel']
 
 
-@MODELS.register_module(
-    Tasks.dialog_intent_prediction, module_name=r'space-intent')
+@MODELS.register_module(Tasks.dialog_intent_prediction, module_name=r'space')
 class DialogIntentModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

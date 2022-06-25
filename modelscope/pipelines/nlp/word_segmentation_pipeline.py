@@ -1,9 +1,12 @@
 from typing import Any, Dict, Optional, Union
 
-from modelscope.models import Model
-from modelscope.models.nlp import StructBertForTokenClassification
-from modelscope.preprocessors import TokenClassifcationPreprocessor
-from modelscope.utils.constant import Tasks
+import torch
+
+from ...metainfo import Pipelines
+from ...models import Model
+from ...models.nlp import SbertForTokenClassification
+from ...preprocessors import TokenClassifcationPreprocessor
+from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
 
@@ -11,12 +14,11 @@ __all__ = ['WordSegmentationPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.word_segmentation,
-    module_name=r'structbert-chinese-word-segmentation')
+    Tasks.word_segmentation, module_name=Pipelines.word_segmentation)
 class WordSegmentationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[StructBertForTokenClassification, str],
+                 model: Union[SbertForTokenClassification, str],
                  preprocessor: Optional[TokenClassifcationPreprocessor] = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp word segmentation pipeline for prediction
@@ -27,15 +29,23 @@ class WordSegmentationPipeline(Pipeline):
         """
         model = model if isinstance(
             model,
-            StructBertForTokenClassification) else Model.from_pretrained(model)
+            SbertForTokenClassification) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TokenClassifcationPreprocessor(model.model_dir)
+        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = preprocessor.tokenizer
         self.config = model.config
+        assert len(self.config.id2label) > 0
         self.id2label = self.config.id2label
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
+
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:

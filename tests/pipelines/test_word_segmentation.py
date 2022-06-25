@@ -2,14 +2,12 @@
 import shutil
 import unittest
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import StructBertForTokenClassification
+from modelscope.models.nlp import SbertForTokenClassification
 from modelscope.pipelines import WordSegmentationPipeline, pipeline
 from modelscope.preprocessors import TokenClassifcationPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import get_model_cache_dir
 from modelscope.utils.test_utils import test_level
 
 
@@ -17,19 +15,11 @@ class WordSegmentationTest(unittest.TestCase):
     model_id = 'damo/nlp_structbert_word-segmentation_chinese-base'
     sentence = '今天天气不错，适合出去游玩'
 
-    def setUp(self) -> None:
-        # switch to False if downloading everytime is not desired
-        purge_cache = True
-        if purge_cache:
-            shutil.rmtree(
-                get_model_cache_dir(self.model_id), ignore_errors=True)
-
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = TokenClassifcationPreprocessor(cache_path)
-        model = StructBertForTokenClassification(
-            cache_path, tokenizer=tokenizer)
+        model = SbertForTokenClassification(cache_path, tokenizer=tokenizer)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)
@@ -46,13 +36,13 @@ class WordSegmentationTest(unittest.TestCase):
             task=Tasks.word_segmentation, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.word_segmentation, model=self.model_id)
         print(pipeline_ins(input=self.sentence))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.word_segmentation)
         print(pipeline_ins(input=self.sentence))

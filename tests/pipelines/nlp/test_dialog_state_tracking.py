@@ -1,8 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
+import os.path as osp
+import tempfile
 import unittest
 
-from maas_hub.snapshot_download import snapshot_download
-
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import DialogStateTrackingModel
 from modelscope.pipelines import DialogStateTrackingPipeline, pipeline
@@ -10,50 +12,31 @@ from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
 
 
-class DialogIntentPredictionTest(unittest.TestCase):
-    model_id = 'damo/nlp_space_dialog-intent-prediction'
-    test_case = [
-        'How do I locate my card?',
-        'I still have not received my new card, I ordered over a week ago.'
-    ]
+class DialogStateTrackingTest(unittest.TestCase):
+    model_id = 'damo/nlp_space_dialog-state-tracking'
+    test_case = {}
 
-    @unittest.skip('test with snapshot_download')
     def test_run(self):
-        cache_path = snapshot_download(self.model_id)
-        preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
-        model = DialogIntentModel(
-            model_dir=cache_path,
-            text_field=preprocessor.text_field,
-            config=preprocessor.config)
+        # cache_path = ''
+        # cache_path = snapshot_download(self.model_id)
 
-        pipelines = [
-            DialogIntentPredictionPipeline(
-                model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.dialog_intent_prediction,
-                model=model,
-                preprocessor=preprocessor)
-        ]
-
-        for my_pipeline, item in list(zip(pipelines, self.test_case)):
-            print(my_pipeline(item))
-
-    def test_run_with_model_from_modelhub(self):
-        # model = Model.from_pretrained(self.model_id)
-        # preprocessor = DialogIntentPredictionPreprocessor(
-        #     model_dir=model.model_dir)
-        #
+        # preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
+        # model = DialogStateTrackingModel(
+        #     model_dir=cache_path,
+        #     text_field=preprocessor.text_field,
+        #     config=preprocessor.config)
         # pipelines = [
-        #     DialogIntentPredictionPipeline(
-        #         model=model, preprocessor=preprocessor),
+        #     DialogStateTrackingPipeline(model=model, preprocessor=preprocessor),
         #     pipeline(
-        #         task=Tasks.dialog_intent_prediction,
+        #         task=Tasks.dialog_modeling,
         #         model=model,
         #         preprocessor=preprocessor)
         # ]
-        #
-        # for my_pipeline, item in list(zip(pipelines, self.test_case)):
-        #     print(my_pipeline(item))
+
+        print('jizhu test')
+
+    @unittest.skip('test with snapshot_download')
+    def test_run_with_model_from_modelhub(self):
         pass
 
 

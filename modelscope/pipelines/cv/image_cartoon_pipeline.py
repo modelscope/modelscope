@@ -6,6 +6,7 @@ import numpy as np
 import PIL
 import tensorflow as tf
 
+from modelscope.metainfo import Pipelines
 from modelscope.models.cv.cartoon.facelib.facer import FaceAna
 from modelscope.models.cv.cartoon.mtcnn_pytorch.src.align_trans import (
     get_reference_facial_points, warp_and_crop_face)
@@ -25,7 +26,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name='person-image-cartoon')
+    Tasks.image_generation, module_name=Pipelines.person_image_cartoon)
 class ImageCartoonPipeline(Pipeline):
 
     def __init__(self, model: str):

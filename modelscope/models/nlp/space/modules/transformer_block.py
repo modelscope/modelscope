@@ -5,9 +5,8 @@ TransformerBlock class.
 import torch
 import torch.nn as nn
 
-from modelscope.models.nlp.space.modules.feedforward import FeedForward
-from modelscope.models.nlp.space.modules.multihead_attention import \
-    MultiheadAttention
+from .feedforward import FeedForward
+from .multihead_attention import MultiheadAttention
 
 
 class TransformerBlock(nn.Module):

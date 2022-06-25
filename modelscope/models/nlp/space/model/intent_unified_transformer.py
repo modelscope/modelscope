@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modelscope.utils.nlp.space.criterions import compute_kl_loss
+from .....utils.nlp.space.criterions import compute_kl_loss
 from .unified_transformer import UnifiedTransformer
 
 

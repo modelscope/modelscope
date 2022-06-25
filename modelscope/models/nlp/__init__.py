@@ -4,3 +4,4 @@ from .sbert_for_sentence_similarity import *  # noqa F403
 from .sbert_for_token_classification import *  # noqa F403
 from .space.dialog_intent_prediction_model import *  # noqa F403
 from .space.dialog_modeling_model import *  # noqa F403
+from .space.dialog_state_tracking import *  # noqa F403

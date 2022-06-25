@@ -1,7 +1,7 @@
-modelscope.pydatasets package
+modelscope.datasets package
 =============================
 
-.. automodule:: modelscope.pydatasets
+.. automodule:: modelscope.datasets
    :members:
    :undoc-members:
    :show-inheritance:
@@ -9,10 +9,10 @@ modelscope.pydatasets package
 Submodules
 ----------
 
-modelscope.pydatasets.py\_dataset module
+modelscope.datasets.py\_dataset module
 ----------------------------------------
 
-.. automodule:: modelscope.pydatasets.py_dataset
+.. automodule:: modelscope.datasets.ms_dataset
    :members:
    :undoc-members:
    :show-inheritance:

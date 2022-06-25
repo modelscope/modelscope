@@ -2,10 +2,10 @@
 import shutil
 import unittest
 
+from modelscope.datasets import MsDataset
 from modelscope.models import Model
 from modelscope.pipelines import SequenceClassificationPipeline, pipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
-from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import Hubs, Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -28,7 +28,7 @@ class SequenceClassificationTest(unittest.TestCase):
 
         print(data)
 
-    def printDataset(self, dataset: PyDataset):
+    def printDataset(self, dataset: MsDataset):
         for i, r in enumerate(dataset):
             if i > 10:
                 break
@@ -50,7 +50,7 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(
             task=Tasks.text_classification, model=self.model_id)
         result = text_classification(
-            PyDataset.load(
+            MsDataset.load(
                 'glue',
                 subset_name='sst2',
                 split='train',
@@ -62,7 +62,7 @@ class SequenceClassificationTest(unittest.TestCase):
     def test_run_with_default_model(self):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
-            PyDataset.load(
+            MsDataset.load(
                 'glue',
                 subset_name='sst2',
                 split='train',
@@ -78,7 +78,7 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(
             Tasks.text_classification, model=model, preprocessor=preprocessor)
         # loaded from huggingface dataset
-        dataset = PyDataset.load(
+        dataset = MsDataset.load(
             'glue',
             subset_name='sst2',
             split='train',
@@ -91,7 +91,7 @@ class SequenceClassificationTest(unittest.TestCase):
     def test_run_with_modelscope_dataset(self):
         text_classification = pipeline(task=Tasks.text_classification)
         # loaded from modelscope dataset
-        dataset = PyDataset.load(
+        dataset = MsDataset.load(
             'squad', split='train', target='context', hub=Hubs.modelscope)
         result = text_classification(dataset)
         self.printDataset(result)

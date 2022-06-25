@@ -16,7 +16,7 @@ Subpackages
    modelscope.models
    modelscope.pipelines
    modelscope.preprocessors
-   modelscope.pydatasets
+   modelscope.datasets
    modelscope.trainers
    modelscope.utils
 

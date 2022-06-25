@@ -10,8 +10,8 @@ from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
-from modelscope.pydatasets.config import MS_DATASETS_CACHE
-from modelscope.pydatasets.utils.ms_api import MsApi
+from modelscope.datasets.config import MS_DATASETS_CACHE
+from modelscope.datasets.utils.ms_api import MsApi
 from modelscope.utils.constant import Hubs
 from modelscope.utils.logger import get_logger
 
@@ -28,9 +28,9 @@ def format_list(para) -> List:
     return para
 
 
-class PyDataset:
+class MsDataset:
     _hf_ds = None  # holds the underlying HuggingFace Dataset
-    """A PyDataset backed by hugging face Dataset."""
+    """A MsDataset backed by hugging face Dataset."""
 
     def __init__(self, hf_ds: Dataset, target: Optional[str] = None):
         self._hf_ds = hf_ds
@@ -49,7 +49,7 @@ class PyDataset:
     @classmethod
     def from_hf_dataset(cls,
                         hf_ds: Dataset,
-                        target: str = None) -> Union[dict, 'PyDataset']:
+                        target: str = None) -> Union[dict, 'MsDataset']:
         if isinstance(hf_ds, Dataset):
             return cls(hf_ds, target)
         if len(hf_ds.keys()) == 1:
@@ -68,8 +68,8 @@ class PyDataset:
         data_files: Optional[Union[str, Sequence[str],
                                    Mapping[str, Union[str,
                                                       Sequence[str]]]]] = None
-    ) -> Union[dict, 'PyDataset']:
-        """Load a PyDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
+    ) -> Union[dict, 'MsDataset']:
+        """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
             Args:
 
                 dataset_name (str): Path or name of the dataset.
@@ -82,7 +82,7 @@ class PyDataset:
                 hub (Hubs, optional): When loading from a remote hub, where it is from
 
             Returns:
-                PyDataset (obj:`PyDataset`): PyDataset object for a certain dataset.
+                MsDataset (obj:`MsDataset`): MsDataset object for a certain dataset.
             """
         if hub == Hubs.huggingface:
             dataset = hf_load_dataset(
@@ -92,9 +92,9 @@ class PyDataset:
                 split=split,
                 data_dir=data_dir,
                 data_files=data_files)
-            return PyDataset.from_hf_dataset(dataset, target=target)
+            return MsDataset.from_hf_dataset(dataset, target=target)
         else:
-            return PyDataset._load_ms_dataset(
+            return MsDataset._load_ms_dataset(
                 dataset_name,
                 target=target,
                 subset_name=subset_name,
@@ -114,7 +114,7 @@ class PyDataset:
         data_files: Optional[Union[str, Sequence[str],
                                    Mapping[str, Union[str,
                                                       Sequence[str]]]]] = None
-    ) -> Union[dict, 'PyDataset']:
+    ) -> Union[dict, 'MsDataset']:
         if isinstance(dataset_name, str):
             use_hf = False
             if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
@@ -153,7 +153,7 @@ class PyDataset:
         else:
             raise TypeError('path must be a str or a list, but got'
                             f' {type(dataset_name)}')
-        return PyDataset.from_hf_dataset(dataset, target=target)
+        return MsDataset.from_hf_dataset(dataset, target=target)
 
     def to_torch_dataset_with_processors(
         self,

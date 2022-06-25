@@ -3,7 +3,7 @@
 ## python环境配置
 首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境
 
-安装完成后，执行如下命令为modelscope library创建对应的python环境。
+安装完成后，执行如下命令为maas library创建对应的python环境。
 ```shell
 conda create -n modelscope python=3.6
 conda activate modelscope
@@ -105,15 +105,15 @@ import cv2
 import os.path as osp
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.datasets import MsDataset
+from modelscope.pydatasets import PyDataset
 
-# 使用图像url构建MsDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
+# 使用图像url构建PyDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
 input_location = [
     'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
 ]
-dataset = MsDataset.load(input_location, target='image')
+dataset = PyDataset.load(input_location, target='image')
 img_matting = pipeline(Tasks.image_matting, model='damo/image-matting-person')
-# 输入为MsDataset时，输出的结果为迭代器
+# 输入为PyDataset时，输出的结果为迭代器
 result = img_matting(dataset)
 cv2.imwrite('result.png', next(result)['output_png'])
 print(f'Output written to {osp.abspath("result.png")}')

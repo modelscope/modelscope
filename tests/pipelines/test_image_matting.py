@@ -6,9 +6,9 @@ import unittest
 
 import cv2
 
-from modelscope.datasets import MsDataset
 from modelscope.fileio import File
 from modelscope.pipelines import pipeline
+from modelscope.pydatasets import PyDataset
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -37,7 +37,7 @@ class ImageMattingTest(unittest.TestCase):
         # alternatively:
         # input_location = '/dir/to/images'
 
-        dataset = MsDataset.load(input_location, target='image')
+        dataset = PyDataset.load(input_location, target='image')
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
         # note that for dataset output, the inference-output is a Generator that can be iterated.
         result = img_matting(dataset)
@@ -62,7 +62,7 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_modelscope_dataset(self):
-        dataset = MsDataset.load('beans', split='train', target='image')
+        dataset = PyDataset.load('beans', split='train', target='image')
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
         result = img_matting(dataset)
         for i in range(10):

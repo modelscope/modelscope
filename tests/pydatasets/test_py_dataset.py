@@ -2,10 +2,11 @@ import unittest
 
 import datasets as hfdata
 
-from modelscope.datasets import MsDataset
 from modelscope.models import Model
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.pydatasets import PyDataset
+from modelscope.utils.constant import Hubs
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
 
 
@@ -30,15 +31,15 @@ class ImgPreprocessor(Preprocessor):
         }
 
 
-class MsDatasetTest(unittest.TestCase):
+class PyDatasetTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_ds_basic(self):
-        ms_ds_full = MsDataset.load('squad')
+        ms_ds_full = PyDataset.load('squad')
         ms_ds_full_hf = hfdata.load_dataset('squad')
-        ms_ds_train = MsDataset.load('squad', split='train')
+        ms_ds_train = PyDataset.load('squad', split='train')
         ms_ds_train_hf = hfdata.load_dataset('squad', split='train')
-        ms_image_train = MsDataset.from_hf_dataset(
+        ms_image_train = PyDataset.from_hf_dataset(
             hfdata.load_dataset('beans', split='train'))
         self.assertEqual(ms_ds_full['train'][0], ms_ds_full_hf['train'][0])
         self.assertEqual(ms_ds_full['validation'][0],
@@ -57,7 +58,7 @@ class MsDatasetTest(unittest.TestCase):
             nlp_model.model_dir,
             first_sequence='context',
             second_sequence=None)
-        ms_ds_train = MsDataset.load('squad', split='train')
+        ms_ds_train = PyDataset.load('squad', split='train')
         pt_dataset = ms_ds_train.to_torch_dataset(preprocessors=preprocessor)
         import torch
         dataloader = torch.utils.data.DataLoader(pt_dataset, batch_size=5)
@@ -74,7 +75,7 @@ class MsDatasetTest(unittest.TestCase):
             nlp_model.model_dir,
             first_sequence='context',
             second_sequence=None)
-        ms_ds_train = MsDataset.load('squad', split='train')
+        ms_ds_train = PyDataset.load('squad', split='train')
         tf_dataset = ms_ds_train.to_tf_dataset(
             batch_size=5,
             shuffle=True,
@@ -85,7 +86,7 @@ class MsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_img(self):
-        ms_image_train = MsDataset.from_hf_dataset(
+        ms_image_train = PyDataset.from_hf_dataset(
             hfdata.load_dataset('beans', split='train'))
         pt_dataset = ms_image_train.to_torch_dataset(
             preprocessors=ImgPreprocessor(
@@ -99,7 +100,7 @@ class MsDatasetTest(unittest.TestCase):
     def test_to_tf_dataset_img(self):
         import tensorflow as tf
         tf.compat.v1.enable_eager_execution()
-        ms_image_train = MsDataset.load('beans', split='train')
+        ms_image_train = PyDataset.load('beans', split='train')
         tf_dataset = ms_image_train.to_tf_dataset(
             batch_size=5,
             shuffle=True,

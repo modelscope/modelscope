@@ -4,17 +4,17 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Union
 
-from modelscope.datasets import MsDataset
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.preprocessors import Preprocessor
+from modelscope.pydatasets import PyDataset
 from modelscope.utils.config import Config
 from modelscope.utils.logger import get_logger
 from .outputs import TASK_OUTPUTS
 from .util import is_model, is_official_hub_path
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-Input = Union[str, tuple, MsDataset, 'PIL.Image.Image', 'numpy.ndarray']
+Input = Union[str, tuple, PyDataset, 'PIL.Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
 output_keys = [
@@ -85,7 +85,7 @@ class Pipeline(ABC):
             for ele in input:
                 output.append(self._process_single(ele, *args, **post_kwargs))
 
-        elif isinstance(input, MsDataset):
+        elif isinstance(input, PyDataset):
             return self._process_iterator(input, *args, **post_kwargs)
 
         else:

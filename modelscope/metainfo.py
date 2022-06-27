@@ -21,6 +21,7 @@ class Models(object):
     sambert_hifi_16k = 'sambert-hifi-16k'
     generic_tts_frontend = 'generic-tts-frontend'
     hifigan16k = 'hifigan16k'
+    kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal models
     ofa = 'ofa'
@@ -53,6 +54,7 @@ class Pipelines(object):
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
+    kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks
     image_caption = 'image-caption'
@@ -94,6 +96,7 @@ class Preprocessors(object):
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
     text_to_tacotron_symbols = 'text-to-tacotron-symbols'
+    wav_to_lists = 'wav-to-lists'
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'

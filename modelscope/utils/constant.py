@@ -52,6 +52,7 @@ class Tasks(object):
     auto_speech_recognition = 'auto-speech-recognition'
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
+    key_word_spotting = 'key-word-spotting'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

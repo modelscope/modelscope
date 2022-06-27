@@ -2,11 +2,11 @@ import os
 from typing import Any, Dict
 
 from ....preprocessors.space.fields.intent_field import IntentBPETextField
-from ....trainers.nlp.space.trainers.intent_trainer import IntentTrainer
 from ....utils.config import Config
 from ....utils.constant import Tasks
 from ...base import Model, Tensor
 from ...builder import MODELS
+from .application.intent_app import IntentTrainer
 from .model.generator import Generator
 from .model.model_base import ModelBase
 

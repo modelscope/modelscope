@@ -6,6 +6,7 @@ from typing import List, Optional, Union
 
 from requests import HTTPError
 
+from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.config import Config
@@ -16,8 +17,8 @@ def create_model_if_not_exist(
         api,
         model_id: str,
         chinese_name: str,
-        visibility: Optional[int] = 5,  # 1-private, 5-public
-        license: Optional[str] = 'apache-2.0',
+        visibility: Optional[int] = ModelVisibility.PUBLIC,
+        license: Optional[str] = Licenses.APACHE_V2,
         revision: Optional[str] = 'master'):
     exists = True
     try:

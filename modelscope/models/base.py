@@ -2,7 +2,7 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
@@ -42,13 +42,18 @@ class Model(ABC):
         return input
 
     @classmethod
-    def from_pretrained(cls, model_name_or_path: str, *model_args, **kwargs):
-        """ Instantiate a model from local directory or remote model repo
+    def from_pretrained(cls,
+                        model_name_or_path: str,
+                        revision: Optional[str] = 'master',
+                        *model_args,
+                        **kwargs):
+        """ Instantiate a model from local directory or remote model repo. Note
+        that when loading from remote, the model revision can be specified.
         """
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
-            local_model_dir = snapshot_download(model_name_or_path)
+            local_model_dir = snapshot_download(model_name_or_path, revision)
         logger.info(f'initialize model from {local_model_dir}')
         cfg = Config.from_file(
             osp.join(local_model_dir, ModelFile.CONFIGURATION))

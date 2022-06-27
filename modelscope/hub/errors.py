@@ -6,6 +6,10 @@ class RequestError(Exception):
     pass
 
 
+class GitError(Exception):
+    pass
+
+
 def is_ok(rsp):
     """ Check the request is ok
 

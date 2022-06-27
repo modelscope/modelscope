@@ -21,7 +21,6 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
-    Tasks.image_matting: ('image-matting', 'damo/cv_unet_image-matting'),
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
     Tasks.sentiment_classification:
     (Pipelines.sentiment_classification,
@@ -44,6 +43,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
+    Tasks.multi_modal_embedding:
+    (Pipelines.multi_modal_embedding,
+     'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding')
 }
 
 

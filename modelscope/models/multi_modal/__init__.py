@@ -1,1 +1,2 @@
+from .clip.clip_model import CLIPForMultiModalEmbedding
 from .image_captioning_model import OfaForImageCaptioning

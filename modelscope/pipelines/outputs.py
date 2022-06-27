@@ -131,6 +131,13 @@ TASK_OUTPUTS = {
     # }
     Tasks.image_captioning: ['caption'],
 
+    # multi-modal embedding result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D]
+    # }
+    Tasks.multi_modal_embedding: ['img_embedding', 'text_embedding'],
+
     # visual grounding result for single sample
     # {
     #       "boxes": [

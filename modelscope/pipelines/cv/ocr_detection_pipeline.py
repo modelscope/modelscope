@@ -48,6 +48,7 @@ class OCRDetectionPipeline(Pipeline):
 
     def __init__(self, model: str):
         super().__init__(model=model)
+        tf.reset_default_graph()
         model_path = osp.join(
             osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
             'checkpoint-80000')

@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from modelscope.pydatasets.config import (DOWNLOADED_DATASETS_PATH,
+from modelscope.msdatasets.config import (DOWNLOADED_DATASETS_PATH,
                                           MS_HUB_ENDPOINT)
 from modelscope.utils.logger import get_logger
 

@@ -57,6 +57,7 @@ class Tasks(object):
     image_captioning = 'image-captioning'
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
+    multi_modal_embedding = 'multi-modal-embedding'
 
 
 class InputFields(object):

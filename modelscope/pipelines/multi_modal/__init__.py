@@ -1,1 +1,2 @@
 from .image_captioning_pipeline import ImageCaptionPipeline
+from .multi_modal_embedding_pipeline import MultiModalEmbeddingPipeline

@@ -24,6 +24,7 @@ class Models(object):
 
     # multi-modal models
     ofa = 'ofa'
+    clip = 'clip-multi-modal-embedding'
 
 
 class Pipelines(object):
@@ -55,6 +56,7 @@ class Pipelines(object):
 
     # multi-modal tasks
     image_caption = 'image-caption'
+    multi_modal_embedding = 'multi-modal-embedding'
 
 
 class Trainers(object):

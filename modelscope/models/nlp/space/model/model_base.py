@@ -5,8 +5,10 @@ import os
 
 import torch.nn as nn
 
+from .....utils.constant import ModelFile
 
-class ModelBase(nn.Module):
+
+class SpaceModelBase(nn.Module):
     """
     Basic model wrapper for static graph and dygrpah.
     """
@@ -14,21 +16,22 @@ class ModelBase(nn.Module):
 
     @classmethod
     def register(cls, name):
-        ModelBase._registry[name] = cls
+        SpaceModelBase._registry[name] = cls
         return
 
     @staticmethod
     def by_name(name):
-        return ModelBase._registry[name]
+        return SpaceModelBase._registry[name]
 
     @staticmethod
     def create(model_dir, config, *args, **kwargs):
-        model_cls = ModelBase.by_name(config.Model.model)
+        model_cls = SpaceModelBase.by_name(config.Model.model)
         return model_cls(model_dir, config, *args, **kwargs)
 
     def __init__(self, model_dir, config):
-        super(ModelBase, self).__init__()
-        self.init_checkpoint = os.path.join(model_dir, 'pytorch_model.bin')
+        super(SpaceModelBase, self).__init__()
+        self.init_checkpoint = os.path.join(model_dir,
+                                            ModelFile.TORCH_MODEL_BIN_FILE)
         self.abandon_label = config.Dataset.abandon_label
         self.use_gpu = config.use_gpu
         self.gpu = config.Trainer.gpu

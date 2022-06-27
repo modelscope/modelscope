@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import DialogIntentModel
+from modelscope.models.nlp import SpaceForDialogIntentModel
 from modelscope.pipelines import DialogIntentPredictionPipeline, pipeline
 from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
@@ -20,7 +20,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
         preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
-        model = DialogIntentModel(
+        model = SpaceForDialogIntentModel(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)

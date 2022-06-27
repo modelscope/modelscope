@@ -9,10 +9,10 @@ import torch.nn.functional as F
 
 from ..modules.embedder import Embedder
 from ..modules.transformer_block import TransformerBlock
-from .model_base import ModelBase
+from .model_base import SpaceModelBase
 
 
-class UnifiedTransformer(ModelBase):
+class UnifiedTransformer(SpaceModelBase):
     """
     Implement unified transformer.
     """

@@ -3,8 +3,8 @@ from typing import Any, Dict, Union
 import numpy as np
 import torch
 
-from modelscope.metainfo import Models
-from modelscope.utils.constant import Tasks
+from ...metainfo import Models
+from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 

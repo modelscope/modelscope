@@ -36,18 +36,10 @@ class BPETextField(object):
 
     @property
     def bot_id(self):
-        """
-        用于区分user和bot两个角色
-        1和0不是词表中的index，而是专门针对role的index，大小就为2，对应超参数'num_type_embeddings'
-        """
         return 0
 
     @property
     def user_id(self):
-        """
-        用于区分user和bot两个角色
-        1和0不是词表中的index，而是专门针对role的index，大小就为2，对应超参数'num_type_embeddings'
-        """
         return 1
 
     @property
@@ -186,7 +178,7 @@ class BPETextField(object):
             ]
             src_role.append(list(chain(*role))[-self.max_len:])
 
-        # src端序列和tgt端序列需要分开pad，以保证解码时第一个词对齐
+        # src sequence and tgt sequence should be padded separately，to make sure the first word is aligned
         src_token = list2np(src_token, padding=self.pad_id)
         src_pos = list2np(src_pos, padding=self.pad_id)
         src_turn = list2np(src_turn, padding=self.pad_id)
@@ -439,7 +431,7 @@ class MultiWOZBPETextField(BPETextField):
         # logging.info(log_str)
         # cfg.num_training_steps = num_training_steps * cfg.epoch_num
         self.set_stats[set_name][
-            'num_training_steps_per_epoch'] = num_training_steps  # turn-level的steps
+            'num_training_steps_per_epoch'] = num_training_steps  # turn-level steps
         self.set_stats[set_name]['num_turns'] = num_turns
         self.set_stats[set_name]['num_dials'] = num_dials
 
@@ -548,9 +540,6 @@ class MultiWOZBPETextField(BPETextField):
 
     def convert_batch_turn(self, turn_batch, pv_batch, first_turn=False):
         """
-        URURU：这里的含义是指轮级别的训练（数据整理），区别于session级别的训练方式（convert_batch_session）；
-        但不同于eval时的含义，eval时二者都是逐轮依次生成的，那时URURU的含义请见相关的函数注释；
-
         convert the current and the last turn
         concat [U_0,R_0,...,U_{t-1}, R_{t-1}, U_t, B_t, A_t, R_t]
         firts turn: [U_t, B_t, A_t, R_t]

@@ -183,7 +183,7 @@ class BeamSearch(Generator):
 
         scores_after_end = np.full(self.vocab_size, -1e10, dtype='float32')
         scores_after_end[
-            self.pad_id] = 0  # 希望<eos>之后只生成<pad>，故使词表中log(p(<pad>))最高(0)
+            self.pad_id] = 0  # we want <pad> is generated after <eos>，so maximum log(p(<pad>)) is (0)
         scores_after_end = torch.from_numpy(scores_after_end)
 
         if self.use_gpu:
@@ -245,10 +245,8 @@ class BeamSearch(Generator):
             scores = scores.reshape(batch_size, beam_size * self.vocab_size)
 
             topk_scores, topk_indices = torch.topk(scores, beam_size)
-            # topk_indices: [batch_size, beam_size * self.vocab_size] (已reshape)
-            # 判断当前时间步产生词的前一个词在哪个beam中，对vocab_size取商
+            # topk_indices: [batch_size, beam_size * self.vocab_size] (already reshaped)
             parent_idx = topk_indices.floor_divide(self.vocab_size)
-            # 对vocab_size取余
             preds = topk_indices % self.vocab_size
 
             # Gather state / sequence_scores
@@ -262,14 +260,14 @@ class BeamSearch(Generator):
             predictions = predictions.reshape(batch_size, beam_size, step)
             predictions = torch.cat([predictions, preds.unsqueeze(2)], dim=2)
 
-        # 希望生成的整个句子已完结，所以要求最后一个token为<eos>或者<pad>(跟在<eos>之后)，否则惩罚
+        # The last token should be <eos> or <pad>
         pre_ids = predictions[:, :, -1]
         pre_eos_mask = (1 - torch.not_equal(pre_ids, eos_id).float()) + \
                        (1 - torch.not_equal(pre_ids, self.pad_id).float())
         sequence_scores = sequence_scores * pre_eos_mask + (
             1 - pre_eos_mask) * (-1e10)
 
-        # 先获得ascending排序的index，便于之后对predictions和sequence_scores排序(针对beam size轴)
+        # first get ascending ordered index，then sort "predictions" and "sequence_scores"
         indices = torch.argsort(sequence_scores, dim=1)
         indices = indices + pos_index
         indices = indices.reshape(-1)

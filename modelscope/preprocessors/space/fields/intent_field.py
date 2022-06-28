@@ -154,18 +154,10 @@ class BPETextField(object):
 
     @property
     def bot_id(self):
-        """
-        用于区分user和bot两个角色
-        1和0不是词表中的index，而是专门针对role的index，大小就为2，对应超参数'num_type_embeddings'
-        """
         return 0
 
     @property
     def user_id(self):
-        """
-        用于区分user和bot两个角色
-        1和0不是词表中的index，而是专门针对role的index，大小就为2，对应超参数'num_type_embeddings'
-        """
         return 1
 
     def add_sepcial_tokens(self):
@@ -862,7 +854,6 @@ class BPETextField(object):
             ]
             src_role.append(list(chain(*role))[-self.max_len:])
 
-        # src端序列和tgt端序列需要分开pad，以保证解码时第一个词对齐
         src_token = list2np(src_token, padding=self.pad_id)
         src_pos = list2np(src_pos, padding=self.pad_id)
         src_turn = list2np(src_turn, padding=self.pad_id)
@@ -1038,7 +1029,6 @@ class IntentBPETextField(BPETextField):
                 ] * l for i, l in enumerate(utt_lens)]
             src_role.append(list(chain(*role))[-self.max_len:])
 
-        # src端序列和tgt端序列需要分开pad，以保证解码时第一个词对齐
         src_token = list2np(src_token, padding=self.pad_id)
         src_pos = list2np(src_pos, padding=self.pad_id)
         src_turn = list2np(src_turn, padding=self.pad_id)

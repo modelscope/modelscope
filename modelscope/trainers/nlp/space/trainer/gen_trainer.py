@@ -563,7 +563,7 @@ class MultiWOZTrainer(Trainer):
                         generated_bs = outputs[0].cpu().numpy().tolist()
                         bspn_gen = self.decode_generated_bspn(generated_bs)
                         # check DB result
-                        if self.reader.use_true_db_pointer:  # 控制当前轮的db是否为ground truth
+                        if self.reader.use_true_db_pointer:  # To control whether current db is ground truth
                             db = turn['db']
                         else:
                             db_result = self.reader.bspan_to_DBpointer(

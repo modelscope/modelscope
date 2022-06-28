@@ -56,10 +56,6 @@ class Tokenizer(object):
             self._tokenizer = BertTokenizer(
                 vocab_path, never_split=self.special_tokens)
             for tok in self.special_tokens:
-                '''
-                需要先保证special_tokens在词表中，这里设置special_tokens的目的是为了这些词能够完整占位，不再切分为子词；
-                若不在词表中，可以使用词表中的[unused]符号进行转换：spec_convert_dict；
-                '''
                 assert tok in self._tokenizer.vocab, f"special token '{tok}' is not in the vocabulary"
             self.vocab_size = len(self._tokenizer.vocab)
         elif tokenizer_type == 'GPT2':

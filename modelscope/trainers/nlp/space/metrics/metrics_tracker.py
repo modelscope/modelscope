@@ -10,8 +10,8 @@ class MetricsTracker(object):
     """ Tracking metrics. """
 
     def __init__(self):
-        self.metrics_val = defaultdict(float)  # 记录最新一个batch返回的指标
-        self.metrics_avg = defaultdict(float)  # 维护一个epoch内已训练batches的平均指标
+        self.metrics_val = defaultdict(float)  # for one batch
+        self.metrics_avg = defaultdict(float)  # avg batches
         self.num_samples = 0
 
     def update(self, metrics, num_samples):

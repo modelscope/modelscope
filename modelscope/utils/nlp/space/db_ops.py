@@ -172,8 +172,8 @@ class MultiWozDB(object):
                     continue
                 if s in ['people', 'stay'] or (domain == 'hotel' and s == 'day') or \
                         (domain == 'restaurant' and s in ['day', 'time']):
-                    # 因为这些inform slot属于book info，而数据库中没有这些slot；
-                    # 能否book是根据user goal中的信息判断，而非通过数据库查询；
+                    # These inform slots belong to "book info"，which do not exist in DB
+                    # "book" is according to the user goal，not DB
                     continue
 
                 skip_case = {

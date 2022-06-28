@@ -314,18 +314,18 @@ class IntentTrainer(Trainer):
         self.can_norm = config.Trainer.can_norm
 
     def can_normalization(self, y_pred, y_true, ex_data_iter):
-        # 预测结果，计算修正前准确率
+        # compute ACC
         acc_original = np.mean([y_pred.argmax(1) == y_true])
         message = 'original acc: %s' % acc_original
 
-        # 评价每个预测结果的不确定性
+        # compute uncertainty
         k = 3
         y_pred_topk = np.sort(y_pred, axis=1)[:, -k:]
         y_pred_topk /= y_pred_topk.sum(axis=1, keepdims=True)
         y_pred_uncertainty =\
             -(y_pred_topk * np.log(y_pred_topk)).sum(1) / np.log(k)
 
-        # 选择阈值，划分高、低置信度两部分
+        # choose threshold
         # print(np.sort(y_pred_uncertainty)[-100:].tolist())
         threshold = 0.7
         y_pred_confident = y_pred[y_pred_uncertainty < threshold]
@@ -333,8 +333,7 @@ class IntentTrainer(Trainer):
         y_true_confident = y_true[y_pred_uncertainty < threshold]
         y_true_unconfident = y_true[y_pred_uncertainty >= threshold]
 
-        # 显示两部分各自的准确率
-        # 一般而言，高置信度集准确率会远高于低置信度的
+        # compute ACC again for high and low confidence sets
         acc_confident = (y_pred_confident.argmax(1) == y_true_confident).mean() \
             if len(y_true_confident) else 0.
         acc_unconfident = (y_pred_unconfident.argmax(1) == y_true_unconfident).mean() \
@@ -344,7 +343,7 @@ class IntentTrainer(Trainer):
         message += '   (%s) unconfident acc: %s' % (len(y_true_unconfident),
                                                     acc_unconfident)
 
-        # 从训练集统计先验分布
+        # get prior distribution from training set
         prior = np.zeros(self.func_model.num_intent)
         for _, (batch, batch_size) in ex_data_iter:
             for intent_label in batch['intent_label']:
@@ -352,7 +351,7 @@ class IntentTrainer(Trainer):
 
         prior /= prior.sum()
 
-        # 逐个修改低置信度样本，并重新评价准确率
+        # revise each sample from the low confidence set, and compute new ACC
         right, alpha, iters = 0, 1, 1
         for i, y in enumerate(y_pred_unconfident):
             Y = np.concatenate([y_pred_confident, y[None]], axis=0)
@@ -365,7 +364,7 @@ class IntentTrainer(Trainer):
             if y.argmax() == y_true_unconfident[i]:
                 right += 1
 
-        # 输出修正后的准确率
+        # get final ACC
         acc_final = \
             (acc_confident * len(y_pred_confident) + right) / \
             len(y_pred)

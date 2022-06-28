@@ -183,7 +183,8 @@ class BeamSearch(Generator):
 
         scores_after_end = np.full(self.vocab_size, -1e10, dtype='float32')
         scores_after_end[
-            self.pad_id] = 0  # we want <pad> is generated after <eos>，so maximum log(p(<pad>)) is (0)
+            self.
+            pad_id] = 0  # we want <pad> is generated after <eos>，so maximum log(p(<pad>)) is (0)
         scores_after_end = torch.from_numpy(scores_after_end)
 
         if self.use_gpu:

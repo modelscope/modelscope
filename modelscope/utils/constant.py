@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import enum
 
 
 class Fields(object):
@@ -69,11 +70,18 @@ class InputFields(object):
     audio = 'audio'
 
 
-class Hubs(object):
+class Hubs(enum.Enum):
     """ Source from which an entity (such as a Dataset or Model) is stored
     """
     modelscope = 'modelscope'
     huggingface = 'huggingface'
+
+
+class DownloadMode(enum.Enum):
+    """ How to treat existing datasets
+    """
+    REUSE_DATASET_IF_EXISTS = 'reuse_dataset_if_exists'
+    FORCE_REDOWNLOAD = 'force_redownload'
 
 
 class ModelFile(object):

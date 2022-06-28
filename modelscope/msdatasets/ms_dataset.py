@@ -3,7 +3,7 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import numpy as np
-from datasets import Dataset
+from datasets import Dataset, DatasetDict
 from datasets import load_dataset as hf_load_dataset
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
@@ -12,7 +12,7 @@ from datasets.utils.file_utils import (is_relative_path,
 
 from modelscope.msdatasets.config import MS_DATASETS_CACHE
 from modelscope.msdatasets.utils.ms_api import MsApi
-from modelscope.utils.constant import Hubs
+from modelscope.utils.constant import DownloadMode, Hubs
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -34,6 +34,10 @@ class MsDataset:
 
     def __init__(self, hf_ds: Dataset, target: Optional[str] = None):
         self._hf_ds = hf_ds
+        if target is not None and target not in self._hf_ds.features:
+            raise TypeError(
+                f'"target" must be a column of the dataset({list(self._hf_ds.features.keys())}, but got {target}'
+            )
         self.target = target
 
     def __iter__(self):
@@ -48,17 +52,23 @@ class MsDataset:
 
     @classmethod
     def from_hf_dataset(cls,
-                        hf_ds: Dataset,
+                        hf_ds: Union[Dataset, DatasetDict],
                         target: str = None) -> Union[dict, 'MsDataset']:
         if isinstance(hf_ds, Dataset):
             return cls(hf_ds, target)
-        if len(hf_ds.keys()) == 1:
-            return cls(next(iter(hf_ds.values())), target)
-        return {k: cls(v, target) for k, v in hf_ds.items()}
+        elif isinstance(hf_ds, DatasetDict):
+            if len(hf_ds.keys()) == 1:
+                return cls(next(iter(hf_ds.values())), target)
+            return {k: cls(v, target) for k, v in hf_ds.items()}
+        else:
+            raise TypeError(
+                f'"hf_ds" must be a Dataset or DatasetDict, but got {type(hf_ds)}'
+            )
 
     @staticmethod
     def load(
         dataset_name: Union[str, list],
+        namespace: Optional[str] = None,
         target: Optional[str] = None,
         version: Optional[str] = None,
         hub: Optional[Hubs] = Hubs.modelscope,
@@ -67,23 +77,32 @@ class MsDataset:
         data_dir: Optional[str] = None,
         data_files: Optional[Union[str, Sequence[str],
                                    Mapping[str, Union[str,
-                                                      Sequence[str]]]]] = None
+                                                      Sequence[str]]]]] = None,
+        download_mode: Optional[DownloadMode] = DownloadMode.
+        REUSE_DATASET_IF_EXISTS
     ) -> Union[dict, 'MsDataset']:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
             Args:
 
                 dataset_name (str): Path or name of the dataset.
+                namespace(str, optional): Namespace of the dataset. It should not be None, if you load a remote dataset
+                from Hubs.modelscope,
                 target (str, optional): Name of the column to output.
                 version (str, optional): Version of the dataset script to load:
                 subset_name (str, optional): Defining the subset_name of the dataset.
                 data_dir (str, optional): Defining the data_dir of the dataset configuration. I
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
-                hub (Hubs, optional): When loading from a remote hub, where it is from
+                hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
+                download_mode (DownloadMode or str, optional): How to treat existing datasets. default
+                                                               DownloadMode.REUSE_DATASET_IF_EXISTS
 
             Returns:
                 MsDataset (obj:`MsDataset`): MsDataset object for a certain dataset.
             """
+        download_mode = DownloadMode(download_mode
+                                     or DownloadMode.REUSE_DATASET_IF_EXISTS)
+        hub = Hubs(hub or Hubs.modelscope)
         if hub == Hubs.huggingface:
             dataset = hf_load_dataset(
                 dataset_name,
@@ -91,21 +110,25 @@ class MsDataset:
                 revision=version,
                 split=split,
                 data_dir=data_dir,
-                data_files=data_files)
+                data_files=data_files,
+                download_mode=download_mode.value)
             return MsDataset.from_hf_dataset(dataset, target=target)
-        else:
+        elif hub == Hubs.modelscope:
             return MsDataset._load_ms_dataset(
                 dataset_name,
+                namespace=namespace,
                 target=target,
                 subset_name=subset_name,
                 version=version,
                 split=split,
                 data_dir=data_dir,
-                data_files=data_files)
+                data_files=data_files,
+                download_mode=download_mode)
 
     @staticmethod
     def _load_ms_dataset(
         dataset_name: Union[str, list],
+        namespace: Optional[str] = None,
         target: Optional[str] = None,
         version: Optional[str] = None,
         subset_name: Optional[str] = None,
@@ -113,17 +136,19 @@ class MsDataset:
         data_dir: Optional[str] = None,
         data_files: Optional[Union[str, Sequence[str],
                                    Mapping[str, Union[str,
-                                                      Sequence[str]]]]] = None
+                                                      Sequence[str]]]]] = None,
+        download_mode: Optional[DownloadMode] = None
     ) -> Union[dict, 'MsDataset']:
         if isinstance(dataset_name, str):
             use_hf = False
             if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
                     (os.path.isfile(dataset_name) and dataset_name.endswith('.py')):
                 use_hf = True
-            elif is_relative_path(dataset_name):
+            elif is_relative_path(dataset_name) and dataset_name.count(
+                    '/') == 0:
                 ms_api = MsApi()
                 dataset_scripts = ms_api.fetch_dataset_scripts(
-                    dataset_name, version)
+                    dataset_name, namespace, download_mode, version)
                 if 'py' in dataset_scripts:  # dataset copied from hf datasets
                     dataset_name = dataset_scripts['py'][0]
                     use_hf = True
@@ -140,7 +165,8 @@ class MsDataset:
                     split=split,
                     data_dir=data_dir,
                     data_files=data_files,
-                    cache_dir=MS_DATASETS_CACHE)
+                    cache_dir=MS_DATASETS_CACHE,
+                    download_mode=download_mode.value)
             else:
                 # TODO load from ms datahub
                 raise NotImplementedError(

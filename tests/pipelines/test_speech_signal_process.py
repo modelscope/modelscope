@@ -17,6 +17,9 @@ AEC_LIB_URL = 'http://isv-data.oss-cn-hangzhou.aliyuncs.com/ics%2FMaaS%2FAEC%2Fl
               '?Expires=1664085465&OSSAccessKeyId=LTAIxjQyZNde90zh&Signature=Y7gelmGEsQAJRK4yyHSYMrdWizk%3D'
 AEC_LIB_FILE = 'libmitaec_pyio.so'
 
+NOISE_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ANS/sample_audio/speech_with_noise.wav'
+NOISE_SPEECH_FILE = 'speech_with_noise.wav'
+
 
 def download(remote_path, local_path):
     local_dir = os.path.dirname(local_path)
@@ -30,23 +33,40 @@ def download(remote_path, local_path):
 class SpeechSignalProcessTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/speech_dfsmn_aec_psm_16k'
+        pass
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_aec(self):
         # A temporary hack to provide c++ lib. Download it first.
         download(AEC_LIB_URL, AEC_LIB_FILE)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run(self):
+        # Download audio files
         download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
         download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
+        model_id = 'damo/speech_dfsmn_aec_psm_16k'
         input = {
             'nearend_mic': NEAREND_MIC_FILE,
             'farend_speech': FAREND_SPEECH_FILE
         }
         aec = pipeline(
             Tasks.speech_signal_process,
-            model=self.model_id,
+            model=model_id,
             pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
-        aec(input, output_path='output.wav')
+        output_path = os.path.abspath('output.wav')
+        aec(input, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ans(self):
+        # Download audio files
+        download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)
+        model_id = 'damo/speech_frcrn_ans_cirm_16k'
+        ans = pipeline(
+            Tasks.speech_signal_process,
+            model=model_id,
+            pipeline_name=Pipelines.speech_frcrn_ans_cirm_16k)
+        output_path = os.path.abspath('output.wav')
+        ans(NOISE_SPEECH_FILE, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
 
 
 if __name__ == '__main__':

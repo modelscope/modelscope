@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, Optional, Union
 
 import torch
@@ -6,11 +7,13 @@ from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp.masked_language_model import MaskedLanguageModelBase
 from ...preprocessors import FillMaskPreprocessor
-from ...utils.constant import Tasks
+from ...utils.config import Config
+from ...utils.constant import ModelFile, Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
 
 __all__ = ['FillMaskPipeline']
+_type_map = {'veco': 'roberta', 'sbert': 'bert'}
 
 
 @PIPELINES.register_module(Tasks.fill_mask, module_name=Pipelines.fill_mask)
@@ -29,7 +32,6 @@ class FillMaskPipeline(Pipeline):
         """
         fill_mask_model = model if isinstance(
             model, MaskedLanguageModelBase) else Model.from_pretrained(model)
-        assert fill_mask_model.config is not None
 
         if preprocessor is None:
             preprocessor = FillMaskPreprocessor(
@@ -41,11 +43,13 @@ class FillMaskPipeline(Pipeline):
             model=fill_mask_model, preprocessor=preprocessor, **kwargs)
 
         self.preprocessor = preprocessor
+        self.config = Config.from_file(
+            os.path.join(fill_mask_model.model_dir, ModelFile.CONFIGURATION))
         self.tokenizer = preprocessor.tokenizer
-        self.mask_id = {'veco': 250001, 'sbert': 103}
+        self.mask_id = {'roberta': 250001, 'bert': 103}
 
         self.rep_map = {
-            'sbert': {
+            'bert': {
                 '[unused0]': '',
                 '[PAD]': '',
                 '[unused1]': '',
@@ -55,7 +59,7 @@ class FillMaskPipeline(Pipeline):
                 '[CLS]': '',
                 '[UNK]': ''
             },
-            'veco': {
+            'roberta': {
                 r' +': ' ',
                 '<mask>': '<q>',
                 '<pad>': '',
@@ -84,7 +88,9 @@ class FillMaskPipeline(Pipeline):
         input_ids = inputs['input_ids'].detach().numpy()
         pred_ids = np.argmax(logits, axis=-1)
         model_type = self.model.config.model_type
-        rst_ids = np.where(input_ids == self.mask_id[model_type], pred_ids,
+        process_type = model_type if model_type in self.mask_id else _type_map[
+            model_type]
+        rst_ids = np.where(input_ids == self.mask_id[process_type], pred_ids,
                            input_ids)
 
         def rep_tokens(string, rep_map):
@@ -94,14 +100,12 @@ class FillMaskPipeline(Pipeline):
 
         pred_strings = []
         for ids in rst_ids:  # batch
-            # TODO vocab size is not stable
-
-            if self.model.config.vocab_size == 21128:  # zh bert
+            if 'language' in self.config.model and self.config.model.language == 'zh':
                 pred_string = self.tokenizer.convert_ids_to_tokens(ids)
                 pred_string = ''.join(pred_string)
             else:
                 pred_string = self.tokenizer.decode(ids)
-            pred_string = rep_tokens(pred_string, self.rep_map[model_type])
+            pred_string = rep_tokens(pred_string, self.rep_map[process_type])
             pred_strings.append(pred_string)
 
         return {'text': pred_strings}

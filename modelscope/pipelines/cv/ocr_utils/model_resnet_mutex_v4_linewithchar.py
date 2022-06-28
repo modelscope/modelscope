@@ -1,7 +1,11 @@
 import tensorflow as tf
-import tf_slim as slim
 
 from . import ops, resnet18_v1, resnet_utils
+
+if tf.__version__ >= '2.0':
+    import tf_slim as slim
+else:
+    from tensorflow.contrib import slim
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

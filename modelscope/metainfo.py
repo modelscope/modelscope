@@ -22,6 +22,7 @@ class Models(object):
     sambert_hifi_16k = 'sambert-hifi-16k'
     generic_tts_frontend = 'generic-tts-frontend'
     hifigan16k = 'hifigan16k'
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal models
@@ -44,6 +45,7 @@ class Pipelines(object):
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     action_recognition = 'TAdaConv_action-recognition'
+    animal_recognation = 'resnet101-animal_recog'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -59,6 +61,7 @@ class Pipelines(object):
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks

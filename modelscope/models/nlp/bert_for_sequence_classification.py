@@ -4,8 +4,8 @@ from typing import Any, Dict
 import json
 import numpy as np
 
-from modelscope.metainfo import Models
-from modelscope.utils.constant import Tasks
+from ...metainfo import Models
+from ...utils.constant import Tasks
 from ..base import Model
 from ..builder import MODELS
 

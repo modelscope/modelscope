@@ -6,7 +6,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import DialogModelingModel
+from modelscope.models.nlp import SpaceForDialogModelingModel
 from modelscope.pipelines import DialogModelingPipeline, pipeline
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
@@ -97,7 +97,7 @@ class DialogModelingTest(unittest.TestCase):
         cache_path = snapshot_download(self.model_id)
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
-        model = DialogModelingModel(
+        model = SpaceForDialogModelingModel(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)

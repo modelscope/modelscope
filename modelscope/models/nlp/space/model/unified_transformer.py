@@ -9,10 +9,10 @@ import torch.nn.functional as F
 
 from ..modules.embedder import Embedder
 from ..modules.transformer_block import TransformerBlock
-from .model_base import ModelBase
+from .model_base import SpaceModelBase
 
 
-class UnifiedTransformer(ModelBase):
+class UnifiedTransformer(SpaceModelBase):
     """
     Implement unified transformer.
     """
@@ -122,11 +122,7 @@ class UnifiedTransformer(ModelBase):
                      auto_regressive=False):
         """
         Create attention mask.
-        创建从序列形式到矩阵形式的mask：[batch_size, max_seq_len， 1] -> [batch_size, max_seq_len, max_seq_len]
-        mask除了要考虑attention mask（自回归），还需要考虑pad的mask（自回归和双向）
-        注：
-        1. 一个句子中的非<pad>词看整个句子，该句中只有<pad>词才被mask
-        2. 一个句子中的<pad>词看整个句子，该句的所有词都应该被mask
+        from sequence to matrix：[batch_size, max_seq_len， 1] -> [batch_size, max_seq_len, max_seq_len]
 
         @param : input_mask
         @type : Variable(shape: [batch_size, max_seq_len])
@@ -142,13 +138,11 @@ class UnifiedTransformer(ModelBase):
         mask = mask1 * mask2
 
         if append_head:
-            # 拼接上句首位置([M]/z)的mask
             mask = torch.cat([mask[:, :1, :], mask], dim=1)
             mask = torch.cat([mask[:, :, :1], mask], dim=2)
             seq_len += 1
 
         if auto_regressive:
-            # 将tgt端的<pad> mask和自回归attention mask融合
             seq_mask = self.sequence_mask[:seq_len, :seq_len]
             seq_mask = seq_mask.to(mask.device)
             mask = mask * seq_mask
@@ -159,7 +153,7 @@ class UnifiedTransformer(ModelBase):
     def _join_mask(self, mask1, mask2):
         """
         Merge source attention mask and target attention mask.
-        合并后的整个mask矩阵可以分为四个部分：左上lu/右上ru/左下lb/右下rb
+        There are four parts：left upper (lu) / right upper (ru) / left below (lb) / right below (rb)
 
         @param : mask1 : source attention mask
         @type : Variable(shape: [batch_size, max_src_len, max_src_len])

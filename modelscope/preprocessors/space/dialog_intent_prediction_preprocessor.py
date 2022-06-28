@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict
 
 from ...utils.config import Config
-from ...utils.constant import Fields
+from ...utils.constant import Fields, ModelFile
 from ...utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
@@ -26,7 +26,7 @@ class DialogIntentPredictionPreprocessor(Preprocessor):
 
         self.model_dir: str = model_dir
         self.config = Config.from_file(
-            os.path.join(self.model_dir, 'configuration.json'))
+            os.path.join(self.model_dir, ModelFile.CONFIGURATION))
         self.text_field = IntentBPETextField(
             self.model_dir, config=self.config)
 

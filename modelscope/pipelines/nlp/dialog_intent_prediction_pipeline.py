@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from ...metainfo import Pipelines
-from ...models.nlp import DialogIntentModel
+from ...models.nlp import SpaceForDialogIntentModel
 from ...preprocessors import DialogIntentPredictionPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
@@ -15,7 +15,7 @@ __all__ = ['DialogIntentPredictionPipeline']
     module_name=Pipelines.dialog_intent_prediction)
 class DialogIntentPredictionPipeline(Pipeline):
 
-    def __init__(self, model: DialogIntentModel,
+    def __init__(self, model: SpaceForDialogIntentModel,
                  preprocessor: DialogIntentPredictionPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 

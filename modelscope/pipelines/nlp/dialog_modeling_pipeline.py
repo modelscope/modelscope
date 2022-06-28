@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
 
-from modelscope.models.nlp import DialogModelingModel
-from modelscope.preprocessors import DialogModelingPreprocessor
-from modelscope.utils.constant import Tasks
 from ...metainfo import Pipelines
+from ...models.nlp import SpaceForDialogModelingModel
+from ...preprocessors import DialogModelingPreprocessor
+from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
 
@@ -14,7 +14,7 @@ __all__ = ['DialogModelingPipeline']
     Tasks.dialog_modeling, module_name=Pipelines.dialog_modeling)
 class DialogModelingPipeline(Pipeline):
 
-    def __init__(self, model: DialogModelingModel,
+    def __init__(self, model: SpaceForDialogModelingModel,
                  preprocessor: DialogModelingPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 

@@ -570,7 +570,6 @@ class multiwoz22Processor(DSTProcessor):
     def delex_utt(self, utt, values, unk_token='[UNK]'):
         utt_norm = self.tokenize(utt)
         for s, vals in values.items():
-            # TODO vals可能不是数组形式，而是初始化的字符串"none"
             for v in vals:
                 if v != 'none':
                     v_norm = self.tokenize(v)

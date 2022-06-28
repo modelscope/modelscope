@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict
 
+from ....metainfo import Models
 from ....preprocessors.space.fields.intent_field import IntentBPETextField
 from ....trainers.nlp.space.trainer.intent_trainer import IntentTrainer
 from ....utils.config import Config
@@ -13,7 +14,8 @@ from .model.model_base import SpaceModelBase
 __all__ = ['SpaceForDialogIntentModel']
 
 
-@MODELS.register_module(Tasks.dialog_intent_prediction, module_name=r'space')
+@MODELS.register_module(
+    Tasks.dialog_intent_prediction, module_name=Models.space)
 class SpaceForDialogIntentModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

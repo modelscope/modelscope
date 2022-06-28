@@ -3,6 +3,7 @@
 import os
 from typing import Any, Dict
 
+from ...metainfo import Preprocessors
 from ...utils.config import Config
 from ...utils.constant import Fields, ModelFile
 from ...utils.type_assert import type_assert
@@ -13,7 +14,8 @@ from .fields.gen_field import MultiWOZBPETextField
 __all__ = ['DialogModelingPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-modeling')
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.dialog_modeling_preprocessor)
 class DialogModelingPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

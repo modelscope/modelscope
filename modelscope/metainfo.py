@@ -16,6 +16,7 @@ class Models(object):
     palm = 'palm-v2'
     structbert = 'structbert'
     veco = 'veco'
+    space = 'space'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'
@@ -98,6 +99,8 @@ class Preprocessors(object):
     token_cls_tokenizer = 'token-cls-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
     sen_cls_tokenizer = 'sen-cls-tokenizer'
+    dialog_intent_preprocessor = 'dialog-intent-preprocessor'
+    dialog_modeling_preprocessor = 'dialog-modeling-preprocessor'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

@@ -3,6 +3,7 @@
 import os
 from typing import Any, Dict
 
+from ...metainfo import Preprocessors
 from ...utils.config import Config
 from ...utils.constant import Fields, ModelFile
 from ...utils.type_assert import type_assert
@@ -13,7 +14,8 @@ from .fields.intent_field import IntentBPETextField
 __all__ = ['DialogIntentPredictionPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-intent')
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.dialog_intent_preprocessor)
 class DialogIntentPredictionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

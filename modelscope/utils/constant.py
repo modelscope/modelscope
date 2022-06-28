@@ -52,11 +52,13 @@ class Tasks(object):
     auto_speech_recognition = 'auto-speech-recognition'
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
+    key_word_spotting = 'key-word-spotting'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
+    multi_modal_embedding = 'multi-modal-embedding'
 
 
 class InputFields(object):

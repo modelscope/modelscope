@@ -1,4 +1,3 @@
-import imp
 import os
 import pickle
 import subprocess
@@ -9,9 +8,10 @@ from typing import List, Optional, Tuple, Union
 import requests
 
 from modelscope.utils.logger import get_logger
-from .constants import LOGGER_NAME
+from .constants import MODELSCOPE_URL_SCHEME
 from .errors import NotExistError, is_ok, raise_on_error
-from .utils.utils import get_endpoint, model_id_to_group_owner_name
+from .utils.utils import (get_endpoint, get_gitlab_domain,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -40,9 +40,6 @@ class HubApi:
         <Tip>
             You only have to login once within 30 days.
         </Tip>
-
-        TODO: handle cookies expire
-
         """
         path = f'{self.endpoint}/api/v1/login'
         r = requests.post(
@@ -94,14 +91,14 @@ class HubApi:
                 'Path': owner_or_group,
                 'Name': name,
                 'ChineseName': chinese_name,
-                'Visibility': visibility,
+                'Visibility': visibility,  # server check
                 'License': license
             },
             cookies=cookies)
         r.raise_for_status()
         raise_on_error(r.json())
-        d = r.json()
-        return d['Data']['Name']
+        model_repo_url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}'
+        return model_repo_url
 
     def delete_model(self, model_id):
         """_summary_
@@ -209,25 +206,37 @@ class HubApi:
 
 class ModelScopeConfig:
     path_credential = expanduser('~/.modelscope/credentials')
-    os.makedirs(path_credential, exist_ok=True)
+
+    @classmethod
+    def make_sure_credential_path_exist(cls):
+        os.makedirs(cls.path_credential, exist_ok=True)
 
     @classmethod
     def save_cookies(cls, cookies: CookieJar):
+        cls.make_sure_credential_path_exist()
         with open(os.path.join(cls.path_credential, 'cookies'), 'wb+') as f:
             pickle.dump(cookies, f)
 
     @classmethod
     def get_cookies(cls):
         try:
-            with open(os.path.join(cls.path_credential, 'cookies'), 'rb') as f:
-                return pickle.load(f)
+            cookies_path = os.path.join(cls.path_credential, 'cookies')
+            with open(cookies_path, 'rb') as f:
+                cookies = pickle.load(f)
+                for cookie in cookies:
+                    if cookie.is_expired():
+                        logger.warn('Auth is expored, please re-login')
+                        return None
+                return cookies
         except FileNotFoundError:
-            logger.warn("Auth token does not exist, you'll get authentication \
-                error when downloading private model files. Please login first"
-                        )
+            logger.warn(
+                "Auth token does not exist, you'll get authentication error when downloading \
+                private model files. Please login first")
+        return None
 
     @classmethod
     def save_token(cls, token: str):
+        cls.make_sure_credential_path_exist()
         with open(os.path.join(cls.path_credential, 'token'), 'w+') as f:
             f.write(token)
 

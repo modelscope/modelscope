@@ -1,9 +1,9 @@
 import unittest
 
-from maas_hub.maas_api import MaasApi
-
+from modelscope.hub.api import HubApi
 from modelscope.utils.hub import create_model_if_not_exist
 
+# note this is temporary before official account management is ready
 USER_NAME = 'maasadmin'
 PASSWORD = '12345678'
 
@@ -11,8 +11,7 @@ PASSWORD = '12345678'
 class HubExampleTest(unittest.TestCase):
 
     def setUp(self):
-        self.api = MaasApi()
-        # note this is temporary before official account management is ready
+        self.api = HubApi()
         self.api.login(USER_NAME, PASSWORD)
 
     @unittest.skip('to be used for local test only')
@@ -22,7 +21,6 @@ class HubExampleTest(unittest.TestCase):
         model_chinese_name = '达摩卡通化模型'
         model_org = 'damo'
         model_id = '%s/%s' % (model_org, model_name)
-
         created = create_model_if_not_exist(self.api, model_id,
                                             model_chinese_name)
         if not created:

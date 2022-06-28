@@ -19,7 +19,11 @@ implementation is more memory efficient.
 import collections
 
 import tensorflow as tf
-import tf_slim as slim
+
+if tf.__version__ >= '2.0':
+    import tf_slim as slim
+else:
+    from tensorflow.contrib import slim
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

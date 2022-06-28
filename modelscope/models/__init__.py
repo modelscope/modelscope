@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+from .audio.ans.frcrn import FRCRNModel
 from .audio.kws import GenericKeyWordSpotting
 from .audio.tts.am import SambertNetHifi16k
 from .audio.tts.vocoder import Hifigan16k

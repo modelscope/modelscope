@@ -10,6 +10,10 @@ class GitError(Exception):
     pass
 
 
+class InvalidParameter(Exception):
+    pass
+
+
 def is_ok(rsp):
     """ Check the request is ok
 

@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from modelscope.hub.errors import GitError
+from modelscope.hub.errors import GitError, InvalidParameter
 from modelscope.utils.logger import get_logger
 from .api import ModelScopeConfig
 from .constants import MODELSCOPE_URL_SCHEME
@@ -49,6 +49,8 @@ class Repository:
         git_wrapper = GitCommandWrapper()
         if not git_wrapper.is_lfs_installed():
             logger.error('git lfs is not installed, please install.')
+        else:
+            git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
 
         self.git_wrapper = GitCommandWrapper(git_path)
         os.makedirs(self.model_dir, exist_ok=True)
@@ -74,8 +76,6 @@ class Repository:
 
     def push(self,
              commit_message: str,
-             files: List[str] = list(),
-             all_files: bool = False,
              branch: Optional[str] = 'master',
              force: bool = False):
         """Push local to remote, this method will do.
@@ -86,8 +86,12 @@ class Repository:
             commit_message (str): commit message
             revision (Optional[str], optional): which branch to push. Defaults to 'master'.
         """
+        if commit_message is None:
+            msg = 'commit_message must be provided!'
+            raise InvalidParameter(msg)
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
-        self.git_wrapper.add(self.model_dir, files, all_files)
+        self.git_wrapper.pull(self.model_dir)
+        self.git_wrapper.add(self.model_dir, all_files=True)
         self.git_wrapper.commit(self.model_dir, commit_message)
         self.git_wrapper.push(
             repo_dir=self.model_dir,

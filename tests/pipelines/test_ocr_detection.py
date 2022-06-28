@@ -32,11 +32,6 @@ class OCRDetectionTest(unittest.TestCase):
         ocr_detection = pipeline(Tasks.ocr_detection, model=self.model_id)
         self.pipeline_inference(ocr_detection, self.test_image)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_with_model_name(self):
-        ocr_detection = pipeline(Tasks.ocr_detection, model=self.model_id)
-        self.pipeline_inference(ocr_detection, self.test_image)
-
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         ocr_detection = pipeline(Tasks.ocr_detection)

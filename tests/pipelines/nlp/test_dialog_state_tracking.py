@@ -14,26 +14,28 @@ from modelscope.utils.constant import Tasks
 
 class DialogStateTrackingTest(unittest.TestCase):
     model_id = 'damo/nlp_space_dialog-state-tracking'
-    test_case = {}
+
+    test_case = [{
+        'utter': {
+            'User-1':
+            "I'm looking for a place to stay. It needs to be a guesthouse and include free wifi."
+        },
+        'history_states': [{}]
+    }]
 
     def test_run(self):
-        # cache_path = ''
+        cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-state-tracking'
         # cache_path = snapshot_download(self.model_id)
 
-        # preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
-        # model = DialogStateTrackingModel(
-        #     model_dir=cache_path,
-        #     text_field=preprocessor.text_field,
-        #     config=preprocessor.config)
-        # pipelines = [
-        #     DialogStateTrackingPipeline(model=model, preprocessor=preprocessor),
-        #     pipeline(
-        #         task=Tasks.dialog_modeling,
-        #         model=model,
-        #         preprocessor=preprocessor)
-        # ]
+        model = DialogStateTrackingModel(cache_path)
+        preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
+        pipeline1 = DialogStateTrackingPipeline(
+            model=model, preprocessor=preprocessor)
 
-        print('jizhu test')
+        history_states = {}
+        for step, item in enumerate(self.test_case):
+            history_states = pipeline1(item)
+            print(history_states)
 
     @unittest.skip('test with snapshot_download')
     def test_run_with_model_from_modelhub(self):

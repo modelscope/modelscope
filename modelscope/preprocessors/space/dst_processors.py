@@ -1097,29 +1097,31 @@ class DSTExample(object):
         return self.__repr__()
 
     def __repr__(self):
-        s = ''
-        s += 'guid: %s' % (self.guid)
-        s += ', text_a: %s' % (self.text_a)
-        s += ', text_b: %s' % (self.text_b)
-        s += ', history: %s' % (self.history)
+        s_dict = dict()
+        s_dict['guid'] = self.guid
+        s_dict['text_a'] = self.text_a
+        s_dict['text_b'] = self.text_b
+        s_dict['history'] = self.history
         if self.text_a_label:
-            s += ', text_a_label: %d' % (self.text_a_label)
+            s_dict['text_a_label'] = self.text_a_label
         if self.text_b_label:
-            s += ', text_b_label: %d' % (self.text_b_label)
+            s_dict['text_b_label'] = self.text_b_label
         if self.history_label:
-            s += ', history_label: %d' % (self.history_label)
+            s_dict['history_label'] = self.history_label
         if self.values:
-            s += ', values: %d' % (self.values)
+            s_dict['values'] = self.values
         if self.inform_label:
-            s += ', inform_label: %d' % (self.inform_label)
+            s_dict['inform_label'] = self.inform_label
         if self.inform_slot_label:
-            s += ', inform_slot_label: %d' % (self.inform_slot_label)
+            s_dict['inform_slot_label'] = self.inform_slot_label
         if self.refer_label:
-            s += ', refer_label: %d' % (self.refer_label)
+            s_dict['refer_label'] = self.refer_label
         if self.diag_state:
-            s += ', diag_state: %d' % (self.diag_state)
+            s_dict['diag_state'] = self.diag_state
         if self.class_label:
-            s += ', class_label: %d' % (self.class_label)
+            s_dict['class_label'] = self.class_label
+
+        s = json.dumps(s_dict)
         return s
 
 
@@ -1515,6 +1517,7 @@ if __name__ == '__main__':
     delexicalize_sys_utts = True,
     unk_token = '[UNK]'
     analyze = False
+
     example = processor.create_example(utter1, history_states1, set_type,
                                        slot_list, {}, append_history,
                                        use_history_labels, swap_utterances,

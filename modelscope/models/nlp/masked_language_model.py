@@ -2,24 +2,28 @@ from typing import Any, Dict, Optional, Union
 
 import numpy as np
 
-from modelscope.metainfo import Models
-from modelscope.utils.constant import Tasks
+from ...metainfo import Models
+from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM']
+__all__ = ['BertForMaskedLM', 'StructBertForMaskedLM', 'VecoForMaskedLM']
 
 
-class AliceMindBaseForMaskedLM(Model):
+class MaskedLanguageModelBase(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        from sofa.utils.backend import AutoConfig, AutoModelForMaskedLM
-        self.model_dir = model_dir
         super().__init__(model_dir, *args, **kwargs)
+        self.model = self.build_model()
 
-        self.config = AutoConfig.from_pretrained(model_dir)
-        self.model = AutoModelForMaskedLM.from_pretrained(
-            model_dir, config=self.config)
+    def build_model():
+        raise NotImplementedError()
+
+    @property
+    def config(self):
+        if hasattr(self.model, 'config'):
+            return self.model.config
+        return None
 
     def forward(self, inputs: Dict[str, Tensor]) -> Dict[str, np.ndarray]:
         """return the result by the model
@@ -38,14 +42,24 @@ class AliceMindBaseForMaskedLM(Model):
 
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)
-class StructBertForMaskedLM(AliceMindBaseForMaskedLM):
-    # The StructBert for MaskedLM uses the same underlying model structure
-    # as the base model class.
-    pass
+class StructBertForMaskedLM(MaskedLanguageModelBase):
+
+    def build_model(self):
+        from sofa import SbertForMaskedLM
+        return SbertForMaskedLM.from_pretrained(self.model_dir)
 
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.veco)
-class VecoForMaskedLM(AliceMindBaseForMaskedLM):
-    # The Veco for MaskedLM uses the same underlying model structure
-    # as the base model class.
-    pass
+class VecoForMaskedLM(MaskedLanguageModelBase):
+
+    def build_model(self):
+        from sofa import VecoForMaskedLM
+        return VecoForMaskedLM.from_pretrained(self.model_dir)
+
+
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.bert)
+class BertForMaskedLM(MaskedLanguageModelBase):
+
+    def build_model(self):
+        from transformers import BertForMaskedLM
+        return BertForMaskedLM.from_pretrained(self.model_dir)

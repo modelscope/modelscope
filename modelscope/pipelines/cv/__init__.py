@@ -1,4 +1,5 @@
 from .action_recognition_pipeline import ActionRecognitionPipeline
+from .animal_recog_pipeline import AnimalRecogPipeline
 from .image_cartoon_pipeline import ImageCartoonPipeline
 from .image_matting_pipeline import ImageMattingPipeline
 from .ocr_detection_pipeline import OCRDetectionPipeline

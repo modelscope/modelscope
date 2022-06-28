@@ -43,6 +43,7 @@ class Pipelines(object):
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     action_recognition = 'TAdaConv_action-recognition'
+    animal_recognation = 'resnet101-animal_recog'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

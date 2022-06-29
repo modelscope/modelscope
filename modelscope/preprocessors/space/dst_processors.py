@@ -31,317 +31,6 @@ USER_NAME = 'User'
 SYSTEM_NAME = 'System'
 DIALOG_ACT = 'Dialog_Act'
 
-utter1 = {
-    'User-1':
-    "am looking for a place to to stay that has cheap price range it should be in a type of hotel"
-}
-history_states1 = [
-    {},
-]
-utter2 = {
-    'User-1':
-    "am looking for a place to to stay that has cheap price range it should be in a type of hotel",
-    'System-1':
-    'Okay, do you have a specific area you want to stay in?',
-    'Dialog_Act-1': {
-        "Hotel-Request": [
-                [
-                    "Area",
-                    "?"
-                ]
-            ]
-    },
-    'User-2':
-    'no, i just need to make sure it\'s cheap. oh, and i need parking',
-}
-
-history_states2 = [{}, {
-                    "taxi": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "departure": "",
-                            "arriveBy": ""
-                        }
-                    },
-                    "police": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {}
-                    },
-                    "restaurant": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "time": ""
-                        },
-                        "semi": {
-                            "food": "",
-                            "pricerange": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "hospital": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "department": ""
-                        }
-                    },
-                    "hotel": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "stay": ""
-                        },
-                        "semi": {
-                            "name": "not mentioned",
-                            "area": "not mentioned",
-                            "parking": "not mentioned",
-                            "pricerange": "cheap",
-                            "stars": "not mentioned",
-                            "internet": "not mentioned",
-                            "type": "hotel"
-                        }
-                    },
-                    "attraction": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "type": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "train": {
-                        "book": {
-                            "booked": [],
-                            "people": ""
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "day": "",
-                            "arriveBy": "",
-                            "departure": ""
-                        }
-                    }
-                }, {}]
-
-utter3 = {
-    'User-1':
-    "am looking for a place to to stay that has cheap price range it should be in a type of hotel",
-    'System-1':
-    'Okay, do you have a specific area you want to stay in?',
-    'Dialog_Act-1': {
-        "Hotel-Request": [
-                [
-                    "Area",
-                    "?"
-                ]
-            ]
-    },
-    'User-2':
-    'no, i just need to make sure it\'s cheap. oh, and i need parking',
-    'System-2':
-    'I found 1 cheap hotel for you that includes parking. Do you like me to book it?',
-    'Dialog_Act-2': {
-        "Booking-Inform": [
-                [
-                    "none",
-                    "none"
-                ]
-            ],
-            "Hotel-Inform": [
-                [
-                    "Price",
-                    "cheap"
-                ],
-                [
-                    "Choice",
-                    "1"
-                ],
-                [
-                    "Parking",
-                    "none"
-                ]
-            ]
-    },
-    'User-3':
-    'Yes, please. 6 people 3 nights starting on tuesday.'
-}
-
-history_states3 = [{}, {
-                    "taxi": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "departure": "",
-                            "arriveBy": ""
-                        }
-                    },
-                    "police": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {}
-                    },
-                    "restaurant": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "time": ""
-                        },
-                        "semi": {
-                            "food": "",
-                            "pricerange": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "hospital": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "department": ""
-                        }
-                    },
-                    "hotel": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "stay": ""
-                        },
-                        "semi": {
-                            "name": "not mentioned",
-                            "area": "not mentioned",
-                            "parking": "not mentioned",
-                            "pricerange": "cheap",
-                            "stars": "not mentioned",
-                            "internet": "not mentioned",
-                            "type": "hotel"
-                        }
-                    },
-                    "attraction": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "type": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "train": {
-                        "book": {
-                            "booked": [],
-                            "people": ""
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "day": "",
-                            "arriveBy": "",
-                            "departure": ""
-                        }
-                    }
-                }, {}, {
-                    "taxi": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "departure": "",
-                            "arriveBy": ""
-                        }
-                    },
-                    "police": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {}
-                    },
-                    "restaurant": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "time": ""
-                        },
-                        "semi": {
-                            "food": "",
-                            "pricerange": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "hospital": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "department": ""
-                        }
-                    },
-                    "hotel": {
-                        "book": {
-                            "booked": [],
-                            "people": "",
-                            "day": "",
-                            "stay": ""
-                        },
-                        "semi": {
-                            "name": "not mentioned",
-                            "area": "not mentioned",
-                            "parking": "yes",
-                            "pricerange": "cheap",
-                            "stars": "not mentioned",
-                            "internet": "not mentioned",
-                            "type": "hotel"
-                        }
-                    },
-                    "attraction": {
-                        "book": {
-                            "booked": []
-                        },
-                        "semi": {
-                            "type": "",
-                            "name": "",
-                            "area": ""
-                        }
-                    },
-                    "train": {
-                        "book": {
-                            "booked": [],
-                            "people": ""
-                        },
-                        "semi": {
-                            "leaveAt": "",
-                            "destination": "",
-                            "day": "",
-                            "arriveBy": "",
-                            "departure": ""
-                        }
-                    }
-                }, {}]
-
 
 class DSTProcessor(object):
     ACTS_DICT = {
@@ -733,7 +422,7 @@ class multiwoz22Processor(DSTProcessor):
                         dialog_id='example.json'):
 
         # Collects all slot changes throughout the dialog
-        cumulative_labels = {slot: 'none' for slot in slot_list}
+        # cumulative_labels = {slot: 'none' for slot in slot_list}
 
         # First system utterance is empty, since multiwoz starts with user input
         utt_tok_list = [[]]
@@ -772,38 +461,38 @@ class multiwoz22Processor(DSTProcessor):
                 utt_tok_list.append(self.tokenize(
                     utt['text']))  # normalize utterances
 
-            modified_slots = {}
+            # modified_slots = {}
 
             # If sys utt, extract metadata (identify and collect modified slots)
-            if is_sys_utt:
-                for d in utt['metadata']:
-                    booked = utt['metadata'][d]['book']['booked']
-                    booked_slots = {}
-                    # Check the booked section
-                    if booked != []:
-                        for s in booked[0]:
-                            booked_slots[s] = self.normalize_label(
-                                '%s-%s' % (d, s),
-                                booked[0][s])  # normalize labels
-                    # Check the semi and the inform slots
-                    for category in ['book', 'semi']:
-                        for s in utt['metadata'][d][category]:
-                            cs = '%s-book_%s' % (
-                                d, s) if category == 'book' else '%s-%s' % (d,
-                                                                            s)
-                            value_label = self.normalize_label(
-                                cs, utt['metadata'][d][category]
-                                [s])  # normalize labels
-                            # Prefer the slot value as stored in the booked section
-                            if s in booked_slots:
-                                value_label = booked_slots[s]
-                            # Remember modified slots and entire dialog state
-                            if cs in slot_list and cumulative_labels[
-                                    cs] != value_label:
-                                modified_slots[cs] = value_label
-                                cumulative_labels[cs] = value_label
-
-            mod_slots_list.append(modified_slots.copy())
+            # if is_sys_utt:
+            #     for d in utt['metadata']:
+            #         booked = utt['metadata'][d]['book']['booked']
+            #         booked_slots = {}
+            #         # Check the booked section
+            #         if booked != []:
+            #             for s in booked[0]:
+            #                 booked_slots[s] = self.normalize_label(
+            #                     '%s-%s' % (d, s),
+            #                     booked[0][s])  # normalize labels
+            #         # Check the semi and the inform slots
+            #         for category in ['book', 'semi']:
+            #             for s in utt['metadata'][d][category]:
+            #                 cs = '%s-book_%s' % (
+            #                     d, s) if category == 'book' else '%s-%s' % (d,
+            #                                                                 s)
+            #                 value_label = self.normalize_label(
+            #                     cs, utt['metadata'][d][category]
+            #                     [s])  # normalize labels
+            #                 # Prefer the slot value as stored in the booked section
+            #                 if s in booked_slots:
+            #                     value_label = booked_slots[s]
+            #                 # Remember modified slots and entire dialog state
+            #                 if cs in slot_list and cumulative_labels[
+            #                         cs] != value_label:
+            #                     modified_slots[cs] = value_label
+            #                     cumulative_labels[cs] = value_label
+            #
+            # mod_slots_list.append(modified_slots.copy())
 
         # Form proper (usr, sys) turns
         turn_itr = 0
@@ -974,26 +663,39 @@ class multiwoz22Processor(DSTProcessor):
                 txt_b = usr_utt_tok
                 txt_a_lbl = sys_utt_tok_label_dict
                 txt_b_lbl = usr_utt_tok_label_dict
-
+            """
+            text_a: dialog text
+            text_b: dialog text
+            history: dialog text
+            text_a_label: label，ignore during inference，turns to start/end pos
+            text_b_label: label，ignore during inference，turns to start/end pos
+            history_label: label，ignore during inference，turns to start/end pos
+            values: ignore during inference
+            inform_label: ignore during inference
+            inform_slot_label: input, system dialog action
+            refer_label: label，ignore during inference，turns to start/end pos refer_id
+            diag_state: input, history dialog state
+            class_label: label，ignore during inference，turns to start/end pos class_label_id
+            """
             example = DSTExample(
                 guid=guid,
-                text_a=txt_a,                               # 必要 input， 对话文本
-                text_b=txt_b,                               # 必要 input， 对话文本
-                history=hst_utt_tok,                        # 必要 input， 对话文本
-                text_a_label=txt_a_lbl,                     # 输出label，不管， 最后变成 start/end pos
-                text_b_label=txt_b_lbl,                     # 输出label，不管， 最后变成 start/end pos
-                history_label=hst_utt_tok_label_dict,       # 输出label，不管， 最后变成 start/end pos
-                values=diag_seen_slots_value_dict.copy(),   # 后面没用上，不管
-                inform_label=inform_dict,                   # 后面没用上，不管
-                inform_slot_label=inform_slot_dict,         # 必要 input, 代表 system dialog action
-                refer_label=referral_dict,                  # 输出label，不管， 最后变成 refer_id
-                diag_state=diag_state,                      # input, 代表 history dialog state
-                class_label=class_type_dict)                # 输出label，不管， 最后变成 class_label_id
+                text_a=txt_a,
+                text_b=txt_b,
+                history=hst_utt_tok,
+                text_a_label=txt_a_lbl,
+                text_b_label=txt_b_lbl,
+                history_label=hst_utt_tok_label_dict,
+                values=diag_seen_slots_value_dict.copy(),
+                inform_label=inform_dict,
+                inform_slot_label=inform_slot_dict,
+                refer_label=referral_dict,
+                diag_state=diag_state,
+                class_label=class_type_dict)
             # Update some variables.
             hst_utt_tok_label_dict = new_hst_utt_tok_label_dict.copy()
             diag_state = new_diag_state.copy()
 
-            turn_itr += 1  #### 缩进不正确
+            turn_itr += 1
         return example
 
     def create_example(self,
@@ -1517,7 +1219,289 @@ if __name__ == '__main__':
     unk_token = '[UNK]'
     analyze = False
 
-    example = processor.create_example(utter3, history_states3, set_type,
+    utter1 = {
+        'User-1':
+        'am looking for a place to to stay that has cheap price range it should be in a type of hotel'
+    }
+    history_states1 = [
+        {},
+    ]
+    utter2 = {
+        'User-1':
+        'am looking for a place to to stay that has cheap price range it should be in a type of hotel',
+        'System-1':
+        'Okay, do you have a specific area you want to stay in?',
+        'Dialog_Act-1': {
+            'Hotel-Request': [['Area', '?']]
+        },
+        'User-2':
+        'no, i just need to make sure it\'s cheap. oh, and i need parking',
+    }
+
+    history_states2 = [{}, {
+        'taxi': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'departure': '',
+                'arriveBy': ''
+            }
+        },
+        'police': {
+            'book': {
+                'booked': []
+            },
+            'semi': {}
+        },
+        'restaurant': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'time': ''
+            },
+            'semi': {
+                'food': '',
+                'pricerange': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'hospital': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'department': ''
+            }
+        },
+        'hotel': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'stay': ''
+            },
+            'semi': {
+                'name': 'not mentioned',
+                'area': 'not mentioned',
+                'parking': 'not mentioned',
+                'pricerange': 'cheap',
+                'stars': 'not mentioned',
+                'internet': 'not mentioned',
+                'type': 'hotel'
+            }
+        },
+        'attraction': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'type': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'train': {
+            'book': {
+                'booked': [],
+                'people': ''
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'day': '',
+                'arriveBy': '',
+                'departure': ''
+            }
+        }
+    }, {}]
+
+    utter3 = {
+        'User-1':
+        'am looking for a place to to stay that has cheap price range it should be in a type of hotel',
+        'System-1': 'Okay, do you have a specific area you want to stay in?',
+        'Dialog_Act-1': {
+            'Hotel-Request': [['Area', '?']]
+        },
+        'User-2':
+        'no, i just need to make sure it\'s cheap. oh, and i need parking',
+        'System-2':
+        'I found 1 cheap hotel for you that includes parking. Do you like me to book it?',
+        'Dialog_Act-2': {
+            'Booking-Inform': [['none', 'none']],
+            'Hotel-Inform': [['Price', 'cheap'], ['Choice', '1'],
+                             ['Parking', 'none']]
+        },
+        'User-3': 'Yes, please. 6 people 3 nights starting on tuesday.'
+    }
+
+    history_states3 = [{}, {
+        'taxi': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'departure': '',
+                'arriveBy': ''
+            }
+        },
+        'police': {
+            'book': {
+                'booked': []
+            },
+            'semi': {}
+        },
+        'restaurant': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'time': ''
+            },
+            'semi': {
+                'food': '',
+                'pricerange': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'hospital': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'department': ''
+            }
+        },
+        'hotel': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'stay': ''
+            },
+            'semi': {
+                'name': 'not mentioned',
+                'area': 'not mentioned',
+                'parking': 'not mentioned',
+                'pricerange': 'cheap',
+                'stars': 'not mentioned',
+                'internet': 'not mentioned',
+                'type': 'hotel'
+            }
+        },
+        'attraction': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'type': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'train': {
+            'book': {
+                'booked': [],
+                'people': ''
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'day': '',
+                'arriveBy': '',
+                'departure': ''
+            }
+        }
+    }, {}, {
+        'taxi': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'departure': '',
+                'arriveBy': ''
+            }
+        },
+        'police': {
+            'book': {
+                'booked': []
+            },
+            'semi': {}
+        },
+        'restaurant': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'time': ''
+            },
+            'semi': {
+                'food': '',
+                'pricerange': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'hospital': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'department': ''
+            }
+        },
+        'hotel': {
+            'book': {
+                'booked': [],
+                'people': '',
+                'day': '',
+                'stay': ''
+            },
+            'semi': {
+                'name': 'not mentioned',
+                'area': 'not mentioned',
+                'parking': 'yes',
+                'pricerange': 'cheap',
+                'stars': 'not mentioned',
+                'internet': 'not mentioned',
+                'type': 'hotel'
+            }
+        },
+        'attraction': {
+            'book': {
+                'booked': []
+            },
+            'semi': {
+                'type': '',
+                'name': '',
+                'area': ''
+            }
+        },
+        'train': {
+            'book': {
+                'booked': [],
+                'people': ''
+            },
+            'semi': {
+                'leaveAt': '',
+                'destination': '',
+                'day': '',
+                'arriveBy': '',
+                'departure': ''
+            }
+        }
+    }, {}]
+
+    example = processor.create_example(utter2, history_states2, set_type,
                                        slot_list, {}, append_history,
                                        use_history_labels, swap_utterances,
                                        label_value_repetitions,

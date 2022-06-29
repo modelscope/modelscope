@@ -8,7 +8,6 @@ from modelscope.utils.type_assert import type_assert
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
 from .dst_processors import convert_examples_to_features, multiwoz22Processor
-from .tensorlistdataset import TensorListDataset
 
 __all__ = ['DialogStateTrackingPreprocessor']
 
@@ -61,7 +60,6 @@ class DialogStateTrackingPreprocessor(Preprocessor):
             delexicalize_sys_utts=True,
             unk_token='[UNK]',
             analyze=False)
-        print(example)
 
         features = convert_examples_to_features(
             examples=[example],
@@ -105,15 +103,6 @@ class DialogStateTrackingPreprocessor(Preprocessor):
                                              dtype=torch.long)
             all_class_label_ids[s] = torch.tensor(
                 [f[s] for f in f_class_label_ids], dtype=torch.long)
-        # dataset = TensorListDataset(all_input_ids, all_input_mask, all_segment_ids,
-        #                             all_start_positions, all_end_positions,
-        #                             all_inform_slot_ids,
-        #                             all_refer_ids,
-        #                             all_diag_state,
-        #                             all_class_label_ids, all_example_index)
-        #
-        # eval_sampler = SequentialSampler(dataset)
-        # eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=self.config.eval_batch_size)
         dataset = [
             all_input_ids, all_input_mask, all_segment_ids,
             all_start_positions, all_end_positions, all_inform_slot_ids,
@@ -128,7 +117,6 @@ class DialogStateTrackingPreprocessor(Preprocessor):
                               ]).to(self.config.device)
                 for slot in self.config.dst_slot_list
             }
-        # print(diag_state)
 
         return {
             'batch': dataset,

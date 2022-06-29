@@ -5,6 +5,7 @@ import unittest
 import uuid
 
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import GitError
 from modelscope.hub.repository import Repository
 
@@ -15,9 +16,6 @@ USER_NAME2 = 'sdkdev'
 model_chinese_name = '达摩卡通化模型'
 model_org = 'unittest'
 DEFAULT_GIT_PATH = 'git'
-
-sample_model_url = 'https://mindscope.oss-cn-hangzhou.aliyuncs.com/test_models/mnist-12.onnx'
-download_model_file_name = 'mnist-12.onnx'
 
 
 class HubPrivateRepositoryTest(unittest.TestCase):
@@ -31,9 +29,10 @@ class HubPrivateRepositoryTest(unittest.TestCase):
         self.model_id = '%s/%s' % (model_org, self.model_name)
         self.api.create_model(
             model_id=self.model_id,
+            visibility=ModelVisibility.PRIVATE,  # 1-private, 5-public
+            license=Licenses.APACHE_V2,
             chinese_name=model_chinese_name,
-            visibility=1,  # 1-private, 5-public
-            license='apache-2.0')
+        )
 
     def tearDown(self):
         self.api.login(USER_NAME, PASSWORD)

@@ -62,7 +62,8 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_modelscope_dataset(self):
-        dataset = MsDataset.load('beans', split='train', target='image')
+        dataset = MsDataset.load(
+            'beans', namespace='damotest', split='train', target='image')
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
         result = img_matting(dataset)
         for i in range(10):

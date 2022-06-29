@@ -153,5 +153,43 @@ TASK_OUTPUTS = {
     # {
     #    "image": np.ndarray with shape [height, width, 3]
     # }
-    Tasks.text_to_image_synthesis: ['image']
+    Tasks.text_to_image_synthesis: ['image'],
+    Tasks.dialog_modeling: [],
+    Tasks.dialog_intent_prediction: [],
+
+    # {
+    #     "dialog_states": {
+    #         "taxi-leaveAt": "none",
+    #         "taxi-destination": "none",
+    #         "taxi-departure": "none",
+    #         "taxi-arriveBy": "none",
+    #         "restaurant-book_people": "none",
+    #         "restaurant-book_day": "none",
+    #         "restaurant-book_time": "none",
+    #         "restaurant-food": "none",
+    #         "restaurant-pricerange": "none",
+    #         "restaurant-name": "none",
+    #         "restaurant-area": "none",
+    #         "hotel-book_people": "none",
+    #         "hotel-book_day": "none",
+    #         "hotel-book_stay": "none",
+    #         "hotel-name": "none",
+    #         "hotel-area": "none",
+    #         "hotel-parking": "none",
+    #         "hotel-pricerange": "cheap",
+    #         "hotel-stars": "none",
+    #         "hotel-internet": "none",
+    #         "hotel-type": "true",
+    #         "attraction-type": "none",
+    #         "attraction-name": "none",
+    #         "attraction-area": "none",
+    #         "train-book_people": "none",
+    #         "train-leaveAt": "none",
+    #         "train-destination": "none",
+    #         "train-day": "none",
+    #         "train-arriveBy": "none",
+    #         "train-departure": "none"
+    #     }
+    # }
+    Tasks.dialog_state_tracking: ['dialog_states']
 }

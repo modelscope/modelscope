@@ -6,11 +6,11 @@ from ....utils.nlp.space.utils_dst import batch_to_device
 from ...base import Model, Tensor
 from ...builder import MODELS
 
-__all__ = ['DialogStateTrackingModel']
+__all__ = ['SpaceForDialogStateTrackingModel']
 
 
 @MODELS.register_module(Tasks.dialog_state_tracking, module_name=r'space')
-class DialogStateTrackingModel(Model):
+class SpaceForDialogStateTrackingModel(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.

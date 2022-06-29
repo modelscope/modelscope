@@ -70,6 +70,14 @@ class GitCommandWrapper(metaclass=Singleton):
         except GitError:
             return False
 
+    def git_lfs_install(self, repo_dir):
+        cmd = ['git', '-C', repo_dir, 'lfs', 'install']
+        try:
+            self._run_git_command(*cmd)
+            return True
+        except GitError:
+            return False
+
     def clone(self,
               repo_base_dir: str,
               token: str,

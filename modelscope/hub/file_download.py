@@ -7,6 +7,7 @@ import tempfile
 import time
 from functools import partial
 from hashlib import sha256
+from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import BinaryIO, Dict, Optional, Union
 from uuid import uuid4
@@ -107,7 +108,9 @@ def model_file_download(
 
     _api = HubApi()
     headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
-    branches, tags = _api.get_model_branches_and_tags(model_id)
+    cookies = ModelScopeConfig.get_cookies()
+    branches, tags = _api.get_model_branches_and_tags(
+        model_id, use_cookies=False if cookies is None else cookies)
     file_to_download_info = None
     is_commit_id = False
     if revision in branches or revision in tags:  # The revision is version or tag,
@@ -117,18 +120,19 @@ def model_file_download(
             model_id=model_id,
             revision=revision,
             recursive=True,
-        )
+            use_cookies=False if cookies is None else cookies,
+            is_snapshot=False)
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':
                 continue
 
             if model_file['Path'] == file_path:
-                model_file['Branch'] = revision
                 if cache.exists(model_file):
                     return cache.get_file_by_info(model_file)
                 else:
                     file_to_download_info = model_file
+                break
 
         if file_to_download_info is None:
             raise NotExistError('The file path: %s not exist in: %s' %
@@ -141,8 +145,6 @@ def model_file_download(
             return cached_file_path  # the file is in cache.
         is_commit_id = True
     # we need to download again
-    # TODO: skip using JWT for authorization, use cookie instead
-    cookies = ModelScopeConfig.get_cookies()
     url_to_download = get_file_download_url(model_id, file_path, revision)
     file_to_download_info = {
         'Path': file_path,
@@ -202,7 +204,7 @@ def http_get_file(
     url: str,
     local_dir: str,
     file_name: str,
-    cookies: Dict[str, str],
+    cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
 ):
     """
@@ -217,7 +219,7 @@ def http_get_file(
             local directory where the downloaded file stores
         file_name(`str`):
             name of the file stored in `local_dir`
-        cookies(`Dict[str, str]`):
+        cookies(`CookieJar`):
             cookies used to authentication the user, which is used for downloading private repos
         headers(`Optional[Dict[str, str]] = None`):
             http headers to carry necessary info when requesting the remote file

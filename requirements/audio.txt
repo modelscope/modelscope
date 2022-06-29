@@ -16,6 +16,7 @@ protobuf>3,<=3.20
 ptflops
 PyWavelets>=1.0.0
 scikit-learn
+SoundFile>0.10
 sox
 tensorboard
 tensorflow==1.15.*

@@ -30,9 +30,13 @@ ResNet-101 for semantic segmentation into 21 classes:
                                                 output_stride=16)
 """
 import tensorflow as tf
-import tf_slim as slim
 
 from . import resnet_utils
+
+if tf.__version__ >= '2.0':
+    import tf_slim as slim
+else:
+    from tensorflow.contrib import slim
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

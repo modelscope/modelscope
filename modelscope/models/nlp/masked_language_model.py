@@ -7,7 +7,7 @@ from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForMaskedLM', 'VecoForMaskedLM']
+__all__ = ['BertForMaskedLM', 'StructBertForMaskedLM', 'VecoForMaskedLM']
 
 
 class MaskedLanguageModelBase(Model):
@@ -61,3 +61,11 @@ class VecoForMaskedLM(MaskedLanguageModelBase):
     def build_model(self):
         from sofa import VecoForMaskedLM
         return VecoForMaskedLM.from_pretrained(self.model_dir)
+
+
+@MODELS.register_module(Tasks.fill_mask, module_name=Models.bert)
+class BertForMaskedLM(MaskedLanguageModelBase):
+
+    def build_model(self):
+        from transformers import BertForMaskedLM
+        return BertForMaskedLM.from_pretrained(self.model_dir)

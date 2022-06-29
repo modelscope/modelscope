@@ -21,11 +21,13 @@ class Models(object):
     sambert_hifi_16k = 'sambert-hifi-16k'
     generic_tts_frontend = 'generic-tts-frontend'
     hifigan16k = 'hifigan16k'
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal models
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
+    mplug = 'mplug'
 
 
 class Pipelines(object):
@@ -43,6 +45,7 @@ class Pipelines(object):
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     action_recognition = 'TAdaConv_action-recognition'
+    animal_recognation = 'resnet101-animal_recog'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -55,15 +58,18 @@ class Pipelines(object):
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'
     dialog_state_tracking = 'dialog-state-tracking'
+    zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks
     image_caption = 'image-caption'
     multi_modal_embedding = 'multi-modal-embedding'
+    visual_question_answering = 'visual-question-answering'
 
 
 class Trainers(object):
@@ -99,6 +105,8 @@ class Preprocessors(object):
     token_cls_tokenizer = 'token-cls-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
     sen_cls_tokenizer = 'sen-cls-tokenizer'
+    sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
+    zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -107,3 +115,4 @@ class Preprocessors(object):
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'
+    mplug_visual_question_answering = 'mplug-visual-question-answering'

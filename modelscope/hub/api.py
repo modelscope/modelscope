@@ -9,7 +9,7 @@ import requests
 
 from modelscope.utils.logger import get_logger
 from .constants import MODELSCOPE_URL_SCHEME
-from .errors import NotExistError, is_ok, raise_on_error
+from .errors import InvalidParameter, NotExistError, is_ok, raise_on_error
 from .utils.utils import (get_endpoint, get_gitlab_domain,
                           model_id_to_group_owner_name)
 
@@ -61,17 +61,21 @@ class HubApi:
 
         return d['Data']['AccessToken'], cookies
 
-    def create_model(self, model_id: str, chinese_name: str, visibility: int,
-                     license: str) -> str:
+    def create_model(
+        self,
+        model_id: str,
+        visibility: str,
+        license: str,
+        chinese_name: Optional[str] = None,
+    ) -> str:
         """
         Create model repo at ModelScopeHub
 
         Args:
             model_id:(`str`): The model id
-            chinese_name(`str`): chinese name of the model
-            visibility(`int`): visibility of the model(1-private, 3-internal, 5-public)
-            license(`str`): license of the model, candidates can be found at: TBA
-
+            visibility(`int`): visibility of the model(1-private, 5-public), default public.
+            license(`str`): license of the model, default none.
+            chinese_name(`str`, *optional*): chinese name of the model
         Returns:
             name of the model created
 
@@ -79,6 +83,8 @@ class HubApi:
             model_id = {owner}/{name}
         </Tip>
         """
+        if model_id is None:
+            raise InvalidParameter('model_id is required!')
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
             raise ValueError('Token does not exist, please login first.')
@@ -151,11 +157,33 @@ class HubApi:
         else:
             r.raise_for_status()
 
+    def _check_cookie(self,
+                      use_cookies: Union[bool,
+                                         CookieJar] = False) -> CookieJar:
+        cookies = None
+        if isinstance(use_cookies, CookieJar):
+            cookies = use_cookies
+        elif use_cookies:
+            cookies = ModelScopeConfig.get_cookies()
+            if cookies is None:
+                raise ValueError('Token does not exist, please login first.')
+        return cookies
+
     def get_model_branches_and_tags(
         self,
         model_id: str,
+        use_cookies: Union[bool, CookieJar] = False
     ) -> Tuple[List[str], List[str]]:
-        cookies = ModelScopeConfig.get_cookies()
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
+                        will load cookie from local. Defaults to False.
+        Returns:
+            Tuple[List[str], List[str]]: _description_
+        """
+        cookies = self._check_cookie(use_cookies)
 
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions'
         r = requests.get(path, cookies=cookies)
@@ -169,23 +197,33 @@ class HubApi:
                 ] if info['RevisionMap']['Tags'] else []
         return branches, tags
 
-    def get_model_files(
-            self,
-            model_id: str,
-            revision: Optional[str] = 'master',
-            root: Optional[str] = None,
-            recursive: Optional[str] = False,
-            use_cookies: Union[bool, CookieJar] = False) -> List[dict]:
+    def get_model_files(self,
+                        model_id: str,
+                        revision: Optional[str] = 'master',
+                        root: Optional[str] = None,
+                        recursive: Optional[str] = False,
+                        use_cookies: Union[bool, CookieJar] = False,
+                        is_snapshot: Optional[bool] = True) -> List[dict]:
+        """List the models files.
 
-        cookies = None
-        if isinstance(use_cookies, CookieJar):
-            cookies = use_cookies
-        elif use_cookies:
-            cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+        Args:
+            model_id (str): The model id
+            revision (Optional[str], optional): The branch or tag name. Defaults to 'master'.
+            root (Optional[str], optional): The root path. Defaults to None.
+            recursive (Optional[str], optional): Is recurive list files. Defaults to False.
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
+                        will load cookie from local. Defaults to False.
+            is_snapshot(Optional[bool], optional): when snapshot_download set to True, otherwise False.
 
-        path = f'{self.endpoint}/api/v1/models/{model_id}/repo/files?Revision={revision}&Recursive={recursive}'
+        Raises:
+            ValueError: If user_cookies is True, but no local cookie.
+
+        Returns:
+            List[dict]: Model file list.
+        """
+        path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s&Snapshot=%s' % (
+            self.endpoint, model_id, revision, recursive, is_snapshot)
+        cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'
 

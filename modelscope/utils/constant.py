@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import enum
 
 
 class Fields(object):
@@ -52,6 +53,7 @@ class Tasks(object):
     fill_mask = 'fill-mask'
     summarization = 'summarization'
     question_answering = 'question-answering'
+    zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
     auto_speech_recognition = 'auto-speech-recognition'
@@ -64,6 +66,7 @@ class Tasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    visual_question_answering = 'visual-question-answering'
 
 
 class InputFields(object):
@@ -74,11 +77,18 @@ class InputFields(object):
     audio = 'audio'
 
 
-class Hubs(object):
+class Hubs(enum.Enum):
     """ Source from which an entity (such as a Dataset or Model) is stored
     """
     modelscope = 'modelscope'
     huggingface = 'huggingface'
+
+
+class DownloadMode(enum.Enum):
+    """ How to treat existing datasets
+    """
+    REUSE_DATASET_IF_EXISTS = 'reuse_dataset_if_exists'
+    FORCE_REDOWNLOAD = 'force_redownload'
 
 
 class ModelFile(object):

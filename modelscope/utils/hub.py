@@ -31,9 +31,10 @@ def create_model_if_not_exist(
     else:
         api.create_model(
             model_id=model_id,
-            chinese_name=chinese_name,
             visibility=visibility,
-            license=license)
+            license=license,
+            chinese_name=chinese_name,
+        )
         print(f'model {model_id} successfully created.')
         return True
 

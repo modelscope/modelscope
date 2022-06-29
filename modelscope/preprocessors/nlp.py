@@ -326,14 +326,17 @@ class FillMaskPreprocessor(Preprocessor):
             model_dir (str): model path
         """
         super().__init__(*args, **kwargs)
-        from sofa.utils.backend import AutoTokenizer
         self.model_dir = model_dir
         self.first_sequence: str = kwargs.pop('first_sequence',
                                               'first_sequence')
         self.sequence_length = kwargs.pop('sequence_length', 128)
-
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_dir, use_fast=False)
+        try:
+            from transformers import AutoTokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        except KeyError:
+            from sofa.utils.backend import AutoTokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_dir, use_fast=False)
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:

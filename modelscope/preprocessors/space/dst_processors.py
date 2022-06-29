@@ -33,318 +33,324 @@ DIALOG_ACT = 'Dialog_Act'
 
 utter1 = {
     'User-1':
-    "I'd really like to take my client out to a nice restaurant that serves indian food."
+    "I need train reservations from norwich to cambridge"
 }
 history_states1 = [
     {},
 ]
 utter2 = {
     'User-1':
-    "I'd really like to take my client out to a nice restaurant that serves indian food.",
+    "I need train reservations from norwich to cambridge",
     'System-1':
-    'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
+    'I have 133 trains matching your request. Is there a specific day and time you would like to travel?',
     'Dialog_Act-1': {
-        'Restaurant-Inform': [['choice', 'many'], ['food', 'Indian'],
-                              ['pricerange', 'that price range']]
+        "Train-Inform": [
+                [
+                    "Choice",
+                    "133"
+                ]
+            ],
+            "Train-Request": [
+                [
+                    "Leave",
+                    "?"
+                ],
+                [
+                    "Day",
+                    "?"
+                ]
+            ]
     },
     'User-2':
-    'I am looking for an expensive indian restaurant in the area of centre.',
+    'I\'d like to leave on Monday and arrive by 18:00.',
 }
 
 history_states2 = [{}, {
-    'attraction': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'area': '',
-            'name': '',
-            'type': ''
-        }
-    },
-    'hospital': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'department': ''
-        }
-    },
-    'hotel': {
-        'book': {
-            'booked': [{
-                'name': 'alexander bed and breakfast',
-                'reference': 'JXVKZ7KV'
-            }],
-            'day':
-            'sunday',
-            'people':
-            '6',
-            'stay':
-            '4'
-        },
-        'semi': {
-            'area': '',
-            'internet': 'yes',
-            'name': 'alexander bed and breakfast',
-            'parking': 'yes',
-            'pricerange': 'cheap',
-            'stars': '',
-            'type': 'guesthouse'
-        }
-    },
-    'police': {
-        'book': {
-            'booked': []
-        },
-        'semi': {}
-    },
-    'restaurant': {
-        'book': {
-            'booked': [{
-                'name': 'ask',
-                'reference': 'Y2Y8QYBY'
-            }],
-            'day': 'sunday',
-            'people': '6',
-            'time': '18:45'
-        },
-        'semi': {
-            'area': 'centre',
-            'food': 'italian',
-            'name': 'ask',
-            'pricerange': 'cheap'
-        }
-    },
-    'taxi': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'arriveBy': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    },
-    'train': {
-        'book': {
-            'booked': [],
-            'people': ''
-        },
-        'semi': {
-            'arriveBy': '',
-            'day': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    }
-}, {}]
+                    "taxi": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "leaveAt": "",
+                            "destination": "",
+                            "departure": "",
+                            "arriveBy": ""
+                        }
+                    },
+                    "police": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {}
+                    },
+                    "restaurant": {
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "hospital": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "department": ""
+                        }
+                    },
+                    "hotel": {
+                        "book": {
+                            "booked": [],
+                            "stay": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "name": "",
+                            "area": "",
+                            "parking": "",
+                            "pricerange": "",
+                            "stars": "",
+                            "internet": "",
+                            "type": ""
+                        }
+                    },
+                    "attraction": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "type": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "train": {
+                        "book": {
+                            "booked": [],
+                            "people": ""
+                        },
+                        "semi": {
+                            "leaveAt": "not mentioned",
+                            "destination": "cambridge",
+                            "day": "not mentioned",
+                            "arriveBy": "not mentioned",
+                            "departure": "norwich"
+                        }
+                    }
+                }, {}]
 
 utter3 = {
     'User-1':
-    "I'd really like to take my client out to a nice restaurant that serves indian food.",
+    "I need train reservations from norwich to cambridge",
     'System-1':
-    'I show many restaurants that serve Indian food in that price range. What area would you like to travel to?',
+    'I have 133 trains matching your request. Is there a specific day and time you would like to travel?',
     'Dialog_Act-1': {
-        'Restaurant-Inform': [['choice', 'many'], ['food', 'Indian'],
-                              ['pricerange', 'that price range']]
+        "Train-Inform": [
+                [
+                    "Choice",
+                    "133"
+                ]
+            ],
+            "Train-Request": [
+                [
+                    "Leave",
+                    "?"
+                ],
+                [
+                    "Day",
+                    "?"
+                ]
+            ]
     },
     'User-2':
-    'I am looking for an expensive indian restaurant in the area of centre.',
+    'I\'d like to leave on Monday and arrive by 18:00.',
     'System-2':
-    'Might I recommend Saffron Brasserie? That is an expensive Indian restaurant '
-    'in the center of town. I can book a table for you, if you like.',
+    'There are 12 trains for the day and time you request.  Would you like to book it now?',
     'Dialog_Act-2': {
-        'Restaurant-Recommend': [['area', 'center of town'],
-                                 ['food', 'Indian'],
-                                 ['name', 'Saffron Brasserie'],
-                                 ['pricerange', 'expensive']]
+        "Train-Inform": [
+                [
+                    "Choice",
+                    "12"
+                ]
+            ],
+            "Train-OfferBook": [
+                [
+                    "none",
+                    "none"
+                ]
+            ]
     },
     'User-3':
-    'Sure thing, please book for 6 people at 19:30 on Saturday.'
+    'Before booking, I would also like to know the travel time, price, and departure time please.'
 }
 
 history_states3 = [{}, {
-    'attraction': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'area': '',
-            'name': '',
-            'type': ''
-        }
-    },
-    'hospital': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'department': ''
-        }
-    },
-    'hotel': {
-        'book': {
-            'booked': [{
-                'name': 'alexander bed and breakfast',
-                'reference': 'JXVKZ7KV'
-            }],
-            'day':
-            'sunday',
-            'people':
-            '6',
-            'stay':
-            '4'
-        },
-        'semi': {
-            'area': '',
-            'internet': 'yes',
-            'name': 'alexander bed and breakfast',
-            'parking': 'yes',
-            'pricerange': 'cheap',
-            'stars': '',
-            'type': 'guesthouse'
-        }
-    },
-    'police': {
-        'book': {
-            'booked': []
-        },
-        'semi': {}
-    },
-    'restaurant': {
-        'book': {
-            'booked': [{
-                'name': 'ask',
-                'reference': 'Y2Y8QYBY'
-            }],
-            'day': 'sunday',
-            'people': '6',
-            'time': '18:45'
-        },
-        'semi': {
-            'area': 'centre',
-            'food': 'italian',
-            'name': 'ask',
-            'pricerange': 'cheap'
-        }
-    },
-    'taxi': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'arriveBy': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    },
-    'train': {
-        'book': {
-            'booked': [],
-            'people': ''
-        },
-        'semi': {
-            'arriveBy': '',
-            'day': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    }
-}, {}, {
-    'attraction': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'area': '',
-            'name': '',
-            'type': ''
-        }
-    },
-    'hospital': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'department': ''
-        }
-    },
-    'hotel': {
-        'book': {
-            'booked': [{
-                'name': 'alexander bed and breakfast',
-                'reference': 'JXVKZ7KV'
-            }],
-            'day':
-            'sunday',
-            'people':
-            '6',
-            'stay':
-            '4'
-        },
-        'semi': {
-            'area': '',
-            'internet': 'yes',
-            'name': 'alexander bed and breakfast',
-            'parking': 'yes',
-            'pricerange': 'cheap',
-            'stars': '',
-            'type': 'guesthouse'
-        }
-    },
-    'police': {
-        'book': {
-            'booked': []
-        },
-        'semi': {}
-    },
-    'restaurant': {
-        'book': {
-            'booked': [{
-                'name': 'ask',
-                'reference': 'Y2Y8QYBY'
-            }],
-            'day': 'sunday',
-            'people': '6',
-            'time': '18:45'
-        },
-        'semi': {
-            'area': 'centre',
-            'food': 'italian',
-            'name': 'ask',
-            'pricerange': 'cheap'
-        }
-    },
-    'taxi': {
-        'book': {
-            'booked': []
-        },
-        'semi': {
-            'arriveBy': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    },
-    'train': {
-        'book': {
-            'booked': [],
-            'people': ''
-        },
-        'semi': {
-            'arriveBy': '',
-            'day': '',
-            'departure': '',
-            'destination': '',
-            'leaveAt': ''
-        }
-    }
-}, {}]
+                    "taxi": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "leaveAt": "",
+                            "destination": "",
+                            "departure": "",
+                            "arriveBy": ""
+                        }
+                    },
+                    "police": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {}
+                    },
+                    "restaurant": {
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "hospital": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "department": ""
+                        }
+                    },
+                    "hotel": {
+                        "book": {
+                            "booked": [],
+                            "stay": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "name": "",
+                            "area": "",
+                            "parking": "",
+                            "pricerange": "",
+                            "stars": "",
+                            "internet": "",
+                            "type": ""
+                        }
+                    },
+                    "attraction": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "type": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "train": {
+                        "book": {
+                            "booked": [],
+                            "people": ""
+                        },
+                        "semi": {
+                            "leaveAt": "not mentioned",
+                            "destination": "cambridge",
+                            "day": "not mentioned",
+                            "arriveBy": "not mentioned",
+                            "departure": "norwich"
+                        }
+                    }
+                }, {}, {"taxi": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "leaveAt": "",
+                            "destination": "",
+                            "departure": "",
+                            "arriveBy": ""
+                        }
+                    },
+                    "police": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {}
+                    },
+                    "restaurant": {
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "hospital": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "department": ""
+                        }
+                    },
+                    "hotel": {
+                        "book": {
+                            "booked": [],
+                            "stay": "",
+                            "day": "",
+                            "people": ""
+                        },
+                        "semi": {
+                            "name": "",
+                            "area": "",
+                            "parking": "",
+                            "pricerange": "",
+                            "stars": "",
+                            "internet": "",
+                            "type": ""
+                        }
+                    },
+                    "attraction": {
+                        "book": {
+                            "booked": []
+                        },
+                        "semi": {
+                            "type": "",
+                            "name": "",
+                            "area": ""
+                        }
+                    },
+                    "train": {
+                        "book": {
+                            "booked": [],
+                            "people": ""
+                        },
+                        "semi": {
+                            "leaveAt": "not mentioned",
+                            "destination": "cambridge",
+                            "day": "monday",
+                            "arriveBy": "18:00",
+                            "departure": "norwich"
+                        }
+                    }}, {}]
 
 
 class DSTProcessor(object):
@@ -821,6 +827,10 @@ class multiwoz22Processor(DSTProcessor):
         new_hst_utt_tok_label_dict = hst_utt_tok_label_dict.copy()
         new_diag_state = diag_state.copy()
 
+        ######
+        mod_slots_list = []
+        #####
+
         for i in range(0, len(utt_tok_list) - 1, 2):
             sys_utt_tok_label_dict = {}
             usr_utt_tok_label_dict = {}
@@ -977,23 +987,23 @@ class multiwoz22Processor(DSTProcessor):
 
             example = DSTExample(
                 guid=guid,
-                text_a=txt_a,
-                text_b=txt_b,
-                history=hst_utt_tok,
-                text_a_label=txt_a_lbl,
-                text_b_label=txt_b_lbl,
-                history_label=hst_utt_tok_label_dict,
-                values=diag_seen_slots_value_dict.copy(),
-                inform_label=inform_dict,
-                inform_slot_label=inform_slot_dict,
-                refer_label=referral_dict,
-                diag_state=diag_state,
-                class_label=class_type_dict)
-        # Update some variables.
-        hst_utt_tok_label_dict = new_hst_utt_tok_label_dict.copy()
-        diag_state = new_diag_state.copy()
+                text_a=txt_a,                               # 必要 input， 对话文本
+                text_b=txt_b,                               # 必要 input， 对话文本
+                history=hst_utt_tok,                        # 必要 input， 对话文本
+                text_a_label=txt_a_lbl,                     # 输出label，不管， 最后变成 start/end pos
+                text_b_label=txt_b_lbl,                     # 输出label，不管， 最后变成 start/end pos
+                history_label=hst_utt_tok_label_dict,       # 输出label，不管， 最后变成 start/end pos
+                values=diag_seen_slots_value_dict.copy(),   # 后面没用上，不管
+                inform_label=inform_dict,                   # 后面没用上，不管
+                inform_slot_label=inform_slot_dict,         # 必要 input, 代表 system dialog action
+                refer_label=referral_dict,                  # 输出label，不管， 最后变成 refer_id
+                diag_state=diag_state,                      # input, 代表 history dialog state
+                class_label=class_type_dict)                # 输出label，不管， 最后变成 class_label_id
+            # Update some variables.
+            hst_utt_tok_label_dict = new_hst_utt_tok_label_dict.copy()
+            diag_state = new_diag_state.copy()
 
-        turn_itr += 1
+            turn_itr += 1  #### 缩进不正确
         return example
 
     def create_example(self,
@@ -1517,7 +1527,7 @@ if __name__ == '__main__':
     unk_token = '[UNK]'
     analyze = False
 
-    example = processor.create_example(utter1, history_states1, set_type,
+    example = processor.create_example(utter3, history_states3, set_type,
                                        slot_list, {}, append_history,
                                        use_history_labels, swap_utterances,
                                        label_value_repetitions,

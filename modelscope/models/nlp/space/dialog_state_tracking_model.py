@@ -88,7 +88,7 @@ class DialogStateTrackingModel(Model):
                     if u != 0:
                         diag_state[slot][i] = u
 
-            print(outputs)
+            # print(outputs)
 
         return {
             'inputs': inputs,

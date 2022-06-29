@@ -46,10 +46,10 @@ class DialogStateTrackingTest(unittest.TestCase):
         pipelines = [
             DialogStateTrackingPipeline(
                 model=model, preprocessor=preprocessor),
-            # pipeline(
-            #     task=Tasks.dialog_state_tracking,
-            #     model=model,
-            #     preprocessor=preprocessor)
+            pipeline(
+                task=Tasks.dialog_state_tracking,
+                model=model,
+                preprocessor=preprocessor)
         ]
 
         history_states = [{}]

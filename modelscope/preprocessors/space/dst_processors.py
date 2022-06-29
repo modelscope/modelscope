@@ -1135,24 +1135,24 @@ def convert_examples_to_features(examples,
 
         assert (len(input_ids) == len(input_ids_unmasked))
 
-        if example_index < 10:
-            logger.info('*** Example ***')
-            logger.info('guid: %s' % (example.guid))
-            logger.info('tokens: %s' % ' '.join(tokens))
-            logger.info('input_ids: %s' % ' '.join([str(x)
-                                                    for x in input_ids]))
-            logger.info('input_mask: %s'
-                        % ' '.join([str(x) for x in input_mask]))
-            logger.info('segment_ids: %s'
-                        % ' '.join([str(x) for x in segment_ids]))
-            logger.info('start_pos: %s' % str(start_pos_dict))
-            logger.info('end_pos: %s' % str(end_pos_dict))
-            logger.info('values: %s' % str(value_dict))
-            logger.info('inform: %s' % str(inform_dict))
-            logger.info('inform_slot: %s' % str(inform_slot_dict))
-            logger.info('refer_id: %s' % str(refer_id_dict))
-            logger.info('diag_state: %s' % str(diag_state_dict))
-            logger.info('class_label_id: %s' % str(class_label_id_dict))
+        # if example_index < 10:
+        #     logger.info('*** Example ***')
+        #     logger.info('guid: %s' % (example.guid))
+        #     logger.info('tokens: %s' % ' '.join(tokens))
+        #     logger.info('input_ids: %s' % ' '.join([str(x)
+        #                                             for x in input_ids]))
+        #     logger.info('input_mask: %s'
+        #                 % ' '.join([str(x) for x in input_mask]))
+        #     logger.info('segment_ids: %s'
+        #                 % ' '.join([str(x) for x in segment_ids]))
+        #     logger.info('start_pos: %s' % str(start_pos_dict))
+        #     logger.info('end_pos: %s' % str(end_pos_dict))
+        #     logger.info('values: %s' % str(value_dict))
+        #     logger.info('inform: %s' % str(inform_dict))
+        #     logger.info('inform_slot: %s' % str(inform_slot_dict))
+        #     logger.info('refer_id: %s' % str(refer_id_dict))
+        #     logger.info('diag_state: %s' % str(diag_state_dict))
+        #     logger.info('class_label_id: %s' % str(class_label_id_dict))
 
         features.append(
             InputFeatures(

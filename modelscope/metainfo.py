@@ -54,7 +54,7 @@ class Pipelines(object):
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'
-    dialog_state_tracking = 'dialog_state_tracking'
+    dialog_state_tracking = 'dialog-state-tracking'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'

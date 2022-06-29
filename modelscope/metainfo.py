@@ -52,6 +52,7 @@ class Pipelines(object):
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
     fill_mask = 'fill-mask'
+    zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
@@ -95,6 +96,7 @@ class Preprocessors(object):
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
+    zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

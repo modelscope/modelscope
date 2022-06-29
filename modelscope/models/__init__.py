@@ -7,4 +7,5 @@ from .audio.tts.vocoder import Hifigan16k
 from .base import Model
 from .builder import MODELS, build_model
 from .multi_modal import OfaForImageCaptioning
-from .nlp import BertForSequenceClassification, SbertForSentenceSimilarity
+from .nlp import (BertForSequenceClassification, SbertForSentenceSimilarity,
+                  SbertForZeroShotClassification)

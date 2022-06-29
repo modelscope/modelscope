@@ -48,6 +48,7 @@ class Tasks(object):
     fill_mask = 'fill-mask'
     summarization = 'summarization'
     question_answering = 'question-answering'
+    zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
     auto_speech_recognition = 'auto-speech-recognition'

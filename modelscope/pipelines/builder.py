@@ -27,6 +27,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/bert-base-sst2'),
     Tasks.text_generation: (Pipelines.text_generation,
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
+    Tasks.zero_shot_classification:
+    (Pipelines.zero_shot_classification,
+     'damo/nlp_structbert_zero-shot-classification_chinese-base'),
     Tasks.image_captioning: (Pipelines.image_caption,
                              'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:

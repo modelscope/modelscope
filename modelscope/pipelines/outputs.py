@@ -101,6 +101,13 @@ TASK_OUTPUTS = {
     #   }
     Tasks.sentence_similarity: ['scores', 'labels'],
 
+    # zero-shot classification result for single sample
+    #   {
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #   }
+    Tasks.zero_shot_classification: ['scores', 'labels'],
+
     # ============ audio tasks ===================
 
     # audio processed for single file in PCM format

@@ -16,6 +16,7 @@ from .image import load_image
 
 __all__ = [
     'OfaImageCaptionPreprocessor',
+    'MPlugVisualQuestionAnsweringPreprocessor',
 ]
 
 
@@ -110,3 +111,47 @@ class OfaImageCaptionPreprocessor(Preprocessor):
             }
         }
         return sample
+
+
+@PREPROCESSORS.register_module(
+    Fields.multi_modal,
+    module_name=Preprocessors.mplug_visual_question_answering)
+class MPlugVisualQuestionAnsweringPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via 'bert-base-uncased' tokenizer and configuration
+
+        """
+        super().__init__(*args, **kwargs)
+
+        # tokenizer
+        from transformers import AutoTokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+
+        # load configuration
+        from sofa.models.mplug import CONFIG_NAME, MPlugConfig
+        config = MPlugConfig.from_yaml_file(osp.join(model_dir, CONFIG_NAME))
+
+        # Initialize transform
+        from torchvision import transforms
+        mean = (0.48145466, 0.4578275, 0.40821073)
+        std = (0.26862954, 0.26130258, 0.27577711)
+
+        self.patch_resize_transform = transforms.Compose([
+            transforms.Resize((config.image_res, config.image_res),
+                              interpolation=Image.BICUBIC),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        image, question = data['image'], data['question']
+        image = Image.open(image).convert('RGB') if isinstance(image,
+                                                               str) else image
+        image = self.patch_resize_transform(image)
+        image = torch.stack([image], dim=0)
+        question = self.tokenizer([question.lower()],
+                                  padding='longest',
+                                  return_tensors='pt')
+
+        return {'image': image, 'question': question, 'train': False}

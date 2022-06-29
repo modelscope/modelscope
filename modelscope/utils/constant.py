@@ -61,6 +61,7 @@ class Tasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    visual_question_answering = 'visual-question-answering'
 
 
 class InputFields(object):

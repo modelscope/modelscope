@@ -27,6 +27,7 @@ class Models(object):
     # multi-modal models
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
+    mplug = 'mplug'
 
 
 class Pipelines(object):
@@ -63,6 +64,7 @@ class Pipelines(object):
     # multi-modal tasks
     image_caption = 'image-caption'
     multi_modal_embedding = 'multi-modal-embedding'
+    visual_question_answering = 'visual-question-answering'
 
 
 class Trainers(object):
@@ -105,3 +107,4 @@ class Preprocessors(object):
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'
+    mplug_visual_question_answering = 'mplug-visual-question-answering'

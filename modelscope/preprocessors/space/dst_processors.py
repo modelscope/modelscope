@@ -33,36 +33,26 @@ DIALOG_ACT = 'Dialog_Act'
 
 utter1 = {
     'User-1':
-    "I need train reservations from norwich to cambridge"
+    "am looking for a place to to stay that has cheap price range it should be in a type of hotel"
 }
 history_states1 = [
     {},
 ]
 utter2 = {
     'User-1':
-    "I need train reservations from norwich to cambridge",
+    "am looking for a place to to stay that has cheap price range it should be in a type of hotel",
     'System-1':
-    'I have 133 trains matching your request. Is there a specific day and time you would like to travel?',
+    'Okay, do you have a specific area you want to stay in?',
     'Dialog_Act-1': {
-        "Train-Inform": [
+        "Hotel-Request": [
                 [
-                    "Choice",
-                    "133"
-                ]
-            ],
-            "Train-Request": [
-                [
-                    "Leave",
-                    "?"
-                ],
-                [
-                    "Day",
+                    "Area",
                     "?"
                 ]
             ]
     },
     'User-2':
-    'I\'d like to leave on Monday and arrive by 18:00.',
+    'no, i just need to make sure it\'s cheap. oh, and i need parking',
 }
 
 history_states2 = [{}, {
@@ -86,9 +76,9 @@ history_states2 = [{}, {
                     "restaurant": {
                         "book": {
                             "booked": [],
-                            "time": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "time": ""
                         },
                         "semi": {
                             "food": "",
@@ -108,18 +98,18 @@ history_states2 = [{}, {
                     "hotel": {
                         "book": {
                             "booked": [],
-                            "stay": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "stay": ""
                         },
                         "semi": {
-                            "name": "",
-                            "area": "",
-                            "parking": "",
-                            "pricerange": "",
-                            "stars": "",
-                            "internet": "",
-                            "type": ""
+                            "name": "not mentioned",
+                            "area": "not mentioned",
+                            "parking": "not mentioned",
+                            "pricerange": "cheap",
+                            "stars": "not mentioned",
+                            "internet": "not mentioned",
+                            "type": "hotel"
                         }
                     },
                     "attraction": {
@@ -138,58 +128,56 @@ history_states2 = [{}, {
                             "people": ""
                         },
                         "semi": {
-                            "leaveAt": "not mentioned",
-                            "destination": "cambridge",
-                            "day": "not mentioned",
-                            "arriveBy": "not mentioned",
-                            "departure": "norwich"
+                            "leaveAt": "",
+                            "destination": "",
+                            "day": "",
+                            "arriveBy": "",
+                            "departure": ""
                         }
                     }
                 }, {}]
 
 utter3 = {
     'User-1':
-    "I need train reservations from norwich to cambridge",
+    "am looking for a place to to stay that has cheap price range it should be in a type of hotel",
     'System-1':
-    'I have 133 trains matching your request. Is there a specific day and time you would like to travel?',
+    'Okay, do you have a specific area you want to stay in?',
     'Dialog_Act-1': {
-        "Train-Inform": [
+        "Hotel-Request": [
                 [
-                    "Choice",
-                    "133"
-                ]
-            ],
-            "Train-Request": [
-                [
-                    "Leave",
-                    "?"
-                ],
-                [
-                    "Day",
+                    "Area",
                     "?"
                 ]
             ]
     },
     'User-2':
-    'I\'d like to leave on Monday and arrive by 18:00.',
+    'no, i just need to make sure it\'s cheap. oh, and i need parking',
     'System-2':
-    'There are 12 trains for the day and time you request.  Would you like to book it now?',
+    'I found 1 cheap hotel for you that includes parking. Do you like me to book it?',
     'Dialog_Act-2': {
-        "Train-Inform": [
-                [
-                    "Choice",
-                    "12"
-                ]
-            ],
-            "Train-OfferBook": [
+        "Booking-Inform": [
                 [
                     "none",
+                    "none"
+                ]
+            ],
+            "Hotel-Inform": [
+                [
+                    "Price",
+                    "cheap"
+                ],
+                [
+                    "Choice",
+                    "1"
+                ],
+                [
+                    "Parking",
                     "none"
                 ]
             ]
     },
     'User-3':
-    'Before booking, I would also like to know the travel time, price, and departure time please.'
+    'Yes, please. 6 people 3 nights starting on tuesday.'
 }
 
 history_states3 = [{}, {
@@ -213,9 +201,9 @@ history_states3 = [{}, {
                     "restaurant": {
                         "book": {
                             "booked": [],
-                            "time": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "time": ""
                         },
                         "semi": {
                             "food": "",
@@ -235,18 +223,18 @@ history_states3 = [{}, {
                     "hotel": {
                         "book": {
                             "booked": [],
-                            "stay": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "stay": ""
                         },
                         "semi": {
-                            "name": "",
-                            "area": "",
-                            "parking": "",
-                            "pricerange": "",
-                            "stars": "",
-                            "internet": "",
-                            "type": ""
+                            "name": "not mentioned",
+                            "area": "not mentioned",
+                            "parking": "not mentioned",
+                            "pricerange": "cheap",
+                            "stars": "not mentioned",
+                            "internet": "not mentioned",
+                            "type": "hotel"
                         }
                     },
                     "attraction": {
@@ -265,14 +253,15 @@ history_states3 = [{}, {
                             "people": ""
                         },
                         "semi": {
-                            "leaveAt": "not mentioned",
-                            "destination": "cambridge",
-                            "day": "not mentioned",
-                            "arriveBy": "not mentioned",
-                            "departure": "norwich"
+                            "leaveAt": "",
+                            "destination": "",
+                            "day": "",
+                            "arriveBy": "",
+                            "departure": ""
                         }
                     }
-                }, {}, {"taxi": {
+                }, {}, {
+                    "taxi": {
                         "book": {
                             "booked": []
                         },
@@ -292,9 +281,9 @@ history_states3 = [{}, {
                     "restaurant": {
                         "book": {
                             "booked": [],
-                            "time": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "time": ""
                         },
                         "semi": {
                             "food": "",
@@ -314,18 +303,18 @@ history_states3 = [{}, {
                     "hotel": {
                         "book": {
                             "booked": [],
-                            "stay": "",
+                            "people": "",
                             "day": "",
-                            "people": ""
+                            "stay": ""
                         },
                         "semi": {
-                            "name": "",
-                            "area": "",
-                            "parking": "",
-                            "pricerange": "",
-                            "stars": "",
-                            "internet": "",
-                            "type": ""
+                            "name": "not mentioned",
+                            "area": "not mentioned",
+                            "parking": "yes",
+                            "pricerange": "cheap",
+                            "stars": "not mentioned",
+                            "internet": "not mentioned",
+                            "type": "hotel"
                         }
                     },
                     "attraction": {
@@ -344,13 +333,14 @@ history_states3 = [{}, {
                             "people": ""
                         },
                         "semi": {
-                            "leaveAt": "not mentioned",
-                            "destination": "cambridge",
-                            "day": "monday",
-                            "arriveBy": "18:00",
-                            "departure": "norwich"
+                            "leaveAt": "",
+                            "destination": "",
+                            "day": "",
+                            "arriveBy": "",
+                            "departure": ""
                         }
-                    }}, {}]
+                    }
+                }, {}]
 
 
 class DSTProcessor(object):

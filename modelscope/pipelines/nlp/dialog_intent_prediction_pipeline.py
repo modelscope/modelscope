@@ -28,6 +28,7 @@ class DialogIntentPredictionPipeline(Pipeline):
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model = model
+        self.categories = preprocessor.categories
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results
@@ -42,6 +43,10 @@ class DialogIntentPredictionPipeline(Pipeline):
         pred = inputs['pred']
         pos = np.where(pred == np.max(pred))
 
-        result = {'pred': pred, 'label': pos[0]}
+        result = {
+            'pred': pred,
+            'label_pos': pos[0],
+            'label': self.categories[pos[0][0]]
+        }
 
         return result

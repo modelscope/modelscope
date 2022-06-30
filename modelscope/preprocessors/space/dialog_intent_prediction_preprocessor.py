@@ -3,6 +3,8 @@
 import os
 from typing import Any, Dict
 
+import json
+
 from ...metainfo import Preprocessors
 from ...utils.config import Config
 from ...utils.constant import Fields, ModelFile
@@ -31,6 +33,11 @@ class DialogIntentPredictionPreprocessor(Preprocessor):
             os.path.join(self.model_dir, ModelFile.CONFIGURATION))
         self.text_field = IntentBPETextField(
             self.model_dir, config=self.config)
+
+        self.categories = None
+        with open(os.path.join(self.model_dir, 'categories.json'), 'r') as f:
+            self.categories = json.load(f)
+        assert len(self.categories) == 77
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:

@@ -108,7 +108,7 @@ class Preprocessors(object):
     sen_cls_tokenizer = 'sen-cls-tokenizer'
     dialog_intent_preprocessor = 'dialog-intent-preprocessor'
     dialog_modeling_preprocessor = 'dialog-modeling-preprocessor'
-    dialog_state_tracking_preprocessor = 'dialog_state_tracking_preprocessor'
+    dialog_state_tracking_preprocessor = 'dialog-state-tracking-preprocessor'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 

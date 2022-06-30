@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
+from ...metainfo import Preprocessors
 from ..base import Preprocessor
 from ..builder import PREPROCESSORS
 from .dst_processors import convert_examples_to_features, multiwoz22Processor
@@ -12,7 +13,8 @@ from .dst_processors import convert_examples_to_features, multiwoz22Processor
 __all__ = ['DialogStateTrackingPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-dst')
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.dialog_state_tracking_preprocessor)
 class DialogStateTrackingPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

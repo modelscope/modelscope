@@ -15,25 +15,66 @@ class DialogStateTrackingTest(unittest.TestCase):
     model_id = 'damo/nlp_space_dialog-state-tracking'
     test_case = [{
         'User-1':
-        'am looking for a place to to stay that has cheap price range it should be in a type of hotel'
+        'Hi, I\'m looking for a train that is going to cambridge and arriving there by 20:45, '
+        'is there anything like that?'
     }, {
         'System-1':
-        'Okay, do you have a specific area you want to stay in?',
+        'There are over 1,000 trains like that.  Where will you be departing from?',
         'Dialog_Act-1': {
-            'Hotel-Request': [['Area', '?']]
+            'Train-Inform': [['Choice', 'over 1'], ['Choice', '000']],
+            'Train-Request': [['Depart', '?']]
         },
-        'User-2':
-        "no, i just need to make sure it's cheap. oh, and i need parking"
+        'User-2': 'I am departing from birmingham new street.'
     }, {
-        'System-2':
-        'I found 1 cheap hotel for you that includes parking. Do you like me to book it?',
+        'System-2': 'Can you confirm your desired travel day?',
         'Dialog_Act-2': {
-            'Booking-Inform': [['none', 'none']],
-            'Hotel-Inform': [['Price', 'cheap'], ['Choice', '1'],
-                             ['Parking', 'none']]
+            'Train-Request': [['Day', '?']]
         },
-        'User-3':
-        'Yes, please. 6 people 3 nights starting on tuesday.'
+        'User-3': 'I would like to leave on wednesday'
+    }, {
+        'System-3':
+        'I show a train leaving birmingham new street at 17:40 and arriving at 20:23 on Wednesday.  '
+        'Will this work for you?',
+        'Dialog_Act-3': {
+            'Train-Inform': [['Arrive', '20:23'], ['Leave', '17:40'],
+                             ['Day', 'Wednesday'],
+                             ['Depart', 'birmingham new street']]
+        },
+        'User-4':
+        'That will, yes. Please make a booking for 5 people please.',
+    }, {
+        'System-4':
+        'I\'ve booked your train tickets, and your reference number is A9NHSO9Y.',
+        'Dialog_Act-4': {
+            'Train-OfferBooked': [['Ref', 'A9NHSO9Y']]
+        },
+        'User-5':
+        'Thanks so much. I would also need a place to say. '
+        'I am looking for something with 4 stars and has free wifi.'
+    }, {
+        'System-5':
+        'How about the cambridge belfry?  '
+        'It has all the attributes you requested and a great name!  '
+        'Maybe even a real belfry?',
+        'Dialog_Act-5': {
+            'Hotel-Recommend': [['Name', 'the cambridge belfry']]
+        },
+        'User-6':
+        'That sounds great, could you make a booking for me please?',
+    }, {
+        'System-6':
+        'What day would you like your booking for?',
+        'Dialog_Act-6': {
+            'Booking-Request': [['Day', '?']]
+        },
+        'User-7':
+        'Please book it for Wednesday for 5 people and 5 nights, please.',
+    }, {
+        'System-7': 'Booking was successful. Reference number is : 5NAWGJDC.',
+        'Dialog_Act-7': {
+            'Booking-Book': [['Ref', '5NAWGJDC']]
+        },
+        'User-8': 'Thank you, goodbye',
     }]
 
     def test_run(self):
@@ -51,21 +92,22 @@ class DialogStateTrackingTest(unittest.TestCase):
                 preprocessor=preprocessor)
         ]
 
-        history_states = [{}]
-        utter = {}
         pipelines_len = len(pipelines)
         import json
-        for step, item in enumerate(self.test_case):
-            utter.update(item)
-            result = pipelines[step % pipelines_len]({
-                'utter':
-                utter,
-                'history_states':
-                history_states
-            })
-            print(json.dumps(result))
+        for _test_case in self.test_case:
+            history_states = [{}]
+            utter = {}
+            for step, item in enumerate(_test_case):
+                utter.update(item)
+                result = pipelines[step % pipelines_len]({
+                    'utter':
+                    utter,
+                    'history_states':
+                    history_states
+                })
+                print(json.dumps(result))
 
-            history_states.extend([result['dialog_states'], {}])
+                history_states.extend([result['dialog_states'], {}])
 
     @unittest.skip('test with snapshot_download')
     def test_run_with_model_from_modelhub(self):

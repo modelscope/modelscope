@@ -514,7 +514,7 @@ class multiwoz22Processor(DSTProcessor):
             sys_utt_tok_label_dict = {}
             usr_utt_tok_label_dict = {}
             value_dict = {}
-            inform_dict = {}
+            # inform_dict = {}
             inform_slot_dict = {}
             referral_dict = {}
             class_type_dict = {}
@@ -582,7 +582,7 @@ class multiwoz22Processor(DSTProcessor):
                      diag_seen_slots_value_dict,
                      slot_last_occurrence=True)
 
-                inform_dict[slot] = informed_value
+                # inform_dict[slot] = informed_value
 
                 # Generally don't use span prediction on sys utterance (but inform prediction instead).
                 sys_utt_tok_label = [0 for _ in sys_utt_tok]
@@ -1501,7 +1501,7 @@ if __name__ == '__main__':
         }
     }, {}]
 
-    example = processor.create_example(utter2, history_states2, set_type,
+    example = processor.create_example(utter3, history_states3, set_type,
                                        slot_list, {}, append_history,
                                        use_history_labels, swap_utterances,
                                        label_value_repetitions,

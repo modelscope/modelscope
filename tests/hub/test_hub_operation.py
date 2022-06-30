@@ -5,6 +5,8 @@ import unittest
 import uuid
 from shutil import rmtree
 
+import requests
+
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
@@ -77,6 +79,11 @@ class HubOperationTest(unittest.TestCase):
         snapshot_path = snapshot_download(model_id=self.model_id)
         mdtime2 = os.path.getmtime(downloaded_file_path)
         assert mdtime1 == mdtime2
+        model_file_download(
+            model_id=self.model_id,
+            file_path=download_model_file_name)  # not add counter
+        download_times = self.get_model_download_times()
+        assert download_times == 2
 
     def test_download_public_without_login(self):
         rmtree(ModelScopeConfig.path_credential)
@@ -106,6 +113,16 @@ class HubOperationTest(unittest.TestCase):
         file_download_path = model_file_download(
             model_id=self.model_id, file_path=download_model_file_name)
         assert os.path.exists(file_download_path)
+
+    def get_model_download_times(self):
+        url = f'{self.api.endpoint}/api/v1/models/{self.model_id}/downloads'
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.get(url, cookies=cookies)
+        if r.status_code == 200:
+            return r.json()['Data']['Downloads']
+        else:
+            r.raise_for_status()
+        return None
 
 
 if __name__ == '__main__':

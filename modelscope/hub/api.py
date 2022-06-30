@@ -203,7 +203,7 @@ class HubApi:
                         root: Optional[str] = None,
                         recursive: Optional[str] = False,
                         use_cookies: Union[bool, CookieJar] = False,
-                        is_snapshot: Optional[bool] = True) -> List[dict]:
+                        headers: Optional[dict] = {}) -> List[dict]:
         """List the models files.
 
         Args:
@@ -221,13 +221,13 @@ class HubApi:
         Returns:
             List[dict]: Model file list.
         """
-        path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s&Snapshot=%s' % (
-            self.endpoint, model_id, revision, recursive, is_snapshot)
+        path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s' % (
+            self.endpoint, model_id, revision, recursive)
         cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'
 
-        r = requests.get(path, cookies=cookies)
+        r = requests.get(path, cookies=cookies, headers=headers)
 
         r.raise_for_status()
         d = r.json()

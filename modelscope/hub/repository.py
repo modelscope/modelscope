@@ -49,8 +49,6 @@ class Repository:
         git_wrapper = GitCommandWrapper()
         if not git_wrapper.is_lfs_installed():
             logger.error('git lfs is not installed, please install.')
-        else:
-            git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
 
         self.git_wrapper = GitCommandWrapper(git_path)
         os.makedirs(self.model_dir, exist_ok=True)
@@ -63,8 +61,11 @@ class Repository:
         self.git_wrapper.clone(self.model_base_dir, self.auth_token, url,
                                self.model_repo_name, revision)
 
+        if git_wrapper.is_lfs_installed():
+            git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
+
     def _get_model_id_url(self, model_id):
-        url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}'
+        url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}.git'
         return url
 
     def _get_remote_url(self):
@@ -86,9 +87,11 @@ class Repository:
             commit_message (str): commit message
             revision (Optional[str], optional): which branch to push. Defaults to 'master'.
         """
-        if commit_message is None:
+        if commit_message is None or not isinstance(commit_message, str):
             msg = 'commit_message must be provided!'
             raise InvalidParameter(msg)
+        if not isinstance(force, bool):
+            raise InvalidParameter('force must be bool')
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
         self.git_wrapper.pull(self.model_dir)
         self.git_wrapper.add(self.model_dir, all_files=True)

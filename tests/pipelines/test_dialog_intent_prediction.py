@@ -3,10 +3,11 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SpaceForDialogIntentModel
+from modelscope.models.nlp import SpaceForDialogIntent
 from modelscope.pipelines import DialogIntentPredictionPipeline, pipeline
 from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class DialogIntentPredictionTest(unittest.TestCase):
@@ -16,11 +17,11 @@ class DialogIntentPredictionTest(unittest.TestCase):
         'I still have not received my new card, I ordered over a week ago.'
     ]
 
-    @unittest.skip('test with snapshot_download')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
         preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
-        model = SpaceForDialogIntentModel(
+        model = SpaceForDialogIntent(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)
@@ -37,6 +38,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
         for my_pipeline, item in list(zip(pipelines, self.test_case)):
             print(my_pipeline(item))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = DialogIntentPredictionPreprocessor(

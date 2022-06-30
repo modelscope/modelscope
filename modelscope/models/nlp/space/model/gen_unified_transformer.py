@@ -1,6 +1,5 @@
-"""
-IntentUnifiedTransformer
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import torch
 
 from .unified_transformer import UnifiedTransformer

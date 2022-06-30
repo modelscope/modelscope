@@ -1,6 +1,5 @@
-"""
-Intent Field class
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import glob
 import multiprocessing
 import os

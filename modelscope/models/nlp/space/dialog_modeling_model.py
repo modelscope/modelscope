@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Any, Dict, Optional
 
@@ -11,19 +13,17 @@ from ...builder import MODELS
 from .model.generator import Generator
 from .model.model_base import SpaceModelBase
 
-__all__ = ['SpaceForDialogModelingModel']
+__all__ = ['SpaceForDialogModeling']
 
 
 @MODELS.register_module(Tasks.dialog_modeling, module_name=Models.space)
-class SpaceForDialogModelingModel(Model):
+class SpaceForDialogModeling(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
-            model_cls (Optional[Any], optional): model loader, if None, use the
-                default loader to load model weights, by default None.
         """
 
         super().__init__(model_dir, *args, **kwargs)

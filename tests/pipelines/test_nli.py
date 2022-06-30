@@ -37,7 +37,7 @@ class NLITest(unittest.TestCase):
             task=Tasks.nli, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(task=Tasks.nli, model=self.model_id)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))

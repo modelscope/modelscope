@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Any, Dict
 
@@ -11,20 +13,18 @@ from ...builder import MODELS
 from .model.generator import Generator
 from .model.model_base import SpaceModelBase
 
-__all__ = ['SpaceForDialogIntentModel']
+__all__ = ['SpaceForDialogIntent']
 
 
 @MODELS.register_module(
     Tasks.dialog_intent_prediction, module_name=Models.space)
-class SpaceForDialogIntentModel(Model):
+class SpaceForDialogIntent(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
-            model_cls (Optional[Any], optional): model loader, if None, use the
-                default loader to load model weights, by default None.
         """
 
         super().__init__(model_dir, *args, **kwargs)

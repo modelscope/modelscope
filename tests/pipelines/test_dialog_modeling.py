@@ -1,15 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import os.path as osp
-import tempfile
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SpaceForDialogModelingModel
+from modelscope.models.nlp import SpaceForDialogModeling
 from modelscope.pipelines import DialogModelingPipeline, pipeline
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class DialogModelingTest(unittest.TestCase):
@@ -91,13 +89,13 @@ class DialogModelingTest(unittest.TestCase):
         }
     }
 
-    @unittest.skip('test with snapshot_download')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
 
         cache_path = snapshot_download(self.model_id)
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
-        model = SpaceForDialogModelingModel(
+        model = SpaceForDialogModeling(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
             config=preprocessor.config)
@@ -120,6 +118,7 @@ class DialogModelingTest(unittest.TestCase):
             })
             print('sys : {}'.format(result['sys']))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)

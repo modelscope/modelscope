@@ -1,6 +1,5 @@
-"""
-Model base
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 
 import torch.nn as nn

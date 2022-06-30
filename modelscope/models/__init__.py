@@ -10,4 +10,5 @@ from .multi_modal import OfaForImageCaptioning
 from .nlp import (BertForMaskedLM, BertForSequenceClassification, SbertForNLI,
                   SbertForSentenceSimilarity, SbertForSentimentClassification,
                   SbertForTokenClassification, SbertForZeroShotClassification,
+                  SpaceForDialogIntent, SpaceForDialogModeling,
                   StructBertForMaskedLM, VecoForMaskedLM)

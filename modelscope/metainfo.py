@@ -62,7 +62,7 @@ class Pipelines(object):
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks
-    image_caption = 'image-caption'
+    image_caption = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
 

@@ -11,7 +11,7 @@ class MultiModalFeatureTest(unittest.TestCase):
     def test_run(self):
         animal_recog = pipeline(
             Tasks.image_classification,
-            model='damo/cv_resnest101_animal_recognation')
+            model='damo/cv_resnest101_animal_recognition')
         result = animal_recog('data/test/images/image1.jpg')
         print(result)
 

@@ -118,8 +118,14 @@ class DialogStateTrackingPreprocessor(Preprocessor):
                 for slot in self.config.dst_slot_list
             }
 
+        if len(history_states) > 2:
+            ds = history_states[-2]
+        else:
+            ds = {slot: 'none' for slot in self.config.dst_slot_list}
+
         return {
             'batch': dataset,
             'features': features,
-            'diag_state': diag_state
+            'diag_state': diag_state,
+            'ds': ds
         }

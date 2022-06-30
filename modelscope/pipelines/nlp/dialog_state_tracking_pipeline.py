@@ -45,7 +45,8 @@ class DialogStateTrackingPipeline(Pipeline):
         values = inputs['values']
         inform = inputs['inform']
         prefix = inputs['prefix']
-        ds = {slot: 'none' for slot in self.config.dst_slot_list}
+        # ds = {slot: 'none' for slot in self.config.dst_slot_list}
+        ds = inputs['ds']
 
         ds = predict_and_format(self.config, self.tokenizer, _inputs,
                                 _outputs[2], _outputs[3], _outputs[4],
@@ -113,7 +114,11 @@ def predict_and_format(config, tokenizer, features, per_slot_class_logits,
                     'false'):
                 dialog_state[slot] = 'false'
             elif class_prediction == config.dst_class_types.index('inform'):
-                dialog_state[slot] = '§§' + inform[i][slot]
+                # dialog_state[slot] = '§§' + inform[i][slot]
+                if isinstance(inform[i][slot], str):
+                    dialog_state[slot] = inform[i][slot]
+                elif isinstance(inform[i][slot], list):
+                    dialog_state[slot] = inform[i][slot][0]
             # Referral case is handled below
 
             prediction_addendum['slot_prediction_%s'

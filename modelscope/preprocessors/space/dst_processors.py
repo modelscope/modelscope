@@ -432,6 +432,7 @@ class multiwoz22Processor(DSTProcessor):
         usr_sys_switch = True
         turn_itr = 0
 
+        inform_dict = {slot: 'none' for slot in slot_list}
         for utt in utterances:
             # Assert that system and user utterances alternate
             is_sys_utt = utt['metadata'] != {}
@@ -1501,7 +1502,7 @@ if __name__ == '__main__':
         }
     }, {}]
 
-    example = processor.create_example(utter3, history_states3, set_type,
+    example = processor.create_example(utter2, history_states2, set_type,
                                        slot_list, {}, append_history,
                                        use_history_labels, swap_utterances,
                                        label_value_repetitions,

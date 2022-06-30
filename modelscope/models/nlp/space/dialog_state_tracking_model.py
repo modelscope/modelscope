@@ -97,5 +97,6 @@ class SpaceForDialogStateTrackingModel(Model):
             'input_ids_unmasked': input_ids_unmasked,
             'values': values,
             'inform': inform,
-            'prefix': 'final'
+            'prefix': 'final',
+            'ds': input['ds']
         }

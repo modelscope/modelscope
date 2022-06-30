@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models import Model, SpaceForDialogStateTrackingModel
+from modelscope.models import Model, SpaceForDialogStateTracking
 from modelscope.pipelines import DialogStateTrackingPipeline, pipeline
 from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
@@ -81,7 +81,7 @@ class DialogStateTrackingTest(unittest.TestCase):
         cache_path = '/Users/yangliu/Space/maas_model/nlp_space_dialog-state-tracking'
         # cache_path = snapshot_download(self.model_id)
 
-        model = SpaceForDialogStateTrackingModel(cache_path)
+        model = SpaceForDialogStateTracking(cache_path)
         preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
         pipelines = [
             DialogStateTrackingPipeline(
@@ -94,20 +94,19 @@ class DialogStateTrackingTest(unittest.TestCase):
 
         pipelines_len = len(pipelines)
         import json
-        for _test_case in self.test_case:
-            history_states = [{}]
-            utter = {}
-            for step, item in enumerate(_test_case):
-                utter.update(item)
-                result = pipelines[step % pipelines_len]({
-                    'utter':
-                    utter,
-                    'history_states':
-                    history_states
-                })
-                print(json.dumps(result))
+        history_states = [{}]
+        utter = {}
+        for step, item in enumerate(self.test_case):
+            utter.update(item)
+            result = pipelines[step % pipelines_len]({
+                'utter':
+                utter,
+                'history_states':
+                history_states
+            })
+            print(json.dumps(result))
 
-                history_states.extend([result['dialog_states'], {}])
+            history_states.extend([result['dialog_states'], {}])
 
     @unittest.skip('test with snapshot_download')
     def test_run_with_model_from_modelhub(self):

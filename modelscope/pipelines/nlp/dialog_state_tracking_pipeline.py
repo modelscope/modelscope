@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from ...metainfo import Pipelines
-from ...models import SpaceForDialogStateTrackingModel
+from ...models import SpaceForDialogStateTracking
 from ...preprocessors import DialogStateTrackingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
@@ -14,7 +14,7 @@ __all__ = ['DialogStateTrackingPipeline']
     Tasks.dialog_state_tracking, module_name=Pipelines.dialog_state_tracking)
 class DialogStateTrackingPipeline(Pipeline):
 
-    def __init__(self, model: SpaceForDialogStateTrackingModel,
+    def __init__(self, model: SpaceForDialogStateTracking,
                  preprocessor: DialogStateTrackingPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 

@@ -91,7 +91,7 @@ def snapshot_download(model_id: str,
             revision=revision,
             recursive=True,
             use_cookies=False if cookies is None else cookies,
-            is_snapshot=True)
+            headers={'Snapshot': 'True'})
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':

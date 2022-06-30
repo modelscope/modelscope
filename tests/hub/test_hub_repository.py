@@ -12,6 +12,7 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
+from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
 from modelscope.utils.logger import get_logger
 
@@ -23,8 +24,6 @@ PASSWORD = '12345678'
 model_chinese_name = '达摩卡通化模型'
 model_org = 'unittest'
 DEFAULT_GIT_PATH = 'git'
-
-download_model_file_name = 'mnist-12.onnx'
 
 
 def delete_credential():
@@ -80,13 +79,22 @@ class HubRepositoryTest(unittest.TestCase):
         repo = Repository(self.model_dir, clone_from=self.model_id)
         assert os.path.exists(os.path.join(self.model_dir, 'README.md'))
         os.chdir(self.model_dir)
+        lfs_file1 = 'test1.bin'
+        lfs_file2 = 'test2.bin'
         os.system("echo '111'>%s" % os.path.join(self.model_dir, 'add1.py'))
         os.system("echo '222'>%s" % os.path.join(self.model_dir, 'add2.py'))
+        os.system("echo 'lfs'>%s" % os.path.join(self.model_dir, lfs_file1))
+        os.system("echo 'lfs2'>%s" % os.path.join(self.model_dir, lfs_file2))
         repo.push('test')
         add1 = model_file_download(self.model_id, 'add1.py')
         assert os.path.exists(add1)
         add2 = model_file_download(self.model_id, 'add2.py')
         assert os.path.exists(add2)
+        # check lfs files.
+        git_wrapper = GitCommandWrapper()
+        lfs_files = git_wrapper.list_lfs_files(self.model_dir)
+        assert lfs_file1 in lfs_files
+        assert lfs_file2 in lfs_files
 
 
 if __name__ == '__main__':

@@ -116,7 +116,7 @@ class DialogModelingTest(unittest.TestCase):
                 'user_input': user,
                 'history': result
             })
-            print('sys : {}'.format(result['sys']))
+            print('response : {}'.format(result['response']))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
@@ -140,7 +140,7 @@ class DialogModelingTest(unittest.TestCase):
                 'user_input': user,
                 'history': result
             })
-            print('sys : {}'.format(result['sys']))
+            print('response : {}'.format(result['response']))
 
 
 if __name__ == '__main__':

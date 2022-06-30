@@ -1,3 +1,4 @@
+import os
 import subprocess
 from typing import List
 from xmlrpc.client import Boolean
@@ -167,3 +168,14 @@ class GitCommandWrapper(metaclass=Singleton):
         rsp = self._run_git_command(*cmd_args)
         url = rsp.stdout.decode('utf8')
         return url.strip()
+
+    def list_lfs_files(self, repo_dir: str):
+        cmd_args = '-C %s lfs ls-files' % repo_dir
+        cmd_args = cmd_args.split(' ')
+        rsp = self._run_git_command(*cmd_args)
+        out = rsp.stdout.decode('utf8').strip()
+        files = []
+        for line in out.split(os.linesep):
+            files.append(line.split(' ')[-1])
+
+        return files

@@ -121,7 +121,7 @@ def model_file_download(
             revision=revision,
             recursive=True,
             use_cookies=False if cookies is None else cookies,
-            is_snapshot=False)
+        )
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':

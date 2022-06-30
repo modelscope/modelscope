@@ -178,10 +178,10 @@ TASK_OUTPUTS = {
     #        4.31488479e-05, 4.94503947e-05, 4.30105974e-05, 1.00963116e-04,
     #        2.82062047e-05, 1.15582036e-04, 4.48261271e-05, 3.99339879e-05,
     #        7.27692823e-05], dtype=float32), 'label_pos': array([11]), 'label': 'lost_or_stolen_card'}
-    Tasks.dialog_intent_prediction: ['pred', 'label_pos', 'label'],
+    Tasks.dialog_intent_prediction: ['prediction', 'label_pos', 'label'],
 
     # sys : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']
-    Tasks.dialog_modeling: ['sys'],
+    Tasks.dialog_modeling: ['response'],
 
     # ============ audio tasks ===================
 

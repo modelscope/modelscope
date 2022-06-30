@@ -43,6 +43,6 @@ class DialogModelingPipeline(Pipeline):
         assert len(sys_rsp) > 2
         sys_rsp = sys_rsp[1:len(sys_rsp) - 1]
 
-        inputs['sys'] = sys_rsp
+        inputs['response'] = sys_rsp
 
         return inputs

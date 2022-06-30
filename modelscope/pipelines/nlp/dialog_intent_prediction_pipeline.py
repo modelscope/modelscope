@@ -44,7 +44,7 @@ class DialogIntentPredictionPipeline(Pipeline):
         pos = np.where(pred == np.max(pred))
 
         result = {
-            'pred': pred,
+            'prediction': pred,
             'label_pos': pos[0],
             'label': self.categories[pos[0][0]]
         }

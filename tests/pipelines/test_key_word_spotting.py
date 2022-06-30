@@ -15,8 +15,8 @@ from modelscope.utils.test_utils import test_level
 
 KWSBP_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/tools/kwsbp'
 
-POS_WAV_FILE = '20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_6.wav'
-POS_WAV_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testset/' + POS_WAV_FILE
+POS_WAV_FILE = 'data/test/audios/kws_xiaoyunxiaoyun.wav'
+BOFANGYINYUE_WAV_FILE = 'data/test/audios/kws_bofangyinyue.wav'
 
 POS_TESTSETS_FILE = 'pos_testsets.tar.gz'
 POS_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testsets.tar.gz'
@@ -47,12 +47,8 @@ class KeyWordSpottingTest(unittest.TestCase):
         # wav, neg_testsets, pos_testsets, roc
         kws_set = 'wav'
 
-        # downloading wav file
-        wav_file_path = os.path.join(self.workspace, POS_WAV_FILE)
-        if not os.path.exists(wav_file_path):
-            r = requests.get(POS_WAV_URL)
-            with open(wav_file_path, 'wb') as f:
-                f.write(r.content)
+        # get wav file
+        wav_file_path = POS_WAV_FILE
 
         # downloading kwsbp
         kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
@@ -91,8 +87,71 @@ class KeyWordSpottingTest(unittest.TestCase):
         """
         if kws_result.__contains__('keywords'):
             print('test_run_with_wav keywords: ', kws_result['keywords'])
+            print('test_run_with_wav confidence: ', kws_result['confidence'])
         print('test_run_with_wav detected result: ', kws_result['detected'])
         print('test_run_with_wav wave time(seconds): ', kws_result['wav_time'])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_wav_by_customized_keywords(self):
+        # wav, neg_testsets, pos_testsets, roc
+        kws_set = 'wav'
+
+        # get wav file
+        wav_file_path = BOFANGYINYUE_WAV_FILE
+
+        # downloading kwsbp
+        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
+        if not os.path.exists(kwsbp_file_path):
+            r = requests.get(KWSBP_URL)
+            with open(kwsbp_file_path, 'wb') as f:
+                f.write(r.content)
+
+        model = Model.from_pretrained(self.model_id)
+        self.assertTrue(model is not None)
+
+        cfg_preprocessor = dict(
+            type=Preprocessors.wav_to_lists, workspace=self.workspace)
+        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
+        self.assertTrue(preprocessor is not None)
+
+        # customized keyword if you need.
+        # full settings eg.
+        #     keywords = [
+        #         {'keyword':'你好电视', 'threshold': 0.008},
+        #         {'keyword':'播放音乐', 'threshold': 0.008}
+        #     ]
+        keywords = [{'keyword': '播放音乐'}]
+
+        kwsbp_16k_pipline = pipeline(
+            pipeline_name=Pipelines.kws_kwsbp,
+            model=model,
+            preprocessor=preprocessor,
+            keywords=keywords)
+        self.assertTrue(kwsbp_16k_pipline is not None)
+
+        kws_result = kwsbp_16k_pipline(
+            kws_type=kws_set, wav_path=[wav_file_path, None])
+        self.assertTrue(kws_result.__contains__('detected'))
+        """
+        kws result json format example:
+            {
+                'wav_count': 1,
+                'kws_set': 'wav',
+                'wav_time': 9.132938,
+                'keywords': ['播放音乐'],
+                'detected': True,
+                'confidence': 0.660368
+            }
+        """
+        if kws_result.__contains__('keywords'):
+            print('test_run_with_wav_by_customized_keywords keywords: ',
+                  kws_result['keywords'])
+            print('test_run_with_wav_by_customized_keywords confidence: ',
+                  kws_result['confidence'])
+        print('test_run_with_wav_by_customized_keywords detected result: ',
+              kws_result['detected'])
+        print('test_run_with_wav_by_customized_keywords wave time(seconds): ',
+              kws_result['wav_time'])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_pos_testsets(self):

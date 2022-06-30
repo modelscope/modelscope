@@ -124,7 +124,3 @@ replace.sh
 
 # Pytorch
 *.pth
-
-
-# audio
-*.wav

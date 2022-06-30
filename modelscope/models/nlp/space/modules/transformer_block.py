@@ -1,6 +1,4 @@
-"""
-TransformerBlock class.
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import torch
 import torch.nn as nn

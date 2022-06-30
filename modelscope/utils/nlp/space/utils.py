@@ -53,16 +53,9 @@ def clean_replace(s, r, t, forward=True, backward=False):
             return s, -1
         return s[:idx] + t + s[idx_r:], idx_r
 
-    # source, replace, target = s, r, t
-    # count = 0
     sidx = 0
     while sidx != -1:
         s, sidx = clean_replace_single(s, r, t, forward, backward, sidx)
-        # count += 1
-        # print(s, sidx)
-        # if count == 20:
-        #     print(source, '\n', replace, '\n', target)
-        #     quit()
     return s
 
 
@@ -193,14 +186,3 @@ class MultiWOZVocab(object):
             return self._idx2word[idx]
         else:
             return self._idx2word[idx] + '(o)'
-
-    # def sentence_decode(self, index_list, eos=None, indicate_oov=False):
-    #     l = [self.decode(_, indicate_oov) for _ in index_list]
-    #     if not eos or eos not in l:
-    #         return ' '.join(l)
-    #     else:
-    #         idx = l.index(eos)
-    #         return ' '.join(l[:idx])
-    #
-    # def nl_decode(self, l, eos=None):
-    #     return [self.sentence_decode(_, eos) + '\n' for _ in l]

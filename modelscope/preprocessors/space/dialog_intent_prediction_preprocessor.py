@@ -3,6 +3,9 @@
 import os
 from typing import Any, Dict
 
+import json
+
+from ...metainfo import Preprocessors
 from ...utils.config import Config
 from ...utils.constant import Fields, ModelFile
 from ...utils.type_assert import type_assert
@@ -13,7 +16,8 @@ from .fields.intent_field import IntentBPETextField
 __all__ = ['DialogIntentPredictionPreprocessor']
 
 
-@PREPROCESSORS.register_module(Fields.nlp, module_name=r'space-intent')
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.dialog_intent_preprocessor)
 class DialogIntentPredictionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -29,6 +33,11 @@ class DialogIntentPredictionPreprocessor(Preprocessor):
             os.path.join(self.model_dir, ModelFile.CONFIGURATION))
         self.text_field = IntentBPETextField(
             self.model_dir, config=self.config)
+
+        self.categories = None
+        with open(os.path.join(self.model_dir, 'categories.json'), 'r') as f:
+            self.categories = json.load(f)
+        assert len(self.categories) == 77
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:

@@ -1,7 +1,9 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict
 
 from ...metainfo import Pipelines
-from ...models.nlp import SpaceForDialogIntentModel
+from ...models.nlp import SpaceForDialogIntent
 from ...preprocessors import DialogIntentPredictionPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
@@ -15,7 +17,7 @@ __all__ = ['DialogIntentPredictionPipeline']
     module_name=Pipelines.dialog_intent_prediction)
 class DialogIntentPredictionPipeline(Pipeline):
 
-    def __init__(self, model: SpaceForDialogIntentModel,
+    def __init__(self, model: SpaceForDialogIntent,
                  preprocessor: DialogIntentPredictionPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -26,7 +28,7 @@ class DialogIntentPredictionPipeline(Pipeline):
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model = model
-        # self.tokenizer = preprocessor.tokenizer
+        self.categories = preprocessor.categories
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results
@@ -41,6 +43,10 @@ class DialogIntentPredictionPipeline(Pipeline):
         pred = inputs['pred']
         pos = np.where(pred == np.max(pred))
 
-        result = {'pred': pred, 'label': pos[0]}
+        result = {
+            'pred': pred,
+            'label_pos': pos[0],
+            'label': self.categories[pos[0][0]]
+        }
 
         return result

@@ -29,7 +29,7 @@ class NLITest(unittest.TestCase):
             f'sentence1: {self.sentence1}\nsentence2: {self.sentence2}\n'
             f'pipeline1: {pipeline2(input=(self.sentence1, self.sentence2))}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         tokenizer = NLIPreprocessor(model.model_dir)

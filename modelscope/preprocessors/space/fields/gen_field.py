@@ -1,6 +1,5 @@
-"""
-Field class
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 import random
 from collections import OrderedDict
@@ -8,7 +7,6 @@ from itertools import chain
 
 import numpy as np
 
-from ....utils.constant import ModelFile
 from ....utils.nlp.space import ontology, utils
 from ....utils.nlp.space.db_ops import MultiWozDB
 from ....utils.nlp.space.utils import list2np

@@ -308,14 +308,6 @@ if __name__ == '__main__':
             'attraction': 5,
             'train': 1,
         }
-        # for ent in res:
-        #     if reidx.get(domain):
-        #         report.append(ent[reidx[domain]])
-        # for ent in res:
-        #     if 'name' in ent:
-        #         report.append(ent['name'])
-        #     if 'trainid' in ent:
-        #         report.append(ent['trainid'])
         print(constraints)
         print(res)
         print('count:', len(res), '\nnames:', report)

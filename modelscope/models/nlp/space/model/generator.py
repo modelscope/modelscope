@@ -1,6 +1,4 @@
-"""
-Generator class.
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
 

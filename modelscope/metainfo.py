@@ -16,6 +16,7 @@ class Models(object):
     palm = 'palm-v2'
     structbert = 'structbert'
     veco = 'veco'
+    space = 'space'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'
@@ -67,7 +68,7 @@ class Pipelines(object):
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks
-    image_caption = 'image-caption'
+    image_caption = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
 
@@ -105,6 +106,9 @@ class Preprocessors(object):
     token_cls_tokenizer = 'token-cls-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
     sen_cls_tokenizer = 'sen-cls-tokenizer'
+    dialog_intent_preprocessor = 'dialog-intent-preprocessor'
+    dialog_modeling_preprocessor = 'dialog-modeling-preprocessor'
+    dialog_state_tracking_preprocessor = 'dialog_state_tracking_preprocessor'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 

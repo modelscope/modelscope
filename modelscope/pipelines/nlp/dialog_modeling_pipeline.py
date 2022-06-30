@@ -1,7 +1,9 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict, Optional
 
 from ...metainfo import Pipelines
-from ...models.nlp import SpaceForDialogModelingModel
+from ...models.nlp import SpaceForDialogModeling
 from ...preprocessors import DialogModelingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
@@ -14,7 +16,7 @@ __all__ = ['DialogModelingPipeline']
     Tasks.dialog_modeling, module_name=Pipelines.dialog_modeling)
 class DialogModelingPipeline(Pipeline):
 
-    def __init__(self, model: SpaceForDialogModelingModel,
+    def __init__(self, model: SpaceForDialogModeling,
                  preprocessor: DialogModelingPreprocessor, **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
@@ -40,7 +42,6 @@ class DialogModelingPipeline(Pipeline):
             inputs['resp'])
         assert len(sys_rsp) > 2
         sys_rsp = sys_rsp[1:len(sys_rsp) - 1]
-        # sys_rsp = self.preprocessor.text_field.tokenizer.
 
         inputs['sys'] = sys_rsp
 

@@ -123,19 +123,6 @@ dialog_act_all_slots = all_slots + ['choice', 'open']
 # no need of this, just covert slot to [slot] e.g. pricerange -> [pricerange]
 slot_name_to_slot_token = {}
 
-# special slot tokens in responses
-# not use at the momoent
-slot_name_to_value_token = {
-    # 'entrance fee': '[value_price]',
-    # 'pricerange': '[value_price]',
-    # 'arriveby': '[value_time]',
-    # 'leaveat': '[value_time]',
-    # 'departure': '[value_place]',
-    # 'destination': '[value_place]',
-    # 'stay': 'count',
-    # 'people': 'count'
-}
-
 # eos tokens definition
 eos_tokens = {
     'user': '<eos_u>',

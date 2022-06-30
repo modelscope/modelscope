@@ -9,6 +9,7 @@ from .builder import MODELS, build_model
 from .multi_modal import OfaForImageCaptioning
 from .nlp import (BertForMaskedLM, BertForSequenceClassification, SbertForNLI,
                   SbertForSentenceSimilarity, SbertForSentimentClassification,
-                  SbertForTokenClassification, SpaceForDialogIntentModel,
-                  SpaceForDialogModelingModel, SpaceForDialogStateTracking,
-                  StructBertForMaskedLM, VecoForMaskedLM)
+                  SbertForTokenClassification, SbertForZeroShotClassification,
+                  SpaceForDialogIntent, SpaceForDialogModeling,
+                  SpaceForDialogStateTracking, StructBertForMaskedLM,
+                  VecoForMaskedLM)

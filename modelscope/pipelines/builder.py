@@ -36,6 +36,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.zero_shot_classification:
     (Pipelines.zero_shot_classification,
      'damo/nlp_structbert_zero-shot-classification_chinese-base'),
+    Tasks.dialog_intent_prediction:
+    (Pipelines.dialog_intent_prediction,
+     'damo/nlp_space_dialog-intent-prediction'),
+    Tasks.dialog_modeling: (Pipelines.dialog_modeling,
+                            'damo/nlp_space_dialog-modeling'),
     Tasks.image_captioning: (Pipelines.image_caption,
                              'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:

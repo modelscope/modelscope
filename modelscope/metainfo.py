@@ -28,6 +28,7 @@ class Models(object):
     # multi-modal models
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
+    mplug = 'mplug'
 
 
 class Pipelines(object):
@@ -57,6 +58,7 @@ class Pipelines(object):
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'
+    zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
     sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
@@ -65,8 +67,9 @@ class Pipelines(object):
     kws_kwsbp = 'kws-kwsbp'
 
     # multi-modal tasks
-    image_caption = 'image-caption'
+    image_caption = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
+    visual_question_answering = 'visual-question-answering'
 
 
 class Trainers(object):
@@ -104,6 +107,8 @@ class Preprocessors(object):
     sen_cls_tokenizer = 'sen-cls-tokenizer'
     dialog_intent_preprocessor = 'dialog-intent-preprocessor'
     dialog_modeling_preprocessor = 'dialog-modeling-preprocessor'
+    sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
+    zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -112,3 +117,4 @@ class Preprocessors(object):
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'
+    mplug_visual_question_answering = 'mplug-visual-question-answering'

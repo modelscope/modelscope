@@ -10,6 +10,10 @@ class GitError(Exception):
     pass
 
 
+class InvalidParameter(Exception):
+    pass
+
+
 def is_ok(rsp):
     """ Check the request is ok
 
@@ -32,3 +36,18 @@ def raise_on_error(rsp):
         return True
     else:
         raise RequestError(rsp['Message'])
+
+
+# TODO use raise_on_error instead if modelhub and datahub response have uniform structures,
+def datahub_raise_on_error(url, rsp):
+    """If response error, raise exception
+
+    Args:
+        rsp (_type_): The server response
+    """
+    if rsp.get('Code') == 200:
+        return True
+    else:
+        raise RequestError(
+            f"Url = {url}, Status = {rsp.get('status')}, error = {rsp.get('error')}, message = {rsp.get('message')}"
+        )

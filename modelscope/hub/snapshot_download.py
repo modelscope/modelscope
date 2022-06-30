@@ -20,8 +20,7 @@ def snapshot_download(model_id: str,
                       revision: Optional[str] = 'master',
                       cache_dir: Union[str, Path, None] = None,
                       user_agent: Optional[Union[Dict, str]] = None,
-                      local_files_only: Optional[bool] = False,
-                      private: Optional[bool] = False) -> str:
+                      local_files_only: Optional[bool] = False) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
     is useful when you want all files from a repo, because you don't know which
@@ -79,8 +78,10 @@ def snapshot_download(model_id: str,
         # make headers
         headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
         _api = HubApi()
+        cookies = ModelScopeConfig.get_cookies()
         # get file list from model repo
-        branches, tags = _api.get_model_branches_and_tags(model_id)
+        branches, tags = _api.get_model_branches_and_tags(
+            model_id, use_cookies=False if cookies is None else cookies)
         if revision not in branches and revision not in tags:
             raise NotExistError('The specified branch or tag : %s not exist!'
                                 % revision)
@@ -89,11 +90,8 @@ def snapshot_download(model_id: str,
             model_id=model_id,
             revision=revision,
             recursive=True,
-            use_cookies=private)
-
-        cookies = None
-        if private:
-            cookies = ModelScopeConfig.get_cookies()
+            use_cookies=False if cookies is None else cookies,
+            is_snapshot=True)
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':
@@ -116,7 +114,7 @@ def snapshot_download(model_id: str,
                 local_dir=tempfile.gettempdir(),
                 file_name=model_file['Name'],
                 headers=headers,
-                cookies=None if cookies is None else cookies.get_dict())
+                cookies=cookies)
             # put file to cache
             cache.put_file(
                 model_file,

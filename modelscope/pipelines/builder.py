@@ -33,6 +33,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/bert-base-sst2'),
     Tasks.text_generation: (Pipelines.text_generation,
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
+    Tasks.zero_shot_classification:
+    (Pipelines.zero_shot_classification,
+     'damo/nlp_structbert_zero-shot-classification_chinese-base'),
     Tasks.image_captioning: (Pipelines.image_caption,
                              'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:
@@ -45,7 +48,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                'damo/cv_TAdaConv_action-recognition'),
     Tasks.multi_modal_embedding:
     (Pipelines.multi_modal_embedding,
-     'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding')
+     'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding'),
+    Tasks.visual_question_answering:
+    (Pipelines.visual_question_answering,
+     'damo/mplug_visual-question-answering_coco_large_en'),
 }
 
 

@@ -87,12 +87,16 @@ class SequenceClassificationTest(unittest.TestCase):
         result = text_classification(dataset)
         self.printDataset(result)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_modelscope_dataset(self):
         text_classification = pipeline(task=Tasks.text_classification)
         # loaded from modelscope dataset
         dataset = MsDataset.load(
-            'squad', split='train', target='context', hub=Hubs.modelscope)
+            'squad',
+            namespace='damotest',
+            split='train',
+            target='context',
+            hub=Hubs.modelscope)
         result = text_classification(dataset)
         self.printDataset(result)
 

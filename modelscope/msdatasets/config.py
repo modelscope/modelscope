@@ -19,4 +19,4 @@ DOWNLOADED_DATASETS_PATH = Path(
     os.getenv('DOWNLOADED_DATASETS_PATH', DEFAULT_DOWNLOADED_DATASETS_PATH))
 
 MS_HUB_ENDPOINT = os.environ.get('MS_HUB_ENDPOINT',
-                                 'http://101.201.119.157:31752')
+                                 'http://47.94.223.21:31752')

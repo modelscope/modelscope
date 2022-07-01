@@ -66,6 +66,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.assertTrue(preprocessor is not None)
 
         kwsbp_16k_pipline = pipeline(
+            task=Tasks.key_word_spotting,
             pipeline_name=Pipelines.kws_kwsbp,
             model=model,
             preprocessor=preprocessor)
@@ -123,6 +124,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         keywords = [{'keyword': '播放音乐'}]
 
         kwsbp_16k_pipline = pipeline(
+            task=Tasks.key_word_spotting,
             pipeline_name=Pipelines.kws_kwsbp,
             model=model,
             preprocessor=preprocessor,
@@ -192,6 +194,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.assertTrue(preprocessor is not None)
 
         kwsbp_16k_pipline = pipeline(
+            task=Tasks.key_word_spotting,
             pipeline_name=Pipelines.kws_kwsbp,
             model=model,
             preprocessor=preprocessor)
@@ -263,6 +266,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.assertTrue(preprocessor is not None)
 
         kwsbp_16k_pipline = pipeline(
+            task=Tasks.key_word_spotting,
             pipeline_name=Pipelines.kws_kwsbp,
             model=model,
             preprocessor=preprocessor)
@@ -357,6 +361,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.assertTrue(preprocessor is not None)
 
         kwsbp_16k_pipline = pipeline(
+            task=Tasks.key_word_spotting,
             pipeline_name=Pipelines.kws_kwsbp,
             model=model,
             preprocessor=preprocessor)

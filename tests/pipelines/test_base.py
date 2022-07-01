@@ -74,9 +74,9 @@ class CustomPipelineTest(unittest.TestCase):
             def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
                 return inputs
 
-        self.assertTrue('custom-image' in PIPELINES.modules[default_group])
+        self.assertTrue('custom-image' in PIPELINES.modules[dummy_task])
         add_default_pipeline_info(dummy_task, 'custom-image', overwrite=True)
-        pipe = pipeline(pipeline_name='custom-image')
+        pipe = pipeline(task=dummy_task, pipeline_name='custom-image')
         pipe2 = pipeline(dummy_task)
         self.assertTrue(type(pipe) is type(pipe2))
 

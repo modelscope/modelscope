@@ -77,19 +77,6 @@ class Registry(object):
         self._modules[group_key][module_name] = module_cls
         module_cls.group_key = group_key
 
-        if module_name in self._modules[default_group]:
-            if id(self._modules[default_group][module_name]) == id(module_cls):
-                return
-            else:
-                logger.warning(f'{module_name} is already registered in '
-                               f'{self._name}[{default_group}] and will '
-                               'be overwritten')
-                logger.warning(f'{self._modules[default_group][module_name]}'
-                               f'to {module_cls}')
-        # also register module in the default group for faster access
-        # only by module name
-        self._modules[default_group][module_name] = module_cls
-
     def register_module(self,
                         group_key: str = default_group,
                         module_name: str = None,

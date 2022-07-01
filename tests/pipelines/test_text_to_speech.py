@@ -12,7 +12,7 @@ from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.preprocessors import build_preprocessor
-from modelscope.utils.constant import Fields
+from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -43,6 +43,7 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
         self.assertTrue(voc is not None)
 
         sambert_tts = pipeline(
+            task=Tasks.text_to_speech,
             pipeline_name=Pipelines.sambert_hifigan_16k_tts,
             config_file='',
             model=[am, voc],

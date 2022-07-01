@@ -5,6 +5,8 @@ import shutil
 import subprocess
 from setuptools import find_packages, setup
 
+from modelscope.utils.constant import Fields
+
 
 def readme():
     with open('README.md', encoding='utf-8') as f:
@@ -169,6 +171,16 @@ if __name__ == '__main__':
     pack_resource()
     os.chdir('package')
     install_requires, deps_link = parse_requirements('requirements.txt')
+    extra_requires = {}
+    all_requires = []
+    for field in dir(Fields):
+        if field.startswith('_'):
+            continue
+        extra_requires[field], _ = parse_requirements(
+            f'requirements/{field}.txt')
+        all_requires.append(extra_requires[field])
+    extra_requires['all'] = all_requires
+
     setup(
         name='model-scope',
         version=get_version(),
@@ -193,5 +205,6 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         tests_require=parse_requirements('requirements/tests.txt'),
         install_requires=install_requires,
+        extras_require=extra_requires,
         dependency_links=deps_link,
         zip_safe=False)

@@ -1,8 +1,6 @@
-datasets
-einops
+fairseq==maas
 ftfy>=6.0.3
-https://jirenmr.oss-cn-zhangjiakou.aliyuncs.com/ofa/fairseq-maas-py3-none-any.whl
-https://jirenmr.oss-cn-zhangjiakou.aliyuncs.com/ofa/ofa-0.0.2-py3-none-any.whl
+ofa==0.0.2
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
 rouge_score

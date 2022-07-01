@@ -1,6 +1,1 @@
 -r requirements/runtime.txt
--r requirements/pipeline.txt
--r requirements/multi-modal.txt
--r requirements/nlp.txt
--r requirements/audio.txt
--r requirements/cv.txt

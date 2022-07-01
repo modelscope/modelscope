@@ -97,5 +97,18 @@ class ModelFile(object):
     TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
 
 
+class Requirements(object):
+    """Requirement names for each module
+    """
+    protobuf = 'protobuf'
+    sentencepiece = 'sentencepiece'
+    sklearn = 'sklearn'
+    scipy = 'scipy'
+    timm = 'timm'
+    tokenizers = 'tokenizers'
+    tf = 'tf'
+    torch = 'torch'
+
+
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'

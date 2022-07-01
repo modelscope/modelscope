@@ -1,1 +1,1 @@
-https://alinlp.alibaba-inc.com/pypi/sofa-1.0.4.2-py3-none-any.whl
+sofa==1.0.4.2

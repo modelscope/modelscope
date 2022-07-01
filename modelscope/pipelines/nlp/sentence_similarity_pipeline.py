@@ -9,6 +9,7 @@ from modelscope.utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['SentenceSimilarityPipeline']
 
@@ -59,4 +60,4 @@ class SentenceSimilarityPipeline(Pipeline):
         probs = probs[cls_ids].tolist()
         cls_names = [self.model.id2label[cid] for cid in cls_ids]
         b = 0
-        return {'scores': probs[b], 'labels': cls_names[b]}
+        return {OutputKeys.SCORES: probs[b], OutputKeys.LABELS: cls_names[b]}

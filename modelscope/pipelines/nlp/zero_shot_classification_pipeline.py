@@ -14,6 +14,7 @@ from ...preprocessors import ZeroShotClassificationPreprocessor
 from ...utils.constant import Tasks
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['ZeroShotClassificationPipeline']
 
@@ -91,7 +92,7 @@ class ZeroShotClassificationPipeline(Pipeline):
 
         reversed_index = list(reversed(scores.argsort()))
         result = {
-            'labels': [candidate_labels[i] for i in reversed_index],
-            'scores': [scores[i].item() for i in reversed_index],
+            OutputKeys.LABELS: [candidate_labels[i] for i in reversed_index],
+            OutputKeys.SCORES: [scores[i].item() for i in reversed_index],
         }
         return result

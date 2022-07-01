@@ -18,6 +18,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 logger = get_logger()
 
@@ -121,7 +122,9 @@ class AnimalRecogPipeline(Pipeline):
             label_mapping = f.readlines()
         score = torch.max(inputs['outputs'])
         inputs = {
-            'scores': score.item(),
-            'labels': label_mapping[inputs['outputs'].argmax()].split('\t')[1]
+            OutputKeys.SCORES:
+            score.item(),
+            OutputKeys.LABELS:
+            label_mapping[inputs['outputs'].argmax()].split('\t')[1]
         }
         return inputs

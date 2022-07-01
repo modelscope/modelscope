@@ -108,7 +108,11 @@ class CLIPForMultiModalEmbedding(Model):
         return text_ids_tensor, text_mask_tensor
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        output = {'img_embedding': None, 'text_embedding': None}
+        from modelscope.pipelines.outputs import OutputKeys
+        output = {
+            OutputKeys.IMG_EMBEDDING: None,
+            OutputKeys.TEXT_EMBEDDING: None
+        }
         if 'img' in input and input['img'] is not None:
             input_img = input['img']
             if isinstance(input_img, Image.Image):
@@ -130,7 +134,8 @@ class CLIPForMultiModalEmbedding(Model):
 
             img_embedding = self.clip_model(
                 input_data=img_tensor, input_type='img')
-            output['img_embedding'] = img_embedding.data.cpu().numpy()
+            from modelscope.pipelines.outputs import OutputKeys
+            output[OutputKeys.IMG_EMBEDDING] = img_embedding.data.cpu().numpy()
 
         if 'text' in input and input['text'] is not None:
             text_str = input['text']

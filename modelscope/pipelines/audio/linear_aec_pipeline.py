@@ -12,6 +12,7 @@ from modelscope.preprocessors.audio import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 FEATURE_MVN = 'feature.DEY.mvn.txt'
 
@@ -120,7 +121,7 @@ class LinearAECPipeline(Pipeline):
                 }
         """
         output_data = self._process(inputs['feature'], inputs['base'])
-        return {'output_pcm': output_data}
+        return {OutputKeys.OUTPUT_PCM: output_data}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         r"""The post process. Will save audio to file, if the output_path is given.
@@ -140,8 +141,8 @@ class LinearAECPipeline(Pipeline):
         """
         if 'output_path' in kwargs.keys():
             wav.write(kwargs['output_path'], self.preprocessor.SAMPLE_RATE,
-                      inputs['output_pcm'].astype(np.int16))
-        inputs['output_pcm'] = inputs['output_pcm'] / 32768.0
+                      inputs[OutputKeys.OUTPUT_PCM].astype(np.int16))
+        inputs[OutputKeys.OUTPUT_PCM] = inputs[OutputKeys.OUTPUT_PCM] / 32768.0
         return inputs
 
     def _process(self, fbanks, mixture):

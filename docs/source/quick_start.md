@@ -29,7 +29,7 @@ pip install model_scope[all] -f https://pai-vision-data-hz.oss-cn-zhangjiakou.al
 ```
 ### 使用源码安装
 适合本地开发调试使用，修改源码后可以直接执行
-下载源码前首先联系（临在，谦言，颖达，一耘）申请代码库权限，clone代码到本地
+下载源码可以直接clone代码到本地
 ```shell
 git clone git@gitlab.alibaba-inc.com:Ali-MaaS/MaaS-lib.git modelscope
 git fetch origin master

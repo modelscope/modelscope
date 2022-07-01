@@ -9,6 +9,7 @@ from modelscope.utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['SequenceClassificationPipeline']
 
@@ -64,4 +65,4 @@ class SequenceClassificationPipeline(Pipeline):
 
         cls_names = [self.model.id2label[cid] for cid in cls_ids]
 
-        return {'scores': probs, 'labels': cls_names}
+        return {OutputKeys.SCORES: probs, OutputKeys.LABELS: cls_names}

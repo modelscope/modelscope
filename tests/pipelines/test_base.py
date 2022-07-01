@@ -8,6 +8,7 @@ import PIL
 
 from modelscope.pipelines import Pipeline, pipeline
 from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
+from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
@@ -68,7 +69,7 @@ class CustomPipelineTest(unittest.TestCase):
                     outputs['filename'] = inputs['url']
                 img = inputs['img']
                 new_image = img.resize((img.width // 2, img.height // 2))
-                outputs['output_png'] = np.array(new_image)
+                outputs[OutputKeys.OUTPUT_IMG] = np.array(new_image)
                 return outputs
 
             def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -83,13 +84,13 @@ class CustomPipelineTest(unittest.TestCase):
         img_url = 'data/test/images/image1.jpg'
         output = pipe(img_url)
         self.assertEqual(output['filename'], img_url)
-        self.assertEqual(output['output_png'].shape, (318, 512, 3))
+        self.assertEqual(output[OutputKeys.OUTPUT_IMG].shape, (318, 512, 3))
 
         outputs = pipe([img_url for i in range(4)])
         self.assertEqual(len(outputs), 4)
         for out in outputs:
             self.assertEqual(out['filename'], img_url)
-            self.assertEqual(out['output_png'].shape, (318, 512, 3))
+            self.assertEqual(out[OutputKeys.OUTPUT_IMG].shape, (318, 512, 3))
 
 
 if __name__ == '__main__':

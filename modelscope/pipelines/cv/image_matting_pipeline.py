@@ -12,6 +12,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 logger = get_logger()
 
@@ -60,9 +61,9 @@ class ImageMattingPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         with self._session.as_default():
             feed_dict = {self.input_name: input['img']}
-            output_png = self._session.run(self.output, feed_dict=feed_dict)
-            output_png = cv2.cvtColor(output_png, cv2.COLOR_RGBA2BGRA)
-            return {'output_png': output_png}
+            output_img = self._session.run(self.output, feed_dict=feed_dict)
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_RGBA2BGRA)
+            return {OutputKeys.OUTPUT_IMG: output_img}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

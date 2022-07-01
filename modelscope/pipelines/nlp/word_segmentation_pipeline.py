@@ -7,6 +7,7 @@ from modelscope.preprocessors import TokenClassifcationPreprocessor
 from modelscope.utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['WordSegmentationPipeline']
 
@@ -63,7 +64,4 @@ class WordSegmentationPipeline(Pipeline):
         if chunk:
             chunks.append(chunk)
         seg_result = ' '.join(chunks)
-        rst = {
-            'output': seg_result,
-        }
-        return rst
+        return {OutputKeys.OUTPUT: seg_result}

@@ -7,6 +7,7 @@ import cv2
 
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -22,7 +23,7 @@ class ImageCartoonTest(unittest.TestCase):
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)
         if result is not None:
-            cv2.imwrite('result.png', result['output_png'])
+            cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
             print(f'Output written to {osp.abspath("result.png")}')
 
     @unittest.skip('deprecated, download model from model hub instead')

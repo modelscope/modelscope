@@ -3,6 +3,7 @@
 import unittest
 
 from modelscope.pipelines import pipeline
+from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -15,7 +16,7 @@ class ImageCaptionTest(unittest.TestCase):
             Tasks.image_captioning,
             model='damo/ofa_image-caption_coco_large_en')
         result = img_captioning('data/test/images/image_captioning.png')
-        print(result['caption'])
+        print(result[OutputKeys.CAPTION])
 
 
 if __name__ == '__main__':

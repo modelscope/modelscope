@@ -9,6 +9,7 @@ from ...utils.config import Config
 from ...utils.constant import ModelFile, Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['FillMaskPipeline']
 _type_map = {'veco': 'roberta', 'sbert': 'bert'}
@@ -96,4 +97,4 @@ class FillMaskPipeline(Pipeline):
             pred_string = rep_tokens(pred_string, self.rep_map[process_type])
             pred_strings.append(pred_string)
 
-        return {'text': pred_strings}
+        return {OutputKeys.TEXT: pred_strings}

@@ -7,6 +7,7 @@ from modelscope.preprocessors import TextGenerationPreprocessor
 from modelscope.utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['TextGenerationPipeline']
 
@@ -61,4 +62,4 @@ class TextGenerationPipeline(Pipeline):
         for _old, _new in replace_tokens_roberta:
             pred_string = pred_string.replace(_old, _new)
         pred_string.strip()
-        return {'text': pred_string}
+        return {OutputKeys.TEXT: pred_string}

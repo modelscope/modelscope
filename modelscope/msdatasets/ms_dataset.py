@@ -11,7 +11,6 @@ from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
 from modelscope.msdatasets.config import MS_DATASETS_CACHE
-from modelscope.msdatasets.utils.ms_api import MsApi
 from modelscope.utils.constant import DownloadMode, Hubs
 from modelscope.utils.logger import get_logger
 
@@ -146,8 +145,9 @@ class MsDataset:
                 use_hf = True
             elif is_relative_path(dataset_name) and dataset_name.count(
                     '/') == 0:
-                ms_api = MsApi()
-                dataset_scripts = ms_api.fetch_dataset_scripts(
+                from modelscope.hub.api import HubApi
+                api = HubApi()
+                dataset_scripts = api.fetch_dataset_scripts(
                     dataset_name, namespace, download_mode, version)
                 if 'py' in dataset_scripts:  # dataset copied from hf datasets
                     dataset_name = dataset_scripts['py'][0]

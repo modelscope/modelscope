@@ -1,9 +1,7 @@
 import hashlib
-import logging
 import os
 import pickle
 import tempfile
-import time
 from shutil import move, rmtree
 
 from modelscope.utils.logger import get_logger

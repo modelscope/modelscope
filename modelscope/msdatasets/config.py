@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 # Cache location
+from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
+
 DEFAULT_CACHE_HOME = '~/.cache'
 CACHE_HOME = os.getenv('CACHE_HOME', DEFAULT_CACHE_HOME)
 DEFAULT_MS_CACHE_HOME = os.path.join(CACHE_HOME, 'modelscope/hub')
@@ -18,5 +20,5 @@ DEFAULT_DOWNLOADED_DATASETS_PATH = os.path.join(MS_DATASETS_CACHE,
 DOWNLOADED_DATASETS_PATH = Path(
     os.getenv('DOWNLOADED_DATASETS_PATH', DEFAULT_DOWNLOADED_DATASETS_PATH))
 
-MS_HUB_ENDPOINT = os.environ.get('MS_HUB_ENDPOINT',
-                                 'http://47.94.223.21:31752')
+HUB_DATASET_ENDPOINT = os.environ.get('HUB_DATASET_ENDPOINT',
+                                      DEFAULT_MODELSCOPE_DATA_ENDPOINT)

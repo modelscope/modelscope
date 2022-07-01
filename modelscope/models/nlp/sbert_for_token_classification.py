@@ -2,18 +2,17 @@ from typing import Any, Dict, Union
 
 import numpy as np
 import torch
-from sofa import SbertConfig, SbertForTokenClassification
 
-from modelscope.metainfo import Models
-from modelscope.utils.constant import Tasks
+from ...metainfo import Models
+from ...utils.constant import Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
 
-__all__ = ['StructBertForTokenClassification']
+__all__ = ['SbertForTokenClassification']
 
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.structbert)
-class StructBertForTokenClassification(Model):
+class SbertForTokenClassification(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the word segmentation model from the `model_dir` path.
@@ -25,9 +24,16 @@ class StructBertForTokenClassification(Model):
         """
         super().__init__(model_dir, *args, **kwargs)
         self.model_dir = model_dir
-        self.model = SbertForTokenClassification.from_pretrained(
+        import sofa
+        self.model = sofa.SbertForTokenClassification.from_pretrained(
             self.model_dir)
-        self.config = SbertConfig.from_pretrained(self.model_dir)
+        self.config = sofa.SbertConfig.from_pretrained(self.model_dir)
+
+    def train(self):
+        return self.model.train()
+
+    def eval(self):
+        return self.model.eval()
 
     def forward(self, input: Dict[str,
                                   Any]) -> Dict[str, Union[str, np.ndarray]]:
@@ -46,10 +52,12 @@ class StructBertForTokenClassification(Model):
                     }
         """
         input_ids = torch.tensor(input['input_ids']).unsqueeze(0)
-        output = self.model(input_ids)
-        logits = output.logits
+        return {**self.model(input_ids), 'text': input['text']}
+
+    def postprocess(self, input: Dict[str, Tensor],
+                    **kwargs) -> Dict[str, Tensor]:
+        logits = input['logits']
         pred = torch.argmax(logits[0], dim=-1)
         pred = pred.numpy()
-
         rst = {'predictions': pred, 'logits': logits, 'text': input['text']}
         return rst

@@ -34,6 +34,8 @@ class Tasks(object):
 
     # nlp tasks
     word_segmentation = 'word-segmentation'
+    nli = 'nli'
+    sentiment_classification = 'sentiment-classification'
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
@@ -43,6 +45,8 @@ class Tasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    dialog_modeling = 'dialog-modeling'
+    dialog_intent_prediction = 'dialog-intent-prediction'
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'
     fill_mask = 'fill-mask'

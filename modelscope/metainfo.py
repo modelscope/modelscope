@@ -16,6 +16,7 @@ class Models(object):
     palm = 'palm-v2'
     structbert = 'structbert'
     veco = 'veco'
+    space = 'space'
 
     # audio models
     sambert_hifi_16k = 'sambert-hifi-16k'
@@ -52,7 +53,11 @@ class Pipelines(object):
     word_segmentation = 'word-segmentation'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
+    sentiment_classification = 'sentiment-classification'
     fill_mask = 'fill-mask'
+    nli = 'nli'
+    dialog_intent_prediction = 'dialog-intent-prediction'
+    dialog_modeling = 'dialog-modeling'
     zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
@@ -97,6 +102,11 @@ class Preprocessors(object):
     # nlp preprocessor
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
+    token_cls_tokenizer = 'token-cls-tokenizer'
+    nli_tokenizer = 'nli-tokenizer'
+    sen_cls_tokenizer = 'sen-cls-tokenizer'
+    dialog_intent_preprocessor = 'dialog-intent-preprocessor'
+    dialog_modeling_preprocessor = 'dialog-modeling-preprocessor'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
 

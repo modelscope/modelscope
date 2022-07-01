@@ -1,5 +1,7 @@
 import os
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
+
+import torch
 
 from ...metainfo import Pipelines
 from ...models import Model
@@ -21,6 +23,7 @@ class FillMaskPipeline(Pipeline):
     def __init__(self,
                  model: Union[MaskedLanguageModelBase, str],
                  preprocessor: Optional[FillMaskPreprocessor] = None,
+                 first_sequence='sentense',
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction
 
@@ -30,12 +33,16 @@ class FillMaskPipeline(Pipeline):
         """
         fill_mask_model = model if isinstance(
             model, MaskedLanguageModelBase) else Model.from_pretrained(model)
+
         if preprocessor is None:
             preprocessor = FillMaskPreprocessor(
                 fill_mask_model.model_dir,
-                first_sequence='sentence',
+                first_sequence=first_sequence,
                 second_sequence=None)
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        fill_mask_model.eval()
+        super().__init__(
+            model=fill_mask_model, preprocessor=preprocessor, **kwargs)
+
         self.preprocessor = preprocessor
         self.config = Config.from_file(
             os.path.join(fill_mask_model.model_dir, ModelFile.CONFIGURATION))
@@ -62,6 +69,11 @@ class FillMaskPipeline(Pipeline):
                 '<unk>': ' '
             }
         }
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """process the prediction results

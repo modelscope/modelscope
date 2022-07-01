@@ -11,6 +11,8 @@ try:
     from .audio import LinearAECAndFbank
     from .multi_modal import *  # noqa F403
     from .nlp import *  # noqa F403
+    from .space.dialog_intent_prediction_preprocessor import *  # noqa F403
+    from .space.dialog_modeling_preprocessor import *  # noqa F403
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'tensorflow'":
         pass

@@ -4,7 +4,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import StructBertForTokenClassification
+from modelscope.models.nlp import SbertForTokenClassification
 from modelscope.pipelines import WordSegmentationPipeline, pipeline
 from modelscope.preprocessors import TokenClassifcationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -19,8 +19,7 @@ class WordSegmentationTest(unittest.TestCase):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = TokenClassifcationPreprocessor(cache_path)
-        model = StructBertForTokenClassification(
-            cache_path, tokenizer=tokenizer)
+        model = SbertForTokenClassification(cache_path, tokenizer=tokenizer)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)

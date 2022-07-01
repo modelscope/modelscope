@@ -16,8 +16,14 @@ class MaskedLanguageModelBase(Model):
         super().__init__(model_dir, *args, **kwargs)
         self.model = self.build_model()
 
-    def build_model():
+    def build_model(self):
         raise NotImplementedError()
+
+    def train(self):
+        return self.model.train()
+
+    def eval(self):
+        return self.model.eval()
 
     @property
     def config(self):
@@ -25,7 +31,7 @@ class MaskedLanguageModelBase(Model):
             return self.model.config
         return None
 
-    def forward(self, inputs: Dict[str, Tensor]) -> Dict[str, np.ndarray]:
+    def forward(self, input: Dict[str, Tensor]) -> Dict[str, np.ndarray]:
         """return the result by the model
 
         Args:
@@ -35,10 +41,10 @@ class MaskedLanguageModelBase(Model):
             Dict[str, np.ndarray]: results
         """
         rst = self.model(
-            input_ids=inputs['input_ids'],
-            attention_mask=inputs['attention_mask'],
-            token_type_ids=inputs['token_type_ids'])
-        return {'logits': rst['logits'], 'input_ids': inputs['input_ids']}
+            input_ids=input['input_ids'],
+            attention_mask=input['attention_mask'],
+            token_type_ids=input['token_type_ids'])
+        return {'logits': rst['logits'], 'input_ids': input['input_ids']}
 
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)

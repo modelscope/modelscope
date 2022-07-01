@@ -21,6 +21,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
+    Tasks.sentiment_classification:
+    (Pipelines.sentiment_classification,
+     'damo/nlp_structbert_sentiment-classification_chinese-base'),
+    Tasks.text_classification: ('bert-sentiment-analysis',
+                                'damo/bert-base-sst2'),
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,
@@ -30,6 +36,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.zero_shot_classification:
     (Pipelines.zero_shot_classification,
      'damo/nlp_structbert_zero-shot-classification_chinese-base'),
+    Tasks.dialog_intent_prediction:
+    (Pipelines.dialog_intent_prediction,
+     'damo/nlp_space_dialog-intent-prediction'),
+    Tasks.dialog_modeling: (Pipelines.dialog_modeling,
+                            'damo/nlp_space_dialog-modeling'),
     Tasks.image_captioning: (Pipelines.image_caption,
                              'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:

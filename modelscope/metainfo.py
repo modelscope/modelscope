@@ -29,6 +29,7 @@ class Models(object):
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
     mplug = 'mplug'
+    imagen = 'imagen-text-to-image-synthesis'
 
 
 class Pipelines(object):
@@ -71,6 +72,7 @@ class Pipelines(object):
     image_caption = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
+    text_to_image_synthesis = 'text-to-image-synthesis'
 
 
 class Trainers(object):

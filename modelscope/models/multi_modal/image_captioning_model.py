@@ -76,9 +76,10 @@ class OfaForImageCaptioning(Model):
             input = fairseq.utils.move_to_cuda(input, device=self._device)
         results, _ = self.eval_caption(self.task, self.generator, self.models,
                                        input)
+        from ...pipelines.outputs import OutputKeys
         return {
             'image_id': results[0]['image_id'],
-            'caption': results[0]['caption']
+            OutputKeys.CAPTION: results[0][OutputKeys.CAPTION]
         }
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

@@ -11,6 +11,7 @@ from ...preprocessors import NLIPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['NLIPipeline']
 
@@ -69,4 +70,4 @@ class NLIPipeline(Pipeline):
 
         cls_names = [self.model.id2label[cid] for cid in cls_ids]
 
-        return {'scores': probs, 'labels': cls_names}
+        return {OutputKeys.SCORES: probs, OutputKeys.LABELS: cls_names}

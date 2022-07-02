@@ -10,6 +10,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.utils.constant import Tasks
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 
 def audio_norm(x):
@@ -108,10 +109,10 @@ class ANSPipeline(Pipeline):
                     current_idx += stride
             else:
                 outputs = self.model(ndarray)['wav_l2'][0].cpu().numpy()
-        return {'output_pcm': outputs[:nsamples]}
+        return {OutputKeys.OUTPUT_PCM: outputs[:nsamples]}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         if 'output_path' in kwargs.keys():
-            sf.write(kwargs['output_path'], inputs['output_pcm'],
+            sf.write(kwargs['output_path'], inputs[OutputKeys.OUTPUT_PCM],
                      self.SAMPLE_RATE)
         return inputs

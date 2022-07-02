@@ -16,6 +16,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 logger = get_logger()
 
@@ -49,7 +50,7 @@ class ActionRecognitionPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         pred = self.perform_inference(input['video_data'])
         output_label = self.label_mapping[str(pred)]
-        return {'output_label': output_label}
+        return {OutputKeys.LABELS: output_label}
 
     @torch.no_grad()
     def perform_inference(self, data, max_bsz=4):

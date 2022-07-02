@@ -1,7 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
+from typing import List, Tuple, Union
 
+from modelscope.utils.import_utils import requires
 from modelscope.utils.logger import get_logger
 
 default_group = 'default'
@@ -52,9 +54,14 @@ class Registry(object):
     def _register_module(self,
                          group_key=default_group,
                          module_name=None,
-                         module_cls=None):
+                         module_cls=None,
+                         requirements=None):
         assert isinstance(group_key,
                           str), 'group_key is required and must be str'
+
+        if requirements is not None:
+            requires(module_cls, requirements)
+
         if group_key not in self._modules:
             self._modules[group_key] = dict()
 
@@ -70,23 +77,11 @@ class Registry(object):
         self._modules[group_key][module_name] = module_cls
         module_cls.group_key = group_key
 
-        if module_name in self._modules[default_group]:
-            if id(self._modules[default_group][module_name]) == id(module_cls):
-                return
-            else:
-                logger.warning(f'{module_name} is already registered in '
-                               f'{self._name}[{default_group}] and will '
-                               'be overwritten')
-                logger.warning(f'{self._modules[default_group][module_name]}'
-                               f'to {module_cls}')
-        # also register module in the default group for faster access
-        # only by module name
-        self._modules[default_group][module_name] = module_cls
-
     def register_module(self,
                         group_key: str = default_group,
                         module_name: str = None,
-                        module_cls: type = None):
+                        module_cls: type = None,
+                        requirements: Union[List, Tuple] = None):
         """ Register module
 
         Example:
@@ -110,17 +105,18 @@ class Registry(object):
                 default group name is 'default'
             module_name: Module name
             module_cls: Module class object
+            requirements: Module necessary requirements
 
         """
         if not (module_name is None or isinstance(module_name, str)):
             raise TypeError(f'module_name must be either of None, str,'
                             f'got {type(module_name)}')
-
         if module_cls is not None:
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls)
+                module_cls=module_cls,
+                requirements=requirements)
             return module_cls
 
         # if module_cls is None, should return a decorator function
@@ -128,7 +124,8 @@ class Registry(object):
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls)
+                module_cls=module_cls,
+                requirements=requirements)
             return module_cls
 
         return _register

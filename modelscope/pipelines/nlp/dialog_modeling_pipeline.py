@@ -8,6 +8,7 @@ from ...preprocessors import DialogModelingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['DialogModelingPipeline']
 
@@ -42,7 +43,6 @@ class DialogModelingPipeline(Pipeline):
             inputs['resp'])
         assert len(sys_rsp) > 2
         sys_rsp = sys_rsp[1:len(sys_rsp) - 1]
-
-        inputs['response'] = sys_rsp
+        inputs[OutputKeys.RESPONSE] = sys_rsp
 
         return inputs

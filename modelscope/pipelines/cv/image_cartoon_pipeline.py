@@ -17,6 +17,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
@@ -94,7 +95,7 @@ class ImageCartoonPipeline(Pipeline):
         landmarks = self.detect_face(img)
         if landmarks is None:
             print('No face detected!')
-            return {'output_png': None}
+            return {OutputKeys.OUTPUT_IMG: None}
 
         # background process
         pad_bg, pad_h, pad_w = padTo16x(img_brg)
@@ -143,7 +144,7 @@ class ImageCartoonPipeline(Pipeline):
 
         res = cv2.resize(res, (ori_w, ori_h), interpolation=cv2.INTER_AREA)
 
-        return {'output_png': res}
+        return {OutputKeys.OUTPUT_IMG: res}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

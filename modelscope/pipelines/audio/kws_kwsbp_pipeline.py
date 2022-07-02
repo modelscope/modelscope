@@ -5,6 +5,8 @@ import stat
 import subprocess
 from typing import Any, Dict, List
 
+import json
+
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.pipelines.base import Pipeline
@@ -39,6 +41,12 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
         self._preprocessor = preprocessor
         self._model = model
+        self._keywords = None
+
+        if 'keywords' in kwargs.keys():
+            self._keywords = kwargs['keywords']
+            print('self._keywords len: ', len(self._keywords))
+            print('self._keywords: ', self._keywords)
 
     def __call__(self, kws_type: str, wav_path: List[str]) -> Dict[str, Any]:
         assert kws_type in ['wav', 'pos_testsets', 'neg_testsets',
@@ -197,6 +205,16 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         return rst_dict
 
     def _run_with_kwsbp(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        opts: str = ''
+
+        # setting customized keywords
+        keywords_json = self._set_customized_keywords()
+        if len(keywords_json) > 0:
+            keywords_json_file = os.path.join(inputs['workspace'],
+                                              'keyword_custom.json')
+            with open(keywords_json_file, 'w') as f:
+                json.dump(keywords_json, f)
+            opts = '--keyword-custom ' + keywords_json_file
 
         if inputs['kws_set'] == 'roc':
             inputs['keyword_grammar_path'] = os.path.join(
@@ -211,7 +229,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                 ' --sample-rate=' + inputs['sample_rate'] + \
                 ' --keyword-grammar=' + inputs['keyword_grammar_path'] + \
                 ' --wave-scp=' + os.path.join(inputs['pos_data_path'], 'wave.list') + \
-                ' --num-thread=1 > ' + dump_log_path + ' 2>&1'
+                ' --num-thread=1 ' + opts + ' > ' + dump_log_path + ' 2>&1'
             os.system(kws_cmd)
 
         if inputs['kws_set'] in ['pos_testsets', 'roc']:
@@ -236,7 +254,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                     ' --sample-rate=' + inputs['sample_rate'] + \
                     ' --keyword-grammar=' + inputs['keyword_grammar_path'] + \
                     ' --wave-scp=' + wav_list_path + \
-                    ' --num-thread=1 > ' + dump_log_path + ' 2>&1'
+                    ' --num-thread=1 ' + opts + ' > ' + dump_log_path + ' 2>&1'
                 p = subprocess.Popen(kws_cmd, shell=True)
                 process.append(p)
                 j += 1
@@ -268,7 +286,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                     ' --sample-rate=' + inputs['sample_rate'] + \
                     ' --keyword-grammar=' + inputs['keyword_grammar_path'] + \
                     ' --wave-scp=' + wav_list_path + \
-                    ' --num-thread=1 > ' + dump_log_path + ' 2>&1'
+                    ' --num-thread=1 ' + opts + ' > ' + dump_log_path + ' 2>&1'
                 p = subprocess.Popen(kws_cmd, shell=True)
                 process.append(p)
                 j += 1
@@ -447,3 +465,29 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             threshold_cur += step
 
         return output
+
+    def _set_customized_keywords(self) -> Dict[str, Any]:
+        if self._keywords is not None:
+            word_list_inputs = self._keywords
+            word_list = []
+            for i in range(len(word_list_inputs)):
+                key = word_list_inputs[i]
+                new_item = {}
+                if key.__contains__('keyword'):
+                    name = key['keyword']
+                    new_name: str = ''
+                    for n in range(0, len(name), 1):
+                        new_name += name[n]
+                        new_name += ' '
+                    new_name = new_name.strip()
+                    new_item['name'] = new_name
+
+                    if key.__contains__('threshold'):
+                        threshold1: float = key['threshold']
+                        new_item['threshold1'] = threshold1
+
+                word_list.append(new_item)
+            out = {'word_list': word_list}
+            return out
+        else:
+            return ''

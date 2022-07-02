@@ -8,6 +8,7 @@ from ...preprocessors import DialogIntentPredictionPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['DialogIntentPredictionPipeline']
 
@@ -44,9 +45,9 @@ class DialogIntentPredictionPipeline(Pipeline):
         pos = np.where(pred == np.max(pred))
 
         result = {
-            'prediction': pred,
-            'label_pos': pos[0],
-            'label': self.categories[pos[0][0]]
+            OutputKeys.PREDICTION: pred,
+            OutputKeys.LABEL_POS: pos[0],
+            OutputKeys.LABEL: self.categories[pos[0][0]]
         }
 
         return result

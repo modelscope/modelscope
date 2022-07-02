@@ -16,6 +16,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 from .ocr_utils import model_resnet_mutex_v4_linewithchar, ops, utils
 
 if tf.__version__ >= '2.0':
@@ -174,5 +175,5 @@ class OCRDetectionPipeline(Pipeline):
         dt_nms = utils.nms_python(dt_n9)
         dt_polygons = np.array([o[:8] for o in dt_nms])
 
-        result = {'det_polygons': dt_polygons}
+        result = {OutputKeys.POLYGONS: dt_polygons}
         return result

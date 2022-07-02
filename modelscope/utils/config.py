@@ -17,9 +17,10 @@ from typing import Dict
 import addict
 from yapf.yapflib.yapf_api import FormatCode
 
+from modelscope.utils.import_utils import (import_modules,
+                                           import_modules_from_file,
+                                           validate_py_syntax)
 from modelscope.utils.logger import get_logger
-from modelscope.utils.pymod import (import_modules, import_modules_from_file,
-                                    validate_py_syntax)
 
 if platform.system() == 'Windows':
     import regex as re  # type: ignore

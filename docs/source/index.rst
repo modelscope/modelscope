@@ -13,12 +13,15 @@ ModelScope doc
 
    quick_start.md
    develop.md
+   faq.md
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
 
    tutorials/index
+
+
 
 .. toctree::
    :maxdepth: 2

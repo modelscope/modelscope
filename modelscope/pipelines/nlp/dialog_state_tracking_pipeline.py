@@ -6,6 +6,7 @@ from ...preprocessors import DialogStateTrackingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
 from ..builder import PIPELINES
+from ..outputs import OutputKeys
 
 __all__ = ['DialogStateTrackingPipeline']
 
@@ -53,7 +54,7 @@ class DialogStateTrackingPipeline(Pipeline):
                                 _outputs[5], unique_ids, input_ids_unmasked,
                                 values, inform, prefix, ds)
 
-        return {'dialog_states': ds}
+        return {OutputKeys.DIALOG_STATES: ds}
 
 
 def predict_and_format(config, tokenizer, features, per_slot_class_logits,

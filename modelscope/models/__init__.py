@@ -16,7 +16,8 @@ try:
     from .audio.kws import GenericKeyWordSpotting
     from .multi_modal import OfaForImageCaptioning
     from .nlp import (BertForMaskedLM, BertForSequenceClassification,
-                      SbertForNLI, SbertForSentenceSimilarity,
+                      CsanmtForTranslation, SbertForNLI,
+                      SbertForSentenceSimilarity,
                       SbertForSentimentClassification,
                       SbertForTokenClassification,
                       SbertForZeroShotClassification, SpaceForDialogIntent,

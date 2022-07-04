@@ -16,6 +16,7 @@ class Models(object):
     palm = 'palm-v2'
     structbert = 'structbert'
     veco = 'veco'
+    translation = 'csanmt-translation'
     space = 'space'
 
     # audio models
@@ -56,6 +57,7 @@ class Pipelines(object):
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
     fill_mask = 'fill-mask'
+    csanmt_translation = 'csanmt-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'

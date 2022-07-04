@@ -21,6 +21,7 @@ class OutputKeys(object):
     TRANSLATION = 'translation'
     RESPONSE = 'response'
     PREDICTION = 'prediction'
+    VIDEO_EMBEDDING = 'video_embedding'
 
 
 TASK_OUTPUTS = {
@@ -89,6 +90,12 @@ TASK_OUTPUTS = {
     #       [x1, y1, x2, y2, x3, y3, x4, y4]
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
+
+    # video embedding result for single video
+    # {
+    #   "video_embedding": np.array with shape [D],
+    # }
+    Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
 
     # ============ nlp tasks ===================
 

@@ -31,6 +31,7 @@ class Tasks(object):
     image_matting = 'image-matting'
     ocr_detection = 'ocr-detection'
     action_recognition = 'action-recognition'
+    video_embedding = 'video-embedding'
 
     # nlp tasks
     word_segmentation = 'word-segmentation'

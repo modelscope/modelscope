@@ -49,6 +49,7 @@ class Pipelines(object):
     ocr_detection = 'resnet18-ocr-detection'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
+    cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

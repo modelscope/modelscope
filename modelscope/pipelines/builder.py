@@ -21,12 +21,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.translation: (Pipelines.csanmt_translation,
+                        'damo/nlp_csanmt_translation'),
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
     Tasks.sentiment_classification:
     (Pipelines.sentiment_classification,
      'damo/nlp_structbert_sentiment-classification_chinese-base'),
-    Tasks.text_classification: ('bert-sentiment-analysis',
-                                'damo/bert-base-sst2'),
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,

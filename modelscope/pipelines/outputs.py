@@ -18,6 +18,7 @@ class OutputKeys(object):
     OUTPUT_PCM = 'output_pcm'
     IMG_EMBEDDING = 'img_embedding'
     TEXT_EMBEDDING = 'text_embedding'
+    TRANSLATION = 'translation'
     RESPONSE = 'response'
     PREDICTION = 'prediction'
 
@@ -122,6 +123,12 @@ TASK_OUTPUTS = {
     #       "labels": "1",
     #   }
     Tasks.sentence_similarity: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # translation result for a source sentence
+    #   {
+    #       "translation": “北京是中国的首都”
+    #   }
+    Tasks.translation: [OutputKeys.TRANSLATION],
 
     # sentiment classification result for single sample
     #   {

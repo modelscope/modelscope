@@ -1,7 +1,6 @@
 import os
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
-                                      DEFAULT_MODELSCOPE_GITLAB_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
@@ -32,8 +31,3 @@ def get_endpoint():
     modelscope_domain = os.getenv('MODELSCOPE_DOMAIN',
                                   DEFAULT_MODELSCOPE_DOMAIN)
     return MODELSCOPE_URL_SCHEME + modelscope_domain
-
-
-def get_gitlab_domain():
-    return os.getenv('MODELSCOPE_GITLAB_DOMAIN',
-                     DEFAULT_MODELSCOPE_GITLAB_DOMAIN)

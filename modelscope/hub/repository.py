@@ -6,7 +6,7 @@ from modelscope.utils.logger import get_logger
 from .api import ModelScopeConfig
 from .constants import MODELSCOPE_URL_SCHEME
 from .git import GitCommandWrapper
-from .utils.utils import get_gitlab_domain
+from .utils.utils import get_endpoint
 
 logger = get_logger()
 
@@ -65,7 +65,7 @@ class Repository:
             git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
 
     def _get_model_id_url(self, model_id):
-        url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}.git'
+        url = f'{get_endpoint()}/{model_id}.git'
         return url
 
     def _get_remote_url(self):

@@ -15,8 +15,7 @@ from ..utils.constant import DownloadMode
 from .constants import MODELSCOPE_URL_SCHEME
 from .errors import (InvalidParameter, NotExistError, datahub_raise_on_error,
                      is_ok, raise_on_error)
-from .utils.utils import (get_endpoint, get_gitlab_domain,
-                          model_id_to_group_owner_name)
+from .utils.utils import get_endpoint, model_id_to_group_owner_name
 
 logger = get_logger()
 
@@ -109,7 +108,7 @@ class HubApi:
             cookies=cookies)
         r.raise_for_status()
         raise_on_error(r.json())
-        model_repo_url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}'
+        model_repo_url = f'{get_endpoint()}/{model_id}'
         return model_repo_url
 
     def delete_model(self, model_id):

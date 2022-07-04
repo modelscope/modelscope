@@ -63,15 +63,16 @@ class SpaceForDialogIntent(Model):
         """return the result by the model
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            input (Dict[str, Tensor]): the preprocessed data
 
         Returns:
-            Dict[str, np.ndarray]: results
+            Dict[str, Tensor]: results
                 Example:
                     {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
+                        'pred': array([2.62349960e-03 4.12110658e-03 4.12748595e-05 3.77560973e-05
+ 1.08599677e-04 1.72710388e-05 2.95618793e-05 1.93638436e-04
+ 6.45841064e-05 1.15997791e-04 5.11605394e-05 9.87020373e-01
+ 2.66957268e-05 4.72324500e-05 9.74208378e-05], dtype=float32)
                     }
         """
         import numpy as np

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
+from typing import List
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model, SpaceForDialogStateTracking
@@ -75,23 +76,10 @@ class DialogStateTrackingTest(unittest.TestCase):
         'User-8': 'Thank you, goodbye',
     }]
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run(self):
-        cache_path = snapshot_download(self.model_id)
-
-        model = SpaceForDialogStateTracking(cache_path)
-        preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
-        pipelines = [
-            DialogStateTrackingPipeline(
-                model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.dialog_state_tracking,
-                model=model,
-                preprocessor=preprocessor)
-        ]
-
-        pipelines_len = len(pipelines)
+    def tracking_and_print_dialog_states(
+            self, pipelines: List[DialogStateTrackingPipeline]):
         import json
+        pipelines_len = len(pipelines)
         history_states = [{}]
         utter = {}
         for step, item in enumerate(self.test_case):
@@ -105,6 +93,22 @@ class DialogStateTrackingTest(unittest.TestCase):
             print(json.dumps(result))
 
             history_states.extend([result['dialog_states'], {}])
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_by_direct_model_download(self):
+        cache_path = snapshot_download(self.model_id)
+
+        model = SpaceForDialogStateTracking(cache_path)
+        preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
+        pipelines = [
+            DialogStateTrackingPipeline(
+                model=model, preprocessor=preprocessor),
+            pipeline(
+                task=Tasks.dialog_state_tracking,
+                model=model,
+                preprocessor=preprocessor)
+        ]
+        self.tracking_and_print_dialog_states(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
@@ -120,21 +124,19 @@ class DialogStateTrackingTest(unittest.TestCase):
                 preprocessor=preprocessor)
         ]
 
-        pipelines_len = len(pipelines)
-        import json
-        history_states = [{}]
-        utter = {}
-        for step, item in enumerate(self.test_case):
-            utter.update(item)
-            result = pipelines[step % pipelines_len]({
-                'utter':
-                utter,
-                'history_states':
-                history_states
-            })
-            print(json.dumps(result))
+        self.tracking_and_print_dialog_states(pipelines)
 
-            history_states.extend([result['dialog_states'], {}])
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name(self):
+        pipelines = [
+            pipeline(task=Tasks.dialog_state_tracking, model=self.model_id)
+        ]
+        self.tracking_and_print_dialog_states(pipelines)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_default_model(self):
+        pipelines = [pipeline(task=Tasks.dialog_state_tracking)]
+        self.tracking_and_print_dialog_states(pipelines)
 
 
 if __name__ == '__main__':

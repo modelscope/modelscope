@@ -1,8 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from ...metainfo import Pipelines
+from ...models import Model
 from ...models.nlp import SpaceForDialogIntent
 from ...preprocessors import DialogIntentPredictionPreprocessor
 from ...utils.constant import Tasks
@@ -18,17 +19,22 @@ __all__ = ['DialogIntentPredictionPipeline']
     module_name=Pipelines.dialog_intent_prediction)
 class DialogIntentPredictionPipeline(Pipeline):
 
-    def __init__(self, model: SpaceForDialogIntent,
-                 preprocessor: DialogIntentPredictionPreprocessor, **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+    def __init__(self,
+                 model: Union[SpaceForDialogIntent, str],
+                 preprocessor: DialogIntentPredictionPreprocessor = None,
+                 **kwargs):
+        """use `model` and `preprocessor` to create a dialog intent prediction pipeline
 
         Args:
-            model (SequenceClassificationModel): a model instance
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            model (SpaceForDialogIntent): a model instance
+            preprocessor (DialogIntentPredictionPreprocessor): a preprocessor instance
         """
-
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        model = model if isinstance(
+            model, SpaceForDialogIntent) else Model.from_pretrained(model)
+        if preprocessor is None:
+            preprocessor = DialogIntentPredictionPreprocessor(model.model_dir)
         self.model = model
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.categories = preprocessor.categories
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:

@@ -138,13 +138,6 @@ TASK_OUTPUTS = {
     #   }
     Tasks.sentiment_classification: [OutputKeys.SCORES, OutputKeys.LABELS],
 
-    # sentiment classification result for single sample
-    #   {
-    #       "labels": ["happy", "sad", "calm", "angry"],
-    #       "scores": [0.9, 0.1, 0.05, 0.05]
-    #   }
-    Tasks.sentiment_classification: ['scores', 'labels'],
-
     # zero-shot classification result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]

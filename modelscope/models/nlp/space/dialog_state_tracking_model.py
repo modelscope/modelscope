@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict
 
 from modelscope.utils.constant import Tasks
+from ....metainfo import Models
 from ....utils.nlp.space.utils_dst import batch_to_device
 from ...base import Model, Tensor
 from ...builder import MODELS
@@ -9,7 +10,7 @@ from ...builder import MODELS
 __all__ = ['SpaceForDialogStateTracking']
 
 
-@MODELS.register_module(Tasks.dialog_state_tracking, module_name=r'space')
+@MODELS.register_module(Tasks.dialog_state_tracking, module_name=Models.space)
 class SpaceForDialogStateTracking(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -17,8 +18,6 @@ class SpaceForDialogStateTracking(Model):
 
         Args:
             model_dir (str): the model path.
-            model_cls (Optional[Any], optional): model loader, if None, use the
-                default loader to load model weights, by default None.
         """
 
         super().__init__(model_dir, *args, **kwargs)
@@ -27,7 +26,6 @@ class SpaceForDialogStateTracking(Model):
         self.model_dir = model_dir
 
         self.config = SpaceConfig.from_pretrained(self.model_dir)
-        # self.model = SpaceForDST(self.config)
         self.model = SpaceForDST.from_pretrained(self.model_dir)
         self.model.to(self.config.device)
 
@@ -35,15 +33,20 @@ class SpaceForDialogStateTracking(Model):
         """return the result by the model
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            input (Dict[str, Tensor]): the preprocessed data
 
         Returns:
-            Dict[str, np.ndarray]: results
+            Dict[str, Tensor]: results
                 Example:
                     {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
+                        'inputs': dict(input_ids, input_masks,start_pos), # tracking states
+                        'outputs': dict(slots_logits),
+                        'unique_ids': str(test-example.json-0), # default value
+                        'input_ids_unmasked': array([101, 7632, 1010,0,0,0])
+                        'values': array([{'taxi-leaveAt': 'none', 'taxi-destination': 'none'}]),
+                        'inform':  array([{'taxi-leaveAt': 'none', 'taxi-destination': 'none'}]),
+                        'prefix': str('final'), #default value
+                        'ds':  array([{'taxi-leaveAt': 'none', 'taxi-destination': 'none'}])
                     }
         """
         import numpy as np
@@ -87,8 +90,6 @@ class SpaceForDialogStateTracking(Model):
                 for i, u in enumerate(updates):
                     if u != 0:
                         diag_state[slot][i] = u
-
-            # print(outputs)
 
         return {
             'inputs': inputs,

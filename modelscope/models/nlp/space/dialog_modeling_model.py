@@ -62,15 +62,17 @@ class SpaceForDialogModeling(Model):
         """return the result by the model
 
         Args:
-            input (Dict[str, Any]): the preprocessed data
+            input (Dict[str, Tensor]): the preprocessed data
 
         Returns:
-            Dict[str, np.ndarray]: results
+            Dict[str, Tensor]: results
                 Example:
                     {
-                        'predictions': array([1]), # lable 0-negative 1-positive
-                        'probabilities': array([[0.11491239, 0.8850876 ]], dtype=float32),
-                        'logits': array([[-0.53860897,  1.5029076 ]], dtype=float32) # true value
+                        'labels': array([1,192,321,12]), # lable
+                        'resp': array([293,1023,123,1123]), #vocab label for response
+                        'bspn': array([123,321,2,24,1 ]),
+                        'aspn': array([47,8345,32,29,1983]),
+                        'db': array([19, 24, 20]),
                     }
         """
 

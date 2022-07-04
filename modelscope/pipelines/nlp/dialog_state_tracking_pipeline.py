@@ -1,7 +1,7 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from ...metainfo import Pipelines
-from ...models import SpaceForDialogStateTracking
+from ...models import Model, SpaceForDialogStateTracking
 from ...preprocessors import DialogStateTrackingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
@@ -15,17 +15,26 @@ __all__ = ['DialogStateTrackingPipeline']
     Tasks.dialog_state_tracking, module_name=Pipelines.dialog_state_tracking)
 class DialogStateTrackingPipeline(Pipeline):
 
-    def __init__(self, model: SpaceForDialogStateTracking,
-                 preprocessor: DialogStateTrackingPreprocessor, **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+    def __init__(self,
+                 model: Union[SpaceForDialogStateTracking, str],
+                 preprocessor: DialogStateTrackingPreprocessor = None,
+                 **kwargs):
+        """use `model` and `preprocessor` to create a dialog state tracking pipeline for
+        observation of dialog states tracking after many turns of open domain dialogue
 
         Args:
-            model (SequenceClassificationModel): a model instance
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            model (SpaceForDialogStateTracking): a model instance
+            preprocessor (DialogStateTrackingPreprocessor): a preprocessor instance
         """
 
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        model = model if isinstance(
+            model,
+            SpaceForDialogStateTracking) else Model.from_pretrained(model)
         self.model = model
+        if preprocessor is None:
+            preprocessor = DialogStateTrackingPreprocessor(model.model_dir)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
         self.tokenizer = preprocessor.tokenizer
         self.config = preprocessor.config
 
@@ -46,9 +55,7 @@ class DialogStateTrackingPipeline(Pipeline):
         values = inputs['values']
         inform = inputs['inform']
         prefix = inputs['prefix']
-        # ds = {slot: 'none' for slot in self.config.dst_slot_list}
         ds = inputs['ds']
-
         ds = predict_and_format(self.config, self.tokenizer, _inputs,
                                 _outputs[2], _outputs[3], _outputs[4],
                                 _outputs[5], unique_ids, input_ids_unmasked,

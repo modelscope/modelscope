@@ -26,8 +26,7 @@ class FileTest(unittest.TestCase):
 
     def test_http_storage(self):
         storage = HTTPStorage()
-        url = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com' \
-            '/data/test/data.txt'
+        url = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/texts/data.txt'
         content = 'this is test data'
         self.assertEqual(content.encode('utf8'), storage.read(url))
         self.assertEqual(content, storage.read_text(url))
@@ -43,8 +42,7 @@ class FileTest(unittest.TestCase):
             storage.read(url + 'df')
 
     def test_file(self):
-        url = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com'\
-            '/data/test/data.txt'
+        url = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/texts/data.txt'
         content = 'this is test data'
         self.assertEqual(content.encode('utf8'), File.read(url))
 

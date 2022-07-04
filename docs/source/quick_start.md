@@ -25,7 +25,7 @@ pip install --upgrade tensorflow
 ### pip安装
 执行如下命令：
 ```shell
-pip install model_scope[all] -f https://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/release/maas/repo.html
+pip install model_scope[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/0.2/repo.html
 ```
 ### 使用源码安装
 适合本地开发调试使用，修改源码后可以直接执行

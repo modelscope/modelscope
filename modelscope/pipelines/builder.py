@@ -57,6 +57,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),
+    Tasks.text_to_image_synthesis:
+    (Pipelines.text_to_image_synthesis,
+     'damo/cv_imagen_text-to-image-synthesis_tiny')
 }
 
 

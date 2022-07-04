@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Input
@@ -23,7 +23,7 @@ class TextToImageSynthesisPipeline(Pipeline):
             pipe_model = model
         else:
             raise NotImplementedError(
-                f'execpting a Model instance or str, but get {type(model)}.')
+                f'expecting a Model instance or str, but get {type(model)}.')
 
         super().__init__(model=pipe_model)
 

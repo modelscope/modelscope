@@ -2,9 +2,6 @@ import math
 import os.path as osp
 from typing import Any, Dict
 
-import cv2
-import numpy as np
-import PIL
 import torch
 
 from modelscope.metainfo import Pipelines

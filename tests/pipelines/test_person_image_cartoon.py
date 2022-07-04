@@ -16,9 +16,7 @@ class ImageCartoonTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_unet_person-image-cartoon_compound-models'
-        self.test_image = \
-            'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com' \
-            '/data/test/maas/image_carton/test.png'
+        self.test_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_cartoon.png'
 
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)

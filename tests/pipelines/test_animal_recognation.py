@@ -12,7 +12,7 @@ class MultiModalFeatureTest(unittest.TestCase):
         animal_recog = pipeline(
             Tasks.image_classification,
             model='damo/cv_resnest101_animal_recognition')
-        result = animal_recog('data/test/images/image1.jpg')
+        result = animal_recog('data/test/images/dogs.jpg')
         print(result)
 
 

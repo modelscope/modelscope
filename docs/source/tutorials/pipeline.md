@@ -54,9 +54,8 @@ print(word_seg(input))
 下面以一个图像任务：人像抠图（'image-matting'）为例，进一步说明pipeline的用法
 ```python
 import cv2
-import os.path as osp
 from modelscope.pipelines import pipeline
 img_matting = pipeline('image-matting')
-result = img_matting('http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png')
+result = img_matting('https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matting.png')
 cv2.imwrite('result.png', result['output_png'])
 ```

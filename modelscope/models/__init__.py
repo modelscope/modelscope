@@ -15,12 +15,14 @@ except ModuleNotFoundError as e:
 try:
     from .audio.kws import GenericKeyWordSpotting
     from .multi_modal import OfaForImageCaptioning
-    from .nlp import (
-        BertForMaskedLM, BertForSequenceClassification, CsanmtForTranslation,
-        SbertForNLI, SbertForSentenceSimilarity,
-        SbertForSentimentClassification, SbertForTokenClassification,
-        SbertForZeroShotClassification, SpaceForDialogIntent,
-        SpaceForDialogModeling, StructBertForMaskedLM, VecoForMaskedLM)
+    from .nlp import (BertForMaskedLM, BertForSequenceClassification,
+                      CsanmtForTranslation, SbertForNLI,
+                      SbertForSentenceSimilarity,
+                      SbertForSentimentClassification,
+                      SbertForTokenClassification,
+                      SbertForZeroShotClassification, SpaceForDialogIntent,
+                      SpaceForDialogModeling, SpaceForDialogStateTracking,
+                      StructBertForMaskedLM, VecoForMaskedLM)
     from .audio.ans.frcrn import FRCRNModel
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'pytorch'":

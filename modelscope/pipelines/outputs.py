@@ -21,6 +21,7 @@ class OutputKeys(object):
     TRANSLATION = 'translation'
     RESPONSE = 'response'
     PREDICTION = 'prediction'
+    DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
 
 
@@ -158,6 +159,7 @@ TASK_OUTPUTS = {
     #   }
     Tasks.nli: [OutputKeys.SCORES, OutputKeys.LABELS],
 
+    # dialog intent prediction result for single sample
     # {'pred': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
     #        1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04,
     #        6.45841064e-05, 1.15997791e-04, 5.11605394e-05, 9.87020373e-01,
@@ -181,8 +183,46 @@ TASK_OUTPUTS = {
     Tasks.dialog_intent_prediction:
     [OutputKeys.PREDICTION, OutputKeys.LABEL_POS, OutputKeys.LABEL],
 
+    # dialog modeling prediction result for single sample
     # sys : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']
     Tasks.dialog_modeling: [OutputKeys.RESPONSE],
+
+    # dialog state tracking result for single sample
+    # {
+    #     "dialog_states": {
+    #         "taxi-leaveAt": "none",
+    #         "taxi-destination": "none",
+    #         "taxi-departure": "none",
+    #         "taxi-arriveBy": "none",
+    #         "restaurant-book_people": "none",
+    #         "restaurant-book_day": "none",
+    #         "restaurant-book_time": "none",
+    #         "restaurant-food": "none",
+    #         "restaurant-pricerange": "none",
+    #         "restaurant-name": "none",
+    #         "restaurant-area": "none",
+    #         "hotel-book_people": "none",
+    #         "hotel-book_day": "none",
+    #         "hotel-book_stay": "none",
+    #         "hotel-name": "none",
+    #         "hotel-area": "none",
+    #         "hotel-parking": "none",
+    #         "hotel-pricerange": "cheap",
+    #         "hotel-stars": "none",
+    #         "hotel-internet": "none",
+    #         "hotel-type": "true",
+    #         "attraction-type": "none",
+    #         "attraction-name": "none",
+    #         "attraction-area": "none",
+    #         "train-book_people": "none",
+    #         "train-leaveAt": "none",
+    #         "train-destination": "none",
+    #         "train-day": "none",
+    #         "train-arriveBy": "none",
+    #         "train-departure": "none"
+    #     }
+    # }
+    Tasks.dialog_state_tracking: [OutputKeys.DIALOG_STATES],
 
     # ============ audio tasks ===================
 

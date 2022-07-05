@@ -18,7 +18,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
     ]
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run(self):
+    def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
         model = SpaceForDialogIntent(
@@ -53,6 +53,20 @@ class DialogIntentPredictionTest(unittest.TestCase):
                 preprocessor=preprocessor)
         ]
 
+        for my_pipeline, item in list(zip(pipelines, self.test_case)):
+            print(my_pipeline(item))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name(self):
+        pipelines = [
+            pipeline(task=Tasks.dialog_intent_prediction, model=self.model_id)
+        ]
+        for my_pipeline, item in list(zip(pipelines, self.test_case)):
+            print(my_pipeline(item))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_default_model(self):
+        pipelines = [pipeline(task=Tasks.dialog_intent_prediction)]
         for my_pipeline, item in list(zip(pipelines, self.test_case)):
             print(my_pipeline(item))
 

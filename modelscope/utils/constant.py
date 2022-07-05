@@ -48,6 +48,7 @@ class Tasks(object):
     text_generation = 'text-generation'
     dialog_modeling = 'dialog-modeling'
     dialog_intent_prediction = 'dialog-intent-prediction'
+    dialog_state_tracking = 'dialog-state-tracking'
     table_question_answering = 'table-question-answering'
     feature_extraction = 'feature-extraction'
     fill_mask = 'fill-mask'

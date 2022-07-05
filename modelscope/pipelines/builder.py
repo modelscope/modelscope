@@ -41,6 +41,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_space_dialog-intent-prediction'),
     Tasks.dialog_modeling: (Pipelines.dialog_modeling,
                             'damo/nlp_space_dialog-modeling'),
+    Tasks.dialog_state_tracking: (Pipelines.dialog_state_tracking,
+                                  'damo/nlp_space_dialog-state-tracking'),
     Tasks.image_captioning: (Pipelines.image_caption,
                              'damo/ofa_image-caption_coco_large_en'),
     Tasks.image_generation:

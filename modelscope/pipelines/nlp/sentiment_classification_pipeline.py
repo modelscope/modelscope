@@ -74,5 +74,4 @@ class SentimentClassificationPipeline(Pipeline):
         probs = probs[cls_ids].tolist()
 
         cls_names = [self.model.id2label[cid] for cid in cls_ids]
-
         return {OutputKeys.SCORES: probs, OutputKeys.LABELS: cls_names}

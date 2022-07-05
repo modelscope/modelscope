@@ -5,3 +5,4 @@ pycocoevalcap>=1.2
 pycocotools>=2.0.4
 rouge_score
 timm
+torchvision

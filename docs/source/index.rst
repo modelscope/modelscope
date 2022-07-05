@@ -29,15 +29,15 @@ ModelScope doc
 
    change_log.md
 
-.. toctree::
-   :maxdepth: 10
-   :caption: API Doc
+.. .. toctree::
+..    :maxdepth: 10
+..    :caption: API Doc
 
-   api/modelscope.preprocessors
-   api/modelscope.models
-   api/modelscope.pipelines
-   api/modelscope.fileio
-   api/modelscope.utils
+..    api/modelscope.preprocessors
+..    api/modelscope.models
+..    api/modelscope.pipelines
+..    api/modelscope.fileio
+..    api/modelscope.utils
 
 
 Indices and tables

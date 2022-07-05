@@ -1,3 +1,7 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
+from modelscope.utils.error import TENSORFLOW_IMPORT_ERROR
+
 try:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recog_pipeline import AnimalRecogPipeline
@@ -14,6 +18,8 @@ try:
     from .ocr_detection_pipeline import OCRDetectionPipeline
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'tensorflow'":
-        pass
+        print(
+            TENSORFLOW_IMPORT_ERROR.format(
+                'image-cartoon image-matting ocr-detection'))
     else:
         raise ModuleNotFoundError(e)

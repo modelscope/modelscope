@@ -18,6 +18,12 @@ import json
 from packaging import version
 
 from modelscope.utils.constant import Fields
+from modelscope.utils.error import (PROTOBUF_IMPORT_ERROR,
+                                    PYTORCH_IMPORT_ERROR, SCIPY_IMPORT_ERROR,
+                                    SENTENCEPIECE_IMPORT_ERROR,
+                                    SKLEARN_IMPORT_ERROR,
+                                    TENSORFLOW_IMPORT_ERROR, TIMM_IMPORT_ERROR,
+                                    TOKENIZERS_IMPORT_ERROR)
 from modelscope.utils.logger import get_logger
 
 if sys.version_info < (3, 8):
@@ -111,18 +117,26 @@ ENV_VARS_TRUE_VALUES = {'1', 'ON', 'YES', 'TRUE'}
 ENV_VARS_TRUE_AND_AUTO_VALUES = ENV_VARS_TRUE_VALUES.union({'AUTO'})
 USE_TF = os.environ.get('USE_TF', 'AUTO').upper()
 USE_TORCH = os.environ.get('USE_TORCH', 'AUTO').upper()
+
 _torch_version = 'N/A'
 if USE_TORCH in ENV_VARS_TRUE_AND_AUTO_VALUES and USE_TF not in ENV_VARS_TRUE_VALUES:
     _torch_available = importlib.util.find_spec('torch') is not None
     if _torch_available:
         try:
             _torch_version = importlib_metadata.version('torch')
-            logger.info(f'PyTorch version {_torch_version} available.')
+            logger.info(f'PyTorch version {_torch_version} Found.')
         except importlib_metadata.PackageNotFoundError:
             _torch_available = False
 else:
     logger.info('Disabling PyTorch because USE_TF is set')
     _torch_available = False
+
+_timm_available = importlib.util.find_spec('timm') is not None
+try:
+    _timm_version = importlib_metadata.version('timm')
+    logger.debug(f'Successfully imported timm version {_timm_version}')
+except importlib_metadata.PackageNotFoundError:
+    _timm_available = False
 
 _tf_version = 'N/A'
 if USE_TF in ENV_VARS_TRUE_AND_AUTO_VALUES and USE_TORCH not in ENV_VARS_TRUE_VALUES:
@@ -153,17 +167,10 @@ if USE_TF in ENV_VARS_TRUE_AND_AUTO_VALUES and USE_TORCH not in ENV_VARS_TRUE_VA
         if version.parse(_tf_version) < version.parse('2'):
             pass
         else:
-            logger.info(f'TensorFlow version {_tf_version} available.')
+            logger.info(f'TensorFlow version {_tf_version} Found.')
 else:
     logger.info('Disabling Tensorflow because USE_TORCH is set')
     _tf_available = False
-
-_timm_available = importlib.util.find_spec('timm') is not None
-try:
-    _timm_version = importlib_metadata.version('timm')
-    logger.debug(f'Successfully imported timm version {_timm_version}')
-except importlib_metadata.PackageNotFoundError:
-    _timm_available = False
 
 
 def is_scipy_available():
@@ -210,68 +217,6 @@ def is_torch_cuda_available():
 def is_tf_available():
     return _tf_available
 
-
-# docstyle-ignore
-PROTOBUF_IMPORT_ERROR = """
-{0} requires the protobuf library but it was not found in your environment. Checkout the instructions on the
-installation page of its repo: https://github.com/protocolbuffers/protobuf/tree/master/python#installation and
-follow the ones that match your environment.
-"""
-
-# docstyle-ignore
-SENTENCEPIECE_IMPORT_ERROR = """
-{0} requires the SentencePiece library but it was not found in your environment. Checkout the instructions on the
-installation page of its repo: https://github.com/google/sentencepiece#installation and follow the ones
-that match your environment.
-"""
-
-# docstyle-ignore
-SKLEARN_IMPORT_ERROR = """
-{0} requires the scikit-learn library but it was not found in your environment. You can install it with:
-```
-pip install -U scikit-learn
-```
-In a notebook or a colab, you can install it by executing a cell with
-```
-!pip install -U scikit-learn
-```
-"""
-
-# docstyle-ignore
-TENSORFLOW_IMPORT_ERROR = """
-{0} requires the TensorFlow library but it was not found in your environment. Checkout the instructions on the
-installation page: https://www.tensorflow.org/install and follow the ones that match your environment.
-"""
-
-# docstyle-ignore
-TIMM_IMPORT_ERROR = """
-{0} requires the timm library but it was not found in your environment. You can install it with pip:
-`pip install timm`
-"""
-
-# docstyle-ignore
-TOKENIZERS_IMPORT_ERROR = """
-{0} requires the 🤗 Tokenizers library but it was not found in your environment. You can install it with:
-```
-pip install tokenizers
-```
-In a notebook or a colab, you can install it by executing a cell with
-```
-!pip install tokenizers
-```
-"""
-
-# docstyle-ignore
-PYTORCH_IMPORT_ERROR = """
-{0} requires the PyTorch library but it was not found in your environment. Checkout the instructions on the
-installation page: https://pytorch.org/get-started/locally/ and follow the ones that match your environment.
-"""
-
-# docstyle-ignore
-SCIPY_IMPORT_ERROR = """
-{0} requires the scipy library but it was not found in your environment. You can install it with pip:
-`pip install scipy`
-"""
 
 REQUIREMENTS_MAAPING = OrderedDict([
     ('protobuf', (is_protobuf_available, PROTOBUF_IMPORT_ERROR)),

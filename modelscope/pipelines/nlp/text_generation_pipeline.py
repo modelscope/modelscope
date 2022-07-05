@@ -22,11 +22,11 @@ class TextGenerationPipeline(Pipeline):
                  model: Union[PalmForTextGeneration, str],
                  preprocessor: Optional[TextGenerationPreprocessor] = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+        """use `model` and `preprocessor` to create a nlp text generation pipeline for prediction
 
         Args:
-            model (SequenceClassificationModel): a model instance
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            model (PalmForTextGeneration): a model instance
+            preprocessor (TextGenerationPreprocessor): a preprocessor instance
         """
         model = model if isinstance(
             model, PalmForTextGeneration) else Model.from_pretrained(model)

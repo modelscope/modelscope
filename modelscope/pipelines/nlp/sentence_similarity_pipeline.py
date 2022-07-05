@@ -6,7 +6,7 @@ import torch
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SbertForSentenceSimilarity
-from ...preprocessors import SequenceClassificationPreprocessor
+from ...preprocessors import SentenceSimilarityPreprocessor
 from ...utils.constant import Tasks
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
@@ -21,7 +21,7 @@ class SentenceSimilarityPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: SequenceClassificationPreprocessor = None,
+                 preprocessor: SentenceSimilarityPreprocessor = None,
                  first_sequence='first_sequence',
                  second_sequence='second_sequence',
                  **kwargs):
@@ -29,7 +29,7 @@ class SentenceSimilarityPipeline(Pipeline):
 
         Args:
             model (SbertForSentenceSimilarity): a model instance
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            preprocessor (SentenceSimilarityPreprocessor): a preprocessor instance
         """
         assert isinstance(model, str) or isinstance(model, SbertForSentenceSimilarity), \
             'model must be a single str or SbertForSentenceSimilarity'
@@ -37,7 +37,7 @@ class SentenceSimilarityPipeline(Pipeline):
             model,
             SbertForSentenceSimilarity) else Model.from_pretrained(model)
         if preprocessor is None:
-            preprocessor = SequenceClassificationPreprocessor(
+            preprocessor = SentenceSimilarityPreprocessor(
                 sc_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=second_sequence)

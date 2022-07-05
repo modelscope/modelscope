@@ -5,7 +5,7 @@ import torch
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SbertForTokenClassification
-from ...preprocessors import TokenClassifcationPreprocessor
+from ...preprocessors import TokenClassificationPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
@@ -18,21 +18,22 @@ __all__ = ['WordSegmentationPipeline']
     Tasks.word_segmentation, module_name=Pipelines.word_segmentation)
 class WordSegmentationPipeline(Pipeline):
 
-    def __init__(self,
-                 model: Union[SbertForTokenClassification, str],
-                 preprocessor: Optional[TokenClassifcationPreprocessor] = None,
-                 **kwargs):
+    def __init__(
+            self,
+            model: Union[SbertForTokenClassification, str],
+            preprocessor: Optional[TokenClassificationPreprocessor] = None,
+            **kwargs):
         """use `model` and `preprocessor` to create a nlp word segmentation pipeline for prediction
 
         Args:
             model (StructBertForTokenClassification): a model instance
-            preprocessor (TokenClassifcationPreprocessor): a preprocessor instance
+            preprocessor (TokenClassificationPreprocessor): a preprocessor instance
         """
         model = model if isinstance(
             model,
             SbertForTokenClassification) else Model.from_pretrained(model)
         if preprocessor is None:
-            preprocessor = TokenClassifcationPreprocessor(model.model_dir)
+            preprocessor = TokenClassificationPreprocessor(model.model_dir)
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = preprocessor.tokenizer

@@ -11,6 +11,9 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_model_if_not_exist(
@@ -67,3 +70,18 @@ def auto_load(model: Union[str, List[str]]):
         ]
 
     return model
+
+
+def get_model_type(model_dir):
+    try:
+        configuration_file = osp.join(model_dir, ModelFile.CONFIGURATION)
+        config_file = osp.join(model_dir, 'config.json')
+        if osp.isfile(configuration_file):
+            cfg = Config.from_file(configuration_file)
+            return cfg.model.model_type if hasattr(cfg.model, 'model_type') and not hasattr(cfg.model, 'type') \
+                else cfg.model.type
+        elif osp.isfile(config_file):
+            cfg = Config.from_file(config_file)
+            return cfg.model_type if hasattr(cfg, 'model_type') else None
+    except Exception as e:
+        logger.error(f'parse config file failed with error: {e}')

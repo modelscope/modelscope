@@ -106,6 +106,7 @@ class Preprocessors(object):
     load_image = 'load-image'
 
     # nlp preprocessor
+    sen_sim_tokenizer = 'sen-sim-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
     token_cls_tokenizer = 'token-cls-tokenizer'

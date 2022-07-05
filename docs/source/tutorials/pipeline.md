@@ -37,9 +37,9 @@ pipeline函数支持传入实例化的预处理对象、模型对象，从而支
 1. 首先，创建预处理方法和模型
 ```python
 from modelscope.models import Model
-from modelscope.preprocessors import TokenClassifcationPreprocessor
+from modelscope.preprocessors import TokenClassificationPreprocessor
 model = Model.from_pretrained('damo/nlp_structbert_word-segmentation_chinese-base')
-tokenizer = TokenClassifcationPreprocessor(model.model_dir)
+tokenizer = TokenClassificationPreprocessor(model.model_dir)
 ```
 
 2. 使用tokenizer和模型对象创建pipeline

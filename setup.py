@@ -176,6 +176,10 @@ if __name__ == '__main__':
     for field in dir(Fields):
         if field.startswith('_'):
             continue
+        # skip audio requirements due to its hard dependency which
+        # result in mac/windows compatibility problems
+        if field == Fields.audio:
+            continue
         extra_requires[field], _ = parse_requirements(
             f'requirements/{field}.txt')
         all_requires.append(extra_requires[field])

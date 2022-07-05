@@ -1,6 +1,8 @@
 # 快速开始
-ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.15+，Tensorflow 2.6上测试可运行。
-注： 当前（630）版本仅支持python3.7 以及linux环境，其他环境(mac,windows等)支持预计730完成。
+ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.13-1.15，Tensorflow 2.x上测试可运行。
+
+注： 当前（630）版本 `语音相关`的功能仅支持 python3.7,tensorflow1.13-1.15的`linux`环境使用。  其他功能可以在windows、mac上安装使用。
+
 ## python环境配置
 首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境
 
@@ -25,7 +27,12 @@ pip install --upgrade tensorflow
 ### pip安装
 执行如下命令：
 ```shell
-pip install model_scope[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/0.2/repo.html
+pip install "model_scope[all]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
+
+如需体验`语音功能`，请`额外`执行如下命令：
+```shell
+pip install "model_scope[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 ### 使用源码安装
 适合本地开发调试使用，修改源码后可以直接执行
@@ -38,9 +45,16 @@ cd modelscope
 ```
 安装依赖并设置PYTHONPATH
 ```shell
-pip install -r requirements.txt
+pip install -e ".[all]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 export PYTHONPATH=`pwd`
 ```
+注： 6.30版本需要把cv、nlp、multi-modal领域依赖都装上，7.30号各个领域依赖会作为选装，用户需要使用哪个领域安装对应领域依赖即可。
+
+如需使用语音功能，请执行如下命令安装语音功能所需依赖
+```shell
+pip install -e ".[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo
+```
+
 ### 安装验证
 安装成功后，可以执行如下命令进行验证安装是否正确
 ```shell

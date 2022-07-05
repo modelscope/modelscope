@@ -5,7 +5,8 @@ from typing import Any, Dict, Union
 
 from transformers import AutoTokenizer
 
-from ..metainfo import Models, Preprocessors
+from ..metainfo import Preprocessors
+from ..models import Model
 from ..utils.constant import Fields, InputFields
 from ..utils.type_assert import type_assert
 from .base import Preprocessor
@@ -13,9 +14,10 @@ from .builder import PREPROCESSORS
 
 __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor', 'TokenClassifcationPreprocessor',
+    'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
     'NLIPreprocessor', 'SentimentClassificationPreprocessor',
-    'FillMaskPreprocessor', 'ZeroShotClassificationPreprocessor'
+    'FillMaskPreprocessor', 'SentenceSimilarityPreprocessor',
+    'ZeroShotClassificationPreprocessor'
 ]
 
 
@@ -33,9 +35,7 @@ class Tokenize(Preprocessor):
         return data
 
 
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.nli_tokenizer)
-class NLIPreprocessor(Preprocessor):
+class NLPPreprocessorBase(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -45,18 +45,19 @@ class NLIPreprocessor(Preprocessor):
         """
 
         super().__init__(*args, **kwargs)
-
-        from sofa import SbertTokenizer
         self.model_dir: str = model_dir
         self.first_sequence: str = kwargs.pop('first_sequence',
                                               'first_sequence')
         self.second_sequence = kwargs.pop('second_sequence', 'second_sequence')
-        self.sequence_length = kwargs.pop('sequence_length', 128)
+        self.tokenize_kwargs = kwargs
+        self.tokenizer = self.build_tokenizer(model_dir)
 
-        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+    def build_tokenizer(self, model_dir):
+        from sofa import SbertTokenizer
+        return SbertTokenizer.from_pretrained(model_dir)
 
-    @type_assert(object, tuple)
-    def __call__(self, data: tuple) -> Dict[str, Any]:
+    @type_assert(object, object)
+    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -70,101 +71,54 @@ class NLIPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-        sentence1, sentence2 = data
-        new_data = {
-            self.first_sequence: sentence1,
-            self.second_sequence: sentence2
-        }
-        # preprocess the data for the model input
 
-        rst = {
-            'id': [],
-            'input_ids': [],
-            'attention_mask': [],
-            'token_type_ids': []
-        }
+        text_a, text_b = None, None
+        if isinstance(data, str):
+            text_a = data
+        elif isinstance(data, tuple):
+            assert len(data) == 2
+            text_a, text_b = data
+        elif isinstance(data, dict):
+            text_a = data.get(self.first_sequence)
+            text_b = data.get(self.second_sequence, None)
 
-        max_seq_length = self.sequence_length
+        return self.tokenizer(text_a, text_b, **self.tokenize_kwargs)
 
-        text_a = new_data[self.first_sequence]
-        text_b = new_data[self.second_sequence]
-        feature = self.tokenizer(
-            text_a,
-            text_b,
-            padding=False,
-            truncation=True,
-            max_length=max_seq_length)
 
-        rst['id'].append(new_data.get('id', str(uuid.uuid4())))
-        rst['input_ids'].append(feature['input_ids'])
-        rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.nli_tokenizer)
+class NLIPreprocessor(NLPPreprocessorBase):
 
-        return rst
+    def __init__(self, model_dir: str, *args, **kwargs):
+        kwargs['truncation'] = True
+        kwargs['padding'] = False
+        kwargs['return_tensors'] = 'pt'
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        super().__init__(model_dir, *args, **kwargs)
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_cls_tokenizer)
-class SentimentClassificationPreprocessor(Preprocessor):
+class SentimentClassificationPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        kwargs['truncation'] = True
+        kwargs['padding'] = 'max_length'
+        kwargs['return_tensors'] = 'pt'
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        super().__init__(model_dir, *args, **kwargs)
 
-        Args:
-            model_dir (str): model path
-        """
 
-        super().__init__(*args, **kwargs)
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sen_sim_tokenizer)
+class SentenceSimilarityPreprocessor(NLPPreprocessorBase):
 
-        from sofa import SbertTokenizer
-        self.model_dir: str = model_dir
-        self.first_sequence: str = kwargs.pop('first_sequence',
-                                              'first_sequence')
-        self.second_sequence = kwargs.pop('second_sequence', 'second_sequence')
-        self.sequence_length = kwargs.pop('sequence_length', 128)
-
-        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
-
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
-
-        new_data = {self.first_sequence: data}
-        # preprocess the data for the model input
-
-        rst = {
-            'id': [],
-            'input_ids': [],
-            'attention_mask': [],
-            'token_type_ids': []
-        }
-
-        max_seq_length = self.sequence_length
-
-        text_a = new_data[self.first_sequence]
-
-        text_b = new_data.get(self.second_sequence, None)
-        feature = self.tokenizer(
-            text_a,
-            text_b,
-            padding='max_length',
-            truncation=True,
-            max_length=max_seq_length)
-
-        rst['id'].append(new_data.get('id', str(uuid.uuid4())))
-        rst['input_ids'].append(feature['input_ids'])
-        rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
-
-        return rst
+    def __init__(self, model_dir: str, *args, **kwargs):
+        kwargs['truncation'] = True
+        kwargs['padding'] = False
+        kwargs['return_tensors'] = 'pt'
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        super().__init__(model_dir, *args, **kwargs)
 
 
 @PREPROCESSORS.register_module(
@@ -192,36 +146,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
     @type_assert(object, (str, tuple, Dict))
     def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str or tuple, Dict):
-            sentence1 (str): a sentence
-                    Example:
-                        'you are so handsome.'
-            or
-            (sentence1, sentence2)
-                sentence1 (str): a sentence
-                    Example:
-                        'you are so handsome.'
-                sentence2 (str): a sentence
-                    Example:
-                        'you are so beautiful.'
-            or
-            {field1: field_value1, field2: field_value2}
-            field1 (str): field name, default 'first_sequence'
-            field_value1 (str): a sentence
-                    Example:
-                        'you are so handsome.'
-
-            field2 (str): field name, default 'second_sequence'
-            field_value2 (str): a sentence
-                Example:
-                    'you are so beautiful.'
-
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
+        feature = super().__call__(data)
         if isinstance(data, str):
             new_data = {self.first_sequence: data}
         elif isinstance(data, tuple):
@@ -263,136 +188,55 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
-class TextGenerationPreprocessor(Preprocessor):
+class TextGenerationPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
-        """preprocess the data using the vocab.txt from the `model_dir` path
-
-        Args:
-            model_dir (str): model path
-        """
-        super().__init__(*args, **kwargs)
-
-        self.model_dir: str = model_dir
-        self.first_sequence: str = kwargs.pop('first_sequence',
-                                              'first_sequence')
-        self.second_sequence: str = kwargs.pop('second_sequence',
-                                               'second_sequence')
-        self.sequence_length: int = kwargs.pop('sequence_length', 128)
         self.tokenizer = tokenizer
+        kwargs['truncation'] = True
+        kwargs['padding'] = 'max_length'
+        kwargs['return_tensors'] = 'pt'
+        kwargs['return_token_type_ids'] = False
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        super().__init__(model_dir, *args, **kwargs)
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
-
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
-        import torch
-
-        new_data = {self.first_sequence: data}
-        # preprocess the data for the model input
-
-        rst = {'input_ids': [], 'attention_mask': []}
-
-        max_seq_length = self.sequence_length
-
-        text_a = new_data.get(self.first_sequence, None)
-        text_b = new_data.get(self.second_sequence, None)
-        feature = self.tokenizer(
-            text_a,
-            text_b,
-            padding='max_length',
-            truncation=True,
-            max_length=max_seq_length)
-
-        rst['input_ids'].append(feature['input_ids'])
-        rst['attention_mask'].append(feature['attention_mask'])
-        return {k: torch.tensor(v) for k, v in rst.items()}
+    def build_tokenizer(self, model_dir):
+        return self.tokenizer
 
 
 @PREPROCESSORS.register_module(Fields.nlp)
-class FillMaskPreprocessor(Preprocessor):
+class FillMaskPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        kwargs['truncation'] = True
+        kwargs['padding'] = 'max_length'
+        kwargs['return_tensors'] = 'pt'
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        kwargs['return_token_type_ids'] = True
+        super().__init__(model_dir, *args, **kwargs)
 
-        Args:
-            model_dir (str): model path
-        """
-        super().__init__(*args, **kwargs)
-        self.model_dir = model_dir
-        self.first_sequence: str = kwargs.pop('first_sequence',
-                                              'first_sequence')
-        self.sequence_length = kwargs.pop('sequence_length', 128)
-        try:
-            from transformers import AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        except KeyError:
-            from sofa.utils.backend import AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_dir, use_fast=False)
-
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
-
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
-        import torch
-
-        new_data = {self.first_sequence: data}
-        # preprocess the data for the model input
-
-        rst = {'input_ids': [], 'attention_mask': [], 'token_type_ids': []}
-
-        max_seq_length = self.sequence_length
-
-        text_a = new_data[self.first_sequence]
-        feature = self.tokenizer(
-            text_a,
-            padding='max_length',
-            truncation=True,
-            max_length=max_seq_length,
-            return_token_type_ids=True)
-
-        rst['input_ids'].append(feature['input_ids'])
-        rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
-
-        return {k: torch.tensor(v) for k, v in rst.items()}
+    def build_tokenizer(self, model_dir):
+        from ..utils.hub import get_model_type
+        model_type = get_model_type(model_dir)
+        if model_type in ['sbert', 'structbert', 'bert']:
+            from sofa import SbertTokenizer
+            return SbertTokenizer.from_pretrained(model_dir, use_fast=False)
+        elif model_type == 'veco':
+            from sofa import VecoTokenizer
+            return VecoTokenizer.from_pretrained(model_dir, use_fast=False)
+        else:
+            # TODO Only support veco & sbert
+            raise RuntimeError(f'Unsupported model type: {model_type}')
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.token_cls_tokenizer)
-class TokenClassifcationPreprocessor(Preprocessor):
+class TokenClassificationPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
-
-        Args:
-            model_dir (str): model path
-        """
-
-        super().__init__(*args, **kwargs)
-
-        from sofa import SbertTokenizer
-        self.model_dir: str = model_dir
-        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+        super().__init__(model_dir, *args, **kwargs)
 
     @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    def __call__(self, data: Union[str, Dict]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -405,7 +249,8 @@ class TokenClassifcationPreprocessor(Preprocessor):
         """
 
         # preprocess the data for the model input
-
+        if isinstance(data, dict):
+            data = data[self.first_sequence]
         text = data.replace(' ', '').strip()
         tokens = []
         for token in text:
@@ -425,7 +270,7 @@ class TokenClassifcationPreprocessor(Preprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.zero_shot_cls_tokenizer)
-class ZeroShotClassificationPreprocessor(Preprocessor):
+class ZeroShotClassificationPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -433,16 +278,11 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
         Args:
             model_dir (str): model path
         """
-
-        super().__init__(*args, **kwargs)
-
-        from sofa import SbertTokenizer
-        self.model_dir: str = model_dir
         self.sequence_length = kwargs.pop('sequence_length', 512)
-        self.tokenizer = SbertTokenizer.from_pretrained(self.model_dir)
+        super().__init__(model_dir, *args, **kwargs)
 
     @type_assert(object, str)
-    def __call__(self, data: str, hypothesis_template: str,
+    def __call__(self, data, hypothesis_template: str,
                  candidate_labels: list) -> Dict[str, Any]:
         """process the raw input data
 
@@ -454,6 +294,9 @@ class ZeroShotClassificationPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
+        if isinstance(data, dict):
+            data = data.get(self.first_sequence)
+
         pairs = [[data, hypothesis_template.format(label)]
                  for label in candidate_labels]
 

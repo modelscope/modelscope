@@ -6,7 +6,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SbertForSentenceSimilarity
 from modelscope.pipelines import SentenceSimilarityPipeline, pipeline
-from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.preprocessors import SentenceSimilarityPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -19,7 +19,7 @@ class SentenceSimilarityTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = SequenceClassificationPreprocessor(cache_path)
+        tokenizer = SentenceSimilarityPreprocessor(cache_path)
         model = SbertForSentenceSimilarity(cache_path, tokenizer=tokenizer)
         pipeline1 = SentenceSimilarityPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
@@ -35,7 +35,7 @@ class SentenceSimilarityTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = SequenceClassificationPreprocessor(model.model_dir)
+        tokenizer = SentenceSimilarityPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.sentence_similarity,
             model=model,

@@ -69,7 +69,7 @@ class Model(ABC):
         model_cfg.model_dir = local_model_dir
 
         for k, v in kwargs.items():
-            model_cfg.k = v
+            model_cfg[k] = v
         model = build_model(model_cfg, task_name)
 
         # dynamically add pipeline info to model for pipeline inference

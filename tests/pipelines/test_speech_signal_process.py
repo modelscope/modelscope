@@ -13,8 +13,7 @@ FAREND_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/
 NEAREND_MIC_FILE = 'nearend_mic.wav'
 FAREND_SPEECH_FILE = 'farend_speech.wav'
 
-AEC_LIB_URL = 'http://isv-data.oss-cn-hangzhou.aliyuncs.com/ics%2FMaaS%2FAEC%2Flib%2Flibmitaec_pyio.so' \
-              '?Expires=1664085465&OSSAccessKeyId=LTAIxjQyZNde90zh&Signature=Y7gelmGEsQAJRK4yyHSYMrdWizk%3D'
+AEC_LIB_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/dependencies/ics_MaaS_AEC_lib_libmitaec_pyio.so'
 AEC_LIB_FILE = 'libmitaec_pyio.so'
 
 NOISE_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ANS/sample_audio/speech_with_noise.wav'

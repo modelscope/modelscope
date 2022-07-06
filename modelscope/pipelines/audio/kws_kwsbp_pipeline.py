@@ -3,7 +3,7 @@ import os
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import json
 
@@ -25,11 +25,14 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
     def __init__(self,
                  config_file: str = None,
-                 model: Model = None,
+                 model: Union[Model, str] = None,
                  preprocessor: WavToLists = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a kws pipeline for prediction
         """
+
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
 
         super().__init__(
             config_file=config_file,
@@ -37,7 +40,6 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             preprocessor=preprocessor,
             **kwargs)
         assert model is not None, 'kws model should be provided'
-        assert preprocessor is not None, 'preprocessor is none'
 
         self._preprocessor = preprocessor
         self._model = model
@@ -45,12 +47,17 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
         if 'keywords' in kwargs.keys():
             self._keywords = kwargs['keywords']
-            print('self._keywords len: ', len(self._keywords))
-            print('self._keywords: ', self._keywords)
 
-    def __call__(self, kws_type: str, wav_path: List[str]) -> Dict[str, Any]:
+    def __call__(self,
+                 kws_type: str,
+                 wav_path: List[str],
+                 workspace: str = None) -> Dict[str, Any]:
         assert kws_type in ['wav', 'pos_testsets', 'neg_testsets',
                             'roc'], f'kws_type {kws_type} is invalid'
+
+        if self._preprocessor is None:
+            self._preprocessor = WavToLists(workspace=workspace)
+
         output = self._preprocessor.forward(self._model.forward(), kws_type,
                                             wav_path)
         output = self.forward(output)

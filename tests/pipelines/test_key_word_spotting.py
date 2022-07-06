@@ -40,7 +40,7 @@ class KeyWordSpottingTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         if os.path.exists(self.workspace):
-            shutil.rmtree(self.workspace)
+            shutil.rmtree(os.path.join(self.workspace), ignore_errors=True)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav(self):
@@ -57,23 +57,14 @@ class KeyWordSpottingTest(unittest.TestCase):
             with open(kwsbp_file_path, 'wb') as f:
                 f.write(r.content)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting,
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
+            task=Tasks.key_word_spotting, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[wav_file_path, None])
+            kws_type=kws_set,
+            wav_path=[wav_file_path, None],
+            workspace=self.workspace)
         self.assertTrue(kws_result.__contains__('detected'))
         """
         kws result json format example:
@@ -107,14 +98,6 @@ class KeyWordSpottingTest(unittest.TestCase):
             with open(kwsbp_file_path, 'wb') as f:
                 f.write(r.content)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
         # customized keyword if you need.
         # full settings eg.
         #     keywords = [
@@ -125,14 +108,14 @@ class KeyWordSpottingTest(unittest.TestCase):
 
         kwsbp_16k_pipline = pipeline(
             task=Tasks.key_word_spotting,
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor,
+            model=self.model_id,
             keywords=keywords)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[wav_file_path, None])
+            kws_type=kws_set,
+            wav_path=[wav_file_path, None],
+            workspace=self.workspace)
         self.assertTrue(kws_result.__contains__('detected'))
         """
         kws result json format example:
@@ -185,23 +168,14 @@ class KeyWordSpottingTest(unittest.TestCase):
             with open(kwsbp_file_path, 'wb') as f:
                 f.write(r.content)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting,
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
+            task=Tasks.key_word_spotting, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[wav_file_path, None])
+            kws_type=kws_set,
+            wav_path=[wav_file_path, None],
+            workspace=self.workspace)
         self.assertTrue(kws_result.__contains__('recall'))
         """
         kws result json format example:
@@ -257,23 +231,14 @@ class KeyWordSpottingTest(unittest.TestCase):
             with open(kwsbp_file_path, 'wb') as f:
                 f.write(r.content)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting,
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
+            task=Tasks.key_word_spotting, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[None, wav_file_path])
+            kws_type=kws_set,
+            wav_path=[None, wav_file_path],
+            workspace=self.workspace)
         self.assertTrue(kws_result.__contains__('fa_rate'))
         """
         kws result json format example:
@@ -352,23 +317,14 @@ class KeyWordSpottingTest(unittest.TestCase):
             with open(kwsbp_file_path, 'wb') as f:
                 f.write(r.content)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting,
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
+            task=Tasks.key_word_spotting, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[pos_file_path, neg_file_path])
+            kws_type=kws_set,
+            wav_path=[pos_file_path, neg_file_path],
+            workspace=self.workspace)
         """
         kws result json format example:
             {

@@ -62,7 +62,13 @@ if __name__ == '__main__':
         '--test_dir', default='tests', help='directory to be tested')
     parser.add_argument(
         '--level', default=0, type=int, help='2 -- all, 1 -- p1, 0 -- p0')
+    parser.add_argument(
+        '--disable_profile', action='store_true', help='disable profiling')
     args = parser.parse_args()
     set_test_level(args.level)
     logger.info(f'TEST LEVEL: {test_level()}')
+    if not args.disable_profile:
+        from utils import profiler
+        logger.info('enable profile ...')
+        profiler.enable()
     main(args)

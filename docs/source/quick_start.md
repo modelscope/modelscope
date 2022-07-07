@@ -27,12 +27,12 @@ pip install --upgrade tensorflow
 ### pip安装
 执行如下命令：
 ```shell
-pip install "model_scope[all]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+pip install "modelscope[all]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
 如需体验`语音功能`，请`额外`执行如下命令：
 ```shell
-pip install "model_scope[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+pip install "modelscope[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 ### 使用源码安装
 适合本地开发调试使用，修改源码后可以直接执行

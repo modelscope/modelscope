@@ -7,16 +7,23 @@ import scipy.io.wavfile as wav
 import torch
 import yaml
 
+from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
 from modelscope.preprocessors.audio import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
 from ..outputs import OutputKeys
 
+logger = get_logger()
+
 FEATURE_MVN = 'feature.DEY.mvn.txt'
 
 CONFIG_YAML = 'dey_mini.yaml'
+
+AEC_LIB_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/dependencies/ics_MaaS_AEC_lib_libmitaec_pyio.so'
+AEC_LIB_FILE = 'libmitaec_pyio.so'
 
 
 def initialize_config(module_cfg):
@@ -61,6 +68,13 @@ class LinearAECPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model)
+
+        # auto download so for linux inference before light-weight docker got ready
+        if not os.path.exists(AEC_LIB_FILE):
+            logger.info(f'downloading {AEC_LIB_URL} to {AEC_LIB_FILE}')
+            with open(AEC_LIB_FILE, 'wb') as ofile:
+                ofile.write(File.read(AEC_LIB_URL))
+
         self.use_cuda = torch.cuda.is_available()
         with open(
                 os.path.join(self.model, CONFIG_YAML), encoding='utf-8') as f:

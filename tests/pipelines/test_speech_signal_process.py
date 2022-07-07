@@ -36,8 +36,6 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_aec(self):
-        # A temporary hack to provide c++ lib. Download it first.
-        download(AEC_LIB_URL, AEC_LIB_FILE)
         # Download audio files
         download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
         download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)

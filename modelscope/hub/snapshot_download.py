@@ -1,13 +1,11 @@
 import os
 import tempfile
-from glob import glob
 from pathlib import Path
 from typing import Dict, Optional, Union
 
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
-from .constants import DEFAULT_MODELSCOPE_GROUP, MODEL_ID_SEPARATOR
-from .errors import NotExistError, RequestError, raise_on_error
+from .errors import NotExistError
 from .file_download import (get_file_download_url, http_get_file,
                             http_user_agent)
 from .utils.caching import ModelFileSystemCache
@@ -98,8 +96,9 @@ def snapshot_download(model_id: str,
                 continue
             # check model_file is exist in cache, if exist, skip download, otherwise download
             if cache.exists(model_file):
+                file_name = os.path.basename(model_file['Name'])
                 logger.info(
-                    'The specified file is in cache, skip downloading!')
+                    f'File {file_name} already in cache, skip downloading!')
                 continue
 
             # get download url

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Input
@@ -15,6 +15,11 @@ logger = get_logger()
 class MultiModalEmbeddingPipeline(Pipeline):
 
     def __init__(self, model: str, device_id: int = -1):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         if isinstance(model, str):
             pipe_model = Model.from_pretrained(model)
         elif isinstance(model, Model):

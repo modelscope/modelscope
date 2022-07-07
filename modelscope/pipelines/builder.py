@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import List, Union
+from typing import List, Optional, Union
 
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.utils.config import Config, ConfigDict
@@ -67,6 +68,21 @@ DEFAULT_MODEL_FOR_PIPELINE = {
 }
 
 
+def normalize_model_input(model, model_revision):
+    """ normalize the input model, to ensure that a model str is a valid local path: in other words,
+    for model represented by a model id, the model shall be downloaded locally
+    """
+    if isinstance(model, str) and is_official_hub_path(model, model_revision):
+        # note that if there is already a local copy, snapshot_download will check and skip downloading
+        model = snapshot_download(model, revision=model_revision)
+    elif isinstance(model, list) and isinstance(model[0], str):
+        for idx in range(len(model)):
+            if is_official_hub_path(model[idx], model_revision):
+                model[idx] = snapshot_download(
+                    model[idx], revision=model_revision)
+    return model
+
+
 def build_pipeline(cfg: ConfigDict,
                    task_name: str = None,
                    default_args: dict = None):
@@ -89,8 +105,9 @@ def pipeline(task: str = None,
              pipeline_name: str = None,
              framework: str = None,
              device: int = -1,
+             model_revision: Optional[str] = 'master',
              **kwargs) -> Pipeline:
-    """ Factory method to build a obj:`Pipeline`.
+    """ Factory method to build an obj:`Pipeline`.
 
 
     Args:
@@ -100,6 +117,8 @@ def pipeline(task: str = None,
         config_file (str, optional): path to config file.
         pipeline_name (str, optional): pipeline class name or alias name.
         framework (str, optional): framework type.
+        model_revision: revision of model(s) if getting from model hub, for multiple models, expecting
+        all models to have the same revision
         device (int, optional): which device is used to do inference.
 
     Return:
@@ -123,14 +142,18 @@ def pipeline(task: str = None,
     assert isinstance(model, (type(None), str, Model, list)), \
         f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
+    model = normalize_model_input(model, model_revision)
+
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \
            or (isinstance(model, list) and isinstance(model[0], str)):
-            if is_official_hub_path(model):
+            if is_official_hub_path(model, revision=model_revision):
                 # read config file from hub and parse
-                cfg = read_config(model) if isinstance(
-                    model, str) else read_config(model[0])
+                cfg = read_config(
+                    model, revision=model_revision) if isinstance(
+                        model, str) else read_config(
+                            model[0], revision=model_revision)
                 assert hasattr(
                     cfg,
                     'pipeline'), 'pipeline config is missing from config file.'
@@ -152,7 +175,7 @@ def pipeline(task: str = None,
             pipeline_name = first_model.pipeline.type
         else:
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
-            model = default_model_repo
+            model = normalize_model_input(default_model_repo, model_revision)
 
     cfg = ConfigDict(type=pipeline_name, model=model)
 

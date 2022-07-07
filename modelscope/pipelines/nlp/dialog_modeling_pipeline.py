@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Union
+from typing import Dict, Union
 
 from ...metainfo import Pipelines
 from ...models import Model
@@ -22,7 +22,7 @@ class DialogModelingPipeline(Pipeline):
                  model: Union[SpaceForDialogModeling, str],
                  preprocessor: DialogModelingPreprocessor = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a dialog modleing pipeline for dialog response generation
+        """use `model` and `preprocessor` to create a dialog modeling pipeline for dialog response generation
 
         Args:
             model (SpaceForDialogModeling): a model instance

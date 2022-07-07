@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-import shutil
 import tempfile
 import unittest
 
@@ -47,7 +46,8 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
+        img_matting = pipeline(
+            Tasks.image_matting, model=self.model_id, model_revision='beta')
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])

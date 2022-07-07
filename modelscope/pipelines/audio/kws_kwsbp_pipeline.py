@@ -1,7 +1,4 @@
-import io
 import os
-import shutil
-import stat
 import subprocess
 from typing import Any, Dict, List, Union
 
@@ -28,7 +25,10 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                  model: Union[Model, str] = None,
                  preprocessor: WavToLists = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a kws pipeline for prediction
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
         """
 
         model = model if isinstance(model,
@@ -39,6 +39,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             model=model,
             preprocessor=preprocessor,
             **kwargs)
+
         assert model is not None, 'kws model should be provided'
 
         self._preprocessor = preprocessor

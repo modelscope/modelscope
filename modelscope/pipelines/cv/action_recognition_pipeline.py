@@ -23,6 +23,11 @@ logger = get_logger()
 class ActionRecognitionPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
         logger.info(f'loading model from {model_path}')

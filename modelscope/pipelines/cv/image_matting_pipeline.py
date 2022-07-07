@@ -22,6 +22,11 @@ logger = get_logger()
 class ImageMattingPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         import tensorflow as tf
         if tf.__version__ >= '2.0':

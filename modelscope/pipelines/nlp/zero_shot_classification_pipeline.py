@@ -1,9 +1,5 @@
-import os
-import uuid
 from typing import Any, Dict, Union
 
-import json
-import numpy as np
 import torch
 from scipy.special import softmax
 
@@ -12,7 +8,7 @@ from ...models import Model
 from ...models.nlp import SbertForZeroShotClassification
 from ...preprocessors import ZeroShotClassificationPreprocessor
 from ...utils.constant import Tasks
-from ..base import Input, Pipeline
+from ..base import Pipeline
 from ..builder import PIPELINES
 from ..outputs import OutputKeys
 
@@ -30,7 +26,7 @@ class ZeroShotClassificationPipeline(Pipeline):
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
         Args:
-            model (SbertForSentimentClassification): a model instance
+            model (SbertForZeroShotClassification): a model instance
             preprocessor (SentimentClassificationPreprocessor): a preprocessor instance
         """
         assert isinstance(model, str) or isinstance(model, SbertForZeroShotClassification), \

@@ -18,7 +18,12 @@ class ImageCaptionPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: [Preprocessor] = None,
                  **kwargs):
-        super().__init__()
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
+        super().__init__(model=model)
         assert isinstance(model, str) or isinstance(model, Model), \
             'model must be a single str or OfaForImageCaptioning'
         if isinstance(model, str):

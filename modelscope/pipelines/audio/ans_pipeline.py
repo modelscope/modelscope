@@ -37,7 +37,8 @@ class ANSPipeline(Pipeline):
     SAMPLE_RATE = 16000
 
     def __init__(self, model):
-        r"""
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

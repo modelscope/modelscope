@@ -42,7 +42,7 @@ def create_model_if_not_exist(
         return True
 
 
-def read_config(model_id_or_path: str):
+def read_config(model_id_or_path: str, revision: Optional[str] = 'master'):
     """ Read config from hub or local path
 
     Args:
@@ -52,8 +52,8 @@ def read_config(model_id_or_path: str):
         config (:obj:`Config`): config object
     """
     if not os.path.exists(model_id_or_path):
-        local_path = model_file_download(model_id_or_path,
-                                         ModelFile.CONFIGURATION)
+        local_path = model_file_download(
+            model_id_or_path, ModelFile.CONFIGURATION, revision=revision)
     else:
         local_path = os.path.join(model_id_or_path, ModelFile.CONFIGURATION)
 

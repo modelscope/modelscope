@@ -1,5 +1,4 @@
 import os.path as osp
-import tempfile
 from typing import Any, Dict
 
 import cv2
@@ -8,13 +7,12 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-from modelscope.fileio import File
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.animal_recognition import resnet
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
@@ -28,6 +26,11 @@ logger = get_logger()
 class AnimalRecogPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         import torch
 

@@ -31,6 +31,11 @@ logger = get_logger()
 class ImageCartoonPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         self.facer = FaceAna(self.model)
         self.sess_anime_head = self.load_sess(

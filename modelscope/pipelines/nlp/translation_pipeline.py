@@ -1,12 +1,11 @@
 import os.path as osp
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 
 import numpy as np
 import tensorflow as tf
 
 from ...hub.snapshot_download import snapshot_download
 from ...metainfo import Pipelines
-from ...models import Model
 from ...models.nlp import CsanmtForTranslation
 from ...utils.constant import ModelFile, Tasks
 from ...utils.logger import get_logger

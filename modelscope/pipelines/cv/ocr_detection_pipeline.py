@@ -1,8 +1,5 @@
-import math
-import os
 import os.path as osp
-import sys
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict
 
 import cv2
 import numpy as np
@@ -48,6 +45,11 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
 class OCRDetectionPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         tf.reset_default_graph()
         model_path = osp.join(

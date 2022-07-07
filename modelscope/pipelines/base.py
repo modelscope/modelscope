@@ -17,9 +17,6 @@ Tensor = Union['torch.Tensor', 'tf.Tensor']
 Input = Union[str, tuple, MsDataset, 'PIL.Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
-output_keys = [
-]  # 对于不同task的pipeline，规定标准化的输出key，用以对接postprocess,同时也用来标准化postprocess后输出的key
-
 logger = get_logger()
 
 
@@ -28,9 +25,9 @@ class Pipeline(ABC):
     def initiate_single_model(self, model):
         logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):
-            model = snapshot_download(
-                model) if not osp.exists(model) else model
-            return Model.from_pretrained(model) if is_model(model) else model
+            # expecting model has been prefetched to local cache beforehand
+            return Model.from_pretrained(
+                model, model_prefetched=True) if is_model(model) else model
         elif isinstance(model, Model):
             return model
         else:

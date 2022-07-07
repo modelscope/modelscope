@@ -33,7 +33,7 @@ class Model(ABC):
         standard model outputs.
 
         Args:
-            inputs:  input data
+            input:  input data
 
         Return:
             dict of results:  a dict containing outputs of model, each
@@ -50,9 +50,17 @@ class Model(ABC):
         """ Instantiate a model from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.
         """
+        prefetched = kwargs.get('model_prefetched')
+        if prefetched is not None:
+            kwargs.pop('model_prefetched')
+
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
+            if prefetched is True:
+                raise RuntimeError(
+                    'Expecting model is pre-fetched locally, but is not found.'
+                )
             local_model_dir = snapshot_download(model_name_or_path, revision)
         logger.info(f'initialize model from {local_model_dir}')
         cfg = Config.from_file(

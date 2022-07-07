@@ -141,7 +141,9 @@ def model_file_download(
         cached_file_path = cache.get_file_by_path_and_commit_id(
             file_path, revision)
         if cached_file_path is not None:
-            logger.info('The specified file is in cache, skip downloading!')
+            file_name = os.path.basename(cached_file_path)
+            logger.info(
+                f'File {file_name} already in cache, skip downloading!')
             return cached_file_path  # the file is in cache.
         is_commit_id = True
     # we need to download again

@@ -19,6 +19,11 @@ logger = get_logger()
 class TextToImageSynthesisPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         device_id = 0 if torch.cuda.is_available() else -1
         if isinstance(model, str):
             pipe_model = Model.from_pretrained(model, device_id=device_id)

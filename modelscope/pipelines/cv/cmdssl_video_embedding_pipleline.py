@@ -1,11 +1,8 @@
-import math
 import os.path as osp
 from typing import Any, Dict
 
-import cv2
 import decord
 import numpy as np
-import PIL
 import torch
 import torchvision.transforms.functional as TF
 from decord import VideoReader, cpu
@@ -30,6 +27,11 @@ logger = get_logger()
 class CMDSSLVideoEmbeddingPipeline(Pipeline):
 
     def __init__(self, model: str):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         super().__init__(model=model)
         model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
         logger.info(f'loading model from {model_path}')

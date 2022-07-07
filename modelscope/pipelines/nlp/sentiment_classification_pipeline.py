@@ -1,8 +1,5 @@
-import os
-import uuid
 from typing import Any, Dict, Union
 
-import json
 import numpy as np
 import torch
 
@@ -11,7 +8,7 @@ from ...models import Model
 from ...models.nlp import SbertForSentimentClassification
 from ...preprocessors import SentimentClassificationPreprocessor
 from ...utils.constant import Tasks
-from ..base import Input, Pipeline
+from ..base import Pipeline
 from ..builder import PIPELINES
 from ..outputs import OutputKeys
 

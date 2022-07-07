@@ -9,7 +9,8 @@ from modelscope.utils.constant import Tasks
 __all__ = ['GenericKeyWordSpotting']
 
 
-@MODELS.register_module(Tasks.key_word_spotting, module_name=Models.kws_kwsbp)
+@MODELS.register_module(
+    Tasks.auto_speech_recognition, module_name=Models.kws_kwsbp)
 class GenericKeyWordSpotting(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

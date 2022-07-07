@@ -6,11 +6,8 @@ import unittest
 
 import requests
 
-from modelscope.metainfo import Pipelines, Preprocessors
-from modelscope.models import Model
 from modelscope.pipelines import pipeline
-from modelscope.preprocessors import build_preprocessor
-from modelscope.utils.constant import Fields, InputFields, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 KWSBP_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/tools/kwsbp'
@@ -58,7 +55,7 @@ class KeyWordSpottingTest(unittest.TestCase):
                 f.write(r.content)
 
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting, model=self.model_id)
+            task=Tasks.auto_speech_recognition, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
@@ -107,7 +104,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         keywords = [{'keyword': '播放音乐'}]
 
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting,
+            task=Tasks.auto_speech_recognition,
             model=self.model_id,
             keywords=keywords)
         self.assertTrue(kwsbp_16k_pipline is not None)
@@ -169,7 +166,7 @@ class KeyWordSpottingTest(unittest.TestCase):
                 f.write(r.content)
 
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting, model=self.model_id)
+            task=Tasks.auto_speech_recognition, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
@@ -232,7 +229,7 @@ class KeyWordSpottingTest(unittest.TestCase):
                 f.write(r.content)
 
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting, model=self.model_id)
+            task=Tasks.auto_speech_recognition, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(
@@ -318,7 +315,7 @@ class KeyWordSpottingTest(unittest.TestCase):
                 f.write(r.content)
 
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.key_word_spotting, model=self.model_id)
+            task=Tasks.auto_speech_recognition, model=self.model_id)
         self.assertTrue(kwsbp_16k_pipline is not None)
 
         kws_result = kwsbp_16k_pipline(

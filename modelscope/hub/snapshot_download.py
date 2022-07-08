@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 from modelscope.utils.logger import get_logger
+from ..utils.constant import DEFAULT_MODEL_REVISION
 from .api import HubApi, ModelScopeConfig
 from .errors import NotExistError
 from .file_download import (get_file_download_url, http_get_file,
@@ -15,7 +16,7 @@ logger = get_logger()
 
 
 def snapshot_download(model_id: str,
-                      revision: Optional[str] = 'master',
+                      revision: Optional[str] = DEFAULT_MODEL_REVISION,
                       cache_dir: Union[str, Path, None] = None,
                       user_agent: Optional[Union[Dict, str]] = None,
                       local_files_only: Optional[bool] = False) -> str:

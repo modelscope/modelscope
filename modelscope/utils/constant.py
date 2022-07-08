@@ -117,3 +117,6 @@ class Requirements(object):
 
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
+
+DEFAULT_MODEL_REVISION = 'master'
+DEFAULT_DATASET_REVISION = 'master'

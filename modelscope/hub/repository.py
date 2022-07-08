@@ -3,6 +3,7 @@ from typing import Optional
 
 from modelscope.hub.errors import GitError, InvalidParameter
 from modelscope.utils.logger import get_logger
+from ..utils.constant import DEFAULT_MODEL_REVISION
 from .api import ModelScopeConfig
 from .git import GitCommandWrapper
 from .utils.utils import get_endpoint
@@ -18,7 +19,7 @@ class Repository:
         self,
         model_dir: str,
         clone_from: str,
-        revision: Optional[str] = 'master',
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
         auth_token: Optional[str] = None,
         git_path: Optional[str] = None,
     ):
@@ -76,15 +77,15 @@ class Repository:
 
     def push(self,
              commit_message: str,
-             branch: Optional[str] = 'master',
-             force: Optional[bool] = False):
+             branch: Optional[str] = DEFAULT_MODEL_REVISION,
+             force: bool = False):
         """Push local files to remote, this method will do.
            git add
            git commit
            git push
         Args:
             commit_message (str): commit message
-            branch (Optional[str]): which branch to push. Defaults to 'master'.
+            branch (Optional[str], optional): which branch to push.
             force (Optional[bool]): whether to use forced-push.
         """
         if commit_message is None or not isinstance(commit_message, str):

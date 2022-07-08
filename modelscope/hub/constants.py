@@ -11,8 +11,12 @@ LOGGER_NAME = 'ModelScopeHub'
 
 class Licenses(object):
     APACHE_V2 = 'Apache License 2.0'
-    GPL = 'GPL'
-    LGPL = 'LGPL'
+    GPL_V2 = 'GPL-2.0'
+    GPL_V3 = 'GPL-3.0'
+    LGPL_V2_1 = 'LGPL-2.1'
+    LGPL_V3 = 'LGPL-3.0'
+    AFL_V3 = 'AFL-3.0'
+    ECL_V2 = 'ECL-2.0'
     MIT = 'MIT'
 
 

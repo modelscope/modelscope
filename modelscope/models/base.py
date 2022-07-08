@@ -7,7 +7,7 @@ from typing import Dict, Optional, Union
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -44,7 +44,7 @@ class Model(ABC):
     @classmethod
     def from_pretrained(cls,
                         model_name_or_path: str,
-                        revision: Optional[str] = 'master',
+                        revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         *model_args,
                         **kwargs):
         """ Instantiate a model from local directory or remote model repo. Note

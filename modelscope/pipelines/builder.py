@@ -6,7 +6,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Tasks
 from modelscope.utils.hub import read_config
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline
@@ -105,7 +105,7 @@ def pipeline(task: str = None,
              pipeline_name: str = None,
              framework: str = None,
              device: int = -1,
-             model_revision: Optional[str] = 'master',
+             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
              **kwargs) -> Pipeline:
     """ Factory method to build an obj:`Pipeline`.
 

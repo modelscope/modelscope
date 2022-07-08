@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 from modelscope import __version__
 from modelscope.utils.logger import get_logger
+from ..utils.constant import DEFAULT_MODEL_REVISION
 from .api import HubApi, ModelScopeConfig
 from .constants import (DEFAULT_MODELSCOPE_GROUP, LOGGER_NAME,
                         MODEL_ID_SEPARATOR)
@@ -35,7 +36,7 @@ logger = get_logger()
 def model_file_download(
     model_id: str,
     file_path: str,
-    revision: Optional[str] = 'master',
+    revision: Optional[str] = DEFAULT_MODEL_REVISION,
     cache_dir: Optional[str] = None,
     user_agent: Union[Dict, str, None] = None,
     local_files_only: Optional[bool] = False,
@@ -55,7 +56,7 @@ def model_file_download(
             Path of the file to be downloaded, relative to the root of model repo
         revision(`str`, *optional*):
             revision of the model file to be downloaded.
-            Can be any of a branch, tag or commit hash, default to `master`
+            Can be any of a branch, tag or commit hash
         cache_dir (`str`, `Path`, *optional*):
             Path to the folder where cached files are stored.
         user_agent (`dict`, `str`, *optional*):
@@ -120,8 +121,7 @@ def model_file_download(
             model_id=model_id,
             revision=revision,
             recursive=True,
-            use_cookies=False if cookies is None else cookies,
-        )
+            use_cookies=False if cookies is None else cookies)
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':

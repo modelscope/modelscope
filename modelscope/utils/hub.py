@@ -10,7 +10,7 @@ from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -22,7 +22,7 @@ def create_model_if_not_exist(
         chinese_name: str,
         visibility: Optional[int] = ModelVisibility.PUBLIC,
         license: Optional[str] = Licenses.APACHE_V2,
-        revision: Optional[str] = 'master'):
+        revision: Optional[str] = DEFAULT_MODEL_REVISION):
     exists = True
     try:
         api.get_model(model_id=model_id, revision=revision)
@@ -42,12 +42,13 @@ def create_model_if_not_exist(
         return True
 
 
-def read_config(model_id_or_path: str, revision: Optional[str] = 'master'):
+def read_config(model_id_or_path: str,
+                revision: Optional[str] = DEFAULT_MODEL_REVISION):
     """ Read config from hub or local path
 
     Args:
         model_id_or_path (str): Model repo name or local directory path.
-
+        revision: revision of the model when getting from the hub
     Return:
         config (:obj:`Config`): config object
     """

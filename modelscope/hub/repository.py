@@ -1,10 +1,9 @@
 import os
-from typing import List, Optional
+from typing import Optional
 
 from modelscope.hub.errors import GitError, InvalidParameter
 from modelscope.utils.logger import get_logger
 from .api import ModelScopeConfig
-from .constants import MODELSCOPE_URL_SCHEME
 from .git import GitCommandWrapper
 from .utils.utils import get_endpoint
 
@@ -12,7 +11,7 @@ logger = get_logger()
 
 
 class Repository:
-    """Representation local model git repository.
+    """A local representation of the model git repository.
     """
 
     def __init__(
@@ -78,14 +77,15 @@ class Repository:
     def push(self,
              commit_message: str,
              branch: Optional[str] = 'master',
-             force: bool = False):
-        """Push local to remote, this method will do.
+             force: Optional[bool] = False):
+        """Push local files to remote, this method will do.
            git add
            git commit
            git push
         Args:
             commit_message (str): commit message
-            revision (Optional[str], optional): which branch to push. Defaults to 'master'.
+            branch (Optional[str]): which branch to push. Defaults to 'master'.
+            force (Optional[bool]): whether to use forced-push.
         """
         if commit_message is None or not isinstance(commit_message, str):
             msg = 'commit_message must be provided!'

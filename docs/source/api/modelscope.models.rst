@@ -14,6 +14,8 @@ Subpackages
 
    modelscope.models.cv
    modelscope.models.nlp
+   modelscope.models.multi_modal
+   modelscope.models.audio
 
 Submodules
 ----------

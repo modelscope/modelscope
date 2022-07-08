@@ -18,9 +18,6 @@ class LoadImage:
     "scale_factor" (1.0) and "img_norm_cfg" (means=0 and stds=1).
     Args:
         mode (str): See :ref:`PIL.Mode<https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes>`.
-        to_float32 (bool): Whether to convert the loaded image to a float32
-            numpy array. If set to False, the loaded image is an uint8 array.
-            Defaults to False.
     """
 
     def __init__(self, mode='rgb'):
@@ -57,7 +54,7 @@ class LoadImage:
         return results
 
     def __repr__(self):
-        repr_str = (f'{self.__class__.__name__}(' f'mode={self.mode})')
+        repr_str = f'{self.__class__.__name__}(' f'mode={self.mode})'
         return repr_str
 
 

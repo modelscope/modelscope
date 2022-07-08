@@ -1,14 +1,11 @@
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
-from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from ..base import BaseTrainer
 from ..builder import TRAINERS
-
-# __all__ = ["SequenceClassificationTrainer"]
 
 PATH = None
 logger = get_logger(PATH)

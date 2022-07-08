@@ -5,7 +5,7 @@ import torch
 
 from ...metainfo import Pipelines
 from ...models import Model
-from ...models.nlp.masked_language_model import MaskedLanguageModelBase
+from ...models.nlp.masked_language import MaskedLanguageModelBase
 from ...preprocessors import FillMaskPreprocessor
 from ...utils.config import Config
 from ...utils.constant import ModelFile, Tasks

@@ -28,8 +28,16 @@ def format_list(para) -> List:
 
 
 class MsDataset:
-    _hf_ds = None  # holds the underlying HuggingFace Dataset
-    """A MsDataset backed by hugging face Dataset."""
+    """
+    ModelScope Dataset (aka, MsDataset) is backed by a huggingface Dataset to
+    provide efficient data access and local storage managements. On top of
+    that, MsDataset supports the data integration and interactions with multiple
+    remote hubs, particularly, ModelScope's own Dataset-hub. MsDataset also
+    abstracts away data-access details with other remote storage, including both
+    general external web-hosted data and cloud storage such as OSS.
+    """
+    # the underlying huggingface Dataset
+    _hf_ds = None
 
     def __init__(self, hf_ds: Dataset, target: Optional[str] = None):
         self._hf_ds = hf_ds

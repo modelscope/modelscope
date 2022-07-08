@@ -263,5 +263,11 @@ TASK_OUTPUTS = {
     # {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
-    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMG]
+    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMG],
+
+    # text_to_speech result for a single sample
+    # {
+    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    # }
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM]
 }

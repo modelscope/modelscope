@@ -177,7 +177,6 @@ def build_from_cfg(cfg,
                         f'but got {type(default_args)}')
 
     args = cfg.copy()
-
     if default_args is not None:
         for name, value in default_args.items():
             args.setdefault(name, value)

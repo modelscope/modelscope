@@ -10,6 +10,13 @@ class TtsException(Exception):
     pass
 
 
+class TtsModelConfigurationExcetion(TtsException):
+    """
+    TTS model configuration exceptions.
+    """
+    pass
+
+
 class TtsFrontendException(TtsException):
     """
     TTS frontend module level exceptions.

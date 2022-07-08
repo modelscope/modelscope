@@ -3,46 +3,45 @@ from typing import Any, Dict, List
 import numpy as np
 
 from modelscope.metainfo import Pipelines
-from modelscope.pipelines.base import Pipeline
+from modelscope.models import Model
+from modelscope.models.audio.tts import SambertHifigan
+from modelscope.pipelines.base import Input, InputModel, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import Preprocessor, TextToTacotronSymbols
-from modelscope.utils.constant import Tasks
+from modelscope.pipelines.outputs import OutputKeys
+from modelscope.utils.constant import Fields, Tasks
 
-__all__ = ['TextToSpeechSambertHifigan16kPipeline']
+__all__ = ['TextToSpeechSambertHifiganPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.text_to_speech, module_name=Pipelines.sambert_hifigan_16k_tts)
-class TextToSpeechSambertHifigan16kPipeline(Pipeline):
+    Tasks.text_to_speech, module_name=Pipelines.sambert_hifigan_tts)
+class TextToSpeechSambertHifiganPipeline(Pipeline):
 
-    def __init__(self,
-                 model: List[str] = None,
-                 preprocessor: Preprocessor = None,
-                 **kwargs):
-        """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+    def __init__(self, model: InputModel, **kwargs):
+        """use `model` to create a text-to-speech pipeline for prediction
+
         Args:
-            model: model id on modelscope hub.
+            model (SambertHifigan or str): a model instance or valid offical model id
         """
-        assert len(model) == 3, 'model number should be 3'
-        if preprocessor is None:
-            lang_type = 'pinyin'
-            if 'lang_type' in kwargs:
-                lang_type = kwargs.lang_type
-            preprocessor = TextToTacotronSymbols(model[0], lang_type=lang_type)
-        models = [model[1], model[2]]
-        super().__init__(model=models, preprocessor=preprocessor, **kwargs)
-        self._am = self.models[0]
-        self._vocoder = self.models[1]
+        super().__init__(model=model, **kwargs)
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, np.ndarray]:
-        texts = inputs['texts']
-        audio_total = np.empty((0), dtype='int16')
-        for line in texts:
-            line = line.strip().split('\t')
-            audio = self._vocoder.forward(self._am.forward(line[1]))
-            audio_total = np.append(audio_total, audio, axis=0)
-        return {'output': audio_total}
+    def forward(self, inputs: Dict[str, str]) -> Dict[str, np.ndarray]:
+        """synthesis text from inputs with pipeline
+        Args:
+            inputs (Dict[str, str]): a dictionary that key is the name of
+            certain testcase and value is the text to synthesis.
+        Returns:
+            Dict[str, np.ndarray]: a dictionary with key and value. The key
+            is the same as inputs' key which is the label of the testcase
+            and the value is the pcm audio data.
+        """
+        output_wav = {}
+        for label, text in inputs.items():
+            output_wav[label] = self.model.forward(text)
+        return {OutputKeys.OUTPUT_PCM: output_wav}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return inputs
+
+    def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         return inputs

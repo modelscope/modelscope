@@ -4,7 +4,7 @@ from tensorflow.contrib.rnn import RNNCell
 from tensorflow.contrib.seq2seq import AttentionWrapperState
 from tensorflow.python.ops import rnn_cell_impl
 
-from .modules import prenet
+from .am_models import prenet
 
 
 class VarPredictorCell(RNNCell):

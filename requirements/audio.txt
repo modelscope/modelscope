@@ -20,5 +20,5 @@ torch
 torchaudio
 torchvision
 tqdm
-ttsfrd==0.0.2
+ttsfrd==0.0.3
 unidecode

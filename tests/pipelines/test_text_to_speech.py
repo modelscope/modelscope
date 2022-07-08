@@ -7,10 +7,10 @@ import unittest
 import torch
 from scipy.io.wavfile import write
 
-from modelscope.metainfo import Pipelines, Preprocessors
+from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.pipelines import pipeline
-from modelscope.preprocessors import build_preprocessor
+from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
@@ -24,17 +24,18 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline(self):
-        text = '明天天气怎么样'
-        preprocessor_model_id = 'damo/speech_binary_tts_frontend_resource'
-        am_model_id = 'damo/speech_sambert16k_tts_zhitian_emo'
-        voc_model_id = 'damo/speech_hifigan16k_tts_zhitian_emo'
-        sambert_tts = pipeline(
-            task=Tasks.text_to_speech,
-            model=[preprocessor_model_id, am_model_id, voc_model_id])
-        self.assertTrue(sambert_tts is not None)
-        output = sambert_tts(text)
-        self.assertTrue(len(output['output']) > 0)
-        write('output.wav', 16000, output['output'])
+        single_test_case_label = 'test_case_label_0'
+        text = '今天北京天气怎么样？'
+        model_id = 'damo/speech_sambert-hifigan_tts_zhitian_emo_zhcn_16k'
+
+        sambert_hifigan_tts = pipeline(
+            task=Tasks.text_to_speech, model=model_id)
+        self.assertTrue(sambert_hifigan_tts is not None)
+        test_cases = {single_test_case_label: text}
+        output = sambert_hifigan_tts(test_cases)
+        self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
+        pcm = output[OutputKeys.OUTPUT_PCM][single_test_case_label]
+        write('output.wav', 16000, pcm)
 
 
 if __name__ == '__main__':

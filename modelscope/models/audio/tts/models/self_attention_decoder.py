@@ -5,7 +5,7 @@ import sys
 import tensorflow as tf
 
 from . import compat, transformer
-from .modules import decoder_prenet
+from .am_models import decoder_prenet
 from .position import SinusoidalPositionEncoder
 
 

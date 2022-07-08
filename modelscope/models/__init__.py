@@ -5,8 +5,7 @@ from .base import Model
 from .builder import MODELS, build_model
 
 try:
-    from .audio.tts.am import SambertNetHifi16k
-    from .audio.tts.vocoder import Hifigan16k
+    from .audio.tts import SambertHifigan
     from .audio.kws import GenericKeyWordSpotting
     from .audio.ans.frcrn import FRCRNModel
 except ModuleNotFoundError as e:

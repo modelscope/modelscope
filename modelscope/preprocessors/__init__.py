@@ -6,7 +6,6 @@ from .builder import PREPROCESSORS, build_preprocessor
 from .common import Compose
 from .image import LoadImage, load_image
 from .kws import WavToLists
-from .text_to_speech import *  # noqa F403
 
 try:
     from .audio import LinearAECAndFbank

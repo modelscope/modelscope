@@ -20,9 +20,7 @@ class Models(object):
     space = 'space'
 
     # audio models
-    sambert_hifi_16k = 'sambert-hifi-16k'
-    generic_tts_frontend = 'generic-tts-frontend'
-    hifigan16k = 'hifigan16k'
+    sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
 
@@ -66,7 +64,7 @@ class Pipelines(object):
     zero_shot_classification = 'zero-shot-classification'
 
     # audio tasks
-    sambert_hifigan_16k_tts = 'sambert-hifigan-16k-tts'
+    sambert_hifigan_tts = 'sambert-hifigan-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'

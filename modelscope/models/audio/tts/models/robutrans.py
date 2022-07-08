@@ -3,9 +3,9 @@ from tensorflow.contrib.rnn import LSTMBlockCell, MultiRNNCell
 from tensorflow.contrib.seq2seq import BasicDecoder
 from tensorflow.python.ops.ragged.ragged_util import repeat
 
+from .am_models import conv_prenet, decoder_prenet, encoder_prenet
 from .fsmn_encoder import FsmnEncoderV2
 from .helpers import VarTestHelper, VarTrainingHelper
-from .modules import conv_prenet, decoder_prenet, encoder_prenet
 from .position import (BatchSinusodalPositionalEncoding,
                        SinusodalPositionalEncoding)
 from .rnn_wrappers import DurPredictorCell, VarPredictorCell

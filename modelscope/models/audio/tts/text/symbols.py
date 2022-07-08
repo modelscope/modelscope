@@ -12,7 +12,7 @@ _eos = '~'
 _mask = '@[MASK]'
 
 
-def load_symbols(dict_path):
+def load_symbols(dict_path, has_mask=True):
     _characters = ''
     _ch_symbols = []
     sy_dict_name = 'sy_dict.txt'
@@ -25,7 +25,9 @@ def load_symbols(dict_path):
     _arpabet = ['@' + s for s in _ch_symbols]
 
     # Export all symbols:
-    sy = list(_characters) + _arpabet + [_pad, _eos, _mask]
+    sy = list(_characters) + _arpabet + [_pad, _eos]
+    if has_mask:
+        sy.append(_mask)
 
     _characters = ''
 
@@ -38,7 +40,9 @@ def load_symbols(dict_path):
         _ch_tones.append(line)
 
     # Export all tones:
-    tone = list(_characters) + _ch_tones + [_pad, _eos, _mask]
+    tone = list(_characters) + _ch_tones + [_pad, _eos]
+    if has_mask:
+        tone.append(_mask)
 
     _characters = ''
 
@@ -51,9 +55,9 @@ def load_symbols(dict_path):
         _ch_syllable_flags.append(line)
 
     # Export all syllable_flags:
-    syllable_flag = list(_characters) + _ch_syllable_flags + [
-        _pad, _eos, _mask
-    ]
+    syllable_flag = list(_characters) + _ch_syllable_flags + [_pad, _eos]
+    if has_mask:
+        syllable_flag.append(_mask)
 
     _characters = ''
 
@@ -66,7 +70,9 @@ def load_symbols(dict_path):
         _ch_word_segments.append(line)
 
     # Export all syllable_flags:
-    word_segment = list(_characters) + _ch_word_segments + [_pad, _eos, _mask]
+    word_segment = list(_characters) + _ch_word_segments + [_pad, _eos]
+    if has_mask:
+        word_segment.append(_mask)
 
     _characters = ''
 
@@ -78,7 +84,9 @@ def load_symbols(dict_path):
         line = line.strip('\r\n')
         _ch_emo_types.append(line)
 
-    emo_category = list(_characters) + _ch_emo_types + [_pad, _eos, _mask]
+    emo_category = list(_characters) + _ch_emo_types + [_pad, _eos]
+    if has_mask:
+        emo_category.append(_mask)
 
     _characters = ''
 
@@ -91,5 +99,7 @@ def load_symbols(dict_path):
         _ch_speakers.append(line)
 
     # Export all syllable_flags:
-    speaker = list(_characters) + _ch_speakers + [_pad, _eos, _mask]
+    speaker = list(_characters) + _ch_speakers + [_pad, _eos]
+    if has_mask:
+        speaker.append(_mask)
     return sy, tone, syllable_flag, word_segment, emo_category, speaker

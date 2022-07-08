@@ -14,7 +14,7 @@ from ..msdatasets.config import DOWNLOADED_DATASETS_PATH, HUB_DATASET_ENDPOINT
 from ..utils.constant import DownloadMode
 from .constants import MODELSCOPE_URL_SCHEME
 from .errors import (InvalidParameter, NotExistError, datahub_raise_on_error,
-                     is_ok, raise_on_error)
+                     handle_http_response, is_ok, raise_on_error)
 from .utils.utils import get_endpoint, model_id_to_group_owner_name
 
 logger = get_logger()
@@ -121,6 +121,8 @@ class HubApi:
         </Tip>
         """
         cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
         path = f'{self.endpoint}/api/v1/models/{model_id}'
 
         r = requests.delete(path, cookies=cookies)
@@ -154,6 +156,7 @@ class HubApi:
         path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?{revision}'
 
         r = requests.get(path, cookies=cookies)
+        handle_http_response(r, logger, cookies, model_id)
         if r.status_code == 200:
             if is_ok(r.json()):
                 return r.json()['Data']
@@ -192,7 +195,7 @@ class HubApi:
 
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions'
         r = requests.get(path, cookies=cookies)
-        r.raise_for_status()
+        handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
         info = d['Data']
@@ -234,7 +237,7 @@ class HubApi:
 
         r = requests.get(path, cookies=cookies, headers=headers)
 
-        r.raise_for_status()
+        handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
 
@@ -326,19 +329,16 @@ class ModelScopeConfig:
 
     @classmethod
     def get_cookies(cls):
-        try:
-            cookies_path = os.path.join(cls.path_credential, 'cookies')
+        cookies_path = os.path.join(cls.path_credential, 'cookies')
+        if os.path.exists(cookies_path):
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     if cookie.is_expired():
-                        logger.warn('Auth is expored, please re-login')
+                        logger.warn(
+                            'Authentication has expired, please re-login')
                         return None
                 return cookies
-        except FileNotFoundError:
-            logger.warn(
-                "Auth token does not exist, you'll get authentication error when downloading \
-                private model files. Please login first")
         return None
 
     @classmethod

@@ -15,33 +15,13 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
 from modelscope.utils.logger import get_logger
+from .test_utils import (TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
+                         TEST_PASSWORD, TEST_USER_NAME1, TEST_USER_NAME2,
+                         delete_credential, delete_stored_git_credential)
 
 logger = get_logger()
 logger.setLevel('DEBUG')
-USER_NAME = 'maasadmin'
-PASSWORD = '12345678'
-
-model_chinese_name = '达摩卡通化模型'
-model_org = 'unittest'
 DEFAULT_GIT_PATH = 'git'
-
-
-def delete_credential():
-    path_credential = expanduser('~/.modelscope/credentials')
-    shutil.rmtree(path_credential)
-
-
-def delete_stored_git_credential(user):
-    credential_path = expanduser('~/.git-credentials')
-    if os.path.exists(credential_path):
-        with open(credential_path, 'r+') as f:
-            lines = f.readlines()
-            for line in lines:
-                if user in line:
-                    lines.remove(line)
-            f.seek(0)
-            f.write(''.join(lines))
-            f.truncate()
 
 
 class HubRepositoryTest(unittest.TestCase):
@@ -49,14 +29,14 @@ class HubRepositoryTest(unittest.TestCase):
     def setUp(self):
         self.api = HubApi()
         # note this is temporary before official account management is ready
-        self.api.login(USER_NAME, PASSWORD)
+        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)
         self.model_name = uuid.uuid4().hex
-        self.model_id = '%s/%s' % (model_org, self.model_name)
+        self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
         self.api.create_model(
             model_id=self.model_id,
             visibility=ModelVisibility.PUBLIC,  # 1-private, 5-public
             license=Licenses.APACHE_V2,
-            chinese_name=model_chinese_name,
+            chinese_name=TEST_MODEL_CHINESE_NAME,
         )
         temporary_dir = tempfile.mkdtemp()
         self.model_dir = os.path.join(temporary_dir, self.model_name)
@@ -70,10 +50,10 @@ class HubRepositoryTest(unittest.TestCase):
 
     def test_clone_public_model_without_token(self):
         delete_credential()
-        delete_stored_git_credential(USER_NAME)
+        delete_stored_git_credential(TEST_USER_NAME1)
         Repository(self.model_dir, clone_from=self.model_id)
         assert os.path.exists(os.path.join(self.model_dir, 'README.md'))
-        self.api.login(USER_NAME, PASSWORD)  # re-login for delete
+        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)  # re-login for delete
 
     def test_push_all(self):
         repo = Repository(self.model_dir, clone_from=self.model_id)

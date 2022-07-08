@@ -1,3 +1,6 @@
+from requests.exceptions import HTTPError
+
+
 class NotExistError(Exception):
     pass
 
@@ -24,6 +27,17 @@ def is_ok(rsp):
         Success: {'Code': 200, 'Data': {}, 'Message': 'success', 'RequestId': '', 'Success': True}
     """
     return rsp['Code'] == 200 and rsp['Success']
+
+
+def handle_http_response(response, logger, cookies, model_id):
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        if cookies is None:  # code in [403] and
+            logger.error(
+                f'Authentication token does not exist, failed to access model {model_id} which may be private. \
+                  Please login first.')
+        raise
 
 
 def raise_on_error(rsp):

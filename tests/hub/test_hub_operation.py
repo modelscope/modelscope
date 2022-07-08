@@ -12,12 +12,9 @@ from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
+from .test_utils import (TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
+                         TEST_PASSWORD, TEST_USER_NAME1)
 
-USER_NAME = 'maasadmin'
-PASSWORD = '12345678'
-
-model_chinese_name = '达摩卡通化模型'
-model_org = 'unittest'
 DEFAULT_GIT_PATH = 'git'
 
 download_model_file_name = 'test.bin'
@@ -28,14 +25,14 @@ class HubOperationTest(unittest.TestCase):
     def setUp(self):
         self.api = HubApi()
         # note this is temporary before official account management is ready
-        self.api.login(USER_NAME, PASSWORD)
+        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)
         self.model_name = uuid.uuid4().hex
-        self.model_id = '%s/%s' % (model_org, self.model_name)
+        self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
         self.api.create_model(
             model_id=self.model_id,
             visibility=ModelVisibility.PUBLIC,
             license=Licenses.APACHE_V2,
-            chinese_name=model_chinese_name,
+            chinese_name=TEST_MODEL_CHINESE_NAME,
         )
         temporary_dir = tempfile.mkdtemp()
         self.model_dir = os.path.join(temporary_dir, self.model_name)
@@ -97,7 +94,7 @@ class HubOperationTest(unittest.TestCase):
             file_path=download_model_file_name,
             cache_dir=temporary_dir)
         assert os.path.exists(downloaded_file)
-        self.api.login(USER_NAME, PASSWORD)
+        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)
 
     def test_snapshot_delete_download_cache_file(self):
         snapshot_path = snapshot_download(model_id=self.model_id)

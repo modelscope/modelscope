@@ -1,3 +1,4 @@
+espnet==202204
 #tts
 h5py
 inflect

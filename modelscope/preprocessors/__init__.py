@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from modelscope.utils.error import AUDIO_IMPORT_ERROR, TENSORFLOW_IMPORT_ERROR
+from .asr import WavToScp
 from .base import Preprocessor
 from .builder import PREPROCESSORS, build_preprocessor
 from .common import Compose

@@ -23,6 +23,7 @@ class Models(object):
     sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
+    generic_asr = 'generic-asr'
 
     # multi-modal models
     ofa = 'ofa'
@@ -68,6 +69,7 @@ class Pipelines(object):
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     kws_kwsbp = 'kws-kwsbp'
+    asr_inference = 'asr-inference'
 
     # multi-modal tasks
     image_caption = 'image-captioning'
@@ -120,6 +122,7 @@ class Preprocessors(object):
     linear_aec_fbank = 'linear-aec-fbank'
     text_to_tacotron_symbols = 'text-to-tacotron-symbols'
     wav_to_lists = 'wav-to-lists'
+    wav_to_scp = 'wav-to-scp'
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'

@@ -1,8 +1,7 @@
-import io
 import os
 import shutil
 import threading
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import yaml
 
@@ -12,7 +11,6 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
 from modelscope.utils.constant import Tasks
-from .asr_engine import asr_env_checking, asr_inference_paraformer_espnet
 from .asr_engine.common import asr_utils
 
 __all__ = ['AutomaticSpeechRecognitionPipeline']
@@ -30,7 +28,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  **kwargs):
         """use `model` and `preprocessor` to create an asr pipeline for prediction
         """
-
+        from .asr_engine import asr_env_checking
         assert model is not None, 'asr model should be provided'
 
         model_list: List = []
@@ -199,6 +197,7 @@ class AsrInferenceThread(threading.Thread):
 
     def run(self):
         if self._cmd['model_type'] == 'pytorch':
+            from .asr_engine import asr_inference_paraformer_espnet
             asr_inference_paraformer_espnet.asr_inference(
                 batch_size=self._cmd['batch_size'],
                 output_dir=self._cmd['output_dir'],

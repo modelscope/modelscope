@@ -10,7 +10,6 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from espnet2.asr.frontend.default import DefaultFrontend
 from espnet2.asr.transducer.beam_search_transducer import BeamSearchTransducer
 from espnet2.asr.transducer.beam_search_transducer import \
     ExtendedHypothesis as ExtTransHypothesis  # noqa: H301
@@ -35,6 +34,7 @@ from espnet.nets.scorers.length_bonus import LengthBonus
 from espnet.utils.cli_utils import get_commandline_args
 from typeguard import check_argument_types
 
+from .espnet.asr.frontend.wav_frontend import WavFrontend
 from .espnet.tasks.asr import ASRTaskNAR as ASRTask
 
 
@@ -70,7 +70,7 @@ class Speech2Text:
         asr_model, asr_train_args = ASRTask.build_model_from_file(
             asr_train_config, asr_model_file, device)
         if asr_model.frontend is None and frontend_conf is not None:
-            frontend = DefaultFrontend(**frontend_conf)
+            frontend = WavFrontend(**frontend_conf)
             asr_model.frontend = frontend
         asr_model.to(dtype=getattr(torch, dtype)).eval()
 

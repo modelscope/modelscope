@@ -11,7 +11,10 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
 from modelscope.utils.constant import Tasks
+from modelscope.utils.logger import get_logger
 from .asr_engine.common import asr_utils
+
+logger = get_logger()
 
 __all__ = ['AutomaticSpeechRecognitionPipeline']
 
@@ -76,6 +79,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         """Decoding
         """
 
+        logger.info(f"Decoding with {inputs['audio_format']} files ...")
+
         j: int = 0
         process = []
 
@@ -133,6 +138,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """process the asr results
         """
+
+        logger.info('Computing the result of ASR ...')
 
         rst = {'rec_result': 'None'}
 

@@ -8,7 +8,10 @@ import requests
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
+
+logger = get_logger()
 
 WAV_FILE = 'data/test/audios/asr_example.wav'
 
@@ -38,6 +41,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         '''run with single waveform file
         '''
 
+        logger.info('Run ASR test with waveform file ...')
+
         wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
 
         inference_16k_pipline = pipeline(
@@ -57,7 +62,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                'rec_result': 'None'
            }
         '''
-        print('test_run_with_wav rec result: ' + rec_result['rec_result'])
+        logger.info('test_run_with_wav rec result: '
+                    + rec_result['rec_result'])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_wav_dataset(self):
@@ -77,6 +83,9 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                transcript
                  data.text  # hypothesis text
         '''
+
+        logger.info('Run ASR test with waveform dataset ...')
+        logger.info('Downloading waveform testsets file ...')
 
         # downloading pos_testsets file
         testsets_file_path = os.path.join(self._workspace,
@@ -124,8 +133,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                    }
             }
         '''
-        print('test_run_with_wav_dataset datasets result: ')
-        print(rec_result['datasets_result'])
+        logger.info('test_run_with_wav_dataset datasets result: ')
+        logger.info(rec_result['datasets_result'])
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_ark_dataset(self):
@@ -145,6 +154,9 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                  data.scp
                  data.text
         '''
+
+        logger.info('Run ASR test with ark dataset ...')
+        logger.info('Downloading ark testsets file ...')
 
         # downloading pos_testsets file
         testsets_file_path = os.path.join(self._workspace,
@@ -191,8 +203,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                    }
             }
         '''
-        print('test_run_with_ark_dataset datasets result: ')
-        print(rec_result['datasets_result'])
+        logger.info('test_run_with_ark_dataset datasets result: ')
+        logger.info(rec_result['datasets_result'])
 
 
 if __name__ == '__main__':

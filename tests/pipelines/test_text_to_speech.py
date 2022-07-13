@@ -26,13 +26,14 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
     def test_pipeline(self):
         single_test_case_label = 'test_case_label_0'
         text = '今天北京天气怎么样？'
-        model_id = 'damo/speech_sambert-hifigan_tts_zhitian_emo_zhcn_16k'
+        model_id = 'damo/speech_sambert-hifigan_tts_zhcn_16k'
+        voice = 'zhitian_emo'
 
         sambert_hifigan_tts = pipeline(
             task=Tasks.text_to_speech, model=model_id)
         self.assertTrue(sambert_hifigan_tts is not None)
-        test_cases = {single_test_case_label: text}
-        output = sambert_hifigan_tts(test_cases)
+        inputs = {single_test_case_label: text, 'voice': voice}
+        output = sambert_hifigan_tts(inputs)
         self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
         pcm = output[OutputKeys.OUTPUT_PCM][single_test_case_label]
         write('output.wav', 16000, pcm)

@@ -17,6 +17,13 @@ class TtsModelConfigurationExcetion(TtsException):
     pass
 
 
+class TtsVoiceNotExistsException(TtsException):
+    """
+    TTS voice not exists exception.
+    """
+    pass
+
+
 class TtsFrontendException(TtsException):
     """
     TTS frontend module level exceptions.

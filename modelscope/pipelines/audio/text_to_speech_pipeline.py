@@ -37,7 +37,7 @@ class TextToSpeechSambertHifiganPipeline(Pipeline):
         """
         output_wav = {}
         for label, text in inputs.items():
-            output_wav[label] = self.model.forward(text)
+            output_wav[label] = self.model.forward(text, inputs.get('voice'))
         return {OutputKeys.OUTPUT_PCM: output_wav}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

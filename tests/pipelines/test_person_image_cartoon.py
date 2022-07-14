@@ -5,9 +5,9 @@ import unittest
 
 import cv2
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

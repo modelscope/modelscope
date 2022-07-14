@@ -13,12 +13,7 @@ class Fields(object):
     multi_modal = 'multi-modal'
 
 
-class Tasks(object):
-    """ Names for tasks supported by modelscope.
-
-    Holds the standard task name to use for identifying different tasks.
-    This should be used to register models, pipelines, trainers.
-    """
+class CVTasks(object):
     # vision tasks
     image_to_text = 'image-to-text'
     pose_estimation = 'pose-estimation'
@@ -33,6 +28,8 @@ class Tasks(object):
     action_recognition = 'action-recognition'
     video_embedding = 'video-embedding'
 
+
+class NLPTasks(object):
     # nlp tasks
     word_segmentation = 'word-segmentation'
     nli = 'nli'
@@ -56,17 +53,62 @@ class Tasks(object):
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
 
+
+class AudioTasks(object):
     # audio tasks
     auto_speech_recognition = 'auto-speech-recognition'
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
 
+
+class MultiModalTasks(object):
     # multi-modal tasks
     image_captioning = 'image-captioning'
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
+
+
+class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
+    """ Names for tasks supported by modelscope.
+
+    Holds the standard task name to use for identifying different tasks.
+    This should be used to register models, pipelines, trainers.
+    """
+
+    reverse_field_index = {}
+
+    @staticmethod
+    def find_field_by_task(task_name):
+        if len(Tasks.reverse_field_index) == 0:
+            # Lazy init, not thread safe
+            field_dict = {
+                Fields.cv: [
+                    getattr(Tasks, attr) for attr in dir(CVTasks)
+                    if not attr.startswith('__')
+                ],
+                Fields.nlp: [
+                    getattr(Tasks, attr) for attr in dir(NLPTasks)
+                    if not attr.startswith('__')
+                ],
+                Fields.audio: [
+                    getattr(Tasks, attr) for attr in dir(AudioTasks)
+                    if not attr.startswith('__')
+                ],
+                Fields.multi_modal: [
+                    getattr(Tasks, attr) for attr in dir(MultiModalTasks)
+                    if not attr.startswith('__')
+                ],
+            }
+
+            for field, tasks in field_dict.items():
+                for task in tasks:
+                    if task in Tasks.reverse_field_index:
+                        raise ValueError(f'Duplicate task: {task}')
+                    Tasks.reverse_field_index[task] = field
+
+        return Tasks.reverse_field_index.get(task_name)
 
 
 class InputFields(object):
@@ -100,6 +142,7 @@ class ModelFile(object):
     TF_CKPT_PREFIX = 'ckpt-'
     TORCH_MODEL_FILE = 'pytorch_model.pt'
     TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
+    LABEL_MAPPING = 'label_mapping.json'
 
 
 class Requirements(object):

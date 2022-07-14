@@ -4,12 +4,12 @@ import numpy as np
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.nlp import BertForSequenceClassification
+from modelscope.outputs import OutputKeys
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from ...models import Model
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 __all__ = ['SequenceClassificationPipeline']
 

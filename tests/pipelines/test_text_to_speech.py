@@ -9,8 +9,8 @@ from scipy.io.wavfile import write
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level

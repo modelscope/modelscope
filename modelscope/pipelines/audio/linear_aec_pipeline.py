@@ -9,12 +9,12 @@ import yaml
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
+from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.audio import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 logger = get_logger()
 

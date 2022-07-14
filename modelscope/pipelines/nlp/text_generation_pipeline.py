@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from modelscope.outputs import OutputKeys
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import PalmForTextGeneration
@@ -9,7 +10,6 @@ from ...preprocessors import TextGenerationPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 __all__ = ['TextGenerationPipeline']
 

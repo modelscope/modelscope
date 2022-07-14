@@ -4,6 +4,7 @@ from typing import Any, Dict, Union
 import numpy as np
 import torch
 
+from modelscope.outputs import OutputKeys
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SbertForNLI
@@ -11,7 +12,6 @@ from ...preprocessors import NLIPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 __all__ = ['NLIPipeline']
 

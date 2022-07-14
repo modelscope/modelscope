@@ -6,13 +6,13 @@ import numpy as np
 import PIL
 
 from modelscope.metainfo import Pipelines
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 logger = get_logger()
 

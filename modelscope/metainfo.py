@@ -127,3 +127,16 @@ class Preprocessors(object):
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'
     mplug_visual_question_answering = 'mplug-visual-question-answering'
+
+
+class Metrics(object):
+    """ Names for different metrics.
+    """
+
+    # accuracy
+    accuracy = 'accuracy'
+
+    # metrics for sequence classification task
+    seq_cls_metric = 'seq_cls_metric'
+    # metrics for token-classification task
+    token_cls_metric = 'token-cls-metric'

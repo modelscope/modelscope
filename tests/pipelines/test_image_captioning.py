@@ -2,8 +2,8 @@
 
 import unittest
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

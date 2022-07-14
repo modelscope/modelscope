@@ -7,10 +7,10 @@ from typing import Any, Dict, Generator, List, Union
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
+from modelscope.outputs import TASK_OUTPUTS
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.logger import get_logger
-from .outputs import TASK_OUTPUTS
 from .util import is_model, is_official_hub_path
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']

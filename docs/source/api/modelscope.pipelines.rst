@@ -36,10 +36,10 @@ modelscope.pipelines.base module
    :undoc-members:
    :show-inheritance:
 
-modelscope.pipelines.outputs module
+modelscope.outputs module
 -----------------------------------
 
-.. automodule:: modelscope.pipelines.outputs
+.. automodule:: modelscope.outputs
    :members:
    :undoc-members:
    :show-inheritance:

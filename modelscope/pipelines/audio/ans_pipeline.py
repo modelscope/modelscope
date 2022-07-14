@@ -7,10 +7,10 @@ import soundfile as sf
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 
 def audio_norm(x):

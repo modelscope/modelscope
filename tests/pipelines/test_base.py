@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 import PIL
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import Pipeline, pipeline
 from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group

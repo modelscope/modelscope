@@ -4,6 +4,7 @@ from typing import Any, Dict
 import numpy as np
 import tensorflow as tf
 
+from modelscope.outputs import OutputKeys
 from ...hub.snapshot_download import snapshot_download
 from ...metainfo import Pipelines
 from ...models.nlp import CsanmtForTranslation
@@ -11,7 +12,6 @@ from ...utils.constant import ModelFile, Tasks
 from ...utils.logger import get_logger
 from ..base import Pipeline, Tensor
 from ..builder import PIPELINES
-from ..outputs import OutputKeys
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

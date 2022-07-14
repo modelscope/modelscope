@@ -7,7 +7,10 @@ import torch
 from sofa.models.sbert.modeling_sbert import SbertModel, SbertPreTrainedModel
 from torch import nn
 
+from modelscope.metainfo import Models
+from modelscope.utils.constant import Tasks
 from ..base import Model
+from ..builder import MODELS
 
 
 class SbertTextClassfier(SbertPreTrainedModel):
@@ -20,7 +23,11 @@ class SbertTextClassfier(SbertPreTrainedModel):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
-    def forward(self, input_ids=None, token_type_ids=None):
+    def forward(self,
+                input_ids=None,
+                token_type_ids=None,
+                labels=None,
+                **kwargs):
         outputs = self.encoder(
             input_ids,
             token_type_ids=token_type_ids,
@@ -29,6 +36,10 @@ class SbertTextClassfier(SbertPreTrainedModel):
         pooled_output = outputs[1]
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            return {'logits': logits, 'loss': loss}
         return {'logits': logits}
 
 

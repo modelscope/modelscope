@@ -11,8 +11,8 @@ from PIL import Image
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.cmdssl_video_embedding.resnet2p1d import \
     resnet26_2p1d
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger

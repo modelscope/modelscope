@@ -8,6 +8,7 @@ from transformers import AutoTokenizer
 from ..metainfo import Preprocessors
 from ..models import Model
 from ..utils.constant import Fields, InputFields
+from ..utils.hub import parse_label_mapping
 from ..utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
@@ -115,7 +116,8 @@ class SentenceSimilarityPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         kwargs['truncation'] = True
-        kwargs['padding'] = False
+        kwargs['padding'] = False if 'padding' not in kwargs else kwargs[
+            'padding']
         kwargs['return_tensors'] = 'pt'
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, *args, **kwargs)
@@ -143,6 +145,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
         print(f'this is the tokenzier {self.tokenizer}')
+        self.label2id = parse_label_mapping(self.model_dir)
 
     @type_assert(object, (str, tuple, Dict))
     def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
@@ -164,7 +167,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
             'id': [],
             'input_ids': [],
             'attention_mask': [],
-            'token_type_ids': []
+            'token_type_ids': [],
         }
 
         max_seq_length = self.sequence_length
@@ -183,6 +186,29 @@ class SequenceClassificationPreprocessor(Preprocessor):
         rst['attention_mask'].append(feature['attention_mask'])
         rst['token_type_ids'].append(feature['token_type_ids'])
 
+        return rst
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name='bert-seq-cls-tokenizer-finetune')
+class SentenceSimilarityFinetunePreprocessor(SentenceSimilarityPreprocessor):
+    """Sentence similarity preprocessor in the finetune scenario
+
+    Mainly added the label mapping procedure.
+    """
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        kwargs['padding'] = 'max_length'
+        super().__init__(model_dir, *args, **kwargs)
+        self.label2id = parse_label_mapping(self.model_dir)
+
+    @type_assert(object, (str, tuple, Dict))
+    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
+        rst = super().__call__(data)
+        rst = {k: v.squeeze() for k, v in rst.items()}
+        if self.label2id is not None and 'label' in data:
+            rst['labels'] = []
+            rst['labels'].append(self.label2id[str(data['label'])])
         return rst
 
 

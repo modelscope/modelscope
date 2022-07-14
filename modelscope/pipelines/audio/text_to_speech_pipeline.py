@@ -5,9 +5,9 @@ import numpy as np
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.audio.tts import SambertHifigan
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, InputModel, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.pipelines.outputs import OutputKeys
 from modelscope.utils.constant import Fields, Tasks
 
 __all__ = ['TextToSpeechSambertHifiganPipeline']

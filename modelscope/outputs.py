@@ -4,6 +4,7 @@ from modelscope.utils.constant import Tasks
 
 
 class OutputKeys(object):
+    LOGITS = 'logits'
     SCORES = 'scores'
     LABEL = 'label'
     LABELS = 'labels'

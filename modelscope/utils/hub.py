@@ -86,3 +86,16 @@ def get_model_type(model_dir):
             return cfg.model_type if hasattr(cfg, 'model_type') else None
     except Exception as e:
         logger.error(f'parse config file failed with error: {e}')
+
+
+def parse_label_mapping(model_dir):
+    import os
+    import json
+    label2id = None
+    label_path = os.path.join(model_dir, ModelFile.LABEL_MAPPING)
+    if os.path.exists(label_path):
+        with open(label_path) as f:
+            label_mapping = json.load(f)
+        label2id = {name: idx for name, idx in label_mapping.items()}
+
+    return label2id

@@ -1,6 +1,6 @@
-fairseq==maas
+fairseq
 ftfy>=6.0.3
-ofa==0.0.2-3.6
+ofa>=0.0.2-3.6
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
 rouge_score

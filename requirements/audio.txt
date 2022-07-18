@@ -1,4 +1,4 @@
-espnet==202204
+espnet>=202204
 #tts
 h5py
 inflect
@@ -8,7 +8,8 @@ lxml
 matplotlib
 nara_wpe
 numpy<=1.18
-protobuf>3,<=3.20
+# tested on version before 3.20, expecting no breaking change going forward
+protobuf>3
 ptflops
 pytorch_wavelets
 PyWavelets>=1.0.0
@@ -21,5 +22,5 @@ torch
 torchaudio
 torchvision
 tqdm
-ttsfrd==0.0.3
+ttsfrd>=0.0.3
 unidecode

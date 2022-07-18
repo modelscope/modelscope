@@ -24,7 +24,6 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline(self):
-        single_test_case_label = 'test_case_label_0'
         text = '今天北京天气怎么样？'
         model_id = 'damo/speech_sambert-hifigan_tts_zhcn_16k'
         voice = 'zhitian_emo'
@@ -32,10 +31,9 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
         sambert_hifigan_tts = pipeline(
             task=Tasks.text_to_speech, model=model_id)
         self.assertTrue(sambert_hifigan_tts is not None)
-        inputs = {single_test_case_label: text, 'voice': voice}
-        output = sambert_hifigan_tts(inputs)
+        output = sambert_hifigan_tts(input=text, voice=voice)
         self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
-        pcm = output[OutputKeys.OUTPUT_PCM][single_test_case_label]
+        pcm = output[OutputKeys.OUTPUT_PCM]
         write('output.wav', 16000, pcm)
 
 

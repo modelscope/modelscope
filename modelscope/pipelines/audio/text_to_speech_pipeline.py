@@ -25,22 +25,19 @@ class TextToSpeechSambertHifiganPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
 
-    def forward(self, inputs: Dict[str, str]) -> Dict[str, np.ndarray]:
+    def forward(self, input: str, **forward_params) -> Dict[str, np.ndarray]:
         """synthesis text from inputs with pipeline
         Args:
-            inputs (Dict[str, str]): a dictionary that key is the name of
-            certain testcase and value is the text to synthesis.
+            input (str): text to synthesis
+            forward_params: valid param is 'voice' used to setting speaker vocie
         Returns:
-            Dict[str, np.ndarray]: a dictionary with key and value. The key
-            is the same as inputs' key which is the label of the testcase
-            and the value is the pcm audio data.
+            Dict[str, np.ndarray]: {OutputKeys.OUTPUT_PCM : np.ndarray(16bit pcm data)}
         """
-        output_wav = {}
-        for label, text in inputs.items():
-            output_wav[label] = self.model.forward(text, inputs.get('voice'))
+        output_wav = self.model.forward(input, forward_params.get('voice'))
         return {OutputKeys.OUTPUT_PCM: output_wav}
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, Any]:
         return inputs
 
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
+from modelscope.utils.constant import LogKeys
 from .builder import HOOKS
 from .hook import Hook
 from .priority import Priority
@@ -46,7 +47,7 @@ class LrSchedulerHook(Hook):
         return lr
 
     def before_train_iter(self, trainer):
-        trainer.log_buffer.output['lr'] = self._get_log_lr(trainer)
+        trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def before_train_epoch(self, trainer):
         if self.by_epoch:
@@ -54,7 +55,7 @@ class LrSchedulerHook(Hook):
                 self.warmup_lr_scheduler.step()
             else:
                 trainer.lr_scheduler.step()
-        trainer.log_buffer.output['lr'] = self._get_log_lr(trainer)
+        trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def _get_log_lr(self, trainer):
         cur_lr = self.get_current_lr(trainer)

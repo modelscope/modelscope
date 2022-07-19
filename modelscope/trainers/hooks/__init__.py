@@ -6,11 +6,12 @@ from .hook import Hook
 from .iter_timer_hook import IterTimerHook
 from .logger.text_logger_hook import TextLoggerHook
 from .lr_scheduler_hook import LrSchedulerHook
-from .optimizer_hook import OptimizerHook
+from .optimizer_hook import (ApexAMPOptimizerHook, OptimizerHook,
+                             TorchAMPOptimizerHook)
 from .priority import Priority
 
 __all__ = [
     'Hook', 'HOOKS', 'CheckpointHook', 'EvaluationHook', 'LrSchedulerHook',
     'OptimizerHook', 'Priority', 'build_hook', 'TextLoggerHook',
-    'IterTimerHook'
+    'IterTimerHook', 'TorchAMPOptimizerHook', 'ApexAMPOptimizerHook'
 ]

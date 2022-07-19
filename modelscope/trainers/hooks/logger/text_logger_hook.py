@@ -8,6 +8,7 @@ import json
 import torch
 from torch import distributed as dist
 
+from modelscope.utils.constant import LogKeys, ModeKeys
 from modelscope.utils.torch_utils import get_dist_info
 from ..builder import HOOKS
 from .base import LoggerHook
@@ -72,44 +73,53 @@ class TextLoggerHook(LoggerHook):
         return mem_mb.item()
 
     def _log_info(self, log_dict, trainer):
-        if log_dict['mode'] == 'train':
-            if isinstance(log_dict['lr'], dict):
+        lr_key = LogKeys.LR
+        epoch_key = LogKeys.EPOCH
+        iter_key = LogKeys.ITER
+        mode_key = LogKeys.MODE
+        iter_time_key = LogKeys.ITER_TIME
+        data_load_time_key = LogKeys.DATA_LOAD_TIME
+        eta_key = LogKeys.ETA
+
+        if log_dict[mode_key] == ModeKeys.TRAIN:
+            if isinstance(log_dict[lr_key], dict):
                 lr_str = []
-                for k, val in log_dict['lr'].items():
-                    lr_str.append(f'lr_{k}: {val:.3e}')
+                for k, val in log_dict[lr_key].items():
+                    lr_str.append(f'{lr_key}_{k}: {val:.3e}')
                 lr_str = ' '.join(lr_str)
             else:
-                lr_str = f'lr: {log_dict["lr"]:.3e}'
+                lr_str = f'{lr_key}: {log_dict[lr_key]:.3e}'
 
             if self.by_epoch:
-                log_str = f'Epoch [{log_dict["epoch"]}][{log_dict["iter"]}/{len(trainer.data_loader)}]\t'
+                log_str = f'{epoch_key} [{log_dict[epoch_key]}][{log_dict[iter_key]}/{len(trainer.data_loader)}]\t'
             else:
-                log_str = f'Iter [{log_dict["iter"]}/{trainer.max_iters}]\t'
+                log_str = f'{iter_key} [{log_dict[iter_key]}/{trainer.max_iters}]\t'
             log_str += f'{lr_str}, '
-            self._logged_keys.extend(['lr', 'mode', 'iter', 'epoch'])
+            self._logged_keys.extend([lr_key, mode_key, iter_key, epoch_key])
 
-            if 'time' in log_dict.keys():
-                self.time_sec_tot += (log_dict['time'] * self.interval)
+            if iter_time_key in log_dict.keys():
+                self.time_sec_tot += (log_dict[iter_time_key] * self.interval)
                 time_sec_avg = self.time_sec_tot / (
                     trainer.iter - self.start_iter + 1)
                 eta_sec = time_sec_avg * (trainer.max_iters - trainer.iter - 1)
                 eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-                log_str += f'eta: {eta_str}, '
-                log_str += f'time: {log_dict["time"]:.3f}, data_load_time: {log_dict["data_load_time"]:.3f}, '
+                log_str += f'{eta_key}: {eta_str}, '
+                log_str += f'{iter_time_key}: {log_dict[iter_time_key]:.3f}, '
+                log_str += f'{data_load_time_key}: {log_dict[data_load_time_key]:.3f}, '
                 self._logged_keys.extend([
-                    'time',
-                    'data_load_time',
+                    iter_time_key,
+                    data_load_time_key,
                 ])
         else:
             # val/test time
             # here 1000 is the length of the val dataloader
-            # by epoch: Epoch[val] [4][1000]
-            # by iter: Iter[val] [1000]
+            # by epoch: epoch[val] [4][1000]
+            # by iter: iter[val] [1000]
             if self.by_epoch:
-                log_str = f'Epoch({log_dict["mode"]}) [{log_dict["epoch"]}][{log_dict["iter"]}]\t'
+                log_str = f'{epoch_key}({log_dict[mode_key]}) [{log_dict[epoch_key]}][{log_dict[iter_key]}]\t'
             else:
-                log_str = f'Iter({log_dict["mode"]}) [{log_dict["iter"]}]\t'
-            self._logged_keys.extend(['mode', 'iter', 'epoch'])
+                log_str = f'{iter_key}({log_dict[mode_key]}) [{log_dict[iter_key]}]\t'
+            self._logged_keys.extend([mode_key, iter_key, epoch_key])
 
         log_items = []
         for name, val in log_dict.items():
@@ -150,7 +160,7 @@ class TextLoggerHook(LoggerHook):
 
         # statistic memory
         if torch.cuda.is_available():
-            log_dict['memory'] = self._get_max_memory(trainer)
+            log_dict[LogKeys.MEMORY] = self._get_max_memory(trainer)
 
         log_dict = dict(log_dict, **trainer.log_buffer.output)
 

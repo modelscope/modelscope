@@ -3,6 +3,7 @@ import os
 
 from modelscope import __version__
 from modelscope.utils.checkpoint import save_checkpoint
+from modelscope.utils.constant import LogKeys
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import get_dist_info
 from .builder import HOOKS
@@ -58,11 +59,11 @@ class CheckpointHook(Hook):
 
     def _save_checkpoint(self, trainer):
         if self.by_epoch:
-            cur_save_name = os.path.join(self.save_dir,
-                                         f'epoch_{trainer.epoch + 1}.pth')
+            cur_save_name = os.path.join(
+                self.save_dir, f'{LogKeys.EPOCH}_{trainer.epoch + 1}.pth')
         else:
-            cur_save_name = os.path.join(self.save_dir,
-                                         f'iter_{trainer.epoch + 1}.pth')
+            cur_save_name = os.path.join(
+                self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
         rank, _ = get_dist_info()
         if rank == 0:

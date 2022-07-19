@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import Dataset
 
 from modelscope.trainers import build_trainer
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 
 
 class DummyDataset(Dataset, metaclass=ABCMeta):
@@ -89,39 +89,43 @@ class IterTimerHookTest(unittest.TestCase):
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
         trainer.register_hook_from_cfg(trainer.cfg.train.hooks)
-
-        trainer.invoke_hook('before_run')
+        trainer.data_loader = train_dataloader
+        trainer.invoke_hook(TrainerStages.before_run)
         for i in range(trainer._epoch, trainer._max_epochs):
-            trainer.invoke_hook('before_train_epoch')
+            trainer.invoke_hook(TrainerStages.before_train_epoch)
             for _, data_batch in enumerate(train_dataloader):
-                trainer.invoke_hook('before_train_iter')
+                trainer.invoke_hook(TrainerStages.before_train_iter)
                 trainer.train_step(trainer.model, data_batch)
-                trainer.invoke_hook('after_train_iter')
+                trainer.invoke_hook(TrainerStages.after_train_iter)
 
-                self.assertIn('data_load_time', trainer.log_buffer.val_history)
-                self.assertIn('time', trainer.log_buffer.val_history)
-                self.assertIn('loss', trainer.log_buffer.val_history)
+                self.assertIn(LogKeys.DATA_LOAD_TIME,
+                              trainer.log_buffer.val_history)
+                self.assertIn(LogKeys.ITER_TIME,
+                              trainer.log_buffer.val_history)
+                self.assertIn(LogKeys.LOSS, trainer.log_buffer.val_history)
 
-            trainer.invoke_hook('after_train_epoch')
+            trainer.invoke_hook(TrainerStages.after_train_epoch)
 
-            target_len = 5 * (i + 1)
+            target_len = 5
             self.assertEqual(
-                len(trainer.log_buffer.val_history['data_load_time']),
+                len(trainer.log_buffer.val_history[LogKeys.DATA_LOAD_TIME]),
                 target_len)
             self.assertEqual(
-                len(trainer.log_buffer.val_history['time']), target_len)
-            self.assertEqual(
-                len(trainer.log_buffer.val_history['loss']), target_len)
-
-            self.assertEqual(
-                len(trainer.log_buffer.n_history['data_load_time']),
+                len(trainer.log_buffer.val_history[LogKeys.ITER_TIME]),
                 target_len)
             self.assertEqual(
-                len(trainer.log_buffer.n_history['time']), target_len)
-            self.assertEqual(
-                len(trainer.log_buffer.n_history['loss']), target_len)
+                len(trainer.log_buffer.val_history[LogKeys.LOSS]), target_len)
 
-        trainer.invoke_hook('after_run')
+            self.assertEqual(
+                len(trainer.log_buffer.n_history[LogKeys.DATA_LOAD_TIME]),
+                target_len)
+            self.assertEqual(
+                len(trainer.log_buffer.n_history[LogKeys.ITER_TIME]),
+                target_len)
+            self.assertEqual(
+                len(trainer.log_buffer.n_history[LogKeys.LOSS]), target_len)
+
+        trainer.invoke_hook(TrainerStages.after_run)
 
 
 if __name__ == '__main__':

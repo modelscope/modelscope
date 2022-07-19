@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import time
 
+from modelscope.utils.constant import LogKeys
 from .builder import HOOKS
 from .hook import Hook
 from .priority import Priority
@@ -15,8 +16,9 @@ class IterTimerHook(Hook):
 
     def before_iter(self, trainer):
         trainer.log_buffer.update(
-            {'data_load_time': time.time() - self.start_time})
+            {LogKeys.DATA_LOAD_TIME: time.time() - self.start_time})
 
     def after_iter(self, trainer):
-        trainer.log_buffer.update({'time': time.time() - self.start_time})
+        trainer.log_buffer.update(
+            {LogKeys.ITER_TIME: time.time() - self.start_time})
         self.start_time = time.time()

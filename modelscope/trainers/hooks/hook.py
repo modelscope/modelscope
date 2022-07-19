@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.utils.constant import TrainerStages
 from modelscope.utils.import_utils import is_method_overridden
 from .priority import Priority
 
@@ -9,11 +10,12 @@ class Hook:
     The Hook base class of any modelscope trainer. You can build your own hook inherited from this class.
     """
 
-    # TODO @jiangnana.jnn use constant variable for stages
-    stages = ('before_run', 'before_train_epoch', 'before_train_iter',
-              'after_train_iter', 'after_train_epoch', 'before_val_epoch',
-              'before_val_iter', 'after_val_iter', 'after_val_epoch',
-              'after_run')
+    stages = (TrainerStages.before_run, TrainerStages.before_train_epoch,
+              TrainerStages.before_train_iter, TrainerStages.after_train_iter,
+              TrainerStages.after_train_epoch, TrainerStages.before_val_epoch,
+              TrainerStages.before_val_iter, TrainerStages.after_val_iter,
+              TrainerStages.after_val_epoch, TrainerStages.after_run)
+
     PRIORITY = Priority.NORMAL
 
     def before_run(self, trainer):
@@ -170,6 +172,13 @@ class Hook:
         Returns: bool
         """
         return (trainer.epoch + 1) % n == 0 if n > 0 else False
+
+    def every_n_inner_iters(self, runner, n):
+        """
+        Whether to reach every ``n`` iterations at every epoch
+        Returns: bool
+        """
+        return (runner.inner_iter + 1) % n == 0 if n > 0 else False
 
     def every_n_iters(self, trainer, n):
         """

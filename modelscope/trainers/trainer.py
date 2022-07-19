@@ -26,14 +26,16 @@ from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
-from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import Hubs, ModelFile, Tasks
+from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.constant import (Hubs, ModeKeys, ModelFile, Tasks,
+                                       TrainerStages)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.tensor_utils import torch_default_data_collator
 from modelscope.utils.torch_utils import get_dist_info
 from .base import BaseTrainer
 from .builder import TRAINERS
+from .default_config import DEFAULT_CONFIG
 from .hooks.hook import Hook
 
 
@@ -97,6 +99,10 @@ class EpochBasedTrainer(BaseTrainer):
             self.model = model
 
         super().__init__(cfg_file, arg_parse_fn)
+
+        # add default config
+        self.cfg.merge_from_dict(self._get_default_config(), force=False)
+
         if 'work_dir' in kwargs:
             self.work_dir = kwargs['work_dir']
         else:
@@ -112,14 +118,14 @@ class EpochBasedTrainer(BaseTrainer):
         self.device = int(
             os.environ['LOCAL_RANK']) if 'LOCAL_RANK' in os.environ else None
         self.train_dataset = self.to_task_dataset(
-            train_dataset, mode='train', preprocessor=self.preprocessor)
+            train_dataset, mode=ModeKeys.TRAIN, preprocessor=self.preprocessor)
         self.eval_dataset = self.to_task_dataset(
-            eval_dataset, mode='eval', preprocessor=self.preprocessor)
+            eval_dataset, mode=ModeKeys.EVAL, preprocessor=self.preprocessor)
         self.data_collator = data_collator if data_collator is not None else torch_default_data_collator
         self.metrics = self.get_metrics()
         self.optimizers = optimizers
         self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
-        self._mode = 'train'
+        self._mode = ModeKeys.TRAIN
         self._hooks: List[Hook] = []
         self._epoch = 0
         self._iter = 0
@@ -131,6 +137,8 @@ class EpochBasedTrainer(BaseTrainer):
             self._max_epochs = self.cfg.train.max_epochs
         else:
             self._max_epochs = kwargs['max_epochs']
+
+        self.use_fp16 = kwargs.get('use_fp16', False)
 
         # TODO @wenmeng.zwm add seed init fn
         self._seed = 0
@@ -245,7 +253,7 @@ class EpochBasedTrainer(BaseTrainer):
 
     def train(self, *args, **kwargs):
         self.model.train()
-        self._mode = 'train'
+        self._mode = ModeKeys.TRAIN
 
         if self.train_dataset is None:
             self.train_dataloader = self.get_train_dataloader()
@@ -261,7 +269,7 @@ class EpochBasedTrainer(BaseTrainer):
 
     def evaluate(self, checkpoint_path=None):
         self.model.eval()
-        self._mode = 'val'
+        self._mode = ModeKeys.EVAL
 
         if self.eval_dataset is None:
             self.eval_dataloader = self.get_eval_data_loader()
@@ -329,7 +337,7 @@ class EpochBasedTrainer(BaseTrainer):
         # EvaluationHook will do evaluate and change mode to val, return to train mode
         # TODO: find more pretty way to change mode
         model.train()
-        self._mode = 'train'
+        self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
         if isinstance(inputs, dict):
             train_outputs = model.forward(**inputs)
@@ -394,7 +402,8 @@ class EpochBasedTrainer(BaseTrainer):
         """
         train_data = self.cfg.dataset.train
         if self.train_dataset is None:
-            self.train_dataset = self.build_dataset(train_data, mode='train')
+            self.train_dataset = self.build_dataset(
+                train_data, mode=ModeKeys.TRAIN)
 
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset, **self.cfg.train.get('dataloader', {}))
@@ -409,7 +418,8 @@ class EpochBasedTrainer(BaseTrainer):
         """
         val_data = self.cfg.dataset.val
         if self.eval_dataset is None:
-            self.eval_dataset = self.build_dataset(val_data, mode='eval')
+            self.eval_dataset = self.build_dataset(
+                val_data, mode=ModeKeys.TRAIN)
 
         batch_size = self.cfg.evaluation.batch_size
         workers = self.cfg.evaluation.workers
@@ -492,7 +502,10 @@ class EpochBasedTrainer(BaseTrainer):
 
         _, _, optim_options, lr_options = self.create_optimizer_and_scheduler()
         lr_hook = dict(type='LrSchedulerHook', **lr_options)
-        optim_hook = dict(type='OptimizerHook', **optim_options)
+        if self.use_fp16:
+            optim_hook = dict(type='TorchAMPOptimizerHook', **optim_options)
+        else:
+            optim_hook = dict(type='OptimizerHook', **optim_options)
 
         self.register_hook_from_cfg([lr_hook, optim_hook])
 
@@ -578,26 +591,26 @@ class EpochBasedTrainer(BaseTrainer):
     def train_loop(self, data_loader):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
-        self.invoke_hook('before_run')
+        self.invoke_hook(TrainerStages.before_run)
         self._epoch = 0
         kwargs = {}
         for _ in range(self._epoch, self._max_epochs):
-            self.invoke_hook('before_train_epoch')
+            self.invoke_hook(TrainerStages.before_train_epoch)
             time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
                 self.data_batch = data_batch
                 self._inner_iter = i
-                self.invoke_hook('before_train_iter')
+                self.invoke_hook(TrainerStages.before_train_iter)
                 self.train_step(self.model, data_batch, **kwargs)
-                self.invoke_hook('after_train_iter')
+                self.invoke_hook(TrainerStages.after_train_iter)
                 del self.data_batch
                 self._iter += 1
 
-            self.invoke_hook('after_train_epoch')
+            self.invoke_hook(TrainerStages.after_train_epoch)
             self._epoch += 1
 
         time.sleep(1)  # wait for some hooks like loggers to finish
-        self.invoke_hook('after_run')
+        self.invoke_hook(TrainerStages.after_run)
 
     def evaluation_loop(self, data_loader, checkpoint_path, metric_classes):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
@@ -692,6 +705,9 @@ class EpochBasedTrainer(BaseTrainer):
                 info += '\n -------------------- '
                 stage_hook_infos.append(info)
         return '\n'.join(stage_hook_infos)
+
+    def _get_default_config(self):
+        return DEFAULT_CONFIG
 
 
 def worker_init_fn(worker_id, num_workers, rank, seed):

@@ -20,9 +20,9 @@ def single_gpu_test(model,
     """Test model with a single gpu.
 
     Args:
-        data_collate_fn: An optional data_collate_fn before fed into the model
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
+        data_collate_fn: An optional data_collate_fn before fed into the model
         metric_classes(List): List of Metric class that uses to collect metrics
 
     Returns:
@@ -62,10 +62,10 @@ def multi_gpu_test(model,
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
-        data_collate_fn: An optional data_collate_fn before fed into the model
         tmpdir (str): Path of directory to save the temporary results from
             different gpus under cpu mode.
         gpu_collect (bool): Option to use either gpu or cpu to collect results.
+        data_collate_fn: An optional data_collate_fn before fed into the model
         metric_classes(List): List of Metric class that uses to collect metrics
 
     Returns:

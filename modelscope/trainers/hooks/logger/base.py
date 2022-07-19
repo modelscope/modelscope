@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from modelscope.trainers.hooks.hook import Hook
+from modelscope.utils.constant import ModeKeys
 from ..priority import Priority
 
 
@@ -60,15 +61,12 @@ class LoggerHook(Hook):
             return False
 
     def get_epoch(self, trainer):
-        if trainer.mode == 'train':
+        if trainer.mode in [ModeKeys.TRAIN, ModeKeys.EVAL]:
             epoch = trainer.epoch + 1
-        elif trainer.mode == 'val':
-            # normal val mode
-            # trainer.epoch += 1 has been done before val workflow
-            epoch = trainer.epoch
         else:
-            raise ValueError(f"trainer mode should be 'train' or 'val', "
-                             f'but got {trainer.mode}')
+            raise ValueError(
+                f'trainer mode should be {ModeKeys.TRAIN} or {ModeKeys.EVAL}, '
+                f'but got {trainer.mode}')
         return epoch
 
     def get_iter(self, trainer, inner_iter=False):
@@ -89,7 +87,7 @@ class LoggerHook(Hook):
         trainer.log_buffer.clear()  # clear logs of last epoch
 
     def after_train_iter(self, trainer):
-        if self.by_epoch and self.every_n_epochs(trainer, self.interval):
+        if self.by_epoch and self.every_n_inner_iters(trainer, self.interval):
             trainer.log_buffer.average(self.interval)
         elif not self.by_epoch and self.every_n_iters(trainer, self.interval):
             trainer.log_buffer.average(self.interval)

@@ -163,3 +163,33 @@ PYTORCH = 'pytorch'
 
 DEFAULT_MODEL_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
+
+
+class ModeKeys:
+    TRAIN = 'train'
+    EVAL = 'eval'
+
+
+class LogKeys:
+    ITER = 'iter'
+    ITER_TIME = 'iter_time'
+    EPOCH = 'epoch'
+    LR = 'lr'  # learning rate
+    MODE = 'mode'
+    DATA_LOAD_TIME = 'data_load_time'
+    ETA = 'eta'  # estimated time of arrival
+    MEMORY = 'memory'
+    LOSS = 'loss'
+
+
+class TrainerStages:
+    before_run = 'before_run'
+    before_train_epoch = 'before_train_epoch'
+    before_train_iter = 'before_train_iter'
+    after_train_iter = 'after_train_iter'
+    after_train_epoch = 'after_train_epoch'
+    before_val_epoch = 'before_val_epoch'
+    before_val_iter = 'before_val_iter'
+    after_val_iter = 'after_val_iter'
+    after_val_epoch = 'after_val_epoch'
+    after_run = 'after_run'

@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import glob
 import os
 import shutil
 import tempfile
@@ -38,7 +39,7 @@ class DummyModel(nn.Module):
         return dict(logits=x, loss=loss)
 
 
-class CheckpointHookTest(unittest.TestCase):
+class TensorboardHookTest(unittest.TestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -50,7 +51,7 @@ class CheckpointHookTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    def test_checkpoint_hook(self):
+    def test_tensorboard_hook(self):
         json_cfg = {
             'task': 'image_classification',
             'train': {
@@ -61,26 +62,15 @@ class CheckpointHookTest(unittest.TestCase):
                 },
                 'optimizer': {
                     'type': 'SGD',
-                    'lr': 0.01,
-                    'options': {
-                        'grad_clip': {
-                            'max_norm': 2.0
-                        }
-                    }
+                    'lr': 0.01
                 },
                 'lr_scheduler': {
                     'type': 'StepLR',
                     'step_size': 2,
-                    'options': {
-                        'warmup': {
-                            'type': 'LinearWarmup',
-                            'warmup_iters': 2
-                        }
-                    }
                 },
                 'hooks': [{
-                    'type': 'CheckpointHook',
-                    'interval': 1
+                    'type': 'TensorboardHook',
+                    'interval': 2
                 }]
             }
         }
@@ -99,9 +89,23 @@ class CheckpointHookTest(unittest.TestCase):
 
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
-        results_files = os.listdir(self.tmp_dir)
-        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
+        tb_out_dir = os.path.join(self.tmp_dir, 'tensorboard_output')
+
+        events_files = glob.glob(
+            os.path.join(tb_out_dir, 'events.out.tfevents.*'))
+        self.assertEqual(len(events_files), 1)
+
+        from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+        ea = EventAccumulator(events_files[0])
+        ea.Reload()
+        self.assertEqual(len(ea.Scalars(LogKeys.LOSS)), 10)
+        self.assertEqual(len(ea.Scalars(LogKeys.LR)), 10)
+        for i in range(5):
+            self.assertAlmostEqual(
+                ea.Scalars(LogKeys.LR)[i].value, 0.01, delta=0.001)
+        for i in range(5, 10):
+            self.assertAlmostEqual(
+                ea.Scalars(LogKeys.LR)[i].value, 0.001, delta=0.0001)
 
 
 if __name__ == '__main__':

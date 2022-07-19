@@ -140,50 +140,26 @@ git pull origin branch_name
 
 
 
-## Code Review
-
-1. Run following command to create an aone CR, replace `TARGET_BRANCH` and `CR_NAME` with the one you want.
+## Development and Code Review
+1. Get the latest master code and checkout a new branch for local development.
     ```shell
-    git push origin HEAD:refs/for/TARGET_BRANCH/CR_NAME
+    git pull origin master --rebase
+    git checout -b dev/my-dev-branch
     ```
-
-    Please refer to [https://yuque.antfin.com/aone/platform/lcg8yr](https://yuque.antfin.com/aone/platform/lcg8yr) for more details.
-
-    The following output is expected.
+   note: replace "dev/my-dev-branch" with a meaningful branch name. We recommend using a new dev branch for every change.
+2. Make your local changes.
+3. Commit your local changes.
     ```shell
-    Counting objects: 5, done.
-    Delta compression using up to 96 threads.
-    Compressing objects: 100% (5/5), done.
-    Writing objects: 100% (5/5), 543 bytes | 0 bytes/s, done.
-    Total 5 (delta 4), reused 0 (delta 0)
-    remote: +------------------------------------------------------------------------+
-    remote: | Merge Request #8949062 was created or updated.                         |
-    remote: | View merge request at URL:                                             |
-    remote: | https://code.aone.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/8949062 |
-    remote: +------------------------------------------------------------------------+
-    To git@gitlab.alibaba-inc.com:Ali-MaaS/MaaS-lib.git
-    * [new branch]      HEAD -> refs/for/master/support_kwargs_pipeline
+    git add .
+    git commit -m "[to #42322933] my commit message"
     ```
-
-2. Open the remote url `https://code.aone.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/ID` and edit the title of CR with following format before merging your code:
-    * Feature
-        ```shell
-        [to #AONE_ID] feat: commit title
-
-        Link: https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/8949062
-
-        * commit msg1
-        * commit msg2
-        ```
-    * Bugfix
-        ```shell
-        [to #AONE_ID] fix: commit title
-
-        Link: https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/8949062
-
-        * commit msg1
-        * commit msg2
-        ```
+   note: you may replace [to #42322933]  with your own aone issue id (if any).
+4. Push your change:
+   ```shell
+    git push --set-upstream origin dev/my-dev-branch
+    ```
+   Note that you may push multiple times to the same branch with 'git push' commands later.
+5. Open the remote url `https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/new` to create a new merge request that merges your development branch (aka, the "dev/my-dev-branch in this example) into master branch. Please follow the instruction on aone page to submit the merge request a code review.
 
 
 

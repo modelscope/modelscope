@@ -2,14 +2,15 @@ from typing import Dict
 
 from ...metainfo import Models
 from ...utils.constant import Tasks
-from ..base import Model, Tensor
+from ..base import Tensor
+from ..base_torch import TorchModel
 from ..builder import MODELS
 
 __all__ = ['PalmForTextGeneration']
 
 
 @MODELS.register_module(Tasks.text_generation, module_name=Models.palm)
-class PalmForTextGeneration(Model):
+class PalmForTextGeneration(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the text generation model from the `model_dir` path.
@@ -22,15 +23,42 @@ class PalmForTextGeneration(Model):
         super().__init__(model_dir, *args, **kwargs)
 
         from sofa.models.palm_v2 import PalmForConditionalGeneration, Translator
-        model = PalmForConditionalGeneration.from_pretrained(model_dir)
-        self.tokenizer = model.tokenizer
-        self.generator = Translator(model)
+        self.model = PalmForConditionalGeneration.from_pretrained(model_dir)
+        self.tokenizer = self.model.tokenizer
+        self.generator = Translator(self.model)
 
-    def train(self):
-        return self.generator.train()
+    def _evaluate_postprocess(self, src: Tensor, tgt: Tensor,
+                              mask_src: Tensor) -> Dict[str, str]:
+        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
+                               ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
+                               ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
+        replace_tokens_roberta = ((r' +', ' '), ('<mask>', '<q>'), ('<pad>',
+                                                                    ''),
+                                  ('<s>', ''), ('</s>', ''), ('<unk>', ' '))
 
-    def eval(self):
-        return self.generator.eval()
+        inputs = self.generator(src, mask_src)
+        pred_list = inputs['predictions']
+        pred_id_list = [
+            pred_batch[0].cpu().numpy().tolist() for pred_batch in pred_list
+        ]
+        tgt_id_list = tgt.cpu().numpy().tolist()
+        pred_strings = [
+            self.tokenizer.decode(pred_ids) for pred_ids in pred_id_list
+        ]
+        tgt_strings = [
+            self.tokenizer.decode(tgt_ids) for tgt_ids in tgt_id_list
+        ]
+        for _old, _new in replace_tokens_bert:
+            pred_strings = [s.replace(_old, _new) for s in pred_strings]
+            tgt_strings = [s.replace(_old, _new) for s in tgt_strings]
+        for _old, _new in replace_tokens_roberta:
+            pred_strings = [s.replace(_old, _new) for s in pred_strings]
+            tgt_strings = [s.replace(_old, _new) for s in tgt_strings]
+        for s in pred_strings:
+            s.strip()
+        for s in tgt_strings:
+            s.strip()
+        return {'preds': pred_strings, 'tgts': tgt_strings}
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
@@ -45,5 +73,9 @@ class PalmForTextGeneration(Model):
                         'predictions': Tensor([[1377, 4959, 2785, 6392...])]), # tokens need to be decode by tokenizer
                     }
         """
-
-        return self.generator(**input)
+        if self.training:
+            return {'loss': self.model(**input)}
+        elif 'tgt' in input:
+            return self._evaluate_postprocess(**input)
+        else:
+            return self.generator(**input)

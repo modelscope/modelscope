@@ -216,8 +216,9 @@ class SentenceSimilarityFinetunePreprocessor(SentenceSimilarityPreprocessor):
     Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
 class TextGenerationPreprocessor(NLPPreprocessorBase):
 
-    def __init__(self, model_dir: str, tokenizer, *args, **kwargs):
-        self.tokenizer = tokenizer
+    def __init__(self, model_dir: str, tokenizer=None, *args, **kwargs):
+        self.tokenizer = self.build_tokenizer(
+            model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = True
         kwargs['padding'] = 'max_length'
         kwargs['return_tensors'] = 'pt'
@@ -225,8 +226,43 @@ class TextGenerationPreprocessor(NLPPreprocessorBase):
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, *args, **kwargs)
 
-    def build_tokenizer(self, model_dir):
-        return self.tokenizer
+    def build_tokenizer(self, model_dir: str):
+        import os
+        from sofa.models.palm_v2 import PalmConfig
+
+        config_file = os.path.join(model_dir, 'config.json')
+        config = PalmConfig.from_json_file(config_file) if os.path.isfile(
+            config_file) else PalmConfig()
+        config.encoder_pth = os.path.join(model_dir, config.encoder_pth)
+        if config.encoder == 'roberta':
+            from transformers import RobertaTokenizer
+            tokenizer = RobertaTokenizer.from_pretrained(
+                config.encoder_pth, do_lower_case=False)
+        elif config.encoder == 'bert' or config.encoder == 'zh_bert':
+            from transformers import BertTokenizer
+            tokenizer = BertTokenizer.from_pretrained(
+                config.encoder_pth, do_lower_case=True)
+        return tokenizer
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name='palm-text-gen-tokenizer-finetune')
+class TextGenerationFinetunePreprocessor(TextGenerationPreprocessor):
+
+    @type_assert(object, dict)
+    def __call__(self, data: dict) -> Dict[str, Any]:
+        src_txt = data['src_txt']
+        tgt_txt = data['tgt_txt']
+        src_rst = super().__call__(src_txt)
+        tgt_rst = super().__call__(tgt_txt)
+        src_rst = {k: v.squeeze() for k, v in src_rst.items()}
+        tgt_rst = {k: v.squeeze() for k, v in tgt_rst.items()}
+
+        return {
+            'src': src_rst['input_ids'],
+            'tgt': tgt_rst['input_ids'],
+            'mask_src': src_rst['attention_mask']
+        }
 
 
 @PREPROCESSORS.register_module(Fields.nlp)

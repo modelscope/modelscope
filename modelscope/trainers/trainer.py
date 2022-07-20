@@ -297,6 +297,7 @@ class EpochBasedTrainer(BaseTrainer):
         model = Model.from_pretrained(self.model_dir)
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             return model.model
+        return model
 
     def collate_fn(self, data):
         """Prepare the input just before the forward function.
@@ -339,7 +340,7 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
-        if isinstance(inputs, dict):
+        if not isinstance(model, Model) and isinstance(inputs, dict):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)

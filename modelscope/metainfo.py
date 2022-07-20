@@ -141,3 +141,5 @@ class Metrics(object):
     seq_cls_metric = 'seq_cls_metric'
     # metrics for token-classification task
     token_cls_metric = 'token-cls-metric'
+    # metrics for text-generation task
+    text_gen_metric = 'text-gen-metric'

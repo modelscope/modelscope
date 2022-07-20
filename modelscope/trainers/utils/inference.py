@@ -10,6 +10,7 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
+from modelscope.models.base import Model
 from modelscope.utils.torch_utils import get_dist_info
 
 
@@ -35,7 +36,10 @@ def single_gpu_test(model,
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
             with torch.no_grad():
-                result = model(**data)
+                if not isinstance(model, Model):
+                    result = model(**data)
+                else:
+                    result = model(data)
             if metric_classes is not None:
                 for metric_cls in metric_classes:
                     metric_cls.add(result, data)
@@ -83,7 +87,10 @@ def multi_gpu_test(model,
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
             with torch.no_grad():
-                result = model(**data)
+                if not isinstance(model, Model):
+                    result = model(**data)
+                else:
+                    result = model(data)
             results.extend(result)
 
             rank, world_size = get_dist_info()

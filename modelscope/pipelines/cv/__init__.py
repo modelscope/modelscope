@@ -6,6 +6,7 @@ try:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recog_pipeline import AnimalRecogPipeline
     from .cmdssl_video_embedding_pipleline import CMDSSLVideoEmbeddingPipeline
+    from .face_image_generation_pipeline import FaceImageGenerationPipeline
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'torch'":
         pass

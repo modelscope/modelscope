@@ -11,7 +11,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_captioning, module_name=Pipelines.image_caption)
+    Tasks.image_captioning, module_name=Pipelines.image_captioning)
 class ImageCaptionPipeline(Pipeline):
 
     def __init__(self,

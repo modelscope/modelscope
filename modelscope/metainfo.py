@@ -73,7 +73,7 @@ class Pipelines(object):
     asr_inference = 'asr-inference'
 
     # multi-modal tasks
-    image_caption = 'image-captioning'
+    image_captioning = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
     text_to_image_synthesis = 'text-to-image-synthesis'

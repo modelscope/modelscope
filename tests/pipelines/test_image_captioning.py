@@ -14,7 +14,7 @@ class ImageCaptionTest(unittest.TestCase):
     def test_run(self):
         img_captioning = pipeline(
             Tasks.image_captioning,
-            model='damo/ofa_image-caption_coco_large_en')
+            model='damo/ofa_image-caption_coco_distilled_en')
         result = img_captioning('data/test/images/image_captioning.png')
         print(result[OutputKeys.CAPTION])
 

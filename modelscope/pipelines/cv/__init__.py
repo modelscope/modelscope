@@ -15,11 +15,12 @@ except ModuleNotFoundError as e:
 try:
     from .image_cartoon_pipeline import ImageCartoonPipeline
     from .image_matting_pipeline import ImageMattingPipeline
+    from .style_transfer_pipeline import StyleTransferPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'tensorflow'":
         print(
             TENSORFLOW_IMPORT_ERROR.format(
-                'image-cartoon image-matting ocr-detection'))
+                'image-cartoon image-matting ocr-detection style-transfer'))
     else:
         raise ModuleNotFoundError(e)

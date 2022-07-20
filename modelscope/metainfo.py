@@ -49,6 +49,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    style_transfer = 'AAMS-style-transfer'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

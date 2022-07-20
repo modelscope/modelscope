@@ -34,13 +34,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             'label': [0, 1, 1]
         }
         dataset = Dataset.from_dict(dataset_dict)
-
-        class MsDatasetDummy(MsDataset):
-
-            def __len__(self):
-                return len(self._hf_ds)
-
-        self.dataset = MsDatasetDummy(dataset)
+        self.dataset = MsDataset.from_hf_dataset(dataset)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)

@@ -60,6 +60,8 @@ def torch_default_data_collator(features):
                          ) and v is not None and not isinstance(v, str):
                 if isinstance(v, torch.Tensor):
                     batch[k] = torch.stack([f[k] for f in features])
+                elif isinstance(v, list):
+                    batch[k] = torch.stack([d for f in features for d in f[k]])
                 else:
                     batch[k] = torch.tensor([f[k] for f in features])
     elif isinstance(first, tuple):

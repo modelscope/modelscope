@@ -64,10 +64,13 @@ class ImageMattingTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_modelscope_dataset(self):
         dataset = MsDataset.load(
-            'beans', namespace='damotest', split='train', target='image')
+            'fixtures_image_utils',
+            namespace='damotest',
+            split='test',
+            target='file')
         img_matting = pipeline(Tasks.image_matting, model=self.model_id)
         result = img_matting(dataset)
-        for i in range(10):
+        for i in range(2):
             cv2.imwrite(f'result_{i}.png', next(result)[OutputKeys.OUTPUT_IMG])
         print(
             f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'

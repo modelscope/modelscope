@@ -21,7 +21,6 @@ from modelscope.models.base_torch import TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.preprocessors import build_preprocessor
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.task_datasets import TorchTaskDataset, build_task_dataset
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -49,7 +48,7 @@ class EpochBasedTrainer(BaseTrainer):
             or a model id. If model is None, build_model method will be called.
         data_collator (`Callable`, *optional*):
             The function to use to form a batch from a list of elements of `train_dataset` or `eval_dataset`.
-        train_dataset (`torch.utils.data.Dataset` or `torch.utils.data.IterableDataset`, *optional*):
+        train_dataset (`MsDataset`, *optional*):
             The dataset to use for training.
 
             Note that if it's a `torch.utils.data.IterableDataset` with some randomization and you are training in a
@@ -117,10 +116,10 @@ class EpochBasedTrainer(BaseTrainer):
         # TODO how to fill device option?
         self.device = int(
             os.environ['LOCAL_RANK']) if 'LOCAL_RANK' in os.environ else None
-        self.train_dataset = self.to_task_dataset(
-            train_dataset, mode=ModeKeys.TRAIN, preprocessor=self.preprocessor)
-        self.eval_dataset = self.to_task_dataset(
-            eval_dataset, mode=ModeKeys.EVAL, preprocessor=self.preprocessor)
+        self.train_dataset = train_dataset.to_torch_dataset(
+            preprocessors=self.preprocessor) if train_dataset else None
+        self.eval_dataset = eval_dataset.to_torch_dataset(
+            preprocessors=self.preprocessor) if eval_dataset else None
         self.data_collator = data_collator if data_collator is not None else torch_default_data_collator
         self.metrics = self.get_metrics()
         self.optimizers = optimizers
@@ -178,38 +177,6 @@ class EpochBasedTrainer(BaseTrainer):
     def max_iters(self):
         """int: Maximum training iterations."""
         return self._max_epochs * len(self.data_loader)
-
-    def to_task_dataset(self,
-                        datasets: Tuple[Dataset, List[Dataset]],
-                        mode: str,
-                        preprocessor: Optional[Preprocessor] = None):
-        """Build the task specific dataset processor for this trainer.
-
-        Returns: The task dataset processor for the task. If no result for the very model-type and task,
-        the default TaskDataset will be returned.
-        """
-        try:
-            if not datasets:
-                return datasets
-            if isinstance(datasets, TorchTaskDataset):
-                return datasets
-            task_dataset = build_task_dataset(
-                ConfigDict({
-                    **self.cfg.model,
-                    'mode': mode,
-                    'preprocessor': preprocessor,
-                    'datasets': datasets,
-                }), getattr(self.cfg, 'task', None))
-            return task_dataset
-        except Exception:
-            if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
-                return TorchTaskDataset(
-                    datasets,
-                    mode=mode,
-                    preprocessor=preprocessor,
-                    **(self.cfg.model if hasattr(self.cfg, 'model') else {}))
-            else:
-                return datasets
 
     def build_preprocessor(self) -> Preprocessor:
         """Build the preprocessor.
@@ -448,9 +415,7 @@ class EpochBasedTrainer(BaseTrainer):
         )
         torch_dataset = dataset.to_torch_dataset(
             preprocessors=self.preprocessor, )
-        dataset = self.to_task_dataset(
-            torch_dataset, mode, preprocessor=self.preprocessor)
-        return dataset
+        return torch_dataset
 
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler

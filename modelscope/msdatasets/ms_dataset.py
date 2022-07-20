@@ -57,6 +57,9 @@ class MsDataset:
     def __getitem__(self, key):
         return self._hf_ds[key]
 
+    def __len__(self):
+        return len(self._hf_ds)
+
     @classmethod
     def from_hf_dataset(cls,
                         hf_ds: Union[Dataset, DatasetDict],
@@ -223,6 +226,7 @@ class MsDataset:
             retained_columns.append(k)
 
         import torch
+        import math
 
         class MsIterableDataset(torch.utils.data.IterableDataset):
 
@@ -230,8 +234,23 @@ class MsDataset:
                 super(MsIterableDataset).__init__()
                 self.dataset = dataset
 
+            def __len__(self):
+                return len(self.dataset)
+
             def __iter__(self):
-                for item_dict in self.dataset:
+                worker_info = torch.utils.data.get_worker_info()
+                if worker_info is None:  # single-process data loading
+                    iter_start = 0
+                    iter_end = len(self.dataset)
+                else:  # in a worker process
+                    per_worker = math.ceil(
+                        len(self.dataset) / float(worker_info.num_workers))
+                    worker_id = worker_info.id
+                    iter_start = worker_id * per_worker
+                    iter_end = min(iter_start + per_worker, len(self.dataset))
+
+                for idx in range(iter_start, iter_end):
+                    item_dict = self.dataset[idx]
                     res = {
                         k: np.array(item_dict[k])
                         for k in columns if k in retained_columns
@@ -273,7 +292,8 @@ class MsDataset:
                 'The function to_torch_dataset requires pytorch to be installed'
             )
         if preprocessors is not None:
-            return self.to_torch_dataset_with_processors(preprocessors)
+            return self.to_torch_dataset_with_processors(
+                preprocessors, columns=columns)
         else:
             self._hf_ds.reset_format()
             self._hf_ds.set_format(

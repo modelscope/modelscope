@@ -3,28 +3,20 @@ import os
 import shutil
 import tempfile
 import unittest
-from abc import ABCMeta
 
 import json
+import numpy as np
 import torch
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
-from torch.utils.data import Dataset
 
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
+from modelscope.utils.test_utils import create_dummy_test_dataset
 
-
-class DummyDataset(Dataset, metaclass=ABCMeta):
-    """Base Dataset
-    """
-
-    def __len__(self):
-        return 10
-
-    def __getitem__(self, idx):
-        return dict(feat=torch.rand((5, )), label=torch.randint(0, 4, (1, )))
+dummy_dataset = create_dummy_test_dataset(
+    np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 10)
 
 
 class DummyModel(nn.Module):
@@ -77,7 +69,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         kwargs = dict(
             cfg_file=config_path,
             model=model,
-            train_dataset=DummyDataset(),
+            train_dataset=dummy_dataset,
             optimizers=(optimizer, lr_scheduler),
             max_epochs=5)
 
@@ -148,7 +140,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         kwargs = dict(
             cfg_file=config_path,
             model=model,
-            train_dataset=DummyDataset(),
+            train_dataset=dummy_dataset,
             # optimizers=(optimmizer, lr_scheduler),
             max_epochs=7)
 

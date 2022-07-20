@@ -3,17 +3,17 @@ import os
 import shutil
 import tempfile
 import unittest
-from abc import ABCMeta
 
 import json
+import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import Dataset
 
 from modelscope.metrics.builder import METRICS, MetricKeys
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.registry import default_group
+from modelscope.utils.test_utils import create_dummy_test_dataset
 
 _global_iter = 0
 
@@ -32,13 +32,8 @@ class DummyMetric:
         return {MetricKeys.ACCURACY: self._fake_acc_by_epoch[_global_iter]}
 
 
-class DummyDataset(Dataset, metaclass=ABCMeta):
-
-    def __len__(self):
-        return 20
-
-    def __getitem__(self, idx):
-        return dict(feat=torch.rand((5, )), label=torch.randint(0, 4, (1, )))
+dummy_dataset = create_dummy_test_dataset(
+    np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
 
 
 class DummyModel(nn.Module):
@@ -115,8 +110,8 @@ class EvaluationHookTest(unittest.TestCase):
             cfg_file=config_path,
             model=DummyModel(),
             data_collator=None,
-            train_dataset=DummyDataset(),
-            eval_dataset=DummyDataset(),
+            train_dataset=dummy_dataset,
+            eval_dataset=dummy_dataset,
             max_epochs=3)
 
         trainer = build_trainer(trainer_name, kwargs)
@@ -177,8 +172,8 @@ class EvaluationHookTest(unittest.TestCase):
             cfg_file=config_path,
             model=DummyModel(),
             data_collator=None,
-            train_dataset=DummyDataset(),
-            eval_dataset=DummyDataset(),
+            train_dataset=dummy_dataset,
+            eval_dataset=dummy_dataset,
             max_epochs=3)
 
         trainer = build_trainer(trainer_name, kwargs)

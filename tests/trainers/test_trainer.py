@@ -6,27 +6,31 @@ import unittest
 from abc import ABCMeta
 
 import json
+import numpy as np
 import torch
+from datasets import Dataset
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import Dataset
 
 from modelscope.metrics.builder import MetricKeys
+from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
 
-class DummyDataset(Dataset, metaclass=ABCMeta):
-    """Base Dataset
-    """
+class DummyMetric:
 
-    def __len__(self):
-        return 20
+    def __call__(self, ground_truth, predict_results):
+        return {'accuracy': 0.5}
 
-    def __getitem__(self, idx):
-        return dict(feat=torch.rand((5, )), label=torch.randint(0, 4, (1, )))
+
+dummy_dataset_small = create_dummy_test_dataset(
+    np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
+
+dummy_dataset_big = create_dummy_test_dataset(
+    np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 40)
 
 
 class DummyModel(nn.Module):
@@ -116,8 +120,8 @@ class TrainerTest(unittest.TestCase):
             cfg_file=config_path,
             model=DummyModel(),
             data_collator=None,
-            train_dataset=DummyDataset(),
-            eval_dataset=DummyDataset(),
+            train_dataset=dummy_dataset_small,
+            eval_dataset=dummy_dataset_small,
             max_epochs=3)
 
         trainer = build_trainer(trainer_name, kwargs)
@@ -174,8 +178,8 @@ class TrainerTest(unittest.TestCase):
             cfg_file=config_path,
             model=model,
             data_collator=None,
-            train_dataset=DummyDataset(),
-            eval_dataset=DummyDataset(),
+            train_dataset=dummy_dataset_small,
+            eval_dataset=dummy_dataset_small,
             optimizers=(optimmizer, lr_scheduler),
             max_epochs=3)
 
@@ -212,13 +216,6 @@ class TrainerTest(unittest.TestCase):
             }
         }
 
-        class _DummyDataset(DummyDataset):
-            """Base Dataset
-            """
-
-            def __len__(self):
-                return 40
-
         config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
@@ -231,8 +228,8 @@ class TrainerTest(unittest.TestCase):
             cfg_file=config_path,
             model=model,
             data_collator=None,
-            train_dataset=_DummyDataset(),
-            eval_dataset=DummyDataset(),
+            train_dataset=dummy_dataset_big,
+            eval_dataset=dummy_dataset_small,
             optimizers=(optimmizer, lr_scheduler),
             max_epochs=3)
 

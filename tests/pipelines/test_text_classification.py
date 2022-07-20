@@ -51,11 +51,11 @@ class SequenceClassificationTest(unittest.TestCase):
             task=Tasks.text_classification, model=self.model_id)
         result = text_classification(
             MsDataset.load(
-                'glue',
-                subset_name='sst2',
-                split='train',
-                target='sentence',
-                hub=Hubs.huggingface))
+                'xcopa',
+                subset_name='translation-et',
+                namespace='damotest',
+                split='test',
+                target='premise'))
         self.printDataset(result)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -63,28 +63,11 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(task=Tasks.text_classification)
         result = text_classification(
             MsDataset.load(
-                'glue',
-                subset_name='sst2',
-                split='train',
-                target='sentence',
-                hub=Hubs.huggingface))
-        self.printDataset(result)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_dataset(self):
-        model = Model.from_pretrained(self.model_id)
-        preprocessor = SequenceClassificationPreprocessor(
-            model.model_dir, first_sequence='sentence', second_sequence=None)
-        text_classification = pipeline(
-            Tasks.text_classification, model=model, preprocessor=preprocessor)
-        # loaded from huggingface dataset
-        dataset = MsDataset.load(
-            'glue',
-            subset_name='sst2',
-            split='train',
-            target='sentence',
-            hub=Hubs.huggingface)
-        result = text_classification(dataset)
+                'xcopa',
+                subset_name='translation-et',
+                namespace='damotest',
+                split='test',
+                target='premise'))
         self.printDataset(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -92,11 +75,11 @@ class SequenceClassificationTest(unittest.TestCase):
         text_classification = pipeline(task=Tasks.text_classification)
         # loaded from modelscope dataset
         dataset = MsDataset.load(
-            'squad',
+            'xcopa',
+            subset_name='translation-et',
             namespace='damotest',
-            split='train',
-            target='context',
-            hub=Hubs.modelscope)
+            split='test',
+            target='premise')
         result = text_classification(dataset)
         self.printDataset(result)
 

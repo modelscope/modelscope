@@ -85,12 +85,19 @@ def snapshot_download(model_id: str,
             raise NotExistError('The specified branch or tag : %s not exist!'
                                 % revision)
 
+        snapshot_header = headers if 'CI_TEST' in os.environ else {
+            **headers,
+            **{
+                'Snapshot': 'True'
+            }
+        }
         model_files = _api.get_model_files(
             model_id=model_id,
             revision=revision,
             recursive=True,
             use_cookies=False if cookies is None else cookies,
-            headers={'Snapshot': 'True'})
+            headers=snapshot_header,
+        )
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':

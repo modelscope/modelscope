@@ -27,6 +27,7 @@ DEFAULT_GIT_PATH = 'git'
 class HubRepositoryTest(unittest.TestCase):
 
     def setUp(self):
+        self.old_cwd = os.getcwd()
         self.api = HubApi()
         # note this is temporary before official account management is ready
         self.api.login(TEST_USER_NAME1, TEST_PASSWORD)
@@ -42,6 +43,7 @@ class HubRepositoryTest(unittest.TestCase):
         self.model_dir = os.path.join(temporary_dir, self.model_name)
 
     def tearDown(self):
+        os.chdir(self.old_cwd)
         self.api.delete_model(model_id=self.model_id)
 
     def test_clone_repo(self):

@@ -79,8 +79,6 @@ class HubOperationTest(unittest.TestCase):
         model_file_download(
             model_id=self.model_id,
             file_path=download_model_file_name)  # not add counter
-        download_times = self.get_model_download_times()
-        assert download_times == 2
 
     def test_download_public_without_login(self):
         rmtree(ModelScopeConfig.path_credential)

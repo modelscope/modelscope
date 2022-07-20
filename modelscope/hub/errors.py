@@ -35,7 +35,7 @@ def handle_http_response(response, logger, cookies, model_id):
     except HTTPError:
         if cookies is None:  # code in [403] and
             logger.error(
-                f'Authentication token does not exist, failed to access model {model_id} which may be private. \
+                f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be private. \
                   Please login first.')
         raise
 

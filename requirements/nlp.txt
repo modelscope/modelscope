@@ -1,2 +1,5 @@
+
+http://ait-public.oss-cn-hangzhou-zmf.aliyuncs.com/jizhu/en_core_web_sm-2.3.1.tar.gz
+pai-easynlp
 sofa>=1.0.5
 spacy>=2.3.5

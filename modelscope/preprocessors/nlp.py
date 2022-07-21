@@ -17,8 +17,8 @@ __all__ = [
     'Tokenize', 'SequenceClassificationPreprocessor',
     'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
     'NLIPreprocessor', 'SentimentClassificationPreprocessor',
-    'FillMaskPreprocessor', 'SentenceSimilarityPreprocessor',
-    'ZeroShotClassificationPreprocessor'
+    'SentenceSimilarityPreprocessor', 'FillMaskPreprocessor',
+    'ZeroShotClassificationPreprocessor', 'NERPreprocessor'
 ]
 
 
@@ -370,3 +370,68 @@ class ZeroShotClassificationPreprocessor(NLPPreprocessorBase):
             return_tensors='pt',
             truncation_strategy='only_first')
         return features
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.ner_tokenizer)
+class NERPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+
+        self.model_dir: str = model_dir
+        self.sequence_length = kwargs.pop('sequence_length', 512)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_dir, use_fast=True)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+
+        # preprocess the data for the model input
+        text = data
+        encodings = self.tokenizer(
+            text,
+            add_special_tokens=True,
+            padding=True,
+            truncation=True,
+            max_length=self.sequence_length,
+            return_offsets_mapping=True)
+        input_ids = encodings['input_ids']
+        attention_mask = encodings['attention_mask']
+        word_ids = encodings.word_ids()
+        label_mask = []
+        offset_mapping = []
+        for i in range(len(word_ids)):
+            if word_ids[i] is None:
+                label_mask.append(0)
+            elif word_ids[i] == word_ids[i - 1]:
+                label_mask.append(0)
+                offset_mapping[-1] = (offset_mapping[-1][0],
+                                      encodings['offset_mapping'][i][1])
+            else:
+                label_mask.append(1)
+                offset_mapping.append(encodings['offset_mapping'][i])
+
+        return {
+            'text': text,
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'label_mask': label_mask,
+            'offset_mapping': offset_mapping
+        }

@@ -2,6 +2,7 @@
 from modelscope.utils.error import TENSORFLOW_IMPORT_WARNING
 from .bert_for_sequence_classification import *  # noqa F403
 from .masked_language import *  # noqa F403
+from .nncrf_for_named_entity_recognition import *  # noqa F403
 from .palm_for_text_generation import *  # noqa F403
 from .sbert_for_nli import *  # noqa F403
 from .sbert_for_sentence_similarity import *  # noqa F403

@@ -127,6 +127,15 @@ TASK_OUTPUTS = {
     # }
     Tasks.word_segmentation: [OutputKeys.OUTPUT],
 
+    # named entity recognition result for single sample
+    # {
+    #   "output": [
+    #     {"type": "LOC", "start": 2, "end": 5, "span": "温岭市"},
+    #     {"type": "LOC", "start": 5, "end": 8, "span": "新河镇"}
+    #   ]
+    # }
+    Tasks.named_entity_recognition: [OutputKeys.OUTPUT],
+
     # sentence similarity result for single sample
     #   {
     #       "scores": 0.9

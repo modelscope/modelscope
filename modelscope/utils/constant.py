@@ -34,6 +34,7 @@ class CVTasks(object):
 class NLPTasks(object):
     # nlp tasks
     word_segmentation = 'word-segmentation'
+    named_entity_recognition = 'named-entity-recognition'
     nli = 'nli'
     sentiment_classification = 'sentiment-classification'
     sentiment_analysis = 'sentiment-analysis'

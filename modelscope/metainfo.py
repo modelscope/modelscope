@@ -18,6 +18,7 @@ class Models(object):
     veco = 'veco'
     translation = 'csanmt-translation'
     space = 'space'
+    tcrf = 'transformer-crf'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -56,6 +57,7 @@ class Pipelines(object):
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
+    named_entity_recognition = 'named-entity-recognition'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
@@ -113,6 +115,7 @@ class Preprocessors(object):
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
     token_cls_tokenizer = 'token-cls-tokenizer'
+    ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
     sen_cls_tokenizer = 'sen-cls-tokenizer'
     dialog_intent_preprocessor = 'dialog-intent-preprocessor'

@@ -19,6 +19,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.named_entity_recognition:
+    (Pipelines.named_entity_recognition,
+     'damo/nlp_transformercrf_named-entity-recognition_chinese-base-news'),
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),

@@ -27,9 +27,15 @@ class FaceGenerationTest(unittest.TestCase):
     def test_run_modelhub(self):
         seed = 10
         face_generation = pipeline(
-            Tasks.image_generation,
+            Tasks.face_image_generation,
             model=self.model_id,
         )
+        self.pipeline_inference(face_generation, seed)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_modelhub_default_model(self):
+        seed = 10
+        face_generation = pipeline(Tasks.face_image_generation)
         self.pipeline_inference(face_generation, seed)
 
 

@@ -69,7 +69,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.text_to_image_synthesis,
      'damo/cv_imagen_text-to-image-synthesis_tiny'),
     Tasks.style_transfer: (Pipelines.style_transfer,
-                           'damo/cv_aams_style-transfer_damo')
+                           'damo/cv_aams_style-transfer_damo'),
+    Tasks.face_image_generation: (Pipelines.face_image_generation,
+                                  'damo/cv_gan_face-image-generation'),
+    Tasks.image_super_resolution: (Pipelines.image_super_resolution,
+                                   'damo/cv_rrdb_image-super-resolution'),
 }
 
 

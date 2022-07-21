@@ -20,16 +20,17 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name=Pipelines.face_image_generation)
+    Tasks.face_image_generation, module_name=Pipelines.face_image_generation)
 class FaceImageGenerationPipeline(Pipeline):
 
     def __init__(self, model: str):
         """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        use `model` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
         super().__init__(model=model)
+        self.device = 'cpu'
         self.size = 1024
         self.latent = 512
         self.n_mlp = 8
@@ -40,7 +41,7 @@ class FaceImageGenerationPipeline(Pipeline):
             self.size,
             self.latent,
             self.n_mlp,
-            channel_multiplier=self.channel_multiplier)
+            channel_multiplier=self.channel_multiplier).to(self.device)
 
         self.model_file = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
 
@@ -63,7 +64,7 @@ class FaceImageGenerationPipeline(Pipeline):
         torch.cuda.manual_seed_all(input)
         self.generator.eval()
         with torch.no_grad():
-            sample_z = torch.randn(1, self.latent)
+            sample_z = torch.randn(1, self.latent).to(self.device)
 
             sample, _ = self.generator([sample_z],
                                        truncation=self.truncation,

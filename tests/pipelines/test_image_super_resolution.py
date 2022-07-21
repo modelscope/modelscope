@@ -28,8 +28,13 @@ class ImageSuperResolutionTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub(self):
         super_resolution = pipeline(
-            Tasks.image_restoration, model=self.model_id)
+            Tasks.image_super_resolution, model=self.model_id)
 
+        self.pipeline_inference(super_resolution, self.img)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_modelhub_default_model(self):
+        super_resolution = pipeline(Tasks.image_super_resolution)
         self.pipeline_inference(super_resolution, self.img)
 
 

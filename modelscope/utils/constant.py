@@ -27,6 +27,7 @@ class CVTasks(object):
     ocr_detection = 'ocr-detection'
     action_recognition = 'action-recognition'
     video_embedding = 'video-embedding'
+    image_restoration = 'image-restoration'
     style_transfer = 'style-transfer'
 
 

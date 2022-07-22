@@ -3,7 +3,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForSentimentClassification
+from modelscope.models.nlp import (SbertForSentimentClassification,
+                                   SequenceClassificationModel)
 from modelscope.pipelines import SentimentClassificationPipeline, pipeline
 from modelscope.preprocessors import SentimentClassificationPreprocessor
 from modelscope.utils.constant import Tasks
@@ -18,39 +19,44 @@ class SentimentClassificationTest(unittest.TestCase):
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = SentimentClassificationPreprocessor(cache_path)
-        model = SbertForSentimentClassification(
-            cache_path, tokenizer=tokenizer)
+        model = SequenceClassificationModel.from_pretrained(
+            self.model_id, num_labels=2)
         pipeline1 = SentimentClassificationPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.sentiment_classification,
             model=model,
-            preprocessor=tokenizer)
+            preprocessor=tokenizer,
+            model_revision='beta')
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1:{pipeline1(input=self.sentence1)}')
         print()
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1: {pipeline2(input=self.sentence1)}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         tokenizer = SentimentClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.sentiment_classification,
             model=model,
-            preprocessor=tokenizer)
-        print(pipeline_ins(input=self.sentence1))
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_model_name(self):
-        pipeline_ins = pipeline(
-            task=Tasks.sentiment_classification, model=self.model_id)
+            preprocessor=tokenizer,
+            model_revision='beta')
         print(pipeline_ins(input=self.sentence1))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentiment_classification,
+            model=self.model_id,
+            model_revision='beta')
+        print(pipeline_ins(input=self.sentence1))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.sentiment_classification)
+        pipeline_ins = pipeline(
+            task=Tasks.sentiment_classification, model_revision='beta')
         print(pipeline_ins(input=self.sentence1))
 
 

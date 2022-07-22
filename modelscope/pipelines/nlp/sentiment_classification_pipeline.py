@@ -6,7 +6,7 @@ import torch
 from modelscope.outputs import OutputKeys
 from ...metainfo import Pipelines
 from ...models import Model
-from ...models.nlp import SbertForSentimentClassification
+from ...models.nlp import SequenceClassificationModel
 from ...preprocessors import SentimentClassificationPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline
@@ -21,7 +21,7 @@ __all__ = ['SentimentClassificationPipeline']
 class SentimentClassificationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[SbertForSentimentClassification, str],
+                 model: Union[SequenceClassificationModel, str],
                  preprocessor: SentimentClassificationPreprocessor = None,
                  first_sequence='first_sequence',
                  second_sequence='second_sequence',
@@ -29,14 +29,14 @@ class SentimentClassificationPipeline(Pipeline):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
         Args:
-            model (SbertForSentimentClassification): a model instance
+            model (SequenceClassificationModel): a model instance
             preprocessor (SentimentClassificationPreprocessor): a preprocessor instance
         """
-        assert isinstance(model, str) or isinstance(model, SbertForSentimentClassification), \
-            'model must be a single str or SbertForSentimentClassification'
+        assert isinstance(model, str) or isinstance(model, SequenceClassificationModel), \
+            'model must be a single str or SentimentClassification'
         model = model if isinstance(
             model,
-            SbertForSentimentClassification) else Model.from_pretrained(model)
+            SequenceClassificationModel) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = SentimentClassificationPreprocessor(
                 model.model_dir,

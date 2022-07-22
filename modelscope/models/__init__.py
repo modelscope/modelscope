@@ -29,6 +29,8 @@ try:
                       SbertForZeroShotClassification, SpaceForDialogIntent,
                       SpaceForDialogModeling, SpaceForDialogStateTracking,
                       StructBertForMaskedLM, VecoForMaskedLM)
+    from .nlp.heads import (SequenceClassificationHead)
+    from .nlp.backbones import (SbertModel)
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'pytorch'":
         pass

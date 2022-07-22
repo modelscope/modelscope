@@ -2,6 +2,8 @@
 # Part of the implementation is borrowed from huggingface/transformers.
 from collections.abc import Mapping
 
+import numpy as np
+
 
 def torch_nested_numpify(tensors):
     import torch
@@ -27,9 +29,6 @@ def torch_nested_detach(tensors):
 def torch_default_data_collator(features):
     # TODO @jiangnana.jnn refine this default data collator
     import torch
-
-    # if not isinstance(features[0], (dict, BatchEncoding)):
-    #     features = [vars(f) for f in features]
     first = features[0]
 
     if isinstance(first, Mapping):
@@ -40,9 +39,14 @@ def torch_default_data_collator(features):
         if 'label' in first and first['label'] is not None:
             label = first['label'].item() if isinstance(
                 first['label'], torch.Tensor) else first['label']
-            dtype = torch.long if isinstance(label, int) else torch.float
-            batch['labels'] = torch.tensor([f['label'] for f in features],
-                                           dtype=dtype)
+            # the msdataset return a 0-dimension np.array with a single value, the following part handle this.
+            if isinstance(label, np.ndarray):
+                dtype = torch.long if label[(
+                )].dtype == np.int64 else torch.float
+            else:
+                dtype = torch.long if isinstance(label, int) else torch.float
+            batch['labels'] = torch.tensor(
+                np.array([f['label'] for f in features]), dtype=dtype)
         elif 'label_ids' in first and first['label_ids'] is not None:
             if isinstance(first['label_ids'], torch.Tensor):
                 batch['labels'] = torch.stack(

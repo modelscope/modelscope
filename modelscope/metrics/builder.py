@@ -17,6 +17,7 @@ class MetricKeys(object):
 
 task_default_metrics = {
     Tasks.sentence_similarity: [Metrics.seq_cls_metric],
+    Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
 }
 

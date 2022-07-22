@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 
 from ..metainfo import Preprocessors
 from ..models import Model
-from ..utils.constant import Fields, InputFields
+from ..utils.constant import Fields, InputFields, ModeKeys
 from ..utils.hub import parse_label_mapping
 from ..utils.type_assert import type_assert
 from .base import Preprocessor
@@ -52,6 +52,7 @@ class NLPPreprocessorBase(Preprocessor):
         self.second_sequence = kwargs.pop('second_sequence', 'second_sequence')
         self.tokenize_kwargs = kwargs
         self.tokenizer = self.build_tokenizer(model_dir)
+        self.label2id = parse_label_mapping(self.model_dir)
 
     def build_tokenizer(self, model_dir):
         from sofa import SbertTokenizer
@@ -83,7 +84,12 @@ class NLPPreprocessorBase(Preprocessor):
             text_a = data.get(self.first_sequence)
             text_b = data.get(self.second_sequence, None)
 
-        return self.tokenizer(text_a, text_b, **self.tokenize_kwargs)
+        rst = self.tokenizer(text_a, text_b, **self.tokenize_kwargs)
+        if self._mode == ModeKeys.TRAIN:
+            rst = {k: v.squeeze() for k, v in rst.items()}
+            if self.label2id is not None and 'label' in data:
+                rst['label'] = self.label2id[str(data['label'])]
+        return rst
 
 
 @PREPROCESSORS.register_module(
@@ -200,16 +206,6 @@ class SentenceSimilarityFinetunePreprocessor(SentenceSimilarityPreprocessor):
     def __init__(self, model_dir: str, *args, **kwargs):
         kwargs['padding'] = 'max_length'
         super().__init__(model_dir, *args, **kwargs)
-        self.label2id = parse_label_mapping(self.model_dir)
-
-    @type_assert(object, (str, tuple, Dict))
-    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
-        rst = super().__call__(data)
-        rst = {k: v.squeeze() for k, v in rst.items()}
-        if self.label2id is not None and 'label' in data:
-            rst['labels'] = []
-            rst['labels'].append(self.label2id[str(data['label'])])
-        return rst
 
 
 @PREPROCESSORS.register_module(

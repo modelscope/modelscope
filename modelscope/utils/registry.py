@@ -6,6 +6,7 @@ from typing import List, Tuple, Union
 from modelscope.utils.import_utils import requires
 from modelscope.utils.logger import get_logger
 
+TYPE_NAME = 'type'
 default_group = 'default'
 logger = get_logger()
 
@@ -159,15 +160,16 @@ def build_from_cfg(cfg,
         group_key (str, optional): The name of registry group from which
             module should be searched.
         default_args (dict, optional): Default initialization arguments.
+        type_name (str, optional): The name of the type in the config.
     Returns:
         object: The constructed object.
     """
     if not isinstance(cfg, dict):
         raise TypeError(f'cfg must be a dict, but got {type(cfg)}')
-    if 'type' not in cfg:
-        if default_args is None or 'type' not in default_args:
+    if TYPE_NAME not in cfg:
+        if default_args is None or TYPE_NAME not in default_args:
             raise KeyError(
-                '`cfg` or `default_args` must contain the key "type", '
+                f'`cfg` or `default_args` must contain the key "{TYPE_NAME}", '
                 f'but got {cfg}\n{default_args}')
     if not isinstance(registry, Registry):
         raise TypeError('registry must be an modelscope.Registry object, '
@@ -184,7 +186,7 @@ def build_from_cfg(cfg,
     if group_key is None:
         group_key = default_group
 
-    obj_type = args.pop('type')
+    obj_type = args.pop(TYPE_NAME)
     if isinstance(obj_type, str):
         obj_cls = registry.get(obj_type, group_key=group_key)
         if obj_cls is None:
@@ -196,7 +198,10 @@ def build_from_cfg(cfg,
         raise TypeError(
             f'type must be a str or valid type, but got {type(obj_type)}')
     try:
-        return obj_cls(**args)
+        if hasattr(obj_cls, '_instantiate'):
+            return obj_cls._instantiate(**args)
+        else:
+            return obj_cls(**args)
     except Exception as e:
         # Normal TypeError does not print class name.
         raise type(e)(f'{obj_cls.__name__}: {e}')

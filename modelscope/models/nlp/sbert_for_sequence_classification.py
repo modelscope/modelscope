@@ -42,6 +42,9 @@ class SbertTextClassfier(SbertPreTrainedModel):
             return {'logits': logits, 'loss': loss}
         return {'logits': logits}
 
+    def build(**kwags):
+        return SbertTextClassfier.from_pretrained(model_dir, **model_args)
+
 
 class SbertForSequenceClassificationBase(Model):
 

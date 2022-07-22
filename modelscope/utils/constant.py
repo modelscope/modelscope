@@ -57,6 +57,7 @@ class NLPTasks(object):
     summarization = 'summarization'
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
+    backbone = 'backbone'
 
 
 class AudioTasks(object):
@@ -173,6 +174,7 @@ DEFAULT_DATASET_REVISION = 'master'
 class ModeKeys:
     TRAIN = 'train'
     EVAL = 'eval'
+    INFERENCE = 'inference'
 
 
 class LogKeys:

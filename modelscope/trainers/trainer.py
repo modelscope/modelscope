@@ -2,6 +2,7 @@
 import os.path
 import random
 import time
+from collections.abc import Mapping
 from distutils.version import LooseVersion
 from functools import partial
 from typing import Callable, List, Optional, Tuple, Union
@@ -16,8 +17,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metrics import build_metric, task_default_metrics
-from modelscope.models.base import Model
-from modelscope.models.base_torch import TorchModel
+from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.preprocessors import build_preprocessor
 from modelscope.preprocessors.base import Preprocessor
@@ -26,12 +26,13 @@ from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import (Hubs, ModeKeys, ModelFile, Tasks,
-                                       TrainerStages)
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Hubs, ModeKeys,
+                                       ModelFile, Tasks, TrainerStages)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.tensor_utils import torch_default_data_collator
 from modelscope.utils.torch_utils import get_dist_info
+from modelscope.utils.utils import if_func_recieve_dict_inputs
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -79,13 +80,15 @@ class EpochBasedTrainer(BaseTrainer):
             optimizers: Tuple[torch.optim.Optimizer,
                               torch.optim.lr_scheduler._LRScheduler] = (None,
                                                                         None),
+            model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             **kwargs):
         if isinstance(model, str):
             if os.path.exists(model):
                 self.model_dir = model if os.path.isdir(
                     model) else os.path.dirname(model)
             else:
-                self.model_dir = snapshot_download(model)
+                self.model_dir = snapshot_download(
+                    model, revision=model_revision)
             cfg_file = os.path.join(self.model_dir, ModelFile.CONFIGURATION)
             self.model = self.build_model()
         else:
@@ -112,6 +115,8 @@ class EpochBasedTrainer(BaseTrainer):
             self.preprocessor = preprocessor
         elif hasattr(self.cfg, 'preprocessor'):
             self.preprocessor = self.build_preprocessor()
+        if self.preprocessor is not None:
+            self.preprocessor.mode = ModeKeys.TRAIN
         # TODO @wenmeng.zwm add data collator option
         # TODO how to fill device option?
         self.device = int(
@@ -264,7 +269,8 @@ class EpochBasedTrainer(BaseTrainer):
         model = Model.from_pretrained(self.model_dir)
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             return model.model
-        return model
+        elif isinstance(model, nn.Module):
+            return model
 
     def collate_fn(self, data):
         """Prepare the input just before the forward function.
@@ -307,7 +313,8 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
-        if not isinstance(model, Model) and isinstance(inputs, dict):
+        if isinstance(inputs, Mapping) and not if_func_recieve_dict_inputs(
+                model.forward, inputs):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)

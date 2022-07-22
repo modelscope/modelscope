@@ -5,6 +5,7 @@ import pickle
 import shutil
 import tempfile
 import time
+from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
@@ -12,6 +13,7 @@ from tqdm import tqdm
 
 from modelscope.models.base import Model
 from modelscope.utils.torch_utils import get_dist_info
+from modelscope.utils.utils import if_func_recieve_dict_inputs
 
 
 def single_gpu_test(model,
@@ -36,7 +38,10 @@ def single_gpu_test(model,
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
             with torch.no_grad():
-                if not isinstance(model, Model):
+                if isinstance(data,
+                              Mapping) and not if_func_recieve_dict_inputs(
+                                  model.forward, data):
+
                     result = model(**data)
                 else:
                     result = model(data)
@@ -87,7 +92,9 @@ def multi_gpu_test(model,
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
             with torch.no_grad():
-                if not isinstance(model, Model):
+                if isinstance(data,
+                              Mapping) and not if_func_recieve_dict_inputs(
+                                  model.forward, data):
                     result = model(**data)
                 else:
                     result = model(data)

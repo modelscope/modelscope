@@ -33,6 +33,16 @@ class Models(object):
     imagen = 'imagen-text-to-image-synthesis'
 
 
+class TaskModels(object):
+    # nlp task
+    text_classification = 'text-classification'
+
+
+class Heads(object):
+    # nlp heads
+    text_classification = 'text-classification'
+
+
 class Pipelines(object):
     """ Names for different pipelines.
 

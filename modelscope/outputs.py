@@ -4,6 +4,7 @@ from modelscope.utils.constant import Tasks
 
 
 class OutputKeys(object):
+    LOSS = 'loss'
     LOGITS = 'logits'
     SCORES = 'scores'
     LABEL = 'label'
@@ -22,6 +23,8 @@ class OutputKeys(object):
     TRANSLATION = 'translation'
     RESPONSE = 'response'
     PREDICTION = 'prediction'
+    PREDICTIONS = 'predictions'
+    PROBABILITIES = 'probabilities'
     DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
 

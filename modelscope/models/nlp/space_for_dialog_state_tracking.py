@@ -2,10 +2,10 @@ import os
 from typing import Any, Dict
 
 from modelscope.utils.constant import Tasks
-from ....metainfo import Models
-from ....utils.nlp.space.utils_dst import batch_to_device
-from ...base import Model, Tensor
-from ...builder import MODELS
+from ...metainfo import Models
+from ...utils.nlp.space.utils_dst import batch_to_device
+from ..base import Model, Tensor
+from ..builder import MODELS
 
 __all__ = ['SpaceForDialogStateTracking']
 

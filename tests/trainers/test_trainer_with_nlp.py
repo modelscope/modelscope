@@ -56,6 +56,23 @@ class TestTrainerWithNlp(unittest.TestCase):
         for i in range(10):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_trainer_with_backbone_head(self):
+        model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
+        kwargs = dict(
+            model=model_id,
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            work_dir=self.tmp_dir,
+            model_revision='beta')
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(10):
+            self.assertIn(f'epoch_{i+1}.pth', results_files)
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
         tmp_dir = tempfile.TemporaryDirectory().name

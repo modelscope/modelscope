@@ -1,8 +1,8 @@
 from typing import Any, Dict, Union
 
-from modelscope.outputs import OutputKeys
 from ...metainfo import Pipelines
 from ...models import Model, SpaceForDialogStateTracking
+from ...outputs import OutputKeys
 from ...preprocessors import DialogStateTrackingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline

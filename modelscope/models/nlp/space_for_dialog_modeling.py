@@ -1,24 +1,22 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from ....metainfo import Models
-from ....preprocessors.space.fields.intent_field import IntentBPETextField
-from ....trainers.nlp.space.trainer.intent_trainer import IntentTrainer
-from ....utils.config import Config
-from ....utils.constant import ModelFile, Tasks
-from ...base import Model, Tensor
-from ...builder import MODELS
-from .model.generator import Generator
-from .model.model_base import SpaceModelBase
+from ...metainfo import Models
+from ...preprocessors.space.fields.gen_field import MultiWOZBPETextField
+from ...trainers.nlp.space.trainer.gen_trainer import MultiWOZTrainer
+from ...utils.config import Config
+from ...utils.constant import ModelFile, Tasks
+from ..base import Model, Tensor
+from ..builder import MODELS
+from .backbones import SpaceGenerator, SpaceModelBase
 
-__all__ = ['SpaceForDialogIntent']
+__all__ = ['SpaceForDialogModeling']
 
 
-@MODELS.register_module(
-    Tasks.dialog_intent_prediction, module_name=Models.space)
-class SpaceForDialogIntent(Model):
+@MODELS.register_module(Tasks.dialog_modeling, module_name=Models.space)
+class SpaceForDialogModeling(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.
@@ -35,9 +33,9 @@ class SpaceForDialogIntent(Model):
                 os.path.join(self.model_dir, ModelFile.CONFIGURATION)))
         self.text_field = kwargs.pop(
             'text_field',
-            IntentBPETextField(self.model_dir, config=self.config))
-
-        self.generator = Generator.create(self.config, reader=self.text_field)
+            MultiWOZBPETextField(self.model_dir, config=self.config))
+        self.generator = SpaceGenerator.create(
+            self.config, reader=self.text_field)
         self.model = SpaceModelBase.create(
             model_dir=model_dir,
             config=self.config,
@@ -52,11 +50,12 @@ class SpaceForDialogIntent(Model):
             array = torch.tensor(array)
             return array.cuda() if self.config.use_gpu else array
 
-        self.trainer = IntentTrainer(
+        self.trainer = MultiWOZTrainer(
             model=self.model,
             to_tensor=to_tensor,
             config=self.config,
-            reader=self.text_field)
+            reader=self.text_field,
+            evaluator=None)
         self.trainer.load()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -69,14 +68,17 @@ class SpaceForDialogIntent(Model):
             Dict[str, Tensor]: results
                 Example:
                     {
-                        'pred': array([2.62349960e-03 4.12110658e-03 4.12748595e-05 3.77560973e-05
- 1.08599677e-04 1.72710388e-05 2.95618793e-05 1.93638436e-04
- 6.45841064e-05 1.15997791e-04 5.11605394e-05 9.87020373e-01
- 2.66957268e-05 4.72324500e-05 9.74208378e-05], dtype=float32)
+                        'labels': array([1,192,321,12]), # lable
+                        'resp': array([293,1023,123,1123]), #vocab label for response
+                        'bspn': array([123,321,2,24,1 ]),
+                        'aspn': array([47,8345,32,29,1983]),
+                        'db': array([19, 24, 20]),
                     }
         """
-        import numpy as np
-        pred = self.trainer.forward(input)
-        pred = np.squeeze(pred[0], 0)
 
-        return {'pred': pred}
+        turn = {'user': input['user']}
+        old_pv_turn = input['history']
+
+        pv_turn = self.trainer.forward(turn=turn, old_pv_turn=old_pv_turn)
+
+        return pv_turn

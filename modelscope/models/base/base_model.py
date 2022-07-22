@@ -4,6 +4,8 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Union
 
+import numpy as np
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
@@ -25,6 +27,15 @@ class Model(ABC):
 
     @abstractmethod
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
+        """
+        Run the forward pass for a model.
+
+        Args:
+            input (Dict[str, Tensor]): the dict of the model inputs for the forward method
+
+        Returns:
+            Dict[str, Tensor]: output from the model forward pass
+        """
         pass
 
     def postprocess(self, input: Dict[str, Tensor],
@@ -40,6 +51,15 @@ class Model(ABC):
                 output should have the standard output name.
         """
         return input
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        """ Define the instantiation method of a model,default method is by
+            calling the constructor. Note that in the case of no loading model
+            process in constructor of a task model, a load_model method is
+            added, and thus this method is overloaded
+        """
+        return cls(**kwargs)
 
     @classmethod
     def from_pretrained(cls,
@@ -71,6 +91,7 @@ class Model(ABC):
             cfg, 'pipeline'), 'pipeline config is missing from config file.'
         pipeline_cfg = cfg.pipeline
         # TODO @wenmeng.zwm may should manually initialize model after model building
+
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
 
@@ -78,7 +99,8 @@ class Model(ABC):
 
         for k, v in kwargs.items():
             model_cfg[k] = v
-        model = build_model(model_cfg, task_name)
+        model = build_model(
+            model_cfg, task_name=task_name, default_args=kwargs)
 
         # dynamically add pipeline info to model for pipeline inference
         model.pipeline = pipeline_cfg

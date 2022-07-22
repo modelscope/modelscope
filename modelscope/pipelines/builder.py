@@ -30,7 +30,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
     Tasks.sentiment_classification:
     (Pipelines.sentiment_classification,
-     'damo/nlp_structbert_sentiment-classification_chinese-base'),
+     'damo/nlp_structbert_sentiment-classification_chinese-base'
+     ),  # TODO: revise back after passing the pr
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,

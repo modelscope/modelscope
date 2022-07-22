@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modelscope.models.base_torch import TorchModel
+from modelscope.models.base import TorchModel
 
 
 class TorchBaseTest(unittest.TestCase):

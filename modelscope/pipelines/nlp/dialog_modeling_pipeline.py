@@ -2,10 +2,10 @@
 
 from typing import Dict, Union
 
-from modelscope.outputs import OutputKeys
 from ...metainfo import Pipelines
 from ...models import Model
 from ...models.nlp import SpaceForDialogModeling
+from ...outputs import OutputKeys
 from ...preprocessors import DialogModelingPreprocessor
 from ...utils.constant import Tasks
 from ..base import Pipeline, Tensor

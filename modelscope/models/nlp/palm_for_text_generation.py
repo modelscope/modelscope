@@ -2,8 +2,7 @@ from typing import Dict
 
 from ...metainfo import Models
 from ...utils.constant import Tasks
-from ..base import Tensor
-from ..base_torch import TorchModel
+from ..base import Tensor, TorchModel
 from ..builder import MODELS
 
 __all__ = ['PalmForTextGeneration']

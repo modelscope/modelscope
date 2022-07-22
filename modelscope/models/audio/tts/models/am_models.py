@@ -1,7 +1,4 @@
 import tensorflow as tf
-from tensorflow.contrib.cudnn_rnn import CudnnLSTM
-from tensorflow.contrib.cudnn_rnn.python.ops import cudnn_rnn_ops
-from tensorflow.contrib.rnn import LSTMBlockCell
 
 
 def encoder_prenet(inputs,
@@ -207,6 +204,7 @@ def conv_and_lstm(inputs,
                   embedded_inputs_speaker,
                   mask=None,
                   scope='conv_and_lstm'):
+    from tensorflow.contrib.rnn import LSTMBlockCell
     x = inputs
     with tf.variable_scope(scope):
         for i in range(n_conv_layers):
@@ -244,6 +242,7 @@ def conv_and_lstm_dec(inputs,
                       mask=None,
                       scope='conv_and_lstm'):
     x = inputs
+    from tensorflow.contrib.rnn import LSTMBlockCell
     with tf.variable_scope(scope):
         for i in range(n_conv_layers):
             x = conv1d(

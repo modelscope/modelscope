@@ -1,14 +1,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import io
 import os
-import time
 import zipfile
-from typing import Any, Dict, Optional, Union
 
 import json
 import numpy as np
-import torch
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
@@ -16,8 +12,8 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.audio.tts_exceptions import (
     TtsFrontendInitializeFailedException,
     TtsFrontendLanguageTypeInvalidException, TtsModelConfigurationExcetion,
-    TtsVocoderMelspecShapeMismatchException, TtsVoiceNotExistsException)
-from modelscope.utils.constant import ModelFile, Tasks
+    TtsVoiceNotExistsException)
+from modelscope.utils.constant import Tasks
 from .voice import Voice
 
 import tensorflow as tf  # isort:skip

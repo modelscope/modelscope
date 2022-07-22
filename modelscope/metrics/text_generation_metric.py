@@ -1,8 +1,5 @@
 from typing import Dict
 
-import numpy as np
-from rouge_score import rouge_scorer
-
 from ..metainfo import Metrics
 from ..utils.registry import default_group
 from .base import Metric
@@ -18,6 +15,7 @@ class TextGenerationMetric(Metric):
     def __init__(self):
         self.preds = []
         self.tgts = []
+        from rouge_score import rouge_scorer
         self.scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
 
     def add(self, outputs: Dict, inputs: Dict):

@@ -1,9 +1,8 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.seq2seq import Helper
 
 
-class VarTestHelper(Helper):
+class VarTestHelper(tf.contrib.seq2seq.Helper):
 
     def __init__(self, batch_size, inputs, dim):
         with tf.name_scope('VarTestHelper'):
@@ -44,7 +43,7 @@ class VarTestHelper(Helper):
             return (finished, next_inputs, state)
 
 
-class VarTrainingHelper(Helper):
+class VarTrainingHelper(tf.contrib.seq2seq.Helper):
 
     def __init__(self, targets, inputs, dim):
         with tf.name_scope('VarTrainingHelper'):
@@ -86,7 +85,7 @@ class VarTrainingHelper(Helper):
             return (finished, next_inputs, state)
 
 
-class VarTrainingSSHelper(Helper):
+class VarTrainingSSHelper(tf.contrib.seq2seq.Helper):
 
     def __init__(self, targets, inputs, dim, global_step, schedule_begin,
                  alpha, decay_steps):

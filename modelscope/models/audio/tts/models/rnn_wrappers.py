@@ -1,14 +1,11 @@
-import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.rnn import RNNCell
-from tensorflow.contrib.seq2seq import AttentionWrapperState
 from tensorflow.python.ops import rnn_cell_impl
 
 from .am_models import prenet
 
 
-class VarPredictorCell(RNNCell):
-    '''Wrapper wrapper knock knock.'''
+class VarPredictorCell(tf.contrib.rnn.RNNCell):
+    """Wrapper wrapper knock knock."""
 
     def __init__(self, var_predictor_cell, is_training, dim, prenet_units):
         super(VarPredictorCell, self).__init__()
@@ -33,7 +30,7 @@ class VarPredictorCell(RNNCell):
         ])
 
     def call(self, inputs, state):
-        '''Run the Tacotron2 super decoder cell.'''
+        """Run the Tacotron2 super decoder cell."""
         super_cell_out, decoder_state = state
 
         # split
@@ -61,8 +58,8 @@ class VarPredictorCell(RNNCell):
         return new_super_cell_out, new_states
 
 
-class DurPredictorCell(RNNCell):
-    '''Wrapper wrapper knock knock.'''
+class DurPredictorCell(tf.contrib.rnn.RNNCell):
+    """Wrapper wrapper knock knock."""
 
     def __init__(self, var_predictor_cell, is_training, dim, prenet_units):
         super(DurPredictorCell, self).__init__()
@@ -87,7 +84,7 @@ class DurPredictorCell(RNNCell):
         ])
 
     def call(self, inputs, state):
-        '''Run the Tacotron2 super decoder cell.'''
+        """Run the Tacotron2 super decoder cell."""
         super_cell_out, decoder_state = state
 
         # split
@@ -117,8 +114,8 @@ class DurPredictorCell(RNNCell):
         return new_super_cell_out, new_states
 
 
-class DurPredictorCECell(RNNCell):
-    '''Wrapper wrapper knock knock.'''
+class DurPredictorCECell(tf.contrib.rnn.RNNCell):
+    """Wrapper wrapper knock knock."""
 
     def __init__(self, var_predictor_cell, is_training, dim, prenet_units,
                  max_dur, dur_embedding_dim):
@@ -146,7 +143,7 @@ class DurPredictorCECell(RNNCell):
         ])
 
     def call(self, inputs, state):
-        '''Run the Tacotron2 super decoder cell.'''
+        """Run the Tacotron2 super decoder cell."""
         super_cell_out, decoder_state = state
 
         # split
@@ -181,8 +178,8 @@ class DurPredictorCECell(RNNCell):
         return new_super_cell_out, new_states
 
 
-class VarPredictorCell2(RNNCell):
-    '''Wrapper wrapper knock knock.'''
+class VarPredictorCell2(tf.contrib.rnn.RNNCell):
+    """Wrapper wrapper knock knock."""
 
     def __init__(self, var_predictor_cell, is_training, dim, prenet_units):
         super(VarPredictorCell2, self).__init__()

@@ -23,8 +23,8 @@ logger = get_logger()
 class Pipeline(ABC):
 
     def initiate_single_model(self, model):
-        logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):
+            logger.info(f'initiate model from location {model}.')
             # expecting model has been prefetched to local cache beforehand
             return Model.from_pretrained(
                 model, model_prefetched=True) if is_model(model) else model

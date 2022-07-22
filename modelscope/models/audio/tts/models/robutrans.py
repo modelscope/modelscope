@@ -1,14 +1,8 @@
 import tensorflow as tf
-from tensorflow.contrib.rnn import LSTMBlockCell, MultiRNNCell
-from tensorflow.contrib.seq2seq import BasicDecoder
 from tensorflow.python.ops.ragged.ragged_util import repeat
 
-from .am_models import conv_prenet, decoder_prenet, encoder_prenet
 from .fsmn_encoder import FsmnEncoderV2
-from .helpers import VarTestHelper, VarTrainingHelper
-from .position import (BatchSinusodalPositionalEncoding,
-                       SinusodalPositionalEncoding)
-from .rnn_wrappers import DurPredictorCell, VarPredictorCell
+from .position import BatchSinusodalPositionalEncoding
 from .self_attention_decoder import SelfAttentionDecoder
 from .self_attention_encoder import SelfAttentionEncoder
 
@@ -32,7 +26,7 @@ class RobuTrans():
                    duration_scales=None,
                    energy_contours=None,
                    energy_scales=None):
-        '''Initializes the model for inference.
+        """Initializes the model for inference.
 
         Sets "mel_outputs", "linear_outputs", "stop_token_outputs", and "alignments" fields.
 
@@ -46,7 +40,10 @@ class RobuTrans():
           mel_targets: float32 Tensor with shape [N, T_out, M] where N is batch size, T_out is number
             of steps in the output time series, M is num_mels, and values are entries in the mel
             spectrogram. Only needed for training.
-        '''
+        """
+        from tensorflow.contrib.rnn import LSTMBlockCell, MultiRNNCell
+        from tensorflow.contrib.seq2seq import BasicDecoder
+
         with tf.variable_scope('inference') as _:
             is_training = mel_targets is not None
             batch_size = tf.shape(inputs)[0]
@@ -229,17 +226,20 @@ class RobuTrans():
                     LSTMBlockCell(hp.predictor_lstm_units),
                     LSTMBlockCell(hp.predictor_lstm_units)
                 ], state_is_tuple=True)  # yapf:disable
+                from .rnn_wrappers import DurPredictorCell
                 duration_output_cell = DurPredictorCell(
                     duration_predictor_cell, is_training, 1,
                     hp.predictor_prenet_units)
                 duration_predictor_init_state = duration_output_cell.zero_state(
                     batch_size=batch_size, dtype=tf.float32)
                 if is_training:
+                    from .helpers import VarTrainingHelper
                     duration_helper = VarTrainingHelper(
                         tf.expand_dims(
                             tf.log(tf.cast(durations, tf.float32) + 1),
                             axis=2), dur_inputs, 1)
                 else:
+                    from .helpers import VarTestHelper
                     duration_helper = VarTestHelper(batch_size, dur_inputs, 1)
                 (
                     duration_outputs, _

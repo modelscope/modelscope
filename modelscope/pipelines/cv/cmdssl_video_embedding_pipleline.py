@@ -1,11 +1,9 @@
 import os.path as osp
 from typing import Any, Dict
 
-import decord
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
-from decord import VideoReader, cpu
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -49,6 +47,7 @@ class CMDSSLVideoEmbeddingPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
+        import decord
         decord.bridge.set_bridge('native')
 
         transforms = VCompose([
@@ -60,7 +59,7 @@ class CMDSSLVideoEmbeddingPipeline(Pipeline):
 
         clip_len = (self.cfg.DATA.video_frames
                     - 1) * self.cfg.DATA.video_stride + 1
-        vr = VideoReader(input, ctx=cpu(0))
+        vr = decord.VideoReader(input, ctx=decord.cpu(0))
         if len(vr) <= clip_len:
             init_frames = np.zeros(self.cfg.DATA.multi_crop, dtype=int)
         else:

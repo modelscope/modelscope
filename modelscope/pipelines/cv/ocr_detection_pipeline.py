@@ -17,11 +17,6 @@ from ..builder import PIPELINES
 from .ocr_utils import model_resnet_mutex_v4_linewithchar, ops, utils
 
 if tf.__version__ >= '2.0':
-    import tf_slim as slim
-else:
-    from tensorflow.contrib import slim
-
-if tf.__version__ >= '2.0':
     tf = tf.compat.v1
 tf.compat.v1.disable_eager_execution()
 

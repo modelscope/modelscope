@@ -31,6 +31,10 @@ class SpaceForDialogModeling(Model):
             'config',
             Config.from_file(
                 os.path.join(self.model_dir, ModelFile.CONFIGURATION)))
+
+        import torch
+        self.config.use_gpu = self.config.use_gpu and torch.cuda.is_available()
+
         self.text_field = kwargs.pop(
             'text_field',
             MultiWOZBPETextField(self.model_dir, config=self.config))

@@ -119,6 +119,10 @@ class HubOperationTest(unittest.TestCase):
             r.raise_for_status()
         return None
 
+    def test_list_model(self):
+        data = self.api.list_model(TEST_MODEL_ORG)
+        assert len(data['Models']) >= 1
+
 
 if __name__ == '__main__':
     unittest.main()

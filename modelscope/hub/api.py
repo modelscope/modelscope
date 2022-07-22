@@ -13,8 +13,9 @@ from modelscope.utils.logger import get_logger
 from ..msdatasets.config import DOWNLOADED_DATASETS_PATH, HUB_DATASET_ENDPOINT
 from ..utils.constant import (DEFAULT_DATASET_REVISION, DEFAULT_MODEL_REVISION,
                               DownloadMode)
-from .errors import (InvalidParameter, NotExistError, datahub_raise_on_error,
-                     handle_http_response, is_ok, raise_on_error)
+from .errors import (InvalidParameter, NotExistError, RequestError,
+                     datahub_raise_on_error, handle_http_response, is_ok,
+                     raise_on_error)
 from .utils.utils import get_endpoint, model_id_to_group_owner_name
 
 logger = get_logger()
@@ -165,6 +166,36 @@ class HubApi:
         else:
             r.raise_for_status()
 
+    def list_model(self,
+                   owner_or_group: str,
+                   page_number=1,
+                   page_size=10) -> dict:
+        """List model in owner or group.
+
+        Args:
+            owner_or_group(`str`): owner or group.
+            page_number(`int`): The page number, default: 1
+            page_size(`int`): The page size, default: 10
+        Returns:
+            dict: {"models": "list of models", "TotalCount": total_number_of_models_in_owner_or_group}
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        path = f'{self.endpoint}/api/v1/models/'
+        r = requests.put(
+            path,
+            data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
+            (owner_or_group, page_number, page_size))
+        handle_http_response(r, logger, cookies, 'list_model')
+        if r.status_code == 200:
+            if is_ok(r.json()):
+                data = r.json()['Data']
+                return data
+            else:
+                raise RequestError(r.json()['Message'])
+        else:
+            r.raise_for_status()
+        return None
+
     def _check_cookie(self,
                       use_cookies: Union[bool,
                                          CookieJar] = False) -> CookieJar:
@@ -189,7 +220,7 @@ class HubApi:
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
                         will load cookie from local. Defaults to False.
         Returns:
-            Tuple[List[str], List[str]]: _description_
+            Tuple[List[str], List[str]]: Return list of branch name and tags
         """
         cookies = self._check_cookie(use_cookies)
 

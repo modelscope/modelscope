@@ -96,7 +96,7 @@ make tests
 As we need a lot of data for testing, including images, videos, models. We use git lfs
 to store those large files.
 
-1. install git-lfs
+1. install git-lfs(version>=2.5.0)
 for mac
 ```bash
 brew install git-lfs

@@ -15,10 +15,10 @@ class TaskDataset(ABC):
         super().__init__()
         self.mode = mode
         self.preprocessor = preprocessor
-        self._inner_dataset = self.compose_dataset(datasets)
+        self._inner_dataset = self.prepare_dataset(datasets)
 
     @abstractmethod
-    def compose_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
+    def prepare_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
         """Prepare a dataset.
 
         User can process the input datasets in a whole dataset perspective.
@@ -33,7 +33,7 @@ class TaskDataset(ABC):
         pass
 
     @abstractmethod
-    def preprocess_dataset(self, data):
+    def prepare_sample(self, data):
         """Preprocess the data fetched from the inner_dataset.
 
         If the preprocessor is None, the original data will be returned, else the preprocessor will be called.

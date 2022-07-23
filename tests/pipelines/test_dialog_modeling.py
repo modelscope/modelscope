@@ -113,27 +113,33 @@ class DialogModelingTest(unittest.TestCase):
         model = SpaceForDialogModeling(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
-            config=preprocessor.config)
+            config=preprocessor.config,
+            device='cpu')
         pipelines = [
-            DialogModelingPipeline(model=model, preprocessor=preprocessor),
+            DialogModelingPipeline(
+                model=model, preprocessor=preprocessor, device='cpu'),
             pipeline(
                 task=Tasks.dialog_modeling,
                 model=model,
-                preprocessor=preprocessor)
+                preprocessor=preprocessor,
+                device='cpu')
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)
+        preprocessor = DialogModelingPreprocessor(
+            model_dir=model.model_dir, device='cpu')
 
         pipelines = [
-            DialogModelingPipeline(model=model, preprocessor=preprocessor),
+            DialogModelingPipeline(
+                model=model, preprocessor=preprocessor, device='cpu'),
             pipeline(
                 task=Tasks.dialog_modeling,
                 model=model,
-                preprocessor=preprocessor)
+                preprocessor=preprocessor,
+                device='cpu')
         ]
 
         self.generate_and_print_dialog_response(pipelines)
@@ -141,16 +147,18 @@ class DialogModelingTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipelines = [
-            pipeline(task=Tasks.dialog_modeling, model=self.model_id),
-            pipeline(task=Tasks.dialog_modeling, model=self.model_id)
+            pipeline(
+                task=Tasks.dialog_modeling, model=self.model_id, device='cpu'),
+            pipeline(
+                task=Tasks.dialog_modeling, model=self.model_id, device='cpu')
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipelines = [
-            pipeline(task=Tasks.dialog_modeling),
-            pipeline(task=Tasks.dialog_modeling)
+            pipeline(task=Tasks.dialog_modeling, device='cpu'),
+            pipeline(task=Tasks.dialog_modeling, device='cpu')
         ]
         self.generate_and_print_dialog_response(pipelines)
 

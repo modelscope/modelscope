@@ -151,6 +151,19 @@ class ModelFile(object):
     LABEL_MAPPING = 'label_mapping.json'
 
 
+class ConfigFields(object):
+    """ First level keyword in configuration file
+    """
+    framework = 'framework'
+    task = 'task'
+    pipeline = 'pipeline'
+    model = 'model'
+    dataset = 'dataset'
+    preprocessor = 'preprocessor'
+    train = 'train'
+    evaluation = 'evaluation'
+
+
 class Requirements(object):
     """Requirement names for each module
     """
@@ -164,8 +177,11 @@ class Requirements(object):
     torch = 'torch'
 
 
-TENSORFLOW = 'tensorflow'
-PYTORCH = 'pytorch'
+class Frameworks(object):
+    tf = 'tensorflow'
+    torch = 'pytorch'
+    kaldi = 'kaldi'
+
 
 DEFAULT_MODEL_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'

@@ -69,15 +69,15 @@ class FRCRNModel(Model):
             model_dir (str): the model path.
         """
         super().__init__(model_dir, *args, **kwargs)
-        self._model = FRCRN(*args, **kwargs)
+        self.model = FRCRN(*args, **kwargs)
         model_bin_file = os.path.join(model_dir,
                                       ModelFile.TORCH_MODEL_BIN_FILE)
         if os.path.exists(model_bin_file):
             checkpoint = torch.load(model_bin_file)
-            self._model.load_state_dict(checkpoint, strict=False)
+            self.model.load_state_dict(checkpoint, strict=False)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        output = self._model.forward(input)
+        output = self.model.forward(input)
         return {
             'spec_l1': output[0],
             'wav_l1': output[1],
@@ -88,11 +88,11 @@ class FRCRNModel(Model):
         }
 
     def to(self, *args, **kwargs):
-        self._model = self._model.to(*args, **kwargs)
+        self.model = self.model.to(*args, **kwargs)
         return self
 
     def eval(self):
-        self._model = self._model.train(False)
+        self.model = self.model.train(False)
         return self
 
 

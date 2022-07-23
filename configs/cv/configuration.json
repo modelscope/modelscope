@@ -170,6 +170,9 @@
             "shuffle": false
         },
         "metrics": ["accuracy", "precision", "recall"]
+    },
+    "pipeline": {
+        "type": "dummy"
     }
 
 }

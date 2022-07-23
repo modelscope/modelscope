@@ -39,13 +39,13 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
     Tasks.ocr_detection, module_name=Pipelines.ocr_detection)
 class OCRDetectionPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         tf.reset_default_graph()
         model_path = osp.join(
             osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),

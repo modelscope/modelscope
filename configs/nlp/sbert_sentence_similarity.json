@@ -1,4 +1,5 @@
 {
+    "framework": "pytorch",
     "task": "sentence-similarity",
     "preprocessor": {
       "type": "bert-seq-cls-tokenizer-finetune",
@@ -38,8 +39,8 @@
     "pipeline": {
        "type": "sentence-similarity"
     },
-    "work_dir": "/tmp",
     "train": {
+        "work_dir": "/tmp",
         "dataloader": {
             "batch_size_per_gpu": 2,
             "workers_per_gpu": 1

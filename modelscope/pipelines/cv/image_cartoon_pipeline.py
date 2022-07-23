@@ -30,13 +30,13 @@ logger = get_logger()
     Tasks.image_generation, module_name=Pipelines.person_image_cartoon)
 class ImageCartoonPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         self.facer = FaceAna(self.model)
         self.sess_anime_head = self.load_sess(
             os.path.join(self.model, 'cartoon_anime_h.pb'), 'model_anime_head')

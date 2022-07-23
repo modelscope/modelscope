@@ -30,10 +30,6 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-
         super().__init__(
             config_file=config_file,
             model=model,
@@ -43,7 +39,6 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         assert model is not None, 'kws model should be provided'
 
         self._preprocessor = preprocessor
-        self._model = model
         self._keywords = None
 
         if 'keywords' in kwargs.keys():
@@ -59,7 +54,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         if self._preprocessor is None:
             self._preprocessor = WavToLists(workspace=workspace)
 
-        output = self._preprocessor.forward(self._model.forward(), kws_type,
+        output = self._preprocessor.forward(self.model.forward(), kws_type,
                                             wav_path)
         output = self.forward(output)
         rst = self.postprocess(output)

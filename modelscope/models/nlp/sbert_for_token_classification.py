@@ -58,6 +58,6 @@ class SbertForTokenClassification(Model):
                     **kwargs) -> Dict[str, Tensor]:
         logits = input['logits']
         pred = torch.argmax(logits[0], dim=-1)
-        pred = pred.numpy()
+        pred = pred.cpu().numpy()
         rst = {'predictions': pred, 'logits': logits, 'text': input['text']}
         return rst

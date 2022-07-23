@@ -3,14 +3,14 @@
 import os
 from typing import Any, Dict
 
-from ...metainfo import Models
+from modelscope.metainfo import Models
+from modelscope.models.nlp.backbones.space import (SpaceGenerator,
+                                                   SpaceModelBase)
 from ...preprocessors.space.fields.intent_field import IntentBPETextField
-from ...trainers.nlp.space.trainer.intent_trainer import IntentTrainer
 from ...utils.config import Config
 from ...utils.constant import ModelFile, Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
-from .backbones import SpaceGenerator, SpaceModelBase
 
 __all__ = ['SpaceForDialogIntent']
 
@@ -27,6 +27,7 @@ class SpaceForDialogIntent(Model):
         """
 
         super().__init__(model_dir, *args, **kwargs)
+        from modelscope.trainers.nlp.space.trainer.intent_trainer import IntentTrainer
         self.model_dir = model_dir
         self.config = kwargs.pop(
             'config',

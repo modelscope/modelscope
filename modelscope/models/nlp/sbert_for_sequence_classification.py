@@ -78,8 +78,8 @@ class SbertForSequenceClassificationBase(Model):
 
     def postprocess(self, input, **kwargs):
         logits = input['logits']
-        probs = logits.softmax(-1).numpy()
-        pred = logits.argmax(-1).numpy()
-        logits = logits.numpy()
+        probs = logits.softmax(-1).cpu().numpy()
+        pred = logits.argmax(-1).cpu().numpy()
+        logits = logits.cpu().numpy()
         res = {'predictions': pred, 'probabilities': probs, 'logits': logits}
         return res

@@ -223,12 +223,6 @@ class Trainer(object):
         """
         raise NotImplementedError
 
-    def forward(self, turn, old_pv_turn):
-        """
-        one turn inference
-        """
-        raise NotImplementedError
-
     def save(self, is_best=False):
         """ save """
         train_state = {
@@ -697,7 +691,7 @@ class MultiWOZTrainer(Trainer):
 
         assert 'bspn' in old_pv_turn
         pv_bspn_token = self.tokenizer.convert_ids_to_tokens(
-            old_pv_turn['bspn'])
+            old_pv_turn['bspn'].cpu().numpy().tolist())
         pv_turn_slots = _get_slots(pv_bspn_token)
         for domain, value in turn_slots.items():
             pv_value = pv_turn_slots[
@@ -709,13 +703,8 @@ class MultiWOZTrainer(Trainer):
 
         return turn_domain
 
-    def forward(self, turn, old_pv_turn):
+    def forward(self, first_turn, batch, prompt_id, labels, old_pv_turn):
         with torch.no_grad():
-            first_turn = True if len(old_pv_turn) == 0 else False
-            inputs, prompt_id = self.reader.convert_turn_eval(
-                turn, old_pv_turn, first_turn)
-            batch, batch_size = self.reader.collate_fn_multi_turn(
-                samples=[inputs])
             batch = type(batch)(
                 map(lambda kv: (kv[0], self.to_tensor(kv[1])), batch.items()))
             pv_turn = {}
@@ -752,7 +741,9 @@ class MultiWOZTrainer(Trainer):
             decoded = self.decode_generated_act_resp(generated_ar)
             decoded['bspn'] = bspn_gen
 
-            pv_turn['labels'] = inputs['labels']
+            pv_turn['labels'] = [
+                label.cpu().numpy().tolist() for label in labels
+            ]
             pv_turn['resp'] = decoded['resp']
             pv_turn['bspn'] = decoded['bspn']
             pv_turn['db'] = db

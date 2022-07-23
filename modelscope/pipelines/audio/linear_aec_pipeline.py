@@ -62,13 +62,13 @@ class LinearAECPipeline(Pipeline):
             the file path to write generate audio.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
 
         # auto download so for linux inference before light-weight docker got ready
         if not os.path.exists(AEC_LIB_FILE):

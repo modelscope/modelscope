@@ -25,13 +25,13 @@ logger = get_logger()
     Tasks.image_classification, module_name=Pipelines.animal_recognation)
 class AnimalRecogPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         import torch
 
         def resnest101(**kwargs):

@@ -24,16 +24,15 @@ logger = get_logger()
     Tasks.image_colorization, module_name=Pipelines.image_colorization)
 class ImageColorizationPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
-        self.device = 'cuda'
+        super().__init__(model=model, **kwargs)
         self.cut = 8
-        self.size = 1024 if self.device == 'cpu' else 512
+        self.size = 1024 if self.device_name == 'cpu' else 512
         self.orig_img = None
         self.model_type = 'stable'
         self.norm = transforms.Compose([
@@ -59,7 +58,7 @@ class ImageColorizationPipeline(Pipeline):
                 last_cross=True,
                 bottle=False,
                 nf_factor=2,
-            ).to(self.device)
+            )
         else:
             body = models.resnet34(pretrained=True)
             body = torch.nn.Sequential(*list(body.children())[:cut])
@@ -74,11 +73,12 @@ class ImageColorizationPipeline(Pipeline):
                 last_cross=True,
                 bottle=False,
                 nf_factor=1.5,
-            ).to(self.device)
+            )
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
         self.model.load_state_dict(
-            torch.load(model_path)['model'], strict=True)
+            torch.load(model_path, map_location=torch.device('cpu'))['model'],
+            strict=True)
 
         logger.info('load model done')
 

@@ -27,7 +27,6 @@ class SpaceForDialogStateTracking(Model):
 
         self.config = SpaceConfig.from_pretrained(self.model_dir)
         self.model = SpaceForDST.from_pretrained(self.model_dir)
-        self.model.to(self.config.device)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
@@ -54,7 +53,6 @@ class SpaceForDialogStateTracking(Model):
 
         self.model.eval()
         batch = input['batch']
-        batch = batch_to_device(batch, self.config.device)
 
         features = input['features']
         diag_state = input['diag_state']

@@ -9,6 +9,7 @@ import torch
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
+from modelscope.utils.torch_utils import create_device
 from ..base import Input, Pipeline
 from ..builder import PIPELINES
 
@@ -36,16 +37,13 @@ class ANSPipeline(Pipeline):
     """
     SAMPLE_RATE = 16000
 
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
-        self.device = torch.device(
-            'cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = self.model.to(self.device)
+        super().__init__(model=model, **kwargs)
         self.model.eval()
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
@@ -63,6 +61,8 @@ class ANSPipeline(Pipeline):
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         ndarray = inputs['ndarray']
+        if isinstance(ndarray, torch.Tensor):
+            ndarray = ndarray.cpu().numpy()
         nsamples = inputs['nsamples']
         decode_do_segement = False
         window = 16000

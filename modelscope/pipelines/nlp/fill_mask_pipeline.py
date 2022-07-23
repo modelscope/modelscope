@@ -85,8 +85,8 @@ class FillMaskPipeline(Pipeline):
             Dict[str, str]: the prediction results
         """
         import numpy as np
-        logits = inputs['logits'].detach().numpy()
-        input_ids = inputs['input_ids'].detach().numpy()
+        logits = inputs['logits'].detach().cpu().numpy()
+        input_ids = inputs['input_ids'].detach().cpu().numpy()
         pred_ids = np.argmax(logits, axis=-1)
         model_type = self.model.config.model_type
         process_type = model_type if model_type in self.mask_id else _type_map[

@@ -29,7 +29,8 @@ class TransformerCRFForNamedEntityRecognition(Model):
         self.model = TransformerCRF(model_dir, num_labels)
 
         model_ckpt = os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-        self.model.load_state_dict(torch.load(model_ckpt))
+        self.model.load_state_dict(
+            torch.load(model_ckpt, map_location=torch.device('cpu')))
 
     def train(self):
         return self.model.train()
@@ -59,7 +60,7 @@ class TransformerCRFForNamedEntityRecognition(Model):
         output = {
             'text': input['text'],
             'offset_mapping': input['offset_mapping'],
-            'predicts': predicts['predicts'].squeeze(0).numpy(),
+            'predicts': predicts['predicts'].squeeze(0).cpu().numpy(),
         }
         return output
 

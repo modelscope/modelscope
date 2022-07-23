@@ -21,13 +21,13 @@ logger = get_logger()
     Tasks.image_matting, module_name=Pipelines.image_matting)
 class ImageMattingPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         import tensorflow as tf
         if tf.__version__ >= '2.0':
             tf = tf.compat.v1

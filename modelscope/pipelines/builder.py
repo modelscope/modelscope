@@ -1,11 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 from typing import List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.utils.config import ConfigDict
+from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Tasks
 from modelscope.utils.hub import read_config
 from modelscope.utils.registry import Registry, build_from_cfg
@@ -85,11 +86,15 @@ def normalize_model_input(model, model_revision):
     for model represented by a model id, the model shall be downloaded locally
     """
     if isinstance(model, str) and is_official_hub_path(model, model_revision):
-        # note that if there is already a local copy, snapshot_download will check and skip downloading
-        model = snapshot_download(model, revision=model_revision)
+        # skip revision download if model is a local directory
+        if not os.path.exists(model):
+            # note that if there is already a local copy, snapshot_download will check and skip downloading
+            model = snapshot_download(model, revision=model_revision)
     elif isinstance(model, list) and isinstance(model[0], str):
         for idx in range(len(model)):
-            if is_official_hub_path(model[idx], model_revision):
+            if is_official_hub_path(
+                    model[idx],
+                    model_revision) and not os.path.exists(model[idx]):
                 model[idx] = snapshot_download(
                     model[idx], revision=model_revision)
     return model
@@ -116,7 +121,7 @@ def pipeline(task: str = None,
              config_file: str = None,
              pipeline_name: str = None,
              framework: str = None,
-             device: int = -1,
+             device: str = 'gpu',
              model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
              **kwargs) -> Pipeline:
     """ Factory method to build an obj:`Pipeline`.
@@ -131,7 +136,7 @@ def pipeline(task: str = None,
         framework (str, optional): framework type.
         model_revision: revision of model(s) if getting from model hub, for multiple models, expecting
         all models to have the same revision
-        device (int, optional): which device is used to do inference.
+        device (str, optional): whether to use gpu or cpu is used to do inference.
 
     Return:
         pipeline (obj:`Pipeline`): pipeline object for certain task.
@@ -166,9 +171,7 @@ def pipeline(task: str = None,
                     model, revision=model_revision) if isinstance(
                         model, str) else read_config(
                             model[0], revision=model_revision)
-                assert hasattr(
-                    cfg,
-                    'pipeline'), 'pipeline config is missing from config file.'
+                check_config(cfg)
                 pipeline_name = cfg.pipeline.type
             else:
                 # used for test case, when model is str and is not hub path
@@ -180,9 +183,7 @@ def pipeline(task: str = None,
             if not hasattr(first_model, 'pipeline'):
                 # model is instantiated by user, we should parse config again
                 cfg = read_config(first_model.model_dir)
-                assert hasattr(
-                    cfg,
-                    'pipeline'), 'pipeline config is missing from config file.'
+                check_config(cfg)
                 first_model.pipeline = cfg.pipeline
             pipeline_name = first_model.pipeline.type
         else:
@@ -190,7 +191,7 @@ def pipeline(task: str = None,
             model = normalize_model_input(default_model_repo, model_revision)
 
     cfg = ConfigDict(type=pipeline_name, model=model)
-
+    cfg.device = device
     if kwargs:
         cfg.update(kwargs)
 

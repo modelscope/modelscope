@@ -3,14 +3,14 @@
 import os
 from typing import Any, Dict, Optional
 
+from modelscope.models.nlp.backbones.space import (SpaceGenerator,
+                                                   SpaceModelBase)
 from ...metainfo import Models
 from ...preprocessors.space.fields.gen_field import MultiWOZBPETextField
-from ...trainers.nlp.space.trainer.gen_trainer import MultiWOZTrainer
 from ...utils.config import Config
 from ...utils.constant import ModelFile, Tasks
 from ..base import Model, Tensor
 from ..builder import MODELS
-from .backbones import SpaceGenerator, SpaceModelBase
 
 __all__ = ['SpaceForDialogModeling']
 
@@ -26,6 +26,7 @@ class SpaceForDialogModeling(Model):
         """
 
         super().__init__(model_dir, *args, **kwargs)
+        from ...trainers.nlp.space.trainer.gen_trainer import MultiWOZTrainer
         self.model_dir = model_dir
         self.config = kwargs.pop(
             'config',
@@ -80,9 +81,17 @@ class SpaceForDialogModeling(Model):
                     }
         """
 
-        turn = {'user': input['user']}
+        first_turn = input['first_turn']
+        batch = input['batch']
+        prompt_id = input['prompt_id']
+        labels = input['labels']
         old_pv_turn = input['history']
 
-        pv_turn = self.trainer.forward(turn=turn, old_pv_turn=old_pv_turn)
+        pv_turn = self.trainer.forward(
+            first_turn=first_turn,
+            batch=batch,
+            prompt_id=prompt_id,
+            labels=labels,
+            old_pv_turn=old_pv_turn)
 
         return pv_turn

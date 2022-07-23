@@ -45,6 +45,6 @@ class SbertForZeroShotClassification(Model):
                     }
         """
         outputs = self.model(**input)
-        logits = outputs['logits'].numpy()
+        logits = outputs['logits'].cpu().numpy()
         res = {'logits': logits}
         return res

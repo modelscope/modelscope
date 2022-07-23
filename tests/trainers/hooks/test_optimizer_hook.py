@@ -109,6 +109,8 @@ class TorchAMPOptimizerHookTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
+    @unittest.skipIf(not torch.cuda.is_available(),
+                     'skip this test when cuda is not available')
     def test_amp_optimizer_hook(self):
         json_cfg = {
             'task': 'image_classification',

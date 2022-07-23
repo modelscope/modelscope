@@ -118,13 +118,12 @@ def snapshot_download(model_id: str,
             # First download to /tmp
             http_get_file(
                 url=url,
-                local_dir=tempfile.gettempdir(),
+                local_dir=cache_dir,
                 file_name=model_file['Name'],
                 headers=headers,
                 cookies=cookies)
             # put file to cache
-            cache.put_file(
-                model_file,
-                os.path.join(tempfile.gettempdir(), model_file['Name']))
+            cache.put_file(model_file,
+                           os.path.join(cache_dir, model_file['Name']))
 
         return os.path.join(cache.get_root_location())

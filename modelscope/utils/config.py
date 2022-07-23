@@ -9,11 +9,12 @@ import sys
 import tempfile
 import types
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import addict
 from yapf.yapflib.yapf_api import FormatCode
 
+from modelscope.utils.constant import ConfigFields, ModelFile
 from modelscope.utils.import_utils import import_modules_from_file
 from modelscope.utils.logger import get_logger
 
@@ -602,3 +603,27 @@ class Config:
                     f'int, str, float or list of them but got type {v}')
 
         return parse_fn(args)
+
+
+def check_config(cfg: Union[str, ConfigDict]):
+    """ Check whether configuration file is valid, If anything wrong, exception will be raised.
+
+    Args:
+        cfg (str or ConfigDict): Config file path or config object.
+    """
+
+    if isinstance(cfg, str):
+        cfg = Config.from_file(cfg)
+
+    def check_attr(attr_name, msg=''):
+        assert hasattr(cfg, attr_name), f'Attribute {attr_name} is missing from ' \
+            f'{ModelFile.CONFIGURATION}. {msg}'
+
+    check_attr(ConfigFields.framework)
+    check_attr(ConfigFields.task)
+    check_attr(ConfigFields.pipeline)
+
+    if hasattr(cfg, ConfigFields.train):
+        check_attr(ConfigFields.model)
+        check_attr(ConfigFields.preprocessor)
+        check_attr(ConfigFields.evaluation)

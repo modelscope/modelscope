@@ -22,13 +22,13 @@ logger = get_logger()
     Tasks.image_super_resolution, module_name=Pipelines.image_super_resolution)
 class ImageSuperResolutionPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         self.device = 'cpu'
         self.num_feat = 64
         self.num_block = 23

@@ -25,7 +25,6 @@ class OfaForImageCaptioning(Model):
         from ofa.tasks.mm_tasks import CaptionTask
         from ofa.utils.eval_utils import eval_caption
         self.eval_caption = eval_caption
-
         tasks.register_task('caption', CaptionTask)
         if torch.cuda.is_available():
             self._device = torch.device('cuda')

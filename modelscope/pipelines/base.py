@@ -2,7 +2,11 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, List, Union
+from contextlib import contextmanager
+from threading import Lock
+from typing import Any, Dict, Generator, List, Mapping, Union
+
+import numpy as np
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
@@ -10,8 +14,17 @@ from modelscope.msdatasets import MsDataset
 from modelscope.outputs import TASK_OUTPUTS
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
+from modelscope.utils.constant import Frameworks, ModelFile
+from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import create_device
 from .util import is_model, is_official_hub_path
+
+if is_torch_available():
+    import torch
+
+if is_tf_available():
+    import tensorflow as tf
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 Input = Union[str, tuple, MsDataset, 'PIL.Image.Image', 'numpy.ndarray']
@@ -23,6 +36,8 @@ logger = get_logger()
 class Pipeline(ABC):
 
     def initiate_single_model(self, model):
+        if isinstance(model, str):
+            logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
             # expecting model has been prefetched to local cache beforehand
@@ -47,6 +62,7 @@ class Pipeline(ABC):
                  config_file: str = None,
                  model: Union[InputModel, List[InputModel]] = None,
                  preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
+                 device: str = 'gpu',
                  **kwargs):
         """ Base class for pipeline.
 
@@ -58,6 +74,7 @@ class Pipeline(ABC):
             config_file(str, optional): Filepath to configuration file.
             model: (list of) Model name or model object
             preprocessor: (list of) Preprocessor object
+            device (str): gpu device or cpu device to use
         """
         if config_file is not None:
             self.cfg = Config.from_file(config_file)
@@ -65,15 +82,106 @@ class Pipeline(ABC):
             self.model = self.initiate_single_model(model)
             self.models = [self.model]
         else:
+            self.model = None
             self.models = self.initiate_multiple_models(model)
 
         self.has_multiple_models = len(self.models) > 1
         self.preprocessor = preprocessor
 
+        if self.model or (self.has_multiple_models and self.models[0]):
+            self.framework = self._get_framework()
+        else:
+            self.framework = None
+
+        assert device in ['gpu', 'cpu'], 'device should be either cpu or gpu.'
+        self.device_name = device
+        if self.framework == Frameworks.torch:
+            self.device = create_device(self.device_name == 'cpu')
+        self._model_prepare = False
+        self._model_prepare_lock = Lock()
+
+    def prepare_model(self):
+        self._model_prepare_lock.acquire(timeout=600)
+
+        def _prepare_single(model):
+            if isinstance(model, torch.nn.Module):
+                model.to(self.device)
+            elif hasattr(model, 'model') and isinstance(
+                    model.model, torch.nn.Module):
+                model.model.to(self.device)
+
+        if not self._model_prepare:
+            # prepare model for pytorch
+            if self.framework == Frameworks.torch:
+                if self.has_multiple_models:
+                    for m in self.models:
+                        _prepare_single(m)
+                else:
+                    _prepare_single(self.model)
+            self._model_prepare = True
+        self._model_prepare_lock.release()
+
+    @contextmanager
+    def place_device(self):
+        """ device placement function, allow user to specify which device to place pipeline
+
+        Returns:
+            Context manager
+
+        Examples:
+
+        ```python
+        # Requests for using pipeline on cuda:0 for gpu
+        pipeline = pipeline(..., device='gpu')
+        with pipeline.device():
+            output = pipe(...)
+        ```
+        """
+        if self.framework == Frameworks.tf:
+            if self.device_name == 'cpu':
+                with tf.device('/CPU:0'):
+                    yield
+            else:
+                with tf.device('/device:GPU:0'):
+                    yield
+
+        elif self.framework == Frameworks.torch:
+            if self.device_name == 'gpu':
+                device = create_device()
+                if device.type == 'gpu':
+                    torch.cuda.set_device(device)
+            yield
+        else:
+            yield
+
+    def _get_framework(self) -> str:
+        frameworks = []
+        for m in self.models:
+            if isinstance(m, Model):
+                model_dir = m.model_dir
+            else:
+                assert isinstance(m,
+                                  str), 'model should be either str or Model.'
+                model_dir = m
+            cfg_file = osp.join(model_dir, ModelFile.CONFIGURATION)
+            cfg = Config.from_file(cfg_file)
+            frameworks.append(cfg.framework)
+        if not all(x == frameworks[0] for x in frameworks):
+            raise ValueError(
+                f'got multiple models, but they are in different frameworks {frameworks}'
+            )
+
+        return frameworks[0]
+
     def __call__(self, input: Union[Input, List[Input]], *args,
                  **kwargs) -> Union[Dict[str, Any], Generator]:
         # model provider should leave it as it is
         # modelscope library developer will handle this function
+
+        # place model to cpu or gpu
+        if (self.model or (self.has_multiple_models and self.models[0])):
+            if not self._model_prepare:
+                self.prepare_model()
 
         # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)
@@ -114,13 +222,56 @@ class Pipeline(ABC):
         for ele in input:
             yield self._process_single(ele, *args, **kwargs)
 
+    def _collate_fn(self, data):
+        """Prepare the input just before the forward function.
+        This method will move the tensors to the right device.
+        Usually this method does not need to be overridden.
+
+        Args:
+            data: The data out of the dataloader.
+
+        Returns: The processed data.
+
+        """
+        from torch.utils.data.dataloader import default_collate
+        from modelscope.preprocessors.space.dst_processors import InputFeatures
+        if isinstance(data, dict) or isinstance(data, Mapping):
+            return type(data)(
+                {k: self._collate_fn(v)
+                 for k, v in data.items()})
+        elif isinstance(data, (tuple, list)):
+            if isinstance(data[0], (int, float)):
+                return default_collate(data).to(self.device)
+            else:
+                return type(data)(self._collate_fn(v) for v in data)
+        elif isinstance(data, np.ndarray):
+            if data.dtype.type is np.str_:
+                return data
+            else:
+                return self._collate_fn(torch.from_numpy(data))
+        elif isinstance(data, torch.Tensor):
+            return data.to(self.device)
+        elif isinstance(data, (str, int, float, bool)):
+            return data
+        elif isinstance(data, InputFeatures):
+            return data
+        else:
+            raise ValueError(f'Unsupported data type {type(data)}')
+
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
         preprocess_params = kwargs.get('preprocess_params')
         forward_params = kwargs.get('forward_params')
         postprocess_params = kwargs.get('postprocess_params')
 
         out = self.preprocess(input, **preprocess_params)
-        out = self.forward(out, **forward_params)
+        with self.place_device():
+            if self.framework == Frameworks.torch:
+                with torch.no_grad():
+                    out = self._collate_fn(out)
+                    out = self.forward(out, **forward_params)
+            else:
+                out = self.forward(out, **forward_params)
+
         out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out

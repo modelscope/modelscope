@@ -21,12 +21,12 @@ class TorchTaskDataset(TaskDataset, Dataset):
         TaskDataset.__init__(self, datasets, mode, preprocessor, **kwargs)
 
     def __getitem__(self, index) -> Any:
-        return self.preprocess_dataset(self._inner_dataset[index])
+        return self.prepare_sample(self._inner_dataset[index])
 
     def __len__(self):
         return len(self._inner_dataset)
 
-    def compose_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
+    def prepare_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
         """Prepare a dataset.
 
         User can process the input datasets in a whole dataset perspective.
@@ -47,7 +47,7 @@ class TorchTaskDataset(TaskDataset, Dataset):
         else:
             return datasets
 
-    def preprocess_dataset(self, data):
+    def prepare_sample(self, data):
         """Preprocess the data fetched from the inner_dataset.
 
         If the preprocessor is None, the original data will be returned, else the preprocessor will be called.

@@ -23,13 +23,13 @@ logger = get_logger()
     Tasks.face_image_generation, module_name=Pipelines.face_image_generation)
 class FaceImageGenerationPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         self.device = 'cpu'
         self.size = 1024
         self.latent = 512

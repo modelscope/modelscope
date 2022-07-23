@@ -56,8 +56,8 @@ PARAMS = {
 class TranslationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
-        if not osp.exists(model):
-            model = snapshot_download(model)
+        super().__init__(model=model)
+        model = self.model.model_dir
         tf.reset_default_graph()
         model_path = osp.join(
             osp.join(model, ModelFile.TF_CHECKPOINT_FOLDER), 'ckpt-0')
@@ -81,8 +81,7 @@ class TranslationPipeline(Pipeline):
         self.output = {}
 
         # model
-        csanmt_model = CsanmtForTranslation(model, params=self.params)
-        output = csanmt_model(self.input_wids)
+        output = self.model(self.input_wids)
         self.output.update(output)
 
         with self._session.as_default() as sess:

@@ -20,13 +20,13 @@ logger = get_logger()
     Tasks.style_transfer, module_name=Pipelines.style_transfer)
 class StyleTransferPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         import tensorflow as tf
         if tf.__version__ >= '2.0':
             tf = tf.compat.v1

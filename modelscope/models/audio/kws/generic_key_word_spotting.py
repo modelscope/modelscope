@@ -19,7 +19,7 @@ class GenericKeyWordSpotting(Model):
         Args:
             model_dir (str): the model path.
         """
-
+        super().__init__(model_dir)
         self.model_cfg = {
             'model_workspace': model_dir,
             'config_path': os.path.join(model_dir, 'config.yaml')

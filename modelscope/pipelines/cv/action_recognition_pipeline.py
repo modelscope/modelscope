@@ -22,20 +22,18 @@ logger = get_logger()
     Tasks.action_recognition, module_name=Pipelines.action_recognition)
 class ActionRecognitionPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
         logger.info(f'loading model from {model_path}')
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading config from {config_path}')
         self.cfg = Config.from_file(config_path)
-        self.device = torch.device(
-            'cuda' if torch.cuda.is_available() else 'cpu')
         self.infer_model = BaseVideoModel(cfg=self.cfg).to(self.device)
         self.infer_model.eval()
         self.infer_model.load_state_dict(

@@ -21,6 +21,10 @@ class Model(ABC):
 
     def __init__(self, model_dir, *args, **kwargs):
         self.model_dir = model_dir
+        device_name = kwargs.get('device', 'gpu')
+        assert device_name in ['gpu',
+                               'cpu'], 'device should be either cpu or gpu.'
+        self._device_name = device_name
 
     def __call__(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         return self.postprocess(self.forward(input))

@@ -24,13 +24,13 @@ logger = get_logger()
     Tasks.video_embedding, module_name=Pipelines.cmdssl_video_embedding)
 class CMDSSLVideoEmbeddingPipeline(Pipeline):
 
-    def __init__(self, model: str):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
         logger.info(f'loading model from {model_path}')
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)

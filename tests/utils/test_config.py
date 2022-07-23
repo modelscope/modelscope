@@ -4,7 +4,7 @@ import copy
 import tempfile
 import unittest
 
-from modelscope.utils.config import Config
+from modelscope.utils.config import Config, check_config
 
 obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}
 
@@ -77,6 +77,10 @@ class ConfigTest(unittest.TestCase):
         self.assertAlmostEqual(args.weight_decay, 1e-6)
         self.assertEqual(args.optimizer, 'Adam')
         self.assertEqual(args.save_checkpoint_epochs, 20)
+
+    def test_check_config(self):
+        check_config('configs/cv/configuration.json')
+        check_config('configs/nlp/sbert_sentence_similarity.json')
 
     def test_merge_from_dict(self):
         base_cfg = copy.deepcopy(obj)

@@ -48,8 +48,22 @@ class DialogModelingPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-
+        import torch
+        first_turn = True if len(data['history']) == 0 else False
         user_ids = self.text_field.get_ids(data['user_input'])
-        data['user'] = user_ids
+        inputs, prompt_id = self.text_field.convert_turn_eval(
+            turn={'user': user_ids},
+            pv_turn=data['history'],
+            first_turn=first_turn)
+        batch, batch_size = self.text_field.collate_fn_multi_turn(
+            samples=[inputs])
+
+        data['first_turn'] = first_turn
+        data['batch'] = batch
+        data['batch_size'] = batch_size
+        data['prompt_id'] = prompt_id
+        data['labels'] = [
+            torch.Tensor(item).int() for item in inputs['labels']
+        ]
 
         return data

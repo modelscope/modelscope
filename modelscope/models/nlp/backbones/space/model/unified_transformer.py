@@ -165,7 +165,7 @@ class UnifiedTransformer(SpaceModelBase):
         # seq_len = seq_len1 + seq_len2
 
         mask_lu = mask1
-        mask_ru = torch.ones(batch_size, seq_len1, seq_len2)
+        mask_ru = torch.ones(batch_size, seq_len1, seq_len2).to(mask_lu.device)
         if self.use_gpu:
             mask_ru = mask_ru.cuda()
         mask3 = mask2[:, :, :1].repeat(1, 1, seq_len1)

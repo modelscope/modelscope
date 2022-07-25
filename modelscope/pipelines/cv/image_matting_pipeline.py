@@ -46,7 +46,7 @@ class ImageMattingPipeline(Pipeline):
             logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        img = LoadImage.convert_to_img(input)
+        img = LoadImage.convert_to_ndarray(input)
         img = img.astype(np.float)
         result = {'img': img}
         return result

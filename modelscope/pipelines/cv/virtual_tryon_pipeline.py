@@ -1,21 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, List, Union
+from typing import Any, Dict
 
 import cv2
 import numpy as np
 import PIL
 import torch
 from PIL import Image
-from torchvision import transforms
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.virual_tryon.sdafnet import SDAFNet_Tryon
-from modelscope.outputs import TASK_OUTPUTS, OutputKeys
-from modelscope.pipelines.util import is_model, is_official_hub_path
+from modelscope.outputs import OutputKeys
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from ..base import Pipeline
@@ -67,6 +64,7 @@ class VirtualTryonPipeline(Pipeline):
         load_pretrained(self.model, src_params)
         self.model = self.model.eval()
         self.size = 192
+        from torchvision import transforms
         self.test_transforms = transforms.Compose([
             transforms.Resize(self.size, interpolation=2),
             transforms.ToTensor(),

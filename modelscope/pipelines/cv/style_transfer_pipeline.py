@@ -3,13 +3,12 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import PIL
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -61,35 +60,12 @@ class StyleTransferPipeline(Pipeline):
         return pipeline_parameters, {}, {}
 
     def preprocess(self, content: Input, style: Input) -> Dict[str, Any]:
-        if isinstance(content, str):
-            content = np.array(load_image(content))
-        elif isinstance(content, PIL.Image.Image):
-            content = np.array(content.convert('RGB'))
-        elif isinstance(content, np.ndarray):
-            if len(content.shape) == 2:
-                content = cv2.cvtColor(content, cv2.COLOR_GRAY2BGR)
-            content = content[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(
-                f'modelscope error: content should be either str, PIL.Image,'
-                f' np.array, but got {type(content)}')
+        content = LoadImage.convert_to_ndarray(content)
         if len(content.shape) == 2:
             content = cv2.cvtColor(content, cv2.COLOR_GRAY2BGR)
         content_img = content.astype(np.float)
 
-        if isinstance(style, str):
-            style_img = np.array(load_image(style))
-        elif isinstance(style, PIL.Image.Image):
-            style_img = np.array(style.convert('RGB'))
-        elif isinstance(style, np.ndarray):
-            if len(style.shape) == 2:
-                style_img = cv2.cvtColor(style, cv2.COLOR_GRAY2BGR)
-            style_img = style_img[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(
-                f'modelscope error: style should be either str, PIL.Image,'
-                f' np.array, but got {type(style)}')
-
+        style_img = LoadImage.convert_to_ndarray(style)
         if len(style_img.shape) == 2:
             style_img = cv2.cvtColor(style_img, cv2.COLOR_GRAY2BGR)
         style_img = style_img.astype(np.float)

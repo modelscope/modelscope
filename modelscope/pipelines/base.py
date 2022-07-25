@@ -8,7 +8,6 @@ from typing import Any, Dict, Generator, List, Mapping, Union
 
 import numpy as np
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import TASK_OUTPUTS

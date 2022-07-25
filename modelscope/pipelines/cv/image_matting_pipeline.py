@@ -3,13 +3,12 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import PIL
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -47,17 +46,7 @@ class ImageMattingPipeline(Pipeline):
             logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
+        img = LoadImage.convert_to_img(input)
         img = img.astype(np.float)
         result = {'img': img}
         return result

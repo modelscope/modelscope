@@ -3,7 +3,6 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import PIL
 import tensorflow as tf
 
 from modelscope.metainfo import Pipelines
@@ -14,7 +13,7 @@ from modelscope.models.cv.cartoon.utils import get_f5p, padTo16x, resize_size
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -65,17 +64,7 @@ class ImageCartoonPipeline(Pipeline):
         return sess
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                input = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
+        img = LoadImage.convert_to_ndarray(input)
         img = img.astype(np.float)
         result = {'img': img}
         return result

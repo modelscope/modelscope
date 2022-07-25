@@ -13,7 +13,7 @@ from modelscope.models.cv.animal_recognition import resnet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage, load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -79,19 +79,7 @@ class AnimalRecogPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = load_image(input)
-        elif isinstance(input, PIL.Image.Image):
-            img = input.convert('RGB')
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]
-            img = Image.fromarray(img.astype('uint8')).convert('RGB')
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
-
+        img = LoadImage.convert_to_img(input)
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         test_transforms = transforms.Compose([

@@ -3,14 +3,13 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import PIL
 import tensorflow as tf
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from .ocr_utils import model_resnet_mutex_v4_linewithchar, ops, utils
@@ -112,17 +111,8 @@ class OCRDetectionPipeline(Pipeline):
             model_loader.restore(sess, model_path)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
+        img = LoadImage.convert_to_ndarray(input)
+
         h, w, c = img.shape
         img_pad = np.zeros((max(h, w), max(h, w), 3), dtype=np.float32)
         img_pad[:h, :w, :] = img

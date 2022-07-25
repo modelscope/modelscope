@@ -2,7 +2,10 @@
 import io
 from typing import Any, Dict, Union
 
-import torch
+import cv2
+import numpy as np
+import PIL
+from numpy import ndarray
 from PIL import Image, ImageOps
 
 from modelscope.fileio import File
@@ -59,6 +62,37 @@ class LoadImage:
     def __repr__(self):
         repr_str = f'{self.__class__.__name__}(' f'mode={self.mode})'
         return repr_str
+
+    @staticmethod
+    def convert_to_ndarray(input) -> ndarray:
+        if isinstance(input, str):
+            img = np.array(load_image(input))
+        elif isinstance(input, PIL.Image.Image):
+            img = np.array(input.convert('RGB'))
+        elif isinstance(input, np.ndarray):
+            if len(input.shape) == 2:
+                input = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
+            img = input[:, :, ::-1]
+        else:
+            raise TypeError(f'input should be either str, PIL.Image,'
+                            f' np.array, but got {type(input)}')
+        return img
+
+    @staticmethod
+    def convert_to_img(input) -> ndarray:
+        if isinstance(input, str):
+            img = load_image(input)
+        elif isinstance(input, PIL.Image.Image):
+            img = input.convert('RGB')
+        elif isinstance(input, np.ndarray):
+            if len(input.shape) == 2:
+                img = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
+            img = input[:, :, ::-1]
+            img = Image.fromarray(img.astype('uint8')).convert('RGB')
+        else:
+            raise TypeError(f'input should be either str, PIL.Image,'
+                            f' np.array, but got {type(input)}')
+        return img
 
 
 def load_image(image_path_or_url: str) -> Image.Image:

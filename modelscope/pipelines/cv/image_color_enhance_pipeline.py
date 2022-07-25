@@ -13,7 +13,7 @@ from modelscope.models.cv.image_color_enhance.image_color_enhance import \
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import (ImageColorEnhanceFinetunePreprocessor,
-                                      load_image)
+                                      LoadImage, load_image)
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from ..base import Pipeline
@@ -47,18 +47,7 @@ class ImageColorEnhancePipeline(Pipeline):
             self._device = torch.device('cpu')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = load_image(input)
-        elif isinstance(input, PIL.Image.Image):
-            img = input.convert('RGB')
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-            img = Image.fromarray(img.astype('uint8')).convert('RGB')
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
-
+        img = LoadImage.convert_to_img(input)
         test_transforms = transforms.Compose([transforms.ToTensor()])
         img = test_transforms(img)
         result = {'src': img.unsqueeze(0).to(self._device)}

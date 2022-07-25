@@ -10,7 +10,7 @@ from modelscope.models.cv.super_resolution import rrdbnet_arch
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import load_image
+from modelscope.preprocessors import LoadImage, load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -46,18 +46,7 @@ class ImageSuperResolutionPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
-
+        img = LoadImage.convert_to_ndarray(input)
         img = torch.from_numpy(img).to(self.device).permute(
             2, 0, 1).unsqueeze(0) / 255.
         result = {'img': img}

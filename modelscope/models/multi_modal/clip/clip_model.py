@@ -1,6 +1,6 @@
-import os.path as osp
 from typing import Any, Dict
 
+import cv2
 import json
 import numpy as np
 import torch

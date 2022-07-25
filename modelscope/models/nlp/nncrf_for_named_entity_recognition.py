@@ -8,10 +8,10 @@ import torch.nn as nn
 from torch.autograd import Variable
 from transformers import AutoConfig, AutoModel
 
-from ...metainfo import Models
-from ...utils.constant import ModelFile, Tasks
-from ..base import Model
-from ..builder import MODELS
+from modelscope.metainfo import Models
+from modelscope.models.base import Model
+from modelscope.models.builder import MODELS
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['TransformerCRFForNamedEntityRecognition']
 

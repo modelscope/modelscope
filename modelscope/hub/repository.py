@@ -2,8 +2,8 @@ import os
 from typing import Optional
 
 from modelscope.hub.errors import GitError, InvalidParameter
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from ..utils.constant import DEFAULT_MODEL_REVISION
 from .api import ModelScopeConfig
 from .git import GitCommandWrapper
 from .utils.utils import get_endpoint

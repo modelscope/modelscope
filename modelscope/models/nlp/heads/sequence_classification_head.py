@@ -5,11 +5,11 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from ....metainfo import Heads
-from ....outputs import OutputKeys
-from ....utils.constant import Tasks
-from ...base import TorchHead
-from ...builder import HEADS
+from modelscope.metainfo import Heads
+from modelscope.models.base import TorchHead
+from modelscope.models.builder import HEADS
+from modelscope.outputs import OutputKeys
+from modelscope.utils.constant import Tasks
 
 
 @HEADS.register_module(

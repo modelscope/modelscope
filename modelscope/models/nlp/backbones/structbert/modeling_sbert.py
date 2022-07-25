@@ -15,11 +15,11 @@ from transformers.modeling_utils import (apply_chunking_to_forward,
                                          find_pruneable_heads_and_indices,
                                          prune_linear_layer)
 
-from .....metainfo import Models
-from .....utils.constant import Fields
-from .....utils.logger import get_logger
-from ....base import TorchModel
-from ....builder import BACKBONES
+from modelscope.metainfo import Models
+from modelscope.models.base import TorchModel
+from modelscope.models.builder import BACKBONES
+from modelscope.utils.constant import Fields
+from modelscope.utils.logger import get_logger
 from .configuration_sbert import SbertConfig
 
 logger = get_logger(__name__)

@@ -2,14 +2,14 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.nlp import TransformerCRFForNamedEntityRecognition
-from ...outputs import OutputKeys
-from ...preprocessors import NERPreprocessor
-from ...utils.constant import Tasks
-from ..base import Pipeline, Tensor
-from ..builder import PIPELINES
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.nlp import TransformerCRFForNamedEntityRecognition
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import NERPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['NamedEntityRecognitionPipeline']
 

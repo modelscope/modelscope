@@ -9,10 +9,11 @@ from typing import List, Optional, Tuple, Union
 
 import requests
 
+from modelscope.msdatasets.config import (DOWNLOADED_DATASETS_PATH,
+                                          HUB_DATASET_ENDPOINT)
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+                                       DEFAULT_MODEL_REVISION, DownloadMode)
 from modelscope.utils.logger import get_logger
-from ..msdatasets.config import DOWNLOADED_DATASETS_PATH, HUB_DATASET_ENDPOINT
-from ..utils.constant import (DEFAULT_DATASET_REVISION, DEFAULT_MODEL_REVISION,
-                              DownloadMode)
 from .errors import (InvalidParameter, NotExistError, RequestError,
                      datahub_raise_on_error, handle_http_response, is_ok,
                      raise_on_error)

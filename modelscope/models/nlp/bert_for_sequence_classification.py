@@ -4,10 +4,10 @@ from typing import Any, Dict
 import json
 import numpy as np
 
-from ...metainfo import Models
-from ...utils.constant import Tasks
-from ..base import Model
-from ..builder import MODELS
+from modelscope.metainfo import Models
+from modelscope.models.base import Model
+from modelscope.models.builder import MODELS
+from modelscope.utils.constant import Tasks
 
 __all__ = ['BertForSequenceClassification']
 

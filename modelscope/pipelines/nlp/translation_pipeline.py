@@ -4,14 +4,14 @@ from typing import Any, Dict
 import numpy as np
 import tensorflow as tf
 
+from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Pipelines
+from modelscope.models.nlp import CsanmtForTranslation
 from modelscope.outputs import OutputKeys
-from ...hub.snapshot_download import snapshot_download
-from ...metainfo import Pipelines
-from ...models.nlp import CsanmtForTranslation
-from ...utils.constant import ModelFile, Tasks
-from ...utils.logger import get_logger
-from ..base import Pipeline, Tensor
-from ..builder import PIPELINES
+from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

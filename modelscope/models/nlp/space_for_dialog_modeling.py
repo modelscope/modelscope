@@ -3,14 +3,14 @@
 import os
 from typing import Any, Dict, Optional
 
-from modelscope.models.nlp.backbones.space import (SpaceGenerator,
-                                                   SpaceModelBase)
-from ...metainfo import Models
-from ...preprocessors.space.fields.gen_field import MultiWOZBPETextField
-from ...utils.config import Config
-from ...utils.constant import ModelFile, Tasks
-from ..base import Model, Tensor
-from ..builder import MODELS
+from modelscope.metainfo import Models
+from modelscope.models.base import Model, Tensor
+from modelscope.models.builder import MODELS
+from modelscope.preprocessors.space.fields.gen_field import \
+    MultiWOZBPETextField
+from modelscope.utils.config import Config
+from modelscope.utils.constant import ModelFile, Tasks
+from .backbones import SpaceGenerator, SpaceModelBase
 
 __all__ = ['SpaceForDialogModeling']
 

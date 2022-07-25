@@ -4,10 +4,10 @@ from typing import Any, Dict
 import json
 import numpy as np
 
-from ...metainfo import TaskModels
-from ...outputs import OutputKeys
-from ...utils.constant import Tasks
-from ..builder import MODELS
+from modelscope.metainfo import TaskModels
+from modelscope.models.builder import MODELS
+from modelscope.outputs import OutputKeys
+from modelscope.utils.constant import Tasks
 from .task_model import SingleBackboneTaskModelBase
 
 __all__ = ['SequenceClassificationModel']

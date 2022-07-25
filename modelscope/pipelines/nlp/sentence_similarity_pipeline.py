@@ -3,14 +3,14 @@ from typing import Any, Dict, Union
 import numpy as np
 import torch
 
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.nlp import SbertForSentenceSimilarity
 from modelscope.outputs import OutputKeys
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.nlp import SbertForSentenceSimilarity
-from ...preprocessors import SentenceSimilarityPreprocessor
-from ...utils.constant import Tasks
-from ..base import Input, Pipeline
-from ..builder import PIPELINES
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import SentenceSimilarityPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['SentenceSimilarityPipeline']
 

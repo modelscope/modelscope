@@ -5,11 +5,11 @@ from typing import Any, Dict, Union
 
 from transformers import AutoTokenizer
 
-from ..metainfo import Preprocessors
-from ..models import Model
-from ..utils.constant import Fields, InputFields, ModeKeys
-from ..utils.hub import parse_label_mapping
-from ..utils.type_assert import type_assert
+from modelscope.metainfo import Preprocessors
+from modelscope.models import Model
+from modelscope.utils.constant import Fields, InputFields, ModeKeys
+from modelscope.utils.hub import parse_label_mapping
+from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 

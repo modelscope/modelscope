@@ -1,11 +1,11 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
+from modelscope.pipelines.base import Model, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import OfaImageCaptionPreprocessor, Preprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Model, Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 
@@ -16,7 +16,7 @@ class ImageCaptionPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: [Preprocessor] = None,
+                 preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction

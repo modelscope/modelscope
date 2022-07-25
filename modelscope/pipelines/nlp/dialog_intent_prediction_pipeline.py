@@ -2,14 +2,14 @@
 
 from typing import Any, Dict, Union
 
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.nlp import SpaceForDialogIntent
-from ...outputs import OutputKeys
-from ...preprocessors import DialogIntentPredictionPreprocessor
-from ...utils.constant import Tasks
-from ..base import Pipeline
-from ..builder import PIPELINES
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.nlp import SpaceForDialogIntent
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import DialogIntentPredictionPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['DialogIntentPredictionPipeline']
 

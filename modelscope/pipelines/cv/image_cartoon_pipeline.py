@@ -12,12 +12,11 @@ from modelscope.models.cv.cartoon.mtcnn_pytorch.src.align_trans import (
     get_reference_facial_points, warp_and_crop_face)
 from modelscope.models.cv.cartoon.utils import get_f5p, padTo16x, resize_size
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

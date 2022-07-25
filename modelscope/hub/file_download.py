@@ -19,8 +19,8 @@ from requests.exceptions import HTTPError
 from tqdm import tqdm
 
 from modelscope import __version__
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from ..utils.constant import DEFAULT_MODEL_REVISION
 from .api import HubApi, ModelScopeConfig
 from .constants import (DEFAULT_MODELSCOPE_GROUP, LOGGER_NAME,
                         MODEL_ID_SEPARATOR)

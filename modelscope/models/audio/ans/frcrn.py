@@ -6,9 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from modelscope.metainfo import Models
+from modelscope.models.base import Model, Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
-from ...base import Model, Tensor
 from .conv_stft import ConviSTFT, ConvSTFT
 from .unet import UNet
 

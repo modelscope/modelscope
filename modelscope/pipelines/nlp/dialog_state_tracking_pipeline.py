@@ -1,12 +1,12 @@
 from typing import Any, Dict, Union
 
-from ...metainfo import Pipelines
-from ...models import Model, SpaceForDialogStateTracking
-from ...outputs import OutputKeys
-from ...preprocessors import DialogStateTrackingPreprocessor
-from ...utils.constant import Tasks
-from ..base import Pipeline
-from ..builder import PIPELINES
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model, SpaceForDialogStateTracking
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import DialogStateTrackingPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['DialogStateTrackingPipeline']
 

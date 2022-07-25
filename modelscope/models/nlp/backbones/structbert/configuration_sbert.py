@@ -17,7 +17,7 @@
 """ SBERT model configuration, mainly copied from :class:`~transformers.BertConfig` """
 from transformers import PretrainedConfig
 
-from .....utils import logger as logging
+from modelscope.utils import logger as logging
 
 logger = logging.get_logger(__name__)
 

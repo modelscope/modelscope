@@ -2,13 +2,13 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.multi_modal import MPlugForVisualQuestionAnswering
-from ...preprocessors import MPlugVisualQuestionAnsweringPreprocessor
-from ...utils.constant import Tasks
-from ..base import Pipeline, Tensor
-from ..builder import PIPELINES
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.multi_modal import MPlugForVisualQuestionAnswering
+from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import MPlugVisualQuestionAnsweringPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['VisualQuestionAnsweringPipeline']
 

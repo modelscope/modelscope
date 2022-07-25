@@ -3,14 +3,14 @@ from typing import Any, Dict, Union
 import torch
 from scipy.special import softmax
 
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.nlp import SbertForZeroShotClassification
 from modelscope.outputs import OutputKeys
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.nlp import SbertForZeroShotClassification
-from ...preprocessors import ZeroShotClassificationPreprocessor
-from ...utils.constant import Tasks
-from ..base import Pipeline
-from ..builder import PIPELINES
+from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import ZeroShotClassificationPreprocessor
+from modelscope.utils.constant import Tasks
 
 __all__ = ['ZeroShotClassificationPipeline']
 

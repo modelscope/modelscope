@@ -2,10 +2,11 @@ from typing import Dict, List, Union
 
 import numpy as np
 
+from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys
-from ..metainfo import Metrics
-from ..utils.registry import default_group
-from ..utils.tensor_utils import torch_nested_detach, torch_nested_numpify
+from modelscope.utils.registry import default_group
+from modelscope.utils.tensor_utils import (torch_nested_detach,
+                                           torch_nested_numpify)
 from .base import Metric
 from .builder import METRICS, MetricKeys
 

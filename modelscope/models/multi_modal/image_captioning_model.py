@@ -5,9 +5,9 @@ import torch.cuda
 from PIL import Image
 
 from modelscope.metainfo import Models
+from modelscope.models.base import Model
+from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
-from ..base import Model
-from ..builder import MODELS
 
 __all__ = ['OfaForImageCaptioning']
 

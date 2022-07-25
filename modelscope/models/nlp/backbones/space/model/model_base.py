@@ -4,7 +4,7 @@ import os
 
 import torch.nn as nn
 
-from ......utils.constant import ModelFile
+from modelscope.utils.constant import ModelFile
 
 
 class SpaceModelBase(nn.Module):

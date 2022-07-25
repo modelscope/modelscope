@@ -9,12 +9,11 @@ import torch
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_generation import stylegan2
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 

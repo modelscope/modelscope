@@ -8,10 +8,10 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.torch_utils import create_device
-from ..base import Input, Pipeline
-from ..builder import PIPELINES
 
 
 def audio_norm(x):

@@ -1,6 +1,6 @@
-from ...metainfo import Models
-from ...utils.constant import Tasks
-from ..builder import MODELS
+from modelscope.metainfo import Models
+from modelscope.models.builder import MODELS
+from modelscope.utils.constant import Tasks
 from .sbert_for_sequence_classification import \
     SbertForSequenceClassificationBase
 

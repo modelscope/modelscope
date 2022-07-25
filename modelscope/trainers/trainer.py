@@ -33,7 +33,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.tensor_utils import torch_default_data_collator
 from modelscope.utils.torch_utils import create_device, get_dist_info
-from modelscope.utils.utils import if_func_recieve_dict_inputs
+from modelscope.utils.utils import if_func_receive_dict_inputs
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -377,9 +377,8 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
-
         # call model forward but not __call__ to skip postprocess
-        if isinstance(inputs, Mapping) and not if_func_recieve_dict_inputs(
+        if isinstance(inputs, Mapping) and not if_func_receive_dict_inputs(
                 model.forward, inputs):
             train_outputs = model.forward(**inputs)
         else:

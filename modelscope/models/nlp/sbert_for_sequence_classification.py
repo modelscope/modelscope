@@ -7,10 +7,7 @@ import torch
 from sofa.models.sbert.modeling_sbert import SbertModel, SbertPreTrainedModel
 from torch import nn
 
-from modelscope.metainfo import Models
-from modelscope.utils.constant import Tasks
-from ..base import Model
-from ..builder import MODELS
+from modelscope.models.base import Model
 
 
 class SbertTextClassfier(SbertPreTrainedModel):

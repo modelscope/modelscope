@@ -67,7 +67,7 @@ def torch_default_data_collator(features):
                 elif isinstance(v, list):
                     batch[k] = torch.stack([d for f in features for d in f[k]])
                 else:
-                    batch[k] = torch.tensor([f[k] for f in features])
+                    batch[k] = torch.tensor(np.array([f[k] for f in features]))
     elif isinstance(first, tuple):
         batch = []
         for idx in range(len(first)):

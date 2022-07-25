@@ -3,15 +3,15 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from modelscope.metainfo import Pipelines
+from modelscope.models import Model
+from modelscope.models.nlp.masked_language import MaskedLanguageModelBase
 from modelscope.outputs import OutputKeys
-from ...metainfo import Pipelines
-from ...models import Model
-from ...models.nlp.masked_language import MaskedLanguageModelBase
-from ...preprocessors import FillMaskPreprocessor
-from ...utils.config import Config
-from ...utils.constant import ModelFile, Tasks
-from ..base import Pipeline, Tensor
-from ..builder import PIPELINES
+from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import FillMaskPreprocessor
+from modelscope.utils.config import Config
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['FillMaskPipeline']
 _type_map = {'veco': 'roberta', 'sbert': 'bert'}

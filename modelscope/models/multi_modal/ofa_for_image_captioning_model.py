@@ -3,10 +3,10 @@ from typing import Any, Dict
 import torch.cuda
 
 from modelscope.metainfo import Models
+from modelscope.models.base import Model
+from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
-from ..base import Model
-from ..builder import MODELS
 from .ofa import OFAModel, OFATokenizer
 from .ofa.generate import sequence_generator as sg
 from .ofa.generate.utils import move_to_device

@@ -1,7 +1,7 @@
 from typing import Dict
 
-from ..metainfo import Metrics
-from ..utils.registry import default_group
+from modelscope.metainfo import Metrics
+from modelscope.utils.registry import default_group
 from .base import Metric
 from .builder import METRICS, MetricKeys
 

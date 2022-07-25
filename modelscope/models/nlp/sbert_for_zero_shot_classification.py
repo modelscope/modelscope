@@ -2,10 +2,10 @@ from typing import Any, Dict
 
 import numpy as np
 
+from modelscope.metainfo import Models
+from modelscope.models.base import Model
+from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from ...metainfo import Models
-from ..base import Model
-from ..builder import MODELS
 
 __all__ = ['SbertForZeroShotClassification']
 

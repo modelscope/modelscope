@@ -4,13 +4,13 @@ import os
 from typing import Any, Dict
 
 from modelscope.metainfo import Models
-from modelscope.models.nlp.backbones.space import (SpaceGenerator,
-                                                   SpaceModelBase)
-from ...preprocessors.space.fields.intent_field import IntentBPETextField
-from ...utils.config import Config
-from ...utils.constant import ModelFile, Tasks
-from ..base import Model, Tensor
-from ..builder import MODELS
+from modelscope.models.base import Model, Tensor
+from modelscope.models.builder import MODELS
+from modelscope.preprocessors.space.fields.intent_field import \
+    IntentBPETextField
+from modelscope.utils.config import Config
+from modelscope.utils.constant import ModelFile, Tasks
+from .backbones import SpaceGenerator, SpaceModelBase
 
 __all__ = ['SpaceForDialogIntent']
 

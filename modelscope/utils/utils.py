@@ -3,7 +3,7 @@
 import inspect
 
 
-def if_func_recieve_dict_inputs(func, inputs):
+def if_func_receive_dict_inputs(func, inputs):
     """to decide if a func could recieve dict inputs or not
 
     Args:

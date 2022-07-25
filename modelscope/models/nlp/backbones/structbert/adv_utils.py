@@ -16,7 +16,7 @@
 import torch
 from torch import nn
 
-from .....utils.logger import get_logger
+from modelscope.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

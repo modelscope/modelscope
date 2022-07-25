@@ -1,9 +1,9 @@
 from typing import Dict
 
-from ...metainfo import Models
-from ...utils.constant import Tasks
-from ..base import Tensor, TorchModel
-from ..builder import MODELS
+from modelscope.metainfo import Models
+from modelscope.models.base import Tensor, TorchModel
+from modelscope.models.builder import MODELS
+from modelscope.utils.constant import Tasks
 
 __all__ = ['PalmForTextGeneration']
 

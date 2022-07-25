@@ -1,9 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from ..metainfo import Metrics
-from ..utils.config import ConfigDict
-from ..utils.constant import Tasks
-from ..utils.registry import Registry, build_from_cfg, default_group
+from modelscope.metainfo import Metrics
+from modelscope.utils.config import ConfigDict
+from modelscope.utils.constant import Tasks
+from modelscope.utils.registry import Registry, build_from_cfg, default_group
 
 METRICS = Registry('metrics')
 

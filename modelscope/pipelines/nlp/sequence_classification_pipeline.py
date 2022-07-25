@@ -3,13 +3,13 @@ from typing import Any, Dict, Union
 import numpy as np
 
 from modelscope.metainfo import Pipelines
+from modelscope.models import Model
 from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
-from ...models import Model
-from ..base import Input, Pipeline
-from ..builder import PIPELINES
 
 __all__ = ['SequenceClassificationPipeline']
 

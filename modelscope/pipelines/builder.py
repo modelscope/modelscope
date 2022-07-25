@@ -70,6 +70,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_to_image_synthesis:
     (Pipelines.text_to_image_synthesis,
      'damo/cv_imagen_text-to-image-synthesis_tiny'),
+    Tasks.virtual_tryon: (Pipelines.virtual_tryon,
+                          'damo/cv_daflow_virtual-tryon_base'),
     Tasks.image_colorization: (Pipelines.image_colorization,
                                'damo/cv_unet_image-colorization'),
     Tasks.style_transfer: (Pipelines.style_transfer,

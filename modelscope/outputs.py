@@ -285,5 +285,10 @@ TASK_OUTPUTS = {
     # {
     #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
     # }
-    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM]
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+    # virtual_tryon result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.virtual_tryon: [OutputKeys.OUTPUT_IMG]
 }

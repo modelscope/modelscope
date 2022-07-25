@@ -60,6 +60,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    virtual_tryon = 'virtual_tryon'
     image_colorization = 'unet-image-colorization'
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'

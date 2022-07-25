@@ -218,3 +218,11 @@ class TrainerStages:
     after_val_iter = 'after_val_iter'
     after_val_epoch = 'after_val_epoch'
     after_run = 'after_run'
+
+
+class ColorCodes:
+    MAGENTA = '\033[95m'
+    YELLOW = '\033[93m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    END = '\033[0m'

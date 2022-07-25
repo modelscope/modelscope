@@ -3,14 +3,16 @@ import os
 import shutil
 import tarfile
 import unittest
+from typing import Any, Dict, List, Union
 
 import requests
 
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.constant import ColorCodes, Tasks
+from modelscope.utils.logger import get_logger
+from modelscope.utils.test_utils import download_and_untar, test_level
 
-KWSBP_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/tools/kwsbp'
+logger = get_logger()
 
 POS_WAV_FILE = 'data/test/audios/kws_xiaoyunxiaoyun.wav'
 BOFANGYINYUE_WAV_FILE = 'data/test/audios/kws_bofangyinyue.wav'
@@ -22,12 +24,102 @@ NEG_TESTSETS_FILE = 'neg_testsets.tar.gz'
 NEG_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/neg_testsets.tar.gz'
 
 
-def un_tar_gz(fname, dirs):
-    t = tarfile.open(fname)
-    t.extractall(path=dirs)
-
-
 class KeyWordSpottingTest(unittest.TestCase):
+    action_info = {
+        'test_run_with_wav': {
+            'checking_item': 'kws_list',
+            'checking_value': '小云小云',
+            'example': {
+                'wav_count':
+                1,
+                'kws_set':
+                'wav',
+                'kws_list': [{
+                    'keyword': '小云小云',
+                    'offset': 5.76,
+                    'length': 9.132938,
+                    'confidence': 0.990368
+                }]
+            }
+        },
+        'test_run_with_wav_by_customized_keywords': {
+            'checking_item': 'kws_list',
+            'checking_value': '播放音乐',
+            'example': {
+                'wav_count':
+                1,
+                'kws_set':
+                'wav',
+                'kws_list': [{
+                    'keyword': '播放音乐',
+                    'offset': 0.87,
+                    'length': 2.158313,
+                    'confidence': 0.646237
+                }]
+            }
+        },
+        'test_run_with_pos_testsets': {
+            'checking_item': 'recall',
+            'example': {
+                'wav_count': 450,
+                'kws_set': 'pos_testsets',
+                'wav_time': 3013.75925,
+                'keywords': ['小云小云'],
+                'recall': 0.953333,
+                'detected_count': 429,
+                'rejected_count': 21,
+                'rejected': ['yyy.wav', 'zzz.wav']
+            }
+        },
+        'test_run_with_neg_testsets': {
+            'checking_item': 'fa_rate',
+            'example': {
+                'wav_count':
+                751,
+                'kws_set':
+                'neg_testsets',
+                'wav_time':
+                3572.180813,
+                'keywords': ['小云小云'],
+                'fa_rate':
+                0.001332,
+                'fa_per_hour':
+                1.007788,
+                'detected_count':
+                1,
+                'rejected_count':
+                750,
+                'detected': [{
+                    '6.wav': {
+                        'confidence': '0.321170',
+                        'keyword': '小云小云'
+                    }
+                }]
+            }
+        },
+        'test_run_with_roc': {
+            'checking_item': 'keywords',
+            'checking_value': '小云小云',
+            'example': {
+                'kws_set':
+                'roc',
+                'keywords': ['小云小云'],
+                '小云小云': [{
+                    'threshold': 0.0,
+                    'recall': 0.953333,
+                    'fa_per_hour': 1.007788
+                }, {
+                    'threshold': 0.001,
+                    'recall': 0.953333,
+                    'fa_per_hour': 1.007788
+                }, {
+                    'threshold': 0.999,
+                    'recall': 0.004444,
+                    'fa_per_hour': 0.0
+                }]
+            }
+        }
+    }
 
     def setUp(self) -> None:
         self.model_id = 'damo/speech_charctc_kws_phone-xiaoyunxiaoyun'
@@ -36,315 +128,121 @@ class KeyWordSpottingTest(unittest.TestCase):
             os.mkdir(self.workspace)
 
     def tearDown(self) -> None:
+        # remove workspace dir (.tmp)
         if os.path.exists(self.workspace):
-            shutil.rmtree(os.path.join(self.workspace), ignore_errors=True)
+            shutil.rmtree(self.workspace, ignore_errors=True)
+
+    def run_pipeline(self,
+                     model_id: str,
+                     wav_path: Union[List[str], str],
+                     keywords: List[str] = None) -> Dict[str, Any]:
+        kwsbp_16k_pipline = pipeline(
+            task=Tasks.auto_speech_recognition, model=model_id)
+
+        kws_result = kwsbp_16k_pipline(wav_path=wav_path, keywords=keywords)
+
+        return kws_result
+
+    def print_error(self, functions: str, result: Dict[str, Any]) -> None:
+        logger.error(ColorCodes.MAGENTA + functions + ': FAILED.'
+                     + ColorCodes.END)
+        logger.error(ColorCodes.MAGENTA + functions
+                     + ' correct result example: ' + ColorCodes.YELLOW
+                     + str(self.action_info[functions]['example'])
+                     + ColorCodes.END)
+
+        raise ValueError('kws result is mismatched')
+
+    def check_and_print_result(self, functions: str,
+                               result: Dict[str, Any]) -> None:
+        if result.__contains__(self.action_info[functions]['checking_item']):
+            checking_item = result[self.action_info[functions]
+                                   ['checking_item']]
+            if functions == 'test_run_with_roc':
+                if checking_item[0] != self.action_info[functions][
+                        'checking_value']:
+                    self.print_error(functions, result)
+
+            elif functions == 'test_run_with_wav':
+                if checking_item[0]['keyword'] != self.action_info[functions][
+                        'checking_value']:
+                    self.print_error(functions, result)
+
+            elif functions == 'test_run_with_wav_by_customized_keywords':
+                if checking_item[0]['keyword'] != self.action_info[functions][
+                        'checking_value']:
+                    self.print_error(functions, result)
+
+            logger.info(ColorCodes.MAGENTA + functions + ': SUCCESS.'
+                        + ColorCodes.END)
+            if functions == 'test_run_with_roc':
+                find_keyword = result['keywords'][0]
+                keyword_list = result[find_keyword]
+                for item in iter(keyword_list):
+                    threshold: float = item['threshold']
+                    recall: float = item['recall']
+                    fa_per_hour: float = item['fa_per_hour']
+                    logger.info(ColorCodes.YELLOW + '  threshold:'
+                                + str(threshold) + ' recall:' + str(recall)
+                                + ' fa_per_hour:' + str(fa_per_hour)
+                                + ColorCodes.END)
+            else:
+                logger.info(ColorCodes.YELLOW + str(result) + ColorCodes.END)
+        else:
+            self.print_error(functions, result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'wav'
-
-        # get wav file
-        wav_file_path = POS_WAV_FILE
-
-        # downloading kwsbp
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=self.model_id)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set,
-            wav_path=[wav_file_path, None],
-            workspace=self.workspace)
-        self.assertTrue(kws_result.__contains__('detected'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 1,
-                'kws_set': 'wav',
-                'wav_time': 9.132938,
-                'keywords': ['小云小云'],
-                'detected': True,
-                'confidence': 0.990368
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_wav keywords: ', kws_result['keywords'])
-            print('test_run_with_wav confidence: ', kws_result['confidence'])
-        print('test_run_with_wav detected result: ', kws_result['detected'])
-        print('test_run_with_wav wave time(seconds): ', kws_result['wav_time'])
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, wav_path=POS_WAV_FILE)
+        self.check_and_print_result('test_run_with_wav', kws_result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_by_customized_keywords(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'wav'
-
-        # get wav file
-        wav_file_path = BOFANGYINYUE_WAV_FILE
-
-        # downloading kwsbp
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        # customized keyword if you need.
-        # full settings eg.
-        #     keywords = [
-        #         {'keyword':'你好电视', 'threshold': 0.008},
-        #         {'keyword':'播放音乐', 'threshold': 0.008}
-        #     ]
         keywords = [{'keyword': '播放音乐'}]
 
-        kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition,
-            model=self.model_id,
+        kws_result = self.run_pipeline(
+            model_id=self.model_id,
+            wav_path=BOFANGYINYUE_WAV_FILE,
             keywords=keywords)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set,
-            wav_path=[wav_file_path, None],
-            workspace=self.workspace)
-        self.assertTrue(kws_result.__contains__('detected'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 1,
-                'kws_set': 'wav',
-                'wav_time': 9.132938,
-                'keywords': ['播放音乐'],
-                'detected': True,
-                'confidence': 0.660368
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_wav_by_customized_keywords keywords: ',
-                  kws_result['keywords'])
-            print('test_run_with_wav_by_customized_keywords confidence: ',
-                  kws_result['confidence'])
-        print('test_run_with_wav_by_customized_keywords detected result: ',
-              kws_result['detected'])
-        print('test_run_with_wav_by_customized_keywords wave time(seconds): ',
-              kws_result['wav_time'])
+        self.check_and_print_result('test_run_with_wav_by_customized_keywords',
+                                    kws_result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_pos_testsets(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'pos_testsets'
+        wav_file_path = download_and_untar(
+            os.path.join(self.workspace, POS_TESTSETS_FILE), POS_TESTSETS_URL,
+            self.workspace)
+        wav_path = [wav_file_path, None]
 
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self.workspace, POS_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(POS_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(POS_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # wav_file_path = <cwd>/.tmp_pos_testsets/pos_testsets/
-        wav_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the pos_testsets file
-        if not os.path.exists(wav_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=self.model_id)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set,
-            wav_path=[wav_file_path, None],
-            workspace=self.workspace)
-        self.assertTrue(kws_result.__contains__('recall'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 450,
-                'kws_set': 'pos_testsets',
-                'wav_time': 3013.759254,
-                'keywords': ["小云小云"],
-                'recall': 0.953333,
-                'detected_count': 429,
-                'rejected_count': 21,
-                'rejected': [
-                    'yyy.wav',
-                    'zzz.wav',
-                    ......
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_pos_testsets keywords: ',
-                  kws_result['keywords'])
-        print('test_run_with_pos_testsets recall: ', kws_result['recall'])
-        print('test_run_with_pos_testsets wave time(seconds): ',
-              kws_result['wav_time'])
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, wav_path=wav_path)
+        self.check_and_print_result('test_run_with_pos_testsets', kws_result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_neg_testsets(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'neg_testsets'
+        wav_file_path = download_and_untar(
+            os.path.join(self.workspace, NEG_TESTSETS_FILE), NEG_TESTSETS_URL,
+            self.workspace)
+        wav_path = [None, wav_file_path]
 
-        # downloading neg_testsets file
-        testsets_file_path = os.path.join(self.workspace, NEG_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(NEG_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(NEG_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # wav_file_path = <cwd>/.tmp_neg_testsets/neg_testsets/
-        wav_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the neg_testsets file
-        if not os.path.exists(wav_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=self.model_id)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set,
-            wav_path=[None, wav_file_path],
-            workspace=self.workspace)
-        self.assertTrue(kws_result.__contains__('fa_rate'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 751,
-                'kws_set': 'neg_testsets',
-                'wav_time': 3572.180812,
-                'keywords': ['小云小云'],
-                'fa_rate': 0.001332,
-                'fa_per_hour': 1.007788,
-                'detected_count': 1,
-                'rejected_count': 750,
-                'detected': [
-                    {
-                        '6.wav': {
-                            'confidence': '0.321170'
-                        }
-                    }
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_neg_testsets keywords: ',
-                  kws_result['keywords'])
-        print('test_run_with_neg_testsets fa rate: ', kws_result['fa_rate'])
-        print('test_run_with_neg_testsets fa per hour: ',
-              kws_result['fa_per_hour'])
-        print('test_run_with_neg_testsets wave time(seconds): ',
-              kws_result['wav_time'])
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, wav_path=wav_path)
+        self.check_and_print_result('test_run_with_neg_testsets', kws_result)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_roc(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'roc'
+        pos_file_path = download_and_untar(
+            os.path.join(self.workspace, POS_TESTSETS_FILE), POS_TESTSETS_URL,
+            self.workspace)
+        neg_file_path = download_and_untar(
+            os.path.join(self.workspace, NEG_TESTSETS_FILE), NEG_TESTSETS_URL,
+            self.workspace)
+        wav_path = [pos_file_path, neg_file_path]
 
-        # downloading neg_testsets file
-        testsets_file_path = os.path.join(self.workspace, NEG_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(NEG_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(NEG_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # neg_file_path = <workspace>/.tmp_roc/neg_testsets/
-        neg_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the neg_testsets file
-        if not os.path.exists(neg_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self.workspace, POS_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(POS_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(POS_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # pos_file_path = <workspace>/.tmp_roc/pos_testsets/
-        pos_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the pos_testsets file
-        if not os.path.exists(pos_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=self.model_id)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set,
-            wav_path=[pos_file_path, neg_file_path],
-            workspace=self.workspace)
-        """
-        kws result json format example:
-            {
-                'kws_set': 'roc',
-                'keywords': ['小云小云'],
-                '小云小云': [
-                    {'threshold': 0.0, 'recall': 0.953333, 'fa_per_hour': 1.007788},
-                    {'threshold': 0.001, 'recall': 0.953333, 'fa_per_hour': 1.007788},
-                    ......
-                    {'threshold': 0.999, 'recall': 0.004444, 'fa_per_hour': 0.0}
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            find_keyword = kws_result['keywords'][0]
-            print('test_run_with_roc keywords: ', find_keyword)
-            keyword_list = kws_result[find_keyword]
-            for item in iter(keyword_list):
-                threshold: float = item['threshold']
-                recall: float = item['recall']
-                fa_per_hour: float = item['fa_per_hour']
-                print('  threshold:', threshold, ' recall:', recall,
-                      ' fa_per_hour:', fa_per_hour)
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, wav_path=wav_path)
+        self.check_and_print_result('test_run_with_roc', kws_result)
 
 
 if __name__ == '__main__':

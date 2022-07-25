@@ -3,6 +3,7 @@ espnet>=202204
 h5py
 inflect
 keras
+kwsbp
 librosa
 lxml
 matplotlib

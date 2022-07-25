@@ -2,9 +2,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import tarfile
 import unittest
 
 import numpy as np
+import requests
 from datasets import Dataset
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
 
@@ -42,3 +44,21 @@ def set_test_level(level: int):
 def create_dummy_test_dataset(feat, label, num):
     return MsDataset.from_hf_dataset(
         Dataset.from_dict(dict(feat=[feat] * num, label=[label] * num)))
+
+
+def download_and_untar(fpath, furl, dst) -> str:
+    if not os.path.exists(fpath):
+        r = requests.get(furl)
+        with open(fpath, 'wb') as f:
+            f.write(r.content)
+
+    file_name = os.path.basename(fpath)
+    root_dir = os.path.dirname(fpath)
+    target_dir_name = os.path.splitext(os.path.splitext(file_name)[0])[0]
+    target_dir_path = os.path.join(root_dir, target_dir_name)
+
+    # untar the file
+    t = tarfile.open(fpath)
+    t.extractall(path=dst)
+
+    return target_dir_path

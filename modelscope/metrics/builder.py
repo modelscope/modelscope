@@ -13,12 +13,15 @@ class MetricKeys(object):
     F1 = 'f1'
     PRECISION = 'precision'
     RECALL = 'recall'
+    PSNR = 'psnr'
+    SSIM = 'ssim'
 
 
 task_default_metrics = {
     Tasks.sentence_similarity: [Metrics.seq_cls_metric],
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
+    Tasks.image_color_enhance: [Metrics.image_color_enhance_metric]
 }
 
 

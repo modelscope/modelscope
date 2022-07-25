@@ -105,6 +105,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
 
+    # image_color_enhance result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3], uint8
+    # }
+    Tasks.image_color_enhance: [OutputKeys.OUTPUT_IMG],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample

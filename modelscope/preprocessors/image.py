@@ -1,12 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
+import torch
 from PIL import Image, ImageOps
 
 from modelscope.fileio import File
 from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields
+from modelscope.utils.type_assert import type_assert
+from .base import Preprocessor
 from .builder import PREPROCESSORS
 
 
@@ -66,3 +69,36 @@ def load_image(image_path_or_url: str) -> Image.Image:
     """
     loader = LoadImage()
     return loader(image_path_or_url)['img']
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.image_color_enhance_preprocessor)
+class ImageColorEnhanceFinetunePreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+        self.model_dir: str = model_dir
+
+    @type_assert(object, object)
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (tuple): [sentence1, sentence2]
+                sentence1 (str): a sentence
+                    Example:
+                        'you are so handsome.'
+                sentence2 (str): a sentence
+                    Example:
+                        'you are so beautiful.'
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+
+        return data

@@ -6,6 +6,7 @@ try:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recog_pipeline import AnimalRecogPipeline
     from .cmdssl_video_embedding_pipleline import CMDSSLVideoEmbeddingPipeline
+    from .image_color_enhance_pipeline import ImageColorEnhancePipeline
     from .virtual_tryon_pipeline import VirtualTryonPipeline
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline

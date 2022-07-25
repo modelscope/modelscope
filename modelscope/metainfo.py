@@ -10,6 +10,7 @@ class Models(object):
         Model name should only contain model info but not task info.
     """
     # vision models
+    csrnet = 'csrnet'
 
     # nlp models
     bert = 'bert'
@@ -60,6 +61,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    image_color_enhance = 'csrnet-image-color-enhance'
     virtual_tryon = 'virtual_tryon'
     image_colorization = 'unet-image-colorization'
     image_super_resolution = 'rrdb-image-super-resolution'
@@ -121,6 +123,7 @@ class Preprocessors(object):
 
     # cv preprocessor
     load_image = 'load-image'
+    image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -160,3 +163,5 @@ class Metrics(object):
     token_cls_metric = 'token-cls-metric'
     # metrics for text-generation task
     text_gen_metric = 'text-gen-metric'
+    # metrics for image-color-enhance task
+    image_color_enhance_metric = 'image-color-enhance-metric'

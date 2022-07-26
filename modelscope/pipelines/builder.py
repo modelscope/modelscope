@@ -76,6 +76,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                           'damo/cv_daflow_virtual-tryon_base'),
     Tasks.image_colorization: (Pipelines.image_colorization,
                                'damo/cv_unet_image-colorization'),
+    Tasks.image_segmentation:
+    (Pipelines.image_instance_segmentation,
+     'damo/cv_swin-b_image-instance-segmentation_coco'),
     Tasks.style_transfer: (Pipelines.style_transfer,
                            'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,

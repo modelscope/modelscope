@@ -13,6 +13,7 @@ class OutputKeys(object):
     POSES = 'poses'
     CAPTION = 'caption'
     BOXES = 'boxes'
+    MASKS = 'masks'
     TEXT = 'text'
     POLYGONS = 'polygons'
     OUTPUT = 'output'

@@ -20,6 +20,7 @@ try:
     from .space.dialog_modeling_preprocessor import *  # noqa F403
     from .space.dialog_state_tracking_preprocessor import *  # noqa F403
     from .image import ImageColorEnhanceFinetunePreprocessor
+    from .image import ImageInstanceSegmentationPreprocessor
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'tensorflow'":
         print(TENSORFLOW_IMPORT_ERROR.format('tts'))

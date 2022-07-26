@@ -136,3 +136,72 @@ class ImageColorEnhanceFinetunePreprocessor(Preprocessor):
         """
 
         return data
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv,
+    module_name=Preprocessors.image_instance_segmentation_preprocessor)
+class ImageInstanceSegmentationPreprocessor(Preprocessor):
+
+    def __init__(self, *args, **kwargs):
+        """image instance segmentation preprocessor in the fine-tune scenario
+        """
+
+        super().__init__(*args, **kwargs)
+
+        self.training = kwargs.pop('training', True)
+        self.preprocessor_train_cfg = kwargs.pop('train', None)
+        self.preprocessor_test_cfg = kwargs.pop('val', None)
+
+        self.train_transforms = []
+        self.test_transforms = []
+
+        from modelscope.models.cv.image_instance_segmentation.datasets import \
+            build_preprocess_transform
+
+        if self.preprocessor_train_cfg is not None:
+            if isinstance(self.preprocessor_train_cfg, dict):
+                self.preprocessor_train_cfg = [self.preprocessor_train_cfg]
+            for cfg in self.preprocessor_train_cfg:
+                transform = build_preprocess_transform(cfg)
+                self.train_transforms.append(transform)
+
+        if self.preprocessor_test_cfg is not None:
+            if isinstance(self.preprocessor_test_cfg, dict):
+                self.preprocessor_test_cfg = [self.preprocessor_test_cfg]
+            for cfg in self.preprocessor_test_cfg:
+                transform = build_preprocess_transform(cfg)
+                self.test_transforms.append(transform)
+
+    def train(self):
+        self.training = True
+        return
+
+    def eval(self):
+        self.training = False
+        return
+
+    @type_assert(object, object)
+    def __call__(self, results: Dict[str, Any]):
+        """process the raw input data
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            Dict[str, Any] | None: the preprocessed data
+        """
+
+        if self.training:
+            transforms = self.train_transforms
+        else:
+            transforms = self.test_transforms
+
+        for t in transforms:
+
+            results = t(results)
+
+            if results is None:
+                return None
+
+        return results

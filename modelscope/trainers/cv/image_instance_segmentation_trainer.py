@@ -1,0 +1,27 @@
+from modelscope.trainers.builder import TRAINERS
+from modelscope.trainers.trainer import EpochBasedTrainer
+
+
+@TRAINERS.register_module(module_name='image-instance-segmentation')
+class ImageInstanceSegmentationTrainer(EpochBasedTrainer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def collate_fn(self, data):
+        # we skip this func due to some special data type, e.g., BitmapMasks
+        return data
+
+    def train(self, *args, **kwargs):
+        super().train(*args, **kwargs)
+
+    def evaluate(self, *args, **kwargs):
+        metric_values = super().evaluate(*args, **kwargs)
+        return metric_values
+
+    def prediction_step(self, model, inputs):
+        pass
+
+    def to_task_dataset(self, datasets, mode, preprocessor=None):
+        # wait for dataset interface to become stable...
+        return datasets.to_torch_dataset(preprocessor)

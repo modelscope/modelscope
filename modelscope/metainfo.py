@@ -11,6 +11,7 @@ class Models(object):
     """
     # vision models
     csrnet = 'csrnet'
+    cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
 
     # nlp models
     bert = 'bert'
@@ -67,6 +68,7 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
+    image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -124,6 +126,7 @@ class Preprocessors(object):
     # cv preprocessor
     load_image = 'load-image'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
+    image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -157,6 +160,8 @@ class Metrics(object):
     # accuracy
     accuracy = 'accuracy'
 
+    # metric for image instance segmentation task
+    image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'
     # metrics for sequence classification task
     seq_cls_metric = 'seq_cls_metric'
     # metrics for token-classification task

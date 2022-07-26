@@ -11,6 +11,7 @@ try:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
+    from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'torch'":
         pass

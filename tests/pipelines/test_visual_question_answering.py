@@ -30,8 +30,8 @@ class VisualQuestionAnsweringTest(unittest.TestCase):
             model=model,
             preprocessor=preprocessor)
         print(f"question: {self.input_vqa['question']}")
-        print(f"pipeline1: {pipeline1(self.input_vqa)['answer']}")
-        print(f"pipeline2: {pipeline2(self.input_vqa)['answer']}")
+        print(f'pipeline1: {pipeline1(self.input_vqa)}')
+        print(f'pipeline2: {pipeline2(self.input_vqa)}')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):

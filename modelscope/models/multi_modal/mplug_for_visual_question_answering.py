@@ -19,7 +19,7 @@ class MPlugForVisualQuestionAnswering(Model):
         """
 
         super().__init__(model_dir, *args, **kwargs)
-        from sofa.models.mplug import MPlugForVisualQuestionAnswering
+        from modelscope.models.multi_modal.mplug import MPlugForVisualQuestionAnswering
         self.model = MPlugForVisualQuestionAnswering.from_pretrained(model_dir)
         self.tokenizer = self.model.tokenizer
 

@@ -78,14 +78,16 @@ class MPlugVisualQuestionAnsweringPreprocessor(Preprocessor):
         """preprocess the data via 'bert-base-uncased' tokenizer and configuration
 
         """
+        from transformers import BertTokenizer
+        from modelscope.models.multi_modal.mplug import CONFIG_NAME, VOCAB_NAME, MPlugConfig
+
         super().__init__(*args, **kwargs)
 
         # tokenizer
-        from transformers import AutoTokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+        self.tokenizer = BertTokenizer.from_pretrained(
+            osp.join(model_dir, VOCAB_NAME))
 
         # load configuration
-        from sofa.models.mplug import CONFIG_NAME, MPlugConfig
         config = MPlugConfig.from_yaml_file(osp.join(model_dir, CONFIG_NAME))
 
         # Initialize transform

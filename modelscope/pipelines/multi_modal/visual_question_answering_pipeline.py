@@ -5,6 +5,7 @@ import torch
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.multi_modal import MPlugForVisualQuestionAnswering
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import MPlugVisualQuestionAnsweringPreprocessor
@@ -62,4 +63,4 @@ class VisualQuestionAnsweringPipeline(Pipeline):
         for _old, _new in replace_tokens_bert:
             pred_string = pred_string.replace(_old, _new)
         pred_string.strip()
-        return {'answer': pred_string}
+        return {OutputKeys.TEXT: pred_string}

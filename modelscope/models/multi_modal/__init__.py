@@ -1,4 +1,5 @@
 from .clip.clip_model import CLIPForMultiModalEmbedding
+from .gemm.gemm_model import GEMMForMultiModalEmbedding
 from .imagen.imagen_model import ImagenForTextToImageSynthesis
 from .mplug_for_visual_question_answering import \
     MPlugForVisualQuestionAnswering

@@ -31,6 +31,7 @@ class Models(object):
     # multi-modal models
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
+    gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
     imagen = 'imagen-text-to-image-synthesis'
 
@@ -95,6 +96,7 @@ class Pipelines(object):
     # multi-modal tasks
     image_captioning = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'
+    generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
     text_to_image_synthesis = 'text-to-image-synthesis'
 

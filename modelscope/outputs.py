@@ -271,6 +271,15 @@ TASK_OUTPUTS = {
     Tasks.multi_modal_embedding:
     [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
 
+    # generative multi-modal embedding result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D],
+    #   "caption": "this is an image caption text."
+    # }
+    Tasks.generative_multi_modal_embedding:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
+
     # visual grounding result for single sample
     # {
     #       "boxes": [

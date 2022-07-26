@@ -75,6 +75,7 @@ class MultiModalTasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
 
 

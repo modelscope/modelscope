@@ -34,6 +34,7 @@ class Models(object):
     gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
     imagen = 'imagen-text-to-image-synthesis'
+    video_clip = 'video-clip-multi-modal-embedding'
 
 
 class TaskModels(object):
@@ -99,6 +100,7 @@ class Pipelines(object):
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
     text_to_image_synthesis = 'text-to-image-synthesis'
+    video_multi_modal_embedding = 'video-multi-modal-embedding'
 
 
 class Trainers(object):

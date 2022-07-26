@@ -225,8 +225,8 @@ class MsDataset:
                 continue
             retained_columns.append(k)
 
-        import torch
         import math
+        import torch
 
         class MsIterableDataset(torch.utils.data.IterableDataset):
 

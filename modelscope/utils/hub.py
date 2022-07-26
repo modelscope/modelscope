@@ -89,8 +89,8 @@ def get_model_type(model_dir):
 
 
 def parse_label_mapping(model_dir):
-    import os
     import json
+    import os
     label2id = None
     label_path = os.path.join(model_dir, ModelFile.LABEL_MAPPING)
     if os.path.exists(label_path):

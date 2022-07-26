@@ -784,7 +784,7 @@ class BertModel(nn.Module):
         elif config.transformer_type.lower() == 'act':
             self.encoder = BERTEncoderACT(config)
         elif config.transformer_type.lower() == 'textnas':
-            from textnas_final import op_dict, input_dict, skip_dict
+            from textnas_final import input_dict, op_dict, skip_dict
             self.encoder = TextNASEncoder(config, op_dict, input_dict,
                                           skip_dict)
         else:

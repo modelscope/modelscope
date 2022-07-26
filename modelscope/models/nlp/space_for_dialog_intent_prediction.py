@@ -27,7 +27,8 @@ class SpaceForDialogIntent(Model):
         """
 
         super().__init__(model_dir, *args, **kwargs)
-        from modelscope.trainers.nlp.space.trainer.intent_trainer import IntentTrainer
+        from modelscope.trainers.nlp.space.trainer.intent_trainer import \
+            IntentTrainer
         self.model_dir = model_dir
         self.config = kwargs.pop(
             'config',

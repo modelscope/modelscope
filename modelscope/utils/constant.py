@@ -77,6 +77,7 @@ class MultiModalTasks(object):
     multi_modal_embedding = 'multi-modal-embedding'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     visual_question_answering = 'visual-question-answering'
+    video_multi_modal_embedding = 'video-multi-modal-embedding'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
@@ -85,7 +86,6 @@ class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
     Holds the standard task name to use for identifying different tasks.
     This should be used to register models, pipelines, trainers.
     """
-
     reverse_field_index = {}
 
     @staticmethod

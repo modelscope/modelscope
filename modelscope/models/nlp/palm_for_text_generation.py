@@ -21,7 +21,8 @@ class PalmForTextGeneration(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
 
-        from sofa.models.palm_v2 import PalmForConditionalGeneration, Translator
+        from sofa.models.palm_v2 import (PalmForConditionalGeneration,
+                                         Translator)
         self.model = PalmForConditionalGeneration.from_pretrained(model_dir)
         self.tokenizer = self.model.tokenizer
         self.generator = Translator(self.model)

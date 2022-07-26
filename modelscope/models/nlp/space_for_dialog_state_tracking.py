@@ -22,7 +22,7 @@ class SpaceForDialogStateTracking(Model):
 
         super().__init__(model_dir, *args, **kwargs)
 
-        from sofa.models.space import SpaceForDST, SpaceConfig
+        from sofa.models.space import SpaceConfig, SpaceForDST
         self.model_dir = model_dir
 
         self.config = SpaceConfig.from_pretrained(self.model_dir)

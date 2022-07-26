@@ -74,6 +74,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_to_image_synthesis:
     (Pipelines.text_to_image_synthesis,
      'damo/cv_imagen_text-to-image-synthesis_tiny'),
+    Tasks.video_multi_modal_embedding:
+    (Pipelines.video_multi_modal_embedding,
+     'damo/multi_modal_clip_vtretrival_msrvtt_53'),
     Tasks.image_color_enhance: (Pipelines.image_color_enhance,
                                 'damo/cv_csrnet_image-color-enhance-models'),
     Tasks.virtual_tryon: (Pipelines.virtual_tryon,

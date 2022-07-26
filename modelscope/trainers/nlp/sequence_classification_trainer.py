@@ -78,7 +78,8 @@ class SequenceClassificationTrainer(BaseTrainer):
         import torch
         from easynlp.appzoo import load_dataset
         from easynlp.appzoo.dataset import GeneralDataset
-        from easynlp.appzoo.sequence_classification.model import SequenceClassification
+        from easynlp.appzoo.sequence_classification.model import \
+            SequenceClassification
         from easynlp.utils import losses
         from sklearn.metrics import f1_score
         from torch.utils.data import DataLoader

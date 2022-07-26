@@ -5,10 +5,10 @@ from .base import Model
 from .builder import MODELS, build_model
 
 try:
-    from .audio.asr import GenericAutomaticSpeechRecognition
-    from .audio.tts import SambertHifigan
-    from .audio.kws import GenericKeyWordSpotting
     from .audio.ans.frcrn import FRCRNModel
+    from .audio.asr import GenericAutomaticSpeechRecognition
+    from .audio.kws import GenericKeyWordSpotting
+    from .audio.tts import SambertHifigan
 except ModuleNotFoundError as e:
     print(AUDIO_IMPORT_ERROR.format(e))
 
@@ -29,8 +29,8 @@ try:
                       SbertForZeroShotClassification, SpaceForDialogIntent,
                       SpaceForDialogModeling, SpaceForDialogStateTracking,
                       StructBertForMaskedLM, VecoForMaskedLM)
-    from .nlp.heads import (SequenceClassificationHead)
-    from .nlp.backbones import (SbertModel)
+    from .nlp.backbones import SbertModel
+    from .nlp.heads import SequenceClassificationHead
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'pytorch'":
         pass

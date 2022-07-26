@@ -8,6 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 from tokenizers import BertWordPieceTokenizer
+from torch.distributed.nn.functional import \
+    all_gather as all_gather_with_backprop
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 
 from modelscope.metainfo import Models
@@ -15,7 +17,7 @@ from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.clip.clip_bert import TextTransformer
 from modelscope.models.multi_modal.clip.clip_vit import VisionTransformer
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModeKeys, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -40,12 +42,61 @@ class CLIPModel(nn.Module):
             width=vision_config['width'],
             layers=vision_config['layers'],
             heads=vision_config['heads'],
-            output_dim=vision_config['feat_dim'])
+            output_dim=vision_config['feat_dim'],
+            use_grad_ckp=True)
 
         # text encoder
         text_config = model_config['text_config']
         self.text_encoder = TextTransformer(
             text_config['bert_config'], feat_dim=text_config['feat_dim'])
+
+        self.logit_scale = nn.Parameter(torch.ones([]) * 4.6)
+
+    def contrastive_loss(self, logits, dim):
+        neg_ce = torch.diag(F.log_softmax(logits, dim=dim))
+        return -neg_ce.mean()
+
+    def clip_loss(self, t2i_sim, i2t_sim, img_idx=None, all_img_idx=None):
+        if img_idx is not None and all_img_idx is not None:
+            with torch.no_grad():
+                false_neg_indicator = (
+                    img_idx[:, None] == all_img_idx[None, :])
+                false_neg_indicator.fill_diagonal_(False)
+            t2i_sim.masked_fill_(false_neg_indicator, float('-inf'))
+            i2t_sim.masked_fill_(false_neg_indicator, float('-inf'))
+            caption_loss = self.contrastive_loss(t2i_sim, dim=1)
+            image_loss = self.contrastive_loss(i2t_sim, dim=1)
+        else:
+            caption_loss = self.contrastive_loss(t2i_sim, dim=1)
+            image_loss = self.contrastive_loss(i2t_sim, dim=1)
+        return (caption_loss + image_loss) / 2.0
+
+    def get_loss(self, img_tensor, text_ids_tensor, text_masks_tensor,
+                 img_id_list):
+        img_feat = self.forward(img_tensor, input_type='img')
+        text_feat = self.forward((text_ids_tensor, text_masks_tensor),
+                                 input_type='text')
+
+        global_img_feat = torch.cat(all_gather_with_backprop(img_feat), dim=0)
+        global_text_feat = torch.cat(
+            all_gather_with_backprop(text_feat), dim=0)
+        global_img_id_list = torch.cat(
+            all_gather_with_backprop(img_id_list), dim=0)
+
+        t2i_sim_mat = text_feat @ global_img_feat.t()
+        i2t_sim_mat = img_feat @ global_text_feat.t()
+
+        logit_scale = self.logit_scale.exp().clamp(max=100.0)
+        t2i_sim_mat_logits = t2i_sim_mat * logit_scale
+        i2t_sim_mat_logits = i2t_sim_mat * logit_scale
+
+        loss = self.clip_loss(
+            t2i_sim_mat_logits,
+            i2t_sim_mat_logits,
+            img_idx=img_id_list,
+            all_img_idx=global_img_id_list)
+
+        return loss
 
     def forward(self, input_data, input_type):
         if input_type == 'img':
@@ -58,6 +109,8 @@ class CLIPModel(nn.Module):
                                                text_mask_tensor)
             text_embedding = F.normalize(text_embedding, p=2.0, dim=1)
             return text_embedding
+        elif input_type == ModeKeys.TRAIN:
+            return self.get_loss(*input_data)
         else:
             raise ValueError('Unknown input type')
 

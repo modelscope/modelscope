@@ -13,7 +13,7 @@ logger = get_logger()
     Tasks.multi_modal_embedding, module_name=Pipelines.multi_modal_embedding)
 class MultiModalEmbeddingPipeline(Pipeline):
 
-    def __init__(self, model: str, device_id: int = -1):
+    def __init__(self, model: str, device: str = 'gpu'):
         """
         use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:

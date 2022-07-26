@@ -6,6 +6,7 @@ from typing import Tuple, Union
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.utils.checkpoint as checkpoint
 from torch import nn
 
 
@@ -60,7 +61,8 @@ class Transformer(nn.Module):
                  width: int,
                  layers: int,
                  heads: int,
-                 attn_mask: torch.Tensor = None):
+                 attn_mask: torch.Tensor = None,
+                 use_grad_ckp: bool = True):
         super().__init__()
         self.width = width
         self.layers = layers
@@ -69,14 +71,21 @@ class Transformer(nn.Module):
             for _ in range(layers)
         ])
 
+        self.use_grad_ckp = use_grad_ckp
+
     def forward(self, x: torch.Tensor):
-        return self.resblocks(x)
+        if self.use_grad_ckp:
+            for each_block in self.resblocks:
+                x = checkpoint.checkpoint(each_block, x)
+            return x
+        else:
+            return self.resblocks(x)
 
 
 class VisionTransformer(nn.Module):
 
     def __init__(self, input_resolution: int, patch_size: int, width: int,
-                 layers: int, heads: int, output_dim: int):
+                 layers: int, heads: int, output_dim: int, use_grad_ckp: bool):
         super().__init__()
         self.input_resolution = input_resolution
         self.output_dim = output_dim
@@ -93,7 +102,8 @@ class VisionTransformer(nn.Module):
             (input_resolution // patch_size)**2 + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = Transformer(width, layers, heads)
+        self.transformer = Transformer(
+            width, layers, heads, use_grad_ckp=use_grad_ckp)
 
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))

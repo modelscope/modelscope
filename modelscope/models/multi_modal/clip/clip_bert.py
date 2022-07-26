@@ -4,9 +4,12 @@ from transformers import BertConfig, BertForMaskedLM
 
 class TextTransformer(nn.Module):
 
-    def __init__(self, config_dict, feat_dim=768):
+    def __init__(self, config_dict, feat_dim=768, use_grad_ckp=True):
         super(TextTransformer, self).__init__()
         bert_config = BertConfig.from_dict(config_dict)
+        if use_grad_ckp:
+            bert_config.gradient_checkpointing = True
+
         self.bert = BertForMaskedLM(bert_config).bert
 
         self.projector = nn.Linear(

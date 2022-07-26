@@ -111,6 +111,9 @@ class Trainers(object):
 
     default = 'Trainer'
 
+    # multi-modal tasks
+    clip_multi_modal_embedding = 'clip-multi-modal-embedding'
+
 
 class Preprocessors(object):
     """ Names for different preprocessor.

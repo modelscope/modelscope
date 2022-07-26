@@ -71,7 +71,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,

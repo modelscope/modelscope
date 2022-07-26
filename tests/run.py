@@ -49,7 +49,9 @@ def main(args):
     if not args.list_tests:
         result = runner.run(test_suite)
         if len(result.failures) > 0:
-            sys.exit(1)
+            sys.exit(len(result.failures))
+        if len(result.errors) > 0:
+            sys.exit(len(result.errors))
 
 
 if __name__ == '__main__':

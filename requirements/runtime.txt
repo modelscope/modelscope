@@ -6,8 +6,6 @@ filelock>=3.3.0
 numpy
 opencv-python
 Pillow>=6.2.0
-# tested on version before 3.20, expecting no breaking change going forward
-protobuf>3
 pyyaml
 requests
 scipy

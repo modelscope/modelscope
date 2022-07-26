@@ -9,8 +9,8 @@ lxml
 matplotlib
 nara_wpe
 numpy<=1.18
-# tested on version before 3.20, expecting no breaking change going forward
-protobuf>3
+# protobuf version beyond 3.20.0 is not compatible with TensorFlow 1.x, therefore is discouraged.
+protobuf>3,<3.21.0
 ptflops
 pytorch_wavelets
 PyWavelets>=1.0.0

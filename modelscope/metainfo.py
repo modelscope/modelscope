@@ -10,6 +10,7 @@ class Models(object):
         Model name should only contain model info but not task info.
     """
     # vision models
+    classification_model = 'ClassificationModel'
     nafnet = 'nafnet'
     csrnet = 'csrnet'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
@@ -66,6 +67,8 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    general_image_classification = 'vit-base_image-classification_ImageNet-labels'
+    daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
     image_color_enhance = 'csrnet-image-color-enhance'
     virtual_tryon = 'virtual_tryon'
     image_colorization = 'unet-image-colorization'

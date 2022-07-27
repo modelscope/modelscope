@@ -94,6 +94,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                   'damo/cv_gan_face-image-generation'),
     Tasks.image_super_resolution: (Pipelines.image_super_resolution,
                                    'damo/cv_rrdb_image-super-resolution'),
+    Tasks.image_classification_imagenet:
+    (Pipelines.general_image_classification,
+     'damo/cv_vit-base_image-classification_ImageNet-labels'),
+    Tasks.image_classification_dailylife:
+    (Pipelines.daily_image_classification,
+     'damo/cv_vit-base_image-classification_Dailylife-labels'),
 }
 
 

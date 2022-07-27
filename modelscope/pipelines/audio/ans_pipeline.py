@@ -1,4 +1,4 @@
-import os.path
+import io
 from typing import Any, Dict
 
 import librosa
@@ -46,14 +46,17 @@ class ANSPipeline(Pipeline):
         self.model.eval()
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
-        assert isinstance(inputs, str) and os.path.exists(inputs) and os.path.isfile(inputs), \
-            f'Input file do not exists: {inputs}'
-        data1, fs = sf.read(inputs)
-        data1 = audio_norm(data1)
+        if isinstance(inputs, bytes):
+            raw_data, fs = sf.read(io.BytesIO(inputs))
+        elif isinstance(inputs, str):
+            raw_data, fs = sf.read(inputs)
+        else:
+            raise TypeError(f'Unsupported type {type(inputs)}.')
+        if len(raw_data.shape) > 1:
+            data1 = raw_data[:, 0]
         if fs != self.SAMPLE_RATE:
             data1 = librosa.resample(data1, fs, self.SAMPLE_RATE)
-        if len(data1.shape) > 1:
-            data1 = data1[:, 0]
+        data1 = audio_norm(data1)
         data = data1.astype(np.float32)
         inputs = np.reshape(data, [1, data.shape[0]])
         return {'ndarray': inputs, 'nsamples': data.shape[0]}

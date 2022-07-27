@@ -9,11 +9,11 @@ from torchvision import transforms
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.animal_recognition import resnet
+from modelscope.models.cv.animal_recognition import Bottleneck, ResNet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage, load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -34,8 +34,8 @@ class AnimalRecogPipeline(Pipeline):
         import torch
 
         def resnest101(**kwargs):
-            model = resnet.ResNet(
-                resnet.Bottleneck, [3, 4, 23, 3],
+            model = ResNet(
+                Bottleneck, [3, 4, 23, 3],
                 radix=2,
                 groups=1,
                 bottleneck_width=64,

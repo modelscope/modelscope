@@ -5,7 +5,7 @@ from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.cv import NAFNetForImageDenoise
+from modelscope.models.cv.image_denoise import NAFNetForImageDenoise
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES

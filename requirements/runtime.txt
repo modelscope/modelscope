@@ -3,6 +3,7 @@ datasets
 easydict
 einops
 filelock>=3.3.0
+gast>=0.5.3
 numpy
 opencv-python
 Pillow>=6.2.0

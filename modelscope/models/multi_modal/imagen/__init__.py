@@ -1,0 +1,1 @@
+from .imagen_model import ImagenForTextToImageSynthesis

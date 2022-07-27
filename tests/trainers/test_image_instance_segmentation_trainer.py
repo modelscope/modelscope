@@ -7,10 +7,8 @@ import zipfile
 from functools import partial
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.cv.image_instance_segmentation import \
-    CascadeMaskRCNNSwinModel
-from modelscope.models.cv.image_instance_segmentation.datasets import \
-    ImageInstanceSegmentationCocoDataset
+from modelscope.models.cv.image_instance_segmentation import (
+    CascadeMaskRCNNSwinModel, ImageInstanceSegmentationCocoDataset)
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile

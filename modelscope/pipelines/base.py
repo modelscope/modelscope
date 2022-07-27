@@ -26,7 +26,7 @@ if is_tf_available():
     import tensorflow as tf
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-Input = Union[str, tuple, MsDataset, 'PIL.Image.Image', 'numpy.ndarray']
+Input = Union[str, tuple, MsDataset, 'Image.Image', 'numpy.ndarray']
 InputModel = Union[str, Model]
 
 logger = get_logger()
@@ -233,7 +233,7 @@ class Pipeline(ABC):
 
         """
         from torch.utils.data.dataloader import default_collate
-        from modelscope.preprocessors.space.dst_processors import InputFeatures
+        from modelscope.preprocessors import InputFeatures
         if isinstance(data, dict) or isinstance(data, Mapping):
             return type(data)(
                 {k: self._collate_fn(v)

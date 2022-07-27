@@ -5,11 +5,11 @@ from typing import Any, Dict
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.action_recognition.models import BaseVideoModel
+from modelscope.models.cv.action_recognition import BaseVideoModel
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors.video import ReadVideoData
+from modelscope.preprocessors import ReadVideoData
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger

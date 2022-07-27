@@ -11,7 +11,7 @@ from PIL import Image
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.virual_tryon.sdafnet import SDAFNet_Tryon
+from modelscope.models.cv.virual_tryon import SDAFNet_Tryon
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES

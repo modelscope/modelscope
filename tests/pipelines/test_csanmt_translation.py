@@ -3,7 +3,7 @@ import shutil
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.pipelines import TranslationPipeline, pipeline
+from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

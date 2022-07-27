@@ -1,8 +1,35 @@
-from .clip.clip_model import CLIPForMultiModalEmbedding
-from .gemm.gemm_model import GEMMForMultiModalEmbedding
-from .imagen.imagen_model import ImagenForTextToImageSynthesis
-from .mmr.models.clip_for_multi_model_video_embedding import \
-    VideoCLIPForMultiModalEmbedding
-from .mplug_for_visual_question_answering import \
-    MPlugForVisualQuestionAnswering
-from .ofa_for_image_captioning_model import OfaForImageCaptioning
+# Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
+
+from modelscope.utils.import_utils import LazyImportModule
+
+if TYPE_CHECKING:
+
+    from .clip import CLIPForMultiModalEmbedding
+    from .gemm import GEMMForMultiModalEmbedding
+    from .imagen import ImagenForTextToImageSynthesis
+    from .mmr import VideoCLIPForMultiModalEmbedding
+    from .mplug_for_visual_question_answering import \
+        MPlugForVisualQuestionAnswering
+    from .ofa_for_image_captioning_model import OfaForImageCaptioning
+
+else:
+    _import_structure = {
+        'clip': ['CLIPForMultiModalEmbedding'],
+        'imagen': ['ImagenForTextToImageSynthesis'],
+        'gemm': ['GEMMForMultiModalEmbedding'],
+        'mmr': ['VideoCLIPForMultiModalEmbedding'],
+        'mplug_for_visual_question_answering':
+        ['MPlugForVisualQuestionAnswering'],
+        'ofa_for_image_captioning_model': ['OfaForImageCaptioning']
+    }
+
+    import sys
+
+    sys.modules[__name__] = LazyImportModule(
+        __name__,
+        globals()['__file__'],
+        _import_structure,
+        module_spec=__spec__,
+        extra_objects={},
+    )

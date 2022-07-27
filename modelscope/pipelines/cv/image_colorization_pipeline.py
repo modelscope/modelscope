@@ -7,8 +7,8 @@ import torch
 from torchvision import models, transforms
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.image_colorization import unet
-from modelscope.models.cv.image_colorization.utils import NormType
+from modelscope.models.cv.image_colorization import (DynamicUnetDeep,
+                                                     DynamicUnetWide, NormType)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -46,7 +46,7 @@ class ImageColorizationPipeline(Pipeline):
         if self.model_type == 'stable':
             body = models.resnet101(pretrained=True)
             body = torch.nn.Sequential(*list(body.children())[:self.cut])
-            self.model = unet.DynamicUnetWide(
+            self.model = DynamicUnetWide(
                 body,
                 n_classes=3,
                 blur=True,
@@ -61,7 +61,7 @@ class ImageColorizationPipeline(Pipeline):
         else:
             body = models.resnet34(pretrained=True)
             body = torch.nn.Sequential(*list(body.children())[:cut])
-            model = unet.DynamicUnetDeep(
+            model = DynamicUnetDeep(
                 body,
                 n_classes=3,
                 blur=True,
@@ -84,7 +84,7 @@ class ImageColorizationPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
         if isinstance(input, str):
             img = load_image(input).convert('LA').convert('RGB')
-        elif isinstance(input, PIL.Image.Image):
+        elif isinstance(input, Image.Image):
             img = input.convert('LA').convert('RGB')
         elif isinstance(input, np.ndarray):
             if len(input.shape) == 2:

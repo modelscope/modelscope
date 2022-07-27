@@ -3,8 +3,10 @@ import unittest
 from typing import List
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models import Model, SpaceForDialogStateTracking
-from modelscope.pipelines import DialogStateTrackingPipeline, pipeline
+from modelscope.models import Model
+from modelscope.models.nlp import SpaceForDialogStateTracking
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.nlp import DialogStateTrackingPipeline
 from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level

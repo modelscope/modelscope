@@ -9,6 +9,7 @@ librosa
 lxml
 matplotlib
 nara_wpe
+nltk
 numpy<=1.18
 # protobuf version beyond 3.20.0 is not compatible with TensorFlow 1.x, therefore is discouraged.
 protobuf>3,<3.21.0

@@ -2,7 +2,7 @@
 
 import unittest
 
-import PIL
+from PIL import Image
 
 from modelscope.preprocessors import load_image
 
@@ -11,7 +11,7 @@ class ImagePreprocessorTest(unittest.TestCase):
 
     def test_load(self):
         img = load_image('data/test/images/image_matting.png')
-        self.assertTrue(isinstance(img, PIL.Image.Image))
+        self.assertTrue(isinstance(img, Image.Image))
         self.assertEqual(img.size, (948, 533))
 
 

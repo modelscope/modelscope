@@ -4,7 +4,7 @@ import unittest
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
-import PIL
+from PIL import Image
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import Pipeline, pipeline
@@ -54,7 +54,7 @@ class CustomPipelineTest(unittest.TestCase):
                 """ Provide default implementation based on preprocess_cfg and user can reimplement it
 
                 """
-                if not isinstance(input, PIL.Image.Image):
+                if not isinstance(input, Image.Image):
                     from modelscope.preprocessors import load_image
                     data_dict = {'img': load_image(input), 'url': input}
                 else:

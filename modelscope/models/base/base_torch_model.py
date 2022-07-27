@@ -6,7 +6,6 @@ import torch
 from torch import nn
 
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import create_device
 from .base_model import Model
 
 logger = get_logger(__name__)

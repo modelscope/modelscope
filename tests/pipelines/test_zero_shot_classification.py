@@ -4,7 +4,8 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SbertForZeroShotClassification
-from modelscope.pipelines import ZeroShotClassificationPipeline, pipeline
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.nlp import ZeroShotClassificationPipeline
 from modelscope.preprocessors import ZeroShotClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level

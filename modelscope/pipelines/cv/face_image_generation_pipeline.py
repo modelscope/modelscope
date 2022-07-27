@@ -7,7 +7,7 @@ import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.face_generation import stylegan2
+from modelscope.models.cv.face_generation import Generator
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -36,7 +36,7 @@ class FaceImageGenerationPipeline(Pipeline):
         self.channel_multiplier = 2
         self.truncation = 0.7
         self.truncation_mean = 4096
-        self.generator = stylegan2.Generator(
+        self.generator = Generator(
             self.size,
             self.latent,
             self.n_mlp,

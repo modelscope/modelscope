@@ -1,30 +1,50 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
 
-from modelscope.utils.error import TENSORFLOW_IMPORT_WARNING
+from modelscope.utils.import_utils import LazyImportModule
 
-try:
-    from .translation_pipeline import *  # noqa F403
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'tensorflow'":
-        print(TENSORFLOW_IMPORT_WARNING.format('translation'))
-    else:
-        raise ModuleNotFoundError(e)
+if TYPE_CHECKING:
+    from .dialog_intent_prediction_pipeline import DialogIntentPredictionPipeline
+    from .dialog_modeling_pipeline import DialogModelingPipeline
+    from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
+    from .fill_mask_pipeline import FillMaskPipeline
+    from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
+    from .nli_pipeline import NLIPipeline
+    from .sentence_similarity_pipeline import SentenceSimilarityPipeline
+    from .sentiment_classification_pipeline import SentimentClassificationPipeline
+    from .sequence_classification_pipeline import SequenceClassificationPipeline
+    from .text_generation_pipeline import TextGenerationPipeline
+    from .translation_pipeline import TranslationPipeline
+    from .word_segmentation_pipeline import WordSegmentationPipeline
+    from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
 
-try:
-    from .dialog_intent_prediction_pipeline import *  # noqa F403
-    from .dialog_modeling_pipeline import *  # noqa F403
-    from .dialog_state_tracking_pipeline import *  # noqa F403
-    from .fill_mask_pipeline import *  # noqa F403
-    from .named_entity_recognition_pipeline import *  # noqa F403
-    from .nli_pipeline import *  # noqa F403
-    from .sentence_similarity_pipeline import *  # noqa F403
-    from .sentiment_classification_pipeline import *  # noqa F403
-    from .sequence_classification_pipeline import *  # noqa F403
-    from .text_generation_pipeline import *  # noqa F403
-    from .word_segmentation_pipeline import *  # noqa F403
-    from .zero_shot_classification_pipeline import *  # noqa F403
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'torch'":
-        pass
-    else:
-        raise ModuleNotFoundError(e)
+else:
+    _import_structure = {
+        'dialog_intent_prediction_pipeline':
+        ['DialogIntentPredictionPipeline'],
+        'dialog_modeling_pipeline': ['DialogModelingPipeline'],
+        'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
+        'fill_mask_pipeline': ['FillMaskPipeline'],
+        'nli_pipeline': ['NLIPipeline'],
+        'sentence_similarity_pipeline': ['SentenceSimilarityPipeline'],
+        'sentiment_classification_pipeline':
+        ['SentimentClassificationPipeline'],
+        'sequence_classification_pipeline': ['SequenceClassificationPipeline'],
+        'text_generation_pipeline': ['TextGenerationPipeline'],
+        'word_segmentation_pipeline': ['WordSegmentationPipeline'],
+        'zero_shot_classification_pipeline':
+        ['ZeroShotClassificationPipeline'],
+        'named_entity_recognition_pipeline':
+        ['NamedEntityRecognitionPipeline'],
+        'translation_pipeline': ['TranslationPipeline'],
+    }
+
+    import sys
+
+    sys.modules[__name__] = LazyImportModule(
+        __name__,
+        globals()['__file__'],
+        _import_structure,
+        module_spec=__spec__,
+        extra_objects={},
+    )

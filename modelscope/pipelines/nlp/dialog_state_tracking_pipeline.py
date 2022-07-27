@@ -1,7 +1,8 @@
 from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model, SpaceForDialogStateTracking
+from modelscope.models import Model
+from modelscope.models.nlp import SpaceForDialogStateTracking
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES

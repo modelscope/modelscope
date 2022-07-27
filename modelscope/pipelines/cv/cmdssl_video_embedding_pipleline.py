@@ -7,8 +7,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.cmdssl_video_embedding.resnet2p1d import \
-    resnet26_2p1d
+from modelscope.models.cv.cmdssl_video_embedding import resnet26_2p1d
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES

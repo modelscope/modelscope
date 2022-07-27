@@ -4,7 +4,8 @@ import unittest
 
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.pipelines import SequenceClassificationPipeline, pipeline
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.nlp import SequenceClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Hubs, Tasks
 from modelscope.utils.test_utils import test_level

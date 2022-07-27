@@ -7,7 +7,8 @@ from PIL import Image
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines import ImageDenoisePipeline, pipeline
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.cv import ImageDenoisePipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

@@ -12,7 +12,9 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .ocr_utils import model_resnet_mutex_v4_linewithchar, ops, utils
+from .ocr_utils import (SegLinkDetector, cal_width, combine_segments_python,
+                        decode_segments_links_python, nms_python,
+                        rboxes_to_polygons)
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
@@ -66,7 +68,7 @@ class OCRDetectionPipeline(Pipeline):
                 0.997, global_step)
 
             # detector
-            detector = model_resnet_mutex_v4_linewithchar.SegLinkDetector()
+            detector = SegLinkDetector()
             all_maps = detector.build_model(
                 self.input_images, is_training=False)
 
@@ -90,7 +92,7 @@ class OCRDetectionPipeline(Pipeline):
 
             # decode segments and links
             image_size = tf.shape(self.input_images)[1:3]
-            segments, group_indices, segment_counts, _ = ops.decode_segments_links_python(
+            segments, group_indices, segment_counts, _ = decode_segments_links_python(
                 image_size,
                 all_nodes,
                 all_links,
@@ -98,7 +100,7 @@ class OCRDetectionPipeline(Pipeline):
                 anchor_sizes=list(detector.anchor_sizes))
 
             # combine segments
-            combined_rboxes, combined_counts = ops.combine_segments_python(
+            combined_rboxes, combined_counts = combine_segments_python(
                 segments, group_indices, segment_counts)
             self.output['combined_rboxes'] = combined_rboxes
             self.output['combined_counts'] = combined_counts
@@ -145,7 +147,7 @@ class OCRDetectionPipeline(Pipeline):
         # convert rboxes to polygons and find its coordinates on the original image
         orig_h, orig_w = inputs['orig_size']
         resize_h, resize_w = inputs['resize_size']
-        polygons = utils.rboxes_to_polygons(rboxes)
+        polygons = rboxes_to_polygons(rboxes)
         scale_y = float(orig_h) / float(resize_h)
         scale_x = float(orig_w) / float(resize_w)
 
@@ -157,8 +159,8 @@ class OCRDetectionPipeline(Pipeline):
         polygons = np.round(polygons).astype(np.int32)
 
         # nms
-        dt_n9 = [o + [utils.cal_width(o)] for o in polygons.tolist()]
-        dt_nms = utils.nms_python(dt_n9)
+        dt_n9 = [o + [cal_width(o)] for o in polygons.tolist()]
+        dt_nms = nms_python(dt_n9)
         dt_polygons = np.array([o[:8] for o in dt_nms])
 
         result = {OutputKeys.POLYGONS: dt_polygons}

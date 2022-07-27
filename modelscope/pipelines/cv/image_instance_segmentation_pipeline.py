@@ -7,10 +7,8 @@ import torch
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.image_instance_segmentation.model import \
-    CascadeMaskRCNNSwinModel
-from modelscope.models.cv.image_instance_segmentation.postprocess_utils import \
-    get_img_ins_seg_result
+from modelscope.models.cv.image_instance_segmentation import (
+    CascadeMaskRCNNSwinModel, get_img_ins_seg_result)
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import (ImageInstanceSegmentationPreprocessor,

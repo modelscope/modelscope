@@ -12,7 +12,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors.audio import LinearAECAndFbank
+from modelscope.preprocessors import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 

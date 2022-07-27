@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
+import os
 
 
 def if_func_receive_dict_inputs(func, inputs):
@@ -26,3 +27,12 @@ def if_func_receive_dict_inputs(func, inputs):
         return True
     else:
         return False
+
+
+def get_default_cache_dir():
+    """
+    default base dir: '~/.cache/modelscope'
+    """
+    default_cache_dir = os.path.expanduser(
+        os.path.join('~/.cache', 'modelscope'))
+    return default_cache_dir

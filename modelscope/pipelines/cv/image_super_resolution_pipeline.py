@@ -6,11 +6,11 @@ import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.super_resolution import rrdbnet_arch
+from modelscope.models.cv.super_resolution import RRDBNet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage, load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -32,7 +32,7 @@ class ImageSuperResolutionPipeline(Pipeline):
         self.num_feat = 64
         self.num_block = 23
         self.scale = 4
-        self.sr_model = rrdbnet_arch.RRDBNet(
+        self.sr_model = RRDBNet(
             num_in_ch=3,
             num_out_ch=3,
             num_feat=self.num_feat,

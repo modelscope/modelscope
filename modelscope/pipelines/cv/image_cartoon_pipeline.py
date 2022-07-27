@@ -6,10 +6,10 @@ import numpy as np
 import tensorflow as tf
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.cartoon.facelib.facer import FaceAna
-from modelscope.models.cv.cartoon.mtcnn_pytorch.src.align_trans import (
-    get_reference_facial_points, warp_and_crop_face)
-from modelscope.models.cv.cartoon.utils import get_f5p, padTo16x, resize_size
+from modelscope.models.cv.cartoon import (FaceAna, get_f5p,
+                                          get_reference_facial_points,
+                                          padTo16x, resize_size,
+                                          warp_and_crop_face)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES

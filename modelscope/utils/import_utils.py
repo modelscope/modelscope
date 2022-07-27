@@ -2,11 +2,10 @@
 # Part of the implementation is borrowed from huggingface/transformers.
 import ast
 import functools
-import importlib.util
+import importlib
 import os
 import os.path as osp
 import sys
-import types
 from collections import OrderedDict
 from functools import wraps
 from importlib import import_module
@@ -14,17 +13,14 @@ from itertools import chain
 from types import ModuleType
 from typing import Any
 
-import json
 from packaging import version
 
-from modelscope.utils.constant import Fields
-from modelscope.utils.error import (PROTOBUF_IMPORT_ERROR,
-                                    PYTORCH_IMPORT_ERROR, SCIPY_IMPORT_ERROR,
-                                    SENTENCEPIECE_IMPORT_ERROR,
-                                    SKLEARN_IMPORT_ERROR,
-                                    TENSORFLOW_IMPORT_ERROR, TIMM_IMPORT_ERROR,
-                                    TOKENIZERS_IMPORT_ERROR)
+from modelscope.utils.ast_utils import (INDEX_KEY, MODULE_KEY, REQUIREMENT_KEY,
+                                        load_index)
+from modelscope.utils.error import *  # noqa
 from modelscope.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 if sys.version_info < (3, 8):
     import importlib_metadata
@@ -32,6 +28,8 @@ else:
     import importlib.metadata as importlib_metadata
 
 logger = get_logger()
+
+AST_INDEX = None
 
 
 def import_modules_from_file(py_file: str):
@@ -250,17 +248,43 @@ def is_tf_available():
     return _tf_available
 
 
+def is_opencv_available():
+    return importlib.util.find_spec('cv2') is not None
+
+
+def is_pillow_available():
+    return importlib.util.find_spec('PIL.Image') is not None
+
+
+def is_package_available(pkg_name):
+    return importlib.util.find_spec(pkg_name) is not None
+
+
+def is_espnet_available(pkg_name):
+    return importlib.util.find_spec('espnet2') is not None \
+        and importlib.util.find_spec('espnet')
+
+
 REQUIREMENTS_MAAPING = OrderedDict([
     ('protobuf', (is_protobuf_available, PROTOBUF_IMPORT_ERROR)),
     ('sentencepiece', (is_sentencepiece_available,
                        SENTENCEPIECE_IMPORT_ERROR)),
     ('sklearn', (is_sklearn_available, SKLEARN_IMPORT_ERROR)),
     ('tf', (is_tf_available, TENSORFLOW_IMPORT_ERROR)),
+    ('tensorflow', (is_tf_available, TENSORFLOW_IMPORT_ERROR)),
     ('timm', (is_timm_available, TIMM_IMPORT_ERROR)),
     ('tokenizers', (is_tokenizers_available, TOKENIZERS_IMPORT_ERROR)),
     ('torch', (is_torch_available, PYTORCH_IMPORT_ERROR)),
     ('scipy', (is_scipy_available, SCIPY_IMPORT_ERROR)),
+    ('cv2', (is_opencv_available, OPENCV_IMPORT_ERROR)),
+    ('PIL', (is_pillow_available, PILLOW_IMPORT_ERROR)),
+    ('espnet2', (is_espnet_available,
+                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
+    ('espnet', (is_espnet_available,
+                GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
 ])
+
+SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])
 
 
 def requires(obj, requirements):
@@ -271,7 +295,18 @@ def requires(obj, requirements):
     else:
         name = obj.__name__ if hasattr(obj,
                                        '__name__') else obj.__class__.__name__
-    checks = (REQUIREMENTS_MAAPING[req] for req in requirements)
+    checks = []
+    for req in requirements:
+        if req == '' or req in SYSTEM_PACKAGE:
+            continue
+        if req in REQUIREMENTS_MAAPING:
+            check = REQUIREMENTS_MAAPING[req]
+        else:
+            check_fn = functools.partial(is_package_available, req)
+            err_msg = GENERAL_IMPORT_ERROR.replace('REQ', req)
+            check = (check_fn, err_msg)
+        checks.append(check)
+
     failed = [msg.format(name) for available, msg in checks if not available()]
     if failed:
         raise ImportError(''.join(failed))
@@ -299,3 +334,99 @@ def tf_required(func):
             raise ImportError(f'Method `{func.__name__}` requires TF.')
 
     return wrapper
+
+
+class LazyImportModule(ModuleType):
+    AST_INDEX = None
+    if AST_INDEX is None:
+        AST_INDEX = load_index()
+
+    def __init__(self,
+                 name,
+                 module_file,
+                 import_structure,
+                 module_spec=None,
+                 extra_objects=None,
+                 try_to_pre_import=False):
+        super().__init__(name)
+        self._modules = set(import_structure.keys())
+        self._class_to_module = {}
+        for key, values in import_structure.items():
+            for value in values:
+                self._class_to_module[value] = key
+        # Needed for autocompletion in an IDE
+        self.__all__ = list(import_structure.keys()) + list(
+            chain(*import_structure.values()))
+        self.__file__ = module_file
+        self.__spec__ = module_spec
+        self.__path__ = [os.path.dirname(module_file)]
+        self._objects = {} if extra_objects is None else extra_objects
+        self._name = name
+        self._import_structure = import_structure
+        if try_to_pre_import:
+            self._try_to_import()
+
+    def _try_to_import(self):
+        for sub_module in self._class_to_module.keys():
+            try:
+                getattr(self, sub_module)
+            except Exception as e:
+                logger.warn(
+                    f'pre load module {sub_module} error, please check {e}')
+
+    # Needed for autocompletion in an IDE
+    def __dir__(self):
+        result = super().__dir__()
+        # The elements of self.__all__ that are submodules may or may not be in the dir already, depending on whether
+        # they have been accessed or not. So we only add the elements of self.__all__ that are not already in the dir.
+        for attr in self.__all__:
+            if attr not in result:
+                result.append(attr)
+        return result
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._objects:
+            return self._objects[name]
+        if name in self._modules:
+            value = self._get_module(name)
+        elif name in self._class_to_module.keys():
+            module = self._get_module(self._class_to_module[name])
+            value = getattr(module, name)
+        else:
+            raise AttributeError(
+                f'module {self.__name__} has no attribute {name}')
+
+        setattr(self, name, value)
+        return value
+
+    def _get_module(self, module_name: str):
+        try:
+            # check requirements before module import
+            module_name_full = self.__name__ + '.' + module_name
+            if module_name_full in LazyImportModule.AST_INDEX[REQUIREMENT_KEY]:
+                requirements = LazyImportModule.AST_INDEX[REQUIREMENT_KEY][
+                    module_name_full]
+                requires(module_name_full, requirements)
+            return importlib.import_module('.' + module_name, self.__name__)
+        except Exception as e:
+            raise RuntimeError(
+                f'Failed to import {self.__name__}.{module_name} because of the following error '
+                f'(look up to see its traceback):\n{e}') from e
+
+    def __reduce__(self):
+        return self.__class__, (self._name, self.__file__,
+                                self._import_structure)
+
+    @staticmethod
+    def import_module(signature):
+        """ import a lazy import module using signature
+
+        Args:
+            signature (tuple): a tuple of str, (registry_name, registry_group_name, module_name)
+        """
+        if signature in LazyImportModule.AST_INDEX[INDEX_KEY]:
+            mod_index = LazyImportModule.AST_INDEX[INDEX_KEY][signature]
+            module_name = mod_index[MODULE_KEY]
+            importlib.import_module(module_name)
+        else:
+            logger.warning(f'{signature} not found in ast index file')

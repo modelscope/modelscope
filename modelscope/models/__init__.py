@@ -1,39 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
+
 from modelscope.utils.error import (AUDIO_IMPORT_ERROR,
                                     TENSORFLOW_IMPORT_WARNING)
-from .base import Model
-from .builder import MODELS, build_model
+from modelscope.utils.import_utils import is_torch_available
+from . import audio, cv, multi_modal, nlp
+from .base import Head, Model
+from .builder import BACKBONES, HEADS, MODELS, build_model
 
-try:
-    from .audio.ans.frcrn import FRCRNModel
-    from .audio.asr import GenericAutomaticSpeechRecognition
-    from .audio.kws import GenericKeyWordSpotting
-    from .audio.tts import SambertHifigan
-except ModuleNotFoundError as e:
-    print(AUDIO_IMPORT_ERROR.format(e))
-
-try:
-    from .nlp.csanmt_for_translation import CsanmtForTranslation
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'tensorflow'":
-        print(TENSORFLOW_IMPORT_WARNING.format('CsanmtForTranslation'))
-    else:
-        raise ModuleNotFoundError(e)
-
-try:
-    from .multi_modal import OfaForImageCaptioning
-    from .cv import NAFNetForImageDenoise
-    from .nlp import (BertForMaskedLM, BertForSequenceClassification,
-                      SbertForNLI, SbertForSentenceSimilarity,
-                      SbertForSentimentClassification,
-                      SbertForTokenClassification,
-                      SbertForZeroShotClassification, SpaceForDialogIntent,
-                      SpaceForDialogModeling, SpaceForDialogStateTracking,
-                      StructBertForMaskedLM, VecoForMaskedLM)
-    from .nlp.backbones import SbertModel
-    from .nlp.heads import SequenceClassificationHead
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'pytorch'":
-        pass
-    else:
-        raise ModuleNotFoundError(e)
+if is_torch_available():
+    from .base import TorchModel, TorchHead

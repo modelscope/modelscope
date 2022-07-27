@@ -6,11 +6,10 @@ from typing import Any, Dict
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor
 from modelscope.models.builder import MODELS
-from modelscope.preprocessors.space.fields.intent_field import \
-    IntentBPETextField
+from modelscope.models.nlp.backbones import SpaceGenerator, SpaceModelBase
+from modelscope.preprocessors.space import IntentBPETextField
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
-from .backbones import SpaceGenerator, SpaceModelBase
 
 __all__ = ['SpaceForDialogIntent']
 

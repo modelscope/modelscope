@@ -1,14 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import importlib
 import inspect
 from typing import List, Tuple, Union
 
-from modelscope.utils.import_utils import requires
 from modelscope.utils.logger import get_logger
 
 TYPE_NAME = 'type'
 default_group = 'default'
 logger = get_logger()
+AST_INDEX = None
 
 
 class Registry(object):
@@ -55,13 +56,9 @@ class Registry(object):
     def _register_module(self,
                          group_key=default_group,
                          module_name=None,
-                         module_cls=None,
-                         requirements=None):
+                         module_cls=None):
         assert isinstance(group_key,
                           str), 'group_key is required and must be str'
-
-        if requirements is not None:
-            requires(module_cls, requirements)
 
         if group_key not in self._modules:
             self._modules[group_key] = dict()
@@ -81,8 +78,7 @@ class Registry(object):
     def register_module(self,
                         group_key: str = default_group,
                         module_name: str = None,
-                        module_cls: type = None,
-                        requirements: Union[List, Tuple] = None):
+                        module_cls: type = None):
         """ Register module
 
         Example:
@@ -106,7 +102,6 @@ class Registry(object):
                 default group name is 'default'
             module_name: Module name
             module_cls: Module class object
-            requirements: Module necessary requirements
 
         """
         if not (module_name is None or isinstance(module_name, str)):
@@ -116,8 +111,7 @@ class Registry(object):
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls,
-                requirements=requirements)
+                module_cls=module_cls)
             return module_cls
 
         # if module_cls is None, should return a decorator function
@@ -125,8 +119,7 @@ class Registry(object):
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls,
-                requirements=requirements)
+                module_cls=module_cls)
             return module_cls
 
         return _register
@@ -177,6 +170,11 @@ def build_from_cfg(cfg,
     if not (isinstance(default_args, dict) or default_args is None):
         raise TypeError('default_args must be a dict or None, '
                         f'but got {type(default_args)}')
+
+    # dynamic load installation reqruiements for this module
+    from modelscope.utils.import_utils import LazyImportModule
+    sig = (registry.name.upper(), group_key, cfg['type'])
+    LazyImportModule.import_module(sig)
 
     args = cfg.copy()
     if default_args is not None:

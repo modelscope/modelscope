@@ -5,7 +5,8 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.multi_modal import MPlugForVisualQuestionAnswering
-from modelscope.pipelines import VisualQuestionAnsweringPipeline, pipeline
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.multi_modal import VisualQuestionAnsweringPipeline
 from modelscope.preprocessors import MPlugVisualQuestionAnsweringPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level

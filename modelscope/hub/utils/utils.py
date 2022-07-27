@@ -4,6 +4,7 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
+from modelscope.utils.utils import get_default_cache_dir
 
 
 def model_id_to_group_owner_name(model_id):
@@ -21,8 +22,7 @@ def get_cache_dir():
     cache dir precedence:
         function parameter > enviroment > ~/.cache/modelscope/hub
     """
-    default_cache_dir = os.path.expanduser(
-        os.path.join('~/.cache', 'modelscope'))
+    default_cache_dir = get_default_cache_dir()
     return os.getenv('MODELSCOPE_CACHE', os.path.join(default_cache_dir,
                                                       'hub'))
 

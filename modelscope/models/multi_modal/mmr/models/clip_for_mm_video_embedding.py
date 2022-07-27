@@ -11,13 +11,11 @@ from PIL import Image
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
-from modelscope.models.multi_modal.mmr.dataloaders.rawvideo_util import \
-    RawVideoExtractor
-from modelscope.models.multi_modal.mmr.models.modeling import CLIP4Clip
-from modelscope.models.multi_modal.mmr.models.tokenization_clip import \
-    SimpleTokenizer as ClipTokenizer
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
+from ..dataloaders.rawvideo_util import RawVideoExtractor
+from .modeling import CLIP4Clip
+from .tokenization_clip import SimpleTokenizer as ClipTokenizer
 
 logger = get_logger()
 

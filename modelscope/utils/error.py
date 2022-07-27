@@ -75,3 +75,19 @@ SCIPY_IMPORT_ERROR = """
 {0} requires the scipy library but it was not found in your environment. You can install it with pip:
 `pip install scipy`
 """
+
+# docstyle-ignore
+OPENCV_IMPORT_ERROR = """
+{0} requires the opencv library but it was not found in your environment. You can install it with pip:
+`pip install opencv-python`
+"""
+
+PILLOW_IMPORT_ERROR = """
+{0} requires the Pillow library but it was not found in your environment. You can install it with pip:
+`pip install Pillow`
+"""
+
+GENERAL_IMPORT_ERROR = """
+{0} requires the REQ library but it was not found in your environment. You can install it with pip:
+`pip install REQ`
+"""

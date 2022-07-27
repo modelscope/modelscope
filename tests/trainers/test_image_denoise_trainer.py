@@ -5,9 +5,8 @@ import tempfile
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models import NAFNetForImageDenoise
-from modelscope.msdatasets.image_denoise_data.image_denoise_dataset import \
-    PairedImageDataset
+from modelscope.models.cv.image_denoise import NAFNetForImageDenoise
+from modelscope.msdatasets.image_denoise_data import PairedImageDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile

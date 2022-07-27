@@ -1,21 +1,30 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
 
-from modelscope.utils.error import TENSORFLOW_IMPORT_ERROR
+from modelscope.utils.import_utils import LazyImportModule
 
-try:
+if TYPE_CHECKING:
+    from .ans_pipeline import ANSPipeline
     from .asr_inference_pipeline import AutomaticSpeechRecognitionPipeline
-    from .kws_kwsbp_pipeline import *  # noqa F403
+    from .kws_kwsbp_pipeline import KeyWordSpottingKwsbpPipeline
     from .linear_aec_pipeline import LinearAECPipeline
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'torch'":
-        pass
-    else:
-        raise ModuleNotFoundError(e)
+    from .text_to_speech_pipeline import TextToSpeechSambertHifiganPipeline
 
-try:
-    from .text_to_speech_pipeline import *  # noqa F403
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'tensorflow'":
-        print(TENSORFLOW_IMPORT_ERROR.format('tts'))
-    else:
-        raise ModuleNotFoundError(e)
+else:
+    _import_structure = {
+        'ans_pipeline': ['ANSPipeline'],
+        'asr_inference_pipeline': ['AutomaticSpeechRecognitionPipeline'],
+        'kws_kwsbp_pipeline': ['KeyWordSpottingKwsbpPipeline'],
+        'linear_aec_pipeline': ['LinearAECPipeline'],
+        'text_to_speech_pipeline': ['TextToSpeechSambertHifiganPipeline'],
+    }
+
+    import sys
+
+    sys.modules[__name__] = LazyImportModule(
+        __name__,
+        globals()['__file__'],
+        _import_structure,
+        module_spec=__spec__,
+        extra_objects={},
+    )

@@ -11,6 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
+from modelscope.utils.torch_utils import create_device
 
 
 def audio_norm(x):

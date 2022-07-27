@@ -11,8 +11,7 @@ import torch
 from torch.utils import data as data
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.cv.image_color_enhance.image_color_enhance import \
-    ImageColorEnhance
+from modelscope.models.cv.image_color_enhance import ImageColorEnhance
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.test_utils import test_level

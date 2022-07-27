@@ -1,29 +1,67 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
 
-from modelscope.utils.error import AUDIO_IMPORT_ERROR, TENSORFLOW_IMPORT_ERROR
-from .asr import WavToScp
-from .base import Preprocessor
-from .builder import PREPROCESSORS, build_preprocessor
-from .common import Compose
-from .image import LoadImage, load_image
-from .kws import WavToLists
+from modelscope.utils.import_utils import LazyImportModule
 
-try:
+if TYPE_CHECKING:
+    from .base import Preprocessor
+    from .builder import PREPROCESSORS, build_preprocessor
+    from .common import Compose
+    from .asr import WavToScp
     from .audio import LinearAECAndFbank
-except ModuleNotFoundError as e:
-    print(AUDIO_IMPORT_ERROR.format(e))
+    from .image import (LoadImage, load_image,
+                        ImageColorEnhanceFinetunePreprocessor,
+                        ImageInstanceSegmentationPreprocessor,
+                        ImageDenoisePreprocessor)
+    from .kws import WavToLists
+    from .multi_modal import (OfaImageCaptionPreprocessor,
+                              MPlugVisualQuestionAnsweringPreprocessor)
+    from .nlp import (Tokenize, SequenceClassificationPreprocessor,
+                      TextGenerationPreprocessor,
+                      TokenClassificationPreprocessor, NLIPreprocessor,
+                      SentimentClassificationPreprocessor,
+                      SentenceSimilarityPreprocessor, FillMaskPreprocessor,
+                      ZeroShotClassificationPreprocessor, NERPreprocessor)
+    from .space import (DialogIntentPredictionPreprocessor,
+                        DialogModelingPreprocessor,
+                        DialogStateTrackingPreprocessor)
+    from .video import ReadVideoData
 
-try:
-    from .multi_modal import *  # noqa F403
-    from .nlp import *  # noqa F403
-    from .space.dialog_intent_prediction_preprocessor import *  # noqa F403
-    from .space.dialog_modeling_preprocessor import *  # noqa F403
-    from .space.dialog_state_tracking_preprocessor import *  # noqa F403
-    from .image import ImageColorEnhanceFinetunePreprocessor
-    from .image import ImageInstanceSegmentationPreprocessor
-    from .image import ImageDenoisePreprocessor
-except ModuleNotFoundError as e:
-    if str(e) == "No module named 'tensorflow'":
-        print(TENSORFLOW_IMPORT_ERROR.format('tts'))
-    else:
-        raise ModuleNotFoundError(e)
+else:
+    _import_structure = {
+        'base': ['Preprocessor'],
+        'builder': ['PREPROCESSORS', 'build_preprocessor'],
+        'common': ['Compose'],
+        'asr': ['WavToScp'],
+        'video': ['ReadVideoData'],
+        'image': [
+            'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
+            'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
+        ],
+        'kws': ['WavToLists'],
+        'multi_modal': [
+            'OfaImageCaptionPreprocessor',
+            'MPlugVisualQuestionAnsweringPreprocessor'
+        ],
+        'nlp': [
+            'Tokenize', 'SequenceClassificationPreprocessor',
+            'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
+            'NLIPreprocessor', 'SentimentClassificationPreprocessor',
+            'SentenceSimilarityPreprocessor', 'FillMaskPreprocessor',
+            'ZeroShotClassificationPreprocessor', 'NERPreprocessor'
+        ],
+        'space': [
+            'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
+            'DialogStateTrackingPreprocessor', 'InputFeatures'
+        ],
+    }
+
+    import sys
+
+    sys.modules[__name__] = LazyImportModule(
+        __name__,
+        globals()['__file__'],
+        _import_structure,
+        module_spec=__spec__,
+        extra_objects={},
+    )

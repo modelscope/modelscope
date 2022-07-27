@@ -5,7 +5,8 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SbertForSentenceSimilarity
-from modelscope.pipelines import SentenceSimilarityPipeline, pipeline
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.nlp import SentenceSimilarityPipeline
 from modelscope.preprocessors import SentenceSimilarityPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level

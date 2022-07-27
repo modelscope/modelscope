@@ -5,8 +5,7 @@ from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.cv.image_color_enhance.image_color_enhance import \
-    ImageColorEnhance
+from modelscope.models.cv.image_color_enhance import ImageColorEnhance
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES

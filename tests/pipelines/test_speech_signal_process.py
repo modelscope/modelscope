@@ -65,6 +65,21 @@ class SpeechSignalProcessTest(unittest.TestCase):
         ans(NOISE_SPEECH_FILE, output_path=output_path)
         print(f'Processed audio saved to {output_path}')
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ans_bytes(self):
+        # Download audio files
+        download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)
+        model_id = 'damo/speech_frcrn_ans_cirm_16k'
+        ans = pipeline(
+            Tasks.speech_signal_process,
+            model=model_id,
+            pipeline_name=Pipelines.speech_frcrn_ans_cirm_16k)
+        output_path = os.path.abspath('output.wav')
+        with open(NOISE_SPEECH_FILE, 'rb') as f:
+            data = f.read()
+            ans(data, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
 
 if __name__ == '__main__':
     unittest.main()

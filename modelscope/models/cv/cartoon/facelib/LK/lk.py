@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..config import config as cfg
+from modelscope.models.cv.cartoon.facelib.config import config as cfg
 
 
 class GroupTrack():

@@ -1,13 +1,10 @@
 from typing import Any, Dict
 
-import torch
-
 from modelscope.metainfo import Pipelines
-from modelscope.pipelines.base import Input
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Model, Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 

@@ -1,12 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union
+from typing import Dict, Union
 
-import numpy as np
-
-from ...utils.config import ConfigDict
-from ...utils.logger import get_logger
-from .base_model import Model
+from modelscope.models.base.base_model import Model
+from modelscope.utils.config import ConfigDict
+from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 

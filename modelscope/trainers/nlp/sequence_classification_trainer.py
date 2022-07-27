@@ -3,9 +3,9 @@ from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
+from modelscope.trainers.base import BaseTrainer
+from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.logger import get_logger
-from ..base import BaseTrainer
-from ..builder import TRAINERS
 
 PATH = None
 logger = get_logger(PATH)

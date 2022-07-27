@@ -5,9 +5,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..modules.embedder import Embedder
-from ..modules.transformer_block import TransformerBlock
-from .model_base import SpaceModelBase
+from modelscope.models.nlp.backbones.space.model.model_base import \
+    SpaceModelBase
+from modelscope.models.nlp.backbones.space.modules.embedder import Embedder
+from modelscope.models.nlp.backbones.space.modules.transformer_block import \
+    TransformerBlock
 
 
 class UnifiedTransformer(SpaceModelBase):

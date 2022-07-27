@@ -3,13 +3,14 @@
 import os
 from typing import Any, Dict
 
-from ...metainfo import Preprocessors
-from ...utils.config import Config
-from ...utils.constant import Fields, ModelFile
-from ...utils.type_assert import type_assert
-from ..base import Preprocessor
-from ..builder import PREPROCESSORS
-from .fields.gen_field import MultiWOZBPETextField
+from modelscope.metainfo import Preprocessors
+from modelscope.preprocessors.base import Preprocessor
+from modelscope.preprocessors.builder import PREPROCESSORS
+from modelscope.preprocessors.space.fields.gen_field import \
+    MultiWOZBPETextField
+from modelscope.utils.config import Config
+from modelscope.utils.constant import Fields, ModelFile
+from modelscope.utils.type_assert import type_assert
 
 __all__ = ['DialogModelingPreprocessor']
 

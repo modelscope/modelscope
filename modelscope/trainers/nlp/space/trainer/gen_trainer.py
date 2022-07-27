@@ -13,8 +13,9 @@ import torch
 from tqdm import tqdm
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
-from .....utils.nlp.space import ontology
-from ..metrics.metrics_tracker import MetricsTracker
+from modelscope.trainers.nlp.space.metrics.metrics_tracker import \
+    MetricsTracker
+from modelscope.utils.nlp.space import ontology
 
 
 def get_logger(log_path, name='default'):

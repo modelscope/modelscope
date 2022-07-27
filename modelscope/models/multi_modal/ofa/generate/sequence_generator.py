@@ -12,8 +12,9 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from ..generate import search
-from .ngram_repeat_block import NGramRepeatBlock
+from modelscope.models.multi_modal.ofa.generate import search
+from modelscope.models.multi_modal.ofa.generate.ngram_repeat_block import \
+    NGramRepeatBlock
 
 
 def _expand_mask(mask: torch.Tensor,

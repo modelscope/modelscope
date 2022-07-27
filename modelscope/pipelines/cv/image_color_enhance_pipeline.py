@@ -1,9 +1,6 @@
 from typing import Any, Dict, Optional, Union
 
-import cv2
-import numpy as np
 import torch
-from PIL import Image
 from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
@@ -11,13 +8,12 @@ from modelscope.models.base import Model
 from modelscope.models.cv.image_color_enhance.image_color_enhance import \
     ImageColorEnhance
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import (ImageColorEnhanceFinetunePreprocessor,
-                                      LoadImage, load_image)
-from modelscope.utils.constant import ModelFile, Tasks
+                                      LoadImage)
+from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 

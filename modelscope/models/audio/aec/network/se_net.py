@@ -2,10 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..layers.activations import RectifiedLinear, Sigmoid
-from ..layers.affine_transform import AffineTransform
-from ..layers.deep_fsmn import DeepFsmn
-from ..layers.uni_deep_fsmn import Conv2d, UniDeepFsmn
+from modelscope.models.audio.aec.layers.activations import (RectifiedLinear,
+                                                            Sigmoid)
+from modelscope.models.audio.aec.layers.affine_transform import AffineTransform
+from modelscope.models.audio.aec.layers.deep_fsmn import DeepFsmn
+from modelscope.models.audio.aec.layers.uni_deep_fsmn import (Conv2d,
+                                                              UniDeepFsmn)
 
 
 class MaskNet(nn.Module):

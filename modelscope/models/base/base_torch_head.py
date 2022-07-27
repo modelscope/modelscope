@@ -1,13 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path
-import re
-from typing import Dict, Optional, Union
+from typing import Dict
 
 import torch
-from torch import nn
 
-from ...utils.logger import get_logger
-from .base_head import Head
+from modelscope.models.base.base_head import Head
+from modelscope.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

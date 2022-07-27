@@ -273,7 +273,7 @@ class FillMaskPreprocessor(NLPPreprocessorBase):
         super().__init__(model_dir, *args, **kwargs)
 
     def build_tokenizer(self, model_dir):
-        from ..utils.hub import get_model_type
+        from modelscope.utils.hub import get_model_type
         model_type = get_model_type(model_dir)
         if model_type in ['sbert', 'structbert', 'bert']:
             from sofa import SbertTokenizer

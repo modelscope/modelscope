@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from ...utils.error import TENSORFLOW_IMPORT_WARNING
+from modelscope.utils.error import TENSORFLOW_IMPORT_WARNING
 from .backbones import *  # noqa F403
 from .bert_for_sequence_classification import *  # noqa F403
 from .heads import *  # noqa F403

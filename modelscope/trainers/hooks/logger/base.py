@@ -7,8 +7,8 @@ import numpy as np
 import torch
 
 from modelscope.trainers.hooks.hook import Hook
+from modelscope.trainers.hooks.priority import Priority
 from modelscope.utils.constant import ModeKeys
-from ..priority import Priority
 
 
 class LoggerHook(Hook):

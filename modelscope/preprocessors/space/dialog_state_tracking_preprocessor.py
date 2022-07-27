@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
 from typing import Any, Dict
 
+from modelscope.metainfo import Preprocessors
+from modelscope.preprocessors.base import Preprocessor
+from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
-from ...metainfo import Preprocessors
-from ..base import Preprocessor
-from ..builder import PREPROCESSORS
 from .dst_processors import convert_examples_to_features, multiwoz22Processor
 
 __all__ = ['DialogStateTrackingPreprocessor']

@@ -85,6 +85,13 @@ TASK_OUTPUTS = {
     # }
     Tasks.action_recognition: [OutputKeys.LABELS],
 
+    # video category recognition result for single video
+    # {
+    #       "scores": [0.7716429233551025]
+    #       "labels": ['生活>>好物推荐'],
+    # }
+    Tasks.video_category: [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # pose estimation result for single sample
     # {
     #   "poses": np.array with shape [num_pose, num_keypoint, 3],

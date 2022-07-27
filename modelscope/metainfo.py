@@ -76,6 +76,7 @@ class Pipelines(object):
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
+    video_category = 'video-category'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

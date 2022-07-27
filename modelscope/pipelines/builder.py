@@ -61,6 +61,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
+    Tasks.video_category: (Pipelines.video_category,
+                           'damo/cv_resnet50_video-category'),
     Tasks.multi_modal_embedding:
     (Pipelines.multi_modal_embedding,
      'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding'),

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .image_color_enhance_pipeline import ImageColorEnhancePipeline
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
+    from .video_category_pipeline import VideoCategoryPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .style_transfer_pipeline import StyleTransferPipeline
@@ -38,6 +39,7 @@ else:
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
+        'video_category_pipeline': ['VideoCategoryPipeline'],
     }
 
     import sys

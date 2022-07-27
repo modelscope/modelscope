@@ -24,6 +24,7 @@ class CVTasks(object):
     image_editing = 'image-editing'
     image_generation = 'image-generation'
     image_matting = 'image-matting'
+    image_denoise = 'image-denoise'
     ocr_detection = 'ocr-detection'
     action_recognition = 'action-recognition'
     video_embedding = 'video-embedding'

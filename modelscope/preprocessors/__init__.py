@@ -21,6 +21,7 @@ try:
     from .space.dialog_state_tracking_preprocessor import *  # noqa F403
     from .image import ImageColorEnhanceFinetunePreprocessor
     from .image import ImageInstanceSegmentationPreprocessor
+    from .image import ImageDenoisePreprocessor
 except ModuleNotFoundError as e:
     if str(e) == "No module named 'tensorflow'":
         print(TENSORFLOW_IMPORT_ERROR.format('tts'))

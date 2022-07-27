@@ -139,6 +139,31 @@ class ImageColorEnhanceFinetunePreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.image_denoie_preprocessor)
+class ImageDenoisePreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+        self.model_dir: str = model_dir
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data Dict[str, Any]
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        return data
+
+
+@PREPROCESSORS.register_module(
     Fields.cv,
     module_name=Preprocessors.image_instance_segmentation_preprocessor)
 class ImageInstanceSegmentationPreprocessor(Preprocessor):

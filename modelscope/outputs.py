@@ -74,6 +74,7 @@ TASK_OUTPUTS = {
     Tasks.image_editing: [OutputKeys.OUTPUT_IMG],
     Tasks.image_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.image_generation: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_denoise: [OutputKeys.OUTPUT_IMG],
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.face_image_generation: [OutputKeys.OUTPUT_IMG],
     Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],

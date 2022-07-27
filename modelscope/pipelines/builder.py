@@ -35,6 +35,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      ),  # TODO: revise back after passing the pr
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
+    Tasks.image_denoise: (Pipelines.image_denoise,
+                          'damo/cv_nafnet_image-denoise_sidd'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,
                                 'damo/bert-base-sst2'),
     Tasks.text_generation: (Pipelines.text_generation,

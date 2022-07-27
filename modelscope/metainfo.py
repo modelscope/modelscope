@@ -10,6 +10,7 @@ class Models(object):
         Model name should only contain model info but not task info.
     """
     # vision models
+    nafnet = 'nafnet'
     csrnet = 'csrnet'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
 
@@ -59,6 +60,7 @@ class Pipelines(object):
     """
     # vision tasks
     image_matting = 'unet-image-matting'
+    image_denoise = 'nafnet-image-denoise'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     action_recognition = 'TAdaConv_action-recognition'
@@ -132,6 +134,7 @@ class Preprocessors(object):
 
     # cv preprocessor
     load_image = 'load-image'
+    image_denoie_preprocessor = 'image-denoise-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
 
@@ -166,6 +169,9 @@ class Metrics(object):
 
     # accuracy
     accuracy = 'accuracy'
+
+    # metrics for image denoise task
+    image_denoise_metric = 'image-denoise-metric'
 
     # metric for image instance segmentation task
     image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'

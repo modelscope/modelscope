@@ -22,6 +22,7 @@ task_default_metrics = {
     Tasks.sentence_similarity: [Metrics.seq_cls_metric],
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
+    Tasks.image_denoise: [Metrics.image_denoise_metric],
     Tasks.image_color_enhance: [Metrics.image_color_enhance_metric]
 }
 

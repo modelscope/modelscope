@@ -22,6 +22,7 @@ except ModuleNotFoundError as e:
 
 try:
     from .multi_modal import OfaForImageCaptioning
+    from .cv import NAFNetForImageDenoise
     from .nlp import (BertForMaskedLM, BertForSequenceClassification,
                       SbertForNLI, SbertForSentenceSimilarity,
                       SbertForSentimentClassification,

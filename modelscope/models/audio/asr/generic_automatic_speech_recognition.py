@@ -20,8 +20,10 @@ class GenericAutomaticSpeechRecognition(Model):
         Args:
             model_dir (str): the model path.
             am_model_name (str): the am model name from configuration.json
+            model_config (Dict[str, Any]): the detail config about model from configuration.json
         """
-
+        super().__init__(model_dir, am_model_name, model_config, *args,
+                         **kwargs)
         self.model_cfg = {
             # the recognition model dir path
             'model_workspace': model_dir,

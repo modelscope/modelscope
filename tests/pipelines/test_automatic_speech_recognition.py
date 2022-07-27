@@ -1,15 +1,20 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
+import sys
 import tarfile
 import unittest
+from typing import Any, Dict, Union
 
+import numpy as np
 import requests
+import soundfile
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ColorCodes, Tasks
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.test_utils import download_and_untar, test_level
 
 logger = get_logger()
 
@@ -21,6 +26,9 @@ LITTLE_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AS
 AISHELL1_TESTSETS_FILE = 'aishell1.tar.gz'
 AISHELL1_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/aishell1.tar.gz'
 
+TFRECORD_TESTSETS_FILE = 'tfrecord.tar.gz'
+TFRECORD_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/tfrecord.tar.gz'
+
 
 def un_tar_gz(fname, dirs):
     t = tarfile.open(fname)
@@ -28,45 +36,168 @@ def un_tar_gz(fname, dirs):
 
 
 class AutomaticSpeechRecognitionTest(unittest.TestCase):
+    action_info = {
+        'test_run_with_wav_pytorch': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
+        'test_run_with_pcm_pytorch': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
+        'test_run_with_wav_tf': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
+        'test_run_with_pcm_tf': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
+        'test_run_with_wav_dataset_pytorch': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'dataset_example'
+        },
+        'test_run_with_wav_dataset_tf': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'dataset_example'
+        },
+        'test_run_with_ark_dataset': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'dataset_example'
+        },
+        'test_run_with_tfrecord_dataset': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'dataset_example'
+        },
+        'dataset_example': {
+            'Wrd': 49532,  # the number of words
+            'Snt': 5000,  # the number of sentences
+            'Corr': 47276,  # the number of correct words
+            'Ins': 49,  # the number of insert words
+            'Del': 152,  # the number of delete words
+            'Sub': 2207,  # the number of substitution words
+            'wrong_words': 2408,  # the number of wrong words
+            'wrong_sentences': 1598,  # the number of wrong sentences
+            'Err': 4.86,  # WER/CER
+            'S.Err': 31.96  # SER
+        },
+        'wav_example': {
+            'text': '每一天都要快乐喔'
+        }
+    }
 
     def setUp(self) -> None:
-        self._am_model_id = 'damo/speech_paraformer_asr_nat-aishell1-pytorch'
+        self.am_pytorch_model_id = 'damo/speech_paraformer_asr_nat-aishell1-pytorch'
+        self.am_tf_model_id = 'damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1'
         # this temporary workspace dir will store waveform files
-        self._workspace = os.path.join(os.getcwd(), '.tmp')
-        if not os.path.exists(self._workspace):
-            os.mkdir(self._workspace)
+        self.workspace = os.path.join(os.getcwd(), '.tmp')
+        if not os.path.exists(self.workspace):
+            os.mkdir(self.workspace)
+
+    def tearDown(self) -> None:
+        # remove workspace dir (.tmp)
+        shutil.rmtree(self.workspace, ignore_errors=True)
+
+    def run_pipeline(self, model_id: str,
+                     audio_in: Union[str, bytes]) -> Dict[str, Any]:
+        inference_16k_pipline = pipeline(
+            task=Tasks.auto_speech_recognition, model=model_id)
+
+        rec_result = inference_16k_pipline(audio_in)
+
+        return rec_result
+
+    def log_error(self, functions: str, result: Dict[str, Any]) -> None:
+        logger.error(ColorCodes.MAGENTA + functions + ': FAILED.'
+                     + ColorCodes.END)
+        logger.error(
+            ColorCodes.MAGENTA + functions + ' correct result example:'
+            + ColorCodes.YELLOW
+            + str(self.action_info[self.action_info[functions]['example']])
+            + ColorCodes.END)
+
+        raise ValueError('asr result is mismatched')
+
+    def check_result(self, functions: str, result: Dict[str, Any]) -> None:
+        if result.__contains__(self.action_info[functions]['checking_item']):
+            logger.info(ColorCodes.MAGENTA + functions + ': SUCCESS.'
+                        + ColorCodes.END)
+            logger.info(
+                ColorCodes.YELLOW
+                + str(result[self.action_info[functions]['checking_item']])
+                + ColorCodes.END)
+        else:
+            self.log_error(functions, result)
+
+    def wav2bytes(self, wav_file) -> bytes:
+        audio, fs = soundfile.read(wav_file)
+
+        # float32 -> int16
+        audio = np.asarray(audio)
+        dtype = np.dtype('int16')
+        i = np.iinfo(dtype)
+        abs_max = 2**(i.bits - 1)
+        offset = i.min + abs_max
+        audio = (audio * abs_max + offset).clip(i.min, i.max).astype(dtype)
+
+        # int16(PCM_16) -> byte
+        audio = audio.tobytes()
+        return audio
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_wav(self):
+    def test_run_with_wav_pytorch(self):
         '''run with single waveform file
         '''
 
-        logger.info('Run ASR test with waveform file ...')
+        logger.info('Run ASR test with waveform file (pytorch)...')
 
         wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
 
-        inference_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=[self._am_model_id])
-        self.assertTrue(inference_16k_pipline is not None)
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=wav_file_path)
+        self.check_result('test_run_with_wav_pytorch', rec_result)
 
-        rec_result = inference_16k_pipline(wav_file_path)
-        self.assertTrue(len(rec_result['rec_result']) > 0)
-        self.assertTrue(rec_result['rec_result'] != 'None')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_pcm_pytorch(self):
+        '''run with wav data
         '''
-           result structure:
-           {
-               'rec_result': '每一天都要快乐喔'
-           }
-           or
-           {
-               'rec_result': 'None'
-           }
+
+        logger.info('Run ASR test with wav data (pytorch)...')
+
+        audio = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=audio)
+        self.check_result('test_run_with_pcm_pytorch', rec_result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_wav_tf(self):
+        '''run with single waveform file
         '''
-        logger.info('test_run_with_wav rec result: '
-                    + rec_result['rec_result'])
+
+        logger.info('Run ASR test with waveform file (tensorflow)...')
+
+        wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=wav_file_path)
+        self.check_result('test_run_with_wav_tf', rec_result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_pcm_tf(self):
+        '''run with wav data
+        '''
+
+        logger.info('Run ASR test with wav data (tensorflow)...')
+
+        audio = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=audio)
+        self.check_result('test_run_with_pcm_tf', rec_result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_with_wav_dataset(self):
+    def test_run_with_wav_dataset_pytorch(self):
         '''run with datasets, and audio format is waveform
            datasets directory:
              <dataset_path>
@@ -84,57 +215,48 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                  data.text  # hypothesis text
         '''
 
-        logger.info('Run ASR test with waveform dataset ...')
+        logger.info('Run ASR test with waveform dataset (pytorch)...')
         logger.info('Downloading waveform testsets file ...')
 
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self._workspace,
-                                          LITTLE_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(LITTLE_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
+        dataset_path = download_and_untar(
+            os.path.join(self.workspace, LITTLE_TESTSETS_FILE),
+            LITTLE_TESTSETS_URL, self.workspace)
+        dataset_path = os.path.join(dataset_path, 'wav', 'test')
 
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(
-                os.path.splitext(
-                    os.path.basename(LITTLE_TESTSETS_FILE))[0]))[0]
-        # dataset_path = <cwd>/.tmp/data_aishell/wav/test
-        dataset_path = os.path.join(self._workspace, testsets_dir_name, 'wav',
-                                    'test')
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=dataset_path)
+        self.check_result('test_run_with_wav_dataset_pytorch', rec_result)
 
-        # untar the dataset_path file
-        if not os.path.exists(dataset_path):
-            un_tar_gz(testsets_file_path, self._workspace)
-
-        inference_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=[self._am_model_id])
-        self.assertTrue(inference_16k_pipline is not None)
-
-        rec_result = inference_16k_pipline(wav_path=dataset_path)
-        self.assertTrue(len(rec_result['datasets_result']) > 0)
-        self.assertTrue(rec_result['datasets_result']['Wrd'] > 0)
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_wav_dataset_tf(self):
+        '''run with datasets, and audio format is waveform
+           datasets directory:
+             <dataset_path>
+               wav
+                 test   # testsets
+                   xx.wav
+                   ...
+                 dev    # devsets
+                   yy.wav
+                   ...
+                 train  # trainsets
+                   zz.wav
+                   ...
+               transcript
+                 data.text  # hypothesis text
         '''
-           result structure:
-           {
-               'rec_result': 'None',
-               'datasets_result':
-                   {
-                       'Wrd': 1654,           # the number of words
-                       'Snt': 128,            # the number of sentences
-                       'Corr': 1573,          # the number of correct words
-                       'Ins': 1,              # the number of insert words
-                       'Del': 1,              # the number of delete words
-                       'Sub': 80,             # the number of substitution words
-                       'wrong_words': 82,     # the number of wrong words
-                       'wrong_sentences': 47, # the number of wrong sentences
-                       'Err': 4.96,           # WER/CER
-                       'S.Err': 36.72         # SER
-                   }
-            }
-        '''
-        logger.info('test_run_with_wav_dataset datasets result: ')
-        logger.info(rec_result['datasets_result'])
+
+        logger.info('Run ASR test with waveform dataset (tensorflow)...')
+        logger.info('Downloading waveform testsets file ...')
+
+        dataset_path = download_and_untar(
+            os.path.join(self.workspace, LITTLE_TESTSETS_FILE),
+            LITTLE_TESTSETS_URL, self.workspace)
+        dataset_path = os.path.join(dataset_path, 'wav', 'test')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=dataset_path)
+        self.check_result('test_run_with_wav_dataset_tf', rec_result)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_ark_dataset(self):
@@ -155,56 +277,40 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                  data.text
         '''
 
-        logger.info('Run ASR test with ark dataset ...')
+        logger.info('Run ASR test with ark dataset (pytorch)...')
         logger.info('Downloading ark testsets file ...')
 
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self._workspace,
-                                          AISHELL1_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(AISHELL1_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
+        dataset_path = download_and_untar(
+            os.path.join(self.workspace, AISHELL1_TESTSETS_FILE),
+            AISHELL1_TESTSETS_URL, self.workspace)
+        dataset_path = os.path.join(dataset_path, 'test')
 
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(
-                os.path.splitext(
-                    os.path.basename(AISHELL1_TESTSETS_FILE))[0]))[0]
-        # dataset_path = <cwd>/.tmp/aishell1/test
-        dataset_path = os.path.join(self._workspace, testsets_dir_name, 'test')
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=dataset_path)
+        self.check_result('test_run_with_ark_dataset', rec_result)
 
-        # untar the dataset_path file
-        if not os.path.exists(dataset_path):
-            un_tar_gz(testsets_file_path, self._workspace)
-
-        inference_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=[self._am_model_id])
-        self.assertTrue(inference_16k_pipline is not None)
-
-        rec_result = inference_16k_pipline(wav_path=dataset_path)
-        self.assertTrue(len(rec_result['datasets_result']) > 0)
-        self.assertTrue(rec_result['datasets_result']['Wrd'] > 0)
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_tfrecord_dataset(self):
+        '''run with datasets, and audio format is tfrecord
+           datasets directory:
+             <dataset_path>
+               test   # testsets
+                 data.records
+                 data.idx
+                 data.text
         '''
-           result structure:
-           {
-               'rec_result': 'None',
-               'datasets_result':
-                   {
-                       'Wrd': 104816,           # the number of words
-                       'Snt': 7176,             # the number of sentences
-                       'Corr': 99327,           # the number of correct words
-                       'Ins': 104,              # the number of insert words
-                       'Del': 155,              # the number of delete words
-                       'Sub': 5334,             # the number of substitution words
-                       'wrong_words': 5593,     # the number of wrong words
-                       'wrong_sentences': 2898, # the number of wrong sentences
-                       'Err': 5.34,             # WER/CER
-                       'S.Err': 40.38           # SER
-                   }
-            }
-        '''
-        logger.info('test_run_with_ark_dataset datasets result: ')
-        logger.info(rec_result['datasets_result'])
+
+        logger.info('Run ASR test with tfrecord dataset (tensorflow)...')
+        logger.info('Downloading tfrecord testsets file ...')
+
+        dataset_path = download_and_untar(
+            os.path.join(self.workspace, TFRECORD_TESTSETS_FILE),
+            TFRECORD_TESTSETS_URL, self.workspace)
+        dataset_path = os.path.join(dataset_path, 'test')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=dataset_path)
+        self.check_result('test_run_with_tfrecord_dataset', rec_result)
 
 
 if __name__ == '__main__':

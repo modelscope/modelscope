@@ -3,7 +3,7 @@
 from modelscope.utils.error import TENSORFLOW_IMPORT_ERROR
 
 try:
-    from .asr.asr_inference_pipeline import AutomaticSpeechRecognitionPipeline
+    from .asr_inference_pipeline import AutomaticSpeechRecognitionPipeline
     from .kws_kwsbp_pipeline import *  # noqa F403
     from .linear_aec_pipeline import LinearAECPipeline
 except ModuleNotFoundError as e:

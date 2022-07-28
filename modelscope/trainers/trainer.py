@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path
+import os
 import random
 import time
 from collections.abc import Mapping
@@ -32,12 +32,15 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Hubs, ModeKeys,
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.tensor_utils import torch_default_data_collator
-from modelscope.utils.torch_utils import create_device, get_dist_info
+from modelscope.utils.torch_utils import (broadcast, create_device,
+                                          get_dist_info, init_dist)
 from modelscope.utils.utils import if_func_receive_dict_inputs
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
 from .hooks.hook import Hook
+from .parallel.builder import build_parallel
+from .parallel.utils import is_parallel
 
 
 @TRAINERS.register_module()
@@ -150,11 +153,16 @@ class EpochBasedTrainer(BaseTrainer):
         # TODO @wenmeng.zwm add seed init fn
         self._seed = 0
 
+        if kwargs.get('launcher', None) is not None:
+            init_dist(kwargs['launcher'])
+
         self._dist = get_dist_info()[1] > 1
 
         # model placement
         if self.device.type == 'cuda':
             self.model.to(self.device)
+            if not is_parallel(self.model) and self._dist:
+                self.model = self.to_parallel(self.model)
 
     @property
     def mode(self):
@@ -287,7 +295,10 @@ class EpochBasedTrainer(BaseTrainer):
             self.train_dataloader = self.get_train_dataloader()
         else:
             self.train_dataloader = self._build_dataloader_with_dataset(
-                self.train_dataset, **self.cfg.train.get('dataloader', {}))
+                self.train_dataset,
+                dist=self._dist,
+                seed=self._seed,
+                **self.cfg.train.get('dataloader', {}))
         self.data_loader = self.train_dataloader
 
         self.register_optimizers_hook()
@@ -303,15 +314,21 @@ class EpochBasedTrainer(BaseTrainer):
             self.eval_dataloader = self.get_eval_data_loader()
         else:
             self.eval_dataloader = self._build_dataloader_with_dataset(
-                self.eval_dataset, **self.cfg.evaluation.get('dataloader', {}))
+                self.eval_dataset,
+                dist=self._dist,
+                seed=self._seed,
+                **self.cfg.evaluation.get('dataloader', {}))
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
         self.evaluation_loop(self.eval_dataloader, checkpoint_path,
                              metric_classes)
-
+        rank, world_size = get_dist_info()
         metric_values = {}
-        for metric_cls in metric_classes:
-            metric_values.update(metric_cls.evaluate())
+        if rank == 0:
+            for metric_cls in metric_classes:
+                metric_values.update(metric_cls.evaluate())
+        if world_size > 1:
+            metric_values = broadcast(metric_values, 0)
         return metric_values
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -327,6 +344,20 @@ class EpochBasedTrainer(BaseTrainer):
             return model.model
         elif isinstance(model, nn.Module):
             return model
+
+    def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
+        # config format to reserve custom ddp
+        if self.cfg.get('parallel', None) is not None:
+            self.cfg.parallel.update(
+                dict(module=model, device_ids=[torch.cuda.current_device()]))
+            return build_parallel(self.cfg.parallel)
+
+        dp_cfg = dict(
+            type='DistributedDataParallel',
+            module=model,
+            device_ids=[torch.cuda.current_device()])
+
+        return build_parallel(dp_cfg)
 
     def collate_fn(self, data):
         """Prepare the input just before the forward function.
@@ -378,8 +409,9 @@ class EpochBasedTrainer(BaseTrainer):
         self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
         # call model forward but not __call__ to skip postprocess
-        if isinstance(inputs, Mapping) and not if_func_receive_dict_inputs(
-                model.forward, inputs):
+        if isinstance(
+                inputs,
+                Mapping) and not if_func_receive_dict_inputs(model.forward):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)
@@ -444,7 +476,10 @@ class EpochBasedTrainer(BaseTrainer):
                 train_data, mode=ModeKeys.TRAIN)
 
         data_loader = self._build_dataloader_with_dataset(
-            self.train_dataset, **self.cfg.train.get('dataloader', {}))
+            self.train_dataset,
+            dist=self._dist,
+            seed=self._seed,
+            **self.cfg.train.get('dataloader', {}))
         return data_loader
 
     def get_eval_data_loader(self):
@@ -594,7 +629,7 @@ class EpochBasedTrainer(BaseTrainer):
 
         if dist:
             sampler = DistributedSampler(
-                dataset, world_size, rank, shuffle=shuffle, seed=seed)
+                dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:
             sampler = None
 

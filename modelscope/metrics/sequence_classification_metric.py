@@ -24,7 +24,7 @@ class SequenceClassificationMetric(Metric):
         self.labels = []
 
     def add(self, outputs: Dict, inputs: Dict):
-        ground_truths = inputs[SequenceClassificationMetric.label_name]
+        ground_truths = inputs[self.label_name]
         eval_results = outputs[OutputKeys.LOGITS]
         self.preds.append(
             torch_nested_numpify(torch_nested_detach(eval_results)))

@@ -1,11 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Following code is partialy borrowed from openmmlab/mmcv
-
 import functools
 import os
+import pickle
 import socket
 import subprocess
-from collections import OrderedDict
+import tempfile
 from typing import Callable, List, Optional, Tuple
 
 import torch
@@ -116,6 +116,11 @@ def get_dist_info() -> Tuple[int, int]:
     return rank, world_size
 
 
+def is_master():
+    rank, _ = get_dist_info()
+    return rank == 0
+
+
 def master_only(func: Callable) -> Callable:
 
     @functools.wraps(func)
@@ -136,3 +141,53 @@ def create_device(cpu: bool = False) -> torch.DeviceObjType:
         device = torch.device('cpu')
 
     return device
+
+
+def make_tmp_dir():
+    """Make sure each rank has the same temporary directory on the distributed mode.
+    """
+    rank, world_size = get_dist_info()
+    if world_size <= 1:
+        return tempfile.mkdtemp()
+
+    tmpdir = None
+    if rank == 0:
+        tmpdir = tempfile.mkdtemp()
+
+    dist.barrier()
+    tmpdir = broadcast(tmpdir, 0)
+
+    return tmpdir
+
+
+def broadcast(inputs, src):
+    """
+    Broadcasts the inputs to all ranks.
+
+    Arguments:
+        inputs : Any objects that can be serialized by pickle.
+        src (int): Source rank.
+    Returns:
+        Each rank returns the same value as src.
+    """
+    rank, _ = get_dist_info()
+    shape_tensor = torch.tensor([0], device='cuda')
+
+    if rank == src:
+        inputs_tensor = torch.tensor(
+            bytearray(pickle.dumps(inputs)), dtype=torch.uint8, device='cuda')
+        shape_tensor = torch.tensor(inputs_tensor.shape, device='cuda')
+
+    dist.barrier()
+    dist.broadcast(shape_tensor, src)
+
+    if rank != src:
+        inputs_tensor = torch.full((shape_tensor.item(), ),
+                                   0,
+                                   dtype=torch.uint8,
+                                   device='cuda')
+
+    dist.barrier()
+    dist.broadcast(inputs_tensor, src)
+
+    return pickle.loads(inputs_tensor.cpu().numpy().tobytes())

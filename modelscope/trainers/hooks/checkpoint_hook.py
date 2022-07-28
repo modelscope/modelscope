@@ -5,7 +5,7 @@ from modelscope import __version__
 from modelscope.utils.checkpoint import save_checkpoint
 from modelscope.utils.constant import LogKeys
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import get_dist_info
+from modelscope.utils.torch_utils import is_master
 from .builder import HOOKS
 from .hook import Hook
 from .priority import Priority
@@ -47,15 +47,18 @@ class CheckpointHook(Hook):
         else:
             self.logger = trainer.logger
 
-        self.logger.info(f'Checkpoints will be saved to {self.save_dir}')
+        if is_master():
+            self.logger.info(f'Checkpoints will be saved to {self.save_dir}')
 
     def after_train_epoch(self, trainer):
         if not self.by_epoch:
             return
 
         if self._should_save(trainer):
-            self.logger.info(f'Saving checkpoint at {trainer.epoch + 1} epoch')
-            self._save_checkpoint(trainer)
+            if is_master():
+                self.logger.info(
+                    f'Saving checkpoint at {trainer.epoch + 1} epoch')
+                self._save_checkpoint(trainer)
 
     def _save_checkpoint(self, trainer):
         if self.by_epoch:
@@ -65,18 +68,17 @@ class CheckpointHook(Hook):
             cur_save_name = os.path.join(
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
-        rank, _ = get_dist_info()
-        if rank == 0:
-            save_checkpoint(trainer.model, cur_save_name, trainer.optimizer)
+        save_checkpoint(trainer.model, cur_save_name, trainer.optimizer)
 
     def after_train_iter(self, trainer):
         if self.by_epoch:
             return
 
         if self._should_save(trainer):
-            self.logger.info(
-                f'Saving checkpoint at {trainer.iter + 1} iterations')
-            self._save_checkpoint(trainer)
+            if is_master():
+                self.logger.info(
+                    f'Saving checkpoint at {trainer.iter + 1} iterations')
+                self._save_checkpoint(trainer)
 
     def _should_save(self, trainer):
         if self.by_epoch:

@@ -11,7 +11,7 @@ from torch import distributed as dist
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.logger.base import LoggerHook
 from modelscope.utils.constant import LogKeys, ModeKeys
-from modelscope.utils.torch_utils import get_dist_info
+from modelscope.utils.torch_utils import get_dist_info, is_master
 
 
 @HOOKS.register_module()
@@ -130,7 +130,8 @@ class TextLoggerHook(LoggerHook):
             log_items.append(f'{name}: {val}')
         log_str += ', '.join(log_items)
 
-        trainer.logger.info(log_str)
+        if is_master():
+            trainer.logger.info(log_str)
 
     def _dump_log(self, log_dict):
         # dump log in json format
@@ -138,8 +139,7 @@ class TextLoggerHook(LoggerHook):
         for k, v in log_dict.items():
             json_log[k] = self._round_float(v)
 
-        rank, _ = get_dist_info()
-        if rank == 0:
+        if is_master():
             with open(self.json_log_path, 'a+') as f:
                 json.dump(json_log, f)
                 f.write('\n')

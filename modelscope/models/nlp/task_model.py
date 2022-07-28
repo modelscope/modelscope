@@ -424,7 +424,7 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         """default forward method is the backbone-only forward"""
-        if if_func_receive_dict_inputs(self.backbone.forward, input):
+        if if_func_receive_dict_inputs(self.backbone.forward):
             outputs = self.backbone.forward(input)
         else:
             outputs = self.backbone.forward(**input)
@@ -472,13 +472,13 @@ class EncoderDecoderTaskModelBase(BaseTaskModel):
         return getattr(self, self._decoder_prefix)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        if if_func_receive_dict_inputs(self.encoder_.forward, input):
+        if if_func_receive_dict_inputs(self.encoder_.forward):
             encoder_outputs = self.encoder_.forward(input)
         else:
             encoder_outputs = self.encoder_.forward(**input)
         decoder_inputs = self.project_decoder_inputs_and_mediate(
             input, encoder_outputs)
-        if if_func_receive_dict_inputs(self.decoder_.forward, input):
+        if if_func_receive_dict_inputs(self.decoder_.forward):
             outputs = self.decoder_.forward(decoder_inputs)
         else:
             outputs = self.decoder_.forward(**decoder_inputs)

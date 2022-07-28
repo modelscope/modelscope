@@ -3,7 +3,6 @@
 import os
 import pickle
 import shutil
-import tempfile
 import time
 from collections.abc import Mapping
 
@@ -11,8 +10,7 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
-from modelscope.models.base import Model
-from modelscope.utils.torch_utils import get_dist_info
+from modelscope.utils.torch_utils import get_dist_info, is_master, make_tmp_dir
 from modelscope.utils.utils import if_func_receive_dict_inputs
 
 
@@ -40,7 +38,7 @@ def single_gpu_test(model,
             with torch.no_grad():
                 if isinstance(data,
                               Mapping) and not if_func_receive_dict_inputs(
-                                  model.forward, data):
+                                  model.forward):
 
                     result = model(**data)
                 else:
@@ -82,25 +80,28 @@ def multi_gpu_test(model,
     """
     model.eval()
     results = []
+    data_list = []
     dataset = data_loader.dataset
 
     time.sleep(2)  # This line can prevent deadlock problem in some cases.
+
+    rank, world_size = get_dist_info()
 
     count = 0
     with tqdm(total=len(dataset), desc='test samples with multi gpus') as pbar:
         for _, data in enumerate(data_loader):
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
+            data_list.append(data)
             with torch.no_grad():
                 if isinstance(data,
                               Mapping) and not if_func_receive_dict_inputs(
-                                  model.forward, data):
+                                  model.forward):
                     result = model(**data)
                 else:
                     result = model(data)
-            results.extend(result)
+            results.append(result)
 
-            rank, world_size = get_dist_info()
             if rank == 0:
                 batch_size = len(result)
                 batch_size_all = batch_size * world_size
@@ -110,15 +111,26 @@ def multi_gpu_test(model,
                 for _ in range(batch_size_all):
                     pbar.update()
 
-    # collect results from all ranks
+    # TODO: allgather data list may cost a lot of memory and needs to be redesigned
+    # collect results and data from all ranks
     if gpu_collect:
         results = collect_results_gpu(results, len(dataset))
+        data_list = collect_results_gpu(data_list, len(dataset))
     else:
-        results = collect_results_cpu(results, len(dataset), tmpdir)
-    ground_truths = [dataset[i] for i in range(len(dataset))]
-    if metric_classes is not None:
-        for metric_cls in metric_classes:
-            metric_cls.add(results, ground_truths)
+        if tmpdir is None:
+            tmpdir = make_tmp_dir()
+        results = collect_results_cpu(results, len(dataset),
+                                      os.path.join(tmpdir, 'predict'))
+        data_list = collect_results_cpu(data_list, len(dataset),
+                                        os.path.join(tmpdir, 'groundtruth'))
+
+    if is_master():
+        assert len(data_list) == len(
+            results), f'size mismatch {len(data_list)} and {len(results)}'
+        if metric_classes is not None:
+            for i in range(len(data_list)):
+                for metric_cls in metric_classes:
+                    metric_cls.add(results[i], data_list[i])
 
 
 def collect_results_cpu(result_part, size, tmpdir=None):
@@ -140,13 +152,15 @@ def collect_results_cpu(result_part, size, tmpdir=None):
         list: The collected results.
     """
     rank, world_size = get_dist_info()
-    # TODO create a random tmp dir if it is not specified
     if tmpdir is None:
-        tmpdir = tempfile.gettempdir()
-    if not os.path.exists(tmpdir):
+        tmpdir = make_tmp_dir()
+    if not os.path.exists(tmpdir) and is_master():
         os.makedirs(tmpdir)
+    dist.barrier()
+
     # dump the part result to the dir
-    pickle.dump(result_part, os.path.join(tmpdir, f'part_{rank}.pkl'))
+    with open(os.path.join(tmpdir, f'part_{rank}.pkl'), 'wb') as f:
+        pickle.dump(result_part, f)
     dist.barrier()
     # collect all parts
     if rank != 0:
@@ -156,7 +170,8 @@ def collect_results_cpu(result_part, size, tmpdir=None):
         part_list = []
         for i in range(world_size):
             part_file = os.path.join(tmpdir, f'part_{i}.pkl')
-            part_result = pickle.load(part_file)
+            with open(part_file, 'rb') as f:
+                part_result = pickle.load(f)
             # When data is severely insufficient, an empty part_result
             # on a certain gpu could makes the overall outputs empty.
             if part_result:

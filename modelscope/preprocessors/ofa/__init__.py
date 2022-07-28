@@ -1,0 +1,8 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+from .image_captioning import OfaImageCaptioningPreprocessor
+from .image_classification import OfaImageClassificationPreprocessor
+from .summarization import OfaSummarizationPreprocessor
+from .text_classification import OfaTextClassificationPreprocessor
+from .visual_entailment import OfaVisualEntailmentPreprocessor
+from .visual_grounding import OfaVisualGroundingPreprocessor
+from .visual_question_answering import OfaVisualQuestionAnsweringPreprocessor

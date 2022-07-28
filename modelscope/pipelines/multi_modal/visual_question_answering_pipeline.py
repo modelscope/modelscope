@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, Optional, Union
 
 import torch
@@ -30,15 +31,18 @@ class VisualQuestionAnsweringPipeline(Pipeline):
             model (MPlugForVisualQuestionAnswering): a model instance
             preprocessor (MPlugVisualQuestionAnsweringPreprocessor): a preprocessor instance
         """
-        model = model if isinstance(
-            model,
-            MPlugForVisualQuestionAnswering) else Model.from_pretrained(model)
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
+        self.tokenizer = None
         if preprocessor is None:
             preprocessor = MPlugVisualQuestionAnsweringPreprocessor(
                 model.model_dir)
-        model.eval()
+        if isinstance(model, MPlugForVisualQuestionAnswering):
+            model.eval()
+            self.tokenizer = model.tokenizer
+        else:
+            model.model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.tokenizer = model.tokenizer
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -55,6 +59,8 @@ class VisualQuestionAnsweringPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
+        if self.tokenizer is None:
+            return inputs
         replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
                                ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
                                ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))

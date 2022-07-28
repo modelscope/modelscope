@@ -194,13 +194,6 @@ class SequenceGenerator(nn.Module):
         bos_token: Optional[int] = None,
     ):
         model = EnsembleModel(models)
-        # incremental_states = torch.jit.annotate(
-        #     List[Dict[str, Dict[str, Optional[Tensor]]]],
-        #     [
-        #         torch.jit.annotate(Dict[str, Dict[str, Optional[Tensor]]], {})
-        #         for i in range(model.models_size)
-        #     ],
-        # )
         incremental_states = torch.jit.annotate(
             List[Tuple[Tuple[torch.Tensor]]],
             [
@@ -208,8 +201,6 @@ class SequenceGenerator(nn.Module):
                 for i in range(model.models_size)
             ],
         )
-        # print("incremental_states",incremental_states)
-        # print("incremental_states[0]",incremental_states[0])
         net_input = sample['net_input']
 
         if 'src_tokens' in net_input:
@@ -281,7 +272,6 @@ class SequenceGenerator(nn.Module):
         tokens = (torch.zeros(bsz * beam_size,
                               max_len + 2).to(src_tokens).long().fill_(
                                   self.pad))  # +2 for eos and pad
-        # tokens[:, 0] = self.eos if bos_token is None else bos_token
         tokens[:, 0] = self.bos
         attn: Optional[Tensor] = None
 
@@ -335,7 +325,7 @@ class SequenceGenerator(nn.Module):
                         corr.unsqueeze(-1) * beam_size)
                     original_batch_idxs = original_batch_idxs[batch_idxs]
                 model.reorder_incremental_state(incremental_states,
-                                                reorder_state)  # todo
+                                                reorder_state)
                 encoder_outs = model.reorder_encoder_out(
                     encoder_outs, reorder_state)
 
@@ -479,7 +469,6 @@ class SequenceGenerator(nn.Module):
                 batch_mask = torch.ones(
                     bsz, dtype=torch.bool, device=cand_indices.device)
                 batch_mask[finalized_sents] = False
-                # TODO replace `nonzero(as_tuple=False)` after TorchScript supports it
                 batch_idxs = torch.arange(
                     bsz, device=cand_indices.device).masked_select(batch_mask)
 
@@ -833,7 +822,7 @@ class EnsembleModel(nn.Module):
 
             # decode each model
             if self.has_incremental_states():
-                decoder_out = model.decoder.forward(  # todo 模型输入不同
+                decoder_out = model.decoder.forward(
                     input_ids=tokens,
                     attention_mask=attention_mask,
                     encoder_hidden_states=encoder_hidden_states,
@@ -846,7 +835,7 @@ class EnsembleModel(nn.Module):
             else:
                 if hasattr(model, 'decoder'):
                     # decoder_out = model.decoder.forward(tokens, code_masks=code_mask, encoder_out=encoder_out)
-                    decoder_out = model.decoder.forward(  # todo 模型输入不同
+                    decoder_out = model.decoder.forward(
                         input_ids=tokens,
                         attention_mask=attention_mask,
                         encoder_hidden_states=encoder_hidden_states,
@@ -855,43 +844,15 @@ class EnsembleModel(nn.Module):
                         src_pos_embed=src_pos_embed)
                 else:
                     decoder_out = model.forward(tokens)
-            # print('#### decoder_out ####', decoder_out)
-            # print('#### decoder_out ####', decoder_out.keys())
-            # for k,v in decoder_out.items():
-            #     print(k)
-            #     if isinstance(v, Tensor):
-            #         print(v.shape)
-            #     elif k == "past_key_values":
-            #         print(len(v))
-            #         print([v[0][i].shape for i in range(len(v[0]))])
-            #     else:
-            #         print(len(v))
-            #         print([v[i].shape for i in range(len(v))])
 
             attn: Optional[Tensor] = None
             decoder_len = len(decoder_out)
-            # if decoder_len > 1 and decoder_out[1] is not None:
-            #     if isinstance(decoder_out[1], Tensor):
-            #         attn = decoder_out[1]
-            #     else:
-            #         attn_holder = decoder_out[1]["attn"]
-            #         if isinstance(attn_holder, Tensor):
-            #             attn = attn_holder
-            #         elif attn_holder is not None:
-            #             attn = attn_holder[0]
-            #     if attn is not None:
-            #         attn = attn[:, -1, :]
 
             if 'cross_attentions' in decoder_out:
                 attn = decoder_out['cross_attentions'][-1].transpose(1, 0)
                 attn = attn.mean(dim=0)  # (B, tgt_len, src_len)
                 if attn is not None:
                     attn = attn[:, -1, :]
-
-            # decoder_out_tuple = (
-            #     decoder_out[0][:, -1:, :].div_(temperature),
-            #     None if decoder_len <= 1 else decoder_out[1],
-            # )
 
             decoder_out_tuple = (
                 decoder_out[0][:, -1:, :].div_(temperature),
@@ -993,5 +954,5 @@ class EnsembleModel(nn.Module):
         if not self.has_incremental_states():
             return
         for i, model in enumerate(self.models):
-            model.decoder.reorder_incremental_state_scripting(  # todo
+            model.decoder.reorder_incremental_state_scripting(
                 incremental_states[i], new_order)

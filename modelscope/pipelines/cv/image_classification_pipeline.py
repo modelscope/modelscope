@@ -1,4 +1,5 @@
-from typing import Any, Dict
+# Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import Any, Dict, Union
 
 import cv2
 import numpy as np
@@ -7,14 +8,39 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input
-from modelscope.preprocessors import load_image
+from modelscope.pipelines.base import Input, Model, Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import OfaPreprocessor, Preprocessor, load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
+
+
+@PIPELINES.register_module(
+    Tasks.image_classification, module_name=Pipelines.image_classification)
+class ImageClassificationPipeline(Pipeline):
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: [Preprocessor] = None,
+                 **kwargs):
+        super().__init__(model=model)
+        assert isinstance(model, str) or isinstance(model, Model), \
+            'model must be a single str or OfaForAllTasks'
+        if isinstance(model, str):
+            pipe_model = Model.from_pretrained(model)
+        elif isinstance(model, Model):
+            pipe_model = model
+        else:
+            raise NotImplementedError
+        pipe_model.model.eval()
+        if preprocessor is None and pipe_model:
+            preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
+        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+
+    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return inputs
 
 
 @PIPELINES.register_module(
@@ -27,7 +53,7 @@ class GeneralImageClassificationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        use `model` and `preprocessor` to create a image classification pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

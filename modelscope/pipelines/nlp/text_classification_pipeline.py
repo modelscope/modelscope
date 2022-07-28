@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Model, Pipeline
@@ -12,15 +12,15 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_captioning, module_name=Pipelines.image_captioning)
-class ImageCaptioningPipeline(Pipeline):
+    Tasks.text_classification, module_name=Pipelines.text_classification)
+class TextClassificationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: Optional[Preprocessor] = None,
+                 preprocessor: [Preprocessor] = None,
                  **kwargs):
         """
-        use `model` and `preprocessor` to create a image captioning pipeline for prediction
+        use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

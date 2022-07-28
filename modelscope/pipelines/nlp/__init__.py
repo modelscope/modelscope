@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
+    from .summarization_pipeline import SummarizationPipeline
+    from .text_classification_pipeline import TextClassificationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
 
 else:
@@ -38,6 +40,8 @@ else:
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
+        'summarization_pipeline': ['SummarizationPipeline'],
+        'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline']
     }
 

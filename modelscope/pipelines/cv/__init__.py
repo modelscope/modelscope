@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_tryon_pipeline import VirtualTryonPipeline
+    from .image_classification_pipeline import ImageClassificationPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -33,7 +34,7 @@ else:
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],
         'image_classification_pipeline':
-        ['GeneralImageClassificationPipeline'],
+        ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],

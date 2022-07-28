@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from .mmr import VideoCLIPForMultiModalEmbedding
     from .mplug_for_visual_question_answering import \
         MPlugForVisualQuestionAnswering
-    from .ofa_for_image_captioning_model import OfaForImageCaptioning
 
 else:
     _import_structure = {
@@ -21,7 +20,7 @@ else:
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
         'mplug_for_visual_question_answering':
         ['MPlugForVisualQuestionAnswering'],
-        'ofa_for_image_captioning_model': ['OfaForImageCaptioning']
+        'ofa_for_all_tasks': ['OfaForAllTasks']
     }
 
     import sys

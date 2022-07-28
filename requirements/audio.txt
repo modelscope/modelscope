@@ -8,6 +8,7 @@ kwsbp
 librosa
 lxml
 matplotlib
+MinDAEC
 nara_wpe
 nltk
 # numpy requirements should be declared with tensorflow 1.15 but not here

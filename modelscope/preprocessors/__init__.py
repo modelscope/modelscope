@@ -32,6 +32,7 @@ else:
         'base': ['Preprocessor'],
         'builder': ['PREPROCESSORS', 'build_preprocessor'],
         'common': ['Compose'],
+        'audio': ['LinearAECAndFbank'],
         'asr': ['WavToScp'],
         'video': ['ReadVideoData'],
         'image': [

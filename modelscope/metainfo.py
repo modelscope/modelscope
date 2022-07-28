@@ -67,6 +67,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
     image_color_enhance = 'csrnet-image-color-enhance'
@@ -76,6 +77,7 @@ class Pipelines(object):
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
+    live_category = 'live-category'
     video_category = 'video-category'
 
     # nlp tasks

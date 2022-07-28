@@ -85,6 +85,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.action_recognition: [OutputKeys.LABELS],
 
+    # live category recognition result for single video
+    # {
+    #       "scores": [0.885272, 0.014790631, 0.014558001]
+    #       "labels": ['女装/女士精品>>棉衣/棉服', '女装/女士精品>>牛仔裤', '女装/女士精品>>裤子>>休闲裤'],
+    # }
+    Tasks.live_category: [OutputKeys.SCORES, OutputKeys.LABELS],
     # video category recognition result for single video
     # {
     #       "scores": [0.7716429233551025]

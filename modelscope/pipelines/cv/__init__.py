@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recog_pipeline import AnimalRecogPipeline
     from .cmdssl_video_embedding_pipleline import CMDSSLVideoEmbeddingPipeline
+    from .live_category_pipeline import LiveCategoryPipeline
     from .image_classification_pipeline import GeneralImageClassificationPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
@@ -40,6 +41,7 @@ else:
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
+        'live_category_pipeline': ['LiveCategoryPipeline'],
     }
 
     import sys

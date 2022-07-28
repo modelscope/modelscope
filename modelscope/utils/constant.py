@@ -67,6 +67,7 @@ class NLPTasks(object):
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
+    text_error_correction = 'text-error-correction'
 
 
 class AudioTasks(object):

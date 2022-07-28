@@ -24,6 +24,7 @@ class Models(object):
     translation = 'csanmt-translation'
     space = 'space'
     tcrf = 'transformer-crf'
+    bart = 'bart'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -98,6 +99,7 @@ class Pipelines(object):
     dialog_modeling = 'dialog-modeling'
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
+    text_error_correction = 'text-error-correction'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -161,6 +163,7 @@ class Preprocessors(object):
     dialog_state_tracking_preprocessor = 'dialog-state-tracking-preprocessor'
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
+    text_error_correction = 'text-error-correction'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

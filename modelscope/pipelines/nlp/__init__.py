@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
+    from .text_error_correction_pipeline import TextErrorCorrectionPipeline
 
 else:
     _import_structure = {
@@ -37,6 +38,7 @@ else:
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
+        'text_error_correction_pipeline': ['TextErrorCorrectionPipeline']
     }
 
     import sys

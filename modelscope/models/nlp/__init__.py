@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from .space_for_dialog_modeling import SpaceForDialogModeling
     from .space_for_dialog_state_tracking import SpaceForDialogStateTracking
     from .task_model import SingleBackboneTaskModelBase
+    from .bart_for_text_error_correction import BartForTextErrorCorrection
 
 else:
     _import_structure = {
@@ -46,6 +47,7 @@ else:
         'space_for_dialog_modeling': ['SpaceForDialogModeling'],
         'space_for_dialog_state_tracking': ['SpaceForDialogStateTracking'],
         'task_model': ['SingleBackboneTaskModelBase'],
+        'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
     }
 
     import sys

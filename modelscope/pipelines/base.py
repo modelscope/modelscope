@@ -255,7 +255,11 @@ class Pipeline(ABC):
         elif isinstance(data, InputFeatures):
             return data
         else:
-            raise ValueError(f'Unsupported data type {type(data)}')
+            import mmcv
+            if isinstance(data, mmcv.parallel.data_container.DataContainer):
+                return data
+            else:
+                raise ValueError(f'Unsupported data type {type(data)}')
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
         preprocess_params = kwargs.get('preprocess_params')

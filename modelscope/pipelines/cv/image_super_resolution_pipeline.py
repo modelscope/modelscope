@@ -23,7 +23,7 @@ class ImageSuperResolutionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model` to create a kws pipeline for prediction
+        use `model` to create a image super resolution pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

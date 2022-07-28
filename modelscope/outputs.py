@@ -13,6 +13,7 @@ class OutputKeys(object):
     POSES = 'poses'
     CAPTION = 'caption'
     BOXES = 'boxes'
+    KEYPOINTS = 'keypoints'
     MASKS = 'masks'
     TEXT = 'text'
     POLYGONS = 'polygons'
@@ -54,6 +55,31 @@ TASK_OUTPUTS = {
     #   }
     Tasks.object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+
+    # face detection result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #       "keypoints": [
+    #           [x1, y1, x2, y2, x3, y3, x4, y4, x5, y5],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4, x5, y5],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4, x5, y5],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4, x5, y5],
+    #       ],
+    #   }
+    Tasks.face_detection:
+    [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
+
+    # face recognition result for single sample
+    #   {
+    #       "img_embedding": np.array with shape [1, D],
+    #   }
+    Tasks.face_recognition: [OutputKeys.IMG_EMBEDDING],
 
     # instance segmentation result for single sample
     #   {

@@ -25,7 +25,7 @@ class VirtualTryonPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model`  to create a kws pipeline for prediction
+        use `model` to create a virtual tryon pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

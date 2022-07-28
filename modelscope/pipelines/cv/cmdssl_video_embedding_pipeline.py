@@ -24,7 +24,7 @@ class CMDSSLVideoEmbeddingPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        use `model` to create a CMDSSL Video Embedding pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

@@ -27,7 +27,7 @@ class ImageColorEnhancePipeline(Pipeline):
                      ImageColorEnhanceFinetunePreprocessor] = None,
                  **kwargs):
         """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        use `model` and `preprocessor` to create a image color enhance pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

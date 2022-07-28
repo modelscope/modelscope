@@ -22,11 +22,11 @@ logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.image_classification, module_name=Pipelines.animal_recognation)
-class AnimalRecogPipeline(Pipeline):
+class AnimalRecognitionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        use `model` to create a animal recognition pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """

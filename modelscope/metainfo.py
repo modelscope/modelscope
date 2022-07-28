@@ -10,6 +10,7 @@ class Models(object):
         Model name should only contain model info but not task info.
     """
     # vision models
+    scrfd = 'scrfd'
     classification_model = 'ClassificationModel'
     nafnet = 'nafnet'
     csrnet = 'csrnet'
@@ -67,6 +68,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    face_detection = 'resnet-face-detection-scrfd10gkps'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
@@ -76,6 +78,7 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
+    face_recognition = 'ir101-face-recognition-cfglint'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'
     live_category = 'live-category'

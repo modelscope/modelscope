@@ -105,9 +105,11 @@ class Pipeline(ABC):
         def _prepare_single(model):
             if isinstance(model, torch.nn.Module):
                 model.to(self.device)
+                model.eval()
             elif hasattr(model, 'model') and isinstance(
                     model.model, torch.nn.Module):
                 model.model.to(self.device)
+                model.model.eval()
 
         if not self._model_prepare:
             # prepare model for pytorch

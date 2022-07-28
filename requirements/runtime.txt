@@ -3,7 +3,7 @@ datasets
 easydict
 einops
 filelock>=3.3.0
-gast>=0.5.3
+gast>=0.2.2
 numpy
 opencv-python
 Pillow>=6.2.0
@@ -11,8 +11,8 @@ pyyaml
 requests
 scipy
 setuptools
+tensorboard
 tokenizers
-torch
 tqdm>=4.64.0
 transformers>=4.10.3
 yapf

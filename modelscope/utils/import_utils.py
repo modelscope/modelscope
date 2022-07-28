@@ -256,8 +256,12 @@ def is_pillow_available():
     return importlib.util.find_spec('PIL.Image') is not None
 
 
-def is_package_available(pkg_name):
+def _is_package_available_fn(pkg_name):
     return importlib.util.find_spec(pkg_name) is not None
+
+
+def is_package_available(pkg_name):
+    return functools.partial(_is_package_available_fn, pkg_name)
 
 
 def is_espnet_available(pkg_name):
@@ -282,6 +286,8 @@ REQUIREMENTS_MAAPING = OrderedDict([
                  GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('espnet', (is_espnet_available,
                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
+    ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
+    ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR))
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

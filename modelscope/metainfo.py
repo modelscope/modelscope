@@ -77,6 +77,7 @@ class Pipelines(object):
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
+    image2image_translation = 'image-to-image-translation'
     live_category = 'live-category'
     video_category = 'video-category'
 

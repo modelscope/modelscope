@@ -65,10 +65,6 @@ python -c "from modelscope.pipelines import pipeline;print(pipeline('word-segmen
 
 pipeline函数提供了简洁的推理接口，相关介绍和示例请参考[pipeline使用教程](tutorials/pipeline.md)
 
-## 训练
+## 训练 & 评估
 
-to be done
-
-## 评估
-
-to be done
+Trainer类提供了简洁的Finetuning和评估接口，相关介绍和示例请参考[Trainer使用教程](tutorials/trainer.md)

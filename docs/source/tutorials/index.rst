@@ -3,3 +3,4 @@
    :caption: Tutorials
 
    pipeline.md
+   trainer.md

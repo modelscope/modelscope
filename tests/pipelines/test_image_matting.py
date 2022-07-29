@@ -46,8 +46,7 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        img_matting = pipeline(
-            Tasks.image_matting, model=self.model_id, model_revision='beta')
+        img_matting = pipeline(Tasks.image_matting, model=self.model_id)
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])

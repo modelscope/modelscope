@@ -14,8 +14,7 @@ class TranslationTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipeline_ins = pipeline(
-            task=Tasks.translation, model=self.model_id, model_revision='beta')
+        pipeline_ins = pipeline(task=Tasks.translation, model=self.model_id)
         print(pipeline_ins(input=self.inputs))
 
 

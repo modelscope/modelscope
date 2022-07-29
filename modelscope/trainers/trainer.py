@@ -93,7 +93,9 @@ class EpochBasedTrainer(BaseTrainer):
             else:
                 self.model_dir = snapshot_download(
                     model, revision=model_revision)
-            cfg_file = os.path.join(self.model_dir, ModelFile.CONFIGURATION)
+            if cfg_file is None:
+                cfg_file = os.path.join(self.model_dir,
+                                        ModelFile.CONFIGURATION)
             self.model = self.build_model()
         else:
             assert cfg_file is not None, 'Config file should not be None if model is an nn.Module class'

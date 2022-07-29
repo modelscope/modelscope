@@ -1,7 +1,5 @@
 import unittest
 
-import datasets as hfdata
-
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import SequenceClassificationPreprocessor
@@ -31,6 +29,12 @@ class ImgPreprocessor(Preprocessor):
 
 
 class MsDatasetTest(unittest.TestCase):
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ms_csv_basic(self):
+        ms_ds_train = MsDataset.load(
+            'afqmc_small', namespace='userxiaoming', split='train')
+        print(next(iter(ms_ds_train)))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_basic(self):

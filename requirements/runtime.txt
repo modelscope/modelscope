@@ -6,6 +6,7 @@ filelock>=3.3.0
 gast>=0.2.2
 numpy
 opencv-python
+oss2
 Pillow>=6.2.0
 pyyaml
 requests

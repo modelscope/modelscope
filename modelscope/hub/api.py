@@ -12,7 +12,9 @@ import requests
 from modelscope.msdatasets.config import (DOWNLOADED_DATASETS_PATH,
                                           HUB_DATASET_ENDPOINT)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
-                                       DEFAULT_MODEL_REVISION, DownloadMode)
+                                       DEFAULT_MODEL_REVISION,
+                                       DatasetFormations, DatasetMetaFormats,
+                                       DownloadMode)
 from modelscope.utils.logger import get_logger
 from .errors import (InvalidParameter, NotExistError, RequestError,
                      datahub_raise_on_error, handle_http_response, is_ok,
@@ -301,8 +303,8 @@ class HubApi:
                 f'Dataset from Hubs.modelscope should have a valid "namespace", but get {namespace}'
             )
         revision = revision or DEFAULT_DATASET_REVISION
-        cache_dir = os.path.join(DOWNLOADED_DATASETS_PATH, dataset_name,
-                                 namespace, revision)
+        cache_dir = os.path.join(DOWNLOADED_DATASETS_PATH, namespace,
+                                 dataset_name, revision)
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         if download_mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(
@@ -314,6 +316,7 @@ class HubApi:
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         dataset_id = resp['Data']['Id']
+        dataset_type = resp['Data']['Type']
         datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
         r = requests.get(datahub_url)
         resp = r.json()
@@ -326,25 +329,53 @@ class HubApi:
 
         file_list = file_list['Files']
         local_paths = defaultdict(list)
+        dataset_formation = DatasetFormations(dataset_type)
+        dataset_meta_format = DatasetMetaFormats[dataset_formation]
         for file_info in file_list:
             file_path = file_info['Path']
-            if file_path.endswith('.py'):
-                datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{dataset_id}/repo/files?' \
-                              f'Revision={revision}&Path={file_path}'
+            extension = os.path.splitext(file_path)[-1]
+            if extension in dataset_meta_format:
+                datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+                              f'Revision={revision}&FilePath={file_path}'
                 r = requests.get(datahub_url)
                 r.raise_for_status()
-                content = r.json()['Data']['Content']
                 local_path = os.path.join(cache_dir, file_path)
                 if os.path.exists(local_path):
                     logger.warning(
                         f"Reusing dataset {dataset_name}'s python file ({local_path})"
                     )
-                    local_paths['py'].append(local_path)
+                    local_paths[extension].append(local_path)
                     continue
-                with open(local_path, 'w') as f:
-                    f.writelines(content)
-                local_paths['py'].append(local_path)
-        return local_paths
+                with open(local_path, 'wb') as f:
+                    f.write(r.content)
+                local_paths[extension].append(local_path)
+
+        return local_paths, dataset_formation, cache_dir
+
+    def get_dataset_file_url(
+            self,
+            file_name: str,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION):
+        return f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+               f'Revision={revision}&FilePath={file_name}'
+
+    def get_dataset_access_config(
+            self,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION):
+        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
+                      f'ststoken?Revision={revision}'
+        return self.datahub_remote_call(datahub_url)
+
+    @staticmethod
+    def datahub_remote_call(url):
+        r = requests.get(url)
+        resp = r.json()
+        datahub_raise_on_error(url, resp)
+        return resp['Data']
 
 
 class ModelScopeConfig:

@@ -152,6 +152,23 @@ class DownloadMode(enum.Enum):
     FORCE_REDOWNLOAD = 'force_redownload'
 
 
+class DatasetFormations(enum.Enum):
+    """ How a dataset is organized and interpreted
+    """
+    # formation that is compatible with official huggingface dataset, which
+    # organizes whole dataset into one single (zip) file.
+    hf_compatible = 1
+    # native modelscope formation that supports, among other things,
+    # multiple files in a dataset
+    native = 2
+
+
+DatasetMetaFormats = {
+    DatasetFormations.native: ['.json'],
+    DatasetFormations.hf_compatible: ['.py'],
+}
+
+
 class ModelFile(object):
     CONFIGURATION = 'configuration.json'
     README = 'README.md'

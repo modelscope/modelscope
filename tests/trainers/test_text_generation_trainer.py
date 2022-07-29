@@ -21,10 +21,10 @@ class TestTextGenerationTrainer(unittest.TestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
-        from datasets import Dataset
-
         self.model_id = 'damo/nlp_palm2.0_text-generation_english-base'
 
+        # todo: Replace below scripts with MsDataset.load when the formal dataset service is ready
+        from datasets import Dataset
         dataset_dict = {
             'src_txt': [
                 'This is test sentence1-1', 'This is test sentence2-1',

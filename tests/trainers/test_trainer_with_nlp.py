@@ -23,6 +23,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
+        # todo: Replace below scripts with MsDataset.load when the formal dataset service is ready
         from datasets import Dataset
         dataset_dict = {
             'sentence1': [

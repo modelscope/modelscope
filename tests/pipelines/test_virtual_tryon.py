@@ -3,6 +3,7 @@ import unittest
 
 import cv2
 import numpy as np
+from PIL import Image
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -12,11 +13,10 @@ from modelscope.utils.test_utils import test_level
 
 class VirtualTryonTest(unittest.TestCase):
     model_id = 'damo/cv_daflow_virtual-tryon_base'
-    input_imgs = {
-        'masked_model': 'data/test/images/virtual_tryon_model.jpg',
-        'pose': 'data/test/images/virtual_tryon_pose.jpg',
-        'cloth': 'data/test/images/virtual_tryon_cloth.jpg'
-    }
+    masked_model = Image.open('data/test/images/virtual_tryon_model.jpg')
+    pose = Image.open('data/test/images/virtual_tryon_pose.jpg')
+    cloth = Image.open('data/test/images/virtual_tryon_cloth.jpg')
+    input_imgs = (masked_model, pose, cloth)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):

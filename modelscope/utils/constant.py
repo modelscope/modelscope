@@ -20,6 +20,7 @@ class CVTasks(object):
     image_classification = 'image-classification'
     image_tagging = 'image-tagging'
     object_detection = 'object-detection'
+    human_detection = 'human-detection'
     image_segmentation = 'image-segmentation'
     image_editing = 'image-editing'
     image_generation = 'image-generation'

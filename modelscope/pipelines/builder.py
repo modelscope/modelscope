@@ -35,6 +35,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      ),  # TODO: revise back after passing the pr
     Tasks.image_matting: (Pipelines.image_matting,
                           'damo/cv_unet_image-matting'),
+    Tasks.human_detection: (Pipelines.human_detection,
+                            'damo/cv_resnet18_human-detection'),
+    Tasks.object_detection: (Pipelines.object_detection,
+                             'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoise: (Pipelines.image_denoise,
                           'damo/cv_nafnet_image-denoise_sidd'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,

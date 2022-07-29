@@ -62,6 +62,7 @@ class Pipeline(ABC):
                  model: Union[InputModel, List[InputModel]] = None,
                  preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
                  device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """ Base class for pipeline.
 
@@ -74,6 +75,7 @@ class Pipeline(ABC):
             model: (list of) Model name or model object
             preprocessor: (list of) Preprocessor object
             device (str): gpu device or cpu device to use
+            auto_collate (bool): automatically to convert data to tensor or not.
         """
         if config_file is not None:
             self.cfg = Config.from_file(config_file)
@@ -98,6 +100,7 @@ class Pipeline(ABC):
             self.device = create_device(self.device_name == 'cpu')
         self._model_prepare = False
         self._model_prepare_lock = Lock()
+        self._auto_collate = auto_collate
 
     def prepare_model(self):
         self._model_prepare_lock.acquire(timeout=600)
@@ -252,7 +255,7 @@ class Pipeline(ABC):
                 return self._collate_fn(torch.from_numpy(data))
         elif isinstance(data, torch.Tensor):
             return data.to(self.device)
-        elif isinstance(data, (str, int, float, bool)):
+        elif isinstance(data, (str, int, float, bool, type(None))):
             return data
         elif isinstance(data, InputFeatures):
             return data
@@ -270,7 +273,7 @@ class Pipeline(ABC):
 
         out = self.preprocess(input, **preprocess_params)
         with self.place_device():
-            if self.framework == Frameworks.torch:
+            if self.framework == Frameworks.torch and self._auto_collate:
                 with torch.no_grad():
                     out = self._collate_fn(out)
                     out = self.forward(out, **forward_params)

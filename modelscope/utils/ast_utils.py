@@ -188,7 +188,8 @@ class AstScaning(object):
                                 )
                                 name = type(el).__name__
                                 if (name == 'Import' or name == 'ImportFrom'
-                                        or parent_node_name == 'ImportFrom'):
+                                        or parent_node_name == 'ImportFrom'
+                                        or parent_node_name == 'Import'):
                                     if name not in el_dict:
                                         el_dict[name] = []
                                     el_dict[name].append(local_out)
@@ -224,8 +225,13 @@ class AstScaning(object):
 
                         if type(node).__name__ == 'Import':
                             final_dict = outputs[field]['alias']
-                            self.result_import[outputs[field]['alias']
-                                               ['name']] = final_dict
+                            if isinstance(final_dict, list):
+                                for item in final_dict:
+                                    self.result_import[
+                                        item['alias']['name']] = item['alias']
+                            else:
+                                self.result_import[outputs[field]['alias']
+                                                   ['name']] = final_dict
 
                     if 'decorator_list' == field and attr != []:
                         self.result_decorator.extend(attr)
@@ -434,7 +440,13 @@ class FilesAstScaning(object):
                 self.file_dirs.append(item.path)
 
     def _get_single_file_scan_result(self, file):
-        output = self.astScaner.generate_ast(file)
+        try:
+            output = self.astScaner.generate_ast(file)
+        except Exception as e:
+            raise Exception(
+                'During ast indexing, there are index errors in the '
+                f'file {file} : {type(e).__name__}.{e}')
+
         import_list = self.parse_import(output)
         return output[DECORATOR_KEY], import_list
 

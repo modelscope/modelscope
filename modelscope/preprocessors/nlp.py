@@ -2,7 +2,7 @@
 
 import os.path as osp
 import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from transformers import AutoTokenizer
 
@@ -211,36 +211,34 @@ class SentenceSimilarityFinetunePreprocessor(SentenceSimilarityPreprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.palm_text_gen_tokenizer)
+    Fields.nlp, module_name=Preprocessors.text_gen_tokenizer)
 class TextGenerationPreprocessor(NLPPreprocessorBase):
 
     def __init__(self, model_dir: str, tokenizer=None, *args, **kwargs):
         self.tokenizer = self.build_tokenizer(
             model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = True
-        kwargs['padding'] = 'max_length'
+        kwargs['padding'] = True
         kwargs['return_tensors'] = 'pt'
         kwargs['return_token_type_ids'] = False
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, *args, **kwargs)
 
-    def build_tokenizer(self, model_dir: str):
+    @staticmethod
+    def get_roberta_tokenizer_dir(model_dir: str) -> Optional[str]:
         import os
-        from sofa.models.palm_v2 import PalmConfig
+        for name in os.listdir(model_dir):
+            full_name = os.path.join(model_dir, name)
+            if 'roberta' in name and os.path.isdir(full_name):
+                return full_name
 
-        config_file = os.path.join(model_dir, 'config.json')
-        config = PalmConfig.from_json_file(config_file) if os.path.isfile(
-            config_file) else PalmConfig()
-        config.encoder_pth = os.path.join(model_dir, config.encoder_pth)
-        if config.encoder == 'roberta':
+    def build_tokenizer(self, model_dir: str):
+        roberta_tokenizer_dir = self.get_roberta_tokenizer_dir(model_dir)
+        if roberta_tokenizer_dir:
             from transformers import RobertaTokenizer
-            tokenizer = RobertaTokenizer.from_pretrained(
-                config.encoder_pth, do_lower_case=False)
-        elif config.encoder == 'bert' or config.encoder == 'zh_bert':
-            from transformers import BertTokenizer
-            tokenizer = BertTokenizer.from_pretrained(
-                config.encoder_pth, do_lower_case=True)
-        return tokenizer
+            return RobertaTokenizer.from_pretrained(
+                roberta_tokenizer_dir, do_lower_case=False)
+        return super().build_tokenizer(model_dir)
 
 
 @PREPROCESSORS.register_module(

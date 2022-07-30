@@ -26,6 +26,7 @@ class Models(object):
     space = 'space'
     tcrf = 'transformer-crf'
     bart = 'bart'
+    gpt3 = 'gpt3'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -160,7 +161,7 @@ class Preprocessors(object):
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
-    palm_text_gen_tokenizer = 'palm-text-gen-tokenizer'
+    text_gen_tokenizer = 'text-gen-tokenizer'
     token_cls_tokenizer = 'token-cls-tokenizer'
     ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'

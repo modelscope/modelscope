@@ -1,8 +1,9 @@
-from typing import Dict
+from typing import Dict, List
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 
 __all__ = ['PalmForTextGeneration']
@@ -27,8 +28,7 @@ class PalmForTextGeneration(TorchModel):
         self.tokenizer = self.model.tokenizer
         self.generator = Translator(self.model)
 
-    def _evaluate_postprocess(self, src: Tensor, tgt: Tensor,
-                              mask_src: Tensor) -> Dict[str, str]:
+    def _evaluate_postprocess(self, ids_list: List[List[int]]) -> List[str]:
         replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
                                ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
                                ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
@@ -36,29 +36,14 @@ class PalmForTextGeneration(TorchModel):
                                                                     ''),
                                   ('<s>', ''), ('</s>', ''), ('<unk>', ' '))
 
-        inputs = self.generator(src, mask_src)
-        pred_list = inputs['predictions']
-        pred_id_list = [
-            pred_batch[0].cpu().numpy().tolist() for pred_batch in pred_list
-        ]
-        tgt_id_list = tgt.cpu().numpy().tolist()
-        pred_strings = [
-            self.tokenizer.decode(pred_ids) for pred_ids in pred_id_list
-        ]
-        tgt_strings = [
-            self.tokenizer.decode(tgt_ids) for tgt_ids in tgt_id_list
-        ]
+        strings = [self.tokenizer.decode(pred_ids) for pred_ids in ids_list]
         for _old, _new in replace_tokens_bert:
-            pred_strings = [s.replace(_old, _new) for s in pred_strings]
-            tgt_strings = [s.replace(_old, _new) for s in tgt_strings]
+            strings = [s.replace(_old, _new) for s in strings]
         for _old, _new in replace_tokens_roberta:
-            pred_strings = [s.replace(_old, _new) for s in pred_strings]
-            tgt_strings = [s.replace(_old, _new) for s in tgt_strings]
-        for s in pred_strings:
+            strings = [s.replace(_old, _new) for s in strings]
+        for s in strings:
             s.strip()
-        for s in tgt_strings:
-            s.strip()
-        return {'preds': pred_strings, 'tgts': tgt_strings}
+        return strings
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
@@ -70,12 +55,30 @@ class PalmForTextGeneration(TorchModel):
             Dict[str, Tensor]: results
                 Example:
                     {
-                        'predictions': Tensor([[1377, 4959, 2785, 6392...])]), # tokens need to be decode by tokenizer
+                        'loss': Tensor([12.34]), # loss for backward
+                    }
+                    or
+                    {
+                        'preds': List["hello word"...] # the predicted strings
+                        'tgts': List["hello world"...] # target strings
                     }
         """
         if self.training:
             return {'loss': self.model(**input)}
-        elif 'tgt' in input:
-            return self._evaluate_postprocess(**input)
         else:
-            return self.generator(**input)
+            outputs = self.generator(input['src'], input['mask_src'])
+            preds = outputs['predictions']
+            pred_ids_list = [
+                pred_batch[0].cpu().numpy().tolist() for pred_batch in preds
+            ]
+            tgt_ids_list = input['tgt'].cpu().numpy().tolist()
+            return {
+                'preds': self._evaluate_postprocess(pred_ids_list),
+                'tgts': self._evaluate_postprocess(tgt_ids_list)
+            }
+
+    def generate(self, input: Dict[str, Tensor]) -> Dict[str, str]:
+        outputs = self.generator(**input)
+        preds = outputs['predictions']
+        pred_ids_list = [preds[0][0].cpu().numpy().tolist()]
+        return {OutputKeys.TEXT: self._evaluate_postprocess(pred_ids_list)[0]}

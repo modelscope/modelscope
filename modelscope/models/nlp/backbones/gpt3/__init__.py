@@ -4,9 +4,13 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .modeling_sbert import SbertModel
+    from .configuration_gpt3 import GPT3Config
+    from .modeling_gpt3 import GPT3Model
 else:
-    _import_structure = {'modeling_sbert': ['SbertModel']}
+    _import_structure = {
+        'configuration_gpt3': ['GPT3Config'],
+        'modeling_gpt3': ['GPT3Model']
+    }
 
     import sys
 

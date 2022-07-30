@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbones import (SbertModel, SpaceGenerator, SpaceModelBase)
+    from .backbones import (SbertModel, SpaceGenerator, SpaceModelBase,
+                            GPT3Model)
     from .heads import SequenceClassificationHead
     from .bert_for_sequence_classification import BertForSequenceClassification
     from .csanmt_for_translation import CsanmtForTranslation
@@ -23,10 +24,12 @@ if TYPE_CHECKING:
     from .space_for_dialog_state_tracking import SpaceForDialogStateTracking
     from .task_model import SingleBackboneTaskModelBase
     from .bart_for_text_error_correction import BartForTextErrorCorrection
+    from .gpt3_for_text_generation import GPT3ForTextGeneration
 
 else:
     _import_structure = {
-        'backbones': ['SbertModel', 'SpaceGenerator', 'SpaceModelBase'],
+        'backbones':
+        ['SbertModel', 'SpaceGenerator', 'SpaceModelBase', 'GPT3Model'],
         'heads': ['SequenceClassificationHead'],
         'csanmt_for_translation': ['CsanmtForTranslation'],
         'bert_for_sequence_classification': ['BertForSequenceClassification'],
@@ -48,6 +51,7 @@ else:
         'space_for_dialog_state_tracking': ['SpaceForDialogStateTracking'],
         'task_model': ['SingleBackboneTaskModelBase'],
         'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
+        'gpt3_for_text_generation': ['GPT3ForTextGeneration'],
     }
 
     import sys

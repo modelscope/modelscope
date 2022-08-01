@@ -1,10 +1,7 @@
 import math
-import os
 from collections import namedtuple
-from typing import Any, Dict
+from typing import Dict
 
-import json
-import numpy as np
 import tensorflow as tf
 
 from modelscope.metainfo import Models

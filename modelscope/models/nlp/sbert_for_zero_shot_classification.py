@@ -3,7 +3,7 @@ from typing import Any, Dict
 import numpy as np
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
@@ -12,7 +12,7 @@ __all__ = ['SbertForZeroShotClassification']
 
 @MODELS.register_module(
     Tasks.zero_shot_classification, module_name=Models.structbert)
-class SbertForZeroShotClassification(Model):
+class SbertForZeroShotClassification(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the zero shot classification model from the `model_dir` path.

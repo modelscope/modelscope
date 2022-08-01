@@ -1,15 +1,12 @@
 import os
 from typing import Any, Dict, List, Optional
 
-import json
-import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from transformers import AutoConfig, AutoModel
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -18,7 +15,7 @@ __all__ = ['TransformerCRFForNamedEntityRecognition']
 
 @MODELS.register_module(
     Tasks.named_entity_recognition, module_name=Models.tcrf)
-class TransformerCRFForNamedEntityRecognition(Model):
+class TransformerCRFForNamedEntityRecognition(TorchModel):
 
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)

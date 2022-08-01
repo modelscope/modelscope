@@ -1,16 +1,17 @@
-from typing import Any, Dict, Optional, Union
+from typing import Dict
 
 import numpy as np
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
 __all__ = ['BertForMaskedLM', 'StructBertForMaskedLM', 'VecoForMaskedLM']
 
 
-class MaskedLanguageModelBase(Model):
+class MaskedLanguageModelBase(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)

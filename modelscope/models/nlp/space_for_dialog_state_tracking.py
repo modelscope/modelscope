@@ -1,17 +1,16 @@
-import os
-from typing import Any, Dict
+from typing import Dict
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from modelscope.utils.nlp.space.utils_dst import batch_to_device
 
 __all__ = ['SpaceForDialogStateTracking']
 
 
 @MODELS.register_module(Tasks.dialog_state_tracking, module_name=Models.space)
-class SpaceForDialogStateTracking(Model):
+class SpaceForDialogStateTracking(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.

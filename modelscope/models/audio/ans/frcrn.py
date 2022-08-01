@@ -6,7 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
 from .conv_stft import ConviSTFT, ConvSTFT
@@ -59,7 +60,7 @@ class FTB(nn.Module):
 
 @MODELS.register_module(
     Tasks.speech_signal_process, module_name=Models.speech_frcrn_ans_cirm_16k)
-class FRCRNModel(Model):
+class FRCRNModel(TorchModel):
     r""" A decorator of FRCRN for integrating into modelscope framework """
 
     def __init__(self, model_dir: str, *args, **kwargs):

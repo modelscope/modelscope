@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
@@ -13,7 +13,7 @@ __all__ = ['BertForSequenceClassification']
 
 
 @MODELS.register_module(Tasks.text_classification, module_name=Models.bert)
-class BertForSequenceClassification(Model):
+class BertForSequenceClassification(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)

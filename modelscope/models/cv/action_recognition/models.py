@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 from .tada_convnext import TadaConvNeXt

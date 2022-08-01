@@ -13,7 +13,7 @@ from torch.distributed.nn.functional import \
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.clip.clip_bert import TextTransformer
 from modelscope.models.multi_modal.clip.clip_vit import VisionTransformer
@@ -116,7 +116,7 @@ class CLIPModel(nn.Module):
 
 
 @MODELS.register_module(Tasks.multi_modal_embedding, module_name=Models.clip)
-class CLIPForMultiModalEmbedding(Model):
+class CLIPForMultiModalEmbedding(TorchModel):
 
     def __init__(self, model_dir, device_id=-1):
         super().__init__(model_dir=model_dir, device_id=device_id)

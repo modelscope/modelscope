@@ -1,10 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Any, Dict
+from typing import Dict
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.backbones import SpaceGenerator, SpaceModelBase
 from modelscope.preprocessors.space import IntentBPETextField
@@ -16,7 +17,7 @@ __all__ = ['SpaceForDialogIntent']
 
 @MODELS.register_module(
     Tasks.dialog_intent_prediction, module_name=Models.space)
-class SpaceForDialogIntent(Model):
+class SpaceForDialogIntent(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the test generation model from the `model_dir` path.

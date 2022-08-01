@@ -4,7 +4,8 @@ import numpy as np
 import torch
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
@@ -12,7 +13,7 @@ __all__ = ['SbertForTokenClassification']
 
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.structbert)
-class SbertForTokenClassification(Model):
+class SbertForTokenClassification(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the word segmentation model from the `model_dir` path.

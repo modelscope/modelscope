@@ -1,4 +1,3 @@
-import os
 import random
 from os.path import exists
 from typing import Any, Dict
@@ -9,7 +8,7 @@ import torch
 from PIL import Image
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -22,7 +21,7 @@ logger = get_logger()
 
 @MODELS.register_module(
     Tasks.video_multi_modal_embedding, module_name=Models.video_clip)
-class VideoCLIPForMultiModalEmbedding(Model):
+class VideoCLIPForMultiModalEmbedding(TorchModel):
 
     def __init__(self, model_dir, device_id=-1):
         super().__init__(model_dir=model_dir, device_id=device_id)

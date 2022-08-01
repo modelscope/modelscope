@@ -1,7 +1,8 @@
 from typing import Dict
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model, Tensor
+from modelscope.models import TorchModel
+from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
@@ -10,7 +11,7 @@ __all__ = ['MPlugForVisualQuestionAnswering']
 
 @MODELS.register_module(
     Tasks.visual_question_answering, module_name=Models.mplug)
-class MPlugForVisualQuestionAnswering(Model):
+class MPlugForVisualQuestionAnswering(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the mplug model from the `model_dir` path.

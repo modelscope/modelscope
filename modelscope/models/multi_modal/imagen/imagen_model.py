@@ -6,10 +6,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import Model
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.imagen.diffusion import (GaussianDiffusion,
                                                             beta_schedule)

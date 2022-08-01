@@ -7,7 +7,7 @@ import torch
 from sofa.models.sbert.modeling_sbert import SbertModel, SbertPreTrainedModel
 from torch import nn
 
-from modelscope.models.base import Model
+from modelscope.models import TorchModel
 
 
 class SbertTextClassfier(SbertPreTrainedModel):
@@ -43,7 +43,7 @@ class SbertTextClassfier(SbertPreTrainedModel):
         return SbertTextClassfier.from_pretrained(model_dir, **model_args)
 
 
-class SbertForSequenceClassificationBase(Model):
+class SbertForSequenceClassificationBase(TorchModel):
 
     def __init__(self, model_dir: str, model_args=None, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)

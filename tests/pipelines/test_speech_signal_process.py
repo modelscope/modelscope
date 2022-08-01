@@ -31,7 +31,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
     def setUp(self) -> None:
         pass
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_aec(self):
         # Download audio files
         download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
@@ -49,7 +49,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
         aec(input, output_path=output_path)
         print(f'Processed audio saved to {output_path}')
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_ans(self):
         # Download audio files
         download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)
@@ -62,7 +62,7 @@ class SpeechSignalProcessTest(unittest.TestCase):
         ans(NOISE_SPEECH_FILE, output_path=output_path)
         print(f'Processed audio saved to {output_path}')
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_ans_bytes(self):
         # Download audio files
         download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)

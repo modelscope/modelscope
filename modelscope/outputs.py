@@ -300,6 +300,8 @@ TASK_OUTPUTS = {
     #   "output_pcm": np.array with shape(samples,) and dtype float32
     # }
     Tasks.speech_signal_process: [OutputKeys.OUTPUT_PCM],
+    Tasks.acoustic_echo_cancellation: [OutputKeys.OUTPUT_PCM],
+    Tasks.acoustic_noise_suppression: [OutputKeys.OUTPUT_PCM],
 
     # ============ multi-modal tasks ===================
 

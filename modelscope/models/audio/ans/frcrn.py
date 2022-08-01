@@ -59,7 +59,8 @@ class FTB(nn.Module):
 
 
 @MODELS.register_module(
-    Tasks.speech_signal_process, module_name=Models.speech_frcrn_ans_cirm_16k)
+    Tasks.acoustic_noise_suppression,
+    module_name=Models.speech_frcrn_ans_cirm_16k)
 class FRCRNModel(TorchModel):
     r""" A decorator of FRCRN for integrating into modelscope framework """
 

@@ -77,6 +77,8 @@ class AudioTasks(object):
     auto_speech_recognition = 'auto-speech-recognition'
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
+    acoustic_echo_cancellation = 'acoustic-echo-cancellation'
+    acoustic_noise_suppression = 'acoustic-noise-suppression'
 
 
 class MultiModalTasks(object):

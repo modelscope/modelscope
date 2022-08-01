@@ -48,7 +48,7 @@ def initialize_config(module_cfg):
 
 
 @PIPELINES.register_module(
-    Tasks.speech_signal_process,
+    Tasks.acoustic_echo_cancellation,
     module_name=Pipelines.speech_dfsmn_aec_psm_16k)
 class LinearAECPipeline(Pipeline):
     r"""AEC Inference Pipeline only support 16000 sample rate.

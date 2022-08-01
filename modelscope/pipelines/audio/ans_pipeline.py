@@ -27,7 +27,7 @@ def audio_norm(x):
 
 
 @PIPELINES.register_module(
-    Tasks.speech_signal_process,
+    Tasks.acoustic_noise_suppression,
     module_name=Pipelines.speech_frcrn_ans_cirm_16k)
 class ANSPipeline(Pipeline):
     r"""ANS (Acoustic Noise Suppression) Inference Pipeline .

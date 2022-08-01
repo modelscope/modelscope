@@ -118,6 +118,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification_dailylife:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_to_image_generation:
+    (Pipelines.image_to_image_generation,
+     'damo/cv_latent_diffusion_image2image_generate'),
 }
 
 

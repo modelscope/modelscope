@@ -42,6 +42,7 @@ class CVTasks(object):
     video_category = 'video-category'
     image_classification_imagenet = 'image-classification-imagenet'
     image_classification_dailylife = 'image-classification-dailylife'
+    image_to_image_generation = 'image-to-image-generation'
 
 
 class NLPTasks(object):

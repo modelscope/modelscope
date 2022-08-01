@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
+    from .image_to_image_generation_pipeline import Image2ImageGenerationePipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .style_transfer_pipeline import StyleTransferPipeline
@@ -51,6 +52,8 @@ else:
         'product_retrieval_embedding_pipeline':
         ['ProductRetrievalEmbeddingPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
+        'image_to_image_generation_pipeline':
+        ['Image2ImageGenerationePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'style_transfer_pipeline': ['StyleTransferPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],

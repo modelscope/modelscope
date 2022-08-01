@@ -91,6 +91,7 @@ class Pipelines(object):
     image2image_translation = 'image-to-image-translation'
     live_category = 'live-category'
     video_category = 'video-category'
+    image_to_image_generation = 'image-to-image-generation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

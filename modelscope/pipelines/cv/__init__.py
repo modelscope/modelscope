@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_recognition_pipeline import FaceRecognitionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
+    from .image_classification_pipeline import ImageClassificationPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
     from .image_classification_pipeline import GeneralImageClassificationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
@@ -20,12 +21,12 @@ if TYPE_CHECKING:
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
+    from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .style_transfer_pipeline import StyleTransferPipeline
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_tryon_pipeline import VirtualTryonPipeline
-    from .image_classification_pipeline import ImageClassificationPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -47,6 +48,8 @@ else:
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
         'image_to_image_translation_pipeline':
         ['Image2ImageTranslationPipeline'],
+        'product_retrieval_embedding_pipeline':
+        ['ProductRetrievalEmbeddingPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'style_transfer_pipeline': ['StyleTransferPipeline'],

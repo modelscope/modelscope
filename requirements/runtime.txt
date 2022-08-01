@@ -4,7 +4,8 @@ easydict
 einops
 filelock>=3.3.0
 gast>=0.2.2
-numpy
+# tensorflow 1.x compatability requires numpy version to be cap at 1.18
+numpy<=1.18
 opencv-python
 oss2
 Pillow>=6.2.0

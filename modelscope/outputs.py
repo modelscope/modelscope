@@ -140,6 +140,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
 
+    # image embedding result for a single image
+    # {
+    #   "image_bedding": np.array with shape [D]
+    # }
+    Tasks.product_retrieval_embedding: [OutputKeys.IMG_EMBEDDING],
+
     # video embedding result for single video
     # {
     #   "video_embedding": np.array with shape [D],

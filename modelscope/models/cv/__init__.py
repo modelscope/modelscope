@@ -3,5 +3,5 @@ from . import (action_recognition, animal_recognition, cartoon,
                cmdssl_video_embedding, face_detection, face_generation,
                image_classification, image_color_enhance, image_colorization,
                image_denoise, image_instance_segmentation,
-               image_to_image_translation, object_detection, super_resolution,
-               virual_tryon)
+               image_to_image_translation, object_detection,
+               product_retrieval_embedding, super_resolution, virual_tryon)

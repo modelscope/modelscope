@@ -16,6 +16,7 @@ class Models(object):
     nafnet = 'nafnet'
     csrnet = 'csrnet'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
+    product_retrieval_embedding = 'product-retrieval-embedding'
 
     # nlp models
     bert = 'bert'
@@ -84,6 +85,7 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     style_transfer = 'AAMS-style-transfer'
+    product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
     face_recognition = 'ir101-face-recognition-cfglint'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'

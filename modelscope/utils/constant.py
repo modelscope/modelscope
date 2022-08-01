@@ -37,6 +37,7 @@ class CVTasks(object):
     face_image_generation = 'face-image-generation'
     image_super_resolution = 'image-super-resolution'
     style_transfer = 'style-transfer'
+    product_retrieval_embedding = 'product-retrieval-embedding'
     live_category = 'live-category'
     video_category = 'video-category'
     image_classification_imagenet = 'image-classification-imagenet'

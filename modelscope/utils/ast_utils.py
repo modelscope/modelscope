@@ -490,7 +490,7 @@ class FilesAstScaning(object):
 
         result = dict()
         for file in self.file_dirs:
-            filepath = file[file.find('modelscope'):]
+            filepath = file[file.rfind('modelscope'):]
             module_name = filepath.replace(osp.sep, '.').replace('.py', '')
             decorator_list, import_list = self._get_single_file_scan_result(
                 file)

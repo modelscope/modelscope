@@ -178,7 +178,11 @@ if __name__ == '__main__':
             continue
         extra_requires[field], _ = parse_requirements(
             f'requirements/{field}.txt')
-        all_requires.extend(extra_requires[field])
+
+        # skip audio requirements due to its hard dependency which
+        # result in mac/windows compatibility problems
+        if field != Fields.audio:
+            all_requires.append(extra_requires[field])
 
     extra_requires['all'] = all_requires
 

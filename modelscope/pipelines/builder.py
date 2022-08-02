@@ -96,8 +96,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
     Tasks.image_color_enhance: (Pipelines.image_color_enhance,
                                 'damo/cv_csrnet_image-color-enhance-models'),
-    Tasks.virtual_tryon: (Pipelines.virtual_tryon,
-                          'damo/cv_daflow_virtual-tryon_base'),
+    Tasks.virtual_try_on: (Pipelines.virtual_try_on,
+                           'damo/cv_daflow_virtual-try-on_base'),
     Tasks.image_colorization: (Pipelines.image_colorization,
                                'damo/cv_unet_image-colorization'),
     Tasks.image_segmentation:

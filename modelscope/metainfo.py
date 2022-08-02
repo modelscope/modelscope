@@ -80,7 +80,7 @@ class Pipelines(object):
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
     image_color_enhance = 'csrnet-image-color-enhance'
-    virtual_tryon = 'virtual_tryon'
+    virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'

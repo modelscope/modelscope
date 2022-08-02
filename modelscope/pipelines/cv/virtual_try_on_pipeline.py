@@ -20,7 +20,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 
 
 @PIPELINES.register_module(
-    Tasks.virtual_tryon, module_name=Pipelines.virtual_tryon)
+    Tasks.virtual_try_on, module_name=Pipelines.virtual_try_on)
 class VirtualTryonPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

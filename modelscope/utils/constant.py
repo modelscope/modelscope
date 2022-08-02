@@ -33,7 +33,7 @@ class CVTasks(object):
     face_detection = 'face-detection'
     face_recognition = 'face-recognition'
     image_color_enhance = 'image-color-enhance'
-    virtual_tryon = 'virtual-tryon'
+    virtual_try_on = 'virtual-try-on'
     image_colorization = 'image-colorization'
     face_image_generation = 'face-image-generation'
     image_style_transfer = 'image-style-transfer'

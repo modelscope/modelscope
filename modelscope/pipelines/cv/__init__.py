@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .video_category_pipeline import VideoCategoryPipeline
-    from .virtual_tryon_pipeline import VirtualTryonPipeline
+    from .virtual_try_on_pipeline import VirtualTryonPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -57,7 +57,7 @@ else:
         ['Image2ImageGenerationePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
-        'virtual_tryon_pipeline': ['VirtualTryonPipeline'],
+        'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
     }
 
     import sys

@@ -56,7 +56,8 @@ class Registry(object):
     def _register_module(self,
                          group_key=default_group,
                          module_name=None,
-                         module_cls=None):
+                         module_cls=None,
+                         force=False):
         assert isinstance(group_key,
                           str), 'group_key is required and must be str'
 
@@ -69,7 +70,7 @@ class Registry(object):
         if module_name is None:
             module_name = module_cls.__name__
 
-        if module_name in self._modules[group_key]:
+        if module_name in self._modules[group_key] and not force:
             raise KeyError(f'{module_name} is already registered in '
                            f'{self._name}[{group_key}]')
         self._modules[group_key][module_name] = module_cls
@@ -78,7 +79,8 @@ class Registry(object):
     def register_module(self,
                         group_key: str = default_group,
                         module_name: str = None,
-                        module_cls: type = None):
+                        module_cls: type = None,
+                        force=False):
         """ Register module
 
         Example:
@@ -102,6 +104,8 @@ class Registry(object):
                 default group name is 'default'
             module_name: Module name
             module_cls: Module class object
+            force (bool, optional): Whether to override an existing class with
+                the same name. Default: False.
 
         """
         if not (module_name is None or isinstance(module_name, str)):
@@ -111,7 +115,8 @@ class Registry(object):
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls)
+                module_cls=module_cls,
+                force=force)
             return module_cls
 
         # if module_cls is None, should return a decorator function
@@ -119,7 +124,8 @@ class Registry(object):
             self._register_module(
                 group_key=group_key,
                 module_name=module_name,
-                module_cls=module_cls)
+                module_cls=module_cls,
+                force=force)
             return module_cls
 
         return _register

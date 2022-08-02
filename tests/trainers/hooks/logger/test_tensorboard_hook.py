@@ -99,7 +99,7 @@ class TensorboardHookTest(unittest.TestCase):
                 ea.Scalars(LogKeys.LR)[i].value, 0.01, delta=0.001)
         for i in range(5, 10):
             self.assertAlmostEqual(
-                ea.Scalars(LogKeys.LR)[i].value, 0.001, delta=0.0001)
+                ea.Scalars(LogKeys.LR)[i].value, 0.01, delta=0.0001)
 
 
 if __name__ == '__main__':

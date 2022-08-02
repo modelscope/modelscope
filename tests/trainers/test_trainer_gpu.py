@@ -18,13 +18,6 @@ from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
 
-
-class DummyMetric:
-
-    def __call__(self, ground_truth, predict_results):
-        return {'accuracy': 0.5}
-
-
 dummy_dataset_small = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
 
@@ -141,14 +134,14 @@ class TrainerTestSingleGpu(unittest.TestCase):
                 LogKeys.MODE: ModeKeys.TRAIN,
                 LogKeys.EPOCH: 2,
                 LogKeys.ITER: 10,
-                LogKeys.LR: 0.001
+                LogKeys.LR: 0.01
             }, json.loads(lines[3]))
         self.assertDictContainsSubset(
             {
                 LogKeys.MODE: ModeKeys.TRAIN,
                 LogKeys.EPOCH: 2,
                 LogKeys.ITER: 20,
-                LogKeys.LR: 0.001
+                LogKeys.LR: 0.01
             }, json.loads(lines[4]))
         self.assertDictContainsSubset(
             {
@@ -229,7 +222,7 @@ class TrainerTestMultiGpus(DistributedTestCase):
                 LogKeys.MODE: ModeKeys.TRAIN,
                 LogKeys.EPOCH: 2,
                 LogKeys.ITER: 10,
-                LogKeys.LR: 0.001
+                LogKeys.LR: 0.01
             }, json.loads(lines[2]))
         self.assertDictContainsSubset(
             {

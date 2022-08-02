@@ -52,12 +52,12 @@ class BaseWarmup(_LRScheduler):
         for i, group in enumerate(self.optimizer.param_groups):
             group['lr'] *= scale_value[i]
 
-    def step(self, epoch=None):
+    def step(self, *args, **kwargs):
         """
         When ``self.base_scheduler._step_count`` is less than ``self.warmup_iters``, multiply lr by scale
         """
         if self.base_scheduler._step_count > self.warmup_iters:
-            return self.base_scheduler.step(epoch=epoch)
+            return self.base_scheduler.step(*args, **kwargs)
 
         for group, lr in zip(self.optimizer.param_groups, self.base_lrs):
             group['lr'] = lr
@@ -66,7 +66,7 @@ class BaseWarmup(_LRScheduler):
         if self._is_init_step:
             self._is_init_step = False
         else:
-            self.base_scheduler.step(epoch=epoch)
+            self.base_scheduler.step(*args, **kwargs)
 
         self.scale()
 

@@ -7,6 +7,7 @@ from distutils.version import LooseVersion
 from functools import partial
 from typing import Callable, List, Optional, Tuple, Union
 
+import json
 import numpy as np
 import torch
 from addict import Dict
@@ -135,6 +136,7 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.data_collator = data_collator if data_collator is not None else torch_default_data_collator
         self.metrics = self.get_metrics()
+        self._metric_values = None
         self.optimizers = optimizers
         self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
         self._mode = ModeKeys.TRAIN
@@ -322,16 +324,15 @@ class EpochBasedTrainer(BaseTrainer):
                 **self.cfg.evaluation.get('dataloader', {}))
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
-        self.evaluation_loop(self.eval_dataloader, checkpoint_path,
-                             metric_classes)
-        rank, world_size = get_dist_info()
-        metric_values = {}
-        if rank == 0:
-            for metric_cls in metric_classes:
-                metric_values.update(metric_cls.evaluate())
-        if world_size > 1:
-            metric_values = broadcast(metric_values, 0)
+        metric_values = self.evaluation_loop(self.eval_dataloader,
+                                             checkpoint_path, metric_classes)
+
+        self._metric_values = metric_values
         return metric_values
+
+    @property
+    def metric_values(self):
+        return self._metric_values
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
         """ Instantiate a pytorch model and return.
@@ -530,8 +531,6 @@ class EpochBasedTrainer(BaseTrainer):
         We provide a default implementation, if you want to customize your own optimizer
         and lr scheduler, you can either pass a tuple through trainer init function or
         subclass this class and override this method.
-
-
         """
         optimizer, lr_scheduler = self.optimizers
         if optimizer is None:
@@ -563,22 +562,38 @@ class EpochBasedTrainer(BaseTrainer):
     def register_optimizers_hook(self):
         """ Register optimizer hook and lr scheduler hook.
         """
-        optimizer, lr_scheduler = self.optimizers
-        opti_error_msg = 'optimizers should be a tuple of `torch.optim.Optimizer`'\
-                         ' and `torch.optim.lr_scheduler._LRScheduler`'
-        if optimizer is not None:
-            assert isinstance(optimizer, torch.optim.Optimizer), opti_error_msg
-        if lr_scheduler is not None:
-            assert isinstance(
-                lr_scheduler,
-                torch.optim.lr_scheduler._LRScheduler), opti_error_msg
+        _, lr_scheduler, optim_options, lr_options = self.create_optimizer_and_scheduler(
+        )
 
-        _, _, optim_options, lr_options = self.create_optimizer_and_scheduler()
-        lr_hook = dict(type='LrSchedulerHook', **lr_options)
-        if self.use_fp16:
-            optim_hook = dict(type='TorchAMPOptimizerHook', **optim_options)
-        else:
-            optim_hook = dict(type='OptimizerHook', **optim_options)
+        optim_hook = self.cfg.train.get('optimizer_hook', None)
+        lr_hook = self.cfg.train.get('lr_scheduler_hook', None)
+
+        # adapt to `ReduceLROnPlateau`
+        from torch.optim.lr_scheduler import ReduceLROnPlateau
+        if isinstance(lr_scheduler, ReduceLROnPlateau) and lr_hook is None:
+            plateau_cfg = {
+                'train': {
+                    'lr_scheduler_hook': {
+                        'type': 'PlateauLrSchedulerHook',
+                        'metric_key':
+                        'Metric Key used for PlateauLrSchedulerHook'
+                    }
+                }
+            }
+            plateau_cfg = json.dumps(
+                plateau_cfg, sort_keys=False, indent=4, separators=(',', ':'))
+            raise ValueError(
+                'Must add `lr_scheduler_hook` to configuration for `ReduceLROnPlateau` lr scheduler as follows:'
+                + '\n' + plateau_cfg)
+
+        if lr_hook is None:
+            lr_hook = dict(type='LrSchedulerHook', **lr_options)
+        if optim_hook is None:
+            if self.use_fp16:
+                optim_hook = dict(
+                    type='TorchAMPOptimizerHook', **optim_options)
+            else:
+                optim_hook = dict(type='OptimizerHook', **optim_options)
 
         self.register_hook_from_cfg([lr_hook, optim_hook])
 
@@ -692,7 +707,7 @@ class EpochBasedTrainer(BaseTrainer):
         """
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
-            multi_gpu_test(
+            metric_values = multi_gpu_test(
                 self.model,
                 data_loader,
                 tmpdir=None,
@@ -701,11 +716,13 @@ class EpochBasedTrainer(BaseTrainer):
                 metric_classes=metric_classes)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            single_gpu_test(
+            metric_values = single_gpu_test(
                 self.model,
                 data_loader,
                 data_collate_fn=self.collate_fn,
                 metric_classes=metric_classes)
+
+        return metric_values
 
     def register_hook(self, hook: Hook) -> None:
         """Register a hook into the hook list.

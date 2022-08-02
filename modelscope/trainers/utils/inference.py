@@ -10,7 +10,8 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
-from modelscope.utils.torch_utils import get_dist_info, is_master, make_tmp_dir
+from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
+                                          make_tmp_dir)
 from modelscope.utils.utils import if_func_receive_dict_inputs
 
 
@@ -50,6 +51,12 @@ def single_gpu_test(model,
             batch_size = len(result)
             for _ in range(batch_size):
                 pbar.update()
+
+    metric_values = {}
+    for metric_cls in metric_classes:
+        metric_values.update(metric_cls.evaluate())
+
+    return metric_values
 
 
 def multi_gpu_test(model,
@@ -131,6 +138,15 @@ def multi_gpu_test(model,
             for i in range(len(data_list)):
                 for metric_cls in metric_classes:
                     metric_cls.add(results[i], data_list[i])
+
+    metric_values = {}
+    if rank == 0:
+        for metric_cls in metric_classes:
+            metric_values.update(metric_cls.evaluate())
+    if world_size > 1:
+        metric_values = broadcast(metric_values, 0)
+
+    return metric_values
 
 
 def collect_results_cpu(result_part, size, tmpdir=None):

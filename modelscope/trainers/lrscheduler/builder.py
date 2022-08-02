@@ -40,7 +40,8 @@ def register_torch_lr_scheduler():
     members = inspect.getmembers(lr_scheduler)
 
     for name, obj in members:
-        if inspect.isclass(obj) and issubclass(obj, _LRScheduler):
+        if (inspect.isclass(obj) and issubclass(
+                obj, _LRScheduler)) or name in ['ReduceLROnPlateau']:
             LR_SCHEDULER.register_module(module_name=name, module_cls=obj)
 
 

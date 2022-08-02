@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.utils.constant import LogKeys
+from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import is_master
 from .builder import HOOKS
 from .hook import Hook
 from .priority import Priority
@@ -50,12 +52,14 @@ class LrSchedulerHook(Hook):
         trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def before_train_epoch(self, trainer):
+        trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
+
+    def after_train_epoch(self, trainer):
         if self.by_epoch:
             if self.warmup_lr_scheduler is not None:
                 self.warmup_lr_scheduler.step()
             else:
                 trainer.lr_scheduler.step()
-        trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def _get_log_lr(self, trainer):
         cur_lr = self.get_current_lr(trainer)
@@ -70,3 +74,44 @@ class LrSchedulerHook(Hook):
                 lr.update({k: lr_[0]})
 
         return lr
+
+
+@HOOKS.register_module()
+class PlateauLrSchedulerHook(LrSchedulerHook):
+    """Lr scheduler hook for `ReduceLROnPlateau`.
+
+    Args:
+        metric_key (str): Metric key returned from `trainer.metric_values`,
+            get the value of metric key and pass it to `ReduceLROnPlateau.step`.
+        by_epoch (bool): Whether lr changes by epoch
+        warmup (dict): warm up config
+    """
+    PRIORITY = Priority.LOW  # should be after EvaluationHook
+
+    def __init__(self, metric_key, by_epoch=True, warmup=None) -> None:
+        super().__init__(by_epoch=by_epoch, warmup=warmup)
+        self.metric_key = metric_key
+
+    def before_run(self, trainer):
+        super().before_run(trainer)
+        if not hasattr(trainer, 'logger'):
+            self.logger = get_logger(__name__)
+        else:
+            self.logger = trainer.logger
+
+    def after_train_epoch(self, trainer):
+        # adapt to evaluation intervel is greater than 1
+        if trainer.metric_values is None:
+            if is_master():
+                self.logger.warning(
+                    f'Current epoch {trainer.epoch} has no evaluation metric values, skip lr_scheduler.step() !'
+                )
+            return
+
+        metrics = trainer.metric_values[self.metric_key]
+
+        if self.by_epoch:
+            if self.warmup_lr_scheduler is not None:
+                self.warmup_lr_scheduler.step(metrics=metrics)
+            else:
+                trainer.lr_scheduler.step(metrics=metrics)

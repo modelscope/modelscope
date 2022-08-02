@@ -15,21 +15,18 @@ from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.registry import default_group
 from modelscope.utils.test_utils import create_dummy_test_dataset
 
-_global_iter = 0
 
+def create_dummy_metric():
 
-@METRICS.register_module(group_key=default_group, module_name='DummyMetric')
-class DummyMetric:
+    @METRICS.register_module(
+        group_key=default_group, module_name='DummyMetric', force=True)
+    class DummyMetric:
 
-    _fake_acc_by_epoch = {1: 0.1, 2: 0.5, 3: 0.2}
+        def add(*args, **kwargs):
+            pass
 
-    def add(*args, **kwargs):
-        pass
-
-    def evaluate(self):
-        global _global_iter
-        _global_iter += 1
-        return {MetricKeys.ACCURACY: self._fake_acc_by_epoch[_global_iter]}
+        def evaluate(self):
+            return {MetricKeys.ACCURACY: 0.5}
 
 
 dummy_dataset = create_dummy_test_dataset(
@@ -58,20 +55,17 @@ class EvaluationHookTest(unittest.TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
+        create_dummy_metric()
 
     def tearDown(self):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    def test_best_ckpt_rule_max(self):
-        global _global_iter
-        _global_iter = 0
-
+    def test_evaluation_hook(self):
         json_cfg = {
             'task': 'image_classification',
             'train': {
-                'work_dir':
-                self.tmp_dir,
+                'work_dir': self.tmp_dir,
                 'dataloader': {
                     'batch_size_per_gpu': 2,
                     'workers_per_gpu': 1
@@ -87,8 +81,6 @@ class EvaluationHookTest(unittest.TestCase):
                 'hooks': [{
                     'type': 'EvaluationHook',
                     'interval': 1,
-                    'save_best_ckpt': True,
-                    'monitor_key': MetricKeys.ACCURACY
                 }]
             },
             'evaluation': {
@@ -112,78 +104,11 @@ class EvaluationHookTest(unittest.TestCase):
             data_collator=None,
             train_dataset=dummy_dataset,
             eval_dataset=dummy_dataset,
-            max_epochs=3)
+            max_epochs=1)
 
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
-        results_files = os.listdir(self.tmp_dir)
-        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
-        self.assertIn(f'best_{LogKeys.EPOCH}2_{MetricKeys.ACCURACY}0.5.pth',
-                      results_files)
-
-    def test_best_ckpt_rule_min(self):
-        global _global_iter
-        _global_iter = 0
-
-        json_cfg = {
-            'task': 'image_classification',
-            'train': {
-                'work_dir':
-                self.tmp_dir,
-                'dataloader': {
-                    'batch_size_per_gpu': 2,
-                    'workers_per_gpu': 1
-                },
-                'optimizer': {
-                    'type': 'SGD',
-                    'lr': 0.01,
-                },
-                'lr_scheduler': {
-                    'type': 'StepLR',
-                    'step_size': 2,
-                },
-                'hooks': [{
-                    'type': 'EvaluationHook',
-                    'interval': 1,
-                    'save_best_ckpt': True,
-                    'monitor_key': 'accuracy',
-                    'rule': 'min',
-                    'out_dir': os.path.join(self.tmp_dir, 'best_ckpt')
-                }]
-            },
-            'evaluation': {
-                'dataloader': {
-                    'batch_size_per_gpu': 2,
-                    'workers_per_gpu': 1,
-                    'shuffle': False
-                },
-                'metrics': ['DummyMetric']
-            }
-        }
-
-        config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
-        with open(config_path, 'w') as f:
-            json.dump(json_cfg, f)
-
-        trainer_name = 'EpochBasedTrainer'
-        kwargs = dict(
-            cfg_file=config_path,
-            model=DummyModel(),
-            data_collator=None,
-            train_dataset=dummy_dataset,
-            eval_dataset=dummy_dataset,
-            max_epochs=3)
-
-        trainer = build_trainer(trainer_name, kwargs)
-        trainer.train()
-        results_files = os.listdir(self.tmp_dir)
-        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
-        self.assertIn(f'best_{LogKeys.EPOCH}1_{MetricKeys.ACCURACY}0.1.pth',
-                      os.listdir(os.path.join(self.tmp_dir, 'best_ckpt')))
+        self.assertDictEqual(trainer.metric_values, {'accuracy': 0.5})
 
 
 if __name__ == '__main__':

@@ -200,3 +200,19 @@ class ApexAMPOptimizerHook(OptimizerHook):
 
             trainer.optimizer.step()
             trainer.optimizer.zero_grad()
+
+
+@HOOKS.register_module()
+class NoneOptimizerHook(OptimizerHook):
+
+    def __init__(self, cumulative_iters=1, grad_clip=None, loss_keys='loss'):
+
+        super(NoneOptimizerHook, self).__init__(
+            grad_clip=grad_clip, loss_keys=loss_keys)
+        self.cumulative_iters = cumulative_iters
+
+    def before_run(self, trainer):
+        return
+
+    def after_train_iter(self, trainer):
+        return

@@ -16,6 +16,7 @@ class Models(object):
     nafnet = 'nafnet'
     csrnet = 'csrnet'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
+    gpen = 'gpen'
     product_retrieval_embedding = 'product-retrieval-embedding'
 
     # nlp models
@@ -91,6 +92,7 @@ class Pipelines(object):
     image2image_translation = 'image-to-image-translation'
     live_category = 'live-category'
     video_category = 'video-category'
+    image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
 
     # nlp tasks
@@ -160,6 +162,7 @@ class Preprocessors(object):
     image_denoie_preprocessor = 'image-denoise-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
+    image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -207,3 +210,5 @@ class Metrics(object):
     text_gen_metric = 'text-gen-metric'
     # metrics for image-color-enhance task
     image_color_enhance_metric = 'image-color-enhance-metric'
+    # metrics for image-portrait-enhancement task
+    image_portrait_enhancement_metric = 'image-portrait-enhancement-metric'

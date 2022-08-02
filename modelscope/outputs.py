@@ -137,6 +137,7 @@ TASK_OUTPUTS = {
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
 
     # image generation task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}

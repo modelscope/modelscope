@@ -1,2 +1,3 @@
 from .image_instance_segmentation_trainer import \
     ImageInstanceSegmentationTrainer
+from .image_portrait_enhancement_trainer import ImagePortraitEnhancementTrainer

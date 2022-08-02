@@ -14,5 +14,5 @@ __all__ = [
     'Hook', 'HOOKS', 'CheckpointHook', 'EvaluationHook', 'LrSchedulerHook',
     'OptimizerHook', 'Priority', 'build_hook', 'TextLoggerHook',
     'IterTimerHook', 'TorchAMPOptimizerHook', 'ApexAMPOptimizerHook',
-    'BestCkptSaverHook'
+    'BestCkptSaverHook', 'NoneOptimizerHook', 'NoneLrSchedulerHook'
 ]

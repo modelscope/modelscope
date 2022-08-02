@@ -23,7 +23,9 @@ task_default_metrics = {
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
-    Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric]
+    Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],
+    Tasks.image_portrait_enhancement:
+    [Metrics.image_portrait_enhancement_metric],
 }
 
 

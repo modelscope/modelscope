@@ -115,3 +115,18 @@ class PlateauLrSchedulerHook(LrSchedulerHook):
                 self.warmup_lr_scheduler.step(metrics=metrics)
             else:
                 trainer.lr_scheduler.step(metrics=metrics)
+
+
+@HOOKS.register_module()
+class NoneLrSchedulerHook(LrSchedulerHook):
+
+    PRIORITY = Priority.LOW  # should be after EvaluationHook
+
+    def __init__(self, by_epoch=True, warmup=None) -> None:
+        super().__init__(by_epoch=by_epoch, warmup=warmup)
+
+    def before_run(self, trainer):
+        return
+
+    def after_train_epoch(self, trainer):
+        return

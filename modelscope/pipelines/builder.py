@@ -110,6 +110,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                   'damo/cv_gan_face-image-generation'),
     Tasks.image_super_resolution: (Pipelines.image_super_resolution,
                                    'damo/cv_rrdb_image-super-resolution'),
+    Tasks.image_portrait_enhancement:
+    (Pipelines.image_portrait_enhancement,
+     'damo/cv_gpen_image-portrait-enhancement'),
     Tasks.product_retrieval_embedding:
     (Pipelines.product_retrieval_embedding,
      'damo/cv_resnet50_product-bag-embedding-models'),

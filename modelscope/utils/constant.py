@@ -43,6 +43,7 @@ class CVTasks(object):
     image_colorization = 'image-colorization'
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'
+    image_portrait_enhancement = 'image-portrait-enhancement'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'

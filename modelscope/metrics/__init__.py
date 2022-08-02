@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .image_denoise_metric import ImageDenoiseMetric
     from .image_instance_segmentation_metric import \
         ImageInstanceSegmentationCOCOMetric
+    from .image_portrait_enhancement_metric import ImagePortraitEnhancementMetric
     from .sequence_classification_metric import SequenceClassificationMetric
     from .text_generation_metric import TextGenerationMetric
 
@@ -21,6 +22,8 @@ else:
         'image_denoise_metric': ['ImageDenoiseMetric'],
         'image_instance_segmentation_metric':
         ['ImageInstanceSegmentationCOCOMetric'],
+        'image_portrait_enhancement_metric':
+        ['ImagePortraitEnhancementMetric'],
         'sequence_classification_metric': ['SequenceClassificationMetric'],
         'text_generation_metric': ['TextGenerationMetric'],
     }

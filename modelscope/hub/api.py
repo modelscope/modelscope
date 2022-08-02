@@ -160,7 +160,7 @@ class HubApi:
         """
         cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?{revision}'
+        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
 
         r = requests.get(path, cookies=cookies)
         handle_http_response(r, logger, cookies, model_id)

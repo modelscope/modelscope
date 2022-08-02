@@ -69,6 +69,25 @@ class SpeechSignalProcessTest(unittest.TestCase):
         print(f'Processed audio saved to {output_path}')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_aec_tuple_bytes(self):
+        # Download audio files
+        download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
+        download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
+        model_id = 'damo/speech_dfsmn_aec_psm_16k'
+        with open(NEAREND_MIC_FILE, 'rb') as f:
+            nearend_bytes = f.read()
+        with open(FAREND_SPEECH_FILE, 'rb') as f:
+            farend_bytes = f.read()
+        inputs = (nearend_bytes, farend_bytes)
+        aec = pipeline(
+            Tasks.acoustic_echo_cancellation,
+            model=model_id,
+            pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
+        output_path = os.path.abspath('output.wav')
+        aec(inputs, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ans(self):
         # Download audio files
         download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)

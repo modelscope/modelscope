@@ -1,12 +1,13 @@
 import io
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import scipy.io.wavfile as wav
 import torch
 
 from modelscope.utils.constant import Fields
+from . import Preprocessor
 from .builder import PREPROCESSORS
 
 
@@ -115,7 +116,7 @@ class Feature:
 
 
 @PREPROCESSORS.register_module(Fields.audio)
-class LinearAECAndFbank:
+class LinearAECAndFbank(Preprocessor):
     SAMPLE_RATE = 16000
 
     def __init__(self, io_config):
@@ -127,18 +128,27 @@ class LinearAECAndFbank:
         self.mitaec = MinDAEC.load()
         self.mask_on_mic = io_config['mask_on'] == 'nearend_mic'
 
-    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """ linear filtering the near end mic and far end audio, then extract the feature
-        :param data: dict with two keys and correspond audios: "nearend_mic" and "farend_speech"
-        :return: dict with two keys and Tensor values: "base" linear filtered audio，and "feature"
+    def __call__(self, data: Union[Tuple, Dict[str, Any]]) -> Dict[str, Any]:
+        """ Linear filtering the near end mic and far end audio, then extract the feature.
+
+        Args:
+            data: Dict with two keys and correspond audios: "nearend_mic" and "farend_speech".
+
+        Returns:
+            Dict with two keys and Tensor values: "base" linear filtered audio，and "feature"
         """
-        # read files
-        nearend_mic, fs = self.load_wav(data['nearend_mic'])
-        farend_speech, fs = self.load_wav(data['farend_speech'])
-        if 'nearend_speech' in data:
-            nearend_speech, fs = self.load_wav(data['nearend_speech'])
-        else:
+        if isinstance(data, tuple):
+            nearend_mic, fs = self.load_wav(data[0])
+            farend_speech, fs = self.load_wav(data[1])
             nearend_speech = np.zeros_like(nearend_mic)
+        else:
+            # read files
+            nearend_mic, fs = self.load_wav(data['nearend_mic'])
+            farend_speech, fs = self.load_wav(data['farend_speech'])
+            if 'nearend_speech' in data:
+                nearend_speech, fs = self.load_wav(data['nearend_speech'])
+            else:
+                nearend_speech = np.zeros_like(nearend_mic)
 
         out_mic, out_ref, out_linear, out_echo = self.mitaec.do_linear_aec(
             nearend_mic, farend_speech)

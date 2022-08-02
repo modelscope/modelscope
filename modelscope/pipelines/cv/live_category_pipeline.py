@@ -85,7 +85,7 @@ class LiveCategoryPipeline(Pipeline):
             for label_key in label_keys:
                 if label_info[label_key] not in label_str:
                     label_str.append(label_info[label_key])
-            labels.append('>>'.join(label_str))
+            labels.append(label_str[-1])
         return {OutputKeys.SCORES: list(scores), OutputKeys.LABELS: labels}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

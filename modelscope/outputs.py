@@ -159,10 +159,17 @@ TASK_OUTPUTS = {
     # }
     Tasks.action_recognition: [OutputKeys.LABELS],
 
+    # live category recognition result for single video
+    # {
+    #       "scores": [0.885272, 0.014790631, 0.014558001],
+    #       'labels': ['修身型棉衣', '高腰牛仔裤', '休闲连体裤']
+    # }
+    Tasks.live_category: [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # video category recognition result for single video
     # {
-    #       "scores": [0.7716429233551025]
-    #       "labels": ['生活>>好物推荐'],
+    #       "scores": [0.7716429233551025],
+    #       "labels": ['生活>>好物推荐']
     # }
     Tasks.video_category: [OutputKeys.SCORES, OutputKeys.LABELS],
 

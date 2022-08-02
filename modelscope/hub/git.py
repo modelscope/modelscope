@@ -4,6 +4,7 @@ from typing import List
 from xmlrpc.client import Boolean
 
 from modelscope.utils.logger import get_logger
+from .api import ModelScopeConfig
 from .errors import GitError
 
 logger = get_logger()
@@ -37,7 +38,7 @@ class GitCommandWrapper(metaclass=Singleton):
         Returns:
             subprocess.CompletedProcess: the command response
         """
-        logger.info(' '.join(args))
+        logger.debug(' '.join(args))
         response = subprocess.run(
             [self.git_path, *args],
             stdout=subprocess.PIPE,
@@ -49,6 +50,15 @@ class GitCommandWrapper(metaclass=Singleton):
             raise GitError(
                 'stdout: %s, stderr: %s' %
                 (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
+
+    def config_auth_token(self, repo_dir, auth_token):
+        url = self.get_repo_remote_url(repo_dir)
+        if '//oauth2' not in url:
+            auth_url = self._add_token(auth_token, url)
+            cmd_args = '-C %s remote set-url origin %s' % (repo_dir, auth_url)
+            cmd_args = cmd_args.split(' ')
+            rsp = self._run_git_command(*cmd_args)
+            logger.debug(rsp.stdout.decode('utf8'))
 
     def _add_token(self, token: str, url: str):
         if token:
@@ -104,8 +114,22 @@ class GitCommandWrapper(metaclass=Singleton):
         logger.debug(clone_args)
         clone_args = clone_args.split(' ')
         response = self._run_git_command(*clone_args)
-        logger.info(response.stdout.decode('utf8'))
+        logger.debug(response.stdout.decode('utf8'))
         return response
+
+    def add_user_info(self, repo_base_dir, repo_name):
+        user_name, user_email = ModelScopeConfig.get_user_info()
+        if user_name and user_email:
+            # config user.name and user.email if exist
+            config_user_name_args = '-C %s/%s config user.name %s' % (
+                repo_base_dir, repo_name, user_name)
+            response = self._run_git_command(*config_user_name_args.split(' '))
+            logger.debug(response.stdout.decode('utf8'))
+            config_user_email_args = '-C %s/%s config user.name %s' % (
+                repo_base_dir, repo_name, user_name)
+            response = self._run_git_command(
+                *config_user_email_args.split(' '))
+            logger.debug(response.stdout.decode('utf8'))
 
     def add(self,
             repo_dir: str,
@@ -118,7 +142,7 @@ class GitCommandWrapper(metaclass=Singleton):
             add_args = '-C %s add %s' % (repo_dir, files_str)
         add_args = add_args.split(' ')
         rsp = self._run_git_command(*add_args)
-        logger.info(rsp.stdout.decode('utf8'))
+        logger.debug(rsp.stdout.decode('utf8'))
         return rsp
 
     def commit(self, repo_dir: str, message: str):
@@ -159,7 +183,7 @@ class GitCommandWrapper(metaclass=Singleton):
             push_args += ' -f'
         push_args = push_args.split(' ')
         rsp = self._run_git_command(*push_args)
-        logger.info(rsp.stdout.decode('utf8'))
+        logger.debug(rsp.stdout.decode('utf8'))
         return rsp
 
     def get_repo_remote_url(self, repo_dir: str):

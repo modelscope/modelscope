@@ -24,6 +24,8 @@ do
              -v /home/admin/pre-commit:/home/admin/pre-commit \
              -e CI_TEST=True \
              -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
+             -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
+             -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
              --workdir=$CODE_DIR_IN_CONTAINER \
              --net host  \
              ${IMAGE_NAME}:${IMAGE_VERSION} \

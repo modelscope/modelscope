@@ -3,12 +3,19 @@ import pickle
 import shutil
 import subprocess
 from collections import defaultdict
+from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import List, Optional, Tuple, Union
 
 import requests
 
+from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
+                                      API_RESPONSE_FIELD_EMAIL,
+                                      API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
+                                      API_RESPONSE_FIELD_MESSAGE,
+                                      API_RESPONSE_FIELD_USERNAME,
+                                      DEFAULT_CREDENTIALS_PATH)
 from modelscope.msdatasets.config import (DOWNLOADED_DATASETS_PATH,
                                           HUB_DATASET_ENDPOINT)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
@@ -32,16 +39,13 @@ class HubApi:
 
     def login(
         self,
-        user_name: str,
-        password: str,
+        access_token: str,
     ) -> tuple():
         """
         Login with username and password
 
         Args:
-            user_name(`str`): user name on modelscope
-            password(`str`): password
-
+            access_token(`str`): user access token on modelscope.
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
             gitlab token: to access private repos
@@ -51,24 +55,23 @@ class HubApi:
         </Tip>
         """
         path = f'{self.endpoint}/api/v1/login'
-        r = requests.post(
-            path, json={
-                'username': user_name,
-                'password': password
-            })
+        r = requests.post(path, json={'AccessToken': access_token})
         r.raise_for_status()
         d = r.json()
         raise_on_error(d)
 
-        token = d['Data']['AccessToken']
+        token = d[API_RESPONSE_FIELD_DATA][API_RESPONSE_FIELD_GIT_ACCESS_TOKEN]
         cookies = r.cookies
 
         # save token and cookie
         ModelScopeConfig.save_token(token)
         ModelScopeConfig.save_cookies(cookies)
-        ModelScopeConfig.write_to_git_credential(user_name, password)
+        ModelScopeConfig.save_user_info(
+            d[API_RESPONSE_FIELD_DATA][API_RESPONSE_FIELD_USERNAME],
+            d[API_RESPONSE_FIELD_DATA][API_RESPONSE_FIELD_EMAIL])
 
-        return d['Data']['AccessToken'], cookies
+        return d[API_RESPONSE_FIELD_DATA][
+            API_RESPONSE_FIELD_GIT_ACCESS_TOKEN], cookies
 
     def create_model(
         self,
@@ -161,11 +164,11 @@ class HubApi:
 
         r = requests.get(path, cookies=cookies)
         handle_http_response(r, logger, cookies, model_id)
-        if r.status_code == 200:
+        if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
-                return r.json()['Data']
+                return r.json()[API_RESPONSE_FIELD_DATA]
             else:
-                raise NotExistError(r.json()['Message'])
+                raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
             r.raise_for_status()
 
@@ -189,12 +192,12 @@ class HubApi:
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
             (owner_or_group, page_number, page_size))
         handle_http_response(r, logger, cookies, 'list_model')
-        if r.status_code == 200:
+        if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
-                data = r.json()['Data']
+                data = r.json()[API_RESPONSE_FIELD_DATA]
                 return data
             else:
-                raise RequestError(r.json()['Message'])
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
             r.raise_for_status()
         return None
@@ -232,7 +235,7 @@ class HubApi:
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
-        info = d['Data']
+        info = d[API_RESPONSE_FIELD_DATA]
         branches = [x['Revision'] for x in info['RevisionMap']['Branches']
                     ] if info['RevisionMap']['Branches'] else []
         tags = [x['Revision'] for x in info['RevisionMap']['Tags']
@@ -276,7 +279,7 @@ class HubApi:
         raise_on_error(d)
 
         files = []
-        for file in d['Data']['Files']:
+        for file in d[API_RESPONSE_FIELD_DATA]['Files']:
             if file['Name'] == '.gitignore' or file['Name'] == '.gitattributes':
                 continue
 
@@ -289,7 +292,7 @@ class HubApi:
         params = {}
         r = requests.get(path, params=params, headers=headers)
         r.raise_for_status()
-        dataset_list = r.json()['Data']
+        dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
 
     def fetch_dataset_scripts(
@@ -379,21 +382,27 @@ class HubApi:
 
 
 class ModelScopeConfig:
-    path_credential = expanduser('~/.modelscope/credentials')
+    path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
+    COOKIES_FILE_NAME = 'cookies'
+    GIT_TOKEN_FILE_NAME = 'git_token'
+    USER_INFO_FILE_NAME = 'user'
 
-    @classmethod
-    def make_sure_credential_path_exist(cls):
-        os.makedirs(cls.path_credential, exist_ok=True)
+    @staticmethod
+    def make_sure_credential_path_exist():
+        os.makedirs(ModelScopeConfig.path_credential, exist_ok=True)
 
-    @classmethod
-    def save_cookies(cls, cookies: CookieJar):
-        cls.make_sure_credential_path_exist()
-        with open(os.path.join(cls.path_credential, 'cookies'), 'wb+') as f:
+    @staticmethod
+    def save_cookies(cookies: CookieJar):
+        ModelScopeConfig.make_sure_credential_path_exist()
+        with open(
+                os.path.join(ModelScopeConfig.path_credential,
+                             ModelScopeConfig.COOKIES_FILE_NAME), 'wb+') as f:
             pickle.dump(cookies, f)
 
-    @classmethod
-    def get_cookies(cls):
-        cookies_path = os.path.join(cls.path_credential, 'cookies')
+    @staticmethod
+    def get_cookies():
+        cookies_path = os.path.join(ModelScopeConfig.path_credential,
+                                    ModelScopeConfig.COOKIES_FILE_NAME)
         if os.path.exists(cookies_path):
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
@@ -405,14 +414,38 @@ class ModelScopeConfig:
                 return cookies
         return None
 
-    @classmethod
-    def save_token(cls, token: str):
-        cls.make_sure_credential_path_exist()
-        with open(os.path.join(cls.path_credential, 'token'), 'w+') as f:
+    @staticmethod
+    def save_token(token: str):
+        ModelScopeConfig.make_sure_credential_path_exist()
+        with open(
+                os.path.join(ModelScopeConfig.path_credential,
+                             ModelScopeConfig.GITLAB_TOKEN_FILE_NAME),
+                'w+') as f:
             f.write(token)
 
-    @classmethod
-    def get_token(cls) -> Optional[str]:
+    @staticmethod
+    def save_user_info(user_name: str, user_email: str):
+        ModelScopeConfig.make_sure_credential_path_exist()
+        with open(
+                os.path.join(ModelScopeConfig.path_credential,
+                             ModelScopeConfig.USER_INFO_FILE_NAME), 'w+') as f:
+            f.write('%s:%s' % (user_name, user_email))
+
+    @staticmethod
+    def get_user_info() -> Tuple[str, str]:
+        try:
+            with open(
+                    os.path.join(ModelScopeConfig.path_credential,
+                                 ModelScopeConfig.USER_INFO_FILE_NAME),
+                    'r') as f:
+                info = f.read()
+                return info.split(':')[0], info.split(':')[1]
+        except FileNotFoundError:
+            pass
+        return None, None
+
+    @staticmethod
+    def get_token() -> Optional[str]:
         """
         Get token or None if not existent.
 
@@ -422,24 +455,11 @@ class ModelScopeConfig:
         """
         token = None
         try:
-            with open(os.path.join(cls.path_credential, 'token'), 'r') as f:
+            with open(
+                    os.path.join(ModelScopeConfig.path_credential,
+                                 ModelScopeConfig.GITLAB_TOKEN_FILE_NAME),
+                    'r') as f:
                 token = f.read()
         except FileNotFoundError:
             pass
         return token
-
-    @staticmethod
-    def write_to_git_credential(username: str, password: str):
-        with subprocess.Popen(
-                'git credential-store store'.split(),
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-        ) as process:
-            input_username = f'username={username.lower()}'
-            input_password = f'password={password}'
-
-            process.stdin.write(
-                f'url={get_endpoint()}\n{input_username}\n{input_password}\n\n'
-                .encode('utf-8'))
-            process.stdin.flush()

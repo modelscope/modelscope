@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from modelscope.hub.errors import GitError, InvalidParameter
+from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import ModelScopeConfig
@@ -64,6 +64,12 @@ class Repository:
         if git_wrapper.is_lfs_installed():
             git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
 
+        # add user info if login
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
+        if self.auth_token:  # config remote with auth token
+            self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+
     def _get_model_id_url(self, model_id):
         url = f'{get_endpoint()}/{model_id}.git'
         return url
@@ -93,6 +99,14 @@ class Repository:
             raise InvalidParameter(msg)
         if not isinstance(force, bool):
             raise InvalidParameter('force must be bool')
+
+        if not self.auth_token:
+            raise NotLoginException('Must login to push, please login first.')
+
+        self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
+
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
         self.git_wrapper.pull(self.model_dir)
         self.git_wrapper.add(self.model_dir, all_files=True)

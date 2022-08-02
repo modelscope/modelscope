@@ -1,30 +1,22 @@
 import copy
-import fnmatch
-import logging
 import os
 import sys
 import tempfile
-import time
 from functools import partial
-from hashlib import sha256
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import BinaryIO, Dict, Optional, Union
+from typing import Dict, Optional, Union
 from uuid import uuid4
 
-import json
 import requests
 from filelock import FileLock
-from requests.exceptions import HTTPError
 from tqdm import tqdm
 
 from modelscope import __version__
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
-from .constants import (DEFAULT_MODELSCOPE_GROUP, LOGGER_NAME,
-                        MODEL_ID_SEPARATOR)
-from .errors import NotExistError, RequestError, raise_on_error
+from .errors import NotExistError
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (get_cache_dir, get_endpoint,
                           model_id_to_group_owner_name)

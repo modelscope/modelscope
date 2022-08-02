@@ -14,23 +14,26 @@ from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
-from .test_utils import (TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
-                         TEST_PASSWORD, TEST_USER_NAME1, TEST_USER_NAME2,
-                         delete_credential, delete_stored_git_credential)
+from .test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_CHINESE_NAME,
+                         TEST_MODEL_ORG, delete_credential)
 
 logger = get_logger()
 logger.setLevel('DEBUG')
 DEFAULT_GIT_PATH = 'git'
 
 
+@unittest.skip(
+    "Access token is always change, we can't login with same access token, so skip!"
+)
 class HubRepositoryTest(unittest.TestCase):
 
     def setUp(self):
         self.old_cwd = os.getcwd()
         self.api = HubApi()
         # note this is temporary before official account management is ready
-        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)
+        self.api.login(TEST_ACCESS_TOKEN1)
         self.model_name = uuid.uuid4().hex
         self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
         self.api.create_model(
@@ -48,18 +51,17 @@ class HubRepositoryTest(unittest.TestCase):
 
     def test_clone_repo(self):
         Repository(self.model_dir, clone_from=self.model_id)
-        assert os.path.exists(os.path.join(self.model_dir, 'README.md'))
+        assert os.path.exists(os.path.join(self.model_dir, ModelFile.README))
 
     def test_clone_public_model_without_token(self):
         delete_credential()
-        delete_stored_git_credential(TEST_USER_NAME1)
         Repository(self.model_dir, clone_from=self.model_id)
-        assert os.path.exists(os.path.join(self.model_dir, 'README.md'))
-        self.api.login(TEST_USER_NAME1, TEST_PASSWORD)  # re-login for delete
+        assert os.path.exists(os.path.join(self.model_dir, ModelFile.README))
+        self.api.login(TEST_ACCESS_TOKEN1)  # re-login for delete
 
     def test_push_all(self):
         repo = Repository(self.model_dir, clone_from=self.model_id)
-        assert os.path.exists(os.path.join(self.model_dir, 'README.md'))
+        assert os.path.exists(os.path.join(self.model_dir, ModelFile.README))
         os.chdir(self.model_dir)
         lfs_file1 = 'test1.bin'
         lfs_file2 = 'test2.bin'

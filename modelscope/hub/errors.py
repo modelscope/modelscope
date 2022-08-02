@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from requests.exceptions import HTTPError
 
 
@@ -17,6 +19,10 @@ class InvalidParameter(Exception):
     pass
 
 
+class NotLoginException(Exception):
+    pass
+
+
 def is_ok(rsp):
     """ Check the request is ok
 
@@ -26,7 +32,7 @@ def is_ok(rsp):
                  'RequestId': '', 'Success': False}
         Success: {'Code': 200, 'Data': {}, 'Message': 'success', 'RequestId': '', 'Success': True}
     """
-    return rsp['Code'] == 200 and rsp['Success']
+    return rsp['Code'] == HTTPStatus.OK and rsp['Success']
 
 
 def handle_http_response(response, logger, cookies, model_id):
@@ -46,7 +52,7 @@ def raise_on_error(rsp):
     Args:
         rsp (_type_): The server response
     """
-    if rsp['Code'] == 200 and rsp['Success']:
+    if rsp['Code'] == HTTPStatus.OK and rsp['Success']:
         return True
     else:
         raise RequestError(rsp['Message'])
@@ -59,7 +65,7 @@ def datahub_raise_on_error(url, rsp):
     Args:
         rsp (_type_): The server response
     """
-    if rsp.get('Code') == 200:
+    if rsp.get('Code') == HTTPStatus.OK:
         return True
     else:
         raise RequestError(

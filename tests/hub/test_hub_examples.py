@@ -4,15 +4,14 @@ from modelscope.hub.api import HubApi
 from modelscope.utils.hub import create_model_if_not_exist
 
 # note this is temporary before official account management is ready
-USER_NAME = 'maasadmin'
-PASSWORD = '12345678'
+YOUR_ACCESS_TOKEN = 'token'
 
 
 class HubExampleTest(unittest.TestCase):
 
     def setUp(self):
         self.api = HubApi()
-        self.api.login(USER_NAME, PASSWORD)
+        self.api.login(YOUR_ACCESS_TOKEN)
 
     @unittest.skip('to be used for local test only')
     def test_example_model_creation(self):

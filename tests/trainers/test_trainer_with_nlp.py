@@ -24,20 +24,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             os.makedirs(self.tmp_dir)
 
         # todo: Replace below scripts with MsDataset.load when the formal dataset service is ready
-        from datasets import Dataset
-        dataset_dict = {
-            'sentence1': [
-                'This is test sentence1-1', 'This is test sentence2-1',
-                'This is test sentence3-1'
-            ],
-            'sentence2': [
-                'This is test sentence1-2', 'This is test sentence2-2',
-                'This is test sentence3-2'
-            ],
-            'label': [0, 1, 1]
-        }
-        dataset = Dataset.from_dict(dataset_dict)
-        self.dataset = MsDataset.from_hf_dataset(dataset)
+        self.dataset = MsDataset.load(
+            'afqmc_small', namespace='userxiaoming', split='train')
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)

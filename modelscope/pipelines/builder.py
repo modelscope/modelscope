@@ -116,15 +116,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.product_retrieval_embedding:
     (Pipelines.product_retrieval_embedding,
      'damo/cv_resnet50_product-bag-embedding-models'),
-    Tasks.image_classification_imagenet:
-    (Pipelines.general_image_classification,
-     'damo/cv_vit-base_image-classification_ImageNet-labels'),
-    Tasks.image_classification_dailylife:
-    (Pipelines.daily_image_classification,
-     'damo/cv_vit-base_image-classification_Dailylife-labels'),
     Tasks.image_to_image_generation:
     (Pipelines.image_to_image_generation,
      'damo/cv_latent_diffusion_image2image_generate'),
+    Tasks.image_classification:
+    (Pipelines.daily_image_classification,
+     'damo/cv_vit-base_image-classification_Dailylife-labels'),
 }
 
 

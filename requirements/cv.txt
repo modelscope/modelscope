@@ -1,6 +1,4 @@
 easydict
-# tensorflow 1.x compatability requires numpy version to be cap at 1.18
-numpy<=1.18
 onnxruntime>=1.10
 tf_slim
 timm

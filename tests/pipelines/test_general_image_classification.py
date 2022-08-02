@@ -10,7 +10,7 @@ class GeneralImageClassificationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_ImageNet(self):
         general_image_classification = pipeline(
-            Tasks.image_classification_imagenet,
+            Tasks.image_classification,
             model='damo/cv_vit-base_image-classification_ImageNet-labels')
         result = general_image_classification('data/test/images/bird.JPEG')
         print(result)
@@ -18,22 +18,14 @@ class GeneralImageClassificationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_Dailylife(self):
         general_image_classification = pipeline(
-            Tasks.image_classification_dailylife,
+            Tasks.image_classification,
             model='damo/cv_vit-base_image-classification_Dailylife-labels')
         result = general_image_classification('data/test/images/bird.JPEG')
         print(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_ImageNet_default_task(self):
-        general_image_classification = pipeline(
-            Tasks.image_classification_imagenet)
-        result = general_image_classification('data/test/images/bird.JPEG')
-        print(result)
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_Dailylife_default_task(self):
-        general_image_classification = pipeline(
-            Tasks.image_classification_dailylife)
+    def test_run_Dailylife_default(self):
+        general_image_classification = pipeline(Tasks.image_classification)
         result = general_image_classification('data/test/images/bird.JPEG')
         print(result)
 

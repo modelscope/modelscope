@@ -7,11 +7,7 @@ from modelscope.utils.constant import Tasks
 
 
 @MODELS.register_module(
-    Tasks.image_classification_imagenet,
-    module_name=Models.classification_model)
-@MODELS.register_module(
-    Tasks.image_classification_dailylife,
-    module_name=Models.classification_model)
+    Tasks.image_classification, module_name=Models.classification_model)
 class ClassificationModel(TorchModel):
 
     def __init__(self, model_dir: str):

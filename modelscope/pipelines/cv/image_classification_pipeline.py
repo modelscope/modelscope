@@ -44,10 +44,10 @@ class ImageClassificationPipeline(Pipeline):
 
 
 @PIPELINES.register_module(
-    Tasks.image_classification_imagenet,
+    Tasks.image_classification,
     module_name=Pipelines.general_image_classification)
 @PIPELINES.register_module(
-    Tasks.image_classification_dailylife,
+    Tasks.image_classification,
     module_name=Pipelines.daily_image_classification)
 class GeneralImageClassificationPipeline(Pipeline):
 

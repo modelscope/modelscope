@@ -23,7 +23,8 @@ class WavToScp(Preprocessor):
                  model: Model = None,
                  recog_type: str = None,
                  audio_format: str = None,
-                 audio_in: Union[str, bytes] = None) -> Dict[str, Any]:
+                 audio_in: Union[str, bytes] = None,
+                 audio_fs: int = None) -> Dict[str, Any]:
         assert model is not None, 'preprocess model is empty'
         assert recog_type is not None and len(
             recog_type) > 0, 'preprocess recog_type is empty'
@@ -32,12 +33,12 @@ class WavToScp(Preprocessor):
 
         self.am_model = model
         out = self.forward(self.am_model.forward(), recog_type, audio_format,
-                           audio_in)
+                           audio_in, audio_fs)
         return out
 
-    def forward(self, model: Dict[str, Any], recog_type: str,
-                audio_format: str, audio_in: Union[str,
-                                                   bytes]) -> Dict[str, Any]:
+    def forward(self, model: Dict[str,
+                                  Any], recog_type: str, audio_format: str,
+                audio_in: Union[str, bytes], audio_fs: int) -> Dict[str, Any]:
         assert len(recog_type) > 0, 'preprocess recog_type is empty'
         assert len(audio_format) > 0, 'preprocess audio_format is empty'
         assert len(
@@ -65,7 +66,9 @@ class WavToScp(Preprocessor):
             # the asr audio format setting, eg: wav, pcm, kaldi_ark, tfrecord
             'audio_format': audio_format,
             # the recognition model config dict
-            'model_config': model['model_config']
+            'model_config': model['model_config'],
+            # the sample rate of audio_in
+            'audio_fs': audio_fs
         }
 
         if isinstance(audio_in, str):
@@ -185,6 +188,12 @@ class WavToScp(Preprocessor):
                                                   'data.idx')
                 assert os.path.exists(
                     inputs['idx_text']), 'idx text does not exist'
+
+        # set asr model language
+        if 'lang' in inputs['model_config']:
+            inputs['model_lang'] = inputs['model_config']['lang']
+        else:
+            inputs['model_lang'] = 'zh-cn'
 
         return inputs
 

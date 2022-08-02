@@ -428,6 +428,12 @@ TASK_OUTPUTS = {
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],
 
+    # auto_speech_recognition result for a single sample
+    # {
+    #    "text": "每天都要快乐喔"
+    # }
+    Tasks.auto_speech_recognition: [OutputKeys.TEXT],
+
     # {
     #       "scores": [0.9, 0.1, 0.1],
     #       "labels": ["entailment", "contradiction", "neutral"]

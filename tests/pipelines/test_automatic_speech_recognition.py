@@ -98,12 +98,14 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         # remove workspace dir (.tmp)
         shutil.rmtree(self.workspace, ignore_errors=True)
 
-    def run_pipeline(self, model_id: str,
-                     audio_in: Union[str, bytes]) -> Dict[str, Any]:
+    def run_pipeline(self,
+                     model_id: str,
+                     audio_in: Union[str, bytes],
+                     sr: int = 16000) -> Dict[str, Any]:
         inference_16k_pipline = pipeline(
             task=Tasks.auto_speech_recognition, model=model_id)
 
-        rec_result = inference_16k_pipline(audio_in)
+        rec_result = inference_16k_pipline(audio_in, audio_fs=sr)
 
         return rec_result
 
@@ -129,7 +131,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         else:
             self.log_error(functions, result)
 
-    def wav2bytes(self, wav_file) -> bytes:
+    def wav2bytes(self, wav_file):
         audio, fs = soundfile.read(wav_file)
 
         # float32 -> int16
@@ -142,7 +144,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
         # int16(PCM_16) -> byte
         audio = audio.tobytes()
-        return audio
+        return audio, fs
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_pytorch(self):
@@ -164,10 +166,10 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
         logger.info('Run ASR test with wav data (pytorch)...')
 
-        audio = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
+        audio, sr = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
 
         rec_result = self.run_pipeline(
-            model_id=self.am_pytorch_model_id, audio_in=audio)
+            model_id=self.am_pytorch_model_id, audio_in=audio, sr=sr)
         self.check_result('test_run_with_pcm_pytorch', rec_result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -190,10 +192,10 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
         logger.info('Run ASR test with wav data (tensorflow)...')
 
-        audio = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
+        audio, sr = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
 
         rec_result = self.run_pipeline(
-            model_id=self.am_tf_model_id, audio_in=audio)
+            model_id=self.am_tf_model_id, audio_in=audio, sr=sr)
         self.check_result('test_run_with_pcm_tf', rec_result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

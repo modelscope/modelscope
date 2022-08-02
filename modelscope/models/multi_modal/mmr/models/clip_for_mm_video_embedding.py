@@ -5,6 +5,7 @@ from typing import Any, Dict
 import json
 import numpy as np
 import torch
+from decord import VideoReader, cpu
 from PIL import Image
 
 from modelscope.metainfo import Models
@@ -131,7 +132,6 @@ class VideoCLIPForMultiModalEmbedding(TorchModel):
                 end_time = end_time + 1
 
         if exists(video_path):
-            from decord import VideoReader, cpu
             vreader = VideoReader(video_path, ctx=cpu(0))
         else:
             logger.error('non video input, output is wrong!!!')

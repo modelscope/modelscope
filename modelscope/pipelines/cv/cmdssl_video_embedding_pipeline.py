@@ -1,6 +1,7 @@
 import os.path as osp
 from typing import Any, Dict
 
+import decord
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
@@ -45,7 +46,6 @@ class CMDSSLVideoEmbeddingPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        import decord
         decord.bridge.set_bridge('native')
 
         transforms = VCompose([

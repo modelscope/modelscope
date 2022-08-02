@@ -6,6 +6,7 @@ import torch
 import torch.utils.data
 import torch.utils.dlpack as dlpack
 import torchvision.transforms._transforms_video as transforms
+from decord import VideoReader
 from torchvision.transforms import Compose
 
 
@@ -124,7 +125,6 @@ def _decode_video(cfg, path):
         Returns:
             frames            (Tensor): video tensor data
     """
-    from decord import VideoReader
     vr = VideoReader(path)
 
     num_clips_per_video = cfg.TEST.NUM_ENSEMBLE_VIEWS

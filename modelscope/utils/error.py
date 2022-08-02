@@ -91,3 +91,8 @@ GENERAL_IMPORT_ERROR = """
 {0} requires the REQ library but it was not found in your environment. You can install it with pip:
 `pip install REQ`
 """
+
+DECORD_IMPORT_ERROR = """
+{0} requires the decord library but it was not found in your environment. You can install it with pip:
+`pip install decord>=0.6.0`
+"""

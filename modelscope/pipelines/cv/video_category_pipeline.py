@@ -2,6 +2,7 @@
 import os.path as osp
 from typing import Any, Dict
 
+import decord
 import json
 import numpy as np
 import torch
@@ -9,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 import torchvision.transforms.functional as TF
+from decord import VideoReader, cpu
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -67,8 +69,6 @@ class VideoCategoryPipeline(Pipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         if isinstance(input, str):
-            import decord
-            from decord import VideoReader, cpu
             decord.bridge.set_bridge('native')
             vr = VideoReader(input, ctx=cpu(0))
             indices = np.linspace(0, len(vr) - 1, 16).astype(int)

@@ -287,7 +287,8 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('espnet', (is_espnet_available,
                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
-    ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR))
+    ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR)),
+    ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])
@@ -308,7 +309,7 @@ def requires(obj, requirements):
         if req in REQUIREMENTS_MAAPING:
             check = REQUIREMENTS_MAAPING[req]
         else:
-            check_fn = functools.partial(is_package_available, req)
+            check_fn = is_package_available(req)
             err_msg = GENERAL_IMPORT_ERROR.replace('REQ', req)
             check = (check_fn, err_msg)
         checks.append(check)
@@ -433,6 +434,10 @@ class LazyImportModule(ModuleType):
         if signature in LazyImportModule.AST_INDEX[INDEX_KEY]:
             mod_index = LazyImportModule.AST_INDEX[INDEX_KEY][signature]
             module_name = mod_index[MODULE_KEY]
+            if module_name in LazyImportModule.AST_INDEX[REQUIREMENT_KEY]:
+                requirements = LazyImportModule.AST_INDEX[REQUIREMENT_KEY][
+                    module_name]
+                requires(module_name, requirements)
             importlib.import_module(module_name)
         else:
             logger.warning(f'{signature} not found in ast index file')

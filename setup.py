@@ -176,6 +176,7 @@ if __name__ == '__main__':
     for field in dir(Fields):
         if field.startswith('_'):
             continue
+        field = getattr(Fields, field)
         extra_requires[field], _ = parse_requirements(
             f'requirements/{field}.txt')
 

@@ -33,17 +33,19 @@ class ImageCartoonTest(unittest.TestCase):
             )
             os.system('unzip assets.zip')
 
-        img_cartoon = pipeline(Tasks.image_generation, model=model_dir)
+        img_cartoon = pipeline(
+            Tasks.image_portrait_stylization, model=model_dir)
         self.pipeline_inference(img_cartoon, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub(self):
-        img_cartoon = pipeline(Tasks.image_generation, model=self.model_id)
+        img_cartoon = pipeline(
+            Tasks.image_portrait_stylization, model=self.model_id)
         self.pipeline_inference(img_cartoon, self.test_image)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
-        img_cartoon = pipeline(Tasks.image_generation)
+        img_cartoon = pipeline(Tasks.image_portrait_stylization)
         self.pipeline_inference(img_cartoon, self.test_image)
 
 

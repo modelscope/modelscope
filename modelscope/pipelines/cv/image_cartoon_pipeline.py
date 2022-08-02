@@ -25,7 +25,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name=Pipelines.person_image_cartoon)
+    Tasks.image_portrait_stylization,
+    module_name=Pipelines.person_image_cartoon)
 class ImageCartoonPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -85,11 +86,6 @@ class ImageCartoonPipeline(Pipeline):
 
         img_brg = img[:, :, ::-1]
 
-        landmarks = self.detect_face(img)
-        if landmarks is None:
-            print('No face detected!')
-            return {OutputKeys.OUTPUT_IMG: None}
-
         # background process
         pad_bg, pad_h, pad_w = padTo16x(img_brg)
 
@@ -98,6 +94,11 @@ class ImageCartoonPipeline(Pipeline):
                 'model_anime_bg/output_image:0'),
             feed_dict={'model_anime_bg/input_image:0': pad_bg})
         res = bg_res[:pad_h, :pad_w, :]
+
+        landmarks = self.detect_face(img)
+        if landmarks is None:
+            print('No face detected!')
+            return {OutputKeys.OUTPUT_IMG: res}
 
         for landmark in landmarks:
             # get facial 5 points

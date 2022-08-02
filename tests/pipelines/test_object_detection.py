@@ -13,7 +13,7 @@ class ObjectDetectionTest(unittest.TestCase):
     def test_object_detection(self):
         input_location = 'data/test/images/image_detection.jpg'
         model_id = 'damo/cv_vit_object-detection_coco'
-        object_detect = pipeline(Tasks.object_detection, model=model_id)
+        object_detect = pipeline(Tasks.image_object_detection, model=model_id)
         result = object_detect(input_location)
         if result:
             print(result)
@@ -23,7 +23,7 @@ class ObjectDetectionTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_object_detection_with_default_task(self):
         input_location = 'data/test/images/image_detection.jpg'
-        object_detect = pipeline(Tasks.object_detection)
+        object_detect = pipeline(Tasks.image_object_detection)
         result = object_detect(input_location)
         if result:
             print(result)

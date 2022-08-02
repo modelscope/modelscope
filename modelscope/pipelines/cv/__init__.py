@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
-    from .object_detection_pipeline import ObjectDetectionPipeline
+    from .image_detection_pipeline import ImageDetectionPipeline
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_recognition_pipeline import FaceRecognitionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
@@ -33,7 +33,7 @@ else:
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
-        'object_detection_pipeline': ['ObjectDetectionPipeline'],
+        'image_detection_pipeline': ['ImageDetectionPipeline'],
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],

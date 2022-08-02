@@ -15,7 +15,8 @@ from .mmdet_ms.roi_heads import FCNMaskNHead, Shared4Conv1FCBBoxNHead
 
 
 @MODELS.register_module(Tasks.human_detection, module_name=Models.detection)
-@MODELS.register_module(Tasks.object_detection, module_name=Models.detection)
+@MODELS.register_module(
+    Tasks.image_object_detection, module_name=Models.detection)
 class DetectionModel(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

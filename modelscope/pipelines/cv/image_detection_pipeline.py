@@ -14,8 +14,8 @@ from modelscope.utils.logger import get_logger
 @PIPELINES.register_module(
     Tasks.human_detection, module_name=Pipelines.human_detection)
 @PIPELINES.register_module(
-    Tasks.object_detection, module_name=Pipelines.object_detection)
-class ObjectDetectionPipeline(Pipeline):
+    Tasks.image_object_detection, module_name=Pipelines.object_detection)
+class ImageDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """

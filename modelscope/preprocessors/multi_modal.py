@@ -76,7 +76,10 @@ class OfaPreprocessor(Preprocessor):
         else:
             data = self._build_dict(input)
         sample = self.preprocess(data)
-        sample['sample'] = data
+        str_data = dict()
+        for k, v in data.items():
+            str_data[k] = str(v)
+        sample['sample'] = str_data
         return collate_fn([sample],
                           pad_idx=self.tokenizer.pad_token_id,
                           eos_idx=self.tokenizer.eos_token_id)

@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+from PIL import Image
+
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -181,8 +183,8 @@ class OfaTasksTest(unittest.TestCase):
             task=Tasks.image_captioning,
             model=model,
         )
-        result = img_captioning(
-            {'image': 'data/test/images/image_captioning.png'})
+        image = Image.open('data/test/images/image_captioning.png')
+        result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

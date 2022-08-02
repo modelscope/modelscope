@@ -103,8 +103,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_segmentation:
     (Pipelines.image_instance_segmentation,
      'damo/cv_swin-b_image-instance-segmentation_coco'),
-    Tasks.style_transfer: (Pipelines.style_transfer,
-                           'damo/cv_aams_style-transfer_damo'),
+    Tasks.image_style_transfer: (Pipelines.image_style_transfer,
+                                 'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
                                   'damo/cv_gan_face-image-generation'),
     Tasks.image_super_resolution: (Pipelines.image_super_resolution,

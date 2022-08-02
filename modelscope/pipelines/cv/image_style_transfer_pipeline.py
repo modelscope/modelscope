@@ -16,8 +16,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.style_transfer, module_name=Pipelines.style_transfer)
-class StyleTransferPipeline(Pipeline):
+    Tasks.image_style_transfer, module_name=Pipelines.image_style_transfer)
+class ImageStyleTransferPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """

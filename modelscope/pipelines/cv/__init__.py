@@ -19,11 +19,11 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
+    from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .image_to_image_generation_pipeline import Image2ImageGenerationePipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
-    from .style_transfer_pipeline import StyleTransferPipeline
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .video_category_pipeline import VideoCategoryPipeline
@@ -46,6 +46,7 @@ else:
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'image_matting_pipeline': ['ImageMattingPipeline'],
+        'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
         'image_to_image_translation_pipeline':
         ['Image2ImageTranslationPipeline'],
@@ -55,7 +56,6 @@ else:
         'image_to_image_generation_pipeline':
         ['Image2ImageGenerationePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
-        'style_transfer_pipeline': ['StyleTransferPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_tryon_pipeline': ['VirtualTryonPipeline'],
     }

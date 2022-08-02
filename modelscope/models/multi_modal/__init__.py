@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
     from .clip import CLIPForMultiModalEmbedding
     from .gemm import GEMMForMultiModalEmbedding
-    from .imagen import ImagenForTextToImageSynthesis
+    from .diffusion import DiffusionForTextToImageSynthesis
     from .mmr import VideoCLIPForMultiModalEmbedding
     from .mplug_for_visual_question_answering import \
         MPlugForVisualQuestionAnswering
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 else:
     _import_structure = {
         'clip': ['CLIPForMultiModalEmbedding'],
-        'imagen': ['ImagenForTextToImageSynthesis'],
+        'diffusion': ['DiffusionForTextToImageSynthesis'],
         'gemm': ['GEMMForMultiModalEmbedding'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
         'mplug_for_visual_question_answering':

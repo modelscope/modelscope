@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ['ImagenGenerator']
+__all__ = ['DiffusionGenerator']
 
 
 def sinusoidal_embedding(timesteps, dim):
@@ -156,7 +156,7 @@ class AttentionBlock(nn.Module):
         return x + identity
 
 
-class ImagenGenerator(nn.Module):
+class DiffusionGenerator(nn.Module):
 
     def __init__(self,
                  in_dim=3,
@@ -173,7 +173,7 @@ class ImagenGenerator(nn.Module):
                  use_scale_shift_norm=True,
                  dropout=0.0):
         embed_dim = dim * 4
-        super(ImagenGenerator, self).__init__()
+        super(DiffusionGenerator, self).__init__()
         self.in_dim = in_dim
         self.dim = dim
         self.text_dim = text_dim

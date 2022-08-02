@@ -41,7 +41,7 @@ class Models(object):
     clip = 'clip-multi-modal-embedding'
     gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
-    imagen = 'imagen-text-to-image-synthesis'
+    diffusion = 'diffusion-text-to-image-synthesis'
     video_clip = 'video-clip-multi-modal-embedding'
 
 

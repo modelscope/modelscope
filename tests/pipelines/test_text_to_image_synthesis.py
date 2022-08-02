@@ -12,7 +12,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class TextToImageSynthesisTest(unittest.TestCase):
-    model_id = 'damo/cv_imagen_text-to-image-synthesis_tiny'
+    model_id = 'damo/cv_diffusion_text-to-image-synthesis_tiny'
     test_text = {
         'text': '宇航员',
         'generator_ddim_timesteps': 2,
@@ -30,7 +30,7 @@ class TextToImageSynthesisTest(unittest.TestCase):
             self.test_text)[OutputKeys.OUTPUT_IMG]
         print(np.sum(np.abs(img)))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipe_line_text_to_image_synthesis = pipeline(
             task=Tasks.text_to_image_synthesis, model=self.model_id)

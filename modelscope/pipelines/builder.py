@@ -86,7 +86,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_r2p1d_video_embedding'),
     Tasks.text_to_image_synthesis:
     (Pipelines.text_to_image_synthesis,
-     'damo/cv_imagen_text-to-image-synthesis_tiny'),
+     'damo/cv_diffusion_text-to-image-synthesis_tiny'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,

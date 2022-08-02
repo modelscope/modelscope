@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ['ImagenUpsampler1024']
+__all__ = ['SuperResUNet1024']
 
 
 def sinusoidal_embedding(timesteps, dim):
@@ -99,7 +99,7 @@ class ResidualBlock(nn.Module):
         return x
 
 
-class ImagenUpsampler1024(nn.Module):
+class SuperResUNet1024(nn.Module):
 
     def __init__(self,
                  in_dim=6,
@@ -111,7 +111,7 @@ class ImagenUpsampler1024(nn.Module):
                  use_scale_shift_norm=True,
                  dropout=0.0):
         embed_dim = dim * 4
-        super(ImagenUpsampler1024, self).__init__()
+        super(SuperResUNet1024, self).__init__()
         self.in_dim = in_dim
         self.dim = dim
         self.out_dim = out_dim

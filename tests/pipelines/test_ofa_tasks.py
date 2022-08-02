@@ -12,8 +12,7 @@ class OfaTasksTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_captioning_with_model(self):
-        model = Model.from_pretrained(
-            'damo/ofa_image-caption_coco_distilled_en')
+        model = Model.from_pretrained('damo/ofa_image-caption_coco_large_en')
         img_captioning = pipeline(
             task=Tasks.image_captioning,
             model=model,
@@ -170,6 +169,40 @@ class OfaTasksTest(unittest.TestCase):
             preprocessor=preprocessor)
         image = 'data/test/images/visual_question_answering.png'
         text = 'what is grown on the plant?'
+        input = {'image': image, 'text': text}
+        result = ofa_pipe(input)
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_image_captioning_distilled_with_model(self):
+        model = Model.from_pretrained(
+            'damo/ofa_image-caption_coco_distilled_en')
+        img_captioning = pipeline(
+            task=Tasks.image_captioning,
+            model=model,
+        )
+        result = img_captioning(
+            {'image': 'data/test/images/image_captioning.png'})
+        print(result[OutputKeys.CAPTION])
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_visual_entailment_distilled_model_with_name(self):
+        ofa_pipe = pipeline(
+            Tasks.visual_entailment,
+            model='damo/ofa_visual-entailment_snli-ve_distilled_v2_en')
+        image = 'data/test/images/dogs.jpg'
+        text = 'there are two birds.'
+        input = {'image': image, 'text': text}
+        result = ofa_pipe(input)
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_visual_grounding_distilled_model_with_model(self):
+        model = Model.from_pretrained(
+            'damo/ofa_visual-grounding_refcoco_distilled_en')
+        ofa_pipe = pipeline(Tasks.visual_grounding, model=model)
+        image = 'data/test/images/visual_grounding.png'
+        text = 'a blue turtle-like pokemon with round head'
         input = {'image': image, 'text': text}
         result = ofa_pipe(input)
         print(result)

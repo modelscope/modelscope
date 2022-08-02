@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
-    from .image_to_image_generation_pipeline import Image2ImageGenerationePipeline
+    from .image_to_image_generate_pipeline import Image2ImageGenerationePipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .live_category_pipeline import LiveCategoryPipeline

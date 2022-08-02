@@ -21,6 +21,7 @@ class OutputKeys(object):
     OUTPUT_IMG = 'output_img'
     OUTPUT_PCM = 'output_pcm'
     IMG_EMBEDDING = 'img_embedding'
+    SPO_LIST = 'spo_list'
     TEXT_EMBEDDING = 'text_embedding'
     TRANSLATION = 'translation'
     RESPONSE = 'response'
@@ -29,32 +30,21 @@ class OutputKeys(object):
     PROBABILITIES = 'probabilities'
     DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
+    UUID = 'uuid'
+    WORD = 'word'
+    KWS_LIST = 'kws_list'
 
 
 TASK_OUTPUTS = {
 
     # ============ vision tasks ===================
 
-    # image classification result for single sample
-    #   {
-    #       "scores": [0.9, 0.1, 0.05, 0.05]
-    #       "labels": ["dog", "horse", "cow", "cat"],
-    #   }
-    Tasks.image_classification: [OutputKeys.SCORES, OutputKeys.LABELS],
-    Tasks.image_tagging: [OutputKeys.SCORES, OutputKeys.LABELS],
-
-    # object detection result for single sample
-    #   {
-    #       "scores": [0.9, 0.1, 0.05, 0.05]
-    #       "labels": ["dog", "horse", "cow", "cat"],
-    #       "boxes": [
-    #           [x1, y1, x2, y2],
-    #           [x1, y1, x2, y2],
-    #           [x1, y1, x2, y2],
-    #       ],
-    #   }
-    Tasks.object_detection:
-    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    # ocr detection result for single sample
+    # {
+    #   "polygons": np.array with shape [num_text, 8], each polygon is
+    #       [x1, y1, x2, y2, x3, y3, x4, y4]
+    # }
+    Tasks.ocr_detection: [OutputKeys.POLYGONS],
 
     # face detection result for single sample
     #   {
@@ -81,35 +71,79 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_recognition: [OutputKeys.IMG_EMBEDDING],
 
+    # human detection result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "labels": ["person", "person", "person", "person"],
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #   }
+    #
+    Tasks.human_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+
+    # face generation result for single sample
+    # {
+    #   "output_img": np.array with shape(h, w, 3)
+    # }
+    Tasks.face_image_generation: [OutputKeys.OUTPUT_IMG],
+
+    # image classification result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "labels": ["dog", "horse", "cow", "cat"],
+    #   }
+    Tasks.image_classification: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # object detection result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "labels": ["dog", "horse", "cow", "cat"],
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #   }
+    Tasks.image_object_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+
     # instance segmentation result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05],
     #       "labels": ["dog", "horse", "cow", "cat"],
-    #       "boxes": [
-    #           np.array in bgr channel order
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 1
     #       ]
     #   }
     Tasks.image_segmentation:
-    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
 
-    # image generation/editing/matting result for single sample
+    # image matting result for single sample
     # {
     #   "output_img": np.array with shape(h, w, 4)
-    #                 for matting or (h, w, 3) for general purpose
     # }
-    Tasks.image_editing: [OutputKeys.OUTPUT_IMG],
     Tasks.image_matting: [OutputKeys.OUTPUT_IMG],
-    Tasks.image_generation: [OutputKeys.OUTPUT_IMG],
-    Tasks.image_denoise: [OutputKeys.OUTPUT_IMG],
-    Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
-    Tasks.face_image_generation: [OutputKeys.OUTPUT_IMG],
-    Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],
+    Tasks.protrait_matting: [OutputKeys.OUTPUT_IMG],
 
-    # action recognition result for single video
-    # {
-    #   "output_label": "abseiling"
-    # }
-    Tasks.action_recognition: [OutputKeys.LABELS],
+    # image editing task result for a single image
+    # {"output_img": np.array with shape (h, w, 3)}
+    Tasks.image_protrait_enhancement: [OutputKeys.OUTPUT_IMG],
+    Tasks.skin_retouching: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
+
+    # image generation task result for a single image
+    # {"output_img": np.array with shape (h, w, 3)}
+    Tasks.image_to_image_generation: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_to_image_translation: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_style_transfer: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_portrait_stylization: [OutputKeys.OUTPUT_IMG],
 
     # live category recognition result for single video
     # {
@@ -117,28 +151,19 @@ TASK_OUTPUTS = {
     #       "labels": ['女装/女士精品>>棉衣/棉服', '女装/女士精品>>牛仔裤', '女装/女士精品>>裤子>>休闲裤'],
     # }
     Tasks.live_category: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # action recognition result for single video
+    # {
+    #   "output_label": "abseiling"
+    # }
+    Tasks.action_recognition: [OutputKeys.LABELS],
+
     # video category recognition result for single video
     # {
     #       "scores": [0.7716429233551025]
     #       "labels": ['生活>>好物推荐'],
     # }
     Tasks.video_category: [OutputKeys.SCORES, OutputKeys.LABELS],
-
-    # pose estimation result for single sample
-    # {
-    #   "poses": np.array with shape [num_pose, num_keypoint, 3],
-    #       each keypoint is a array [x, y, score]
-    #   "boxes": np.array with shape [num_pose, 4], each box is
-    #       [x1, y1, x2, y2]
-    # }
-    Tasks.pose_estimation: [OutputKeys.POSES, OutputKeys.BOXES],
-
-    # ocr detection result for single sample
-    # {
-    #   "polygons": np.array with shape [num_text, 8], each polygon is
-    #       [x1, y1, x2, y2, x3, y3, x4, y4]
-    # }
-    Tasks.ocr_detection: [OutputKeys.POLYGONS],
 
     # image embedding result for a single image
     # {
@@ -152,11 +177,11 @@ TASK_OUTPUTS = {
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
 
-    # image_color_enhance result for a single sample
+    # virtual_try_on result for a single sample
     # {
-    #    "output_img": np.ndarray with shape [height, width, 3], uint8
+    #    "output_img": np.ndarray with shape [height, width, 3]
     # }
-    Tasks.image_color_enhance: [OutputKeys.OUTPUT_IMG],
+    Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
 
     # ============ nlp tasks ===================
 
@@ -167,33 +192,6 @@ TASK_OUTPUTS = {
     #   }
     Tasks.text_classification: [OutputKeys.SCORES, OutputKeys.LABELS],
 
-    # text generation result for single sample
-    # {
-    #   "text": "this is the text generated by a model."
-    # }
-    Tasks.text_generation: [OutputKeys.TEXT],
-
-    # fill mask result for single sample
-    # {
-    #   "text": "this is the text which masks filled by model."
-    # }
-    Tasks.fill_mask: [OutputKeys.TEXT],
-
-    # word segmentation result for single sample
-    # {
-    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
-    # }
-    Tasks.word_segmentation: [OutputKeys.OUTPUT],
-
-    # named entity recognition result for single sample
-    # {
-    #   "output": [
-    #     {"type": "LOC", "start": 2, "end": 5, "span": "温岭市"},
-    #     {"type": "LOC", "start": 5, "end": 8, "span": "新河镇"}
-    #   ]
-    # }
-    Tasks.named_entity_recognition: [OutputKeys.OUTPUT],
-
     # sentence similarity result for single sample
     #   {
     #       "scores": 0.9
@@ -201,11 +199,12 @@ TASK_OUTPUTS = {
     #   }
     Tasks.sentence_similarity: [OutputKeys.SCORES, OutputKeys.LABELS],
 
-    # translation result for a source sentence
+    # nli result for single sample
     #   {
-    #       "translation": “北京是中国的首都”
+    #       "labels": ["happy", "sad", "calm", "angry"],
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
     #   }
-    Tasks.translation: [OutputKeys.TRANSLATION],
+    Tasks.nli: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # sentiment classification result for single sample
     #   {
@@ -221,14 +220,78 @@ TASK_OUTPUTS = {
     #   }
     Tasks.zero_shot_classification: [OutputKeys.SCORES, OutputKeys.LABELS],
 
-    # nli result for single sample
-    #   {
-    #       "labels": ["happy", "sad", "calm", "angry"],
-    #       "scores": [0.9, 0.1, 0.05, 0.05]
-    #   }
-    Tasks.nli: [OutputKeys.SCORES, OutputKeys.LABELS],
+    # relation extraction result for a single sample
+    # {
+    #     "uuid": "人生信息-1",
+    #     "text": "《父老乡亲》是由是由由中国人民解放军海政文工团创作的军旅歌曲，石顺义作词，王锡仁作曲，范琳琳演唱",
+    #     "spo_list": [{"subject": "石顺义", "predicate": "国籍", "object": "中国"}]
+    # }
+    Tasks.relation_extraction:
+    [OutputKeys.UUID, OutputKeys.TEXT, OutputKeys.SPO_LIST],
 
-    # dialog intent prediction result for single sample
+    # translation result for a source sentence
+    #   {
+    #       "translation": “北京是中国的首都”
+    #   }
+    Tasks.translation: [OutputKeys.TRANSLATION],
+
+    # word segmentation result for single sample
+    # {
+    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
+    # }
+    Tasks.word_segmentation: [OutputKeys.OUTPUT],
+
+    # part-of-speech result for single sample
+    # [
+    #     {'word': '诸葛', 'label': 'PROPN'},
+    #     {'word': '亮', 'label': 'PROPN'},
+    #     {'word': '发明', 'label': 'VERB'},
+    #     {'word': '八', 'label': 'NUM'},
+    #     {'word': '阵', 'label': 'NOUN'},
+    #     {'word': '图', 'label': 'PART'},
+    #     {'word': '以', 'label': 'ADV'},
+    #     {'word': '利', 'label': 'VERB'},
+    #     {'word': '立营', 'label': 'VERB'},
+    #     {'word': '练兵', 'label': 'VERB'},
+    #     {'word': '.', 'label': 'PUNCT'}
+    # ]
+    # TODO @wenmeng.zwm support list of result check
+    Tasks.part_of_speech: [OutputKeys.WORD, OutputKeys.LABEL],
+
+    # named entity recognition result for single sample
+    # {
+    #   "output": [
+    #     {"type": "LOC", "start": 2, "end": 5, "span": "温岭市"},
+    #     {"type": "LOC", "start": 5, "end": 8, "span": "新河镇"}
+    #   ]
+    # }
+    Tasks.named_entity_recognition: [OutputKeys.OUTPUT],
+
+    # text_error_correction result for a single sample
+    # {
+    #    "output": "我想吃苹果"
+    # }
+    Tasks.text_error_correction: [OutputKeys.OUTPUT],
+
+    # text generation result for single sample
+    # {
+    #   "text": "this is the text generated by a model."
+    # }
+    Tasks.text_generation: [OutputKeys.TEXT],
+
+    # text feature extraction for single sample
+    # {
+    #   "text_embedding": np.array with shape [1, D]
+    # }
+    Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING],
+
+    # fill mask result for single sample
+    # {
+    #   "text": "this is the text which masks filled by model."
+    # }
+    Tasks.fill_mask: [OutputKeys.TEXT],
+
+    # (Deprecated) dialog intent prediction result for single sample
     # {'pred': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
     #        1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04,
     #        6.45841064e-05, 1.15997791e-04, 5.11605394e-05, 9.87020373e-01,
@@ -252,11 +315,11 @@ TASK_OUTPUTS = {
     Tasks.dialog_intent_prediction:
     [OutputKeys.PREDICTION, OutputKeys.LABEL_POS, OutputKeys.LABEL],
 
-    # dialog modeling prediction result for single sample
+    # (Deprecated) dialog modeling prediction result for single sample
     # sys : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']
     Tasks.dialog_modeling: [OutputKeys.RESPONSE],
 
-    # dialog state tracking result for single sample
+    # (Deprecated) dialog state tracking result for single sample
     # {
     #     "dialog_states": {
     #         "taxi-leaveAt": "none",
@@ -294,6 +357,9 @@ TASK_OUTPUTS = {
     Tasks.dialog_state_tracking: [OutputKeys.DIALOG_STATES],
 
     # ============ audio tasks ===================
+    # asr result for single sample
+    # { "text": "每一天都要快乐喔"}
+    Tasks.auto_speech_recognition: [OutputKeys.TEXT],
 
     # audio processed for single file in PCM format
     # {
@@ -303,6 +369,12 @@ TASK_OUTPUTS = {
     Tasks.acoustic_echo_cancellation: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_noise_suppression: [OutputKeys.OUTPUT_PCM],
 
+    # text_to_speech result for a single sample
+    # {
+    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    # }
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+
     # ============ multi-modal tasks ===================
 
     # image caption result for single sample
@@ -310,23 +382,6 @@ TASK_OUTPUTS = {
     #   "caption": "this is an image caption text."
     # }
     Tasks.image_captioning: [OutputKeys.CAPTION],
-
-    # multi-modal embedding result for single sample
-    # {
-    #   "img_embedding": np.array with shape [1, D],
-    #   "text_embedding": np.array with shape [1, D]
-    # }
-    Tasks.multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
-
-    # generative multi-modal embedding result for single sample
-    # {
-    #   "img_embedding": np.array with shape [1, D],
-    #   "text_embedding": np.array with shape [1, D],
-    #   "caption": "this is an image caption text."
-    # }
-    Tasks.generative_multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
 
     # visual grounding result for single sample
     # {
@@ -350,25 +405,31 @@ TASK_OUTPUTS = {
     #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
     # }
     Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
-    # virtual_try_on result for a single sample
-    # {
-    #    "output_img": np.ndarray with shape [height, width, 3]
-    # }
-    Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
-    # visual_question_answering result for a single sample
-    # {
-    #    "text": "this is the text generated by a model."
-    # }
-    Tasks.visual_question_answering: [OutputKeys.TEXT],
-    # auto_speech_recognition result for a single sample
-    # {
-    #    "text": "每天都要快乐喔"
-    # }
-    Tasks.auto_speech_recognition: [OutputKeys.TEXT],
 
-    # text_error_correction result for a single sample
+    # multi-modal embedding result for single sample
     # {
-    #    "output": "我想吃苹果"
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D]
     # }
-    Tasks.text_error_correction: [OutputKeys.OUTPUT]
+    Tasks.multi_modal_embedding:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
+
+    # generative multi-modal embedding result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D],
+    #   "caption": "this is an image caption text."
+    # }
+    Tasks.generative_multi_modal_embedding:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
+
+    # VQA result for a sample
+    # {"text": "this is a text answser. "}
+    Tasks.visual_question_answering: [OutputKeys.TEXT],
+
+    # {
+    #       "scores": [0.9, 0.1, 0.1],
+    #       "labels": ["entailment", "contradiction", "neutral"]
+    # }
+    Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
 }

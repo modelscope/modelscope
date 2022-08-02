@@ -24,7 +24,7 @@ class Image2ImageTranslationTest(unittest.TestCase):
             just like the following code.
         """
         img2img_gen_pipeline = pipeline(
-            Tasks.image_generation,
+            Tasks.image_to_image_translation,
             model='damo/cv_latent_diffusion_image2image_translation')
         result = img2img_gen_pipeline(
             ('data/test/images/img2img_input_mask.png',

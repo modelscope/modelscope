@@ -21,7 +21,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    group_key=Tasks.image_tagging, module_name='custom_single_model')
+    group_key=Tasks.image_classification, module_name='custom_single_model')
 class CustomSingleModelPipeline(Pipeline):
 
     def __init__(self,
@@ -38,7 +38,7 @@ class CustomSingleModelPipeline(Pipeline):
 
 
 @PIPELINES.register_module(
-    group_key=Tasks.image_tagging, module_name='model1_model2')
+    group_key=Tasks.image_classification, module_name='model1_model2')
 class CustomMultiModelPipeline(Pipeline):
 
     def __init__(self,
@@ -64,7 +64,7 @@ class PipelineInterfaceTest(unittest.TestCase):
         cfg_file = os.path.join(dirname, ModelFile.CONFIGURATION)
         cfg = {
             ConfigFields.framework: Frameworks.torch,
-            ConfigFields.task: Tasks.image_tagging,
+            ConfigFields.task: Tasks.image_classification,
             ConfigFields.pipeline: {
                 'type': pipeline_name,
             }
@@ -77,12 +77,13 @@ class PipelineInterfaceTest(unittest.TestCase):
         self.prepare_dir('/tmp/model2', 'model1_model2')
 
     def test_single_model(self):
-        pipe = pipeline(Tasks.image_tagging, model='/tmp/custom_single_model')
+        pipe = pipeline(
+            Tasks.image_classification, model='/tmp/custom_single_model')
         assert isinstance(pipe, CustomSingleModelPipeline)
 
     def test_multi_model(self):
         pipe = pipeline(
-            Tasks.image_tagging, model=['/tmp/model1', '/tmp/model2'])
+            Tasks.image_classification, model=['/tmp/model1', '/tmp/model2'])
         assert isinstance(pipe, CustomMultiModelPipeline)
 
 

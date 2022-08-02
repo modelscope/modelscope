@@ -18,7 +18,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_color_enhance, module_name=Pipelines.image_color_enhance)
+    Tasks.image_color_enhancement, module_name=Pipelines.image_color_enhance)
 class ImageColorEnhancePipeline(Pipeline):
 
     def __init__(self,

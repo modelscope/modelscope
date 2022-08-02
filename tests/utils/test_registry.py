@@ -42,12 +42,13 @@ class RegistryTest(unittest.TestCase):
             MODELS.get('Bert', Tasks.sentiment_analysis) is
             BertForSentimentAnalysis)
 
-        @MODELS.register_module(Tasks.object_detection)
+        @MODELS.register_module(Tasks.image_object_detection)
         class DETR(object):
             pass
 
-        self.assertTrue(Tasks.object_detection in MODELS.modules)
-        self.assertTrue(MODELS.get('DETR', Tasks.object_detection) is DETR)
+        self.assertTrue(Tasks.image_object_detection in MODELS.modules)
+        self.assertTrue(
+            MODELS.get('DETR', Tasks.image_object_detection) is DETR)
 
         self.assertEqual(len(MODELS.modules), 4)
 

@@ -14,42 +14,60 @@ class Fields(object):
 
 
 class CVTasks(object):
-    # vision tasks
-    image_to_text = 'image-to-text'
-    pose_estimation = 'pose-estimation'
-    image_classification = 'image-classification'
-    image_tagging = 'image-tagging'
-    object_detection = 'object-detection'
-    image_object_detection = 'image-object-detection'
-    human_detection = 'human-detection'
-    image_segmentation = 'image-segmentation'
-    image_editing = 'image-editing'
-    image_generation = 'image-generation'
-    image_matting = 'image-matting'
-    image_denoise = 'image-denoise'
+    # ocr
     ocr_detection = 'ocr-detection'
-    action_recognition = 'action-recognition'
-    video_embedding = 'video-embedding'
+    ocr_recognition = 'ocr-recognition'
+
+    # human face body related
     face_detection = 'face-detection'
     face_recognition = 'face-recognition'
-    image_color_enhance = 'image-color-enhance'
-    virtual_try_on = 'virtual-try-on'
-    image_colorization = 'image-colorization'
+    human_detection = 'human-detection'
+    human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
-    image_style_transfer = 'image-style-transfer'
-    image_super_resolution = 'image-super-resolution'
-    product_retrieval_embedding = 'product-retrieval-embedding'
-    live_category = 'live-category'
-    video_category = 'video-category'
+
+    image_classification = 'image-classification'
+    image_multilabel_classification = 'image-multilabel-classification'
     image_classification_imagenet = 'image-classification-imagenet'
     image_classification_dailylife = 'image-classification-dailylife'
-    image_portrait_stylization = 'image-portrait-stylization'
+
+    image_object_detection = 'image-object-detection'
+
+    image_segmentation = 'image-segmentation'
+    image_matting = 'image-matting'
+    protrait_matting = 'protrait-matting'
+
+    # image editting
+    image_protrait_enhancement = 'image-protrait-enhancement'
+    skin_retouching = 'skin-retouching'
+    image_super_resolution = 'image-super-resolution'
+    image_colorization = 'image-colorization'
+    image_color_enhancement = 'image-color-enhancement'
+    image_denoising = 'image-denoising'
+
+    # image generation
+    image_to_image_translation = 'image-to-image-translation'
     image_to_image_generation = 'image-to-image-generation'
+    image_style_transfer = 'image-style-transfer'
+    image_portrait_stylization = 'image-portrait-stylization'
+
+    image_embedding = 'image-embedding'
+
+    product_retrieval_embedding = 'product-retrieval-embedding'
+
+    # video recognition
+    live_category = 'live-category'
+    action_recognition = 'action-recognition'
+    video_category = 'video-category'
+
+    video_embedding = 'video-embedding'
+
+    virtual_try_on = 'virtual-try-on'
 
 
 class NLPTasks(object):
     # nlp tasks
     word_segmentation = 'word-segmentation'
+    part_of_speech = 'part-of-speech'
     named_entity_recognition = 'named-entity-recognition'
     nli = 'nli'
     sentiment_classification = 'sentiment-classification'
@@ -66,7 +84,7 @@ class NLPTasks(object):
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_state_tracking = 'dialog-state-tracking'
     table_question_answering = 'table-question-answering'
-    feature_extraction = 'feature-extraction'
+    sentence_embedding = 'sentence-embedding'
     fill_mask = 'fill-mask'
     summarization = 'summarization'
     question_answering = 'question-answering'

@@ -16,6 +16,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
+    Tasks.protrait_matting, module_name=Pipelines.image_matting)
+@PIPELINES.register_module(
     Tasks.image_matting, module_name=Pipelines.image_matting)
 class ImageMattingPipeline(Pipeline):
 

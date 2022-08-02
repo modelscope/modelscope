@@ -19,7 +19,7 @@ logger = get_logger()
 __all__ = ['NAFNetForImageDenoise']
 
 
-@MODELS.register_module(Tasks.image_denoise, module_name=Models.nafnet)
+@MODELS.register_module(Tasks.image_denoising, module_name=Models.nafnet)
 class NAFNetForImageDenoise(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

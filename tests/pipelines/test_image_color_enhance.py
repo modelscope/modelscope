@@ -27,13 +27,13 @@ class ImageColorEnhanceTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         img_color_enhance = pipeline(
-            Tasks.image_color_enhance, model=self.model_id)
+            Tasks.image_color_enhancement, model=self.model_id)
         self.pipeline_inference(img_color_enhance,
                                 'data/test/images/image_color_enhance.png')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
-        img_color_enhance = pipeline(Tasks.image_color_enhance)
+        img_color_enhance = pipeline(Tasks.image_color_enhancement)
         self.pipeline_inference(img_color_enhance,
                                 'data/test/images/image_color_enhance.png')
 

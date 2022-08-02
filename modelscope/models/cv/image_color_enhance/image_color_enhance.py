@@ -17,7 +17,8 @@ logger = get_logger()
 __all__ = ['ImageColorEnhance']
 
 
-@MODELS.register_module(Tasks.image_color_enhance, module_name=Models.csrnet)
+@MODELS.register_module(
+    Tasks.image_color_enhancement, module_name=Models.csrnet)
 class ImageColorEnhance(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

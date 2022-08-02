@@ -39,8 +39,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_resnet18_human-detection'),
     Tasks.image_object_detection: (Pipelines.object_detection,
                                    'damo/cv_vit_object-detection_coco'),
-    Tasks.image_denoise: (Pipelines.image_denoise,
-                          'damo/cv_nafnet_image-denoise_sidd'),
+    Tasks.image_denoising: (Pipelines.image_denoise,
+                            'damo/cv_nafnet_image-denoise_sidd'),
     Tasks.text_classification: (Pipelines.sentiment_analysis,
                                 'damo/bert-base-sst2'),
     Tasks.text_generation: (Pipelines.text_generation,
@@ -94,8 +94,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
-    Tasks.image_color_enhance: (Pipelines.image_color_enhance,
-                                'damo/cv_csrnet_image-color-enhance-models'),
+    Tasks.image_color_enhancement:
+    (Pipelines.image_color_enhance,
+     'damo/cv_csrnet_image-color-enhance-models'),
     Tasks.virtual_try_on: (Pipelines.virtual_try_on,
                            'damo/cv_daflow_virtual-try-on_base'),
     Tasks.image_colorization: (Pipelines.image_colorization,

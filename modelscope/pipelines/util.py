@@ -34,7 +34,8 @@ def is_official_hub_path(path: Union[str, List],
             try:
                 _ = HubApi().get_model(path, revision=revision)
                 return True
-            except Exception:
+            except Exception as e:
+                logger.warning(f'get model exception: {e}')
                 return False
 
     if isinstance(path, str):

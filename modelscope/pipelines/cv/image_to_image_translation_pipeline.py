@@ -34,7 +34,8 @@ def save_grid(imgs, filename, nrow=5):
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name=Pipelines.image2image_translation)
+    Tasks.image_to_image_translation,
+    module_name=Pipelines.image2image_translation)
 class Image2ImageTranslationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

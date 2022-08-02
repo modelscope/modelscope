@@ -19,7 +19,7 @@ __all__ = ['ImageDenoisePipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.image_denoise, module_name=Pipelines.image_denoise)
+    Tasks.image_denoising, module_name=Pipelines.image_denoise)
 class ImageDenoisePipeline(Pipeline):
 
     def __init__(self,

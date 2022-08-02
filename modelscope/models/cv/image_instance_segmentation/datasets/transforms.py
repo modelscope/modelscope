@@ -79,15 +79,19 @@ class LoadImageFromFile:
             dict: The dict contains loaded image and meta information.
         """
 
-        if results['img_prefix'] is not None:
-            filename = osp.join(results['img_prefix'],
-                                results['img_info']['filename'])
-        else:
+        if 'img' in results and isinstance(results['img'], np.ndarray):
+            img = results['img']
             filename = results['img_info']['filename']
+        else:
+            if results['img_prefix'] is not None:
+                filename = osp.join(results['img_prefix'],
+                                    results['img_info']['filename'])
+            else:
+                filename = results['img_info']['filename']
 
-        img_bytes = File.read(filename)
+            img_bytes = File.read(filename)
 
-        img = self.imfrombytes(img_bytes, 'color', 'bgr', backend='pillow')
+            img = self.imfrombytes(img_bytes, 'color', 'bgr', backend='pillow')
 
         if self.to_float32:
             img = img.astype(np.float32)

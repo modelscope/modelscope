@@ -122,6 +122,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.skin_retouching: (Pipelines.skin_retouching,
+                            'damo/cv_unet_skin-retouching'),
 }
 
 

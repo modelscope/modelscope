@@ -5,11 +5,11 @@ from scipy.special import softmax
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForZeroShotClassification
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import ZeroShotClassificationPreprocessor
+from modelscope.preprocessors import (Preprocessor,
+                                      ZeroShotClassificationPreprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['ZeroShotClassificationPipeline']
@@ -21,19 +21,18 @@ __all__ = ['ZeroShotClassificationPipeline']
 class ZeroShotClassificationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[SbertForZeroShotClassification, str],
-                 preprocessor: ZeroShotClassificationPreprocessor = None,
+                 model: Union[Model, str],
+                 preprocessor: Preprocessor = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+        """use `model` and `preprocessor` to create a nlp zero-shot text classification pipeline for prediction
         Args:
-            model (SbertForZeroShotClassification): a model instance
-            preprocessor (SentimentClassificationPreprocessor): a preprocessor instance
+            model (Model): a model instance
+            preprocessor (Preprocessor): a preprocessor instance
         """
-        assert isinstance(model, str) or isinstance(model, SbertForZeroShotClassification), \
-            'model must be a single str or SbertForZeroShotClassification'
-        model = model if isinstance(
-            model,
-            SbertForZeroShotClassification) else Model.from_pretrained(model)
+        assert isinstance(model, str) or isinstance(model, Model), \
+            'model must be a single str or Model'
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
         self.entailment_id = 0
         self.contradiction_id = 2
         if preprocessor is None:
@@ -58,7 +57,7 @@ class ZeroShotClassificationPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return self.model(inputs, **forward_params)
 
     def postprocess(self,
                     inputs: Dict[str, Any],
@@ -70,7 +69,7 @@ class ZeroShotClassificationPipeline(Pipeline):
         Returns:
             Dict[str, Any]: the prediction results
         """
-        logits = inputs['logits']
+        logits = inputs[OutputKeys.LOGITS]
         if multi_label or len(candidate_labels) == 1:
             logits = logits[..., [self.contradiction_id, self.entailment_id]]
             scores = softmax(logits, axis=-1)[..., 1]

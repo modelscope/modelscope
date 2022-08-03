@@ -5,8 +5,7 @@ import tempfile
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.nlp.palm_for_text_generation import \
-    PalmForTextGeneration
+from modelscope.models.nlp.palm_v2 import PalmForTextGeneration
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
@@ -50,13 +49,21 @@ class TestTextGenerationTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
+
+        def cfg_modify_fn(cfg):
+            cfg.preprocessor.type = 'text-gen-tokenizer'
+            return cfg
+
         kwargs = dict(
             model=self.model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            work_dir=self.tmp_dir)
+            work_dir=self.tmp_dir,
+            cfg_modify_fn=cfg_modify_fn,
+            model_revision='beta')
 
-        trainer = build_trainer(default_args=kwargs)
+        trainer = build_trainer(
+            name='NlpEpochBasedTrainer', default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -69,7 +76,7 @@ class TestTextGenerationTrainer(unittest.TestCase):
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
 
-        cache_path = snapshot_download(self.model_id)
+        cache_path = snapshot_download(self.model_id, revision='beta')
         model = PalmForTextGeneration.from_pretrained(cache_path)
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
@@ -85,6 +92,44 @@ class TestTextGenerationTrainer(unittest.TestCase):
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(2):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+    @unittest.skip
+    def test_finetune_cnndm(self):
+        from datasets import load_dataset
+        dataset_dict = load_dataset('ccdv/cnn_dailymail', '3.0.0')
+        train_dataset = dataset_dict['train'] \
+            .rename_columns({'article': 'src_txt', 'highlights': 'tgt_txt'}) \
+            .remove_columns('id')
+        eval_dataset = dataset_dict['validation'] \
+            .rename_columns({'article': 'src_txt', 'highlights': 'tgt_txt'}) \
+            .remove_columns('id')
+        num_warmup_steps = 2000
+
+        def noam_lambda(current_step: int):
+            current_step += 1
+            return min(current_step**(-0.5),
+                       current_step * num_warmup_steps**(-1.5))
+
+        def cfg_modify_fn(cfg):
+            cfg.train.lr_scheduler = {
+                'type': 'LambdaLR',
+                'lr_lambda': noam_lambda,
+                'options': {
+                    'by_epoch': False
+                }
+            }
+            return cfg
+
+        kwargs = dict(
+            model=self.model_id,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            work_dir=self.tmp_dir,
+            cfg_modify_fn=cfg_modify_fn,
+            model_revision='beta')
+        trainer = build_trainer(
+            name='NlpEpochBasedTrainer', default_args=kwargs)
+        trainer.train()
 
 
 if __name__ == '__main__':

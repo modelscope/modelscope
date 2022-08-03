@@ -24,7 +24,7 @@ class DialogStateTrackingPreprocessor(Preprocessor):
         """
         super().__init__(*args, **kwargs)
 
-        from sofa.models.space import SpaceConfig, SpaceTokenizer
+        from modelscope.models.nlp.space import SpaceConfig, SpaceTokenizer
         self.model_dir: str = model_dir
         self.config = SpaceConfig.from_pretrained(self.model_dir)
         self.tokenizer = SpaceTokenizer.from_pretrained(self.model_dir)

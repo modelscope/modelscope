@@ -9,9 +9,8 @@ if TYPE_CHECKING:
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
-    from .nli_pipeline import NLIPipeline
-    from .sentence_similarity_pipeline import SentenceSimilarityPipeline
-    from .sentiment_classification_pipeline import SentimentClassificationPipeline
+    from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
+    from .single_sentence_classification_pipeline import SingleSentenceClassificationPipeline
     from .sequence_classification_pipeline import SequenceClassificationPipeline
     from .text_generation_pipeline import TextGenerationPipeline
     from .translation_pipeline import TranslationPipeline
@@ -28,10 +27,10 @@ else:
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
-        'nli_pipeline': ['NLIPipeline'],
-        'sentence_similarity_pipeline': ['SentenceSimilarityPipeline'],
-        'sentiment_classification_pipeline':
-        ['SentimentClassificationPipeline'],
+        'single_sentence_classification_pipeline':
+        ['SingleSentenceClassificationPipeline'],
+        'pair_sentence_classification_pipeline':
+        ['PairSentenceClassificationPipeline'],
         'sequence_classification_pipeline': ['SequenceClassificationPipeline'],
         'text_generation_pipeline': ['TextGenerationPipeline'],
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],

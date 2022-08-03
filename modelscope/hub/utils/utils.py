@@ -4,7 +4,7 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
-from modelscope.utils.utils import get_default_cache_dir
+from modelscope.utils.file_utils import get_default_cache_dir
 
 
 def model_id_to_group_owner_name(model_id):

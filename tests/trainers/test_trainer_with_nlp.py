@@ -6,8 +6,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
-from modelscope.models.nlp.sbert_for_sequence_classification import \
-    SbertTextClassfier
+from modelscope.models.nlp.sequence_classification import \
+    SbertForSequenceClassification
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
@@ -102,7 +102,7 @@ class TestTrainerWithNlp(unittest.TestCase):
 
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
         cache_path = snapshot_download(model_id)
-        model = SbertTextClassfier.from_pretrained(cache_path)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
             model=model,

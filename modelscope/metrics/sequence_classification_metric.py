@@ -17,14 +17,14 @@ class SequenceClassificationMetric(Metric):
     """The metric computation class for sequence classification classes.
     """
 
-    label_name = 'labels'
-
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.preds = []
         self.labels = []
 
     def add(self, outputs: Dict, inputs: Dict):
-        ground_truths = inputs[self.label_name]
+        label_name = OutputKeys.LABEL if OutputKeys.LABEL in inputs else OutputKeys.LABELS
+        ground_truths = inputs[label_name]
         eval_results = outputs[OutputKeys.LOGITS]
         self.preds.append(
             torch_nested_numpify(torch_nested_detach(eval_results)))

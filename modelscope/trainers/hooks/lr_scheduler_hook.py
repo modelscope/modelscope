@@ -21,9 +21,6 @@ class LrSchedulerHook(Hook):
     def __init__(self, by_epoch=True, warmup=None) -> None:
         super().__init__()
         self.by_epoch = by_epoch
-        if not self.by_epoch:
-            raise ValueError('We only support ``by_epoch=True`` now!')
-
         self.warmup = warmup
         self.warmup_lr_scheduler = None
 
@@ -49,6 +46,11 @@ class LrSchedulerHook(Hook):
         return lr
 
     def before_train_iter(self, trainer):
+        if not self.by_epoch:
+            if self.warmup_lr_scheduler is not None:
+                self.warmup_lr_scheduler.step()
+            else:
+                trainer.lr_scheduler.step()
         trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def before_train_epoch(self, trainer):

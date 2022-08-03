@@ -270,6 +270,7 @@ class PlateauLrSchedulerHookTest(unittest.TestCase):
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
+        trainer.train_dataloader = train_dataloader
         trainer.data_loader = train_dataloader
         trainer.register_optimizers_hook()
         trainer.register_hook_from_cfg(trainer.cfg.train.hooks)

@@ -1,85 +1,174 @@
-import os
-from typing import Any, Dict
+from abc import abstractmethod
 
-import json
-import numpy as np
+from torch import nn
 
-from modelscope.metainfo import TaskModels
+from modelscope.metainfo import Models
+from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.structbert import SbertPreTrainedModel
+from modelscope.models.nlp.veco import \
+    VecoForSequenceClassification as VecoForSequenceClassificationTransform
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
-from .task_model import SingleBackboneTaskModelBase
+from modelscope.utils.hub import parse_label_mapping
+from modelscope.utils.tensor_utils import (torch_nested_detach,
+                                           torch_nested_numpify)
 
-__all__ = ['SequenceClassificationModel']
+__all__ = ['SbertForSequenceClassification', 'VecoForSequenceClassification']
 
 
-@MODELS.register_module(
-    Tasks.sentiment_classification, module_name=TaskModels.text_classification)
-@MODELS.register_module(
-    Tasks.text_classification, module_name=TaskModels.text_classification)
-class SequenceClassificationModel(SingleBackboneTaskModelBase):
+class SequenceClassificationBase(TorchModel):
+    base_model_prefix: str = 'bert'
 
-    def __init__(self, model_dir: str, *args, **kwargs):
-        """initialize the sequence classification model from the `model_dir` path.
+    def __init__(self, config, model_dir):
+        super().__init__(model_dir)
+        self.num_labels = config.num_labels
+        self.config = config
+        setattr(self, self.base_model_prefix, self.build_base_model())
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
-        Args:
-            model_dir (str): the model path.
+    @abstractmethod
+    def build_base_model(self):
+        """Build the backbone model.
+
+        Returns: the backbone instance.
         """
-        super().__init__(model_dir, *args, **kwargs)
-        if 'base_model_prefix' in kwargs:
-            self._base_model_prefix = kwargs['base_model_prefix']
+        pass
 
-        backbone_cfg = self.cfg.backbone
-        head_cfg = self.cfg.head
+    @property
+    def base_model(self):
+        return getattr(self, self.base_model_prefix)
 
-        # get the num_labels from label_mapping.json
-        self.id2label = {}
-        self.label_path = os.path.join(model_dir, 'label_mapping.json')
-        if os.path.exists(self.label_path):
-            with open(self.label_path) as f:
-                self.label_mapping = json.load(f)
-            self.id2label = {
-                idx: name
-                for name, idx in self.label_mapping.items()
-            }
-        head_cfg['num_labels'] = len(self.label_mapping)
+    def forward(self, **kwargs):
+        labels = None
+        if OutputKeys.LABEL in kwargs:
+            labels = kwargs.pop(OutputKeys.LABEL)
+        elif OutputKeys.LABELS in kwargs:
+            labels = kwargs.pop(OutputKeys.LABELS)
 
-        self.build_backbone(backbone_cfg)
-        self.build_head(head_cfg)
+        outputs = self.base_model.forward(**kwargs)
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
-        outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
-        outputs = self.head.forward(pooled_output)
-        if 'labels' in input:
-            loss = self.compute_loss(outputs, input['labels'])
-            outputs.update(loss)
-        return outputs
-
-    def extract_logits(self, outputs):
-        return outputs[OutputKeys.LOGITS].cpu().detach()
-
-    def extract_backbone_outputs(self, outputs):
-        sequence_output = None
-        pooled_output = None
-        if hasattr(self.backbone, 'extract_sequence_outputs'):
-            sequence_output = self.backbone.extract_sequence_outputs(outputs)
-        if hasattr(self.backbone, 'extract_pooled_outputs'):
-            pooled_output = self.backbone.extract_pooled_outputs(outputs)
-        return sequence_output, pooled_output
-
-    def compute_loss(self, outputs, labels):
-        loss = self.head.compute_loss(outputs, labels)
-        return loss
+        # backbone model should return pooled_output as its second output
+        pooled_output = outputs[1]
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+        if labels is not None:
+            loss_fct = nn.CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            return {OutputKeys.LOGITS: logits, OutputKeys.LOSS: loss}
+        return {OutputKeys.LOGITS: logits}
 
     def postprocess(self, input, **kwargs):
-        logits = self.extract_logits(input)
-        probs = logits.softmax(-1).numpy()
-        pred = logits.argmax(-1).numpy()
-        logits = logits.numpy()
+        logits = input[OutputKeys.LOGITS]
+        probs = torch_nested_numpify(torch_nested_detach(logits.softmax(-1)))
+        pred = torch_nested_numpify(torch_nested_detach(logits.argmax(-1)))
+        logits = torch_nested_numpify(torch_nested_detach(logits))
         res = {
             OutputKeys.PREDICTIONS: pred,
             OutputKeys.PROBABILITIES: probs,
             OutputKeys.LOGITS: logits
         }
         return res
+
+
+@MODELS.register_module(
+    Tasks.sentence_similarity, module_name=Models.structbert)
+@MODELS.register_module(
+    Tasks.sentiment_classification, module_name=Models.structbert)
+@MODELS.register_module(Tasks.nli, module_name=Models.structbert)
+@MODELS.register_module(
+    Tasks.zero_shot_classification, module_name=Models.structbert)
+class SbertForSequenceClassification(SequenceClassificationBase,
+                                     SbertPreTrainedModel):
+    base_model_prefix: str = 'bert'
+    supports_gradient_checkpointing = True
+    _keys_to_ignore_on_load_missing = [r'position_ids']
+
+    def __init__(self, config, model_dir):
+        if hasattr(config, 'base_model_prefix'):
+            SbertForSequenceClassification.base_model_prefix = config.base_model_prefix
+        super().__init__(config, model_dir)
+
+    def build_base_model(self):
+        from .structbert import SbertModel
+        return SbertModel(self.config, add_pooling_layer=True)
+
+    def forward(self,
+                input_ids=None,
+                attention_mask=None,
+                token_type_ids=None,
+                labels=None,
+                **kwargs):
+        return super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            labels=labels)
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        model_dir = kwargs.get('model_dir')
+        num_labels = kwargs.get('num_labels')
+        if num_labels is None:
+            label2id = parse_label_mapping(model_dir)
+            if label2id is not None and len(label2id) > 0:
+                num_labels = len(label2id)
+
+        model_args = {} if num_labels is None else {'num_labels': num_labels}
+        return super(SbertPreTrainedModel,
+                     SbertForSequenceClassification).from_pretrained(
+                         pretrained_model_name_or_path=kwargs.get('model_dir'),
+                         model_dir=kwargs.get('model_dir'),
+                         **model_args)
+
+
+@MODELS.register_module(Tasks.sentence_similarity, module_name=Models.veco)
+@MODELS.register_module(
+    Tasks.sentiment_classification, module_name=Models.veco)
+@MODELS.register_module(Tasks.nli, module_name=Models.veco)
+class VecoForSequenceClassification(TorchModel,
+                                    VecoForSequenceClassificationTransform):
+
+    def __init__(self, config, model_dir):
+        super().__init__(model_dir)
+        VecoForSequenceClassificationTransform.__init__(self, config)
+
+    def forward(self,
+                input_ids=None,
+                attention_mask=None,
+                token_type_ids=None,
+                position_ids=None,
+                head_mask=None,
+                inputs_embeds=None,
+                labels=None,
+                output_attentions=None,
+                output_hidden_states=None,
+                **kwargs):
+        return VecoForSequenceClassificationTransform.forward(
+            self,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            labels=labels)
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        model_dir = kwargs.get('model_dir')
+        num_labels = kwargs.get('num_labels')
+        if num_labels is None:
+            label2id = parse_label_mapping(model_dir)
+            if label2id is not None and len(label2id) > 0:
+                num_labels = len(label2id)
+
+        model_args = {} if num_labels is None else {'num_labels': num_labels}
+        return super(VecoForSequenceClassificationTransform,
+                     VecoForSequenceClassification).from_pretrained(
+                         pretrained_model_name_or_path=kwargs.get('model_dir'),
+                         model_dir=kwargs.get('model_dir'),
+                         **model_args)

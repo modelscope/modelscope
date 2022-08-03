@@ -9,6 +9,7 @@ class OutputKeys(object):
     SCORES = 'scores'
     LABEL = 'label'
     LABELS = 'labels'
+    INPUT_IDS = 'input_ids'
     LABEL_POS = 'label_pos'
     POSES = 'poses'
     CAPTION = 'caption'

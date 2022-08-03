@@ -5,11 +5,10 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp.masked_language import MaskedLanguageModelBase
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import FillMaskPreprocessor
+from modelscope.preprocessors import FillMaskPreprocessor, Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -21,18 +20,18 @@ _type_map = {'veco': 'roberta', 'sbert': 'bert'}
 class FillMaskPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[MaskedLanguageModelBase, str],
-                 preprocessor: Optional[FillMaskPreprocessor] = None,
-                 first_sequence='sentense',
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 first_sequence='sentence',
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction
 
         Args:
-            model (MaskedLanguageModelBase): a model instance
-            preprocessor (FillMaskPreprocessor): a preprocessor instance
+            model (Model): a model instance
+            preprocessor (Preprocessor): a preprocessor instance
         """
         fill_mask_model = model if isinstance(
-            model, MaskedLanguageModelBase) else Model.from_pretrained(model)
+            model, Model) else Model.from_pretrained(model)
 
         if preprocessor is None:
             preprocessor = FillMaskPreprocessor(
@@ -73,7 +72,7 @@ class FillMaskPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return self.model(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """process the prediction results
@@ -85,8 +84,8 @@ class FillMaskPipeline(Pipeline):
             Dict[str, str]: the prediction results
         """
         import numpy as np
-        logits = inputs['logits'].detach().cpu().numpy()
-        input_ids = inputs['input_ids'].detach().cpu().numpy()
+        logits = inputs[OutputKeys.LOGITS].detach().cpu().numpy()
+        input_ids = inputs[OutputKeys.INPUT_IDS].detach().cpu().numpy()
         pred_ids = np.argmax(logits, axis=-1)
         model_type = self.model.config.model_type
         process_type = model_type if model_type in self.mask_id else _type_map[

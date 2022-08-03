@@ -12,7 +12,7 @@ class TranslationTest(unittest.TestCase):
     model_id = 'damo/nlp_csanmt_translation'
     inputs = 'Gut@@ ach : Incre@@ ased safety for pedestri@@ ans'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(task=Tasks.translation, model=self.model_id)
         print(pipeline_ins(input=self.inputs))

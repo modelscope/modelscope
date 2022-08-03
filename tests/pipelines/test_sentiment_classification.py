@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (SbertForSentimentClassification,
-                                   SequenceClassificationModel)
+from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import SentimentClassificationPipeline
-from modelscope.preprocessors import SentimentClassificationPreprocessor
+from modelscope.pipelines.nlp import SingleSentenceClassificationPipeline
+from modelscope.preprocessors import SingleSentenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -19,46 +18,52 @@ class SentimentClassificationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = SentimentClassificationPreprocessor(cache_path)
-        model = SequenceClassificationModel.from_pretrained(
+        tokenizer = SingleSentenceClassificationPreprocessor(cache_path)
+        model = SbertForSequenceClassification.from_pretrained(
             self.model_id, num_labels=2)
-        pipeline1 = SentimentClassificationPipeline(
+        pipeline1 = SingleSentenceClassificationPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.sentiment_classification,
             model=model,
-            preprocessor=tokenizer,
-            model_revision='beta')
+            preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1:{pipeline1(input=self.sentence1)}')
         print()
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1: {pipeline2(input=self.sentence1)}')
+        self.assertTrue(
+            isinstance(pipeline1.model, SbertForSequenceClassification))
+        self.assertTrue(
+            isinstance(pipeline2.model, SbertForSequenceClassification))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = SentimentClassificationPreprocessor(model.model_dir)
+        tokenizer = SingleSentenceClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.sentiment_classification,
             model=model,
-            preprocessor=tokenizer,
-            model_revision='beta')
+            preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence1))
+        self.assertTrue(
+            isinstance(pipeline_ins.model, SbertForSequenceClassification))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
-            task=Tasks.sentiment_classification,
-            model=self.model_id,
-            model_revision='beta')
+            task=Tasks.sentiment_classification, model=self.model_id)
         print(pipeline_ins(input=self.sentence1))
+        print(pipeline_ins.model.__class__)
+        self.assertTrue(
+            isinstance(pipeline_ins.model, SbertForSequenceClassification))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(
-            task=Tasks.sentiment_classification, model_revision='beta')
+        pipeline_ins = pipeline(task=Tasks.sentiment_classification)
         print(pipeline_ins(input=self.sentence1))
+        self.assertTrue(
+            isinstance(pipeline_ins.model, SbertForSequenceClassification))
 
 
 if __name__ == '__main__':

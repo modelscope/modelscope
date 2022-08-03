@@ -32,6 +32,7 @@ class EvaluationHook(Hook):
     def do_evaluate(self, trainer):
         """Evaluate the results."""
         eval_res = trainer.evaluate()
+        trainer.data_loader = trainer.train_dataloader
         for name, val in eval_res.items():
             trainer.log_buffer.output[name] = val
 

@@ -20,7 +20,9 @@ class MetricKeys(object):
 task_default_metrics = {
     Tasks.image_segmentation: [Metrics.image_ins_seg_coco_metric],
     Tasks.sentence_similarity: [Metrics.seq_cls_metric],
+    Tasks.nli: [Metrics.seq_cls_metric],
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
+    Tasks.token_classification: [Metrics.token_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
     Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],

@@ -4,11 +4,10 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp import TransformerCRFForNamedEntityRecognition
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import NERPreprocessor
+from modelscope.preprocessors import NERPreprocessor, Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['NamedEntityRecognitionPipeline']
@@ -20,13 +19,12 @@ __all__ = ['NamedEntityRecognitionPipeline']
 class NamedEntityRecognitionPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[TransformerCRFForNamedEntityRecognition, str],
-                 preprocessor: Optional[NERPreprocessor] = None,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
 
         model = model if isinstance(model,
-                                    TransformerCRFForNamedEntityRecognition
-                                    ) else Model.from_pretrained(model)
+                                    Model) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = NERPreprocessor(model.model_dir)
         model.eval()

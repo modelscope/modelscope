@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Union
 import torch
 from torch import nn
 
+from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from .base_model import Model
 
@@ -19,6 +20,13 @@ class TorchModel(Model, torch.nn.Module):
     def __init__(self, model_dir=None, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
         torch.nn.Module.__init__(self)
+
+    def __call__(self, input: Dict[str,
+                                   torch.Tensor]) -> Dict[str, torch.Tensor]:
+        if func_receive_dict_inputs(self.forward):
+            return self.postprocess(self.forward(input))
+        else:
+            return self.postprocess(self.forward(**input))
 
     def forward(self, inputs: Dict[str,
                                    torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -50,6 +58,3 @@ class TorchModel(Model, torch.nn.Module):
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-
-    def compute_loss(self, outputs: Dict[str, Any], labels):
-        raise NotImplementedError()

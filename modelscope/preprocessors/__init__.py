@@ -18,11 +18,11 @@ if TYPE_CHECKING:
                               MPlugVisualQuestionAnsweringPreprocessor)
     from .nlp import (Tokenize, SequenceClassificationPreprocessor,
                       TextGenerationPreprocessor,
-                      TokenClassificationPreprocessor, NLIPreprocessor,
-                      SentimentClassificationPreprocessor,
-                      SentenceSimilarityPreprocessor, FillMaskPreprocessor,
-                      ZeroShotClassificationPreprocessor, NERPreprocessor,
-                      TextErrorCorrectionPreprocessor)
+                      TokenClassificationPreprocessor,
+                      SingleSentenceClassificationPreprocessor,
+                      PairSentenceClassificationPreprocessor,
+                      FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
+                      NERPreprocessor, TextErrorCorrectionPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -46,8 +46,8 @@ else:
         'nlp': [
             'Tokenize', 'SequenceClassificationPreprocessor',
             'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
-            'NLIPreprocessor', 'SentimentClassificationPreprocessor',
-            'SentenceSimilarityPreprocessor', 'FillMaskPreprocessor',
+            'SingleSentenceClassificationPreprocessor',
+            'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
             'TextErrorCorrectionPreprocessor'
         ],

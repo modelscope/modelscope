@@ -5,9 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .sequence_classification_head import SequenceClassificationHead
+    from .torch_pretrain_head import BertMLMHead, RobertaMLMHead
 else:
     _import_structure = {
-        'sequence_classification_head': ['SequenceClassificationHead']
+        'sequence_classification_head': ['SequenceClassificationHead'],
+        'torch_pretrain_head': ['BertMLMHead', 'RobertaMLMHead'],
     }
 
     import sys

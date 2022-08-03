@@ -45,7 +45,7 @@ class FillMaskTest(unittest.TestCase):
             model_dir = snapshot_download(self.model_id_sbert[language])
             preprocessor = FillMaskPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
-            model = StructBertForMaskedLM(model_dir)
+            model = StructBertForMaskedLM.from_pretrained(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
             pipeline2 = pipeline(
                 Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -60,7 +60,7 @@ class FillMaskTest(unittest.TestCase):
         model_dir = snapshot_download(self.model_id_veco)
         preprocessor = FillMaskPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
-        model = VecoForMaskedLM(model_dir)
+        model = VecoForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -77,7 +77,7 @@ class FillMaskTest(unittest.TestCase):
         model_dir = snapshot_download(self.model_id_bert)
         preprocessor = FillMaskPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
-        model = BertForMaskedLM(model_dir)
+        model = BertForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)

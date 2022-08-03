@@ -4,11 +4,11 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForTokenClassification
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import TokenClassificationPreprocessor
+from modelscope.preprocessors import (Preprocessor,
+                                      TokenClassificationPreprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['WordSegmentationPipeline']
@@ -18,33 +18,35 @@ __all__ = ['WordSegmentationPipeline']
     Tasks.word_segmentation, module_name=Pipelines.word_segmentation)
 class WordSegmentationPipeline(Pipeline):
 
-    def __init__(
-            self,
-            model: Union[SbertForTokenClassification, str],
-            preprocessor: Optional[TokenClassificationPreprocessor] = None,
-            **kwargs):
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 **kwargs):
         """use `model` and `preprocessor` to create a nlp word segmentation pipeline for prediction
 
         Args:
-            model (StructBertForTokenClassification): a model instance
-            preprocessor (TokenClassificationPreprocessor): a preprocessor instance
+            model (Model): a model instance
+            preprocessor (Preprocessor): a preprocessor instance
         """
-        model = model if isinstance(
-            model,
-            SbertForTokenClassification) else Model.from_pretrained(model)
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TokenClassificationPreprocessor(model.model_dir)
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.tokenizer = preprocessor.tokenizer
-        self.config = model.config
-        assert len(self.config.id2label) > 0
-        self.id2label = self.config.id2label
+        self.id2label = kwargs.get('id2label')
+        if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
+            self.id2label = self.preprocessor.id2label
+        assert self.id2label is not None, 'Cannot convert id to the original label, please pass in the mapping ' \
+                                          'as a parameter or make sure the preprocessor has the attribute.'
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
+        text = inputs.pop(OutputKeys.TEXT)
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return {
+                **self.model(inputs, **forward_params), OutputKeys.TEXT: text
+            }
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:

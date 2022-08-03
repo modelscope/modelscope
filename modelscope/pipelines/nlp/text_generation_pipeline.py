@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.base import TorchModel
+from modelscope.models.base import Model
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TextGenerationPreprocessor
@@ -17,7 +17,7 @@ __all__ = ['TextGenerationPipeline']
 class TextGenerationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[TorchModel, str],
+                 model: Union[Model, str],
                  preprocessor: Optional[TextGenerationPreprocessor] = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a nlp text generation pipeline for prediction
@@ -26,8 +26,8 @@ class TextGenerationPipeline(Pipeline):
             model (PalmForTextGeneration): a model instance
             preprocessor (TextGenerationPreprocessor): a preprocessor instance
         """
-        model = model if isinstance(
-            model, TorchModel) else TorchModel.from_pretrained(model)
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TextGenerationPreprocessor(
                 model.model_dir,

@@ -10,6 +10,8 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.file_utils import func_receive_dict_inputs
+from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -69,6 +71,7 @@ class Model(ABC):
     def from_pretrained(cls,
                         model_name_or_path: str,
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                        cfg_dict: Config = None,
                         *model_args,
                         **kwargs):
         """ Instantiate a model from local directory or remote model repo. Note
@@ -87,25 +90,25 @@ class Model(ABC):
                 )
             local_model_dir = snapshot_download(model_name_or_path, revision)
         logger.info(f'initialize model from {local_model_dir}')
-        cfg = Config.from_file(
-            osp.join(local_model_dir, ModelFile.CONFIGURATION))
+        if cfg_dict is not None:
+            cfg = cfg_dict
+        else:
+            cfg = Config.from_file(
+                osp.join(local_model_dir, ModelFile.CONFIGURATION))
         task_name = cfg.task
         model_cfg = cfg.model
-        assert hasattr(
-            cfg, 'pipeline'), 'pipeline config is missing from config file.'
-        pipeline_cfg = cfg.pipeline
         # TODO @wenmeng.zwm may should manually initialize model after model building
 
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
 
         model_cfg.model_dir = local_model_dir
-
         for k, v in kwargs.items():
             model_cfg[k] = v
         model = build_model(
             model_cfg, task_name=task_name, default_args=kwargs)
 
         # dynamically add pipeline info to model for pipeline inference
-        model.pipeline = pipeline_cfg
+        if hasattr(cfg, 'pipeline'):
+            model.pipeline = cfg.pipeline
         return model

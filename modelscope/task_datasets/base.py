@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from abc import ABC, abstractmethod
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 
 class TaskDataset(ABC):
@@ -8,7 +8,7 @@ class TaskDataset(ABC):
     """
 
     def __init__(self,
-                 datasets: Tuple[Any, List[Any]],
+                 datasets: Union[Any, List[Any]],
                  mode,
                  preprocessor=None,
                  **kwargs):
@@ -18,7 +18,7 @@ class TaskDataset(ABC):
         self._inner_dataset = self.prepare_dataset(datasets)
 
     @abstractmethod
-    def prepare_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
+    def prepare_dataset(self, datasets: Union[Any, List[Any]]) -> Any:
         """Prepare a dataset.
 
         User can process the input datasets in a whole dataset perspective.

@@ -10,9 +10,9 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
+from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
-from modelscope.utils.utils import if_func_receive_dict_inputs
 
 
 def single_gpu_test(model,
@@ -37,18 +37,19 @@ def single_gpu_test(model,
             if data_collate_fn is not None:
                 data = data_collate_fn(data)
             with torch.no_grad():
-                if isinstance(data,
-                              Mapping) and not if_func_receive_dict_inputs(
-                                  model.forward):
-
-                    result = model(**data)
+                if isinstance(data, Mapping) and not func_receive_dict_inputs(
+                        model.forward):
+                    result = model.forward(**data)
                 else:
-                    result = model(data)
+                    result = model.forward(data)
             if metric_classes is not None:
                 for metric_cls in metric_classes:
                     metric_cls.add(result, data)
 
-            batch_size = len(result)
+            if isinstance(data, dict):
+                batch_size = len(next(iter(data.values())))
+            else:
+                batch_size = len(data)
             for _ in range(batch_size):
                 pbar.update()
 
@@ -101,16 +102,18 @@ def multi_gpu_test(model,
                 data = data_collate_fn(data)
             data_list.append(data)
             with torch.no_grad():
-                if isinstance(data,
-                              Mapping) and not if_func_receive_dict_inputs(
-                                  model.forward):
-                    result = model(**data)
+                if isinstance(data, Mapping) and not func_receive_dict_inputs(
+                        model.forward):
+                    result = model.forward(**data)
                 else:
-                    result = model(data)
+                    result = model.forward(data)
             results.append(result)
 
             if rank == 0:
-                batch_size = len(result)
+                if isinstance(data, dict):
+                    batch_size = len(next(iter(data.values())))
+                else:
+                    batch_size = len(data)
                 batch_size_all = batch_size * world_size
                 count += batch_size_all
                 if count > len(dataset):

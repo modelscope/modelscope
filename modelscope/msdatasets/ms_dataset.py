@@ -517,3 +517,10 @@ class MsDataset:
     def to_hf_dataset(self) -> Dataset:
         self._hf_ds.reset_format()
         return self._hf_ds
+
+    @staticmethod
+    def interleave_datasets(datasets: List[Any],
+                            probabilities: Optional[List[float]] = None,
+                            seed: Optional[int] = None):
+        from datasets import interleave_datasets
+        return interleave_datasets(datasets, probabilities, seed)

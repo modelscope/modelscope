@@ -16,9 +16,9 @@ from modelscope.fileio.file import LocalStorage
 from modelscope.metainfo import (Heads, Metrics, Models, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
+from modelscope.utils.file_utils import get_default_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
-from modelscope.utils.utils import get_default_cache_dir
 
 logger = get_logger()
 storage = LocalStorage()

@@ -98,4 +98,14 @@ def parse_label_mapping(model_dir):
             label_mapping = json.load(f)
         label2id = {name: idx for name, idx in label_mapping.items()}
 
+    if label2id is None:
+        config_path = os.path.join(model_dir, ModelFile.CONFIGURATION)
+        config = Config.from_file(config_path)
+        if hasattr(config, 'model') and hasattr(config.model, 'label2id'):
+            label2id = config.model.label2id
+    if label2id is None:
+        config_path = os.path.join(model_dir, 'config.json')
+        config = Config.from_file(config_path)
+        if hasattr(config, 'label2id'):
+            label2id = config.label2id
     return label2id

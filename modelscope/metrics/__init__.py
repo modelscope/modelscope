@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .image_portrait_enhancement_metric import ImagePortraitEnhancementMetric
     from .sequence_classification_metric import SequenceClassificationMetric
     from .text_generation_metric import TextGenerationMetric
+    from .token_classification_metric import TokenClassificationMetric
 
 else:
     _import_structure = {
@@ -26,6 +27,7 @@ else:
         ['ImagePortraitEnhancementMetric'],
         'sequence_classification_metric': ['SequenceClassificationMetric'],
         'text_generation_metric': ['TextGenerationMetric'],
+        'token_classification_metric': ['TokenClassificationMetric'],
     }
 
     import sys

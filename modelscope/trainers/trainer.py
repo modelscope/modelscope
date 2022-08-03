@@ -22,7 +22,8 @@ from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.preprocessors import build_preprocessor
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.task_datasets import TorchTaskDataset, build_task_dataset
+from modelscope.task_datasets.builder import build_task_dataset
+from modelscope.task_datasets.torch_base_dataset import TorchTaskDataset
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -30,12 +31,12 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Hubs, ModeKeys,
                                        ModelFile, Tasks, TrainerStages)
+from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.tensor_utils import torch_default_data_collator
 from modelscope.utils.torch_utils import (broadcast, create_device,
                                           get_dist_info, init_dist)
-from modelscope.utils.utils import if_func_receive_dict_inputs
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -87,6 +88,7 @@ class EpochBasedTrainer(BaseTrainer):
                                                                         None),
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             **kwargs):
+
         if isinstance(model, str):
             if os.path.exists(model):
                 self.model_dir = model if os.path.isdir(
@@ -108,9 +110,9 @@ class EpochBasedTrainer(BaseTrainer):
             self.model = model
 
         super().__init__(cfg_file, arg_parse_fn)
-
         # add default config
         self.cfg.merge_from_dict(self._get_default_config(), force=False)
+        self.cfg = self.rebuild_config(self.cfg)
 
         if 'work_dir' in kwargs:
             self.work_dir = kwargs['work_dir']
@@ -130,9 +132,9 @@ class EpochBasedTrainer(BaseTrainer):
         self.device = create_device(device_name == 'cpu')
 
         self.train_dataset = self.to_task_dataset(
-            train_dataset, mode='train', preprocessor=self.preprocessor)
+            train_dataset, mode=ModeKeys.TRAIN, preprocessor=self.preprocessor)
         self.eval_dataset = self.to_task_dataset(
-            eval_dataset, mode='eval', preprocessor=self.preprocessor)
+            eval_dataset, mode=ModeKeys.EVAL, preprocessor=self.preprocessor)
 
         self.data_collator = data_collator if data_collator is not None else torch_default_data_collator
         self.metrics = self.get_metrics()
@@ -167,6 +169,14 @@ class EpochBasedTrainer(BaseTrainer):
             self.model.to(self.device)
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
+
+    def rebuild_config(self, cfg: Config):
+        """A method used to rebuild the config, any subclass can override this method.
+
+        Returns: The rebuilt config
+
+        """
+        return cfg
 
     @property
     def mode(self):
@@ -203,7 +213,7 @@ class EpochBasedTrainer(BaseTrainer):
         return self._max_epochs * len(self.data_loader)
 
     def to_task_dataset(self,
-                        datasets: Tuple[Dataset, List[Dataset]],
+                        datasets: Union[Dataset, List[Dataset]],
                         mode: str,
                         preprocessor: Optional[Preprocessor] = None):
         """Build the task specific dataset processor for this trainer.
@@ -229,17 +239,13 @@ class EpochBasedTrainer(BaseTrainer):
                 cfg = ConfigDict(
                     type=self.cfg.task, mode=mode, datasets=datasets)
                 return build_task_dataset(cfg, self.cfg.task)
-            elif isinstance(datasets,
-                            Dataset) or (isinstance(datasets, List)
-                                         and isinstance(datasets[0], Dataset)):
-                cfg = ConfigDict(
-                    type=self.cfg.model.type, mode=mode, datasets=datasets)
-                return build_task_dataset(cfg, self.cfg.task)
             else:
-                raise ValueError(
-                    f'invalid datasets type: {type(datasets)}, '
-                    f'expected  `MsDataset`, `torch.utils.data.Dataset` or list of them.'
-                )
+                cfg = ConfigDict(
+                    type=self.cfg.model.type,
+                    mode=mode,
+                    datasets=datasets,
+                    preprocessor=preprocessor)
+                return build_task_dataset(cfg, self.cfg.task)
         except Exception:
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
                 return TorchTaskDataset(
@@ -262,8 +268,11 @@ class EpochBasedTrainer(BaseTrainer):
         # TODO @wenmeng.zwm @jiangnana.jnn add support for different preprocessor
         # when they are different ones in training and evaluation
         cfg = ConfigDict({
-            **getattr(self.cfg, 'preprocessor'), 'model_dir':
-            self.model_dir
+            **getattr(self.cfg, 'preprocessor'),
+            'model_dir':
+            self.model_dir,
+            'mode':
+            ModeKeys.TRAIN,
         })
         return build_preprocessor(cfg, Tasks.find_field_by_task(self.cfg.task))
 
@@ -324,6 +333,8 @@ class EpochBasedTrainer(BaseTrainer):
                 **self.cfg.evaluation.get('dataloader', {}))
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
+        for m in metric_classes:
+            m.trainer = self
         metric_values = self.evaluation_loop(self.eval_dataloader,
                                              checkpoint_path, metric_classes)
 
@@ -338,10 +349,9 @@ class EpochBasedTrainer(BaseTrainer):
         """ Instantiate a pytorch model and return.
 
         By default, we will create a model using config from configuration file. You can
-        subclass and override this method in a subclass.
+        override this method in a subclass.
 
         """
-        # TODO temp implementation, waiting for @zhangzhicheng
         model = Model.from_pretrained(self.model_dir)
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             return model.model
@@ -412,9 +422,8 @@ class EpochBasedTrainer(BaseTrainer):
         self._mode = ModeKeys.TRAIN
         inputs = self.collate_fn(inputs)
         # call model forward but not __call__ to skip postprocess
-        if isinstance(
-                inputs,
-                Mapping) and not if_func_receive_dict_inputs(model.forward):
+        if isinstance(inputs,
+                      Mapping) and not func_receive_dict_inputs(model.forward):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)
@@ -495,7 +504,7 @@ class EpochBasedTrainer(BaseTrainer):
         if self.eval_dataset is None:
             val_data = self.cfg.dataset.val
             self.eval_dataset = self.build_dataset(
-                val_data, mode=ModeKeys.TRAIN)
+                val_data, mode=ModeKeys.EVAL)
 
         batch_size = self.cfg.evaluation.batch_size
         workers = self.cfg.evaluation.workers
@@ -523,7 +532,8 @@ class EpochBasedTrainer(BaseTrainer):
         )
         torch_dataset = dataset.to_torch_dataset(
             preprocessors=self.preprocessor, )
-        return torch_dataset
+        dataset = self.to_task_dataset(torch_dataset, mode)
+        return dataset
 
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler

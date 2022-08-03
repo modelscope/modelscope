@@ -3,10 +3,10 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForNLI
+from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import NLIPipeline
-from modelscope.preprocessors import NLIPreprocessor
+from modelscope.pipelines.nlp import PairSentenceClassificationPipeline
+from modelscope.preprocessors import PairSentenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -19,9 +19,10 @@ class NLITest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = NLIPreprocessor(cache_path)
-        model = SbertForNLI(cache_path, tokenizer=tokenizer)
-        pipeline1 = NLIPipeline(model, preprocessor=tokenizer)
+        tokenizer = PairSentenceClassificationPreprocessor(cache_path)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
+        pipeline1 = PairSentenceClassificationPipeline(
+            model, preprocessor=tokenizer)
         pipeline2 = pipeline(Tasks.nli, model=model, preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\nsentence2: {self.sentence2}\n'
               f'pipeline1:{pipeline1(input=(self.sentence1, self.sentence2))}')
@@ -33,7 +34,7 @@ class NLITest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = NLIPreprocessor(model.model_dir)
+        tokenizer = PairSentenceClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.nli, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))

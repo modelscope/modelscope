@@ -53,6 +53,10 @@ class TaskModels(object):
 class Heads(object):
     # nlp heads
     text_classification = 'text-classification'
+    # mlm
+    bert_mlm = 'bert-mlm'
+    # roberta mlm
+    roberta_mlm = 'roberta-mlm'
 
 
 class Pipelines(object):
@@ -137,7 +141,7 @@ class Trainers(object):
         Holds the standard trainer name to use for identifying different trainer.
     This should be used to register trainers.
 
-        For a general Trainer, you can use easynlp-trainer/ofa-trainer/sofa-trainer.
+        For a general Trainer, you can use easynlp-trainer/ofa-trainer.
         For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
     """
 
@@ -179,6 +183,8 @@ class Preprocessors(object):
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
+    word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
+    fill_mask = 'fill-mask'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -204,7 +210,7 @@ class Metrics(object):
     # metric for image instance segmentation task
     image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'
     # metrics for sequence classification task
-    seq_cls_metric = 'seq_cls_metric'
+    seq_cls_metric = 'seq-cls-metric'
     # metrics for token-classification task
     token_cls_metric = 'token-cls-metric'
     # metrics for text-generation task

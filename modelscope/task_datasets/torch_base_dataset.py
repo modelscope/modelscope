@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 from torch.utils.data import ConcatDataset, Dataset
 
@@ -14,7 +14,7 @@ class TorchTaskDataset(TaskDataset, Dataset):
     """
 
     def __init__(self,
-                 datasets: Tuple[Any, List[Any]],
+                 datasets: Union[Any, List[Any]],
                  mode,
                  preprocessor=None,
                  **kwargs):
@@ -26,7 +26,7 @@ class TorchTaskDataset(TaskDataset, Dataset):
     def __len__(self):
         return len(self._inner_dataset)
 
-    def prepare_dataset(self, datasets: Tuple[Any, List[Any]]) -> Any:
+    def prepare_dataset(self, datasets: Union[Any, List[Any]]) -> Any:
         """Prepare a dataset.
 
         User can process the input datasets in a whole dataset perspective.

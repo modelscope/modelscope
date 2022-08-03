@@ -2,7 +2,7 @@
     "framework": "pytorch",
     "task": "sentence-similarity",
     "preprocessor": {
-      "type": "bert-seq-cls-tokenizer-finetune",
+      "type": "sen-sim-tokenizer",
       "first_sequence": "sentence1",
       "second_sequence": "sentence2"
     },

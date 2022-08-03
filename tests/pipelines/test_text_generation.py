@@ -39,7 +39,7 @@ class TextGenerationTest(unittest.TestCase):
         for model_id, input in ((self.palm_model_id_zh, self.palm_input_zh),
                                 (self.palm_model_id_en, self.palm_input_en)):
             cache_path = snapshot_download(model_id)
-            model = PalmForTextGeneration(cache_path)
+            model = PalmForTextGeneration.from_pretrained(cache_path)
             preprocessor = TextGenerationPreprocessor(
                 cache_path,
                 model.tokenizer,

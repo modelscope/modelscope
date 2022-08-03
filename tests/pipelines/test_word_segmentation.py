@@ -20,7 +20,7 @@ class WordSegmentationTest(unittest.TestCase):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = TokenClassificationPreprocessor(cache_path)
-        model = SbertForTokenClassification(cache_path, tokenizer=tokenizer)
+        model = SbertForTokenClassification.from_pretrained(cache_path)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)

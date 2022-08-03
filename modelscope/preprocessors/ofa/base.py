@@ -6,7 +6,7 @@ import json
 import numpy as np
 import torch
 
-from modelscope.models.multi_modal.ofa import OFATokenizer
+from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
 from modelscope.utils.trie import Trie
 from .utils.random_help import set_torch_seed
 
@@ -21,7 +21,15 @@ class OfaBasePreprocessor:
             model_dir (str): model path
         """
         self.cfg = cfg
-        tokenizer = OFATokenizer.from_pretrained(model_dir)
+        self.language = self.cfg.model.get('language', 'en')
+        if self.language == 'en':
+            tokenizer = OFATokenizer.from_pretrained(model_dir)
+        elif self.language in ['zh', 'cn']:
+            tokenizer = OFATokenizerZH.from_pretrained(model_dir)
+        else:
+            raise NotImplementedError
+        # there is some diff between here and our ofa code,
+        # there will be no need to use param: use_bpe
         tokenizer.add_tokens(['<code_{}>'.format(i) for i in range(8192)])
         tokenizer.add_tokens(['<bin_{}>'.format(i) for i in range(1000)])
         self.tokenizer = tokenizer

@@ -311,7 +311,6 @@ class OFAAttention(nn.Module):
             self.head_dim * num_heads == self.embed_dim
         ), f'embed_dim must be divisible by num_heads ' \
            f'(got `embed_dim`: {self.embed_dim} and `num_heads`: {num_heads}).'
-        # self.scaling = self.head_dim ** -0.5
         # 1. difference
         scale_factor = 2
         self.scaling = float(self.head_dim * scale_factor)**-0.5
@@ -913,7 +912,6 @@ class OFAEncoder(OFAPreTrainedModel):
         else:
             raise NotImplementedError
 
-        # self.image_proj = nn.Linear(1024, embed_dim)
         self.image_proj = Linear(1024, embed_dim)
 
         if config.resnet_model_path:
@@ -1075,7 +1073,25 @@ class OFAEncoder(OFAPreTrainedModel):
             image_num_patches = sample_patch_num
             image_padding_mask = image_padding_mask.gather(1, patch_orders)
             image_position_ids = image_position_ids.gather(1, patch_orders)
-        image_pos_embed = self.embed_image_positions(image_position_ids)
+        orig_num_patches = (self.config.orig_patch_image_size // 16)**2
+        orig_hw = self.config.orig_patch_image_size // 16
+        if self.config.interpolate_position and image_num_patches > orig_num_patches:
+            old_image_position_ids = torch.arange(orig_hw).unsqueeze(0).expand(orig_hw, orig_hw) + \
+                                     torch.arange(orig_hw).unsqueeze(1) * \
+                                     self.config.image_bucket_size + 1 # noqa
+            old_image_position_ids = old_image_position_ids.to(device)
+            old_image_pos_embed = self.embed_image_positions(
+                old_image_position_ids)
+            old_image_pos_embed = old_image_pos_embed.reshape(
+                1, orig_hw, orig_hw, -1).permute(0, 3, 1, 2)
+            image_pos_embed = F.interpolate(
+                old_image_pos_embed, size=(h, w), mode='bilinear')
+            image_pos_embed = image_pos_embed.permute(0, 2, 3, 1).reshape(
+                1, image_num_patches, -1)
+            image_pos_embed = image_pos_embed.expand(
+                patch_images.size(0), -1, -1)
+        else:
+            image_pos_embed = self.embed_image_positions(image_position_ids)
 
         return image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed
 
@@ -1250,7 +1266,6 @@ class OFAEncoder(OFAPreTrainedModel):
                 position_embedding (`torch.FloatTensor` of shape `(bsz, seq_len, embed_dim)`):
                     positional embeddings of the input image and tokens.
         """
-
         image_embed = None
         image_embed_2 = None
         image_pos_embed = None
@@ -1258,14 +1273,7 @@ class OFAEncoder(OFAPreTrainedModel):
         if patch_images is not None:
             image_embed, image_num_patches, image_padding_mask, image_position_ids, image_pos_embed = \
                 self.get_patch_images_info(patch_images, sample_patch_num, input_ids.device)
-            # print("patch_masks.shape")
-            # print(patch_masks.shape)
-            # print(patch_masks)
-            # print("image_padding_mask.shape")
-            # print(image_padding_mask.shape)
-            # print(image_padding_mask)
             image_padding_mask[~patch_masks] = True
-            # print(image_padding_mask)
         if patch_images_2 is not None:
             image_embed_2, image_num_patches_2, image_padding_mask_2, image_position_ids_2, image_pos_embed_2 = \
                 self.get_patch_images_info(patch_images_2, sample_patch_num, input_ids.device)
@@ -1312,10 +1320,6 @@ class OFAEncoder(OFAPreTrainedModel):
 
         encoder_states = () if output_hidden_states else None
         all_attentions = () if output_attentions else None
-
-        # if output_hidden_states:
-        #     # encoder_states.append(x)
-        #     encoder_states += (x,)
 
         # encoder layers
         for idx, layer in enumerate(self.layers):
@@ -1645,7 +1649,6 @@ class OFADecoder(OFAPreTrainedModel):
 
     def reorder_incremental_state_scripting(
         self,
-        # incremental_state: Dict[str, Dict[str, Optional[Tensor]]],
         past_key_values: Optional[torch.Tensor],
         new_order: Tensor,
     ):
@@ -1799,15 +1802,12 @@ class OFADecoder(OFAPreTrainedModel):
 
             self_attn_bias = self_abs_pos_bias.clone()
             if code_masks is None or not code_masks.any():
-                # print("code_masks is None or not code_masks.any()")
                 self_attn_bias += self.get_rel_pos_bias(
                     all_prev_output_tokens, idx).unsqueeze(0)
             elif code_masks is not None and code_masks.all():
-                # print("code_masks is not None and code_masks.all()")
                 self_attn_bias += self.get_image_rel_pos_bias(
                     all_prev_output_tokens, idx).unsqueeze(0)
             else:
-                # print("else")
                 self_attn_bias[~code_masks] += self.get_rel_pos_bias(
                     all_prev_output_tokens, idx).unsqueeze(0)
                 self_attn_bias[code_masks] += self.get_image_rel_pos_bias(
@@ -1921,7 +1921,7 @@ class OFAModel(OFAPreTrainedModel):
         output_type=Seq2SeqModelOutput,
         config_class=_CONFIG_FOR_DOC,
     )
-    # 新增函数以适配fairseq的generator
+    # an adaptor for fairseq generator
     def max_decoder_positions(self):
         """Maximum length supported by the decoder."""
         return self.decoder.max_positions()
@@ -2062,7 +2062,6 @@ class OFAModel(OFAPreTrainedModel):
 
         return Seq2SeqLMOutput(
             logits=decoder_outputs.last_hidden_state,
-            # last_hidden_state=decoder_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,

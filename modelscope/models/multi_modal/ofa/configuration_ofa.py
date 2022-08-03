@@ -134,6 +134,8 @@ class OFAConfig(PretrainedConfig):
                  code_layernorm_embedding=True,
                  code_image_size=128,
                  entangle_position_embedding=False,
+                 interpolate_position=False,
+                 orig_patch_image_size=224,
                  **kwargs):
         self.vocab_size = vocab_size
         self.max_position_embeddings = max_position_embeddings
@@ -173,6 +175,8 @@ class OFAConfig(PretrainedConfig):
         self.code_layernorm_embedding = code_layernorm_embedding
         self.code_image_size = code_image_size
         self.entangle_position_embedding = entangle_position_embedding
+        self.interpolate_position = interpolate_position
+        self.orig_patch_image_size = orig_patch_image_size
 
         super().__init__(
             pad_token_id=pad_token_id,

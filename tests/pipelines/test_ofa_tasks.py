@@ -1,16 +1,32 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import unittest
+from os import path as osp
 
+import cv2
+import numpy as np
 from PIL import Image
 
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
 class OfaTasksTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.output_dir = 'unittest_output'
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def save_img(self, image_in, box, image_out):
+        image = load_image(image_in)
+        img = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+        cv2.rectangle(img, (int(box[0]), int(box[1])),
+                      (int(box[2]), int(box[3])), (0, 255, 0), 3)
+        cv2.imwrite(osp.join(self.output_dir, image_out), img)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_captioning_with_model(self):
@@ -132,6 +148,9 @@ class OfaTasksTest(unittest.TestCase):
         input = {'image': image, 'text': text}
         result = ofa_pipe(input)
         print(result)
+        image_name = image.split('/')[-2]
+        self.save_img(image, result[OutputKeys.BOXES],
+                      osp.join('large_en_model_' + image_name + '.png'))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_grounding_with_name(self):
@@ -143,6 +162,22 @@ class OfaTasksTest(unittest.TestCase):
         input = {'image': image, 'text': text}
         result = ofa_pipe(input)
         print(result)
+        image_name = image.split('/')[-2]
+        self.save_img(image, result[OutputKeys.BOXES],
+                      osp.join('large_en_name_' + image_name + '.png'))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_visual_grounding_zh_with_name(self):
+        model = 'damo/ofa_visual-grounding_refcoco_large_zh'
+        ofa_pipe = pipeline(Tasks.visual_grounding, model=model)
+        image = 'data/test/images/visual_grounding.png'
+        text = '一个圆头的蓝色宝可梦'
+        input = {'image': image, 'text': text}
+        result = ofa_pipe(input)
+        print(result)
+        image_name = image.split('/')[-1]
+        self.save_img(image, result[OutputKeys.BOXES],
+                      osp.join('large_zh_name_' + image_name))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_question_answering_with_model(self):

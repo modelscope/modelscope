@@ -16,7 +16,7 @@ from modelscope.preprocessors.ofa.utils.collate import collate_tokens
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.trie import Trie
-from .ofa import OFAModel, OFATokenizer
+from .ofa import OFAModel, OFATokenizer, OFATokenizerZH
 from .ofa.generate import sequence_generator as sg
 from .ofa.generate.utils import move_to_device
 from .ofa.utils.constant import OFA_TASK_KEY_MAPPING, Tasks
@@ -41,11 +41,21 @@ class OfaForAllTasks(TorchModel):
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
         self.model = model.module if hasattr(model, 'module') else model
-        self.tokenizer = OFATokenizer.from_pretrained(model_dir)
+        self.language = self.cfg.model.get('language', 'en')
+        if self.language == 'en':
+            self.tokenizer = OFATokenizer.from_pretrained(model_dir)
+        elif self.language in ['zh', 'cn']:
+            self.tokenizer = OFATokenizerZH.from_pretrained(model_dir)
+        else:
+            raise NotImplementedError
+        # there is some diff between here and our ofa code,
+        # there will be no need to use param: use_bpe
         self.tokenizer.add_tokens(['<code_{}>'.format(i) for i in range(8192)])
         self.tokenizer.add_tokens(['<bin_{}>'.format(i) for i in range(1000)])
         self.cfg.update({'num_bins': 1000, 'num_codes': 8192})
         self.batch_size = self.cfg.model.get('batch_size', 1)
+        self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
+        self.max_image_size = self.cfg.model.get('max_image_size', 512)
         self.val_batch_size = self.cfg.model.get('valid_batch_size',
                                                  self.batch_size)
         self.gen_type = self.cfg.model.get('gen_type', 'generation')
@@ -129,8 +139,8 @@ class OfaForAllTasks(TorchModel):
                                   - len(self.tokenizer.get_vocab().items())
                                   + self.cfg.num_bins)
         region_tensor = torch.stack(region_coord_l, dim=0)
-        region_tensor = region_tensor / (
-            self.cfg.num_bins - 1) * self.cfg.model.get('max_image_size', 512)
+        region_tensor = region_tensor / (self.cfg.num_bins
+                                         - 1) * self.max_image_size
         region_tensor[:, ::2] /= input['w_resize_ratios']
         region_tensor[:, 1::2] /= input['h_resize_ratios']
         return {

@@ -87,7 +87,7 @@ class DetectionModel(TorchModel):
             return None, None, None
         bboxes = bbox_result[inds, :]
         labels = labels[inds]
-        scores = bboxes[:, 4]
-        bboxes = bboxes[:, 0:4]
+        scores = np.around(bboxes[:, 4], 6)
+        bboxes = (bboxes[:, 0:4]).astype(int)
         labels = [self.class_names[i_label] for i_label in labels]
         return bboxes, scores, labels

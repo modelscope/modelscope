@@ -113,10 +113,13 @@ class ANSPipeline(Pipeline):
                     current_idx += stride
             else:
                 outputs = self.model(ndarray)['wav_l2'][0].cpu().numpy()
-        return {OutputKeys.OUTPUT_PCM: outputs[:nsamples]}
+        outputs = (outputs[:nsamples] * 32768).astype(np.int16).tobytes()
+        return {OutputKeys.OUTPUT_PCM: outputs}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         if 'output_path' in kwargs.keys():
-            sf.write(kwargs['output_path'], inputs[OutputKeys.OUTPUT_PCM],
-                     self.SAMPLE_RATE)
+            sf.write(
+                kwargs['output_path'],
+                np.frombuffer(inputs[OutputKeys.OUTPUT_PCM], dtype=np.int16),
+                self.SAMPLE_RATE)
         return inputs

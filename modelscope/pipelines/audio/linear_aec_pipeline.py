@@ -126,6 +126,7 @@ class LinearAECPipeline(Pipeline):
                 }
         """
         output_data = self._process(inputs['feature'], inputs['base'])
+        output_data = output_data.astype(np.int16).tobytes()
         return {OutputKeys.OUTPUT_PCM: output_data}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
@@ -145,9 +146,9 @@ class LinearAECPipeline(Pipeline):
                 }
         """
         if 'output_path' in kwargs.keys():
-            wav.write(kwargs['output_path'], self.preprocessor.SAMPLE_RATE,
-                      inputs[OutputKeys.OUTPUT_PCM].astype(np.int16))
-        inputs[OutputKeys.OUTPUT_PCM] = inputs[OutputKeys.OUTPUT_PCM] / 32768.0
+            wav.write(
+                kwargs['output_path'], self.preprocessor.SAMPLE_RATE,
+                np.frombuffer(inputs[OutputKeys.OUTPUT_PCM], dtype=np.int16))
         return inputs
 
     def _process(self, fbanks, mixture):

@@ -59,8 +59,6 @@ class CVTasks(object):
     live_category = 'live-category'
     action_recognition = 'action-recognition'
     video_category = 'video-category'
-    image_portrait_stylization = 'image-portrait-stylization'
-    image_to_image_generation = 'image-to-image-generation'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
 

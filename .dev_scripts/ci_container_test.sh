@@ -4,6 +4,9 @@ pip install -r requirements/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs
 pip install -r requirements/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 pip install -r requirements/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 pip install -r requirements/tests.txt
+# install numpy<=1.18 for tensorflow==1.15.x
+pip install "numpy<=1.18"
+
 git config --global --add safe.directory /Maas-lib
 
 # linter test

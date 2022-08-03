@@ -419,8 +419,7 @@ class ModelScopeConfig:
         ModelScopeConfig.make_sure_credential_path_exist()
         with open(
                 os.path.join(ModelScopeConfig.path_credential,
-                             ModelScopeConfig.GITLAB_TOKEN_FILE_NAME),
-                'w+') as f:
+                             ModelScopeConfig.GIT_TOKEN_FILE_NAME), 'w+') as f:
             f.write(token)
 
     @staticmethod
@@ -457,7 +456,7 @@ class ModelScopeConfig:
         try:
             with open(
                     os.path.join(ModelScopeConfig.path_credential,
-                                 ModelScopeConfig.GITLAB_TOKEN_FILE_NAME),
+                                 ModelScopeConfig.GIT_TOKEN_FILE_NAME),
                     'r') as f:
                 token = f.read()
         except FileNotFoundError:

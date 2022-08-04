@@ -28,7 +28,10 @@ class ImageSuperResolutionPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        self.device = 'cpu'
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
         self.num_feat = 64
         self.num_block = 23
         self.scale = 4

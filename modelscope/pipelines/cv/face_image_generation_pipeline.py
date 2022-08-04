@@ -29,7 +29,10 @@ class FaceImageGenerationPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        self.device = 'cpu'
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
         self.size = 1024
         self.latent = 512
         self.n_mlp = 8

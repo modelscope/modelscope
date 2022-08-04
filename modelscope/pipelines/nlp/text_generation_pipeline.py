@@ -32,7 +32,8 @@ class TextGenerationPipeline(Pipeline):
             preprocessor = TextGenerationPreprocessor(
                 model.model_dir,
                 first_sequence='sentence',
-                second_sequence=None)
+                second_sequence=None,
+                sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 

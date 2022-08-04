@@ -216,7 +216,7 @@ class PairSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get(
-            'padding', False if mode == 'inference' else 'max_length')
+            'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, pair=True, mode=mode, **kwargs)
 
@@ -228,7 +228,7 @@ class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get(
-            'padding', False if mode == 'inference' else 'max_length')
+            'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, pair=False, mode=mode, **kwargs)
 
@@ -309,7 +309,7 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
         return super().build_tokenizer(model_dir)
 
     def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
-        if self._mode == 'inference':
+        if self._mode == ModeKeys.INFERENCE:
             return super().__call__(data)
         src_txt = data['src_txt']
         tgt_txt = data['tgt_txt']
@@ -420,6 +420,7 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         elif isinstance(data, dict):
             text_a = data.get(self.first_sequence)
             labels_list = data.get(self.label)
+        text_a = text_a.replace(' ', '').strip()
         tokenized_inputs = self.tokenizer(
             text_a,
             return_tensors='pt' if self._mode == ModeKeys.INFERENCE else None,

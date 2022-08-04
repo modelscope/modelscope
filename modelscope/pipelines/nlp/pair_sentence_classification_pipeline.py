@@ -33,5 +33,6 @@ class PairSentenceClassificationPipeline(SequenceClassificationPipelineBase):
             preprocessor = PairSentenceClassificationPreprocessor(
                 model.model_dir if isinstance(model, Model) else model,
                 first_sequence=first_sequence,
-                second_sequence=second_sequence)
+                second_sequence=second_sequence,
+                sequence_length=kwargs.pop('sequence_length', 512))
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)

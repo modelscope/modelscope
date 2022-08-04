@@ -38,8 +38,10 @@ PRETRAINED_VOCAB_FILES_MAP = {
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
-    'chinese_sbert-large-std-512': 512,
-    'english_sbert-large-std-512': 512,
+    'nlp_structbert_backbone_large_std': 512,
+    'nlp_structbert_backbone_base_std': 512,
+    'nlp_structbert_backbone_lite_std': 512,
+    'nlp_structbert_backbone_tiny_std': 512,
 }
 
 PRETRAINED_INIT_CONFIGURATION = {

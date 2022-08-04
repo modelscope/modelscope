@@ -36,7 +36,9 @@ class ZeroShotClassificationPipeline(Pipeline):
         self.entailment_id = 0
         self.contradiction_id = 2
         if preprocessor is None:
-            preprocessor = ZeroShotClassificationPreprocessor(model.model_dir)
+            preprocessor = ZeroShotClassificationPreprocessor(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 

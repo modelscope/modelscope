@@ -53,7 +53,7 @@ from .configuration_sbert import SbertConfig
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_FOR_DOC = 'chinese_sbert-large-std-512'
+_CHECKPOINT_FOR_DOC = 'nlp_structbert_backbone_base_std'
 _CONFIG_FOR_DOC = 'SbertConfig'
 _TOKENIZER_FOR_DOC = 'SbertTokenizer'
 

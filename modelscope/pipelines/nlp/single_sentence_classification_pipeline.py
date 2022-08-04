@@ -31,5 +31,6 @@ class SingleSentenceClassificationPipeline(SequenceClassificationPipelineBase):
         if preprocessor is None:
             preprocessor = SingleSentenceClassificationPreprocessor(
                 model.model_dir if isinstance(model, Model) else model,
-                first_sequence=first_sequence)
+                first_sequence=first_sequence,
+                sequence_length=kwargs.pop('sequence_length', 512))
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)

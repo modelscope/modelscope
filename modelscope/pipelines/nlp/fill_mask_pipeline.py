@@ -37,7 +37,8 @@ class FillMaskPipeline(Pipeline):
             preprocessor = FillMaskPreprocessor(
                 fill_mask_model.model_dir,
                 first_sequence=first_sequence,
-                second_sequence=None)
+                second_sequence=None,
+                sequence_length=kwargs.pop('sequence_length', 128))
         fill_mask_model.eval()
         super().__init__(
             model=fill_mask_model, preprocessor=preprocessor, **kwargs)

@@ -12,7 +12,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class SentimentClassificationTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
+    model_id = 'damo/nlp_structbert_sentiment-classification_chinese-tiny'
     sentence1 = '启动的时候很大声音，然后就会听到1.2秒的卡察的声音，类似齿轮摩擦的声音'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

@@ -31,7 +31,9 @@ class WordSegmentationPipeline(Pipeline):
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
         if preprocessor is None:
-            preprocessor = TokenClassificationPreprocessor(model.model_dir)
+            preprocessor = TokenClassificationPreprocessor(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.id2label = kwargs.get('id2label')

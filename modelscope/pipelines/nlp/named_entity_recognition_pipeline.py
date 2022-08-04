@@ -26,7 +26,9 @@ class NamedEntityRecognitionPipeline(Pipeline):
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
         if preprocessor is None:
-            preprocessor = NERPreprocessor(model.model_dir)
+            preprocessor = NERPreprocessor(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = preprocessor.tokenizer

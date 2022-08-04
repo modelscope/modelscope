@@ -37,7 +37,8 @@ class SequenceClassificationPipeline(Pipeline):
             preprocessor = SequenceClassificationPreprocessor(
                 sc_model.model_dir,
                 first_sequence='sentence',
-                second_sequence=None)
+                second_sequence=None,
+                sequence_length=kwargs.pop('sequence_length', 512))
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
         assert hasattr(self.model, 'id2label'), \

@@ -7,6 +7,7 @@ import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.multi_modal import OfaForAllTasks
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -35,7 +36,7 @@ class ImageClassificationPipeline(Pipeline):
         else:
             raise NotImplementedError
         pipe_model.model.eval()
-        if preprocessor is None and pipe_model:
+        if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
             preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
         super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
 

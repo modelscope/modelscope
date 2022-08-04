@@ -22,9 +22,7 @@ __all__ = [
 
 
 @PREPROCESSORS.register_module(
-    Fields.multi_modal, module_name=Preprocessors.ofa_image_caption)
-@PREPROCESSORS.register_module(
-    Fields.multi_modal, module_name=Preprocessors.ofa_text_to_image_synthesis)
+    Fields.multi_modal, module_name=Preprocessors.ofa_tasks_preprocessor)
 class OfaPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):

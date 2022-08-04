@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .mmr import VideoCLIPForMultiModalEmbedding
     from .mplug_for_visual_question_answering import \
         MPlugForVisualQuestionAnswering
+    from .ofa_for_all_tasks import OfaForAllTasks
 
 else:
     _import_structure = {

@@ -5,11 +5,13 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.multi_modal import MPlugForVisualQuestionAnswering
+from modelscope.models.multi_modal import (MPlugForVisualQuestionAnswering,
+                                           OfaForAllTasks)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import MPlugVisualQuestionAnsweringPreprocessor
+from modelscope.preprocessors import (MPlugVisualQuestionAnsweringPreprocessor,
+                                      OfaPreprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['VisualQuestionAnsweringPipeline']
@@ -35,8 +37,11 @@ class VisualQuestionAnsweringPipeline(Pipeline):
                                     Model) else Model.from_pretrained(model)
         self.tokenizer = None
         if preprocessor is None:
-            preprocessor = MPlugVisualQuestionAnsweringPreprocessor(
-                model.model_dir)
+            if isinstance(model, OfaForAllTasks):
+                preprocessor = OfaPreprocessor(model.model_dir)
+            elif isinstance(model, MPlugForVisualQuestionAnswering):
+                preprocessor = MPlugVisualQuestionAnsweringPreprocessor(
+                    model.model_dir)
         if isinstance(model, MPlugForVisualQuestionAnswering):
             model.eval()
             self.tokenizer = model.tokenizer

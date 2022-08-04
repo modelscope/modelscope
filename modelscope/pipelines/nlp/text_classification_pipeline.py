@@ -2,6 +2,7 @@
 from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.multi_modal import OfaForAllTasks
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import OfaPreprocessor, Preprocessor
@@ -34,7 +35,7 @@ class TextClassificationPipeline(Pipeline):
         else:
             raise NotImplementedError
         pipe_model.model.eval()
-        if preprocessor is None and pipe_model:
+        if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
             preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
         super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
 

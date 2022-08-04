@@ -201,9 +201,8 @@ class Preprocessors(object):
     wav_to_lists = 'wav-to-lists'
     wav_to_scp = 'wav-to-scp'
 
-    # multi-modal
-    ofa_image_caption = 'ofa-image-caption'
-    ofa_text_to_image_synthesis = 'ofa-text-to-image-synthesis'
+    # multi-modal preprocessor
+    ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
     mplug_visual_question_answering = 'mplug-visual-question-answering'
 
 

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
+import string
 from os import path as osp
 from typing import Any, Dict
 
@@ -58,6 +59,9 @@ class OfaForAllTasks(TorchModel):
         self.max_image_size = self.cfg.model.get('max_image_size', 512)
         self.val_batch_size = self.cfg.model.get('valid_batch_size',
                                                  self.batch_size)
+        self.transtab = str.maketrans(
+            {key: None
+             for key in string.punctuation})
         self.gen_type = self.cfg.model.get('gen_type', 'generation')
         assert self.gen_type in ['generation', 'traverse'], \
             'model.gen_type must be in ["generation", "traverse"]'
@@ -116,6 +120,10 @@ class OfaForAllTasks(TorchModel):
 
     def postprocess(self, input: Dict[str, Tensor],
                     **kwargs) -> Dict[str, Tensor]:
+        if self.cfg.task == Tasks.image_captioning:
+            caption = input[OutputKeys.CAPTION]
+            caption = caption.translate(self.transtab).strip()
+            input[OutputKeys.CAPTION] = caption
         return input
 
     def _text_gen_inference(self, input):

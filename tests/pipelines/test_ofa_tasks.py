@@ -35,15 +35,15 @@ class OfaTasksTest(unittest.TestCase):
             task=Tasks.image_captioning,
             model=model,
         )
-        result = img_captioning(
-            {'image': 'data/test/images/image_captioning.png'})
+        image = 'data/test/images/image_captioning.png'
+        result = img_captioning({'image': image})
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_captioning_with_name(self):
         img_captioning = pipeline(
             Tasks.image_captioning,
-            model='damo/ofa_image-caption_coco_distilled_en')
+            model='damo/ofa_image-caption_coco_large_en')
         result = img_captioning(
             {'image': 'data/test/images/image_captioning.png'})
         print(result[OutputKeys.CAPTION])
@@ -181,14 +181,9 @@ class OfaTasksTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_question_answering_with_model(self):
-        from modelscope.preprocessors.multi_modal import OfaPreprocessor
         model = Model.from_pretrained(
             'damo/ofa_visual-question-answering_pretrain_large_en')
-        preprocessor = OfaPreprocessor(model_dir=model.model_dir)
-        ofa_pipe = pipeline(
-            Tasks.visual_question_answering,
-            model=model,
-            preprocessor=preprocessor)
+        ofa_pipe = pipeline(Tasks.visual_question_answering, model=model)
         image = 'data/test/images/visual_question_answering.png'
         text = 'what is grown on the plant?'
         input = {'image': image, 'text': text}
@@ -197,13 +192,8 @@ class OfaTasksTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_question_answering_with_name(self):
-        from modelscope.preprocessors.multi_modal import OfaPreprocessor
         model = 'damo/ofa_visual-question-answering_pretrain_large_en'
-        preprocessor = OfaPreprocessor(model_dir=model)
-        ofa_pipe = pipeline(
-            Tasks.visual_question_answering,
-            model=model,
-            preprocessor=preprocessor)
+        ofa_pipe = pipeline(Tasks.visual_question_answering, model=model)
         image = 'data/test/images/visual_question_answering.png'
         text = 'what is grown on the plant?'
         input = {'image': image, 'text': text}
@@ -218,7 +208,8 @@ class OfaTasksTest(unittest.TestCase):
             task=Tasks.image_captioning,
             model=model,
         )
-        image = Image.open('data/test/images/image_captioning.png')
+        image_path = 'data/test/images/image_captioning.png'
+        image = Image.open(image_path)
         result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
 

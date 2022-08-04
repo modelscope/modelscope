@@ -30,7 +30,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
-    def __call__(self, wav_path: Union[List[str], str],
+    def __call__(self, audio_in: Union[List[str], str, bytes],
                  **kwargs) -> Dict[str, Any]:
         if 'keywords' in kwargs.keys():
             self.keywords = kwargs['keywords']
@@ -40,7 +40,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         if self.preprocessor is None:
             self.preprocessor = WavToLists()
 
-        output = self.preprocessor.forward(self.model.forward(), wav_path)
+        output = self.preprocessor.forward(self.model.forward(), audio_in)
         output = self.forward(output)
         rst = self.postprocess(output)
         return rst
@@ -49,7 +49,7 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         """Decoding
         """
 
-        logger.info(f"Decoding with {inputs['kws_set']} mode ...")
+        logger.info(f"Decoding with {inputs['kws_type']} mode ...")
 
         # will generate kws result
         out = self.run_with_kwsbp(inputs)
@@ -80,60 +80,97 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             pos_kws_list = inputs['pos_kws_list']
         if 'neg_kws_list' in inputs:
             neg_kws_list = inputs['neg_kws_list']
+
         rst_dict = kws_util.common.parsing_kws_result(
-            kws_type=inputs['kws_set'],
+            kws_type=inputs['kws_type'],
             pos_list=pos_kws_list,
             neg_list=neg_kws_list)
 
         return rst_dict
 
     def run_with_kwsbp(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        cmd = {
-            'sys_dir': inputs['model_workspace'],
-            'cfg_file': inputs['cfg_file_path'],
-            'sample_rate': inputs['sample_rate'],
-            'keyword_custom': ''
-        }
-
         import kwsbp
         import kws_util.common
         kws_inference = kwsbp.KwsbpEngine()
 
-        # setting customized keywords
-        cmd['customized_keywords'] = kws_util.common.generate_customized_keywords(
-            self.keywords)
+        cmd = {
+            'sys_dir':
+            inputs['model_workspace'],
+            'cfg_file':
+            inputs['cfg_file_path'],
+            'sample_rate':
+            inputs['sample_rate'],
+            'keyword_custom':
+            '',
+            'pcm_data':
+            None,
+            'pcm_data_len':
+            0,
+            'list_flag':
+            True,
+            # setting customized keywords
+            'customized_keywords':
+            kws_util.common.generate_customized_keywords(self.keywords)
+        }
 
-        if inputs['kws_set'] == 'roc':
+        if inputs['kws_type'] == 'pcm':
+            cmd['pcm_data'] = inputs['pos_data']
+            cmd['pcm_data_len'] = len(inputs['pos_data'])
+            cmd['list_flag'] = False
+
+        if inputs['kws_type'] == 'roc':
             inputs['keyword_grammar_path'] = os.path.join(
                 inputs['model_workspace'], 'keywords_roc.json')
 
-        if inputs['kws_set'] in ['wav', 'pos_testsets', 'roc']:
+        if inputs['kws_type'] in ['wav', 'pcm', 'pos_testsets', 'roc']:
             cmd['wave_scp'] = inputs['pos_wav_list']
             cmd['keyword_grammar_path'] = inputs['keyword_grammar_path']
             cmd['num_thread'] = inputs['pos_num_thread']
 
-            # run and get inference result
-            result = kws_inference.inference(cmd['sys_dir'], cmd['cfg_file'],
-                                             cmd['keyword_grammar_path'],
-                                             str(json.dumps(cmd['wave_scp'])),
-                                             str(cmd['customized_keywords']),
-                                             cmd['sample_rate'],
-                                             cmd['num_thread'])
+            if hasattr(kws_inference, 'inference_new'):
+                # run and get inference result
+                result = kws_inference.inference_new(
+                    cmd['sys_dir'], cmd['cfg_file'],
+                    cmd['keyword_grammar_path'],
+                    str(json.dumps(cmd['wave_scp'])),
+                    str(cmd['customized_keywords']), cmd['pcm_data'],
+                    cmd['pcm_data_len'], cmd['sample_rate'], cmd['num_thread'],
+                    cmd['list_flag'])
+            else:
+                # in order to support kwsbp-0.0.1
+                result = kws_inference.inference(
+                    cmd['sys_dir'], cmd['cfg_file'],
+                    cmd['keyword_grammar_path'],
+                    str(json.dumps(cmd['wave_scp'])),
+                    str(cmd['customized_keywords']), cmd['sample_rate'],
+                    cmd['num_thread'])
+
             pos_result = json.loads(result)
             inputs['pos_kws_list'] = pos_result['kws_list']
 
-        if inputs['kws_set'] in ['neg_testsets', 'roc']:
+        if inputs['kws_type'] in ['neg_testsets', 'roc']:
             cmd['wave_scp'] = inputs['neg_wav_list']
             cmd['keyword_grammar_path'] = inputs['keyword_grammar_path']
             cmd['num_thread'] = inputs['neg_num_thread']
 
-            # run and get inference result
-            result = kws_inference.inference(cmd['sys_dir'], cmd['cfg_file'],
-                                             cmd['keyword_grammar_path'],
-                                             str(json.dumps(cmd['wave_scp'])),
-                                             str(cmd['customized_keywords']),
-                                             cmd['sample_rate'],
-                                             cmd['num_thread'])
+            if hasattr(kws_inference, 'inference_new'):
+                # run and get inference result
+                result = kws_inference.inference_new(
+                    cmd['sys_dir'], cmd['cfg_file'],
+                    cmd['keyword_grammar_path'],
+                    str(json.dumps(cmd['wave_scp'])),
+                    str(cmd['customized_keywords']), cmd['pcm_data'],
+                    cmd['pcm_data_len'], cmd['sample_rate'], cmd['num_thread'],
+                    cmd['list_flag'])
+            else:
+                # in order to support kwsbp-0.0.1
+                result = kws_inference.inference(
+                    cmd['sys_dir'], cmd['cfg_file'],
+                    cmd['keyword_grammar_path'],
+                    str(json.dumps(cmd['wave_scp'])),
+                    str(cmd['customized_keywords']), cmd['sample_rate'],
+                    cmd['num_thread'])
+
             neg_result = json.loads(result)
             inputs['neg_kws_list'] = neg_result['kws_list']
 

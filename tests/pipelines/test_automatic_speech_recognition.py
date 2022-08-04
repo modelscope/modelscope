@@ -30,11 +30,6 @@ TFRECORD_TESTSETS_FILE = 'tfrecord.tar.gz'
 TFRECORD_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/tfrecord.tar.gz'
 
 
-def un_tar_gz(fname, dirs):
-    t = tarfile.open(fname)
-    t.extractall(path=dirs)
-
-
 class AutomaticSpeechRecognitionTest(unittest.TestCase):
     action_info = {
         'test_run_with_wav_pytorch': {

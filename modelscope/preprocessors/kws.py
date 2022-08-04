@@ -21,23 +21,26 @@ class WavToLists(Preprocessor):
     def __init__(self):
         pass
 
-    def __call__(self, model: Model, wav_path: Union[List[str],
-                                                     str]) -> Dict[str, Any]:
+    def __call__(self, model: Model, audio_in: Union[List[str], str,
+                                                     bytes]) -> Dict[str, Any]:
         """Call functions to load model and wav.
 
         Args:
             model (Model): model should be provided
-            wav_path (Union[List[str], str]): wav_path[0] is positive wav path,  wav_path[1] is negative wav path
+            audio_in (Union[List[str], str, bytes]):
+                audio_in[0] is positive wav path, audio_in[1] is negative wav path;
+                audio_in (str) is positive wav path;
+                audio_in (bytes) is audio pcm data;
         Returns:
             Dict[str, Any]: the kws result
         """
 
         self.model = model
-        out = self.forward(self.model.forward(), wav_path)
+        out = self.forward(self.model.forward(), audio_in)
         return out
 
     def forward(self, model: Dict[str, Any],
-                wav_path: Union[List[str], str]) -> Dict[str, Any]:
+                audio_in: Union[List[str], str, bytes]) -> Dict[str, Any]:
         assert len(
             model['config_path']) > 0, 'preprocess model[config_path] is empty'
         assert os.path.exists(
@@ -45,22 +48,21 @@ class WavToLists(Preprocessor):
 
         inputs = model.copy()
 
-        wav_list = [None, None]
-        if isinstance(wav_path, str):
-            wav_list[0] = wav_path
-        else:
-            wav_list = wav_path
-
         import kws_util.common
-        kws_type = kws_util.common.type_checking(wav_list)
-        assert kws_type in ['wav', 'pos_testsets', 'neg_testsets', 'roc'
-                            ], f'preprocess kws_type {kws_type} is invalid'
+        kws_type = kws_util.common.type_checking(audio_in)
+        assert kws_type in [
+            'wav', 'pcm', 'pos_testsets', 'neg_testsets', 'roc'
+        ], f'kws_type {kws_type} is invalid, please check audio data'
 
-        inputs['kws_set'] = kws_type
-        if wav_list[0] is not None:
-            inputs['pos_wav_path'] = wav_list[0]
-        if wav_list[1] is not None:
-            inputs['neg_wav_path'] = wav_list[1]
+        inputs['kws_type'] = kws_type
+        if kws_type == 'wav':
+            inputs['pos_wav_path'] = audio_in
+        elif kws_type == 'pcm':
+            inputs['pos_data'] = audio_in
+        if kws_type in ['pos_testsets', 'roc']:
+            inputs['pos_wav_path'] = audio_in[0]
+        if kws_type in ['neg_testsets', 'roc']:
+            inputs['neg_wav_path'] = audio_in[1]
 
         out = self.read_config(inputs)
         out = self.generate_wav_lists(out)
@@ -93,7 +95,7 @@ class WavToLists(Preprocessor):
         """
         import kws_util.common
 
-        if inputs['kws_set'] == 'wav':
+        if inputs['kws_type'] == 'wav':
             wav_list = []
             wave_scp_content: str = inputs['pos_wav_path']
             wav_list.append(wave_scp_content)
@@ -101,7 +103,12 @@ class WavToLists(Preprocessor):
             inputs['pos_wav_count'] = 1
             inputs['pos_num_thread'] = 1
 
-        if inputs['kws_set'] in ['pos_testsets', 'roc']:
+        if inputs['kws_type'] == 'pcm':
+            inputs['pos_wav_list'] = ['pcm_data']
+            inputs['pos_wav_count'] = 1
+            inputs['pos_num_thread'] = 1
+
+        if inputs['kws_type'] in ['pos_testsets', 'roc']:
             # find all positive wave
             wav_list = []
             wav_dir = inputs['pos_wav_path']
@@ -116,7 +123,7 @@ class WavToLists(Preprocessor):
             else:
                 inputs['pos_num_thread'] = 128
 
-        if inputs['kws_set'] in ['neg_testsets', 'roc']:
+        if inputs['kws_type'] in ['neg_testsets', 'roc']:
             # find all negative wave
             wav_list = []
             wav_dir = inputs['neg_wav_path']

@@ -2,6 +2,8 @@
 
 import unittest
 
+from PIL import Image
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.multi_modal import MPlugForVisualQuestionAnswering
@@ -13,11 +15,13 @@ from modelscope.utils.test_utils import test_level
 
 
 class VisualQuestionAnsweringTest(unittest.TestCase):
-    model_id = 'damo/mplug_visual-question-answering_coco_large_en'
-    input_vqa = {
-        'image': 'data/test/images/image_mplug_vqa.jpg',
-        'question': 'What is the woman doing?',
-    }
+
+    def setUp(self):
+        self.model_id = 'damo/mplug_visual-question-answering_coco_large_en'
+        self.input_vqa = {
+            'image': Image.open('data/test/images/image_mplug_vqa.jpg'),
+            'question': 'What is the woman doing?',
+        }
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):

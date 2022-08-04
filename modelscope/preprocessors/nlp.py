@@ -286,7 +286,7 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
         self.tokenizer = self.build_tokenizer(
             model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = kwargs.get('truncation', True)
-        kwargs['padding'] = kwargs.get('padding', True)
+        kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)

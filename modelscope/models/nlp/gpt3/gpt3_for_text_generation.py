@@ -43,8 +43,14 @@ class GPT3ForTextGeneration(TorchModel):
 
     def generate(self, input: Dict[str, Tensor]) -> Dict[str, str]:
         assert 'input_ids' in input, "generate function must accept 'input_ids' key"
+        input_ids = input['input_ids']
+        if 'attention_mask' in input:
+            attention_mask = input['attention_mask']
+            input_ids = input_ids[0][attention_mask[0].nonzero()] \
+                .squeeze().unsqueeze(0)
+
         gen_params = dict()
-        gen_params['inputs'] = input['input_ids']
+        gen_params['inputs'] = input_ids
         gen_params['do_sample'] = input.pop('do_sample', True)
         gen_params['max_length'] = input.pop('max_length', 128)
         gen_params['top_k'] = input.pop('top_k', 10)

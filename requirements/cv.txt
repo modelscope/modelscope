@@ -12,7 +12,6 @@ lpips
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0
-mmseg>=0.26
 networkx>=2.5
 onnxruntime>=1.10
 pai-easycv>=0.5

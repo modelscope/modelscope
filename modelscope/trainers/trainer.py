@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
@@ -45,7 +46,7 @@ from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
 
 
-@TRAINERS.register_module()
+@TRAINERS.register_module(module_name=Trainers.default)
 class EpochBasedTrainer(BaseTrainer):
     """Epoch based Trainer, a training helper for PyTorch.
 

@@ -12,8 +12,9 @@ from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 
+from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import MetricKeys
-from modelscope.trainers import build_trainer
+from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
@@ -70,7 +71,7 @@ def train_func(work_dir, dist=False):
     model = DummyModel()
     optimmizer = SGD(model.parameters(), lr=0.01)
     lr_scheduler = StepLR(optimmizer, 2)
-    trainer_name = 'EpochBasedTrainer'
+    trainer_name = Trainers.default
     kwargs = dict(
         cfg_file=config_path,
         model=model,

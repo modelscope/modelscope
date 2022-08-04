@@ -4,6 +4,7 @@ from collections.abc import Mapping
 import torch
 from torch import distributed as dist
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
@@ -11,7 +12,7 @@ from modelscope.utils.constant import ModeKeys
 from modelscope.utils.logger import get_logger
 
 
-@TRAINERS.register_module(module_name='gpen')
+@TRAINERS.register_module(module_name=Trainers.image_portrait_enhancement)
 class ImagePortraitEnhancementTrainer(EpochBasedTrainer):
 
     def train_step(self, model, inputs):

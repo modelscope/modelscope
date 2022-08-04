@@ -1,9 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.metainfo import LR_Schedulers
 from modelscope.trainers.lrscheduler.builder import LR_SCHEDULER
 from .base import BaseWarmup
 
 
-@LR_SCHEDULER.register_module()
+@LR_SCHEDULER.register_module(module_name=LR_Schedulers.ConstantWarmup)
 class ConstantWarmup(BaseWarmup):
     """Linear warmup scheduler.
 
@@ -29,7 +30,7 @@ class ConstantWarmup(BaseWarmup):
         return self.warmup_ratio
 
 
-@LR_SCHEDULER.register_module()
+@LR_SCHEDULER.register_module(module_name=LR_Schedulers.LinearWarmup)
 class LinearWarmup(BaseWarmup):
     """Linear warmup scheduler.
 
@@ -54,7 +55,7 @@ class LinearWarmup(BaseWarmup):
         return 1 - k
 
 
-@LR_SCHEDULER.register_module()
+@LR_SCHEDULER.register_module(module_name=LR_Schedulers.ExponentialWarmup)
 class ExponentialWarmup(BaseWarmup):
     """Exponential warmup scheduler.
 

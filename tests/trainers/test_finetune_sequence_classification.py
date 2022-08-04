@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import unittest
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
 
 
@@ -23,7 +24,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                  model_id,
                  train_dataset,
                  eval_dataset,
-                 name='NlpEpochBasedTrainer',
+                 name=Trainers.nlp_base_trainer,
                  cfg_modify_fn=None,
                  **kwargs):
         kwargs = dict(
@@ -236,7 +237,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             'damo/nlp_veco_fill-mask-large',
             train_datasets,
             eval_datasets,
-            name='VecoTrainer',
+            name=Trainers.nlp_veco_trainer,
             cfg_modify_fn=cfg_modify_fn)
 
 

@@ -1,17 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .base import BaseWarmup
-    from .warmup import ConstantWarmup, ExponentialWarmup, LinearWarmup
+    from .apex_optimizer_hook import ApexAMPOptimizerHook
+    from .base import OptimizerHook, NoneOptimizerHook
+    from .torch_optimizer_hook import TorchAMPOptimizerHook
 
 else:
     _import_structure = {
-        'base': ['BaseWarmup'],
-        'warmup': ['ConstantWarmup', 'ExponentialWarmup', 'LinearWarmup']
+        'apex_optimizer_hook': ['ApexAMPOptimizerHook'],
+        'base': ['OptimizerHook', 'NoneOptimizerHook'],
+        'torch_optimizer_hook': ['TorchAMPOptimizerHook']
     }
 
     import sys

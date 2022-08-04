@@ -11,6 +11,7 @@ from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau
 
+from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
@@ -89,7 +90,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         model = DummyModel()
         optimizer = SGD(model.parameters(), lr=0.01)
         lr_scheduler = MultiStepLR(optimizer, milestones=[2, 4])
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,
@@ -161,7 +162,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         model = DummyModel()
         # optimmizer = SGD(model.parameters(), lr=0.01)
         # lr_scheduler = MultiStepLR(optimmizer, milestones=[2, 4])
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,
@@ -258,7 +259,7 @@ class PlateauLrSchedulerHookTest(unittest.TestCase):
 
         model = DummyModel()
         optimizer = SGD(model.parameters(), lr=0.01)
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,

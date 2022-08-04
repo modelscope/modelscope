@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.metainfo import Hooks
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.utils.constant import LogKeys
 from modelscope.utils.logger import get_logger
@@ -8,7 +9,7 @@ from .hook import Hook
 from .priority import Priority
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.LrSchedulerHook)
 class LrSchedulerHook(Hook):
     """Lr scheduler.
 
@@ -78,7 +79,7 @@ class LrSchedulerHook(Hook):
         return lr
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.PlateauLrSchedulerHook)
 class PlateauLrSchedulerHook(LrSchedulerHook):
     """Lr scheduler hook for `ReduceLROnPlateau`.
 
@@ -119,7 +120,7 @@ class PlateauLrSchedulerHook(LrSchedulerHook):
                 trainer.lr_scheduler.step(metrics=metrics)
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.NoneLrSchedulerHook)
 class NoneLrSchedulerHook(LrSchedulerHook):
 
     PRIORITY = Priority.LOW  # should be after EvaluationHook

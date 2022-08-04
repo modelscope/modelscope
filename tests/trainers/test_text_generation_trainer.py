@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Trainers
 from modelscope.models.nlp.palm_v2 import PalmForTextGeneration
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
@@ -57,7 +58,7 @@ class TestTextGenerationTrainer(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(
-            name='NlpEpochBasedTrainer', default_args=kwargs)
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -122,7 +123,7 @@ class TestTextGenerationTrainer(unittest.TestCase):
             cfg_modify_fn=cfg_modify_fn,
             model_revision='beta')
         trainer = build_trainer(
-            name='NlpEpochBasedTrainer', default_args=kwargs)
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
         trainer.train()
 
 

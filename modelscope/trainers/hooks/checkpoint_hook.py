@@ -2,6 +2,7 @@
 import os
 
 from modelscope import __version__
+from modelscope.metainfo import Hooks
 from modelscope.utils.checkpoint import save_checkpoint
 from modelscope.utils.constant import LogKeys
 from modelscope.utils.logger import get_logger
@@ -11,7 +12,7 @@ from .hook import Hook
 from .priority import Priority
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.CheckpointHook)
 class CheckpointHook(Hook):
     """Save checkpoints periodically.
 
@@ -98,7 +99,7 @@ class CheckpointHook(Hook):
         return False
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.BestCkptSaverHook)
 class BestCkptSaverHook(CheckpointHook):
     """Save best checkpoints hook.
     Args:

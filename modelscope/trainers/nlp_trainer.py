@@ -6,6 +6,7 @@ from torch import nn
 from torch.utils.data import Dataset
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import build_metric
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets import MsDataset
@@ -17,7 +18,7 @@ from .base import TRAINERS
 from .trainer import EpochBasedTrainer
 
 
-@TRAINERS.register_module(module_name='NlpEpochBasedTrainer')
+@TRAINERS.register_module(module_name=Trainers.nlp_base_trainer)
 class NlpEpochBasedTrainer(EpochBasedTrainer):
 
     def __init__(
@@ -142,7 +143,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         return build_preprocessor(cfg, Tasks.find_field_by_task(self.cfg.task))
 
 
-@TRAINERS.register_module(module_name='VecoTrainer')
+@TRAINERS.register_module(module_name=Trainers.nlp_veco_trainer)
 class VecoTrainer(NlpEpochBasedTrainer):
 
     def evaluate(self, checkpoint_path=None):

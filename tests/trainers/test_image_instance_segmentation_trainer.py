@@ -7,6 +7,7 @@ import zipfile
 from functools import partial
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Trainers
 from modelscope.models.cv.image_instance_segmentation import (
     CascadeMaskRCNNSwinModel, ImageInstanceSegmentationCocoDataset)
 from modelscope.trainers import build_trainer
@@ -79,7 +80,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(
-            name='image-instance-segmentation', default_args=kwargs)
+            name=Trainers.image_instance_segmentation, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -103,7 +104,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(
-            name='image-instance-segmentation', default_args=kwargs)
+            name=Trainers.image_instance_segmentation, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)

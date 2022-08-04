@@ -1,8 +1,9 @@
+from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.trainer import EpochBasedTrainer
 
 
-@TRAINERS.register_module(module_name='image-instance-segmentation')
+@TRAINERS.register_module(module_name=Trainers.image_instance_segmentation)
 class ImageInstanceSegmentationTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):

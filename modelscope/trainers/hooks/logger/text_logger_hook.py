@@ -8,13 +8,14 @@ import json
 import torch
 from torch import distributed as dist
 
+from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.logger.base import LoggerHook
 from modelscope.utils.constant import LogKeys, ModeKeys
 from modelscope.utils.torch_utils import get_dist_info, is_master
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.TextLoggerHook)
 class TextLoggerHook(LoggerHook):
     """Logger hook in text, Output log to both console and local json file.
 

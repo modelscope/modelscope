@@ -1,13 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import time
 
+from modelscope.metainfo import Hooks
 from modelscope.utils.constant import LogKeys
 from .builder import HOOKS
 from .hook import Hook
 from .priority import Priority
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.IterTimerHook)
 class IterTimerHook(Hook):
     PRIORITY = Priority.LOW
 

@@ -145,10 +145,19 @@ class Trainers(object):
         For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
     """
 
-    default = 'Trainer'
+    default = 'trainer'
 
-    # multi-modal tasks
+    # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
+
+    # cv trainers
+    image_instance_segmentation = 'image-instance-segmentation'
+    image_portrait_enhancement = 'image-portrait-enhancement'
+
+    # nlp trainers
+    bert_sentiment_analysis = 'bert-sentiment-analysis'
+    nlp_base_trainer = 'nlp-base-trainer'
+    nlp_veco_trainer = 'nlp-veco-trainer'
 
 
 class Preprocessors(object):
@@ -219,3 +228,52 @@ class Metrics(object):
     image_color_enhance_metric = 'image-color-enhance-metric'
     # metrics for image-portrait-enhancement task
     image_portrait_enhancement_metric = 'image-portrait-enhancement-metric'
+
+
+class Optimizers(object):
+    """ Names for different OPTIMIZER.
+
+        Holds the standard optimizer name to use for identifying different optimizer.
+        This should be used to register optimizer.
+    """
+
+    default = 'optimizer'
+
+    SGD = 'SGD'
+
+
+class Hooks(object):
+    """ Names for different hooks.
+
+        All kinds of hooks are defined here
+    """
+    # lr
+    LrSchedulerHook = 'LrSchedulerHook'
+    PlateauLrSchedulerHook = 'PlateauLrSchedulerHook'
+    NoneLrSchedulerHook = 'NoneLrSchedulerHook'
+
+    # optimizer
+    OptimizerHook = 'OptimizerHook'
+    TorchAMPOptimizerHook = 'TorchAMPOptimizerHook'
+    ApexAMPOptimizerHook = 'ApexAMPOptimizerHook'
+    NoneOptimizerHook = 'NoneOptimizerHook'
+
+    # checkpoint
+    CheckpointHook = 'CheckpointHook'
+    BestCkptSaverHook = 'BestCkptSaverHook'
+
+    # logger
+    TextLoggerHook = 'TextLoggerHook'
+    TensorboardHook = 'TensorboardHook'
+
+    IterTimerHook = 'IterTimerHook'
+    EvaluationHook = 'EvaluationHook'
+
+
+class LR_Schedulers(object):
+    """learning rate scheduler is defined here
+
+    """
+    LinearWarmup = 'LinearWarmup'
+    ConstantWarmup = 'ConstantWarmup'
+    ExponentialWarmup = 'ExponentialWarmup'

@@ -11,6 +11,7 @@ from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.test_utils import create_dummy_test_dataset
@@ -68,7 +69,7 @@ class IterTimerHookTest(unittest.TestCase):
         model = DummyModel()
         optimizer = SGD(model.parameters(), lr=0.01)
         lr_scheduler = MultiStepLR(optimizer, milestones=[2, 4])
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,

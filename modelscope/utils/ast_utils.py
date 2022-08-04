@@ -5,6 +5,7 @@ import importlib
 import os
 import os.path as osp
 import time
+import traceback
 from functools import reduce
 from typing import Generator, Union
 
@@ -13,8 +14,9 @@ import json
 
 from modelscope import __version__
 from modelscope.fileio.file import LocalStorage
-from modelscope.metainfo import (Heads, Metrics, Models, Pipelines,
-                                 Preprocessors, TaskModels, Trainers)
+from modelscope.metainfo import (Heads, Hooks, LR_Schedulers, Metrics, Models,
+                                 Optimizers, Pipelines, Preprocessors,
+                                 TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.file_utils import get_default_cache_dir
 from modelscope.utils.logger import get_logger
@@ -28,7 +30,8 @@ MODELSCOPE_PATH = '/'.join(os.path.dirname(__file__).split('/')[:-1])
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
-    'models', 'metrics', 'pipelines', 'preprocessors', 'task_datasets'
+    'models', 'metrics', 'pipelines', 'preprocessors', 'task_datasets',
+    'trainers'
 ]
 INDEXER_FILE = 'ast_indexer'
 DECORATOR_KEY = 'decorators'
@@ -305,9 +308,11 @@ class AstScaning(object):
         output = [functions[0]]
 
         if len(args_list) == 0 and len(keyword_list) == 0:
-            args_list.append(None)
+            args_list.append(default_group)
         if len(keyword_list) == 0 and len(args_list) == 1:
             args_list.append(None)
+        if len(keyword_list) == 1 and len(args_list) == 0:
+            args_list.append(default_group)
 
         args_list.extend(keyword_list)
 
@@ -318,6 +323,8 @@ class AstScaning(object):
             # the case (default_group)
             elif item[1] is None:
                 output.append(item[0])
+            elif isinstance(item, str):
+                output.append(item)
             else:
                 output.append('.'.join(item))
         return (output[0], self._get_registry_value(output[1]),
@@ -443,9 +450,11 @@ class FilesAstScaning(object):
         try:
             output = self.astScaner.generate_ast(file)
         except Exception as e:
+            detail = traceback.extract_tb(e.__traceback__)
             raise Exception(
-                'During ast indexing, there are index errors in the '
-                f'file {file} : {type(e).__name__}.{e}')
+                f'During ast indexing, error is in the file {detail[-1].filename}'
+                f' line: {detail[-1].lineno}: "{detail[-1].line}" with error msg: '
+                f'"{type(e).__name__}: {e}"')
 
         import_list = self.parse_import(output)
         return output[DECORATOR_KEY], import_list
@@ -523,14 +532,14 @@ class FilesAstScaning(object):
         return md5.hexdigest()
 
 
-fileScaner = FilesAstScaning()
+file_scanner = FilesAstScaning()
 
 
 def _save_index(index, file_path):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
     index[VERSION_KEY] = __version__
-    index[MD5_KEY] = fileScaner.files_mtime_md5()
+    index[MD5_KEY] = file_scanner.files_mtime_md5()
     json_index = json.dumps(index)
     storage.write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
@@ -579,7 +588,7 @@ def load_index(force_rebuild=False):
     index = None
     if not force_rebuild and os.path.exists(file_path):
         wrapped_index = _load_index(file_path)
-        md5 = fileScaner.files_mtime_md5()
+        md5 = file_scanner.files_mtime_md5()
         if (wrapped_index[VERSION_KEY] == __version__
                 and wrapped_index[MD5_KEY] == md5):
             index = wrapped_index
@@ -591,7 +600,7 @@ def load_index(force_rebuild=False):
             logger.info(
                 f'No valid ast index found from {file_path}, rebuilding ast index!'
             )
-        index = fileScaner.get_files_scan_results()
+        index = file_scanner.get_files_scan_results()
         _save_index(index, file_path)
     return index
 

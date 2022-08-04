@@ -11,6 +11,7 @@ import torch
 from torch.utils import data as data
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.metainfo import Trainers
 from modelscope.models.cv.image_portrait_enhancement import \
     ImagePortraitEnhancement
 from modelscope.trainers import build_trainer
@@ -91,7 +92,8 @@ class TestImagePortraitEnhancementTrainer(unittest.TestCase):
             device='gpu',
             work_dir=self.tmp_dir)
 
-        trainer = build_trainer(name='gpen', default_args=kwargs)
+        trainer = build_trainer(
+            name=Trainers.image_portrait_enhancement, default_args=kwargs)
         trainer.train()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -111,7 +113,8 @@ class TestImagePortraitEnhancementTrainer(unittest.TestCase):
             max_epochs=2,
             work_dir=self.tmp_dir)
 
-        trainer = build_trainer(name='gpen', default_args=kwargs)
+        trainer = build_trainer(
+            name=Trainers.image_portrait_enhancement, default_args=kwargs)
         trainer.train()
 
 

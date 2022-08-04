@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from torch import nn
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.test_utils import create_dummy_test_dataset
@@ -73,7 +74,7 @@ class TensorboardHookTest(unittest.TestCase):
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
 
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=DummyModel(),

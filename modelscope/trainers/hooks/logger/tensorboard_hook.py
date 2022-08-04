@@ -1,13 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 
+from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.utils.constant import LogKeys
 from modelscope.utils.torch_utils import master_only
 from .base import LoggerHook
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.TensorboardHook)
 class TensorboardHook(LoggerHook):
     """TensorBoard hook for visualization.
     Args:

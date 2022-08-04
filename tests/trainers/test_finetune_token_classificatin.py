@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from functools import reduce
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
 from modelscope.utils.test_utils import test_level
 
@@ -25,7 +26,7 @@ class TestFinetuneTokenClassification(unittest.TestCase):
                  model_id,
                  train_dataset,
                  eval_dataset,
-                 name='NlpEpochBasedTrainer',
+                 name=Trainers.nlp_base_trainer,
                  cfg_modify_fn=None,
                  **kwargs):
         kwargs = dict(

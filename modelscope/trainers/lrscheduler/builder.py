@@ -4,7 +4,7 @@ import inspect
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.registry import Registry, build_from_cfg, default_group
 
-LR_SCHEDULER = Registry('lr scheduler')
+LR_SCHEDULER = Registry('lr_scheduler')
 
 
 def build_lr_scheduler(cfg: ConfigDict, default_args: dict = None):

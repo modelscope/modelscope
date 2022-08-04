@@ -3,6 +3,7 @@ from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
+from modelscope.metainfo import Trainers
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.logger import get_logger
@@ -11,7 +12,7 @@ PATH = None
 logger = get_logger(PATH)
 
 
-@TRAINERS.register_module(module_name=r'bert-sentiment-analysis')
+@TRAINERS.register_module(module_name=Trainers.bert_sentiment_analysis)
 class SequenceClassificationTrainer(BaseTrainer):
 
     def __init__(self, cfg_file: str, *args, **kwargs):

@@ -13,7 +13,5 @@ requests
 scipy
 setuptools
 tensorboard
-tokenizers
 tqdm>=4.64.0
-transformers>=4.12.0
 yapf

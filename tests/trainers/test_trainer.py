@@ -13,6 +13,7 @@ from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 
+from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import MetricKeys
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
@@ -101,14 +102,14 @@ class TrainerTest(unittest.TestCase):
                     'workers_per_gpu': 1,
                     'shuffle': False
                 },
-                'metrics': ['seq_cls_metric']
+                'metrics': ['seq-cls-metric']
             }
         }
         config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
 
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=DummyModel(),
@@ -155,7 +156,7 @@ class TrainerTest(unittest.TestCase):
                     'workers_per_gpu': 1,
                     'shuffle': False
                 },
-                'metrics': ['seq_cls_metric']
+                'metrics': ['seq-cls-metric']
             }
         }
 
@@ -166,7 +167,7 @@ class TrainerTest(unittest.TestCase):
         model = DummyModel()
         optimmizer = SGD(model.parameters(), lr=0.01)
         lr_scheduler = StepLR(optimmizer, 2)
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,
@@ -205,7 +206,7 @@ class TrainerTest(unittest.TestCase):
                     'workers_per_gpu': 1,
                     'shuffle': False
                 },
-                'metrics': ['seq_cls_metric']
+                'metrics': ['seq-cls-metric']
             }
         }
 
@@ -216,7 +217,7 @@ class TrainerTest(unittest.TestCase):
         model = DummyModel()
         optimmizer = SGD(model.parameters(), lr=0.01)
         lr_scheduler = StepLR(optimmizer, 2)
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,

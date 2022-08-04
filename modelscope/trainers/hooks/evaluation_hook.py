@@ -1,9 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.metainfo import Hooks
 from .builder import HOOKS
 from .hook import Hook
 
 
-@HOOKS.register_module()
+@HOOKS.register_module(module_name=Hooks.EvaluationHook)
 class EvaluationHook(Hook):
     """Evaluation hook.
     Args:

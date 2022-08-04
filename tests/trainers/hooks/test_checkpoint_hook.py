@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 
+from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile
@@ -108,7 +109,7 @@ class CheckpointHookTest(unittest.TestCase):
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
 
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=DummyModel(),
@@ -179,7 +180,7 @@ class BestCkptSaverHookTest(unittest.TestCase):
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
 
-        trainer_name = 'EpochBasedTrainer'
+        trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=DummyModel(),

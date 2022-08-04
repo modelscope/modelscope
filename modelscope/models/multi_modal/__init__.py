@@ -20,7 +20,9 @@ else:
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
         'mplug_for_visual_question_answering':
         ['MPlugForVisualQuestionAnswering'],
-        'ofa_for_all_tasks': ['OfaForAllTasks']
+        'ofa_for_all_tasks': ['OfaForAllTasks'],
+        'ofa_for_text_to_image_synthesis_model':
+        ['OfaForTextToImageSynthesis']
     }
 
     import sys

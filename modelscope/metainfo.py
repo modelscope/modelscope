@@ -203,6 +203,7 @@ class Preprocessors(object):
 
     # multi-modal
     ofa_image_caption = 'ofa-image-caption'
+    ofa_text_to_image_synthesis = 'ofa-text-to-image-synthesis'
     mplug_visual_question_answering = 'mplug-visual-question-answering'
 
 

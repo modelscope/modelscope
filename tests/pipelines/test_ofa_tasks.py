@@ -244,6 +244,25 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_text_to_image_synthesis_with_name(self):
+        model = 'damo/ofa_text-to-image-synthesis_coco_large_en'
+        ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)
+        example = {'text': 'a bear in the water.'}
+        result = ofa_pipe(example)
+        result[OutputKeys.OUTPUT_IMG].save('result.png')
+        print(f'Output written to {osp.abspath("result.png")}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_text_to_image_synthesis_with_model(self):
+        model = Model.from_pretrained(
+            'damo/ofa_text-to-image-synthesis_coco_large_en')
+        ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)
+        example = {'text': 'a bear in the water.'}
+        result = ofa_pipe(example)
+        result[OutputKeys.OUTPUT_IMG].save('result.png')
+        print(f'Output written to {osp.abspath("result.png")}')
+
 
 if __name__ == '__main__':
     unittest.main()

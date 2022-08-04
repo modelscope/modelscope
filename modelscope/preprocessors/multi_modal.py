@@ -23,6 +23,8 @@ __all__ = [
 
 @PREPROCESSORS.register_module(
     Fields.multi_modal, module_name=Preprocessors.ofa_image_caption)
+@PREPROCESSORS.register_module(
+    Fields.multi_modal, module_name=Preprocessors.ofa_text_to_image_synthesis)
 class OfaPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -40,7 +42,8 @@ class OfaPreprocessor(Preprocessor):
             Tasks.visual_entailment: OfaVisualEntailmentPreprocessor,
             Tasks.image_classification: OfaImageClassificationPreprocessor,
             Tasks.text_classification: OfaTextClassificationPreprocessor,
-            Tasks.summarization: OfaSummarizationPreprocessor
+            Tasks.summarization: OfaSummarizationPreprocessor,
+            Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
         }
         input_key_mapping = {
             Tasks.image_captioning: ['image'],
@@ -50,6 +53,7 @@ class OfaPreprocessor(Preprocessor):
             Tasks.visual_grounding: ['image', 'text'],
             Tasks.visual_question_answering: ['image', 'text'],
             Tasks.visual_entailment: ['image', 'text', 'text2'],
+            Tasks.text_to_image_synthesis: ['text']
         }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
             model_dir)

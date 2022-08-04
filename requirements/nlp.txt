@@ -1,6 +1,8 @@
 en_core_web_sm>=2.3.5
 fairseq>=0.10.2
-pai-easynlp
+# temporarily remove pai-easynl due to its hard dependency scipy==1.5.4
+# will be added back
+# pai-easynlp
 # rough-score was just recently updated from 0.0.4 to 0.0.7
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4

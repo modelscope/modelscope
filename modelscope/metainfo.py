@@ -141,7 +141,7 @@ class Trainers(object):
         Holds the standard trainer name to use for identifying different trainer.
     This should be used to register trainers.
 
-        For a general Trainer, you can use easynlp-trainer/ofa-trainer.
+        For a general Trainer, you can use EpochBasedTrainer.
         For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
     """
 

@@ -8,22 +8,10 @@ Modelscope提供了众多预训练模型，你可以使用其中任意一个，�
 
 在开始Finetuning前，需要准备一个数据集用以训练和评估，详细可以参考数据集使用教程。
 
-`临时写法`，我们通过数据集接口创建一个虚假的dataset
 ```python
 from datasets import Dataset
-dataset_dict = {
-    'sentence1': [
-        'This is test sentence1-1', 'This is test sentence2-1',
-        'This is test sentence3-1'
-    ],
-    'sentence2': [
-        'This is test sentence1-2', 'This is test sentence2-2',
-        'This is test sentence3-2'
-    ],
-    'label': [0, 1, 1]
-}
-train_dataset = MsDataset.from_hf_dataset(Dataset.from_dict(dataset_dict))
-eval_dataset = MsDataset.from_hf_dataset(Dataset.from_dict(dataset_dict))
+train_dataset = MsDataset.load'afqmc_small', namespace='modelscope', split='train')
+eval_dataset = MsDataset.load('afqmc_small', namespace='modelscope', split='validation')
 ```
 ### 训练
 ModelScope把所有训练相关的配置信息全部放到了模型仓库下的`configuration.json`中，因此我们只需要创建Trainer，加载配置文件，传入数据集即可完成训练。

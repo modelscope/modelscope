@@ -1,7 +1,7 @@
 # 快速开始
-ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.13-1.15，Tensorflow 2.x上测试可运行。
+ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.15，Tensorflow 2.x上测试可运行。
 
-注： 当前（630）版本 `语音相关`的功能仅支持 python3.7,tensorflow1.13-1.15的`linux`环境使用。  其他功能可以在windows、mac上安装使用。
+注： `语音相关`的功能仅支持 python3.7,tensorflow1.15的`linux`环境使用。  其他功能可以在windows、mac上安装使用。
 
 ## python环境配置
 首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境

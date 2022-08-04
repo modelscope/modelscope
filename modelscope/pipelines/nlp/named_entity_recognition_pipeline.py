@@ -42,7 +42,7 @@ class NamedEntityRecognitionPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:
         text = inputs['text']
-        offset_mapping = inputs['offset_mapping']
+        offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
         labels = [self.id2label[x] for x in inputs['predicts']]
         entities = []
         entity = {}

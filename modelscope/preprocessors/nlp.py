@@ -483,6 +483,8 @@ class NERPreprocessor(Preprocessor):
         self.sequence_length = kwargs.pop('sequence_length', 512)
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_dir, use_fast=True)
+        self.is_split_into_words = self.tokenizer.init_kwargs.get(
+            'is_split_into_words', False)
 
     @type_assert(object, str)
     def __call__(self, data: str) -> Dict[str, Any]:
@@ -499,29 +501,51 @@ class NERPreprocessor(Preprocessor):
 
         # preprocess the data for the model input
         text = data
-        encodings = self.tokenizer(
-            text,
-            add_special_tokens=True,
-            padding=True,
-            truncation=True,
-            max_length=self.sequence_length,
-            return_offsets_mapping=True)
-        input_ids = encodings['input_ids']
-        attention_mask = encodings['attention_mask']
-        word_ids = encodings.word_ids()
-        label_mask = []
-        offset_mapping = []
-        for i in range(len(word_ids)):
-            if word_ids[i] is None:
-                label_mask.append(0)
-            elif word_ids[i] == word_ids[i - 1]:
-                label_mask.append(0)
-                offset_mapping[-1] = (offset_mapping[-1][0],
-                                      encodings['offset_mapping'][i][1])
-            else:
-                label_mask.append(1)
-                offset_mapping.append(encodings['offset_mapping'][i])
-
+        if self.is_split_into_words:
+            input_ids = []
+            label_mask = []
+            offset_mapping = []
+            for offset, token in enumerate(list(data)):
+                subtoken_ids = self.tokenizer.encode(
+                    token, add_special_tokens=False)
+                if len(subtoken_ids) == 0:
+                    subtoken_ids = [self.tokenizer.unk_token_id]
+                input_ids.extend(subtoken_ids)
+                label_mask.extend([1] + [0] * (len(subtoken_ids) - 1))
+                offset_mapping.extend([(offset, offset + 1)]
+                                      + [(offset + 1, offset + 1)]
+                                      * (len(subtoken_ids) - 1))
+            if len(input_ids) >= self.sequence_length - 2:
+                input_ids = input_ids[:self.sequence_length - 2]
+                label_mask = label_mask[:self.sequence_length - 2]
+                offset_mapping = offset_mapping[:self.sequence_length - 2]
+            input_ids = [self.tokenizer.cls_token_id
+                         ] + input_ids + [self.tokenizer.sep_token_id]
+            label_mask = [0] + label_mask + [0]
+            attention_mask = [1] * len(input_ids)
+        else:
+            encodings = self.tokenizer(
+                text,
+                add_special_tokens=True,
+                padding=True,
+                truncation=True,
+                max_length=self.sequence_length,
+                return_offsets_mapping=True)
+            input_ids = encodings['input_ids']
+            attention_mask = encodings['attention_mask']
+            word_ids = encodings.word_ids()
+            label_mask = []
+            offset_mapping = []
+            for i in range(len(word_ids)):
+                if word_ids[i] is None:
+                    label_mask.append(0)
+                elif word_ids[i] == word_ids[i - 1]:
+                    label_mask.append(0)
+                    offset_mapping[-1] = (offset_mapping[-1][0],
+                                          encodings['offset_mapping'][i][1])
+                else:
+                    label_mask.append(1)
+                    offset_mapping.append(encodings['offset_mapping'][i])
         return {
             'text': text,
             'input_ids': input_ids,

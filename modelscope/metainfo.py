@@ -70,7 +70,7 @@ class Pipelines(object):
         For pipeline which suuport only one model, we should use ${Model}-${Task} as its name.
     """
     # vision tasks
-    image_matting = 'unet-image-matting'
+    portrait_matting = 'unet-image-matting'
     image_denoise = 'nafnet-image-denoise'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'

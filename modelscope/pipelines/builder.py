@@ -33,8 +33,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.sentiment_classification,
      'damo/nlp_structbert_sentiment-classification_chinese-base'
      ),  # TODO: revise back after passing the pr
-    Tasks.image_matting: (Pipelines.image_matting,
-                          'damo/cv_unet_image-matting'),
+    Tasks.portrait_matting: (Pipelines.portrait_matting,
+                             'damo/cv_unet_image-matting'),
     Tasks.human_detection: (Pipelines.human_detection,
                             'damo/cv_resnet18_human-detection'),
     Tasks.image_object_detection: (Pipelines.object_detection,

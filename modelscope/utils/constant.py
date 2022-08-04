@@ -31,7 +31,6 @@ class CVTasks(object):
     image_object_detection = 'image-object-detection'
 
     image_segmentation = 'image-segmentation'
-    image_matting = 'image-matting'
     portrait_matting = 'portrait-matting'
 
     # image editing

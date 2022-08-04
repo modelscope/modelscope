@@ -127,7 +127,6 @@ TASK_OUTPUTS = {
     # {
     #   "output_img": np.array with shape(h, w, 4)
     # }
-    Tasks.image_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
 
     # image editing task result for a single image

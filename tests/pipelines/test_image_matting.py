@@ -26,7 +26,7 @@ class ImageMattingTest(unittest.TestCase):
             model_file = osp.join(tmp_dir, ModelFile.TF_GRAPH_FILE)
             with open(model_file, 'wb') as ofile:
                 ofile.write(File.read(model_path))
-            img_matting = pipeline(Tasks.protrait_matting, model=tmp_dir)
+            img_matting = pipeline(Tasks.portrait_matting, model=tmp_dir)
 
             result = img_matting('data/test/images/image_matting.png')
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
@@ -38,7 +38,7 @@ class ImageMattingTest(unittest.TestCase):
         # input_location = '/dir/to/images'
 
         dataset = MsDataset.load(input_location, target='image')
-        img_matting = pipeline(Tasks.protrait_matting, model=self.model_id)
+        img_matting = pipeline(Tasks.portrait_matting, model=self.model_id)
         # note that for dataset output, the inference-output is a Generator that can be iterated.
         result = img_matting(dataset)
         cv2.imwrite('result.png', next(result)[OutputKeys.OUTPUT_IMG])
@@ -46,7 +46,7 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        img_matting = pipeline(Tasks.protrait_matting, model=self.model_id)
+        img_matting = pipeline(Tasks.portrait_matting, model=self.model_id)
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
@@ -54,7 +54,7 @@ class ImageMattingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
-        img_matting = pipeline(Tasks.protrait_matting)
+        img_matting = pipeline(Tasks.portrait_matting)
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
@@ -67,7 +67,7 @@ class ImageMattingTest(unittest.TestCase):
             namespace='damotest',
             split='test',
             target='file')
-        img_matting = pipeline(Tasks.protrait_matting, model=self.model_id)
+        img_matting = pipeline(Tasks.portrait_matting, model=self.model_id)
         result = img_matting(dataset)
         for i in range(2):
             cv2.imwrite(f'result_{i}.png', next(result)[OutputKeys.OUTPUT_IMG])

@@ -5,8 +5,6 @@ import enum
 class Fields(object):
     """ Names for different application fields
     """
-    # image = 'image'
-    # video = 'video'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
@@ -34,10 +32,9 @@ class CVTasks(object):
 
     image_segmentation = 'image-segmentation'
     image_matting = 'image-matting'
-    protrait_matting = 'protrait-matting'
+    portrait_matting = 'portrait-matting'
 
-    # image editting
-    image_protrait_enhancement = 'image-protrait-enhancement'
+    # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
     image_colorization = 'image-colorization'

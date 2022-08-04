@@ -158,6 +158,27 @@ TASK_OUTPUTS = {
     # }
     Tasks.action_recognition: [OutputKeys.LABELS],
 
+    # human body keypoints detection result for single sample
+    # {
+    #   "poses": [
+    #               [x, y],
+    #               [x, y],
+    #               [x, y]
+    #             ]
+    #   "scores": [
+    #               [score],
+    #               [score],
+    #               [score],
+    #              ]
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.body_2d_keypoints:
+    [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001],

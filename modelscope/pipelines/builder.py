@@ -87,6 +87,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_to_image_synthesis:
     (Pipelines.text_to_image_synthesis,
      'damo/cv_diffusion_text-to-image-synthesis_tiny'),
+    Tasks.body_2d_keypoints: (Pipelines.body_2d_keypoints,
+                              'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,
@@ -238,6 +240,7 @@ def pipeline(task: str = None,
 
     cfg = ConfigDict(type=pipeline_name, model=model)
     cfg.device = device
+
     if kwargs:
         cfg.update(kwargs)
 

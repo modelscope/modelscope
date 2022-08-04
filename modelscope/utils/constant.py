@@ -22,6 +22,7 @@ class CVTasks(object):
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
+    body_2d_keypoints = 'body-2d-keypoints'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'

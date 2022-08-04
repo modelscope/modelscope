@@ -18,6 +18,7 @@ class Models(object):
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
     gpen = 'gpen'
     product_retrieval_embedding = 'product-retrieval-embedding'
+    body_2d_keypoints = 'body-2d-keypoints'
 
     # nlp models
     bert = 'bert'
@@ -77,6 +78,7 @@ class Pipelines(object):
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognation = 'resnet101-animal_recog'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
     image_classification = 'image-classification'

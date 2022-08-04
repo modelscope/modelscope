@@ -16,7 +16,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.portrait_matting, module_name=Pipelines.image_matting)
+    Tasks.portrait_matting, module_name=Pipelines.portrait_matting)
 class ImageMattingPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

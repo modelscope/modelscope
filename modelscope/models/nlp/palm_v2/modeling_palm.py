@@ -1170,7 +1170,6 @@ class Translator(nn.Module):
         results['batch'] = batch
 
         for step in range(max_length):
-            self.logger.info(f'step: {step + 1} / {max_length}')
             decoder_input = alive_seq[:, -1].view(1, -1)
 
             # Decoder forward.

@@ -5,7 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .dialog_intent_prediction_pipeline import DialogIntentPredictionPipeline
-    from .dialog_modeling_pipeline import DialogModelingPipeline
+    from .task_oriented_conversation_pipeline import TaskOrientedConversationPipeline
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
@@ -24,7 +24,8 @@ else:
     _import_structure = {
         'dialog_intent_prediction_pipeline':
         ['DialogIntentPredictionPipeline'],
-        'dialog_modeling_pipeline': ['DialogModelingPipeline'],
+        'task_oriented_conversation_pipeline':
+        ['TaskOrientedConversationPipeline'],
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'single_sentence_classification_pipeline':

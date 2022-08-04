@@ -79,7 +79,7 @@ class NLPTasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
-    dialog_modeling = 'dialog-modeling'
+    task_oriented_conversation = 'task-oriented-conversation'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_state_tracking = 'dialog-state-tracking'
     table_question_answering = 'table-question-answering'

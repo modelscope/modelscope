@@ -11,12 +11,13 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
 
-__all__ = ['DialogModelingPipeline']
+__all__ = ['TaskOrientedConversationPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.dialog_modeling, module_name=Pipelines.dialog_modeling)
-class DialogModelingPipeline(Pipeline):
+    Tasks.task_oriented_conversation,
+    module_name=Pipelines.task_oriented_conversation)
+class TaskOrientedConversationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[SpaceForDialogModeling, str],

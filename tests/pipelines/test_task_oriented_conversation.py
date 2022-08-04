@@ -6,13 +6,13 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SpaceForDialogModeling
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import DialogModelingPipeline
+from modelscope.pipelines.nlp import TaskOrientedConversationPipeline
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class DialogModelingTest(unittest.TestCase):
+class TaskOrientedConversationTest(unittest.TestCase):
     model_id = 'damo/nlp_space_dialog-modeling'
     test_case = {
         'sng0073': {
@@ -92,7 +92,7 @@ class DialogModelingTest(unittest.TestCase):
     }
 
     def generate_and_print_dialog_response(
-            self, pipelines: List[DialogModelingPipeline]):
+            self, pipelines: List[TaskOrientedConversationPipeline]):
 
         result = {}
         for step, item in enumerate(self.test_case['sng0073']['log']):
@@ -108,39 +108,37 @@ class DialogModelingTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
 
-        cache_path = snapshot_download(self.model_id)
+        cache_path = snapshot_download(
+            self.model_id, revision='task_oriented_conversation')
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
         model = SpaceForDialogModeling(
             model_dir=cache_path,
             text_field=preprocessor.text_field,
-            config=preprocessor.config,
-            device='cpu')
+            config=preprocessor.config)
         pipelines = [
-            DialogModelingPipeline(
-                model=model, preprocessor=preprocessor, device='cpu'),
+            TaskOrientedConversationPipeline(
+                model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_modeling,
+                task=Tasks.task_oriented_conversation,
                 model=model,
-                preprocessor=preprocessor,
-                device='cpu')
+                preprocessor=preprocessor)
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(self.model_id)
-        preprocessor = DialogModelingPreprocessor(
-            model_dir=model.model_dir, device='cpu')
+        model = Model.from_pretrained(
+            self.model_id, revision='task_oriented_conversation')
+        preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)
 
         pipelines = [
-            DialogModelingPipeline(
-                model=model, preprocessor=preprocessor, device='cpu'),
+            TaskOrientedConversationPipeline(
+                model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_modeling,
+                task=Tasks.task_oriented_conversation,
                 model=model,
-                preprocessor=preprocessor,
-                device='cpu')
+                preprocessor=preprocessor)
         ]
 
         self.generate_and_print_dialog_response(pipelines)
@@ -149,17 +147,25 @@ class DialogModelingTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipelines = [
             pipeline(
-                task=Tasks.dialog_modeling, model=self.model_id, device='cpu'),
+                task=Tasks.task_oriented_conversation,
+                model=self.model_id,
+                model_revision='task_oriented_conversation'),
             pipeline(
-                task=Tasks.dialog_modeling, model=self.model_id, device='cpu')
+                task=Tasks.task_oriented_conversation,
+                model=self.model_id,
+                model_revision='task_oriented_conversation')
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipelines = [
-            pipeline(task=Tasks.dialog_modeling, device='cpu'),
-            pipeline(task=Tasks.dialog_modeling, device='cpu')
+            pipeline(
+                task=Tasks.task_oriented_conversation,
+                model_revision='task_oriented_conversation'),
+            pipeline(
+                task=Tasks.task_oriented_conversation,
+                model_revision='task_oriented_conversation')
         ]
         self.generate_and_print_dialog_response(pipelines)
 

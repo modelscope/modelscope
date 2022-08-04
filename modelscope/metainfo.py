@@ -112,7 +112,7 @@ class Pipelines(object):
     csanmt_translation = 'csanmt-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
-    dialog_modeling = 'dialog-modeling'
+    task_oriented_conversation = 'task-oriented-conversation'
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'

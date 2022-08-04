@@ -326,7 +326,7 @@ TASK_OUTPUTS = {
 
     # (Deprecated) dialog modeling prediction result for single sample
     # sys : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']
-    Tasks.dialog_modeling: [OutputKeys.RESPONSE],
+    Tasks.task_oriented_conversation: [OutputKeys.RESPONSE],
 
     # (Deprecated) dialog state tracking result for single sample
     # {

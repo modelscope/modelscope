@@ -24,12 +24,11 @@ logger = get_logger()
     Tasks.face_recognition, module_name=Pipelines.face_recognition)
 class FaceRecognitionPipeline(Pipeline):
 
-    def __init__(self, model: str, face_detection: Pipeline, **kwargs):
+    def __init__(self, model: str, **kwargs):
         """
         use `model` to create a face recognition pipeline for prediction
         Args:
             model: model id on modelscope hub.
-            face_detecion: pipeline for face detection and face alignment before recognition
         """
 
         # face recong model
@@ -47,7 +46,9 @@ class FaceRecognitionPipeline(Pipeline):
         self.face_model = face_model
         logger.info('face recognition model loaded!')
         # face detect pipeline
-        self.face_detection = face_detection
+        det_model_id = 'damo/cv_resnet_facedetection_scrfd10gkps'
+        self.face_detection = pipeline(
+            Tasks.face_detection, model=det_model_id)
 
     def _choose_face(self,
                      det_result,

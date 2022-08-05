@@ -379,9 +379,6 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         kwargs['padding'] = kwargs.get(
             'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        kwargs['is_split_into_words'] = kwargs.pop(
-            'is_split_into_words',
-            False if mode == ModeKeys.INFERENCE else True)
         self.label_all_tokens = kwargs.pop('label_all_tokens', False)
         super().__init__(model_dir, pair=False, mode=mode, **kwargs)
 
@@ -397,22 +394,6 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
             Dict[str, Any]: the preprocessed data
         """
 
-        # preprocess the data for the model input
-        # if isinstance(data, dict):
-        #     data = data[self.first_sequence]
-        # text = data.replace(' ', '').strip()
-        # tokens = []
-        # for token in text:
-        #     token = self.tokenizer.tokenize(token)
-        #     tokens.extend(token)
-        # input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        # input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
-        # attention_mask = [1] * len(input_ids)
-        # token_type_ids = [0] * len(input_ids)
-
-        # new code to deal with labels
-        # tokenized_inputs = self.tokenizer(data, truncation=True, is_split_into_words=True)
-
         text_a = None
         labels_list = None
         if isinstance(data, str):
@@ -420,10 +401,14 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         elif isinstance(data, dict):
             text_a = data.get(self.first_sequence)
             labels_list = data.get(self.label)
-        text_a = text_a.replace(' ', '').strip()
+
+        if isinstance(text_a, str):
+            text_a = text_a.replace(' ', '').strip()
+
         tokenized_inputs = self.tokenizer(
-            text_a,
+            [t for t in text_a],
             return_tensors='pt' if self._mode == ModeKeys.INFERENCE else None,
+            is_split_into_words=True,
             **self.tokenize_kwargs)
 
         if labels_list is not None:

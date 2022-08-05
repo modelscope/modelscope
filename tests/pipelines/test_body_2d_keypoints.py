@@ -71,7 +71,6 @@ class Body2DKeypointsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'damo/cv_hrnetv2w32_body-2d-keypoints_image'
         self.test_image = 'data/test/images/keypoints_detect/000000438862.jpg'
-        self.human_detect_model_id = 'damo/cv_resnet18_human-detection'
 
     def pipeline_inference(self, pipeline: Pipeline):
         output = pipeline(self.test_image)
@@ -87,12 +86,8 @@ class Body2DKeypointsTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        human_detector = pipeline(
-            Tasks.human_detection, model=self.human_detect_model_id)
         body_2d_keypoints = pipeline(
-            Tasks.body_2d_keypoints,
-            human_detector=human_detector,
-            model=self.model_id)
+            Tasks.body_2d_keypoints, model=self.model_id)
         self.pipeline_inference(body_2d_keypoints)
 
 

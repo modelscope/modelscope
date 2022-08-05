@@ -27,7 +27,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
     Tasks.translation: (Pipelines.csanmt_translation,
-                        'damo/nlp_csanmt_translation'),
+                        'damo/nlp_csanmt_translation_zh2en'),
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
     Tasks.sentiment_classification:
     (Pipelines.sentiment_classification,

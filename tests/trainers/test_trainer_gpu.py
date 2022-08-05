@@ -12,7 +12,7 @@ from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 
-from modelscope.metainfo import Trainers
+from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
@@ -60,7 +60,7 @@ def train_func(work_dir, dist=False):
                 'workers_per_gpu': 1,
                 'shuffle': False
             },
-            'metrics': ['seq_cls_metric']
+            'metrics': [Metrics.seq_cls_metric]
         }
     }
 

@@ -85,7 +85,7 @@ class MsDataset:
     @staticmethod
     def load(
         dataset_name: Union[str, list],
-        namespace: Optional[str] = None,
+        namespace: Optional[str] = 'modelscope',
         target: Optional[str] = None,
         version: Optional[str] = DEFAULT_DATASET_REVISION,
         hub: Optional[Hubs] = Hubs.modelscope,

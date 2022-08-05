@@ -17,12 +17,14 @@ class CVTasks(object):
     ocr_recognition = 'ocr-recognition'
 
     # human face body related
+    animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
     face_recognition = 'face-recognition'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
     body_2d_keypoints = 'body-2d-keypoints'
+    general_recognition = 'general-recognition'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'

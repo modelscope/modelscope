@@ -5,14 +5,14 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class MultiModalFeatureTest(unittest.TestCase):
+class GeneralRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run(self):
-        animal_recog = pipeline(
-            Tasks.image_classification,
-            model='damo/cv_resnest101_animal_recognition')
-        result = animal_recog('data/test/images/dogs.jpg')
+        general_recognition = pipeline(
+            Tasks.general_recognition,
+            model='damo/cv_resnest101_general_recognition')
+        result = general_recognition('data/test/images/dogs.jpg')
         print(result)
 
 

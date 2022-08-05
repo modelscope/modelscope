@@ -10,8 +10,9 @@ if TYPE_CHECKING:
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
     from .image_detection_pipeline import ImageDetectionPipeline
     from .face_detection_pipeline import FaceDetectionPipeline
-    from .face_recognition_pipeline import FaceRecognitionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
+    from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .general_recognition_pipeline import GeneralRecognitionPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
     from .image_classification_pipeline import GeneralImageClassificationPipeline
     from .image_color_enhance_pipeline import ImageColorEnhancePipeline
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
-    from .image_to_image_generate_pipeline import Image2ImageGenerationePipeline
+    from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .live_category_pipeline import LiveCategoryPipeline
@@ -41,6 +42,7 @@ else:
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],
+        'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
         'image_classification_pipeline':
         ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
@@ -60,7 +62,7 @@ else:
         ['ProductRetrievalEmbeddingPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generation_pipeline':
-        ['Image2ImageGenerationePipeline'],
+        ['Image2ImageGenerationPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],

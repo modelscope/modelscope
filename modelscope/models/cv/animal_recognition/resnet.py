@@ -81,8 +81,7 @@ class Bottleneck(nn.Module):
                 norm_layer=norm_layer,
                 dropblock_prob=dropblock_prob)
         elif rectified_conv:
-            from rfconv import RFConv2d
-            self.conv2 = RFConv2d(
+            self.conv2 = nn.Conv2d(
                 group_width,
                 group_width,
                 kernel_size=3,
@@ -90,8 +89,7 @@ class Bottleneck(nn.Module):
                 padding=dilation,
                 dilation=dilation,
                 groups=cardinality,
-                bias=False,
-                average_mode=rectify_avg)
+                bias=False)
             self.bn2 = norm_layer(group_width)
         else:
             self.conv2 = nn.Conv2d(
@@ -190,8 +188,7 @@ class ResNet(nn.Module):
         self.rectified_conv = rectified_conv
         self.rectify_avg = rectify_avg
         if rectified_conv:
-            from rfconv import RFConv2d
-            conv_layer = RFConv2d
+            conv_layer = nn.Conv2d
         else:
             conv_layer = nn.Conv2d
         conv_kwargs = {'average_mode': rectify_avg} if rectified_conv else {}

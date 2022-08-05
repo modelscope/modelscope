@@ -39,8 +39,7 @@ class SplAtConv2d(Module):
         self.channels = channels
         self.dropblock_prob = dropblock_prob
         if self.rectify:
-            from rfconv import RFConv2d
-            self.conv = RFConv2d(
+            self.conv = Conv2d(
                 in_channels,
                 channels * radix,
                 kernel_size,
@@ -49,7 +48,6 @@ class SplAtConv2d(Module):
                 dilation,
                 groups=groups * radix,
                 bias=bias,
-                average_mode=rectify_avg,
                 **kwargs)
         else:
             self.conv = Conv2d(

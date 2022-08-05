@@ -9,33 +9,33 @@ from torchvision import transforms
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.animal_recognition import Bottleneck, ResNet
+from modelscope.models.cv.animal_recognition import resnet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage
-from modelscope.utils.constant import Tasks
+from modelscope.preprocessors import LoadImage, load_image
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.animal_recognition, module_name=Pipelines.animal_recognition)
-class AnimalRecognitionPipeline(Pipeline):
+    Tasks.general_recognition, module_name=Pipelines.general_recognition)
+class GeneralRecognitionPipeline(Pipeline):
 
-    def __init__(self, model: str, **kwargs):
+    def __init__(self, model: str, device: str):
         """
-        use `model` to create a animal recognition pipeline for prediction
+        use `model` to create a general recognition pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model, **kwargs)
+        super().__init__(model=model)
         import torch
 
         def resnest101(**kwargs):
-            model = ResNet(
-                Bottleneck, [3, 4, 23, 3],
+            model = resnet.ResNet(
+                resnet.Bottleneck, [3, 4, 23, 3],
                 radix=2,
                 groups=1,
                 bottleneck_width=64,
@@ -66,15 +66,16 @@ class AnimalRecognitionPipeline(Pipeline):
             filter_param(src_params, own_state)
             model.load_state_dict(own_state)
 
-        self.model = resnest101(num_classes=8288)
+        self.model = resnest101(num_classes=54092)
         local_model_dir = model
+        device = 'cpu'
         if osp.exists(model):
             local_model_dir = model
         else:
             local_model_dir = snapshot_download(model)
         self.local_path = local_model_dir
         src_params = torch.load(
-            osp.join(local_model_dir, 'pytorch_model.pt'), 'cpu')
+            osp.join(local_model_dir, ModelFile.TORCH_MODEL_FILE), device)
         load_pretrained(self.model, src_params)
         logger.info('load model done')
 
@@ -82,12 +83,12 @@ class AnimalRecognitionPipeline(Pipeline):
         img = LoadImage.convert_to_img(input)
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        test_transforms = transforms.Compose([
+        transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(), normalize
         ])
-        img = test_transforms(img)
+        img = transform(img)
         result = {'img': img}
         return result
 
@@ -107,7 +108,7 @@ class AnimalRecognitionPipeline(Pipeline):
         return {'outputs': outputs}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        label_mapping_path = osp.join(self.local_path, 'label_mapping.txt')
+        label_mapping_path = osp.join(self.local_path, 'meta_info.txt')
         with open(label_mapping_path, 'r') as f:
             label_mapping = f.readlines()
         score = torch.max(inputs['outputs'])

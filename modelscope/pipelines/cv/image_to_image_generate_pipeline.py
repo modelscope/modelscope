@@ -32,7 +32,7 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_to_image_generation,
     module_name=Pipelines.image_to_image_generation)
-class Image2ImageGenerationePipeline(Pipeline):
+class Image2ImageGenerationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """

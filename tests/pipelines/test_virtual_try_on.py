@@ -1,8 +1,6 @@
-import sys
 import unittest
 
 import cv2
-import numpy as np
 from PIL import Image
 
 from modelscope.outputs import OutputKeys
@@ -18,7 +16,7 @@ class VirtualTryonTest(unittest.TestCase):
     cloth = Image.open('data/test/images/virtual_tryon_cloth.jpg')
     input_imgs = (masked_model, pose, cloth)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_virtual_try_on = pipeline(
             task=Tasks.virtual_try_on, model=self.model_id)

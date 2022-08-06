@@ -4,8 +4,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.cv.image_instance_segmentation import (
-    CascadeMaskRCNNSwinModel, get_img_ins_seg_result)
+from modelscope.models.cv.image_instance_segmentation import \
+    CascadeMaskRCNNSwinModel
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import ImageInstanceSegmentationPipeline

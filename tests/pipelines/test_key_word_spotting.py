@@ -1,12 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
-import tarfile
 import unittest
 from typing import Any, Dict, List, Union
 
 import numpy as np
-import requests
 import soundfile
 
 from modelscope.outputs import OutputKeys

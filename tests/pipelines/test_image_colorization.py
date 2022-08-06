@@ -1,11 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 import os.path as osp
 import unittest
 
 import cv2
 
-from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
@@ -25,7 +23,7 @@ class ImageColorizationTest(unittest.TestCase):
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
             print(f'Output written to {osp.abspath("result.png")}')
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         image_colorization = pipeline(
             Tasks.image_colorization, model=self.model_id)

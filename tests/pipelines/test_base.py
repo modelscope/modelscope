@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import unittest
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 from PIL import Image
@@ -9,9 +9,7 @@ from PIL import Image
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import Pipeline, pipeline
 from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
-from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from modelscope.utils.registry import default_group
 
 logger = get_logger()
 

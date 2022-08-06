@@ -39,7 +39,7 @@ class OfaTasksTest(unittest.TestCase):
         result = img_captioning({'image': image})
         print(result[OutputKeys.CAPTION])
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_image_captioning_with_name(self):
         img_captioning = pipeline(
             Tasks.image_captioning,
@@ -58,7 +58,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_image_classification_with_name(self):
         ofa_pipe = pipeline(
             Tasks.image_classification,
@@ -81,7 +81,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_summarization_with_name(self):
         ofa_pipe = pipeline(
             Tasks.summarization,
@@ -105,7 +105,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_text_classification_with_name(self):
         ofa_pipe = pipeline(
             Tasks.text_classification,
@@ -127,7 +127,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_entailment_with_name(self):
         ofa_pipe = pipeline(
             Tasks.visual_entailment,
@@ -166,7 +166,7 @@ class OfaTasksTest(unittest.TestCase):
         self.save_img(image, result[OutputKeys.BOXES],
                       osp.join('large_en_name_' + image_name + '.png'))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_grounding_zh_with_name(self):
         model = 'damo/ofa_visual-grounding_refcoco_large_zh'
         ofa_pipe = pipeline(Tasks.visual_grounding, model=model)
@@ -190,7 +190,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_question_answering_with_name(self):
         model = 'damo/ofa_visual-question-answering_pretrain_large_en'
         ofa_pipe = pipeline(Tasks.visual_question_answering, model=model)
@@ -213,7 +213,7 @@ class OfaTasksTest(unittest.TestCase):
         result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_entailment_distilled_model_with_name(self):
         ofa_pipe = pipeline(
             Tasks.visual_entailment,
@@ -235,7 +235,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_text_to_image_synthesis_with_name(self):
         model = 'damo/ofa_text-to-image-synthesis_coco_large_en'
         ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)

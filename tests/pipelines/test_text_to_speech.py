@@ -7,11 +7,9 @@ import unittest
 import torch
 from scipy.io.wavfile import write
 
-from modelscope.metainfo import Pipelines
-from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Fields, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -22,7 +20,7 @@ logger = get_logger()
 
 class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_pipeline(self):
         text = '今天北京天气怎么样？'
         model_id = 'damo/speech_sambert-hifigan_tts_zhcn_16k'

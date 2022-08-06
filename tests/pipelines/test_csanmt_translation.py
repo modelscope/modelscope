@@ -1,10 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import shutil
 import unittest
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import TranslationPipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 import os.path as osp
 import unittest
 
@@ -31,7 +30,7 @@ class SkinRetouchingTest(unittest.TestCase):
         skin_retouching = pipeline(Tasks.skin_retouching, model=model_dir)
         self.pipeline_inference(skin_retouching, self.test_image)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         skin_retouching = pipeline(Tasks.skin_retouching, model=self.model_id)
         self.pipeline_inference(skin_retouching, self.test_image)

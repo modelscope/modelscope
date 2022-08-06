@@ -5,7 +5,6 @@ import unittest
 
 import cv2
 
-from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
@@ -27,7 +26,7 @@ class ImagePortraitEnhancementTest(unittest.TestCase):
         else:
             raise Exception('Testing failed: invalid output')
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         face_enhancement = pipeline(
             Tasks.image_portrait_enhancement, model=self.model_id)

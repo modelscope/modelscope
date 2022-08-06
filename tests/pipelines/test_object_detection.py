@@ -3,7 +3,6 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 
@@ -30,7 +29,7 @@ class ObjectDetectionTest(unittest.TestCase):
         else:
             raise ValueError('process error')
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_human_detection(self):
         input_location = 'data/test/images/image_detection.jpg'
         model_id = 'damo/cv_resnet18_human-detection'

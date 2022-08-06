@@ -39,7 +39,7 @@ class TextErrorCorrectionTest(unittest.TestCase):
             preprocessor=preprocessor)
         print(pipeline_ins(self.input))
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.text_error_correction, model=self.model_id)

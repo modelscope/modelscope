@@ -1,16 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-import tempfile
 import unittest
 
 import cv2
 import numpy as np
 
-from modelscope.fileio import File
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 

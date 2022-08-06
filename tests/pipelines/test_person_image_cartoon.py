@@ -37,7 +37,7 @@ class ImageCartoonTest(unittest.TestCase):
             Tasks.image_portrait_stylization, model=model_dir)
         self.pipeline_inference(img_cartoon, self.test_image)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         img_cartoon = pipeline(
             Tasks.image_portrait_stylization, model=self.model_id)

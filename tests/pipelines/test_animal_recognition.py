@@ -7,7 +7,7 @@ from modelscope.utils.test_utils import test_level
 
 class AnimalRecognitionTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
         animal_recognition = pipeline(
             Tasks.animal_recognition,

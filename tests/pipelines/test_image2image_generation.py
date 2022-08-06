@@ -1,14 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-import shutil
 import unittest
 
 from torchvision.utils import save_image
 
-from modelscope.fileio import File
-from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 

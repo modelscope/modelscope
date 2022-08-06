@@ -125,7 +125,7 @@ class TaskOrientedConversationTest(unittest.TestCase):
         ]
         self.generate_and_print_dialog_response(pipelines)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)

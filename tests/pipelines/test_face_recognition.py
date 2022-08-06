@@ -1,16 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-import tempfile
 import unittest
 
-import cv2
 import numpy as np
 
-from modelscope.fileio import File
-from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
@@ -19,7 +14,7 @@ class FaceRecognitionTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'damo/cv_ir101_facerecognition_cfglint'
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_face_compare(self):
         img1 = 'data/test/images/face_recognition_1.png'
         img2 = 'data/test/images/face_recognition_2.png'

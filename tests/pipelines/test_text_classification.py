@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import shutil
 import unittest
 
 from modelscope.models import Model

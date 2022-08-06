@@ -39,7 +39,7 @@ class ZeroShotClassificationTest(unittest.TestCase):
             f'pipeline2: {pipeline2(self.sentence,candidate_labels=self.labels,hypothesis_template=self.template)}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         tokenizer = ZeroShotClassificationPreprocessor(model.model_dir)

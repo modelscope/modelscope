@@ -2,20 +2,15 @@
 
 import os
 import unittest
-from asyncio import Task
-from typing import Any, Dict, List, Tuple, Union
-
-import numpy as np
-import PIL
+from typing import Any, Dict, List, Union
 
 from modelscope.fileio import io
 from modelscope.models.base import Model
 from modelscope.pipelines import Pipeline, pipeline
-from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import (ConfigFields, Frameworks, ModelFile,
                                        Tasks)
 from modelscope.utils.logger import get_logger
-from modelscope.utils.registry import default_group
 
 logger = get_logger()
 

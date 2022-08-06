@@ -2,8 +2,6 @@
 
 import unittest
 
-import numpy as np
-
 from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -19,7 +17,7 @@ class GEMMMultiModalEmbeddingTest(unittest.TestCase):
         'captioning': False
     }
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
         generative_multi_modal_embedding_pipeline = pipeline(
             Tasks.generative_multi_modal_embedding, model=self.model_id)

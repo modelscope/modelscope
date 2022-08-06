@@ -7,7 +7,7 @@ from modelscope.utils.test_utils import test_level
 
 class GeneralImageClassificationTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_ImageNet(self):
         general_image_classification = pipeline(
             Tasks.image_classification,
@@ -15,7 +15,7 @@ class GeneralImageClassificationTest(unittest.TestCase):
         result = general_image_classification('data/test/images/bird.JPEG')
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_Dailylife(self):
         general_image_classification = pipeline(
             Tasks.image_classification,
@@ -23,7 +23,7 @@ class GeneralImageClassificationTest(unittest.TestCase):
         result = general_image_classification('data/test/images/bird.JPEG')
         print(result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_Dailylife_default(self):
         general_image_classification = pipeline(Tasks.image_classification)
         result = general_image_classification('data/test/images/bird.JPEG')

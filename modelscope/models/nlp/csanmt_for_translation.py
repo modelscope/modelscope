@@ -21,7 +21,7 @@ class CsanmtForTranslation(Model):
             params (dict): the model configuration.
         """
         super().__init__(model_dir, *args, **kwargs)
-        self.params = kwargs['params']
+        self.params = kwargs
 
     def __call__(self,
                  input: Dict[str, Tensor],

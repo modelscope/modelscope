@@ -47,7 +47,7 @@ class CsanmtTranslationTrainer(BaseTrainer):
 
         self.global_step = tf.train.create_global_step()
 
-        self.model = CsanmtForTranslation(self.model_path, params=self.params)
+        self.model = CsanmtForTranslation(self.model_path, **self.params)
         output = self.model(input=self.source_wids, label=self.target_wids)
         self.output.update(output)
 
@@ -319,6 +319,4 @@ def get_pretrained_variables_map(checkpoint_file_path, ignore_scope=None):
             if var_shape == saved_shapes[saved_var_name]:
                 restore_vars.append(curr_var)
                 restore_map[saved_var_name] = curr_var
-            tf.logging.info('Restore paramter %s from %s ...' %
-                            (saved_var_name, checkpoint_file_path))
     return restore_map

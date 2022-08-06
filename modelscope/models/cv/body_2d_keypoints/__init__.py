@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 else:
     _import_structure = {
-        'keypoints_detector': ['PoseHighResolutionNetV2'],
+        'hrnet_v2': ['PoseHighResolutionNetV2'],
     }
 
     import sys

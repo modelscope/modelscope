@@ -15,6 +15,8 @@ do
   echo "get gpu lock $gpu"
   CONTAINER_NAME="modelscope-ci-$gpu"
   let is_get_file_lock=true
+  # pull image if there are update
+  docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
   docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
              --cpuset-cpus=${cpu_sets_arr[$gpu]} \
              --gpus="device=$gpu" \
@@ -23,6 +25,7 @@ do
              -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
              -v /home/admin/pre-commit:/home/admin/pre-commit \
              -e CI_TEST=True \
+             -e TEST_LEVEL=$TEST_LEVEL \
              -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
              -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
              -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \

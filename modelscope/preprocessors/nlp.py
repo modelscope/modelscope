@@ -139,13 +139,13 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
     def build_tokenizer(self, model_dir):
         model_type = get_model_type(model_dir)
         if model_type in (Models.structbert, Models.gpt3, Models.palm):
-            from modelscope.models.nlp.structbert import SbertTokenizerFast
-            return SbertTokenizerFast.from_pretrained(model_dir)
+            from modelscope.models.nlp.structbert import SbertTokenizer
+            return SbertTokenizer.from_pretrained(model_dir, use_fast=False)
         elif model_type == Models.veco:
-            from modelscope.models.nlp.veco import VecoTokenizerFast
-            return VecoTokenizerFast.from_pretrained(model_dir)
+            from modelscope.models.nlp.veco import VecoTokenizer
+            return VecoTokenizer.from_pretrained(model_dir)
         else:
-            return AutoTokenizer.from_pretrained(model_dir)
+            return AutoTokenizer.from_pretrained(model_dir, use_fast=False)
 
     def __call__(self, data: Union[str, Tuple, Dict]) -> Dict[str, Any]:
         """process the raw input data
@@ -468,7 +468,7 @@ class NERPreprocessor(Preprocessor):
         self.model_dir: str = model_dir
         self.sequence_length = kwargs.pop('sequence_length', 512)
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_dir, use_fast=True)
+            model_dir, use_fast=False)
         self.is_split_into_words = self.tokenizer.init_kwargs.get(
             'is_split_into_words', False)
 

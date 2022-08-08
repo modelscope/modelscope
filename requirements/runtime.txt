@@ -1,5 +1,6 @@
 addict
-datasets
+#version above 2.1.0 introduces backward-compatability issue which is being resolved
+datasets==2.1.0
 easydict
 einops
 filelock>=3.3.0

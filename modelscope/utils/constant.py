@@ -98,6 +98,7 @@ class AudioTasks(object):
     speech_signal_process = 'speech-signal-process'
     acoustic_echo_cancellation = 'acoustic-echo-cancellation'
     acoustic_noise_suppression = 'acoustic-noise-suppression'
+    keyword_spotting = 'keyword-spotting'
 
 
 class MultiModalTasks(object):

@@ -15,9 +15,6 @@ from .test_utils import (TEST_ACCESS_TOKEN1, TEST_ACCESS_TOKEN2,
 DEFAULT_GIT_PATH = 'git'
 
 
-@unittest.skip(
-    "Access token is always change, we can't login with same access token, so skip!"
-)
 class HubPrivateRepositoryTest(unittest.TestCase):
 
     def setUp(self):

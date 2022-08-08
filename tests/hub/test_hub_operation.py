@@ -21,9 +21,6 @@ DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
 
 
-@unittest.skip(
-    "Access token is always change, we can't login with same access token, so skip!"
-)
 class HubOperationTest(unittest.TestCase):
 
     def setUp(self):

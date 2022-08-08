@@ -24,9 +24,6 @@ logger.setLevel('DEBUG')
 DEFAULT_GIT_PATH = 'git'
 
 
-@unittest.skip(
-    "Access token is always change, we can't login with same access token, so skip!"
-)
 class HubRepositoryTest(unittest.TestCase):
 
     def setUp(self):

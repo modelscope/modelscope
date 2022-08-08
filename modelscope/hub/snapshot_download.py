@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -58,6 +59,8 @@ def snapshot_download(model_id: str,
         cache_dir = get_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
+    temporary_cache_dir = os.path.join(cache_dir, 'temp')
+    os.makedirs(temporary_cache_dir, exist_ok=True)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
 
@@ -98,31 +101,35 @@ def snapshot_download(model_id: str,
             headers=snapshot_header,
         )
 
-        for model_file in model_files:
-            if model_file['Type'] == 'tree':
-                continue
-            # check model_file is exist in cache, if exist, skip download, otherwise download
-            if cache.exists(model_file):
-                file_name = os.path.basename(model_file['Name'])
-                logger.info(
-                    f'File {file_name} already in cache, skip downloading!')
-                continue
+        with tempfile.TemporaryDirectory(
+                dir=temporary_cache_dir) as temp_cache_dir:
+            for model_file in model_files:
+                if model_file['Type'] == 'tree':
+                    continue
+                # check model_file is exist in cache, if exist, skip download, otherwise download
+                if cache.exists(model_file):
+                    file_name = os.path.basename(model_file['Name'])
+                    logger.info(
+                        f'File {file_name} already in cache, skip downloading!'
+                    )
+                    continue
 
-            # get download url
-            url = get_file_download_url(
-                model_id=model_id,
-                file_path=model_file['Path'],
-                revision=revision)
+                # get download url
+                url = get_file_download_url(
+                    model_id=model_id,
+                    file_path=model_file['Path'],
+                    revision=revision)
 
-            # First download to /tmp
-            http_get_file(
-                url=url,
-                local_dir=cache_dir,
-                file_name=model_file['Name'],
-                headers=headers,
-                cookies=cookies)
-            # put file to cache
-            cache.put_file(model_file,
-                           os.path.join(cache_dir, model_file['Name']))
+                # First download to /tmp
+                http_get_file(
+                    url=url,
+                    local_dir=temp_cache_dir,
+                    file_name=model_file['Name'],
+                    headers=headers,
+                    cookies=cookies)
+                # put file to cache
+                cache.put_file(
+                    model_file, os.path.join(temp_cache_dir,
+                                             model_file['Name']))
 
         return os.path.join(cache.get_root_location())

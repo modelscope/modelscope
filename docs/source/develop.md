@@ -167,22 +167,3 @@ git pull origin branch_name
 ```bash
 make whl
 ```
-
-## Build docker
-
-build develop docker
-```bash
-sudo make -f Makefile.docker devel-image
-```
-
-push develop docker, passwd pls ask wenmeng.zwm
-```bash
-sudo docker login --username=mass_test@test.aliyunid.com registry.cn-shanghai.aliyuncs.com
-Password:
-sudo make -f Makefile.docker devel-push
-```
-
-To build runtime image, just replace `devel` with `runtime` in the upper commands.
-```bash
-udo make -f Makefile.docker runtime-image runtime-push
-```

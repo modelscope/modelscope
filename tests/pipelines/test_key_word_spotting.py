@@ -139,7 +139,7 @@ class KeyWordSpottingTest(unittest.TestCase):
     }
 
     def setUp(self) -> None:
-        self.model_id = 'damo/speech_charctc_kws_phone-xiaoyunxiaoyun'
+        self.model_id = 'damo/speech_charctc_kws_phone-xiaoyun'
         self.workspace = os.path.join(os.getcwd(), '.tmp')
         if not os.path.exists(self.workspace):
             os.mkdir(self.workspace)
@@ -153,7 +153,7 @@ class KeyWordSpottingTest(unittest.TestCase):
                      audio_in: Union[List[str], str, bytes],
                      keywords: List[str] = None) -> Dict[str, Any]:
         kwsbp_16k_pipline = pipeline(
-            task=Tasks.auto_speech_recognition, model=model_id)
+            task=Tasks.keyword_spotting, model=model_id)
 
         kws_result = kwsbp_16k_pipline(audio_in=audio_in, keywords=keywords)
 

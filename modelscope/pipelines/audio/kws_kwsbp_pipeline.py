@@ -17,7 +17,7 @@ __all__ = ['KeyWordSpottingKwsbpPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.auto_speech_recognition, module_name=Pipelines.kws_kwsbp)
+    Tasks.keyword_spotting, module_name=Pipelines.kws_kwsbp)
 class KeyWordSpottingKwsbpPipeline(Pipeline):
     """KWS Pipeline - key word spotting decoding
     """

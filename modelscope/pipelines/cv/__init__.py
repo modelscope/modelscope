@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
+    from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
 else:
@@ -65,6 +66,7 @@ else:
         ['Image2ImageGenerationPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
+        'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
     }

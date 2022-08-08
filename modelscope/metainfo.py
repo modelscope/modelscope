@@ -102,6 +102,7 @@ class Pipelines(object):
     image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'
+    tinynas_classification = 'tinynas-classification'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

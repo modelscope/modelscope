@@ -79,6 +79,8 @@ def model_file_download(
         cache_dir = get_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
+    temporary_cache_dir = os.path.join(cache_dir, 'temp')
+    os.makedirs(temporary_cache_dir, exist_ok=True)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
 
@@ -152,12 +154,13 @@ def model_file_download(
         temp_file_name = next(tempfile._get_candidate_names())
         http_get_file(
             url_to_download,
-            cache_dir,
+            temporary_cache_dir,
             temp_file_name,
             headers=headers,
             cookies=None if cookies is None else cookies.get_dict())
-        return cache.put_file(file_to_download_info,
-                              os.path.join(cache_dir, temp_file_name))
+        return cache.put_file(
+            file_to_download_info,
+            os.path.join(temporary_cache_dir, temp_file_name))
 
 
 def http_user_agent(user_agent: Union[Dict, str, None] = None, ) -> str:

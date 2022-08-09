@@ -21,7 +21,11 @@ class YOLOXONNX(object):
         self.num_classes = 13
         self.onnx_path = onnx_path
         import onnxruntime as ort
-        self.ort_session = ort.InferenceSession(self.onnx_path)
+        options = ort.SessionOptions()
+        options.intra_op_num_threads = 1
+        options.inter_op_num_threads = 1
+        self.ort_session = ort.InferenceSession(
+            self.onnx_path, sess_options=options)
         self.with_p6 = False
         self.multi_detect = multi_detect
 

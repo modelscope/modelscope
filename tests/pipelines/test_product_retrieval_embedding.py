@@ -13,14 +13,14 @@ class ProductRetrievalEmbeddingTest(unittest.TestCase):
     model_id = 'damo/cv_resnet50_product-bag-embedding-models'
     img_input = 'data/test/images/product_embed_bag.jpg'
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         product_embed = pipeline(Tasks.product_retrieval_embedding,
                                  self.model_id)
         result = product_embed(self.img_input)[OutputKeys.IMG_EMBEDDING]
         print('abs sum value is: {}'.format(np.sum(np.abs(result))))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         product_embed = pipeline(

@@ -24,7 +24,7 @@ def clip_train_worker(local_rank, ngpus, node_size, node_rank):
     dist.init_process_group(
         backend='nccl', world_size=dist_world_size, rank=global_rank)
 
-    model_id = 'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding'
+    model_id = 'damo/multi-modal_clip-vit-large-patch14_zh'
     local_model_dir = snapshot_download(model_id)
 
     default_args = dict(

@@ -11,7 +11,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class MultiModalEmbeddingTest(unittest.TestCase):
-    model_id = 'damo/multi-modal_clip-vit-large-patch14-chinese_multi-modal-embedding'
+    model_id = 'damo/multi-modal_clip-vit-large-patch14_zh'
     test_text = {'text': '一张风景图'}
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

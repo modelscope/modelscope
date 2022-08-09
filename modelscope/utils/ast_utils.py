@@ -602,6 +602,9 @@ def load_index(force_rebuild=False):
             )
         index = file_scanner.get_files_scan_results()
         _save_index(index, file_path)
+    logger.info(
+        f'Loading done! Current index file version is {index[VERSION_KEY]}, '
+        f'with md5 {index[MD5_KEY]}')
     return index
 
 

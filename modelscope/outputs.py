@@ -161,19 +161,19 @@ TASK_OUTPUTS = {
     # human body keypoints detection result for single sample
     # {
     #   "poses": [
-    #               [x, y],
-    #               [x, y],
-    #               [x, y]
+    #               [[x, y]*15],
+    #               [[x, y]*15],
+    #               [[x, y]*15]
     #             ]
     #   "scores": [
-    #               [score],
-    #               [score],
-    #               [score],
+    #               [[score]*15],
+    #               [[score]*15],
+    #               [[score]*15]
     #              ]
     #   "boxes": [
-    #               [x1, y1, x2, y2],
-    #               [x1, y1, x2, y2],
-    #               [x1, y1, x2, y2],
+    #               [[x1, y1], [x2, y2]],
+    #               [[x1, y1], [x2, y2]],
+    #               [[x1, y1], [x2, y2]],
     #             ]
     # }
     Tasks.body_2d_keypoints:

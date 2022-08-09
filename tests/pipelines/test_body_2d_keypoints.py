@@ -3,6 +3,7 @@ import unittest
 
 import cv2
 import numpy as np
+from PIL import Image
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -68,8 +69,8 @@ class Body2DKeypointsTest(unittest.TestCase):
         self.model_id = 'damo/cv_hrnetv2w32_body-2d-keypoints_image'
         self.test_image = 'data/test/images/keypoints_detect/000000438862.jpg'
 
-    def pipeline_inference(self, pipeline: Pipeline):
-        output = pipeline(self.test_image)
+    def pipeline_inference(self, pipeline: Pipeline, pipeline_input):
+        output = pipeline(pipeline_input)
         poses = np.array(output[OutputKeys.POSES])
         scores = np.array(output[OutputKeys.SCORES])
         boxes = np.array(output[OutputKeys.BOXES])
@@ -80,11 +81,17 @@ class Body2DKeypointsTest(unittest.TestCase):
             draw_joints(image, np.array(poses[i]), np.array(scores[i]))
         cv2.imwrite('pose_keypoint.jpg', image)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_modelhub(self):
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_modelhub_with_image_file(self):
         body_2d_keypoints = pipeline(
             Tasks.body_2d_keypoints, model=self.model_id)
-        self.pipeline_inference(body_2d_keypoints)
+        self.pipeline_inference(body_2d_keypoints, self.test_image)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_modelhub_with_image_input(self):
+        body_2d_keypoints = pipeline(
+            Tasks.body_2d_keypoints, model=self.model_id)
+        self.pipeline_inference(body_2d_keypoints, Image.open(self.test_image))
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ from modelscope.models.cv.image_colorization import (DynamicUnetDeep,
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage, load_image
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -63,11 +63,11 @@ class ImageColorizationPipeline(Pipeline):
                 last_cross=True,
                 bottle=False,
                 nf_factor=2,
-            )
+            ).to(self.device)
         else:
             body = models.resnet34(pretrained=True)
             body = torch.nn.Sequential(*list(body.children())[:cut])
-            model = DynamicUnetDeep(
+            self.model = DynamicUnetDeep(
                 body,
                 n_classes=3,
                 blur=True,
@@ -78,7 +78,7 @@ class ImageColorizationPipeline(Pipeline):
                 last_cross=True,
                 bottle=False,
                 nf_factor=1.5,
-            )
+            ).to(self.device)
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
         self.model.load_state_dict(
@@ -91,10 +91,8 @@ class ImageColorizationPipeline(Pipeline):
         img = LoadImage.convert_to_img(input).convert('LA').convert('RGB')
 
         self.wide, self.height = img.size
-        if self.wide * self.height > self.size * self.size:
-            self.orig_img = img.copy()
-            img = img.resize((self.size, self.size),
-                             resample=PIL.Image.BILINEAR)
+        self.orig_img = img.copy()
+        img = img.resize((self.size, self.size), resample=PIL.Image.BILINEAR)
 
         img = self.norm(img).unsqueeze(0).to(self.device)
         result = {'img': img}

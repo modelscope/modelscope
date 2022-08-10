@@ -23,7 +23,7 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_pipeline(self):
         text = '今天北京天气怎么样？'
-        model_id = 'damo/speech_sambert-hifigan_tts_zhcn_16k'
+        model_id = 'damo/speech_sambert-hifigan_tts_zhitian_emo_zh-cn_16k'
         voice = 'zhitian_emo'
 
         sambert_hifigan_tts = pipeline(

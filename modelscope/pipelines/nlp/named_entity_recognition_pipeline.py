@@ -22,6 +22,24 @@ class NamedEntityRecognitionPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
+        """Use `model` and `preprocessor` to create a nlp NER pipeline for prediction
+
+        Args:
+            model (str or Model): Supply either a local model dir which supported NER task, or a
+            model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            sequence_length: Max sequence length in the user's custom scenario. 512 will be used as a default value.
+
+            Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> pipeline_ins = pipeline(task='named-entity-recognition',
+            >>>        model='damo/nlp_raner_named-entity-recognition_chinese-base-news')
+            >>> input = '这与温岭市新河镇的一个神秘的传说有关。'
+            >>> print(pipeline_ins(input))
+
+            To view other examples plese check the tests/pipelines/test_named_entity_recognition.py.
+        """
 
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)

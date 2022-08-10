@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.base import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -25,7 +26,11 @@ __all__ = ['TranslationPipeline']
     Tasks.translation, module_name=Pipelines.csanmt_translation)
 class TranslationPipeline(Pipeline):
 
-    def __init__(self, model: str, **kwargs):
+    def __init__(self, model: Model, **kwargs):
+        """Build a translation pipeline with a model dir or a model id in the model hub.
+
+        @param model: A Model instance.
+        """
         super().__init__(model=model)
         model = self.model.model_dir
         tf.reset_default_graph()

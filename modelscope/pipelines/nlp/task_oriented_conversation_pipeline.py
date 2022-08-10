@@ -23,11 +23,12 @@ class TaskOrientedConversationPipeline(Pipeline):
                  model: Union[SpaceForDialogModeling, str],
                  preprocessor: DialogModelingPreprocessor = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a dialog modeling pipeline for dialog response generation
+        """Use `model` and `preprocessor` to create a dialog modeling pipeline for dialog response generation
 
         Args:
-            model (SpaceForDialogModeling): a model instance
-            preprocessor (DialogModelingPreprocessor): a preprocessor instance
+            model (str or SpaceForDialogModeling): Supply either a local model dir or a model id from the model hub,
+            or a SpaceForDialogModeling instance.
+            preprocessor (DialogModelingPreprocessor): An optional preprocessor instance.
         """
         model = model if isinstance(
             model, SpaceForDialogModeling) else Model.from_pretrained(model)

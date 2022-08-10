@@ -16,6 +16,8 @@ __all__ = ['TransformerCRFForNamedEntityRecognition']
 @MODELS.register_module(
     Tasks.named_entity_recognition, module_name=Models.tcrf)
 class TransformerCRFForNamedEntityRecognition(TorchModel):
+    """This model wraps the TransformerCRF model to register into model sets.
+    """
 
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
@@ -63,6 +65,10 @@ class TransformerCRFForNamedEntityRecognition(TorchModel):
 
 
 class TransformerCRF(nn.Module):
+    """A transformer based model to NER tasks.
+
+    This model will use transformers' backbones as its backbone.
+    """
 
     def __init__(self, model_dir, num_labels, **kwargs):
         super(TransformerCRF, self).__init__()

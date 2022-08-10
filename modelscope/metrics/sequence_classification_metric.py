@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict
 
 import numpy as np
 
@@ -15,6 +15,8 @@ from .builder import METRICS, MetricKeys
     group_key=default_group, module_name=Metrics.seq_cls_metric)
 class SequenceClassificationMetric(Metric):
     """The metric computation class for sequence classification classes.
+
+    This metric class calculates accuracy for the whole input batches.
     """
 
     def __init__(self, *args, **kwargs):

@@ -74,6 +74,14 @@ def auto_load(model: Union[str, List[str]]):
 
 
 def get_model_type(model_dir):
+    """Get the model type from the configuration.
+
+    This method will try to get the 'model.type' or 'model.model_type' field from the configuration.json file.
+    If this file does not exist, the method will try to get the 'model_type' field from the config.json.
+
+    @param model_dir: The local model dir to use.
+    @return: The model type string, returns None if nothing is found.
+    """
     try:
         configuration_file = osp.join(model_dir, ModelFile.CONFIGURATION)
         config_file = osp.join(model_dir, 'config.json')
@@ -89,6 +97,16 @@ def get_model_type(model_dir):
 
 
 def parse_label_mapping(model_dir):
+    """Get the label mapping from the model dir.
+
+    This method will do:
+    1. Try to read label-id mapping from the label_mapping.json
+    2. Try to read label-id mapping from the configuration.json
+    3. Try to read label-id mapping from the config.json
+
+    @param model_dir: The local model dir to use.
+    @return: The label2id mapping if found.
+    """
     import json
     import os
     label2id = None

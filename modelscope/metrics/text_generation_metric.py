@@ -10,6 +10,8 @@ from .builder import METRICS, MetricKeys
     group_key=default_group, module_name=Metrics.text_gen_metric)
 class TextGenerationMetric(Metric):
     """The metric computation class for text generation classes.
+
+    This metric class calculates F1 of the rouge scores for the whole evaluation dataset.
     """
 
     def __init__(self):

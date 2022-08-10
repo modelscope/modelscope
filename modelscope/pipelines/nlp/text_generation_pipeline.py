@@ -19,19 +19,39 @@ class TextGenerationPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Optional[TextGenerationPreprocessor] = None,
+                 first_sequence='sentence',
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp text generation pipeline for prediction
+        """Use `model` and `preprocessor` to create a generation pipeline for prediction.
 
         Args:
-            model (PalmForTextGeneration): a model instance
-            preprocessor (TextGenerationPreprocessor): a preprocessor instance
+            model (str or Model): Supply either a local model dir which supported the text generation task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            first_sequence: The key to read the first sentence in.
+            sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
+
+            NOTE: Inputs of type 'str' are also supported. In this scenario, the 'first_sequence'
+            param will have no effect.
+
+            Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> pipeline_ins = pipeline(task='text-generation',
+            >>>    model='damo/nlp_palm2.0_text-generation_chinese-base')
+            >>> sentence1 = '本文总结了十个可穿戴产品的设计原则，而这些原则，同样也是笔者认为是这个行业最吸引人的地方：'
+            >>>     '1.为人们解决重复性问题；2.从人开始，而不是从机器开始；3.要引起注意，但不要刻意；4.提升用户能力，而不是取代'
+            >>> print(pipeline_ins(sentence1))
+            >>> # Or use the dict input:
+            >>> print(pipeline_ins({'sentence': sentence1}))
+
+            To view other examples plese check the tests/pipelines/test_text_generation.py.
         """
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TextGenerationPreprocessor(
                 model.model_dir,
-                first_sequence='sentence',
+                first_sequence=first_sequence,
                 second_sequence=None,
                 sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()

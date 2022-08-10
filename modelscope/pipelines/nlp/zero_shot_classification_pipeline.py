@@ -24,10 +24,36 @@ class ZeroShotClassificationPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: Preprocessor = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp zero-shot text classification pipeline for prediction
+        """Use `model` and `preprocessor` to create a nlp zero shot classifiction for prediction.
+
+        A zero-shot classification task is used to classify texts by prompts.
+        In a normal classification task, model may produce a positive label by the input text
+        like 'The ice cream is made of the high quality milk, it is so delicious'
+        In a zero-shot task, the sentence is converted to:
+        ['The ice cream is made of the high quality milk, it is so delicious', 'This means it is good']
+        And:
+        ['The ice cream is made of the high quality milk, it is so delicious', 'This means it is bad']
+        Then feed these sentences into the model and turn the task to a NLI task(entailment, contradiction),
+        and compare the output logits to give the original classification label.
+
+
         Args:
-            model (Model): a model instance
-            preprocessor (Preprocessor): a preprocessor instance
+            model (str or Model): Supply either a local model dir which supported the task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            sequence_length: Max sequence length in the user's custom scenario. 512 will be used as a default value.
+
+            Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> pipeline_ins = pipeline(task='zero-shot-classification',
+            >>>    model='damo/nlp_structbert_zero-shot-classification_chinese-base')
+            >>> sentence1 = '全新突破 解放军运20版空中加油机曝光'
+            >>> labels = ['文化', '体育', '娱乐', '财经', '家居', '汽车', '教育', '科技', '军事']
+            >>> template = '这篇文章的标题是{}'
+            >>> print(pipeline_ins(sentence1, candidate_labels=labels, hypothesis_template=template))
+
+            To view other examples plese check the tests/pipelines/test_zero_shot_classification.py.
         """
         assert isinstance(model, str) or isinstance(model, Model), \
             'model must be a single str or Model'

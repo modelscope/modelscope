@@ -19,6 +19,8 @@ __all__ = ['SbertForTokenClassification']
 
 
 class TokenClassification(TorchModel):
+    """A token classification base class for all the fitted token classification models.
+    """
 
     base_model_prefix: str = 'bert'
 
@@ -56,7 +58,7 @@ class TokenClassification(TorchModel):
             labels: The labels
             **kwargs: Other input params.
 
-        Returns: Loss.
+        Returns: The loss.
 
         """
         pass
@@ -92,6 +94,10 @@ class TokenClassification(TorchModel):
 @MODELS.register_module(
     Tasks.token_classification, module_name=Models.structbert)
 class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):
+    """Sbert token classification model.
+
+    Inherited from TokenClassification.
+    """
 
     supports_gradient_checkpointing = True
     _keys_to_ignore_on_load_unexpected = [r'pooler']
@@ -118,6 +124,14 @@ class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):
             labels=labels)
 
     def compute_loss(self, logits, labels, attention_mask=None, **kwargs):
+        """Compute the loss with an attention mask.
+
+        @param logits: The logits output from the classifier.
+        @param labels: The labels.
+        @param attention_mask: The attention_mask.
+        @param kwargs: Unused input args.
+        @return: The loss
+        """
         loss_fct = nn.CrossEntropyLoss()
         # Only keep active parts of the loss
         if attention_mask is not None:
@@ -132,6 +146,15 @@ class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):
 
     @classmethod
     def _instantiate(cls, **kwargs):
+        """Instantiate the model.
+
+        @param kwargs: Input args.
+                    model_dir: The model dir used to load the checkpoint and the label information.
+                    num_labels: An optional arg to tell the model how many classes to initialize.
+                                    Method will call utils.parse_label_mapping if num_labels not supplied.
+                                    If num_labels is not found, the model will use the default setting (2 classes).
+        @return: The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
+        """
         model_dir = kwargs.get('model_dir')
         num_labels = kwargs.get('num_labels')
         if num_labels is None:

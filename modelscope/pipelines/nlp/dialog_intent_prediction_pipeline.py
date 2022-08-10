@@ -23,11 +23,12 @@ class DialogIntentPredictionPipeline(Pipeline):
                  model: Union[SpaceForDialogIntent, str],
                  preprocessor: DialogIntentPredictionPreprocessor = None,
                  **kwargs):
-        """use `model` and `preprocessor` to create a dialog intent prediction pipeline
+        """Use `model` and `preprocessor` to create a dialog intent prediction pipeline
 
         Args:
-            model (SpaceForDialogIntent): a model instance
-            preprocessor (DialogIntentPredictionPreprocessor): a preprocessor instance
+            model (str or SpaceForDialogIntent): Supply either a local model dir or a model id from the model hub,
+            or a SpaceForDialogIntent instance.
+            preprocessor (DialogIntentPredictionPreprocessor): An optional preprocessor instance.
         """
         model = model if isinstance(
             model, SpaceForDialogIntent) else Model.from_pretrained(model)

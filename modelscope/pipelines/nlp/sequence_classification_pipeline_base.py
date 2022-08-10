@@ -13,11 +13,11 @@ class SequenceClassificationPipelineBase(Pipeline):
 
     def __init__(self, model: Union[Model, str], preprocessor: Preprocessor,
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+        """This is the base class for all the sequence classification sub-tasks.
 
         Args:
-            model (str or Model): a model instance
-            preprocessor (Preprocessor): a preprocessor instance
+            model (str or Model): A model instance or a model local dir or a model id in the model hub.
+            preprocessor (Preprocessor): a preprocessor instance, must not be None.
         """
         assert isinstance(model, str) or isinstance(model, Model), \
             'model must be a single str or Model'

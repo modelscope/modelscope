@@ -20,10 +20,12 @@ class SummarizationPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: [Preprocessor] = None,
                  **kwargs):
-        """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
+        """Use `model` and `preprocessor` to create a Summarization pipeline for prediction.
+
         Args:
-            model: model id on modelscope hub.
+            model (str or Model): Supply either a local model dir which supported the summarization task,
+            or a model id from the model hub, or a model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance.
         """
         super().__init__(model=model)
         assert isinstance(model, str) or isinstance(model, Model), \

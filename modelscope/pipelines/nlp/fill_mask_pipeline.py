@@ -24,11 +24,29 @@ class FillMaskPipeline(Pipeline):
                  preprocessor: Optional[Preprocessor] = None,
                  first_sequence='sentence',
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction
+        """Use `model` and `preprocessor` to create a nlp fill mask pipeline for prediction
 
         Args:
-            model (Model): a model instance
-            preprocessor (Preprocessor): a preprocessor instance
+            model (str or Model): Supply either a local model dir which supported mlm task, or a
+            mlm model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            first_sequence: The key to read the sentence in.
+            sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
+
+            NOTE: Inputs of type 'str' are also supported. In this scenario, the 'first_sequence'
+            param will have no effect.
+
+            Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> pipeline_ins = pipeline('fill-mask', model='damo/nlp_structbert_fill-mask_english-large')
+            >>> input = 'Everything in [MASK] you call reality is really [MASK] a reflection of your [MASK].'
+            >>> print(pipeline_ins(input))
+
+            NOTE2: Please pay attention to the model's special tokens.
+            If bert based model(bert, structbert, etc.) is used, the mask token is '[MASK]'.
+            If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
+            To view other examples plese check the tests/pipelines/test_fill_mask.py.
         """
         fill_mask_model = model if isinstance(
             model, Model) else Model.from_pretrained(model)

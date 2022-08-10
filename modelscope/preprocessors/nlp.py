@@ -107,10 +107,20 @@ class SequenceClassificationPreprocessor(Preprocessor):
 class NLPTokenizerPreprocessorBase(Preprocessor):
 
     def __init__(self, model_dir: str, pair: bool, mode: str, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """The NLP tokenizer preprocessor base class.
+
+        Any nlp preprocessor which uses the hf tokenizer can inherit from this class.
 
         Args:
-            model_dir (str): model path
+            model_dir (str): The local model path
+            first_sequence: The key for the first sequence
+            second_sequence: The key for the second sequence
+            label: The label key
+            label2id: An optional label2id mapping, the class will try to call utils.parse_label_mapping
+                if this mapping is not supplied.
+            pair (bool): Pair sentence input or single sentence input.
+            mode: Run this preprocessor in either 'train'/'eval'/'inference' mode
+            kwargs: These kwargs will be directly fed into the tokenizer.
         """
 
         super().__init__(**kwargs)
@@ -132,11 +142,24 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
 
     @property
     def id2label(self):
+        """Return the id2label mapping according to the label2id mapping.
+
+        @return: The id2label mapping if exists.
+        """
         if self.label2id is not None:
             return {id: label for label, id in self.label2id.items()}
         return None
 
     def build_tokenizer(self, model_dir):
+        """Build a tokenizer by the model type.
+
+        NOTE: This default implementation only returns slow tokenizer, because the fast tokenizers have a
+        multi-thread problem.
+
+        @param model_dir:  The local model dir.
+        @return: The initialized tokenizer.
+        """
+
         model_type = get_model_type(model_dir)
         if model_type in (Models.structbert, Models.gpt3, Models.palm):
             from modelscope.models.nlp.structbert import SbertTokenizer
@@ -172,6 +195,15 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         return output
 
     def parse_text_and_label(self, data):
+        """Parse the input and return the sentences and labels.
+
+        When input type is tuple or list and its size is 2:
+        If the pair param is False, data will be parsed as the first_sentence and the label,
+        else it will be parsed as the first_sentence and the second_sentence.
+
+        @param data: The input data.
+        @return: The sentences and labels tuple.
+        """
         text_a, text_b, labels = None, None, None
         if isinstance(data, str):
             text_a = data
@@ -191,6 +223,16 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         return text_a, text_b, labels
 
     def labels_to_id(self, labels, output):
+        """Turn the labels to id with the type int or float.
+
+        If the original label's type is str or int, the label2id mapping will try to convert it to the final label.
+        If the original label's type is float, or the label2id mapping does not exist,
+        the original label will be returned.
+
+        @param labels: The input labels.
+        @param output: The label id.
+        @return: The final labels.
+        """
 
         def label_can_be_mapped(label):
             return isinstance(label, str) or isinstance(label, int)
@@ -212,6 +254,8 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_sim_tokenizer)
 class PairSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in pair sentence classification.
+    """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
@@ -224,6 +268,8 @@ class PairSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_cls_tokenizer)
 class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in single sentence classification.
+    """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
@@ -236,6 +282,8 @@ class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.zero_shot_cls_tokenizer)
 class ZeroShotClassificationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in zero shot classification.
+    """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -277,6 +325,8 @@ class ZeroShotClassificationPreprocessor(NLPTokenizerPreprocessorBase):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.text_gen_tokenizer)
 class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in text generation.
+    """
 
     def __init__(self,
                  model_dir: str,
@@ -325,6 +375,8 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
 
 @PREPROCESSORS.register_module(Fields.nlp, module_name=Preprocessors.fill_mask)
 class FillMaskPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in MLM task.
+    """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
@@ -339,6 +391,8 @@ class FillMaskPreprocessor(NLPTokenizerPreprocessorBase):
     Fields.nlp,
     module_name=Preprocessors.word_segment_text_to_label_preprocessor)
 class WordSegmentationBlankSetToLabelPreprocessor(Preprocessor):
+    """The preprocessor used to turn a single sentence to a labeled token-classification dict.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -373,6 +427,8 @@ class WordSegmentationBlankSetToLabelPreprocessor(Preprocessor):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.token_cls_tokenizer)
 class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in normal token classification task.
+    """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
@@ -455,6 +511,10 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.ner_tokenizer)
 class NERPreprocessor(Preprocessor):
+    """The tokenizer preprocessor used in normal NER task.
+
+    NOTE: This preprocessor may be merged with the TokenClassificationPreprocessor in the next edition.
+    """
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -544,6 +604,8 @@ class NERPreprocessor(Preprocessor):
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.text_error_correction)
 class TextErrorCorrectionPreprocessor(Preprocessor):
+    """The preprocessor used in text correction task.
+    """
 
     def __init__(self, model_dir: str, *args, **kwargs):
         from fairseq.data import Dictionary

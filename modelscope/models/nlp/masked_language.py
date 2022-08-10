@@ -17,6 +17,10 @@ __all__ = ['BertForMaskedLM', 'StructBertForMaskedLM', 'VecoForMaskedLM']
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.structbert)
 class StructBertForMaskedLM(TorchModel, SbertForMaskedLM):
+    """Structbert for MLM model.
+
+    Inherited from structbert.SbertForMaskedLM and TorchModel, so this class can be registered into Model sets.
+    """
 
     def __init__(self, config, model_dir):
         super(TorchModel, self).__init__(model_dir)
@@ -49,6 +53,10 @@ class StructBertForMaskedLM(TorchModel, SbertForMaskedLM):
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.bert)
 class BertForMaskedLM(TorchModel, BertForMaskedLMTransformer):
+    """Bert for MLM model.
+
+    Inherited from transformers.BertForMaskedLM and TorchModel, so this class can be registered into Model sets.
+    """
 
     def __init__(self, config, model_dir):
         super(TorchModel, self).__init__(model_dir)
@@ -83,6 +91,10 @@ class BertForMaskedLM(TorchModel, BertForMaskedLMTransformer):
 
 @MODELS.register_module(Tasks.fill_mask, module_name=Models.veco)
 class VecoForMaskedLM(TorchModel, VecoForMaskedLMTransformer):
+    """Veco for MLM model.
+
+    Inherited from veco.VecoForMaskedLM and TorchModel, so this class can be registered into Model sets.
+    """
 
     def __init__(self, config, model_dir):
         super(TorchModel, self).__init__(model_dir)

@@ -18,6 +18,8 @@ __all__ = ['SbertForSequenceClassification', 'VecoForSequenceClassification']
 
 
 class SequenceClassificationBase(TorchModel):
+    """A sequence classification base class for all the fitted sequence classification models.
+    """
     base_model_prefix: str = 'bert'
 
     def __init__(self, config, model_dir):
@@ -81,6 +83,10 @@ class SequenceClassificationBase(TorchModel):
     Tasks.zero_shot_classification, module_name=Models.structbert)
 class SbertForSequenceClassification(SequenceClassificationBase,
                                      SbertPreTrainedModel):
+    """Sbert sequence classification model.
+
+    Inherited from SequenceClassificationBase.
+    """
     base_model_prefix: str = 'bert'
     supports_gradient_checkpointing = True
     _keys_to_ignore_on_load_missing = [r'position_ids']
@@ -108,6 +114,16 @@ class SbertForSequenceClassification(SequenceClassificationBase,
 
     @classmethod
     def _instantiate(cls, **kwargs):
+        """Instantiate the model.
+
+        @param kwargs: Input args.
+                    model_dir: The model dir used to load the checkpoint and the label information.
+                    num_labels: An optional arg to tell the model how many classes to initialize.
+                                    Method will call utils.parse_label_mapping if num_labels not supplied.
+                                    If num_labels is not found, the model will use the default setting (2 classes).
+        @return: The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
+        """
+
         model_dir = kwargs.get('model_dir')
         num_labels = kwargs.get('num_labels')
         if num_labels is None:
@@ -129,6 +145,12 @@ class SbertForSequenceClassification(SequenceClassificationBase,
 @MODELS.register_module(Tasks.nli, module_name=Models.veco)
 class VecoForSequenceClassification(TorchModel,
                                     VecoForSequenceClassificationTransform):
+    """Veco sequence classification model.
+
+    Inherited from VecoForSequenceClassification and TorchModel, so this class can be registered into the model set.
+    This model cannot be inherited from SequenceClassificationBase, because Veco/XlmRoberta's classification structure
+    is different.
+    """
 
     def __init__(self, config, model_dir):
         super().__init__(model_dir)
@@ -159,6 +181,16 @@ class VecoForSequenceClassification(TorchModel,
 
     @classmethod
     def _instantiate(cls, **kwargs):
+        """Instantiate the model.
+
+        @param kwargs: Input args.
+                    model_dir: The model dir used to load the checkpoint and the label information.
+                    num_labels: An optional arg to tell the model how many classes to initialize.
+                                    Method will call utils.parse_label_mapping if num_labels not supplied.
+                                    If num_labels is not found, the model will use the default setting (2 classes).
+        @return: The loaded model, which is initialized by veco.VecoForSequenceClassification.from_pretrained
+        """
+
         model_dir = kwargs.get('model_dir')
         num_labels = kwargs.get('num_labels')
         if num_labels is None:

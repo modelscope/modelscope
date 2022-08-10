@@ -38,8 +38,36 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             **kwargs):
         """Add code to adapt with nlp models.
 
+        This trainer will accept the information of labels&text keys in the cfg, and then initialize
+        the nlp models/preprocessors with this information.
+
+        Labels&text key information may be carried in the cfg like this:
+
+        >>> cfg = {
+        >>>     ...
+        >>>     "dataset": {
+        >>>         "train": {
+        >>>             "first_sequence": "text1",
+        >>>             "second_sequence": "text2",
+        >>>             "label": "label",
+        >>>             "labels": [1, 2, 3, 4]
+        >>>         }
+        >>>     }
+        >>> }
+
+
         Args:
             cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
+
+            Example:
+            >>> def cfg_modify_fn(cfg):
+            >>>     cfg.preprocessor.first_sequence= 'text1'
+            >>>     cfg.preprocessor.second_sequence='text2'
+            >>>     return cfg
+
+            To view some actual finetune examples, please check the test files listed below:
+            tests/trainers/test_finetune_sequence_classification.py
+            tests/trainers/test_finetune_token_classification.py
         """
 
         if isinstance(model, str):

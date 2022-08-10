@@ -24,8 +24,9 @@ class DialogStateTrackingPipeline(Pipeline):
         observation of dialog states tracking after many turns of open domain dialogue
 
         Args:
-            model (SpaceForDialogStateTracking): a model instance
-            preprocessor (DialogStateTrackingPreprocessor): a preprocessor instance
+            model (str or SpaceForDialogStateTracking): Supply either a local model dir or a model id
+            from the model hub, or a SpaceForDialogStateTracking instance.
+            preprocessor (DialogStateTrackingPreprocessor): An optional preprocessor instance.
         """
 
         model = model if isinstance(

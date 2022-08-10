@@ -23,12 +23,22 @@ class TextErrorCorrectionPipeline(Pipeline):
             model: Union[BartForTextErrorCorrection, str],
             preprocessor: Optional[TextErrorCorrectionPreprocessor] = None,
             **kwargs):
-        """use `model` and `preprocessor` to create a nlp text generation pipeline for prediction
+        """use `model` and `preprocessor` to create a nlp text correction pipeline.
 
         Args:
-            model (BartForTextErrorCorrection): a model instance
-            preprocessor (TextErrorCorrectionPreprocessor): a preprocessor instance
+            model (BartForTextErrorCorrection): A model instance, or a model local dir, or a model id in the model hub.
+            preprocessor (TextErrorCorrectionPreprocessor): An optional preprocessor instance.
+
+        Example:
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_ins = pipeline(
+        >>>    task='text-error-correction', model='damo/nlp_bart_text-error-correction_chinese')
+        >>> sentence1 = '随着中国经济突飞猛近，建造工业与日俱增'
+        >>> print(pipeline_ins(sentence1))
+
+        To view other examples plese check the tests/pipelines/test_text_error_correction.py.
         """
+
         model = model if isinstance(
             model,
             BartForTextErrorCorrection) else Model.from_pretrained(model)

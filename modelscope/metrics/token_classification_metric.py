@@ -14,8 +14,10 @@ from .builder import METRICS, MetricKeys
 @METRICS.register_module(
     group_key=default_group, module_name=Metrics.token_cls_metric)
 class TokenClassificationMetric(Metric):
-    """
-    The metric computation class for token-classification task.
+    """The metric computation class for token-classification task.
+
+    This metric class uses seqeval to calculate the scores.
+
     Args:
         return_entity_level_metrics (bool, *optional*):
             Whether to return every label's detail metrics, default False.

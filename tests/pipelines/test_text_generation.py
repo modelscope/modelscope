@@ -32,7 +32,7 @@ class TextGenerationTest(unittest.TestCase):
 
         self.gpt3_base_model_id = 'damo/nlp_gpt3_text-generation_chinese-base'
         self.gpt3_large_model_id = 'damo/nlp_gpt3_text-generation_chinese-large'
-        self.gpt3_input = '我很好奇'
+        self.gpt3_input = '《故乡》。深蓝的天空中挂着一轮金黄的圆月，下面是海边的沙地，'
 
     def run_pipeline_with_model_instance(self, model_id, input):
         model = Model.from_pretrained(model_id)

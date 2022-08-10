@@ -48,6 +48,8 @@ class GPT3ForTextGeneration(TorchModel):
             attention_mask = input['attention_mask']
             input_ids = input_ids[0][attention_mask[0].nonzero()] \
                 .squeeze().unsqueeze(0)
+        # remove sep token at the end of tokenizer output
+        input_ids = input_ids[:, :-1]
 
         gen_params = dict()
         gen_params['inputs'] = input_ids

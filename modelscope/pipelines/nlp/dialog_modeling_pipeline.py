@@ -11,13 +11,12 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
 
-__all__ = ['TaskOrientedConversationPipeline']
+__all__ = ['DialogModelingPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.task_oriented_conversation,
-    module_name=Pipelines.task_oriented_conversation)
-class TaskOrientedConversationPipeline(Pipeline):
+    Tasks.task_oriented_conversation, module_name=Pipelines.dialog_modeling)
+class DialogModelingPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[SpaceForDialogModeling, str],
@@ -51,6 +50,6 @@ class TaskOrientedConversationPipeline(Pipeline):
             inputs['resp'])
         assert len(sys_rsp) > 2
         sys_rsp = sys_rsp[1:len(sys_rsp) - 1]
-        inputs[OutputKeys.RESPONSE] = sys_rsp
+        inputs[OutputKeys.OUTPUT] = sys_rsp
 
         return inputs

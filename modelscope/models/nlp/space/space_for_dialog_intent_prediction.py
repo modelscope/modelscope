@@ -16,7 +16,7 @@ __all__ = ['SpaceForDialogIntent']
 
 
 @MODELS.register_module(
-    Tasks.dialog_intent_prediction, module_name=Models.space)
+    Tasks.task_oriented_conversation, module_name=Models.space_intent)
 class SpaceForDialogIntent(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

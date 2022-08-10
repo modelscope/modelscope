@@ -13,7 +13,8 @@ __all__ = ['DialogStateTrackingPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.dialog_state_tracking, module_name=Pipelines.dialog_state_tracking)
+    Tasks.task_oriented_conversation,
+    module_name=Pipelines.dialog_state_tracking)
 class DialogStateTrackingPipeline(Pipeline):
 
     def __init__(self,
@@ -63,7 +64,7 @@ class DialogStateTrackingPipeline(Pipeline):
                                 _outputs[5], unique_ids, input_ids_unmasked,
                                 values, inform, prefix, ds)
 
-        return {OutputKeys.DIALOG_STATES: ds}
+        return {OutputKeys.OUTPUT: ds}
 
 
 def predict_and_format(config, tokenizer, features, per_slot_class_logits,

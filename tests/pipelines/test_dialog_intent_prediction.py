@@ -20,7 +20,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
-        cache_path = snapshot_download(self.model_id)
+        cache_path = snapshot_download(self.model_id, revision='update')
         preprocessor = DialogIntentPredictionPreprocessor(model_dir=cache_path)
         model = SpaceForDialogIntent(
             model_dir=cache_path,
@@ -31,7 +31,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
             DialogIntentPredictionPipeline(
                 model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_intent_prediction,
+                task=Tasks.task_oriented_conversation,
                 model=model,
                 preprocessor=preprocessor)
         ]
@@ -41,7 +41,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(self.model_id)
+        model = Model.from_pretrained(self.model_id, revision='update')
         preprocessor = DialogIntentPredictionPreprocessor(
             model_dir=model.model_dir)
 
@@ -49,7 +49,7 @@ class DialogIntentPredictionTest(unittest.TestCase):
             DialogIntentPredictionPipeline(
                 model=model, preprocessor=preprocessor),
             pipeline(
-                task=Tasks.dialog_intent_prediction,
+                task=Tasks.task_oriented_conversation,
                 model=model,
                 preprocessor=preprocessor)
         ]
@@ -60,14 +60,11 @@ class DialogIntentPredictionTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipelines = [
-            pipeline(task=Tasks.dialog_intent_prediction, model=self.model_id)
+            pipeline(
+                task=Tasks.task_oriented_conversation,
+                model=self.model_id,
+                model_revision='update')
         ]
-        for my_pipeline, item in list(zip(pipelines, self.test_case)):
-            print(my_pipeline(item))
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_default_model(self):
-        pipelines = [pipeline(task=Tasks.dialog_intent_prediction)]
         for my_pipeline, item in list(zip(pipelines, self.test_case)):
             print(my_pipeline(item))
 

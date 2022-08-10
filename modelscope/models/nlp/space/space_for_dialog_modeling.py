@@ -16,7 +16,7 @@ __all__ = ['SpaceForDialogModeling']
 
 
 @MODELS.register_module(
-    Tasks.task_oriented_conversation, module_name=Models.space)
+    Tasks.task_oriented_conversation, module_name=Models.space_modeling)
 class SpaceForDialogModeling(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -34,8 +34,10 @@ class SpaceForDialogModeling(TorchModel):
             Config.from_file(
                 os.path.join(self.model_dir, ModelFile.CONFIGURATION)))
 
-        self.config.use_gpu = True if 'device' not in kwargs or kwargs[
-            'device'] == 'gpu' else False
+        import torch
+        self.config.use_gpu = True if (
+            'device' not in kwargs or kwargs['device']
+            == 'gpu') and torch.cuda.is_available() else False
 
         self.text_field = kwargs.pop(
             'text_field',

@@ -320,7 +320,7 @@ TASK_OUTPUTS = {
     Tasks.fill_mask: [OutputKeys.TEXT],
 
     # (Deprecated) dialog intent prediction result for single sample
-    # {'pred': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
+    # {'output': {'prediction': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
     #        1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04,
     #        6.45841064e-05, 1.15997791e-04, 5.11605394e-05, 9.87020373e-01,
     #        2.66957268e-05, 4.72324500e-05, 9.74208378e-05, 4.18022355e-05,
@@ -339,50 +339,49 @@ TASK_OUTPUTS = {
     #        3.61441926e-05, 3.38475402e-05, 3.44323053e-05, 5.70138109e-05,
     #        4.31488479e-05, 4.94503947e-05, 4.30105974e-05, 1.00963116e-04,
     #        2.82062047e-05, 1.15582036e-04, 4.48261271e-05, 3.99339879e-05,
-    #        7.27692823e-05], dtype=float32), 'label_pos': array([11]), 'label': 'lost_or_stolen_card'}
-    Tasks.dialog_intent_prediction:
-    [OutputKeys.PREDICTION, OutputKeys.LABEL_POS, OutputKeys.LABEL],
+    #        7.27692823e-05], dtype=float32), 'label_pos': array([11]), 'label': 'lost_or_stolen_card'}}
 
     # (Deprecated) dialog modeling prediction result for single sample
-    # sys : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']
-    Tasks.task_oriented_conversation: [OutputKeys.RESPONSE],
+    # {'output' : ['you', 'are', 'welcome', '.', 'have', 'a', 'great', 'day', '!']}
 
     # (Deprecated) dialog state tracking result for single sample
     # {
-    #     "dialog_states": {
-    #         "taxi-leaveAt": "none",
-    #         "taxi-destination": "none",
-    #         "taxi-departure": "none",
-    #         "taxi-arriveBy": "none",
-    #         "restaurant-book_people": "none",
-    #         "restaurant-book_day": "none",
-    #         "restaurant-book_time": "none",
-    #         "restaurant-food": "none",
-    #         "restaurant-pricerange": "none",
-    #         "restaurant-name": "none",
-    #         "restaurant-area": "none",
-    #         "hotel-book_people": "none",
-    #         "hotel-book_day": "none",
-    #         "hotel-book_stay": "none",
-    #         "hotel-name": "none",
-    #         "hotel-area": "none",
-    #         "hotel-parking": "none",
-    #         "hotel-pricerange": "cheap",
-    #         "hotel-stars": "none",
-    #         "hotel-internet": "none",
-    #         "hotel-type": "true",
-    #         "attraction-type": "none",
-    #         "attraction-name": "none",
-    #         "attraction-area": "none",
-    #         "train-book_people": "none",
-    #         "train-leaveAt": "none",
-    #         "train-destination": "none",
-    #         "train-day": "none",
-    #         "train-arriveBy": "none",
-    #         "train-departure": "none"
+    #     "output":{
+    #         "dialog_states": {
+    #             "taxi-leaveAt": "none",
+    #             "taxi-destination": "none",
+    #             "taxi-departure": "none",
+    #             "taxi-arriveBy": "none",
+    #             "restaurant-book_people": "none",
+    #             "restaurant-book_day": "none",
+    #             "restaurant-book_time": "none",
+    #             "restaurant-food": "none",
+    #             "restaurant-pricerange": "none",
+    #             "restaurant-name": "none",
+    #             "restaurant-area": "none",
+    #             "hotel-book_people": "none",
+    #             "hotel-book_day": "none",
+    #             "hotel-book_stay": "none",
+    #             "hotel-name": "none",
+    #             "hotel-area": "none",
+    #             "hotel-parking": "none",
+    #             "hotel-pricerange": "cheap",
+    #             "hotel-stars": "none",
+    #             "hotel-internet": "none",
+    #             "hotel-type": "true",
+    #             "attraction-type": "none",
+    #             "attraction-name": "none",
+    #             "attraction-area": "none",
+    #             "train-book_people": "none",
+    #             "train-leaveAt": "none",
+    #             "train-destination": "none",
+    #             "train-day": "none",
+    #             "train-arriveBy": "none",
+    #             "train-departure": "none"
+    #         }
     #     }
     # }
-    Tasks.dialog_state_tracking: [OutputKeys.DIALOG_STATES],
+    Tasks.task_oriented_conversation: [OutputKeys.OUTPUT],
 
     # ============ audio tasks ===================
     # asr result for single sample

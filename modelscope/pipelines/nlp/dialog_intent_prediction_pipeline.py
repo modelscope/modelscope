@@ -15,7 +15,7 @@ __all__ = ['DialogIntentPredictionPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.dialog_intent_prediction,
+    Tasks.task_oriented_conversation,
     module_name=Pipelines.dialog_intent_prediction)
 class DialogIntentPredictionPipeline(Pipeline):
 
@@ -50,10 +50,10 @@ class DialogIntentPredictionPipeline(Pipeline):
         pred = inputs['pred']
         pos = np.where(pred == np.max(pred))
 
-        result = {
-            OutputKeys.PREDICTION: pred,
-            OutputKeys.LABEL_POS: pos[0],
-            OutputKeys.LABEL: self.categories[pos[0][0]]
+        return {
+            OutputKeys.OUTPUT: {
+                OutputKeys.PREDICTION: pred,
+                OutputKeys.LABEL_POS: pos[0],
+                OutputKeys.LABEL: self.categories[pos[0][0]]
+            }
         }
-
-        return result

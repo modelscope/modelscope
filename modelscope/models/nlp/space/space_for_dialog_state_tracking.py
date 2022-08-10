@@ -9,7 +9,8 @@ from modelscope.utils.constant import Tasks
 __all__ = ['SpaceForDialogStateTracking']
 
 
-@MODELS.register_module(Tasks.dialog_state_tracking, module_name=Models.space)
+@MODELS.register_module(
+    Tasks.task_oriented_conversation, module_name=Models.space_dst)
 class SpaceForDialogStateTracking(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

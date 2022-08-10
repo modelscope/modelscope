@@ -5,14 +5,15 @@ from typing import List
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SpaceForDialogModeling
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import TaskOrientedConversationPipeline
+from modelscope.pipelines.nlp import DialogModelingPipeline
 from modelscope.preprocessors import DialogModelingPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class TaskOrientedConversationTest(unittest.TestCase):
+class DialogModelingTest(unittest.TestCase):
     model_id = 'damo/nlp_space_dialog-modeling'
     test_case = {
         'sng0073': {
@@ -92,23 +93,25 @@ class TaskOrientedConversationTest(unittest.TestCase):
     }
 
     def generate_and_print_dialog_response(
-            self, pipelines: List[TaskOrientedConversationPipeline]):
+            self, pipelines: List[DialogModelingPipeline]):
 
         result = {}
+        pipeline_len = len(pipelines)
         for step, item in enumerate(self.test_case['sng0073']['log']):
             user = item['user']
             print('user: {}'.format(user))
 
-            result = pipelines[step % 2]({
+            result = pipelines[step % pipeline_len]({
                 'user_input': user,
                 'history': result
             })
-            print('response : {}'.format(result['response']))
+            print('response : {}'.format(result[OutputKeys.OUTPUT]))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
 
-        cache_path = snapshot_download(self.model_id)
+        cache_path = snapshot_download(
+            self.model_id, revision='task_oriented_conversation')
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
         model = SpaceForDialogModeling(
@@ -116,27 +119,18 @@ class TaskOrientedConversationTest(unittest.TestCase):
             text_field=preprocessor.text_field,
             config=preprocessor.config)
         pipelines = [
-            TaskOrientedConversationPipeline(
-                model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.task_oriented_conversation,
-                model=model,
-                preprocessor=preprocessor)
+            DialogModelingPipeline(model=model, preprocessor=preprocessor)
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(self.model_id)
+        model = Model.from_pretrained(
+            self.model_id, revision='task_oriented_conversation')
         preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)
 
         pipelines = [
-            TaskOrientedConversationPipeline(
-                model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.task_oriented_conversation,
-                model=model,
-                preprocessor=preprocessor)
+            DialogModelingPipeline(model=model, preprocessor=preprocessor)
         ]
 
         self.generate_and_print_dialog_response(pipelines)
@@ -145,17 +139,18 @@ class TaskOrientedConversationTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipelines = [
             pipeline(
-                task=Tasks.task_oriented_conversation, model=self.model_id),
-            pipeline(
-                task=Tasks.task_oriented_conversation, model=self.model_id)
+                task=Tasks.task_oriented_conversation,
+                model=self.model_id,
+                model_revision='task_oriented_conversation')
         ]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipelines = [
-            pipeline(task=Tasks.task_oriented_conversation),
-            pipeline(task=Tasks.task_oriented_conversation)
+            pipeline(
+                task=Tasks.task_oriented_conversation,
+                model_revision='task_oriented_conversation')
         ]
         self.generate_and_print_dialog_response(pipelines)
 

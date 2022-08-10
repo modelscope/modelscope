@@ -47,6 +47,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
 
+    # ocr recognition result for single sample
+    # {
+    #    "text": "电子元器件提供BOM配单"
+    # }
+    Tasks.ocr_recognition: [OutputKeys.TEXT],
+
     # face detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]

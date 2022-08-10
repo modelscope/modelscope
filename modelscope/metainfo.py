@@ -101,6 +101,7 @@ class Pipelines(object):
     image2image_translation = 'image-to-image-translation'
     live_category = 'live-category'
     video_category = 'video-category'
+    ocr_recognition = 'convnextTiny-ocr-recognition'
     image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'

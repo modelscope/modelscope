@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import PIL
 import torch
+import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 from scipy.spatial.distance import pdist, squareform
 
@@ -118,7 +119,7 @@ class ImagePortraitEnhancementPipeline(Pipeline):
         img_t = torch.from_numpy(img).to(self.device) / 255.
         if is_norm:
             img_t = (img_t - 0.5) / 0.5
-        img_t = img_t.permute(2, 0, 1).unsqueeze(0).flip(1)  # BGR->RGB
+        img_t = img_t.permute(2, 0, 1).unsqueeze(0)
         return img_t
 
     def tensor2img(self, img_t, pmax=255.0, is_denorm=True, imtype=np.uint8):
@@ -129,19 +130,46 @@ class ImagePortraitEnhancementPipeline(Pipeline):
 
         return img_np.astype(imtype)
 
+    def sr_process(self, img):
+        img = img.astype(np.float32) / 255.
+        img = torch.from_numpy(np.transpose(img, (2, 0, 1))).float()
+        img = img.unsqueeze(0).to(self.device)
+
+        if self.scale == 2:
+            mod_scale = 2
+        elif self.scale == 1:
+            mod_scale = 4
+        else:
+            mod_scale = None
+        if mod_scale is not None:
+            h_pad, w_pad = 0, 0
+            _, _, h, w = img.size()
+            if (h % mod_scale != 0):
+                h_pad = (mod_scale - h % mod_scale)
+            if (w % mod_scale != 0):
+                w_pad = (mod_scale - w % mod_scale)
+            img = F.pad(img, (0, w_pad, 0, h_pad), 'reflect')
+
+        self.sr_model.eval()
+        with torch.no_grad():
+            output = self.sr_model(img)
+            del img
+            # remove extra pad
+            if mod_scale is not None:
+                _, _, h, w = output.size()
+                output = output[:, :, 0:h - h_pad, 0:w - w_pad]
+            output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
+            output = (output * 255.0).round().astype(np.uint8)
+
+        return output
+
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)
 
-        img_sr = None
+        img_sr = img
         if self.use_sr:
-            self.sr_model.eval()
-            with torch.no_grad():
-                img_t = self.img2tensor(img, is_norm=False)
-                img_out = self.sr_model(img_t)
-
-            img_sr = img_out.squeeze(0).permute(1, 2, 0).flip(2).cpu().clamp_(
-                0, 1).numpy()
-            img_sr = (img_sr * 255.0).round().astype(np.uint8)
+            img_sr = self.sr_process(img)
 
             img = cv2.resize(img, img_sr.shape[:2][::-1])
 
@@ -160,7 +188,6 @@ class ImagePortraitEnhancementPipeline(Pipeline):
         for i, (faceb, facial5points) in enumerate(zip(facebs, landms)):
             if faceb[4] < self.threshold:
                 continue
-            # fh, fw = (faceb[3] - faceb[1]), (faceb[2] - faceb[0])
 
             facial5points = np.reshape(facial5points, (2, 5))
 
@@ -183,14 +210,6 @@ class ImagePortraitEnhancementPipeline(Pipeline):
             dist = squareform(pdist([fea_o, fea_e], 'cosine')).mean()
             if dist > self.id_thres:
                 continue
-
-            # blending parameter
-            fq = max(1., (fq_o - self.fqa_thres))
-            fq = (1 - 2 * dist) * (1.0 / (1 + math.exp(-(2 * fq - 1))))
-
-            # blend face
-            ef = cv2.addWeighted(ef, fq * self.alpha, of, 1 - fq * self.alpha,
-                                 0.0)
 
             tmp_mask = self.mask
             tmp_mask = cv2.resize(tmp_mask, ef.shape[:2])

@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import PIL
 import torch
+import torch.nn.functional as F
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.super_resolution import RRDBNet
@@ -32,6 +33,7 @@ class ImageSuperResolutionPipeline(Pipeline):
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
+
         self.num_feat = 64
         self.num_block = 23
         self.scale = 4
@@ -58,13 +60,35 @@ class ImageSuperResolutionPipeline(Pipeline):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         self.sr_model.eval()
+
+        img = input['img']
+        if self.scale == 2:
+            mod_scale = 2
+        elif self.scale == 1:
+            mod_scale = 4
+        else:
+            mod_scale = None
+        if mod_scale is not None:
+            h_pad, w_pad = 0, 0
+            _, _, h, w = img.size()
+            if (h % mod_scale != 0):
+                h_pad = (mod_scale - h % mod_scale)
+            if (w % mod_scale != 0):
+                w_pad = (mod_scale - w % mod_scale)
+            img = F.pad(img, (0, w_pad, 0, h_pad), 'reflect')
+
         with torch.no_grad():
-            out = self.sr_model(input['img'])
+            output = self.sr_model(img)
+            del img
+            # remove extra pad
+            if mod_scale is not None:
+                _, _, h, w = output.size()
+                output = output[:, :, 0:h - h_pad, 0:w - w_pad]
+            output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
+            output = (output * 255.0).round().astype(np.uint8)
 
-        out = out.squeeze(0).permute(1, 2, 0).flip(2)
-        out_img = np.clip(out.float().cpu().numpy(), 0, 1) * 255
-
-        return {OutputKeys.OUTPUT_IMG: out_img.astype(np.uint8)}
+        return {OutputKeys.OUTPUT_IMG: output}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

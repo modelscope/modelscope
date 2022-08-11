@@ -12,6 +12,7 @@ from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.logger.base import LoggerHook
 from modelscope.utils.constant import LogKeys, ModeKeys
+from modelscope.utils.json_utils import EnhancedEncoder
 from modelscope.utils.torch_utils import get_dist_info, is_master
 
 
@@ -23,7 +24,7 @@ class TextLoggerHook(LoggerHook):
         by_epoch (bool, optional): Whether EpochBasedtrainer is used.
             Default: True.
         interval (int, optional): Logging interval (every k iterations).
-            Default: 10.
+            It is interval of iterations even by_epoch is true. Default: 10.
         ignore_last (bool, optional): Ignore the log of last iterations in each
             epoch if less than :attr:`interval`. Default: True.
         reset_flag (bool, optional): Whether to clear the output buffer after
@@ -142,7 +143,7 @@ class TextLoggerHook(LoggerHook):
 
         if is_master():
             with open(self.json_log_path, 'a+') as f:
-                json.dump(json_log, f)
+                json.dump(json_log, f, cls=EnhancedEncoder)
                 f.write('\n')
 
     def _round_float(self, items, ndigits=5):

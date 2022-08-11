@@ -15,7 +15,7 @@ class LoggerHook(Hook):
     """Base class for logger hooks.
 
     Args:
-        interval (int): Logging interval (every k iterations).
+        interval (int): Logging interval (every k iterations). It is interval of iterations even by_epoch is true.
         ignore_last (bool): Ignore the log of last iterations in each epoch
             if less than `interval`.
         reset_flag (bool): Whether to clear the output buffer after logging.

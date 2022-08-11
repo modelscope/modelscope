@@ -64,3 +64,6 @@ class ConversationalTextToSqlPipeline(Pipeline):
         sql = Example.evaluator.obtain_sql(inputs['predict'][0], inputs['db'])
         result = {OutputKeys.TEXT: sql}
         return result
+
+    def _collate_fn(self, data):
+        return data

@@ -30,6 +30,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         """use `model` and `preprocessor` to create an asr pipeline for prediction
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model_cfg = self.model.forward()
 
     def __call__(self,
                  audio_in: Union[str, bytes],
@@ -49,16 +50,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 recog_type=recog_type,
                 audio_format=audio_format)
 
-        if hasattr(asr_utils, 'sample_rate_checking'):
+        if hasattr(asr_utils, 'sample_rate_checking') and audio_fs is None:
             self.audio_fs = asr_utils.sample_rate_checking(
                 self.audio_in, self.audio_format)
 
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
 
-        output = self.preprocessor.forward(self.model.forward(),
-                                           self.recog_type, self.audio_format,
-                                           self.audio_in, self.audio_fs)
+        output = self.preprocessor.forward(self.model_cfg, self.recog_type,
+                                           self.audio_format, self.audio_in,
+                                           self.audio_fs)
         output = self.forward(output)
         rst = self.postprocess(output)
         return rst
@@ -198,8 +199,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
             for line in lines:
                 line_item = line.split(None, 1)
-                item = {'key': line_item[0], 'value': line_item[1].strip('\n')}
-                ref_list.append(item)
+                if len(line_item) > 1:
+                    item = {
+                        'key': line_item[0],
+                        'value': line_item[1].strip('\n')
+                    }
+                    ref_list.append(item)
 
         return ref_list
 

@@ -389,6 +389,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.task_oriented_conversation: [OutputKeys.OUTPUT],
 
+    # conversational text-to-sql result for single sample
+    # {
+    #   "text": "SELECT shop.Name FROM shop."
+    # }
+    Tasks.conversational_text_to_sql: [OutputKeys.TEXT],
+
     # ============ audio tasks ===================
     # asr result for single sample
     # { "text": "每一天都要快乐喔"}

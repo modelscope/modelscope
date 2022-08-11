@@ -17,12 +17,14 @@ if TYPE_CHECKING:
     from .space import SpaceForDialogIntent
     from .space import SpaceForDialogModeling
     from .space import SpaceForDialogStateTracking
+    from .star_text_to_sql import StarForTextToSql
     from .task_models.task_model import SingleBackboneTaskModelBase
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
 
 else:
     _import_structure = {
+        'star_text_to_sql': ['StarForTextToSql'],
         'backbones': ['SbertModel'],
         'heads': ['SequenceClassificationHead'],
         'csanmt_for_translation': ['CsanmtForTranslation'],

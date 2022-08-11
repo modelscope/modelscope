@@ -29,6 +29,7 @@ class Models(object):
     space_dst = 'space-dst'
     space_intent = 'space-intent'
     space_modeling = 'space-modeling'
+    star = 'star'
     tcrf = 'transformer-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
@@ -123,6 +124,7 @@ class Pipelines(object):
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'
+    conversational_text_to_sql = 'conversational-text-to-sql'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -201,6 +203,7 @@ class Preprocessors(object):
     text_error_correction = 'text-error-correction'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
+    conversational_text_to_sql = 'conversational-text-to-sql'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

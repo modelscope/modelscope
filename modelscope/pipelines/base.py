@@ -239,6 +239,7 @@ class Pipeline(ABC):
         """
         from torch.utils.data.dataloader import default_collate
         from modelscope.preprocessors import InputFeatures
+        from text2sql_lgesql.utils.batch import Batch
         if isinstance(data, dict) or isinstance(data, Mapping):
             return type(data)(
                 {k: self._collate_fn(v)
@@ -258,6 +259,8 @@ class Pipeline(ABC):
         elif isinstance(data, (str, int, float, bool, type(None))):
             return data
         elif isinstance(data, InputFeatures):
+            return data
+        elif isinstance(data, Batch):
             return data
         else:
             import mmcv

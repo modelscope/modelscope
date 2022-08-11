@@ -6,5 +6,6 @@ pai-easynlp
 rouge_score<=0.0.4
 seqeval
 spacy>=2.3.5
+text2sql_lgesql
 tokenizers
 transformers>=4.12.0

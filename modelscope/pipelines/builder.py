@@ -50,6 +50,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_structbert_zero-shot-classification_chinese-base'),
     Tasks.task_oriented_conversation: (Pipelines.dialog_modeling,
                                        'damo/nlp_space_dialog-modeling'),
+    Tasks.dialog_state_tracking: (Pipelines.dialog_state_tracking,
+                                  'damo/nlp_space_dialog-state-tracking'),
+    Tasks.conversational_text_to_sql:
+    (Pipelines.conversational_text_to_sql,
+     'damo/nlp_star_conversational-text-to-sql'),
     Tasks.text_error_correction:
     (Pipelines.text_error_correction,
      'damo/nlp_bart_text-error-correction_chinese'),

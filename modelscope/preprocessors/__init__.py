@@ -27,6 +27,7 @@ if TYPE_CHECKING:
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
     from .video import ReadVideoData
+    from .star import ConversationalTextToSqlPreprocessor
 
 else:
     _import_structure = {
@@ -55,6 +56,7 @@ else:
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'
         ],
+        'star': ['ConversationalTextToSqlPreprocessor'],
     }
 
     import sys

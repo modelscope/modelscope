@@ -6,11 +6,13 @@ from typing import Dict, Optional, Union
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
+from .constants import FILE_HASH
 from .errors import NotExistError
 from .file_download import (get_file_download_url, http_get_file,
                             http_user_agent)
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import get_cache_dir, model_id_to_group_owner_name
+from .utils.utils import (file_integrity_validation, get_cache_dir,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -127,9 +129,11 @@ def snapshot_download(model_id: str,
                     file_name=model_file['Name'],
                     headers=headers,
                     cookies=cookies)
+                # check file integrity
+                temp_file = os.path.join(temp_cache_dir, model_file['Name'])
+                if FILE_HASH in model_file:
+                    file_integrity_validation(temp_file, model_file[FILE_HASH])
                 # put file to cache
-                cache.put_file(
-                    model_file, os.path.join(temp_cache_dir,
-                                             model_file['Name']))
+                cache.put_file(model_file, temp_file)
 
         return os.path.join(cache.get_root_location())

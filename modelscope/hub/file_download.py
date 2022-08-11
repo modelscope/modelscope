@@ -16,10 +16,11 @@ from modelscope import __version__
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
-from .errors import NotExistError
+from .constants import FILE_HASH
+from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import (get_cache_dir, get_endpoint,
-                          model_id_to_group_owner_name)
+from .utils.utils import (file_integrity_validation, get_cache_dir,
+                          get_endpoint, model_id_to_group_owner_name)
 
 SESSION_ID = uuid4().hex
 logger = get_logger()
@@ -143,24 +144,29 @@ def model_file_download(
     # we need to download again
     url_to_download = get_file_download_url(model_id, file_path, revision)
     file_to_download_info = {
-        'Path': file_path,
+        'Path':
+        file_path,
         'Revision':
-        revision if is_commit_id else file_to_download_info['Revision']
+        revision if is_commit_id else file_to_download_info['Revision'],
+        FILE_HASH:
+        None if (is_commit_id or FILE_HASH not in file_to_download_info) else
+        file_to_download_info[FILE_HASH]
     }
-    # Prevent parallel downloads of the same file with a lock.
-    lock_path = cache.get_root_location() + '.lock'
 
-    with FileLock(lock_path):
-        temp_file_name = next(tempfile._get_candidate_names())
-        http_get_file(
-            url_to_download,
-            temporary_cache_dir,
-            temp_file_name,
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict())
-        return cache.put_file(
-            file_to_download_info,
-            os.path.join(temporary_cache_dir, temp_file_name))
+    temp_file_name = next(tempfile._get_candidate_names())
+    http_get_file(
+        url_to_download,
+        temporary_cache_dir,
+        temp_file_name,
+        headers=headers,
+        cookies=None if cookies is None else cookies.get_dict())
+    temp_file_path = os.path.join(temporary_cache_dir, temp_file_name)
+    # for download with commit we can't get Sha256
+    if file_to_download_info[FILE_HASH] is not None:
+        file_integrity_validation(temp_file_path,
+                                  file_to_download_info[FILE_HASH])
+    return cache.put_file(file_to_download_info,
+                          os.path.join(temporary_cache_dir, temp_file_name))
 
 
 def http_user_agent(user_agent: Union[Dict, str, None] = None, ) -> str:
@@ -222,6 +228,7 @@ def http_get_file(
             http headers to carry necessary info when requesting the remote file
 
     """
+    total = -1
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
 
@@ -250,4 +257,12 @@ def http_get_file(
         progress.close()
 
     logger.info('storing %s in cache at %s', url, local_dir)
+    downloaded_length = os.path.getsize(temp_file.name)
+    if total != downloaded_length:
+        os.remove(temp_file.name)
+        msg = 'File %s download incomplete, content_length: %s but the \
+                    file downloaded length: %s, please download again' % (
+            file_name, total, downloaded_length)
+        logger.error(msg)
+        raise FileDownloadError(msg)
     os.replace(temp_file.name, os.path.join(local_dir, file_name))

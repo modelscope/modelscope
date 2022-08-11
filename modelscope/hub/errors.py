@@ -23,6 +23,14 @@ class NotLoginException(Exception):
     pass
 
 
+class FileIntegrityError(Exception):
+    pass
+
+
+class FileDownloadError(Exception):
+    pass
+
+
 def is_ok(rsp):
     """ Check the request is ok
 

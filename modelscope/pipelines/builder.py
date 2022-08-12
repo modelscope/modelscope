@@ -128,6 +128,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_convnextTiny_ocr-recognition_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
+    Tasks.crowd_counting: (Pipelines.crowd_counting,
+                           'damo/cv_hrnet_crowd-counting_dcanet'),
 }
 
 

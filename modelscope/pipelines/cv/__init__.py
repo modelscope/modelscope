@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
+    from .crowd_counting_pipeline import CrowdCountingPipeline
     from .image_detection_pipeline import ImageDetectionPipeline
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
@@ -40,6 +41,7 @@ else:
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
+        'crowd_counting_pipeline': ['CrowdCountingPipeline'],
         'image_detection_pipeline': ['ImageDetectionPipeline'],
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],

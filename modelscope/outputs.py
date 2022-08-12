@@ -132,6 +132,8 @@ TASK_OUTPUTS = {
     # image matting result for single sample
     # {
     #   "output_img": np.array with shape(h, w, 4)
+    #                 for matting or (h, w, 3) for general purpose
+    #                 , shape(h, w) for crowd counting
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
 
@@ -143,6 +145,7 @@ TASK_OUTPUTS = {
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
+    Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
 
     # image generation task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}

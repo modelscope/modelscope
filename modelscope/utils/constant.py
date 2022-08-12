@@ -60,6 +60,7 @@ class CVTasks(object):
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
+    crowd_counting = 'crowd-counting'
 
 
 class NLPTasks(object):

@@ -19,6 +19,7 @@ class Models(object):
     gpen = 'gpen'
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
+    crowd_counting = 'HRNetCrowdCounting'
 
     # nlp models
     bert = 'bert'
@@ -107,6 +108,7 @@ class Pipelines(object):
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
+    crowd_counting = 'hrnet-crowd-counting'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

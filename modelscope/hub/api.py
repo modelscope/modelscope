@@ -190,7 +190,8 @@ class HubApi:
         r = requests.put(
             path,
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
-            (owner_or_group, page_number, page_size))
+            (owner_or_group, page_number, page_size),
+            cookies=cookies)
         handle_http_response(r, logger, cookies, 'list_model')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):

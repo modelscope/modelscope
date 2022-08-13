@@ -45,8 +45,8 @@ class FQA(object):
         model.load_state_dict(model_dict)
 
     def get_face_quality(self, img):
-        img = torch.from_numpy(img).permute(2, 0,
-                                            1).unsqueeze(0).flip(1).cuda()
+        img = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).flip(1).to(
+            self.device)
         img = (img - 127.5) / 128.0
 
         # extract features & predict quality

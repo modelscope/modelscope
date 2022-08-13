@@ -36,7 +36,6 @@ class ImageColorizationPipeline(Pipeline):
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
-            self.size = 1024
 
         self.orig_img = None
         self.model_type = 'stable'
@@ -91,6 +90,8 @@ class ImageColorizationPipeline(Pipeline):
         img = LoadImage.convert_to_img(input).convert('LA').convert('RGB')
 
         self.wide, self.height = img.size
+        if self.wide * self.height < 100000:
+            self.size = 256
         self.orig_img = img.copy()
         img = img.resize((self.size, self.size), resample=PIL.Image.BILINEAR)
 

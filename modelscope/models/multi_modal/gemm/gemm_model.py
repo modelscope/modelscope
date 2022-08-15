@@ -45,6 +45,7 @@ class GEMMForMultiModalEmbedding(TorchModel):
             self.gemm_model.to('cuda:{}'.format(self.device_id))
             logger.info('Use GPU: {}'.format(self.device_id))
         else:
+            self.device_id = -1
             logger.info('Use CPU for inference')
         self.img_preprocessor = T.Compose([
             T.Resize(224),

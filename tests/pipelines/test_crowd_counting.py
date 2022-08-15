@@ -8,7 +8,7 @@ from PIL import Image
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.file_utils import numpy_to_cv2img
+from modelscope.utils.cv.heatmap import numpy_to_cv2img
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 

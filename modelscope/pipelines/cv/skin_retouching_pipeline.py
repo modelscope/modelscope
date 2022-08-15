@@ -44,8 +44,10 @@ class SkinRetouchingPipeline(Pipeline):
         """
         super().__init__(model=model)
 
-        if device == 'gpu':
+        if torch.cuda.is_available() and device == 'gpu':
             device = 'cuda'
+        else:
+            device = 'cpu'
         model_path = os.path.join(self.model, ModelFile.TORCH_MODEL_FILE)
         detector_model_path = os.path.join(
             self.model, 'retinaface_resnet50_2020-07-20_old_torch.pth')

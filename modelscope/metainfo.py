@@ -86,6 +86,7 @@ class Pipelines(object):
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     live_category = 'live-category'

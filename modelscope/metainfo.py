@@ -38,6 +38,7 @@ class Models(object):
     # audio models
     sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
 
@@ -133,6 +134,7 @@ class Pipelines(object):
     sambert_hifigan_tts = 'sambert-hifigan-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     asr_inference = 'asr-inference'
 

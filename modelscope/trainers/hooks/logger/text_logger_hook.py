@@ -93,7 +93,7 @@ class TextLoggerHook(LoggerHook):
                 lr_str = f'{lr_key}: {log_dict[lr_key]:.3e}'
 
             if self.by_epoch:
-                log_str = f'{epoch_key} [{log_dict[epoch_key]}][{log_dict[iter_key]}/{len(trainer.data_loader)}]\t'
+                log_str = f'{epoch_key} [{log_dict[epoch_key]}][{log_dict[iter_key]}/{trainer.iters_per_epoch}]\t'
             else:
                 log_str = f'{iter_key} [{log_dict[iter_key]}/{trainer.max_iters}]\t'
             log_str += f'{lr_str}, '

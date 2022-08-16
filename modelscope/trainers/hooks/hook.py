@@ -192,7 +192,7 @@ class Hook:
         Whether to reach the end of every epoch
         Returns: bool
         """
-        return trainer.inner_iter + 1 == len(trainer.data_loader)
+        return trainer.inner_iter + 1 == trainer.iters_per_epoch
 
     def is_last_epoch(self, trainer):
         """

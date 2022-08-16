@@ -37,7 +37,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            work_dir=self.tmp_dir)
+            work_dir=self.tmp_dir,
+            model_revision='beta')
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -53,7 +54,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            work_dir=self.tmp_dir)
+            work_dir=self.tmp_dir,
+            model_revision='beta')
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -69,7 +71,7 @@ class TestTrainerWithNlp(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_user_defined_config(self):
         model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
-        cfg = read_config(model_id)
+        cfg = read_config(model_id, revision='beta')
         cfg.train.max_epochs = 20
         cfg.train.work_dir = self.tmp_dir
         cfg_file = os.path.join(self.tmp_dir, 'config.json')
@@ -78,7 +80,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            cfg_file=cfg_file)
+            cfg_file=cfg_file,
+            model_revision='beta')
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -98,7 +101,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             os.makedirs(tmp_dir)
 
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
-        cache_path = snapshot_download(model_id)
+        cache_path = snapshot_download(model_id, revision='beta')
         model = SbertForSequenceClassification.from_pretrained(cache_path)
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),

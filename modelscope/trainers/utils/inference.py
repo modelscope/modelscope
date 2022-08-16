@@ -10,21 +10,19 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
+from modelscope.utils.data_utils import to_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
 
 
-def single_gpu_test(model,
-                    data_loader,
-                    data_collate_fn=None,
-                    metric_classes=None):
+def single_gpu_test(model, data_loader, device, metric_classes=None):
     """Test model with a single gpu.
 
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
-        data_collate_fn: An optional data_collate_fn before fed into the model
+        device: (str | torch.device): The target device for the data.
         metric_classes(List): List of Metric class that uses to collect metrics
 
     Returns:
@@ -34,8 +32,7 @@ def single_gpu_test(model,
     dataset = data_loader.dataset
     with tqdm(total=len(dataset), desc='test samples') as pbar:
         for data in data_loader:
-            if data_collate_fn is not None:
-                data = data_collate_fn(data)
+            data = to_device(data, device)
             with torch.no_grad():
                 if isinstance(data, Mapping) and not func_receive_dict_inputs(
                         model.forward):
@@ -62,9 +59,9 @@ def single_gpu_test(model,
 
 def multi_gpu_test(model,
                    data_loader,
+                   device,
                    tmpdir=None,
                    gpu_collect=False,
-                   data_collate_fn=None,
                    metric_classes=None):
     """Test model with multiple gpus.
 
@@ -77,10 +74,10 @@ def multi_gpu_test(model,
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
+        device: (str | torch.device): The target device for the data.
         tmpdir (str): Path of directory to save the temporary results from
             different gpus under cpu mode.
         gpu_collect (bool): Option to use either gpu or cpu to collect results.
-        data_collate_fn: An optional data_collate_fn before fed into the model
         metric_classes(List): List of Metric class that uses to collect metrics
 
     Returns:
@@ -98,8 +95,7 @@ def multi_gpu_test(model,
     count = 0
     with tqdm(total=len(dataset), desc='test samples with multi gpus') as pbar:
         for _, data in enumerate(data_loader):
-            if data_collate_fn is not None:
-                data = data_collate_fn(data)
+            data = to_device(data, device)
             data_list.append(data)
             with torch.no_grad():
                 if isinstance(data, Mapping) and not func_receive_dict_inputs(

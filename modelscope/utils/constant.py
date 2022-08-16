@@ -219,6 +219,12 @@ class ConfigFields(object):
     evaluation = 'evaluation'
 
 
+class ConfigKeys(object):
+    """Fixed keywords in configuration file"""
+    train = 'train'
+    val = 'val'
+
+
 class Requirements(object):
     """Requirement names for each module
     """

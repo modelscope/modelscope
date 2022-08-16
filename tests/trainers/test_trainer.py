@@ -3,19 +3,16 @@ import os
 import shutil
 import tempfile
 import unittest
-from abc import ABCMeta
 
 import json
 import numpy as np
 import torch
-from datasets import Dataset
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
-from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
@@ -116,7 +113,8 @@ class TrainerTest(unittest.TestCase):
             data_collator=None,
             train_dataset=dummy_dataset_small,
             eval_dataset=dummy_dataset_small,
-            max_epochs=3)
+            max_epochs=3,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
@@ -175,7 +173,8 @@ class TrainerTest(unittest.TestCase):
             train_dataset=dummy_dataset_small,
             eval_dataset=dummy_dataset_small,
             optimizers=(optimmizer, lr_scheduler),
-            max_epochs=3)
+            max_epochs=3,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
@@ -225,7 +224,8 @@ class TrainerTest(unittest.TestCase):
             train_dataset=dummy_dataset_big,
             eval_dataset=dummy_dataset_small,
             optimizers=(optimmizer, lr_scheduler),
-            max_epochs=3)
+            max_epochs=3,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()

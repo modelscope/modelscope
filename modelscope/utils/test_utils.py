@@ -50,7 +50,7 @@ def set_test_level(level: int):
 
 def create_dummy_test_dataset(feat, label, num):
     return MsDataset.from_hf_dataset(
-        Dataset.from_dict(dict(feat=[feat] * num, label=[label] * num)))
+        Dataset.from_dict(dict(feat=[feat] * num, labels=[label] * num)))
 
 
 def download_and_untar(fpath, furl, dst) -> str:

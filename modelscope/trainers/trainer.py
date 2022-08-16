@@ -5,15 +5,15 @@ import time
 from collections.abc import Mapping
 from distutils.version import LooseVersion
 from functools import partial
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import json
 import numpy as np
 import torch
-from addict import Dict
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -21,8 +21,9 @@ from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
-from modelscope.preprocessors import build_preprocessor
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.preprocessors.builder import build_preprocessor
+from modelscope.preprocessors.common import Compose
 from modelscope.task_datasets.builder import build_task_dataset
 from modelscope.task_datasets.torch_base_dataset import TorchTaskDataset
 from modelscope.trainers.hooks.builder import HOOKS
@@ -30,14 +31,15 @@ from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Hubs, ModeKeys,
-                                       ModelFile, Tasks, TrainerStages)
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
+                                       ConfigKeys, Hubs, ModeKeys, ModelFile,
+                                       Tasks, TrainerStages)
+from modelscope.utils.data_utils import to_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.tensor_utils import torch_default_data_collator
-from modelscope.utils.torch_utils import (broadcast, create_device,
-                                          get_dist_info, init_dist)
+from modelscope.utils.torch_utils import (create_device, get_dist_info,
+                                          init_dist)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -83,7 +85,8 @@ class EpochBasedTrainer(BaseTrainer):
             data_collator: Optional[Callable] = None,
             train_dataset: Optional[Union[MsDataset, Dataset]] = None,
             eval_dataset: Optional[Union[MsDataset, Dataset]] = None,
-            preprocessor: Optional[Preprocessor] = None,
+            preprocessor: Optional[Union[Preprocessor,
+                                         Dict[str, Preprocessor]]] = None,
             optimizers: Tuple[torch.optim.Optimizer,
                               torch.optim.lr_scheduler._LRScheduler] = (None,
                                                                         None),
@@ -120,24 +123,46 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             self.work_dir = self.cfg.train.get('work_dir', './work_dir')
 
-        self.preprocessor = None
+        self.train_preprocessor, self.eval_preprocessor = None, None
         if isinstance(preprocessor, Preprocessor):
-            self.preprocessor = preprocessor
-        elif hasattr(self.cfg, 'preprocessor'):
-            self.preprocessor = self.build_preprocessor()
-        if self.preprocessor is not None:
-            self.preprocessor.mode = ModeKeys.TRAIN
+            self.train_preprocessor = preprocessor
+            self.eval_preprocessor = preprocessor
+        elif isinstance(preprocessor, Mapping):
+            if not (ConfigKeys.train in preprocessor
+                    or ConfigKeys.val in preprocessor):
+                raise ValueError(
+                    f'Preprocessor must split with `{ConfigKeys.train}` and `{ConfigKeys.val}` keys!'
+                )
+            if ConfigKeys.train in preprocessor:
+                assert isinstance(preprocessor[ConfigKeys.train], Preprocessor)
+                self.train_preprocessor = preprocessor[ConfigKeys.train]
+            if ConfigKeys.val in preprocessor:
+                assert isinstance(preprocessor[ConfigKeys.val], Preprocessor)
+                self.eval_preprocessor = preprocessor[ConfigKeys.val]
+        elif hasattr(self.cfg, ConfigFields.preprocessor):
+            self.train_preprocessor, self.eval_preprocessor = self.build_preprocessor(
+            )
+
+        if self.train_preprocessor is not None:
+            self.train_preprocessor.mode = ModeKeys.TRAIN
+        if self.eval_preprocessor is not None:
+            self.eval_preprocessor.mode = ModeKeys.EVAL
+
         device_name = kwargs.get('device', 'gpu')
         assert device_name in ['gpu',
                                'cpu'], 'device should be either cpu or gpu.'
         self.device = create_device(device_name == 'cpu')
 
         self.train_dataset = self.to_task_dataset(
-            train_dataset, mode=ModeKeys.TRAIN, preprocessor=self.preprocessor)
+            train_dataset,
+            mode=ModeKeys.TRAIN,
+            preprocessor=self.train_preprocessor)
         self.eval_dataset = self.to_task_dataset(
-            eval_dataset, mode=ModeKeys.EVAL, preprocessor=self.preprocessor)
+            eval_dataset,
+            mode=ModeKeys.EVAL,
+            preprocessor=self.eval_preprocessor)
 
-        self.data_collator = data_collator if data_collator is not None else torch_default_data_collator
+        self.data_collator = data_collator if data_collator is not None else default_collate
         self.metrics = self.get_metrics()
         self._metric_values = None
         self.optimizers = optimizers
@@ -229,12 +254,12 @@ class EpochBasedTrainer(BaseTrainer):
                 return datasets
             elif isinstance(datasets, MsDataset):
                 datasets = datasets.to_torch_dataset(
-                    preprocessors=self.preprocessor)
+                    preprocessors=preprocessor)
                 return datasets
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
                 datasets = [
-                    d.to_torch_dataset(preprocessor=self.preprocessor)
+                    d.to_torch_dataset(preprocessor=preprocessor)
                     for d in datasets
                 ]
                 cfg = ConfigDict(
@@ -258,24 +283,44 @@ class EpochBasedTrainer(BaseTrainer):
             else:
                 return datasets
 
-    def build_preprocessor(self) -> Preprocessor:
-        """Build the preprocessor.
+    def build_preprocessor(self) -> Tuple[Preprocessor, Preprocessor]:
+        """Build train and eval preprocessor.
 
         User can override this method to implement custom logits.
 
-        Returns: The preprocessor instance.
+        Returns: The train preprocessor and eval preprocessor instance.
 
         """
-        # TODO @wenmeng.zwm @jiangnana.jnn add support for different preprocessor
-        # when they are different ones in training and evaluation
-        cfg = ConfigDict({
-            **getattr(self.cfg, 'preprocessor'),
-            'model_dir':
-            self.model_dir,
-            'mode':
-            ModeKeys.TRAIN,
-        })
-        return build_preprocessor(cfg, Tasks.find_field_by_task(self.cfg.task))
+        field_name = Tasks.find_field_by_task(self.cfg.task)
+        train_preprocessor, eval_preprocessor = None, None
+        _train_cfg, _eval_cfg = {}, {}
+        _dafault_args = {'model_dir': self.model_dir}
+
+        if 'type' not in self.cfg.preprocessor and (
+                'train' in self.cfg.preprocessor
+                or 'val' in self.cfg.preprocessor):
+            if 'train' in self.cfg.preprocessor:
+                _train_cfg = self.cfg.preprocessor.train
+            if 'val' in self.cfg.preprocessor:
+                _eval_cfg = self.cfg.preprocessor.val
+        else:
+            _train_cfg = self.cfg.preprocessor
+            _eval_cfg = self.cfg.preprocessor
+
+        if len(_train_cfg):
+            if isinstance(_train_cfg, Sequence):
+                # TODO: for Sequence, need adapt to `mode` and `mode_dir` args,
+                # and add mode for Compose or other plans
+                raise NotImplementedError('Not supported yet!')
+            _train_cfg.update(_dafault_args)
+            train_preprocessor = build_preprocessor(_train_cfg, field_name)
+        if len(_eval_cfg):
+            if isinstance(_eval_cfg, Sequence):
+                raise NotImplementedError('Not supported yet!')
+            _eval_cfg.update(_dafault_args)
+            eval_preprocessor = build_preprocessor(_eval_cfg, field_name)
+
+        return train_preprocessor, eval_preprocessor
 
     def get_metrics(self) -> List[str]:
         """Get the metric class types.
@@ -373,34 +418,6 @@ class EpochBasedTrainer(BaseTrainer):
 
         return build_parallel(dp_cfg)
 
-    def collate_fn(self, data):
-        """Prepare the input just before the forward function.
-        This method will move the tensors to the right device.
-        Usually this method does not need to be overridden.
-
-        Args:
-            data: The data out of the dataloader.
-
-        Returns: The processed data.
-
-        """
-        from torch.utils.data.dataloader import default_collate
-        if isinstance(data, dict) or isinstance(data, Mapping):
-            return type(data)({k: self.collate_fn(v) for k, v in data.items()})
-        elif isinstance(data, (tuple, list)):
-            if isinstance(data[0], (int, float)):
-                return default_collate(data).to(self.device)
-            else:
-                return type(data)(self.collate_fn(v) for v in data)
-        elif isinstance(data, np.ndarray):
-            return self.collate_fn(torch.from_numpy(data))
-        elif isinstance(data, torch.Tensor):
-            return data.to(self.device)
-        elif isinstance(data, (str, int, float, bool)):
-            return data
-        else:
-            raise ValueError(f'Unsupported data type {type(data)}')
-
     def train_step(self, model, inputs):
         """ Perform a training step on a batch of inputs.
 
@@ -421,7 +438,6 @@ class EpochBasedTrainer(BaseTrainer):
         # TODO: find more pretty way to change mode
         model.train()
         self._mode = ModeKeys.TRAIN
-        inputs = self.collate_fn(inputs)
         # call model forward but not __call__ to skip postprocess
         if isinstance(inputs,
                       Mapping) and not func_receive_dict_inputs(model.forward):
@@ -486,7 +502,9 @@ class EpochBasedTrainer(BaseTrainer):
         if self.train_dataset is None:
             train_data = self.cfg.dataset.train
             self.train_dataset = self.build_dataset(
-                train_data, mode=ModeKeys.TRAIN)
+                train_data,
+                mode=ModeKeys.TRAIN,
+                preprocessor=self.train_preprocessor)
 
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,
@@ -505,7 +523,9 @@ class EpochBasedTrainer(BaseTrainer):
         if self.eval_dataset is None:
             val_data = self.cfg.dataset.val
             self.eval_dataset = self.build_dataset(
-                val_data, mode=ModeKeys.EVAL)
+                val_data,
+                mode=ModeKeys.EVAL,
+                preprocessor=self.eval_preprocessor)
 
         batch_size = self.cfg.evaluation.batch_size
         workers = self.cfg.evaluation.workers
@@ -521,7 +541,7 @@ class EpochBasedTrainer(BaseTrainer):
         )
         return data_loader
 
-    def build_dataset(self, data_cfg, mode):
+    def build_dataset(self, data_cfg, mode, preprocessor=None):
         """ Build torch dataset object using data config
         """
         dataset = MsDataset.load(
@@ -531,8 +551,7 @@ class EpochBasedTrainer(BaseTrainer):
                 data_cfg, 'subset_name') else None,
             hub=data_cfg.hub if hasattr(data_cfg, 'hub') else Hubs.modelscope,
         )
-        torch_dataset = dataset.to_torch_dataset(
-            preprocessors=self.preprocessor, )
+        torch_dataset = dataset.to_torch_dataset(preprocessors=preprocessor)
         dataset = self.to_task_dataset(torch_dataset, mode)
         return dataset
 
@@ -698,6 +717,7 @@ class EpochBasedTrainer(BaseTrainer):
             self.invoke_hook(TrainerStages.before_train_epoch)
             time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
+                data_batch = to_device(data_batch, self.device)
                 self.data_batch = data_batch
                 self._inner_iter = i
                 self.invoke_hook(TrainerStages.before_train_iter)
@@ -721,16 +741,16 @@ class EpochBasedTrainer(BaseTrainer):
             metric_values = multi_gpu_test(
                 self.model,
                 data_loader,
+                device=self.device,
                 tmpdir=None,
                 gpu_collect=False,
-                data_collate_fn=self.collate_fn,
                 metric_classes=metric_classes)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
                 self.model,
                 data_loader,
-                data_collate_fn=self.collate_fn,
+                device=self.device,
                 metric_classes=metric_classes)
 
         return metric_values

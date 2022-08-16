@@ -36,19 +36,7 @@ class NAFNetForImageDenoise(TorchModel):
         model_path = os.path.join(model_dir, ModelFile.TORCH_MODEL_FILE)
         self.model = NAFNet(**self.config.model.network_g)
         self.loss = PSNRLoss()
-
-        if torch.cuda.is_available():
-            self._device = torch.device('cuda')
-        else:
-            self._device = torch.device('cpu')
-
-        self.model = self.model.to(self._device)
         self.model = self._load_pretrained(self.model, model_path)
-
-        if self.training:
-            self.model.train()
-        else:
-            self.model.eval()
 
     def _load_pretrained(self,
                          net,
@@ -109,8 +97,6 @@ class NAFNetForImageDenoise(TorchModel):
         Returns:
             Dict[str, Tensor]: results
         """
-        for key, value in inputs.items():
-            inputs[key] = inputs[key].to(self._device)
         if self.training:
             return self._train_forward(**inputs)
         elif 'target' in inputs:

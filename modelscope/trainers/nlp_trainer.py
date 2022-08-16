@@ -110,9 +110,11 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         self.train_keys = build_dataset_keys(
             self.cfg.dataset.train if hasattr(self.cfg, 'dataset')
             and hasattr(self.cfg.dataset, 'train') else None)
-        # TODO eval may has special keys, which is now not supported.
-        # because there is only one preprocessor in the trainer, and it only supports one group of keys.
-        self.eval_keys = self.train_keys
+        self.eval_keys = build_dataset_keys(
+            self.cfg.dataset.val if hasattr(self.cfg, 'dataset')
+            and hasattr(self.cfg.dataset, 'val') else None)
+        if len(self.eval_keys) == 0:
+            self.eval_keys = self.train_keys
 
         super().__init__(
             model=model_dir,
@@ -148,7 +150,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         elif isinstance(model, nn.Module):
             return model
 
-    def build_preprocessor(self) -> Preprocessor:
+    def build_preprocessor(self) -> Tuple[Preprocessor, Preprocessor]:
         """Build the preprocessor.
 
         User can override this method to implement custom logits.
@@ -159,16 +161,38 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         model_args = {} if self.label2id is None else {
             'label2id': self.label2id
         }
-        cfg = ConfigDict({
-            **getattr(self.cfg, 'preprocessor'),
-            'model_dir':
-            self.model_dir,
-            **model_args,
-            'mode':
-            ModeKeys.TRAIN,
-            **self.train_keys,
-        })
-        return build_preprocessor(cfg, Tasks.find_field_by_task(self.cfg.task))
+
+        field_name = Tasks.find_field_by_task(self.cfg.task)
+        train_preprocessor, eval_preprocessor = None, None
+        _train_cfg, _eval_cfg = {}, {}
+
+        if 'type' not in self.cfg.preprocessor and (
+                'train' in self.cfg.preprocessor
+                or 'val' in self.cfg.preprocessor):
+            if 'train' in self.cfg.preprocessor:
+                _train_cfg = self.cfg.preprocessor.train
+            if 'val' in self.cfg.preprocessor:
+                _eval_cfg = self.cfg.preprocessor.val
+        else:
+            _train_cfg = self.cfg.preprocessor
+            _eval_cfg = self.cfg.preprocessor
+
+        if len(_train_cfg):
+            _train_cfg.update({
+                'model_dir': self.model_dir,
+                **model_args,
+                **self.train_keys, 'mode': ModeKeys.TRAIN
+            })
+            train_preprocessor = build_preprocessor(_train_cfg, field_name)
+        if len(_eval_cfg):
+            _eval_cfg.update({
+                'model_dir': self.model_dir,
+                **model_args,
+                **self.eval_keys, 'mode': ModeKeys.EVAL
+            })
+            eval_preprocessor = build_preprocessor(_eval_cfg, field_name)
+
+        return train_preprocessor, eval_preprocessor
 
 
 @TRAINERS.register_module(module_name=Trainers.nlp_veco_trainer)

@@ -6,7 +6,7 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .base import Preprocessor
     from .builder import PREPROCESSORS, build_preprocessor
-    from .common import Compose
+    from .common import Compose, ToTensor, Filter
     from .asr import WavToScp
     from .audio import LinearAECAndFbank
     from .image import (LoadImage, load_image,
@@ -33,7 +33,7 @@ else:
     _import_structure = {
         'base': ['Preprocessor'],
         'builder': ['PREPROCESSORS', 'build_preprocessor'],
-        'common': ['Compose'],
+        'common': ['Compose', 'ToTensor', 'Filter'],
         'audio': ['LinearAECAndFbank'],
         'asr': ['WavToScp'],
         'video': ['ReadVideoData'],

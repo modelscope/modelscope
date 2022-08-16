@@ -12,7 +12,7 @@ from .base import OfaBasePreprocessor
 class OfaImageClassificationPreprocessor(OfaBasePreprocessor):
 
     def __init__(self, cfg, model_dir):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config

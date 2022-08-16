@@ -20,6 +20,7 @@ from transformers import PreTrainedTokenizerFast
 from transformers.models.bart.tokenization_bart_fast import BartTokenizerFast
 from transformers.utils import logging
 
+from modelscope.utils.constant import ModelFile
 from .tokenization_ofa import OFATokenizer, OFATokenizerZH
 
 logger = logging.get_logger(__name__)
@@ -50,7 +51,7 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     'ofa-base': 1024,
 }
 
-VOCAB_FILES_NAMES_ZH = {'vocab_file': 'vocab.txt'}
+VOCAB_FILES_NAMES_ZH = {'vocab_file': ModelFile.VOCAB_FILE}
 
 PRETRAINED_VOCAB_FILES_MAP_ZH = {
     'vocab_file': {

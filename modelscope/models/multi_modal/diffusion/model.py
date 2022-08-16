@@ -136,7 +136,7 @@ class DiffusionForTextToImageSynthesis(Model):
         self.unet_upsampler_1024 = diffusion_model.unet_upsampler_1024
 
         # text tokenizer
-        vocab_path = '{}/vocab.txt'.format(model_dir)
+        vocab_path = f'{model_dir}/{ModelFile.VOCAB_FILE}'
         self.tokenizer = Tokenizer(vocab_file=vocab_path, seq_len=64)
 
         # diffusion process

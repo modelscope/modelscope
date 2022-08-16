@@ -9,7 +9,7 @@ from .base import OfaBasePreprocessor
 class OfaTextToImageSynthesisPreprocessor(OfaBasePreprocessor):
 
     def __init__(self, cfg, model_dir):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path

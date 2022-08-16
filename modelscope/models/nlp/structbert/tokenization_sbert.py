@@ -23,11 +23,12 @@ from typing import List, Optional, Tuple
 from transformers.tokenization_utils import (PreTrainedTokenizer, _is_control,
                                              _is_punctuation, _is_whitespace)
 
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-VOCAB_FILES_NAMES = {'vocab_file': 'vocab.txt'}
+VOCAB_FILES_NAMES = {'vocab_file': ModelFile.VOCAB_FILE}
 
 PRETRAINED_VOCAB_FILES_MAP = {'vocab_file': {}}
 

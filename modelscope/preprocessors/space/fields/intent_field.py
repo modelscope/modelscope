@@ -14,6 +14,7 @@ import numpy as np
 from tqdm import tqdm
 
 from modelscope.preprocessors.space.tokenizer import Tokenizer
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.nlp.space import ontology
 from modelscope.utils.nlp.space.scores import hierarchical_set_score
 from modelscope.utils.nlp.space.utils import list2np
@@ -50,7 +51,7 @@ class BPETextField(object):
         ]
         special_tokens.extend(self.add_sepcial_tokens())
         self.tokenizer = Tokenizer(
-            vocab_path=os.path.join(model_dir, 'vocab.txt'),
+            vocab_path=os.path.join(model_dir, ModelFile.VOCAB_FILE),
             special_tokens=special_tokens,
             tokenizer_type=config.BPETextField.tokenizer_type)
         self.understand_ids = self.numericalize(self.understand_tokens)

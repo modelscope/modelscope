@@ -22,6 +22,8 @@ from transformers.models.bert.tokenization_bert import (BasicTokenizer,
                                                         WordpieceTokenizer)
 from transformers.utils import logging
 
+from modelscope.utils.constant import ModelFile
+
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {'vocab_file': 'vocab.json', 'merges_file': 'merges.txt'}
@@ -42,7 +44,7 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     'ofa-base': 1024,
 }
 
-VOCAB_FILES_NAMES_ZH = {'vocab_file': 'vocab.txt'}
+VOCAB_FILES_NAMES_ZH = {'vocab_file': ModelFile.VOCAB_FILE}
 
 PRETRAINED_VOCAB_FILES_MAP_ZH = {
     'vocab_file': {

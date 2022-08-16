@@ -26,7 +26,7 @@ __all__ = [
 class OfaPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -97,13 +97,13 @@ class MPlugVisualQuestionAnsweringPreprocessor(Preprocessor):
 
         """
         from transformers import BertTokenizer
-        from modelscope.models.multi_modal.mplug import CONFIG_NAME, VOCAB_NAME, MPlugConfig
+        from modelscope.models.multi_modal.mplug import CONFIG_NAME, MPlugConfig
 
         super().__init__(*args, **kwargs)
 
         # tokenizer
         self.tokenizer = BertTokenizer.from_pretrained(
-            osp.join(model_dir, VOCAB_NAME))
+            osp.join(model_dir, ModelFile.VOCAB_FILE))
 
         # load configuration
         config = MPlugConfig.from_yaml_file(osp.join(model_dir, CONFIG_NAME))

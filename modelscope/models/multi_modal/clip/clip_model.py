@@ -17,7 +17,7 @@ from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.clip.clip_bert import TextTransformer
 from modelscope.models.multi_modal.clip.clip_vit import VisionTransformer
-from modelscope.utils.constant import ModeKeys, Tasks
+from modelscope.utils.constant import ModeKeys, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -143,7 +143,7 @@ class CLIPForMultiModalEmbedding(TorchModel):
         ])
 
         # text tokenizer
-        vocab_path = '{}/vocab.txt'.format(model_dir)
+        vocab_path = f'{model_dir}/{ModelFile.VOCAB_FILE}'
         self.text_tokenizer = BertWordPieceTokenizer(
             vocab_path, lowercase=False)
         self.text_tokenizer.enable_truncation(max_length=30)

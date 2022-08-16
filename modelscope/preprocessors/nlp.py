@@ -44,7 +44,7 @@ class Tokenize(Preprocessor):
 class SequenceClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -291,7 +291,7 @@ class ZeroShotClassificationPreprocessor(NLPTokenizerPreprocessorBase):
     """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -522,7 +522,7 @@ class NERPreprocessor(Preprocessor):
     """
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -614,7 +614,7 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         from fairseq.data import Dictionary
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data via the vocab file from the `model_dir` path
 
         Args:
             model_dir (str): model path

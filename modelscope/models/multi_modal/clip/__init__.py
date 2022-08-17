@@ -1,1 +1,1 @@
-from .clip_model import CLIPForMultiModalEmbedding
+from .model import CLIPForMultiModalEmbedding

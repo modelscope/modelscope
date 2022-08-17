@@ -193,6 +193,15 @@ class SubPreprocessor():
 
         from nltk import data
         data.path.append(os.path.join(self.model_dir, 'nltk_data'))
+
+        zippath = os.path.join(self.model_dir, 'nltk_data/tokenizers/punkt')
+        if os.path.exists(zippath):
+            print('punkt has already exist!')
+        else:
+            import zipfile
+            with zipfile.ZipFile(zippath + '.zip') as zf:
+                zf.extractall(
+                    os.path.join(self.model_dir, 'nltk_data/tokenizers/'))
         question = nltk.word_tokenize(question)
         question = mwtokenizer.tokenize(question)
 

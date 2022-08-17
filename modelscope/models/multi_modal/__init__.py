@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from .mplug_for_visual_question_answering import \
         MPlugForVisualQuestionAnswering
     from .ofa_for_all_tasks import OfaForAllTasks
+    from .ofa_for_text_to_image_synthesis_model import \
+        OfaForTextToImageSynthesis
 
 else:
     _import_structure = {

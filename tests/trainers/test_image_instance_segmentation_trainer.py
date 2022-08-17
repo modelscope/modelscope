@@ -8,10 +8,13 @@ from functools import partial
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.cv.image_instance_segmentation import (
-    CascadeMaskRCNNSwinModel, ImageInstanceSegmentationCocoDataset)
+from modelscope.models.cv.image_instance_segmentation import \
+    CascadeMaskRCNNSwinModel
+from modelscope.msdatasets import MsDataset
+from modelscope.msdatasets.task_datasets import \
+    ImageInstanceSegmentationCocoDataset
 from modelscope.trainers import build_trainer
-from modelscope.utils.config import Config
+from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.test_utils import test_level
 
@@ -27,34 +30,47 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         config_path = os.path.join(cache_path, ModelFile.CONFIGURATION)
         cfg = Config.from_file(config_path)
 
-        data_root = cfg.dataset.data_root
-        classes = tuple(cfg.dataset.classes)
         max_epochs = cfg.train.max_epochs
         samples_per_gpu = cfg.train.dataloader.batch_size_per_gpu
-
-        if data_root is None:
+        try:
+            train_data_cfg = cfg.dataset.train
+            val_data_cfg = cfg.dataset.val
+        except Exception:
+            train_data_cfg = None
+            val_data_cfg = None
+        if train_data_cfg is None:
             # use default toy data
-            dataset_path = os.path.join(cache_path, 'toydata.zip')
-            with zipfile.ZipFile(dataset_path, 'r') as zipf:
-                zipf.extractall(cache_path)
-            data_root = cache_path + '/toydata/'
-            classes = ('Cat', 'Dog')
+            train_data_cfg = ConfigDict(
+                name='pets_small',
+                split='train',
+                classes=('Cat', 'Dog'),
+                test_mode=False)
+        if val_data_cfg is None:
+            val_data_cfg = ConfigDict(
+                name='pets_small',
+                split='validation',
+                classes=('Cat', 'Dog'),
+                test_mode=True)
 
-        self.train_dataset = ImageInstanceSegmentationCocoDataset(
-            data_root + 'annotations/instances_train.json',
-            classes=classes,
-            data_root=data_root,
-            img_prefix=data_root + 'images/train/',
-            seg_prefix=None,
-            test_mode=False)
+        self.train_dataset = MsDataset.load(
+            dataset_name=train_data_cfg.name,
+            split=train_data_cfg.split,
+            classes=train_data_cfg.classes,
+            test_mode=train_data_cfg.test_mode)
+        assert self.train_dataset.config_kwargs[
+            'classes'] == train_data_cfg.classes
+        assert next(
+            iter(self.train_dataset.config_kwargs['split_config'].values()))
 
-        self.eval_dataset = ImageInstanceSegmentationCocoDataset(
-            data_root + 'annotations/instances_val.json',
-            classes=classes,
-            data_root=data_root,
-            img_prefix=data_root + 'images/val/',
-            seg_prefix=None,
-            test_mode=True)
+        self.eval_dataset = MsDataset.load(
+            dataset_name=val_data_cfg.name,
+            split=val_data_cfg.split,
+            classes=val_data_cfg.classes,
+            test_mode=val_data_cfg.test_mode)
+        assert self.eval_dataset.config_kwargs[
+            'classes'] == val_data_cfg.classes
+        assert next(
+            iter(self.eval_dataset.config_kwargs['split_config'].values()))
 
         from mmcv.parallel import collate
 

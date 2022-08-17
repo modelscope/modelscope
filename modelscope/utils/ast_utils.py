@@ -30,8 +30,8 @@ MODELSCOPE_PATH = '/'.join(os.path.dirname(__file__).split('/')[:-1])
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
-    'models', 'metrics', 'pipelines', 'preprocessors', 'task_datasets',
-    'trainers'
+    'models', 'metrics', 'pipelines', 'preprocessors',
+    'msdatasets/task_datasets', 'trainers'
 ]
 INDEXER_FILE = 'ast_indexer'
 DECORATOR_KEY = 'decorators'

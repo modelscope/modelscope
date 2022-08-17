@@ -202,7 +202,7 @@ class VecoTrainer(NlpEpochBasedTrainer):
         """Veco evaluates the datasets one by one.
 
         """
-        from modelscope.task_datasets import VecoDataset
+        from modelscope.msdatasets.task_datasets import VecoDataset
         self.model.eval()
         self._mode = ModeKeys.EVAL
         metric_values = {}

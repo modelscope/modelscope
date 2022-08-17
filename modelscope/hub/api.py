@@ -362,8 +362,10 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
-        return f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
-               f'Revision={revision}&FilePath={file_name}'
+        if file_name.endswith('.csv'):
+            file_name = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+                        f'Revision={revision}&FilePath={file_name}'
+        return file_name
 
     def get_dataset_access_config(
             self,

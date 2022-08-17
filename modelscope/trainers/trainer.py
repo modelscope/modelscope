@@ -21,11 +21,12 @@ from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
+from modelscope.msdatasets.task_datasets.builder import build_task_dataset
+from modelscope.msdatasets.task_datasets.torch_base_dataset import \
+    TorchTaskDataset
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import build_preprocessor
 from modelscope.preprocessors.common import Compose
-from modelscope.task_datasets.builder import build_task_dataset
-from modelscope.task_datasets.torch_base_dataset import TorchTaskDataset
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -288,14 +289,21 @@ class EpochBasedTrainer(BaseTrainer):
             if isinstance(datasets, TorchTaskDataset):
                 return datasets
             elif isinstance(datasets, MsDataset):
-                datasets = datasets.to_torch_dataset(
+                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
+                    else ConfigDict(type=None, mode=mode)
+                return datasets.to_torch_dataset(
+                    task_data_config=cfg,
+                    task_name=self.cfg.task,
                     preprocessors=preprocessor)
-                return datasets
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
+                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
+                    else ConfigDict(type=None, mode=mode)
                 datasets = [
-                    d.to_torch_dataset(preprocessor=preprocessor)
-                    for d in datasets
+                    d.to_torch_dataset(
+                        task_data_config=cfg,
+                        task_name=self.cfg.task,
+                        preprocessors=preprocessor) for d in datasets
                 ]
                 cfg = ConfigDict(
                     type=self.cfg.task, mode=mode, datasets=datasets)
@@ -585,8 +593,13 @@ class EpochBasedTrainer(BaseTrainer):
             subset_name=data_cfg.subset_name if hasattr(
                 data_cfg, 'subset_name') else None,
             hub=data_cfg.hub if hasattr(data_cfg, 'hub') else Hubs.modelscope,
+            **data_cfg,
         )
-        torch_dataset = dataset.to_torch_dataset(preprocessors=preprocessor)
+        cfg = ConfigDict(type=self.cfg.model.type, mode=mode)
+        torch_dataset = dataset.to_torch_dataset(
+            task_data_config=cfg,
+            task_name=self.cfg.task,
+            preprocessors=self.preprocessor)
         dataset = self.to_task_dataset(torch_dataset, mode)
         return dataset
 

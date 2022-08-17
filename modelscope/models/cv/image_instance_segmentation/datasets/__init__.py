@@ -1,2 +1,1 @@
-from .dataset import ImageInstanceSegmentationCocoDataset
 from .transforms import build_preprocess_transform

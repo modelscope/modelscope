@@ -2,7 +2,7 @@
 
 import unittest
 
-from modelscope.task_datasets.veco_dataset import VecoDataset
+from modelscope.msdatasets.task_datasets.veco_dataset import VecoDataset
 from modelscope.utils.test_utils import test_level
 
 

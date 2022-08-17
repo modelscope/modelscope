@@ -13,9 +13,12 @@ from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
 from modelscope.msdatasets.config import MS_DATASETS_CACHE
+from modelscope.utils.config import ConfigDict
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DatasetFormations, DownloadMode, Hubs)
 from modelscope.utils.logger import get_logger
+from .task_datasets.builder import build_task_dataset
+from .utils.dataset_builder import ExternalDataset
 from .utils.dataset_utils import (get_dataset_files,
                                   get_target_dataset_structure,
                                   load_dataset_builder)
@@ -67,9 +70,16 @@ class MsDataset:
     def __len__(self):
         return len(self._hf_ds)
 
+    @property
+    def config_kwargs(self):
+        if isinstance(self._hf_ds, ExternalDataset):
+            return self._hf_ds.config_kwargs
+        else:
+            return None
+
     @classmethod
     def from_hf_dataset(cls,
-                        hf_ds: Union[Dataset, DatasetDict],
+                        hf_ds: Union[Dataset, DatasetDict, ExternalDataset],
                         target: str = None) -> Union[dict, 'MsDataset']:
         if isinstance(hf_ds, Dataset):
             return cls(hf_ds, target)
@@ -77,6 +87,8 @@ class MsDataset:
             if len(hf_ds.keys()) == 1:
                 return cls(next(iter(hf_ds.values())), target)
             return {k: cls(v, target) for k, v in hf_ds.items()}
+        elif isinstance(hf_ds, ExternalDataset):
+            return cls(hf_ds)
         else:
             raise TypeError(
                 f'"hf_ds" must be a Dataset or DatasetDict, but got {type(hf_ds)}'
@@ -96,7 +108,8 @@ class MsDataset:
                                    Mapping[str, Union[str,
                                                       Sequence[str]]]]] = None,
         download_mode: Optional[DownloadMode] = DownloadMode.
-        REUSE_DATASET_IF_EXISTS
+        REUSE_DATASET_IF_EXISTS,
+        **config_kwargs,
     ) -> Union[dict, 'MsDataset']:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
             Args:
@@ -113,6 +126,7 @@ class MsDataset:
                 hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
                 download_mode (DownloadMode or str, optional): How to treat existing datasets. default
                                                                DownloadMode.REUSE_DATASET_IF_EXISTS
+                **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
                 MsDataset (obj:`MsDataset`): MsDataset object for a certain dataset.
@@ -128,7 +142,8 @@ class MsDataset:
                 split=split,
                 data_dir=data_dir,
                 data_files=data_files,
-                download_mode=download_mode.value)
+                download_mode=download_mode.value,
+                **config_kwargs)
             return MsDataset.from_hf_dataset(dataset, target=target)
         elif hub == Hubs.modelscope:
             return MsDataset._load_ms_dataset(
@@ -140,22 +155,22 @@ class MsDataset:
                 split=split,
                 data_dir=data_dir,
                 data_files=data_files,
-                download_mode=download_mode)
+                download_mode=download_mode,
+                **config_kwargs)
 
     @staticmethod
-    def _load_ms_dataset(
-        dataset_name: Union[str, list],
-        namespace: Optional[str] = None,
-        target: Optional[str] = None,
-        version: Optional[str] = DEFAULT_DATASET_REVISION,
-        subset_name: Optional[str] = None,
-        split: Optional[str] = None,
-        data_dir: Optional[str] = None,
-        data_files: Optional[Union[str, Sequence[str],
-                                   Mapping[str, Union[str,
-                                                      Sequence[str]]]]] = None,
-        download_mode: Optional[DownloadMode] = None
-    ) -> Union[dict, 'MsDataset']:
+    def _load_ms_dataset(dataset_name: Union[str, list],
+                         namespace: Optional[str] = None,
+                         target: Optional[str] = None,
+                         version: Optional[str] = DEFAULT_DATASET_REVISION,
+                         subset_name: Optional[str] = None,
+                         split: Optional[str] = None,
+                         data_dir: Optional[str] = None,
+                         data_files: Optional[Union[
+                             str, Sequence[str],
+                             Mapping[str, Union[str, Sequence[str]]]]] = None,
+                         download_mode: Optional[DownloadMode] = None,
+                         **config_kwargs) -> Union[dict, 'MsDataset']:
         if isinstance(dataset_name, str):
             dataset_formation = DatasetFormations.native
             if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
@@ -184,7 +199,8 @@ class MsDataset:
                     data_dir=data_dir,
                     data_files=data_files,
                     cache_dir=MS_DATASETS_CACHE,
-                    download_mode=download_mode.value)
+                    download_mode=download_mode.value,
+                    **config_kwargs)
             else:
                 dataset = MsDataset._load_from_ms(
                     dataset_name,
@@ -195,7 +211,7 @@ class MsDataset:
                     subset_name=subset_name,
                     split=split,
                     download_mode=download_mode,
-                )
+                    **config_kwargs)
         elif isinstance(dataset_name, list):
             if target is None:
                 target = 'target'
@@ -206,16 +222,15 @@ class MsDataset:
         return MsDataset.from_hf_dataset(dataset, target=target)
 
     @staticmethod
-    def _load_from_ms(
-        dataset_name: str,
-        dataset_files: dict,
-        download_dir: str,
-        namespace: Optional[str] = None,
-        version: Optional[str] = DEFAULT_DATASET_REVISION,
-        subset_name: Optional[str] = None,
-        split: Optional[str] = None,
-        download_mode: Optional[DownloadMode] = None,
-    ) -> Union[Dataset, DatasetDict]:
+    def _load_from_ms(dataset_name: str,
+                      dataset_files: dict,
+                      download_dir: str,
+                      namespace: Optional[str] = None,
+                      version: Optional[str] = DEFAULT_DATASET_REVISION,
+                      subset_name: Optional[str] = None,
+                      split: Optional[str] = None,
+                      download_mode: Optional[DownloadMode] = None,
+                      **config_kwargs) -> Union[Dataset, DatasetDict]:
         for json_path in dataset_files['.json']:
             if json_path.endswith(f'{dataset_name}.json'):
                 with open(json_path, encoding='utf-8') as dataset_json_file:
@@ -226,7 +241,6 @@ class MsDataset:
         meta_map, file_map = get_dataset_files(target_dataset_structure,
                                                dataset_name, namespace,
                                                version)
-
         builder = load_dataset_builder(
             dataset_name,
             subset_name,
@@ -235,7 +249,8 @@ class MsDataset:
             zip_data_files=file_map,
             cache_dir=MS_DATASETS_CACHE,
             version=version,
-            split=list(target_dataset_structure.keys()))
+            split=list(target_dataset_structure.keys()),
+            **config_kwargs)
 
         download_config = DownloadConfig(
             cache_dir=download_dir,
@@ -253,7 +268,6 @@ class MsDataset:
             data_dir=download_dir,
         )
         builder.download_and_prepare(
-            download_config=download_config,
             dl_manager=dl_manager,
             download_mode=download_mode.value,
             try_from_hf_gcs=False)
@@ -338,6 +352,8 @@ class MsDataset:
         self,
         columns: Union[str, List[str]] = None,
         preprocessors: Union[Callable, List[Callable]] = None,
+        task_name: str = None,
+        task_data_config: ConfigDict = None,
         **format_kwargs,
     ):
         """Create a torch.utils.data.Dataset from the MS Dataset. The torch.utils.data.Dataset can be passed to
@@ -350,6 +366,8 @@ class MsDataset:
             columns (str or List[str], default None): Dataset column(s) to be loaded (numeric data only). If the
                 preprocessor is None, the arg columns must have at least one column. If the `preprocessors` is not None,
                 the output fields of processors will also be added.
+            task_name (str, default None):  task name, refer to :obj:`Tasks` for more details
+            task_data_config (ConfigDict, default None): config dict for model object.
             format_kwargs: A `dict` of arguments to be passed to the `torch.tensor`.
 
         Returns:
@@ -360,6 +378,10 @@ class MsDataset:
             raise ImportError(
                 'The function to_torch_dataset requires pytorch to be installed'
             )
+        if isinstance(self._hf_ds, ExternalDataset):
+            task_data_config.update({'preprocessor': preprocessors})
+            return build_task_dataset(task_data_config, task_name,
+                                      self._hf_ds.config_kwargs)
         if preprocessors is not None:
             return self.to_torch_dataset_with_processors(
                 preprocessors, columns=columns)

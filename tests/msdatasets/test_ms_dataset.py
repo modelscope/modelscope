@@ -4,6 +4,7 @@ from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
 
 
@@ -29,6 +30,16 @@ class ImgPreprocessor(Preprocessor):
 
 
 class MsDatasetTest(unittest.TestCase):
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_coco(self):
+        ms_ds_train = MsDataset.load(
+            'pets_small',
+            namespace='modelscope',
+            split='train',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD,
+            classes=('1', '2'))
+        print(ms_ds_train._hf_ds.config_kwargs)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ms_csv_basic(self):

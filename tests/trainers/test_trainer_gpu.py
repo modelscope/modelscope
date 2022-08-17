@@ -11,6 +11,7 @@ import torch
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
+from torch.utils.data import IterableDataset
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
@@ -18,6 +19,16 @@ from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
+
+
+class DummyIterableDataset(IterableDataset):
+
+    def __iter__(self):
+        feat = np.random.random(size=(5, )).astype(np.float32)
+        labels = np.random.randint(0, 4, (1, ))
+        iterations = [{'feat': feat, 'labels': labels}] * 500
+        return iter(iterations)
+
 
 dummy_dataset_small = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
@@ -41,7 +52,7 @@ class DummyModel(nn.Module):
         return dict(logits=x, loss=loss)
 
 
-def train_func(work_dir, dist=False):
+def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
     json_cfg = {
         'train': {
             'work_dir': work_dir,
@@ -72,18 +83,25 @@ def train_func(work_dir, dist=False):
     optimmizer = SGD(model.parameters(), lr=0.01)
     lr_scheduler = StepLR(optimmizer, 2)
     trainer_name = Trainers.default
-    kwargs = dict(
+    if iterable_dataset:
+        train_dataset = DummyIterableDataset()
+        eval_dataset = DummyIterableDataset()
+    else:
+        train_dataset = dummy_dataset_big
+        eval_dataset = dummy_dataset_small
+    _kwargs = dict(
         cfg_file=config_path,
         model=model,
         data_collator=None,
-        train_dataset=dummy_dataset_big,
-        eval_dataset=dummy_dataset_small,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
         optimizers=(optimmizer, lr_scheduler),
         max_epochs=3,
         device='gpu',
-        launcher='pytorch' if dist else None)
+        launcher='pytorch' if dist else None,
+        **kwargs)
 
-    trainer = build_trainer(trainer_name, kwargs)
+    trainer = build_trainer(trainer_name, _kwargs)
     trainer.train()
 
 
@@ -252,6 +270,28 @@ class TrainerTestMultiGpus(DistributedTestCase):
             self.assertIn(LogKeys.ITER_TIME, lines[i])
         for i in [1, 3, 5]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
+
+    # TODO: support iters_per_epoch for dist mode
+    @unittest.skipIf(True, 'need to adapt to DistributedSampler')
+    def test_multi_gpus_with_iters_per_epoch(self):
+        self.start(
+            train_func,
+            num_gpus=2,
+            work_dir=self.tmp_dir,
+            dist=True,
+            iterable_dataset=True,
+            train_iters_per_epoch=20,
+            val_iters_per_epoch=10,
+        )
+
+        results_files = os.listdir(self.tmp_dir)
+        json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
+        self.assertEqual(len(json_files), 1)
+
+        with open(json_files[0], 'r') as f:
+            lines = [i.strip() for i in f.readlines()]
+
+        print(results_files, lines)
 
 
 if __name__ == '__main__':

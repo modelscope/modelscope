@@ -254,7 +254,7 @@ class EpochBasedTrainer(BaseTrainer):
 
         def _get_data_len(data_loader):
             try:
-                return len(self.data_loader)
+                return len(data_loader)
             except Exception as e:
                 self.logger.error(e)
                 raise ValueError(
@@ -266,12 +266,12 @@ class EpochBasedTrainer(BaseTrainer):
             if self._train_iters_per_epoch is not None:
                 return self._train_iters_per_epoch
             else:
-                return _get_data_len(self.data_loader)
+                return _get_data_len(self.train_dataloader)
         elif self.mode == ModeKeys.EVAL:
             if self._eval_iters_per_epoch is not None:
                 return self._eval_iters_per_epoch
             else:
-                return _get_data_len(self.data_loader)
+                return _get_data_len(self.eval_dataloader)
 
     def to_task_dataset(self,
                         datasets: Union[Dataset, List[Dataset]],
@@ -761,6 +761,9 @@ class EpochBasedTrainer(BaseTrainer):
                 del self.data_batch
                 self._iter += 1
 
+                if i + 1 >= self.iters_per_epoch:
+                    break
+
             self.invoke_hook(TrainerStages.after_train_epoch)
             self._epoch += 1
 
@@ -779,14 +782,18 @@ class EpochBasedTrainer(BaseTrainer):
                 device=self.device,
                 tmpdir=None,
                 gpu_collect=False,
-                metric_classes=metric_classes)
+                metric_classes=metric_classes,
+                data_loader_iters_per_gpu=self.iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
                 self.model,
                 data_loader,
                 device=self.device,
-                metric_classes=metric_classes)
+                metric_classes=metric_classes,
+                data_loader_iters=self.iters_per_epoch)
+
+        self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
         return metric_values
 

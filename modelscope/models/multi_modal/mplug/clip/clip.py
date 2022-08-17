@@ -5,9 +5,69 @@ from typing import Tuple, Union
 
 import torch
 import torch.nn.functional as F
+import torch.utils.checkpoint as checkpoint
 from torch import nn
 
-from modelscope.models.multi_modal.clip.clip_vit import Transformer
+
+class QuickGELU(nn.Module):
+
+    def forward(self, x: torch.Tensor):
+        return x * torch.sigmoid(1.702 * x)
+
+
+class ResidualAttentionBlock(nn.Module):
+
+    def __init__(self,
+                 d_model: int,
+                 n_head: int,
+                 attn_mask: torch.Tensor = None):
+        super().__init__()
+        self.attn = nn.MultiheadAttention(d_model, n_head)
+        self.ln_1 = LayerNorm(d_model)
+        self.mlp = nn.Sequential(
+            OrderedDict([('c_fc', nn.Linear(d_model, d_model * 4)),
+                         ('gelu', QuickGELU()),
+                         ('c_proj', nn.Linear(d_model * 4, d_model))]))
+        self.ln_2 = LayerNorm(d_model)
+        self.attn_mask = attn_mask
+
+    def attention(self, x: torch.Tensor):
+        self.attn_mask = self.attn_mask.to(
+            dtype=x.dtype,
+            device=x.device) if self.attn_mask is not None else None
+        return self.attn(
+            x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
+
+    def forward(self, x: torch.Tensor):
+        x = x + self.attention(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+
+class Transformer(nn.Module):
+
+    def __init__(self,
+                 width: int,
+                 layers: int,
+                 heads: int,
+                 attn_mask: torch.Tensor = None,
+                 use_grad_ckp: bool = True):
+        super().__init__()
+        self.width = width
+        self.layers = layers
+        self.resblocks = nn.Sequential(*[
+            ResidualAttentionBlock(width, heads, attn_mask)
+            for _ in range(layers)
+        ])
+        self.use_grad_ckp = use_grad_ckp
+
+    def forward(self, x: torch.Tensor):
+        if self.use_grad_ckp:
+            for each_block in self.resblocks:
+                x = checkpoint.checkpoint(each_block, x)
+            return x
+        else:
+            return self.resblocks(x)
 
 
 class Bottleneck(nn.Module):

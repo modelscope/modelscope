@@ -50,13 +50,13 @@ def _init_dist_pytorch(backend: str, **kwargs) -> None:
     # rank = int(os.environ['RANK'])
     local_rank = int(os.environ['LOCAL_RANK'])
 
-    torch.cuda.set_device(local_rank)
+    #torch.cuda.set_device(local_rank)
     dist.init_process_group(backend=backend, **kwargs)
 
 
 def _init_dist_mpi(backend: str, **kwargs) -> None:
     local_rank = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
-    torch.cuda.set_device(local_rank)
+    #torch.cuda.set_device(local_rank)
     if 'MASTER_PORT' not in os.environ:
         # 29500 is torch.distributed default port
         os.environ['MASTER_PORT'] = '29500'
@@ -82,7 +82,7 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
     ntasks = int(os.environ['SLURM_NTASKS'])
     node_list = os.environ['SLURM_NODELIST']
     num_gpus = torch.cuda.device_count()
-    torch.cuda.set_device(proc_id % num_gpus)
+    #torch.cuda.set_device(proc_id % num_gpus)
     addr = subprocess.getoutput(
         f'scontrol show hostname {node_list} | head -n1')
     # specify master port

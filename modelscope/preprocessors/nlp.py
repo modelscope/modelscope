@@ -161,7 +161,7 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         """
 
         model_type = get_model_type(model_dir)
-        if model_type in (Models.structbert, Models.gpt3, Models.palm):
+        if model_type in (Models.structbert, Models.gpt3, Models.palm, Models.plug):
             from modelscope.models.nlp.structbert import SbertTokenizer
             return SbertTokenizer.from_pretrained(model_dir, use_fast=False)
         elif model_type == Models.veco:

@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import GPT3ForTextGeneration, PalmForTextGeneration
+from modelscope.models.nlp import GPT3ForTextGeneration, PalmForTextGeneration, PlugForTextGeneration
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationPipeline
 from modelscope.preprocessors import TextGenerationPreprocessor
@@ -34,83 +34,15 @@ class TextGenerationTest(unittest.TestCase):
         self.gpt3_large_model_id = 'damo/nlp_gpt3_text-generation_chinese-large'
         self.gpt3_input = '《故乡》。深蓝的天空中挂着一轮金黄的圆月，下面是海边的沙地，'
 
-    def run_pipeline_with_model_instance(self, model_id, input):
-        model = Model.from_pretrained(model_id)
-        preprocessor = TextGenerationPreprocessor(
-            model.model_dir,
-            model.tokenizer,
-            first_sequence='sentence',
-            second_sequence=None)
-        pipeline_ins = pipeline(
-            task=Tasks.text_generation, model=model, preprocessor=preprocessor)
-        print(pipeline_ins(input))
+        self.plug_model_id = 'damo/nlp_plug_text-generation_chinese'
+        self.plug_input = '段誉轻挥折扇，摇了摇头，说'
 
-    def run_pipeline_with_model_id(self, model_id, input):
-        pipeline_ins = pipeline(task=Tasks.text_generation, model=model_id)
-        print(pipeline_ins(input))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_palm_zh_with_model_name(self):
-        self.run_pipeline_with_model_id(self.palm_model_id_zh,
-                                        self.palm_input_zh)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_palm_en_with_model_name(self):
-        self.run_pipeline_with_model_id(self.palm_model_id_en,
-                                        self.palm_input_en)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_gpt_base_with_model_name(self):
-        self.run_pipeline_with_model_id(self.gpt3_base_model_id,
-                                        self.gpt3_input)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_gpt_large_with_model_name(self):
-        self.run_pipeline_with_model_id(self.gpt3_large_model_id,
-                                        self.gpt3_input)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_palm_zh_with_model_instance(self):
-        self.run_pipeline_with_model_instance(self.palm_model_id_zh,
-                                              self.palm_input_zh)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_palm_en_with_model_instance(self):
-        self.run_pipeline_with_model_instance(self.palm_model_id_en,
-                                              self.palm_input_en)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_gpt_base_with_model_instance(self):
-        self.run_pipeline_with_model_instance(self.gpt3_base_model_id,
-                                              self.gpt3_input)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_gpt_large_with_model_instance(self):
-        self.run_pipeline_with_model_instance(self.gpt3_large_model_id,
-                                              self.gpt3_input)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_palm(self):
-        for model_id, input in ((self.palm_model_id_zh, self.palm_input_zh),
-                                (self.palm_model_id_en, self.palm_input_en)):
-            cache_path = snapshot_download(model_id)
-            model = PalmForTextGeneration.from_pretrained(cache_path)
-            preprocessor = TextGenerationPreprocessor(
-                cache_path,
-                model.tokenizer,
-                first_sequence='sentence',
-                second_sequence=None)
-            pipeline1 = TextGenerationPipeline(model, preprocessor)
-            pipeline2 = pipeline(
-                Tasks.text_generation, model=model, preprocessor=preprocessor)
-            print(
-                f'pipeline1: {pipeline1(input)}\npipeline2: {pipeline2(input)}'
-            )
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_gpt3(self):
-        cache_path = snapshot_download(self.gpt3_base_model_id)
-        model = GPT3ForTextGeneration(cache_path)
+    def test_plug(self):
+        import torch
+        print("start_method", str(torch.multiprocessing.get_start_method(allow_none=True)))
+        torch.multiprocessing.set_start_method("spawn")
+        cache_path = "/home/suluyan.sly/model/plug_model"
+        model = PlugForTextGeneration(cache_path)
         preprocessor = TextGenerationPreprocessor(
             cache_path,
             model.tokenizer,
@@ -120,13 +52,102 @@ class TextGenerationTest(unittest.TestCase):
         pipeline2 = pipeline(
             Tasks.text_generation, model=model, preprocessor=preprocessor)
         print(
-            f'pipeline1: {pipeline1(self.gpt3_input)}\npipeline2: {pipeline2(self.gpt3_input)}'
+            f'pipeline1: {pipeline1(self.plug_input)}\npipeline2: {pipeline2(self.plug_input)}'
         )
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.text_generation)
-        print(pipeline_ins(self.palm_input_zh))
+    # def run_pipeline_with_model_instance(self, model_id, input):
+    #     model = Model.from_pretrained(model_id)
+    #     preprocessor = TextGenerationPreprocessor(
+    #         model.model_dir,
+    #         model.tokenizer,
+    #         first_sequence='sentence',
+    #         second_sequence=None)
+    #     pipeline_ins = pipeline(
+    #         task=Tasks.text_generation, model=model, preprocessor=preprocessor)
+    #     print(pipeline_ins(input))
+
+    # def run_pipeline_with_model_id(self, model_id, input):
+    #     pipeline_ins = pipeline(task=Tasks.text_generation, model=model_id)
+    #     print(pipeline_ins(input))
+
+    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # def test_palm_zh_with_model_name(self):
+    #     self.run_pipeline_with_model_id(self.palm_model_id_zh,
+    #                                     self.palm_input_zh)
+
+    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # def test_palm_en_with_model_name(self):
+    #     self.run_pipeline_with_model_id(self.palm_model_id_en,
+    #                                     self.palm_input_en)
+
+    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # def test_gpt_base_with_model_name(self):
+    #     self.run_pipeline_with_model_id(self.gpt3_base_model_id,
+    #                                     self.gpt3_input)
+
+    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # def test_gpt_large_with_model_name(self):
+    #     self.run_pipeline_with_model_id(self.gpt3_large_model_id,
+    #                                     self.gpt3_input)
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_palm_zh_with_model_instance(self):
+    #     self.run_pipeline_with_model_instance(self.palm_model_id_zh,
+    #                                           self.palm_input_zh)
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_palm_en_with_model_instance(self):
+    #     self.run_pipeline_with_model_instance(self.palm_model_id_en,
+    #                                           self.palm_input_en)
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_gpt_base_with_model_instance(self):
+    #     self.run_pipeline_with_model_instance(self.gpt3_base_model_id,
+    #                                           self.gpt3_input)
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_gpt_large_with_model_instance(self):
+    #     self.run_pipeline_with_model_instance(self.gpt3_large_model_id,
+    #                                           self.gpt3_input)
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_run_palm(self):
+    #     for model_id, input in ((self.palm_model_id_zh, self.palm_input_zh),
+    #                             (self.palm_model_id_en, self.palm_input_en)):
+    #         cache_path = snapshot_download(model_id)
+    #         model = PalmForTextGeneration.from_pretrained(cache_path)
+    #         preprocessor = TextGenerationPreprocessor(
+    #             cache_path,
+    #             model.tokenizer,
+    #             first_sequence='sentence',
+    #             second_sequence=None)
+    #         pipeline1 = TextGenerationPipeline(model, preprocessor)
+    #         pipeline2 = pipeline(
+    #             Tasks.text_generation, model=model, preprocessor=preprocessor)
+    #         print(
+    #             f'pipeline1: {pipeline1(input)}\npipeline2: {pipeline2(input)}'
+    #         )
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_run_gpt3(self):
+    #     cache_path = snapshot_download(self.gpt3_base_model_id)
+    #     model = GPT3ForTextGeneration(cache_path)
+    #     preprocessor = TextGenerationPreprocessor(
+    #         cache_path,
+    #         model.tokenizer,
+    #         first_sequence='sentence',
+    #         second_sequence=None)
+    #     pipeline1 = TextGenerationPipeline(model, preprocessor)
+    #     pipeline2 = pipeline(
+    #         Tasks.text_generation, model=model, preprocessor=preprocessor)
+    #     print(
+    #         f'pipeline1: {pipeline1(self.gpt3_input)}\npipeline2: {pipeline2(self.gpt3_input)}'
+    #     )
+
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # def test_run_with_default_model(self):
+    #     pipeline_ins = pipeline(task=Tasks.text_generation)
+    #     print(pipeline_ins(self.palm_input_zh))
 
 
 if __name__ == '__main__':

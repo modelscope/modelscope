@@ -8,6 +8,7 @@ from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TextGenerationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.outputs import OutputKeys
 
 __all__ = ['TextGenerationPipeline']
 
@@ -56,6 +57,7 @@ class TextGenerationPipeline(Pipeline):
                 sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.tokenizer = preprocessor.tokenizer
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -72,4 +74,6 @@ class TextGenerationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        return inputs
+        generate_context = inputs["generate_context"]
+        generate_context = "".join(self.tokenizer.convert_ids_to_tokens(generate_context)).replace('[UNK]', '“').replace('##','')
+        return {OutputKeys.TEXT: generate_context}

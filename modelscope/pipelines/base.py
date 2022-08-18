@@ -153,7 +153,7 @@ class Pipeline(ABC):
             if self.device_name == 'gpu':
                 device = create_device()
                 if device.type == 'gpu':
-                    torch.cuda.set_device(device)
+                    pass #torch.cuda.set_device(device)
             yield
         else:
             yield

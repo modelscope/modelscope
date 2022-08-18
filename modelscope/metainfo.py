@@ -32,6 +32,7 @@ class Models(object):
     tcrf = 'transformer-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    plug = 'plug'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

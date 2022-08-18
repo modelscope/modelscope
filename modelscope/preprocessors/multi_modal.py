@@ -17,7 +17,7 @@ from .ofa.utils.collate import collate_fn
 
 __all__ = [
     'OfaPreprocessor',
-    'MPlugVisualQuestionAnsweringPreprocessor',
+    'MPlugPreprocessor',
 ]
 
 
@@ -88,39 +88,55 @@ class OfaPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.multi_modal,
-    module_name=Preprocessors.mplug_visual_question_answering)
-class MPlugVisualQuestionAnsweringPreprocessor(Preprocessor):
+    Fields.multi_modal, module_name=Preprocessors.mplug_tasks_preprocessor)
+class MPlugPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via 'bert-base-uncased' tokenizer and configuration
-
-        """
-        from transformers import BertTokenizer
-        from modelscope.models.multi_modal.mplug import CONFIG_NAME, MPlugConfig
-
         super().__init__(*args, **kwargs)
+        self.model_dir = model_dir
 
-        # tokenizer
-        self.tokenizer = BertTokenizer.from_pretrained(
-            osp.join(model_dir, ModelFile.VOCAB_FILE))
+        self._tokenizer = None
+        self._patch_resize_transform = None
 
-        # load configuration
-        config = MPlugConfig.from_yaml_file(osp.join(model_dir, CONFIG_NAME))
+    @property
+    def tokenizer(self):
+        from transformers import BertTokenizer
 
-        # Initialize transform
-        from torchvision import transforms
-        mean = (0.48145466, 0.4578275, 0.40821073)
-        std = (0.26862954, 0.26130258, 0.27577711)
+        if self._tokenizer is None:
+            self._tokenizer = BertTokenizer.from_pretrained(self.model_dir)
+        return self._tokenizer
 
-        self.patch_resize_transform = transforms.Compose([
-            transforms.Resize((config.image_res, config.image_res),
-                              interpolation=Image.BICUBIC),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
-        ])
+    @property
+    def patch_resize_transform(self):
+        if self._patch_resize_transform is None:
+            from torchvision import transforms
+            from modelscope.models.multi_modal.mplug import CONFIG_NAME, MPlugConfig
 
-    def __call__(self, data: Union[tuple, Dict[str, Any]]) -> Dict[str, Any]:
+            config = MPlugConfig.from_yaml_file(
+                osp.join(self.model_dir, CONFIG_NAME))
+
+            mean = (0.48145466, 0.4578275, 0.40821073)
+            std = (0.26862954, 0.26130258, 0.27577711)
+
+            self._patch_resize_transform = transforms.Compose([
+                transforms.Resize((config.image_res, config.image_res),
+                                  interpolation=Image.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+            ])
+        return self._patch_resize_transform
+
+    def __call__(self, *args, **kwargs):
+        call_mapping = {
+            Tasks.visual_question_answering: self.vqa_call,
+            Tasks.image_captioning: self.caption_call
+        }
+
+        self.cfg = Config.from_file(
+            osp.join(self.model_dir, ModelFile.CONFIGURATION))
+        return call_mapping[self.cfg.task](*args, **kwargs)
+
+    def vqa_call(self, data: Union[tuple, Dict[str, Any]]) -> Dict[str, Any]:
         image: Image.Image = data[0] if isinstance(data,
                                                    tuple) else data['image']
         question: str = data[1] if isinstance(data,
@@ -131,5 +147,21 @@ class MPlugVisualQuestionAnsweringPreprocessor(Preprocessor):
         question = self.tokenizer([question.lower()],
                                   padding='longest',
                                   return_tensors='pt')
+
+        return {'image': image, 'question': question, 'train': False}
+
+    def caption_call(
+            self, data: Union[Image.Image, tuple,
+                              Dict[str, Any]]) -> Dict[str, Any]:
+        if isinstance(data, Image.Image):
+            image = data
+        elif isinstance(data, tuple):
+            image = data[0]
+        else:
+            image = data['image']
+        image = image.convert('RGB')
+        image = self.patch_resize_transform(image)
+        image = torch.stack([image], dim=0)
+        question = self.tokenizer('', return_tensors='pt')
 
         return {'image': image, 'question': question, 'train': False}

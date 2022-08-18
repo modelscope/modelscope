@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from .gemm import GEMMForMultiModalEmbedding
     from .diffusion import DiffusionForTextToImageSynthesis
     from .mmr import VideoCLIPForMultiModalEmbedding
-    from .mplug_for_visual_question_answering import \
-        MPlugForVisualQuestionAnswering
+    from .mplug_for_all_tasks import MPlugForAllTasks
     from .ofa_for_all_tasks import OfaForAllTasks
     from .ofa_for_text_to_image_synthesis_model import \
         OfaForTextToImageSynthesis
@@ -21,8 +20,7 @@ else:
         'diffusion': ['DiffusionForTextToImageSynthesis'],
         'gemm': ['GEMMForMultiModalEmbedding'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
-        'mplug_for_visual_question_answering':
-        ['MPlugForVisualQuestionAnswering'],
+        'mplug_for_all_tasks': ['MPlugForAllTasks'],
         'ofa_for_all_tasks': ['OfaForAllTasks'],
         'ofa_for_text_to_image_synthesis_model':
         ['OfaForTextToImageSynthesis']

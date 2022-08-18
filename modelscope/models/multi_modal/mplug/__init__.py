@@ -14,4 +14,4 @@
 # limitations under the License.
 
 from .configuration_mplug import MPlugConfig
-from .modeling_mplug import CONFIG_NAME, MPlugForVisualQuestionAnswering
+from .modeling_mplug import CONFIG_NAME, MPlug

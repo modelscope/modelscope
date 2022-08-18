@@ -14,8 +14,7 @@ if TYPE_CHECKING:
                         ImageInstanceSegmentationPreprocessor,
                         ImageDenoisePreprocessor)
     from .kws import WavToLists
-    from .multi_modal import (OfaPreprocessor,
-                              MPlugVisualQuestionAnsweringPreprocessor)
+    from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
     from .nlp import (Tokenize, SequenceClassificationPreprocessor,
                       TextGenerationPreprocessor,
                       TokenClassificationPreprocessor,
@@ -42,8 +41,7 @@ else:
             'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
         ],
         'kws': ['WavToLists'],
-        'multi_modal':
-        ['OfaPreprocessor', 'MPlugVisualQuestionAnsweringPreprocessor'],
+        'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
             'Tokenize', 'SequenceClassificationPreprocessor',
             'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',

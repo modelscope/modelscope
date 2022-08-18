@@ -15,13 +15,13 @@
 # limitations under the License.
 """ MPLUG model configuration """
 import os
-from collections import OrderedDict
-from typing import Any, Dict, Mapping, Union
+from typing import Any, Dict, Union
 
 import yaml
 from transformers import PretrainedConfig
-from transformers.onnx import OnnxConfig
 from transformers.utils import logging
+
+from modelscope.utils.constant import Tasks
 
 logger = logging.get_logger(__name__)
 
@@ -32,6 +32,7 @@ class MPlugConfig(PretrainedConfig):
 
     def __init__(
             self,
+            task=Tasks.visual_question_answering,
             bert_config='config_bert.json',
             image_res=504,
             batch_size_train=128,
@@ -64,7 +65,9 @@ class MPlugConfig(PretrainedConfig):
             clip_transformer_heads=12,
             clip_transformer_layers=12,
             **kwargs):
+
         super().__init__(**kwargs)
+        self.task = task
         self.bert_config = bert_config
         self.image_res = image_res
         self.batch_size_train = batch_size_train
@@ -103,23 +106,3 @@ class MPlugConfig(PretrainedConfig):
         with open(yaml_file, 'r') as reader:
             config_dict = yaml.load(reader, Loader=yaml.Loader)
         return cls(**config_dict)
-
-
-class MPlugOnnxConfig(OnnxConfig):
-
-    @property
-    def inputs(self) -> Mapping[str, Mapping[int, str]]:
-        return OrderedDict([
-            ('input_ids', {
-                0: 'batch',
-                1: 'sequence'
-            }),
-            ('attention_mask', {
-                0: 'batch',
-                1: 'sequence'
-            }),
-            ('token_type_ids', {
-                0: 'batch',
-                1: 'sequence'
-            }),
-        ])

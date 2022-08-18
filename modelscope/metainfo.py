@@ -218,7 +218,7 @@ class Preprocessors(object):
 
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
-    mplug_visual_question_answering = 'mplug-visual-question-answering'
+    mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
 
 
 class Metrics(object):

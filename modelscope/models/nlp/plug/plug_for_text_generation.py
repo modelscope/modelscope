@@ -21,6 +21,8 @@ class PlugForTextGeneration(TorchModel):
         from multiprocessing import Pool
         from .arguments import get_args
         from . import PlugNLGConfig
+        import torch
+        torch.multiprocessing.set_start_method("spawn")
 
         self.tokenizer = BertTokenizer.from_pretrained(model_dir)
         model_config = PlugNLGConfig.from_pretrained(model_dir)

@@ -38,9 +38,6 @@ class TextGenerationTest(unittest.TestCase):
         self.plug_input = '段誉轻挥折扇，摇了摇头，说'
 
     def test_plug(self):
-        import torch
-        print("start_method", str(torch.multiprocessing.get_start_method(allow_none=True)))
-        torch.multiprocessing.set_start_method("spawn")
         cache_path = "/home/suluyan.sly/model/plug_model"
         model = PlugForTextGeneration(cache_path)
         preprocessor = TextGenerationPreprocessor(

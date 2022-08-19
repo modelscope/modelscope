@@ -111,6 +111,7 @@ class Pipelines(object):
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
+    video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

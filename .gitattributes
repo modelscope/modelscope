@@ -4,3 +4,4 @@
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.JPEG filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text

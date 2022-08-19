@@ -6,4 +6,4 @@ from . import (action_recognition, animal_recognition, body_2d_keypoints,
                image_portrait_enhancement, image_to_image_generation,
                image_to_image_translation, object_detection,
                product_retrieval_embedding, salient_detection,
-               super_resolution, virual_tryon)
+               super_resolution, video_single_object_tracking, virual_tryon)

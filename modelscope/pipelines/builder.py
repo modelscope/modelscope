@@ -130,6 +130,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_unet_skin-retouching'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
+    Tasks.video_single_object_tracking:
+    (Pipelines.video_single_object_tracking,
+     'damo/cv_vitb_video-single-object-tracking_ostrack'),
 }
 
 

@@ -188,6 +188,16 @@ TASK_OUTPUTS = {
     Tasks.body_2d_keypoints:
     [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
 
+    # video single object tracking result for single video
+    # {
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.video_single_object_tracking: [OutputKeys.BOXES],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001],

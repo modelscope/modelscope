@@ -62,6 +62,9 @@ class CVTasks(object):
     virtual_try_on = 'virtual-try-on'
     crowd_counting = 'crowd-counting'
 
+    # video related
+    video_single_object_tracking = 'video-single-object-tracking'
+
 
 class NLPTasks(object):
     # nlp tasks

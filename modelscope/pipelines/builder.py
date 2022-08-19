@@ -124,8 +124,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
-    Tasks.ocr_recognition: (Pipelines.ocr_recognition,
-                            'damo/cv_convnextTiny_ocr-recognition_damo'),
+    Tasks.ocr_recognition:
+    (Pipelines.ocr_recognition,
+     'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,

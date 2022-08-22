@@ -201,6 +201,8 @@ class ModelFile(object):
     TF_CKPT_PREFIX = 'ckpt-'
     TORCH_MODEL_FILE = 'pytorch_model.pt'
     TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
+    VOCAB_FILE = 'vocab.txt'
+    ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
 
 

@@ -13,8 +13,8 @@ from modelscope.models.cv.product_retrieval_embedding.item_embedding import (
     preprocess, resnet50_embed)
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import create_device
 
 logger = get_logger()
 
@@ -48,9 +48,8 @@ class ProductRetrievalEmbedding(TorchModel):
             filter_param(src_params, own_state)
             model.load_state_dict(own_state)
 
-        cpu_flag = device == 'cpu'
         self.device = create_device(
-            cpu_flag)  # device.type == "cpu" or device.type == "cuda"
+            device)  # device.type == "cpu" or device.type == "cuda"
         self.use_gpu = self.device.type == 'cuda'
 
         # config the model path

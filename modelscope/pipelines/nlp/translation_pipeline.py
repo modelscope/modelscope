@@ -31,7 +31,7 @@ class TranslationPipeline(Pipeline):
 
         @param model: A Model instance.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
         model = self.model.model_dir
         tf.reset_default_graph()
 

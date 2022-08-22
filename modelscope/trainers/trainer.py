@@ -36,11 +36,11 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, Hubs, ModeKeys, ModelFile,
                                        Tasks, TrainerStages)
 from modelscope.utils.data_utils import to_device
+from modelscope.utils.device import create_device, verify_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (create_device, get_dist_info,
-                                          init_dist)
+from modelscope.utils.torch_utils import get_dist_info, init_dist
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -150,9 +150,8 @@ class EpochBasedTrainer(BaseTrainer):
             self.eval_preprocessor.mode = ModeKeys.EVAL
 
         device_name = kwargs.get('device', 'gpu')
-        assert device_name in ['gpu',
-                               'cpu'], 'device should be either cpu or gpu.'
-        self.device = create_device(device_name == 'cpu')
+        verify_device(device_name)
+        self.device = create_device(device_name)
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,

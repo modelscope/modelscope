@@ -71,6 +71,7 @@ class FRCRNModel(TorchModel):
             model_dir (str): the model path.
         """
         super().__init__(model_dir, *args, **kwargs)
+        kwargs.pop('device')
         self.model = FRCRN(*args, **kwargs)
         model_bin_file = os.path.join(model_dir,
                                       ModelFile.TORCH_MODEL_BIN_FILE)

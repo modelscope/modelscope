@@ -10,7 +10,7 @@ from modelscope.utils.constant import Tasks
     Tasks.image_classification, module_name=Models.classification_model)
 class ClassificationModel(TorchModel):
 
-    def __init__(self, model_dir: str):
+    def __init__(self, model_dir: str, **kwargs):
         import mmcv
         from mmcls.models import build_classifier
 

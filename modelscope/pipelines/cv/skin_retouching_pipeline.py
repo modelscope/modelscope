@@ -23,6 +23,7 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device, device_placement
 from modelscope.utils.logger import get_logger
 
 if tf.__version__ >= '2.0':
@@ -42,12 +43,9 @@ class SkinRetouchingPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, device=device)
 
-        if torch.cuda.is_available() and device == 'gpu':
-            device = 'cuda'
-        else:
-            device = 'cpu'
+        device = create_device(self.device_name)
         model_path = os.path.join(self.model, ModelFile.TORCH_MODEL_FILE)
         detector_model_path = os.path.join(
             self.model, 'retinaface_resnet50_2020-07-20_old_torch.pth')
@@ -81,16 +79,17 @@ class SkinRetouchingPipeline(Pipeline):
 
         self.skin_model_path = skin_model_path
         if self.skin_model_path is not None:
-            config = tf.ConfigProto(allow_soft_placement=True)
-            config.gpu_options.per_process_gpu_memory_fraction = 0.3
-            config.gpu_options.allow_growth = True
-            self.sess = tf.Session(config=config)
-            with tf.gfile.FastGFile(self.skin_model_path, 'rb') as f:
-                graph_def = tf.GraphDef()
-                graph_def.ParseFromString(f.read())
-                self.sess.graph.as_default()
-                tf.import_graph_def(graph_def, name='')
-                self.sess.run(tf.global_variables_initializer())
+            with device_placement(self.framework, self.device_name):
+                config = tf.ConfigProto(allow_soft_placement=True)
+                config.gpu_options.per_process_gpu_memory_fraction = 0.3
+                config.gpu_options.allow_growth = True
+                self.sess = tf.Session(config=config)
+                with tf.gfile.FastGFile(self.skin_model_path, 'rb') as f:
+                    graph_def = tf.GraphDef()
+                    graph_def.ParseFromString(f.read())
+                    self.sess.graph.as_default()
+                    tf.import_graph_def(graph_def, name='')
+                    self.sess.run(tf.global_variables_initializer())
 
         self.image_files_transforms = transforms.Compose([
             transforms.ToTensor(),

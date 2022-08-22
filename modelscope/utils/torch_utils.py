@@ -132,17 +132,6 @@ def master_only(func: Callable) -> Callable:
     return wrapper
 
 
-def create_device(cpu: bool = False) -> torch.DeviceObjType:
-    use_cuda = torch.cuda.is_available() and not cpu
-    if use_cuda:
-        local_rank = os.environ.get('LOCAL_RANK', 0)
-        device = torch.device(f'cuda:{local_rank}')
-    else:
-        device = torch.device('cpu')
-
-    return device
-
-
 def make_tmp_dir():
     """Make sure each rank has the same temporary directory on the distributed mode.
     """

@@ -41,3 +41,7 @@ class KWSFarfieldTest(unittest.TestCase):
         result = kws(data)
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
+
+
+if __name__ == '__main__':
+    unittest.main()

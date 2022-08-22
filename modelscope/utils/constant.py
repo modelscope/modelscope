@@ -290,3 +290,9 @@ class ColorCodes:
     GREEN = '\033[92m'
     RED = '\033[91m'
     END = '\033[0m'
+
+
+class Devices:
+    """device used for training and inference"""
+    cpu = 'cpu'
+    gpu = 'gpu'

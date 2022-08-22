@@ -20,6 +20,7 @@ class Models(object):
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
+    image_reid_person = 'passvitb'
 
     # nlp models
     bert = 'bert'
@@ -112,6 +113,7 @@ class Pipelines(object):
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
+    image_reid_person = 'passvitb-image-reid-person'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

@@ -134,6 +134,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_single_object_tracking:
     (Pipelines.video_single_object_tracking,
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
+    Tasks.image_reid_person: (Pipelines.image_reid_person,
+                              'damo/cv_passvitb_image-reid-person_market'),
 }
 
 

@@ -503,4 +503,10 @@ TASK_OUTPUTS = {
     #       "labels": ["entailment", "contradiction", "neutral"]
     # }
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # image person reid result for single sample
+    #   {
+    #       "img_embedding": np.array with shape [1, D],
+    #   }
+    Tasks.image_reid_person: [OutputKeys.IMG_EMBEDDING],
 }

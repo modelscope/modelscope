@@ -1,5 +1,4 @@
 #!/bin/bash
-IMAGE_NAME=reg.docker.alibaba-inc.com/dinger/modelscope
 MODELSCOPE_CACHE_DIR_IN_CONTAINER=/modelscope_cache
 CODE_DIR=$PWD
 CODE_DIR_IN_CONTAINER=/Maas-lib
@@ -8,6 +7,7 @@ gpus='7 6 5 4 3 2 1 0'
 cpu_sets='0-7 8-15 16-23 24-30 31-37 38-44 45-51 52-58'
 cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
+CI_COMMAND=${CI_COMMAND:-'bash .dev_scripts/ci_container_test.sh'}
 for gpu in $gpus
 do
   exec {lock_fd}>"/tmp/gpu$gpu" || exit 1
@@ -31,10 +31,11 @@ do
              -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
              -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
              -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
+             -e TEST_LEVEL=$TEST_LEVEL \
              --workdir=$CODE_DIR_IN_CONTAINER \
              --net host  \
              ${IMAGE_NAME}:${IMAGE_VERSION} \
-             bash .dev_scripts/ci_container_test.sh
+             $CI_COMMAND
   if [ $? -ne 0 ]; then
     echo "Running test case failed, please check the log!"
     exit -1

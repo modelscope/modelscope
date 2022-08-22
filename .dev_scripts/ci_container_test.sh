@@ -16,5 +16,7 @@ if [ $? -ne 0 ]; then
     echo "linter test failed, please run 'pre-commit run --all-files' to check"
     exit -1
 fi
+# test with install
+python setup.py install
 
-PYTHONPATH=. python tests/run.py
+python tests/run.py

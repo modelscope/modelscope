@@ -21,7 +21,6 @@ class FaceRecognitionTest(unittest.TestCase):
 
         face_recognition = pipeline(
             Tasks.face_recognition, model=self.model_id)
-        # note that for dataset output, the inference-output is a Generator that can be iterated.
         emb1 = face_recognition(img1)[OutputKeys.IMG_EMBEDDING]
         emb2 = face_recognition(img2)[OutputKeys.IMG_EMBEDDING]
         sim = np.dot(emb1[0], emb2[0])

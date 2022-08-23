@@ -1,5 +1,4 @@
-# The implementation is also open-sourced by the authors as OSTrack, and is available publicly on
-# https://github.com/botaoye/OSTrack/
+# The implementation is based on OSTrack, available at https://github.com/botaoye/OSTrack/
 import torch
 
 

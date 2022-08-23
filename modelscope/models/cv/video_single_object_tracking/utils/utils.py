@@ -238,3 +238,24 @@ def check_box(box: list, image_height, image_width) -> bool:
     if box[3] < 0 or box[3] >= image_height:
         return False
     return True
+
+
+def show_tracking_result(video_in_path, bboxes, video_save_path):
+    cap = cv2.VideoCapture(video_in_path)
+    for i in range(len(bboxes)):
+        box = bboxes[i]
+        success, frame = cap.read()
+        if success is False:
+            raise Exception(video_in_path,
+                            ' can not be correctly decoded by OpenCV.')
+        if i == 0:
+            size = (frame.shape[1], frame.shape[0])
+            fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+            video_writer = cv2.VideoWriter(video_save_path, fourcc,
+                                           cap.get(cv2.CAP_PROP_FPS), size,
+                                           True)
+        cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), (0, 255, 0),
+                      5)
+        video_writer.write(frame)
+    video_writer.release
+    cap.release()

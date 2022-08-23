@@ -9,7 +9,6 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import ConversationalTextToSqlPipeline
 from modelscope.preprocessors import ConversationalTextToSqlPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.nlp.nlp_utils import text2sql_tracking_and_print_results
 from modelscope.utils.test_utils import test_level
 
 
@@ -25,6 +24,24 @@ class ConversationalTextToSql(unittest.TestCase):
             'Which shop is hiring the highest number of employees? | do you want the name of the shop ? | Yes'
         ]
     }
+
+    def tracking_and_print_results(
+            self, pipelines: List[ConversationalTextToSqlPipeline]):
+        for my_pipeline in pipelines:
+            last_sql, history = '', []
+            for item in self.test_case['utterance']:
+                case = {
+                    'utterance': item,
+                    'history': history,
+                    'last_sql': last_sql,
+                    'database_id': self.test_case['database_id'],
+                    'local_db_path': self.test_case['local_db_path']
+                }
+                results = my_pipeline(case)
+                print({'question': item})
+                print(results)
+                last_sql = results['text']
+                history.append(item)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
@@ -44,7 +61,7 @@ class ConversationalTextToSql(unittest.TestCase):
                 model=model,
                 preprocessor=preprocessor)
         ]
-        text2sql_tracking_and_print_results(self.test_case, pipelines)
+        self.tracking_and_print_results(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
@@ -60,7 +77,7 @@ class ConversationalTextToSql(unittest.TestCase):
                 model=model,
                 preprocessor=preprocessor)
         ]
-        text2sql_tracking_and_print_results(self.test_case, pipelines)
+        self.tracking_and_print_results(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
@@ -68,12 +85,12 @@ class ConversationalTextToSql(unittest.TestCase):
             pipeline(
                 task=Tasks.conversational_text_to_sql, model=self.model_id)
         ]
-        text2sql_tracking_and_print_results(self.test_case, pipelines)
+        self.tracking_and_print_results(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipelines = [pipeline(task=Tasks.conversational_text_to_sql)]
-        text2sql_tracking_and_print_results(self.test_case, pipelines)
+        self.tracking_and_print_results(pipelines)
 
 
 if __name__ == '__main__':

@@ -1,14 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
+from typing import List
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SpaceForDialogStateTracking
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import DialogStateTrackingPipeline
 from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.nlp.nlp_utils import tracking_and_print_dialog_states
 from modelscope.utils.test_utils import test_level
 
 
@@ -78,6 +79,24 @@ class DialogStateTrackingTest(unittest.TestCase):
         'User-8': 'Thank you, goodbye',
     }]
 
+    def tracking_and_print_dialog_states(
+            self, pipelines: List[DialogStateTrackingPipeline]):
+        import json
+        pipelines_len = len(pipelines)
+        history_states = [{}]
+        utter = {}
+        for step, item in enumerate(self.test_case):
+            utter.update(item)
+            result = pipelines[step % pipelines_len]({
+                'utter':
+                utter,
+                'history_states':
+                history_states
+            })
+            print(json.dumps(result))
+
+            history_states.extend([result[OutputKeys.OUTPUT], {}])
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id, revision='update')
@@ -92,7 +111,7 @@ class DialogStateTrackingTest(unittest.TestCase):
                 model=model,
                 preprocessor=preprocessor)
         ]
-        tracking_and_print_dialog_states(pipelines)
+        self.tracking_and_print_dialog_states(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
@@ -109,7 +128,7 @@ class DialogStateTrackingTest(unittest.TestCase):
                 preprocessor=preprocessor)
         ]
 
-        tracking_and_print_dialog_states(pipelines)
+        self.tracking_and_print_dialog_states(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
@@ -119,7 +138,7 @@ class DialogStateTrackingTest(unittest.TestCase):
                 model=self.model_id,
                 model_revision='update')
         ]
-        tracking_and_print_dialog_states(pipelines)
+        self.tracking_and_print_dialog_states(pipelines)
 
 
 if __name__ == '__main__':

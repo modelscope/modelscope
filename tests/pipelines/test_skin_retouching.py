@@ -23,10 +23,9 @@ class SkinRetouchingTest(unittest.TestCase):
         cv2.imwrite('result_skinretouching.png', result[OutputKeys.OUTPUT_IMG])
         print(f'Output written to {osp.abspath("result_skinretouching.png")}')
 
-    @unittest.skip('deprecated, download model from model hub instead')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         model_dir = snapshot_download(self.model_id)
-
         skin_retouching = pipeline(Tasks.skin_retouching, model=model_dir)
         self.pipeline_inference(skin_retouching, self.test_image)
 

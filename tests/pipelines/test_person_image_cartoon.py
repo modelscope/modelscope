@@ -24,19 +24,6 @@ class ImageCartoonTest(unittest.TestCase):
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
             print(f'Output written to {osp.abspath("result.png")}')
 
-    @unittest.skip('deprecated, download model from model hub instead')
-    def test_run_by_direct_model_download(self):
-        model_dir = './assets'
-        if not os.path.exists(model_dir):
-            os.system(
-                'wget https://invi-label.oss-cn-shanghai.aliyuncs.com/label/model/cartoon/assets.zip'
-            )
-            os.system('unzip assets.zip')
-
-        img_cartoon = pipeline(
-            Tasks.image_portrait_stylization, model=model_dir)
-        self.pipeline_inference(img_cartoon, self.test_image)
-
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         img_cartoon = pipeline(

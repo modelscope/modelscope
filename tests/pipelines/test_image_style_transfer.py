@@ -15,7 +15,7 @@ class ImageStyleTransferTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'damo/cv_aams_style-transfer_damo'
 
-    @unittest.skip('deprecated, download model from model hub instead')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         snapshot_path = snapshot_download(self.model_id)
         print('snapshot_path: {}'.format(snapshot_path))

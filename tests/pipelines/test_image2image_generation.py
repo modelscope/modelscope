@@ -3,6 +3,7 @@ import unittest
 
 from torchvision.utils import save_image
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -27,13 +28,13 @@ class Image2ImageGenerationTest(unittest.TestCase):
         result2 = img2img_gen_pipeline(('data/test/images/img2img_input.jpg',
                                         'data/test/images/img2img_style.jpg'))
         save_image(
-            result1['output_img'].clamp(-1, 1),
+            result1[OutputKeys.OUTPUT_IMG].clamp(-1, 1),
             'result1.jpg',
             range=(-1, 1),
             normalize=True,
             nrow=4)
         save_image(
-            result2['output_img'].clamp(-1, 1),
+            result2[OutputKeys.OUTPUT_IMG].clamp(-1, 1),
             'result2.jpg',
             range=(-1, 1),
             normalize=True,

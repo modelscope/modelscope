@@ -18,6 +18,11 @@ from .ocr_utils import (SegLinkDetector, cal_width, combine_segments_python,
                         rboxes_to_polygons)
 
 if tf.__version__ >= '2.0':
+    import tf_slim as slim
+else:
+    from tensorflow.contrib import slim
+
+if tf.__version__ >= '2.0':
     tf = tf.compat.v1
 tf.compat.v1.disable_eager_execution()
 

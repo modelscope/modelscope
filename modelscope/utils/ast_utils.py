@@ -7,6 +7,7 @@ import os.path as osp
 import time
 import traceback
 from functools import reduce
+from pathlib import Path
 from typing import Generator, Union
 
 import gast
@@ -24,9 +25,10 @@ from modelscope.utils.registry import default_group
 
 logger = get_logger()
 storage = LocalStorage()
+p = Path(__file__)
 
 # get the path of package 'modelscope'
-MODELSCOPE_PATH = '/'.join(os.path.dirname(__file__).split('/')[:-1])
+MODELSCOPE_PATH = p.resolve().parents[1]
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [

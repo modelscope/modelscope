@@ -88,7 +88,7 @@ def _nn_variable(name, shape, init_method, collection=None, **kwargs):
     else:
         raise 'Unsupported weight initialization method: ' + init_method
 
-    var = tf.get_variable(name, shape=shape, initializer=initializer, **kwargs)
+    var = tf.get_variable(name, shape=shape, initializer=initializer)
     if collection is not None:
         tf.add_to_collection(collection, var)
 

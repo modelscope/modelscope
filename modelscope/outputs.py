@@ -188,6 +188,16 @@ TASK_OUTPUTS = {
     Tasks.body_2d_keypoints:
     [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
 
+    # video single object tracking result for single video
+    # {
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.video_single_object_tracking: [OutputKeys.BOXES],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001],
@@ -405,7 +415,7 @@ TASK_OUTPUTS = {
 
     # audio processed for single file in PCM format
     # {
-    #   "output_pcm": np.array with shape(samples,) and dtype float32
+    #   "output_pcm": pcm encoded audio bytes
     # }
     Tasks.speech_signal_process: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_echo_cancellation: [OutputKeys.OUTPUT_PCM],
@@ -416,6 +426,19 @@ TASK_OUTPUTS = {
     #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
     # }
     Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+
+    # {
+    #     "kws_list": [
+    #         {
+    #             'keyword': '',        # the keyword spotted
+    #             'offset': 19.4,       # the keyword start time in second
+    #             'length': 0.68,       # the keyword length in second
+    #             'confidence': 0.85    # the possibility if it is the keyword
+    #         },
+    #         ...
+    #     ]
+    # }
+    Tasks.keyword_spotting: [OutputKeys.KWS_LIST],
 
     # ============ multi-modal tasks ===================
 

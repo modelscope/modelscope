@@ -38,6 +38,7 @@ class Models(object):
     # audio models
     sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
 
@@ -86,6 +87,7 @@ class Pipelines(object):
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     live_category = 'live-category'
@@ -109,6 +111,7 @@ class Pipelines(object):
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
+    video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -132,6 +135,7 @@ class Pipelines(object):
     sambert_hifigan_tts = 'sambert-hifigan-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     asr_inference = 'asr-inference'
 
@@ -215,7 +219,7 @@ class Preprocessors(object):
 
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
-    mplug_visual_question_answering = 'mplug-visual-question-answering'
+    mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
 
 
 class Metrics(object):

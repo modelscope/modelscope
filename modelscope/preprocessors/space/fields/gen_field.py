@@ -8,6 +8,7 @@ from itertools import chain
 import numpy as np
 
 from modelscope.preprocessors.space.tokenizer import Tokenizer
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.nlp.space import ontology, utils
 from modelscope.utils.nlp.space.db_ops import MultiWozDB
@@ -343,7 +344,7 @@ class MultiWOZBPETextField(BPETextField):
         ]
         special_tokens.extend(self.add_sepcial_tokens())
         self.tokenizer = Tokenizer(
-            vocab_path=os.path.join(model_dir, 'vocab.txt'),
+            vocab_path=os.path.join(model_dir, ModelFile.VOCAB_FILE),
             special_tokens=special_tokens,
             tokenizer_type=config.BPETextField.tokenizer_type)
         self.understand_ids = self.tokenizer.convert_tokens_to_ids(

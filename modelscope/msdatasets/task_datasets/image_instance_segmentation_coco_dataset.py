@@ -2,14 +2,32 @@ import os.path as osp
 
 import numpy as np
 from pycocotools.coco import COCO
-from torch.utils.data import Dataset
+
+from modelscope.metainfo import Models
+from modelscope.utils.constant import Tasks
+from .builder import TASK_DATASETS
+from .torch_base_dataset import TorchTaskDataset
+
+DATASET_STRUCTURE = {
+    'train': {
+        'annotation': 'annotations/instances_train.json',
+        'images': 'images/train'
+    },
+    'validation': {
+        'annotation': 'annotations/instances_val.json',
+        'images': 'images/val'
+    }
+}
 
 
-class ImageInstanceSegmentationCocoDataset(Dataset):
+@TASK_DATASETS.register_module(
+    module_name=Models.cascade_mask_rcnn_swin,
+    group_key=Tasks.image_segmentation)
+class ImageInstanceSegmentationCocoDataset(TorchTaskDataset):
     """Coco-style dataset for image instance segmentation.
 
     Args:
-        ann_file (str): Annotation file path.
+        split_config (dict): Annotation file path. {"train":"xxxxx"}
         classes (Sequence[str], optional): Specify classes to load.
             If is None, ``cls.CLASSES`` will be used. Default: None.
         data_root (str, optional): Data root for ``ann_file``,
@@ -37,29 +55,26 @@ class ImageInstanceSegmentationCocoDataset(Dataset):
                'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
 
     def __init__(self,
-                 ann_file,
+                 split_config: dict,
+                 preprocessor=None,
                  classes=None,
-                 data_root=None,
-                 img_prefix='',
                  seg_prefix=None,
                  test_mode=False,
-                 filter_empty_gt=True):
-        self.ann_file = ann_file
-        self.data_root = data_root
-        self.img_prefix = img_prefix
+                 filter_empty_gt=True,
+                 **kwargs):
+        self.data_root = next(iter(split_config.values()))
+        self.split = next(iter(split_config.keys()))
+        self.preprocessor = preprocessor
+
+        self.ann_file = osp.join(self.data_root,
+                                 DATASET_STRUCTURE[self.split]['annotation'])
+
+        self.img_prefix = osp.join(self.data_root,
+                                   DATASET_STRUCTURE[self.split]['images'])
         self.seg_prefix = seg_prefix
         self.test_mode = test_mode
         self.filter_empty_gt = filter_empty_gt
         self.CLASSES = self.get_classes(classes)
-
-        # join paths if data_root is specified
-        if self.data_root is not None:
-            if not osp.isabs(self.ann_file):
-                self.ann_file = osp.join(self.data_root, self.ann_file)
-            if not (self.img_prefix is None or osp.isabs(self.img_prefix)):
-                self.img_prefix = osp.join(self.data_root, self.img_prefix)
-            if not (self.seg_prefix is None or osp.isabs(self.seg_prefix)):
-                self.seg_prefix = osp.join(self.data_root, self.seg_prefix)
 
         # load annotations
         self.data_infos = self.load_annotations(self.ann_file)
@@ -70,8 +85,6 @@ class ImageInstanceSegmentationCocoDataset(Dataset):
             self.data_infos = [self.data_infos[i] for i in valid_inds]
             # set group flag for the sampler
             self._set_group_flag()
-
-        self.preprocessor = None
 
     def __len__(self):
         """Total number of samples of data."""
@@ -326,7 +339,3 @@ class ImageInstanceSegmentationCocoDataset(Dataset):
             raise ValueError(f'Unsupported type {type(classes)} of classes.')
 
         return class_names
-
-    def to_torch_dataset(self, preprocessors=None):
-        self.preprocessor = preprocessors
-        return self

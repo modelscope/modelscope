@@ -28,7 +28,7 @@ __all__ = ['ConversationalTextToSqlPreprocessor']
 class ConversationalTextToSqlPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path

@@ -62,6 +62,9 @@ class CVTasks(object):
     virtual_try_on = 'virtual-try-on'
     crowd_counting = 'crowd-counting'
 
+    # video related
+    video_single_object_tracking = 'video-single-object-tracking'
+
 
 class NLPTasks(object):
     # nlp tasks
@@ -203,6 +206,8 @@ class ModelFile(object):
     TF_CKPT_PREFIX = 'ckpt-'
     TORCH_MODEL_FILE = 'pytorch_model.pt'
     TORCH_MODEL_BIN_FILE = 'pytorch_model.bin'
+    VOCAB_FILE = 'vocab.txt'
+    ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
 
 
@@ -217,6 +222,12 @@ class ConfigFields(object):
     preprocessor = 'preprocessor'
     train = 'train'
     evaluation = 'evaluation'
+
+
+class ConfigKeys(object):
+    """Fixed keywords in configuration file"""
+    train = 'train'
+    val = 'val'
 
 
 class Requirements(object):

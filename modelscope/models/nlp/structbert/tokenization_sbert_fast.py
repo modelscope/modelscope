@@ -22,13 +22,14 @@ import transformers
 from tokenizers import normalizers
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 from .tokenization_sbert import SbertTokenizer
 
 logger = get_logger(__name__)
 
 VOCAB_FILES_NAMES = {
-    'vocab_file': 'vocab.txt',
+    'vocab_file': ModelFile.VOCAB_FILE,
     'tokenizer_file': 'tokenizer.json'
 }
 

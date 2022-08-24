@@ -38,7 +38,7 @@ class DetectionModel(TorchModel):
             self.model, model_path, map_location='cpu')
         self.class_names = checkpoint['meta']['CLASSES']
         config.test_pipeline[0].type = 'LoadImageFromWebcam'
-        self.test_pipeline = Compose(
+        self.transform_input = Compose(
             replace_ImageToTensor(config.test_pipeline))
         self.model.cfg = config
         self.model.eval()
@@ -56,7 +56,7 @@ class DetectionModel(TorchModel):
 
         from mmcv.parallel import collate, scatter
         data = dict(img=image)
-        data = self.test_pipeline(data)
+        data = self.transform_input(data)
         data = collate([data], samples_per_gpu=1)
         data['img_metas'] = [
             img_metas.data[0] for img_metas in data['img_metas']

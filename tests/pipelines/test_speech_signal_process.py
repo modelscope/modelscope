@@ -8,22 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
-NEAREND_MIC_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/nearend_mic.wav'
-FAREND_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/farend_speech.wav'
-NEAREND_MIC_FILE = 'nearend_mic.wav'
-FAREND_SPEECH_FILE = 'farend_speech.wav'
+NEAREND_MIC_FILE = 'data/test/audios/nearend_mic.wav'
+FAREND_SPEECH_FILE = 'data/test/audios/farend_speech.wav'
 
-NOISE_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ANS/sample_audio/speech_with_noise.wav'
-NOISE_SPEECH_FILE = 'speech_with_noise.wav'
-
-
-def download(remote_path, local_path):
-    local_dir = os.path.dirname(local_path)
-    if len(local_dir) > 0:
-        if not os.path.exists(local_dir):
-            os.makedirs(local_dir)
-    with open(local_path, 'wb') as ofile:
-        ofile.write(File.read(remote_path))
+NOISE_SPEECH_FILE = 'data/test/audios/speech_with_noise.wav'
 
 
 class SpeechSignalProcessTest(unittest.TestCase):
@@ -33,13 +21,10 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_aec(self):
-        # Download audio files
-        download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
-        download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
         model_id = 'damo/speech_dfsmn_aec_psm_16k'
         input = {
-            'nearend_mic': NEAREND_MIC_FILE,
-            'farend_speech': FAREND_SPEECH_FILE
+            'nearend_mic': os.path.join(os.getcwd(), NEAREND_MIC_FILE),
+            'farend_speech': os.path.join(os.getcwd(), FAREND_SPEECH_FILE)
         }
         aec = pipeline(Tasks.acoustic_echo_cancellation, model=model_id)
         output_path = os.path.abspath('output.wav')
@@ -48,14 +33,11 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_aec_bytes(self):
-        # Download audio files
-        download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
-        download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
         model_id = 'damo/speech_dfsmn_aec_psm_16k'
         input = {}
-        with open(NEAREND_MIC_FILE, 'rb') as f:
+        with open(os.path.join(os.getcwd(), NEAREND_MIC_FILE), 'rb') as f:
             input['nearend_mic'] = f.read()
-        with open(FAREND_SPEECH_FILE, 'rb') as f:
+        with open(os.path.join(os.getcwd(), FAREND_SPEECH_FILE), 'rb') as f:
             input['farend_speech'] = f.read()
         aec = pipeline(
             Tasks.acoustic_echo_cancellation,
@@ -67,13 +49,10 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_aec_tuple_bytes(self):
-        # Download audio files
-        download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
-        download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
         model_id = 'damo/speech_dfsmn_aec_psm_16k'
-        with open(NEAREND_MIC_FILE, 'rb') as f:
+        with open(os.path.join(os.getcwd(), NEAREND_MIC_FILE), 'rb') as f:
             nearend_bytes = f.read()
-        with open(FAREND_SPEECH_FILE, 'rb') as f:
+        with open(os.path.join(os.getcwd(), FAREND_SPEECH_FILE), 'rb') as f:
             farend_bytes = f.read()
         inputs = (nearend_bytes, farend_bytes)
         aec = pipeline(
@@ -86,25 +65,22 @@ class SpeechSignalProcessTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_ans(self):
-        # Download audio files
-        download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)
         model_id = 'damo/speech_frcrn_ans_cirm_16k'
         ans = pipeline(Tasks.acoustic_noise_suppression, model=model_id)
         output_path = os.path.abspath('output.wav')
-        ans(NOISE_SPEECH_FILE, output_path=output_path)
+        ans(os.path.join(os.getcwd(), NOISE_SPEECH_FILE),
+            output_path=output_path)
         print(f'Processed audio saved to {output_path}')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ans_bytes(self):
-        # Download audio files
-        download(NOISE_SPEECH_URL, NOISE_SPEECH_FILE)
         model_id = 'damo/speech_frcrn_ans_cirm_16k'
         ans = pipeline(
             Tasks.acoustic_noise_suppression,
             model=model_id,
             pipeline_name=Pipelines.speech_frcrn_ans_cirm_16k)
         output_path = os.path.abspath('output.wav')
-        with open(NOISE_SPEECH_FILE, 'rb') as f:
+        with open(os.path.join(os.getcwd(), NOISE_SPEECH_FILE), 'rb') as f:
             data = f.read()
             ans(data, output_path=output_path)
         print(f'Processed audio saved to {output_path}')

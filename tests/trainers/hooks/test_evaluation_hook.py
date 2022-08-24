@@ -12,7 +12,7 @@ from torch import nn
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
 from modelscope.trainers import build_trainer
-from modelscope.utils.constant import LogKeys, ModelFile
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.registry import default_group
 from modelscope.utils.test_utils import create_dummy_test_dataset
 

@@ -6,7 +6,7 @@ from datasets.builder import DatasetBuilder
 
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 from modelscope.utils.logger import get_logger
-from .dataset_builder import MsCsvDatasetBuilder
+from .dataset_builder import MsCsvDatasetBuilder, TaskSpecificDatasetBuilder
 
 logger = get_logger()
 
@@ -87,7 +87,7 @@ def get_dataset_files(subset_split_into: dict,
     modelscope_api = HubApi()
     for split, info in subset_split_into.items():
         meta_map[split] = modelscope_api.get_dataset_file_url(
-            info['meta'], dataset_name, namespace, revision)
+            info.get('meta', ''), dataset_name, namespace, revision)
         if info.get('file'):
             file_map[split] = info['file']
     return meta_map, file_map
@@ -99,15 +99,32 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
                          zip_data_files: Mapping[str, Union[str,
                                                             Sequence[str]]],
                          cache_dir: str, version: Optional[Union[str]],
-                         split: Sequence[str]) -> DatasetBuilder:
+                         split: Sequence[str],
+                         **config_kwargs) -> DatasetBuilder:
     sub_dir = os.path.join(version, '_'.join(split))
-    builder_instance = MsCsvDatasetBuilder(
-        dataset_name=dataset_name,
-        namespace=namespace,
-        cache_dir=cache_dir,
-        subset_name=subset_name,
-        meta_data_files=meta_data_files,
-        zip_data_files=zip_data_files,
-        hash=sub_dir)
+    meta_data_file = next(iter(meta_data_files.values()))
+    if not meta_data_file:
+        builder_instance = TaskSpecificDatasetBuilder(
+            dataset_name=dataset_name,
+            namespace=namespace,
+            cache_dir=cache_dir,
+            subset_name=subset_name,
+            meta_data_files=meta_data_files,
+            zip_data_files=zip_data_files,
+            hash=sub_dir,
+            **config_kwargs)
+    elif meta_data_file.endswith('.csv'):
+        builder_instance = MsCsvDatasetBuilder(
+            dataset_name=dataset_name,
+            namespace=namespace,
+            cache_dir=cache_dir,
+            subset_name=subset_name,
+            meta_data_files=meta_data_files,
+            zip_data_files=zip_data_files,
+            hash=sub_dir)
+    else:
+        raise NotImplementedError(
+            f'Dataset mete file extensions "{os.path.splitext(meta_data_file)[-1]}" is not implemented yet'
+        )
 
     return builder_instance

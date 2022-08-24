@@ -4,6 +4,7 @@ import os.path as osp
 import uuid
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
+import numpy as np
 from transformers import AutoTokenizer
 
 from modelscope.metainfo import Models, Preprocessors
@@ -43,7 +44,7 @@ class Tokenize(Preprocessor):
 class SequenceClassificationPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -191,6 +192,10 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
             text_b,
             return_tensors='pt' if self._mode == ModeKeys.INFERENCE else None,
             **self.tokenize_kwargs)
+        output = {
+            k: np.array(v) if isinstance(v, list) else v
+            for k, v in output.items()
+        }
         self.labels_to_id(labels, output)
         return output
 
@@ -240,13 +245,13 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         if labels is not None:
             if isinstance(labels, Iterable) and all([label_can_be_mapped(label) for label in labels]) \
                     and self.label2id is not None:
-                output[OutputKeys.LABEL] = [
+                output[OutputKeys.LABELS] = [
                     self.label2id[str(label)] for label in labels
                 ]
             elif label_can_be_mapped(labels) and self.label2id is not None:
-                output[OutputKeys.LABEL] = self.label2id[str(labels)]
+                output[OutputKeys.LABELS] = self.label2id[str(labels)]
             else:
-                output[OutputKeys.LABEL] = labels
+                output[OutputKeys.LABELS] = labels
 
 
 @PREPROCESSORS.register_module(
@@ -286,7 +291,7 @@ class ZeroShotClassificationPreprocessor(NLPTokenizerPreprocessorBase):
     """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -517,7 +522,7 @@ class NERPreprocessor(Preprocessor):
     """
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data
 
         Args:
             model_dir (str): model path
@@ -609,7 +614,7 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         from fairseq.data import Dictionary
-        """preprocess the data via the vocab.txt from the `model_dir` path
+        """preprocess the data via the vocab file from the `model_dir` path
 
         Args:
             model_dir (str): model path

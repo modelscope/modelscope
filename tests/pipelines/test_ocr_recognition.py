@@ -19,7 +19,7 @@ from modelscope.utils.test_utils import test_level
 class OCRRecognitionTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/cv_convnextTiny_ocr-recognition_damo'
+        self.model_id = 'damo/cv_convnextTiny_ocr-recognition-general_damo'
         self.test_image = 'data/test/images/ocr_recognition.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):

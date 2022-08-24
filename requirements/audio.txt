@@ -16,6 +16,7 @@ numpy<=1.18
 # protobuf version beyond 3.20.0 is not compatible with TensorFlow 1.x, therefore is discouraged.
 protobuf>3,<3.21.0
 ptflops
+py_sound_connect
 pytorch_wavelets
 PyWavelets>=1.0.0
 scikit-learn

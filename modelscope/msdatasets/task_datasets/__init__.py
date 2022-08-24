@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .builder import TASK_DATASETS, build_task_dataset
     from .torch_base_dataset import TorchTaskDataset
     from .veco_dataset import VecoDataset
+    from .image_instance_segmentation_coco_dataset import ImageInstanceSegmentationCocoDataset
 
 else:
     _import_structure = {
@@ -15,6 +16,8 @@ else:
         'builder': ['TASK_DATASETS', 'build_task_dataset'],
         'torch_base_dataset': ['TorchTaskDataset'],
         'veco_dataset': ['VecoDataset'],
+        'image_instance_segmentation_coco_dataset':
+        ['ImageInstanceSegmentationCocoDataset']
     }
     import sys
 

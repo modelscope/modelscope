@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.optim import SGD
-from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau
+from torch.optim.lr_scheduler import MultiStepLR
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
@@ -96,7 +96,8 @@ class LrSchedulerHookTest(unittest.TestCase):
             model=model,
             train_dataset=dummy_dataset,
             optimizers=(optimizer, lr_scheduler),
-            max_epochs=5)
+            max_epochs=5,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(
@@ -160,15 +161,13 @@ class LrSchedulerHookTest(unittest.TestCase):
             json.dump(json_cfg, f)
 
         model = DummyModel()
-        # optimmizer = SGD(model.parameters(), lr=0.01)
-        # lr_scheduler = MultiStepLR(optimmizer, milestones=[2, 4])
         trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
             model=model,
             train_dataset=dummy_dataset,
-            # optimizers=(optimmizer, lr_scheduler),
-            max_epochs=7)
+            max_epochs=7,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(
@@ -266,7 +265,8 @@ class PlateauLrSchedulerHookTest(unittest.TestCase):
             train_dataset=dummy_dataset,
             eval_dataset=dummy_dataset,
             optimizers=(optimizer, None),
-            max_epochs=5)
+            max_epochs=5,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(

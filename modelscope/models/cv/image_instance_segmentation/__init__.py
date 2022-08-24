@@ -7,13 +7,11 @@ if TYPE_CHECKING:
     from .cascade_mask_rcnn_swin import CascadeMaskRCNNSwin
     from .model import CascadeMaskRCNNSwinModel
     from .postprocess_utils import get_img_ins_seg_result
-    from .datasets import ImageInstanceSegmentationCocoDataset
 else:
     _import_structure = {
         'cascade_mask_rcnn_swin': ['CascadeMaskRCNNSwin'],
         'model': ['CascadeMaskRCNNSwinModel'],
         'postprocess_utils': ['get_img_ins_seg_result'],
-        'datasets': ['ImageInstanceSegmentationCocoDataset']
     }
 
     import sys

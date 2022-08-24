@@ -2,7 +2,7 @@
 
 import unittest
 
-from modelscope.preprocessors import build_preprocessor
+from modelscope.preprocessors import build_preprocessor, nlp
 from modelscope.utils.constant import Fields, InputFields
 from modelscope.utils.logger import get_logger
 

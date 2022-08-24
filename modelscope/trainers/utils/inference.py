@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import logging
 import os
 import pickle
 import shutil
@@ -10,6 +11,7 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
+from modelscope.utils.data_utils import to_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
@@ -17,25 +19,41 @@ from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
 
 def single_gpu_test(model,
                     data_loader,
-                    data_collate_fn=None,
-                    metric_classes=None):
+                    device,
+                    metric_classes=None,
+                    data_loader_iters=None):
     """Test model with a single gpu.
 
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
-        data_collate_fn: An optional data_collate_fn before fed into the model
-        metric_classes(List): List of Metric class that uses to collect metrics
+        device (str | torch.device): The target device for the data.
+        metric_classes (List): List of Metric class that uses to collect metrics
+        data_loader_iters (int): Used when dataset has no attribute __len__ or only load part of dataset.
 
     Returns:
         list: The prediction results.
     """
     model.eval()
     dataset = data_loader.dataset
-    with tqdm(total=len(dataset), desc='test samples') as pbar:
-        for data in data_loader:
-            if data_collate_fn is not None:
-                data = data_collate_fn(data)
+    progress_with_iters = False
+    if data_loader_iters is None:
+        try:
+            data_len = len(dataset)
+        except Exception as e:
+            logging.error(e)
+            raise ValueError(
+                'Please implement ``__len__`` method for your dataset, or provide ``data_loader_iters``'
+            )
+        desc = 'Total test samples'
+    else:
+        progress_with_iters = True
+        data_len = data_loader_iters
+        desc = 'Test iterations'
+
+    with tqdm(total=data_len, desc=desc) as pbar:
+        for i, data in enumerate(data_loader):
+            data = to_device(data, device)
             with torch.no_grad():
                 if isinstance(data, Mapping) and not func_receive_dict_inputs(
                         model.forward):
@@ -46,12 +64,18 @@ def single_gpu_test(model,
                 for metric_cls in metric_classes:
                     metric_cls.add(result, data)
 
-            if isinstance(data, dict):
-                batch_size = len(next(iter(data.values())))
+            if progress_with_iters:
+                batch_size = 1  # iteration count
             else:
-                batch_size = len(data)
+                if isinstance(data, dict):
+                    batch_size = len(next(iter(data.values())))
+                else:
+                    batch_size = len(data)
             for _ in range(batch_size):
                 pbar.update()
+
+            if progress_with_iters and (i + 1) >= data_len:
+                break
 
     metric_values = {}
     for metric_cls in metric_classes:
@@ -62,10 +86,11 @@ def single_gpu_test(model,
 
 def multi_gpu_test(model,
                    data_loader,
+                   device,
                    tmpdir=None,
                    gpu_collect=False,
-                   data_collate_fn=None,
-                   metric_classes=None):
+                   metric_classes=None,
+                   data_loader_iters_per_gpu=None):
     """Test model with multiple gpus.
 
     This method tests model with multiple gpus and collects the results
@@ -77,12 +102,12 @@ def multi_gpu_test(model,
     Args:
         model (nn.Module): Model to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
+        device: (str | torch.device): The target device for the data.
         tmpdir (str): Path of directory to save the temporary results from
             different gpus under cpu mode.
         gpu_collect (bool): Option to use either gpu or cpu to collect results.
-        data_collate_fn: An optional data_collate_fn before fed into the model
         metric_classes(List): List of Metric class that uses to collect metrics
-
+        data_loader_iters_per_gpu (int): Used when dataset has no attribute __len__ or only load part of dataset.
     Returns:
         list: The prediction results.
     """
@@ -90,16 +115,31 @@ def multi_gpu_test(model,
     results = []
     data_list = []
     dataset = data_loader.dataset
+    rank, world_size = get_dist_info()
+
+    progress_with_iters = False
+    if data_loader_iters_per_gpu is None:
+        try:
+            data_len = len(dataset)
+            total_samples = data_len
+        except Exception as e:
+            logging.error(e)
+            raise ValueError(
+                'Please implement ``__len__`` method for your dataset, or provide ``data_loader_iters_per_gpu``'
+            )
+        desc = 'Total test samples with multi gpus'
+    else:
+        total_samples = 0
+        progress_with_iters = True
+        data_len = data_loader_iters_per_gpu * world_size
+        desc = 'Total test iterations with multi gpus'
 
     time.sleep(2)  # This line can prevent deadlock problem in some cases.
 
-    rank, world_size = get_dist_info()
-
     count = 0
-    with tqdm(total=len(dataset), desc='test samples with multi gpus') as pbar:
-        for _, data in enumerate(data_loader):
-            if data_collate_fn is not None:
-                data = data_collate_fn(data)
+    with tqdm(total=data_len, desc=desc) as pbar:
+        for i, data in enumerate(data_loader):
+            data = to_device(data, device)
             data_list.append(data)
             with torch.no_grad():
                 if isinstance(data, Mapping) and not func_receive_dict_inputs(
@@ -114,24 +154,32 @@ def multi_gpu_test(model,
                     batch_size = len(next(iter(data.values())))
                 else:
                     batch_size = len(data)
+
+                if progress_with_iters:
+                    total_samples += batch_size * world_size
+                    batch_size = 1  # iteration count
+
                 batch_size_all = batch_size * world_size
                 count += batch_size_all
-                if count > len(dataset):
-                    batch_size_all = len(dataset) - (count - batch_size_all)
+                if count > data_len:
+                    batch_size_all = data_len - (count - batch_size_all)
                 for _ in range(batch_size_all):
                     pbar.update()
+
+            if progress_with_iters and (i + 1) >= data_len:
+                break
 
     # TODO: allgather data list may cost a lot of memory and needs to be redesigned
     # collect results and data from all ranks
     if gpu_collect:
-        results = collect_results_gpu(results, len(dataset))
-        data_list = collect_results_gpu(data_list, len(dataset))
+        results = collect_results_gpu(results, total_samples)
+        data_list = collect_results_gpu(data_list, total_samples)
     else:
         if tmpdir is None:
             tmpdir = make_tmp_dir()
-        results = collect_results_cpu(results, len(dataset),
+        results = collect_results_cpu(results, total_samples,
                                       os.path.join(tmpdir, 'predict'))
-        data_list = collect_results_cpu(data_list, len(dataset),
+        data_list = collect_results_cpu(data_list, total_samples,
                                         os.path.join(tmpdir, 'groundtruth'))
 
     if is_master():

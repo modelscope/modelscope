@@ -75,7 +75,8 @@ class IterTimerHookTest(unittest.TestCase):
             model=model,
             train_dataset=dummy_dataset,
             optimizers=(optimizer, lr_scheduler),
-            max_epochs=5)
+            max_epochs=5,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(
@@ -83,6 +84,7 @@ class IterTimerHookTest(unittest.TestCase):
         trainer.register_optimizers_hook()
         trainer.register_hook_from_cfg(trainer.cfg.train.hooks)
         trainer.data_loader = train_dataloader
+        trainer.train_dataloader = train_dataloader
         trainer.invoke_hook(TrainerStages.before_run)
         for i in range(trainer._epoch, trainer._max_epochs):
             trainer.invoke_hook(TrainerStages.before_train_epoch)

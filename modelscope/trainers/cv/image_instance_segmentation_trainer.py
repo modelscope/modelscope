@@ -22,7 +22,3 @@ class ImageInstanceSegmentationTrainer(EpochBasedTrainer):
 
     def prediction_step(self, model, inputs):
         pass
-
-    def to_task_dataset(self, datasets, mode, preprocessor=None):
-        # wait for dataset interface to become stable...
-        return datasets.to_torch_dataset(preprocessor)

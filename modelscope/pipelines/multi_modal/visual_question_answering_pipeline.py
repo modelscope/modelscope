@@ -5,13 +5,12 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.multi_modal import (MPlugForVisualQuestionAnswering,
-                                           OfaForAllTasks)
+from modelscope.models.multi_modal import MPlugForAllTasks, OfaForAllTasks
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (MPlugVisualQuestionAnsweringPreprocessor,
-                                      OfaPreprocessor)
+from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
+                                      Preprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['VisualQuestionAnsweringPipeline']
@@ -23,9 +22,8 @@ __all__ = ['VisualQuestionAnsweringPipeline']
 class VisualQuestionAnsweringPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[MPlugForVisualQuestionAnswering, str],
-                 preprocessor: Optional[
-                     MPlugVisualQuestionAnsweringPreprocessor] = None,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a visual question answering pipeline for prediction
 
@@ -35,18 +33,12 @@ class VisualQuestionAnsweringPipeline(Pipeline):
         """
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
-        self.tokenizer = None
         if preprocessor is None:
             if isinstance(model, OfaForAllTasks):
                 preprocessor = OfaPreprocessor(model.model_dir)
-            elif isinstance(model, MPlugForVisualQuestionAnswering):
-                preprocessor = MPlugVisualQuestionAnsweringPreprocessor(
-                    model.model_dir)
-        if isinstance(model, MPlugForVisualQuestionAnswering):
-            model.eval()
-            self.tokenizer = model.tokenizer
-        else:
-            model.model.eval()
+            elif isinstance(model, MPlugForAllTasks):
+                preprocessor = MPlugPreprocessor(model.model_dir)
+        model.model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def forward(self, inputs: Dict[str, Any],
@@ -64,14 +56,6 @@ class VisualQuestionAnsweringPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        if self.tokenizer is None:
+        if isinstance(self.model, OfaForAllTasks):
             return inputs
-        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
-                               ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
-                               ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
-
-        pred_string = self.tokenizer.decode(inputs[0][0])
-        for _old, _new in replace_tokens_bert:
-            pred_string = pred_string.replace(_old, _new)
-        pred_string.strip()
-        return {OutputKeys.TEXT: pred_string}
+        return {OutputKeys.TEXT: inputs}

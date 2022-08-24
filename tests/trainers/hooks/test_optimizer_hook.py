@@ -17,7 +17,7 @@ from modelscope.utils.constant import ModelFile, TrainerStages
 from modelscope.utils.test_utils import create_dummy_test_dataset
 
 dummy_dataset = create_dummy_test_dataset(
-    np.random.random(size=(2, 2)), np.random.randint(0, 2, (1, )), 10)
+    np.random.random(size=(2, )), np.random.randint(0, 2, (1, )), 10)
 
 
 class DummyModel(nn.Module):
@@ -71,7 +71,8 @@ class OptimizerHookTest(unittest.TestCase):
             model=model,
             train_dataset=dummy_dataset,
             optimizers=(optimizer, lr_scheduler),
-            max_epochs=2)
+            max_epochs=2,
+            device='cpu')
 
         trainer = build_trainer(trainer_name, kwargs)
         train_dataloader = trainer._build_dataloader_with_dataset(

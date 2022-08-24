@@ -1,11 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, Optional, Union
 
+import torch
+
 from modelscope.metainfo import Pipelines
-from modelscope.models.multi_modal import OfaForAllTasks
+from modelscope.models.multi_modal import MPlugForAllTasks, OfaForAllTasks
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import OfaPreprocessor, Preprocessor
+from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
+                                      Preprocessor)
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -35,9 +39,19 @@ class ImageCaptioningPipeline(Pipeline):
         else:
             raise NotImplementedError
         pipe_model.model.eval()
-        if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
-            preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
+        if preprocessor is None:
+            if isinstance(pipe_model, OfaForAllTasks):
+                preprocessor = OfaPreprocessor(pipe_model.model_dir)
+            elif isinstance(pipe_model, MPlugForAllTasks):
+                preprocessor = MPlugPreprocessor(pipe_model.model_dir)
         super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
 
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
+
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return inputs
+        if isinstance(self.model, OfaForAllTasks):
+            return inputs
+        return {OutputKeys.CAPTION: inputs}

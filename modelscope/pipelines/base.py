@@ -255,7 +255,7 @@ class Pipeline(ABC):
                 return self._collate_fn(torch.from_numpy(data))
         elif isinstance(data, torch.Tensor):
             return data.to(self.device)
-        elif isinstance(data, (str, int, float, bool, type(None))):
+        elif isinstance(data, (bytes, str, int, float, bool, type(None))):
             return data
         elif isinstance(data, InputFeatures):
             return data

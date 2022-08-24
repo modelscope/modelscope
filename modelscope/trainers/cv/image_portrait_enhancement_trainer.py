@@ -40,7 +40,6 @@ class ImagePortraitEnhancementTrainer(EpochBasedTrainer):
 
         train_outputs = dict()
         self._mode = ModeKeys.TRAIN
-        inputs = self.collate_fn(inputs)
         # call model forward but not __call__ to skip postprocess
         if isinstance(inputs, Mapping):
             d_loss = model._train_forward_d(**inputs)

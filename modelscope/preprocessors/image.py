@@ -151,6 +151,11 @@ class ImageDenoisePreprocessor(Preprocessor):
         super().__init__(*args, **kwargs)
         self.model_dir: str = model_dir
 
+        from .common import Filter
+
+        # TODO: `Filter` should be moved to configurarion file of each model
+        self._transforms = [Filter(reserved_keys=['input', 'target'])]
+
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """process the raw input data
 
@@ -160,6 +165,9 @@ class ImageDenoisePreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
+        for t in self._transforms:
+            data = t(data)
+
         return data
 
 

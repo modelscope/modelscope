@@ -14,6 +14,7 @@ from torch.utils.data import IterableDataset
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
+from modelscope.models.base import Model
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
@@ -35,7 +36,7 @@ dummy_dataset_big = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 40)
 
 
-class DummyModel(nn.Module):
+class DummyModel(nn.Module, Model):
 
     def __init__(self):
         super().__init__()

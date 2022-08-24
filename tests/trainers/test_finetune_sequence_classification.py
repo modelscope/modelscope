@@ -4,11 +4,18 @@ import shutil
 import tempfile
 import unittest
 
-from modelscope.metainfo import Trainers
+from modelscope.metainfo import Preprocessors, Trainers
+from modelscope.models import Model
+from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
+from modelscope.utils.constant import ModelFile, Tasks
 
 
 class TestFinetuneSequenceClassification(unittest.TestCase):
+    epoch_num = 1
+
+    sentence1 = '今天气温比昨天高么？'
+    sentence2 = '今天湿度比昨天高么？'
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -40,15 +47,32 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(10):
+        for i in range(self.epoch_num):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+        output_files = os.listdir(
+            os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
+        self.assertIn(ModelFile.CONFIGURATION, output_files)
+        self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE, output_files)
+        copy_src_files = os.listdir(trainer.model_dir)
+
+        print(f'copy_src_files are {copy_src_files}')
+        print(f'output_files are {output_files}')
+        for item in copy_src_files:
+            if not item.startswith('.'):
+                self.assertIn(item, output_files)
+
+    def pipeline_sentence_similarity(self, model_dir):
+        model = Model.from_pretrained(model_dir)
+        pipeline_ins = pipeline(task=Tasks.sentence_similarity, model=model)
+        print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
     @unittest.skip
     def test_finetune_afqmc(self):
 
         def cfg_modify_fn(cfg):
-            cfg.task = 'sentence-similarity'
-            cfg['preprocessor'] = {'type': 'sen-sim-tokenizer'}
+            cfg.task = Tasks.sentence_similarity
+            cfg['preprocessor'] = {'type': Preprocessors.sen_sim_tokenizer}
             cfg.train.optimizer.lr = 2e-5
             cfg['dataset'] = {
                 'train': {
@@ -58,7 +82,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'label': 'label',
                 }
             }
-            cfg.train.max_epochs = 10
+            cfg.train.max_epochs = self.epoch_num
             cfg.train.lr_scheduler = {
                 'type': 'LinearLR',
                 'start_factor': 1.0,
@@ -94,6 +118,9 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             train_dataset=dataset['train'],
             eval_dataset=dataset['validation'],
             cfg_modify_fn=cfg_modify_fn)
+
+        output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        self.pipeline_sentence_similarity(output_dir)
 
     @unittest.skip
     def test_finetune_tnews(self):

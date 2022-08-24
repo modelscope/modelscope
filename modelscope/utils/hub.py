@@ -10,7 +10,8 @@ from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
+                                       ModelFile)
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -119,8 +120,13 @@ def parse_label_mapping(model_dir):
     if label2id is None:
         config_path = os.path.join(model_dir, ModelFile.CONFIGURATION)
         config = Config.from_file(config_path)
-        if hasattr(config, 'model') and hasattr(config.model, 'label2id'):
-            label2id = config.model.label2id
+        if hasattr(config, ConfigFields.model) and hasattr(
+                config[ConfigFields.model], 'label2id'):
+            label2id = config[ConfigFields.model].label2id
+        elif hasattr(config, ConfigFields.preprocessor) and hasattr(
+                config[ConfigFields.preprocessor], 'label2id'):
+            label2id = config[ConfigFields.preprocessor].label2id
+
     if label2id is None:
         config_path = os.path.join(model_dir, 'config.json')
         config = Config.from_file(config_path)

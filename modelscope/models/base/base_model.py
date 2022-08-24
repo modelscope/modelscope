@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Union
-
-import numpy as np
+from typing import Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
+from modelscope.utils.checkpoint import save_pretrained
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.device import device_placement, verify_device
@@ -119,3 +118,28 @@ class Model(ABC):
         if hasattr(cfg, 'pipeline'):
             model.pipeline = cfg.pipeline
         return model
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = None,
+                        config: Optional[dict] = None,
+                        **kwargs):
+        """save the pretrained model, its configuration and other related files to a directory, so that it can be re-loaded
+
+        Args:
+            target_folder (Union[str, os.PathLike]):
+            Directory to which to save. Will be created if it doesn't exist.
+
+            save_checkpoint_names (Union[str, List[str]]):
+            The checkpoint names to be saved in the target_folder
+
+            save_function (Callable, optional):
+            The function to use to save the state dictionary.
+
+            config (Optional[dict], optional):
+            The config for the configuration.json, might not be identical with model.config
+
+        """
+        save_pretrained(self, target_folder, save_checkpoint_names,
+                        save_function, config, **kwargs)

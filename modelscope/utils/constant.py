@@ -211,6 +211,7 @@ class ModelFile(object):
     VOCAB_FILE = 'vocab.txt'
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
+    TRAIN_OUTPUT_DIR = 'output'
 
 
 class ConfigFields(object):

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Union
 
 import addict
+import json
 from yapf.yapflib.yapf_api import FormatCode
 
 from modelscope.utils.constant import ConfigFields, ModelFile
@@ -627,3 +628,20 @@ def check_config(cfg: Union[str, ConfigDict]):
         check_attr(ConfigFields.model)
         check_attr(ConfigFields.preprocessor)
         check_attr(ConfigFields.evaluation)
+
+
+class JSONIteratorEncoder(json.JSONEncoder):
+    """Implement this method in order that supporting arbitrary iterators, it returns
+        a serializable object for ``obj``, or calls the base implementation
+        (to raise a ``TypeError``).
+
+    """
+
+    def default(self, obj):
+        try:
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return json.JSONEncoder.default(self, obj)

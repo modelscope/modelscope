@@ -11,6 +11,7 @@ from torch import nn
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
+from modelscope.models.base import Model
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.registry import default_group
@@ -34,7 +35,7 @@ dummy_dataset = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
 
 
-class DummyModel(nn.Module):
+class DummyModel(nn.Module, Model):
 
     def __init__(self):
         super().__init__()

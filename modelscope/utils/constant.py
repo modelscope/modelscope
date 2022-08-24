@@ -64,6 +64,7 @@ class CVTasks(object):
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
+    video_summarization = 'video-summarization'
     image_reid_person = 'image-reid-person'
 
 

@@ -15,6 +15,7 @@ class MetricKeys(object):
     RECALL = 'recall'
     PSNR = 'psnr'
     SSIM = 'ssim'
+    FScore = 'fscore'
 
 
 task_default_metrics = {
@@ -28,6 +29,7 @@ task_default_metrics = {
     Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],
     Tasks.image_portrait_enhancement:
     [Metrics.image_portrait_enhancement_metric],
+    Tasks.video_summarization: [Metrics.video_summarization_metric],
 }
 
 

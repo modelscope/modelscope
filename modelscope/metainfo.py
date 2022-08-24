@@ -21,6 +21,7 @@ class Models(object):
     body_2d_keypoints = 'body-2d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
     image_reid_person = 'passvitb'
+    video_summarization = 'pgl-video-summarization'
 
     # nlp models
     bert = 'bert'
@@ -113,6 +114,7 @@ class Pipelines(object):
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
+    video_summarization = 'googlenet_pgl_video_summarization'
     image_reid_person = 'passvitb-image-reid-person'
 
     # nlp tasks
@@ -170,6 +172,7 @@ class Trainers(object):
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
     image_portrait_enhancement = 'image-portrait-enhancement'
+    video_summarization = 'video-summarization'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -194,6 +197,7 @@ class Preprocessors(object):
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
+    video_summarization_preprocessor = 'video-summarization-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -246,6 +250,7 @@ class Metrics(object):
     image_color_enhance_metric = 'image-color-enhance-metric'
     # metrics for image-portrait-enhancement task
     image_portrait_enhancement_metric = 'image-portrait-enhancement-metric'
+    video_summarization_metric = 'video-summarization-metric'
 
 
 class Optimizers(object):

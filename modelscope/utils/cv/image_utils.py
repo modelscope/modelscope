@@ -134,3 +134,22 @@ def show_video_tracking_result(video_in_path, bboxes, video_save_path):
         video_writer.write(frame)
     video_writer.release
     cap.release()
+
+
+def panoptic_seg_masks_to_image(masks):
+    draw_img = np.zeros([masks[0].shape[0], masks[0].shape[1], 3])
+    from mmdet.core.visualization.palette import get_palette
+    mask_palette = get_palette('coco', 133)
+
+    from mmdet.core.visualization.image import _get_bias_color
+    taken_colors = set([0, 0, 0])
+    for i, mask in enumerate(masks):
+        color_mask = mask_palette[i]
+        while tuple(color_mask) in taken_colors:
+            color_mask = _get_bias_color(color_mask)
+        taken_colors.add(tuple(color_mask))
+
+        mask = mask.astype(bool)
+        draw_img[mask] = color_mask
+
+    return draw_img

@@ -20,6 +20,7 @@ class Models(object):
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
+    panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
     video_summarization = 'pgl-video-summarization'
 
@@ -114,6 +115,7 @@ class Pipelines(object):
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
+    image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'
     image_reid_person = 'passvitb-image-reid-person'
 

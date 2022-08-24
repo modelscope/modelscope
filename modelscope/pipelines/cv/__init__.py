@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
+    from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_reid_person_pipeline import ImageReidPersonPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -59,6 +61,8 @@ else:
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'image_matting_pipeline': ['ImageMattingPipeline'],
+        'image_panoptic_segmentation_pipeline':
+        ['ImagePanopticSegmentationPipeline'],
         'image_portrait_enhancement_pipeline':
         ['ImagePortraitEnhancementPipeline'],
         'image_reid_person_pipeline': ['ImageReidPersonPipeline'],

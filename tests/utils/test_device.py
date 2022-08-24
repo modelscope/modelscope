@@ -81,6 +81,7 @@ class DeviceTest(unittest.TestCase):
         with device_placement(Frameworks.torch, 'cpu'):
             pass
 
+    @unittest.skip('skip this test to avoid debug logging.')
     def test_device_placement_tf_gpu(self):
         tf.debugging.set_log_device_placement(True)
         with device_placement(Frameworks.tf, 'gpu:0'):

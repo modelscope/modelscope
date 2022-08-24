@@ -1,12 +1,13 @@
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
+
+import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
-from modelscope.models.nlp import PalmForTextGeneration
+from modelscope.models.base import Model
+from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TextGenerationPreprocessor
 from modelscope.utils.constant import Tasks
-from ..base import Pipeline, Tensor
-from ..builder import PIPELINES
 
 __all__ = ['TextGenerationPipeline']
 
@@ -16,27 +17,53 @@ __all__ = ['TextGenerationPipeline']
 class TextGenerationPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[PalmForTextGeneration, str],
+                 model: Union[Model, str],
                  preprocessor: Optional[TextGenerationPreprocessor] = None,
+                 first_sequence='sentence',
                  **kwargs):
-        """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
+        """Use `model` and `preprocessor` to create a generation pipeline for prediction.
 
         Args:
-            model (SequenceClassificationModel): a model instance
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            model (str or Model): Supply either a local model dir which supported the text generation task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            first_sequence: The key to read the first sentence in.
+            sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
+
+            NOTE: Inputs of type 'str' are also supported. In this scenario, the 'first_sequence'
+            param will have no effect.
+
+            Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> pipeline_ins = pipeline(task='text-generation',
+            >>>    model='damo/nlp_palm2.0_text-generation_chinese-base')
+            >>> sentence1 = '本文总结了十个可穿戴产品的设计原则，而这些原则，同样也是笔者认为是这个行业最吸引人的地方：'
+            >>>     '1.为人们解决重复性问题；2.从人开始，而不是从机器开始；3.要引起注意，但不要刻意；4.提升用户能力，而不是取代'
+            >>> print(pipeline_ins(sentence1))
+            >>> # Or use the dict input:
+            >>> print(pipeline_ins({'sentence': sentence1}))
+
+            To view other examples plese check the tests/pipelines/test_text_generation.py.
         """
-        model = model if isinstance(
-            model, PalmForTextGeneration) else Model.from_pretrained(model)
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
         if preprocessor is None:
             preprocessor = TextGenerationPreprocessor(
                 model.model_dir,
-                model.tokenizer,
-                first_sequence='sentence',
-                second_sequence=None)
+                first_sequence=first_sequence,
+                second_sequence=None,
+                sequence_length=kwargs.pop('sequence_length', 128))
+        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.tokenizer = model.tokenizer
 
-    def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return self.model.generate(inputs)
+
+    def postprocess(self, inputs: Dict[str, Tensor],
+                    **postprocess_params) -> Dict[str, str]:
         """process the prediction results
 
         Args:
@@ -45,20 +72,4 @@ class TextGenerationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
-                               ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
-                               ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
-        replace_tokens_roberta = ((r' +', ' '), ('<mask>', '<q>'), ('<pad>',
-                                                                    ''),
-                                  ('<s>', ''), ('</s>', ''), ('<unk>', ' '))
-
-        pred_list = inputs['predictions']
-        pred_ids = pred_list[0][0].cpu().numpy().tolist()
-        pred_string = self.tokenizer.decode(pred_ids)
-        for _old, _new in replace_tokens_bert:
-            pred_string = pred_string.replace(_old, _new)
-        pred_string.strip()
-        for _old, _new in replace_tokens_roberta:
-            pred_string = pred_string.replace(_old, _new)
-        pred_string.strip()
-        return {'text': pred_string}
+        return inputs

@@ -1,9 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
+import copy
 import tempfile
 import unittest
 
-from modelscope.utils.config import Config
+from modelscope.utils.config import Config, check_config
 
 obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}
 
@@ -76,6 +77,152 @@ class ConfigTest(unittest.TestCase):
         self.assertAlmostEqual(args.weight_decay, 1e-6)
         self.assertEqual(args.optimizer, 'Adam')
         self.assertEqual(args.save_checkpoint_epochs, 20)
+
+    def test_check_config(self):
+        check_config('configs/cv/configuration.json')
+        check_config('configs/nlp/sbert_sentence_similarity.json')
+
+    def test_merge_from_dict(self):
+        base_cfg = copy.deepcopy(obj)
+        base_cfg.update({'dict_list': [dict(l1=1), dict(l2=2)]})
+
+        cfg = Config(base_cfg)
+
+        merge_dict = {
+            'a': 2,
+            'b.d': 'ee',
+            'b.c': [3, 3, 3],
+            'dict_list': {
+                '0': dict(l1=3)
+            },
+            'c': 'test'
+        }
+
+        cfg1 = copy.deepcopy(cfg)
+        cfg1.merge_from_dict(merge_dict)
+        self.assertDictEqual(
+            cfg1._cfg_dict, {
+                'a': 2,
+                'b': {
+                    'c': [3, 3, 3],
+                    'd': 'ee'
+                },
+                'dict_list': [dict(l1=3), dict(l2=2)],
+                'c': 'test'
+            })
+
+        cfg2 = copy.deepcopy(cfg)
+        cfg2.merge_from_dict(merge_dict, force=False)
+        self.assertDictEqual(
+            cfg2._cfg_dict, {
+                'a': 1,
+                'b': {
+                    'c': [1, 2, 3],
+                    'd': 'dd'
+                },
+                'dict_list': [dict(l1=1), dict(l2=2)],
+                'c': 'test'
+            })
+
+    def test_merge_from_dict_with_list(self):
+        base_cfg = {
+            'a':
+            1,
+            'b': {
+                'c': [1, 2, 3],
+                'd': 'dd'
+            },
+            'dict_list': [dict(type='l1', v=1),
+                          dict(type='l2', v=2)],
+            'dict_list2': [
+                dict(
+                    type='l1',
+                    v=[dict(type='l1_1', v=1),
+                       dict(type='l1_2', v=2)]),
+                dict(type='l2', v=2)
+            ]
+        }
+        cfg = Config(base_cfg)
+
+        merge_dict_for_list = {
+            'a':
+            2,
+            'b.c': [3, 3, 3],
+            'b.d':
+            'ee',
+            'dict_list': [dict(type='l1', v=8),
+                          dict(type='l3', v=8)],
+            'dict_list2': [
+                dict(
+                    type='l1',
+                    v=[
+                        dict(type='l1_1', v=8),
+                        dict(type='l1_2', v=2),
+                        dict(type='l1_3', v=8),
+                    ]),
+                dict(type='l2', v=8)
+            ],
+            'c':
+            'test'
+        }
+
+        cfg1 = copy.deepcopy(cfg)
+        cfg1.merge_from_dict(merge_dict_for_list, force=False)
+        self.assertDictEqual(
+            cfg1._cfg_dict, {
+                'a':
+                1,
+                'b': {
+                    'c': [1, 2, 3],
+                    'd': 'dd'
+                },
+                'dict_list': [
+                    dict(type='l1', v=1),
+                    dict(type='l2', v=2),
+                    dict(type='l3', v=8)
+                ],
+                'dict_list2': [
+                    dict(
+                        type='l1',
+                        v=[
+                            dict(type='l1_1', v=1),
+                            dict(type='l1_2', v=2),
+                            dict(type='l1_3', v=8),
+                        ]),
+                    dict(type='l2', v=2)
+                ],
+                'c':
+                'test'
+            })
+
+        cfg2 = copy.deepcopy(cfg)
+        cfg2.merge_from_dict(merge_dict_for_list, force=True)
+        self.assertDictEqual(
+            cfg2._cfg_dict, {
+                'a':
+                2,
+                'b': {
+                    'c': [3, 3, 3],
+                    'd': 'ee'
+                },
+                'dict_list': [
+                    dict(type='l1', v=8),
+                    dict(type='l2', v=2),
+                    dict(type='l3', v=8)
+                ],
+                'dict_list2': [
+                    dict(
+                        type='l1',
+                        v=[
+                            dict(type='l1_1', v=8),
+                            dict(type='l1_2', v=2),
+                            dict(type='l1_3', v=8),
+                        ]),
+                    dict(type='l2', v=8)
+                ],
+                'c':
+                'test'
+            })
 
 
 if __name__ == '__main__':

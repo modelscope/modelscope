@@ -5,6 +5,8 @@ import shutil
 import subprocess
 from setuptools import find_packages, setup
 
+from modelscope.utils.constant import Fields
+
 
 def readme():
     with open('README.md', encoding='utf-8') as f:
@@ -68,9 +70,9 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
     """
+    import re
     import sys
     from os.path import exists
-    import re
     require_fpath = fname
 
     def parse_line(line):
@@ -169,8 +171,24 @@ if __name__ == '__main__':
     pack_resource()
     os.chdir('package')
     install_requires, deps_link = parse_requirements('requirements.txt')
+    extra_requires = {}
+    all_requires = []
+    for field in dir(Fields):
+        if field.startswith('_'):
+            continue
+        field = getattr(Fields, field)
+        extra_requires[field], _ = parse_requirements(
+            f'requirements/{field}.txt')
+
+        # skip audio requirements due to its hard dependency which
+        # result in mac/windows compatibility problems
+        if field != Fields.audio:
+            all_requires.append(extra_requires[field])
+
+    extra_requires['all'] = all_requires
+
     setup(
-        name='model-scope',
+        name='modelscope',
         version=get_version(),
         description='',
         long_description=readme(),
@@ -193,5 +211,6 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         tests_require=parse_requirements('requirements/tests.txt'),
         install_requires=install_requires,
+        extras_require=extra_requires,
         dependency_links=deps_link,
         zip_safe=False)

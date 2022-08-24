@@ -1,0 +1,37 @@
+repos:
+  - repo: /home/admin/pre-commit/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
+        exclude: thirdparty/|examples/
+  - repo: /home/admin/pre-commit/isort
+    rev: 4.3.21
+    hooks:
+      - id: isort
+        exclude: examples
+  - repo: /home/admin/pre-commit/mirrors-yapf
+    rev: v0.30.0
+    hooks:
+      - id: yapf
+        exclude: thirdparty/|examples/
+  - repo: /home/admin/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: thirdparty/
+      - id: check-yaml
+        exclude: thirdparty/
+      - id: end-of-file-fixer
+        exclude: thirdparty/
+      - id: requirements-txt-fixer
+        exclude: thirdparty/
+      - id: double-quote-string-fixer
+        exclude: thirdparty/
+      - id: check-merge-conflict
+        exclude: thirdparty/
+      - id: fix-encoding-pragma
+        exclude: thirdparty/
+        args: ["--remove"]
+      - id: mixed-line-ending
+        exclude: thirdparty/
+        args: ["--fix=lf"]

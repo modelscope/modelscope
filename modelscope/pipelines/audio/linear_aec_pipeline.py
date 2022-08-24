@@ -8,10 +8,14 @@ import torch
 import yaml
 
 from modelscope.metainfo import Pipelines
-from modelscope.preprocessors.audio import LinearAECAndFbank
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import LinearAECAndFbank
 from modelscope.utils.constant import ModelFile, Tasks
-from ..base import Pipeline
-from ..builder import PIPELINES
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 FEATURE_MVN = 'feature.DEY.mvn.txt'
 
@@ -40,7 +44,7 @@ def initialize_config(module_cfg):
 
 
 @PIPELINES.register_module(
-    Tasks.speech_signal_process,
+    Tasks.acoustic_echo_cancellation,
     module_name=Pipelines.speech_dfsmn_aec_psm_16k)
 class LinearAECPipeline(Pipeline):
     r"""AEC Inference Pipeline only support 16000 sample rate.
@@ -54,12 +58,14 @@ class LinearAECPipeline(Pipeline):
             the file path to write generate audio.
     """
 
-    def __init__(self, model):
-        r"""
+    def __init__(self, model, **kwargs):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, **kwargs)
+
         self.use_cuda = torch.cuda.is_available()
         with open(
                 os.path.join(self.model, CONFIG_YAML), encoding='utf-8') as f:
@@ -120,7 +126,8 @@ class LinearAECPipeline(Pipeline):
                 }
         """
         output_data = self._process(inputs['feature'], inputs['base'])
-        return {'output_pcm': output_data}
+        output_data = output_data.astype(np.int16).tobytes()
+        return {OutputKeys.OUTPUT_PCM: output_data}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         r"""The post process. Will save audio to file, if the output_path is given.
@@ -139,9 +146,9 @@ class LinearAECPipeline(Pipeline):
                 }
         """
         if 'output_path' in kwargs.keys():
-            wav.write(kwargs['output_path'], self.preprocessor.SAMPLE_RATE,
-                      inputs['output_pcm'].astype(np.int16))
-        inputs['output_pcm'] = inputs['output_pcm'] / 32768.0
+            wav.write(
+                kwargs['output_path'], self.preprocessor.SAMPLE_RATE,
+                np.frombuffer(inputs[OutputKeys.OUTPUT_PCM], dtype=np.int16))
         return inputs
 
     def _process(self, fbanks, mixture):

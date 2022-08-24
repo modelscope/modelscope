@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import ast
 import copy
 import os
 import os.path as osp
@@ -9,22 +8,15 @@ import shutil
 import sys
 import tempfile
 import types
-import uuid
-from importlib import import_module
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import addict
 from yapf.yapflib.yapf_api import FormatCode
 
+from modelscope.utils.constant import ConfigFields, ModelFile
+from modelscope.utils.import_utils import import_modules_from_file
 from modelscope.utils.logger import get_logger
-from modelscope.utils.pymod import (import_modules, import_modules_from_file,
-                                    validate_py_syntax)
-
-if platform.system() == 'Windows':
-    import regex as re  # type: ignore
-else:
-    import re  # type: ignore
 
 logger = get_logger()
 
@@ -379,8 +371,8 @@ class Config:
             file_format = file.split('.')[-1]
             return dump(cfg_dict, file=file, file_format=file_format)
 
-    def merge_from_dict(self, options, allow_list_keys=True):
-        """Merge list into cfg_dict.
+    def merge_from_dict(self, options, allow_list_keys=True, force=True):
+        """Merge dict into cfg_dict.
 
         Merge the dict parsed by MultipleKVAction into this cfg.
 
@@ -391,9 +383,9 @@ class Config:
             >>> cfg.merge_from_dict(options)
             >>> cfg_dict = super(Config, self).__getattribute__('_cfg_dict')
             >>> assert cfg_dict == dict(
-            ...     model=dict(backbone=dict(depth=50, with_cp=True)))
+            ...     model=dict(backbone=dict(type='ResNet', depth=50, with_cp=True)))
 
-            >>> # Merge list element
+            >>> # Merge list element for replace target index
             >>> cfg = Config(dict(pipeline=[
             ...     dict(type='Resize'), dict(type='RandomDistortion')]))
             >>> options = dict(pipeline={'0': dict(type='MyResize')})
@@ -402,12 +394,38 @@ class Config:
             >>> assert cfg_dict == dict(pipeline=[
             ...     dict(type='MyResize'), dict(type='RandomDistortion')])
 
+            >>> # Merge list element for replace args and add to list, only support list of type dict with key ``type``,
+            >>> # if you add new list element, the list does not guarantee the order,
+            >>> # it is only suitable for the case where the order of the list is not concerned.
+            >>> cfg = Config(dict(pipeline=[
+            ...     dict(type='Resize', size=224), dict(type='RandomDistortion')]))
+            >>> options = dict(pipeline=[dict(type='Resize', size=256), dict(type='RandomFlip')])
+            >>> cfg.merge_from_dict(options, allow_list_keys=True)
+            >>> cfg_dict = super(Config, self).__getattribute__('_cfg_dict')
+            >>> assert cfg_dict == dict(pipeline=[
+            ...     dict(type='Resize', size=256), dict(type='RandomDistortion'), dict(type='RandomFlip')])
+
+            >>> # force usage
+            >>> options = {'model.backbone.depth': 18,
+            ...            'model.backbone.with_cp':True}
+            >>> cfg = Config(dict(model=dict(backbone=dict(type='ResNet', depth=50))))
+            >>> cfg.merge_from_dict(options, force=False)
+            >>> cfg_dict = super(Config, self).__getattribute__('_cfg_dict')
+            >>> assert cfg_dict == dict(
+            ...     model=dict(backbone=dict(type='ResNet', depth=50, with_cp=True)))
+
         Args:
             options (dict): dict of configs to merge from.
             allow_list_keys (bool): If True, int string keys (e.g. '0', '1')
               are allowed in ``options`` and will replace the element of the
               corresponding index in the config if the config is a list.
+              Or you can directly replace args for list or add new list element,
+              only support list of type dict with key ``type``,
+              but if you add new list element, the list does not guarantee the order,
+              It is only suitable for the case where the order of the list is not concerned.
               Default: True.
+            force (bool): If True, existing key-value will be replaced by new given.
+                If False, existing key-value will not be updated.
         """
         option_cfg_dict = {}
         for full_key, v in options.items():
@@ -423,7 +441,122 @@ class Config:
         super(Config, self).__setattr__(
             '_cfg_dict',
             Config._merge_a_into_b(
-                option_cfg_dict, cfg_dict, allow_list_keys=allow_list_keys))
+                option_cfg_dict,
+                cfg_dict,
+                allow_list_keys=allow_list_keys,
+                force=force))
+
+    @staticmethod
+    def _merge_a_into_b(a, b, allow_list_keys=False, force=True):
+        """merge dict ``a`` into dict ``b`` (non-inplace).
+
+        Values in ``a`` will overwrite ``b``. ``b`` is copied first to avoid
+        in-place modifications.
+
+        Args:
+            a (dict): The source dict to be merged into ``b``.
+            b (dict): The origin dict to be fetch keys from ``a``.
+            allow_list_keys (bool): If True, int string keys (e.g. '0', '1')
+              are allowed in source ``a`` and will replace the element of the
+              corresponding index in b if b is a list. Default: False.
+            force (bool): If True, existing key-value will be replaced by new given.
+                If False, existing key-value will not be updated.
+
+        Returns:
+            dict: The modified dict of ``b`` using ``a``.
+
+        Examples:
+            # Normally merge a into b.
+            >>> Config._merge_a_into_b(
+            ...     dict(obj=dict(a=2)), dict(obj=dict(a=1)))
+            {'obj': {'a': 2}}
+
+            # Delete b first and merge a into b.
+            >>> Config._merge_a_into_b(
+            ...     dict(obj=dict(_delete_=True, a=2)), dict(obj=dict(a=1)))
+            {'obj': {'a': 2}}
+
+            # b is a list
+            >>> Config._merge_a_into_b(
+            ...     {'0': dict(a=2)}, [dict(a=1), dict(b=2)], True)
+            [{'a': 2}, {'b': 2}]
+
+            # value of a and b are both list, only support list of type dict with key ``type``,
+            # You can directly replace args for list or add new list element,
+            # but if you add new list element, the list does not guarantee the order,
+            # it is only suitable for the case where the order of the list is not concerned.
+            >>> Config._merge_a_into_b(
+            ...     {'k': [dict(a=2), dict(c=3)]}, {'k': [dict(a=1), dict(b=2)]}, True)
+            {'k': [dict(a=2), dict(b=2), dict(c=3)]}
+
+            # force is False
+            >>> Config._merge_a_into_b(
+            ...     dict(obj=dict(a=2, b=2)), dict(obj=dict(a=1))), True, force=False)
+            {'obj': {'a': 1, b=2}}
+        """
+        b = b.copy()
+        for k, v in a.items():
+            if allow_list_keys and k.isdigit() and isinstance(b, list):
+                k = int(k)
+                if len(b) <= k:
+                    raise KeyError(f'Index {k} exceeds the length of list {b}')
+                b[k] = Config._merge_a_into_b(
+                    v, b[k], allow_list_keys, force=force)
+            elif allow_list_keys and isinstance(v, list) and k in b:
+                if not isinstance(b[k], list):
+                    raise ValueError(
+                        f'type mismatch {type(v)} and {type(b[k])} between a and b for key {k}'
+                    )
+                _is_dict_with_type = True
+                for list_i in b[k] + v:
+                    if not isinstance(list_i, dict) or 'type' not in list_i:
+                        if k not in b or force:
+                            b[k] = v
+                        _is_dict_with_type = False
+                if _is_dict_with_type:
+                    res_list = []
+                    added_index_bk, added_index_v = [], []
+                    for i, b_li in enumerate(b[k]):
+                        for j, a_lj in enumerate(v):
+                            if a_lj['type'] == b_li['type']:
+                                res_list.append(
+                                    Config._merge_a_into_b(
+                                        a_lj,
+                                        b_li,
+                                        allow_list_keys,
+                                        force=force))
+                                added_index_v.append(j)
+                                added_index_bk.append(i)
+                                break
+                    rest_bk = [
+                        b[k][i] for i in range(len(b[k]))
+                        if i not in added_index_bk
+                    ]
+                    rest_v = [
+                        v[i] for i in range(len(v)) if i not in added_index_v
+                    ]
+                    rest = rest_bk + rest_v
+                    res_list += [
+                        Config._merge_a_into_b(
+                            rest[i], {}, allow_list_keys, force=force)
+                        for i in range(len(rest))
+                    ]
+                    b[k] = res_list
+            elif isinstance(v,
+                            dict) and k in b and not v.pop(DELETE_KEY, False):
+                allowed_types = (dict, list) if allow_list_keys else dict
+                if not isinstance(b[k], allowed_types):
+                    raise TypeError(
+                        f'{k}={v} in child config cannot inherit from base '
+                        f'because {k} is a dict in the child config but is of '
+                        f'type {type(b[k])} in base config. You may set '
+                        f'`{DELETE_KEY}=True` to ignore the base config')
+                b[k] = Config._merge_a_into_b(
+                    v, b[k], allow_list_keys, force=force)
+            else:
+                if k not in b or force:
+                    b[k] = v
+        return b
 
     def to_dict(self) -> Dict:
         """ Convert Config object to python dict
@@ -470,3 +603,27 @@ class Config:
                     f'int, str, float or list of them but got type {v}')
 
         return parse_fn(args)
+
+
+def check_config(cfg: Union[str, ConfigDict]):
+    """ Check whether configuration file is valid, If anything wrong, exception will be raised.
+
+    Args:
+        cfg (str or ConfigDict): Config file path or config object.
+    """
+
+    if isinstance(cfg, str):
+        cfg = Config.from_file(cfg)
+
+    def check_attr(attr_name, msg=''):
+        assert hasattr(cfg, attr_name), f'Attribute {attr_name} is missing from ' \
+            f'{ModelFile.CONFIGURATION}. {msg}'
+
+    check_attr(ConfigFields.framework)
+    check_attr(ConfigFields.task)
+    check_attr(ConfigFields.pipeline)
+
+    if hasattr(cfg, ConfigFields.train):
+        check_attr(ConfigFields.model)
+        check_attr(ConfigFields.preprocessor)
+        check_attr(ConfigFields.evaluation)

@@ -1,47 +1,44 @@
-import time
 from typing import Any, Dict, List
 
 import numpy as np
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.audio.tts.am import SambertNetHifi16k
-from modelscope.models.audio.tts.vocoder import Hifigan16k
-from modelscope.pipelines.base import Pipeline
+from modelscope.models.audio.tts import SambertHifigan
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, InputModel, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import TextToTacotronSymbols, build_preprocessor
 from modelscope.utils.constant import Fields, Tasks
 
-__all__ = ['TextToSpeechSambertHifigan16kPipeline']
+__all__ = ['TextToSpeechSambertHifiganPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.text_to_speech, module_name=Pipelines.sambert_hifigan_16k_tts)
-class TextToSpeechSambertHifigan16kPipeline(Pipeline):
+    Tasks.text_to_speech, module_name=Pipelines.sambert_hifigan_tts)
+class TextToSpeechSambertHifiganPipeline(Pipeline):
 
-    def __init__(self,
-                 config_file: str = None,
-                 model: List[Model] = None,
-                 preprocessor: TextToTacotronSymbols = None,
-                 **kwargs):
-        super().__init__(
-            config_file=config_file,
-            model=model,
-            preprocessor=preprocessor,
-            **kwargs)
-        assert len(model) == 2, 'model number should be 2'
-        self._am = model[0]
-        self._vocoder = model[1]
-        self._preprocessor = preprocessor
+    def __init__(self, model: InputModel, **kwargs):
+        """use `model` to create a text-to-speech pipeline for prediction
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, np.ndarray]:
-        texts = inputs['texts']
-        audio_total = np.empty((0), dtype='int16')
-        for line in texts:
-            line = line.strip().split('\t')
-            audio = self._vocoder.forward(self._am.forward(line[1]))
-            audio_total = np.append(audio_total, audio, axis=0)
-        return {'output': audio_total}
+        Args:
+            model (SambertHifigan or str): a model instance or valid offical model id
+        """
+        super().__init__(model=model, **kwargs)
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, input: str, **forward_params) -> Dict[str, np.ndarray]:
+        """synthesis text from inputs with pipeline
+        Args:
+            input (str): text to synthesis
+            forward_params: valid param is 'voice' used to setting speaker vocie
+        Returns:
+            Dict[str, np.ndarray]: {OutputKeys.OUTPUT_PCM : np.ndarray(16bit pcm data)}
+        """
+        output_wav = self.model.forward(input, forward_params.get('voice'))
+        return {OutputKeys.OUTPUT_PCM: output_wav}
+
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         return inputs

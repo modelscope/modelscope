@@ -1,25 +1,25 @@
 import os
-from typing import List, Optional
+from typing import Optional
 
-from modelscope.hub.errors import GitError
+from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import ModelScopeConfig
-from .constants import MODELSCOPE_URL_SCHEME
 from .git import GitCommandWrapper
-from .utils.utils import get_gitlab_domain
+from .utils.utils import get_endpoint
 
 logger = get_logger()
 
 
 class Repository:
-    """Representation local model git repository.
+    """A local representation of the model git repository.
     """
 
     def __init__(
         self,
         model_dir: str,
         clone_from: str,
-        revision: Optional[str] = 'master',
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
         auth_token: Optional[str] = None,
         git_path: Optional[str] = None,
     ):
@@ -61,8 +61,17 @@ class Repository:
         self.git_wrapper.clone(self.model_base_dir, self.auth_token, url,
                                self.model_repo_name, revision)
 
+        if git_wrapper.is_lfs_installed():
+            git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
+
+        # add user info if login
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
+        if self.auth_token:  # config remote with auth token
+            self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+
     def _get_model_id_url(self, model_id):
-        url = f'{MODELSCOPE_URL_SCHEME}{get_gitlab_domain()}/{model_id}'
+        url = f'{get_endpoint()}/{model_id}.git'
         return url
 
     def _get_remote_url(self):
@@ -74,20 +83,33 @@ class Repository:
 
     def push(self,
              commit_message: str,
-             files: List[str] = list(),
-             all_files: bool = False,
-             branch: Optional[str] = 'master',
+             branch: Optional[str] = DEFAULT_MODEL_REVISION,
              force: bool = False):
-        """Push local to remote, this method will do.
+        """Push local files to remote, this method will do.
            git add
            git commit
            git push
         Args:
             commit_message (str): commit message
-            revision (Optional[str], optional): which branch to push. Defaults to 'master'.
+            branch (Optional[str], optional): which branch to push.
+            force (Optional[bool]): whether to use forced-push.
         """
+        if commit_message is None or not isinstance(commit_message, str):
+            msg = 'commit_message must be provided!'
+            raise InvalidParameter(msg)
+        if not isinstance(force, bool):
+            raise InvalidParameter('force must be bool')
+
+        if not self.auth_token:
+            raise NotLoginException('Must login to push, please login first.')
+
+        self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
+
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
-        self.git_wrapper.add(self.model_dir, files, all_files)
+        self.git_wrapper.pull(self.model_dir)
+        self.git_wrapper.add(self.model_dir, all_files=True)
         self.git_wrapper.commit(self.model_dir, commit_message)
         self.git_wrapper.push(
             repo_dir=self.model_dir,

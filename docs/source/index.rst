@@ -13,12 +13,15 @@ ModelScope doc
 
    quick_start.md
    develop.md
+   faq.md
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
 
    tutorials/index
+
+
 
 .. toctree::
    :maxdepth: 2
@@ -27,14 +30,18 @@ ModelScope doc
    change_log.md
 
 .. toctree::
-   :maxdepth: 10
-   :caption: API Doc
+..    :maxdepth: 10
+..    :caption: API Doc
 
-   api/modelscope.preprocessors
-   api/modelscope.models
-   api/modelscope.pipelines
-   api/modelscope.fileio
-   api/modelscope.utils
+..    api/modelscope.preprocessors
+..    api/modelscope.models
+..    api/modelscope.pipelines
+..    api/modelscope.fileio
+..    api/modelscope.utils
+..    api/modelscope.hub
+..    api/modelscope.msdatasets
+..    api/modelscope.tools
+..    api/modelscope.trainers
 
 
 Indices and tables

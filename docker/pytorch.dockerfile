@@ -30,7 +30,8 @@ RUN apt-get update &&\
     zip \
     zlib1g-dev \
     unzip \
-    pkg-config
+    pkg-config \
+    libsndfile1
 
 # install modelscope and its python env
 WORKDIR /opt/modelscope

@@ -1,33 +1,29 @@
-# 快速开始
+ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.15，Tensorflow 2.x上测试可运行。
+
+**注： **`**语音相关**`**的功能仅支持 python3.7,tensorflow1.15的**`**linux**`**环境使用。  其他功能可以在windows、mac上安装使用。**
 
 ## python环境配置
-首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境
 
+首先，参考[文档](https://docs.anaconda.com/anaconda/install/) 安装配置Anaconda环境。
 安装完成后，执行如下命令为modelscope library创建对应的python环境。
+
 ```shell
-conda create -n modelscope python=3.6
+conda create -n modelscope python=3.7
 conda activate modelscope
 ```
-检查python和pip命令是否切换到conda环境下。
+
+## 安装深度学习框架
+
+- 安装pytorch[参考链接](https://pytorch.org/get-started/locally/)。
+
 ```shell
-which python
-# ~/workspace/anaconda3/envs/modelscope/bin/python
-
-which pip
-# ~/workspace/anaconda3/envs/modelscope/bin/pip
+pip3 install torch torchvision torchaudio
 ```
-注： 本项目只支持`python3`环境，请勿使用python2环境。
 
-## 第三方依赖安装
+- 安装Tensorflow[参考链接](https://www.tensorflow.org/install/pip)。
 
-ModelScope Library目前支持tensorflow，pytorch两大深度学习框架进行模型训练、推理， 在Python 3.6+,  Pytorch 1.8+, Tensorflow 2.6上测试可运行，用户可以根据所选模型对应的计算框架进行安装，可以参考如下链接进行安装所需框架:
-
-* [Pytorch安装指导](https://pytorch.org/get-started/locally/)
-* [Tensorflow安装指导](https://www.tensorflow.org/install/pip)
-
-部分第三方依赖库需要提前安装numpy
-```
-pip install numpy
+```shell
+pip install --upgrade tensorflow
 ```
 
 ## ModelScope library 安装
@@ -35,86 +31,88 @@ pip install numpy
 注： 如果在安装过程中遇到错误，请前往[常见问题](faq.md)查找解决方案。
 
 ### pip安装
+执行如下命令可以安装所有领域依赖：
 ```shell
-pip install -r http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/release/maas/modelscope.txt
+pip install "modelscope[cv,nlp,audio,multi-modal]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
-安装成功后，可以执行如下命令进行验证安装是否正确
+如仅需体验`语音功能`，请执行如下命令：
 ```shell
-python -c "from modelscope.pipelines import pipeline;print(pipeline('image-matting',model='damo/image-matting-person')('http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'))"
+pip install "modelscope[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
+如仅需体验CV功能，可执行如下命令安装依赖：
+```shell
+pip install "modelscope[cv]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
+
+如仅需体验NLP功能，可执行如下命令安装依赖：
+```shell
+pip install "modelscope[nlp]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
+
+如仅需体验多模态功能，可执行如下命令安装依赖：
+```shell
+pip install "modelscope[multi-modal]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
+**注**：
+
+1. `**语音相关**`**的功能仅支持 python3.7,tensorflow1.15的**`**linux**`**环境使用。  其他功能可以在windows、mac上安装使用。**
+
+2. 语音领域中一部分模型使用了三方库SoundFile进行wav文件处理，**在Linux系统上用户需要手动安装SoundFile的底层依赖库libsndfile**，在Windows和MacOS上会自动安装不需要用户操作。详细信息可参考[SoundFile官网](https://github.com/bastibe/python-soundfile#installation)。以Ubuntu系统为>例，用户需要执行如下命令:
+
+    ```shell
+    sudo apt-get update
+    sudo apt-get install libsndfile1
+    ```
+
+3. **CV功能使用需要安装mmcv-full， 请参考mmcv**[**安装手册**](https://github.com/open-mmlab/mmcv#installation)**进行安装**
 
 ### 使用源码安装
 
-适合本地开发调试使用，修改源码后可以直接执行
+适合本地开发调试使用，修改源码后可以直接执行。
+ModelScope的源码可以直接clone到本地：
+
 ```shell
 git clone git@gitlab.alibaba-inc.com:Ali-MaaS/MaaS-lib.git modelscope
+cd modelscope
 git fetch origin master
 git checkout master
 
-cd modelscope
-
-#安装依赖
-pip install -r requirements.txt
-
-# 设置PYTHONPATH
-export PYTHONPATH=`pwd`
 ```
 
-安装成功后，可以执行如下命令进行验证安装是否正确
+
+安装依赖
+如需安装所有依赖，请执行如下命令
 ```shell
-python -c "from modelscope.pipelines import pipeline;print(pipeline('image-matting',model='damo/image-matting-person')('http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'))"
+pip install -e ".[cv,nlp,audio,multi-modal]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
 
-## 训练
 
-to be done
-
-## 评估
-
-to be done
-
-## 推理
-
-pipeline函数提供了简洁的推理接口，示例如下， 更多pipeline介绍和示例请参考[pipeline使用教程](tutorials/pipeline.md)
-
-```python
-import cv2
-import os.path as osp
-from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
-
-# 根据任务名创建pipeline
-img_matting = pipeline(Tasks.image_matting, model='damo/image-matting-person')
-
-# 直接提供图像文件的url作为pipeline推理的输入
-result = img_matting(
-    'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-)
-cv2.imwrite('result.png', result['output_png'])
-print(f'Output written to {osp.abspath("result.png")}')
-
+如需体验`语音功能`，请单独执行如下命令：
+```shell
+pip install -e ".[audio]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
-此外，pipeline接口也能接收Dataset作为输入，上面的代码同样可以实现为
+如仅需体验CV功能，可执行如下命令安装依赖：
+```shell
+pip install -e ".[cv]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
+如仅需体验NLP功能，可执行如下命令安装依赖：
+```shell
+pip install -e ".[nlp]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
 
-```python
-import cv2
-import os.path as osp
-from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
-from modelscope.msdatasets import MsDataset
+如仅需体验多模态功能，可执行如下命令安装依赖：
+```shell
+pip install -e ".[multi-modal]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```
 
-# 使用图像url构建MsDataset，此处也可通过 input_location = '/dir/to/images' 来使用本地文件夹
-input_location = [
-    'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/data/test/maas/image_matting/test.png'
-]
-dataset = MsDataset.load(input_location, target='image')
-img_matting = pipeline(Tasks.image_matting, model='damo/image-matting-person')
-# 输入为MsDataset时，输出的结果为迭代器
-result = img_matting(dataset)
-cv2.imwrite('result.png', next(result)['output_png'])
-print(f'Output written to {osp.abspath("result.png")}')
+### 安装验证
+
+安装成功后，可以执行如下命令进行验证安装是否正确：
+
+```shell
+python -c "from modelscope.pipelines import pipeline;print(pipeline('word-segmentation')('今天天气不错，适合 出去游玩'))"
 ```

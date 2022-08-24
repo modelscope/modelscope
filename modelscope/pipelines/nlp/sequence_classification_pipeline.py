@@ -3,12 +3,13 @@ from typing import Any, Dict, Union
 import numpy as np
 
 from modelscope.metainfo import Pipelines
+from modelscope.models import Model
 from modelscope.models.nlp import BertForSequenceClassification
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
-from ...models import Model
-from ..base import Input, Pipeline
-from ..builder import PIPELINES
 
 __all__ = ['SequenceClassificationPipeline']
 
@@ -36,7 +37,8 @@ class SequenceClassificationPipeline(Pipeline):
             preprocessor = SequenceClassificationPreprocessor(
                 sc_model.model_dir,
                 first_sequence='sentence',
-                second_sequence=None)
+                second_sequence=None,
+                sequence_length=kwargs.pop('sequence_length', 512))
         super().__init__(model=sc_model, preprocessor=preprocessor, **kwargs)
 
         assert hasattr(self.model, 'id2label'), \
@@ -64,4 +66,4 @@ class SequenceClassificationPipeline(Pipeline):
 
         cls_names = [self.model.id2label[cid] for cid in cls_ids]
 
-        return {'scores': probs, 'labels': cls_names}
+        return {OutputKeys.SCORES: probs, OutputKeys.LABELS: cls_names}

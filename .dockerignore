@@ -1,0 +1,11 @@
+.gitignore
+tests
+data
+.dev_scripts
+.dockerignore
+.git
+.gitattributes
+.pre-commit-config.yaml
+.pre-commit-config_local.yaml
+.readthedocs.yaml
+Dockfile

@@ -5,15 +5,15 @@ import json
 import numpy as np
 
 from modelscope.metainfo import Models
+from modelscope.models import TorchModel
+from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from ..base import Model
-from ..builder import MODELS
 
 __all__ = ['BertForSequenceClassification']
 
 
 @MODELS.register_module(Tasks.text_classification, module_name=Models.bert)
-class BertForSequenceClassification(Model):
+class BertForSequenceClassification(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         # Model.__init__(self, model_dir, model_cls, first_sequence, *args, **kwargs)
@@ -25,9 +25,9 @@ class BertForSequenceClassification(Model):
         """
 
         super().__init__(model_dir, *args, **kwargs)
+        import torch
         from easynlp.appzoo import SequenceClassification
         from easynlp.core.predictor import get_model_predictor
-        import torch
         self.model = get_model_predictor(
             model_dir=self.model_dir,
             model_cls=SequenceClassification,

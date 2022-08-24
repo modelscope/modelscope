@@ -1,22 +1,22 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
-import tarfile
 import unittest
+from typing import Any, Dict, List, Union
 
-import requests
+import numpy as np
+import soundfile
 
-from modelscope.metainfo import Pipelines, Preprocessors
-from modelscope.models import Model
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.preprocessors import build_preprocessor
-from modelscope.utils.constant import Fields, InputFields, Tasks
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.constant import ColorCodes, Tasks
+from modelscope.utils.logger import get_logger
+from modelscope.utils.test_utils import download_and_untar, test_level
 
-KWSBP_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/tools/kwsbp'
+logger = get_logger()
 
-POS_WAV_FILE = '20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_6.wav'
-POS_WAV_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testset/' + POS_WAV_FILE
+POS_WAV_FILE = 'data/test/audios/kws_xiaoyunxiaoyun.wav'
+BOFANGYINYUE_WAV_FILE = 'data/test/audios/kws_bofangyinyue.wav'
 
 POS_TESTSETS_FILE = 'pos_testsets.tar.gz'
 POS_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testsets.tar.gz'
@@ -25,309 +25,252 @@ NEG_TESTSETS_FILE = 'neg_testsets.tar.gz'
 NEG_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/neg_testsets.tar.gz'
 
 
-def un_tar_gz(fname, dirs):
-    t = tarfile.open(fname)
-    t.extractall(path=dirs)
-
-
 class KeyWordSpottingTest(unittest.TestCase):
+    action_info = {
+        'test_run_with_wav': {
+            'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
+            'checking_value': '小云小云',
+            'example': {
+                'wav_count':
+                1,
+                'kws_type':
+                'wav',
+                'kws_list': [{
+                    'keyword': '小云小云',
+                    'offset': 5.76,
+                    'length': 9.132938,
+                    'confidence': 0.990368
+                }]
+            }
+        },
+        'test_run_with_pcm': {
+            'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
+            'checking_value': '小云小云',
+            'example': {
+                'wav_count':
+                1,
+                'kws_type':
+                'pcm',
+                'kws_list': [{
+                    'keyword': '小云小云',
+                    'offset': 5.76,
+                    'length': 9.132938,
+                    'confidence': 0.990368
+                }]
+            }
+        },
+        'test_run_with_wav_by_customized_keywords': {
+            'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
+            'checking_value': '播放音乐',
+            'example': {
+                'wav_count':
+                1,
+                'kws_type':
+                'wav',
+                'kws_list': [{
+                    'keyword': '播放音乐',
+                    'offset': 0.87,
+                    'length': 2.158313,
+                    'confidence': 0.646237
+                }]
+            }
+        },
+        'test_run_with_pos_testsets': {
+            'checking_item': ['recall'],
+            'example': {
+                'wav_count': 450,
+                'kws_type': 'pos_testsets',
+                'wav_time': 3013.75925,
+                'keywords': ['小云小云'],
+                'recall': 0.953333,
+                'detected_count': 429,
+                'rejected_count': 21,
+                'rejected': ['yyy.wav', 'zzz.wav']
+            }
+        },
+        'test_run_with_neg_testsets': {
+            'checking_item': ['fa_rate'],
+            'example': {
+                'wav_count':
+                751,
+                'kws_type':
+                'neg_testsets',
+                'wav_time':
+                3572.180813,
+                'keywords': ['小云小云'],
+                'fa_rate':
+                0.001332,
+                'fa_per_hour':
+                1.007788,
+                'detected_count':
+                1,
+                'rejected_count':
+                750,
+                'detected': [{
+                    '6.wav': {
+                        'confidence': '0.321170',
+                        'keyword': '小云小云'
+                    }
+                }]
+            }
+        },
+        'test_run_with_roc': {
+            'checking_item': ['keywords', 0],
+            'checking_value': '小云小云',
+            'example': {
+                'kws_type':
+                'roc',
+                'keywords': ['小云小云'],
+                '小云小云': [{
+                    'threshold': 0.0,
+                    'recall': 0.953333,
+                    'fa_per_hour': 1.007788
+                }, {
+                    'threshold': 0.001,
+                    'recall': 0.953333,
+                    'fa_per_hour': 1.007788
+                }, {
+                    'threshold': 0.999,
+                    'recall': 0.004444,
+                    'fa_per_hour': 0.0
+                }]
+            }
+        }
+    }
 
     def setUp(self) -> None:
-        self.model_id = 'damo/speech_charctc_kws_phone-xiaoyunxiaoyun'
+        self.model_id = 'damo/speech_charctc_kws_phone-xiaoyun'
         self.workspace = os.path.join(os.getcwd(), '.tmp')
         if not os.path.exists(self.workspace):
             os.mkdir(self.workspace)
 
     def tearDown(self) -> None:
-        if os.path.exists(self.workspace):
-            shutil.rmtree(self.workspace)
+        # remove workspace dir (.tmp)
+        shutil.rmtree(self.workspace, ignore_errors=True)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_wav(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'wav'
-
-        # downloading wav file
-        wav_file_path = os.path.join(self.workspace, POS_WAV_FILE)
-        if not os.path.exists(wav_file_path):
-            r = requests.get(POS_WAV_URL)
-            with open(wav_file_path, 'wb') as f:
-                f.write(r.content)
-
-        # downloading kwsbp
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
+    def run_pipeline(self,
+                     model_id: str,
+                     audio_in: Union[List[str], str, bytes],
+                     keywords: List[str] = None) -> Dict[str, Any]:
         kwsbp_16k_pipline = pipeline(
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
-        self.assertTrue(kwsbp_16k_pipline is not None)
+            task=Tasks.keyword_spotting, model=model_id)
 
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[wav_file_path, None])
-        self.assertTrue(kws_result.__contains__('detected'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 1,
-                'kws_set': 'wav',
-                'wav_time': 9.132938,
-                'keywords': ['小云小云'],
-                'detected': True,
-                'confidence': 0.990368
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_wav keywords: ', kws_result['keywords'])
-        print('test_run_with_wav detected result: ', kws_result['detected'])
-        print('test_run_with_wav wave time(seconds): ', kws_result['wav_time'])
+        kws_result = kwsbp_16k_pipline(audio_in=audio_in, keywords=keywords)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_with_pos_testsets(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'pos_testsets'
+        return kws_result
 
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self.workspace, POS_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(POS_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
+    def log_error(self, functions: str, result: Dict[str, Any]) -> None:
+        logger.error(ColorCodes.MAGENTA + functions + ': FAILED.'
+                     + ColorCodes.END)
+        logger.error(ColorCodes.MAGENTA + functions
+                     + ' correct result example: ' + ColorCodes.YELLOW
+                     + str(self.action_info[functions]['example'])
+                     + ColorCodes.END)
 
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(POS_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # wav_file_path = <cwd>/.tmp_pos_testsets/pos_testsets/
-        wav_file_path = os.path.join(self.workspace, testsets_dir_name)
+        raise ValueError('kws result is mismatched')
 
-        # untar the pos_testsets file
-        if not os.path.exists(wav_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
+    def check_result(self, functions: str, result: Dict[str, Any]) -> None:
+        result_item = result
+        check_list = self.action_info[functions]['checking_item']
+        for check_item in check_list:
+            result_item = result_item[check_item]
+            if result_item is None or result_item == 'None':
+                self.log_error(functions, result)
 
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
+        if self.action_info[functions].__contains__('checking_value'):
+            check_value = self.action_info[functions]['checking_value']
+            if result_item != check_value:
+                self.log_error(functions, result)
 
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
-        kwsbp_16k_pipline = pipeline(
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[wav_file_path, None])
-        self.assertTrue(kws_result.__contains__('recall'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 450,
-                'kws_set': 'pos_testsets',
-                'wav_time': 3013.759254,
-                'keywords': ["小云小云"],
-                'recall': 0.953333,
-                'detected_count': 429,
-                'rejected_count': 21,
-                'rejected': [
-                    'yyy.wav',
-                    'zzz.wav',
-                    ......
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_pos_testsets keywords: ',
-                  kws_result['keywords'])
-        print('test_run_with_pos_testsets recall: ', kws_result['recall'])
-        print('test_run_with_pos_testsets wave time(seconds): ',
-              kws_result['wav_time'])
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_with_neg_testsets(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'neg_testsets'
-
-        # downloading neg_testsets file
-        testsets_file_path = os.path.join(self.workspace, NEG_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(NEG_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(NEG_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # wav_file_path = <cwd>/.tmp_neg_testsets/neg_testsets/
-        wav_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the neg_testsets file
-        if not os.path.exists(wav_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
-        kwsbp_16k_pipline = pipeline(
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[None, wav_file_path])
-        self.assertTrue(kws_result.__contains__('fa_rate'))
-        """
-        kws result json format example:
-            {
-                'wav_count': 751,
-                'kws_set': 'neg_testsets',
-                'wav_time': 3572.180812,
-                'keywords': ['小云小云'],
-                'fa_rate': 0.001332,
-                'fa_per_hour': 1.007788,
-                'detected_count': 1,
-                'rejected_count': 750,
-                'detected': [
-                    {
-                        '6.wav': {
-                            'confidence': '0.321170'
-                        }
-                    }
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            print('test_run_with_neg_testsets keywords: ',
-                  kws_result['keywords'])
-        print('test_run_with_neg_testsets fa rate: ', kws_result['fa_rate'])
-        print('test_run_with_neg_testsets fa per hour: ',
-              kws_result['fa_per_hour'])
-        print('test_run_with_neg_testsets wave time(seconds): ',
-              kws_result['wav_time'])
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_roc(self):
-        # wav, neg_testsets, pos_testsets, roc
-        kws_set = 'roc'
-
-        # downloading neg_testsets file
-        testsets_file_path = os.path.join(self.workspace, NEG_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(NEG_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(NEG_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # neg_file_path = <workspace>/.tmp_roc/neg_testsets/
-        neg_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the neg_testsets file
-        if not os.path.exists(neg_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading pos_testsets file
-        testsets_file_path = os.path.join(self.workspace, POS_TESTSETS_FILE)
-        if not os.path.exists(testsets_file_path):
-            r = requests.get(POS_TESTSETS_URL)
-            with open(testsets_file_path, 'wb') as f:
-                f.write(r.content)
-
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(POS_TESTSETS_FILE))[0]
-        testsets_dir_name = os.path.splitext(
-            os.path.basename(testsets_dir_name))[0]
-        # pos_file_path = <workspace>/.tmp_roc/pos_testsets/
-        pos_file_path = os.path.join(self.workspace, testsets_dir_name)
-
-        # untar the pos_testsets file
-        if not os.path.exists(pos_file_path):
-            un_tar_gz(testsets_file_path, self.workspace)
-
-        # downloading kwsbp -- a kws batch processing tool
-        kwsbp_file_path = os.path.join(self.workspace, 'kwsbp')
-        if not os.path.exists(kwsbp_file_path):
-            r = requests.get(KWSBP_URL)
-            with open(kwsbp_file_path, 'wb') as f:
-                f.write(r.content)
-
-        model = Model.from_pretrained(self.model_id)
-        self.assertTrue(model is not None)
-
-        cfg_preprocessor = dict(
-            type=Preprocessors.wav_to_lists, workspace=self.workspace)
-        preprocessor = build_preprocessor(cfg_preprocessor, Fields.audio)
-        self.assertTrue(preprocessor is not None)
-
-        kwsbp_16k_pipline = pipeline(
-            pipeline_name=Pipelines.kws_kwsbp,
-            model=model,
-            preprocessor=preprocessor)
-        self.assertTrue(kwsbp_16k_pipline is not None)
-
-        kws_result = kwsbp_16k_pipline(
-            kws_type=kws_set, wav_path=[pos_file_path, neg_file_path])
-        """
-        kws result json format example:
-            {
-                'kws_set': 'roc',
-                'keywords': ['小云小云'],
-                '小云小云': [
-                    {'threshold': 0.0, 'recall': 0.953333, 'fa_per_hour': 1.007788},
-                    {'threshold': 0.001, 'recall': 0.953333, 'fa_per_hour': 1.007788},
-                    ......
-                    {'threshold': 0.999, 'recall': 0.004444, 'fa_per_hour': 0.0}
-                ]
-            }
-        """
-        if kws_result.__contains__('keywords'):
-            find_keyword = kws_result['keywords'][0]
-            print('test_run_with_roc keywords: ', find_keyword)
-            keyword_list = kws_result[find_keyword]
+        logger.info(ColorCodes.MAGENTA + functions + ': SUCCESS.'
+                    + ColorCodes.END)
+        if functions == 'test_run_with_roc':
+            find_keyword = result['keywords'][0]
+            keyword_list = result[find_keyword]
             for item in iter(keyword_list):
                 threshold: float = item['threshold']
                 recall: float = item['recall']
                 fa_per_hour: float = item['fa_per_hour']
-                print('  threshold:', threshold, ' recall:', recall,
-                      ' fa_per_hour:', fa_per_hour)
+                logger.info(ColorCodes.YELLOW + '  threshold:' + str(threshold)
+                            + ' recall:' + str(recall) + ' fa_per_hour:'
+                            + str(fa_per_hour) + ColorCodes.END)
+        else:
+            logger.info(ColorCodes.YELLOW + str(result) + ColorCodes.END)
+
+    def wav2bytes(self, wav_file) -> bytes:
+        audio, fs = soundfile.read(wav_file)
+
+        # float32 -> int16
+        audio = np.asarray(audio)
+        dtype = np.dtype('int16')
+        i = np.iinfo(dtype)
+        abs_max = 2**(i.bits - 1)
+        offset = i.min + abs_max
+        audio = (audio * abs_max + offset).clip(i.min, i.max).astype(dtype)
+
+        # int16(PCM_16) -> byte
+        audio = audio.tobytes()
+        return audio
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_wav(self):
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, audio_in=POS_WAV_FILE)
+        self.check_result('test_run_with_wav', kws_result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_pcm(self):
+        audio = self.wav2bytes(os.path.join(os.getcwd(), POS_WAV_FILE))
+
+        kws_result = self.run_pipeline(model_id=self.model_id, audio_in=audio)
+        self.check_result('test_run_with_pcm', kws_result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_wav_by_customized_keywords(self):
+        keywords = [{'keyword': '播放音乐'}]
+
+        kws_result = self.run_pipeline(
+            model_id=self.model_id,
+            audio_in=BOFANGYINYUE_WAV_FILE,
+            keywords=keywords)
+        self.check_result('test_run_with_wav_by_customized_keywords',
+                          kws_result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_pos_testsets(self):
+        wav_file_path = download_and_untar(
+            os.path.join(self.workspace, POS_TESTSETS_FILE), POS_TESTSETS_URL,
+            self.workspace)
+        audio_list = [wav_file_path, None]
+
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, audio_in=audio_list)
+        self.check_result('test_run_with_pos_testsets', kws_result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_neg_testsets(self):
+        wav_file_path = download_and_untar(
+            os.path.join(self.workspace, NEG_TESTSETS_FILE), NEG_TESTSETS_URL,
+            self.workspace)
+        audio_list = [None, wav_file_path]
+
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, audio_in=audio_list)
+        self.check_result('test_run_with_neg_testsets', kws_result)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_roc(self):
+        pos_file_path = download_and_untar(
+            os.path.join(self.workspace, POS_TESTSETS_FILE), POS_TESTSETS_URL,
+            self.workspace)
+        neg_file_path = download_and_untar(
+            os.path.join(self.workspace, NEG_TESTSETS_FILE), NEG_TESTSETS_URL,
+            self.workspace)
+        audio_list = [pos_file_path, neg_file_path]
+
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, audio_in=audio_list)
+        self.check_result('test_run_with_roc', kws_result)
 
 
 if __name__ == '__main__':

@@ -2,20 +2,17 @@ import math
 import os.path as osp
 from typing import Any, Dict
 
-import cv2
-import numpy as np
-import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.action_recognition.models import BaseVideoModel
-from modelscope.pipelines.base import Input
-from modelscope.preprocessors.video import ReadVideoData
+from modelscope.models.cv.action_recognition import BaseVideoModel
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import ReadVideoData
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 
@@ -24,22 +21,28 @@ logger = get_logger()
     Tasks.action_recognition, module_name=Pipelines.action_recognition)
 class ActionRecognitionPipeline(Pipeline):
 
-    def __init__(self, model: str):
-        super().__init__(model=model)
+    def __init__(self, model: str, **kwargs):
+        """
+        use `model` to create a action recognition pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
+        super().__init__(model=model, **kwargs)
         model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
         logger.info(f'loading model from {model_path}')
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading config from {config_path}')
         self.cfg = Config.from_file(config_path)
-        self.infer_model = BaseVideoModel(cfg=self.cfg).cuda()
+        self.infer_model = BaseVideoModel(cfg=self.cfg).to(self.device)
         self.infer_model.eval()
-        self.infer_model.load_state_dict(torch.load(model_path)['model_state'])
+        self.infer_model.load_state_dict(
+            torch.load(model_path, map_location=self.device)['model_state'])
         self.label_mapping = self.cfg.label_mapping
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         if isinstance(input, str):
-            video_input_data = ReadVideoData(self.cfg, input).cuda()
+            video_input_data = ReadVideoData(self.cfg, input).to(self.device)
         else:
             raise TypeError(f'input should be a str,'
                             f'  but got {type(input)}')
@@ -49,7 +52,7 @@ class ActionRecognitionPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         pred = self.perform_inference(input['video_data'])
         output_label = self.label_mapping[str(pred)]
-        return {'output_label': output_label}
+        return {OutputKeys.LABELS: output_label}
 
     @torch.no_grad()
     def perform_inference(self, data, max_bsz=4):

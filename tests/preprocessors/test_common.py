@@ -2,7 +2,10 @@
 
 import unittest
 
-from modelscope.preprocessors import PREPROCESSORS, Compose, Preprocessor
+import torch
+
+from modelscope.preprocessors import (PREPROCESSORS, Compose, Filter,
+                                      Preprocessor, ToTensor)
 
 
 class ComposeTest(unittest.TestCase):
@@ -33,6 +36,28 @@ class ComposeTest(unittest.TestCase):
         output = trans(input)
         self.assertEqual(output['tmp1'], 'tmp1')
         self.assertEqual(output['tmp2'], 'tmp2')
+
+
+class ToTensorTest(unittest.TestCase):
+
+    def test_totensor(self):
+        to_tensor_op = ToTensor(keys=['img'])
+        inputs = {'img': [1, 2, 3], 'label': 1, 'path': 'test.jpg'}
+        inputs = to_tensor_op(inputs)
+        self.assertIsInstance(inputs['img'], torch.Tensor)
+        self.assertEqual(inputs['label'], 1)
+        self.assertEqual(inputs['path'], 'test.jpg')
+
+
+class FilterTest(unittest.TestCase):
+
+    def test_filter(self):
+        filter_op = Filter(reserved_keys=['img', 'label'])
+        inputs = {'img': [1, 2, 3], 'label': 1, 'path': 'test.jpg'}
+        inputs = filter_op(inputs)
+        self.assertIn('img', inputs)
+        self.assertIn('label', inputs)
+        self.assertNotIn('path', inputs)
 
 
 if __name__ == '__main__':

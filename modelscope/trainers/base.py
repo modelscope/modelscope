@@ -1,10 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import time
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.config import Config
+from .utils.log_buffer import LogBuffer
 
 
 class BaseTrainer(ABC):
@@ -27,6 +29,8 @@ class BaseTrainer(ABC):
             self.args = self.cfg.to_args(arg_parse_fn)
         else:
             self.args = None
+        self.log_buffer = LogBuffer()
+        self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
     @abstractmethod
     def train(self, *args, **kwargs):

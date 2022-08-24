@@ -1,9 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from modelscope.utils.config import ConfigDict
-from modelscope.utils.registry import Registry, build_from_cfg
+from modelscope.utils.registry import TYPE_NAME, Registry, build_from_cfg
 
 MODELS = Registry('models')
+BACKBONES = Registry('backbones')
+HEADS = Registry('heads')
 
 
 def build_model(cfg: ConfigDict,
@@ -19,3 +21,29 @@ def build_model(cfg: ConfigDict,
     """
     return build_from_cfg(
         cfg, MODELS, group_key=task_name, default_args=default_args)
+
+
+def build_backbone(cfg: ConfigDict,
+                   field: str = None,
+                   default_args: dict = None):
+    """ build backbone given backbone config dict
+
+    Args:
+        cfg (:obj:`ConfigDict`): config dict for backbone object.
+        field (str, optional): field, such as CV, NLP's backbone
+        default_args (dict, optional): Default initialization arguments.
+    """
+    return build_from_cfg(
+        cfg, BACKBONES, group_key=field, default_args=default_args)
+
+
+def build_head(cfg: ConfigDict, default_args: dict = None):
+    """ build head given config dict
+
+    Args:
+        cfg (:obj:`ConfigDict`): config dict for head object.
+        default_args (dict, optional): Default initialization arguments.
+    """
+
+    return build_from_cfg(
+        cfg, HEADS, group_key=cfg[TYPE_NAME], default_args=default_args)

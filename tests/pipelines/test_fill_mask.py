@@ -3,8 +3,10 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import StructBertForMaskedLM, VecoForMaskedLM
-from modelscope.pipelines import FillMaskPipeline, pipeline
+from modelscope.models.nlp import (BertForMaskedLM, StructBertForMaskedLM,
+                                   VecoForMaskedLM)
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -16,6 +18,7 @@ class FillMaskTest(unittest.TestCase):
         'en': 'damo/nlp_structbert_fill-mask_english-large'
     }
     model_id_veco = 'damo/nlp_veco_fill-mask-large'
+    model_id_bert = 'damo/nlp_bert_fill-mask_chinese-base'
 
     ori_texts = {
         'zh':
@@ -42,7 +45,7 @@ class FillMaskTest(unittest.TestCase):
             model_dir = snapshot_download(self.model_id_sbert[language])
             preprocessor = FillMaskPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
-            model = StructBertForMaskedLM(model_dir)
+            model = StructBertForMaskedLM.from_pretrained(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
             pipeline2 = pipeline(
                 Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -57,7 +60,7 @@ class FillMaskTest(unittest.TestCase):
         model_dir = snapshot_download(self.model_id_veco)
         preprocessor = FillMaskPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
-        model = VecoForMaskedLM(model_dir)
+        model = VecoForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -68,6 +71,20 @@ class FillMaskTest(unittest.TestCase):
                 f'\nori_text: {ori_text}\ninput: {test_input}\npipeline1: '
                 f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n'
             )
+
+        # zh bert
+        language = 'zh'
+        model_dir = snapshot_download(self.model_id_bert)
+        preprocessor = FillMaskPreprocessor(
+            model_dir, first_sequence='sentence', second_sequence=None)
+        model = BertForMaskedLM.from_pretrained(model_dir)
+        pipeline1 = FillMaskPipeline(model, preprocessor)
+        pipeline2 = pipeline(
+            Tasks.fill_mask, model=model, preprocessor=preprocessor)
+        ori_text = self.ori_texts[language]
+        test_input = self.test_inputs[language]
+        print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline1: '
+              f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
@@ -97,6 +114,18 @@ class FillMaskTest(unittest.TestCase):
             print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
                   f'{pipeline_ins(test_input)}\n')
 
+        # zh bert
+        model = Model.from_pretrained(self.model_id_bert)
+        preprocessor = FillMaskPreprocessor(
+            model.model_dir, first_sequence='sentence', second_sequence=None)
+        pipeline_ins = pipeline(
+            Tasks.fill_mask, model=model, preprocessor=preprocessor)
+        language = 'zh'
+        ori_text = self.ori_texts[language]
+        test_input = self.test_inputs[language]
+        print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+              f'{pipeline_ins(test_input)}\n')
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         # veco
@@ -111,6 +140,12 @@ class FillMaskTest(unittest.TestCase):
         language = 'zh'
         pipeline_ins = pipeline(
             task=Tasks.fill_mask, model=self.model_id_sbert[language])
+        print(
+            f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+            f'{pipeline_ins(self.test_inputs[language])}\n')
+
+        # bert
+        pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_bert)
         print(
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')

@@ -1,11 +1,10 @@
 import unittest
 
-import datasets as hfdata
-
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
 
 
@@ -32,38 +31,54 @@ class ImgPreprocessor(Preprocessor):
 
 class MsDatasetTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_ds_basic(self):
-        ms_ds_full = MsDataset.load('squad')
-        ms_ds_full_hf = hfdata.load_dataset('squad')
-        ms_ds_train = MsDataset.load('squad', split='train')
-        ms_ds_train_hf = hfdata.load_dataset('squad', split='train')
-        ms_image_train = MsDataset.from_hf_dataset(
-            hfdata.load_dataset('beans', split='train'))
-        self.assertEqual(ms_ds_full['train'][0], ms_ds_full_hf['train'][0])
-        self.assertEqual(ms_ds_full['validation'][0],
-                         ms_ds_full_hf['validation'][0])
-        self.assertEqual(ms_ds_train[0], ms_ds_train_hf[0])
-        print(next(iter(ms_ds_full['train'])))
-        print(next(iter(ms_ds_train)))
-        print(next(iter(ms_image_train)))
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_coco(self):
+        ms_ds_train = MsDataset.load(
+            'pets_small',
+            namespace='modelscope',
+            split='train',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD,
+            classes=('1', '2'))
+        print(ms_ds_train._hf_ds.config_kwargs)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ms_csv_basic(self):
+        ms_ds_train = MsDataset.load(
+            'afqmc_small', namespace='userxiaoming', split='train')
+        print(next(iter(ms_ds_train)))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ds_basic(self):
+        ms_ds_full = MsDataset.load(
+            'xcopa', subset_name='translation-et', namespace='damotest')
+        ms_ds = MsDataset.load(
+            'xcopa',
+            subset_name='translation-et',
+            namespace='damotest',
+            split='test')
+        print(next(iter(ms_ds_full['test'])))
+        print(next(iter(ms_ds)))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_text(self):
         model_id = 'damo/bert-base-sst2'
         nlp_model = Model.from_pretrained(model_id)
         preprocessor = SequenceClassificationPreprocessor(
             nlp_model.model_dir,
-            first_sequence='context',
+            first_sequence='premise',
             second_sequence=None)
-        ms_ds_train = MsDataset.load('squad', split='train')
+        ms_ds_train = MsDataset.load(
+            'xcopa',
+            subset_name='translation-et',
+            namespace='damotest',
+            split='test')
         pt_dataset = ms_ds_train.to_torch_dataset(preprocessors=preprocessor)
         import torch
         dataloader = torch.utils.data.DataLoader(pt_dataset, batch_size=5)
         print(next(iter(dataloader)))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     @require_tf
     def test_to_tf_dataset_text(self):
         import tensorflow as tf
@@ -72,9 +87,13 @@ class MsDatasetTest(unittest.TestCase):
         nlp_model = Model.from_pretrained(model_id)
         preprocessor = SequenceClassificationPreprocessor(
             nlp_model.model_dir,
-            first_sequence='context',
+            first_sequence='premise',
             second_sequence=None)
-        ms_ds_train = MsDataset.load('squad', split='train')
+        ms_ds_train = MsDataset.load(
+            'xcopa',
+            subset_name='translation-et',
+            namespace='damotest',
+            split='test')
         tf_dataset = ms_ds_train.to_tf_dataset(
             batch_size=5,
             shuffle=True,
@@ -85,11 +104,10 @@ class MsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_img(self):
-        ms_image_train = MsDataset.from_hf_dataset(
-            hfdata.load_dataset('beans', split='train'))
+        ms_image_train = MsDataset.load(
+            'fixtures_image_utils', namespace='damotest', split='test')
         pt_dataset = ms_image_train.to_torch_dataset(
-            preprocessors=ImgPreprocessor(
-                image_path='image_file_path', label='labels'))
+            preprocessors=ImgPreprocessor(image_path='file'))
         import torch
         dataloader = torch.utils.data.DataLoader(pt_dataset, batch_size=5)
         print(next(iter(dataloader)))
@@ -99,13 +117,14 @@ class MsDatasetTest(unittest.TestCase):
     def test_to_tf_dataset_img(self):
         import tensorflow as tf
         tf.compat.v1.enable_eager_execution()
-        ms_image_train = MsDataset.load('beans', split='train')
+        ms_image_train = MsDataset.load(
+            'fixtures_image_utils', namespace='damotest', split='test')
         tf_dataset = ms_image_train.to_tf_dataset(
             batch_size=5,
             shuffle=True,
-            preprocessors=ImgPreprocessor(image_path='image_file_path'),
+            preprocessors=ImgPreprocessor(image_path='file'),
             drop_remainder=True,
-            label_cols='labels')
+        )
         print(next(iter(tf_dataset)))
 
 

@@ -19,6 +19,7 @@ Subpackages
    modelscope.msdatasets
    modelscope.trainers
    modelscope.utils
+   modelscope.hub
 
 Submodules
 ----------

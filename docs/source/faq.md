@@ -41,3 +41,8 @@ reference: [https://huggingface.co/docs/tokenizers/installation#installation-fro
 ```shell
 pip install -f https://download.pytorch.org/whl/torch_stable.html -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 ```
+### 4. zsh: no matches found: modelscope-0.2.2-py3-none-any.whl[all]
+mac终端的zsh 对于[]需要做转义，执行如下命令
+```shell
+pip install modelscope\[all\] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+```

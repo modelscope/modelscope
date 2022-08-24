@@ -1,27 +1,27 @@
 import os
 import tempfile
-from glob import glob
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
-from .constants import DEFAULT_MODELSCOPE_GROUP, MODEL_ID_SEPARATOR
-from .errors import NotExistError, RequestError, raise_on_error
+from .constants import FILE_HASH
+from .errors import NotExistError
 from .file_download import (get_file_download_url, http_get_file,
                             http_user_agent)
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import get_cache_dir, model_id_to_group_owner_name
+from .utils.utils import (file_integrity_validation, get_cache_dir,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
 
 def snapshot_download(model_id: str,
-                      revision: Optional[str] = 'master',
+                      revision: Optional[str] = DEFAULT_MODEL_REVISION,
                       cache_dir: Union[str, Path, None] = None,
                       user_agent: Optional[Union[Dict, str]] = None,
-                      local_files_only: Optional[bool] = False,
-                      private: Optional[bool] = False) -> str:
+                      local_files_only: Optional[bool] = False) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
     is useful when you want all files from a repo, because you don't know which
@@ -61,6 +61,8 @@ def snapshot_download(model_id: str,
         cache_dir = get_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
+    temporary_cache_dir = os.path.join(cache_dir, 'temp')
+    os.makedirs(temporary_cache_dir, exist_ok=True)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
 
@@ -79,47 +81,59 @@ def snapshot_download(model_id: str,
         # make headers
         headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
         _api = HubApi()
+        cookies = ModelScopeConfig.get_cookies()
         # get file list from model repo
-        branches, tags = _api.get_model_branches_and_tags(model_id)
+        branches, tags = _api.get_model_branches_and_tags(
+            model_id, use_cookies=False if cookies is None else cookies)
         if revision not in branches and revision not in tags:
             raise NotExistError('The specified branch or tag : %s not exist!'
                                 % revision)
 
+        snapshot_header = headers if 'CI_TEST' in os.environ else {
+            **headers,
+            **{
+                'Snapshot': 'True'
+            }
+        }
         model_files = _api.get_model_files(
             model_id=model_id,
             revision=revision,
             recursive=True,
-            use_cookies=private)
+            use_cookies=False if cookies is None else cookies,
+            headers=snapshot_header,
+        )
 
-        cookies = None
-        if private:
-            cookies = ModelScopeConfig.get_cookies()
+        with tempfile.TemporaryDirectory(
+                dir=temporary_cache_dir) as temp_cache_dir:
+            for model_file in model_files:
+                if model_file['Type'] == 'tree':
+                    continue
+                # check model_file is exist in cache, if exist, skip download, otherwise download
+                if cache.exists(model_file):
+                    file_name = os.path.basename(model_file['Name'])
+                    logger.info(
+                        f'File {file_name} already in cache, skip downloading!'
+                    )
+                    continue
 
-        for model_file in model_files:
-            if model_file['Type'] == 'tree':
-                continue
-            # check model_file is exist in cache, if exist, skip download, otherwise download
-            if cache.exists(model_file):
-                logger.info(
-                    'The specified file is in cache, skip downloading!')
-                continue
+                # get download url
+                url = get_file_download_url(
+                    model_id=model_id,
+                    file_path=model_file['Path'],
+                    revision=revision)
 
-            # get download url
-            url = get_file_download_url(
-                model_id=model_id,
-                file_path=model_file['Path'],
-                revision=revision)
-
-            # First download to /tmp
-            http_get_file(
-                url=url,
-                local_dir=tempfile.gettempdir(),
-                file_name=model_file['Name'],
-                headers=headers,
-                cookies=None if cookies is None else cookies.get_dict())
-            # put file to cache
-            cache.put_file(
-                model_file,
-                os.path.join(tempfile.gettempdir(), model_file['Name']))
+                # First download to /tmp
+                http_get_file(
+                    url=url,
+                    local_dir=temp_cache_dir,
+                    file_name=model_file['Name'],
+                    headers=headers,
+                    cookies=cookies)
+                # check file integrity
+                temp_file = os.path.join(temp_cache_dir, model_file['Name'])
+                if FILE_HASH in model_file:
+                    file_integrity_validation(temp_file, model_file[FILE_HASH])
+                # put file to cache
+                cache.put_file(model_file, temp_file)
 
         return os.path.join(cache.get_root_location())

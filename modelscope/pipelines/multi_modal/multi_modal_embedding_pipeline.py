@@ -1,11 +1,10 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
-from modelscope.pipelines.base import Input
+from modelscope.pipelines.base import Input, Model, Pipeline
+from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Model, Pipeline
-from ..builder import PIPELINES
 
 logger = get_logger()
 
@@ -14,7 +13,12 @@ logger = get_logger()
     Tasks.multi_modal_embedding, module_name=Pipelines.multi_modal_embedding)
 class MultiModalEmbeddingPipeline(Pipeline):
 
-    def __init__(self, model: str, device_id: int = -1):
+    def __init__(self, model: str, device: str = 'gpu'):
+        """
+        use `model` and `preprocessor` to create a kws pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
         if isinstance(model, str):
             pipe_model = Model.from_pretrained(model)
         elif isinstance(model, Model):

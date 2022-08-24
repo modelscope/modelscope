@@ -8,45 +8,82 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
-NEAREND_MIC_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/nearend_mic.wav'
-FAREND_SPEECH_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/AEC/sample_audio/farend_speech.wav'
-NEAREND_MIC_FILE = 'nearend_mic.wav'
-FAREND_SPEECH_FILE = 'farend_speech.wav'
+NEAREND_MIC_FILE = 'data/test/audios/nearend_mic.wav'
+FAREND_SPEECH_FILE = 'data/test/audios/farend_speech.wav'
 
-AEC_LIB_URL = 'http://isv-data.oss-cn-hangzhou.aliyuncs.com/ics%2FMaaS%2FAEC%2Flib%2Flibmitaec_pyio.so' \
-              '?Expires=1664085465&OSSAccessKeyId=LTAIxjQyZNde90zh&Signature=Y7gelmGEsQAJRK4yyHSYMrdWizk%3D'
-AEC_LIB_FILE = 'libmitaec_pyio.so'
-
-
-def download(remote_path, local_path):
-    local_dir = os.path.dirname(local_path)
-    if len(local_dir) > 0:
-        if not os.path.exists(local_dir):
-            os.makedirs(local_dir)
-    with open(local_path, 'wb') as ofile:
-        ofile.write(File.read(remote_path))
+NOISE_SPEECH_FILE = 'data/test/audios/speech_with_noise.wav'
 
 
 class SpeechSignalProcessTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/speech_dfsmn_aec_psm_16k'
-        # A temporary hack to provide c++ lib. Download it first.
-        download(AEC_LIB_URL, AEC_LIB_FILE)
+        pass
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run(self):
-        download(NEAREND_MIC_URL, NEAREND_MIC_FILE)
-        download(FAREND_SPEECH_URL, FAREND_SPEECH_FILE)
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_aec(self):
+        model_id = 'damo/speech_dfsmn_aec_psm_16k'
         input = {
-            'nearend_mic': NEAREND_MIC_FILE,
-            'farend_speech': FAREND_SPEECH_FILE
+            'nearend_mic': os.path.join(os.getcwd(), NEAREND_MIC_FILE),
+            'farend_speech': os.path.join(os.getcwd(), FAREND_SPEECH_FILE)
         }
+        aec = pipeline(Tasks.acoustic_echo_cancellation, model=model_id)
+        output_path = os.path.abspath('output.wav')
+        aec(input, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_aec_bytes(self):
+        model_id = 'damo/speech_dfsmn_aec_psm_16k'
+        input = {}
+        with open(os.path.join(os.getcwd(), NEAREND_MIC_FILE), 'rb') as f:
+            input['nearend_mic'] = f.read()
+        with open(os.path.join(os.getcwd(), FAREND_SPEECH_FILE), 'rb') as f:
+            input['farend_speech'] = f.read()
         aec = pipeline(
-            Tasks.speech_signal_process,
-            model=self.model_id,
+            Tasks.acoustic_echo_cancellation,
+            model=model_id,
             pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
-        aec(input, output_path='output.wav')
+        output_path = os.path.abspath('output.wav')
+        aec(input, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_aec_tuple_bytes(self):
+        model_id = 'damo/speech_dfsmn_aec_psm_16k'
+        with open(os.path.join(os.getcwd(), NEAREND_MIC_FILE), 'rb') as f:
+            nearend_bytes = f.read()
+        with open(os.path.join(os.getcwd(), FAREND_SPEECH_FILE), 'rb') as f:
+            farend_bytes = f.read()
+        inputs = (nearend_bytes, farend_bytes)
+        aec = pipeline(
+            Tasks.acoustic_echo_cancellation,
+            model=model_id,
+            pipeline_name=Pipelines.speech_dfsmn_aec_psm_16k)
+        output_path = os.path.abspath('output.wav')
+        aec(inputs, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_ans(self):
+        model_id = 'damo/speech_frcrn_ans_cirm_16k'
+        ans = pipeline(Tasks.acoustic_noise_suppression, model=model_id)
+        output_path = os.path.abspath('output.wav')
+        ans(os.path.join(os.getcwd(), NOISE_SPEECH_FILE),
+            output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_ans_bytes(self):
+        model_id = 'damo/speech_frcrn_ans_cirm_16k'
+        ans = pipeline(
+            Tasks.acoustic_noise_suppression,
+            model=model_id,
+            pipeline_name=Pipelines.speech_frcrn_ans_cirm_16k)
+        output_path = os.path.abspath('output.wav')
+        with open(os.path.join(os.getcwd(), NOISE_SPEECH_FILE), 'rb') as f:
+            data = f.read()
+            ans(data, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
 
 
 if __name__ == '__main__':

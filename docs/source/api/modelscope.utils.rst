@@ -41,14 +41,6 @@ modelscope.utils.logger module
    :undoc-members:
    :show-inheritance:
 
-modelscope.utils.pymod module
------------------------------
-
-.. automodule:: modelscope.utils.pymod
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 modelscope.utils.registry module
 --------------------------------
 

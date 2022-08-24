@@ -1,21 +1,18 @@
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
-from modelscope.utils.constant import Tasks
+from modelscope.metainfo import Trainers
+from modelscope.trainers.base import BaseTrainer
+from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.logger import get_logger
-from ..base import BaseTrainer
-from ..builder import TRAINERS
-
-# __all__ = ["SequenceClassificationTrainer"]
 
 PATH = None
 logger = get_logger(PATH)
 
 
-@TRAINERS.register_module(
-    Tasks.text_classification, module_name=r'bert-sentiment-analysis')
+@TRAINERS.register_module(module_name=Trainers.bert_sentiment_analysis)
 class SequenceClassificationTrainer(BaseTrainer):
 
     def __init__(self, cfg_file: str, *args, **kwargs):
@@ -82,7 +79,8 @@ class SequenceClassificationTrainer(BaseTrainer):
         import torch
         from easynlp.appzoo import load_dataset
         from easynlp.appzoo.dataset import GeneralDataset
-        from easynlp.appzoo.sequence_classification.model import SequenceClassification
+        from easynlp.appzoo.sequence_classification.model import \
+            SequenceClassification
         from easynlp.utils import losses
         from sklearn.metrics import f1_score
         from torch.utils.data import DataLoader

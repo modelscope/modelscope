@@ -1,10 +1,15 @@
+import hashlib
 import os
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
-                                      DEFAULT_MODELSCOPE_GITLAB_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
+from modelscope.hub.errors import FileIntegrityError
+from modelscope.utils.file_utils import get_default_cache_dir
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 def model_id_to_group_owner_name(model_id):
@@ -22,8 +27,7 @@ def get_cache_dir():
     cache dir precedence:
         function parameter > enviroment > ~/.cache/modelscope/hub
     """
-    default_cache_dir = os.path.expanduser(
-        os.path.join('~/.cache', 'modelscope'))
+    default_cache_dir = get_default_cache_dir()
     return os.getenv('MODELSCOPE_CACHE', os.path.join(default_cache_dir,
                                                       'hub'))
 
@@ -34,6 +38,32 @@ def get_endpoint():
     return MODELSCOPE_URL_SCHEME + modelscope_domain
 
 
-def get_gitlab_domain():
-    return os.getenv('MODELSCOPE_GITLAB_DOMAIN',
-                     DEFAULT_MODELSCOPE_GITLAB_DOMAIN)
+def compute_hash(file_path):
+    BUFFER_SIZE = 1024 * 64  # 64k buffer size
+    sha256_hash = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        while True:
+            data = f.read(BUFFER_SIZE)
+            if not data:
+                break
+            sha256_hash.update(data)
+    return sha256_hash.hexdigest()
+
+
+def file_integrity_validation(file_path, expected_sha256):
+    """Validate the file hash is expected, if not, delete the file
+
+    Args:
+        file_path (str): The file to validate
+        expected_sha256 (str): The expected sha256 hash
+
+    Raises:
+        FileIntegrityError: If file_path hash is not expected.
+
+    """
+    file_sha256 = compute_hash(file_path)
+    if not file_sha256 == expected_sha256:
+        os.remove(file_path)
+        msg = 'File %s integrity check failed, the download may be incomplete, please try again.' % file_path
+        logger.error(msg)
+        raise FileIntegrityError(msg)

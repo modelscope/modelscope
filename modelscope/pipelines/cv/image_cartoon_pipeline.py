@@ -3,20 +3,20 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import PIL
 import tensorflow as tf
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.cartoon.facelib.facer import FaceAna
-from modelscope.models.cv.cartoon.mtcnn_pytorch.src.align_trans import (
-    get_reference_facial_points, warp_and_crop_face)
-from modelscope.models.cv.cartoon.utils import get_f5p, padTo16x, resize_size
-from modelscope.pipelines.base import Input
-from modelscope.preprocessors import load_image
+from modelscope.models.cv.cartoon import (FaceAna, get_f5p,
+                                          get_reference_facial_points,
+                                          padTo16x, resize_size,
+                                          warp_and_crop_face)
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from ..base import Pipeline
-from ..builder import PIPELINES
+from ...utils.device import device_placement
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
@@ -26,16 +26,25 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_generation, module_name=Pipelines.person_image_cartoon)
+    Tasks.image_portrait_stylization,
+    module_name=Pipelines.person_image_cartoon)
 class ImageCartoonPipeline(Pipeline):
 
-    def __init__(self, model: str):
-        super().__init__(model=model)
-        self.facer = FaceAna(self.model)
-        self.sess_anime_head = self.load_sess(
-            os.path.join(self.model, 'cartoon_anime_h.pb'), 'model_anime_head')
-        self.sess_anime_bg = self.load_sess(
-            os.path.join(self.model, 'cartoon_anime_bg.pb'), 'model_anime_bg')
+    def __init__(self, model: str, **kwargs):
+        """
+        use `model` to create a image cartoon pipeline for prediction
+        Args:
+            model: model id on modelscope hub.
+        """
+        super().__init__(model=model, **kwargs)
+        with device_placement(self.framework, self.device_name):
+            self.facer = FaceAna(self.model)
+            self.sess_anime_head = self.load_sess(
+                os.path.join(self.model, 'cartoon_anime_h.pb'),
+                'model_anime_head')
+            self.sess_anime_bg = self.load_sess(
+                os.path.join(self.model, 'cartoon_anime_bg.pb'),
+                'model_anime_bg')
 
         self.box_width = 288
         global_mask = cv2.imread(os.path.join(self.model, 'alpha.jpg'))
@@ -60,17 +69,7 @@ class ImageCartoonPipeline(Pipeline):
         return sess
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                input = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
+        img = LoadImage.convert_to_ndarray(input)
         img = img.astype(np.float)
         result = {'img': img}
         return result
@@ -91,11 +90,6 @@ class ImageCartoonPipeline(Pipeline):
 
         img_brg = img[:, :, ::-1]
 
-        landmarks = self.detect_face(img)
-        if landmarks is None:
-            print('No face detected!')
-            return {'output_png': None}
-
         # background process
         pad_bg, pad_h, pad_w = padTo16x(img_brg)
 
@@ -104,6 +98,11 @@ class ImageCartoonPipeline(Pipeline):
                 'model_anime_bg/output_image:0'),
             feed_dict={'model_anime_bg/input_image:0': pad_bg})
         res = bg_res[:pad_h, :pad_w, :]
+
+        landmarks = self.detect_face(img)
+        if landmarks is None:
+            print('No face detected!')
+            return {OutputKeys.OUTPUT_IMG: res}
 
         for landmark in landmarks:
             # get facial 5 points
@@ -143,7 +142,7 @@ class ImageCartoonPipeline(Pipeline):
 
         res = cv2.resize(res, (ori_w, ori_h), interpolation=cv2.INTER_AREA)
 
-        return {'output_png': res}
+        return {OutputKeys.OUTPUT_IMG: res}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

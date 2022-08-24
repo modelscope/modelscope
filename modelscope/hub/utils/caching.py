@@ -1,9 +1,7 @@
 import hashlib
-import logging
 import os
 import pickle
 import tempfile
-import time
 from shutil import move, rmtree
 
 from modelscope.utils.logger import get_logger
@@ -101,8 +99,9 @@ class FileSystemCache(object):
         Args:
             key (dict): The cache key.
         """
-        self.cached_files.remove(key)
-        self.save_cached_files()
+        if key in self.cached_files:
+            self.cached_files.remove(key)
+            self.save_cached_files()
 
     def exists(self, key):
         for cache_file in self.cached_files:
@@ -204,6 +203,7 @@ class ModelFileSystemCache(FileSystemCache):
                     return orig_path
                 else:
                     self.remove_key(cached_file)
+                    break
 
         return None
 
@@ -230,6 +230,7 @@ class ModelFileSystemCache(FileSystemCache):
                     cached_key['Revision'].startswith(key['Revision'])
                     or key['Revision'].startswith(cached_key['Revision'])):
                 is_exists = True
+                break
         file_path = os.path.join(self.cache_root_location,
                                  model_file_info['Path'])
         if is_exists:
@@ -253,6 +254,7 @@ class ModelFileSystemCache(FileSystemCache):
                                          cached_file['Path'])
                 if os.path.exists(file_path):
                     os.remove(file_path)
+                break
 
     def put_file(self, model_file_info, model_file_location):
         """Put model on model_file_location to cache, the model first download to /tmp, and move to cache.

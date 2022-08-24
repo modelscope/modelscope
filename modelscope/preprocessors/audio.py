@@ -1,56 +1,14 @@
-import ctypes
+import io
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import scipy.io.wavfile as wav
 import torch
-from numpy.ctypeslib import ndpointer
 
 from modelscope.utils.constant import Fields
+from . import Preprocessor
 from .builder import PREPROCESSORS
-
-
-def load_wav(path):
-    samp_rate, data = wav.read(path)
-    return np.float32(data), samp_rate
-
-
-def load_library(libaec):
-    libaec_in_cwd = os.path.join('.', libaec)
-    if os.path.exists(libaec_in_cwd):
-        libaec = libaec_in_cwd
-    mitaec = ctypes.cdll.LoadLibrary(libaec)
-    fe_process = mitaec.fe_process_inst
-    fe_process.argtypes = [
-        ndpointer(ctypes.c_float, flags='C_CONTIGUOUS'),
-        ndpointer(ctypes.c_float, flags='C_CONTIGUOUS'), ctypes.c_int,
-        ndpointer(ctypes.c_float, flags='C_CONTIGUOUS'),
-        ndpointer(ctypes.c_float, flags='C_CONTIGUOUS'),
-        ndpointer(ctypes.c_float, flags='C_CONTIGUOUS')
-    ]
-    return fe_process
-
-
-def do_linear_aec(fe_process, mic, ref, int16range=True):
-    mic = np.float32(mic)
-    ref = np.float32(ref)
-    if len(mic) > len(ref):
-        mic = mic[:len(ref)]
-    out_mic = np.zeros_like(mic)
-    out_linear = np.zeros_like(mic)
-    out_echo = np.zeros_like(mic)
-    out_ref = np.zeros_like(mic)
-    if int16range:
-        mic /= 32768
-        ref /= 32768
-    fe_process(mic, ref, len(mic), out_mic, out_linear, out_echo)
-    # out_ref not in use here
-    if int16range:
-        out_mic *= 32768
-        out_linear *= 32768
-        out_echo *= 32768
-    return out_mic, out_ref, out_linear, out_echo
 
 
 def load_kaldi_feature_transform(filename):
@@ -158,35 +116,42 @@ class Feature:
 
 
 @PREPROCESSORS.register_module(Fields.audio)
-class LinearAECAndFbank:
+class LinearAECAndFbank(Preprocessor):
     SAMPLE_RATE = 16000
 
     def __init__(self, io_config):
+        import MinDAEC
         self.trunc_length = 7200 * self.SAMPLE_RATE
         self.linear_aec_delay = io_config['linear_aec_delay']
         self.feature = Feature(io_config['fbank_config'],
                                io_config['feat_type'], io_config['mvn'])
-        self.mitaec = load_library(io_config['mitaec_library'])
+        self.mitaec = MinDAEC.load()
         self.mask_on_mic = io_config['mask_on'] == 'nearend_mic'
 
-    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """ linear filtering the near end mic and far end audio, then extract the feature
-        :param data: dict with two keys and correspond audios: "nearend_mic" and "farend_speech"
-        :return: dict with two keys and Tensor values: "base" linear filtered audio，and "feature"
-        """
-        # read files
-        nearend_mic, fs = load_wav(data['nearend_mic'])
-        assert fs == self.SAMPLE_RATE, f'The sample rate should be {self.SAMPLE_RATE}'
-        farend_speech, fs = load_wav(data['farend_speech'])
-        assert fs == self.SAMPLE_RATE, f'The sample rate should be {self.SAMPLE_RATE}'
-        if 'nearend_speech' in data:
-            nearend_speech, fs = load_wav(data['nearend_speech'])
-            assert fs == self.SAMPLE_RATE, f'The sample rate should be {self.SAMPLE_RATE}'
-        else:
-            nearend_speech = np.zeros_like(nearend_mic)
+    def __call__(self, data: Union[Tuple, Dict[str, Any]]) -> Dict[str, Any]:
+        """ Linear filtering the near end mic and far end audio, then extract the feature.
 
-        out_mic, out_ref, out_linear, out_echo = do_linear_aec(
-            self.mitaec, nearend_mic, farend_speech)
+        Args:
+            data: Dict with two keys and correspond audios: "nearend_mic" and "farend_speech".
+
+        Returns:
+            Dict with two keys and Tensor values: "base" linear filtered audio，and "feature"
+        """
+        if isinstance(data, tuple):
+            nearend_mic, fs = self.load_wav(data[0])
+            farend_speech, fs = self.load_wav(data[1])
+            nearend_speech = np.zeros_like(nearend_mic)
+        else:
+            # read files
+            nearend_mic, fs = self.load_wav(data['nearend_mic'])
+            farend_speech, fs = self.load_wav(data['farend_speech'])
+            if 'nearend_speech' in data:
+                nearend_speech, fs = self.load_wav(data['nearend_speech'])
+            else:
+                nearend_speech = np.zeros_like(nearend_mic)
+
+        out_mic, out_ref, out_linear, out_echo = self.mitaec.do_linear_aec(
+            nearend_mic, farend_speech)
         # fix 20ms linear aec delay by delaying the target speech
         extra_zeros = np.zeros([int(self.linear_aec_delay * fs)])
         nearend_speech = np.concatenate([extra_zeros, nearend_speech])
@@ -229,3 +194,20 @@ class LinearAECAndFbank:
             base = out_linear
         out_data = {'base': base, 'target': nearend_speech, 'feature': feat}
         return out_data
+
+    @staticmethod
+    def load_wav(inputs):
+        import librosa
+        if isinstance(inputs, bytes):
+            inputs = io.BytesIO(inputs)
+        elif isinstance(inputs, str):
+            pass
+        else:
+            raise TypeError(f'Unsupported input type: {type(inputs)}.')
+        sample_rate, data = wav.read(inputs)
+        if len(data.shape) > 1:
+            raise ValueError('modelscope error:The audio must be mono.')
+        if sample_rate != LinearAECAndFbank.SAMPLE_RATE:
+            data = librosa.resample(data, sample_rate,
+                                    LinearAECAndFbank.SAMPLE_RATE)
+        return data.astype(np.float32), LinearAECAndFbank.SAMPLE_RATE

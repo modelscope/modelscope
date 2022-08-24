@@ -1,31 +1,26 @@
 import copy
-import fnmatch
-import logging
 import os
 import sys
 import tempfile
-import time
 from functools import partial
-from hashlib import sha256
+from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import BinaryIO, Dict, Optional, Union
+from typing import Dict, Optional, Union
 from uuid import uuid4
 
-import json
 import requests
 from filelock import FileLock
-from requests.exceptions import HTTPError
 from tqdm import tqdm
 
 from modelscope import __version__
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .api import HubApi, ModelScopeConfig
-from .constants import (DEFAULT_MODELSCOPE_GROUP, LOGGER_NAME,
-                        MODEL_ID_SEPARATOR)
-from .errors import NotExistError, RequestError, raise_on_error
+from .constants import FILE_HASH
+from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import (get_cache_dir, get_endpoint,
-                          model_id_to_group_owner_name)
+from .utils.utils import (file_integrity_validation, get_cache_dir,
+                          get_endpoint, model_id_to_group_owner_name)
 
 SESSION_ID = uuid4().hex
 logger = get_logger()
@@ -34,7 +29,7 @@ logger = get_logger()
 def model_file_download(
     model_id: str,
     file_path: str,
-    revision: Optional[str] = 'master',
+    revision: Optional[str] = DEFAULT_MODEL_REVISION,
     cache_dir: Optional[str] = None,
     user_agent: Union[Dict, str, None] = None,
     local_files_only: Optional[bool] = False,
@@ -54,7 +49,7 @@ def model_file_download(
             Path of the file to be downloaded, relative to the root of model repo
         revision(`str`, *optional*):
             revision of the model file to be downloaded.
-            Can be any of a branch, tag or commit hash, default to `master`
+            Can be any of a branch, tag or commit hash
         cache_dir (`str`, `Path`, *optional*):
             Path to the folder where cached files are stored.
         user_agent (`dict`, `str`, *optional*):
@@ -85,6 +80,8 @@ def model_file_download(
         cache_dir = get_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
+    temporary_cache_dir = os.path.join(cache_dir, 'temp')
+    os.makedirs(temporary_cache_dir, exist_ok=True)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
 
@@ -107,7 +104,9 @@ def model_file_download(
 
     _api = HubApi()
     headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
-    branches, tags = _api.get_model_branches_and_tags(model_id)
+    cookies = ModelScopeConfig.get_cookies()
+    branches, tags = _api.get_model_branches_and_tags(
+        model_id, use_cookies=False if cookies is None else cookies)
     file_to_download_info = None
     is_commit_id = False
     if revision in branches or revision in tags:  # The revision is version or tag,
@@ -117,18 +116,18 @@ def model_file_download(
             model_id=model_id,
             revision=revision,
             recursive=True,
-        )
+            use_cookies=False if cookies is None else cookies)
 
         for model_file in model_files:
             if model_file['Type'] == 'tree':
                 continue
 
             if model_file['Path'] == file_path:
-                model_file['Branch'] = revision
                 if cache.exists(model_file):
                     return cache.get_file_by_info(model_file)
                 else:
                     file_to_download_info = model_file
+                break
 
         if file_to_download_info is None:
             raise NotExistError('The file path: %s not exist in: %s' %
@@ -137,31 +136,37 @@ def model_file_download(
         cached_file_path = cache.get_file_by_path_and_commit_id(
             file_path, revision)
         if cached_file_path is not None:
-            logger.info('The specified file is in cache, skip downloading!')
+            file_name = os.path.basename(cached_file_path)
+            logger.info(
+                f'File {file_name} already in cache, skip downloading!')
             return cached_file_path  # the file is in cache.
         is_commit_id = True
     # we need to download again
-    # TODO: skip using JWT for authorization, use cookie instead
-    cookies = ModelScopeConfig.get_cookies()
     url_to_download = get_file_download_url(model_id, file_path, revision)
     file_to_download_info = {
-        'Path': file_path,
+        'Path':
+        file_path,
         'Revision':
-        revision if is_commit_id else file_to_download_info['Revision']
+        revision if is_commit_id else file_to_download_info['Revision'],
+        FILE_HASH:
+        None if (is_commit_id or FILE_HASH not in file_to_download_info) else
+        file_to_download_info[FILE_HASH]
     }
-    # Prevent parallel downloads of the same file with a lock.
-    lock_path = cache.get_root_location() + '.lock'
 
-    with FileLock(lock_path):
-        temp_file_name = next(tempfile._get_candidate_names())
-        http_get_file(
-            url_to_download,
-            cache_dir,
-            temp_file_name,
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict())
-        return cache.put_file(file_to_download_info,
-                              os.path.join(cache_dir, temp_file_name))
+    temp_file_name = next(tempfile._get_candidate_names())
+    http_get_file(
+        url_to_download,
+        temporary_cache_dir,
+        temp_file_name,
+        headers=headers,
+        cookies=None if cookies is None else cookies.get_dict())
+    temp_file_path = os.path.join(temporary_cache_dir, temp_file_name)
+    # for download with commit we can't get Sha256
+    if file_to_download_info[FILE_HASH] is not None:
+        file_integrity_validation(temp_file_path,
+                                  file_to_download_info[FILE_HASH])
+    return cache.put_file(file_to_download_info,
+                          os.path.join(temporary_cache_dir, temp_file_name))
 
 
 def http_user_agent(user_agent: Union[Dict, str, None] = None, ) -> str:
@@ -202,7 +207,7 @@ def http_get_file(
     url: str,
     local_dir: str,
     file_name: str,
-    cookies: Dict[str, str],
+    cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
 ):
     """
@@ -217,12 +222,13 @@ def http_get_file(
             local directory where the downloaded file stores
         file_name(`str`):
             name of the file stored in `local_dir`
-        cookies(`Dict[str, str]`):
+        cookies(`CookieJar`):
             cookies used to authentication the user, which is used for downloading private repos
         headers(`Optional[Dict[str, str]] = None`):
             http headers to carry necessary info when requesting the remote file
 
     """
+    total = -1
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
 
@@ -251,4 +257,12 @@ def http_get_file(
         progress.close()
 
     logger.info('storing %s in cache at %s', url, local_dir)
+    downloaded_length = os.path.getsize(temp_file.name)
+    if total != downloaded_length:
+        os.remove(temp_file.name)
+        msg = 'File %s download incomplete, content_length: %s but the \
+                    file downloaded length: %s, please download again' % (
+            file_name, total, downloaded_length)
+        logger.error(msg)
+        raise FileDownloadError(msg)
     os.replace(temp_file.name, os.path.join(local_dir, file_name))

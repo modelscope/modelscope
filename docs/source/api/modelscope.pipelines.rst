@@ -12,21 +12,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   modelscope.pipelines.audio
    modelscope.pipelines.cv
-   modelscope.pipelines.multi_modal
    modelscope.pipelines.nlp
+   modelscope.pipelines.multi_modal
+   modelscope.pipelines.audio
 
 Submodules
 ----------
-
-modelscope.pipelines.base module
---------------------------------
-
-.. automodule:: modelscope.pipelines.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 modelscope.pipelines.builder module
 -----------------------------------
@@ -36,10 +28,18 @@ modelscope.pipelines.builder module
    :undoc-members:
    :show-inheritance:
 
-modelscope.pipelines.default module
+modelscope.pipelines.base module
 -----------------------------------
 
-.. automodule:: modelscope.pipelines.default
+.. automodule:: modelscope.pipelines.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+modelscope.outputs module
+-----------------------------------
+
+.. automodule:: modelscope.outputs
    :members:
    :undoc-members:
    :show-inheritance:

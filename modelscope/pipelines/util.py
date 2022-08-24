@@ -1,11 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-from typing import List, Union
+from typing import List, Optional, Union
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
 from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -20,8 +20,9 @@ def is_config_has_model(cfg_file):
         return False
 
 
-def is_official_hub_path(path: Union[str, List]):
-    """ Whether path is a official hub name or a valid local
+def is_official_hub_path(path: Union[str, List],
+                         revision: Optional[str] = DEFAULT_MODEL_REVISION):
+    """ Whether path is an official hub name or a valid local
     path to official hub directory.
     """
 
@@ -31,9 +32,10 @@ def is_official_hub_path(path: Union[str, List]):
             return osp.exists(cfg_file)
         else:
             try:
-                _ = HubApi().get_model(path)
+                _ = HubApi().get_model(path, revision=revision)
                 return True
-            except Exception:
+            except Exception as e:
+                logger.warning(f'get model exception: {e}')
                 return False
 
     if isinstance(path, str):

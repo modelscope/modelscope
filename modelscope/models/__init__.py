@@ -1,9 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import TYPE_CHECKING
 
-from .audio.kws import GenericKeyWordSpotting
-from .audio.tts.am import SambertNetHifi16k
-from .audio.tts.vocoder import Hifigan16k
-from .base import Model
-from .builder import MODELS, build_model
-from .multi_modal import OfaForImageCaptioning
-from .nlp import BertForSequenceClassification, SbertForSentenceSimilarity
+from modelscope.utils.error import (AUDIO_IMPORT_ERROR,
+                                    TENSORFLOW_IMPORT_WARNING)
+from modelscope.utils.import_utils import is_torch_available
+from . import audio, cv, multi_modal, nlp
+from .base import Head, Model
+from .builder import BACKBONES, HEADS, MODELS, build_model
+
+if is_torch_available():
+    from .base import TorchModel, TorchHead

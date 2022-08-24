@@ -5,13 +5,13 @@ import shutil
 import tempfile
 import time
 import unittest
-
-import gast
+from pathlib import Path
 
 from modelscope.utils.ast_utils import AstScaning, FilesAstScaning, load_index
 
-MODELSCOPE_PATH = '/'.join(
-    os.path.dirname(__file__).split('/')[:-2]) + '/modelscope'
+p = Path(__file__)
+
+MODELSCOPE_PATH = p.resolve().parents[2].joinpath('modelscope')
 
 
 class AstScaningTest(unittest.TestCase):

@@ -10,6 +10,7 @@ from collections import OrderedDict
 from functools import wraps
 from importlib import import_module
 from itertools import chain
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -43,7 +44,7 @@ def import_modules_from_file(py_file: str):
     """
     dirname, basefile = os.path.split(py_file)
     if dirname == '':
-        dirname == './'
+        dirname = Path.cwd()
     module_name = osp.splitext(basefile)[0]
     sys.path.insert(0, dirname)
     validate_py_syntax(py_file)

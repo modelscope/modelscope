@@ -13,7 +13,7 @@ from .utils.random_help import set_torch_seed
 
 class OfaBasePreprocessor:
 
-    def __init__(self, cfg, model_dir):
+    def __init__(self, cfg, model_dir, split, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
 
         Args:
@@ -76,6 +76,7 @@ class OfaBasePreprocessor:
             text,
             max_length=self.max_src_length,
             add_special_tokens=False,
+            truncation=True,
             return_tensors='pt')['input_ids'].squeeze(0)
         if add_bos:
             inputs = torch.cat([self.bos_item, inputs])

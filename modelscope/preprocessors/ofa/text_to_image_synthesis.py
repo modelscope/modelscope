@@ -8,14 +8,16 @@ from .base import OfaBasePreprocessor
 
 class OfaTextToImageSynthesisPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+        """preprocess the data
 
         Args:
-            model_dir (str): model path
+            cfg(modelscope.utils.config.ConfigDict) : model config
+            model_dir (str): model path,
+            split: data phase
         """
         super(OfaTextToImageSynthesisPreprocessor,
-              self).__init__(cfg, model_dir)
+              self).__init__(cfg, model_dir, split, *args, **kwargs)
         self.max_src_length = 64
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:

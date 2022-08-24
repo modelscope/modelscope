@@ -11,19 +11,22 @@ from .base import OfaBasePreprocessor
 
 class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+        """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
-            model_dir (str): model path
+            model_dir (str): model path,
+            split: data phase
         """
-        super(OfaVisualEntailmentPreprocessor, self).__init__(cfg, model_dir)
+        super(OfaVisualEntailmentPreprocessor,
+              self).__init__(cfg, model_dir, split, *args, **kwargs)
         # Initialize transform
         self.patch_resize_transform = transforms.Compose([
             lambda image: image.convert('RGB'),
-            transforms.Resize((self.patch_image_size, self.patch_image_size),
-                              interpolation=Image.BICUBIC),
+            transforms.Resize(
+                (self.patch_image_size, self.patch_image_size),
+                interpolation=transforms.InterpolationMode.BICUBIC),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.mean, std=self.std),
         ])

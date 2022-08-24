@@ -127,10 +127,23 @@ class OfaForAllTasks(TorchModel):
         return input
 
     def _text_gen_inference(self, input):
+        import pdb
+        pdb.set_trace()
         input = move_to_device(input, self._device)
-        gen_output = self.generator.generate([self.model], input)
-        gen = [gen_output[i][0]['tokens'] for i in range(len(gen_output))]
-        result = self.tokenizer.batch_decode(gen, skip_special_tokens=True)
+        if 'prefix_tokens' in input:
+            gen_output = self.generator.generate(
+                [self.model], input, prefix_tokens=input['prefix_tokens'])
+        else:
+            gen_output = self.generator.generate([self.model], input)
+        gen_l = list()
+        for i in range(len(gen_output)):
+            if 'prefix_tokens' in input:
+                prefix_tokens = input['prefix_tokens']
+                gen_l.append(
+                    gen_output[i][0]['tokens'][len(prefix_tokens[i]):])
+            else:
+                gen_l.append(gen_output[i][0]['tokens'])
+        result = self.tokenizer.batch_decode(gen_l, skip_special_tokens=True)
         # text generation tasks have no score
         ret = {OFA_TASK_KEY_MAPPING[self.cfg.task]: result}
         if self.cfg.task.endswith('classification'):

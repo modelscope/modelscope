@@ -385,12 +385,7 @@ class SequenceGenerator(nn.Module):
                     attn = torch.empty(bsz * beam_size,
                                        avg_attn_scores.size(1),
                                        max_len + 2).to(scores)
-                    # print("+++++++ debug attention shape +++++++")
-                    # print("attn", attn.shape)
-                    # print("avg_attn_scores", avg_attn_scores.shape)
                 attn[:, :, step + 1].copy_(avg_attn_scores)
-                # print("attn[:, :, step + 1]", attn[:, :, step + 1].shape)
-                # print("attn", attn.shape)
 
             scores = scores.type_as(lprobs)
             eos_bbsz_idx = torch.empty(0).to(
@@ -403,7 +398,8 @@ class SequenceGenerator(nn.Module):
             if self.should_set_src_lengths:
                 self.search.set_src_lengths(src_lengths)
 
-            if self.repeat_ngram_blocker is not None:
+            if self.repeat_ngram_blocker is not None and step > prefix_tokens.size(
+                    1):
                 lprobs = self.repeat_ngram_blocker(tokens, lprobs, bsz,
                                                    beam_size, step)
 
@@ -415,7 +411,6 @@ class SequenceGenerator(nn.Module):
                 tokens[:, :step + 1],
                 original_batch_idxs,
             )
-
             # cand_bbsz_idx contains beam indices for the top candidate
             # hypotheses, with a range of values: [0, bsz*beam_size),
             # and dimensions: [bsz, cand_size]
@@ -671,7 +666,7 @@ class SequenceGenerator(nn.Module):
                 cum_unfin.append(prev)
         cum_fin_tensor = torch.tensor(cum_unfin, dtype=torch.int).to(bbsz_idx)
 
-        unfin_idx = bbsz_idx // beam_size
+        unfin_idx = torch.div(bbsz_idx, beam_size, rounding_mode='floor')
         sent = unfin_idx + torch.index_select(cum_fin_tensor, 0, unfin_idx)
 
         # Create a set of "{sent}{unfin_idx}", where

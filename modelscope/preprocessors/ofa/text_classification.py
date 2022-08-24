@@ -6,14 +6,16 @@ from .base import OfaBasePreprocessor
 
 class OfaTextClassificationPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir):
-        """preprocess the data via the vocab.txt from the `model_dir` path
+    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+        """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
-            model_dir (str): model path
+            model_dir (str): model path,
+            split: data phase
         """
-        super(OfaTextClassificationPreprocessor, self).__init__(cfg, model_dir)
+        super(OfaTextClassificationPreprocessor,
+              self).__init__(cfg, model_dir, split, *args, **kwargs)
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         text1 = ' '.join(
@@ -34,5 +36,6 @@ class OfaTextClassificationPreprocessor(OfaBasePreprocessor):
         sample = {
             'source': inputs,
             'decoder_prompt': decoder_prompt,
+            'prefix_token': decoder_prompt[:-1],
         }
         return sample

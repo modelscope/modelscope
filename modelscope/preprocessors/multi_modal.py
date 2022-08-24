@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
+from io import BytesIO
 from typing import Any, Dict, List, Union
 
 import torch
@@ -8,6 +9,7 @@ from PIL import Image
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Fields, ModelFile, Tasks
 from .base import Preprocessor
@@ -71,20 +73,32 @@ class OfaPreprocessor(Preprocessor):
             data[key] = item
         return data
 
+    def _compatible_with_pretrain(self, data):
+        if 'image' in data and self.cfg.model.get('type', None) == 'ofa':
+            image = load_image(data['image'])
+            img_buffer = BytesIO()
+            image.save(img_buffer, format='JPEG')
+            data['image'] = Image.open(img_buffer)
+        return data
+
     def __call__(self, input: Union[str, tuple, Dict[str, Any]], *args,
                  **kwargs) -> Dict[str, Any]:
         if isinstance(input, dict):
             data = input
         else:
             data = self._build_dict(input)
+        data = self._compatible_with_pretrain(data)
         sample = self.preprocess(data)
         str_data = dict()
         for k, v in data.items():
             str_data[k] = str(v)
         sample['sample'] = str_data
-        return collate_fn([sample],
-                          pad_idx=self.tokenizer.pad_token_id,
-                          eos_idx=self.tokenizer.eos_token_id)
+        if kwargs.get('no_collate', None):
+            return sample
+        else:
+            return collate_fn([sample],
+                              pad_idx=self.tokenizer.pad_token_id,
+                              eos_idx=self.tokenizer.eos_token_id)
 
 
 @PREPROCESSORS.register_module(

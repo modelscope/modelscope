@@ -1,0 +1,69 @@
+{
+    "framework": "pytorch",
+    "task": "text-generation",
+    "preprocessor": {
+        "type": "text-gen-tokenizer"
+    },
+    "model": {
+        "type": "plug",
+        "world_size": 8,
+        "model_parallel_size": 8,
+        "pre_load": true,
+        "distributed_backend": "nccl",
+        "checkpoint_activations": true,
+        "top_k": 20,
+        "top_p": 0.0,
+        "temperature": 0.9,
+        "seed": 42,
+        "output_sequence_length": 128
+    },
+    "pipeline": {
+        "type": "text-generation"
+    },
+    "train": {
+        "work_dir": "/tmp",
+        "max_epochs": 3,
+        "dataloader": {
+            "batch_size_per_gpu": 2,
+            "workers_per_gpu": 1
+        },
+        "optimizer": {
+            "type": "SGD",
+            "lr": 0.01,
+            "options": {
+                "grad_clip": {
+                    "max_norm": 2.0
+                }
+            }
+        },
+        "lr_scheduler": {
+            "type": "StepLR",
+            "step_size": 2,
+            "options": {
+                "warmup": {
+                    "type": "LinearWarmup",
+                    "warmup_iters": 2
+                }
+            }
+        },
+        "hooks": [{
+            "type": "CheckpointHook",
+            "interval": 1
+        }, {
+            "type": "TextLoggerHook",
+            "interval": 1
+        }, {
+            "type": "IterTimerHook"
+        }, {
+            "type": "EvaluationHook",
+            "interval": 1
+        }]
+    },
+    "evaluation": {
+        "dataloader": {
+            "batch_size_per_gpu": 2,
+            "workers_per_gpu": 1,
+            "shuffle": false
+        }
+    }
+}

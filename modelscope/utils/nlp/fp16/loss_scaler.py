@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import torch
-from sofa.utils import mpu
+from modelscope.utils.nlp import mpu
 
 # item() is a recent addition, so this helps with backward compatibility.
 def to_python_float(t):

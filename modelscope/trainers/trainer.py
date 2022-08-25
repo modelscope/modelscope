@@ -10,6 +10,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import json
 import numpy as np
 import torch
+from modelscope.utils.torch_utils import set_random_seed
 from addict import Dict
 from torch import distributed as dist
 from torch import nn
@@ -816,6 +817,4 @@ def worker_init_fn(worker_id, num_workers, rank, seed):
     # The seed of each worker equals to
     # num_worker * rank + worker_id + user_seed
     worker_seed = num_workers * rank + worker_id + seed
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
-    torch.manual_seed(worker_seed)
+    set_random_seed(worker_seed)

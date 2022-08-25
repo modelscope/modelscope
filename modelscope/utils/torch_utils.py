@@ -3,6 +3,8 @@
 import functools
 import os
 import pickle
+import random
+import numpy as np
 import socket
 import subprocess
 import tempfile
@@ -11,8 +13,7 @@ from typing import Callable, List, Optional, Tuple
 import torch
 import torch.multiprocessing as mp
 from torch import distributed as dist
-from torch._utils import (_flatten_dense_tensors, _take_tensors,
-                          _unflatten_dense_tensors)
+from modelscope.utils.nlp import mpu
 
 
 def _find_free_port() -> str:
@@ -106,6 +107,25 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
     dist.init_process_group(backend=backend)
 
 
+def initialize_distributed(rank):
+    """Initialize torch.distributed."""
+    # Manually set the device ids.
+    #torch.multiprocessing.set_start_method("spawn")
+    device = rank % torch.cuda.device_count()
+    torch.cuda.set_device(device)
+    # Call the init process
+    init_method = 'tcp://'
+    master_ip = os.getenv('MASTER_ADDR', '127.0.0.1')
+    master_port = os.getenv('MASTER_PORT', '12345')
+    init_method += master_ip + ':' + master_port
+    torch.distributed.init_process_group(
+        backend="nccl",
+        world_size=8, rank=rank,
+        init_method=init_method)
+    # Set the model-parallel communicators.
+    mpu.initialize_model_parallel(8)
+
+
 def get_dist_info() -> Tuple[int, int]:
     if dist.is_available() and dist.is_initialized():
         rank = dist.get_rank()
@@ -191,3 +211,17 @@ def broadcast(inputs, src):
     dist.broadcast(inputs_tensor, src)
 
     return pickle.loads(inputs_tensor.cpu().numpy().tobytes())
+
+
+def set_random_seed(seed):
+    if seed is not None and seed > 0:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+    else:
+        raise ValueError(f'Random seed should be positive, current seed is {seed}')
+
+
+def set_random_seed_mpu(seed):
+    set_random_seed(seed)
+    mpu.model_parallel_cuda_manual_seed(seed)

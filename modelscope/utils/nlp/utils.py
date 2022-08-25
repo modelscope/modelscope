@@ -1,21 +1,16 @@
-
-import os
-import random
 import time
-import numpy as np
+from modelscope.utils.logger import get_logger
 import torch
 
-"""Utilities for logging and serialization"""
+logger = get_logger(__name__)
 
-def get_log_constant(user_log):
-        return '[user log]' if user_log else ''
 
 def print_rank_0(message):
     if torch.distributed.is_initialized():
         if torch.distributed.get_rank() == 0:
-            print(message, flush=True)
+            logger.info(message)
     else:
-        print(message, flush=True)
+        logger.info(message)
 
 
 def print_args(args):

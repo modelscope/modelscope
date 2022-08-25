@@ -8,3 +8,4 @@ seqeval
 spacy>=2.3.5
 tokenizers
 transformers>=4.12.0
+deepspeed

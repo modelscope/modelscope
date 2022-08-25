@@ -18,8 +18,6 @@ import json
 import copy
 
 """ BERT model configuration """
-from collections import OrderedDict
-from typing import Mapping
 
 from transformers import PretrainedConfig
 from modelscope.utils import logger as logging
@@ -94,11 +92,12 @@ class PlugNLUConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-    model_type="plugNLU"
+    model_type = "plugNLU"
 
     def __init__(
         self,
         vocab_size=21504,
+        original_vocab_size=21128,
         hidden_size=768,
         num_hidden_layers=12,
         num_attention_heads=12,
@@ -141,6 +140,7 @@ class PlugNLUConfig(PretrainedConfig):
         super().__init__(layer_norm_eps=layernorm_epsilon, **kwargs)
 
         self.vocab_size = vocab_size
+        self.original_vocab_size = original_vocab_size
         self.hidden_size = hidden_size
         self.num_hidden_layers = num_hidden_layers
         self.num_attention_heads = num_attention_heads

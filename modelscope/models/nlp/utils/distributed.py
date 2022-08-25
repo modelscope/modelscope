@@ -15,7 +15,7 @@ class DistributedTorchModel(Model):
         super().__init__(model_dir, *args, **kwargs)
         self.model_pool = None
         self.world_size = None
-    
+
     def __getstate__(self):
         self_dict = self.__dict__.copy()
         del self_dict['model_pool']
@@ -29,31 +29,32 @@ class DistributedTorchModel(Model):
         model.world_size = cfg.model.world_size
         ranks = list(range(model.world_size))
         model.model_pool = Pool(model.world_size)
-        model.model_pool.map(partial(model._instantiate_one, model_dir=model_dir), ranks)
+        master_ip = '127.0.0.1'
+        master_port = '29500'
+        if not _is_free_port(int(master_port)):
+            master_port = str(_find_free_port())
+        model.model_pool.map(partial(model._instantiate_one, model_dir=model_dir,
+                                     master_ip=master_ip, master_port=master_port, **kwargs), ranks)
         return model
 
-    def _instantiate_one(self, rank, model_dir):
+    def _instantiate_one(self, rank, model_dir, **kwargs):
         pass
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        res = self.model_pool.map(self._forward_one, [input]*self.world_size)
+        res = self.model_pool.map(self._forward_one, [input] * self.world_size)
         return res[0]
 
     def _forward_one(self, input):
         pass
 
 
-def initialize_distributed(rank, mpu, world_size, model_parallel_size):
+def initialize_distributed(rank, mpu, world_size, model_parallel_size, master_ip, master_port):
     """Initialize torch.distributed."""
     # Manually set the device ids.
     device = rank % torch.cuda.device_count()
     torch.cuda.set_device(device)
     # Call the init process
     init_method = 'tcp://'
-    master_ip = os.getenv('MASTER_ADDR', '127.0.0.1')
-    master_port = os.getenv('MASTER_PORT', '29500')
-    # if not _is_free_port(int(master_port)):
-    #    master_port = str(_find_free_port())
     init_method += master_ip + ':' + master_port
     init_dist('pytorch', world_size=world_size, rank=rank, init_method=init_method)
     # Set the model-parallel communicators.

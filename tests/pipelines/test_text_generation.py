@@ -41,7 +41,7 @@ class TextGenerationTest(unittest.TestCase):
     def test_plug(self):
         cache_path = "/home/yuze.zyz/MaaS-lib/plug_model"
         tokenizer = BertTokenizer.from_pretrained(cache_path)
-        model = PlugForTextGeneration._instantiate(cache_path, cls_token_id=tokenizer.cls_token_id)
+        model = Model.from_pretrained(cache_path, cls_token_id=tokenizer.cls_token_id)
         preprocessor = TextGenerationPreprocessor(
             cache_path,
             tokenizer,

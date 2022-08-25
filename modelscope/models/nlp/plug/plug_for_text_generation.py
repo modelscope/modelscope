@@ -31,9 +31,9 @@ class PlugForTextGeneration(DistributedTorchModel):
         res = self.forward(input)
         return res
 
-    def _instantiate_one(self, rank, model_dir):
+    def _instantiate_one(self, rank, model_dir, **kwargs):
         cfg = read_config(model_dir)
-        self.__class__.model = DistributedPlug(model_dir, rank, **cfg.model)
+        self.__class__.model = DistributedPlug(model_dir, rank, **cfg.model, **kwargs)
 
         
 

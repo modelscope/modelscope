@@ -26,7 +26,8 @@ class DistributedPlug(TorchModel):
         self.rank = rank
         self.model_cfg = kwargs
         self.config = PlugNLGConfig.from_pretrained(model_dir)
-        initialize_distributed(rank, mpu, kwargs['world_size'], kwargs['model_parallel_size'])
+        initialize_distributed(rank, mpu, kwargs['world_size'],
+                               kwargs['model_parallel_size'], kwargs['master_ip'], kwargs['master_port'])
         if 'seed' in kwargs:
             set_random_seed_mpu(kwargs['seed'])
         self.iteration = 0
@@ -118,8 +119,8 @@ class DistributedPlug(TorchModel):
                 position_ids = torch.full([batch_size, 1], len(generate_tokens),
                                           dtype=torch.long, device=device)
                 _, logits, sequence_output = self.dist_model(tokens, None, attention_mask, dec_input_ids,
-                                                            attention_mask, position_ids, is_infer=True,
-                                                            sequence_output=sequence_output, parallel_output=False)
+                                                             attention_mask, position_ids, is_infer=True,
+                                                             sequence_output=sequence_output, parallel_output=False)
                 logits = logits[:, -1, :]
                 logits = logits / self.model_cfg['temperature']
                 logits = self.top_k_logits(logits, top_k=self.model_cfg['top_k'], top_p=self.model_cfg['top_p'])
@@ -143,4 +144,3 @@ class DistributedPlug(TorchModel):
                 else:
                     generate_context.append(token)
             return {"generate_context": generate_context}
-

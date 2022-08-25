@@ -32,6 +32,7 @@ do
              -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
              -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
              -e TEST_LEVEL=$TEST_LEVEL \
+             -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
              --workdir=$CODE_DIR_IN_CONTAINER \
              --net host  \
              ${IMAGE_NAME}:${IMAGE_VERSION} \

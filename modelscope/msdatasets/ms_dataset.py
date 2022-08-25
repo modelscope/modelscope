@@ -12,9 +12,11 @@ from datasets.utils.download_manager import DownloadConfig
 from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
-from modelscope.msdatasets.config import MS_DATASETS_CACHE
+from modelscope.hub.repository import DatasetRepository
 from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+from modelscope.utils.config_ds import MS_DATASETS_CACHE
+from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
+                                       DEFAULT_DATASET_REVISION,
                                        DatasetFormations, DownloadMode, Hubs)
 from modelscope.utils.logger import get_logger
 from .task_datasets.builder import build_task_dataset
@@ -23,6 +25,7 @@ from .utils.dataset_utils import (get_dataset_files,
                                   get_target_dataset_structure,
                                   load_dataset_builder)
 from .utils.download_utils import DatasetDownloadManager
+from .utils.upload_utils import DatasetUploadManager
 
 logger = get_logger()
 
@@ -97,7 +100,7 @@ class MsDataset:
     @staticmethod
     def load(
         dataset_name: Union[str, list],
-        namespace: Optional[str] = 'modelscope',
+        namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
         target: Optional[str] = None,
         version: Optional[str] = DEFAULT_DATASET_REVISION,
         hub: Optional[Hubs] = Hubs.modelscope,
@@ -171,15 +174,17 @@ class MsDataset:
                              Mapping[str, Union[str, Sequence[str]]]]] = None,
                          download_mode: Optional[DownloadMode] = None,
                          **config_kwargs) -> Union[dict, 'MsDataset']:
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        download_dataset = ''
         if isinstance(dataset_name, str):
+            download_dataset = dataset_name
             dataset_formation = DatasetFormations.native
             if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
                     (os.path.isfile(dataset_name) and dataset_name.endswith('.py')):
                 dataset_formation = DatasetFormations.hf_compatible
             elif is_relative_path(dataset_name) and dataset_name.count(
                     '/') == 0:
-                from modelscope.hub.api import HubApi
-                api = HubApi()
                 dataset_scripts, dataset_formation, download_dir = api.fetch_dataset_scripts(
                     dataset_name, namespace, download_mode, version)
                 # dataset organized to be compatible with hf format
@@ -219,6 +224,11 @@ class MsDataset:
         else:
             raise TypeError('path must be a str or a list, but got'
                             f' {type(dataset_name)}')
+
+        if download_dataset:
+            api.on_dataset_download(
+                dataset_name=download_dataset, namespace=namespace)
+
         return MsDataset.from_hf_dataset(dataset, target=target)
 
     @staticmethod
@@ -539,3 +549,100 @@ class MsDataset:
     def to_hf_dataset(self) -> Dataset:
         self._hf_ds.reset_format()
         return self._hf_ds
+
+    @staticmethod
+    def upload(object_name: str,
+               local_file_path: str,
+               dataset_name: str,
+               namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
+               version: Optional[str] = DEFAULT_DATASET_REVISION) -> None:
+        """Upload dataset file to the ModelScope Hub. Please login to the ModelScope Hub first.
+
+        Args:
+            object_name (str): The object name on ModelScope, in the form of your-dataset-name.zip
+            local_file_path (str): Local file to upload
+            dataset_name (str): Name of the dataset
+            namespace(str, optional): Namespace of the dataset
+            version: Optional[str]: Version of the dataset
+
+        Returns:
+            None
+
+        """
+        from modelscope.hub.api import HubApi
+        _hub_api = HubApi()
+        cookies = _hub_api.check_cookies_upload_data(use_cookies=True)
+        _upload_manager = DatasetUploadManager(
+            dataset_name=dataset_name,
+            namespace=namespace,
+            version=version,
+            cookies=cookies)
+        _upload_manager.upload(object_name, local_file_path)
+
+    @staticmethod
+    def clone_meta(dataset_work_dir: str,
+                   dataset_id: str,
+                   revision: Optional[str] = DEFAULT_DATASET_REVISION,
+                   auth_token: Optional[str] = None,
+                   git_path: Optional[str] = None) -> None:
+        """Clone meta-file of dataset from the ModelScope Hub.
+        Args:
+            dataset_work_dir (str): Current git working directory.
+            dataset_id (str): Dataset id, It should be like your-namespace/your-dataset-name .
+            revision(`Optional[str]`):
+                revision of the model you want to clone from. Can be any of a branch, tag or commit hash
+            auth_token(`Optional[str]`):
+                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
+                as the token is already saved when you login the first time, if None, we will use saved token.
+            git_path:(`Optional[str]`):
+                The git command line path, if None, we use 'git'
+        Returns:
+            None
+        """
+
+        _repo = DatasetRepository(
+            repo_work_dir=dataset_work_dir,
+            dataset_id=dataset_id,
+            revision=revision,
+            auth_token=auth_token,
+            git_path=git_path)
+        clone_work_dir = _repo.clone()
+        if clone_work_dir:
+            logger.info('Already cloned repo to: {}'.format(clone_work_dir))
+        else:
+            logger.warning('The repo working dir is already ex.')
+
+    @staticmethod
+    def upload_meta(dataset_work_dir: str,
+                    dataset_id: str,
+                    commit_message: str,
+                    revision: Optional[str] = DEFAULT_DATASET_REVISION,
+                    auth_token: Optional[str] = None,
+                    git_path: Optional[str] = None,
+                    force: bool = False) -> None:
+        """Upload meta-file of dataset to the ModelScope Hub. Please clone the meta-data from the ModelScope Hub first.
+
+        Args:
+            dataset_work_dir (str): Current working directory.
+            dataset_id (str): Dataset id, It should be like your-namespace/your-dataset-name .
+            commit_message (str): Commit message.
+            revision(`Optional[str]`):
+                revision of the model you want to clone from. Can be any of a branch, tag or commit hash
+            auth_token(`Optional[str]`):
+                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
+                as the token is already saved when you login the first time, if None, we will use saved token.
+            git_path:(`Optional[str]`):
+                The git command line path, if None, we use 'git'
+            force (Optional[bool]): whether to use forced-push.
+
+        Returns:
+            None
+
+        """
+        _repo = DatasetRepository(
+            repo_work_dir=dataset_work_dir,
+            dataset_id=dataset_id,
+            revision=revision,
+            auth_token=auth_token,
+            git_path=git_path)
+        _repo.push(commit_message=commit_message, branch=revision, force=force)

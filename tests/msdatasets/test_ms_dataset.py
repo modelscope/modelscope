@@ -4,7 +4,7 @@ from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.utils.constant import DownloadMode
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
 
 
@@ -35,7 +35,7 @@ class MsDatasetTest(unittest.TestCase):
     def test_coco(self):
         ms_ds_train = MsDataset.load(
             'pets_small',
-            namespace='modelscope',
+            namespace=DEFAULT_DATASET_NAMESPACE,
             split='train',
             download_mode=DownloadMode.FORCE_REDOWNLOAD,
             classes=('1', '2'))

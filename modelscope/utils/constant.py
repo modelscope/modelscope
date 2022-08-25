@@ -254,6 +254,7 @@ class Frameworks(object):
 
 DEFAULT_MODEL_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
+DEFAULT_DATASET_NAMESPACE = 'modelscope'
 
 
 class ModeKeys:

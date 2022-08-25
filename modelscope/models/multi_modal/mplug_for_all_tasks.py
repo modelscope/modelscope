@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
@@ -25,12 +25,6 @@ class MPlugForAllTasks(TorchModel):
         self.model = MPlug.from_pretrained(model_dir)
         self.tokenizer = self.model.tokenizer
 
-    def train(self):
-        return self.model.train()
-
-    def eval(self):
-        return self.model.eval()
-
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
 
@@ -45,13 +39,43 @@ class MPlugForAllTasks(TorchModel):
                     }
         """
 
-        topk_ids, _ = self.model(**input)
         replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
                                ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
                                ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
 
-        pred_string = self.tokenizer.decode(topk_ids[0][0])
-        for _old, _new in replace_tokens_bert:
-            pred_string = pred_string.replace(_old, _new)
-        pred_string = pred_string.strip()
-        return pred_string
+        if not self.training and 'answer_input_ids' not in input:
+            topk_ids, _ = self.model(**input)
+            pred_string: str = self.tokenizer.decode(topk_ids[0][0])
+            for _old, _new in replace_tokens_bert:
+                pred_string = pred_string.replace(_old, _new)
+            pred_string = pred_string.strip()
+            return pred_string
+        else:
+            import addict
+            question = addict.Dict(
+                input_ids=input['question_input_ids'],
+                attention_mask=input['question_attention_mask'])
+            answer = addict.Dict(
+                input_ids=input['answer_input_ids'],
+                attention_mask=input['answer_attention_mask'])
+            output = self.model(
+                input['image'], question, answer, train=self.training)
+            if self.training:
+                return {'loss': output}
+            topk_ids, _ = output
+            preds: List[str] = [
+                self.tokenizer.decode(batch[0]) for batch in topk_ids
+            ]
+            for i in range(len(preds)):
+                for _old, _new in replace_tokens_bert:
+                    preds[i] = preds[i].replace(_old, _new)
+                preds[i] = preds[i].strip()
+            tgts: List[str] = [
+                self.tokenizer.decode(batch)
+                for batch in input['answer_input_ids'].cpu().numpy().tolist()
+            ]
+            for i in range(len(tgts)):
+                for _old, _new in replace_tokens_bert:
+                    tgts[i] = tgts[i].replace(_old, _new)
+                preds[i] = preds[i].strip()
+            return {'preds': preds, 'tgts': tgts}

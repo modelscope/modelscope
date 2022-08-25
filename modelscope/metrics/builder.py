@@ -30,6 +30,8 @@ task_default_metrics = {
     Tasks.image_portrait_enhancement:
     [Metrics.image_portrait_enhancement_metric],
     Tasks.video_summarization: [Metrics.video_summarization_metric],
+    Tasks.image_captioning: [Metrics.text_gen_metric],
+    Tasks.visual_question_answering: [Metrics.text_gen_metric],
 }
 
 

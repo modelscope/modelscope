@@ -1969,71 +1969,6 @@ class MPlug(PreTrainedModel):
                 [init_dim * np.arange(n_tile) + i for i in range(init_dim)]))
         return torch.index_select(x, dim, order_index.to(x.device))
 
-    def rank_answer(self, question_states, question_atts, answer_ids,
-                    answer_atts, k):
-
-        num_ques = question_states.size(0)
-        start_ids = answer_ids[0, 0].repeat(num_ques, 1)  # bos token
-
-        start_output = self.text_decoder(
-            start_ids,
-            encoder_hidden_states=question_states,
-            encoder_attention_mask=question_atts,
-            return_dict=True,
-            reduction='none')
-        logits = start_output.logits[:, 0, :]  # first token's logit
-
-        # topk_probs: top-k probability
-        # topk_ids: [num_question, k]
-        answer_first_token = answer_ids[:, 1]
-        prob_first_token = F.softmax(
-            logits, dim=1).index_select(
-                dim=1, index=answer_first_token)
-        topk_probs, topk_ids = prob_first_token.topk(k, dim=1)
-
-        # answer input: [num_question*k, answer_len]
-        input_ids = []
-        input_atts = []
-        for b, topk_id in enumerate(topk_ids):
-            input_ids.append(answer_ids.index_select(dim=0, index=topk_id))
-            input_atts.append(answer_atts.index_select(dim=0, index=topk_id))
-        input_ids = torch.cat(input_ids, dim=0)
-        input_atts = torch.cat(input_atts, dim=0)
-
-        targets_ids = input_ids.masked_fill(
-            input_ids == self.tokenizer.pad_token_id, -100)
-
-        # repeat encoder's output for top-k answers
-        question_states = self._tile(question_states, 0, k)
-        question_atts = self._tile(question_atts, 0, k)
-
-        output = self.text_decoder(
-            input_ids,
-            attention_mask=input_atts,
-            encoder_hidden_states=question_states,
-            encoder_attention_mask=question_atts,
-            labels=targets_ids,
-            return_dict=True,
-            reduction='none')
-
-        answer_loss = output.loss
-        answer_loss = answer_loss.view(input_ids.size(0), -1)
-
-        # topk_prob: first token probability
-        topk_probs = topk_probs.view(-1, 1)
-        log_probs = torch.cat([topk_probs.log(), -answer_loss], dim=1)
-
-        # re-calculate log probabilities for the answer sequences using chain rule
-        log_probs_sum = log_probs.sum(1)
-        log_probs_sum = log_probs_sum.view(num_ques, k)
-
-        topk_probs = F.softmax(log_probs_sum, dim=-1)
-        # get top-k after re-ranking
-        topk_probs, rerank_id = topk_probs.topk(k, dim=1)
-        topk_ids = torch.gather(topk_ids, 1, rerank_id)
-
-        return topk_ids, topk_probs
-
 
 class MPlugForVisualQuestionAnswering(MPlug):
 
@@ -2111,6 +2046,8 @@ class MPlugForVisualQuestionAnswering(MPlug):
             merge_text_attention = torch.cat(
                 [image_atts, question.attention_mask], 1)
 
+            if k is None:
+                k = [1] * question_output.shape[0]
             question_states = []
             question_atts = []
             for b, n in enumerate(k):
@@ -2177,6 +2114,8 @@ class MPlugForVisualQuestionAnswering(MPlug):
                     return_dict=True,
                     reduction='none',
                 )
+            if weights is None:
+                weights = 1
             loss = weights * answer_output.loss
             loss = loss.sum() / image.size(0)
 
@@ -2262,50 +2201,17 @@ class MPLUGForImageCaption(MPlug):
         if train:
             answer_targets = answer.input_ids.masked_fill(
                 answer.input_ids == self.tokenizer.pad_token_id, -100)
-            text_output = self.text_encoder(
-                question.input_ids,
-                attention_mask=question.attention_mask,
-                return_dict=True)
-            text_embeds = text_output.last_hidden_state
-            fusion_output = self.fusion_encoder(
-                encoder_embeds=text_embeds,
-                attention_mask=question.attention_mask,
-                encoder_hidden_states=image_embeds,
-                encoder_attention_mask=image_atts,
-                return_dict=False)
-
-            image_output, question_output = fusion_output
-
-            question_output = torch.cat([image_output, question_output], 1)
-            merge_text_attention = torch.cat(
-                [image_atts, question.attention_mask], 1)
-
             answer_output = self.text_decoder(
                 answer.input_ids,
                 attention_mask=answer.attention_mask,
-                encoder_hidden_states=question_output,
-                encoder_attention_mask=merge_text_attention,
+                encoder_hidden_states=image_embeds,
+                encoder_attention_mask=image_atts,
                 labels=answer_targets,
                 return_dict=True,
                 reduction='none')
             loss = answer_output.loss
+
             return loss
         else:
-            text_output = self.text_encoder(
-                question.input_ids,
-                attention_mask=question.attention_mask,
-                return_dict=True)
-            text_embeds = text_output.last_hidden_state
-            fusion_output = self.fusion_encoder(
-                encoder_embeds=text_embeds,
-                attention_mask=question.attention_mask,
-                encoder_hidden_states=image_embeds,
-                encoder_attention_mask=image_atts,
-                return_dict=False)
-            image_output, question_output = fusion_output
-            question_output = torch.cat([image_output, question_output], 1)
-            merge_text_attention = torch.cat(
-                [image_atts, question.attention_mask], 1)
-            topk_ids, topk_probs = self.generation(question_output,
-                                                   merge_text_attention)
+            topk_ids, topk_probs = self.generation(image_embeds, image_atts)
             return topk_ids, topk_probs

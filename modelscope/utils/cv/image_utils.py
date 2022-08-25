@@ -153,3 +153,16 @@ def panoptic_seg_masks_to_image(masks):
         draw_img[mask] = color_mask
 
     return draw_img
+
+
+def semantic_seg_masks_to_image(masks):
+    from mmdet.core.visualization.palette import get_palette
+    mask_palette = get_palette('coco', 133)
+
+    draw_img = np.zeros([masks[0].shape[0], masks[0].shape[1], 3])
+
+    for i, mask in enumerate(masks):
+        color_mask = mask_palette[i]
+        mask = mask.astype(bool)
+        draw_img[mask] = color_mask
+    return draw_img

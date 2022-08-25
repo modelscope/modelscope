@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_reid_person_pipeline import ImageReidPersonPipeline
+    from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
@@ -66,6 +67,8 @@ else:
         'image_portrait_enhancement_pipeline':
         ['ImagePortraitEnhancementPipeline'],
         'image_reid_person_pipeline': ['ImageReidPersonPipeline'],
+        'image_semantic_segmentation_pipeline':
+        ['ImageSemanticSegmentationPipeline'],
         'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
         'image_to_image_translation_pipeline':

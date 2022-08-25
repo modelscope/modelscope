@@ -23,6 +23,8 @@ class Models(object):
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
     video_summarization = 'pgl-video-summarization'
+    swinL_semantic_segmentation = 'swinL-semantic-segmentation'
+    vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
 
     # nlp models
     bert = 'bert'
@@ -117,6 +119,7 @@ class Pipelines(object):
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'
+    image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
 
     # nlp tasks

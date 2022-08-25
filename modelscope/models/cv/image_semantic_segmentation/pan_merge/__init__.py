@@ -1,0 +1,1 @@
+from .maskformer_semantic_head import MaskFormerSemanticHead

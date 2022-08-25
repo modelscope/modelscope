@@ -106,4 +106,4 @@ class VideoSummarizationPipeline(Pipeline):
             summary = generate_summary([change_points], [scores], [n_frames],
                                        [picks])[0]
 
-        return summary
+        return summary.tolist()

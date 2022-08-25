@@ -9,6 +9,7 @@ from modelscope.pipelines.nlp import TextGenerationPipeline
 from modelscope.preprocessors import TextGenerationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
+from transformers import BertTokenizer
 
 
 class TextGenerationTest(unittest.TestCase):
@@ -38,11 +39,12 @@ class TextGenerationTest(unittest.TestCase):
         self.plug_input = '段誉轻挥折扇，摇了摇头，说'
 
     def test_plug(self):
-        cache_path = "/home/suluyan.sly/model/plug_model"
-        model = PlugForTextGeneration(cache_path)
+        cache_path = "/home/yuze.zyz/MaaS-lib/plug_model"
+        tokenizer = BertTokenizer.from_pretrained(cache_path)
+        model = PlugForTextGeneration._instantiate(cache_path, cls_token_id=tokenizer.cls_token_id)
         preprocessor = TextGenerationPreprocessor(
             cache_path,
-            model.tokenizer,
+            tokenizer,
             first_sequence='sentence',
             second_sequence=None)
         pipeline1 = TextGenerationPipeline(model, preprocessor)

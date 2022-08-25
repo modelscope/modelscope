@@ -48,10 +48,6 @@ def init_dist(launcher: str, backend: str = 'nccl', **kwargs) -> None:
 
 
 def _init_dist_pytorch(backend: str, **kwargs) -> None:
-    # rank = int(os.environ['RANK'])
-    local_rank = int(os.environ['LOCAL_RANK'])
-
-    #torch.cuda.set_device(local_rank)
     dist.init_process_group(backend=backend, **kwargs)
 
 

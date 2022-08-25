@@ -8,12 +8,18 @@ from modelscope.models.nlp.structbert import SbertTokenizer
 from modelscope.models.nlp.utils.distributed import DistributedTorchModel
 from . import DistributedPlug
 from ...base import Tensor
+from modelscope.utils.hub import read_config
 
 __all__ = ['PlugForTextGeneration']
 
 
 @MODELS.register_module(Tasks.text_generation, module_name=Models.plug)
 class PlugForTextGeneration(DistributedTorchModel):
+   
+    def __init__(self, model_dir, cls_token_id, **kwargs):
+        assert cls_token_id is not None
+        super().__init__(model_dir, **kwargs)
+        self.cls_token_id = cls_token_id
 
     def _forward_one(self, input: Dict[str, Any]) -> Dict[str, Tensor]:
         return self.model(**input)
@@ -25,10 +31,9 @@ class PlugForTextGeneration(DistributedTorchModel):
         res = self.model_pool.map(DistributedPlug.forward, [input]*self.world_size)
         return res[0]
 
-    def _instantiate_one(self, model_dir, rank):
-        tokenizer = SbertTokenizer.from_pretrained(model_dir)
-        self.cls_token_id = tokenizer.cls_token_id
-        self.model = DistributedPlug.instantiate(model_dir, rank)
+    def _instantiate_one(self, rank, model_dir):
+        cfg = read_config(model_dir)
+        self.model = DistributedPlug(model_dir, rank, **cfg.model)
 
         
 

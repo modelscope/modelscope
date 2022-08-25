@@ -15,19 +15,24 @@ class DistributedTorchModel(Model):
         super().__init__(model_dir, *args, **kwargs)
         self.model_pool = None
         self.world_size = None
+    
+    def __getstate__(self):
+        self_dict = self.__dict__.copy()
+        del self_dict['model_pool']
+        return self_dict
 
     @classmethod
-    def _instantiate(cls, model_dir):
-        model = DistributedTorchModel(model_dir=model_dir)
+    def _instantiate(cls, model_dir, **kwargs):
+        model = cls(model_dir=model_dir, **kwargs)
         torch.multiprocessing.set_start_method("spawn")
         cfg = read_config(model_dir)
-        model.world_size = cfg.model.word_size
+        model.world_size = cfg.model.world_size
         ranks = list(range(model.world_size))
         model.model_pool = Pool(model.world_size)
         model.model_pool.map(partial(model._instantiate_one, model_dir=model_dir), ranks)
         return model
 
-    def _instantiate_one(self, model_dir, rank):
+    def _instantiate_one(self, rank, model_dir):
         pass
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:

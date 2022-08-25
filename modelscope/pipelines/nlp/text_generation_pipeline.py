@@ -55,7 +55,7 @@ class TextGenerationPipeline(Pipeline):
                 first_sequence=first_sequence,
                 second_sequence=None,
                 sequence_length=kwargs.pop('sequence_length', 128))
-        model.eval()
+        # model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.tokenizer = preprocessor.tokenizer
 

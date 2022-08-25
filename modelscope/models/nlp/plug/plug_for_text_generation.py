@@ -22,18 +22,18 @@ class PlugForTextGeneration(DistributedTorchModel):
         self.cls_token_id = cls_token_id
 
     def _forward_one(self, input: Dict[str, Any]) -> Dict[str, Tensor]:
-        return self.model(**input)
+        return self.__class__.model(input)
 
     def generate(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         batch_size = input['input_ids'].shape[0]
         dec_input_ids = torch.full([batch_size, 1], self.cls_token_id, dtype=torch.long)
         input["dec_input_ids"] = dec_input_ids
-        res = self.model_pool.map(DistributedPlug.forward, [input]*self.world_size)
-        return res[0]
+        res = self.forward(input)
+        return res
 
     def _instantiate_one(self, rank, model_dir):
         cfg = read_config(model_dir)
-        self.model = DistributedPlug(model_dir, rank, **cfg.model)
+        self.__class__.model = DistributedPlug(model_dir, rank, **cfg.model)
 
         
 

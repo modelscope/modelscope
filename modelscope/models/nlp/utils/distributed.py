@@ -52,8 +52,8 @@ def initialize_distributed(rank, mpu, world_size, model_parallel_size):
     init_method = 'tcp://'
     master_ip = os.getenv('MASTER_ADDR', '127.0.0.1')
     master_port = os.getenv('MASTER_PORT', '29500')
-    if not _is_free_port(int(master_port)):
-        master_port = str(_find_free_port())
+    # if not _is_free_port(int(master_port)):
+    #    master_port = str(_find_free_port())
     init_method += master_ip + ':' + master_port
     init_dist('pytorch', world_size=world_size, rank=rank, init_method=init_method)
     # Set the model-parallel communicators.

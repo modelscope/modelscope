@@ -42,7 +42,7 @@ class DistributedPlug(TorchModel):
                 mpu.get_model_parallel_rank(),
                 sum([p.nelement() for p in model.parameters()])))
 
-        if self.config.deepspeed and self.args.fp16:
+        if self.config.deepspeed and self.config.fp16:
             model.half()
 
         # GPU allocation.

@@ -533,7 +533,7 @@ class NERPreprocessor(Preprocessor):
         self.model_dir: str = model_dir
         self.sequence_length = kwargs.pop('sequence_length', 512)
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_dir, use_fast=False)
+            model_dir, use_fast=True)
         self.is_split_into_words = self.tokenizer.init_kwargs.get(
             'is_split_into_words', False)
 

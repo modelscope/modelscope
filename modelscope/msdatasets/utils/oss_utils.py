@@ -24,7 +24,8 @@ class OssUtilities:
             rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
             print('\r{0}% '.format(rate), end='', flush=True)
 
-    def download(self, oss_file_name, cache_dir):
+    def download(self, oss_file_name, download_config):
+        cache_dir = download_config.cache_dir
         candidate_key = os.path.join(self.oss_dir, oss_file_name)
         candidate_key_backup = os.path.join(self.oss_backup_dir, oss_file_name)
         file_oss_key = candidate_key if self.bucket.object_exists(
@@ -32,8 +33,9 @@ class OssUtilities:
         filename = hash_url_to_filename(file_oss_key, etag=None)
         local_path = os.path.join(cache_dir, filename)
 
-        self.bucket.get_object_to_file(
-            file_oss_key, local_path, progress_callback=self._percentage)
+        if download_config.force_download or not os.path.exists(local_path):
+            self.bucket.get_object_to_file(
+                file_oss_key, local_path, progress_callback=self._percentage)
         return local_path
 
     def upload(self, oss_file_name: str, local_file_path: str) -> str:

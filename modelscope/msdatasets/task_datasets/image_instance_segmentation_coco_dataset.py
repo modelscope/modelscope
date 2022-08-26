@@ -59,10 +59,13 @@ class ImageInstanceSegmentationCocoDataset(TorchTaskDataset):
                  preprocessor=None,
                  classes=None,
                  seg_prefix=None,
+                 folder_name=None,
                  test_mode=False,
                  filter_empty_gt=True,
                  **kwargs):
-        self.data_root = next(iter(split_config.values()))
+        data_root = next(iter(split_config.values()))
+        self.data_root = osp.join(data_root,
+                                  folder_name) if folder_name else data_root
         self.split = next(iter(split_config.keys()))
         self.preprocessor = preprocessor
 

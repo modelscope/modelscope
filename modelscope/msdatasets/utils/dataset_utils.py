@@ -11,6 +11,14 @@ from .dataset_builder import MsCsvDatasetBuilder, TaskSpecificDatasetBuilder
 logger = get_logger()
 
 
+def format_dataset_structure(dataset_structure):
+    return {
+        k: v
+        for k, v in dataset_structure.items()
+        if (v.get('meta') or v.get('file'))
+    }
+
+
 def get_target_dataset_structure(dataset_structure: dict,
                                  subset_name: Optional[str] = None,
                                  split: Optional[str] = None):
@@ -56,7 +64,8 @@ def get_target_dataset_structure(dataset_structure: dict,
             f'No subset_name specified, defaulting to the {target_subset_name}'
         )
     # verify dataset split
-    target_dataset_structure = dataset_structure[target_subset_name]
+    target_dataset_structure = format_dataset_structure(
+        dataset_structure[target_subset_name])
     if split and split not in target_dataset_structure:
         raise ValueError(
             f'split {split} not found. Available: {target_dataset_structure.keys()}'

@@ -37,9 +37,10 @@ class MsDatasetTest(unittest.TestCase):
             'pets_small',
             namespace=DEFAULT_DATASET_NAMESPACE,
             split='train',
-            download_mode=DownloadMode.FORCE_REDOWNLOAD,
-            classes=('1', '2'))
-        print(ms_ds_train._hf_ds.config_kwargs)
+            classes=('1', '2'),
+            folder_name='Pets')
+        print(ms_ds_train.config_kwargs)
+        assert next(iter(ms_ds_train.config_kwargs['split_config'].values()))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ms_csv_basic(self):

@@ -44,18 +44,21 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
                 name='pets_small',
                 split='train',
                 classes=('Cat', 'Dog'),
+                folder_name='Pets',
                 test_mode=False)
         if val_data_cfg is None:
             val_data_cfg = ConfigDict(
                 name='pets_small',
                 split='validation',
                 classes=('Cat', 'Dog'),
+                folder_name='Pets',
                 test_mode=True)
 
         self.train_dataset = MsDataset.load(
             dataset_name=train_data_cfg.name,
             split=train_data_cfg.split,
             classes=train_data_cfg.classes,
+            folder_name=train_data_cfg.folder_name,
             test_mode=train_data_cfg.test_mode)
         assert self.train_dataset.config_kwargs[
             'classes'] == train_data_cfg.classes
@@ -66,6 +69,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
             dataset_name=val_data_cfg.name,
             split=val_data_cfg.split,
             classes=val_data_cfg.classes,
+            folder_name=val_data_cfg.folder_name,
             test_mode=val_data_cfg.test_mode)
         assert self.eval_dataset.config_kwargs[
             'classes'] == val_data_cfg.classes

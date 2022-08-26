@@ -7,6 +7,7 @@ class OutputKeys(object):
     LOSS = 'loss'
     LOGITS = 'logits'
     SCORES = 'scores'
+    SCORE = 'score'
     LABEL = 'label'
     LABELS = 'labels'
     INPUT_IDS = 'input_ids'
@@ -504,6 +505,16 @@ TASK_OUTPUTS = {
     # }
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
 
+    # {
+    #   'output': [
+    #     [{'label': '6527856', 'score': 0.9942756295204163}, {'label': '1000012000', 'score': 0.0379515215754509},
+    #      {'label': '13421097', 'score': 2.2825044965202324e-08}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}]]
+    # }
+    Tasks.faq_question_answering: [OutputKeys.OUTPUT],
     # image person reid result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],

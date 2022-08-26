@@ -138,6 +138,7 @@ class Pipelines(object):
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'
+    faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
 
     # audio tasks
@@ -220,6 +221,7 @@ class Preprocessors(object):
     text_error_correction = 'text-error-correction'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
+    faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
 
     # audio preprocessor

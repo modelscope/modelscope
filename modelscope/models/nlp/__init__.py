@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .task_models.task_model import SingleBackboneTaskModelBase
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
+    from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
 
 else:
     _import_structure = {
@@ -44,6 +45,7 @@ else:
         'task_model': ['SingleBackboneTaskModelBase'],
         'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
         'gpt3': ['GPT3ForTextGeneration'],
+        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering']
     }
 
     import sys

@@ -21,7 +21,8 @@ if TYPE_CHECKING:
                       SingleSentenceClassificationPreprocessor,
                       PairSentenceClassificationPreprocessor,
                       FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
-                      NERPreprocessor, TextErrorCorrectionPreprocessor)
+                      NERPreprocessor, TextErrorCorrectionPreprocessor,
+                      FaqQuestionAnsweringPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -48,7 +49,8 @@ else:
             'SingleSentenceClassificationPreprocessor',
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
-            'TextErrorCorrectionPreprocessor'
+            'TextErrorCorrectionPreprocessor',
+            'FaqQuestionAnsweringPreprocessor'
         ],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',

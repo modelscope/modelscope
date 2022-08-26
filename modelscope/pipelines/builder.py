@@ -129,6 +129,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
+    Tasks.faq_question_answering:
+    (Pipelines.faq_question_answering,
+     'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
     Tasks.video_single_object_tracking:
@@ -218,7 +221,6 @@ def pipeline(task: str = None,
         f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
     model = normalize_model_input(model, model_revision)
-
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \

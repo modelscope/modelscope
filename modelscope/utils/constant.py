@@ -95,6 +95,7 @@ class NLPTasks(object):
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
     text_error_correction = 'text-error-correction'
+    faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
 
 

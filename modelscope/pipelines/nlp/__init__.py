@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .summarization_pipeline import SummarizationPipeline
     from .text_classification_pipeline import TextClassificationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
+    from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
 
 else:
     _import_structure = {
@@ -44,7 +45,8 @@ else:
         'translation_pipeline': ['TranslationPipeline'],
         'summarization_pipeline': ['SummarizationPipeline'],
         'text_classification_pipeline': ['TextClassificationPipeline'],
-        'text_error_correction_pipeline': ['TextErrorCorrectionPipeline']
+        'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
+        'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline']
     }
 
     import sys

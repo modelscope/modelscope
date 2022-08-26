@@ -368,15 +368,20 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
     def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         if self._mode == ModeKeys.INFERENCE:
             return super().__call__(data)
-        src_txt = data['src_txt']
-        tgt_txt = data['tgt_txt']
-        src_rst = super().__call__(src_txt)
-        tgt_rst = super().__call__(tgt_txt)
+        src_rst = super().__call__(data['src_txt'])
+        src_input_ids = src_rst['input_ids']
+        src_attention_mask = src_rst['attention_mask']
+        if 'tgt_txt' in data:
+            labels = super().__call__(data['tgt_txt'])['input_ids']
+        else:
+            labels = src_input_ids[1:]
+            src_input_ids = src_input_ids[:-1]
+            src_attention_mask = src_attention_mask[:-1]
 
         return {
-            'src': src_rst['input_ids'],
-            'tgt': tgt_rst['input_ids'],
-            'mask_src': src_rst['attention_mask']
+            'input_ids': src_input_ids,
+            'attention_mask': src_attention_mask,
+            'labels': labels,
         }
 
 

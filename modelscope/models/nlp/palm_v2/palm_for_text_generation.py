@@ -63,14 +63,15 @@ class PalmForTextGeneration(TorchModel):
                     }
         """
         if self.training:
-            return {'loss': self.model(**input)}
+            return self.model(**input)
         else:
-            outputs = self.generator(input['src'], input['mask_src'])
+            outputs = self.generator(input['input_ids'],
+                                     input['attention_mask'])
             preds = outputs['predictions']
             pred_ids_list = [
                 pred_batch[0].cpu().numpy().tolist() for pred_batch in preds
             ]
-            tgt_ids_list = input['tgt'].cpu().numpy().tolist()
+            tgt_ids_list = input['labels'].cpu().numpy().tolist()
             return {
                 'preds': self._evaluate_postprocess(pred_ids_list),
                 'tgts': self._evaluate_postprocess(tgt_ids_list)

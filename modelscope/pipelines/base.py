@@ -240,9 +240,9 @@ class Pipeline(ABC):
                 raise ValueError(f'Unsupported data type {type(data)}')
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
-        preprocess_params = kwargs.get('preprocess_params')
-        forward_params = kwargs.get('forward_params')
-        postprocess_params = kwargs.get('postprocess_params')
+        preprocess_params = kwargs.get('preprocess_params', {})
+        forward_params = kwargs.get('forward_params', {})
+        postprocess_params = kwargs.get('postprocess_params', {})
 
         out = self.preprocess(input, **preprocess_params)
         with device_placement(self.framework, self.device_name):

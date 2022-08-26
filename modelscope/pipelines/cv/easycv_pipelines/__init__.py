@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mmdet_model import DetectionModel
-    from .yolox_pai import YOLOX
-
+    from .detection_pipeline import EasyCVDetectionPipeline
+    from .segmentation_pipeline import EasyCVSegmentationPipeline
 else:
     _import_structure = {
-        'mmdet_model': ['DetectionModel'],
-        'yolox_pai': ['YOLOX']
+        'detection_pipeline': ['EasyCVDetectionPipeline'],
+        'segmentation_pipeline': ['EasyCVSegmentationPipeline']
     }
 
     import sys

@@ -4,6 +4,8 @@ import copy
 import tempfile
 import unittest
 
+import json
+
 from modelscope.utils.config import Config, check_config
 
 obj = {'a': 1, 'b': {'c': [1, 2, 3], 'd': 'dd'}}
@@ -43,7 +45,8 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(pretty_text, cfg.dump())
             cfg.dump(ofile.name)
             with open(ofile.name, 'r') as infile:
-                self.assertEqual(json_str, infile.read())
+                self.assertDictEqual(
+                    json.loads(json_str), json.loads(infile.read()))
 
         with tempfile.NamedTemporaryFile(suffix='.yaml') as ofile:
             cfg.dump(ofile.name)

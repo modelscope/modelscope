@@ -15,9 +15,9 @@ import json
 
 from modelscope import __version__
 from modelscope.fileio.file import LocalStorage
-from modelscope.metainfo import (Heads, Hooks, LR_Schedulers, Metrics, Models,
-                                 Optimizers, Pipelines, Preprocessors,
-                                 TaskModels, Trainers)
+from modelscope.metainfo import (Datasets, Heads, Hooks, LR_Schedulers,
+                                 Metrics, Models, Optimizers, Pipelines,
+                                 Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.file_utils import get_default_cache_dir
 from modelscope.utils.logger import get_logger
@@ -32,8 +32,7 @@ MODELSCOPE_PATH = p.resolve().parents[1]
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
-    'models', 'metrics', 'pipelines', 'preprocessors',
-    'msdatasets/task_datasets', 'trainers'
+    'models', 'metrics', 'pipelines', 'preprocessors', 'trainers', 'msdatasets'
 ]
 INDEXER_FILE = 'ast_indexer'
 DECORATOR_KEY = 'decorators'

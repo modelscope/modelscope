@@ -26,6 +26,10 @@ class Models(object):
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
 
+    # EasyCV models
+    yolox = 'YOLOX'
+    segformer = 'Segformer'
+
     # nlp models
     bert = 'bert'
     palm = 'palm-v2'
@@ -92,6 +96,8 @@ class Pipelines(object):
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    easycv_detection = 'easycv-detection'
+    easycv_segmentation = 'easycv-segmentation'
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
@@ -171,6 +177,7 @@ class Trainers(object):
     """
 
     default = 'trainer'
+    easycv = 'easycv'
 
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
@@ -307,3 +314,12 @@ class LR_Schedulers(object):
     LinearWarmup = 'LinearWarmup'
     ConstantWarmup = 'ConstantWarmup'
     ExponentialWarmup = 'ExponentialWarmup'
+
+
+class Datasets(object):
+    """ Names for different datasets.
+    """
+    ClsDataset = 'ClsDataset'
+    SegDataset = 'SegDataset'
+    DetDataset = 'DetDataset'
+    DetImagesMixDataset = 'DetImagesMixDataset'

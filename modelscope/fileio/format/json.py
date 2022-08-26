@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import json
+import jsonplus
 import numpy as np
 
 from .base import FormatHandler
@@ -22,14 +22,14 @@ def set_default(obj):
 
 
 class JsonHandler(FormatHandler):
+    """Use jsonplus, serialization of Python types to JSON that "just works"."""
 
     def load(self, file):
-        return json.load(file)
+        return jsonplus.loads(file.read())
 
     def dump(self, obj, file, **kwargs):
-        kwargs.setdefault('default', set_default)
-        json.dump(obj, file, **kwargs)
+        file.write(self.dumps(obj, **kwargs))
 
     def dumps(self, obj, **kwargs):
         kwargs.setdefault('default', set_default)
-        return json.dumps(obj, **kwargs)
+        return jsonplus.dumps(obj, **kwargs)

@@ -81,12 +81,19 @@ class CheckpointHook(Hook):
         if self.is_last_epoch(trainer) and self.by_epoch:
             output_dir = os.path.join(self.save_dir,
                                       ModelFile.TRAIN_OUTPUT_DIR)
+            from modelscope.trainers.parallel.utils import is_parallel
 
-            trainer.model.save_pretrained(
-                output_dir,
-                ModelFile.TORCH_MODEL_BIN_FILE,
-                save_function=save_checkpoint,
-                config=trainer.cfg.to_dict())
+            if is_parallel(trainer.model):
+                model = trainer.model.module
+            else:
+                model = trainer.model
+
+            if hasattr(model, 'save_pretrained'):
+                model.save_pretrained(
+                    output_dir,
+                    ModelFile.TORCH_MODEL_BIN_FILE,
+                    save_function=save_checkpoint,
+                    config=trainer.cfg.to_dict())
 
     def after_train_iter(self, trainer):
         if self.by_epoch:

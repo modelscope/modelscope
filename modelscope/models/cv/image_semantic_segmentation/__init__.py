@@ -5,10 +5,12 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .semantic_seg_model import SemanticSegmentation
+    from .segformer import Segformer
 
 else:
     _import_structure = {
         'semantic_seg_model': ['SemanticSegmentation'],
+        'segformer': ['Segformer']
     }
 
     import sys

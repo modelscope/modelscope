@@ -4,14 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mmdet_model import DetectionModel
-    from .yolox_pai import YOLOX
+    from .hooks import AddLrLogHook
+    from .metric import EasyCVMetric
 
 else:
-    _import_structure = {
-        'mmdet_model': ['DetectionModel'],
-        'yolox_pai': ['YOLOX']
-    }
+    _import_structure = {'hooks': ['AddLrLogHook'], 'metric': ['EasyCVMetric']}
 
     import sys
 

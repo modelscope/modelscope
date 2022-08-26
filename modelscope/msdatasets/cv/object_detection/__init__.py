@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mmdet_model import DetectionModel
-    from .yolox_pai import YOLOX
+    from .easycv_detection import DetDataset, DetImagesMixDataset
 
 else:
     _import_structure = {
-        'mmdet_model': ['DetectionModel'],
-        'yolox_pai': ['YOLOX']
+        'easycv_detection': ['DetDataset', 'DetImagesMixDataset']
     }
 
     import sys

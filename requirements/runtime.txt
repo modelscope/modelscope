@@ -4,6 +4,7 @@ easydict
 einops
 filelock>=3.3.0
 gast>=0.2.2
+jsonplus
 numpy
 opencv-python
 oss2

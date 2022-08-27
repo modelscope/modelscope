@@ -70,6 +70,13 @@ def draw_box(image, box):
                   (int(box[1][0]), int(box[1][1])), (0, 0, 255), 2)
 
 
+def realtime_object_detection_bbox_vis(image, bboxes):
+    for bbox in bboxes:
+        cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                      (255, 0, 0), 2)
+    return image
+
+
 def draw_keypoints(output, original_image):
     poses = np.array(output[OutputKeys.POSES])
     scores = np.array(output[OutputKeys.SCORES])

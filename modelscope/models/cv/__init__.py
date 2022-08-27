@@ -7,5 +7,5 @@ from . import (action_recognition, animal_recognition, body_2d_keypoints,
                image_reid_person, image_semantic_segmentation,
                image_to_image_generation, image_to_image_translation,
                object_detection, product_retrieval_embedding,
-               salient_detection, super_resolution,
+               realtime_object_detection, salient_detection, super_resolution,
                video_single_object_tracking, video_summarization, virual_tryon)

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
+    from .realtime_object_detection_pipeline import RealtimeObjectDetectionPipeline
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
@@ -75,6 +76,8 @@ else:
         ['Image2ImageTranslationPipeline'],
         'product_retrieval_embedding_pipeline':
         ['ProductRetrievalEmbeddingPipeline'],
+        'realtime_object_detection_pipeline':
+        ['RealtimeObjectDetectionPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generation_pipeline':
         ['Image2ImageGenerationPipeline'],

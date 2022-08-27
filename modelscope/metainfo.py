@@ -11,6 +11,7 @@ class Models(object):
     """
     # vision models
     detection = 'detection'
+    realtime_object_detection = 'realtime-object-detection'
     scrfd = 'scrfd'
     classification_model = 'ClassificationModel'
     nafnet = 'nafnet'
@@ -111,6 +112,7 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
+    realtime_object_detection = 'cspnet_realtime-object-detection_yolox'
     face_recognition = 'ir101-face-recognition-cfglint'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'

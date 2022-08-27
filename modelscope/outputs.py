@@ -189,6 +189,16 @@ TASK_OUTPUTS = {
     Tasks.body_2d_keypoints:
     [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
 
+    # 3D human body keypoints detection result for single sample
+    # {
+    #   "poses": [
+    #               [[x, y, z]*17],
+    #               [[x, y, z]*17],
+    #               [[x, y, z]*17]
+    #             ]
+    # }
+    Tasks.body_3d_keypoints: [OutputKeys.POSES],
+
     # video single object tracking result for single video
     # {
     #   "boxes": [

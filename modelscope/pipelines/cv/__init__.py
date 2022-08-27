@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
+    from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
     from .crowd_counting_pipeline import CrowdCountingPipeline
     from .image_detection_pipeline import ImageDetectionPipeline
@@ -46,6 +47,7 @@ else:
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
+        'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
         'crowd_counting_pipeline': ['CrowdCountingPipeline'],
         'image_detection_pipeline': ['ImageDetectionPipeline'],

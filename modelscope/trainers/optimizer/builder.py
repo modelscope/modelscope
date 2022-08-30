@@ -20,7 +20,10 @@ def build_optimizer(model: torch.nn.Module,
     """
     if hasattr(model, 'module'):
         model = model.module
-    cfg.params = model.parameters()
+
+    if default_args is None:
+        default_args = {}
+    default_args['params'] = model.parameters()
 
     return build_from_cfg(
         cfg, OPTIMIZERS, group_key=default_group, default_args=default_args)

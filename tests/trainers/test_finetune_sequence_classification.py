@@ -6,9 +6,15 @@ import unittest
 
 from modelscope.metainfo import Preprocessors, Trainers
 from modelscope.models import Model
+from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
+from modelscope.trainers.hooks import Hook
+from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
+from modelscope.trainers.optimizer.child_tuning_adamw_optimizer import \
+    calculate_fisher
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.data_utils import to_device
 
 
 class TestFinetuneSequenceClassification(unittest.TestCase):
@@ -69,6 +75,10 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
 
     @unittest.skip
     def test_finetune_afqmc(self):
+        """This unittest is used to reproduce the clue:afqmc dataset + structbert model training results.
+
+        User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
+        """
 
         def cfg_modify_fn(cfg):
             cfg.task = Tasks.sentence_similarity
@@ -114,7 +124,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         dc.local_files_only = True
         dataset = load_dataset('clue', 'afqmc', download_config=dc)
         self.finetune(
-            model_id='damo/nlp_structbert_backbone_tiny_std',
+            model_id='damo/nlp_structbert_backbone_base_std',
             train_dataset=dataset['train'],
             eval_dataset=dataset['validation'],
             cfg_modify_fn=cfg_modify_fn)
@@ -124,6 +134,10 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
 
     @unittest.skip
     def test_finetune_tnews(self):
+        """This unittest is used to reproduce the clue:tnews dataset + structbert model training results.
+
+        User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
+        """
 
         def cfg_modify_fn(cfg):
             # TODO no proper task for tnews
@@ -175,13 +189,21 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         dataset = load_dataset('clue', 'tnews', download_config=dc)
 
         self.finetune(
-            model_id='damo/nlp_structbert_backbone_tiny_std',
+            model_id='damo/nlp_structbert_backbone_base_std',
             train_dataset=dataset['train'],
             eval_dataset=dataset['validation'],
             cfg_modify_fn=cfg_modify_fn)
 
     @unittest.skip
     def test_veco_xnli(self):
+        """This unittest is used to reproduce the xnli dataset + veco model training results.
+
+        Here we follow the training scenario listed in the Alicemind open source project:
+        https://github.com/alibaba/AliceMind/tree/main/VECO
+        by training the english language subset.
+        User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
+        """
+
         from datasets import load_dataset
         langs = ['en']
         langs_eval = ['en']
@@ -266,6 +288,112 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             eval_datasets,
             name=Trainers.nlp_veco_trainer,
             cfg_modify_fn=cfg_modify_fn)
+
+    @unittest.skip
+    def test_finetune_cluewsc(self):
+        """This unittest is used to reproduce the clue:wsc dataset + structbert model training results.
+
+        A runnable sample of child-tuning is also showed here.
+
+        User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
+        """
+
+        child_tuning_type = 'ChildTuning-F'
+        mode = {}
+        if child_tuning_type is not None:
+            mode = {'mode': child_tuning_type, 'reserve_p': 0.2}
+
+        def cfg_modify_fn(cfg):
+            cfg.task = 'nli'
+            cfg['preprocessor'] = {'type': 'nli-tokenizer'}
+            cfg['dataset'] = {
+                'train': {
+                    'labels': ['0', '1'],
+                    'first_sequence': 'text',
+                    'second_sequence': 'text2',
+                    'label': 'label',
+                }
+            }
+            cfg.train.dataloader.batch_size_per_gpu = 16
+            cfg.train.max_epochs = 30
+            cfg.train.optimizer = {
+                'type':
+                'AdamW' if child_tuning_type is None else 'ChildTuningAdamW',
+                'lr': 1e-5,
+                'options': {},
+                **mode,
+            }
+            cfg.train.lr_scheduler = {
+                'type':
+                'LinearLR',
+                'start_factor':
+                1.0,
+                'end_factor':
+                0.0,
+                'total_iters':
+                int(
+                    len(dataset['train'])
+                    / cfg.train.dataloader.batch_size_per_gpu)
+                * cfg.train.max_epochs,
+                'options': {
+                    'by_epoch': False
+                }
+            }
+            cfg.train.hooks = [{
+                'type': 'CheckpointHook',
+                'interval': 1
+            }, {
+                'type': 'TextLoggerHook',
+                'interval': 1
+            }, {
+                'type': 'IterTimerHook'
+            }, {
+                'type': 'EvaluationHook',
+                'by_epoch': False,
+                'interval': 30
+            }]
+            return cfg
+
+        def add_sentence2(features):
+            return {
+                'text2':
+                features['target']['span2_text'] + '指代'
+                + features['target']['span1_text']
+            }
+
+        dataset = MsDataset.load('clue', subset_name='cluewsc2020')
+        dataset = {
+            k: v.to_hf_dataset().map(add_sentence2)
+            for k, v in dataset.items()
+        }
+
+        kwargs = dict(
+            model='damo/nlp_structbert_backbone_base_std',
+            train_dataset=dataset['train'],
+            eval_dataset=dataset['validation'],
+            work_dir=self.tmp_dir,
+            cfg_modify_fn=cfg_modify_fn)
+
+        os.environ['LOCAL_RANK'] = '0'
+        trainer: NlpEpochBasedTrainer = build_trainer(
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
+
+        class CalculateFisherHook(Hook):
+
+            @staticmethod
+            def forward_step(model, inputs):
+                inputs = to_device(inputs, trainer.device)
+                trainer.train_step(model, inputs)
+                return trainer.train_outputs['loss']
+
+            def before_run(self, trainer: NlpEpochBasedTrainer):
+                v = calculate_fisher(trainer.model, trainer.train_dataloader,
+                                     self.forward_step, 0.2)
+                trainer.optimizer.set_gradient_mask(v)
+
+        if child_tuning_type == 'ChildTuning-D':
+            trainer.register_hook(CalculateFisherHook())
+        trainer.train()
 
 
 if __name__ == '__main__':

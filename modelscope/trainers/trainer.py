@@ -800,6 +800,7 @@ class EpochBasedTrainer(BaseTrainer):
                 self.invoke_hook(TrainerStages.after_train_iter)
                 del self.data_batch
                 self._iter += 1
+                self._mode = ModeKeys.TRAIN
 
                 if i + 1 >= self.iters_per_epoch:
                     break

@@ -60,6 +60,8 @@ class ImageInstanceSegmentationCocoDataset(TorchTaskDataset):
                  classes=None,
                  seg_prefix=None,
                  folder_name=None,
+                 ann_file=None,
+                 img_prefix=None,
                  test_mode=False,
                  filter_empty_gt=True,
                  **kwargs):
@@ -69,11 +71,9 @@ class ImageInstanceSegmentationCocoDataset(TorchTaskDataset):
         self.split = next(iter(split_config.keys()))
         self.preprocessor = preprocessor
 
-        self.ann_file = osp.join(self.data_root,
-                                 DATASET_STRUCTURE[self.split]['annotation'])
+        self.ann_file = osp.join(self.data_root, ann_file)
 
-        self.img_prefix = osp.join(self.data_root,
-                                   DATASET_STRUCTURE[self.split]['images'])
+        self.img_prefix = osp.join(self.data_root, img_prefix)
         self.seg_prefix = seg_prefix
         self.test_mode = test_mode
         self.filter_empty_gt = filter_empty_gt

@@ -20,7 +20,6 @@ class TestFinetuneMPlug(unittest.TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
-
         from modelscope.utils.constant import DownloadMode
         datadict = MsDataset.load(
             'coco_captions_small_slice',

@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from typing import Mapping, Optional, Sequence, Union
+from typing import Any, Mapping, Optional, Sequence, Union
 
 from datasets.builder import DatasetBuilder
 
@@ -92,6 +92,7 @@ def get_dataset_files(subset_split_into: dict,
     """
     meta_map = defaultdict(dict)
     file_map = defaultdict(dict)
+    args_map = defaultdict(dict)
     from modelscope.hub.api import HubApi
     modelscope_api = HubApi()
     for split, info in subset_split_into.items():
@@ -99,7 +100,8 @@ def get_dataset_files(subset_split_into: dict,
             info.get('meta', ''), dataset_name, namespace, revision)
         if info.get('file'):
             file_map[split] = info['file']
-    return meta_map, file_map
+        args_map[split] = info.get('args')
+    return meta_map, file_map, args_map
 
 
 def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
@@ -107,12 +109,16 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
                                                              Sequence[str]]],
                          zip_data_files: Mapping[str, Union[str,
                                                             Sequence[str]]],
-                         cache_dir: str, version: Optional[Union[str]],
-                         split: Sequence[str],
+                         args_map: Mapping[str, Any], cache_dir: str,
+                         version: Optional[Union[str]], split: Sequence[str],
                          **config_kwargs) -> DatasetBuilder:
     sub_dir = os.path.join(version, '_'.join(split))
     meta_data_file = next(iter(meta_data_files.values()))
     if not meta_data_file:
+        args_map = next(iter(args_map.values()))
+        if args_map is None:
+            args_map = {}
+        args_map.update(config_kwargs)
         builder_instance = TaskSpecificDatasetBuilder(
             dataset_name=dataset_name,
             namespace=namespace,
@@ -121,7 +127,7 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
             meta_data_files=meta_data_files,
             zip_data_files=zip_data_files,
             hash=sub_dir,
-            **config_kwargs)
+            **args_map)
     elif meta_data_file.endswith('.csv'):
         builder_instance = MsCsvDatasetBuilder(
             dataset_name=dataset_name,

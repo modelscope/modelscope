@@ -248,15 +248,15 @@ class MsDataset:
                 break
         target_subset_name, target_dataset_structure = get_target_dataset_structure(
             dataset_json, subset_name, split)
-        meta_map, file_map = get_dataset_files(target_dataset_structure,
-                                               dataset_name, namespace,
-                                               version)
+        meta_map, file_map, args_map = get_dataset_files(
+            target_dataset_structure, dataset_name, namespace, version)
         builder = load_dataset_builder(
             dataset_name,
             subset_name,
             namespace,
             meta_data_files=meta_map,
             zip_data_files=file_map,
+            args_map=args_map,
             cache_dir=MS_DATASETS_CACHE,
             version=version,
             split=list(target_dataset_structure.keys()),

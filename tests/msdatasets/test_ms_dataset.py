@@ -36,9 +36,8 @@ class MsDatasetTest(unittest.TestCase):
         ms_ds_train = MsDataset.load(
             'pets_small',
             namespace=DEFAULT_DATASET_NAMESPACE,
-            split='train',
-            classes=('1', '2'),
-            folder_name='Pets')
+            download_mode=DownloadMode.FORCE_REDOWNLOAD,
+            split='train')
         print(ms_ds_train.config_kwargs)
         assert next(iter(ms_ds_train.config_kwargs['split_config'].values()))
 

@@ -8,12 +8,6 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-if is_tf_available():
-    import tensorflow as tf
-
-if is_torch_available():
-    import torch
-
 
 def verify_device(device_name):
     """ Verify device is valid, device should be either cpu, cuda, gpu, cuda:X or gpu:X.
@@ -63,6 +57,7 @@ def device_placement(framework, device_name='gpu:0'):
     device_type, device_id = verify_device(device_name)
 
     if framework == Frameworks.tf:
+        import tensorflow as tf
         if device_type == Devices.gpu and not tf.test.is_gpu_available():
             logger.warning(
                 'tensorflow cuda is not available, using cpu instead.')
@@ -76,6 +71,7 @@ def device_placement(framework, device_name='gpu:0'):
                     yield
 
     elif framework == Frameworks.torch:
+        import torch
         if device_type == Devices.gpu:
             if torch.cuda.is_available():
                 torch.cuda.set_device(f'cuda:{device_id}')
@@ -86,12 +82,13 @@ def device_placement(framework, device_name='gpu:0'):
         yield
 
 
-def create_device(device_name) -> torch.DeviceObjType:
+def create_device(device_name):
     """ create torch device
 
     Args:
         device_name (str):  cpu, gpu, gpu:0, cuda:0 etc.
     """
+    import torch
     device_type, device_id = verify_device(device_name)
     use_cuda = False
     if device_type == Devices.gpu:

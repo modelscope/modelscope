@@ -312,7 +312,8 @@ class EpochBasedTrainer(BaseTrainer):
                     else ConfigDict(type=None, mode=mode)
                 return datasets.to_torch_dataset(
                     task_data_config=cfg,
-                    task_name=self.cfg.task,
+                    task_name=self.cfg.task
+                    if hasattr(self.cfg, ConfigFields.task) else None,
                     preprocessors=preprocessor)
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):

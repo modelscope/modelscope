@@ -19,4 +19,11 @@ fi
 # test with install
 python setup.py install
 
-python tests/run.py
+if [ $# -eq 0 ]; then
+    ci_command="python tests/run.py --subprocess"
+else
+    ci_command="$@"
+fi
+echo "Running case with command: $ci_command"
+$ci_command
+#python tests/run.py --isolated_cases test_text_to_speech.py test_multi_modal_embedding.py test_ofa_tasks.py test_video_summarization.py

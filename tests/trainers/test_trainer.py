@@ -16,6 +16,7 @@ from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
 from modelscope.models.base import Model
 from modelscope.trainers import build_trainer
+from modelscope.trainers.base import DummyTrainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
@@ -264,7 +265,7 @@ class TrainerTest(unittest.TestCase):
             {
                 LogKeys.MODE: ModeKeys.EVAL,
                 LogKeys.EPOCH: 1,
-                LogKeys.ITER: 20
+                LogKeys.ITER: 10
             }, json.loads(lines[2]))
         self.assertDictContainsSubset(
             {
@@ -284,7 +285,7 @@ class TrainerTest(unittest.TestCase):
             {
                 LogKeys.MODE: ModeKeys.EVAL,
                 LogKeys.EPOCH: 2,
-                LogKeys.ITER: 20
+                LogKeys.ITER: 10
             }, json.loads(lines[5]))
         self.assertDictContainsSubset(
             {
@@ -304,7 +305,7 @@ class TrainerTest(unittest.TestCase):
             {
                 LogKeys.MODE: ModeKeys.EVAL,
                 LogKeys.EPOCH: 3,
-                LogKeys.ITER: 20
+                LogKeys.ITER: 10
             }, json.loads(lines[8]))
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)

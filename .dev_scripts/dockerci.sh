@@ -7,7 +7,8 @@ gpus='7 6 5 4 3 2 1 0'
 cpu_sets='0-7 8-15 16-23 24-30 31-37 38-44 45-51 52-58'
 cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
-CI_COMMAND=${CI_COMMAND:-'bash .dev_scripts/ci_container_test.sh'}
+CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh $RUN_CASE_COMMAND}
+echo "ci command: $CI_COMMAND"
 for gpu in $gpus
 do
   exec {lock_fd}>"/tmp/gpu$gpu" || exit 1

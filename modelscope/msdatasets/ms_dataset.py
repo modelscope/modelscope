@@ -1,9 +1,11 @@
+import math
 import os
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import json
 import numpy as np
+import torch
 from datasets import Dataset, DatasetDict
 from datasets import load_dataset as hf_load_dataset
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
@@ -38,6 +40,46 @@ def format_list(para) -> List:
     elif len(set(para)) < len(para):
         raise ValueError(f'List columns contains duplicates: {para}')
     return para
+
+
+class MsIterableDataset(torch.utils.data.IterableDataset):
+
+    def __init__(self, dataset: Iterable, preprocessor_list, retained_columns,
+                 columns):
+        super(MsIterableDataset).__init__()
+        self.dataset = dataset
+        self.preprocessor_list = preprocessor_list
+        self.retained_columns = retained_columns
+        self.columns = columns
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:  # single-process data loading
+            iter_start = 0
+            iter_end = len(self.dataset)
+        else:  # in a worker process
+            per_worker = math.ceil(
+                len(self.dataset) / float(worker_info.num_workers))
+            worker_id = worker_info.id
+            iter_start = worker_id * per_worker
+            iter_end = min(iter_start + per_worker, len(self.dataset))
+
+        for idx in range(iter_start, iter_end):
+            item_dict = self.dataset[idx]
+            res = {
+                k: np.array(item_dict[k])
+                for k in self.columns if k in self.retained_columns
+            }
+            for preprocessor in self.preprocessor_list:
+                res.update({
+                    k: np.array(v)
+                    for k, v in preprocessor(item_dict).items()
+                    if k in self.retained_columns
+                })
+            yield res
 
 
 class MsDataset:
@@ -318,45 +360,8 @@ class MsDataset:
                 continue
             retained_columns.append(k)
 
-        import math
-        import torch
-
-        class MsIterableDataset(torch.utils.data.IterableDataset):
-
-            def __init__(self, dataset: Iterable):
-                super(MsIterableDataset).__init__()
-                self.dataset = dataset
-
-            def __len__(self):
-                return len(self.dataset)
-
-            def __iter__(self):
-                worker_info = torch.utils.data.get_worker_info()
-                if worker_info is None:  # single-process data loading
-                    iter_start = 0
-                    iter_end = len(self.dataset)
-                else:  # in a worker process
-                    per_worker = math.ceil(
-                        len(self.dataset) / float(worker_info.num_workers))
-                    worker_id = worker_info.id
-                    iter_start = worker_id * per_worker
-                    iter_end = min(iter_start + per_worker, len(self.dataset))
-
-                for idx in range(iter_start, iter_end):
-                    item_dict = self.dataset[idx]
-                    res = {
-                        k: np.array(item_dict[k])
-                        for k in columns if k in retained_columns
-                    }
-                    for preprocessor in preprocessor_list:
-                        res.update({
-                            k: np.array(v)
-                            for k, v in preprocessor(item_dict).items()
-                            if k in retained_columns
-                        })
-                    yield res
-
-        return MsIterableDataset(self._hf_ds)
+        return MsIterableDataset(self._hf_ds, preprocessor_list,
+                                 retained_columns, columns)
 
     def to_torch_dataset(
         self,

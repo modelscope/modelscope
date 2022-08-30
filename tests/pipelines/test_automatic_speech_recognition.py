@@ -53,14 +53,6 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
             'checking_item': OutputKeys.TEXT,
             'example': 'dataset_example'
         },
-        'test_run_with_ark_dataset': {
-            'checking_item': OutputKeys.TEXT,
-            'example': 'dataset_example'
-        },
-        'test_run_with_tfrecord_dataset': {
-            'checking_item': OutputKeys.TEXT,
-            'example': 'dataset_example'
-        },
         'dataset_example': {
             'Wrd': 49532,  # the number of words
             'Snt': 5000,  # the number of sentences
@@ -251,60 +243,6 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         rec_result = self.run_pipeline(
             model_id=self.am_tf_model_id, audio_in=dataset_path)
         self.check_result('test_run_with_wav_dataset_tf', rec_result)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_ark_dataset(self):
-        '''run with datasets, and audio format is kaldi_ark
-           datasets directory:
-             <dataset_path>
-               test   # testsets
-                 data.ark
-                 data.scp
-                 data.text
-               dev    # devsets
-                 data.ark
-                 data.scp
-                 data.text
-               train  # trainsets
-                 data.ark
-                 data.scp
-                 data.text
-        '''
-
-        logger.info('Run ASR test with ark dataset (pytorch)...')
-        logger.info('Downloading ark testsets file ...')
-
-        dataset_path = download_and_untar(
-            os.path.join(self.workspace, AISHELL1_TESTSETS_FILE),
-            AISHELL1_TESTSETS_URL, self.workspace)
-        dataset_path = os.path.join(dataset_path, 'test')
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_pytorch_model_id, audio_in=dataset_path)
-        self.check_result('test_run_with_ark_dataset', rec_result)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_with_tfrecord_dataset(self):
-        '''run with datasets, and audio format is tfrecord
-           datasets directory:
-             <dataset_path>
-               test   # testsets
-                 data.records
-                 data.idx
-                 data.text
-        '''
-
-        logger.info('Run ASR test with tfrecord dataset (tensorflow)...')
-        logger.info('Downloading tfrecord testsets file ...')
-
-        dataset_path = download_and_untar(
-            os.path.join(self.workspace, TFRECORD_TESTSETS_FILE),
-            TFRECORD_TESTSETS_URL, self.workspace)
-        dataset_path = os.path.join(dataset_path, 'test')
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_tf_model_id, audio_in=dataset_path)
-        self.check_result('test_run_with_tfrecord_dataset', rec_result)
 
 
 if __name__ == '__main__':

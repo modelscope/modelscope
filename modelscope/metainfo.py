@@ -170,6 +170,7 @@ class Pipelines(object):
     multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    image_text_retrieval = 'image-text-retrieval'
 
 
 class Trainers(object):

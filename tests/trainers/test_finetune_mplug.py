@@ -4,8 +4,6 @@ import shutil
 import tempfile
 import unittest
 
-from PIL import Image
-
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.models.multi_modal import MPlugForAllTasks
@@ -23,7 +21,10 @@ class TestFinetuneMPlug(unittest.TestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
-        datadict = MsDataset.load('coco_captions_small_slice')
+        from modelscope.utils.constant import DownloadMode
+        datadict = MsDataset.load(
+            'coco_captions_small_slice',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
         self.train_dataset = MsDataset(datadict['train'].to_hf_dataset().map(
             lambda _: {
                 'question': 'what the picture describes?'
@@ -35,17 +36,19 @@ class TestFinetuneMPlug(unittest.TestCase):
             }).rename_column('image:FILE',
                              'image').rename_column('answer:Value', 'answer'))
 
+        self.max_epochs = 3
+
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_caption(self):
-
         kwargs = dict(
             model='damo/mplug_image-captioning_coco_base_en',
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
+            max_epochs=self.max_epochs,
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
@@ -53,15 +56,11 @@ class TestFinetuneMPlug(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(3):
+        for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_caption_with_model_and_args(self):
-        tmp_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-
         cache_path = snapshot_download(
             'damo/mplug_image-captioning_coco_base_en')
         model = MPlugForAllTasks.from_pretrained(cache_path)
@@ -70,7 +69,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             model=model,
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
-            max_epochs=2,
+            max_epochs=self.max_epochs,
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
@@ -78,16 +77,16 @@ class TestFinetuneMPlug(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(2):
+        for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_vqa(self):
-
         kwargs = dict(
             model='damo/mplug_visual-question-answering_coco_large_en',
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
+            max_epochs=self.max_epochs,
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
@@ -95,15 +94,11 @@ class TestFinetuneMPlug(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(3):
+        for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_vqa_with_model_and_args(self):
-        tmp_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-
         cache_path = snapshot_download(
             'damo/mplug_visual-question-answering_coco_large_en')
         model = MPlugForAllTasks.from_pretrained(cache_path)
@@ -112,7 +107,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             model=model,
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
-            max_epochs=2,
+            max_epochs=self.max_epochs,
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
@@ -120,7 +115,45 @@ class TestFinetuneMPlug(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(2):
+        for i in range(self.max_epochs):
+            self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_retrieval(self):
+        kwargs = dict(
+            model='damo/mplug_image-text-retrieval_flickr30k_large_en',
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            max_epochs=self.max_epochs,
+            work_dir=self.tmp_dir)
+
+        trainer: EpochBasedTrainer = build_trainer(
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(self.max_epochs):
+            self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_trainer_with_retrieval_with_model_and_args(self):
+        cache_path = snapshot_download(
+            'damo/mplug_image-text-retrieval_flickr30k_large_en')
+        model = MPlugForAllTasks.from_pretrained(cache_path)
+        kwargs = dict(
+            cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
+            model=model,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            max_epochs=self.max_epochs,
+            work_dir=self.tmp_dir)
+
+        trainer: EpochBasedTrainer = build_trainer(
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
 

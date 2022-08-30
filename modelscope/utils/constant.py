@@ -121,6 +121,7 @@ class MultiModalTasks(object):
     visual_question_answering = 'visual-question-answering'
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    image_text_retrieval = 'image-text-retrieval'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):

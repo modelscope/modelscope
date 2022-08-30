@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import torch
 from PIL import Image
@@ -104,6 +104,7 @@ class MPlugPreprocessor(Preprocessor):
 
         self._tokenizer = None
         self._patch_resize_transform = None
+        self._image_map = {}
 
     @property
     def tokenizer(self):
@@ -133,31 +134,31 @@ class MPlugPreprocessor(Preprocessor):
             ])
         return self._patch_resize_transform
 
-    def __call__(self, *args, **kwargs):
-        call_mapping = {
-            Tasks.visual_question_answering: self.image_text_call,
-            Tasks.image_captioning: self.image_text_call,
-        }
+    def image_open(self, path: str) -> Tuple[Image.Image, int]:
+        if path not in self._image_map:
+            index = len(self._image_map)
+            self._image_map[path] = (Image.open(path), index)
+        return self._image_map[path]
 
-        self.cfg = Config.from_file(
-            osp.join(self.model_dir, ModelFile.CONFIGURATION))
-        return call_mapping[self.cfg.task](*args, **kwargs)
-
-    def image_text_call(
+    def __call__(
             self, data: Union[Image.Image, tuple,
                               Dict[str, Any]]) -> Dict[str, Any]:
+        self.cfg = Config.from_file(
+            osp.join(self.model_dir, ModelFile.CONFIGURATION))
+
         if isinstance(data, (Image.Image, str)):
             image = data
         elif isinstance(data, tuple):
             image = data[0]
         else:
             image = data['image']
+        index = 0
         if isinstance(image, str):
-            image = Image.open(image)
-        question = '' if self.cfg.task != Tasks.visual_question_answering \
-            else data[1 if isinstance(data, tuple) else 'question']
+            image, index = self.image_open(image)
         image = image.convert('RGB')
         image = self.patch_resize_transform(image)
+        question = '' if self.cfg.task == Tasks.image_captioning \
+            else data[1 if isinstance(data, tuple) else 'question']
         question = self.tokenizer(
             question.lower(),
             padding='max_length',
@@ -167,7 +168,7 @@ class MPlugPreprocessor(Preprocessor):
 
         if self.mode == ModeKeys.INFERENCE:
             image = torch.stack([image], dim=0)
-            return {'image': image, 'question': question, 'train': False}
+            return {'image': image, 'question': question}
         else:
             answer = data['answer']
             answer = self.tokenizer(
@@ -176,10 +177,13 @@ class MPlugPreprocessor(Preprocessor):
                 truncation=True,
                 max_length=self.tokenizer_max_length,
                 return_tensors='pt')
-            return {
+            output = {
                 'image': image,
                 'question_input_ids': question.input_ids.squeeze(),
                 'question_attention_mask': question.attention_mask.squeeze(),
                 'answer_input_ids': answer.input_ids.squeeze(),
                 'answer_attention_mask': answer.attention_mask.squeeze(),
             }
+            if self.cfg.task == Tasks.image_text_retrieval:
+                output['index'] = index
+            return output

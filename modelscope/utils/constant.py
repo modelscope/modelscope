@@ -117,6 +117,7 @@ class MultiModalTasks(object):
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
+    multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'

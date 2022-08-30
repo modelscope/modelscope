@@ -79,6 +79,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.generative_multi_modal_embedding,
      'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
      ),
+    Tasks.multi_modal_similarity:
+    (Pipelines.multi_modal_similarity,
+     'damo/multi-modal_team-vit-large-patch14_multi-modal-similarity'),
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),

@@ -59,6 +59,7 @@ class Models(object):
     gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
     diffusion = 'diffusion-text-to-image-synthesis'
+    team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
 
 
@@ -166,6 +167,7 @@ class Pipelines(object):
     visual_question_answering = 'visual-question-answering'
     visual_grounding = 'visual-grounding'
     visual_entailment = 'visual-entailment'
+    multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
 

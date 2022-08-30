@@ -499,6 +499,15 @@ TASK_OUTPUTS = {
     Tasks.generative_multi_modal_embedding:
     [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
 
+    # multi-modal similarity result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D],
+    #   "similarity": float
+    # }
+    Tasks.multi_modal_similarity:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+
     # VQA result for a sample
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],

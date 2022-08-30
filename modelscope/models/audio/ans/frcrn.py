@@ -71,32 +71,41 @@ class FRCRNModel(TorchModel):
             model_dir (str): the model path.
         """
         super().__init__(model_dir, *args, **kwargs)
-        kwargs.pop('device')
         self.model = FRCRN(*args, **kwargs)
         model_bin_file = os.path.join(model_dir,
                                       ModelFile.TORCH_MODEL_BIN_FILE)
         if os.path.exists(model_bin_file):
-            checkpoint = torch.load(model_bin_file)
-            self.model.load_state_dict(checkpoint, strict=False)
+            checkpoint = torch.load(
+                model_bin_file, map_location=torch.device('cpu'))
+            if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+                self.model.load_state_dict(
+                    checkpoint['state_dict'], strict=False)
+            else:
+                self.model.load_state_dict(checkpoint, strict=False)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        output = self.model.forward(input)
-        return {
-            'spec_l1': output[0],
-            'wav_l1': output[1],
-            'mask_l1': output[2],
-            'spec_l2': output[3],
-            'wav_l2': output[4],
-            'mask_l2': output[5]
+        result_list = self.model.forward(input['noisy'])
+        output = {
+            'spec_l1': result_list[0],
+            'wav_l1': result_list[1],
+            'mask_l1': result_list[2],
+            'spec_l2': result_list[3],
+            'wav_l2': result_list[4],
+            'mask_l2': result_list[5]
         }
-
-    def to(self, *args, **kwargs):
-        self.model = self.model.to(*args, **kwargs)
-        return self
-
-    def eval(self):
-        self.model = self.model.train(False)
-        return self
+        if 'clean' in input:
+            mix_result = self.model.loss(
+                input['noisy'], input['clean'], result_list, mode='Mix')
+            output.update(mix_result)
+            sisnr_result = self.model.loss(
+                input['noisy'], input['clean'], result_list, mode='SiSNR')
+            output.update(sisnr_result)
+            # logger hooker will use items under 'log_vars'
+            output['log_vars'] = {k: mix_result[k].item() for k in mix_result}
+            output['log_vars'].update(
+                {k: sisnr_result[k].item()
+                 for k in sisnr_result})
+        return output
 
 
 class FRCRN(nn.Module):
@@ -111,7 +120,8 @@ class FRCRN(nn.Module):
                  win_len=400,
                  win_inc=100,
                  fft_len=512,
-                 win_type='hanning'):
+                 win_type='hanning',
+                 **kwargs):
         r"""
         Args:
             complex: Whether to use complex networks.
@@ -237,7 +247,7 @@ class FRCRN(nn.Module):
                 if count != 3:
                     loss = self.loss_1layer(noisy, est_spec, est_wav, labels,
                                             est_mask, mode)
-            return loss
+            return dict(sisnr=loss)
 
         elif mode == 'Mix':
             count = 0
@@ -252,7 +262,7 @@ class FRCRN(nn.Module):
                     amp_loss, phase_loss, SiSNR_loss = self.loss_1layer(
                         noisy, est_spec, est_wav, labels, est_mask, mode)
                     loss = amp_loss + phase_loss + SiSNR_loss
-            return loss, amp_loss, phase_loss
+            return dict(loss=loss, amp_loss=amp_loss, phase_loss=phase_loss)
 
     def loss_1layer(self, noisy, est, est_wav, labels, cmp_mask, mode='Mix'):
         r""" Compute the loss by mode

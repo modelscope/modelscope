@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .audio_noise_metric import AudioNoiseMetric
     from .base import Metric
     from .builder import METRICS, build_metric, task_default_metrics
     from .image_color_enhance_metric import ImageColorEnhanceMetric
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 
 else:
     _import_structure = {
+        'audio_noise_metric': ['AudioNoiseMetric'],
         'base': ['Metric'],
         'builder': ['METRICS', 'build_metric', 'task_default_metrics'],
         'image_color_enhance_metric': ['ImageColorEnhanceMetric'],

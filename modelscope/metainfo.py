@@ -198,6 +198,9 @@ class Trainers(object):
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
 
+    # audio trainers
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+
 
 class Preprocessors(object):
     """ Names for different preprocessor.
@@ -254,6 +257,7 @@ class Metrics(object):
 
     # accuracy
     accuracy = 'accuracy'
+    audio_noise_metric = 'audio-noise-metric'
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'

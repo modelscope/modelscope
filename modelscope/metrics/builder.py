@@ -16,6 +16,7 @@ class MetricKeys(object):
     RECALL = 'recall'
     PSNR = 'psnr'
     SSIM = 'ssim'
+    AVERAGE_LOSS = 'avg_loss'
     FScore = 'fscore'
 
 

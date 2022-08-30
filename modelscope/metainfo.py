@@ -45,6 +45,7 @@ class Models(object):
     tcrf = 'transformer-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    bert_for_ds = 'bert-for-document-segmentation'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -151,6 +152,7 @@ class Pipelines(object):
     text_error_correction = 'text-error-correction'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    document_segmentation = 'document-segmentation'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -240,6 +242,7 @@ class Preprocessors(object):
     fill_mask = 'fill-mask'
     faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    document_segmentation = 'document-segmentation'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

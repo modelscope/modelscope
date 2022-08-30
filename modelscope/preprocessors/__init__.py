@@ -23,6 +23,7 @@ if TYPE_CHECKING:
                       FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
                       NERPreprocessor, TextErrorCorrectionPreprocessor,
                       FaqQuestionAnsweringPreprocessor)
+    from .slp import DocumentSegmentationPreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -52,6 +53,7 @@ else:
             'TextErrorCorrectionPreprocessor',
             'FaqQuestionAnsweringPreprocessor'
         ],
+        'slp': ['DocumentSegmentationPreprocessor'],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'

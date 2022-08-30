@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .backbones import SbertModel
     from .heads import SequenceClassificationHead
     from .bert_for_sequence_classification import BertForSequenceClassification
+    from .bert_for_document_segmentation import BertForDocumentSegmentation
     from .csanmt_for_translation import CsanmtForTranslation
     from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
                                   BertForMaskedLM)
@@ -30,6 +31,7 @@ else:
         'heads': ['SequenceClassificationHead'],
         'csanmt_for_translation': ['CsanmtForTranslation'],
         'bert_for_sequence_classification': ['BertForSequenceClassification'],
+        'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
         'masked_language':
         ['StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM'],
         'nncrf_for_named_entity_recognition':

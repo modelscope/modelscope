@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .dialog_intent_prediction_pipeline import DialogIntentPredictionPipeline
     from .dialog_modeling_pipeline import DialogModelingPipeline
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
+    from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
@@ -30,6 +31,7 @@ else:
         ['DialogIntentPredictionPipeline'],
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
+        'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'single_sentence_classification_pipeline':
         ['SingleSentenceClassificationPipeline'],

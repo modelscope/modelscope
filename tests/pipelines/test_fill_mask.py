@@ -9,6 +9,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -37,6 +38,7 @@ class FillMaskTest(unittest.TestCase):
         'Everything in [MASK] you call reality is really [MASK] a reflection of your '
         '[MASK]. Your [MASK] universe is just a mirror [MASK] of your story.'
     }
+    regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
@@ -98,9 +100,11 @@ class FillMaskTest(unittest.TestCase):
                 second_sequence=None)
             pipeline_ins = pipeline(
                 task=Tasks.fill_mask, model=model, preprocessor=preprocessor)
-            print(
-                f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
-                f'{pipeline_ins(self.test_inputs[language])}\n')
+            with self.regress_tool.monitor_module_single_forward(
+                    pipeline_ins.model, f'fill_mask_sbert_{language}'):
+                print(
+                    f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+                    f'{pipeline_ins(self.test_inputs[language])}\n')
 
         # veco
         model = Model.from_pretrained(self.model_id_veco)
@@ -111,8 +115,11 @@ class FillMaskTest(unittest.TestCase):
         for language in ['zh', 'en']:
             ori_text = self.ori_texts[language]
             test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
-            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
-                  f'{pipeline_ins(test_input)}\n')
+            with self.regress_tool.monitor_module_single_forward(
+                    pipeline_ins.model, f'fill_mask_veco_{language}'):
+                print(
+                    f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                    f'{pipeline_ins(test_input)}\n')
 
         # zh bert
         model = Model.from_pretrained(self.model_id_bert)
@@ -123,8 +130,10 @@ class FillMaskTest(unittest.TestCase):
         language = 'zh'
         ori_text = self.ori_texts[language]
         test_input = self.test_inputs[language]
-        print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
-              f'{pipeline_ins(test_input)}\n')
+        with self.regress_tool.monitor_module_single_forward(
+                pipeline_ins.model, 'fill_mask_bert_zh'):
+            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                  f'{pipeline_ins(test_input)}\n')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

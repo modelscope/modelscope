@@ -334,6 +334,7 @@ if __name__ == '__main__':
         help='Save result to directory, internal use only')
     args = parser.parse_args()
     set_test_level(args.level)
+    os.environ['REGRESSION_BASELINE'] = '1'
     logger.info(f'TEST LEVEL: {test_level()}')
     if not args.disable_profile:
         from utils import profiler

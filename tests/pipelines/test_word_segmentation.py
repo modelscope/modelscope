@@ -9,6 +9,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationPipeline
 from modelscope.preprocessors import TokenClassificationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -16,6 +17,7 @@ class WordSegmentationTest(unittest.TestCase):
     model_id = 'damo/nlp_structbert_word-segmentation_chinese-base'
     sentence = '今天天气不错，适合出去游玩'
     sentence_eng = 'I am a program.'
+    regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
@@ -27,7 +29,6 @@ class WordSegmentationTest(unittest.TestCase):
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)
         print(f'sentence: {self.sentence}\n'
               f'pipeline1:{pipeline1(input=self.sentence)}')
-        print()
         print(f'pipeline2: {pipeline2(input=self.sentence)}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -42,8 +43,12 @@ class WordSegmentationTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.word_segmentation, model=self.model_id)
-        print(pipeline_ins(input=self.sentence))
-        print(pipeline_ins(input=self.sentence_eng))
+        with self.regress_tool.monitor_module_single_forward(
+                pipeline_ins.model, 'sbert_ws_zh'):
+            print(pipeline_ins(input=self.sentence))
+        with self.regress_tool.monitor_module_single_forward(
+                pipeline_ins.model, 'sbert_ws_en'):
+            print(pipeline_ins(input=self.sentence_eng))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

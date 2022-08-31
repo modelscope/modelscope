@@ -32,6 +32,12 @@ class ImgPreprocessor(Preprocessor):
 class MsDatasetTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_movie_scene_seg_toydata(self):
+        ms_ds_train = MsDataset.load('movie_scene_seg_toydata', split='train')
+        print(ms_ds_train._hf_ds.config_kwargs)
+        assert next(iter(ms_ds_train.config_kwargs['split_config'].values()))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_coco(self):
         ms_ds_train = MsDataset.load(
             'pets_small',

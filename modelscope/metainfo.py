@@ -27,6 +27,7 @@ class Models(object):
     video_summarization = 'pgl-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
+    resnet50_bert = 'resnet50-bert'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -133,6 +134,7 @@ class Pipelines(object):
     video_summarization = 'googlenet_pgl_video_summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
+    movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -195,6 +197,7 @@ class Trainers(object):
     image_instance_segmentation = 'image-instance-segmentation'
     image_portrait_enhancement = 'image-portrait-enhancement'
     video_summarization = 'video-summarization'
+    movie_scene_segmentation = 'movie-scene-segmentation'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -223,6 +226,7 @@ class Preprocessors(object):
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
+    movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -279,6 +283,8 @@ class Metrics(object):
     # metrics for image-portrait-enhancement task
     image_portrait_enhancement_metric = 'image-portrait-enhancement-metric'
     video_summarization_metric = 'video-summarization-metric'
+    # metric for movie-scene-segmentation task
+    movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
 
 
 class Optimizers(object):

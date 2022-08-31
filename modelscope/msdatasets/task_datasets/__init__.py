@@ -9,7 +9,9 @@ if TYPE_CHECKING:
     from .torch_base_dataset import TorchTaskDataset
     from .veco_dataset import VecoDataset
     from .image_instance_segmentation_coco_dataset import ImageInstanceSegmentationCocoDataset
+    from .movie_scene_segmentation import MovieSceneSegmentationDataset
     from .video_summarization_dataset import VideoSummarizationDataset
+
 else:
     _import_structure = {
         'base': ['TaskDataset'],
@@ -19,6 +21,7 @@ else:
         'image_instance_segmentation_coco_dataset':
         ['ImageInstanceSegmentationCocoDataset'],
         'video_summarization_dataset': ['VideoSummarizationDataset'],
+        'movie_scene_segmentation': ['MovieSceneSegmentationDataset'],
     }
     import sys
 

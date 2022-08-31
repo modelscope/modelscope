@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
-    from .video import ReadVideoData
+    from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
     from .star import ConversationalTextToSqlPreprocessor
 
 else:
@@ -37,7 +37,7 @@ else:
         'common': ['Compose', 'ToTensor', 'Filter'],
         'audio': ['LinearAECAndFbank'],
         'asr': ['WavToScp'],
-        'video': ['ReadVideoData'],
+        'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [
             'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
             'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'

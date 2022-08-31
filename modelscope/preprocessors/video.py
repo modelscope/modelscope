@@ -9,6 +9,12 @@ import torchvision.transforms._transforms_video as transforms
 from decord import VideoReader
 from torchvision.transforms import Compose
 
+from modelscope.metainfo import Preprocessors
+from modelscope.utils.constant import Fields, ModeKeys
+from modelscope.utils.type_assert import type_assert
+from .base import Preprocessor
+from .builder import PREPROCESSORS
+
 
 def ReadVideoData(cfg, video_path):
     """ simple interface to load video frames from file
@@ -227,3 +233,42 @@ class KineticsResizedCrop(object):
 
     def __call__(self, clip):
         return self._get_controlled_crop(clip)
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.movie_scene_segmentation_preprocessor)
+class MovieSceneSegmentationPreprocessor(Preprocessor):
+
+    def __init__(self, *args, **kwargs):
+        """
+        movie scene segmentation preprocessor
+        """
+        super().__init__(*args, **kwargs)
+
+        self.is_train = kwargs.pop('is_train', True)
+        self.preprocessor_train_cfg = kwargs.pop(ModeKeys.TRAIN, None)
+        self.preprocessor_test_cfg = kwargs.pop(ModeKeys.EVAL, None)
+        self.num_keyframe = kwargs.pop('num_keyframe', 3)
+
+        from .movie_scene_segmentation import get_transform
+        self.train_transform = get_transform(self.preprocessor_train_cfg)
+        self.test_transform = get_transform(self.preprocessor_test_cfg)
+
+    def train(self):
+        self.is_train = True
+        return
+
+    def eval(self):
+        self.is_train = False
+        return
+
+    @type_assert(object, object)
+    def __call__(self, results):
+        if self.is_train:
+            transforms = self.train_transform
+        else:
+            transforms = self.test_transform
+
+        results = torch.stack(transforms(results), dim=0)
+        results = results.view(-1, self.num_keyframe, 3, 224, 224)
+        return results

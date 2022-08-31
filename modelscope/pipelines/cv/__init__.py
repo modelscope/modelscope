@@ -42,6 +42,8 @@ if TYPE_CHECKING:
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
     from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline
+    from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -90,7 +92,9 @@ else:
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
         'easycv_pipeline':
-        ['EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline']
+        ['EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline'],
+        'movie_scene_segmentation_pipeline':
+        ['MovieSceneSegmentationPipeline'],
     }
 
     import sys

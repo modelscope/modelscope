@@ -8,7 +8,8 @@ if TYPE_CHECKING:
     from .base import DummyTrainer
     from .builder import build_trainer
     from .cv import (ImageInstanceSegmentationTrainer,
-                     ImagePortraitEnhancementTrainer)
+                     ImagePortraitEnhancementTrainer,
+                     MovieSceneSegmentationTrainer)
     from .multi_modal import CLIPTrainer
     from .nlp import SequenceClassificationTrainer
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
@@ -21,7 +22,7 @@ else:
         'builder': ['build_trainer'],
         'cv': [
             'ImageInstanceSegmentationTrainer',
-            'ImagePortraitEnhancementTrainer'
+            'ImagePortraitEnhancementTrainer', 'MovieSceneSegmentationTrainer'
         ],
         'multi_modal': ['CLIPTrainer'],
         'nlp': ['SequenceClassificationTrainer'],

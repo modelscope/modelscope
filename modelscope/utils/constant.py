@@ -62,6 +62,7 @@ class CVTasks(object):
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
     crowd_counting = 'crowd-counting'
+    movie_scene_segmentation = 'movie-scene-segmentation'
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'

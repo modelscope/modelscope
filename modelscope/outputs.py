@@ -35,6 +35,8 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    SPLIT_VIDEO_NUM = 'split_video_num'
+    SPLIT_META_DICT = 'split_meta_dict'
 
 
 TASK_OUTPUTS = {
@@ -240,6 +242,22 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
+
+    # movide scene segmentation result for a single video
+    # {
+    #        "split_video_num":3,
+    #        "split_meta_dict":
+    #        {
+    #           scene_id:
+    #           {
+    #               "shot": [0,1,2],
+    #               "frame": [start_frame, end_frame]
+    #           }
+    #        }
+    #
+    # }
+    Tasks.movie_scene_segmentation:
+    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_DICT],
 
     # ============ nlp tasks ===================
 

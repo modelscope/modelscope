@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .text_generation_metric import TextGenerationMetric
     from .token_classification_metric import TokenClassificationMetric
     from .video_summarization_metric import VideoSummarizationMetric
+    from .movie_scene_segmentation_metric import MovieSceneSegmentationMetric
 
 else:
     _import_structure = {
@@ -32,6 +33,7 @@ else:
         'text_generation_metric': ['TextGenerationMetric'],
         'token_classification_metric': ['TokenClassificationMetric'],
         'video_summarization_metric': ['VideoSummarizationMetric'],
+        'movie_scene_segmentation_metric': ['MovieSceneSegmentationMetric'],
     }
 
     import sys

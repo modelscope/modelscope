@@ -34,6 +34,7 @@ task_default_metrics = {
     Tasks.video_summarization: [Metrics.video_summarization_metric],
     Tasks.image_captioning: [Metrics.text_gen_metric],
     Tasks.visual_question_answering: [Metrics.text_gen_metric],
+    Tasks.movie_scene_segmentation: [Metrics.movie_scene_segmentation_metric],
 }
 
 

@@ -5,6 +5,7 @@ import datasets
 import pandas as pd
 import pyarrow as pa
 from datasets.info import DatasetInfo
+from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import csv
 from datasets.utils.filelock import FileLock
 
@@ -34,8 +35,8 @@ class MsCsvDatasetBuilder(csv.Csv):
             data_files=meta_data_files,
             **config_kwargs)
 
-        self.name = dataset_name
-        self.info.builder_name = self.name
+        self.name = camelcase_to_snakecase(dataset_name)
+        self.info.builder_name = dataset_name
         self._cache_dir = self._build_cache_dir(namespace=namespace)
         lock_path = os.path.join(
             self._cache_dir_root,
@@ -65,7 +66,7 @@ class MsCsvDatasetBuilder(csv.Csv):
         or if a namespace has been specified:
             self.namespace___self.name/self.config.version/self.hash/
         """
-        builder_data_dir = self.name if namespace is None else f'{namespace}___{self.name}'
+        builder_data_dir = self.info.builder_name if namespace is None else f'{namespace}___{self.info.builder_name}'
         builder_config = self.config
         hash = self.hash
         if builder_config:
@@ -156,6 +157,7 @@ class TaskSpecificDatasetBuilder(MsCsvDatasetBuilder):
         self.zip_data_files = zip_data_files
         self.split_path_dict = None
         self.config = None
+        self.info = DatasetInfo.from_dict({'builder_name': dataset_name})
         self._cache_dir_root = os.path.expanduser(cache_dir)
         self._cache_dir = self._build_cache_dir()
         self._config_kwargs = config_kwargs

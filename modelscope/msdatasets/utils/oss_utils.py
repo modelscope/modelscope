@@ -34,8 +34,12 @@ class OssUtilities:
         local_path = os.path.join(cache_dir, filename)
 
         if download_config.force_download or not os.path.exists(local_path):
-            self.bucket.get_object_to_file(
-                file_oss_key, local_path, progress_callback=self._percentage)
+            oss2.resumable_download(
+                self.bucket,
+                file_oss_key,
+                local_path,
+                multiget_threshold=0,
+                progress_callback=self._percentage)
         return local_path
 
     def upload(self, oss_file_name: str, local_file_path: str) -> str:

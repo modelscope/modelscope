@@ -35,6 +35,7 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    TIMESTAMPS = 'timestamps'
     SPLIT_VIDEO_NUM = 'split_video_num'
     SPLIT_META_DICT = 'split_meta_dict'
 
@@ -542,6 +543,19 @@ TASK_OUTPUTS = {
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # {
+    #     'labels': ['吸烟', '打电话', '吸烟'],
+    #     'scores': [0.7527753114700317, 0.753358006477356, 0.6880350708961487],
+    #     'boxes': [[547, 2, 1225, 719], [529, 8, 1255, 719], [584, 0, 1269, 719]],
+    #     'timestamps': [1, 3, 5]
+    # }
+    Tasks.action_detection: [
+        OutputKeys.TIMESTAMPS,
+        OutputKeys.LABELS,
+        OutputKeys.SCORES,
+        OutputKeys.BOXES,
+    ],
+
+    # {
     #   'output': [
     #     [{'label': '6527856', 'score': 0.9942756295204163}, {'label': '1000012000', 'score': 0.0379515215754509},
     #      {'label': '13421097', 'score': 2.2825044965202324e-08}],
@@ -551,6 +565,7 @@ TASK_OUTPUTS = {
     #      {'label': '13421097', 'score': 2.75914817393641e-06}]]
     # }
     Tasks.faq_question_answering: [OutputKeys.OUTPUT],
+
     # image person reid result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],

@@ -5,6 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .action_recognition_pipeline import ActionRecognitionPipeline
+    from .action_detection_pipeline import ActionDetectionPipeline
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
+        'action_detection_pipeline': ['ActionDetectionPipeline'],
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],

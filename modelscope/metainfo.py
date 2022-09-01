@@ -133,6 +133,7 @@ class Pipelines(object):
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     crowd_counting = 'hrnet-crowd-counting'
+    action_detection = 'ResNetC3D-action-detection'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'

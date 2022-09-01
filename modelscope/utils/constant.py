@@ -58,6 +58,7 @@ class CVTasks(object):
     # video recognition
     live_category = 'live-category'
     action_recognition = 'action-recognition'
+    action_detection = 'action-detection'
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'

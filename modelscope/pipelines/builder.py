@@ -71,6 +71,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
+    Tasks.action_detection: (Pipelines.action_detection,
+                             'damo/cv_ResNetC3D_action-detection_detection2d'),
     Tasks.live_category: (Pipelines.live_category,
                           'damo/cv_resnet50_live-category'),
     Tasks.video_category: (Pipelines.video_category,

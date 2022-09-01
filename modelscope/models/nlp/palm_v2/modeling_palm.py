@@ -6,6 +6,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
+import addict
 import json
 import numpy as np
 import torch
@@ -726,10 +727,11 @@ class PalmForConditionalGeneration(PalmPreTrainedModel):
                                    self.palm.vocab_size,
                                    config.label_smoothing)
 
-    def forward(self, src, tgt, mask_src):
-        output = self.palm(src, tgt, mask_src)[0]
-        loss = self.loss(tgt, output)
-        return loss
+    def forward(self, input_ids, attention_mask, labels):
+        output = self.palm(
+            src=input_ids, tgt=labels, mask_src=attention_mask)[0]
+        loss = self.loss(labels, output)
+        return addict.Dict(loss=loss)
 
 
 class Translator(nn.Module):

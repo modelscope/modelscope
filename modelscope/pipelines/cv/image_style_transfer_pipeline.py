@@ -10,6 +10,7 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,30 +32,31 @@ class ImageStyleTransferPipeline(Pipeline):
             tf = tf.compat.v1
         model_path = osp.join(self.model, ModelFile.TF_GRAPH_FILE)
 
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.allow_growth = True
-        self._session = tf.Session(config=config)
-        self.max_length = 800
-        with self._session.as_default():
-            logger.info(f'loading model from {model_path}')
-            with tf.gfile.FastGFile(model_path, 'rb') as f:
-                graph_def = tf.GraphDef()
-                graph_def.ParseFromString(f.read())
-                tf.import_graph_def(graph_def, name='')
+        with device_placement(self.framework, self.device_name):
+            config = tf.ConfigProto(allow_soft_placement=True)
+            config.gpu_options.allow_growth = True
+            self._session = tf.Session(config=config)
+            self.max_length = 800
+            with self._session.as_default():
+                logger.info(f'loading model from {model_path}')
+                with tf.gfile.FastGFile(model_path, 'rb') as f:
+                    graph_def = tf.GraphDef()
+                    graph_def.ParseFromString(f.read())
+                    tf.import_graph_def(graph_def, name='')
 
-                self.content = tf.get_default_graph().get_tensor_by_name(
-                    'content:0')
-                self.style = tf.get_default_graph().get_tensor_by_name(
-                    'style:0')
-                self.output = tf.get_default_graph().get_tensor_by_name(
-                    'stylized_output:0')
-                self.attention = tf.get_default_graph().get_tensor_by_name(
-                    'attention_map:0')
-                self.inter_weight = tf.get_default_graph().get_tensor_by_name(
-                    'inter_weight:0')
-                self.centroids = tf.get_default_graph().get_tensor_by_name(
-                    'centroids:0')
-            logger.info('load model done')
+                    self.content = tf.get_default_graph().get_tensor_by_name(
+                        'content:0')
+                    self.style = tf.get_default_graph().get_tensor_by_name(
+                        'style:0')
+                    self.output = tf.get_default_graph().get_tensor_by_name(
+                        'stylized_output:0')
+                    self.attention = tf.get_default_graph().get_tensor_by_name(
+                        'attention_map:0')
+                    self.inter_weight = tf.get_default_graph(
+                    ).get_tensor_by_name('inter_weight:0')
+                    self.centroids = tf.get_default_graph().get_tensor_by_name(
+                        'centroids:0')
+                logger.info('load model done')
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, {}, {}

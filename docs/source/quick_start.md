@@ -108,7 +108,7 @@ pip install -e ".[nlp]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releas
 ```shell
 pip install -e ".[multi-modal]" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
-###
+
 ### 安装验证
 
 安装成功后，可以执行如下命令进行验证安装是否正确：

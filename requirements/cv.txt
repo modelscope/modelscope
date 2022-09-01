@@ -14,13 +14,14 @@ mmcls>=0.21.0
 mmdet>=2.25.0
 networkx>=2.5
 onnxruntime>=1.10
-pai-easycv>=0.5
+pai-easycv>=0.6.0
 pandas
 psutil
 regex
 scikit-image>=0.19.3
 scikit-learn>=0.20.1
 shapely
+shotdetect_scenedetect_lgss
 tensorflow-estimator>=1.15.1
 tf_slim
 timm>=0.4.9

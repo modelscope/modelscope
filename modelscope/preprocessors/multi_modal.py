@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
 from io import BytesIO
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import torch
 from PIL import Image
@@ -110,12 +110,20 @@ class OfaPreprocessor(Preprocessor):
     Fields.multi_modal, module_name=Preprocessors.mplug_tasks_preprocessor)
 class MPlugPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self,
+                 model_dir: str,
+                 mode: str = ModeKeys.INFERENCE,
+                 tokenizer_max_length: int = 25,
+                 *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.model_dir = model_dir
+        self.mode = mode
+        self.tokenizer_max_length = tokenizer_max_length
 
         self._tokenizer = None
         self._patch_resize_transform = None
+        self._image_map = {}
 
     @property
     def tokenizer(self):
@@ -145,42 +153,56 @@ class MPlugPreprocessor(Preprocessor):
             ])
         return self._patch_resize_transform
 
-    def __call__(self, *args, **kwargs):
-        call_mapping = {
-            Tasks.visual_question_answering: self.vqa_call,
-            Tasks.image_captioning: self.caption_call
-        }
+    def image_open(self, path: str) -> Tuple[Image.Image, int]:
+        if path not in self._image_map:
+            index = len(self._image_map)
+            self._image_map[path] = (Image.open(path), index)
+        return self._image_map[path]
 
-        self.cfg = Config.from_file(
-            osp.join(self.model_dir, ModelFile.CONFIGURATION))
-        return call_mapping[self.cfg.task](*args, **kwargs)
-
-    def vqa_call(self, data: Union[tuple, Dict[str, Any]]) -> Dict[str, Any]:
-        image: Image.Image = data[0] if isinstance(data,
-                                                   tuple) else data['image']
-        question: str = data[1] if isinstance(data,
-                                              tuple) else data['question']
-        image = image.convert('RGB')
-        image = self.patch_resize_transform(image)
-        image = torch.stack([image], dim=0)
-        question = self.tokenizer([question.lower()],
-                                  padding='longest',
-                                  return_tensors='pt')
-
-        return {'image': image, 'question': question, 'train': False}
-
-    def caption_call(
+    def __call__(
             self, data: Union[Image.Image, tuple,
                               Dict[str, Any]]) -> Dict[str, Any]:
-        if isinstance(data, Image.Image):
+        self.cfg = Config.from_file(
+            osp.join(self.model_dir, ModelFile.CONFIGURATION))
+
+        if isinstance(data, (Image.Image, str)):
             image = data
         elif isinstance(data, tuple):
             image = data[0]
         else:
             image = data['image']
+        index = 0
+        if isinstance(image, str):
+            image, index = self.image_open(image)
         image = image.convert('RGB')
         image = self.patch_resize_transform(image)
-        image = torch.stack([image], dim=0)
-        question = self.tokenizer('', return_tensors='pt')
+        question = '' if self.cfg.task == Tasks.image_captioning \
+            else data[1 if isinstance(data, tuple) else 'question']
+        question = self.tokenizer(
+            question.lower(),
+            padding='max_length',
+            truncation=True,
+            max_length=self.tokenizer_max_length,
+            return_tensors='pt')
 
-        return {'image': image, 'question': question, 'train': False}
+        if self.mode == ModeKeys.INFERENCE:
+            image = torch.stack([image], dim=0)
+            return {'image': image, 'question': question}
+        else:
+            answer = data['answer']
+            answer = self.tokenizer(
+                answer,
+                padding='max_length',
+                truncation=True,
+                max_length=self.tokenizer_max_length,
+                return_tensors='pt')
+            output = {
+                'image': image,
+                'question_input_ids': question.input_ids.squeeze(),
+                'question_attention_mask': question.attention_mask.squeeze(),
+                'answer_input_ids': answer.input_ids.squeeze(),
+                'answer_attention_mask': answer.attention_mask.squeeze(),
+            }
+            if self.cfg.task == Tasks.image_text_retrieval:
+                output['index'] = index
+            return output

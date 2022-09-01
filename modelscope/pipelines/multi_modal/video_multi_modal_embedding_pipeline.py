@@ -4,6 +4,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
+from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -26,7 +27,7 @@ class VideoMultiModalEmbeddingPipeline(Pipeline):
         return input
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
-        with self.place_device():
+        with device_placement(self.framework, self.device_name):
             out = self.forward(input)
 
         self._check_output(out)

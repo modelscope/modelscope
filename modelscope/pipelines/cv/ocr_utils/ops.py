@@ -1,8 +1,10 @@
 import math
 import os
 import shutil
+import sys
 import uuid
 
+import absl.flags as absl_flags
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -12,6 +14,10 @@ from . import utils
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
 
+# skip parse sys.argv in tf, so fix bug:
+# absl.flags._exceptions.UnrecognizedFlagError:
+# Unknown command line flag 'OCRDetectionPipeline: Unknown command line flag
+absl_flags.FLAGS(sys.argv, known_only=True)
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('weight_init_method', 'xavier',
                            'Weight initialization method')
@@ -88,7 +94,7 @@ def _nn_variable(name, shape, init_method, collection=None, **kwargs):
     else:
         raise 'Unsupported weight initialization method: ' + init_method
 
-    var = tf.get_variable(name, shape=shape, initializer=initializer, **kwargs)
+    var = tf.get_variable(name, shape=shape, initializer=initializer)
     if collection is not None:
         tf.add_to_collection(collection, var)
 

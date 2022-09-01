@@ -23,6 +23,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.information_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
@@ -79,6 +82,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.generative_multi_modal_embedding,
      'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
      ),
+    Tasks.multi_modal_similarity:
+    (Pipelines.multi_modal_similarity,
+     'damo/multi-modal_team-vit-large-patch14_multi-modal-similarity'),
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),
@@ -89,6 +95,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_diffusion_text-to-image-synthesis_tiny'),
     Tasks.body_2d_keypoints: (Pipelines.body_2d_keypoints,
                               'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
+    Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,
+                              'damo/cv_canonical_body-3d-keypoints_video'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,
@@ -129,11 +137,19 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
+    Tasks.faq_question_answering:
+    (Pipelines.faq_question_answering,
+     'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
     Tasks.video_single_object_tracking:
     (Pipelines.video_single_object_tracking,
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
+    Tasks.image_reid_person: (Pipelines.image_reid_person,
+                              'damo/cv_passvitb_image-reid-person_market'),
+    Tasks.movie_scene_segmentation:
+    (Pipelines.movie_scene_segmentation,
+     'damo/cv_resnet50-bert_video-scene-segmentation_movienet')
 }
 
 
@@ -216,7 +232,6 @@ def pipeline(task: str = None,
         f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
     model = normalize_model_input(model, model_revision)
-
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \

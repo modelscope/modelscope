@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
     from .clip import CLIPForMultiModalEmbedding
     from .gemm import GEMMForMultiModalEmbedding
+    from .team import TEAMForMultiModalSimilarity
     from .diffusion import DiffusionForTextToImageSynthesis
     from .mmr import VideoCLIPForMultiModalEmbedding
     from .mplug_for_all_tasks import MPlugForAllTasks
@@ -19,6 +20,7 @@ else:
         'clip': ['CLIPForMultiModalEmbedding'],
         'diffusion': ['DiffusionForTextToImageSynthesis'],
         'gemm': ['GEMMForMultiModalEmbedding'],
+        'team': ['TEAMForMultiModalSimilarity'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
         'mplug_for_all_tasks': ['MPlugForAllTasks'],
         'ofa_for_all_tasks': ['OfaForAllTasks'],

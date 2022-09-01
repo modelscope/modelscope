@@ -1,10 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 
+import json
+
 from modelscope import __version__
 from modelscope.metainfo import Hooks
 from modelscope.utils.checkpoint import save_checkpoint
-from modelscope.utils.constant import LogKeys
+from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import is_master
 from .builder import HOOKS
@@ -73,6 +75,25 @@ class CheckpointHook(Hook):
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
         save_checkpoint(trainer.model, cur_save_name, trainer.optimizer)
+        self._save_pretrained(trainer)
+
+    def _save_pretrained(self, trainer):
+        if self.is_last_epoch(trainer) and self.by_epoch:
+            output_dir = os.path.join(self.save_dir,
+                                      ModelFile.TRAIN_OUTPUT_DIR)
+            from modelscope.trainers.parallel.utils import is_parallel
+
+            if is_parallel(trainer.model):
+                model = trainer.model.module
+            else:
+                model = trainer.model
+
+            if hasattr(model, 'save_pretrained'):
+                model.save_pretrained(
+                    output_dir,
+                    ModelFile.TORCH_MODEL_BIN_FILE,
+                    save_function=save_checkpoint,
+                    config=trainer.cfg.to_dict())
 
     def after_train_iter(self, trainer):
         if self.by_epoch:
@@ -166,3 +187,4 @@ class BestCkptSaverHook(CheckpointHook):
             )
         save_checkpoint(trainer.model, cur_save_name, trainer.optimizer)
         self._best_ckpt_file = cur_save_name
+        self._save_pretrained(trainer)

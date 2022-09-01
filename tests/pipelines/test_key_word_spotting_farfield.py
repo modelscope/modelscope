@@ -1,7 +1,6 @@
 import os.path
 import unittest
 
-from modelscope.fileio import File
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -41,3 +40,7 @@ class KWSFarfieldTest(unittest.TestCase):
         result = kws(data)
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
+
+
+if __name__ == '__main__':
+    unittest.main()

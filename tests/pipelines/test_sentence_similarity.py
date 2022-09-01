@@ -8,6 +8,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import PairSentenceClassificationPipeline
 from modelscope.preprocessors import PairSentenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -15,6 +16,7 @@ class SentenceSimilarityTest(unittest.TestCase):
     model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
     sentence1 = '今天气温比昨天高么？'
     sentence2 = '今天湿度比昨天高么？'
+    regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
@@ -47,7 +49,9 @@ class SentenceSimilarityTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.sentence_similarity, model=self.model_id)
-        print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+        with self.regress_tool.monitor_module_single_forward(
+                pipeline_ins.model, 'sbert_sen_sim'):
+            print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

@@ -54,6 +54,27 @@ class MplugTasksTest(unittest.TestCase):
         result = pipeline_vqa(input)
         print(result)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_image_text_retrieval_with_model(self):
+        model = Model.from_pretrained(
+            'damo/mplug_image-text-retrieval_flickr30k_large_en')
+        pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
+        image = Image.open('data/test/images/image-text-retrieval.jpg')
+        question = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'question': question}
+        result = pipeline_retrieval(input)
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_image_text_retrieval_with_name(self):
+        model = 'damo/mplug_image-text-retrieval_flickr30k_large_en'
+        pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
+        image = Image.open('data/test/images/image-text-retrieval.jpg')
+        question = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'question': question}
+        result = pipeline_retrieval(input)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

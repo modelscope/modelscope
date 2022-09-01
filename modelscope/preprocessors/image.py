@@ -264,3 +264,28 @@ class ImageInstanceSegmentationPreprocessor(Preprocessor):
                 return None
 
         return results
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.video_summarization_preprocessor)
+class VideoSummarizationPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+        self.model_dir: str = model_dir
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data Dict[str, Any]
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        return data

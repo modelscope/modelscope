@@ -21,11 +21,14 @@ if TYPE_CHECKING:
                       SingleSentenceClassificationPreprocessor,
                       PairSentenceClassificationPreprocessor,
                       FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
-                      NERPreprocessor, TextErrorCorrectionPreprocessor)
+                      NERPreprocessor, TextErrorCorrectionPreprocessor,
+                      FaqQuestionAnsweringPreprocessor,
+                      RelationExtractionPreprocessor)
+    from .slp import DocumentSegmentationPreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
-    from .video import ReadVideoData
+    from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
     from .star import ConversationalTextToSqlPreprocessor
 
 else:
@@ -35,7 +38,7 @@ else:
         'common': ['Compose', 'ToTensor', 'Filter'],
         'audio': ['LinearAECAndFbank'],
         'asr': ['WavToScp'],
-        'video': ['ReadVideoData'],
+        'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [
             'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
             'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
@@ -48,8 +51,11 @@ else:
             'SingleSentenceClassificationPreprocessor',
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
-            'TextErrorCorrectionPreprocessor'
+            'TextErrorCorrectionPreprocessor',
+            'FaqQuestionAnsweringPreprocessor',
+            'RelationExtractionPreprocessor'
         ],
+        'slp': ['DocumentSegmentationPreprocessor'],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'

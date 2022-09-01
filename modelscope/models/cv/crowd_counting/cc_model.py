@@ -13,8 +13,8 @@ from modelscope.utils.constant import Tasks
     Tasks.crowd_counting, module_name=Models.crowd_counting)
 class HRNetCrowdCounting(TorchModel):
 
-    def __init__(self, model_dir: str):
-        super().__init__(model_dir)
+    def __init__(self, model_dir: str, **kwargs):
+        super().__init__(model_dir, **kwargs)
 
         from .hrnet_aspp_relu import HighResolutionNet as HRNet_aspp_relu
 

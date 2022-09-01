@@ -7,10 +7,13 @@ if TYPE_CHECKING:
     from .backbones import SbertModel
     from .heads import SequenceClassificationHead
     from .bert_for_sequence_classification import BertForSequenceClassification
+    from .bert_for_document_segmentation import BertForDocumentSegmentation
     from .csanmt_for_translation import CsanmtForTranslation
     from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
                                   BertForMaskedLM)
-    from .nncrf_for_named_entity_recognition import TransformerCRFForNamedEntityRecognition
+    from .nncrf_for_named_entity_recognition import (
+        TransformerCRFForNamedEntityRecognition,
+        LSTMCRFForNamedEntityRecognition)
     from .palm_v2 import PalmForTextGeneration
     from .token_classification import SbertForTokenClassification
     from .sequence_classification import VecoForSequenceClassification, SbertForSequenceClassification
@@ -18,9 +21,12 @@ if TYPE_CHECKING:
     from .space import SpaceForDialogModeling
     from .space import SpaceForDialogStateTracking
     from .star_text_to_sql import StarForTextToSql
-    from .task_models.task_model import SingleBackboneTaskModelBase
+    from .task_models import (InformationExtractionModel,
+                              SequenceClassificationModel,
+                              SingleBackboneTaskModelBase)
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
+    from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
 
 else:
     _import_structure = {
@@ -29,10 +35,13 @@ else:
         'heads': ['SequenceClassificationHead'],
         'csanmt_for_translation': ['CsanmtForTranslation'],
         'bert_for_sequence_classification': ['BertForSequenceClassification'],
+        'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
         'masked_language':
         ['StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM'],
-        'nncrf_for_named_entity_recognition':
-        ['TransformerCRFForNamedEntityRecognition'],
+        'nncrf_for_named_entity_recognition': [
+            'TransformerCRFForNamedEntityRecognition',
+            'LSTMCRFForNamedEntityRecognition'
+        ],
         'palm_v2': ['PalmForTextGeneration'],
         'token_classification': ['SbertForTokenClassification'],
         'sequence_classification':
@@ -41,9 +50,13 @@ else:
             'SpaceForDialogIntent', 'SpaceForDialogModeling',
             'SpaceForDialogStateTracking'
         ],
-        'task_model': ['SingleBackboneTaskModelBase'],
+        'task_models': [
+            'InformationExtractionModel', 'SequenceClassificationModel',
+            'SingleBackboneTaskModelBase'
+        ],
         'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
         'gpt3': ['GPT3ForTextGeneration'],
+        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
     }
 
     import sys

@@ -60,5 +60,6 @@ class GPT3ForTextGeneration(TorchModel):
         sample_output = self.model.generate(**gen_params)
         return {
             OutputKeys.TEXT:
-            self.tokenizer.decode(sample_output[0], skip_special_tokens=True)
+            self.tokenizer.decode(sample_output[0],
+                                  skip_special_tokens=True).replace(' ', '')
         }

@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
-import os
+from pathlib import Path
 
 
 # TODO: remove this api, unify to flattened args
@@ -33,6 +33,5 @@ def get_default_cache_dir():
     """
     default base dir: '~/.cache/modelscope'
     """
-    default_cache_dir = os.path.expanduser(
-        os.path.join('~/.cache', 'modelscope'))
+    default_cache_dir = Path.home().joinpath('.cache', 'modelscope')
     return default_cache_dir

@@ -10,6 +10,7 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,19 +32,20 @@ class ImageMattingPipeline(Pipeline):
             tf = tf.compat.v1
         model_path = osp.join(self.model, ModelFile.TF_GRAPH_FILE)
 
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.allow_growth = True
-        self._session = tf.Session(config=config)
-        with self._session.as_default():
-            logger.info(f'loading model from {model_path}')
-            with tf.gfile.FastGFile(model_path, 'rb') as f:
-                graph_def = tf.GraphDef()
-                graph_def.ParseFromString(f.read())
-                tf.import_graph_def(graph_def, name='')
-                self.output = self._session.graph.get_tensor_by_name(
-                    'output_png:0')
-                self.input_name = 'input_image:0'
-            logger.info('load model done')
+        with device_placement(self.framework, self.device_name):
+            config = tf.ConfigProto(allow_soft_placement=True)
+            config.gpu_options.allow_growth = True
+            self._session = tf.Session(config=config)
+            with self._session.as_default():
+                logger.info(f'loading model from {model_path}')
+                with tf.gfile.FastGFile(model_path, 'rb') as f:
+                    graph_def = tf.GraphDef()
+                    graph_def.ParseFromString(f.read())
+                    tf.import_graph_def(graph_def, name='')
+                    self.output = self._session.graph.get_tensor_by_name(
+                        'output_png:0')
+                    self.input_name = 'input_image:0'
+                logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)

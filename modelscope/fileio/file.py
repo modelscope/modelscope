@@ -240,7 +240,7 @@ class File(object):
     @staticmethod
     def _get_storage(uri):
         assert isinstance(uri,
-                          str), f'uri should be str type, buf got {type(uri)}'
+                          str), f'uri should be str type, but got {type(uri)}'
 
         if '://' not in uri:
             # local path

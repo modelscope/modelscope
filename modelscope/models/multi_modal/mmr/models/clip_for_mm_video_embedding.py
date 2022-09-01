@@ -24,8 +24,8 @@ logger = get_logger()
     Tasks.video_multi_modal_embedding, module_name=Models.video_clip)
 class VideoCLIPForMultiModalEmbedding(TorchModel):
 
-    def __init__(self, model_dir, device_id=-1):
-        super().__init__(model_dir=model_dir, device_id=device_id)
+    def __init__(self, model_dir, **kwargs):
+        super().__init__(model_dir=model_dir, **kwargs)
         # model config parameters
         with open(f'{model_dir}/{ModelFile.CONFIGURATION}', 'r') as json_file:
             model_config = json.load(json_file)

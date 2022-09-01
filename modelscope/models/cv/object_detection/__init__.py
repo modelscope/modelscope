@@ -5,10 +5,12 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .mmdet_model import DetectionModel
+    from .yolox_pai import YOLOX
 
 else:
     _import_structure = {
         'mmdet_model': ['DetectionModel'],
+        'yolox_pai': ['YOLOX']
     }
 
     import sys

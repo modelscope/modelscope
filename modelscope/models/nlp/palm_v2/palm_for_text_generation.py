@@ -29,20 +29,19 @@ class PalmForTextGeneration(TorchModel):
         self.generator = Translator(self.model)
 
     def _evaluate_postprocess(self, ids_list: List[List[int]]) -> List[str]:
-        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
-                               ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
-                               ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
+        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''), ('[unused1]',
+                                                                  ''),
+                               (r' +', ' '), ('[SEP]', ''), ('[unused2]', ''),
+                               ('[CLS]', ''), ('[UNK]', ''), (' ', ''))
         replace_tokens_roberta = ((r' +', ' '), ('<mask>', '. '),
                                   ('<pad>', ''), ('<s>', ''), ('</s>', ''),
                                   ('<unk>', ' '), ('<q>', '. '))
 
+        replace_tokens = replace_tokens_roberta \
+            if self.model.config.encoder == 'roberta' else replace_tokens_bert
         strings = [self.tokenizer.decode(pred_ids) for pred_ids in ids_list]
-        for _old, _new in replace_tokens_bert:
+        for _old, _new in replace_tokens:
             strings = [s.replace(_old, _new) for s in strings]
-        for _old, _new in replace_tokens_roberta:
-            strings = [s.replace(_old, _new) for s in strings]
-        for s in strings:
-            s.strip()
         return strings
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -64,14 +63,15 @@ class PalmForTextGeneration(TorchModel):
                     }
         """
         if self.training:
-            return {'loss': self.model(**input)}
+            return self.model(**input)
         else:
-            outputs = self.generator(input['src'], input['mask_src'])
+            outputs = self.generator(input['input_ids'],
+                                     input['attention_mask'])
             preds = outputs['predictions']
             pred_ids_list = [
                 pred_batch[0].cpu().numpy().tolist() for pred_batch in preds
             ]
-            tgt_ids_list = input['tgt'].cpu().numpy().tolist()
+            tgt_ids_list = input['labels'].cpu().numpy().tolist()
             return {
                 'preds': self._evaluate_postprocess(pred_ids_list),
                 'tgts': self._evaluate_postprocess(tgt_ids_list)

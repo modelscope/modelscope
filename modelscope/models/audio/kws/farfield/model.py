@@ -33,6 +33,7 @@ class FSMNSeleNetV2Decorator(TorchModel):
                                       ModelFile.TORCH_MODEL_BIN_FILE)
         self._model = None
         if os.path.exists(model_bin_file):
+            kwargs.pop('device')
             self._model = FSMNSeleNetV2(*args, **kwargs)
             checkpoint = torch.load(model_bin_file)
             self._model.load_state_dict(checkpoint, strict=False)

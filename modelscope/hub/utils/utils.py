@@ -1,7 +1,9 @@
 import hashlib
 import os
+from typing import Optional
 
-from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
+from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DATA_ENDPOINT,
+                                      DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
@@ -22,20 +24,27 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
-def get_cache_dir():
+def get_cache_dir(model_id: Optional[str] = None):
     """
     cache dir precedence:
         function parameter > enviroment > ~/.cache/modelscope/hub
     """
     default_cache_dir = get_default_cache_dir()
-    return os.getenv('MODELSCOPE_CACHE', os.path.join(default_cache_dir,
-                                                      'hub'))
+    base_path = os.getenv('MODELSCOPE_CACHE',
+                          os.path.join(default_cache_dir, 'hub'))
+    return base_path if model_id is None else os.path.join(
+        base_path, model_id + '/')
 
 
 def get_endpoint():
     modelscope_domain = os.getenv('MODELSCOPE_DOMAIN',
                                   DEFAULT_MODELSCOPE_DOMAIN)
     return MODELSCOPE_URL_SCHEME + modelscope_domain
+
+
+def get_dataset_hub_endpoint():
+    return os.environ.get('HUB_DATASET_ENDPOINT',
+                          DEFAULT_MODELSCOPE_DATA_ENDPOINT)
 
 
 def compute_hash(file_path):

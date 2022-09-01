@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import sys
 
 import oss2
 from datasets.utils.file_utils import hash_url_to_filename
@@ -19,7 +18,14 @@ class OssUtilities:
         self.oss_dir = oss_config['Dir']
         self.oss_backup_dir = oss_config['BackupDir']
 
-    def download(self, oss_file_name, cache_dir):
+    @staticmethod
+    def _percentage(consumed_bytes, total_bytes):
+        if total_bytes:
+            rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
+            print('\r{0}% '.format(rate), end='', flush=True)
+
+    def download(self, oss_file_name, download_config):
+        cache_dir = download_config.cache_dir
         candidate_key = os.path.join(self.oss_dir, oss_file_name)
         candidate_key_backup = os.path.join(self.oss_backup_dir, oss_file_name)
         file_oss_key = candidate_key if self.bucket.object_exists(
@@ -27,11 +33,30 @@ class OssUtilities:
         filename = hash_url_to_filename(file_oss_key, etag=None)
         local_path = os.path.join(cache_dir, filename)
 
-        def percentage(consumed_bytes, total_bytes):
-            if total_bytes:
-                rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
-                print('\r{0}% '.format(rate), end='', flush=True)
-
-        self.bucket.get_object_to_file(
-            file_oss_key, local_path, progress_callback=percentage)
+        if download_config.force_download or not os.path.exists(local_path):
+            oss2.resumable_download(
+                self.bucket,
+                file_oss_key,
+                local_path,
+                multiget_threshold=0,
+                progress_callback=self._percentage)
         return local_path
+
+    def upload(self, oss_file_name: str, local_file_path: str) -> str:
+        max_retries = 3
+        retry_count = 0
+        object_key = os.path.join(self.oss_dir, oss_file_name)
+
+        while True:
+            try:
+                retry_count += 1
+                self.bucket.put_object_from_file(
+                    object_key,
+                    local_file_path,
+                    progress_callback=self._percentage)
+                break
+            except Exception:
+                if retry_count >= max_retries:
+                    raise
+
+        return object_key

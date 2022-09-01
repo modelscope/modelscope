@@ -4,9 +4,9 @@ from pathlib import Path
 # Cache location
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
 
-DEFAULT_CACHE_HOME = '~/.cache'
+DEFAULT_CACHE_HOME = Path.home().joinpath('.cache')
 CACHE_HOME = os.getenv('CACHE_HOME', DEFAULT_CACHE_HOME)
-DEFAULT_MS_CACHE_HOME = os.path.join(CACHE_HOME, 'modelscope/hub')
+DEFAULT_MS_CACHE_HOME = os.path.join(CACHE_HOME, 'modelscope', 'hub')
 MS_CACHE_HOME = os.path.expanduser(
     os.getenv('MS_CACHE_HOME', DEFAULT_MS_CACHE_HOME))
 

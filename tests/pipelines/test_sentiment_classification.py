@@ -30,7 +30,6 @@ class SentimentClassificationTaskModelTest(unittest.TestCase):
             preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1:{pipeline1(input=self.sentence1)}')
-        print()
         print(f'sentence1: {self.sentence1}\n'
               f'pipeline1: {pipeline2(input=self.sentence1)}')
 

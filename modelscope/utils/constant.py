@@ -24,6 +24,7 @@ class CVTasks(object):
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
     body_2d_keypoints = 'body-2d-keypoints'
+    body_3d_keypoints = 'body-3d-keypoints'
     general_recognition = 'general-recognition'
 
     image_classification = 'image-classification'
@@ -61,9 +62,12 @@ class CVTasks(object):
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
     crowd_counting = 'crowd-counting'
+    movie_scene_segmentation = 'movie-scene-segmentation'
 
-    # video related
+    # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
+    video_summarization = 'video-summarization'
+    image_reid_person = 'image-reid-person'
 
 
 class NLPTasks(object):
@@ -93,7 +97,10 @@ class NLPTasks(object):
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
     text_error_correction = 'text-error-correction'
+    faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    information_extraction = 'information-extraction'
+    document_segmentation = 'document-segmentation'
 
 
 class AudioTasks(object):
@@ -113,9 +120,11 @@ class MultiModalTasks(object):
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
+    multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    image_text_retrieval = 'image-text-retrieval'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
@@ -209,6 +218,7 @@ class ModelFile(object):
     VOCAB_FILE = 'vocab.txt'
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
+    TRAIN_OUTPUT_DIR = 'output'
 
 
 class ConfigFields(object):
@@ -251,6 +261,7 @@ class Frameworks(object):
 
 DEFAULT_MODEL_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
+DEFAULT_DATASET_NAMESPACE = 'modelscope'
 
 
 class ModeKeys:
@@ -290,3 +301,9 @@ class ColorCodes:
     GREEN = '\033[92m'
     RED = '\033[91m'
     END = '\033[0m'
+
+
+class Devices:
+    """device used for training and inference"""
+    cpu = 'cpu'
+    gpu = 'gpu'

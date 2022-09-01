@@ -6,16 +6,20 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
+from modelscope.models.base import Model
 from modelscope.models.nlp.sequence_classification import \
     SbertForSequenceClassification
 from modelscope.msdatasets import MsDataset
+from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import read_config
 from modelscope.utils.test_utils import test_level
 
 
 class TestTrainerWithNlp(unittest.TestCase):
+    sentence1 = '今天气温比昨天高么？'
+    sentence2 = '今天湿度比昨天高么？'
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -30,7 +34,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
         kwargs = dict(
@@ -46,6 +50,27 @@ class TestTrainerWithNlp(unittest.TestCase):
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(10):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+        output_files = os.listdir(
+            os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
+        self.assertIn(ModelFile.CONFIGURATION, output_files)
+        self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE, output_files)
+        copy_src_files = os.listdir(trainer.model_dir)
+
+        print(f'copy_src_files are {copy_src_files}')
+        print(f'output_files are {output_files}')
+        for item in copy_src_files:
+            if not item.startswith('.'):
+                self.assertIn(item, output_files)
+
+        def pipeline_sentence_similarity(model_dir):
+            model = Model.from_pretrained(model_dir)
+            pipeline_ins = pipeline(
+                task=Tasks.sentence_similarity, model=model)
+            print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+        output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        pipeline_sentence_similarity(output_dir)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_backbone_head(self):

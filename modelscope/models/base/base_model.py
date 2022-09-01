@@ -1,15 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Union
-
-import numpy as np
+from typing import Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
+from modelscope.utils.checkpoint import save_pretrained
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.device import device_placement, verify_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.logger import get_logger
@@ -24,8 +24,7 @@ class Model(ABC):
     def __init__(self, model_dir, *args, **kwargs):
         self.model_dir = model_dir
         device_name = kwargs.get('device', 'gpu')
-        assert device_name in ['gpu',
-                               'cpu'], 'device should be either cpu or gpu.'
+        verify_device(device_name)
         self._device_name = device_name
 
     def __call__(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
@@ -72,6 +71,7 @@ class Model(ABC):
                         model_name_or_path: str,
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         cfg_dict: Config = None,
+                        device: str = None,
                         *model_args,
                         **kwargs):
         """ Instantiate a model from local directory or remote model repo. Note
@@ -97,7 +97,7 @@ class Model(ABC):
                 osp.join(local_model_dir, ModelFile.CONFIGURATION))
         task_name = cfg.task
         model_cfg = cfg.model
-        # TODO @wenmeng.zwm may should manually initialize model after model building
+        framework = cfg.framework
 
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
@@ -105,10 +105,41 @@ class Model(ABC):
         model_cfg.model_dir = local_model_dir
         for k, v in kwargs.items():
             model_cfg[k] = v
-        model = build_model(
-            model_cfg, task_name=task_name, default_args=kwargs)
+        if device is not None:
+            model_cfg.device = device
+            with device_placement(framework, device):
+                model = build_model(
+                    model_cfg, task_name=task_name, default_args=kwargs)
+        else:
+            model = build_model(
+                model_cfg, task_name=task_name, default_args=kwargs)
 
         # dynamically add pipeline info to model for pipeline inference
         if hasattr(cfg, 'pipeline'):
             model.pipeline = cfg.pipeline
         return model
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = None,
+                        config: Optional[dict] = None,
+                        **kwargs):
+        """save the pretrained model, its configuration and other related files to a directory, so that it can be re-loaded
+
+        Args:
+            target_folder (Union[str, os.PathLike]):
+            Directory to which to save. Will be created if it doesn't exist.
+
+            save_checkpoint_names (Union[str, List[str]]):
+            The checkpoint names to be saved in the target_folder
+
+            save_function (Callable, optional):
+            The function to use to save the state dictionary.
+
+            config (Optional[dict], optional):
+            The config for the configuration.json, might not be identical with model.config
+
+        """
+        save_pretrained(self, target_folder, save_checkpoint_names,
+                        save_function, config, **kwargs)

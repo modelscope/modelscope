@@ -33,6 +33,7 @@ class ActionRecognitionPipeline(Pipeline):
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading config from {config_path}')
         self.cfg = Config.from_file(config_path)
+
         self.infer_model = BaseVideoModel(cfg=self.cfg).to(self.device)
         self.infer_model.eval()
         self.infer_model.load_state_dict(

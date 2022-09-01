@@ -7,6 +7,7 @@ class OutputKeys(object):
     LOSS = 'loss'
     LOGITS = 'logits'
     SCORES = 'scores'
+    SCORE = 'score'
     LABEL = 'label'
     LABELS = 'labels'
     INPUT_IDS = 'input_ids'
@@ -34,6 +35,8 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    SPLIT_VIDEO_NUM = 'split_video_num'
+    SPLIT_META_DICT = 'split_meta_dict'
 
 
 TASK_OUTPUTS = {
@@ -188,6 +191,16 @@ TASK_OUTPUTS = {
     Tasks.body_2d_keypoints:
     [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
 
+    # 3D human body keypoints detection result for single sample
+    # {
+    #   "poses": [
+    #               [[x, y, z]*17],
+    #               [[x, y, z]*17],
+    #               [[x, y, z]*17]
+    #             ]
+    # }
+    Tasks.body_3d_keypoints: [OutputKeys.POSES],
+
     # video single object tracking result for single video
     # {
     #   "boxes": [
@@ -229,6 +242,22 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
+
+    # movide scene segmentation result for a single video
+    # {
+    #        "split_video_num":3,
+    #        "split_meta_dict":
+    #        {
+    #           scene_id:
+    #           {
+    #               "shot": [0,1,2],
+    #               "frame": [start_frame, end_frame]
+    #           }
+    #        }
+    #
+    # }
+    Tasks.movie_scene_segmentation:
+    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_DICT],
 
     # ============ nlp tasks ===================
 
@@ -273,8 +302,7 @@ TASK_OUTPUTS = {
     #     "text": "《父老乡亲》是由是由由中国人民解放军海政文工团创作的军旅歌曲，石顺义作词，王锡仁作曲，范琳琳演唱",
     #     "spo_list": [{"subject": "石顺义", "predicate": "国籍", "object": "中国"}]
     # }
-    Tasks.relation_extraction:
-    [OutputKeys.UUID, OutputKeys.TEXT, OutputKeys.SPO_LIST],
+    Tasks.relation_extraction: [OutputKeys.SPO_LIST],
 
     # translation result for a source sentence
     #   {
@@ -488,6 +516,15 @@ TASK_OUTPUTS = {
     Tasks.generative_multi_modal_embedding:
     [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
 
+    # multi-modal similarity result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D],
+    #   "similarity": float
+    # }
+    Tasks.multi_modal_similarity:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+
     # VQA result for a sample
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],
@@ -503,4 +540,20 @@ TASK_OUTPUTS = {
     #       "labels": ["entailment", "contradiction", "neutral"]
     # }
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # {
+    #   'output': [
+    #     [{'label': '6527856', 'score': 0.9942756295204163}, {'label': '1000012000', 'score': 0.0379515215754509},
+    #      {'label': '13421097', 'score': 2.2825044965202324e-08}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}]]
+    # }
+    Tasks.faq_question_answering: [OutputKeys.OUTPUT],
+    # image person reid result for single sample
+    #   {
+    #       "img_embedding": np.array with shape [1, D],
+    #   }
+    Tasks.image_reid_person: [OutputKeys.IMG_EMBEDDING],
 }

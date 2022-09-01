@@ -11,10 +11,16 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
 from .ocr_utils import (SegLinkDetector, cal_width, combine_segments_python,
                         decode_segments_links_python, nms_python,
                         rboxes_to_polygons)
+
+if tf.__version__ >= '2.0':
+    import tf_slim as slim
+else:
+    from tensorflow.contrib import slim
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
@@ -51,66 +57,67 @@ class OCRDetectionPipeline(Pipeline):
             osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
             'checkpoint-80000')
 
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.allow_growth = True
-        self._session = tf.Session(config=config)
-        self.input_images = tf.placeholder(
-            tf.float32, shape=[1, 1024, 1024, 3], name='input_images')
-        self.output = {}
+        with device_placement(self.framework, self.device_name):
+            config = tf.ConfigProto(allow_soft_placement=True)
+            config.gpu_options.allow_growth = True
+            self._session = tf.Session(config=config)
+            self.input_images = tf.placeholder(
+                tf.float32, shape=[1, 1024, 1024, 3], name='input_images')
+            self.output = {}
 
-        with tf.variable_scope('', reuse=tf.AUTO_REUSE):
-            global_step = tf.get_variable(
-                'global_step', [],
-                initializer=tf.constant_initializer(0),
-                dtype=tf.int64,
-                trainable=False)
-            variable_averages = tf.train.ExponentialMovingAverage(
-                0.997, global_step)
+            with tf.variable_scope('', reuse=tf.AUTO_REUSE):
+                global_step = tf.get_variable(
+                    'global_step', [],
+                    initializer=tf.constant_initializer(0),
+                    dtype=tf.int64,
+                    trainable=False)
+                variable_averages = tf.train.ExponentialMovingAverage(
+                    0.997, global_step)
 
-            # detector
-            detector = SegLinkDetector()
-            all_maps = detector.build_model(
-                self.input_images, is_training=False)
+                # detector
+                detector = SegLinkDetector()
+                all_maps = detector.build_model(
+                    self.input_images, is_training=False)
 
-            # decode local predictions
-            all_nodes, all_links, all_reg = [], [], []
-            for i, maps in enumerate(all_maps):
-                cls_maps, lnk_maps, reg_maps = maps[0], maps[1], maps[2]
-                reg_maps = tf.multiply(reg_maps, OFFSET_VARIANCE)
+                # decode local predictions
+                all_nodes, all_links, all_reg = [], [], []
+                for i, maps in enumerate(all_maps):
+                    cls_maps, lnk_maps, reg_maps = maps[0], maps[1], maps[2]
+                    reg_maps = tf.multiply(reg_maps, OFFSET_VARIANCE)
 
-                cls_prob = tf.nn.softmax(tf.reshape(cls_maps, [-1, 2]))
+                    cls_prob = tf.nn.softmax(tf.reshape(cls_maps, [-1, 2]))
 
-                lnk_prob_pos = tf.nn.softmax(
-                    tf.reshape(lnk_maps, [-1, 4])[:, :2])
-                lnk_prob_mut = tf.nn.softmax(
-                    tf.reshape(lnk_maps, [-1, 4])[:, 2:])
-                lnk_prob = tf.concat([lnk_prob_pos, lnk_prob_mut], axis=1)
+                    lnk_prob_pos = tf.nn.softmax(
+                        tf.reshape(lnk_maps, [-1, 4])[:, :2])
+                    lnk_prob_mut = tf.nn.softmax(
+                        tf.reshape(lnk_maps, [-1, 4])[:, 2:])
+                    lnk_prob = tf.concat([lnk_prob_pos, lnk_prob_mut], axis=1)
 
-                all_nodes.append(cls_prob)
-                all_links.append(lnk_prob)
-                all_reg.append(reg_maps)
+                    all_nodes.append(cls_prob)
+                    all_links.append(lnk_prob)
+                    all_reg.append(reg_maps)
 
-            # decode segments and links
-            image_size = tf.shape(self.input_images)[1:3]
-            segments, group_indices, segment_counts, _ = decode_segments_links_python(
-                image_size,
-                all_nodes,
-                all_links,
-                all_reg,
-                anchor_sizes=list(detector.anchor_sizes))
+                # decode segments and links
+                image_size = tf.shape(self.input_images)[1:3]
+                segments, group_indices, segment_counts, _ = decode_segments_links_python(
+                    image_size,
+                    all_nodes,
+                    all_links,
+                    all_reg,
+                    anchor_sizes=list(detector.anchor_sizes))
 
-            # combine segments
-            combined_rboxes, combined_counts = combine_segments_python(
-                segments, group_indices, segment_counts)
-            self.output['combined_rboxes'] = combined_rboxes
-            self.output['combined_counts'] = combined_counts
+                # combine segments
+                combined_rboxes, combined_counts = combine_segments_python(
+                    segments, group_indices, segment_counts)
+                self.output['combined_rboxes'] = combined_rboxes
+                self.output['combined_counts'] = combined_counts
 
-        with self._session.as_default() as sess:
-            logger.info(f'loading model from {model_path}')
-            # load model
-            model_loader = tf.train.Saver(
-                variable_averages.variables_to_restore())
-            model_loader.restore(sess, model_path)
+            with self._session.as_default() as sess:
+                logger.info(f'loading model from {model_path}')
+                # load model
+                model_loader = tf.train.Saver(
+                    variable_averages.variables_to_restore())
+                model_loader.restore(sess, model_path)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)

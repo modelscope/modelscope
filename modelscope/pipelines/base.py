@@ -14,9 +14,10 @@ from modelscope.outputs import TASK_OUTPUTS
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Frameworks, ModelFile
+from modelscope.utils.device import (create_device, device_placement,
+                                     verify_device)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import create_device
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -41,7 +42,8 @@ class Pipeline(ABC):
             logger.info(f'initiate model from location {model}.')
             # expecting model has been prefetched to local cache beforehand
             return Model.from_pretrained(
-                model, model_prefetched=True) if is_model(model) else model
+                model, model_prefetched=True,
+                device=self.device_name) if is_model(model) else model
         elif isinstance(model, Model):
             return model
         else:
@@ -74,11 +76,15 @@ class Pipeline(ABC):
             config_file(str, optional): Filepath to configuration file.
             model: (list of) Model name or model object
             preprocessor: (list of) Preprocessor object
-            device (str): gpu device or cpu device to use
+            device (str): device str, should be either cpu, cuda, gpu, gpu:X or cuda:X
             auto_collate (bool): automatically to convert data to tensor or not.
         """
         if config_file is not None:
             self.cfg = Config.from_file(config_file)
+
+        verify_device(device)
+        self.device_name = device
+
         if not isinstance(model, List):
             self.model = self.initiate_single_model(model)
             self.models = [self.model]
@@ -94,15 +100,15 @@ class Pipeline(ABC):
         else:
             self.framework = None
 
-        assert device in ['gpu', 'cpu'], 'device should be either cpu or gpu.'
-        self.device_name = device
         if self.framework == Frameworks.torch:
-            self.device = create_device(self.device_name == 'cpu')
+            self.device = create_device(self.device_name)
         self._model_prepare = False
         self._model_prepare_lock = Lock()
         self._auto_collate = auto_collate
 
     def prepare_model(self):
+        """ Place model on certain device for pytorch models before first inference
+        """
         self._model_prepare_lock.acquire(timeout=600)
 
         def _prepare_single(model):
@@ -124,39 +130,6 @@ class Pipeline(ABC):
                     _prepare_single(self.model)
             self._model_prepare = True
         self._model_prepare_lock.release()
-
-    @contextmanager
-    def place_device(self):
-        """ device placement function, allow user to specify which device to place pipeline
-
-        Returns:
-            Context manager
-
-        Examples:
-
-        ```python
-        # Requests for using pipeline on cuda:0 for gpu
-        pipeline = pipeline(..., device='gpu')
-        with pipeline.device():
-            output = pipe(...)
-        ```
-        """
-        if self.framework == Frameworks.tf:
-            if self.device_name == 'cpu':
-                with tf.device('/CPU:0'):
-                    yield
-            else:
-                with tf.device('/device:GPU:0'):
-                    yield
-
-        elif self.framework == Frameworks.torch:
-            if self.device_name == 'gpu':
-                device = create_device()
-                if device.type == 'gpu':
-                    torch.cuda.set_device(device)
-            yield
-        else:
-            yield
 
     def _get_framework(self) -> str:
         frameworks = []
@@ -267,15 +240,16 @@ class Pipeline(ABC):
                 raise ValueError(f'Unsupported data type {type(data)}')
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
-        preprocess_params = kwargs.get('preprocess_params')
-        forward_params = kwargs.get('forward_params')
-        postprocess_params = kwargs.get('postprocess_params')
+        preprocess_params = kwargs.get('preprocess_params', {})
+        forward_params = kwargs.get('forward_params', {})
+        postprocess_params = kwargs.get('postprocess_params', {})
 
         out = self.preprocess(input, **preprocess_params)
-        with self.place_device():
-            if self.framework == Frameworks.torch and self._auto_collate:
+        with device_placement(self.framework, self.device_name):
+            if self.framework == Frameworks.torch:
                 with torch.no_grad():
-                    out = self._collate_fn(out)
+                    if self._auto_collate:
+                        out = self._collate_fn(out)
                     out = self.forward(out, **forward_params)
             else:
                 out = self.forward(out, **forward_params)

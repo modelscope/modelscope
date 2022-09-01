@@ -27,7 +27,8 @@ class OfaTextToImageSynthesisPreprocessor(OfaBasePreprocessor):
         self.max_src_length = 64
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        source = data['text'].lower().strip().split()[:self.max_src_length]
+        source = ' '.join(
+            data['text'].lower().strip().split()[:self.max_src_length])
         source = 'what is the complete image? caption: {}'.format(source)
         inputs = self.get_inputs(source)
         sample = {

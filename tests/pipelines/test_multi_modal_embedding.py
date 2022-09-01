@@ -31,11 +31,10 @@ class MultiModalEmbeddingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(self.model_id)
+        model = Model.from_pretrained(
+            self.model_id, revision=self.model_version)
         pipeline_multi_modal_embedding = pipeline(
-            task=Tasks.multi_modal_embedding,
-            model=model,
-            model_revision=self.model_version)
+            task=Tasks.multi_modal_embedding, model=model)
         text_embedding = pipeline_multi_modal_embedding(
             self.test_input)[OutputKeys.TEXT_EMBEDDING]
         print('l1-norm: {}'.format(

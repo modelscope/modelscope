@@ -6,7 +6,8 @@ import torch
 
 
 def point_form(boxes: torch.Tensor) -> torch.Tensor:
-    """Convert prior_boxes to (x_min, y_min, x_max, y_max) representation for comparison to point form ground truth data.
+    """Convert prior_boxes to (x_min, y_min, x_max, y_max) representation for comparison to point form \
+       ground truth data.
 
     Args:
         boxes: center-size default boxes from priorbox layers.

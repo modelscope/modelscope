@@ -21,7 +21,9 @@ if TYPE_CHECKING:
     from .space import SpaceForDialogModeling
     from .space import SpaceForDialogStateTracking
     from .star_text_to_sql import StarForTextToSql
-    from .task_models.task_model import SingleBackboneTaskModelBase
+    from .task_models import (InformationExtractionModel,
+                              SequenceClassificationModel,
+                              SingleBackboneTaskModelBase)
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
     from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
@@ -48,10 +50,13 @@ else:
             'SpaceForDialogIntent', 'SpaceForDialogModeling',
             'SpaceForDialogStateTracking'
         ],
-        'task_model': ['SingleBackboneTaskModelBase'],
+        'task_models': [
+            'InformationExtractionModel', 'SequenceClassificationModel',
+            'SingleBackboneTaskModelBase'
+        ],
         'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
         'gpt3': ['GPT3ForTextGeneration'],
-        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering']
+        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
     }
 
     import sys

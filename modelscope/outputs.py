@@ -302,8 +302,7 @@ TASK_OUTPUTS = {
     #     "text": "《父老乡亲》是由是由由中国人民解放军海政文工团创作的军旅歌曲，石顺义作词，王锡仁作曲，范琳琳演唱",
     #     "spo_list": [{"subject": "石顺义", "predicate": "国籍", "object": "中国"}]
     # }
-    Tasks.relation_extraction:
-    [OutputKeys.UUID, OutputKeys.TEXT, OutputKeys.SPO_LIST],
+    Tasks.relation_extraction: [OutputKeys.SPO_LIST],
 
     # translation result for a source sentence
     #   {

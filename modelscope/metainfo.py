@@ -69,6 +69,7 @@ class Models(object):
 class TaskModels(object):
     # nlp task
     text_classification = 'text-classification'
+    information_extraction = 'information-extraction'
 
 
 class Heads(object):
@@ -78,6 +79,7 @@ class Heads(object):
     bert_mlm = 'bert-mlm'
     # roberta mlm
     roberta_mlm = 'roberta-mlm'
+    information_extraction = 'information-extraction'
 
 
 class Pipelines(object):
@@ -156,6 +158,7 @@ class Pipelines(object):
     text_error_correction = 'text-error-correction'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
 
     # audio tasks
@@ -248,6 +251,7 @@ class Preprocessors(object):
     fill_mask = 'fill-mask'
     faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
 
     # audio preprocessor

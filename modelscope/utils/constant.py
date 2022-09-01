@@ -99,6 +99,7 @@ class NLPTasks(object):
     text_error_correction = 'text-error-correction'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'
 
 

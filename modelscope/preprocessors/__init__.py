@@ -22,7 +22,8 @@ if TYPE_CHECKING:
                       PairSentenceClassificationPreprocessor,
                       FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
                       NERPreprocessor, TextErrorCorrectionPreprocessor,
-                      FaqQuestionAnsweringPreprocessor)
+                      FaqQuestionAnsweringPreprocessor,
+                      RelationExtractionPreprocessor)
     from .slp import DocumentSegmentationPreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
@@ -51,7 +52,8 @@ else:
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
             'TextErrorCorrectionPreprocessor',
-            'FaqQuestionAnsweringPreprocessor'
+            'FaqQuestionAnsweringPreprocessor',
+            'RelationExtractionPreprocessor'
         ],
         'slp': ['DocumentSegmentationPreprocessor'],
         'space': [

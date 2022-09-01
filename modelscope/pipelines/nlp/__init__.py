@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .fill_mask_pipeline import FillMaskPipeline
+    from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
     from .single_sentence_classification_pipeline import SingleSentenceClassificationPipeline
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from .text_classification_pipeline import TextClassificationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
+    from .relation_extraction_pipeline import RelationExtractionPipeline
 
 else:
     _import_structure = {
@@ -33,6 +35,7 @@ else:
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
+        'information_extraction_pipeline': ['InformationExtractionPipeline'],
         'single_sentence_classification_pipeline':
         ['SingleSentenceClassificationPipeline'],
         'pair_sentence_classification_pipeline':
@@ -48,7 +51,8 @@ else:
         'summarization_pipeline': ['SummarizationPipeline'],
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
-        'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline']
+        'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline'],
+        'relation_extraction_pipeline': ['RelationExtractionPipeline']
     }
 
     import sys

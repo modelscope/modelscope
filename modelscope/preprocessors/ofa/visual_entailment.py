@@ -6,21 +6,27 @@ from PIL import Image
 from torchvision import transforms
 
 from modelscope.preprocessors.image import load_image
+from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
 
 class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 model_dir,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
             model_dir (str): model path,
-            split: data phase
+            mode: preprocessor mode (model mode)
         """
         super(OfaVisualEntailmentPreprocessor,
-              self).__init__(cfg, model_dir, split, *args, **kwargs)
+              self).__init__(cfg, model_dir, mode, *args, **kwargs)
         # Initialize transform
         self.patch_resize_transform = transforms.Compose([
             lambda image: image.convert('RGB'),

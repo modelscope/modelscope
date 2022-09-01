@@ -172,6 +172,7 @@ class OfaTasksTest(unittest.TestCase):
         ofa_pipe = pipeline(Tasks.visual_grounding, model=model)
         image = 'data/test/images/visual_grounding.png'
         text = '一个圆头的蓝色宝可梦'
+        text = '火'
         input = {'image': image, 'text': text}
         result = ofa_pipe(input)
         print(result)

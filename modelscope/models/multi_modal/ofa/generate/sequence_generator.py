@@ -398,10 +398,27 @@ class SequenceGenerator(nn.Module):
             if self.should_set_src_lengths:
                 self.search.set_src_lengths(src_lengths)
 
-            if self.repeat_ngram_blocker is not None and step > prefix_tokens.size(
-                    1):
-                lprobs = self.repeat_ngram_blocker(tokens, lprobs, bsz,
-                                                   beam_size, step)
+            if self.repeat_ngram_blocker is not None:
+                # process prefix_tokens
+                p_toks_len = prefix_tokens.ne(self.pad).sum(
+                    dim=1) if prefix_tokens is not None else None
+                if p_toks_len is not None:
+                    p_toks_len_beam = p_toks_len.unsqueeze(-1).repeat(
+                        1, beam_size).view(-1)
+                    no_repeat_ngram_size = self.repeat_ngram_blocker.no_repeat_ngram_size
+                    out_prefix = p_toks_len_beam < (
+                        step + no_repeat_ngram_size - 1)
+                else:
+                    out_prefix = [True] * bsz * beam_size
+                ngram_blocker_tokens = tokens[out_prefix]
+                ngram_blocker_lprobs = lprobs[out_prefix]
+                ngram_blocker_bsz = out_prefix.sum() // beam_size
+                lprobs[out_prefix] = self.repeat_ngram_blocker(
+                    tokens=ngram_blocker_tokens,
+                    lprobs=ngram_blocker_lprobs,
+                    bsz=ngram_blocker_bsz,
+                    beam_size=beam_size,
+                    step=step)
 
             # Shape: (batch, cand_size)
             cand_scores, cand_indices, cand_beams = self.search.step(

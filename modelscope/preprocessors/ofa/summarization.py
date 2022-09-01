@@ -1,21 +1,27 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
+from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
 
 class OfaSummarizationPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 model_dir,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
             model_dir (str): model path,
-            split: data phase
+            mode: preprocessor mode (model mode)
         """
         super(OfaSummarizationPreprocessor,
-              self).__init__(cfg, model_dir, split, *args, **kwargs)
+              self).__init__(cfg, model_dir, mode, *args, **kwargs)
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         source = super().pre_caption(

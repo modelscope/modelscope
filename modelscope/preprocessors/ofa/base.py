@@ -13,7 +13,7 @@ from .utils.random_help import set_torch_seed
 
 class OfaBasePreprocessor:
 
-    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+    def __init__(self, cfg, model_dir, mode, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
 
         Args:
@@ -21,6 +21,7 @@ class OfaBasePreprocessor:
             model_dir (str): model path
         """
         self.cfg = cfg
+        self.mode = mode
         self.language = self.cfg.model.get('language', 'en')
         if self.language == 'en':
             tokenizer = OFATokenizer.from_pretrained(model_dir)

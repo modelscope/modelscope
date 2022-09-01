@@ -3,21 +3,27 @@ from typing import Any, Dict
 
 import torch
 
+from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
 
 class OfaTextToImageSynthesisPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 model_dir,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
             model_dir (str): model path,
-            split: data phase
+            mode: preprocessor mode (model mode)
         """
         super(OfaTextToImageSynthesisPreprocessor,
-              self).__init__(cfg, model_dir, split, *args, **kwargs)
+              self).__init__(cfg, model_dir, mode, *args, **kwargs)
         self.max_src_length = 64
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:

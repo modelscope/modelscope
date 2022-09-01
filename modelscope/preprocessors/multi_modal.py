@@ -11,7 +11,7 @@ from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields, ModelFile, Tasks
+from modelscope.utils.constant import Fields, ModeKeys, ModelFile, Tasks
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 from .ofa import *  # noqa
@@ -27,11 +27,16 @@ __all__ = [
     Fields.multi_modal, module_name=Preprocessors.ofa_tasks_preprocessor)
 class OfaPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self,
+                 model_dir: str,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             model_dir (str): model path
+            mode: preprocessor mode (model mode)
         """
         super().__init__(*args, **kwargs)
         preprocess_mapping = {
@@ -59,8 +64,8 @@ class OfaPreprocessor(Preprocessor):
             model_dir)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
-        self.preprocess = preprocess_mapping[self.cfg.task](self.cfg,
-                                                            model_dir)
+        self.preprocess = preprocess_mapping[self.cfg.task](
+            cfg=self.cfg, model_dir=model_dir, mode=mode)
         self.keys = input_key_mapping[self.cfg.task]
         self.tokenizer = self.preprocess.tokenizer
 

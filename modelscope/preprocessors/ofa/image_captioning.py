@@ -12,16 +12,21 @@ from .base import OfaBasePreprocessor
 
 class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
 
-    def __init__(self, cfg, model_dir, split, *args, **kwargs):
+    def __init__(self,
+                 cfg,
+                 model_dir,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
             model_dir (str): model path,
-            split: data phase
+            mode: preprocessor mode (model mode)
         """
         super(OfaImageCaptioningPreprocessor,
-              self).__init__(cfg, model_dir, split, *args, **kwargs)
+              self).__init__(cfg, model_dir, mode, *args, **kwargs)
         # Initialize transform
         self.patch_resize_transform = transforms.Compose([
             lambda image: image.convert('RGB'),

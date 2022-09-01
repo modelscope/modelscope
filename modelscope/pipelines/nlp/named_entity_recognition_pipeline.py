@@ -84,6 +84,9 @@ class NamedEntityRecognitionPipeline(Pipeline):
                     entity['span'] = text[entity['start']:entity['end']]
                     entities.append(entity)
                     entity = {}
+        if entity:
+            entity['span'] = text[entity['start']:entity['end']]
+            entities.append(entity)
         outputs = {OutputKeys.OUTPUT: entities}
 
         return outputs

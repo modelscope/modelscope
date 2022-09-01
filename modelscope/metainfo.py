@@ -44,6 +44,7 @@ class Models(object):
     space_modeling = 'space-modeling'
     star = 'star'
     tcrf = 'transformer-crf'
+    lcrf = 'lstm-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
     bert_for_ds = 'bert-for-document-segmentation'

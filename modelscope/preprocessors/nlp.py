@@ -5,8 +5,7 @@ import uuid
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
-import torch
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BertTokenizerFast
 
 from modelscope.metainfo import Models, Preprocessors
 from modelscope.outputs import OutputKeys
@@ -539,8 +538,13 @@ class NERPreprocessor(Preprocessor):
 
         self.model_dir: str = model_dir
         self.sequence_length = kwargs.pop('sequence_length', 512)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_dir, use_fast=True)
+        self.is_transformer_based_model = 'lstm' not in model_dir
+        if self.is_transformer_based_model:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_dir, use_fast=True)
+        else:
+            self.tokenizer = BertTokenizerFast.from_pretrained(
+                model_dir, use_fast=True)
         self.is_split_into_words = self.tokenizer.init_kwargs.get(
             'is_split_into_words', False)
 
@@ -604,6 +608,11 @@ class NERPreprocessor(Preprocessor):
                 else:
                     label_mask.append(1)
                     offset_mapping.append(encodings['offset_mapping'][i])
+
+        if not self.is_transformer_based_model:
+            input_ids = input_ids[1:-1]
+            attention_mask = attention_mask[1:-1]
+            label_mask = label_mask[1:-1]
         return {
             'text': text,
             'input_ids': input_ids,

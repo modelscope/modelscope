@@ -11,7 +11,9 @@ if TYPE_CHECKING:
     from .csanmt_for_translation import CsanmtForTranslation
     from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
                                   BertForMaskedLM)
-    from .nncrf_for_named_entity_recognition import TransformerCRFForNamedEntityRecognition
+    from .nncrf_for_named_entity_recognition import (
+        TransformerCRFForNamedEntityRecognition,
+        LSTMCRFForNamedEntityRecognition)
     from .palm_v2 import PalmForTextGeneration
     from .token_classification import SbertForTokenClassification
     from .sequence_classification import VecoForSequenceClassification, SbertForSequenceClassification
@@ -34,8 +36,10 @@ else:
         'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
         'masked_language':
         ['StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM'],
-        'nncrf_for_named_entity_recognition':
-        ['TransformerCRFForNamedEntityRecognition'],
+        'nncrf_for_named_entity_recognition': [
+            'TransformerCRFForNamedEntityRecognition',
+            'LSTMCRFForNamedEntityRecognition'
+        ],
         'palm_v2': ['PalmForTextGeneration'],
         'token_classification': ['SbertForTokenClassification'],
         'sequence_classification':

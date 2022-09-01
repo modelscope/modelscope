@@ -37,6 +37,7 @@ class Models(object):
     bert = 'bert'
     palm = 'palm-v2'
     structbert = 'structbert'
+    deberta_v2 = 'deberta_v2'
     veco = 'veco'
     translation = 'csanmt-translation'
     space_dst = 'space-dst'

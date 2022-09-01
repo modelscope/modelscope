@@ -9,12 +9,15 @@ if TYPE_CHECKING:
     from .bert_for_sequence_classification import BertForSequenceClassification
     from .bert_for_document_segmentation import BertForDocumentSegmentation
     from .csanmt_for_translation import CsanmtForTranslation
-    from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
-                                  BertForMaskedLM)
+    from .masked_language import (
+        StructBertForMaskedLM,
+        VecoForMaskedLM,
+        BertForMaskedLM,
+        DebertaV2ForMaskedLM,
+    )
     from .nncrf_for_named_entity_recognition import (
         TransformerCRFForNamedEntityRecognition,
         LSTMCRFForNamedEntityRecognition)
-    from .palm_v2 import PalmForTextGeneration
     from .token_classification import SbertForTokenClassification
     from .sequence_classification import VecoForSequenceClassification, SbertForSequenceClassification
     from .space import SpaceForDialogIntent
@@ -22,7 +25,6 @@ if TYPE_CHECKING:
     from .space import SpaceForDialogStateTracking
     from .star_text_to_sql import StarForTextToSql
     from .task_models import (InformationExtractionModel,
-                              SequenceClassificationModel,
                               SingleBackboneTaskModelBase)
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
@@ -36,8 +38,10 @@ else:
         'csanmt_for_translation': ['CsanmtForTranslation'],
         'bert_for_sequence_classification': ['BertForSequenceClassification'],
         'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
-        'masked_language':
-        ['StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM'],
+        'masked_language': [
+            'StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM',
+            'DebertaV2ForMaskedLM'
+        ],
         'nncrf_for_named_entity_recognition': [
             'TransformerCRFForNamedEntityRecognition',
             'LSTMCRFForNamedEntityRecognition'

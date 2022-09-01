@@ -99,6 +99,7 @@ class Pipelines(object):
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    hicossl_video_embedding = 'hicossl-s3dg-video_embedding'
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     body_3d_keypoints = 'canonical_body-3d-keypoints_video'
     human_detection = 'resnet18-human-detection'

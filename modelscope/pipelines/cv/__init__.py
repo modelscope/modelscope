@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
+    from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
     from .crowd_counting_pipeline import CrowdCountingPipeline
     from .image_detection_pipeline import ImageDetectionPipeline
     from .image_salient_detection_pipeline import ImageSalientDetectionPipeline
@@ -51,6 +52,7 @@ else:
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
+        'hicossl_video_embedding_pipeline': ['HICOSSLVideoEmbeddingPipeline'],
         'crowd_counting_pipeline': ['CrowdCountingPipeline'],
         'image_detection_pipeline': ['ImageDetectionPipeline'],
         'image_salient_detection_pipeline': ['ImageSalientDetectionPipeline'],

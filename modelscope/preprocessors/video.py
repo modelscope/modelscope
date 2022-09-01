@@ -16,34 +16,49 @@ from .base import Preprocessor
 from .builder import PREPROCESSORS
 
 
-def ReadVideoData(cfg, video_path):
+def ReadVideoData(cfg,
+                  video_path,
+                  num_spatial_crops_override=None,
+                  num_temporal_views_override=None):
     """ simple interface to load video frames from file
 
     Args:
         cfg (Config): The global config object.
         video_path (str): video file path
+        num_spatial_crops_override (int): the spatial crops per clip
+        num_temporal_views_override (int): the temporal clips per video
+    Returns:
+        data (Tensor): the normalized video clips for model inputs
     """
-    data = _decode_video(cfg, video_path)
-    transform = kinetics400_tranform(cfg)
+    data = _decode_video(cfg, video_path, num_temporal_views_override)
+    if num_spatial_crops_override is not None:
+        num_spatial_crops = num_spatial_crops_override
+        transform = kinetics400_tranform(cfg, num_spatial_crops_override)
+    else:
+        num_spatial_crops = cfg.TEST.NUM_SPATIAL_CROPS
+        transform = kinetics400_tranform(cfg, cfg.TEST.NUM_SPATIAL_CROPS)
     data_list = []
     for i in range(data.size(0)):
-        for j in range(cfg.TEST.NUM_SPATIAL_CROPS):
+        for j in range(num_spatial_crops):
             transform.transforms[1].set_spatial_index(j)
             data_list.append(transform(data[i]))
     return torch.stack(data_list, dim=0)
 
 
-def kinetics400_tranform(cfg):
+def kinetics400_tranform(cfg, num_spatial_crops):
     """
     Configs the transform for the kinetics-400 dataset.
     We apply controlled spatial cropping and normalization.
     Args:
         cfg (Config): The global config object.
+        num_spatial_crops (int): the spatial crops per clip
+    Returns:
+        transform_function (Compose): the transform function for input clips
     """
     resize_video = KineticsResizedCrop(
         short_side_range=[cfg.DATA.TEST_SCALE, cfg.DATA.TEST_SCALE],
         crop_size=cfg.DATA.TEST_CROP_SIZE,
-        num_spatial_crops=cfg.TEST.NUM_SPATIAL_CROPS)
+        num_spatial_crops=num_spatial_crops)
     std_transform_list = [
         transforms.ToTensorVideo(), resize_video,
         transforms.NormalizeVideo(
@@ -60,17 +75,17 @@ def _interval_based_sampling(vid_length, vid_fps, target_fps, clip_idx,
             vid_length  (int): the length of the whole video (valid selection range).
             vid_fps     (int): the original video fps
             target_fps  (int): the normalized video fps
-            clip_idx    (int): -1 for random temporal sampling, and positive values for
-                                sampling specific clip from the video
+            clip_idx    (int): -1 for random temporal sampling, and positive values for sampling specific
+                                clip from the video
             num_clips   (int): the total clips to be sampled from each video.
-                                combined with clip_idx, the sampled video is the "clip_idx-th"
-                                 video from "num_clips" videos.
+                                combined with clip_idx, the sampled video is the "clip_idx-th" video from
+                                "num_clips" videos.
             num_frames  (int): number of frames in each sampled clips.
             interval    (int): the interval to sample each frame.
             minus_interval (bool): control the end index
         Returns:
             index (tensor): the sampled frame indexes
-        """
+    """
     if num_frames == 1:
         index = [random.randint(0, vid_length - 1)]
     else:
@@ -78,7 +93,10 @@ def _interval_based_sampling(vid_length, vid_fps, target_fps, clip_idx,
         clip_length = num_frames * interval * vid_fps / target_fps
 
         max_idx = max(vid_length - clip_length, 0)
-        start_idx = clip_idx * math.floor(max_idx / (num_clips - 1))
+        if num_clips == 1:
+            start_idx = max_idx / 2
+        else:
+            start_idx = clip_idx * math.floor(max_idx / (num_clips - 1))
         if minus_interval:
             end_idx = start_idx + clip_length - interval
         else:
@@ -90,59 +108,79 @@ def _interval_based_sampling(vid_length, vid_fps, target_fps, clip_idx,
     return index
 
 
-def _decode_video_frames_list(cfg, frames_list, vid_fps):
+def _decode_video_frames_list(cfg,
+                              frames_list,
+                              vid_fps,
+                              num_temporal_views_override=None):
     """
         Decodes the video given the numpy frames.
         Args:
             cfg          (Config): The global config object.
             frames_list  (list):  all frames for a video, the frames should be numpy array.
             vid_fps      (int):  the fps of this video.
+            num_temporal_views_override (int): the temporal clips per video
         Returns:
             frames            (Tensor): video tensor data
     """
     assert isinstance(frames_list, list)
-    num_clips_per_video = cfg.TEST.NUM_ENSEMBLE_VIEWS
+    if num_temporal_views_override is not None:
+        num_clips_per_video = num_temporal_views_override
+    else:
+        num_clips_per_video = cfg.TEST.NUM_ENSEMBLE_VIEWS
 
     frame_list = []
     for clip_idx in range(num_clips_per_video):
         # for each clip in the video,
         # a list is generated before decoding the specified frames from the video
         list_ = _interval_based_sampling(
-            len(frames_list), vid_fps, cfg.DATA.TARGET_FPS, clip_idx,
-            num_clips_per_video, cfg.DATA.NUM_INPUT_FRAMES,
-            cfg.DATA.SAMPLING_RATE, cfg.DATA.MINUS_INTERVAL)
+            len(frames_list),
+            vid_fps,
+            cfg.DATA.TARGET_FPS,
+            clip_idx,
+            num_clips_per_video,
+            cfg.DATA.NUM_INPUT_FRAMES,
+            cfg.DATA.SAMPLING_RATE,
+            cfg.DATA.MINUS_INTERVAL,
+        )
         frames = None
         frames = torch.from_numpy(
-            np.stack([frames_list[l_index] for l_index in list_.tolist()],
-                     axis=0))
+            np.stack([frames_list[index] for index in list_.tolist()], axis=0))
         frame_list.append(frames)
     frames = torch.stack(frame_list)
-    if num_clips_per_video == 1:
-        frames = frames.squeeze(0)
-
+    del vr
     return frames
 
 
-def _decode_video(cfg, path):
+def _decode_video(cfg, path, num_temporal_views_override=None):
     """
         Decodes the video given the numpy frames.
         Args:
+            cfg          (Config): The global config object.
             path          (str): video file path.
+            num_temporal_views_override (int): the temporal clips per video
         Returns:
             frames            (Tensor): video tensor data
     """
     vr = VideoReader(path)
-
-    num_clips_per_video = cfg.TEST.NUM_ENSEMBLE_VIEWS
+    if num_temporal_views_override is not None:
+        num_clips_per_video = num_temporal_views_override
+    else:
+        num_clips_per_video = cfg.TEST.NUM_ENSEMBLE_VIEWS
 
     frame_list = []
     for clip_idx in range(num_clips_per_video):
         # for each clip in the video,
         # a list is generated before decoding the specified frames from the video
         list_ = _interval_based_sampling(
-            len(vr), vr.get_avg_fps(), cfg.DATA.TARGET_FPS, clip_idx,
-            num_clips_per_video, cfg.DATA.NUM_INPUT_FRAMES,
-            cfg.DATA.SAMPLING_RATE, cfg.DATA.MINUS_INTERVAL)
+            len(vr),
+            vr.get_avg_fps(),
+            cfg.DATA.TARGET_FPS,
+            clip_idx,
+            num_clips_per_video,
+            cfg.DATA.NUM_INPUT_FRAMES,
+            cfg.DATA.SAMPLING_RATE,
+            cfg.DATA.MINUS_INTERVAL,
+        )
         frames = None
         if path.endswith('.avi'):
             append_list = torch.arange(0, list_[0], 4)
@@ -155,8 +193,6 @@ def _decode_video(cfg, path):
                 vr.get_batch(list_).to_dlpack()).clone()
         frame_list.append(frames)
     frames = torch.stack(frame_list)
-    if num_clips_per_video == 1:
-        frames = frames.squeeze(0)
     del vr
     return frames
 
@@ -222,6 +258,29 @@ class KineticsResizedCrop(object):
                 elif new_clip_height == length:
                     x = x_max
                     y = y_max // 2
+        return new_clip[:, :, y:y + self.crop_size, x:x + self.crop_size]
+
+    def _get_random_crop(self, clip):
+        _, _, clip_height, clip_width = clip.shape
+
+        short_side = min(clip_height, clip_width)
+        long_side = max(clip_height, clip_width)
+        new_short_side = int(random.uniform(*self.short_side_range))
+        new_long_side = int(long_side / short_side * new_short_side)
+        if clip_height < clip_width:
+            new_clip_height = new_short_side
+            new_clip_width = new_long_side
+        else:
+            new_clip_height = new_long_side
+            new_clip_width = new_short_side
+
+        new_clip = torch.nn.functional.interpolate(
+            clip, size=(new_clip_height, new_clip_width), mode='bilinear')
+
+        x_max = int(new_clip_width - self.crop_size)
+        y_max = int(new_clip_height - self.crop_size)
+        x = int(random.uniform(0, x_max))
+        y = int(random.uniform(0, y_max))
         return new_clip[:, :, y:y + self.crop_size, x:x + self.crop_size]
 
     def set_spatial_index(self, idx):

@@ -1,3 +1,9 @@
+"""
+class ComplexConv2d, ComplexConvTranspose2d and ComplexBatchNorm2d are the work of
+Jongho Choi(sweetcocoa@snu.ac.kr / Seoul National Univ., ESTsoft ).
+from https://github.com/sweetcocoa/DeepComplexUNetPyTorch
+
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

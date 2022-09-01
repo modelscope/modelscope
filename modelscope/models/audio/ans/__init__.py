@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .frcrn import FRCRNModel
+    from .frcrn import FRCRNDecorator
 
 else:
     _import_structure = {
-        'frcrn': ['FRCRNModel'],
+        'frcrn': ['FRCRNDecorator'],
     }
 
     import sys

@@ -1,10 +1,5 @@
-import time
-from typing import List, Optional, Union
-
-from datasets import Dataset
-
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.metainfo import Trainers
-from modelscope.preprocessors import Preprocessor
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.constant import TrainerStages

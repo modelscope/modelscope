@@ -149,7 +149,7 @@ class OCRDetectionPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         rboxes = inputs['combined_rboxes'][0]
         count = inputs['combined_counts'][0]
-        if count==0 or count < rboxes.shape[0]:
+        if count == 0 or count < rboxes.shape[0]:
             raise Exception("No text detected")
         rboxes = rboxes[:count, :]
 

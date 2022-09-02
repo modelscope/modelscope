@@ -1,0 +1,31 @@
+# envs option allows fine-grained control for test executoin, for example,
+# python tests/run.py --env pytorch
+# would only trigger exeutions of all pytorch cases.
+# envs option defaults to None for backward compatbility
+isolated:  # test cases that may require excessive anmount of GPU memory, which will be executed in dedicagted process.
+  - test_text_to_speech.py
+  - test_multi_modal_embedding.py
+  - test_ofa_tasks.py
+  - test_video_summarization.py
+  - test_dialog_modeling.py
+  - test_csanmt_translation.py
+
+envs:
+  default: # default env, case not in other env will in default, pytorch.
+    dependencies: # requirement packages，pip install before test case run.
+      - numpy>=1.20
+  tensorflow1x: #  cases excuted  tensorflow1.x framework.
+    requirements: # requirements files run before test case run.
+      - tensorflow1x.txt
+    dependencies: # requirement packages，pip install before test case run.
+      - numpy==1.18.5
+    tests:
+      - test_text_to_speech.py
+      - test_csanmt_translation.py
+      - test_translation_trainer.py
+      - test_ocr_detection.py
+      - test_automatic_speech_recognition.py
+      - test_image_matting.py
+      - test_person_image_cartoon.py
+      - test_skin_retouching.py
+      - test_image_style_transfer.py

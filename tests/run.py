@@ -21,6 +21,7 @@ import pandas
 #         if 'import tensorflow' in front of 'import torch'.
 #         Puting a 'import torch' here can bypass this incompatibility.
 import torch
+import yaml
 
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import set_test_level, test_level
@@ -61,6 +62,7 @@ def statistics_test_result(df):
         result, total_cases, success_cases, failures_cases, error_cases,
         skipped_cases, expected_failure_cases, unexpected_success_cases)
 
+    print('Testing result summary.')
     print(result_msg)
     if result == 'FAILED':
         sys.exit(1)
@@ -88,6 +90,7 @@ def gather_test_suites_files(test_dir, pattern):
         for file in filenames:
             if fnmatch(file, pattern):
                 case_file_list.append(file)
+
     return case_file_list
 
 
@@ -125,18 +128,6 @@ def collect_test_results(case_results):
     return result_list
 
 
-class TestSuiteRunner:
-
-    def run(self, msg_queue, test_dir, test_suite_file):
-        test_suite = unittest.TestSuite()
-        test_case = unittest.defaultTestLoader.discover(
-            start_dir=test_dir, pattern=test_suite_file)
-        test_suite.addTest(test_case)
-        runner = TimeCostTextTestRunner()
-        test_suite_result = runner.run(test_suite)
-        msg_queue.put(collect_test_results(test_suite_result))
-
-
 def run_command_with_popen(cmd):
     with subprocess.Popen(
             cmd,
@@ -148,55 +139,126 @@ def run_command_with_popen(cmd):
             sys.stdout.write(line)
 
 
+def save_test_result(df, args):
+    if args.result_dir is not None:
+        file_name = str(int(datetime.datetime.now().timestamp() * 1000))
+        os.umask(0)
+        Path(args.result_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
+        Path(os.path.join(args.result_dir, file_name)).touch(
+            mode=0o666, exist_ok=True)
+        df.to_pickle(os.path.join(args.result_dir, file_name))
+
+
+def run_command(cmd):
+    logger.info('Running command: %s' % ' '.join(cmd))
+    response = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        response.check_returncode()
+        logger.info(response.stdout.decode('utf8'))
+    except subprocess.CalledProcessError as error:
+        logger.error(
+            'stdout: %s, stderr: %s' %
+            (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
+
+
+def install_packages(pkgs):
+    cmd = [sys.executable, '-m', 'pip', 'install']
+    for pkg in pkgs:
+        cmd.append(pkg)
+
+    run_command(cmd)
+
+
+def install_requirements(requirements):
+    for req in requirements:
+        cmd = [
+            sys.executable, '-m', 'pip', 'install', '-r',
+            'requirements/%s' % req, '-f',
+            'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
+        ]
+        run_command(cmd)
+
+
+def run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
+                    result_dir):
+    # install requirements and deps # run_config['envs'][env]
+    if 'requirements' in env:
+        install_requirements(env['requirements'])
+    if 'dependencies' in env:
+        install_packages(env['dependencies'])
+
+    for test_suite_file in isolated_cases:  # run case in subprocess
+        if test_suite_file in test_suite_env_map and test_suite_env_map[
+                test_suite_file] == env_name:
+            cmd = [
+                'python',
+                'tests/run.py',
+                '--pattern',
+                test_suite_file,
+                '--result_dir',
+                result_dir,
+            ]
+            run_command_with_popen(cmd)
+        else:
+            pass  # case not in run list.
+
+    # run remain cases in a process.
+    remain_suite_files = []
+    for k, v in test_suite_env_map.items():
+        if k not in isolated_cases and v == env_name:
+            remain_suite_files.append(k)
+    if len(remain_suite_files) == 0:
+        return
+    cmd = ['python', 'tests/run.py', '--result_dir', result_dir, '--suites']
+    for suite in remain_suite_files:
+        cmd.append(suite)
+    run_command_with_popen(cmd)
+
+
 def run_in_subprocess(args):
     # only case args.isolated_cases run in subporcess, all other run in a subprocess
     test_suite_files = gather_test_suites_files(
         os.path.abspath(args.test_dir), args.pattern)
+    run_config = None
+    isolated_cases = []
+    test_suite_env_map = {}
+    # put all the case in default env.
+    for test_suite_file in test_suite_files:
+        test_suite_env_map[test_suite_file] = 'default'
+
+    if args.run_config is not None and Path(args.run_config).exists():
+        with open(args.run_config) as f:
+            run_config = yaml.load(f, Loader=yaml.FullLoader)
+        if 'isolated' in run_config:
+            isolated_cases = run_config['isolated']
+
+        if 'envs' in run_config:
+            for env in run_config['envs']:
+                if env != 'default':
+                    for test_suite in run_config['envs'][env]['tests']:
+                        if test_suite in test_suite_env_map:
+                            test_suite_env_map[test_suite] = env
 
     if args.subprocess:  # run all case in subprocess
         isolated_cases = test_suite_files
-    else:
-        isolated_cases = []
-        with open(args.isolated_cases, 'r') as f:
-            for line in f:
-                if line.strip() in test_suite_files:
-                    isolated_cases.append(line.strip())
 
-    if not args.list_tests:
-        with tempfile.TemporaryDirectory() as temp_result_dir:
-            for test_suite_file in isolated_cases:  # run case in subprocess
-                cmd = [
-                    'python', 'tests/run.py', '--pattern', test_suite_file,
-                    '--result_dir', temp_result_dir
-                ]
-                run_command_with_popen(cmd)
-            result_dfs = []
-            # run remain cases in a process.
-            remain_suite_files = [
-                item for item in test_suite_files if item not in isolated_cases
-            ]
-            test_suite = gather_test_suites_in_files(args.test_dir,
-                                                     remain_suite_files,
-                                                     args.list_tests)
-            if test_suite.countTestCases() > 0:
-                runner = TimeCostTextTestRunner()
-                result = runner.run(test_suite)
-                result = collect_test_results(result)
-                df = test_cases_result_to_df(result)
+    with tempfile.TemporaryDirectory() as temp_result_dir:
+        for env in set(test_suite_env_map.values()):
+            run_case_in_env(env, run_config['envs'][env], test_suite_env_map,
+                            isolated_cases, temp_result_dir)
+
+        result_dfs = []
+        result_path = Path(temp_result_dir)
+        for result in result_path.iterdir():
+            if Path.is_file(result):
+                df = pandas.read_pickle(result)
                 result_dfs.append(df)
-
-            # collect test results
-            result_path = Path(temp_result_dir)
-            for result in result_path.iterdir():
-                if Path.is_file(result):
-                    df = pandas.read_pickle(result)
-                    result_dfs.append(df)
-
-            result_pd = pandas.concat(
-                result_dfs)  # merge result of every test suite.
-            print_table_result(result_pd)
-            print_abnormal_case_info(result_pd)
-            statistics_test_result(result_pd)
+        result_pd = pandas.concat(
+            result_dfs)  # merge result of every test suite.
+        print_table_result(result_pd)
+        print_abnormal_case_info(result_pd)
+        statistics_test_result(result_pd)
 
 
 def get_object_full_name(obj):
@@ -293,15 +355,19 @@ def print_table_result(df):
 
 def main(args):
     runner = TimeCostTextTestRunner()
-    test_suite = gather_test_cases(
-        os.path.abspath(args.test_dir), args.pattern, args.list_tests)
+    if args.suites is not None and len(args.suites) > 0:
+        logger.info('Running: %s' % ' '.join(args.suites))
+        test_suite = gather_test_suites_in_files(args.test_dir, args.suites,
+                                                 args.list_tests)
+    else:
+        test_suite = gather_test_cases(
+            os.path.abspath(args.test_dir), args.pattern, args.list_tests)
     if not args.list_tests:
         result = runner.run(test_suite)
         result = collect_test_results(result)
         df = test_cases_result_to_df(result)
         if args.result_dir is not None:
-            file_name = str(int(datetime.datetime.now().timestamp() * 1000))
-            df.to_pickle(os.path.join(args.result_dir, file_name))
+            save_test_result(df, args)
         else:
             print_table_result(df)
             print_abnormal_case_info(df)
@@ -321,9 +387,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--disable_profile', action='store_true', help='disable profiling')
     parser.add_argument(
-        '--isolated_cases',
+        '--run_config',
         default=None,
-        help='specified isolated cases config file')
+        help='specified case run config file(yaml file)')
     parser.add_argument(
         '--subprocess',
         action='store_true',
@@ -332,6 +398,10 @@ if __name__ == '__main__':
         '--result_dir',
         default=None,
         help='Save result to directory, internal use only')
+    parser.add_argument(
+        '--suites',
+        nargs='*',
+        help='Run specified test suites(test suite file list)')
     args = parser.parse_args()
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'
@@ -340,10 +410,7 @@ if __name__ == '__main__':
         from utils import profiler
         logger.info('enable profile ...')
         profiler.enable()
-    if args.isolated_cases is not None or args.subprocess:
+    if args.run_config is not None or args.subprocess:
         run_in_subprocess(args)
-    elif args.isolated_cases is not None and args.subprocess:
-        print('isolated_cases and subporcess conflict')
-        sys.exit(1)
     else:
         main(args)

@@ -4,8 +4,6 @@ pip install -r requirements/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs
 pip install -r requirements/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 pip install -r requirements/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 pip install -r requirements/tests.txt
-# install numpy<=1.18 for tensorflow==1.15.x
-pip install "numpy<=1.18"
 
 git config --global --add safe.directory /Maas-lib
 
@@ -26,4 +24,3 @@ else
 fi
 echo "Running case with command: $ci_command"
 $ci_command
-#python tests/run.py --isolated_cases test_text_to_speech.py test_multi_modal_embedding.py test_ofa_tasks.py test_video_summarization.py

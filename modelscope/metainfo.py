@@ -9,6 +9,8 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    tinynas_detection = 'tinynas-detection'
+
     # vision models
     detection = 'detection'
     realtime_object_detection = 'realtime-object-detection'
@@ -133,6 +135,7 @@ class Pipelines(object):
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
+    tinynas_detection = 'tinynas-detection'
     crowd_counting = 'hrnet-crowd-counting'
     action_detection = 'ResNetC3D-action-detection'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'

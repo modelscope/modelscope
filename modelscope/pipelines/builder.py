@@ -149,6 +149,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
+    Tasks.text_driven_segmentation:
+    (Pipelines.text_driven_segmentation,
+     'damo/cv_vitl16_segmentation_text-driven-seg'),
     Tasks.movie_scene_segmentation:
     (Pipelines.movie_scene_segmentation,
      'damo/cv_resnet50-bert_video-scene-segmentation_movienet')

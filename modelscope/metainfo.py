@@ -29,6 +29,7 @@ class Models(object):
     video_summarization = 'pgl-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
+    text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
 
     # EasyCV models
@@ -143,6 +144,7 @@ class Pipelines(object):
     video_summarization = 'googlenet_pgl_video_summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
+    text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
 
     # nlp tasks

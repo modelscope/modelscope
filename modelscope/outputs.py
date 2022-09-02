@@ -243,6 +243,13 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
+    # text driven segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.text_driven_segmentation: [OutputKeys.MASKS],
 
     # movide scene segmentation result for a single video
     # {

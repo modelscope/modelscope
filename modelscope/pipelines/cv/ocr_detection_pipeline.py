@@ -150,7 +150,7 @@ class OCRDetectionPipeline(Pipeline):
         rboxes = inputs['combined_rboxes'][0]
         count = inputs['combined_counts'][0]
         if count == 0 or count < rboxes.shape[0]:
-            raise Exception('No text detected')
+            raise Exception('modelscope error: No text detected')
         rboxes = rboxes[:count, :]
 
         # convert rboxes to polygons and find its coordinates on the original image

@@ -57,6 +57,15 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
+    # face 2d keypoint result for single sample
+    #   {
+    #       "keypoints": [
+    #           [x1, y1]*106
+    #       ],
+    #       "poses": [pitch, roll, yaw]
+    #   }
+    Tasks.face_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.POSES],
+
     # face detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]

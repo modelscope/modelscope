@@ -103,6 +103,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
+    Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
+                              'damo/cv_mobilenet_face-2d-keypoints_alignment'),
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),

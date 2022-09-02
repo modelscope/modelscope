@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
-    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline
+    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipleline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
 
@@ -96,8 +96,10 @@ else:
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
-        'easycv_pipeline':
-        ['EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline'],
+        'easycv_pipeline': [
+            'EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline',
+            'Face2DKeypointsPipeline'
+        ],
         'text_driven_segmentation_pipeline':
         ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':

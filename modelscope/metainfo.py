@@ -24,6 +24,7 @@ class Models(object):
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
+    face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
     video_summarization = 'pgl-video-summarization'
@@ -112,6 +113,7 @@ class Pipelines(object):
     object_detection = 'vit-object-detection'
     easycv_detection = 'easycv-detection'
     easycv_segmentation = 'easycv-segmentation'
+    face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
@@ -353,6 +355,7 @@ class Datasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'
+    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'

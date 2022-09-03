@@ -43,10 +43,10 @@ if TYPE_CHECKING:
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
+    from .shop_segmentation_pipleline import ShopSegmentationPipeline
     from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipleline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
-
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -96,6 +96,7 @@ else:
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
+        'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
         'easycv_pipeline': [
             'EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline',
             'Face2DKeypointsPipeline'

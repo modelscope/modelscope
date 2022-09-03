@@ -259,7 +259,13 @@ TASK_OUTPUTS = {
     #       ]
     #   }
     Tasks.text_driven_segmentation: [OutputKeys.MASKS],
-
+    # shop segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.shop_segmentation: [OutputKeys.MASKS],
     # movide scene segmentation result for a single video
     # {
     #        "split_video_num":3,

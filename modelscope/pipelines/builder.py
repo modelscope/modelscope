@@ -156,7 +156,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_vitl16_segmentation_text-driven-seg'),
     Tasks.movie_scene_segmentation:
     (Pipelines.movie_scene_segmentation,
-     'damo/cv_resnet50-bert_video-scene-segmentation_movienet')
+     'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
+    Tasks.shop_segmentation: (Pipelines.shop_segmentation,
+                              'damo/cv_vitb16_segmentation_shop-seg'),
 }
 
 

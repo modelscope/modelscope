@@ -32,6 +32,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
+    shop_segmentation = 'shop-segmentation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -148,6 +149,7 @@ class Pipelines(object):
     image_reid_person = 'passvitb-image-reid-person'
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
+    shop_segmentation = 'shop-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

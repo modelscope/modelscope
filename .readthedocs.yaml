@@ -25,4 +25,4 @@ python:
   install:
     - requirements: requirements/docs.txt
     - requirements: requirements/readthedocs.txt
-    - requirements: requirements/runtime.txt
+    - requirements: requirements/framework.txt

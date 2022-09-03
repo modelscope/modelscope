@@ -32,6 +32,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
+    retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
 
     # EasyCV models
@@ -118,6 +119,7 @@ class Pipelines(object):
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    retina_face_detection = 'resnet50-face-detection-retinaface'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'

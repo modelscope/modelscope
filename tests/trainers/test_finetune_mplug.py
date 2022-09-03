@@ -35,7 +35,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             }).rename_column('image:FILE',
                              'image').rename_column('answer:Value', 'answer'))
 
-        self.max_epochs = 3
+        self.max_epochs = 2
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)

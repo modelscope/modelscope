@@ -287,5 +287,7 @@ class OfaForAllTasks(TorchModel):
 
     def load_ans2label(self):
         if self.cfg.model.get('answer2label', None):
-            filename = osp.join(self.model_dir, self.cfg.model.answer2label)
-            self.ans2label_dict = json.load(open(filename))
+            ans2label_file = osp.join(self.model_dir,
+                                      self.cfg.model.answer2label)
+            with open(ans2label_file, 'r') as reader:
+                self.ans2label_dict = json.load(reader)

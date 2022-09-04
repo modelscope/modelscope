@@ -61,7 +61,8 @@ class OfaBasePreprocessor:
         self.index2ans = {}
         if self.cfg.model.get('answer2label', False):
             ans2label_file = osp.join(model_dir, self.cfg.model.answer2label)
-            ans2label_dict = json.load(open(ans2label_file, 'r'))
+            with open(ans2label_file, 'r') as reader:
+                ans2label_dict = json.load(reader)
             self.constraint_trie = Trie(tokenizer.eos_token_id)
             for i, answer in enumerate(ans2label_dict.keys()):
                 answer_item = tokenizer(

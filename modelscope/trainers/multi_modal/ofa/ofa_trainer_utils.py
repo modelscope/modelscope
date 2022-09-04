@@ -35,7 +35,7 @@ class OFADataset(Dataset):
 
         self.dataset = OFAFileDataset(
             file_path=file_path,
-            selected_col_ids=selected_col_ids,
+            selected_col_ids=','.join(selected_col_ids),
             dtypes=dtypes,
             separator=separator,
             cached_index=cached_index)
@@ -157,7 +157,7 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
 
         self.constraint_start = None
         self.constraint_end = None
-        if args.constraint_range is not None:
+        if args.constraint_range:
             constraint_start, constraint_end = args.constraint_range.split(',')
             self.constraint_start = int(constraint_start)
             self.constraint_end = int(constraint_end)
@@ -280,35 +280,39 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         return loss, nll_loss, ntokens
 
 
-def get_schedule(args):
+def get_schedule(scheduler):
 
-    if args.schedule == 'const':
+    if scheduler.name == 'const':
         scheduler_class = transformers.get_constant_schedule_with_warmup
         scheduler_args = {
             'num_warmup_steps':
-            int(args.warmup_proportion * args.num_train_steps)
+            int(scheduler.warmup_proportion * scheduler.num_train_steps)
         }
-    elif args.schedule == 'linear':
+    elif scheduler.name == 'linear':
         scheduler_class = transformers.get_linear_schedule_with_warmup
         scheduler_args = {
             'num_warmup_steps':
-            int(args.warmup_proportion * args.num_train_steps),
-            'num_training_steps': args.num_train_steps
+            int(scheduler.warmup_proportion * scheduler.num_train_steps),
+            'num_training_steps':
+            scheduler.num_train_steps
         }
-    elif args.schedule == 'cosine':
+    elif scheduler.name == 'cosine':
         scheduler_class = transformers.get_cosine_schedule_with_warmup
         scheduler_args = {
             'num_warmup_steps':
-            int(args.warmup_proportion * args.num_train_steps),
-            'num_training_steps': args.num_train_steps
+            int(scheduler.warmup_proportion * scheduler.num_train_steps),
+            'num_training_steps':
+            scheduler.num_train_steps
         }
-    elif args.schedule == 'polynomial_decay':
+    elif scheduler.name == 'polynomial_decay':
         scheduler_class = transformers.get_polynomial_decay_schedule_with_warmup
         scheduler_args = {
             'num_warmup_steps':
-            int(args.warmup_proportion * args.num_train_steps),
-            'num_training_steps': args.num_train_steps,
-            'lr_end': args.lr_end
+            int(scheduler.warmup_proportion * scheduler.num_train_steps),
+            'num_training_steps':
+            scheduler.num_train_steps,
+            'lr_end':
+            scheduler.lr_end
         }
     else:
         raise NotImplementedError

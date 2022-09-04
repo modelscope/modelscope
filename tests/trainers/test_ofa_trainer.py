@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import shutil
 import unittest
 
@@ -13,7 +14,8 @@ class TestOfaTrainer(unittest.TestCase):
         model_id = '/apsarapangu/disk2/yichang.zyc/ckpt/MaaS/ofa_text-classification_mnli_large_en'
         self.trainer = OFATrainer(model_id)
         self.trainer.train()
-        shutil.rmtree(self.trainer.save_dir)
+        if os.path.exists(self.trainer.work_dir):
+            shutil.rmtree(self.trainer.work_dir)
 
 
 if __name__ == '__main__':

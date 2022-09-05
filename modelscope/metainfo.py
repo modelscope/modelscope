@@ -32,6 +32,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
+    fer = 'fer'
     retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
 
@@ -119,6 +120,7 @@ class Pipelines(object):
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     retina_face_detection = 'resnet50-face-detection-retinaface'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'

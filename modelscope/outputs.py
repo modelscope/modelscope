@@ -85,6 +85,14 @@ TASK_OUTPUTS = {
     Tasks.face_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
+    # facial expression recognition result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
+    #       "labels": ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+    #   }
+    Tasks.facial_expression_recognition:
+    [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # face recognition result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],

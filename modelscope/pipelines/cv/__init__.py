@@ -47,6 +47,8 @@ if TYPE_CHECKING:
     from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipleline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
+    from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -105,6 +107,8 @@ else:
         ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':
         ['MovieSceneSegmentationPipeline'],
+        'facial_expression_recognition_pipelin':
+        ['FacialExpressionRecognitionPipeline']
     }
 
     import sys

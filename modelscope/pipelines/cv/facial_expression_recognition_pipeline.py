@@ -8,7 +8,7 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_recognition.align_face import align_face
-from modelscope.models.cv.facial_expression_recognition.fer.facial_expression_recognition import \
+from modelscope.models.cv.facial_expression_recognition import \
     FacialExpressionRecognition
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

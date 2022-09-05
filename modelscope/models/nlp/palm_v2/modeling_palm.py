@@ -592,11 +592,11 @@ class AbsSummarizer(PalmPreTrainedModel):  # Model
         self.generator.dense.weight = self.decoder.embeddings.weight
 
         if checkpoint is not None:
-            for key in list(checkpoint['model'].keys()):
-                checkpoint['model'][key.replace('module.',
-                                                '')] = checkpoint['model'][key]
-            msg = self.load_state_dict(checkpoint['model'], strict=False)
-            print(msg)
+            if 'model' in checkpoint:
+                checkpoint = checkpoint['model']
+            for key in list(checkpoint.keys()):
+                checkpoint[key.replace('model.palm.', '')] = checkpoint[key]
+            self.load_state_dict(checkpoint, strict=False)
         else:
             for module in self.decoder.modules():
                 if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -734,7 +734,7 @@ class PalmForConditionalGeneration(PalmPreTrainedModel):
         return addict.Dict(loss=loss)
 
 
-class Translator(nn.Module):
+class Translator(object):
     """
     Uses a model to translate a batch of sentences.
     """
@@ -1298,8 +1298,8 @@ class Translator(nn.Module):
 
         return results
 
-    def forward(self, input_ids: torch.Tensor,
-                attention_mask: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def __call__(self, input_ids: torch.Tensor,
+                 attention_mask: torch.Tensor) -> Dict[str, torch.Tensor]:
         batch = self.Batch(
             batch_size=input_ids.size()[0],
             src=input_ids,

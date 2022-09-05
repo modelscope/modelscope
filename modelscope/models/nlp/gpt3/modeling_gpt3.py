@@ -339,5 +339,9 @@ class GPT3Model(PreTrainedModel):
         state_dict_file = os.path.join(pretrained_model_name_or_path,
                                        ModelFile.TORCH_MODEL_BIN_FILE)
         state_dict = torch.load(state_dict_file)
+        state_dict = {
+            k.replace('model.language_model', 'language_model'): v
+            for k, v in state_dict.items()
+        }
         model.load_state_dict(state_dict)
         return model

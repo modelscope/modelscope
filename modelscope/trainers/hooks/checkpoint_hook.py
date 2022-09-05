@@ -27,7 +27,7 @@ class CheckpointHook(Hook):
         save_last (bool): Whether to save the last checkpoint. Default: True.
     """
 
-    PRIORITY = Priority.NORMAL
+    PRIORITY = Priority.LOW
 
     def __init__(self,
                  interval=0,
@@ -75,25 +75,27 @@ class CheckpointHook(Hook):
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
         save_checkpoint(trainer.model, cur_save_name, trainer.optimizer)
-        self._save_pretrained(trainer)
+        if (self.is_last_epoch(trainer)
+                and self.by_epoch) or (self.is_last_iter(trainer)
+                                       and not self.by_epoch):
+            self._save_pretrained(trainer)
 
     def _save_pretrained(self, trainer):
-        if self.is_last_epoch(trainer) and self.by_epoch:
-            output_dir = os.path.join(self.save_dir,
-                                      ModelFile.TRAIN_OUTPUT_DIR)
-            from modelscope.trainers.parallel.utils import is_parallel
+        output_dir = os.path.join(self.save_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        from modelscope.trainers.parallel.utils import is_parallel
 
-            if is_parallel(trainer.model):
-                model = trainer.model.module
-            else:
-                model = trainer.model
+        if is_parallel(trainer.model):
+            model = trainer.model.module
+        else:
+            model = trainer.model
 
-            if hasattr(model, 'save_pretrained'):
-                model.save_pretrained(
-                    output_dir,
-                    ModelFile.TORCH_MODEL_BIN_FILE,
-                    save_function=save_checkpoint,
-                    config=trainer.cfg.to_dict())
+        if hasattr(model, 'save_pretrained'):
+            model.save_pretrained(
+                output_dir,
+                ModelFile.TORCH_MODEL_BIN_FILE,
+                save_function=save_checkpoint,
+                config=trainer.cfg.to_dict(),
+                with_meta=False)
 
     def after_train_iter(self, trainer):
         if self.by_epoch:
@@ -133,7 +135,7 @@ class BestCkptSaverHook(CheckpointHook):
         save_dir (str): Output directory to save best checkpoint.
     """
 
-    PRIORITY = Priority.NORMAL
+    PRIORITY = Priority.LOW
     rule_map = {'max': lambda x, y: x > y, 'min': lambda x, y: x < y}
 
     def __init__(self,
@@ -141,9 +143,11 @@ class BestCkptSaverHook(CheckpointHook):
                  rule='max',
                  by_epoch=True,
                  save_optimizer=True,
-                 save_dir=None):
+                 save_dir=None,
+                 interval=0):
         assert rule in ['max', 'min'], 'Only support "max" or "min" rule now.'
         super().__init__(
+            interval=interval,
             by_epoch=by_epoch,
             save_optimizer=save_optimizer,
             save_dir=save_dir,

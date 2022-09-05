@@ -128,15 +128,14 @@ class TestFinetuneTextGeneration(unittest.TestCase):
 
     @unittest.skip
     def test_finetune_cnndm(self):
-        from datasets import load_dataset
-        dataset_dict = load_dataset('ccdv/cnn_dailymail', '3.0.0')
-        train_dataset = dataset_dict['train'] \
-            .rename_columns({'article': 'src_txt', 'highlights': 'tgt_txt'}) \
-            .remove_columns('id')
-        eval_dataset = dataset_dict['validation'] \
-            .rename_columns({'article': 'src_txt', 'highlights': 'tgt_txt'}) \
-            .remove_columns('id')
-        num_warmup_steps = 2000
+        from modelscope.msdatasets import MsDataset
+        dataset_dict = MsDataset.load('dureader_robust_qg')
+        train_dataset = dataset_dict['train'].to_hf_dataset() \
+            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'})
+        eval_dataset = dataset_dict['validation'].to_hf_dataset() \
+            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'})
+        num_warmup_steps = 200
+        os.environ['LOCAL_RANK'] = '0'
 
         def noam_lambda(current_step: int):
             current_step += 1
@@ -154,12 +153,11 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             return cfg
 
         kwargs = dict(
-            model=self.model_id,
+            model='damo/nlp_palm2.0_text-generation_chinese-base',
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             work_dir=self.tmp_dir,
-            cfg_modify_fn=cfg_modify_fn,
-            model_revision='beta')
+            cfg_modify_fn=cfg_modify_fn)
         trainer = build_trainer(
             name=Trainers.nlp_base_trainer, default_args=kwargs)
         trainer.train()

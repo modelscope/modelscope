@@ -5,9 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .action_recognition_pipeline import ActionRecognitionPipeline
+    from .action_detection_pipeline import ActionDetectionPipeline
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
+    from .hand_2d_keypoints_pipeline import Hand2DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
     from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
     from .crowd_counting_pipeline import CrowdCountingPipeline
@@ -42,15 +44,21 @@ if TYPE_CHECKING:
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
-    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline
+    from .shop_segmentation_pipleline import ShopSegmentationPipeline
+    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
+    from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipleline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
+    from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
+    from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
 
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
+        'action_detection_pipeline': ['ActionDetectionPipeline'],
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
+        'hand_2d_keypoints_pipeline': ['Hand2DKeypointsPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
         'hicossl_video_embedding_pipeline': ['HICOSSLVideoEmbeddingPipeline'],
         'crowd_counting_pipeline': ['CrowdCountingPipeline'],
@@ -93,10 +101,18 @@ else:
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
-        'easycv_pipeline':
-        ['EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline'],
+        'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
+        'easycv_pipeline': [
+            'EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline',
+            'Face2DKeypointsPipeline'
+        ],
+        'text_driven_segmentation_pipeline':
+        ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':
         ['MovieSceneSegmentationPipeline'],
+        'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
+        'facial_expression_recognition_pipelin':
+        ['FacialExpressionRecognitionPipeline']
     }
 
     import sys

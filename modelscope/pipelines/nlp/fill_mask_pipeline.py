@@ -13,7 +13,10 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['FillMaskPipeline']
-_type_map = {'veco': 'roberta', 'sbert': 'bert'}
+_type_map = {
+    'veco': 'roberta',
+    'sbert': 'bert',
+}
 
 
 @PIPELINES.register_module(Tasks.fill_mask, module_name=Pipelines.fill_mask)
@@ -65,7 +68,7 @@ class FillMaskPipeline(Pipeline):
         self.config = Config.from_file(
             os.path.join(fill_mask_model.model_dir, ModelFile.CONFIGURATION))
         self.tokenizer = preprocessor.tokenizer
-        self.mask_id = {'roberta': 250001, 'bert': 103}
+        self.mask_id = {'roberta': 250001, 'bert': 103, 'deberta_v2': 4}
 
         self.rep_map = {
             'bert': {
@@ -85,7 +88,14 @@ class FillMaskPipeline(Pipeline):
                 '<s>': '',
                 '</s>': '',
                 '<unk>': ' '
-            }
+            },
+            'deberta_v2': {
+                '[PAD]': '',
+                r' +': ' ',
+                '[SEP]': '',
+                '[CLS]': '',
+                '[UNK]': ''
+            },
         }
 
     def forward(self, inputs: Dict[str, Any],

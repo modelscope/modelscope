@@ -40,7 +40,8 @@ def weights_to_cpu(state_dict):
 def save_checkpoint(model: torch.nn.Module,
                     filename: str,
                     optimizer: Optional[Optimizer] = None,
-                    meta: Optional[dict] = None) -> None:
+                    meta: Optional[dict] = None,
+                    with_meta: bool = True) -> None:
     """Save checkpoint to file.
 
     The checkpoint will have 3 fields: ``meta``, ``state_dict`` and
@@ -65,10 +66,14 @@ def save_checkpoint(model: torch.nn.Module,
         # save class name to the meta
         meta.update(CLASSES=model.CLASSES)
 
-    checkpoint = {
-        'meta': meta,
-        'state_dict': weights_to_cpu(model.state_dict())
-    }
+    if with_meta:
+        checkpoint = {
+            'meta': meta,
+            'state_dict': weights_to_cpu(model.state_dict())
+        }
+    else:
+        checkpoint = weights_to_cpu(model.state_dict())
+
     # save optimizer state dict in the checkpoint
     if isinstance(optimizer, Optimizer):
         checkpoint['optimizer'] = optimizer.state_dict()
@@ -141,7 +146,7 @@ def save_pretrained(model,
 
     # Save the ckpt to the save directory
     try:
-        save_function(model, output_ckpt_path)
+        save_function(model, output_ckpt_path, **kwargs)
     except Exception as e:
         raise Exception(
             f'During saving checkpoints, the error of "{type(e).__name__} '

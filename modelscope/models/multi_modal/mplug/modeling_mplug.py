@@ -1867,11 +1867,13 @@ class MPlug(PreTrainedModel):
                                            ModelFile.TORCH_MODEL_BIN_FILE)
             checkpoint = torch.load(checkpoint_path, map_location='cpu')
             if 'model' in checkpoint:
-                state_dict = checkpoint['model']
-            else:
-                state_dict = checkpoint['module']
+                checkpoint = checkpoint['model']
+            checkpoint = {
+                k.replace('model.', ''): v
+                for k, v in checkpoint.items()
+            }
 
-            msg = model.load_state_dict(state_dict, strict=False)
+            msg = model.load_state_dict(checkpoint, strict=False)
             print('load checkpoint from %s' % checkpoint_path)
             print(msg)
         return model

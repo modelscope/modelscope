@@ -170,6 +170,9 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         elif model_type == Models.veco:
             from modelscope.models.nlp.veco import VecoTokenizer
             return VecoTokenizer.from_pretrained(model_dir)
+        elif model_type == Models.deberta_v2:
+            from modelscope.models.nlp.deberta_v2 import DebertaV2Tokenizer
+            return DebertaV2Tokenizer.from_pretrained(model_dir)
         else:
             return AutoTokenizer.from_pretrained(model_dir, use_fast=False)
 

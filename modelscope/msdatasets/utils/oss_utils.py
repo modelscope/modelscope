@@ -18,6 +18,12 @@ class OssUtilities:
         self.oss_dir = oss_config['Dir']
         self.oss_backup_dir = oss_config['BackupDir']
 
+        self.upload_resumable_tmp_store = '/tmp/modelscope/tmp_dataset'
+        self.upload_multipart_threshold = 50 * 1024 * 1024
+        self.upload_part_size = 1 * 1024 * 1024
+        self.upload_num_threads = 4
+        self.upload_max_retries = 3
+
     @staticmethod
     def _percentage(consumed_bytes, total_bytes):
         if total_bytes:
@@ -42,21 +48,27 @@ class OssUtilities:
                 progress_callback=self._percentage)
         return local_path
 
-    def upload(self, oss_file_name: str, local_file_path: str) -> str:
-        max_retries = 3
+    def upload(self, oss_object_name: str, local_file_path: str) -> str:
         retry_count = 0
-        object_key = os.path.join(self.oss_dir, oss_file_name)
+        object_key = os.path.join(self.oss_dir, oss_object_name)
+        resumable_store = oss2.ResumableStore(
+            root=self.upload_resumable_tmp_store)
 
         while True:
             try:
                 retry_count += 1
-                self.bucket.put_object_from_file(
+                oss2.resumable_upload(
+                    self.bucket,
                     object_key,
                     local_file_path,
-                    progress_callback=self._percentage)
+                    store=resumable_store,
+                    multipart_threshold=self.upload_multipart_threshold,
+                    part_size=self.upload_part_size,
+                    progress_callback=self._percentage,
+                    num_threads=self.upload_num_threads)
                 break
             except Exception:
-                if retry_count >= max_retries:
+                if retry_count >= self.upload_max_retries:
                     raise
 
         return object_key

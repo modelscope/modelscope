@@ -92,7 +92,7 @@ class TestFinetuneTokenClassification(unittest.TestCase):
                 }
             }
             cfg['preprocessor'] = {'type': 'token-cls-tokenizer'}
-            cfg.train.max_epochs = 3
+            cfg.train.max_epochs = 2
             cfg.train.lr_scheduler = {
                 'type': 'LinearLR',
                 'start_factor': 1.0,

@@ -1,5 +1,4 @@
-import numpy as np
-
+# Copyright (c) Alibaba, Inc. and its affiliates.
 SEGMENT_LENGTH_TRAIN = 16000
 
 
@@ -9,16 +8,13 @@ def to_segment(batch, segment_length=SEGMENT_LENGTH_TRAIN):
     It only works in batch mode.
     """
     noisy_arrays = []
-    for x in batch['noisy']:
-        length = len(x['array'])
-        noisy = np.array(x['array'])
-        for offset in range(segment_length, length, segment_length):
-            noisy_arrays.append(noisy[offset - segment_length:offset])
     clean_arrays = []
-    for x in batch['clean']:
-        length = len(x['array'])
-        clean = np.array(x['array'])
-        for offset in range(segment_length, length, segment_length):
+    for x, y in zip(batch['noisy'], batch['clean']):
+        length = min(len(x['array']), len(y['array']))
+        noisy = x['array']
+        clean = y['array']
+        for offset in range(segment_length, length + 1, segment_length):
+            noisy_arrays.append(noisy[offset - segment_length:offset])
             clean_arrays.append(clean[offset - segment_length:offset])
     return {'noisy': noisy_arrays, 'clean': clean_arrays}
 

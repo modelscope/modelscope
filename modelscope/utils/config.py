@@ -9,6 +9,7 @@ import sys
 import tempfile
 import types
 from pathlib import Path
+from types import FunctionType
 from typing import Dict, Union
 
 import addict
@@ -638,6 +639,8 @@ class JSONIteratorEncoder(json.JSONEncoder):
     """
 
     def default(self, obj):
+        if isinstance(obj, FunctionType):
+            return None
         try:
             iterable = iter(obj)
         except TypeError:

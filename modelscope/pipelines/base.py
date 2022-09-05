@@ -2,7 +2,6 @@
 
 import os.path as osp
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from threading import Lock
 from typing import Any, Dict, Generator, List, Mapping, Union
 

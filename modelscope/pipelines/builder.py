@@ -71,6 +71,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
+    Tasks.action_detection: (Pipelines.action_detection,
+                             'damo/cv_ResNetC3D_action-detection_detection2d'),
     Tasks.live_category: (Pipelines.live_category,
                           'damo/cv_resnet50_live-category'),
     Tasks.video_category: (Pipelines.video_category,
@@ -97,10 +99,18 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                               'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
     Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,
                               'damo/cv_canonical_body-3d-keypoints_video'),
+    Tasks.hand_2d_keypoints:
+    (Pipelines.hand_2d_keypoints,
+     'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
+    Tasks.facial_expression_recognition:
+    (Pipelines.facial_expression_recognition,
+     'damo/cv_vgg19_facial-expression-recognition_fer'),
+    Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
+                              'damo/cv_mobilenet_face-2d-keypoints_alignment'),
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
@@ -147,9 +157,14 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
+    Tasks.text_driven_segmentation:
+    (Pipelines.text_driven_segmentation,
+     'damo/cv_vitl16_segmentation_text-driven-seg'),
     Tasks.movie_scene_segmentation:
     (Pipelines.movie_scene_segmentation,
-     'damo/cv_resnet50-bert_video-scene-segmentation_movienet')
+     'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
+    Tasks.shop_segmentation: (Pipelines.shop_segmentation,
+                              'damo/cv_vitb16_segmentation_shop-seg'),
 }
 
 

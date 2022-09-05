@@ -1,6 +1,0 @@
- test_text_to_speech.py
- test_multi_modal_embedding.py
- test_ofa_tasks.py
- test_video_summarization.py
- test_dialog_modeling.py
- test_csanmt_translation.py

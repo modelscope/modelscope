@@ -35,6 +35,7 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    TIMESTAMPS = 'timestamps'
     SPLIT_VIDEO_NUM = 'split_video_num'
     SPLIT_META_DICT = 'split_meta_dict'
 
@@ -56,6 +57,15 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
+    # face 2d keypoint result for single sample
+    #   {
+    #       "keypoints": [
+    #           [x1, y1]*106
+    #       ],
+    #       "poses": [pitch, roll, yaw]
+    #   }
+    Tasks.face_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.POSES],
+
     # face detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]
@@ -74,6 +84,14 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
+
+    # facial expression recognition result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
+    #       "labels": ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+    #   }
+    Tasks.facial_expression_recognition:
+    [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # face recognition result for single sample
     #   {
@@ -201,6 +219,21 @@ TASK_OUTPUTS = {
     # }
     Tasks.body_3d_keypoints: [OutputKeys.POSES],
 
+    # 2D hand keypoints result for single sample
+    # {
+    #     "keypoints": [
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                  ],
+    #     "boxes": [
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.hand_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.BOXES],
+
     # video single object tracking result for single video
     # {
     #   "boxes": [
@@ -242,7 +275,20 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
-
+    # text driven segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.text_driven_segmentation: [OutputKeys.MASKS],
+    # shop segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.shop_segmentation: [OutputKeys.MASKS],
     # movide scene segmentation result for a single video
     # {
     #        "split_video_num":3,
@@ -542,6 +588,19 @@ TASK_OUTPUTS = {
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # {
+    #     'labels': ['吸烟', '打电话', '吸烟'],
+    #     'scores': [0.7527753114700317, 0.753358006477356, 0.6880350708961487],
+    #     'boxes': [[547, 2, 1225, 719], [529, 8, 1255, 719], [584, 0, 1269, 719]],
+    #     'timestamps': [1, 3, 5]
+    # }
+    Tasks.action_detection: [
+        OutputKeys.TIMESTAMPS,
+        OutputKeys.LABELS,
+        OutputKeys.SCORES,
+        OutputKeys.BOXES,
+    ],
+
+    # {
     #   'output': [
     #     [{'label': '6527856', 'score': 0.9942756295204163}, {'label': '1000012000', 'score': 0.0379515215754509},
     #      {'label': '13421097', 'score': 2.2825044965202324e-08}],
@@ -551,6 +610,7 @@ TASK_OUTPUTS = {
     #      {'label': '13421097', 'score': 2.75914817393641e-06}]]
     # }
     Tasks.faq_question_answering: [OutputKeys.OUTPUT],
+
     # image person reid result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],

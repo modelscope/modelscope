@@ -9,6 +9,8 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    tinynas_detection = 'tinynas-detection'
+
     # vision models
     detection = 'detection'
     realtime_object_detection = 'realtime-object-detection'
@@ -22,12 +24,17 @@ class Models(object):
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
+    face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
     video_summarization = 'pgl-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
+    text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
+    fer = 'fer'
+    retinaface = 'retinaface'
+    shop_segmentation = 'shop-segmentation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -37,6 +44,7 @@ class Models(object):
     bert = 'bert'
     palm = 'palm-v2'
     structbert = 'structbert'
+    deberta_v2 = 'deberta_v2'
     veco = 'veco'
     translation = 'csanmt-translation'
     space_dst = 'space-dst'
@@ -104,13 +112,17 @@ class Pipelines(object):
     hicossl_video_embedding = 'hicossl-s3dg-video_embedding'
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     body_3d_keypoints = 'canonical_body-3d-keypoints_video'
+    hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
     easycv_detection = 'easycv-detection'
     easycv_segmentation = 'easycv-segmentation'
+    face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
+    retina_face_detection = 'resnet50-face-detection-retinaface'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
@@ -132,13 +144,17 @@ class Pipelines(object):
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
+    tinynas_detection = 'tinynas-detection'
     crowd_counting = 'hrnet-crowd-counting'
+    action_detection = 'ResNetC3D-action-detection'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
+    text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
+    shop_segmentation = 'shop-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -347,6 +363,7 @@ class Datasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'
+    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'

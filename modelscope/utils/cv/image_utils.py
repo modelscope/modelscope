@@ -89,6 +89,26 @@ def draw_keypoints(output, original_image):
     return image
 
 
+def draw_facial_expression_result(img_path, facial_expression_result):
+    label_idx = facial_expression_result[OutputKeys.LABELS]
+    map_list = [
+        'Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral'
+    ]
+    label = map_list[label_idx]
+
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+    cv2.putText(
+        img,
+        'facial expression: {}'.format(label), (10, 10),
+        1,
+        1.0, (0, 255, 0),
+        thickness=1,
+        lineType=8)
+    print('facial expression: {}'.format(label))
+    return img
+
+
 def draw_face_detection_result(img_path, detection_result):
     bboxes = np.array(detection_result[OutputKeys.BOXES])
     kpss = np.array(detection_result[OutputKeys.KEYPOINTS])

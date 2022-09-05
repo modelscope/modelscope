@@ -70,12 +70,12 @@ class MsIterableDataset(torch.utils.data.IterableDataset):
         for idx in range(iter_start, iter_end):
             item_dict = self.dataset[idx]
             res = {
-                k: np.array(item_dict[k])
+                k: torch.tensor(item_dict[k])
                 for k in self.columns if k in self.retained_columns
             }
             for preprocessor in self.preprocessor_list:
                 res.update({
-                    k: np.array(v)
+                    k: torch.tensor(v)
                     for k, v in preprocessor(item_dict).items()
                     if k in self.retained_columns
                 })
@@ -574,14 +574,8 @@ class MsDataset:
             None
 
         """
-        from modelscope.hub.api import HubApi
-        _hub_api = HubApi()
-        cookies = _hub_api.check_cookies_upload_data(use_cookies=True)
         _upload_manager = DatasetUploadManager(
-            dataset_name=dataset_name,
-            namespace=namespace,
-            version=version,
-            cookies=cookies)
+            dataset_name=dataset_name, namespace=namespace, version=version)
         _upload_manager.upload(object_name, local_file_path)
 
     @staticmethod

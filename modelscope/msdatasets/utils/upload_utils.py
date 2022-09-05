@@ -1,23 +1,21 @@
-from http.cookiejar import CookieJar
-
 from .oss_utils import OssUtilities
 
 
 class DatasetUploadManager(object):
 
-    def __init__(self, dataset_name: str, namespace: str, version: str,
-                 cookies: CookieJar):
+    def __init__(self, dataset_name: str, namespace: str, version: str):
         from modelscope.hub.api import HubApi
-        api = HubApi()
-        oss_config = api.get_dataset_access_config_session(
-            cookies=cookies,
+        _hub_api = HubApi()
+        _cookies = _hub_api.check_cookies_upload_data(use_cookies=True)
+        _oss_config = _hub_api.get_dataset_access_config_session(
+            cookies=_cookies,
             dataset_name=dataset_name,
             namespace=namespace,
             revision=version)
 
-        self.oss_utilities = OssUtilities(oss_config)
+        self.oss_utilities = OssUtilities(_oss_config)
 
-    def upload(self, oss_file_name: str, local_file_path: str) -> str:
-        oss_object_key = self.oss_utilities.upload(
-            oss_file_name=oss_file_name, local_file_path=local_file_path)
-        return oss_object_key
+    def upload(self, object_name: str, local_file_path: str) -> str:
+        object_key = self.oss_utilities.upload(
+            oss_object_name=object_name, local_file_path=local_file_path)
+        return object_key

@@ -20,11 +20,14 @@ class CVTasks(object):
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
     face_recognition = 'face-recognition'
+    facial_expression_recognition = 'facial-expression-recognition'
+    face_2d_keypoints = 'face-2d-keypoints'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
+    hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
 
     image_classification = 'image-classification'
@@ -36,6 +39,8 @@ class CVTasks(object):
 
     image_segmentation = 'image-segmentation'
     portrait_matting = 'portrait-matting'
+    text_driven_segmentation = 'text-driven-segmentation'
+    shop_segmentation = 'shop-segmentation'
 
     # image editing
     skin_retouching = 'skin-retouching'
@@ -58,6 +63,7 @@ class CVTasks(object):
     # video recognition
     live_category = 'live-category'
     action_recognition = 'action-recognition'
+    action_detection = 'action-detection'
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'

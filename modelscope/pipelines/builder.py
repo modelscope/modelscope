@@ -99,6 +99,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                               'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
     Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,
                               'damo/cv_canonical_body-3d-keypoints_video'),
+    Tasks.hand_2d_keypoints:
+    (Pipelines.hand_2d_keypoints,
+     'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,

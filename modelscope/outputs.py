@@ -219,6 +219,21 @@ TASK_OUTPUTS = {
     # }
     Tasks.body_3d_keypoints: [OutputKeys.POSES],
 
+    # 2D hand keypoints result for single sample
+    # {
+    #     "keypoints": [
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                  ],
+    #     "boxes": [
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.hand_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.BOXES],
+
     # video single object tracking result for single video
     # {
     #   "boxes": [

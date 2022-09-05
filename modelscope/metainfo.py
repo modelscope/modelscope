@@ -112,6 +112,7 @@ class Pipelines(object):
     hicossl_video_embedding = 'hicossl-s3dg-video_embedding'
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
     body_3d_keypoints = 'canonical_body-3d-keypoints_video'
+    hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
     easycv_detection = 'easycv-detection'

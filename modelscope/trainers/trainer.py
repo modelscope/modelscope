@@ -155,11 +155,12 @@ class EpochBasedTrainer(BaseTrainer):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self.device = create_device(device_name)
-
         self.train_dataset = self.to_task_dataset(
             train_dataset,
             mode=ModeKeys.TRAIN,
             preprocessor=self.train_preprocessor)
+        # import pdb
+        # pdb.set_trace()
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
@@ -426,7 +427,6 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.register_optimizers_hook()
         self.register_hook_from_cfg(self.cfg.train.hooks)
-
         self.train_loop(self.train_dataloader)
 
     def evaluate(self, checkpoint_path=None):
@@ -626,7 +626,7 @@ class EpochBasedTrainer(BaseTrainer):
             torch_dataset = dataset.to_torch_dataset(
                 task_data_config=cfg,
                 task_name=self.cfg.task,
-                preprocessors=self.preprocessor)
+                preprocessors=preprocessor)
         else:
             torch_dataset = build_task_dataset(data_cfg, self.cfg.task)
         dataset = self.to_task_dataset(torch_dataset, mode)

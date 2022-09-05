@@ -50,11 +50,10 @@ def collate_fn(samples, pad_idx, eos_idx):
     if samples[0].get('constraint_mask', None) is not None:
         batch['constraint_masks'] = merge('constraint_mask')
     if samples[0].get('decoder_prompt', None) is not None:
-        batch['decoder_prompts'] = torch.stack(
-            [s['decoder_prompt'] for s in samples], dim=0)
+        batch['decoder_prompts'] = np.array(
+            [s['decoder_prompt'].tolist() for s in samples])
     if samples[0].get('prefix_token', None) is not None:
-        batch['prefix_tokens'] = torch.stack(
-            [s['prefix_token'] for s in samples], dim=0)
+        batch['prefix_tokens'] = merge('prefix_token')
     # For detection and visual grounding
     if samples[0].get('w_resize_ratio', None) is not None:
         batch['w_resize_ratios'] = torch.stack(

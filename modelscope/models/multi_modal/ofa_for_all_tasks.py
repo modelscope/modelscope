@@ -127,8 +127,6 @@ class OfaForAllTasks(TorchModel):
         return input
 
     def _text_gen_inference(self, input):
-        import pdb
-        pdb.set_trace()
         input = move_to_device(input, self._device)
         if 'prefix_tokens' in input:
             gen_output = self.generator.generate(

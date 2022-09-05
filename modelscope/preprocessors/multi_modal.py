@@ -68,6 +68,10 @@ class OfaPreprocessor(Preprocessor):
             cfg=self.cfg, model_dir=model_dir, mode=mode)
         self.keys = input_key_mapping[self.cfg.task]
         self.tokenizer = self.preprocess.tokenizer
+        if kwargs.get('no_collate', None):
+            self.no_collate = True
+        else:
+            self.no_collate = False
 
     # just for modelscope demo
     def _build_dict(self, input: Union[Input, List[Input]]) -> Dict[str, Any]:
@@ -98,7 +102,9 @@ class OfaPreprocessor(Preprocessor):
         for k, v in data.items():
             str_data[k] = str(v)
         sample['sample'] = str_data
-        if kwargs.get('no_collate', None):
+        # import pdb
+        # pdb.set_trace()
+        if self.no_collate:
             return sample
         else:
             return collate_fn([sample],

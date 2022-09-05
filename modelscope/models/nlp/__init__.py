@@ -28,6 +28,7 @@ if TYPE_CHECKING:
                               SingleBackboneTaskModelBase)
     from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .gpt3 import GPT3ForTextGeneration
+    from .plug import PlugForTextGeneration
     from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
 
 else:
@@ -60,6 +61,7 @@ else:
         ],
         'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
         'gpt3': ['GPT3ForTextGeneration'],
+        'plug': ['PlugForTextGeneration'],
         'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
     }
 

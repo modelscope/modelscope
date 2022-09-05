@@ -55,6 +55,7 @@ class Models(object):
     lcrf = 'lstm-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
 
     # audio models
@@ -172,6 +173,7 @@ class Pipelines(object):
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'
+    plug_generation = 'plug-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
     relation_extraction = 'relation-extraction'

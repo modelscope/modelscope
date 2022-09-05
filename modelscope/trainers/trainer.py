@@ -39,7 +39,8 @@ from modelscope.utils.device import create_device, verify_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import get_dist_info, init_dist
+from modelscope.utils.torch_utils import (get_dist_info, init_dist,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -922,6 +923,4 @@ def worker_init_fn(worker_id, num_workers, rank, seed):
     # The seed of each worker equals to
     # num_worker * rank + worker_id + user_seed
     worker_seed = num_workers * rank + worker_id + seed
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
-    torch.manual_seed(worker_seed)
+    set_random_seed(worker_seed)

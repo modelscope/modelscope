@@ -1,7 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 import os.path as osp
 from abc import ABC, abstractmethod
+from functools import partial
+from multiprocessing import Pool
 from threading import Lock
 from typing import Any, Dict, Generator, List, Mapping, Union
 
@@ -15,8 +18,10 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import Frameworks, ModelFile
 from modelscope.utils.device import (create_device, device_placement,
                                      verify_device)
+from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import _find_free_port, _is_free_port
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -302,3 +307,106 @@ class Pipeline(ABC):
                 output should have the standard output name.
         """
         raise NotImplementedError('postprocess')
+
+
+class DistributedPipeline(Pipeline):
+    """This pipeline is used to load multi gpu models.
+
+    What will this class do:
+    1. Read the global config from the configuration.json
+    2. Set the multiprocessing method to spawn
+    3. Open a multiprocessing pool of the world_size to instantiate model pieces.
+    4. Set the master port and ip
+    5. Call _instantiate_one to instantiate one model piece
+        This method should be implemented by the derived class.
+    6. After the forward method is called, do preprocess in main process
+        and call _forward_one to collect results, and do
+        post process in main process.
+
+    NOTE: _instantiate_one and _forward_one are class methods, any derived class should implement them and
+    store the model handler in the class field.
+    """
+
+    def __init__(self,
+                 model: str = None,
+                 preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
+                 auto_collate=True,
+                 **kwargs):
+        self.preprocessor = preprocessor
+        self._model_prepare = False
+        self._model_prepare_lock = Lock()
+        self._auto_collate = auto_collate
+
+        if os.path.exists(model):
+            self.model_dir = model
+        else:
+            self.model_dir = snapshot_download(model)
+        self.cfg = read_config(self.model_dir)
+        self.world_size = self.cfg.model.world_size
+        self.model_pool = None
+        self.device_name = 'cpu'
+        self.device = create_device(self.device_name)
+        self.has_multiple_models = False
+        self.framework = self.cfg.framework
+        if torch.multiprocessing.get_start_method(allow_none=True) is None:
+            torch.multiprocessing.set_start_method('spawn')
+
+        ranks = list(range(self.world_size))
+        self.model_pool = Pool(self.world_size)
+        master_ip = '127.0.0.1' if 'master_ip' not in kwargs else kwargs[
+            'master_ip']
+        master_port = '29500' if 'master_port' not in kwargs else kwargs[
+            'master_port']
+        if not _is_free_port(int(master_port)):
+            master_port = str(_find_free_port())
+        self.model_pool.map(
+            partial(
+                self.__class__._instantiate_one,
+                model_dir=self.model_dir,
+                master_ip=master_ip,
+                master_port=master_port,
+                **self.cfg.model,
+                **kwargs), ranks)
+
+    def __del__(self):
+        if hasattr(self, 'model_pool') and self.model_pool is not None:
+            self.model_pool.terminate()
+
+    def __getstate__(self):
+        self_dict = self.__dict__.copy()
+        del self_dict['model_pool']
+        del self_dict['preprocessor']
+        del self_dict['_model_prepare_lock']
+        return self_dict
+
+    @classmethod
+    def _instantiate_one(cls, rank, model_dir, **kwargs):
+        """Instantiate one model piece.
+
+        @param rank: The model rank.
+        @param model_dir: The model_dir in the node.
+        @param kwargs: Any extra args.
+        @return: None. The model handler should be kept in the class field.
+        """
+        pass
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        inputs = {
+            'inputs': inputs,
+            'forward_params': forward_params,
+        }
+        res = self.model_pool.map(self.__class__._forward_one,
+                                  [inputs] * self.world_size)
+        return res[0]
+
+    @classmethod
+    def _forward_one(cls, inputs):
+        """Forward the inputs to one model piece.
+
+        Use the model handler kept in the class field to forward.
+
+        @param inputs: The inputs after the preprocessing.
+        @return: The forward results.
+        """
+        pass

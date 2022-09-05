@@ -3,16 +3,16 @@
 import functools
 import os
 import pickle
+import random
 import socket
 import subprocess
 import tempfile
 from typing import Callable, List, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.multiprocessing as mp
 from torch import distributed as dist
-from torch._utils import (_flatten_dense_tensors, _take_tensors,
-                          _unflatten_dense_tensors)
 
 
 def _find_free_port() -> str:
@@ -49,7 +49,6 @@ def init_dist(launcher: str, backend: str = 'nccl', **kwargs) -> None:
 def _init_dist_pytorch(backend: str, **kwargs) -> None:
     # rank = int(os.environ['RANK'])
     local_rank = int(os.environ['LOCAL_RANK'])
-
     torch.cuda.set_device(local_rank)
     dist.init_process_group(backend=backend, **kwargs)
 
@@ -180,3 +179,19 @@ def broadcast(inputs, src):
     dist.broadcast(inputs_tensor, src)
 
     return pickle.loads(inputs_tensor.cpu().numpy().tobytes())
+
+
+def set_random_seed(seed):
+    if seed is not None and seed >= 0:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+    else:
+        raise ValueError(
+            f'Random seed should be positive, current seed is {seed}')
+
+
+def set_random_seed_mpu(seed):
+    from megatron import mpu
+    set_random_seed(seed)
+    mpu.model_parallel_cuda_manual_seed(seed)

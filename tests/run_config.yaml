@@ -1,7 +1,4 @@
-# envs option allows fine-grained control for test executoin, for example,
-# python tests/run.py --env pytorch
-# would only trigger exeutions of all pytorch cases.
-# envs option defaults to None for backward compatbility
+# isolate cases in env, we can install different dependencies in each env.
 isolated:  # test cases that may require excessive anmount of GPU memory, which will be executed in dedicagted process.
   - test_text_to_speech.py
   - test_multi_modal_embedding.py

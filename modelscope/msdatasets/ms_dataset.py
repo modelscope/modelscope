@@ -574,14 +574,8 @@ class MsDataset:
             None
 
         """
-        from modelscope.hub.api import HubApi
-        _hub_api = HubApi()
-        cookies = _hub_api.check_cookies_upload_data(use_cookies=True)
         _upload_manager = DatasetUploadManager(
-            dataset_name=dataset_name,
-            namespace=namespace,
-            version=version,
-            cookies=cookies)
+            dataset_name=dataset_name, namespace=namespace, version=version)
         _upload_manager.upload(object_name, local_file_path)
 
     @staticmethod

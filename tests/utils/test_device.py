@@ -50,6 +50,12 @@ class DeviceTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             verify_device('xgu')
 
+        with self.assertRaises(AssertionError):
+            verify_device('')
+
+        with self.assertRaises(AssertionError):
+            verify_device(None)
+
     def test_create_device_torch(self):
         if torch.cuda.is_available():
             target_device_type = 'cuda'

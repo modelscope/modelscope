@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+    from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipeline
 
 else:
     _import_structure = {
@@ -114,7 +115,8 @@ else:
         'ulfd_face_detection_pipeline': ['UlfdFaceDetectionPipeline'],
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
         'facial_expression_recognition_pipelin':
-        ['FacialExpressionRecognitionPipeline']
+        ['FacialExpressionRecognitionPipeline'],
+        'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
     }
 
     import sys

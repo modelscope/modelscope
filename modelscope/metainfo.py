@@ -35,6 +35,7 @@ class Models(object):
     fer = 'fer'
     retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
+    mtcnn = 'mtcnn'
     ulfd = 'ulfd'
 
     # EasyCV models
@@ -127,6 +128,7 @@ class Pipelines(object):
     ulfd_face_detection = 'manual-face-detection-ulfd'
     facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     retina_face_detection = 'resnet50-face-detection-retinaface'
+    mtcnn_face_detection = 'manual-face-detection-mtcnn'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'

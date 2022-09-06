@@ -4,12 +4,15 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .mtcnn import MtcnnFaceDetector
     from .retinaface import RetinaFaceDetection
     from .ulfd_slim import UlfdFaceDetector
+
 else:
     _import_structure = {
         'ulfd_slim': ['UlfdFaceDetector'],
-        'retinaface': ['RetinaFaceDetection']
+        'retinaface': ['RetinaFaceDetection'],
+        'mtcnn': ['MtcnnFaceDetector']
     }
 
     import sys

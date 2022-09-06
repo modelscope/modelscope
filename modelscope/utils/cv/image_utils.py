@@ -89,6 +89,27 @@ def draw_keypoints(output, original_image):
     return image
 
 
+def draw_face_detection_no_lm_result(img_path, detection_result):
+    bboxes = np.array(detection_result[OutputKeys.BOXES])
+    scores = np.array(detection_result[OutputKeys.SCORES])
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+    for i in range(len(scores)):
+        bbox = bboxes[i].astype(np.int32)
+        x1, y1, x2, y2 = bbox
+        score = scores[i]
+        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (x1, y2),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+    print(f'Found {len(scores)} faces')
+    return img
+
+
 def draw_facial_expression_result(img_path, facial_expression_result):
     label_idx = facial_expression_result[OutputKeys.LABELS]
     map_list = [

@@ -35,6 +35,7 @@ class Models(object):
     fer = 'fer'
     retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
+    ulfd = 'ulfd'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -122,6 +123,7 @@ class Pipelines(object):
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    ulfd_face_detection = 'manual-face-detection-ulfd'
     facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     retina_face_detection = 'resnet50-face-detection-retinaface'
     live_category = 'live-category'

@@ -5,10 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .retinaface import RetinaFaceDetection
-
+    from .ulfd_slim import UlfdFaceDetector
 else:
     _import_structure = {
-        'retinaface': ['RetinaFaceDetection'],
+        'ulfd_slim': ['UlfdFaceDetector'],
+        'retinaface': ['RetinaFaceDetection']
     }
 
     import sys

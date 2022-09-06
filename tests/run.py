@@ -24,7 +24,9 @@ import torch
 import yaml
 
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import set_test_level, test_level
+from modelscope.utils.model_tag import ModelTag, commit_model_ut_result
+from modelscope.utils.test_utils import (get_case_model_info, set_test_level,
+                                         test_level)
 
 logger = get_logger()
 
@@ -62,6 +64,23 @@ def statistics_test_result(df):
         result, total_cases, success_cases, failures_cases, error_cases,
         skipped_cases, expected_failure_cases, unexpected_success_cases)
 
+    model_cases = get_case_model_info()
+    for model_name, case_info in model_cases.items():
+        cases = df.loc[df['Name'].str.contains('|'.join(list(case_info)))]
+        results = cases['Result']
+        result = None
+        if any(results == 'Error') or any(results == 'Failures') or any(
+                results == 'UnexpectedSuccesses'):
+            result = ModelTag.MODEL_FAIL
+        elif any(results == 'Success'):
+            result = ModelTag.MODEL_PASS
+        elif all(results == 'Skipped'):
+            result = ModelTag.MODEL_SKIP
+        else:
+            print(f'invalid results for {model_name} \n{result}')
+
+        if result is not None:
+            commit_model_ut_result(model_name, result)
     print('Testing result summary.')
     print(result_msg)
     if result == 'FAILED':

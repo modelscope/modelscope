@@ -11,6 +11,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from typing import OrderedDict
 
 import requests
 from datasets import Dataset
@@ -69,6 +70,37 @@ def download_and_untar(fpath, furl, dst) -> str:
     t.extractall(path=dst)
 
     return target_dir_path
+
+
+def get_case_model_info():
+    status_code, result = subprocess.getstatusoutput(
+        'grep -rn "damo/" tests/  | grep -v ".pyc" | grep -v "Binary file" | grep -v run.py '
+    )
+    lines = result.split('\n')
+    test_cases = OrderedDict()
+    model_cases = OrderedDict()
+    for line in lines:
+        # "tests/msdatasets/test_ms_dataset.py:92:        model_id = 'damo/bert-base-sst2'"
+        line = line.strip()
+        elements = line.split(':')
+        test_file = elements[0]
+        model_pos = line.find('damo')
+        left_quote = line[model_pos - 1]
+        rquote_idx = line.rfind(left_quote)
+        model_name = line[model_pos:rquote_idx]
+        if test_file not in test_cases:
+            test_cases[test_file] = set()
+        model_info = test_cases[test_file]
+        model_info.add(model_name)
+
+        if model_name not in model_cases:
+            model_cases[model_name] = set()
+        case_info = model_cases[model_name]
+        case_info.add(
+            test_file.replace('tests/', '').replace('.py',
+                                                    '').replace('/', '.'))
+
+    return model_cases
 
 
 _DIST_SCRIPT_TEMPLATE = """

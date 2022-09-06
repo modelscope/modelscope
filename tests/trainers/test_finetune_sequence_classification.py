@@ -10,11 +10,14 @@ from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
 from modelscope.trainers.hooks import Hook
-from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
+from modelscope.trainers.nlp_trainer import (EpochBasedTrainer,
+                                             NlpEpochBasedTrainer)
 from modelscope.trainers.optimizer.child_tuning_adamw_optimizer import \
     calculate_fisher
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.data_utils import to_device
+from modelscope.utils.regress_test_utils import MsRegressTool
+from modelscope.utils.test_utils import test_level
 
 
 class TestFinetuneSequenceClassification(unittest.TestCase):
@@ -28,10 +31,75 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
+        self.regress_tool = MsRegressTool(baseline=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_trainer_repeatable(self):
+        import torch  # noqa
+
+        def cfg_modify_fn(cfg):
+            cfg.task = 'nli'
+            cfg['preprocessor'] = {'type': 'nli-tokenizer'}
+            cfg.train.optimizer.lr = 2e-5
+            cfg['dataset'] = {
+                'train': {
+                    'labels': [
+                        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                        '11', '12', '13', '14'
+                    ],
+                    'first_sequence':
+                    'sentence',
+                    'label':
+                    'label',
+                }
+            }
+            cfg.train.max_epochs = 5
+            cfg.train.lr_scheduler = {
+                'type': 'LinearLR',
+                'start_factor': 1.0,
+                'end_factor': 0.0,
+                'total_iters':
+                int(len(dataset['train']) / 32) * cfg.train.max_epochs,
+                'options': {
+                    'by_epoch': False
+                }
+            }
+            cfg.train.hooks = [{
+                'type': 'CheckpointHook',
+                'interval': 1
+            }, {
+                'type': 'TextLoggerHook',
+                'interval': 1
+            }, {
+                'type': 'IterTimerHook'
+            }, {
+                'type': 'EvaluationHook',
+                'by_epoch': False,
+                'interval': 100
+            }]
+            return cfg
+
+        dataset = MsDataset.load('clue', subset_name='tnews')
+
+        kwargs = dict(
+            model='damo/nlp_structbert_backbone_base_std',
+            train_dataset=dataset['train'],
+            eval_dataset=dataset['validation'],
+            work_dir=self.tmp_dir,
+            seed=42,
+            cfg_modify_fn=cfg_modify_fn)
+
+        os.environ['LOCAL_RANK'] = '0'
+        trainer: EpochBasedTrainer = build_trainer(
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
+
+        with self.regress_tool.monitor_ms_train(
+                trainer, 'sbert-base-tnews', level='strict'):
+            trainer.train()
 
     def finetune(self,
                  model_id,
@@ -54,7 +122,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(self.epoch_num):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
         output_files = os.listdir(
             os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
@@ -118,11 +186,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             }]
             return cfg
 
-        from datasets import load_dataset
-        from datasets import DownloadConfig
-        dc = DownloadConfig()
-        dc.local_files_only = True
-        dataset = load_dataset('clue', 'afqmc', download_config=dc)
+        dataset = MsDataset.load('clue', subset_name='afqmc')
         self.finetune(
             model_id='damo/nlp_structbert_backbone_base_std',
             train_dataset=dataset['train'],
@@ -182,11 +246,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             }]
             return cfg
 
-        from datasets import load_dataset
-        from datasets import DownloadConfig
-        dc = DownloadConfig()
-        dc.local_files_only = True
-        dataset = load_dataset('clue', 'tnews', download_config=dc)
+        dataset = MsDataset.load('clue', subset_name='tnews')
 
         self.finetune(
             model_id='damo/nlp_structbert_backbone_base_std',

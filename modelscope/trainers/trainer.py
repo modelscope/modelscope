@@ -75,6 +75,7 @@ class EpochBasedTrainer(BaseTrainer):
             this preprocessing action will be executed every time the dataset's __getitem__ is called.
         optimizers (`Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]`, *optional*): A tuple
             containing the optimizer and the scheduler to use.
+        seed (int): The optional random seed for torch, cuda, numpy and random.
         max_epochs: (int, optional): Total training epochs.
     """
 
@@ -93,8 +94,11 @@ class EpochBasedTrainer(BaseTrainer):
                               torch.optim.lr_scheduler._LRScheduler] = (None,
                                                                         None),
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            seed: int = 42,
             **kwargs):
 
+        self._seed = seed
+        set_random_seed(self._seed)
         if isinstance(model, str):
             if os.path.exists(model):
                 self.model_dir = model if os.path.isdir(
@@ -212,9 +216,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._eval_iters_per_epoch = self.cfg.evaluation.val_iters_per_epoch
 
         self.use_fp16 = kwargs.get('use_fp16', False)
-
-        # TODO @wenmeng.zwm add seed init fn
-        self._seed = 0
 
         if kwargs.get('launcher', None) is not None:
             init_dist(kwargs['launcher'])

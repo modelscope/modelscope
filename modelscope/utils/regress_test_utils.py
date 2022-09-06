@@ -133,6 +133,7 @@ class RegressTool:
                              compare_fn=None,
                              ignore_keys=None,
                              compare_random=True,
+                             reset_dropout=True,
                              lazy_stop_callback=None):
         """Monitor a pytorch module's backward data and cfg data within a step of the optimizer.
 
@@ -151,6 +152,7 @@ class RegressTool:
         @param compare_fn: A custom fn used to compare the results manually.
         @param ignore_keys: The keys to ignore of the named_parameters.
         @param compare_random: If to compare random setttings, default True.
+        @param reset_dropout: Reset all dropout modules to 0.0.
         @param lazy_stop_callback: A callback passed in, when the moniting is over, this callback will be called.
 
         >>> def compare_fn(v1, v2, key, type):
@@ -201,6 +203,18 @@ class RegressTool:
         seed = trainer._seed if hasattr(
             trainer,
             '_seed') else trainer.seed if hasattr(trainer, 'seed') else None
+
+        if reset_dropout:
+            with torch.no_grad():
+
+                def reinit_dropout(_module):
+                    for name, submodule in _module.named_children():
+                        if isinstance(submodule, torch.nn.Dropout):
+                            setattr(_module, name, torch.nn.Dropout(0.))
+                        else:
+                            reinit_dropout(submodule)
+
+                reinit_dropout(module)
 
         if level == 'strict':
             hack_forward(module, file_name, io_json)

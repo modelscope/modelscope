@@ -72,6 +72,7 @@ class Models(object):
     gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
     diffusion = 'diffusion-text-to-image-synthesis'
+    multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
 

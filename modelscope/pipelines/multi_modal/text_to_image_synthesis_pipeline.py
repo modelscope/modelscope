@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.multi_modal import OfaForTextToImageSynthesis
+from modelscope.models.multi_modal import (
+    MultiStageDiffusionForTextToImageSynthesis, OfaForTextToImageSynthesis)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -48,7 +49,9 @@ class TextToImageSynthesisPipeline(Pipeline):
             return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        if isinstance(self.model, OfaForTextToImageSynthesis):
+        if isinstance(self.model,
+                      (OfaForTextToImageSynthesis,
+                       MultiStageDiffusionForTextToImageSynthesis)):
             return self.model(input)
         return self.model.generate(input)
 

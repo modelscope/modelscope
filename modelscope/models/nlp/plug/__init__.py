@@ -7,13 +7,11 @@ if TYPE_CHECKING:
     from .configuration_plug import PlugNLGConfig
     from .modeling_plug import PlugModel
     from .distributed_plug import DistributedPlug
-    from .plug_for_text_generation import PlugForTextGeneration
 else:
     _import_structure = {
         'configuration_plug': ['PlugNLGConfig'],
         'modeling_plug': ['PlugModel'],
         'distributed_plug': ['DistributedPlug'],
-        'plug_for_text_generation': ['PlugForTextGeneration'],
     }
 
     import sys

@@ -159,7 +159,7 @@ class ModelTag(object):
     """
 
     def commit_ut_result(self):
-        if self._URL is not None:
+        if self._URL is not None and self._URL != '':
             self.job_name = 'UT'
             self.source = 'dev'
             self.stage = 'integration'

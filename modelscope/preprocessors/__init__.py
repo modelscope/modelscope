@@ -22,8 +22,8 @@ if TYPE_CHECKING:
         PairSentenceClassificationPreprocessor, FillMaskPreprocessor,
         ZeroShotClassificationPreprocessor, NERPreprocessor,
         TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
-        SequenceLabelingPreprocessor, RelationExtractionPreprocessor)
-    from .slp import DocumentSegmentationPreprocessor
+        SequenceLabelingPreprocessor, RelationExtractionPreprocessor,
+        DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -52,9 +52,9 @@ else:
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
             'TextErrorCorrectionPreprocessor',
             'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
-            'RelationExtractionPreprocessor'
+            'RelationExtractionPreprocessor',
+            'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
         ],
-        'slp': ['DocumentSegmentationPreprocessor'],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'

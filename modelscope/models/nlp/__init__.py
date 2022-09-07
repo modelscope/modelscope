@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .gpt3 import GPT3ForTextGeneration
     from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
                                   BertForMaskedLM, DebertaV2ForMaskedLM)
+    from .ponet_for_masked_language import PoNetForMaskedLM
     from .nncrf_for_named_entity_recognition import (
         TransformerCRFForNamedEntityRecognition,
         LSTMCRFForNamedEntityRecognition)
@@ -46,6 +47,7 @@ else:
             'TransformerCRFForNamedEntityRecognition',
             'LSTMCRFForNamedEntityRecognition'
         ],
+        'ponet_for_masked_language': ['PoNetForMaskedLM'],
         'palm_v2': ['PalmForTextGeneration'],
         'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
         'star_text_to_sql': ['StarForTextToSql'],

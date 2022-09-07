@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .fill_mask_pipeline import FillMaskPipeline
+    from .fill_mask_ponet_pipeline import FillMaskPoNetPreprocessor
     from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
@@ -36,6 +37,7 @@ else:
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
+        'fill_mask_ponet_pipeline': ['FillMaskPoNetPipeline'],
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
         'information_extraction_pipeline': ['InformationExtractionPipeline'],

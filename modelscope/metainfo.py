@@ -62,6 +62,7 @@ class Models(object):
     gpt3 = 'gpt3'
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
+    ponet = 'ponet'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -179,6 +180,7 @@ class Pipelines(object):
     sentiment_classification = 'sentiment-classification'
     text_classification = 'text-classification'
     fill_mask = 'fill-mask'
+    fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -281,6 +283,7 @@ class Preprocessors(object):
     sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
+    fill_mask_ponet = 'fill-mask-ponet'
     faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
     re_tokenizer = 're-tokenizer'

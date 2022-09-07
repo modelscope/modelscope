@@ -7,12 +7,14 @@ if TYPE_CHECKING:
     from .information_extraction import InformationExtractionModel
     from .sequence_classification import SequenceClassificationModel
     from .task_model import SingleBackboneTaskModelBase
+    from .token_classification import TokenClassificationModel
 
 else:
     _import_structure = {
         'information_extraction': ['InformationExtractionModel'],
         'sequence_classification': ['SequenceClassificationModel'],
         'task_model': ['SingleBackboneTaskModelBase'],
+        'token_classification': ['TokenClassificationModel'],
     }
 
     import sys

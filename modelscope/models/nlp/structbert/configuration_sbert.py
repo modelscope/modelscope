@@ -85,7 +85,7 @@ class SbertConfig(PretrainedConfig):
             If adv_bound not proveded, 2 * sigma will be used as the adv_bound factor
     """
 
-    model_type = 'sbert'
+    model_type = 'structbert'
 
     def __init__(self,
                  vocab_size=30522,

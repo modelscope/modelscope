@@ -55,7 +55,9 @@ class Models(object):
     space_modeling = 'space-modeling'
     star = 'star'
     tcrf = 'transformer-crf'
+    transformer_softmax = 'transformer-softmax'
     lcrf = 'lstm-crf'
+    gcnncrf = 'gcnn-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
     plug = 'plug'
@@ -82,6 +84,7 @@ class Models(object):
 class TaskModels(object):
     # nlp task
     text_classification = 'text-classification'
+    token_classification = 'token-classification'
     information_extraction = 'information-extraction'
 
 
@@ -92,6 +95,8 @@ class Heads(object):
     bert_mlm = 'bert-mlm'
     # roberta mlm
     roberta_mlm = 'roberta-mlm'
+    # token cls
+    token_classification = 'token-classification'
     information_extraction = 'information-extraction'
 
 
@@ -167,6 +172,7 @@ class Pipelines(object):
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
+    part_of_speech = 'part-of-speech'
     named_entity_recognition = 'named-entity-recognition'
     text_generation = 'text-generation'
     sentiment_analysis = 'sentiment-analysis'
@@ -272,6 +278,7 @@ class Preprocessors(object):
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
+    sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
     faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'

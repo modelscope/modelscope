@@ -15,15 +15,14 @@ if TYPE_CHECKING:
                         ImageDenoisePreprocessor)
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
-    from .nlp import (Tokenize, SequenceClassificationPreprocessor,
-                      TextGenerationPreprocessor,
-                      TokenClassificationPreprocessor,
-                      SingleSentenceClassificationPreprocessor,
-                      PairSentenceClassificationPreprocessor,
-                      FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
-                      NERPreprocessor, TextErrorCorrectionPreprocessor,
-                      FaqQuestionAnsweringPreprocessor,
-                      RelationExtractionPreprocessor)
+    from .nlp import (
+        Tokenize, SequenceClassificationPreprocessor,
+        TextGenerationPreprocessor, TokenClassificationPreprocessor,
+        SingleSentenceClassificationPreprocessor,
+        PairSentenceClassificationPreprocessor, FillMaskPreprocessor,
+        ZeroShotClassificationPreprocessor, NERPreprocessor,
+        TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
+        SequenceLabelingPreprocessor, RelationExtractionPreprocessor)
     from .slp import DocumentSegmentationPreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
@@ -52,7 +51,7 @@ else:
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
             'TextErrorCorrectionPreprocessor',
-            'FaqQuestionAnsweringPreprocessor',
+            'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
             'RelationExtractionPreprocessor'
         ],
         'slp': ['DocumentSegmentationPreprocessor'],

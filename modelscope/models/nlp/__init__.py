@@ -5,40 +5,39 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .backbones import SbertModel
-    from .heads import SequenceClassificationHead
+    from .bart_for_text_error_correction import BartForTextErrorCorrection
     from .bert_for_sequence_classification import BertForSequenceClassification
     from .bert_for_document_segmentation import BertForDocumentSegmentation
     from .csanmt_for_translation import CsanmtForTranslation
-    from .masked_language import (
-        StructBertForMaskedLM,
-        VecoForMaskedLM,
-        BertForMaskedLM,
-        DebertaV2ForMaskedLM,
-    )
+    from .heads import SequenceClassificationHead
+    from .gpt3 import GPT3ForTextGeneration
+    from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
+                                  BertForMaskedLM, DebertaV2ForMaskedLM)
     from .nncrf_for_named_entity_recognition import (
         TransformerCRFForNamedEntityRecognition,
         LSTMCRFForNamedEntityRecognition)
-    from .token_classification import SbertForTokenClassification
+    from .palm_v2 import PalmForTextGeneration
+    from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
+    from .star_text_to_sql import StarForTextToSql
     from .sequence_classification import VecoForSequenceClassification, SbertForSequenceClassification
     from .space import SpaceForDialogIntent
     from .space import SpaceForDialogModeling
     from .space import SpaceForDialogStateTracking
-    from .star_text_to_sql import StarForTextToSql
     from .task_models import (InformationExtractionModel,
-                              SingleBackboneTaskModelBase)
-    from .bart_for_text_error_correction import BartForTextErrorCorrection
-    from .gpt3 import GPT3ForTextGeneration
-    from .plug import PlugForTextGeneration
-    from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
+                              SequenceClassificationModel,
+                              SingleBackboneTaskModelBase,
+                              TokenClassificationModel)
+    from .token_classification import SbertForTokenClassification
 
 else:
     _import_structure = {
-        'star_text_to_sql': ['StarForTextToSql'],
         'backbones': ['SbertModel'],
-        'heads': ['SequenceClassificationHead'],
-        'csanmt_for_translation': ['CsanmtForTranslation'],
+        'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
         'bert_for_sequence_classification': ['BertForSequenceClassification'],
         'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
+        'csanmt_for_translation': ['CsanmtForTranslation'],
+        'heads': ['SequenceClassificationHead'],
+        'gpt3': ['GPT3ForTextGeneration'],
         'masked_language': [
             'StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM',
             'DebertaV2ForMaskedLM'
@@ -48,7 +47,8 @@ else:
             'LSTMCRFForNamedEntityRecognition'
         ],
         'palm_v2': ['PalmForTextGeneration'],
-        'token_classification': ['SbertForTokenClassification'],
+        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
+        'star_text_to_sql': ['StarForTextToSql'],
         'sequence_classification':
         ['VecoForSequenceClassification', 'SbertForSequenceClassification'],
         'space': [
@@ -57,12 +57,9 @@ else:
         ],
         'task_models': [
             'InformationExtractionModel', 'SequenceClassificationModel',
-            'SingleBackboneTaskModelBase'
+            'SingleBackboneTaskModelBase', 'TokenClassificationModel'
         ],
-        'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
-        'gpt3': ['GPT3ForTextGeneration'],
-        'plug': ['PlugForTextGeneration'],
-        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
+        'token_classification': ['SbertForTokenClassification'],
     }
 
     import sys

@@ -5,9 +5,11 @@ import uuid
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
+import torch
 from transformers import AutoTokenizer, BertTokenizerFast
 
 from modelscope.metainfo import Models, Preprocessors
+from modelscope.models.nlp.structbert import SbertTokenizerFast
 from modelscope.outputs import OutputKeys
 from modelscope.utils.config import ConfigFields
 from modelscope.utils.constant import Fields, InputFields, ModeKeys
@@ -23,7 +25,7 @@ __all__ = [
     'SingleSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
     'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
     'TextErrorCorrectionPreprocessor', 'FaqQuestionAnsweringPreprocessor',
-    'RelationExtractionPreprocessor'
+    'SequenceLabelingPreprocessor', 'RelationExtractionPreprocessor'
 ]
 
 
@@ -550,6 +552,112 @@ class NERPreprocessor(Preprocessor):
         else:
             self.tokenizer = BertTokenizerFast.from_pretrained(
                 model_dir, use_fast=True)
+        self.is_split_into_words = self.tokenizer.init_kwargs.get(
+            'is_split_into_words', False)
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    'you are so handsome.'
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+
+        # preprocess the data for the model input
+        text = data
+        if self.is_split_into_words:
+            input_ids = []
+            label_mask = []
+            offset_mapping = []
+            for offset, token in enumerate(list(data)):
+                subtoken_ids = self.tokenizer.encode(
+                    token, add_special_tokens=False)
+                if len(subtoken_ids) == 0:
+                    subtoken_ids = [self.tokenizer.unk_token_id]
+                input_ids.extend(subtoken_ids)
+                label_mask.extend([1] + [0] * (len(subtoken_ids) - 1))
+                offset_mapping.extend([(offset, offset + 1)]
+                                      + [(offset + 1, offset + 1)]
+                                      * (len(subtoken_ids) - 1))
+            if len(input_ids) >= self.sequence_length - 2:
+                input_ids = input_ids[:self.sequence_length - 2]
+                label_mask = label_mask[:self.sequence_length - 2]
+                offset_mapping = offset_mapping[:self.sequence_length - 2]
+            input_ids = [self.tokenizer.cls_token_id
+                         ] + input_ids + [self.tokenizer.sep_token_id]
+            label_mask = [0] + label_mask + [0]
+            attention_mask = [1] * len(input_ids)
+        else:
+            encodings = self.tokenizer(
+                text,
+                add_special_tokens=True,
+                padding=True,
+                truncation=True,
+                max_length=self.sequence_length,
+                return_offsets_mapping=True)
+            input_ids = encodings['input_ids']
+            attention_mask = encodings['attention_mask']
+            word_ids = encodings.word_ids()
+            label_mask = []
+            offset_mapping = []
+            for i in range(len(word_ids)):
+                if word_ids[i] is None:
+                    label_mask.append(0)
+                elif word_ids[i] == word_ids[i - 1]:
+                    label_mask.append(0)
+                    offset_mapping[-1] = (offset_mapping[-1][0],
+                                          encodings['offset_mapping'][i][1])
+                else:
+                    label_mask.append(1)
+                    offset_mapping.append(encodings['offset_mapping'][i])
+
+        if not self.is_transformer_based_model:
+            input_ids = input_ids[1:-1]
+            attention_mask = attention_mask[1:-1]
+            label_mask = label_mask[1:-1]
+        return {
+            'text': text,
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'label_mask': label_mask,
+            'offset_mapping': offset_mapping
+        }
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sequence_labeling_tokenizer)
+class SequenceLabelingPreprocessor(Preprocessor):
+    """The tokenizer preprocessor used in normal NER task.
+
+    NOTE: This preprocessor may be merged with the TokenClassificationPreprocessor in the next edition.
+    """
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
+
+        Args:
+            model_dir (str): model path
+        """
+
+        super().__init__(*args, **kwargs)
+
+        self.model_dir: str = model_dir
+        self.sequence_length = kwargs.pop('sequence_length', 512)
+
+        if 'lstm' in model_dir or 'gcnn' in model_dir:
+            self.tokenizer = BertTokenizerFast.from_pretrained(
+                model_dir, use_fast=False)
+        elif 'structbert' in model_dir:
+            self.tokenizer = SbertTokenizerFast.from_pretrained(
+                model_dir, use_fast=False)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_dir, use_fast=False)
         self.is_split_into_words = self.tokenizer.init_kwargs.get(
             'is_split_into_words', False)
 

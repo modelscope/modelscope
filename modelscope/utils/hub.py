@@ -77,19 +77,26 @@ def auto_load(model: Union[str, List[str]]):
 def get_model_type(model_dir):
     """Get the model type from the configuration.
 
-    This method will try to get the 'model.type' or 'model.model_type' field from the configuration.json file.
-    If this file does not exist, the method will try to get the 'model_type' field from the config.json.
+    This method will try to get the model type from 'model.backbone.type',
+    'model.type' or 'model.model_type' field in the configuration.json file. If
+    this file does not exist, the method will try to get the 'model_type' field
+    from the config.json.
 
-    @param model_dir: The local model dir to use.
-    @return: The model type string, returns None if nothing is found.
+    @param model_dir: The local model dir to use. @return: The model type
+    string, returns None if nothing is found.
     """
     try:
         configuration_file = osp.join(model_dir, ModelFile.CONFIGURATION)
         config_file = osp.join(model_dir, 'config.json')
         if osp.isfile(configuration_file):
             cfg = Config.from_file(configuration_file)
-            return cfg.model.model_type if hasattr(cfg.model, 'model_type') and not hasattr(cfg.model, 'type') \
-                else cfg.model.type
+            if hasattr(cfg.model, 'backbone'):
+                return cfg.model.backbone.type
+            elif hasattr(cfg.model,
+                         'model_type') and not hasattr(cfg.model, 'type'):
+                return cfg.model.model_type
+            else:
+                return cfg.model.type
         elif osp.isfile(config_file):
             cfg = Config.from_file(config_file)
             return cfg.model_type if hasattr(cfg, 'model_type') else None
@@ -123,13 +130,24 @@ def parse_label_mapping(model_dir):
         if hasattr(config, ConfigFields.model) and hasattr(
                 config[ConfigFields.model], 'label2id'):
             label2id = config[ConfigFields.model].label2id
+        elif hasattr(config, ConfigFields.model) and hasattr(
+                config[ConfigFields.model], 'id2label'):
+            id2label = config[ConfigFields.model].id2label
+            label2id = {label: id for id, label in id2label.items()}
         elif hasattr(config, ConfigFields.preprocessor) and hasattr(
                 config[ConfigFields.preprocessor], 'label2id'):
             label2id = config[ConfigFields.preprocessor].label2id
+        elif hasattr(config, ConfigFields.preprocessor) and hasattr(
+                config[ConfigFields.preprocessor], 'id2label'):
+            id2label = config[ConfigFields.preprocessor].id2label
+            label2id = {label: id for id, label in id2label.items()}
 
     if label2id is None:
         config_path = os.path.join(model_dir, 'config.json')
         config = Config.from_file(config_path)
         if hasattr(config, 'label2id'):
             label2id = config.label2id
+        elif hasattr(config, 'id2label'):
+            id2label = config.id2label
+            label2id = {label: id for id, label in id2label.items()}
     return label2id

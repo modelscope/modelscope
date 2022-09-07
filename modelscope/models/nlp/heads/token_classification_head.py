@@ -12,8 +12,8 @@ from modelscope.utils.constant import Tasks
 
 
 @HEADS.register_module(
-    Tasks.text_classification, module_name=Heads.text_classification)
-class SequenceClassificationHead(TorchHead):
+    Tasks.token_classification, module_name=Heads.token_classification)
+class TokenClassificationHead(TorchHead):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -28,12 +28,12 @@ class SequenceClassificationHead(TorchHead):
 
     def forward(self, inputs=None):
         if isinstance(inputs, dict):
-            assert inputs.get('pooled_output') is not None
-            pooled_output = inputs.get('pooled_output')
+            assert inputs.get('sequence_output') is not None
+            sequence_output = inputs.get('sequence_output')
         else:
-            pooled_output = inputs
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
+            sequence_output = inputs
+        sequence_output = self.dropout(sequence_output)
+        logits = self.classifier(sequence_output)
         return {OutputKeys.LOGITS: logits}
 
     def compute_loss(self, outputs: Dict[str, torch.Tensor],

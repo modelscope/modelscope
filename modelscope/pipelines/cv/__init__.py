@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
+    from .mog_face_detection_pipeline import MogFaceDetectionPipeline
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
@@ -112,6 +113,7 @@ else:
         ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':
         ['MovieSceneSegmentationPipeline'],
+        'mog_face_detection_pipeline': ['MogFaceDetectionPipeline'],
         'ulfd_face_detection_pipeline': ['UlfdFaceDetectionPipeline'],
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
         'facial_expression_recognition_pipelin':

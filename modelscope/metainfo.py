@@ -35,6 +35,7 @@ class Models(object):
     fer = 'fer'
     retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
+    mogface = 'mogface'
     mtcnn = 'mtcnn'
     ulfd = 'ulfd'
 
@@ -128,6 +129,7 @@ class Pipelines(object):
     ulfd_face_detection = 'manual-face-detection-ulfd'
     facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     retina_face_detection = 'resnet50-face-detection-retinaface'
+    mog_face_detection = 'resnet101-face-detection-cvpr22papermogface'
     mtcnn_face_detection = 'manual-face-detection-mtcnn'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'

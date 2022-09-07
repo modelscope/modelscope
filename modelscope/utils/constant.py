@@ -70,6 +70,9 @@ class CVTasks(object):
     crowd_counting = 'crowd-counting'
     movie_scene_segmentation = 'movie-scene-segmentation'
 
+    # video editing
+    video_inpainting = 'video-inpainting'
+
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
     video_summarization = 'video-summarization'

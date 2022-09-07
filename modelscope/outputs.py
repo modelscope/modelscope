@@ -610,4 +610,9 @@ TASK_OUTPUTS = {
     #       "img_embedding": np.array with shape [1, D],
     #   }
     Tasks.image_reid_person: [OutputKeys.IMG_EMBEDDING],
+
+    # {
+    #     'output': ['Done' / 'Decode_Error']
+    # }
+    Tasks.video_inpainting: [OutputKeys.OUTPUT]
 }

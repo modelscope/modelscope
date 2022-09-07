@@ -38,6 +38,7 @@ class Models(object):
     mogface = 'mogface'
     mtcnn = 'mtcnn'
     ulfd = 'ulfd'
+    video_inpainting = 'video-inpainting'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -169,6 +170,7 @@ class Pipelines(object):
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
+    video_inpainting = 'video-inpainting'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

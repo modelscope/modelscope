@@ -420,7 +420,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--suites',
         nargs='*',
-        help='Run specified test suites(test suite file list)')
+        help='Run specified test suites(test suite files list split by space)')
     args = parser.parse_args()
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'

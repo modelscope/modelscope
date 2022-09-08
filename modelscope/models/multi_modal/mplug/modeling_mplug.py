@@ -1868,6 +1868,8 @@ class MPlug(PreTrainedModel):
             checkpoint = torch.load(checkpoint_path, map_location='cpu')
             if 'model' in checkpoint:
                 checkpoint = checkpoint['model']
+            if 'module' in checkpoint:
+                checkpoint = checkpoint['module']
             checkpoint = {
                 k.replace('model.', ''): v
                 for k, v in checkpoint.items()

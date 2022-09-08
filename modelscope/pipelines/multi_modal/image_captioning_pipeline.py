@@ -52,6 +52,4 @@ class ImageCaptioningPipeline(Pipeline):
             return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        if isinstance(self.model, OfaForAllTasks):
-            return inputs
-        return {OutputKeys.CAPTION: inputs}
+        return inputs

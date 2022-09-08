@@ -48,4 +48,4 @@ class ImageTextRetrievalPipeline(Pipeline):
             return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return {OutputKeys.SCORES: inputs[0].tolist()}
+        return inputs

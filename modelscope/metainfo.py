@@ -241,6 +241,7 @@ class Trainers(object):
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
+    dialog_intent_trainer = 'dialog-intent-trainer'
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
 

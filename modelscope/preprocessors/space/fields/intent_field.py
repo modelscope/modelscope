@@ -791,7 +791,6 @@ class BPETextField(object):
                                 user_or_sys = [self.sos_r_id]
                             tmp = [self.sos_u_id
                                    ] + self.numericalize(s) + user_or_sys
-                            tmp = tmp + self.numericalize(s) + [self.eos_r_id]
                             new_src.append(tmp)
 
                         src_span_mask = [[0] + list(map(int, s)) + [0]

@@ -9,11 +9,17 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import FillMaskPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class FillMaskTest(unittest.TestCase):
+class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.fill_mask
+        self.model_id = 'damo/nlp_veco_fill-mask-large'
+
     model_id_sbert = {
         'zh': 'damo/nlp_structbert_fill-mask_chinese-large',
         'en': 'damo/nlp_structbert_fill-mask_english-large'
@@ -133,6 +139,10 @@ class FillMaskTest(unittest.TestCase):
         test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
         print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
               f'{pipeline_ins(test_input)}\n')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

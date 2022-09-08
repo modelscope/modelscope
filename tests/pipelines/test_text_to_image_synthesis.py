@@ -8,11 +8,16 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TextToImageSynthesisTest(unittest.TestCase):
-    model_id = 'damo/cv_diffusion_text-to-image-synthesis_tiny'
+class TextToImageSynthesisTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.text_to_image_synthesis
+        self.model_id = 'damo/cv_diffusion_text-to-image-synthesis_tiny'
+
     test_text = {
         'text': '宇航员',
         'generator_ddim_timesteps': 2,
@@ -45,6 +50,10 @@ class TextToImageSynthesisTest(unittest.TestCase):
         img = pipe_line_text_to_image_synthesis(
             self.test_text)[OutputKeys.OUTPUT_IMG]
         print(np.sum(np.abs(img)))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

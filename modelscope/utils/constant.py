@@ -136,6 +136,22 @@ class MultiModalTasks(object):
     image_text_retrieval = 'image-text-retrieval'
 
 
+class TasksIODescriptions(object):
+    image_to_image = 'image_to_image',
+    images_to_image = 'images_to_image',
+    image_to_text = 'image_to_text',
+    seed_to_image = 'seed_to_image',
+    text_to_speech = 'text_to_speech',
+    text_to_text = 'text_to_text',
+    speech_to_text = 'speech_to_text',
+    speech_to_speech = 'speech_to_speech'
+    speeches_to_speech = 'speeches_to_speech',
+    visual_grounding = 'visual_grounding',
+    visual_question_answering = 'visual_question_answering',
+    visual_entailment = 'visual_entailment',
+    generative_multi_modal_embedding = 'generative_multi_modal_embedding'
+
+
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
     """ Names for tasks supported by modelscope.
 

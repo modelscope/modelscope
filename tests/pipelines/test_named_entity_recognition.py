@@ -9,10 +9,16 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import NERPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class NamedEntityRecognitionTest(unittest.TestCase):
+class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.named_entity_recognition
+        self.model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
+
     tcrf_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
     lcrf_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-news'
     sentence = '这与温岭市新河镇的一个神秘的传说有关。'
@@ -87,6 +93,10 @@ class NamedEntityRecognitionTest(unittest.TestCase):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.named_entity_recognition)
         print(pipeline_ins(input=self.sentence))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

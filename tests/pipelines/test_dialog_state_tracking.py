@@ -8,12 +8,17 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import DialogStateTrackingPipeline
 from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.nlp.nlp_utils import tracking_and_print_dialog_states
 from modelscope.utils.test_utils import test_level
 
 
-class DialogStateTrackingTest(unittest.TestCase):
-    model_id = 'damo/nlp_space_dialog-state-tracking'
+class DialogStateTrackingTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.task_oriented_conversation
+        self.model_id = 'damo/nlp_space_dialog-state-tracking'
+
     test_case = [{
         'User-1':
         'Hi, I\'m looking for a train that is going to cambridge and arriving there by 20:45, '
@@ -103,10 +108,7 @@ class DialogStateTrackingTest(unittest.TestCase):
         pipelines = [
             DialogStateTrackingPipeline(
                 model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.task_oriented_conversation,
-                model=model,
-                preprocessor=preprocessor)
+            pipeline(task=self.task, model=model, preprocessor=preprocessor)
         ]
 
         tracking_and_print_dialog_states(self.test_case, pipelines)
@@ -115,11 +117,13 @@ class DialogStateTrackingTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipelines = [
             pipeline(
-                task=Tasks.task_oriented_conversation,
-                model=self.model_id,
-                model_revision='update')
+                task=self.task, model=self.model_id, model_revision='update')
         ]
         tracking_and_print_dialog_states(self.test_case, pipelines)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

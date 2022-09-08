@@ -15,6 +15,10 @@ class TinynasObjectDetectionTest(unittest.TestCase):
             'data/test/images/image_detection.jpg')
         print(result)
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.test_demo()
+
 
 if __name__ == '__main__':
     unittest.main()

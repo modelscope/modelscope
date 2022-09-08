@@ -10,6 +10,7 @@ import soundfile
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ColorCodes, Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import download_and_untar, test_level
 
@@ -22,7 +23,8 @@ LITTLE_TESTSETS_FILE = 'data_aishell.tar.gz'
 LITTLE_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/data_aishell.tar.gz'
 
 
-class AutomaticSpeechRecognitionTest(unittest.TestCase):
+class AutomaticSpeechRecognitionTest(unittest.TestCase,
+                                     DemoCompatibilityCheck):
     action_info = {
         'test_run_with_wav_pytorch': {
             'checking_item': OutputKeys.TEXT,
@@ -74,6 +76,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         self.am_tf_model_id = 'damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1'
         # this temporary workspace dir will store waveform files
         self.workspace = os.path.join(os.getcwd(), '.tmp')
+        self.task = Tasks.auto_speech_recognition
         if not os.path.exists(self.workspace):
             os.mkdir(self.workspace)
 
@@ -253,6 +256,10 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
         rec_result = self.run_pipeline(
             model_id=self.am_tf_model_id, audio_in=dataset_path)
         self.check_result('test_run_with_wav_dataset_tf', rec_result)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

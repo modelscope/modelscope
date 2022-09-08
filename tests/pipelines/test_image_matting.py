@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-import tempfile
 import unittest
 
 import cv2
 
-from modelscope.fileio import File
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageMattingTest(unittest.TestCase):
+class ImageMattingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_unet_image-matting'
@@ -61,6 +60,10 @@ class ImageMattingTest(unittest.TestCase):
         print(
             f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'
         )
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

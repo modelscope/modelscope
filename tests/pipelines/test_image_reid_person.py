@@ -6,14 +6,16 @@ from PIL import Image
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageReidPersonTest(unittest.TestCase):
+class ImageReidPersonTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.input_location = 'data/test/images/image_reid_person.jpg'
         self.model_id = 'damo/cv_passvitb_image-reid-person_market'
+        self.task = Tasks.image_reid_person
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_image_reid_person(self):
@@ -47,6 +49,10 @@ class ImageReidPersonTest(unittest.TestCase):
             f'The shape of img embedding is: {result[OutputKeys.IMG_EMBEDDING].shape}'
         )
         print(f'The img embedding is: {result[OutputKeys.IMG_EMBEDDING]}')
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

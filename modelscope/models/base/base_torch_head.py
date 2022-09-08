@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Dict
+from typing import Any, Dict
 
 import torch
 
@@ -18,10 +18,8 @@ class TorchHead(Head, torch.nn.Module):
         super().__init__(**kwargs)
         torch.nn.Module.__init__(self)
 
-    def forward(self, inputs: Dict[str,
-                                   torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def compute_loss(self, outputs: Dict[str, torch.Tensor],
-                     labels) -> Dict[str, torch.Tensor]:
+    def compute_loss(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError

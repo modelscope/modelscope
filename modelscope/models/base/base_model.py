@@ -2,7 +2,7 @@
 import os
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
@@ -10,8 +10,6 @@ from modelscope.utils.checkpoint import save_pretrained
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.device import device_placement, verify_device
-from modelscope.utils.file_utils import func_receive_dict_inputs
-from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -27,35 +25,31 @@ class Model(ABC):
         verify_device(device_name)
         self._device_name = device_name
 
-    def __call__(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        return self.postprocess(self.forward(input))
+    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
+        return self.postprocess(self.forward(*args, **kwargs))
 
     @abstractmethod
-    def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
+    def forward(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Run the forward pass for a model.
 
-        Args:
-            input (Dict[str, Tensor]): the dict of the model inputs for the forward method
-
         Returns:
-            Dict[str, Tensor]: output from the model forward pass
+            Dict[str, Any]: output from the model forward pass
         """
         pass
 
-    def postprocess(self, input: Dict[str, Tensor],
-                    **kwargs) -> Dict[str, Tensor]:
+    def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """ Model specific postprocess and convert model output to
         standard model outputs.
 
         Args:
-            input:  input data
+            inputs:  input data
 
         Return:
             dict of results:  a dict containing outputs of model, each
                 output should have the standard output name.
         """
-        return input
+        return inputs
 
     @classmethod
     def _instantiate(cls, **kwargs):

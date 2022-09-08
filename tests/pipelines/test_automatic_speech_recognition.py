@@ -16,15 +16,10 @@ from modelscope.utils.test_utils import download_and_untar, test_level
 logger = get_logger()
 
 WAV_FILE = 'data/test/audios/asr_example.wav'
+URL_FILE = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audio/asr_example.wav'
 
 LITTLE_TESTSETS_FILE = 'data_aishell.tar.gz'
 LITTLE_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/data_aishell.tar.gz'
-
-AISHELL1_TESTSETS_FILE = 'aishell1.tar.gz'
-AISHELL1_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/aishell1.tar.gz'
-
-TFRECORD_TESTSETS_FILE = 'tfrecord.tar.gz'
-TFRECORD_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/tfrecord.tar.gz'
 
 
 class AutomaticSpeechRecognitionTest(unittest.TestCase):
@@ -42,6 +37,10 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
             'example': 'wav_example'
         },
         'test_run_with_pcm_tf': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
+        'test_run_with_url_tf': {
             'checking_item': OutputKeys.TEXT,
             'example': 'wav_example'
         },
@@ -132,8 +131,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_pytorch(self):
-        '''run with single waveform file
-        '''
+        """run with single waveform file
+        """
 
         logger.info('Run ASR test with waveform file (pytorch)...')
 
@@ -145,8 +144,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_pcm_pytorch(self):
-        '''run with wav data
-        '''
+        """run with wav data
+        """
 
         logger.info('Run ASR test with wav data (pytorch)...')
 
@@ -158,8 +157,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_tf(self):
-        '''run with single waveform file
-        '''
+        """run with single waveform file
+        """
 
         logger.info('Run ASR test with waveform file (tensorflow)...')
 
@@ -171,8 +170,8 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_pcm_tf(self):
-        '''run with wav data
-        '''
+        """run with wav data
+        """
 
         logger.info('Run ASR test with wav data (tensorflow)...')
 
@@ -182,9 +181,20 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
             model_id=self.am_tf_model_id, audio_in=audio, sr=sr)
         self.check_result('test_run_with_pcm_tf', rec_result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_url_tf(self):
+        """run with single url file
+        """
+
+        logger.info('Run ASR test with url file (tensorflow)...')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=URL_FILE)
+        self.check_result('test_run_with_url_tf', rec_result)
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_wav_dataset_pytorch(self):
-        '''run with datasets, and audio format is waveform
+        """run with datasets, and audio format is waveform
            datasets directory:
              <dataset_path>
                wav
@@ -199,7 +209,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                    ...
                transcript
                  data.text  # hypothesis text
-        '''
+        """
 
         logger.info('Run ASR test with waveform dataset (pytorch)...')
         logger.info('Downloading waveform testsets file ...')
@@ -215,7 +225,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_wav_dataset_tf(self):
-        '''run with datasets, and audio format is waveform
+        """run with datasets, and audio format is waveform
            datasets directory:
              <dataset_path>
                wav
@@ -230,7 +240,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase):
                    ...
                transcript
                  data.text  # hypothesis text
-        '''
+        """
 
         logger.info('Run ASR test with waveform dataset (tensorflow)...')
         logger.info('Downloading waveform testsets file ...')

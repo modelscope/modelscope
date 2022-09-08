@@ -1,4 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import struct
+from typing import Union
+from urllib.parse import urlparse
+
+from modelscope.fileio.file import HTTPStorage
+
 SEGMENT_LENGTH_TRAIN = 16000
 
 
@@ -29,3 +35,41 @@ def audio_norm(x):
     scalarx = 10**(-25 / 20) / rmsx
     x = x * scalarx
     return x
+
+
+def extract_pcm_from_wav(wav: bytes) -> bytes:
+    data = wav
+    if len(data) > 44:
+        frame_len = 44
+        file_len = len(data)
+        header_fields = {}
+        header_fields['ChunkID'] = str(data[0:4], 'UTF-8')
+        header_fields['Format'] = str(data[8:12], 'UTF-8')
+        header_fields['Subchunk1ID'] = str(data[12:16], 'UTF-8')
+        if header_fields['ChunkID'] == 'RIFF' and header_fields[
+                'Format'] == 'WAVE' and header_fields['Subchunk1ID'] == 'fmt ':
+            header_fields['SubChunk1Size'] = struct.unpack('<I',
+                                                           data[16:20])[0]
+
+            if header_fields['SubChunk1Size'] == 16:
+                frame_len = 44
+            elif header_fields['SubChunk1Size'] == 18:
+                frame_len = 46
+            else:
+                return data
+
+            data = wav[frame_len:file_len]
+
+    return data
+
+
+def load_bytes_from_url(url: str) -> Union[bytes, str]:
+    result = urlparse(url)
+    if result.scheme is not None and len(result.scheme) > 0:
+        storage = HTTPStorage()
+        data = storage.read(url)
+        data = extract_pcm_from_wav(data)
+    else:
+        data = url
+
+    return data

@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import yaml
@@ -9,6 +8,8 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
+from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
+                                                load_bytes_from_url)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -41,12 +42,20 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
         self.recog_type = recog_type
         self.audio_format = audio_format
-        self.audio_in = audio_in
         self.audio_fs = audio_fs
+
+        if isinstance(audio_in, str):
+            # load pcm data from url if audio_in is url str
+            self.audio_in = load_bytes_from_url(audio_in)
+        elif isinstance(audio_in, bytes):
+            # load pcm data from wav data if audio_in is wave format
+            self.audio_in = extract_pcm_from_wav(audio_in)
+        else:
+            self.audio_in = audio_in
 
         if recog_type is None or audio_format is None:
             self.recog_type, self.audio_format, self.audio_in = asr_utils.type_checking(
-                audio_in=audio_in,
+                audio_in=self.audio_in,
                 recog_type=recog_type,
                 audio_format=audio_format)
 

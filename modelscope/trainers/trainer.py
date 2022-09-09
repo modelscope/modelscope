@@ -164,10 +164,14 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataset = self.to_task_dataset(
             train_dataset,
             mode=ModeKeys.TRAIN,
+            task_data_config=self.cfg.dataset.get('train', None) if hasattr(
+                self.cfg, 'dataset') else None,
             preprocessor=self.train_preprocessor)
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
+            task_data_config=self.cfg.dataset.get('val', None) if hasattr(
+                self.cfg, 'dataset') else None,
             preprocessor=self.eval_preprocessor)
 
         self.train_data_collator, self.eval_default_collate = None, None
@@ -298,6 +302,7 @@ class EpochBasedTrainer(BaseTrainer):
     def to_task_dataset(self,
                         datasets: Union[Dataset, List[Dataset]],
                         mode: str,
+                        task_data_config: Config = None,
                         preprocessor: Optional[Preprocessor] = None):
         """Build the task specific dataset processor for this trainer.
 
@@ -310,20 +315,29 @@ class EpochBasedTrainer(BaseTrainer):
             if isinstance(datasets, TorchTaskDataset):
                 return datasets
             elif isinstance(datasets, MsDataset):
-                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
-                    else ConfigDict(type=None, mode=mode)
+                if task_data_config is None:
+                    # adapt to some special models
+                    task_data_config = ConfigDict(
+                        type=self.cfg.model.type) if hasattr(
+                            self.cfg, ConfigFields.model) else ConfigDict(
+                                type=None)
+                task_data_config.update(dict(mode=mode))
                 return datasets.to_torch_dataset(
-                    task_data_config=cfg,
-                    task_name=self.cfg.task
-                    if hasattr(self.cfg, ConfigFields.task) else None,
+                    task_data_config=task_data_config,
+                    task_name=self.cfg.task,
                     preprocessors=preprocessor)
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
-                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
-                    else ConfigDict(type=None, mode=mode)
+                if task_data_config is None:
+                    # adapt to some special models
+                    task_data_config = ConfigDict(
+                        type=self.cfg.model.type) if hasattr(
+                            self.cfg, ConfigFields.model) else ConfigDict(
+                                type=None)
+                task_data_config.update(dict(mode=mode))
                 datasets = [
                     d.to_torch_dataset(
-                        task_data_config=cfg,
+                        task_data_config=task_data_config,
                         task_name=self.cfg.task,
                         preprocessors=preprocessor) for d in datasets
                 ]
@@ -331,12 +345,12 @@ class EpochBasedTrainer(BaseTrainer):
                     type=self.cfg.task, mode=mode, datasets=datasets)
                 return build_task_dataset(cfg, self.cfg.task)
             else:
-                cfg = ConfigDict(
-                    type=self.cfg.model.type,
-                    mode=mode,
-                    datasets=datasets,
-                    preprocessor=preprocessor)
-                return build_task_dataset(cfg, self.cfg.task)
+                task_data_config.update(
+                    dict(
+                        mode=mode,
+                        datasets=datasets,
+                        preprocessor=preprocessor))
+                return build_task_dataset(task_data_config, self.cfg.task)
         except Exception:
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
                 return TorchTaskDataset(

@@ -14,10 +14,10 @@ import unittest
 from typing import OrderedDict
 
 import requests
-from datasets import Dataset
+import torch
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
+from torch.utils.data import Dataset
 
-from modelscope.msdatasets import MsDataset
 from .torch_utils import _find_free_port
 
 TEST_LEVEL = 2
@@ -49,9 +49,25 @@ def set_test_level(level: int):
     TEST_LEVEL = level
 
 
+class DummyTorchDataset(Dataset):
+
+    def __init__(self, feat, label, num) -> None:
+        self.feat = feat
+        self.label = label
+        self.num = num
+
+    def __getitem__(self, index):
+        return {
+            'feat': torch.Tensor(self.feat),
+            'labels': torch.Tensor(self.label)
+        }
+
+    def __len__(self):
+        return self.num
+
+
 def create_dummy_test_dataset(feat, label, num):
-    return MsDataset.from_hf_dataset(
-        Dataset.from_dict(dict(feat=[feat] * num, labels=[label] * num)))
+    return DummyTorchDataset(feat, label, num)
 
 
 def download_and_untar(fpath, furl, dst) -> str:

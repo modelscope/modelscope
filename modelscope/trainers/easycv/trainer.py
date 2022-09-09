@@ -27,7 +27,6 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
     """Epoch based Trainer for EasyCV.
 
     Args:
-        task: Task name.
         cfg_file(str): The config file of EasyCV.
         model (:obj:`torch.nn.Module` or :obj:`TorchModel` or `str`): The model to be run, or a valid model dir
             or a model id. If model is None, build_model method will be called.
@@ -51,7 +50,6 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
 
     def __init__(
             self,
-            task: str,
             cfg_file: Optional[str] = None,
             model: Optional[Union[TorchModel, nn.Module, str]] = None,
             arg_parse_fn: Optional[Callable] = None,
@@ -64,7 +62,6 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             **kwargs):
 
-        self.task = task
         register_util.register_parallel()
         register_util.register_part_mmcv_hooks_to_ms()
 
@@ -168,8 +165,3 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
             device_ids=[torch.cuda.current_device()])
 
         return build_parallel(dp_cfg)
-
-    def rebuild_config(self, cfg: Config):
-        cfg.task = self.task
-
-        return cfg

@@ -64,7 +64,7 @@ class TrainerTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_0(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -139,7 +139,7 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_1(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -200,7 +200,7 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_with_default_config(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -319,7 +319,7 @@ class TrainerTest(unittest.TestCase):
         for i in [2, 5, 8]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_with_iters_per_epoch(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -441,7 +441,7 @@ class TrainerTest(unittest.TestCase):
 
 class DummyTrainerTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dummy(self):
         default_args = dict(cfg_file='configs/examples/train.json')
         trainer = build_trainer('dummy', default_args)

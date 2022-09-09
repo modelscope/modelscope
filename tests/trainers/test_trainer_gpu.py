@@ -17,7 +17,7 @@ from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
 from modelscope.models.base import Model
 from modelscope.trainers import EpochBasedTrainer, build_trainer
-from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
+from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
 
@@ -55,6 +55,7 @@ class DummyModel(nn.Module, Model):
 
 def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
     json_cfg = {
+        'task': Tasks.image_classification,
         'train': {
             'work_dir': work_dir,
             'dataloader': {
@@ -119,7 +120,7 @@ class TrainerTestSingleGpu(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_single_gpu(self):
         train_func(self.tmp_dir)
 

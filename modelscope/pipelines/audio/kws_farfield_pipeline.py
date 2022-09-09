@@ -2,6 +2,7 @@ import io
 import wave
 from typing import Any, Dict
 
+from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
@@ -39,6 +40,8 @@ class KWSFarfieldPipeline(Pipeline):
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         if isinstance(inputs, bytes):
             return dict(input_file=inputs)
+        elif isinstance(inputs, str):
+            return dict(input_file=inputs)
         elif isinstance(inputs, Dict):
             return inputs
         else:
@@ -47,6 +50,8 @@ class KWSFarfieldPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         input_file = inputs['input_file']
+        if isinstance(input_file, str):
+            input_file = File.read(input_file)
         if isinstance(input_file, bytes):
             input_file = io.BytesIO(input_file)
         self.frame_count = 0

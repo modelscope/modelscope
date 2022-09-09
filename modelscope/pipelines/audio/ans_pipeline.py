@@ -6,6 +6,7 @@ import numpy as np
 import soundfile as sf
 import torch
 
+from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
@@ -34,11 +35,12 @@ class ANSPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         self.model.eval()
 
-    def preprocess(self, inputs: Input) -> Dict[str, Any]:
+    def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         if isinstance(inputs, bytes):
             data1, fs = sf.read(io.BytesIO(inputs))
         elif isinstance(inputs, str):
-            data1, fs = sf.read(inputs)
+            file_bytes = File.read(inputs)
+            data1, fs = sf.read(io.BytesIO(file_bytes))
         else:
             raise TypeError(f'Unsupported type {type(inputs)}.')
         if len(data1.shape) > 1:
@@ -50,7 +52,8 @@ class ANSPipeline(Pipeline):
         inputs = np.reshape(data, [1, data.shape[0]])
         return {'ndarray': inputs, 'nsamples': data.shape[0]}
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
         ndarray = inputs['ndarray']
         if isinstance(ndarray, torch.Tensor):
             ndarray = ndarray.cpu().numpy()

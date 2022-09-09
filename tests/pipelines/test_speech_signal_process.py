@@ -113,7 +113,7 @@ class SpeechSignalProcessTest(unittest.TestCase, DemoCompatibilityCheck):
             ans(data, output_path=output_path)
         print(f'Processed audio saved to {output_path}')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

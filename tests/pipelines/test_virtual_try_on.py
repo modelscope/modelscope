@@ -34,7 +34,7 @@ class VirtualTryonTest(unittest.TestCase, DemoCompatibilityCheck):
         img = pipeline_virtual_tryon(self.input_imgs)[OutputKeys.OUTPUT_IMG]
         cv2.imwrite('demo.jpg', img[:, :, ::-1])
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

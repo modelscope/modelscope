@@ -51,7 +51,7 @@ class ImageSemanticSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
         cv2.imwrite('result.jpg', draw_img)
         print('test_image_semantic_segmentation_vitadapter_from_PIL DONE')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

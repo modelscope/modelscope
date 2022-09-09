@@ -35,7 +35,7 @@ class SingleObjectTracking(unittest.TestCase, DemoCompatibilityCheck):
         result = video_single_object_tracking((video_path, init_bbox))
         print('result is : ', result[OutputKeys.BOXES])
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

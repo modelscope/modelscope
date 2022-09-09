@@ -41,7 +41,7 @@ class VideoMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         logger.info('video feature: {}'.format(
             output['video_embedding'][0][0][0]))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

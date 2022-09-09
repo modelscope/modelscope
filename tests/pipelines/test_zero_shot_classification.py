@@ -70,7 +70,7 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(task=Tasks.zero_shot_classification)
         print(pipeline_ins(input=self.sentence, candidate_labels=self.labels))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

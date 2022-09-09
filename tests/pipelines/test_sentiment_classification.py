@@ -66,7 +66,7 @@ class SentimentClassificationTaskModelTest(unittest.TestCase,
         self.assertTrue(
             isinstance(pipeline_ins.model, SequenceClassificationModel))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

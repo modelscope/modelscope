@@ -257,7 +257,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             model_id=self.am_tf_model_id, audio_in=dataset_path)
         self.check_result('test_run_with_wav_dataset_tf', rec_result)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

@@ -61,7 +61,7 @@ class ImageMattingTest(unittest.TestCase, DemoCompatibilityCheck):
             f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'
         )
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

@@ -51,7 +51,7 @@ class TextToImageSynthesisTest(unittest.TestCase, DemoCompatibilityCheck):
             self.test_text)[OutputKeys.OUTPUT_IMG]
         print(np.sum(np.abs(img)))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

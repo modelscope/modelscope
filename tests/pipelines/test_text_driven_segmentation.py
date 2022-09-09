@@ -23,7 +23,7 @@ class TextDrivenSegmentationTest(unittest.TestCase):
         # result[OutputKeys.MASKS] is segment map result,other keys are not used
         cv2.imwrite(input_location + '_lseg.jpg', result[OutputKeys.MASKS])
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.test_demo()
 

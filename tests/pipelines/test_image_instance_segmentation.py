@@ -61,7 +61,7 @@ class ImageInstanceSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
         print(f'pipeline1:{pipeline1(input=self.image)[OutputKeys.LABELS]}')
         print(f'pipeline2: {pipeline2(input=self.image)[OutputKeys.LABELS]}')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

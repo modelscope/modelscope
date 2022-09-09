@@ -61,7 +61,7 @@ class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
         w, h = denoise_img.size
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

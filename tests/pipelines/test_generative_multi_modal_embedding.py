@@ -68,7 +68,7 @@ class GEMMMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         output = generative_multi_modal_embedding_pipeline(test_input)
         print(output)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

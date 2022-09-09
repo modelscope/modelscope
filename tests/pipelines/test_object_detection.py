@@ -55,7 +55,7 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         else:
             raise ValueError('process error')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

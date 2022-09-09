@@ -42,23 +42,28 @@ def extract_pcm_from_wav(wav: bytes) -> bytes:
     if len(data) > 44:
         frame_len = 44
         file_len = len(data)
-        header_fields = {}
-        header_fields['ChunkID'] = str(data[0:4], 'UTF-8')
-        header_fields['Format'] = str(data[8:12], 'UTF-8')
-        header_fields['Subchunk1ID'] = str(data[12:16], 'UTF-8')
-        if header_fields['ChunkID'] == 'RIFF' and header_fields[
-                'Format'] == 'WAVE' and header_fields['Subchunk1ID'] == 'fmt ':
-            header_fields['SubChunk1Size'] = struct.unpack('<I',
-                                                           data[16:20])[0]
+        try:
+            header_fields = {}
+            header_fields['ChunkID'] = str(data[0:4], 'UTF-8')
+            header_fields['Format'] = str(data[8:12], 'UTF-8')
+            header_fields['Subchunk1ID'] = str(data[12:16], 'UTF-8')
+            if header_fields['ChunkID'] == 'RIFF' and header_fields[
+                    'Format'] == 'WAVE' and header_fields[
+                        'Subchunk1ID'] == 'fmt ':
+                header_fields['SubChunk1Size'] = struct.unpack(
+                    '<I', data[16:20])[0]
 
-            if header_fields['SubChunk1Size'] == 16:
-                frame_len = 44
-            elif header_fields['SubChunk1Size'] == 18:
-                frame_len = 46
-            else:
-                return data
+                if header_fields['SubChunk1Size'] == 16:
+                    frame_len = 44
+                elif header_fields['SubChunk1Size'] == 18:
+                    frame_len = 46
+                else:
+                    return data
 
-            data = wav[frame_len:file_len]
+                data = wav[frame_len:file_len]
+        except Exception:
+            # no treatment
+            pass
 
     return data
 

@@ -11,8 +11,8 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import ConversationalTextToSqlPreprocessor
-from modelscope.preprocessors.star.fields.common_utils import SubPreprocessor
-from modelscope.preprocessors.star.fields.process_dataset import process_tables
+from modelscope.preprocessors.star.fields import (SubPreprocessor,
+                                                  process_tables)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['ConversationalTextToSqlPipeline']

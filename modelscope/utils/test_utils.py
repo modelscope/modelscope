@@ -11,7 +11,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
-from typing import OrderedDict
+from collections import OrderedDict
 
 import requests
 import torch

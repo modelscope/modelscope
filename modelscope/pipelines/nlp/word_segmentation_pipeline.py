@@ -94,4 +94,4 @@ class WordSegmentationPipeline(Pipeline):
         if chunk:
             chunks.append(chunk)
         seg_result = ' '.join(chunks)
-        return {OutputKeys.OUTPUT: seg_result}
+        return {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}

@@ -193,6 +193,8 @@ class Pipelines(object):
     plug_generation = 'plug-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
 
@@ -245,6 +247,7 @@ class Trainers(object):
     dialog_intent_trainer = 'dialog-intent-trainer'
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
+    nlp_passage_ranking_trainer = 'nlp-passage-ranking-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
@@ -272,6 +275,7 @@ class Preprocessors(object):
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
+    cross_encoder_tokenizer = 'cross-encoder-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     text_gen_tokenizer = 'text-gen-tokenizer'
     token_cls_tokenizer = 'token-cls-tokenizer'
@@ -284,6 +288,8 @@ class Preprocessors(object):
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
     sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'

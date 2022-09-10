@@ -345,12 +345,12 @@ class EpochBasedTrainer(BaseTrainer):
                     type=self.cfg.task, mode=mode, datasets=datasets)
                 return build_task_dataset(cfg, self.cfg.task)
             else:
-                task_data_config.update(
-                    dict(
-                        mode=mode,
-                        datasets=datasets,
-                        preprocessor=preprocessor))
-                return build_task_dataset(task_data_config, self.cfg.task)
+                # avoid add no str value datasets, preprocessors in cfg
+                task_data_build_config = ConfigDict(
+                    mode=mode, datasets=datasets, preprocessor=preprocessor)
+                task_data_build_config.update(task_data_config)
+                return build_task_dataset(task_data_build_config,
+                                          self.cfg.task)
         except Exception:
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
                 return TorchTaskDataset(

@@ -23,7 +23,8 @@ if TYPE_CHECKING:
         ZeroShotClassificationPreprocessor, NERPreprocessor,
         TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
         SequenceLabelingPreprocessor, RelationExtractionPreprocessor,
-        DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor)
+        DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor,
+        PassageRankingPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -50,6 +51,7 @@ else:
             'SingleSentenceClassificationPreprocessor',
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
+            'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
             'TextErrorCorrectionPreprocessor',
             'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
             'RelationExtractionPreprocessor',

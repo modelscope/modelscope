@@ -17,6 +17,11 @@ PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
+    Tasks.sentence_embedding:
+    (Pipelines.sentence_embedding,
+     'damo/nlp_corom_sentence-embedding_english-base'),
+    Tasks.passage_ranking: (Pipelines.passage_ranking,
+                            'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),

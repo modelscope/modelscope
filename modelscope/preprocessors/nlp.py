@@ -29,6 +29,7 @@ __all__ = [
     'PairSentenceClassificationPreprocessor',
     'SingleSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
     'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
+    'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
     'TextErrorCorrectionPreprocessor', 'FaqQuestionAnsweringPreprocessor',
     'SequenceLabelingPreprocessor', 'RelationExtractionPreprocessor',
     'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
@@ -100,6 +101,7 @@ class SequenceClassificationPreprocessor(Preprocessor):
 
         text_a = new_data[self.first_sequence]
         text_b = new_data.get(self.second_sequence, None)
+
         feature = self.tokenizer(
             text_a,
             text_b,
@@ -111,7 +113,6 @@ class SequenceClassificationPreprocessor(Preprocessor):
         rst['input_ids'].append(feature['input_ids'])
         rst['attention_mask'].append(feature['attention_mask'])
         rst['token_type_ids'].append(feature['token_type_ids'])
-
         return rst
 
 
@@ -269,6 +270,62 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.passage_ranking)
+class PassageRankingPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in passage ranking model.
+    """
+
+    def __init__(self,
+                 model_dir: str,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
+        """preprocess the data
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(model_dir, pair=True, mode=mode, *args, **kwargs)
+        self.model_dir: str = model_dir
+        self.first_sequence: str = kwargs.pop('first_sequence',
+                                              'source_sentence')
+        self.second_sequence = kwargs.pop('second_sequence',
+                                          'sentences_to_compare')
+        self.sequence_length = kwargs.pop('sequence_length', 128)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
+
+    @type_assert(object, (str, tuple, Dict))
+    def __call__(self, data: Union[tuple, Dict]) -> Dict[str, Any]:
+        if isinstance(data, tuple):
+            sentence1, sentence2 = data
+        elif isinstance(data, dict):
+            sentence1 = data.get(self.first_sequence)
+            sentence2 = data.get(self.second_sequence)
+        if isinstance(sentence2, str):
+            sentence2 = [sentence2]
+        if isinstance(sentence1, str):
+            sentence1 = [sentence1]
+        sentence1 = sentence1 * len(sentence2)
+
+        max_seq_length = self.sequence_length
+        feature = self.tokenizer(
+            sentence1,
+            sentence2,
+            padding='max_length',
+            truncation=True,
+            max_length=max_seq_length,
+            return_tensors='pt')
+        if 'labels' in data:
+            labels = data['labels']
+            feature['labels'] = labels
+        if 'qid' in data:
+            qid = data['qid']
+            feature['qid'] = qid
+        return feature
+
+
+@PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.nli_tokenizer)
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_sim_tokenizer)
@@ -296,6 +353,51 @@ class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
             'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sentence_embedding)
+class SentenceEmbeddingPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in sentence embedding.
+    """
+
+    def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
+        kwargs['truncation'] = kwargs.get('truncation', True)
+        kwargs['padding'] = kwargs.get(
+            'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+
+    def __call__(self, data: Union[str, Dict]) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data Dict:
+                keys: "source_sentence" && "sentences_to_compare"
+                values: list of sentences
+                Example:
+                    {"source_sentence": ["how long it take to get a master's degree"],
+                     "sentences_to_compare": ["On average, students take about 18 to 24 months
+                     to complete a master's degree.",
+                     "On the other hand, some students prefer to go at a slower pace
+                     and choose to take several years to complete their studies.",
+                     "It can take anywhere from two semesters"]}
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        source_sentence = data['source_sentence']
+        compare_sentences = data['sentences_to_compare']
+        sentences = []
+        sentences.append(source_sentence[0])
+        for sent in compare_sentences:
+            sentences.append(sent)
+
+        tokenized_inputs = self.tokenizer(
+            sentences,
+            return_tensors='pt' if self._mode == ModeKeys.INFERENCE else None,
+            padding=True,
+            truncation=True)
+        return tokenized_inputs
 
 
 @PREPROCESSORS.register_module(

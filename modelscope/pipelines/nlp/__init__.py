@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
-
+    from .passage_ranking_pipeline import PassageRankingPipeline
+    from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
 else:
     _import_structure = {
         'conversational_text_to_sql_pipeline':
@@ -55,6 +56,8 @@ else:
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
+        'passage_ranking_pipeline': ['PassageRankingPipeline'],
+        'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline']
     }
 
     import sys

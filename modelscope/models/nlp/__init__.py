@@ -29,6 +29,8 @@ if TYPE_CHECKING:
                               SingleBackboneTaskModelBase,
                               TokenClassificationModel)
     from .token_classification import SbertForTokenClassification
+    from .sentence_embedding import SentenceEmbedding
+    from .passage_ranking import PassageRanking
 
 else:
     _import_structure = {
@@ -62,6 +64,8 @@ else:
             'SingleBackboneTaskModelBase', 'TokenClassificationModel'
         ],
         'token_classification': ['SbertForTokenClassification'],
+        'sentence_embedding': ['SentenceEmbedding'],
+        'passage_ranking': ['PassageRanking'],
     }
 
     import sys

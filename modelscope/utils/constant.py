@@ -89,6 +89,8 @@ class NLPTasks(object):
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'

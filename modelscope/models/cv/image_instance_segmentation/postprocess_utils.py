@@ -105,12 +105,12 @@ def get_img_ins_seg_result(img_seg_result=None,
     }
     for seg_result in img_seg_result:
 
-        box = {
-            'x': np.int(seg_result[0]),
-            'y': np.int(seg_result[1]),
-            'w': np.int(seg_result[2] - seg_result[0]),
-            'h': np.int(seg_result[3] - seg_result[1])
-        }
+        box = [
+            np.int(seg_result[0]),
+            np.int(seg_result[1]),
+            np.int(seg_result[2]),
+            np.int(seg_result[3])
+        ]
         score = np.float(seg_result[4])
         category = seg_result[5]
 
@@ -161,12 +161,10 @@ def show_result(
             np.random.random() * 255.0
         ])
 
-        x1 = int(box['x'])
-        y1 = int(box['y'])
-        w = int(box['w'])
-        h = int(box['h'])
-        x2 = x1 + w
-        y2 = y1 + h
+        x1 = int(box[0])
+        y1 = int(box[1])
+        x2 = int(box[2])
+        y2 = int(box[3])
 
         if show_box:
             cv2.rectangle(

@@ -394,7 +394,7 @@ class AstScaning(object):
 
     def generate_ast(self, file):
         self._refresh()
-        with open(file, 'r') as code:
+        with open(file, 'r', encoding='utf8') as code:
             data = code.readlines()
         data = ''.join(data)
 

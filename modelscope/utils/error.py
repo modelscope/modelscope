@@ -96,3 +96,18 @@ DECORD_IMPORT_ERROR = """
 {0} requires the decord library but it was not found in your environment. You can install it with pip:
 `pip install decord>=0.6.0`
 """
+
+# docstyle-ignore
+DEEPSPEED_IMPORT_ERROR = """
+{0} requires the Deepspeed library but it was not found in your environment. Checkout the instructions on the
+installation page: https://www.deepspeed.ai/tutorials/advanced-install/ and follow the ones that match your environment.
+"""
+
+# docstyle-ignore
+FAIRSEQ_IMPORT_ERROR = """
+{0} requires the fairseq library but it was not found in your environment.
+You can install it with pip on linux:
+`pip install fairseq`
+On windows, please checkout the instructions on the
+installation page: https://github.com/facebookresearch/fairseq and follow the ones that match your environment.
+"""

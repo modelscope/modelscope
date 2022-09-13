@@ -1,6 +1,4 @@
-deepspeed
 en_core_web_sm>=2.3.5
-fairseq>=0.10.2
 jieba>=0.42.1
 megatron_util
 pai-easynlp

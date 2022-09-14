@@ -35,6 +35,7 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    HISTORY = 'history'
     TIMESTAMPS = 'timestamps'
     SPLIT_VIDEO_NUM = 'split_video_num'
     SPLIT_META_DICT = 'split_meta_dict'
@@ -470,6 +471,13 @@ TASK_OUTPUTS = {
     #   "text": "SELECT shop.Name FROM shop."
     # }
     Tasks.conversational_text_to_sql: [OutputKeys.TEXT],
+
+    # table-question-answering result for single sample
+    # {
+    #   "sql": "SELECT shop.Name FROM shop."
+    #   "sql_history": {sel: 0, agg: 0, conds: [[0, 0, 'val']]}
+    # }
+    Tasks.table_question_answering: [OutputKeys.OUTPUT, OutputKeys.HISTORY],
 
     # ============ audio tasks ===================
     # asr result for single sample

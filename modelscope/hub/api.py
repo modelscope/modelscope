@@ -389,7 +389,7 @@ class HubApi:
         cookies = requests.utils.dict_from_cookiejar(cookies)
         r = requests.get(url=datahub_url, cookies=cookies)
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp)
+        raise_on_error(resp)
         return resp['Data']
 
     def on_dataset_download(self, dataset_name: str, namespace: str) -> None:

@@ -220,18 +220,23 @@ class MsDataset:
         api = HubApi()
         download_dataset = ''
         if isinstance(dataset_name, str):
-            download_dataset = dataset_name
             dataset_formation = DatasetFormations.native
-            if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
-                    (os.path.isfile(dataset_name) and dataset_name.endswith('.py')):
+            if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
+                    dataset_name):
                 dataset_formation = DatasetFormations.hf_compatible
+            elif os.path.isfile(dataset_name) and dataset_name.endswith('.py'):
+                dataset_formation = DatasetFormations.hf_compatible
+                file_name = os.path.basename(dataset_name)
+                download_dataset = os.path.splitext(file_name)[0]
             elif is_relative_path(dataset_name) and dataset_name.count(
                     '/') == 0:
+                download_dataset = dataset_name
                 dataset_scripts, dataset_formation, download_dir = api.fetch_dataset_scripts(
                     dataset_name, namespace, download_mode, version)
                 # dataset organized to be compatible with hf format
                 if dataset_formation == DatasetFormations.hf_compatible:
                     dataset_name = dataset_scripts['.py'][0]
+                    download_dataset = dataset_name
             else:
                 raise FileNotFoundError(
                     f"Couldn't find a dataset script at {relative_to_absolute_path(dataset_name)} "
@@ -268,8 +273,11 @@ class MsDataset:
                             f' {type(dataset_name)}')
 
         if download_dataset:
-            api.on_dataset_download(
-                dataset_name=download_dataset, namespace=namespace)
+            try:
+                api.on_dataset_download(
+                    dataset_name=download_dataset, namespace=namespace)
+            except Exception as e:
+                logger.error(e)
 
         return MsDataset.from_hf_dataset(dataset, target=target)
 
@@ -587,7 +595,7 @@ class MsDataset:
         """Clone meta-file of dataset from the ModelScope Hub.
         Args:
             dataset_work_dir (str): Current git working directory.
-            dataset_id (str): Dataset id, It should be like your-namespace/your-dataset-name .
+            dataset_id (str): Dataset id, in the form of your-namespace/your-dataset-name .
             revision(`Optional[str]`):
                 revision of the model you want to clone from. Can be any of a branch, tag or commit hash
             auth_token(`Optional[str]`):
@@ -609,11 +617,11 @@ class MsDataset:
         if clone_work_dir:
             logger.info('Already cloned repo to: {}'.format(clone_work_dir))
         else:
-            logger.warning('The repo working dir is already ex.')
+            logger.warning(
+                'Repo dir already exists: {}'.format(clone_work_dir))
 
     @staticmethod
     def upload_meta(dataset_work_dir: str,
-                    dataset_id: str,
                     commit_message: str,
                     revision: Optional[str] = DEFAULT_DATASET_REVISION,
                     auth_token: Optional[str] = None,
@@ -623,7 +631,6 @@ class MsDataset:
 
         Args:
             dataset_work_dir (str): Current working directory.
-            dataset_id (str): Dataset id, It should be like your-namespace/your-dataset-name .
             commit_message (str): Commit message.
             revision(`Optional[str]`):
                 revision of the model you want to clone from. Can be any of a branch, tag or commit hash
@@ -640,7 +647,7 @@ class MsDataset:
         """
         _repo = DatasetRepository(
             repo_work_dir=dataset_work_dir,
-            dataset_id=dataset_id,
+            dataset_id='',
             revision=revision,
             auth_token=auth_token,
             git_path=git_path)

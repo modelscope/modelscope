@@ -40,6 +40,11 @@ class Repository:
         self.model_dir = model_dir
         self.model_base_dir = os.path.dirname(model_dir)
         self.model_repo_name = os.path.basename(model_dir)
+
+        if not revision:
+            err_msg = 'a non-default value of revision cannot be empty.'
+            raise InvalidParameter(err_msg)
+
         if auth_token:
             self.auth_token = auth_token
         else:
@@ -145,10 +150,21 @@ class DatasetRepository:
                 The git command line path, if None, we use 'git'
         """
         self.dataset_id = dataset_id
-        self.repo_work_dir = repo_work_dir
-        self.repo_base_dir = os.path.dirname(repo_work_dir)
-        self.repo_name = os.path.basename(repo_work_dir)
+        if not repo_work_dir or not isinstance(repo_work_dir, str):
+            err_msg = 'dataset_work_dir must be provided!'
+            raise InvalidParameter(err_msg)
+        self.repo_work_dir = repo_work_dir.rstrip('/')
+        if not self.repo_work_dir:
+            err_msg = 'dataset_work_dir can not be root dir!'
+            raise InvalidParameter(err_msg)
+        self.repo_base_dir = os.path.dirname(self.repo_work_dir)
+        self.repo_name = os.path.basename(self.repo_work_dir)
+
+        if not revision:
+            err_msg = 'a non-default value of revision cannot be empty.'
+            raise InvalidParameter(err_msg)
         self.revision = revision
+
         if auth_token:
             self.auth_token = auth_token
         else:
@@ -199,7 +215,9 @@ class DatasetRepository:
         self.git_wrapper.config_auth_token(self.repo_work_dir, self.auth_token)
         self.git_wrapper.add_user_info(self.repo_base_dir, self.repo_name)
 
-        remote_url = self.git_wrapper.get_repo_remote_url(self.repo_work_dir)
+        remote_url = self._get_remote_url()
+        remote_url = self.git_wrapper.remove_token_from_url(remote_url)
+
         self.git_wrapper.pull(self.repo_work_dir)
         self.git_wrapper.add(self.repo_work_dir, all_files=True)
         self.git_wrapper.commit(self.repo_work_dir, commit_message)

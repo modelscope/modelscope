@@ -60,7 +60,7 @@ def raise_on_error(rsp):
     Args:
         rsp (_type_): The server response
     """
-    if rsp['Code'] == HTTPStatus.OK and rsp['Success']:
+    if rsp['Code'] == HTTPStatus.OK:
         return True
     else:
         raise RequestError(rsp['Message'])

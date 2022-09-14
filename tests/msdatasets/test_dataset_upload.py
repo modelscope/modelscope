@@ -87,7 +87,6 @@ class DatasetUploadTest(unittest.TestCase):
 
         MsDataset.upload_meta(
             dataset_work_dir=self.test_meta_dir,
-            dataset_id=os.path.join(self.namespace, self.dataset_name),
             commit_message='Update for unit test.')
 
 

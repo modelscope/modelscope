@@ -55,6 +55,7 @@ class Models(object):
     space_intent = 'space-intent'
     space_modeling = 'space-modeling'
     star = 'star'
+    star3 = 'star3'
     tcrf = 'transformer-crf'
     transformer_softmax = 'transformer-softmax'
     lcrf = 'lstm-crf'
@@ -193,6 +194,7 @@ class Pipelines(object):
     plug_generation = 'plug-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    table_question_answering_pipeline = 'table-question-answering-pipeline'
     sentence_embedding = 'sentence-embedding'
     passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
@@ -296,6 +298,7 @@ class Preprocessors(object):
     fill_mask_ponet = 'fill-mask-ponet'
     faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    table_question_answering_preprocessor = 'table-question-answering-preprocessor'
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
 

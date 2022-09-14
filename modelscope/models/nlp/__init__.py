@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from .space import SpaceForDialogIntent
     from .space import SpaceForDialogModeling
     from .space import SpaceForDialogStateTracking
+    from .table_question_answering import TableQuestionAnswering
     from .task_models import (InformationExtractionModel,
                               SequenceClassificationModel,
                               SingleBackboneTaskModelBase,
@@ -64,6 +65,7 @@ else:
             'SingleBackboneTaskModelBase', 'TokenClassificationModel'
         ],
         'token_classification': ['SbertForTokenClassification'],
+        'table_question_answering': ['TableQuestionAnswering'],
         'sentence_embedding': ['SentenceEmbedding'],
         'passage_ranking': ['PassageRanking'],
     }

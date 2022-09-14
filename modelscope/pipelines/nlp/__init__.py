@@ -5,6 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .conversational_text_to_sql_pipeline import ConversationalTextToSqlPipeline
+    from .table_question_answering_pipeline import TableQuestionAnsweringPipeline
     from .dialog_intent_prediction_pipeline import DialogIntentPredictionPipeline
     from .dialog_modeling_pipeline import DialogModelingPipeline
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
@@ -31,6 +32,8 @@ else:
     _import_structure = {
         'conversational_text_to_sql_pipeline':
         ['ConversationalTextToSqlPipeline'],
+        'table_question_answering_pipeline':
+        ['TableQuestionAnsweringPipeline'],
         'dialog_intent_prediction_pipeline':
         ['DialogIntentPredictionPipeline'],
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],

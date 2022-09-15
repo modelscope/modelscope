@@ -11,26 +11,9 @@ from modelscope.msdatasets.task_datasets import TASK_DATASETS
 from modelscope.utils.constant import Tasks
 
 
-class EasyCVDetBaseDataset(EasyCVBaseDataset):
-    DATA_STRUCTURE = {
-        'DetSourceCoco': {
-            'train': {
-                'ann_file':
-                'train.json',  # file name of annotation relative to the root path
-                'img_prefix':
-                'images',  # directory name of images relative to the root path
-            },
-            'validation': {
-                'ann_file': 'val.json',
-                'img_prefix': 'images',
-            }
-        }
-    }
-
-
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_object_detection, module_name=Datasets.DetDataset)
-class DetDataset(EasyCVDetBaseDataset, _DetDataset):
+class DetDataset(EasyCVBaseDataset, _DetDataset):
     """EasyCV dataset for object detection.
     For more details, please refer to https://github.com/alibaba/EasyCV/blob/master/easycv/datasets/detection/raw.py .
 
@@ -52,7 +35,7 @@ class DetDataset(EasyCVDetBaseDataset, _DetDataset):
                  mode=None,
                  *args,
                  **kwargs) -> None:
-        EasyCVDetBaseDataset.__init__(
+        EasyCVBaseDataset.__init__(
             self,
             split_config=split_config,
             preprocessor=preprocessor,
@@ -65,7 +48,7 @@ class DetDataset(EasyCVDetBaseDataset, _DetDataset):
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_object_detection,
     module_name=Datasets.DetImagesMixDataset)
-class DetImagesMixDataset(EasyCVDetBaseDataset, _DetImagesMixDataset):
+class DetImagesMixDataset(EasyCVBaseDataset, _DetImagesMixDataset):
     """EasyCV dataset for object detection, a wrapper of multiple images mixed dataset.
     Suitable for training on multiple images mixed data augmentation like
     mosaic and mixup. For the augmentation pipeline of mixed image data,
@@ -99,7 +82,7 @@ class DetImagesMixDataset(EasyCVDetBaseDataset, _DetImagesMixDataset):
                  mode=None,
                  *args,
                  **kwargs) -> None:
-        EasyCVDetBaseDataset.__init__(
+        EasyCVBaseDataset.__init__(
             self,
             split_config=split_config,
             preprocessor=preprocessor,

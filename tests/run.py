@@ -56,12 +56,12 @@ def statistics_test_result(df):
     if failures_cases > 0 or \
        error_cases > 0 or \
        unexpected_success_cases > 0:
-        result = 'FAILED'
+        final_result = 'FAILED'
     else:
-        result = 'SUCCESS'
+        final_result = 'SUCCESS'
     result_msg = '%s (Runs=%s,success=%s,failures=%s,errors=%s,\
     skipped=%s,expected failures=%s,unexpected successes=%s)' % (
-        result, total_cases, success_cases, failures_cases, error_cases,
+        final_result, total_cases, success_cases, failures_cases, error_cases,
         skipped_cases, expected_failure_cases, unexpected_success_cases)
 
     model_cases = get_case_model_info()
@@ -83,7 +83,7 @@ def statistics_test_result(df):
             commit_model_ut_result(model_name, result)
     print('Testing result summary.')
     print(result_msg)
-    if result == 'FAILED':
+    if final_result == 'FAILED':
         sys.exit(1)
 
 

@@ -403,8 +403,8 @@ class MsDataset:
             )
         if isinstance(self._hf_ds, ExternalDataset):
             task_data_config.update({'preprocessor': preprocessors})
-            return build_task_dataset(task_data_config, task_name,
-                                      self._hf_ds.config_kwargs)
+            task_data_config.update(self._hf_ds.config_kwargs)
+            return build_task_dataset(task_data_config, task_name)
         if preprocessors is not None:
             return self.to_torch_dataset_with_processors(
                 preprocessors, columns=columns)

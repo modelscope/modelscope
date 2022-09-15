@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-
 from easycv.datasets.segmentation import SegDataset as _SegDataset
 
 from modelscope.metainfo import Datasets
@@ -9,30 +7,9 @@ from modelscope.msdatasets.task_datasets.builder import TASK_DATASETS
 from modelscope.utils.constant import Tasks
 
 
-class EasyCVSegBaseDataset(EasyCVBaseDataset):
-    DATA_STRUCTURE = {
-        # data source name
-        'SegSourceRaw': {
-            'train': {
-                'img_root':
-                'images',  # directory name of images relative to the root path
-                'label_root':
-                'annotations',  # directory name of annotation relative to the root path
-                'split':
-                'train.txt'  # split file name relative to the root path
-            },
-            'validation': {
-                'img_root': 'images',
-                'label_root': 'annotations',
-                'split': 'val.txt'
-            }
-        }
-    }
-
-
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_segmentation, module_name=Datasets.SegDataset)
-class SegDataset(EasyCVSegBaseDataset, _SegDataset):
+class SegDataset(EasyCVBaseDataset, _SegDataset):
     """EasyCV dataset for Sementic segmentation.
     For more details, please refer to :
     https://github.com/alibaba/EasyCV/blob/master/easycv/datasets/segmentation/raw.py .
@@ -55,7 +32,7 @@ class SegDataset(EasyCVSegBaseDataset, _SegDataset):
                  mode=None,
                  *args,
                  **kwargs) -> None:
-        EasyCVSegBaseDataset.__init__(
+        EasyCVBaseDataset.__init__(
             self,
             split_config=split_config,
             preprocessor=preprocessor,

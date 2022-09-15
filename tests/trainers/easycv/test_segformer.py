@@ -47,7 +47,8 @@ class EasyCVTrainerTestSegformer(unittest.TestCase):
             namespace='EasyCV',
             split='validation')
         kwargs = dict(
-            model='EasyCV/EasyCV-Segformer-b0',
+            model=
+            'damo/cv_segformer-b0_image_semantic-segmentation_coco-stuff164k',
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             work_dir=self.tmp_dir,

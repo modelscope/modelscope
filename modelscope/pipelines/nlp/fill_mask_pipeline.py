@@ -101,7 +101,7 @@ class FillMaskPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return self.model(inputs, **forward_params)
+            return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """process the prediction results

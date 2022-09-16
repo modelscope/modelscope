@@ -2,7 +2,6 @@
 import os
 from typing import Any, Dict, Union
 
-import torch
 from transformers import BertTokenizer
 
 from modelscope.metainfo import Pipelines
@@ -88,7 +87,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             return current_sql
 
         elif action == 'del_focus':
-            pre_final_sql = copy.deepcopy(history_sql)
+            pre_final_sql = history_sql
             pre_sels = []
             pre_aggs = []
             for idx, seli in enumerate(pre_final_sql['sel']):
@@ -151,7 +150,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             return pre_final_sql
 
         elif action == 'del_cond':
-            pre_final_sql = copy.deepcopy(history_sql)
+            pre_final_sql = history_sql
 
             final_conds = []
 

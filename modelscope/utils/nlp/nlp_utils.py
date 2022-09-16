@@ -1,4 +1,3 @@
-import os.path as osp
 from typing import List
 
 from modelscope.outputs import OutputKeys

@@ -31,11 +31,11 @@ class EasyCVTrainerTestSegformer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
     def _train(self):
-        # adapt to distributed mode
-        from easycv.utils.test_util import pseudo_dist_init
-        pseudo_dist_init()
 
-        cfg_options = {'train.max_epochs': 2}
+        cfg_options = {
+            'train.max_epochs': 2,
+            'model.decode_head.norm_cfg.type': 'BN'
+        }
 
         trainer_name = Trainers.easycv
         train_dataset = MsDataset.load(

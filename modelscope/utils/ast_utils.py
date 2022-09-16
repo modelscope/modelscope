@@ -293,6 +293,9 @@ class AstScaning(object):
                     if type(attribute_node).__name__ == 'Str':
                         result.append((getattr(node,
                                                'arg'), attribute_node.s, None))
+                    elif type(attribute_node).__name__ == 'Constant':
+                        result.append(
+                            (getattr(node, 'arg'), attribute_node.value, None))
                     else:
                         result.append((getattr(node, 'arg'), )
                                       + _get_attribute_item(attribute_node))

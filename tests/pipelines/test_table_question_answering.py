@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import unittest
-from typing import List
 
 from transformers import BertTokenizer
 

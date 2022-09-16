@@ -542,7 +542,7 @@ class EpochBasedTrainer(BaseTrainer):
                 value = train_outputs.get(key, None)
                 if value is not None:
                     if dist.is_available() and dist.is_initialized():
-                        value = value.data.clone()
+                        value = value.data.clone().to('cuda')
                         dist.all_reduce(value.div_(dist.get_world_size()))
                     log_vars.update({key: value.item()})
             self.log_buffer.update(log_vars)

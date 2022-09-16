@@ -5,7 +5,7 @@ from typing import Callable, Dict, Optional, Tuple, Union
 import numpy as np
 
 from modelscope.metainfo import Trainers
-from modelscope.models.nlp.space.model.generator import Generator
+from modelscope.models.nlp.space.model.generator import SpaceGenerator
 from modelscope.models.nlp.space.model.model_base import SpaceModelBase
 from modelscope.preprocessors.space.data_loader import \
     get_sequential_data_loader
@@ -90,7 +90,7 @@ class DialogIntentTrainer(BaseTrainer):
             data_type='test')
 
         # set generator
-        generator = Generator.create(self.cfg, reader=bpe)
+        generator = SpaceGenerator.create(self.cfg, reader=bpe)
         # construct model
         self.model = SpaceModelBase.create(
             self.cfg.Model.init_checkpoint,

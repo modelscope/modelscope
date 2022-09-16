@@ -48,7 +48,7 @@ class SequenceClassificationModel(SingleBackboneTaskModelBase):
         self.build_backbone(backbone_cfg)
         self.build_head(head_cfg)
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         outputs = super().forward(input)
         sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
         outputs = self.head.forward(pooled_output)

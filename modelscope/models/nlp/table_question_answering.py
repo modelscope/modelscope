@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 import numpy
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertTokenizer
 
@@ -15,7 +14,6 @@ from modelscope.models.builder import MODELS
 from modelscope.models.nlp.star3.configuration_star3 import Star3Config
 from modelscope.models.nlp.star3.modeling_star3 import Seq2SQL, Star3Model
 from modelscope.preprocessors.star3.fields.struct import Constant
-from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import verify_device
 

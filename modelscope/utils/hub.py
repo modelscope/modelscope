@@ -142,8 +142,8 @@ def parse_label_mapping(model_dir):
             id2label = config[ConfigFields.preprocessor].id2label
             label2id = {label: id for id, label in id2label.items()}
 
-    if label2id is None:
-        config_path = os.path.join(model_dir, 'config.json')
+    config_path = os.path.join(model_dir, 'config.json')
+    if label2id is None and os.path.exists(config_path):
         config = Config.from_file(config_path)
         if hasattr(config, 'label2id'):
             label2id = config.label2id

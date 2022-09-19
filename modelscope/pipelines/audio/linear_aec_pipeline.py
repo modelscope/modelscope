@@ -51,7 +51,7 @@ class LinearAECPipeline(Pipeline):
 
     When invoke the class with pipeline.__call__(), you should provide two params:
         Dict[str, Any]
-            the path of wav files，eg:{
+            the path of wav files, eg:{
             "nearend_mic": "/your/data/near_end_mic_audio.wav",
             "farend_speech": "/your/data/far_end_speech_audio.wav"}
         output_path (str, optional): "/your/output/audio_after_aec.wav"

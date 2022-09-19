@@ -236,7 +236,7 @@ def postprocess(req, resp):
             _, img_encode = cv2.imencode('.' + file_type, content)
             img_bytes = img_encode.tobytes()
             return type(img_bytes)
-        elif file_type == 'wav':
+        else:
             out_mem_file = io.BytesIO()
             out_mem_file.write(new_resp.get(output_key))
             return type(out_mem_file)

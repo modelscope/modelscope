@@ -6,20 +6,19 @@ import uuid
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
-import torch
 from transformers import AutoTokenizer, BertTokenizerFast
 
 from modelscope.metainfo import Models, Preprocessors
 from modelscope.models.nlp.structbert import SbertTokenizerFast
 from modelscope.outputs import OutputKeys
+from modelscope.preprocessors.base import Preprocessor
+from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.config import Config, ConfigFields
 from modelscope.utils.constant import Fields, InputFields, ModeKeys, ModelFile
 from modelscope.utils.hub import get_model_type, parse_label_mapping
 from modelscope.utils.logger import get_logger
 from modelscope.utils.nlp import import_external_nltk_data
 from modelscope.utils.type_assert import type_assert
-from .base import Preprocessor
-from .builder import PREPROCESSORS
 
 logger = get_logger()
 
@@ -30,9 +29,9 @@ __all__ = [
     'SingleSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
     'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
     'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
-    'TextErrorCorrectionPreprocessor', 'FaqQuestionAnsweringPreprocessor',
-    'SequenceLabelingPreprocessor', 'RelationExtractionPreprocessor',
-    'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
+    'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
+    'RelationExtractionPreprocessor', 'DocumentSegmentationPreprocessor',
+    'FillMaskPoNetPreprocessor'
 ]
 
 
@@ -887,47 +886,6 @@ class RelationExtractionPreprocessor(Preprocessor):
             'attention_mask': output['attention_mask'],
             'offsets': output[0].offsets
         }
-
-
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.text_error_correction)
-class TextErrorCorrectionPreprocessor(Preprocessor):
-    """The preprocessor used in text correction task.
-    """
-
-    def __init__(self, model_dir: str, *args, **kwargs):
-        from fairseq.data import Dictionary
-        """preprocess the data via the vocab file from the `model_dir` path
-
-        Args:
-            model_dir (str): model path
-        """
-        super().__init__(*args, **kwargs)
-        self.vocab = Dictionary.load(osp.join(model_dir, 'dict.src.txt'))
-
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    '随着中国经济突飞猛近，建造工业与日俱增'
-        Returns:
-            Dict[str, Any]: the preprocessed data
-            Example:
-            {'net_input':
-                {'src_tokens':tensor([1,2,3,4]),
-                'src_lengths': tensor([4])}
-            }
-        """
-
-        text = ' '.join([x for x in data])
-        inputs = self.vocab.encode_line(
-            text, append_eos=True, add_if_not_exist=False)
-        lengths = inputs.size()
-        sample = dict()
-        sample['net_input'] = {'src_tokens': inputs, 'src_lengths': lengths}
-        return sample
 
 
 @PREPROCESSORS.register_module(

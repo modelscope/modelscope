@@ -24,7 +24,8 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
         SequenceLabelingPreprocessor, RelationExtractionPreprocessor,
         DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor,
-        PassageRankingPreprocessor)
+        PassageRankingPreprocessor,
+        WordSegmentationBlankSetToLabelPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -56,6 +57,7 @@ else:
             'TextErrorCorrectionPreprocessor',
             'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
             'RelationExtractionPreprocessor',
+            'WordSegmentationBlankSetToLabelPreprocessor',
             'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
         ],
         'space': [

@@ -87,9 +87,8 @@ def save_checkpoint(model: torch.nn.Module,
                 checkpoint['optimizer'][name] = optim.state_dict()
 
         # save lr_scheduler state dict in the checkpoint
-        assert isinstance(lr_scheduler, _LRScheduler), \
-            f'lr_scheduler to be saved should be a subclass of _LRScheduler, current is : {lr_scheduler.__class__}'
-        checkpoint['lr_scheduler'] = lr_scheduler.state_dict()
+        if lr_scheduler is not None and hasattr(lr_scheduler, 'state_dict'):
+            checkpoint['lr_scheduler'] = lr_scheduler.state_dict()
     else:
         checkpoint = weights_to_cpu(model.state_dict())
 

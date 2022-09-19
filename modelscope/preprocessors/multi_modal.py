@@ -8,6 +8,7 @@ from PIL import Image
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
+from modelscope.preprocessors import load_image
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Fields, ModeKeys, ModelFile, Tasks
 from .base import Preprocessor
@@ -137,7 +138,7 @@ class MPlugPreprocessor(Preprocessor):
     def image_open(self, path: str) -> Tuple[Image.Image, int]:
         if path not in self._image_map:
             index = len(self._image_map)
-            self._image_map[path] = (Image.open(path), index)
+            self._image_map[path] = (load_image(path), index)
         return self._image_map[path]
 
     def __call__(

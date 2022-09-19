@@ -22,6 +22,9 @@ URL_FILE = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audi
 LITTLE_TESTSETS_FILE = 'data_aishell.tar.gz'
 LITTLE_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/data_aishell.tar.gz'
 
+TFRECORD_TESTSETS_FILE = 'tfrecord.tar.gz'
+TFRECORD_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/tfrecord.tar.gz'
+
 
 class AutomaticSpeechRecognitionTest(unittest.TestCase,
                                      DemoCompatibilityCheck):

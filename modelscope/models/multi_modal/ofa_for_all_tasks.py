@@ -152,8 +152,8 @@ class OfaForAllTasks(TorchModel):
         region_tensor[:, ::2] /= input['w_resize_ratios']
         region_tensor[:, 1::2] /= input['h_resize_ratios']
         return {
-            OutputKeys.BOXES: move_to_device(region_tensor,
-                                             torch.device('cpu')),
+            OutputKeys.BOXES:
+            move_to_device(region_tensor, torch.device('cpu')).tolist(),
             OutputKeys.SCORES: [1.0] * region_tensor.shape[0]
         }
 

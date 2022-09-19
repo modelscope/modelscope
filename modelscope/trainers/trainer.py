@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import random
 import time
 from collections.abc import Mapping
 from distutils.version import LooseVersion
@@ -8,7 +7,6 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import json
-import numpy as np
 import torch
 from torch import distributed as dist
 from torch import nn
@@ -425,8 +423,16 @@ class EpochBasedTrainer(BaseTrainer):
             metrics = [metrics]
         return metrics
 
-    def train(self, *args, **kwargs):
-        self.model.train()
+    def set_checkpoint_file_to_hook(self, checkpoint_path):
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import CheckpointHook
+            checkpoint_hooks = list(
+                filter(lambda hook: isinstance(hook, CheckpointHook),
+                       self.hooks))
+            for hook in checkpoint_hooks:
+                hook.checkpoint_file = checkpoint_path
+
+    def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN
 
         if self.train_dataset is None:
@@ -442,13 +448,17 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.register_optimizers_hook()
         self.register_hook_from_cfg(self.cfg.train.hooks)
+        self.set_checkpoint_file_to_hook(checkpoint_path)
+        self.model.train()
 
         self.train_loop(self.train_dataloader)
 
     def evaluate(self, checkpoint_path=None):
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import CheckpointHook
+            CheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-
         if self.eval_dataset is None:
             self.eval_dataloader = self.get_eval_data_loader()
         else:
@@ -462,8 +472,9 @@ class EpochBasedTrainer(BaseTrainer):
         metric_classes = [build_metric(metric) for metric in self.metrics]
         for m in metric_classes:
             m.trainer = self
+
         metric_values = self.evaluation_loop(self.eval_dataloader,
-                                             checkpoint_path, metric_classes)
+                                             metric_classes)
 
         self._metric_values = metric_values
         return metric_values
@@ -631,18 +642,13 @@ class EpochBasedTrainer(BaseTrainer):
         if hasattr(data_cfg, 'name'):
             dataset = MsDataset.load(
                 dataset_name=data_cfg.name,
-                split=data_cfg.split,
-                subset_name=data_cfg.subset_name if hasattr(
-                    data_cfg, 'subset_name') else None,
-                hub=data_cfg.hub
-                if hasattr(data_cfg, 'hub') else Hubs.modelscope,
                 **data_cfg,
             )
             cfg = ConfigDict(type=self.cfg.model.type, mode=mode)
             torch_dataset = dataset.to_torch_dataset(
                 task_data_config=cfg,
                 task_name=self.cfg.task,
-                preprocessors=self.preprocessor)
+                preprocessors=preprocessor)
         else:
             torch_dataset = build_task_dataset(data_cfg, self.cfg.task)
         dataset = self.to_task_dataset(torch_dataset, mode)
@@ -802,19 +808,22 @@ class EpochBasedTrainer(BaseTrainer):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
         self.invoke_hook(TrainerStages.before_run)
-        self._epoch = 0
         kwargs = {}
         self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
             time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
+                if i < self.inner_iter:
+                    # inner_iter may be read out from the checkpoint file, so skip the trained iters in the epoch.
+                    continue
                 data_batch = to_device(data_batch, self.device)
                 self.data_batch = data_batch
                 self._inner_iter = i
                 self.invoke_hook(TrainerStages.before_train_iter)
                 self.train_step(self.model, data_batch, **kwargs)
                 self.invoke_hook(TrainerStages.after_train_iter)
+                # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
                 del self.data_batch
                 self._iter += 1
                 self._mode = ModeKeys.TRAIN
@@ -823,12 +832,14 @@ class EpochBasedTrainer(BaseTrainer):
                     break
 
             self.invoke_hook(TrainerStages.after_train_epoch)
+            # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
+            self._inner_iter = 0
             self._epoch += 1
 
         time.sleep(1)  # wait for some hooks like loggers to finish
         self.invoke_hook(TrainerStages.after_run)
 
-    def evaluation_loop(self, data_loader, checkpoint_path, metric_classes):
+    def evaluation_loop(self, data_loader, metric_classes):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
@@ -841,7 +852,7 @@ class EpochBasedTrainer(BaseTrainer):
                 tmpdir=None,
                 gpu_collect=False,
                 metric_classes=metric_classes,
-                data_loader_iters_per_gpu=self.iters_per_epoch)
+                data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
@@ -849,7 +860,7 @@ class EpochBasedTrainer(BaseTrainer):
                 data_loader,
                 device=self.device,
                 metric_classes=metric_classes,
-                data_loader_iters=self.iters_per_epoch)
+                data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 

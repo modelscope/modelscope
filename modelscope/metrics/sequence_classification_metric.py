@@ -14,9 +14,9 @@ from .builder import METRICS, MetricKeys
 @METRICS.register_module(
     group_key=default_group, module_name=Metrics.seq_cls_metric)
 class SequenceClassificationMetric(Metric):
-    """The metric computation class for sequence classification classes.
+    """The metric computation class for sequence classification tasks.
 
-    This metric class calculates accuracy for the whole input batches.
+    This metric class calculates accuracy of the whole input batches.
     """
 
     def __init__(self, *args, **kwargs):

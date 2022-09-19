@@ -299,19 +299,23 @@ class MsRegressTool(RegressTool):
                          file_name,
                          level='config',
                          compare_fn=None,
-                         ignore_keys=None):
+                         ignore_keys=None,
+                         compare_random=True,
+                         lazy_stop_callback=None):
 
-        def lazy_stop_callback():
+        if lazy_stop_callback is None:
 
-            from modelscope.trainers.hooks.hook import Hook, Priority
+            def lazy_stop_callback():
 
-            class EarlyStopHook(Hook):
-                PRIORITY = Priority.VERY_LOW
+                from modelscope.trainers.hooks.hook import Hook, Priority
 
-                def after_iter(self, trainer):
-                    raise MsRegressTool.EarlyStopError('Test finished.')
+                class EarlyStopHook(Hook):
+                    PRIORITY = Priority.VERY_LOW
 
-            trainer.register_hook(EarlyStopHook())
+                    def after_iter(self, trainer):
+                        raise MsRegressTool.EarlyStopError('Test finished.')
+
+                trainer.register_hook(EarlyStopHook())
 
         def _train_loop(trainer, *args, **kwargs):
             with self.monitor_module_train(
@@ -320,6 +324,7 @@ class MsRegressTool(RegressTool):
                     level,
                     compare_fn=compare_fn,
                     ignore_keys=ignore_keys,
+                    compare_random=compare_random,
                     lazy_stop_callback=lazy_stop_callback):
                 try:
                     return trainer.train_loop_origin(*args, **kwargs)

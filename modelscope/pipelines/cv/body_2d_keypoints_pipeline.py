@@ -76,8 +76,11 @@ class Body2DKeypointsPipeline(Pipeline):
             }
 
         poses, scores, boxes = self.keypoint_model.postprocess(input)
+        result_boxes = []
+        for box in boxes:
+            result_boxes.append([box[0][0], box[0][1], box[1][0], box[1][1]])
         return {
-            OutputKeys.BOXES: boxes,
+            OutputKeys.BOXES: result_boxes,
             OutputKeys.POSES: poses,
             OutputKeys.SCORES: scores
         }

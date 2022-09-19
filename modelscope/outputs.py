@@ -202,9 +202,9 @@ TASK_OUTPUTS = {
     #               [[score]*15]
     #              ]
     #   "boxes": [
-    #               [[x1, y1], [x2, y2]],
-    #               [[x1, y1], [x2, y2]],
-    #               [[x1, y1], [x2, y2]],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
     #             ]
     # }
     Tasks.body_2d_keypoints:

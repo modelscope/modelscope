@@ -66,8 +66,8 @@ def draw_joints(image, np_kps, score, threshold=0.2):
 
 
 def draw_box(image, box):
-    cv2.rectangle(image, (int(box[0][0]), int(box[0][1])),
-                  (int(box[1][0]), int(box[1][1])), (0, 0, 255), 2)
+    cv2.rectangle(image, (int(box[0]), int(box[1])),
+                  (int(box[2]), int(box[3])), (0, 0, 255), 2)
 
 
 def realtime_object_detection_bbox_vis(image, bboxes):

@@ -215,3 +215,9 @@ class Hook:
                 trigger_stages.add(stage)
 
         return [stage for stage in Hook.stages if stage in trigger_stages]
+
+    def state_dict(self):
+        return {}
+
+    def load_state_dict(self, state_dict):
+        pass

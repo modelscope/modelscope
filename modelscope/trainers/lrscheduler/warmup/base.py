@@ -28,10 +28,10 @@ class BaseWarmup(_LRScheduler):
         return self.base_scheduler.get_lr()
 
     def state_dict(self):
-        self.base_scheduler.state_dict()
+        return self.base_scheduler.state_dict()
 
     def load_state_dict(self, state_dict):
-        self.base_scheduler.load_state_dict(state_dict)
+        return self.base_scheduler.load_state_dict(state_dict)
 
     def scale(self):
         """Scale the learning rates.

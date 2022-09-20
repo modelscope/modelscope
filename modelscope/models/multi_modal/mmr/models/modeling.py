@@ -85,9 +85,6 @@ class CLIP4Clip(nn.Module):
             linear_patch=config['linear_patch'],
             use_gc=config['use_gc']).float()
 
-        if (platform.system() != 'Darwin'):
-            convert_weights(self.clip)  # fp16
-
         if backbone in ['ViT-B/32', 'ViT-B/16']:
             cross_config = SimpleNamespace(**{
                 'hidden_size': 512,

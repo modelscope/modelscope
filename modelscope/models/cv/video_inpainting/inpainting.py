@@ -1,6 +1,6 @@
 """ VideoInpaintingProcess
-Base modules are adapted from https://github.com/researchmm/STTN,
-originally Apache 2.0 License, Copyright (c) 2018-2022 OpenMMLab,
+The implementation here is modified based on STTN,
+originally Apache 2.0 License and publicly avaialbe at https://github.com/researchmm/STTN
 """
 
 import os
@@ -243,7 +243,8 @@ def inpainting_by_model_balance(model, video_inputPath, mask_path,
                 for m in masks_temp
             ]
             masks_temp = _to_tensors(masks_temp).unsqueeze(0)
-            feats_temp, masks_temp = feats_temp.cuda(), masks_temp.cuda()
+            if torch.cuda.is_available():
+                feats_temp, masks_temp = feats_temp.cuda(), masks_temp.cuda()
             comp_frames = [None] * video_length
             model.eval()
             with torch.no_grad():

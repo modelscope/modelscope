@@ -552,7 +552,7 @@ class CLIPVisionTransformer(nn.Module):
                 nn.GroupNorm(1, embed_dim),
                 nn.ConvTranspose2d(
                     embed_dim, embed_dim, kernel_size=2, stride=2),
-                nn.SyncBatchNorm(embed_dim),
+                nn.BatchNorm2d(embed_dim),
                 nn.GELU(),
                 nn.ConvTranspose2d(
                     embed_dim, embed_dim, kernel_size=2, stride=2),

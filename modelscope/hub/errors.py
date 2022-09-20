@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from http import HTTPStatus
 
 from requests.exceptions import HTTPError

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import unittest
 
 # NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.

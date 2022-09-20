@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import math
 import os
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,

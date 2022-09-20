@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from pathlib import Path
 
 MODELSCOPE_URL_SCHEME = 'http://'

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import unittest
 
 from modelscope.hub.api import HubApi

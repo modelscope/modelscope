@@ -1,4 +1,6 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright (c) OpenMMLab. All rights reserved.
+# Major implementation is borrowed and modified from
+# https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
 import copy
 import os

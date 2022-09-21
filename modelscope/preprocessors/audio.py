@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import io
 import os
 from typing import Any, Dict, Tuple, Union

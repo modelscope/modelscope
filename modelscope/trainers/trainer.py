@@ -37,8 +37,8 @@ from modelscope.utils.device import create_device, verify_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (get_dist_info, init_dist,
-                                          set_random_seed)
+from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
+                                          init_dist, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -155,8 +155,17 @@ class EpochBasedTrainer(BaseTrainer):
         if self.eval_preprocessor is not None:
             self.eval_preprocessor.mode = ModeKeys.EVAL
 
+        if kwargs.get('launcher', None) is not None:
+            init_dist(kwargs['launcher'])
+
+        _, world_size = get_dist_info()
+        self._dist = world_size > 1
+
         device_name = kwargs.get('device', 'gpu')
-        verify_device(device_name)
+        if self._dist:
+            local_rank = get_local_rank()
+            device_name = f'cuda:{local_rank}'
+
         self.device = create_device(device_name)
 
         self.train_dataset = self.to_task_dataset(
@@ -218,11 +227,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._eval_iters_per_epoch = self.cfg.evaluation.val_iters_per_epoch
 
         self.use_fp16 = kwargs.get('use_fp16', False)
-
-        if kwargs.get('launcher', None) is not None:
-            init_dist(kwargs['launcher'])
-
-        self._dist = get_dist_info()[1] > 1
 
         # model placement
         if self.device.type == 'cuda':
@@ -531,8 +535,14 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         # call model forward but not __call__ to skip postprocess
-        if isinstance(inputs,
-                      Mapping) and not func_receive_dict_inputs(model.forward):
+
+        if is_parallel(model):
+            receive_dict_inputs = func_receive_dict_inputs(
+                model.module.forward)
+        else:
+            receive_dict_inputs = func_receive_dict_inputs(model.forward)
+
+        if isinstance(inputs, Mapping) and not receive_dict_inputs:
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)

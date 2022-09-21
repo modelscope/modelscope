@@ -53,7 +53,18 @@ class DummyModel(nn.Module, Model):
         return dict(logits=x, loss=loss)
 
 
-def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
+class DummyModelForwardInputs(DummyModel):
+
+    def forward(self, inputs):
+        feat, labels = inputs['feat'], inputs['labels']
+        return super().forward(feat, labels)
+
+
+def train_func(work_dir,
+               dist=False,
+               iterable_dataset=False,
+               forward_inputs=False,
+               **kwargs):
     json_cfg = {
         'task': Tasks.image_classification,
         'train': {
@@ -81,7 +92,10 @@ def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
     with open(config_path, 'w') as f:
         json.dump(json_cfg, f)
 
-    model = DummyModel()
+    if forward_inputs:
+        model = DummyModelForwardInputs()
+    else:
+        model = DummyModel()
     optimmizer = SGD(model.parameters(), lr=0.01)
     lr_scheduler = StepLR(optimmizer, 2)
     trainer_name = Trainers.default
@@ -272,6 +286,22 @@ class TrainerTestMultiGpus(DistributedTestCase):
             self.assertIn(LogKeys.ITER_TIME, lines[i])
         for i in [1, 3, 5]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_multi_gpus_forward_inputs(self):
+        self.start(
+            train_func,
+            num_gpus=2,
+            work_dir=self.tmp_dir,
+            dist=True,
+            forward_inputs=True)
+
+        results_files = os.listdir(self.tmp_dir)
+        json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
+        self.assertEqual(len(json_files), 1)
+        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
 
     # TODO: support iters_per_epoch for dist mode
     @unittest.skipIf(True, 'need to adapt to DistributedSampler')

@@ -112,8 +112,6 @@ class OfaForAllTasks(TorchModel):
                 OutputKeys.CAPTION, OutputKeys.TEXT, OutputKeys.BOXES,
                 OutputKeys.LABELS, OutputKeys.SCORES
         ]:
-            if key in ret and len(ret[key]) == 1:
-                ret[key] = ret[key][0]
             if key not in ret:
                 ret[key] = None
         return ret
@@ -121,8 +119,10 @@ class OfaForAllTasks(TorchModel):
     def postprocess(self, input: Dict[str, Tensor],
                     **kwargs) -> Dict[str, Tensor]:
         if self.cfg.task == Tasks.image_captioning:
-            caption = input[OutputKeys.CAPTION]
-            caption = caption.translate(self.transtab).strip()
+            caption = [
+                cap.translate(self.transtab).strip()
+                for cap in input[OutputKeys.CAPTION]
+            ]
             input[OutputKeys.CAPTION] = caption
         return input
 

@@ -38,14 +38,29 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
         ])
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if self.mode == ModeKeys.TRAIN:
+            return self._build_train_sample(data)
+        else:
+            return self._build_infer_sample(data)
+
+    def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         image = data['image'] if isinstance(
             data['image'], Image.Image) else load_image(data['image'])
         patch_image = self.patch_resize_transform(image)
         prompt = self.cfg.model.get('prompt', ' what does the image describe?')
-        inputs = self.get_inputs(prompt)
+        inputs = self.tokenize_text(prompt)
         sample = {
             'source': inputs,
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True])
         }
+        return sample
+
+    def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        sample = self._build_infer_sample(data)
+        target = data['target']
+        target = target.translate(self.transtab).strip()
+        target_token_list = target.strip().split()
+        target = ' '.join(target_token_list[:self.max_tgt_length])
+        sample['target'] = self.tokenize_text(target)
         return sample

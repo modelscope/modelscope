@@ -48,7 +48,7 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
         prompt = self.cfg.model.get(
             'prompt', ' which region does the text " {} " describe?')
         text = prompt.format(src_caption)
-        src_item = self.get_inputs(text)
+        src_item = self.tokenize_text(text)
         sample = {
             'source': src_item,
             'patch_image': patch_image,

@@ -84,7 +84,12 @@ class OfaPreprocessor(Preprocessor):
 
     def _compatible_with_pretrain(self, data):
         if 'image' in data and self.cfg.model.get('type', None) == 'ofa':
-            image = load_image(data['image'])
+            if isinstance(data['image'], str):
+                image = load_image(data['image'])
+            else:
+                image = data['image']
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
             img_buffer = BytesIO()
             image.save(img_buffer, format='JPEG')
             data['image'] = Image.open(img_buffer)
@@ -102,8 +107,6 @@ class OfaPreprocessor(Preprocessor):
         for k, v in data.items():
             str_data[k] = str(v)
         sample['sample'] = str_data
-        # import pdb
-        # pdb.set_trace()
         if self.no_collate:
             return sample
         else:

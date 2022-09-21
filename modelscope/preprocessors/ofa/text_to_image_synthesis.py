@@ -30,7 +30,7 @@ class OfaTextToImageSynthesisPreprocessor(OfaBasePreprocessor):
         source = ' '.join(
             data['text'].lower().strip().split()[:self.max_src_length])
         source = 'what is the complete image? caption: {}'.format(source)
-        inputs = self.get_inputs(source)
+        inputs = self.tokenize_text(source)
         sample = {
             'source': inputs,
             'patch_images': None,

@@ -31,7 +31,7 @@ class OfaSummarizationPreprocessor(OfaBasePreprocessor):
         prompt = self.cfg.model.get(
             'prompt', ' " {} " Summarize the article with a title: ')
         text = prompt.format(source)
-        inputs = self.get_inputs(text)
+        inputs = self.tokenize_text(text)
         if self.prompt_type == 'none':
             decoder_prompt = self.bos_item
         elif self.prompt_type == 'prev_output':

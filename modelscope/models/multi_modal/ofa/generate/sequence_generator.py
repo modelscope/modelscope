@@ -409,10 +409,12 @@ class SequenceGenerator(nn.Module):
                     out_prefix = p_toks_len_beam < (
                         step + no_repeat_ngram_size - 1)
                 else:
-                    out_prefix = [True] * bsz * beam_size
+                    out_prefix = torch.ones(bsz * beam_size).bool()
                 ngram_blocker_tokens = tokens[out_prefix]
                 ngram_blocker_lprobs = lprobs[out_prefix]
-                ngram_blocker_bsz = out_prefix.sum() // beam_size
+                ngram_blocker_bsz = torch.div(
+                    out_prefix.sum(), beam_size, rounding_mode='trunc')
+
                 lprobs[out_prefix] = self.repeat_ngram_blocker(
                     tokens=ngram_blocker_tokens,
                     lprobs=ngram_blocker_lprobs,

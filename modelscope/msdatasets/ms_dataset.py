@@ -75,7 +75,7 @@ class MsIterableDataset(torch.utils.data.IterableDataset):
             }
             for preprocessor in self.preprocessor_list:
                 res.update({
-                    k: torch.tensor(v)
+                    k: v  # k: torch.tensor(v)
                     for k, v in preprocessor(item_dict).items()
                     if k in self.retained_columns
                 })
@@ -350,14 +350,15 @@ class MsDataset:
 
         def is_numpy_number(value):
             return np.issubdtype(value.dtype, np.integer) or np.issubdtype(
-                value.dtype, np.floating)
+                value.dtype, np.floating) or np.issubdtype(
+                    value.dtype, np.bool)
 
         retained_columns = []
         for k in sample_res.keys():
             if not is_numpy_number(sample_res[k]):
                 logger.warning(
                     f'Data of column {k} is non-numeric, will be removed')
-                continue
+                # continue
             retained_columns.append(k)
 
         return MsIterableDataset(self._hf_ds, preprocessor_list,

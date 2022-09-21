@@ -53,7 +53,7 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
             prompt = self.cfg.model.get(
                 'prompt', ' can image and text1 " {} " imply text2 " {} "?')
             text = prompt.format(caption, hypothesis)
-        inputs = self.get_inputs(text)
+        inputs = self.tokenize_text(text)
         if self.prompt_type == 'none':
             decoder_prompt = self.bos_item
         elif self.prompt_type == 'src':

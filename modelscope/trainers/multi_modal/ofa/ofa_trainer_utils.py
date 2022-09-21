@@ -172,47 +172,11 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         2) the sample size, which is used as the denominator for the gradient
         3) logging outputs to display while training
         """
-        if isinstance(sample, list):
-            if self.sample_patch_num > 0:
-                sample[0]['net_input'][
-                    'sample_patch_num'] = self.sample_patch_num
-            loss_v1, sample_size_v1, logging_output_v1 = self.forward(
-                output[0], sample[0], update_num, reduce)
-            loss_v2, sample_size_v2, logging_output_v2 = self.forward(
-                output[1], sample[1], update_num, reduce)
-            loss = loss_v1 / sample_size_v1 + loss_v2 / sample_size_v2
-            sample_size = 1
-            logging_output = {
-                'loss':
-                loss.data,
-                'loss_v1':
-                loss_v1.data,
-                'loss_v2':
-                loss_v2.data,
-                'nll_loss':
-                logging_output_v1['nll_loss'].data / sample_size_v1
-                + logging_output_v2['nll_loss'].data / sample_size_v2,
-                'ntokens':
-                logging_output_v1['ntokens'] + logging_output_v2['ntokens'],
-                'nsentences':
-                logging_output_v1['nsentences']
-                + logging_output_v2['nsentences'],
-                'sample_size':
-                1,
-                'sample_size_v1':
-                sample_size_v1,
-                'sample_size_v2':
-                sample_size_v2,
-            }
-            return loss, sample_size, logging_output
-
         if self.use_rdrop:
             construct_rdrop_sample(sample)
 
-        net_output = output
-        # model(**sample["net_input"])
         loss, nll_loss, ntokens = self.compute_loss(
-            net_output, sample, update_num, reduce=reduce)
+            output, sample, update_num, reduce=reduce)
         sample_size = (
             sample['target'].size(0) if self.sentence_avg else ntokens)
         logging_output = {

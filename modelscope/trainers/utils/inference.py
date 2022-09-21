@@ -9,6 +9,7 @@ from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
+from torch.nn.parallel import DistributedDataParallel
 from tqdm import tqdm
 
 from modelscope.utils.data_utils import to_device
@@ -68,7 +69,10 @@ def single_gpu_test(model,
                 batch_size = 1  # iteration count
             else:
                 if isinstance(data, dict):
-                    batch_size = len(next(iter(data.values())))
+                    if 'nsentences' in data:
+                        batch_size = data['nsentences']
+                    else:
+                        batch_size = len(next(iter(data.values())))
                 else:
                     batch_size = len(data)
             for _ in range(batch_size):
@@ -142,28 +146,38 @@ def multi_gpu_test(model,
             data = to_device(data, device)
             data_list.append(data)
             with torch.no_grad():
-                if isinstance(data, Mapping) and not func_receive_dict_inputs(
-                        model.forward):
+                forward_func = model.module.forward if \
+                    isinstance(model, DistributedDataParallel) else model.forward
+                if isinstance(data, Mapping
+                              ) and not func_receive_dict_inputs(forward_func):
                     result = model.forward(**data)
                 else:
                     result = model.forward(data)
             results.append(result)
 
-            if rank == 0:
-                if isinstance(data, dict):
-                    batch_size = len(next(iter(data.values())))
+            if isinstance(data, dict):
+                if 'nsentences' in data:
+                    batch_size = data['nsentences']
                 else:
-                    batch_size = len(data)
+                    batch_size = len(next(iter(data.values())))
+            else:
+                batch_size = len(data)
+            if i >= (data_len // world_size) - 1:
+                total_samples = torch.LongTensor([batch_size]).to(model.device)
+                dist.all_reduce(total_samples, op=dist.reduce_op.SUM)
+                total_samples = total_samples.item()
+            else:
+                total_samples = batch_size * world_size
+            if progress_with_iters:
+                iter_cnt_all = world_size
+            else:
+                iter_cnt_all = total_samples
+                count += iter_cnt_all
 
-                if progress_with_iters:
-                    total_samples += batch_size * world_size
-                    batch_size = 1  # iteration count
-
-                batch_size_all = batch_size * world_size
-                count += batch_size_all
+            if rank == 0:
                 if count > data_len:
-                    batch_size_all = data_len - (count - batch_size_all)
-                for _ in range(batch_size_all):
+                    iter_cnt_all = data_len - (count - iter_cnt_all)
+                for _ in range(iter_cnt_all):
                     pbar.update()
 
             if progress_with_iters and (i + 1) >= data_len:

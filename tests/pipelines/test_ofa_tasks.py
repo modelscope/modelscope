@@ -252,6 +252,27 @@ class OfaTasksTest(unittest.TestCase):
         result[OutputKeys.OUTPUT_IMG].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_visual_question_answering_huge_with_name(self):
+        model = '/apsarapangu/disk2/yichang.zyc/ckpt/MaaS/ofa_visual-question-answering_pretrain_huge_en'
+        ofa_pipe = pipeline(Tasks.visual_question_answering, model=model)
+        image = 'data/test/images/visual_question_answering.png'
+        text = 'what is grown on the plant?'
+        input = {'image': image, 'text': text}
+        result = ofa_pipe(input)
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_image_captioning_huge_with_name(self):
+        model = '/apsarapangu/disk2/yichang.zyc/ckpt/MaaS/ofa_image-caption_coco_huge_en'
+        img_captioning = pipeline(
+            task=Tasks.image_captioning,
+            model=model,
+        )
+        result = img_captioning(
+            {'image': 'data/test/images/image_captioning.png'})
+        print(result[OutputKeys.CAPTION])
+
 
 if __name__ == '__main__':
     unittest.main()

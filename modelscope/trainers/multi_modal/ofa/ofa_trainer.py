@@ -3,6 +3,7 @@ from functools import partial
 from typing import Dict, Optional
 
 from datasets import load_dataset
+from torch import distributed as dist
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model
@@ -15,7 +16,7 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ConfigKeys, ModeKeys, ModelFile
 from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
-                                OFADataset, get_schedule)
+                                get_schedule)
 
 
 @TRAINERS.register_module(module_name=Trainers.ofa_tasks)
@@ -36,31 +37,13 @@ class OFATrainer(EpochBasedTrainer):
         preprocessor = {
             ConfigKeys.train:
             OfaPreprocessor(
-                model_dir=model_dir, model=ModeKeys.TRAIN, no_collate=True),
+                model_dir=model_dir, mode=ModeKeys.TRAIN, no_collate=True),
             ConfigKeys.val:
             OfaPreprocessor(
-                model_dir=model_dir, model=ModeKeys.EVAL, no_collate=True),
+                model_dir=model_dir, mode=ModeKeys.EVAL, no_collate=True),
         }
-        # train_dataset = dataset['train'].to_torch_dataset(
-        #     preprocessors=OfaPreprocessor(model_dir=model_dir, model=ModeKeys.TRAIN, no_collate=True),
-        # )
-        # valid_dataset = dataset['valid'].to_torch_dataset(
-        #     preprocessors=OfaPreprocessor(model_dir=model_dir, model=ModeKeys.TRAIN, no_collate=True),
-        # )
-        # train_dataset = OFADataset(
-        #     file_path=cfg.dataset.train_set,
-        #     selected_id_keys=cfg.dataset.selected_id_keys,
-        #     preprocessor=OfaPreprocessor(
-        #         model_dir=model_dir, mode=ModeKeys.TRAIN),
-        # )
-        # val_dataset = OFADataset(
-        #     file_path=cfg.dataset.valid_set,
-        #     selected_id_keys=cfg.dataset.selected_id_keys,
-        #     preprocessor=OfaPreprocessor(
-        #         model_dir=model_dir, mode=ModeKeys.EVAL),
-        # )
         epoch_steps = len(dataset['train']) // (
-            cfg.train.gradient_accumulation_steps
+            cfg.train.optimizer_hook.cumulative_iters
             * cfg.train.dataloader.batch_size_per_gpu)
         cfg.train.lr_scheduler.num_train_steps = epoch_steps * cfg.train.max_epochs
         cfg.train.criterion.tokenizer = model.tokenizer
@@ -78,6 +61,11 @@ class OFATrainer(EpochBasedTrainer):
             pad_idx=model.tokenizer.pad_token_id,
             eos_idx=model.tokenizer.eos_token_id,
         )
+        if 'launcher' not in kwargs and cfg.train.get('launcher', None):
+            kwargs['launcher'] = cfg.train.launcher
+        if 'use_fp16' not in kwargs and cfg.train.get('use_fp16', False):
+            kwargs['use_fp16'] = cfg.train.use_fp16
+
         super().__init__(
             cfg_file=cfg_file,
             model=model,
@@ -91,14 +79,28 @@ class OFATrainer(EpochBasedTrainer):
             **kwargs,
         )
 
-    # def train(self, *args, **kwargs):
-    #     pass
-
-    def evaluate(self,
-                 checkpoint_path: Optional[str] = None,
-                 *args,
-                 **kwargs) -> Dict[str, float]:
-        pass
-
-    def prediction_step(self, model, inputs):
-        pass
+    def train_step(self, model, inputs):
+        model.train()
+        model_outputs = model.forward(inputs)
+        loss, sample_size, logging_output = self.criterion(
+            model_outputs, inputs)
+        train_outputs = {'loss': loss}
+        # add model output info to log
+        if 'log_vars' not in train_outputs:
+            default_keys_pattern = ['loss']
+            match_keys = set([])
+            for key_p in default_keys_pattern:
+                match_keys.update(
+                    [key for key in train_outputs.keys() if key_p in key])
+            log_vars = {}
+            for key in match_keys:
+                value = train_outputs.get(key, None)
+                if value is not None:
+                    if dist.is_available() and dist.is_initialized():
+                        value = value.data.clone()
+                        dist.all_reduce(value.div_(dist.get_world_size()))
+                    log_vars.update({key: value.item()})
+            self.log_buffer.update(log_vars)
+        else:
+            self.log_buffer.update(train_outputs['log_vars'])
+        self.train_outputs = train_outputs

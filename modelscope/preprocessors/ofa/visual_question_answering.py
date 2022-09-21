@@ -42,7 +42,7 @@ class OfaVisualQuestionAnsweringPreprocessor(OfaBasePreprocessor):
             data['image'], Image.Image) else load_image(data['image'])
         patch_image = self.patch_resize_transform(image)
         text = ' {}'.format(data['text'])
-        inputs = self.get_inputs(text)
+        inputs = self.tokenize_text(text)
         if self.prompt_type == 'none':
             decoder_prompt = self.bos_item
         elif self.prompt_type == 'src':

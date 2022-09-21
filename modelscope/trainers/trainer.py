@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from torch import distributed as dist
 from torch import nn
+from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
@@ -159,8 +160,6 @@ class EpochBasedTrainer(BaseTrainer):
             train_dataset,
             mode=ModeKeys.TRAIN,
             preprocessor=self.train_preprocessor)
-        # import pdb
-        # pdb.set_trace()
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
@@ -200,7 +199,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._max_epochs = self.cfg.train.max_epochs
         else:
             self._max_epochs = kwargs['max_epochs']
-
         self._train_iters_per_epoch = kwargs.get('train_iters_per_epoch', None)
         self._eval_iters_per_epoch = kwargs.get('val_iters_per_epoch', None)
         if self._train_iters_per_epoch is None and hasattr(
@@ -220,12 +218,12 @@ class EpochBasedTrainer(BaseTrainer):
             init_dist(kwargs['launcher'])
 
         self._dist = get_dist_info()[1] > 1
-
         # model placement
         if self.device.type == 'cuda':
             self.model.to(self.device)
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
+                self.device = self.model.device
 
     def rebuild_config(self, cfg: Config):
         """A method used to rebuild the config, any subclass can override this method.
@@ -429,7 +427,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.register_hook_from_cfg(self.cfg.train.hooks)
         self.train_loop(self.train_dataloader)
 
-    def evaluate(self, checkpoint_path=None):
+    def evaluate(self, checkpoint_path=None, *arg, **kwargs):
         self.model.eval()
         self._mode = ModeKeys.EVAL
 
@@ -475,12 +473,12 @@ class EpochBasedTrainer(BaseTrainer):
             self.cfg.parallel.update(
                 dict(module=model, device_ids=[torch.cuda.current_device()]))
             return build_parallel(self.cfg.parallel)
-
+        model.to(f'cuda:{torch.cuda.current_device()}')
         dp_cfg = dict(
             type='DistributedDataParallel',
             module=model,
+            find_unused_parameters=True,
             device_ids=[torch.cuda.current_device()])
-
         return build_parallel(dp_cfg)
 
     def train_step(self, model, inputs):
@@ -504,8 +502,10 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         # call model forward but not __call__ to skip postprocess
+        forward_func = model.module.forward if \
+            isinstance(model, DistributedDataParallel) else model.forward
         if isinstance(inputs,
-                      Mapping) and not func_receive_dict_inputs(model.forward):
+                      Mapping) and not func_receive_dict_inputs(forward_func):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)
@@ -751,7 +751,7 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist:
+        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
             sampler = DistributedSampler(
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:

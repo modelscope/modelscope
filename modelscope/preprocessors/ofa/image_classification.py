@@ -42,7 +42,7 @@ class OfaImageClassificationPreprocessor(OfaBasePreprocessor):
             data['image'], Image.Image) else load_image(data['image'])
         patch_image = self.patch_resize_transform(image)
         prompt = self.cfg.model.get('prompt', ' what does the image describe?')
-        inputs = self.get_inputs(prompt)
+        inputs = self.tokenize_text(prompt)
         sample = {
             'source': inputs,
             'patch_image': patch_image,

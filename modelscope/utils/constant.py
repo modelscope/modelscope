@@ -246,6 +246,7 @@ class ModelFile(object):
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
+    TS_MODEL_FILE = 'model.ts'
 
 
 class ConfigFields(object):

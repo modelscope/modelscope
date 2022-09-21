@@ -28,7 +28,7 @@ if is_torch_available():
     import torch
 
 if is_tf_available():
-    import tensorflow as tf
+    pass
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 Input = Union[str, tuple, MsDataset, 'Image.Image', 'numpy.ndarray']
@@ -204,44 +204,7 @@ class Pipeline(ABC):
             yield self._process_single(ele, *args, **kwargs)
 
     def _collate_fn(self, data):
-        """Prepare the input just before the forward function.
-        This method will move the tensors to the right device.
-        Usually this method does not need to be overridden.
-
-        Args:
-            data: The data out of the dataloader.
-
-        Returns: The processed data.
-
-        """
-        from torch.utils.data.dataloader import default_collate
-        from modelscope.preprocessors import InputFeatures
-        if isinstance(data, dict) or isinstance(data, Mapping):
-            return type(data)(
-                {k: self._collate_fn(v)
-                 for k, v in data.items()})
-        elif isinstance(data, (tuple, list)):
-            if isinstance(data[0], (int, float)):
-                return default_collate(data).to(self.device)
-            else:
-                return type(data)(self._collate_fn(v) for v in data)
-        elif isinstance(data, np.ndarray):
-            if data.dtype.type is np.str_:
-                return data
-            else:
-                return self._collate_fn(torch.from_numpy(data))
-        elif isinstance(data, torch.Tensor):
-            return data.to(self.device)
-        elif isinstance(data, (bytes, str, int, float, bool, type(None))):
-            return data
-        elif isinstance(data, InputFeatures):
-            return data
-        else:
-            import mmcv
-            if isinstance(data, mmcv.parallel.data_container.DataContainer):
-                return data
-            else:
-                raise ValueError(f'Unsupported data type {type(data)}')
+        return collate_fn(data, self.device)
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
         preprocess_params = kwargs.get('preprocess_params', {})
@@ -410,3 +373,43 @@ class DistributedPipeline(Pipeline):
         @return: The forward results.
         """
         pass
+
+
+def collate_fn(data, device):
+    """Prepare the input just before the forward function.
+    This method will move the tensors to the right device.
+    Usually this method does not need to be overridden.
+
+    Args:
+        data: The data out of the dataloader.
+        device: The device to move data to.
+
+    Returns: The processed data.
+
+    """
+    from torch.utils.data.dataloader import default_collate
+    from modelscope.preprocessors import InputFeatures
+    if isinstance(data, dict) or isinstance(data, Mapping):
+        return type(data)({k: collate_fn(v, device) for k, v in data.items()})
+    elif isinstance(data, (tuple, list)):
+        if isinstance(data[0], (int, float)):
+            return default_collate(data).to(device)
+        else:
+            return type(data)(collate_fn(v, device) for v in data)
+    elif isinstance(data, np.ndarray):
+        if data.dtype.type is np.str_:
+            return data
+        else:
+            return collate_fn(torch.from_numpy(data), device)
+    elif isinstance(data, torch.Tensor):
+        return data.to(device)
+    elif isinstance(data, (bytes, str, int, float, bool, type(None))):
+        return data
+    elif isinstance(data, InputFeatures):
+        return data
+    else:
+        import mmcv
+        if isinstance(data, mmcv.parallel.data_container.DataContainer):
+            return data
+        else:
+            raise ValueError(f'Unsupported data type {type(data)}')

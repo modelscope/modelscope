@@ -352,10 +352,10 @@ def numpify_tensor_nested(tensors, reduction=None, clip_value=10000):
         return type(tensors)(
             numpify_tensor_nested(t, reduction, clip_value) for t in tensors)
     if isinstance(tensors, Mapping):
-        return type(tensors)({
+        return {
             k: numpify_tensor_nested(t, reduction, clip_value)
             for k, t in tensors.items()
-        })
+        }
     if isinstance(tensors, torch.Tensor):
         t: np.ndarray = tensors.cpu().numpy()
         if clip_value is not None:
@@ -375,9 +375,7 @@ def detach_tensor_nested(tensors):
     if isinstance(tensors, (list, tuple)):
         return type(tensors)(detach_tensor_nested(t) for t in tensors)
     if isinstance(tensors, Mapping):
-        return type(tensors)(
-            {k: detach_tensor_nested(t)
-             for k, t in tensors.items()})
+        return {k: detach_tensor_nested(t) for k, t in tensors.items()}
     if isinstance(tensors, torch.Tensor):
         return tensors.detach()
     return tensors
@@ -496,7 +494,11 @@ def intercept_module(module: nn.Module,
         intercept_module(module, io_json, full_name, restore)
 
 
-def compare_arguments_nested(print_content, arg1, arg2):
+def compare_arguments_nested(print_content,
+                             arg1,
+                             arg2,
+                             rtol=1.e-3,
+                             atol=1.e-8):
     type1 = type(arg1)
     type2 = type(arg2)
     if type1.__name__ != type2.__name__:
@@ -515,7 +517,7 @@ def compare_arguments_nested(print_content, arg1, arg2):
             return False
         return True
     elif isinstance(arg1, (float, np.floating)):
-        if not np.isclose(arg1, arg2, rtol=1.e-3, atol=1.e-8, equal_nan=True):
+        if not np.isclose(arg1, arg2, rtol=rtol, atol=atol, equal_nan=True):
             if print_content is not None:
                 print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
             return False
@@ -562,7 +564,7 @@ def compare_arguments_nested(print_content, arg1, arg2):
         arg2 = np.where(np.equal(arg2, None), np.NaN,
                         arg2).astype(dtype=np.float)
         if not all(
-                np.isclose(arg1, arg2, rtol=1.e-3, atol=1.e-8,
+                np.isclose(arg1, arg2, rtol=rtol, atol=atol,
                            equal_nan=True).flatten()):
             if print_content is not None:
                 print(f'{print_content}')

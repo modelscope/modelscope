@@ -115,6 +115,10 @@ def get_dist_info() -> Tuple[int, int]:
     return rank, world_size
 
 
+def get_local_rank():
+    return int(os.environ.get('LOCAL_RANK', 0))
+
+
 def is_master():
     rank, _ = get_dist_info()
     return rank == 0

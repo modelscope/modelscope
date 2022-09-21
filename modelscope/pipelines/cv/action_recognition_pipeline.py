@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import math
 import os.path as osp
 from typing import Any, Dict

@@ -147,8 +147,10 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-2]
-        self.save_img(image, result[OutputKeys.BOXES],
-                      osp.join('large_en_model_' + image_name + '.png'))
+        self.save_img(
+            image,
+            result[OutputKeys.BOXES][0],  # just one box
+            osp.join('large_en_model_' + image_name + '.png'))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_grounding_with_name(self):
@@ -161,7 +163,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-2]
-        self.save_img(image, result[OutputKeys.BOXES],
+        self.save_img(image, result[OutputKeys.BOXES][0],
                       osp.join('large_en_name_' + image_name + '.png'))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -174,7 +176,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-1]
-        self.save_img(image, result[OutputKeys.BOXES],
+        self.save_img(image, result[OutputKeys.BOXES][0],
                       osp.join('large_zh_name_' + image_name))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

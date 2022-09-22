@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-# Implementation in this file is modifed from source code avaiable via https://github.com/ViTAE-Transformer/ViTDet
+# Implementation in this file is modified based on ViTAE-Transformer
+# Originally Apache 2.0 License and publicly avaialbe at https://github.com/ViTAE-Transformer/ViTDet
 import copy
 
 import torch

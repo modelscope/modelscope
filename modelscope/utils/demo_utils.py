@@ -121,7 +121,7 @@ INPUT_EXAMPLES = {
         'urlPaths': {
             'outUrls': [{
                 'outputKey': OutputKeys.OUTPUT_PCM,
-                'fileType': 'wav'
+                'fileType': 'pcm'
             }]
         }
     },
@@ -132,7 +132,7 @@ INPUT_EXAMPLES = {
         'urlPaths': {
             'outUrls': [{
                 'outputKey': OutputKeys.OUTPUT_PCM,
-                'fileType': 'wav'
+                'fileType': 'pcm'
             }]
         }
     },
@@ -145,7 +145,13 @@ INPUT_EXAMPLES = {
             'http://xingchen-data.oss-cn-zhangjiakou.aliyuncs.com/maas/visual-grounding/visual_grounding.png',
             'a blue turtle-like pokemon with round head'
         ],
-        'urlPaths': {}
+        'urlPaths': {
+            'inUrls': [{
+                'name': 'image'
+            }, {
+                'name': 'text'
+            }]
+        }
     },
     TasksIODescriptions.visual_question_answering: {
         'task':
@@ -154,7 +160,16 @@ INPUT_EXAMPLES = {
             'http://225252-file.oss-cn-hangzhou-zmf.aliyuncs.com/maas_demo/visual_question_answering.png',
             'what is grown on the plant?'
         ],
-        'urlPaths': {}
+        'urlPaths': {
+            'inUrls': [{
+                'name': 'image'
+            }, {
+                'name': 'text'
+            }],
+            'outUrls': [{
+                'outputKey': 'text'
+            }]
+        }
     },
     TasksIODescriptions.visual_entailment: {
         'task':
@@ -163,7 +178,14 @@ INPUT_EXAMPLES = {
             'http://xingchen-data.oss-cn-zhangjiakou.aliyuncs.com/maas/visual-entailment/visual_entailment.jpg',
             'there are two birds.', 'test'
         ],
-        'urlPaths': {}
+        'urlPaths': {
+            'inUrls': [{
+                'name': 'image'
+            }, {
+                'name': 'text'
+            }],
+            'outUrls': [{}]
+        }
     },
     TasksIODescriptions.generative_multi_modal_embedding: {
         'task':
@@ -172,7 +194,14 @@ INPUT_EXAMPLES = {
             'http://clip-multimodal.oss-cn-beijing.aliyuncs.com/lingchen/demo/dogs.jpg',
             'dogs playing in the grass'
         ],
-        'urlPaths': {}
+        'urlPaths': {
+            'inUrls': [{
+                'name': 'image'
+            }, {
+                'name': 'text'
+            }],
+            'outUrls': [{}]
+        }
     },
 }
 
@@ -190,7 +219,13 @@ class DemoCompatibilityCheck(object):
         print('testing demo: ', self.task, self.model_id)
         test_pipline = pipeline(self.task, self.model_id)
         req = INPUT_EXAMPLES[TASKS_INPUT_TEMPLATES[self.task]]
-        output = test_pipline(preprocess(req))
+        inputs = preprocess(req)
+        params = req.get('parameters', {})
+        # maas inference
+        if params != {}:
+            output = test_pipline(inputs, **params)
+        else:
+            output = test_pipline(inputs)
         json.dumps(output, cls=NumpyEncoder)
         result = postprocess(req, output)
         print(result)
@@ -213,11 +248,21 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def preprocess(req):
+    in_urls = req.get('urlPaths').get('inUrls')
     if len(req['inputs']) == 1:
         inputs = req['inputs'][0]
     else:
         inputs = tuple(req['inputs'])
-    return inputs
+    if in_urls is None or len(in_urls) == 0:
+        return inputs
+
+    inputs_dict = {}
+    for i, in_url in enumerate(in_urls):
+        input_name = in_url.get('name')
+        if input_name is None or input_name == '':
+            return inputs
+        inputs_dict[input_name] = req['inputs'][i]
+    return inputs_dict
 
 
 def postprocess(req, resp):
@@ -240,4 +285,3 @@ def postprocess(req, resp):
             out_mem_file = io.BytesIO()
             out_mem_file.write(new_resp.get(output_key))
             return type(out_mem_file)
-        # TODO(lingcai.wl): support more file type

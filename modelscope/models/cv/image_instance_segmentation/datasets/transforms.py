@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
 
 import numpy as np
@@ -51,9 +52,9 @@ class LoadImageFromFile:
     """Load an image from file.
 
     Required keys are "img_prefix" and "img_info" (a dict that must contain the
-    key "filename"). Added or updated keys are "filename", "img", "img_shape",
-    "ori_shape" (same as `img_shape`), "pad_shape" (same as `img_shape`),
-    "scale_factor" (1.0) and "img_norm_cfg" (means=0 and stds=1).
+    key "filename", "ann_file", and "classes"). Added or updated keys are
+    "filename", "ori_filename", "img", "img_shape", "ori_shape" (same as `img_shape`),
+    "img_fields", "ann_file" (path to annotation file) and "classes".
 
     Args:
         to_float32 (bool): Whether to convert the loaded image to a float32
@@ -73,7 +74,7 @@ class LoadImageFromFile:
         """Call functions to load image and get image meta information.
 
         Args:
-            results (dict): Result dict from :obj:`ImageInstanceSegmentationDataset`.
+            results (dict): Result dict from :obj:`ImageInstanceSegmentationCocoDataset`.
 
         Returns:
             dict: The dict contains loaded image and meta information.

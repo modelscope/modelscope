@@ -10,6 +10,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.pipelines.util import is_official_hub_path
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.device import create_device
 
 
 class EasyCVPipeline(object):
@@ -53,16 +54,19 @@ class EasyCVPipeline(object):
         ), f'Not find "{ModelFile.CONFIGURATION}" in model directory!'
 
         self.cfg = Config.from_file(self.config_file)
-        self.predict_op = self._build_predict_op()
+        if 'device' in kwargs:
+            kwargs['device'] = create_device(kwargs['device'])
+        self.predict_op = self._build_predict_op(**kwargs)
 
-    def _build_predict_op(self):
+    def _build_predict_op(self, **kwargs):
         """Build EasyCV predictor."""
         from easycv.predictors.builder import build_predictor
 
         easycv_config = self._to_easycv_config()
         pipeline_op = build_predictor(self.cfg.pipeline.predictor_config, {
             'model_path': self.model_path,
-            'config_file': easycv_config
+            'config_file': easycv_config,
+            **kwargs
         })
         return pipeline_op
 
@@ -91,5 +95,4 @@ class EasyCVPipeline(object):
         return easycv_config
 
     def __call__(self, inputs) -> Any:
-        # TODO: support image url
         return self.predict_op(inputs)

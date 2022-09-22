@@ -61,7 +61,13 @@ class ImageStyleTransferPipeline(Pipeline):
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, {}, {}
 
-    def preprocess(self, content: Input, style: Input) -> Dict[str, Any]:
+    def preprocess(self,
+                   content: Input,
+                   style: Input = None) -> Dict[str, Any]:
+        if type(content) is dict:  # for demo service
+            style = content['style']
+            content = content['content']
+
         content = LoadImage.convert_to_ndarray(content)
         if len(content.shape) == 2:
             content = cv2.cvtColor(content, cv2.COLOR_GRAY2BGR)

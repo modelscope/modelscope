@@ -223,7 +223,7 @@ class DemoCompatibilityCheck(object):
         req = INPUT_EXAMPLES[TASKS_INPUT_TEMPLATES[self.task]]
         inputs = preprocess(req)
         params = req.get('parameters', {})
-        # maas inference
+        # modelscope inference
         if params != {}:
             output = test_pipline(inputs, **params)
         else:

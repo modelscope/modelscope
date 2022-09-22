@@ -28,7 +28,7 @@ class Hand2DKeypointsPipeline(EasyCVPipeline):
             *args,
             **kwargs)
 
-    def _build_predict_op(self):
+    def _build_predict_op(self, **kwargs):
         """Build EasyCV predictor."""
         from easycv.predictors.builder import build_predictor
         detection_predictor_type = self.cfg['DETECTION']['type']
@@ -46,6 +46,7 @@ class Hand2DKeypointsPipeline(EasyCVPipeline):
         easycv_config = self._to_easycv_config()
         pipeline_op = build_predictor(self.cfg.pipeline.predictor_config, {
             'model_path': self.model_path,
-            'config_file': easycv_config
+            'config_file': easycv_config,
+            **kwargs
         })
         return pipeline_op

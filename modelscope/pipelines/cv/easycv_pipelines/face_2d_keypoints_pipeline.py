@@ -4,7 +4,6 @@ from typing import Any
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from .base import EasyCVPipeline
 
@@ -34,8 +33,11 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
         return self.predict_op.show_result(img, points, scale, save_path)
 
     def __call__(self, inputs) -> Any:
-        output = self.predict_op(inputs)[0][0]
-        points = output['point']
-        poses = output['pose']
+        outputs = self.predict_op(inputs)
 
-        return {OutputKeys.KEYPOINTS: points, OutputKeys.POSES: poses}
+        results = [{
+            OutputKeys.KEYPOINTS: output['point'],
+            OutputKeys.POSES: output['pose']
+        } for output in outputs]
+
+        return results

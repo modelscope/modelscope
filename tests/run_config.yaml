@@ -9,6 +9,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory, which 
   - test_image_super_resolution.py
   - test_easycv_trainer.py
   - test_segformer.py
+  - test_segmentation_pipeline.py
 
 envs:
   default: # default env, case not in other env will in default, pytorch.

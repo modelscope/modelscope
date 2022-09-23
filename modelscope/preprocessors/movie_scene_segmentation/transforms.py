@@ -1,9 +1,5 @@
-# ------------------------------------------------------------------------------------
-# The codes below partially refer to the BaSSL
-# Copyright (c) 2021 KakaoBrain. All Rights Reserved.
-# Licensed under the Apache License, Version 2.0 [see LICENSE for details]
-# Github: https://github.com/kakaobrain/bassl
-# ------------------------------------------------------------------------------------
+# The implementation here is modified based on BaSSL,
+# originally Apache 2.0 License and publicly avaialbe at https://github.com/kakaobrain/bassl
 import numbers
 import os.path as osp
 import random

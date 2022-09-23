@@ -1,6 +1,4 @@
-"""
-Modified from original implementation in torchvision
-"""
+# The implementation is adopted from torchvision
 
 from typing import Any, Callable, List, Optional, Type, Union
 

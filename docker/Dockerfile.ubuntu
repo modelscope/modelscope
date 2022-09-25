@@ -75,7 +75,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 ENV SHELL=/bin/bash
 
 # install special package
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 datasets==2.1.0
+RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets==2.1.0 ipykernel && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set install.trusted-host pypi.tuna.tsinghua.edu.cn
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \

@@ -9,11 +9,17 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import SingleSentenceClassificationPipeline
 from modelscope.preprocessors import SingleSentenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SentimentClassificationTaskModelTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
+class SentimentClassificationTaskModelTest(unittest.TestCase,
+                                           DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.sentiment_classification
+        self.model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
+
     sentence1 = '启动的时候很大声音，然后就会听到1.2秒的卡察的声音，类似齿轮摩擦的声音'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -59,6 +65,10 @@ class SentimentClassificationTaskModelTest(unittest.TestCase):
         print(pipeline_ins(input=self.sentence1))
         self.assertTrue(
             isinstance(pipeline_ins.model, SequenceClassificationModel))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

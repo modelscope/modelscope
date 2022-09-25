@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import unittest
 
 from modelscope.pipelines import pipeline
@@ -14,6 +16,10 @@ class TinynasObjectDetectionTest(unittest.TestCase):
         result = tinynas_object_detection(
             'data/test/images/image_detection.jpg')
         print(result)
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.test_demo()
 
 
 if __name__ == '__main__':

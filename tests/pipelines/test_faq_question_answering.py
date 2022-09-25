@@ -11,11 +11,16 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FaqQuestionAnsweringPipeline
 from modelscope.preprocessors import FaqQuestionAnsweringPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FaqQuestionAnsweringTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_faq-question-answering_chinese-base'
+class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.faq_question_answering
+        self.model_id = 'damo/nlp_structbert_faq-question-answering_chinese-base'
+
     param = {
         'query_set': ['如何使用优惠券', '在哪里领券', '在哪里领券'],
         'support_set': [{
@@ -79,6 +84,10 @@ class FaqQuestionAnsweringTest(unittest.TestCase):
         sentence_vec = pipeline_ins.get_sentence_embedding(
             ['今天星期六', '明天星期几明天星期几'])
         print(np.shape(sentence_vec))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

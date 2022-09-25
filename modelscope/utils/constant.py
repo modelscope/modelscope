@@ -70,6 +70,9 @@ class CVTasks(object):
     crowd_counting = 'crowd-counting'
     movie_scene_segmentation = 'movie-scene-segmentation'
 
+    # video editing
+    video_inpainting = 'video-inpainting'
+
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
     video_summarization = 'video-summarization'
@@ -86,6 +89,8 @@ class NLPTasks(object):
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'
@@ -131,6 +136,22 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+
+
+class TasksIODescriptions(object):
+    image_to_image = 'image_to_image',
+    images_to_image = 'images_to_image',
+    image_to_text = 'image_to_text',
+    seed_to_image = 'seed_to_image',
+    text_to_speech = 'text_to_speech',
+    text_to_text = 'text_to_text',
+    speech_to_text = 'speech_to_text',
+    speech_to_speech = 'speech_to_speech'
+    speeches_to_speech = 'speeches_to_speech',
+    visual_grounding = 'visual_grounding',
+    visual_question_answering = 'visual_question_answering',
+    visual_entailment = 'visual_entailment',
+    generative_multi_modal_embedding = 'generative_multi_modal_embedding'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
@@ -225,6 +246,7 @@ class ModelFile(object):
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
+    TS_MODEL_FILE = 'model.ts'
 
 
 class ConfigFields(object):

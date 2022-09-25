@@ -129,7 +129,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
     @unittest.skip
     def test_finetune_cnndm(self):
         from modelscope.msdatasets import MsDataset
-        dataset_dict = MsDataset.load('dureader_robust_qg')
+        dataset_dict = MsDataset.load('DuReader_robust-QG')
         train_dataset = dataset_dict['train'].to_hf_dataset() \
             .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'})
         eval_dataset = dataset_dict['validation'].to_hf_dataset() \

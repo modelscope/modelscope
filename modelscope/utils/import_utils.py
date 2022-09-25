@@ -290,6 +290,8 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
     ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR)),
     ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),
+    ('deepspeed', (is_package_available('deepspeed'), DEEPSPEED_IMPORT_ERROR)),
+    ('fairseq', (is_package_available('fairseq'), FAIRSEQ_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

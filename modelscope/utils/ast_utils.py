@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import ast
 import contextlib
 import hashlib
@@ -293,6 +295,9 @@ class AstScaning(object):
                     if type(attribute_node).__name__ == 'Str':
                         result.append((getattr(node,
                                                'arg'), attribute_node.s, None))
+                    elif type(attribute_node).__name__ == 'Constant':
+                        result.append(
+                            (getattr(node, 'arg'), attribute_node.value, None))
                     else:
                         result.append((getattr(node, 'arg'), )
                                       + _get_attribute_item(attribute_node))
@@ -394,7 +399,7 @@ class AstScaning(object):
 
     def generate_ast(self, file):
         self._refresh()
-        with open(file, 'r') as code:
+        with open(file, 'r', encoding='utf8') as code:
             data = code.readlines()
         data = ''.join(data)
 

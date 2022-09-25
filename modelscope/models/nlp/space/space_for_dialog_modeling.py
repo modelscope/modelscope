@@ -41,7 +41,7 @@ class SpaceForDialogModeling(TorchModel):
 
         self.text_field = kwargs.pop(
             'text_field',
-            MultiWOZBPETextField(self.model_dir, config=self.config))
+            MultiWOZBPETextField(config=self.config, model_dir=self.model_dir))
         self.generator = SpaceGenerator.create(
             self.config, reader=self.text_field)
         self.model = SpaceModelBase.create(

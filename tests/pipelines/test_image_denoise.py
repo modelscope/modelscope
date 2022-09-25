@@ -10,11 +10,16 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import ImageDenoisePipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageDenoiseTest(unittest.TestCase):
-    model_id = 'damo/cv_nafnet_image-denoise_sidd'
+class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.image_denoising
+        self.model_id = 'damo/cv_nafnet_image-denoise_sidd'
+
     demo_image_path = 'data/test/images/noisy-demo-1.png'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -55,6 +60,10 @@ class ImageDenoiseTest(unittest.TestCase):
         denoise_img = Image.fromarray(denoise_img)
         w, h = denoise_img.size
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

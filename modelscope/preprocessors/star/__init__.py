@@ -6,7 +6,8 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .conversational_text_to_sql_preprocessor import \
         ConversationalTextToSqlPreprocessor
-    from .fields import MultiWOZBPETextField, IntentBPETextField
+    from .fields import (get_label, SubPreprocessor, preprocess_dataset,
+                         process_dataset)
 
 else:
     _import_structure = {

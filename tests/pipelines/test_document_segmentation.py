@@ -6,13 +6,18 @@ from typing import Any, Dict
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class DocumentSegmentationTest(unittest.TestCase):
+class DocumentSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.document_segmentation
+        self.model_id = 'damo/nlp_bert_document-segmentation_chinese-base'
 
     model_id = 'damo/nlp_bert_document-segmentation_chinese-base'
     eng_model_id = 'damo/nlp_bert_document-segmentation_english-base'
@@ -21,10 +26,8 @@ class DocumentSegmentationTest(unittest.TestCase):
     eng_sentences = 'The Saint Alexander Nevsky Church was established in 1936 by Archbishop Vitaly (Maximenko) () on a tract of land donated by Yulia Martinovna Plavskaya.The initial chapel, dedicated to the memory of the great prince St. Alexander Nevsky (1220–1263), was blessed in May, 1936.The church building was subsequently expanded three times.In 1987, ground was cleared for the construction of the new church and on September 12, 1989, on the Feast Day of St. Alexander Nevsky, the cornerstone was laid and the relics of St. Herman of Alaska placed in the foundation.The imposing edifice, completed in 1997, is the work of Nikolaus Karsanov, architect and Protopresbyter Valery Lukianov, engineer.Funds were raised through donations.The Great blessing of the cathedral took place on October 18, 1997 with seven bishops, headed by Metropolitan Vitaly Ustinov, and 36 priests and deacons officiating, some 800 faithful attended the festivity.The old church was rededicated to Our Lady of Tikhvin.Metropolitan Hilarion (Kapral) announced, that cathedral will officially become the episcopal See of the Ruling Bishop of the Eastern American Diocese and the administrative center of the Diocese on September 12, 2014.At present the parish serves the spiritual needs of 300 members.The parochial school instructs over 90 boys and girls in religion, Russian language and history.The school meets every Saturday.The choir is directed by Andrew Burbelo.The sisterhood attends to the needs of the church and a church council acts in the administration of the community.The cathedral is decorated by frescoes in the Byzantine style.The iconography project was fulfilled by Father Andrew Erastov and his students from 1995 until 2001.'  # noqa *
 
     def run_pipeline(self, model_id: str, documents: str) -> Dict[str, Any]:
-        p = pipeline(task=Tasks.document_segmentation, model=model_id)
-
+        p = pipeline(task=self.task, model=model_id)
         result = p(documents=documents)
-
         return result
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -50,6 +53,10 @@ class DocumentSegmentationTest(unittest.TestCase):
         documents_list = result[OutputKeys.TEXT]
         for document in documents_list:
             print(document)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

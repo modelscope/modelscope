@@ -4,15 +4,19 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class VideoMultiModalEmbeddingTest(unittest.TestCase):
+class VideoMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
 
-    model_id = 'damo/multi_modal_clip_vtretrival_msrvtt_53'
+    def setUp(self) -> None:
+        self.task = Tasks.video_multi_modal_embedding
+        self.model_id = 'damo/multi_modal_clip_vtretrival_msrvtt_53'
+
     video_path = 'data/test/videos/multi_modal_test_video_9770.mp4'
     caption = ('a person is connecting something to system', None, None)
     _input = {'video': video_path, 'text': caption}
@@ -36,6 +40,10 @@ class VideoMultiModalEmbeddingTest(unittest.TestCase):
             output['text_embedding'][0][0][0]))
         logger.info('video feature: {}'.format(
             output['video_embedding'][0][0][0]))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

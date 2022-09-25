@@ -35,7 +35,7 @@ class DialogModelingPreprocessor(Preprocessor):
         self.config.use_gpu = self.config.use_gpu and torch.cuda.is_available()
 
         self.text_field = MultiWOZBPETextField(
-            self.model_dir, config=self.config)
+            config=self.config, model_dir=self.model_dir)
 
     @type_assert(object, Dict)
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:

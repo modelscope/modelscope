@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import cv2
 import numpy as np
 
@@ -66,8 +68,8 @@ def draw_joints(image, np_kps, score, threshold=0.2):
 
 
 def draw_box(image, box):
-    cv2.rectangle(image, (int(box[0][0]), int(box[0][1])),
-                  (int(box[1][0]), int(box[1][1])), (0, 0, 255), 2)
+    cv2.rectangle(image, (int(box[0]), int(box[1])),
+                  (int(box[2]), int(box[3])), (0, 0, 255), 2)
 
 
 def realtime_object_detection_bbox_vis(image, bboxes):
@@ -87,6 +89,27 @@ def draw_keypoints(output, original_image):
         draw_box(image, np.array(boxes[i]))
         draw_joints(image, np.array(poses[i]), np.array(scores[i]))
     return image
+
+
+def draw_face_detection_no_lm_result(img_path, detection_result):
+    bboxes = np.array(detection_result[OutputKeys.BOXES])
+    scores = np.array(detection_result[OutputKeys.SCORES])
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+    for i in range(len(scores)):
+        bbox = bboxes[i].astype(np.int32)
+        x1, y1, x2, y2 = bbox
+        score = scores[i]
+        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (x1, y2),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+    print(f'Found {len(scores)} faces')
+    return img
 
 
 def draw_facial_expression_result(img_path, facial_expression_result):

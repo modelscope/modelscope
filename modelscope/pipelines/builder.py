@@ -17,9 +17,17 @@ PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
+    Tasks.sentence_embedding:
+    (Pipelines.sentence_embedding,
+     'damo/nlp_corom_sentence-embedding_english-base'),
+    Tasks.passage_ranking: (Pipelines.passage_ranking,
+                            'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.token_classification:
+    (Pipelines.part_of_speech,
+     'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
@@ -58,6 +66,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.conversational_text_to_sql:
     (Pipelines.conversational_text_to_sql,
      'damo/nlp_star_conversational-text-to-sql'),
+    Tasks.table_question_answering:
+    (Pipelines.table_question_answering_pipeline,
+     'damo/nlp-convai-text2sql-pretrain-cn'),
     Tasks.text_error_correction:
     (Pipelines.text_error_correction,
      'damo/nlp_bart_text-error-correction_chinese'),
@@ -165,6 +176,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
     Tasks.shop_segmentation: (Pipelines.shop_segmentation,
                               'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.video_inpainting: (Pipelines.video_inpainting,
+                             'damo/cv_video-inpainting'),
 }
 
 

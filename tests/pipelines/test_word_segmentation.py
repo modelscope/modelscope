@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import shutil
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -9,12 +8,17 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationPipeline
 from modelscope.preprocessors import TokenClassificationPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class WordSegmentationTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_word-segmentation_chinese-base'
+class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.word_segmentation
+        self.model_id = 'damo/nlp_structbert_word-segmentation_chinese-base'
+
     sentence = '今天天气不错，适合出去游玩'
     sentence_eng = 'I am a program.'
     regress_tool = MsRegressTool(baseline=False)
@@ -54,6 +58,10 @@ class WordSegmentationTest(unittest.TestCase):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.word_segmentation)
         print(pipeline_ins(input=self.sentence))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

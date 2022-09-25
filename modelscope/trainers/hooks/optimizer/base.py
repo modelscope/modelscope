@@ -4,6 +4,7 @@ import logging
 from torch.nn.utils import clip_grad
 
 from modelscope.metainfo import Hooks
+from modelscope.outputs import OutputKeys
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.hook import Hook
 from modelscope.trainers.hooks.priority import Priority
@@ -27,7 +28,7 @@ class OptimizerHook(Hook):
     def __init__(self,
                  cumulative_iters=1,
                  grad_clip=None,
-                 loss_keys='loss') -> None:
+                 loss_keys=OutputKeys.LOSS) -> None:
         if isinstance(loss_keys, str):
             loss_keys = [loss_keys]
         assert isinstance(loss_keys, (tuple, list))

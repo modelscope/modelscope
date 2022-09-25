@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import contextlib
 import hashlib
 import os
@@ -133,6 +135,7 @@ class RegressTool:
                              compare_fn=None,
                              ignore_keys=None,
                              compare_random=True,
+                             reset_dropout=True,
                              lazy_stop_callback=None):
         """Monitor a pytorch module's backward data and cfg data within a step of the optimizer.
 
@@ -151,6 +154,7 @@ class RegressTool:
         @param compare_fn: A custom fn used to compare the results manually.
         @param ignore_keys: The keys to ignore of the named_parameters.
         @param compare_random: If to compare random setttings, default True.
+        @param reset_dropout: Reset all dropout modules to 0.0.
         @param lazy_stop_callback: A callback passed in, when the moniting is over, this callback will be called.
 
         >>> def compare_fn(v1, v2, key, type):
@@ -201,6 +205,18 @@ class RegressTool:
         seed = trainer._seed if hasattr(
             trainer,
             '_seed') else trainer.seed if hasattr(trainer, 'seed') else None
+
+        if reset_dropout:
+            with torch.no_grad():
+
+                def reinit_dropout(_module):
+                    for name, submodule in _module.named_children():
+                        if isinstance(submodule, torch.nn.Dropout):
+                            setattr(_module, name, torch.nn.Dropout(0.))
+                        else:
+                            reinit_dropout(submodule)
+
+                reinit_dropout(module)
 
         if level == 'strict':
             hack_forward(module, file_name, io_json)
@@ -285,19 +301,23 @@ class MsRegressTool(RegressTool):
                          file_name,
                          level='config',
                          compare_fn=None,
-                         ignore_keys=None):
+                         ignore_keys=None,
+                         compare_random=True,
+                         lazy_stop_callback=None):
 
-        def lazy_stop_callback():
+        if lazy_stop_callback is None:
 
-            from modelscope.trainers.hooks.hook import Hook, Priority
+            def lazy_stop_callback():
 
-            class EarlyStopHook(Hook):
-                PRIORITY = Priority.VERY_LOW
+                from modelscope.trainers.hooks.hook import Hook, Priority
 
-                def after_iter(self, trainer):
-                    raise MsRegressTool.EarlyStopError('Test finished.')
+                class EarlyStopHook(Hook):
+                    PRIORITY = Priority.VERY_LOW
 
-            trainer.register_hook(EarlyStopHook())
+                    def after_iter(self, trainer):
+                        raise MsRegressTool.EarlyStopError('Test finished.')
+
+                trainer.register_hook(EarlyStopHook())
 
         def _train_loop(trainer, *args, **kwargs):
             with self.monitor_module_train(
@@ -306,6 +326,7 @@ class MsRegressTool(RegressTool):
                     level,
                     compare_fn=compare_fn,
                     ignore_keys=ignore_keys,
+                    compare_random=compare_random,
                     lazy_stop_callback=lazy_stop_callback):
                 try:
                     return trainer.train_loop_origin(*args, **kwargs)
@@ -331,10 +352,10 @@ def numpify_tensor_nested(tensors, reduction=None, clip_value=10000):
         return type(tensors)(
             numpify_tensor_nested(t, reduction, clip_value) for t in tensors)
     if isinstance(tensors, Mapping):
-        return type(tensors)({
+        return {
             k: numpify_tensor_nested(t, reduction, clip_value)
             for k, t in tensors.items()
-        })
+        }
     if isinstance(tensors, torch.Tensor):
         t: np.ndarray = tensors.cpu().numpy()
         if clip_value is not None:
@@ -354,9 +375,7 @@ def detach_tensor_nested(tensors):
     if isinstance(tensors, (list, tuple)):
         return type(tensors)(detach_tensor_nested(t) for t in tensors)
     if isinstance(tensors, Mapping):
-        return type(tensors)(
-            {k: detach_tensor_nested(t)
-             for k, t in tensors.items()})
+        return {k: detach_tensor_nested(t) for k, t in tensors.items()}
     if isinstance(tensors, torch.Tensor):
         return tensors.detach()
     return tensors
@@ -475,7 +494,11 @@ def intercept_module(module: nn.Module,
         intercept_module(module, io_json, full_name, restore)
 
 
-def compare_arguments_nested(print_content, arg1, arg2):
+def compare_arguments_nested(print_content,
+                             arg1,
+                             arg2,
+                             rtol=1.e-3,
+                             atol=1.e-8):
     type1 = type(arg1)
     type2 = type(arg2)
     if type1.__name__ != type2.__name__:
@@ -494,7 +517,7 @@ def compare_arguments_nested(print_content, arg1, arg2):
             return False
         return True
     elif isinstance(arg1, (float, np.floating)):
-        if not np.isclose(arg1, arg2, rtol=1.e-3, atol=1.e-8, equal_nan=True):
+        if not np.isclose(arg1, arg2, rtol=rtol, atol=atol, equal_nan=True):
             if print_content is not None:
                 print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
             return False
@@ -541,7 +564,7 @@ def compare_arguments_nested(print_content, arg1, arg2):
         arg2 = np.where(np.equal(arg2, None), np.NaN,
                         arg2).astype(dtype=np.float)
         if not all(
-                np.isclose(arg1, arg2, rtol=1.e-3, atol=1.e-8,
+                np.isclose(arg1, arg2, rtol=rtol, atol=atol,
                            equal_nan=True).flatten()):
             if print_content is not None:
                 print(f'{print_content}')

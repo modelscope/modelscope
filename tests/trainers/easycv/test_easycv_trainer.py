@@ -6,10 +6,10 @@ import tempfile
 import unittest
 
 import json
-import requests
 import torch
 
 from modelscope.metainfo import Models, Pipelines, Trainers
+from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import LogKeys, ModeKeys, Tasks
@@ -18,55 +18,19 @@ from modelscope.utils.test_utils import DistributedTestCase, test_level
 from modelscope.utils.torch_utils import is_master
 
 
-def _download_data(url, save_dir):
-    r = requests.get(url, verify=True)
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    zip_name = os.path.split(url)[-1]
-    save_path = os.path.join(save_dir, zip_name)
-    with open(save_path, 'wb') as f:
-        f.write(r.content)
-
-    unpack_dir = os.path.join(save_dir, os.path.splitext(zip_name)[0])
-    shutil.unpack_archive(save_path, unpack_dir)
-
-
-def train_func(work_dir, dist=False, log_config=3, imgs_per_gpu=4):
+def train_func(work_dir, dist=False, log_interval=3, imgs_per_gpu=4):
     import easycv
     config_path = os.path.join(
         os.path.dirname(easycv.__file__),
         'configs/detection/yolox/yolox_s_8xb16_300e_coco.py')
 
-    data_dir = os.path.join(work_dir, 'small_coco_test')
-    url = 'http://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/EasyCV/datasets/small_coco.zip'
-    if is_master():
-        _download_data(url, data_dir)
-
-    import time
-    time.sleep(1)
     cfg = Config.from_file(config_path)
 
-    cfg.work_dir = work_dir
-    cfg.total_epochs = 2
-    cfg.checkpoint_config.interval = 1
-    cfg.eval_config.interval = 1
-    cfg.log_config = dict(
-        interval=log_config,
-        hooks=[
+    cfg.log_config.update(
+        dict(hooks=[
             dict(type='TextLoggerHook'),
             dict(type='TensorboardLoggerHook')
-        ])
-    cfg.data.train.data_source.ann_file = os.path.join(
-        data_dir, 'small_coco/small_coco/instances_train2017_20.json')
-    cfg.data.train.data_source.img_prefix = os.path.join(
-        data_dir, 'small_coco/small_coco/train2017')
-    cfg.data.val.data_source.ann_file = os.path.join(
-        data_dir, 'small_coco/small_coco/instances_val2017_20.json')
-    cfg.data.val.data_source.img_prefix = os.path.join(
-        data_dir, 'small_coco/small_coco/val2017')
-    cfg.data.imgs_per_gpu = imgs_per_gpu
-    cfg.data.workers_per_gpu = 2
-    cfg.data.val.imgs_per_gpu = 2
+        ]))  # not support TensorboardLoggerHookV2
 
     ms_cfg_file = os.path.join(work_dir, 'ms_yolox_s_8xb16_300e_coco.json')
     from easycv.utils.ms_utils import to_ms_config
@@ -81,9 +45,41 @@ def train_func(work_dir, dist=False, log_config=3, imgs_per_gpu=4):
             save_path=ms_cfg_file)
 
     trainer_name = Trainers.easycv
+    train_dataset = MsDataset.load(
+        dataset_name='small_coco_for_test', namespace='EasyCV', split='train')
+    eval_dataset = MsDataset.load(
+        dataset_name='small_coco_for_test',
+        namespace='EasyCV',
+        split='validation')
+
+    cfg_options = {
+        'train.max_epochs':
+        2,
+        'train.dataloader.batch_size_per_gpu':
+        imgs_per_gpu,
+        'evaluation.dataloader.batch_size_per_gpu':
+        2,
+        'train.hooks': [
+            {
+                'type': 'CheckpointHook',
+                'interval': 1
+            },
+            {
+                'type': 'EvaluationHook',
+                'interval': 1
+            },
+            {
+                'type': 'TextLoggerHook',
+                'interval': log_interval
+            },
+        ]
+    }
     kwargs = dict(
-        task=Tasks.image_object_detection,
         cfg_file=ms_cfg_file,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        work_dir=work_dir,
+        cfg_options=cfg_options,
         launcher='pytorch' if dist else None)
 
     trainer = build_trainer(trainer_name, kwargs)
@@ -105,11 +101,8 @@ class EasyCVTrainerTestSingleGpu(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
-    @unittest.skipIf(
-        True, 'The test cases are all run in the master process, '
-        'cause registry conflicts, and it should run in the subprocess.')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_single_gpu(self):
-        # TODO: run in subprocess
         train_func(self.tmp_dir)
 
         results_files = os.listdir(self.tmp_dir)
@@ -185,7 +178,7 @@ class EasyCVTrainerTestMultiGpus(DistributedTestCase):
             num_gpus=2,
             work_dir=self.tmp_dir,
             dist=True,
-            log_config=2,
+            log_interval=2,
             imgs_per_gpu=5)
 
         results_files = os.listdir(self.tmp_dir)

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import io
 import os
 from typing import Any, Dict, Tuple, Union
@@ -6,9 +8,10 @@ import numpy as np
 import scipy.io.wavfile as wav
 import torch
 
+from modelscope.fileio import File
+from modelscope.preprocessors import Preprocessor
+from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields
-from . import Preprocessor
-from .builder import PREPROCESSORS
 
 
 def load_kaldi_feature_transform(filename):
@@ -201,7 +204,8 @@ class LinearAECAndFbank(Preprocessor):
         if isinstance(inputs, bytes):
             inputs = io.BytesIO(inputs)
         elif isinstance(inputs, str):
-            pass
+            file_bytes = File.read(inputs)
+            inputs = io.BytesIO(file_bytes)
         else:
             raise TypeError(f'Unsupported input type: {type(inputs)}.')
         sample_rate, data = wav.read(inputs)

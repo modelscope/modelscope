@@ -8,11 +8,16 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextErrorCorrectionPipeline
 from modelscope.preprocessors import TextErrorCorrectionPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TextErrorCorrectionTest(unittest.TestCase):
-    model_id = 'damo/nlp_bart_text-error-correction_chinese'
+class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.text_error_correction
+        self.model_id = 'damo/nlp_bart_text-error-correction_chinese'
+
     input = '随着中国经济突飞猛近，建造工业与日俱增'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -49,6 +54,10 @@ class TextErrorCorrectionTest(unittest.TestCase):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_error_correction)
         print(pipeline_ins(self.input))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

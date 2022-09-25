@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import random
 import time
 from collections.abc import Mapping
 from distutils.version import LooseVersion
@@ -8,11 +7,9 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import json
-import numpy as np
 import torch
 from torch import distributed as dist
 from torch import nn
-from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
@@ -40,7 +37,8 @@ from modelscope.utils.device import create_device, verify_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import get_dist_info, init_dist
+from modelscope.utils.torch_utils import (get_dist_info, init_dist,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import DEFAULT_CONFIG
@@ -75,6 +73,7 @@ class EpochBasedTrainer(BaseTrainer):
             this preprocessing action will be executed every time the dataset's __getitem__ is called.
         optimizers (`Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]`, *optional*): A tuple
             containing the optimizer and the scheduler to use.
+        seed (int): The optional random seed for torch, cuda, numpy and random.
         max_epochs: (int, optional): Total training epochs.
     """
 
@@ -93,8 +92,11 @@ class EpochBasedTrainer(BaseTrainer):
                               torch.optim.lr_scheduler._LRScheduler] = (None,
                                                                         None),
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            seed: int = 42,
             **kwargs):
 
+        self._seed = seed
+        set_random_seed(self._seed)
         if isinstance(model, str):
             if os.path.exists(model):
                 self.model_dir = model if os.path.isdir(
@@ -156,13 +158,18 @@ class EpochBasedTrainer(BaseTrainer):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self.device = create_device(device_name)
+
         self.train_dataset = self.to_task_dataset(
             train_dataset,
             mode=ModeKeys.TRAIN,
+            task_data_config=self.cfg.dataset.get('train', None) if hasattr(
+                self.cfg, 'dataset') else None,
             preprocessor=self.train_preprocessor)
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
+            task_data_config=self.cfg.dataset.get('val', None) if hasattr(
+                self.cfg, 'dataset') else None,
             preprocessor=self.eval_preprocessor)
 
         self.train_data_collator, self.eval_default_collate = None, None
@@ -199,6 +206,7 @@ class EpochBasedTrainer(BaseTrainer):
             self._max_epochs = self.cfg.train.max_epochs
         else:
             self._max_epochs = kwargs['max_epochs']
+
         self._train_iters_per_epoch = kwargs.get('train_iters_per_epoch', None)
         self._eval_iters_per_epoch = kwargs.get('val_iters_per_epoch', None)
         if self._train_iters_per_epoch is None and hasattr(
@@ -211,19 +219,16 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.use_fp16 = kwargs.get('use_fp16', False)
 
-        # TODO @wenmeng.zwm add seed init fn
-        self._seed = 0
-
         if kwargs.get('launcher', None) is not None:
             init_dist(kwargs['launcher'])
 
         self._dist = get_dist_info()[1] > 1
+
         # model placement
         if self.device.type == 'cuda':
             self.model.to(self.device)
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
-                self.device = self.model.device
 
     def rebuild_config(self, cfg: Config):
         """A method used to rebuild the config, any subclass can override this method.
@@ -295,6 +300,7 @@ class EpochBasedTrainer(BaseTrainer):
     def to_task_dataset(self,
                         datasets: Union[Dataset, List[Dataset]],
                         mode: str,
+                        task_data_config: Config = None,
                         preprocessor: Optional[Preprocessor] = None):
         """Build the task specific dataset processor for this trainer.
 
@@ -307,20 +313,29 @@ class EpochBasedTrainer(BaseTrainer):
             if isinstance(datasets, TorchTaskDataset):
                 return datasets
             elif isinstance(datasets, MsDataset):
-                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
-                    else ConfigDict(type=None, mode=mode)
+                if task_data_config is None:
+                    # adapt to some special models
+                    task_data_config = ConfigDict(
+                        type=self.cfg.model.type) if hasattr(
+                            self.cfg, ConfigFields.model) else ConfigDict(
+                                type=None)
+                task_data_config.update(dict(mode=mode))
                 return datasets.to_torch_dataset(
-                    task_data_config=cfg,
-                    task_name=self.cfg.task
-                    if hasattr(self.cfg, ConfigFields.task) else None,
+                    task_data_config=task_data_config,
+                    task_name=self.cfg.task,
                     preprocessors=preprocessor)
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
-                cfg = ConfigDict(type=self.cfg.model.type, mode=mode) if hasattr(self.cfg, ConfigFields.model) \
-                    else ConfigDict(type=None, mode=mode)
+                if task_data_config is None:
+                    # adapt to some special models
+                    task_data_config = ConfigDict(
+                        type=self.cfg.model.type) if hasattr(
+                            self.cfg, ConfigFields.model) else ConfigDict(
+                                type=None)
+                task_data_config.update(dict(mode=mode))
                 datasets = [
                     d.to_torch_dataset(
-                        task_data_config=cfg,
+                        task_data_config=task_data_config,
                         task_name=self.cfg.task,
                         preprocessors=preprocessor) for d in datasets
                 ]
@@ -328,12 +343,12 @@ class EpochBasedTrainer(BaseTrainer):
                     type=self.cfg.task, mode=mode, datasets=datasets)
                 return build_task_dataset(cfg, self.cfg.task)
             else:
-                cfg = ConfigDict(
-                    type=self.cfg.model.type,
-                    mode=mode,
-                    datasets=datasets,
-                    preprocessor=preprocessor)
-                return build_task_dataset(cfg, self.cfg.task)
+                # avoid add no str value datasets, preprocessors in cfg
+                task_data_build_config = ConfigDict(
+                    mode=mode, datasets=datasets, preprocessor=preprocessor)
+                task_data_build_config.update(task_data_config)
+                return build_task_dataset(task_data_build_config,
+                                          self.cfg.task)
         except Exception:
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
                 return TorchTaskDataset(
@@ -408,8 +423,16 @@ class EpochBasedTrainer(BaseTrainer):
             metrics = [metrics]
         return metrics
 
-    def train(self, *args, **kwargs):
-        self.model.train()
+    def set_checkpoint_file_to_hook(self, checkpoint_path):
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import CheckpointHook
+            checkpoint_hooks = list(
+                filter(lambda hook: isinstance(hook, CheckpointHook),
+                       self.hooks))
+            for hook in checkpoint_hooks:
+                hook.checkpoint_file = checkpoint_path
+
+    def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN
 
         if self.train_dataset is None:
@@ -425,12 +448,17 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.register_optimizers_hook()
         self.register_hook_from_cfg(self.cfg.train.hooks)
+        self.set_checkpoint_file_to_hook(checkpoint_path)
+        self.model.train()
+
         self.train_loop(self.train_dataloader)
 
-    def evaluate(self, checkpoint_path=None, *arg, **kwargs):
+    def evaluate(self, checkpoint_path=None):
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import CheckpointHook
+            CheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-
         if self.eval_dataset is None:
             self.eval_dataloader = self.get_eval_data_loader()
         else:
@@ -444,8 +472,9 @@ class EpochBasedTrainer(BaseTrainer):
         metric_classes = [build_metric(metric) for metric in self.metrics]
         for m in metric_classes:
             m.trainer = self
+
         metric_values = self.evaluation_loop(self.eval_dataloader,
-                                             checkpoint_path, metric_classes)
+                                             metric_classes)
 
         self._metric_values = metric_values
         return metric_values
@@ -473,12 +502,13 @@ class EpochBasedTrainer(BaseTrainer):
             self.cfg.parallel.update(
                 dict(module=model, device_ids=[torch.cuda.current_device()]))
             return build_parallel(self.cfg.parallel)
-        model.to(f'cuda:{torch.cuda.current_device()}')
+
         dp_cfg = dict(
             type='DistributedDataParallel',
             module=model,
             find_unused_parameters=True,
             device_ids=[torch.cuda.current_device()])
+
         return build_parallel(dp_cfg)
 
     def train_step(self, model, inputs):
@@ -502,10 +532,8 @@ class EpochBasedTrainer(BaseTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         # call model forward but not __call__ to skip postprocess
-        forward_func = model.module.forward if \
-            isinstance(model, DistributedDataParallel) else model.forward
         if isinstance(inputs,
-                      Mapping) and not func_receive_dict_inputs(forward_func):
+                      Mapping) and not func_receive_dict_inputs(model.forward):
             train_outputs = model.forward(**inputs)
         else:
             train_outputs = model.forward(inputs)
@@ -526,7 +554,7 @@ class EpochBasedTrainer(BaseTrainer):
                 value = train_outputs.get(key, None)
                 if value is not None:
                     if dist.is_available() and dist.is_initialized():
-                        value = value.data.clone()
+                        value = value.data.clone().to('cuda')
                         dist.all_reduce(value.div_(dist.get_world_size()))
                     log_vars.update({key: value.item()})
             self.log_buffer.update(log_vars)
@@ -615,11 +643,6 @@ class EpochBasedTrainer(BaseTrainer):
         if hasattr(data_cfg, 'name'):
             dataset = MsDataset.load(
                 dataset_name=data_cfg.name,
-                split=data_cfg.split,
-                subset_name=data_cfg.subset_name if hasattr(
-                    data_cfg, 'subset_name') else None,
-                hub=data_cfg.hub
-                if hasattr(data_cfg, 'hub') else Hubs.modelscope,
                 **data_cfg,
             )
             cfg = ConfigDict(type=self.cfg.model.type, mode=mode)
@@ -786,19 +809,22 @@ class EpochBasedTrainer(BaseTrainer):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
         self.invoke_hook(TrainerStages.before_run)
-        self._epoch = 0
         kwargs = {}
         self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
             time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
+                if i < self.inner_iter:
+                    # inner_iter may be read out from the checkpoint file, so skip the trained iters in the epoch.
+                    continue
                 data_batch = to_device(data_batch, self.device)
                 self.data_batch = data_batch
                 self._inner_iter = i
                 self.invoke_hook(TrainerStages.before_train_iter)
                 self.train_step(self.model, data_batch, **kwargs)
                 self.invoke_hook(TrainerStages.after_train_iter)
+                # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
                 del self.data_batch
                 self._iter += 1
                 self._mode = ModeKeys.TRAIN
@@ -807,12 +833,14 @@ class EpochBasedTrainer(BaseTrainer):
                     break
 
             self.invoke_hook(TrainerStages.after_train_epoch)
+            # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
+            self._inner_iter = 0
             self._epoch += 1
 
         time.sleep(1)  # wait for some hooks like loggers to finish
         self.invoke_hook(TrainerStages.after_run)
 
-    def evaluation_loop(self, data_loader, checkpoint_path, metric_classes):
+    def evaluation_loop(self, data_loader, metric_classes):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
@@ -825,7 +853,7 @@ class EpochBasedTrainer(BaseTrainer):
                 tmpdir=None,
                 gpu_collect=False,
                 metric_classes=metric_classes,
-                data_loader_iters_per_gpu=self.iters_per_epoch)
+                data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
@@ -833,7 +861,7 @@ class EpochBasedTrainer(BaseTrainer):
                 data_loader,
                 device=self.device,
                 metric_classes=metric_classes,
-                data_loader_iters=self.iters_per_epoch)
+                data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
@@ -922,6 +950,4 @@ def worker_init_fn(worker_id, num_workers, rank, seed):
     # The seed of each worker equals to
     # num_worker * rank + worker_id + user_seed
     worker_seed = num_workers * rank + worker_id + seed
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
-    torch.manual_seed(worker_seed)
+    set_random_seed(worker_seed)

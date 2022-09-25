@@ -15,21 +15,23 @@ if TYPE_CHECKING:
                         ImageDenoisePreprocessor)
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
-    from .nlp import (Tokenize, SequenceClassificationPreprocessor,
-                      TextGenerationPreprocessor,
-                      TokenClassificationPreprocessor,
-                      SingleSentenceClassificationPreprocessor,
-                      PairSentenceClassificationPreprocessor,
-                      FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
-                      NERPreprocessor, TextErrorCorrectionPreprocessor,
-                      FaqQuestionAnsweringPreprocessor,
-                      RelationExtractionPreprocessor)
-    from .slp import DocumentSegmentationPreprocessor
+    from .nlp import (
+        Tokenize, SequenceClassificationPreprocessor,
+        TextGenerationPreprocessor, TokenClassificationPreprocessor,
+        SingleSentenceClassificationPreprocessor,
+        PairSentenceClassificationPreprocessor, FillMaskPreprocessor,
+        ZeroShotClassificationPreprocessor, NERPreprocessor,
+        TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
+        SequenceLabelingPreprocessor, RelationExtractionPreprocessor,
+        DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor,
+        PassageRankingPreprocessor,
+        WordSegmentationBlankSetToLabelPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
     from .star import ConversationalTextToSqlPreprocessor
+    from .star3 import TableQuestionAnsweringPreprocessor
 
 else:
     _import_structure = {
@@ -51,16 +53,19 @@ else:
             'SingleSentenceClassificationPreprocessor',
             'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
             'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
+            'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
             'TextErrorCorrectionPreprocessor',
-            'FaqQuestionAnsweringPreprocessor',
-            'RelationExtractionPreprocessor'
+            'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
+            'RelationExtractionPreprocessor',
+            'WordSegmentationBlankSetToLabelPreprocessor',
+            'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
         ],
-        'slp': ['DocumentSegmentationPreprocessor'],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'
         ],
         'star': ['ConversationalTextToSqlPreprocessor'],
+        'star3': ['TableQuestionAnsweringPreprocessor'],
     }
 
     import sys

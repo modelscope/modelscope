@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .data_loader import DataLoader
     from .dialog_intent_prediction_preprocessor import \
         DialogIntentPredictionPreprocessor
     from .dialog_modeling_preprocessor import DialogModelingPreprocessor
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
 
 else:
     _import_structure = {
+        'data_loader': ['DataLoader'],
         'dialog_intent_prediction_preprocessor':
         ['DialogIntentPredictionPreprocessor'],
         'dialog_modeling_preprocessor': ['DialogModelingPreprocessor'],

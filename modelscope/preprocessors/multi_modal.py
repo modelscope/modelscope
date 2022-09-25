@@ -9,7 +9,7 @@ from PIL import Image
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
-from modelscope.preprocessors.image import load_image
+from modelscope.preprocessors import load_image
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Fields, ModeKeys, ModelFile, Tasks
 from .base import Preprocessor

@@ -1,6 +1,6 @@
 from .configuration_space import SpaceConfig
 from .gen_unified_transformer import GenUnifiedTransformer
-from .generator import Generator as SpaceGenerator
+from .generator import SpaceGenerator
 from .intent_unified_transformer import IntentUnifiedTransformer
 from .model_base import SpaceModelBase
 from .modeling_space import (SpaceForDST, SpaceForMaskedLM,

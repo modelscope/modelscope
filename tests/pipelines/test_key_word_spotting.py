@@ -10,6 +10,7 @@ import soundfile
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ColorCodes, Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import download_and_untar, test_level
 
@@ -17,6 +18,7 @@ logger = get_logger()
 
 POS_WAV_FILE = 'data/test/audios/kws_xiaoyunxiaoyun.wav'
 BOFANGYINYUE_WAV_FILE = 'data/test/audios/kws_bofangyinyue.wav'
+URL_FILE = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testset/20200707_xiaoyun.wav'
 
 POS_TESTSETS_FILE = 'pos_testsets.tar.gz'
 POS_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/pos_testsets.tar.gz'
@@ -25,7 +27,7 @@ NEG_TESTSETS_FILE = 'neg_testsets.tar.gz'
 NEG_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/neg_testsets.tar.gz'
 
 
-class KeyWordSpottingTest(unittest.TestCase):
+class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
     action_info = {
         'test_run_with_wav': {
             'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
@@ -72,6 +74,22 @@ class KeyWordSpottingTest(unittest.TestCase):
                     'offset': 0.87,
                     'length': 2.158313,
                     'confidence': 0.646237
+                }]
+            }
+        },
+        'test_run_with_url': {
+            'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
+            'checking_value': '小云小云',
+            'example': {
+                'wav_count':
+                1,
+                'kws_type':
+                'pcm',
+                'kws_list': [{
+                    'keyword': '小云小云',
+                    'offset': 0.69,
+                    'length': 1.67,
+                    'confidence': 0.996023
                 }]
             }
         },
@@ -236,6 +254,12 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.check_result('test_run_with_wav_by_customized_keywords',
                           kws_result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_url(self):
+        kws_result = self.run_pipeline(
+            model_id=self.model_id, audio_in=URL_FILE)
+        self.check_result('test_run_with_url', kws_result)
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_pos_testsets(self):
         wav_file_path = download_and_untar(
@@ -271,6 +295,10 @@ class KeyWordSpottingTest(unittest.TestCase):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=audio_list)
         self.check_result('test_run_with_roc', kws_result)
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

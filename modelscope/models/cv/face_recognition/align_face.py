@@ -1,3 +1,7 @@
+"""
+The implementation here is modified based on insightface, originally MIT license and publicly avaialbe at
+https://github.com/deepinsight/insightface/blob/master/python-package/insightface/utils/face_align.py
+"""
 import cv2
 import numpy as np
 from skimage import transform as trans

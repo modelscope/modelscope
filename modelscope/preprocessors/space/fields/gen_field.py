@@ -2,9 +2,11 @@
 
 import os
 import random
+from asyncio import constants
 from collections import OrderedDict
 from itertools import chain
 
+import json
 import numpy as np
 
 from modelscope.preprocessors.space.tokenizer import Tokenizer
@@ -117,7 +119,8 @@ class BPETextField(object):
         return self.tokenizer.convert_tokens_to_ids([self.eos_d_token])[0]
 
     def __init__(self, config):
-        self.gpu = 0
+        self.train, self.dev, self.test = [], [], []
+        self.gpu = config.Trainer.gpu
         self.tokenizer = None
         self.vocab = None
         self.db = None
@@ -249,13 +252,9 @@ class BPETextField(object):
         for dial in data:
             batch.append(dial)
             if len(batch) == self.batch_size:
-                # print('batch size: %d, batch num +1'%(len(batch)))
                 all_batches.append(batch)
                 batch = []
-        # if remainder > 1/2 batch_size, just put them in the previous batch, otherwise form a new batch
-        # print('last batch size: %d, batch num +1'%(len(batch)))
-        # if (len(batch) % len(cfg.cuda_device)) != 0:
-        #     batch = batch[:-(len(batch) % len(cfg.cuda_device))]
+
         # TODO deal with deleted data
         if self.gpu <= 1:
             if len(batch) > 0.5 * self.batch_size:
@@ -308,7 +307,7 @@ class BPETextField(object):
 
 class MultiWOZBPETextField(BPETextField):
 
-    def __init__(self, model_dir, config):
+    def __init__(self, config, **kwargs):
         super(MultiWOZBPETextField, self).__init__(config)
 
         import spacy
@@ -327,8 +326,12 @@ class MultiWOZBPETextField(BPETextField):
                 )
         self.nlp = spacy.load('en_core_web_sm')
 
+        if config.do_train:
+            db_dir = kwargs['data_dir']
+        else:
+            db_dir = kwargs['model_dir']
         self.db = MultiWozDB(
-            model_dir, {
+            db_dir, {
                 'attraction': 'db/attraction_db_processed.json',
                 'hospital': 'db/hospital_db_processed.json',
                 'hotel': 'db/hotel_db_processed.json',
@@ -337,20 +340,40 @@ class MultiWOZBPETextField(BPETextField):
                 'taxi': 'db/taxi_db_processed.json',
                 'train': 'db/train_db_processed.json',
             })
-        self._build_vocab(model_dir)
+        self._build_vocab(db_dir)
 
         special_tokens = [
             self.pad_token, self.bos_token, self.eos_token, self.unk_token
         ]
         special_tokens.extend(self.add_sepcial_tokens())
         self.tokenizer = Tokenizer(
-            vocab_path=os.path.join(model_dir, ModelFile.VOCAB_FILE),
+            vocab_path=os.path.join(kwargs['model_dir'], ModelFile.VOCAB_FILE),
             special_tokens=special_tokens,
             tokenizer_type=config.BPETextField.tokenizer_type)
         self.understand_ids = self.tokenizer.convert_tokens_to_ids(
             self.understand_tokens)
         self.policy_ids = self.tokenizer.convert_tokens_to_ids(
             self.policy_tokens)
+
+        if config.do_train:
+            test_list = [
+                line.strip().lower() for line in open(
+                    os.path.join(kwargs['data_dir'], 'testListFile.json'),
+                    'r').readlines()
+            ]
+            dev_list = [
+                line.strip().lower() for line in open(
+                    os.path.join(kwargs['data_dir'], 'valListFile.json'),
+                    'r').readlines()
+            ]
+
+            self.dev_files, self.test_files = {}, {}
+            for fn in test_list:
+                self.test_files[fn.replace('.json', '')] = 1
+            for fn in dev_list:
+                self.dev_files[fn.replace('.json', '')] = 1
+
+            self._load_data(kwargs['data_dir'])
 
         return
 
@@ -414,7 +437,6 @@ class MultiWOZBPETextField(BPETextField):
         name_to_set = {'train': self.train, 'test': self.test, 'dev': self.dev}
         dial = name_to_set[set_name]
         turn_bucket = self._bucket_by_turn(dial)
-        # self._shuffle_turn_bucket(turn_bucket)
         all_batches = []
 
         if set_name not in self.set_stats:
@@ -433,19 +455,13 @@ class MultiWOZBPETextField(BPETextField):
             except Exception:
                 log_str += 'turn num:%d, dial num: %d, batch num: %d last batch len: %d\n' % (
                     k, len(turn_bucket[k]), len(batches), 0.0)
-            # print("turn num:%d, dial num:v%d, batch num: %d, "%(k, len(turn_bucket[k]), len(batches)))
+
             num_training_steps += k * len(batches)
             num_turns += k * len(turn_bucket[k])
             num_dials += len(turn_bucket[k])
             all_batches += batches
         log_str += 'total batch num: %d\n' % len(all_batches)
-        # print('total batch num: %d'%len(all_batches))
-        # print('dialog count: %d'%dia_count)
-        # return all_batches
 
-        # log stats
-        # logging.info(log_str)
-        # cfg.num_training_steps = num_training_steps * cfg.epoch_num
         self.set_stats[set_name][
             'num_training_steps_per_epoch'] = num_training_steps  # turn-level steps
         self.set_stats[set_name]['num_turns'] = num_turns
@@ -484,6 +500,71 @@ class MultiWOZBPETextField(BPETextField):
         self.vocab.load_vocab(vp)
         return self.vocab.vocab_size
 
+    def _load_data(self, data_dir, save_temp=True):
+        """
+        load processed data and encode, or load already encoded data
+        """
+
+        def load_data_from_resource(data_resource):
+            data = json.loads(
+                open(
+                    os.path.join(data_dir, data_resource),
+                    'r',
+                    encoding='utf-8').read().lower())
+            train, dev, test = [], [], []
+            for fn, dial in data.items():
+                if '.json' in fn:
+                    fn = fn.replace('.json', '')
+                if self.dev_files.get(fn):
+                    dev.append(self._get_encoded_data(fn, dial))
+                elif self.test_files.get(fn):
+                    test.append(self._get_encoded_data(fn, dial))
+                else:
+                    train.append(self._get_encoded_data(fn, dial))
+            return train, dev, test
+
+        data_processed = 'new_db_se_blank_encoded_domain.data.json'
+        data_resource = 'data_for_damd.json'
+        if save_temp:  # save encoded data
+            # encoded: no sos, se_encoded: sos and eos
+            encoded_file = os.path.join(data_dir, data_processed)
+
+            if os.path.exists(encoded_file):
+                logger.info(
+                    'Reading encoded data from {}'.format(encoded_file))
+                self.data = json.loads(
+                    open(
+                        os.path.join(data_dir, data_resource),
+                        'r',
+                        encoding='utf-8').read().lower())
+                encoded_data = json.loads(
+                    open(encoded_file, 'r', encoding='utf-8').read())
+                self.train = encoded_data['train']
+                self.dev = encoded_data['dev']
+                self.test = encoded_data['test']
+            else:
+                logger.info(
+                    'Encoding data now and save the encoded data in {}'.format(
+                        encoded_file))
+                # not exists, encode data and save
+                self.train, self.dev, self.test = load_data_from_resource(
+                    data_resource)
+                # save encoded data
+                encoded_data = {
+                    'train': self.train,
+                    'dev': self.dev,
+                    'test': self.test
+                }
+                json.dump(encoded_data, open(encoded_file, 'w'), indent=2)
+        else:  # directly read processed data and encode
+            self.train, self.dev, self.test = load_data_from_resource(
+                data_resource)
+
+        random.seed(10)
+        random.shuffle(self.train)
+        logger.info('train size:{}, dev size:{}, test size:{}'.format(
+            len(self.train), len(self.dev), len(self.test)))
+
     def _get_convert_str(self, sent):
         assert isinstance(sent, str)
         return ' '.join([
@@ -491,14 +572,65 @@ class MultiWOZBPETextField(BPETextField):
             for tok in sent.split()
         ])
 
+    def _get_encoded_data(self, fn, dial):
+        encoded_dial = []
+        for idx, t in enumerate(dial['log']):  # tokenize to list of ids
+            enc = {}
+            enc['dial_id'] = fn
+
+            enc_info_list = [
+                ('user', self.sos_u_id, 'user', self.eos_u_id),
+                ('usdx', self.sos_u_id, 'user', self.eos_u_id),
+                ('resp', self.sos_r_id, 'resp', self.eos_r_id),
+                ('bspn', self.sos_b_id, 'constraint', self.eos_b_id),
+                ('bsdx', self.sos_b_id, 'cons_delex', self.eos_b_id),
+                ('aspn', self.sos_a_id, 'sys_act', self.eos_a_id)
+            ]
+            for enc_key, start_token, item_key, end_token in enc_info_list:
+                enc[enc_key] = [
+                    start_token
+                ] + self.tokenizer.convert_tokens_to_ids(
+                    self.tokenizer.tokenize(
+                        self._get_convert_str(t[item_key]))) + [end_token]
+
+            enc['turn_num'] = t['turn_num']
+
+            if idx > 0 and t['turn_domain'] == '[general]':
+                enc['dspn'] = encoded_dial[idx - 1]['dspn']
+                enc['pointer'] = encoded_dial[idx - 1]['pointer'][:4] + [
+                    int(i) for i in t['pointer'].split(',')
+                ][-2:]
+                enc['turn_domain'] = encoded_dial[idx - 1]['turn_domain']
+                enc['db'] = encoded_dial[idx - 1]['db']
+            else:
+                if t['turn_domain'] == '[general]':
+                    assert not t['constraint'], f'{fn}-{idx}'
+                enc['dspn'] = [
+                    self.sos_d_id
+                ] + self.tokenizer.convert_tokens_to_ids(
+                    self.tokenizer.tokenize(
+                        self._get_convert_str(
+                            t['turn_domain']))) + [self.eos_d_id]
+                enc['pointer'] = [int(i) for i in t['pointer'].split(',')]
+                enc['turn_domain'] = t['turn_domain'].split()
+                db_pointer = self.bspan_to_DBpointer(t['constraint'],
+                                                     t['turn_domain'].split())
+                enc['db'] = [
+                    self.sos_db_id
+                ] + self.tokenizer.convert_tokens_to_ids(
+                    self.tokenizer.tokenize(
+                        self._get_convert_str(db_pointer))) + [self.eos_db_id]
+
+            encoded_dial.append(enc)
+        return encoded_dial
+
     def bspan_to_DBpointer(self, bspan, turn_domain):
         constraint_dict = self.bspan_to_constraint_dict(bspan)
-        # print(constraint_dict)
         matnums = self.db.get_match_num(constraint_dict)
         match_dom = turn_domain[0] if len(turn_domain) == 1 else turn_domain[1]
         match_dom = match_dom[1:-1] if match_dom.startswith('[') else match_dom
         match = matnums[match_dom]
-        # vector = self.db.addDBPointer(match_dom, match)
+
         vector = self.db.addDBIndicator(match_dom, match)
         return vector
 
@@ -691,3 +823,67 @@ class MultiWOZBPETextField(BPETextField):
                 inputs['labels'] = [context]  # use previous turn
 
         return inputs, prompt_id
+
+    def restore(self, resp, domain, constraint_dict, mat_ents):
+        restored = resp
+
+        restored = restored.replace('[value_reference]', '53022')
+        restored = restored.replace('[value_car]', 'BMW')
+
+        for d in domain:
+            constraint = constraint_dict.get(d, None)
+            if constraint:
+                replace_res_list = [('stay', '[value_stay]'),
+                                    ('day', '[value_day]'),
+                                    ('people', '[value_people]'),
+                                    ('time', '[value_time]'),
+                                    ('type', '[value_type]')]
+                for key, value_key in replace_res_list:
+                    if key in constraint:
+                        restored = restored.replace(value_key, constraint[key])
+
+                if d in mat_ents and len(mat_ents[d]) == 0:
+                    for s in constraint:
+                        if s == 'pricerange' and d in [
+                                'hotel', 'restaurant'
+                        ] and 'price]' in restored:
+                            restored = restored.replace(
+                                '[value_price]', constraint['pricerange'])
+                        if s + ']' in restored:
+                            restored = restored.replace(
+                                '[value_%s]' % s, constraint[s])
+
+            if '[value_choice' in restored and mat_ents.get(d):
+                restored = restored.replace('[value_choice]',
+                                            str(len(mat_ents[d])))
+        if '[value_choice' in restored:
+            restored = restored.replace('[value_choice]', '3')
+
+        try:
+            ent = mat_ents.get(domain[-1], [])
+            if ent:
+                ent = ent[0]
+
+                for t in restored.split():
+                    if '[value' in t:
+                        slot = t[7:-1]
+                        if ent.get(slot):
+                            if domain[-1] == 'hotel' and slot == 'price':
+                                slot = 'pricerange'
+                            restored = restored.replace(t, ent[slot])
+                        elif slot == 'price':
+                            if ent.get('pricerange'):
+                                restored = restored.replace(
+                                    t, ent['pricerange'])
+                            else:
+                                logger.info(restored, domain)
+        except Exception:
+            logger.error(resp)
+            logger.error(restored)
+            quit()
+
+        restored = restored.replace('[value_phone]', '62781111')
+        restored = restored.replace('[value_postcode]', 'CG9566')
+        restored = restored.replace('[value_address]', 'Parkside, Cambridge')
+
+        return restored

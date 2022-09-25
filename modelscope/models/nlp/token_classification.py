@@ -91,6 +91,7 @@ class TokenClassification(TorchModel):
 
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.structbert)
+@MODELS.register_module(Tasks.part_of_speech, module_name=Models.structbert)
 @MODELS.register_module(
     Tasks.token_classification, module_name=Models.structbert)
 class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):

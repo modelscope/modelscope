@@ -8,6 +8,8 @@ from modelscope.models import Model
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToLists
+from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
+                                                load_bytes_from_url)
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -39,6 +41,13 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
         if self.preprocessor is None:
             self.preprocessor = WavToLists()
+
+        if isinstance(audio_in, str):
+            # load pcm data from url if audio_in is url str
+            audio_in = load_bytes_from_url(audio_in)
+        elif isinstance(audio_in, bytes):
+            # load pcm data from wav data if audio_in is wave format
+            audio_in = extract_pcm_from_wav(audio_in)
 
         output = self.preprocessor.forward(self.model.forward(), audio_in)
         output = self.forward(output)

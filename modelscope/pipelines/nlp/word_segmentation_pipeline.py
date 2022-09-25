@@ -62,7 +62,7 @@ class WordSegmentationPipeline(Pipeline):
         text = inputs.pop(OutputKeys.TEXT)
         with torch.no_grad():
             return {
-                **self.model(inputs, **forward_params), OutputKeys.TEXT: text
+                **self.model(**inputs, **forward_params), OutputKeys.TEXT: text
             }
 
     def postprocess(self, inputs: Dict[str, Any],
@@ -94,4 +94,4 @@ class WordSegmentationPipeline(Pipeline):
         if chunk:
             chunks.append(chunk)
         seg_result = ' '.join(chunks)
-        return {OutputKeys.OUTPUT: seg_result}
+        return {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}

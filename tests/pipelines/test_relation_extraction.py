@@ -1,8 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
-import torch
-
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import InformationExtractionModel
@@ -10,11 +8,16 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import InformationExtractionPipeline
 from modelscope.preprocessors import RelationExtractionPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class RelationExtractionTest(unittest.TestCase):
-    model_id = 'damo/nlp_bert_relation-extraction_chinese-base'
+class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.information_extraction
+        self.model_id = 'damo/nlp_bert_relation-extraction_chinese-base'
+
     sentence = '高捷，祖籍江苏，本科毕业于东南大学'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -51,6 +54,10 @@ class RelationExtractionTest(unittest.TestCase):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.information_extraction)
         print(pipeline_ins(input=self.sentence))
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -2,7 +2,8 @@ from typing import List
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.nlp import (ConversationalTextToSqlPipeline,
-                                      DialogStateTrackingPipeline)
+                                      DialogStateTrackingPipeline,
+                                      TableQuestionAnsweringPipeline)
 
 
 def text2sql_tracking_and_print_results(
@@ -41,3 +42,17 @@ def tracking_and_print_dialog_states(
         print(json.dumps(result))
 
         history_states.extend([result[OutputKeys.OUTPUT], {}])
+
+
+def tableqa_tracking_and_print_results(
+        test_case, pipelines: List[TableQuestionAnsweringPipeline]):
+    for pipeline in pipelines:
+        historical_queries = None
+        for question in test_case['utterance']:
+            output_dict = pipeline({
+                'question': question,
+                'history_sql': historical_queries
+            })
+            print('output_dict', output_dict['output'].string,
+                  output_dict['output'].query)
+            historical_queries = output_dict['history']

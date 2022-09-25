@@ -8,14 +8,17 @@ from shutil import copytree, ignore_patterns, rmtree
 from typing import Callable, List, Optional, Union
 
 import json
-import numpy as np
 import torch
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
 from modelscope import __version__
 from modelscope.fileio import File, LocalStorage
 from modelscope.utils.config import JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
+from modelscope.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 storage = LocalStorage()
 
@@ -40,24 +43,27 @@ def weights_to_cpu(state_dict):
 def save_checkpoint(model: torch.nn.Module,
                     filename: str,
                     optimizer: Optional[Optimizer] = None,
+                    lr_scheduler: Optional[_LRScheduler] = None,
                     meta: Optional[dict] = None,
                     with_meta: bool = True) -> None:
     """Save checkpoint to file.
 
     The checkpoint will have 3 fields: ``meta``, ``state_dict`` and
-    ``optimizer``. By default ``meta`` will contain version and time info.
+    ``optimizer``. By default, ``meta`` will contain version and time info.
 
     Args:
         model (Module): Module whose params are to be saved.
         filename (str): Checkpoint filename.
         optimizer (:obj:`Optimizer`, optional): Optimizer to be saved.
+        lr_scheduler(:obj:`_LRScheduler`, optional): LRScheduler to be saved.
         meta (dict, optional): Metadata to be saved in checkpoint.
+        with_meta (bool, optional):
     """
     if meta is None:
         meta = {}
     elif not isinstance(meta, dict):
         raise TypeError(f'meta must be a dict or None, but got {type(meta)}')
-    meta.update(modescope=__version__, time=time.asctime())
+    meta.update(modelscope=__version__, time=time.asctime())
 
     if isinstance(model, torch.nn.parallel.DistributedDataParallel):
         model = model.module
@@ -71,20 +77,66 @@ def save_checkpoint(model: torch.nn.Module,
             'meta': meta,
             'state_dict': weights_to_cpu(model.state_dict())
         }
+
+        # save optimizer state dict in the checkpoint
+        if isinstance(optimizer, Optimizer):
+            checkpoint['optimizer'] = optimizer.state_dict()
+        elif isinstance(optimizer, dict):
+            checkpoint['optimizer'] = {}
+            for name, optim in optimizer.items():
+                checkpoint['optimizer'][name] = optim.state_dict()
+
+        # save lr_scheduler state dict in the checkpoint
+        if lr_scheduler is not None and hasattr(lr_scheduler, 'state_dict'):
+            checkpoint['lr_scheduler'] = lr_scheduler.state_dict()
     else:
         checkpoint = weights_to_cpu(model.state_dict())
-
-    # save optimizer state dict in the checkpoint
-    if isinstance(optimizer, Optimizer):
-        checkpoint['optimizer'] = optimizer.state_dict()
-    elif isinstance(optimizer, dict):
-        checkpoint['optimizer'] = {}
-        for name, optim in optimizer.items():
-            checkpoint['optimizer'][name] = optim.state_dict()
 
     with io.BytesIO() as f:
         torch.save(checkpoint, f)
         File.write(f.getvalue(), filename)
+
+
+def load_checkpoint(filename,
+                    model,
+                    optimizer: Optimizer = None,
+                    lr_scheduler: _LRScheduler = None):
+    if not os.path.exists(filename):
+        raise ValueError(f'Checkpoint file {filename} does not exist!')
+    checkpoint = torch.load(filename, map_location='cpu')
+
+    if optimizer is not None:
+        if 'optimizer' in checkpoint:
+            if isinstance(optimizer, Optimizer):
+                optimizer.load_state_dict(checkpoint['optimizer'])
+            elif isinstance(optimizer, dict):
+                optimizer_dict = checkpoint['optimizer']
+                for key, optimizer_ins in optimizer.items():
+                    if key in optimizer_dict:
+                        optimizer_ins.load_state_dict(optimizer_dict[key])
+                    else:
+                        logger.warn(
+                            f'The state dict of optimizer {key} cannot be found in checkpoint file: {filename}'
+                        )
+        else:
+            logger.warn(
+                f'The state dict of optimizer cannot be found in checkpoint file: {filename}'
+            )
+
+    if lr_scheduler is not None:
+        if 'lr_scheduler' in checkpoint:
+            lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+        else:
+            logger.warn(
+                f'The state dict of lr_scheduler cannot be found in checkpoint file: {filename}'
+            )
+
+    state_dict = checkpoint if 'state_dict' not in checkpoint else checkpoint[
+        'state_dict']
+    model.load_state_dict(state_dict)
+
+    if 'meta' in checkpoint:
+        return checkpoint.get('meta', {})
 
 
 def save_pretrained(model,

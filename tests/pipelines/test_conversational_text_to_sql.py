@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
-from typing import List
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
@@ -9,11 +8,17 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import ConversationalTextToSqlPipeline
 from modelscope.preprocessors import ConversationalTextToSqlPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.nlp.nlp_utils import text2sql_tracking_and_print_results
 from modelscope.utils.test_utils import test_level
 
 
-class ConversationalTextToSql(unittest.TestCase):
+class ConversationalTextToSql(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.conversational_text_to_sql
+        self.model_id = 'damo/nlp_star_conversational-text-to-sql'
+
     model_id = 'damo/nlp_star_conversational-text-to-sql'
     test_case = {
         'database_id':
@@ -39,10 +44,7 @@ class ConversationalTextToSql(unittest.TestCase):
         pipelines = [
             ConversationalTextToSqlPipeline(
                 model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.conversational_text_to_sql,
-                model=model,
-                preprocessor=preprocessor)
+            pipeline(task=self.task, model=model, preprocessor=preprocessor)
         ]
         text2sql_tracking_and_print_results(self.test_case, pipelines)
 
@@ -55,25 +57,23 @@ class ConversationalTextToSql(unittest.TestCase):
         pipelines = [
             ConversationalTextToSqlPipeline(
                 model=model, preprocessor=preprocessor),
-            pipeline(
-                task=Tasks.conversational_text_to_sql,
-                model=model,
-                preprocessor=preprocessor)
+            pipeline(task=self.task, model=model, preprocessor=preprocessor)
         ]
         text2sql_tracking_and_print_results(self.test_case, pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipelines = [
-            pipeline(
-                task=Tasks.conversational_text_to_sql, model=self.model_id)
-        ]
+        pipelines = [pipeline(task=self.task, model=self.model_id)]
         text2sql_tracking_and_print_results(self.test_case, pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipelines = [pipeline(task=Tasks.conversational_text_to_sql)]
+        pipelines = [pipeline(task=self.task)]
         text2sql_tracking_and_print_results(self.test_case, pipelines)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

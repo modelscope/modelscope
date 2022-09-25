@@ -24,7 +24,9 @@ import torch
 import yaml
 
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import set_test_level, test_level
+from modelscope.utils.model_tag import ModelTag, commit_model_ut_result
+from modelscope.utils.test_utils import (get_case_model_info, set_test_level,
+                                         test_level)
 
 logger = get_logger()
 
@@ -54,17 +56,34 @@ def statistics_test_result(df):
     if failures_cases > 0 or \
        error_cases > 0 or \
        unexpected_success_cases > 0:
-        result = 'FAILED'
+        final_result = 'FAILED'
     else:
-        result = 'SUCCESS'
+        final_result = 'SUCCESS'
     result_msg = '%s (Runs=%s,success=%s,failures=%s,errors=%s,\
     skipped=%s,expected failures=%s,unexpected successes=%s)' % (
-        result, total_cases, success_cases, failures_cases, error_cases,
+        final_result, total_cases, success_cases, failures_cases, error_cases,
         skipped_cases, expected_failure_cases, unexpected_success_cases)
 
+    model_cases = get_case_model_info()
+    for model_name, case_info in model_cases.items():
+        cases = df.loc[df['Name'].str.contains('|'.join(list(case_info)))]
+        results = cases['Result']
+        result = None
+        if any(results == 'Error') or any(results == 'Failures') or any(
+                results == 'UnexpectedSuccesses'):
+            result = ModelTag.MODEL_FAIL
+        elif any(results == 'Success'):
+            result = ModelTag.MODEL_PASS
+        elif all(results == 'Skipped'):
+            result = ModelTag.MODEL_SKIP
+        else:
+            print(f'invalid results for {model_name} \n{result}')
+
+        if result is not None:
+            commit_model_ut_result(model_name, result)
     print('Testing result summary.')
     print(result_msg)
-    if result == 'FAILED':
+    if final_result == 'FAILED':
         sys.exit(1)
 
 
@@ -401,7 +420,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--suites',
         nargs='*',
-        help='Run specified test suites(test suite file list)')
+        help='Run specified test suites(test suite files list split by space)')
     args = parser.parse_args()
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'

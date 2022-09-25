@@ -1,4 +1,4 @@
-# The implementation is also open-sourced by the authors as PASS-reID, and is available publicly on
+# The implementation is adopted from PASS-reID, made pubicly available under the Apache-2.0 License at
 # https://github.com/CASIA-IVA-Lab/PASS-reID
 
 import collections.abc as container_abcs

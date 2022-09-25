@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 import subprocess
 from typing import List
@@ -39,17 +41,28 @@ class GitCommandWrapper(metaclass=Singleton):
             subprocess.CompletedProcess: the command response
         """
         logger.debug(' '.join(args))
+        git_env = os.environ.copy()
+        git_env['GIT_TERMINAL_PROMPT'] = '0'
         response = subprocess.run(
             [self.git_path, *args],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)  # compatible for python3.6
+            stderr=subprocess.PIPE,
+            env=git_env,
+        )  # compatible for python3.6
         try:
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            raise GitError(
-                'stdout: %s, stderr: %s' %
-                (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
+            if response.returncode == 1:
+                logger.info('Nothing to commit.')
+                return response
+            else:
+                logger.error(
+                    'There are error run git command, you may need to login first.'
+                )
+                raise GitError('stdout: %s, stderr: %s' %
+                               (response.stdout.decode('utf8'),
+                                error.stderr.decode('utf8')))
 
     def config_auth_token(self, repo_dir, auth_token):
         url = self.get_repo_remote_url(repo_dir)

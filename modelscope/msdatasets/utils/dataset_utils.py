@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from collections import defaultdict
 from typing import Any, Mapping, Optional, Sequence, Union

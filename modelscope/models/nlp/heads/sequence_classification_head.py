@@ -19,7 +19,6 @@ class SequenceClassificationHead(TorchHead):
         super().__init__(**kwargs)
         config = self.config
         self.num_labels = config.num_labels
-        self.config = config
         classifier_dropout = (
             config['classifier_dropout'] if config.get('classifier_dropout')
             is not None else config['hidden_dropout_prob'])

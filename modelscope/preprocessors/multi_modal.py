@@ -186,7 +186,8 @@ class MPlugPreprocessor(Preprocessor):
         image = image.convert('RGB')
         image = self.patch_resize_transform(image)
         question = '' if self.cfg.task == Tasks.image_captioning \
-            else data[1 if isinstance(data, tuple) else 'question']
+            else data[1 if isinstance(data, tuple)
+                      else ('text' if 'text' in data else 'question')]
         question = self.tokenizer(
             question.lower(),
             padding='max_length',

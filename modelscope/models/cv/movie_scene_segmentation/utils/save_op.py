@@ -1,7 +1,5 @@
-# ----------------------------------------------------------------------------------
-# The codes below partially refer to the SceneSeg LGSS.
-# Github: https://github.com/AnyiRao/SceneSeg
-# ----------------------------------------------------------------------------------
+# The implementation here is modified based on SceneSeg,
+# originally Apache 2.0 License and publicly avaialbe at https://github.com/AnyiRao/SceneSeg
 import os
 import os.path as osp
 import subprocess

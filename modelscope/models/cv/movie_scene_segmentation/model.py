@@ -1,3 +1,6 @@
+# The implementation here is modified based on BaSSL,
+# originally Apache 2.0 License and publicly avaialbe at https://github.com/kakaobrain/bassl
+
 import os
 import os.path as osp
 from typing import Any, Dict

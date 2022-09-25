@@ -18,7 +18,7 @@ class EasyCVFace2DKeypointsPipelineTest(unittest.TestCase):
 
         face_2d_keypoints_align = pipeline(
             task=Tasks.face_2d_keypoints, model=model_id)
-        output = face_2d_keypoints_align(img_path)
+        output = face_2d_keypoints_align(img_path)[0]
 
         output_keypoints = output[OutputKeys.KEYPOINTS]
         output_pose = output[OutputKeys.POSES]

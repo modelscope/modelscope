@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.trainer import EpochBasedTrainer

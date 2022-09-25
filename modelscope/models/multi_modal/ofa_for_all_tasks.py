@@ -37,9 +37,7 @@ class OfaForAllTasks(TorchModel):
 
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir=model_dir, *args, **kwargs)
-        sd = torch.load(osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE))
-        sd = sd if 'meta' not in sd else sd['state_dict']
-        model = OFAModel.from_pretrained(model_dir, state_dict=sd)
+        model = OFAModel.from_pretrained(model_dir)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
         self.model = model.module if hasattr(model, 'module') else model

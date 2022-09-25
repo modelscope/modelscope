@@ -9,9 +9,9 @@ from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
-from torch.nn.parallel import DistributedDataParallel
 from tqdm import tqdm
 
+from modelscope.trainers.parallel.utils import is_parallel
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
@@ -138,7 +138,10 @@ def multi_gpu_test(model,
         data_len = data_loader_iters_per_gpu * world_size
         desc = 'Total test iterations with multi gpus'
 
-    time.sleep(2)  # This line can prevent deadlock problem in some cases.
+    if is_parallel(model):
+        receive_dict_inputs = func_receive_dict_inputs(model.module.forward)
+    else:
+        receive_dict_inputs = func_receive_dict_inputs(model.forward)
 
     count = 0
     with tqdm(total=data_len, desc=desc) as pbar:
@@ -146,10 +149,7 @@ def multi_gpu_test(model,
             data = to_device(data, device)
             data_list.append(data)
             with torch.no_grad():
-                forward_func = model.module.forward if \
-                    isinstance(model, DistributedDataParallel) else model.forward
-                if isinstance(data, Mapping
-                              ) and not func_receive_dict_inputs(forward_func):
+                if isinstance(data, Mapping) and not receive_dict_inputs:
                     result = model.forward(**data)
                 else:
                     result = model.forward(data)

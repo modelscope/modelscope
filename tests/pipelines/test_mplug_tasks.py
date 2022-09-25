@@ -44,8 +44,8 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             'damo/mplug_visual-question-answering_coco_large_en')
         pipeline_vqa = pipeline(Tasks.visual_question_answering, model=model)
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        question = 'What is the woman doing?'
-        input = {'image': image, 'question': question}
+        text = 'What is the woman doing?'
+        input = {'image': image, 'text': text}
         result = pipeline_vqa(input)
         print(result)
 
@@ -54,8 +54,8 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         model = 'damo/mplug_visual-question-answering_coco_large_en'
         pipeline_vqa = pipeline(Tasks.visual_question_answering, model=model)
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        question = 'What is the woman doing?'
-        input = {'image': image, 'question': question}
+        text = 'What is the woman doing?'
+        input = {'image': image, 'text': text}
         result = pipeline_vqa(input)
         print(result)
 
@@ -65,8 +65,8 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             'damo/mplug_image-text-retrieval_flickr30k_large_en')
         pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
         image = Image.open('data/test/images/image-text-retrieval.jpg')
-        question = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
-        input = {'image': image, 'question': question}
+        text = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'text': text}
         result = pipeline_retrieval(input)
         print(result)
 
@@ -75,8 +75,8 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         model = 'damo/mplug_image-text-retrieval_flickr30k_large_en'
         pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
         image = Image.open('data/test/images/image-text-retrieval.jpg')
-        question = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
-        input = {'image': image, 'question': question}
+        text = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'text': text}
         result = pipeline_retrieval(input)
         print(result)
 

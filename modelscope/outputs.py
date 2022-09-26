@@ -38,7 +38,7 @@ class OutputKeys(object):
     HISTORY = 'history'
     TIMESTAMPS = 'timestamps'
     SPLIT_VIDEO_NUM = 'split_video_num'
-    SPLIT_META_DICT = 'split_meta_dict'
+    SPLIT_META_LIST = 'split_meta_list'
 
 
 TASK_OUTPUTS = {
@@ -293,18 +293,17 @@ TASK_OUTPUTS = {
     # movide scene segmentation result for a single video
     # {
     #        "split_video_num":3,
-    #        "split_meta_dict":
-    #        {
-    #           scene_id:
+    #        "split_meta_list":
+    #        [
     #           {
     #               "shot": [0,1,2],
     #               "frame": [start_frame, end_frame]
     #           }
-    #        }
+    #        ]
     #
     # }
     Tasks.movie_scene_segmentation:
-    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_DICT],
+    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_LIST],
 
     # ============ nlp tasks ===================
 

@@ -162,11 +162,11 @@ class MovieSceneSegmentationModel(TorchModel):
         thres = self.cfg.pipeline.save_threshold
 
         anno_dict = get_pred_boundary(pred_dict, thres)
-        scene_dict, scene_list = pred2scene(self.shot2keyf, anno_dict)
+        scene_dict_lst, scene_list = pred2scene(self.shot2keyf, anno_dict)
         if self.cfg.pipeline.save_split_scene:
             re_dir = scene2video(inputs['input_video_pth'], scene_list, thres)
             print(f'Split scene video saved to {re_dir}')
-        return len(scene_list), scene_dict
+        return len(scene_list), scene_dict_lst
 
     def preprocess(self, inputs):
         logger.info('Begin shot detect......')

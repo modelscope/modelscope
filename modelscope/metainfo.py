@@ -65,6 +65,7 @@ class Models(object):
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
+    T5 = 'T5'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -179,6 +180,7 @@ class Pipelines(object):
     part_of_speech = 'part-of-speech'
     named_entity_recognition = 'named-entity-recognition'
     text_generation = 'text-generation'
+    text2text_generation = 'text2text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
     text_classification = 'text-classification'
@@ -280,6 +282,7 @@ class Preprocessors(object):
     cross_encoder_tokenizer = 'cross-encoder-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     text_gen_tokenizer = 'text-gen-tokenizer'
+    text2text_gen_preprocessor = 'text2text-gen-preprocessor'
     token_cls_tokenizer = 'token-cls-tokenizer'
     ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'

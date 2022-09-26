@@ -9,6 +9,7 @@ if TYPE_CHECKING:
         Tokenize, SequenceClassificationPreprocessor,
         TextGenerationPreprocessor, TokenClassificationPreprocessor,
         SingleSentenceClassificationPreprocessor,
+        Text2TextGenerationPreprocessor,
         PairSentenceClassificationPreprocessor, FillMaskPreprocessor,
         ZeroShotClassificationPreprocessor, NERPreprocessor,
         FaqQuestionAnsweringPreprocessor, SequenceLabelingPreprocessor,
@@ -27,6 +28,7 @@ else:
             'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
             'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
             'RelationExtractionPreprocessor',
+            'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
         ],

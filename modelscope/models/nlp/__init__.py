@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .token_classification import SbertForTokenClassification
     from .sentence_embedding import SentenceEmbedding
     from .passage_ranking import PassageRanking
-
+    from .T5 import T5ForConditionalGeneration
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -68,6 +68,7 @@ else:
         'table_question_answering': ['TableQuestionAnswering'],
         'sentence_embedding': ['SentenceEmbedding'],
         'passage_ranking': ['PassageRanking'],
+        'T5': ['T5ForConditionalGeneration'],
     }
 
     import sys

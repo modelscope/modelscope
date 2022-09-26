@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .fill_mask_pipeline import FillMaskPipeline
-    from .fill_mask_ponet_pipeline import FillMaskPoNetPreprocessor
+    from .fill_mask_ponet_pipeline import FillMaskPonetPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from .text_classification_pipeline import TextClassificationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .text_generation_pipeline import TextGenerationPipeline
+    from .text2text_generation_pipeline import Text2TextGenerationPipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
@@ -54,6 +55,7 @@ else:
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'text_generation_pipeline': ['TextGenerationPipeline'],
+        'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],

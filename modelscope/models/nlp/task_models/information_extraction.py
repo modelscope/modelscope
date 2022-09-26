@@ -1,7 +1,7 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
 import numpy as np
-import torch
 
 from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS
@@ -9,9 +9,6 @@ from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import parse_label_mapping
-from modelscope.utils.tensor_utils import (torch_nested_detach,
-                                           torch_nested_numpify)
 
 __all__ = ['InformationExtractionModel']
 

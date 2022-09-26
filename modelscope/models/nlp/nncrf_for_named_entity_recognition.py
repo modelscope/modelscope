@@ -1,3 +1,7 @@
+# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors. All rights reserved.
+# The CRF implementation borrows mostly from AllenNLP CRF module (https://github.com/allenai/allennlp)
+# and pytorch-crf (https://github.com/kmkurn/pytorch-crf) with some modifications.
+
 import os
 from typing import Any, Dict, List, Optional
 
@@ -208,8 +212,6 @@ class CRF(nn.Module):
        Learning*. Morgan Kaufmann. pp. 282–289.
     .. _Viterbi algorithm: https://en.wikipedia.org/wiki/Viterbi_algorithm
 
-    The implementation borrows mostly from AllenNLP CRF module (https://github.com/allenai/allennlp)
-    and pytorch-crf (https://github.com/kmkurn/pytorch-crf) with some modifications.
     """
 
     def __init__(self, num_tags: int, batch_first: bool = False) -> None:

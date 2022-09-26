@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines

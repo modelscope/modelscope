@@ -1,6 +1,5 @@
-from typing import Any, Dict, Optional, Union
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
-import numpy as np
 from transformers import BertForMaskedLM as BertForMaskedLMTransformer
 
 from modelscope.metainfo import Models

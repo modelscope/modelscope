@@ -1,3 +1,4 @@
+# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors.
 # Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

@@ -24,7 +24,8 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, FaqQuestionAnsweringPreprocessor,
         SequenceLabelingPreprocessor, RelationExtractionPreprocessor,
         DocumentSegmentationPreprocessor, FillMaskPoNetPreprocessor,
-        PassageRankingPreprocessor, Text2TextGenerationPreprocessor,
+        PassageRankingPreprocessor, SentenceEmbeddingPreprocessor,
+        Text2TextGenerationPreprocessor,
         WordSegmentationBlankSetToLabelPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,

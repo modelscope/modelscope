@@ -1,13 +1,10 @@
-from typing import Dict
-
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import torch
-import torch.nn.functional as F
 from torch import nn
 
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead
 from modelscope.models.builder import HEADS
-from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 
 

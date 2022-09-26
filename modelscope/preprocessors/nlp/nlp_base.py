@@ -23,16 +23,24 @@ from modelscope.utils.type_assert import type_assert
 logger = get_logger()
 
 __all__ = [
-    'Tokenize', 'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
+    'Tokenize',
+    'SequenceClassificationPreprocessor',
+    'TextGenerationPreprocessor',
+    'TokenClassificationPreprocessor',
     'PairSentenceClassificationPreprocessor',
     'Text2TextGenerationPreprocessor',
-    'SingleSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
-    'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
-    'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
-    'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
-    'RelationExtractionPreprocessor', 'DocumentSegmentationPreprocessor',
-    'FillMaskPoNetPreprocessor'
+    'SingleSentenceClassificationPreprocessor',
+    'FillMaskPreprocessor',
+    'ZeroShotClassificationPreprocessor',
+    'NERPreprocessor',
+    'SentenceEmbeddingPreprocessor',
+    'PassageRankingPreprocessor',
+    'FaqQuestionAnsweringPreprocessor',
+    'SequenceLabelingPreprocessor',
+    'RelationExtractionPreprocessor',
+    'DocumentSegmentationPreprocessor',
+    'FillMaskPoNetPreprocessor',
+    'WordSegmentationBlankSetToLabelPreprocessor',
 ]
 
 

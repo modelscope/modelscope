@@ -1,6 +1,4 @@
-"""
-MetricsTracker class
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
 from collections import defaultdict

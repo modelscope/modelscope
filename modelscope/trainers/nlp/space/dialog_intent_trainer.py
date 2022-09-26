@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 import time
 from typing import Callable, Dict, Optional, Tuple, Union

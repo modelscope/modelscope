@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         FaqQuestionAnsweringPreprocessor, SequenceLabelingPreprocessor,
         RelationExtractionPreprocessor, DocumentSegmentationPreprocessor,
         FillMaskPoNetPreprocessor, PassageRankingPreprocessor,
+        SentenceEmbeddingPreprocessor,
         WordSegmentationBlankSetToLabelPreprocessor)
 
 else:

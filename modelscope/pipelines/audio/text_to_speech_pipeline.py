@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict, List
 
 import numpy as np
@@ -42,3 +44,6 @@ class TextToSpeechSambertHifiganPipeline(Pipeline):
 
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         return inputs
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}

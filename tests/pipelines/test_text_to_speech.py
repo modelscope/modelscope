@@ -9,6 +9,7 @@ import unittest
 import torch
 from scipy.io.wavfile import write
 
+from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -33,7 +34,9 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
         text = '今天北京天气怎么样？'
         voice = 'zhitian_emo'
 
-        sambert_hifigan_tts = pipeline(task=self.task, model=self.model_id)
+        model = Model.from_pretrained(
+            model_name_or_path=self.model_id, revision='pytorch_am')
+        sambert_hifigan_tts = pipeline(task=self.task, model=model)
         self.assertTrue(sambert_hifigan_tts is not None)
         output = sambert_hifigan_tts(input=text, voice=voice)
         self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])

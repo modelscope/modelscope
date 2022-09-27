@@ -1,3 +1,6 @@
+# The implementation is adopted from tacotron,
+# made publicly available under the MIT License at https://github.com/keithito/tacotron
+
 import re
 
 import inflect

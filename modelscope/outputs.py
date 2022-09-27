@@ -247,9 +247,11 @@ TASK_OUTPUTS = {
     #               [x1, y1, x2, y2],
     #               [x1, y1, x2, y2],
     #               [x1, y1, x2, y2],
-    #             ]
+    #             ],
+    #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     # }
-    Tasks.video_single_object_tracking: [OutputKeys.BOXES],
+    Tasks.video_single_object_tracking:
+    [OutputKeys.BOXES, OutputKeys.TIMESTAMPS],
 
     # live category recognition result for single video
     # {

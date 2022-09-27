@@ -9,8 +9,8 @@ from modelscope.models.cv.video_single_object_tracking.config.ostrack import \
     cfg
 from modelscope.models.cv.video_single_object_tracking.tracker.ostrack import \
     OSTrack
-from modelscope.models.cv.video_single_object_tracking.utils.utils import \
-    check_box
+from modelscope.models.cv.video_single_object_tracking.utils.utils import (
+    check_box, timestamp_format)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -45,7 +45,10 @@ class VideoSingleObjectTrackingPipeline(Pipeline):
 
     def forward(self, input: Input) -> Dict[str, Any]:
         output_boxes = []
+        output_timestamps = []
         cap = cv2.VideoCapture(self.video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_idx = 0
         success, frame = cap.read()
         if success is False:
             raise Exception(
@@ -58,6 +61,7 @@ class VideoSingleObjectTrackingPipeline(Pipeline):
             raise Exception('modelscope error: init_box out of image range ',
                             init_box)
         output_boxes.append(init_box.copy())
+        output_timestamps.append(timestamp_format(seconds=frame_idx / fps))
         init_box[2] = init_box[2] - init_box[0]
         init_box[3] = init_box[3] - init_box[1]
         self.tracker.initialize(frame, {'init_bbox': init_box})
@@ -67,14 +71,17 @@ class VideoSingleObjectTrackingPipeline(Pipeline):
             ret, frame = cap.read()
             if frame is None:
                 break
+            frame_idx += 1
             out = self.tracker.track(frame)
             state = [int(s) for s in out['target_bbox']]
             output_boxes.append(state)
+            output_timestamps.append(timestamp_format(seconds=frame_idx / fps))
         cap.release()
         logger.info('tracking process done')
 
         return {
             OutputKeys.BOXES: output_boxes,
+            OutputKeys.TIMESTAMPS: output_timestamps
         }
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

@@ -10,6 +10,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -40,28 +41,24 @@ class ImageSemanticSegmentationPipeline(Pipeline):
         # build the data pipeline
 
         if isinstance(input, str):
-            # input is str, file names, pipeline loadimagefromfile
-            # collect data
-            data = dict(img_info=dict(filename=input), img_prefix=None)
+            cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
+            img = np.array(load_image(input))
+            img = img[:, :, ::-1]  # convert to bgr
         elif isinstance(input, PIL.Image.Image):  # BGR
             cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
             img = np.array(input)[:, :, ::-1]
-            # collect data
-            data = dict(img=img)
         elif isinstance(input, np.ndarray):
             cfg.data.test.pipeline[0].type = 'LoadImageFromWebcam'
             if len(input.shape) == 2:
                 img = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
             else:
                 img = input
-            # collect data
-            data = dict(img=img)
-
         else:
             raise TypeError(f'input should be either str, PIL.Image,'
                             f' np.array, but got {type(input)}')
 
-        # data = dict(img=input)
+        # collect data
+        data = dict(img=img)
         cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
         test_pipeline = Compose(cfg.data.test.pipeline)
 
@@ -80,11 +77,9 @@ class ImageSemanticSegmentationPipeline(Pipeline):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         results = self.model.inference(input)
-
         return results
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-
         results = self.model.postprocess(inputs)
         outputs = {
             OutputKeys.MASKS: results[OutputKeys.MASKS],

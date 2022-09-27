@@ -1,6 +1,5 @@
-# The implementation refers to the VitAdapter
-# available at
-# https://github.com/czczup/ViT-Adapter.git
+# The implementation is adopted from VitAdapter,
+# made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
 import logging
 import math
 
@@ -69,10 +68,10 @@ class BEiTAdapter(BASEBEiT):
         ])
 
         self.up = nn.ConvTranspose2d(embed_dim, embed_dim, 2, 2)
-        self.norm1 = nn.SyncBatchNorm(embed_dim)
-        self.norm2 = nn.SyncBatchNorm(embed_dim)
-        self.norm3 = nn.SyncBatchNorm(embed_dim)
-        self.norm4 = nn.SyncBatchNorm(embed_dim)
+        self.norm1 = nn.BatchNorm2d(embed_dim)
+        self.norm2 = nn.BatchNorm2d(embed_dim)
+        self.norm3 = nn.BatchNorm2d(embed_dim)
+        self.norm4 = nn.BatchNorm2d(embed_dim)
 
         self.up.apply(self._init_weights)
         self.spm.apply(self._init_weights)

@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import torch
 import torch.nn.functional as F
 from mmdet.models.builder import HEADS

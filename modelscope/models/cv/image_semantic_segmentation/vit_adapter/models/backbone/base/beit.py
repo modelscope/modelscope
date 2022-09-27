@@ -1,7 +1,5 @@
-# BEIT: BERT Pre-Training of Image Transformers (https://arxiv.org/abs/2106.08254)
-# Github source: https://github.com/microsoft/unilm/tree/master/beit
-# This implementation refers to
-# https://github.com/czczup/ViT-Adapter.git
+# The implementation is adopted from VitAdapter,
+# made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
 import math
 from functools import partial
 

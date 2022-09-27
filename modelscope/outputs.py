@@ -303,7 +303,8 @@ TASK_OUTPUTS = {
     #        [
     #           {
     #               "shot": [0,1,2],
-    #               "frame": [start_frame, end_frame]
+    #               "frame": [start_frame, end_frame],
+    #               "timestamp": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
     #           }
     #        ]
     #

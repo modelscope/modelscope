@@ -26,7 +26,8 @@ def pred2scene(shot2keyf, anno_dict):
     for scene_ind, scene_item in enumerate(scene_list):
         scene_dict_lst.append({
             'shot': pair_list[scene_ind],
-            'frame': scene_item
+            'frame': scene_item[0],
+            'timestamp': scene_item[1]
         })
 
     return scene_dict_lst, scene_list
@@ -42,8 +43,8 @@ def scene2video(source_movie_fn, scene_list, thres):
 
     for scene_ind, scene_item in tqdm(enumerate(scene_list)):
         scene = str(scene_ind).zfill(4)
-        start_frame = int(scene_item[0])
-        end_frame = int(scene_item[1])
+        start_frame = int(scene_item[0][0])
+        end_frame = int(scene_item[0][1])
         start_time, end_time = start_frame / fps, end_frame / fps
         duration_time = end_time - start_time
         out_video_fn = os.path.join(out_video_dir_fn,
@@ -71,7 +72,10 @@ def get_demo_scene_list(shot2keyf, anno_dict):
         start_shot, end_shot = int(pair[0]), int(pair[-1])
         start_frame = shot2keyf[start_shot].split(' ')[0]
         end_frame = shot2keyf[end_shot].split(' ')[1]
-        scene_list.append((start_frame, end_frame))
+        start_timestamp = shot2keyf[start_shot].split(' ')[-2]
+        end_timestamp = shot2keyf[end_shot].split(' ')[-1]
+        scene_list.append([[start_frame, end_frame],
+                           [start_timestamp, end_timestamp]])
     return scene_list, pair_list
 
 

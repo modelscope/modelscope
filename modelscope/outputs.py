@@ -153,7 +153,7 @@ TASK_OUTPUTS = {
 
     # semantic segmentation result for single sample
     #   {
-    #       "masks": [np.array # 2D array containing only 0, 255]
+    #       "masks": [np.array # 2D array with shape [height, width]]
     #   }
     Tasks.semantic_segmentation: [OutputKeys.MASKS],
 

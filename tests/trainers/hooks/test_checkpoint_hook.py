@@ -204,9 +204,6 @@ class BestCkptSaverHookTest(unittest.TestCase):
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
-        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
         self.assertIn(f'best_{LogKeys.EPOCH}1_{MetricKeys.ACCURACY}0.1.pth',
                       results_files)
 

@@ -178,6 +178,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                               'damo/cv_vitb16_segmentation_shop-seg'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.hand_static: (Pipelines.hand_static,
+                        'damo/cv_mobileface_hand-static'),
 }
 
 

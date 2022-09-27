@@ -39,6 +39,7 @@ class Models(object):
     mtcnn = 'mtcnn'
     ulfd = 'ulfd'
     video_inpainting = 'video-inpainting'
+    hand_static = 'hand-static'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -173,6 +174,7 @@ class Pipelines(object):
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
     video_inpainting = 'video-inpainting'
+    hand_static = 'hand-static'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

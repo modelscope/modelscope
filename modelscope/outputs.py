@@ -632,5 +632,9 @@ TASK_OUTPUTS = {
     # {
     #     'output': ['Done' / 'Decode_Error']
     # }
-    Tasks.video_inpainting: [OutputKeys.OUTPUT]
+    Tasks.video_inpainting: [OutputKeys.OUTPUT],
+    # {
+    #     'output': ['bixin']
+    # }
+    Tasks.hand_static: [OutputKeys.OUTPUT]
 }

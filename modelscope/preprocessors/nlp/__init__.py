@@ -6,32 +6,41 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .text_error_correction import TextErrorCorrectionPreprocessor
     from .nlp_base import (
-        Tokenize, SequenceClassificationPreprocessor,
-        TextGenerationPreprocessor, TokenClassificationPreprocessor,
-        SingleSentenceClassificationPreprocessor,
-        Text2TextGenerationPreprocessor,
-        PairSentenceClassificationPreprocessor, FillMaskPreprocessor,
-        ZeroShotClassificationPreprocessor, NERPreprocessor,
-        FaqQuestionAnsweringPreprocessor, SequenceLabelingPreprocessor,
-        RelationExtractionPreprocessor, DocumentSegmentationPreprocessor,
-        FillMaskPoNetPreprocessor, PassageRankingPreprocessor,
+        DocumentSegmentationPreprocessor,
+        FaqQuestionAnsweringPreprocessor,
+        FillMaskPoNetPreprocessor,
+        NLPPreprocessor,
+        NLPTokenizerPreprocessorBase,
+        PassageRankingPreprocessor,
+        RelationExtractionPreprocessor,
         SentenceEmbeddingPreprocessor,
-        WordSegmentationBlankSetToLabelPreprocessor)
+        SequenceClassificationPreprocessor,
+        TokenClassificationPreprocessor,
+        TextGenerationPreprocessor,
+        Text2TextGenerationPreprocessor,
+        Tokenize,
+        WordSegmentationBlankSetToLabelPreprocessor,
+        ZeroShotClassificationPreprocessor,
+    )
 
 else:
     _import_structure = {
         'nlp_base': [
-            'Tokenize', 'SequenceClassificationPreprocessor',
-            'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
-            'SingleSentenceClassificationPreprocessor',
-            'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
-            'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
-            'SentenceEmbeddingPreprocessor', 'PassageRankingPreprocessor',
-            'FaqQuestionAnsweringPreprocessor', 'SequenceLabelingPreprocessor',
+            'DocumentSegmentationPreprocessor',
+            'FaqQuestionAnsweringPreprocessor',
+            'FillMaskPoNetPreprocessor',
+            'NLPPreprocessor',
+            'NLPTokenizerPreprocessorBase',
+            'PassageRankingPreprocessor',
             'RelationExtractionPreprocessor',
+            'SentenceEmbeddingPreprocessor',
+            'SequenceClassificationPreprocessor',
+            'TokenClassificationPreprocessor',
+            'TextGenerationPreprocessor',
+            'Tokenize',
             'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
-            'DocumentSegmentationPreprocessor', 'FillMaskPoNetPreprocessor'
+            'ZeroShotClassificationPreprocessor',
         ],
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',

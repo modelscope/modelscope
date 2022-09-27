@@ -41,12 +41,9 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         input_tensor = {
-            'input_ids':
-            torch.tensor(input['input_ids']).unsqueeze(0),
-            'attention_mask':
-            torch.tensor(input['attention_mask']).unsqueeze(0),
-            'label_mask':
-            torch.tensor(input['label_mask'], dtype=torch.bool).unsqueeze(0)
+            'input_ids': input['input_ids'],
+            'attention_mask': input['attention_mask'],
+            'label_mask': input['label_mask'],
         }
         output = {
             'text': input['text'],

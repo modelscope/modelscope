@@ -91,17 +91,22 @@ class TaskModels(object):
     text_classification = 'text-classification'
     token_classification = 'token-classification'
     information_extraction = 'information-extraction'
+    fill_mask = 'fill-mask'
+    feature_extraction = 'feature-extraction'
 
 
 class Heads(object):
     # nlp heads
+
+    # text cls
     text_classification = 'text-classification'
-    # mlm
+    # fill mask
+    fill_mask = 'fill-mask'
     bert_mlm = 'bert-mlm'
-    # roberta mlm
     roberta_mlm = 'roberta-mlm'
     # token cls
     token_classification = 'token-classification'
+    # extraction
     information_extraction = 'information-extraction'
 
 
@@ -203,6 +208,7 @@ class Pipelines(object):
     passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -306,6 +312,7 @@ class Preprocessors(object):
     table_question_answering_preprocessor = 'table-question-answering-preprocessor'
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

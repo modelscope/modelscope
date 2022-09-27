@@ -10,12 +10,13 @@ from torch import nn
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.bert import BertPreTrainedModel
+from modelscope.models.nlp.structbert import SbertPreTrainedModel
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.tensor_utils import (torch_nested_detach,
                                            torch_nested_numpify)
-from .structbert import SbertPreTrainedModel
 
 __all__ = ['SbertForTokenClassification']
 
@@ -171,3 +172,49 @@ class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):
                          pretrained_model_name_or_path=kwargs.get('model_dir'),
                          model_dir=kwargs.get('model_dir'),
                          **model_args)
+
+
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.bert)
+@MODELS.register_module(Tasks.token_classification, module_name=Models.bert)
+class BertForSequenceClassification(TokenClassification, BertPreTrainedModel):
+    """Bert token classification model.
+
+        Inherited from TokenClassificationBase.
+    """
+    base_model_prefix: str = 'bert'
+    supports_gradient_checkpointing = True
+    _keys_to_ignore_on_load_missing = [r'position_ids']
+
+    def __init__(self, config, model_dir):
+        if hasattr(config, 'base_model_prefix'):
+            BertForSequenceClassification.base_model_prefix = config.base_model_prefix
+        super().__init__(config, model_dir)
+
+    def build_base_model(self):
+        from .bert import BertModel
+        return BertModel(self.config, add_pooling_layer=True)
+
+    def forward(self,
+                input_ids=None,
+                attention_mask=None,
+                token_type_ids=None,
+                position_ids=None,
+                head_mask=None,
+                inputs_embeds=None,
+                labels=None,
+                output_attentions=None,
+                output_hidden_states=None,
+                return_dict=None,
+                **kwargs):
+        return super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+            **kwargs)

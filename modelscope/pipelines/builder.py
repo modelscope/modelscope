@@ -52,8 +52,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                    'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoising: (Pipelines.image_denoise,
                             'damo/cv_nafnet_image-denoise_sidd'),
-    Tasks.text_classification: (Pipelines.sentiment_analysis,
-                                'damo/bert-base-sst2'),
+    Tasks.text_classification:
+    (Pipelines.sentiment_classification,
+     'damo/nlp_structbert_sentiment-classification_chinese-base'),
     Tasks.text_generation: (Pipelines.text_generation,
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
     Tasks.zero_shot_classification:
@@ -80,6 +81,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
+    Tasks.feature_extraction: (Pipelines.feature_extraction,
+                               'damo/pert_feature-extraction_base-test'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
     Tasks.action_detection: (Pipelines.action_detection,

@@ -75,7 +75,8 @@ class MsDatasetTest(unittest.TestCase):
         preprocessor = SequenceClassificationPreprocessor(
             nlp_model.model_dir,
             first_sequence='premise',
-            second_sequence=None)
+            second_sequence=None,
+            padding='max_length')
         ms_ds_train = MsDataset.load(
             'xcopa',
             subset_name='translation-et',

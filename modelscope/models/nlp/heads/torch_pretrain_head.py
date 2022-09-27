@@ -11,7 +11,7 @@ from modelscope.models.builder import HEADS
 from modelscope.utils.constant import Tasks
 
 
-@HEADS.register_module(Tasks.fill_mask, module_name=Heads.bert_mlm)
+# @HEADS.register_module(Tasks.fill_mask, module_name=Heads.bert_mlm)
 class BertMLMHead(BertOnlyMLMHead, TorchHead):
 
     def compute_loss(self, outputs: Dict[str, torch.Tensor],

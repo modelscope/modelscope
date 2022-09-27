@@ -74,7 +74,6 @@ class Registry(object):
             raise KeyError(f'{module_name} is already registered in '
                            f'{self._name}[{group_key}]')
         self._modules[group_key][module_name] = module_cls
-        module_cls.group_key = group_key
 
     def register_module(self,
                         group_key: str = default_group,
@@ -196,6 +195,7 @@ def build_from_cfg(cfg,
         if obj_cls is None:
             raise KeyError(f'{obj_type} is not in the {registry.name}'
                            f' registry group {group_key}')
+        obj_cls.group_key = group_key
     elif inspect.isclass(obj_type) or inspect.isfunction(obj_type):
         obj_cls = obj_type
     else:

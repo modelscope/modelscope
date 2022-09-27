@@ -6,11 +6,9 @@ import torch
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import DebertaV2ForMaskedLM
-from modelscope.models.nlp.deberta_v2 import (DebertaV2Tokenizer,
-                                              DebertaV2TokenizerFast)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
-from modelscope.preprocessors import FillMaskPreprocessor
+from modelscope.preprocessors import NLPPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -24,7 +22,7 @@ class DeBERTaV2TaskTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         model_dir = snapshot_download(self.model_id_deberta)
-        preprocessor = FillMaskPreprocessor(
+        preprocessor = NLPPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
         model = DebertaV2ForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -40,7 +38,7 @@ class DeBERTaV2TaskTest(unittest.TestCase):
         # sbert
         print(self.model_id_deberta)
         model = Model.from_pretrained(self.model_id_deberta)
-        preprocessor = FillMaskPreprocessor(
+        preprocessor = NLPPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             task=Tasks.fill_mask, model=model, preprocessor=preprocessor)

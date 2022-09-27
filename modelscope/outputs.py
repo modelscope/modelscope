@@ -417,6 +417,22 @@ TASK_OUTPUTS = {
     # }
     Tasks.fill_mask: [OutputKeys.TEXT],
 
+    # feature extraction result for single sample
+    # {
+    #   "text_embedding": [[
+    #     [1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04],
+    #     [6.45841064e-05, 1.15997791e-04, 5.11605394e-05, 9.87020373e-01],
+    #     [2.66957268e-05, 4.72324500e-05, 9.74208378e-05, 4.18022355e-05]
+    #   ],
+    #   [
+    #     [2.97343540e-05, 5.81317654e-05, 5.44203431e-05, 6.28319322e-05],
+    #     [8.24327726e-05, 4.66077945e-05, 5.32869453e-05, 4.16190960e-05],
+    #     [3.61441926e-05, 3.38475402e-05, 3.44323053e-05, 5.70138109e-05]
+    #   ]
+    # ]
+    # }
+    Tasks.feature_extraction: [OutputKeys.TEXT_EMBEDDING],
+
     # (Deprecated) dialog intent prediction result for single sample
     # {'output': {'prediction': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
     #        1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04,

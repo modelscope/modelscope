@@ -7,7 +7,7 @@ from modelscope.models.nlp import (LSTMCRFForNamedEntityRecognition,
                                    TransformerCRFForNamedEntityRecognition)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
-from modelscope.preprocessors import NERPreprocessor
+from modelscope.preprocessors import TokenClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -26,7 +26,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download(self):
         cache_path = snapshot_download(self.tcrf_model_id)
-        tokenizer = NERPreprocessor(cache_path)
+        tokenizer = TokenClassificationPreprocessor(cache_path)
         model = TransformerCRFForNamedEntityRecognition(
             cache_path, tokenizer=tokenizer)
         pipeline1 = NamedEntityRecognitionPipeline(
@@ -43,7 +43,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_lcrf_by_direct_model_download(self):
         cache_path = snapshot_download(self.lcrf_model_id)
-        tokenizer = NERPreprocessor(cache_path)
+        tokenizer = TokenClassificationPreprocessor(cache_path)
         model = LSTMCRFForNamedEntityRecognition(
             cache_path, tokenizer=tokenizer)
         pipeline1 = NamedEntityRecognitionPipeline(
@@ -60,7 +60,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_tcrf_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.tcrf_model_id)
-        tokenizer = NERPreprocessor(model.model_dir)
+        tokenizer = TokenClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition,
             model=model,
@@ -70,7 +70,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_lcrf_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.lcrf_model_id)
-        tokenizer = NERPreprocessor(model.model_dir)
+        tokenizer = TokenClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition,
             model=model,

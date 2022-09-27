@@ -30,7 +30,7 @@ class AstScaningTest(unittest.TestCase):
     def test_ast_scaning_class(self):
         astScaner = AstScaning()
         pipeline_file = os.path.join(MODELSCOPE_PATH, 'pipelines', 'nlp',
-                                     'sequence_classification_pipeline.py')
+                                     'text_generation_pipeline.py')
         output = astScaner.generate_ast(pipeline_file)
         self.assertTrue(output['imports'] is not None)
         self.assertTrue(output['from_imports'] is not None)
@@ -40,14 +40,12 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(imports, dict)
         self.assertIsInstance(from_imports, dict)
         self.assertIsInstance(decorators, list)
-        self.assertListEqual(
-            list(set(imports.keys()) - set(['typing', 'numpy'])), [])
-        self.assertEqual(len(from_imports.keys()), 9)
+        self.assertListEqual(list(set(imports.keys()) - set(['torch'])), [])
+        self.assertEqual(len(from_imports.keys()), 7)
         self.assertTrue(from_imports['modelscope.metainfo'] is not None)
         self.assertEqual(from_imports['modelscope.metainfo'], ['Pipelines'])
-        self.assertEqual(
-            decorators,
-            [('PIPELINES', 'text-classification', 'sentiment-analysis')])
+        self.assertEqual(decorators,
+                         [('PIPELINES', 'text-generation', 'text-generation')])
 
     def test_files_scaning_method(self):
         fileScaner = FilesAstScaning()

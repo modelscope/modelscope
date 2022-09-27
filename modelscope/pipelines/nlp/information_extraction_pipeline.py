@@ -36,7 +36,7 @@ class InformationExtractionPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:

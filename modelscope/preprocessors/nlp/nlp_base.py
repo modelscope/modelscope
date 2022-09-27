@@ -2,14 +2,13 @@
 
 import os.path as osp
 import re
-import uuid
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
-from transformers import AutoTokenizer, BertTokenizerFast
+import torch
+from transformers import AutoTokenizer
 
 from modelscope.metainfo import Models, Preprocessors
-from modelscope.models.nlp.structbert import SbertTokenizerFast
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
@@ -23,24 +22,21 @@ from modelscope.utils.type_assert import type_assert
 logger = get_logger()
 
 __all__ = [
-    'Tokenize',
-    'SequenceClassificationPreprocessor',
-    'TextGenerationPreprocessor',
-    'TokenClassificationPreprocessor',
-    'PairSentenceClassificationPreprocessor',
-    'Text2TextGenerationPreprocessor',
-    'SingleSentenceClassificationPreprocessor',
-    'FillMaskPreprocessor',
-    'ZeroShotClassificationPreprocessor',
-    'NERPreprocessor',
-    'SentenceEmbeddingPreprocessor',
-    'PassageRankingPreprocessor',
-    'FaqQuestionAnsweringPreprocessor',
-    'SequenceLabelingPreprocessor',
-    'RelationExtractionPreprocessor',
     'DocumentSegmentationPreprocessor',
+    'FaqQuestionAnsweringPreprocessor',
+    'NLPPreprocessor',
     'FillMaskPoNetPreprocessor',
+    'NLPTokenizerPreprocessorBase',
+    'PassageRankingPreprocessor',
+    'RelationExtractionPreprocessor',
+    'SentenceEmbeddingPreprocessor',
+    'SequenceClassificationPreprocessor',
+    'TokenClassificationPreprocessor',
+    'Text2TextGenerationPreprocessor',
+    'TextGenerationPreprocessor',
+    'Tokenize',
     'WordSegmentationBlankSetToLabelPreprocessor',
+    'ZeroShotClassificationPreprocessor',
 ]
 
 
@@ -48,85 +44,19 @@ __all__ = [
 class Tokenize(Preprocessor):
 
     def __init__(self, tokenizer_name) -> None:
-        self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     def __call__(self, data: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
         if isinstance(data, str):
             data = {InputFields.text: data}
-        token_dict = self._tokenizer(data[InputFields.text])
+        token_dict = self.tokenizer(data[InputFields.text])
         data.update(token_dict)
         return data
 
 
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.bert_seq_cls_tokenizer)
-class SequenceClassificationPreprocessor(Preprocessor):
-
-    def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data
-
-        Args:
-            model_dir (str): model path
-        """
-
-        super().__init__(*args, **kwargs)
-
-        from easynlp.modelzoo import AutoTokenizer
-        self.model_dir: str = model_dir
-        self.first_sequence: str = kwargs.pop('first_sequence',
-                                              'first_sequence')
-        self.second_sequence = kwargs.pop('second_sequence', 'second_sequence')
-        self.sequence_length = kwargs.pop('sequence_length', 128)
-
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
-        print(f'this is the tokenzier {self.tokenizer}')
-        self.label2id = parse_label_mapping(self.model_dir)
-
-    @type_assert(object, (str, tuple, Dict))
-    def __call__(self, data: Union[str, tuple, Dict]) -> Dict[str, Any]:
-        feature = super().__call__(data)
-        if isinstance(data, str):
-            new_data = {self.first_sequence: data}
-        elif isinstance(data, tuple):
-            sentence1, sentence2 = data
-            new_data = {
-                self.first_sequence: sentence1,
-                self.second_sequence: sentence2
-            }
-        else:
-            new_data = data
-
-        # preprocess the data for the model input
-
-        rst = {
-            'id': [],
-            'input_ids': [],
-            'attention_mask': [],
-            'token_type_ids': [],
-        }
-
-        max_seq_length = self.sequence_length
-
-        text_a = new_data[self.first_sequence]
-        text_b = new_data.get(self.second_sequence, None)
-
-        feature = self.tokenizer(
-            text_a,
-            text_b,
-            padding='max_length',
-            truncation=True,
-            max_length=max_seq_length)
-
-        rst['id'].append(new_data.get('id', str(uuid.uuid4())))
-        rst['input_ids'].append(feature['input_ids'])
-        rst['attention_mask'].append(feature['attention_mask'])
-        rst['token_type_ids'].append(feature['token_type_ids'])
-        return rst
-
-
 class NLPTokenizerPreprocessorBase(Preprocessor):
 
-    def __init__(self, model_dir: str, pair: bool, mode: str, **kwargs):
+    def __init__(self, model_dir: str, mode: str, **kwargs):
         """The NLP tokenizer preprocessor base class.
 
         Any nlp preprocessor which uses the hf tokenizer can inherit from this class.
@@ -138,7 +68,6 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
             label: The label key
             label2id: An optional label2id mapping, the class will try to call utils.parse_label_mapping
                 if this mapping is not supplied.
-            pair (bool): Pair sentence input or single sentence input.
             mode: Run this preprocessor in either 'train'/'eval'/'inference' mode
             kwargs: These kwargs will be directly fed into the tokenizer.
         """
@@ -148,7 +77,8 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         self.first_sequence: str = kwargs.pop('first_sequence',
                                               'first_sequence')
         self.second_sequence = kwargs.pop('second_sequence', 'second_sequence')
-        self.pair = pair
+        self.sequence_length = kwargs.pop('sequence_length', 128)
+
         self._mode = mode
         self.label = kwargs.pop('label', OutputKeys.LABEL)
         self.label2id = None
@@ -158,6 +88,7 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
             self.label2id = parse_label_mapping(self.model_dir)
 
         self.tokenize_kwargs = kwargs
+
         self.tokenizer = self.build_tokenizer(model_dir)
 
     @property
@@ -179,20 +110,38 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
         @param model_dir:  The local model dir.
         @return: The initialized tokenizer.
         """
-
+        self.is_transformer_based_model = 'lstm' not in model_dir
+        # fast version lead to parallel inference failed
         model_type = get_model_type(model_dir)
         if model_type in (Models.structbert, Models.gpt3, Models.palm,
                           Models.plug):
-            from modelscope.models.nlp.structbert import SbertTokenizer
-            return SbertTokenizer.from_pretrained(model_dir, use_fast=False)
+            from modelscope.models.nlp.structbert import SbertTokenizer, SbertTokenizerFast
+            return SbertTokenizer.from_pretrained(
+                model_dir
+            ) if self._mode == ModeKeys.INFERENCE else SbertTokenizerFast.from_pretrained(
+                model_dir)
         elif model_type == Models.veco:
-            from modelscope.models.nlp.veco import VecoTokenizer
-            return VecoTokenizer.from_pretrained(model_dir)
+            from modelscope.models.nlp.veco import VecoTokenizer, VecoTokenizerFast
+            return VecoTokenizer.from_pretrained(
+                model_dir
+            ) if self._mode == ModeKeys.INFERENCE else VecoTokenizerFast.from_pretrained(
+                model_dir)
         elif model_type == Models.deberta_v2:
-            from modelscope.models.nlp.deberta_v2 import DebertaV2Tokenizer
-            return DebertaV2Tokenizer.from_pretrained(model_dir)
+            from modelscope.models.nlp.deberta_v2 import DebertaV2Tokenizer, DebertaV2TokenizerFast
+            return DebertaV2Tokenizer.from_pretrained(
+                model_dir
+            ) if self._mode == ModeKeys.INFERENCE else DebertaV2TokenizerFast.from_pretrained(
+                model_dir)
+        elif not self.is_transformer_based_model:
+            from transformers import BertTokenizer, BertTokenizerFast
+            return BertTokenizer.from_pretrained(
+                model_dir
+            ) if self._mode == ModeKeys.INFERENCE else BertTokenizerFast.from_pretrained(
+                model_dir)
         else:
-            return AutoTokenizer.from_pretrained(model_dir, use_fast=False)
+            return AutoTokenizer.from_pretrained(
+                model_dir,
+                use_fast=False if self._mode == ModeKeys.INFERENCE else True)
 
     def __call__(self, data: Union[str, Tuple, Dict]) -> Dict[str, Any]:
         """process the raw input data
@@ -239,7 +188,7 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
             if len(data) == 3:
                 text_a, text_b, labels = data
             elif len(data) == 2:
-                if self.pair:
+                if self._mode == ModeKeys.INFERENCE:
                     text_a, text_b = data
                 else:
                     text_a, labels = data
@@ -275,6 +224,22 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
                 output[OutputKeys.LABELS] = self.label2id[str(labels)]
             else:
                 output[OutputKeys.LABELS] = labels
+
+
+@PREPROCESSORS.register_module(Fields.nlp, module_name=Preprocessors.fill_mask)
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.feature_extraction)
+class NLPPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in MLM task.
+    """
+
+    def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
+        kwargs['truncation'] = kwargs.get('truncation', True)
+        kwargs['padding'] = kwargs.get('padding', 'max_length')
+        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
+        kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
+                                                     True)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
 
 @PREPROCESSORS.register_module(
@@ -337,22 +302,12 @@ class PassageRankingPreprocessor(NLPTokenizerPreprocessorBase):
     Fields.nlp, module_name=Preprocessors.nli_tokenizer)
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_sim_tokenizer)
-class PairSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
-    """The tokenizer preprocessor used in pair sentence classification.
-    """
-
-    def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
-        kwargs['truncation'] = kwargs.get('truncation', True)
-        kwargs['padding'] = kwargs.get(
-            'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
-        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        super().__init__(model_dir, pair=True, mode=mode, **kwargs)
-
-
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.bert_seq_cls_tokenizer)
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.sen_cls_tokenizer)
-class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
-    """The tokenizer preprocessor used in single sentence classification.
+class SequenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in sequence classification.
     """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
@@ -360,7 +315,7 @@ class SingleSentenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         kwargs['padding'] = kwargs.get(
             'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
 
 @PREPROCESSORS.register_module(
@@ -421,7 +376,7 @@ class ZeroShotClassificationPreprocessor(NLPTokenizerPreprocessorBase):
             model_dir (str): model path
         """
         self.sequence_length = kwargs.pop('sequence_length', 512)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
     def __call__(self, data: Union[str, Dict], hypothesis_template: str,
                  candidate_labels: list) -> Dict[str, Any]:
@@ -496,14 +451,12 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
                  tokenizer=None,
                  mode=ModeKeys.INFERENCE,
                  **kwargs):
-        self.tokenizer = self.build_tokenizer(
-            model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
     @staticmethod
     def get_roberta_tokenizer_dir(model_dir: str) -> Optional[str]:
@@ -539,20 +492,6 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
             'attention_mask': src_attention_mask,
             'labels': labels,
         }
-
-
-@PREPROCESSORS.register_module(Fields.nlp, module_name=Preprocessors.fill_mask)
-class FillMaskPreprocessor(NLPTokenizerPreprocessorBase):
-    """The tokenizer preprocessor used in MLM task.
-    """
-
-    def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
-        kwargs['truncation'] = kwargs.get('truncation', True)
-        kwargs['padding'] = kwargs.get('padding', 'max_length')
-        kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
-                                                     True)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
 
 
 @PREPROCESSORS.register_module(
@@ -593,20 +532,39 @@ class WordSegmentationBlankSetToLabelPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.ner_tokenizer)
+@PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.token_cls_tokenizer)
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sequence_labeling_tokenizer)
 class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
-    """The tokenizer preprocessor used in normal token classification task.
+    """The tokenizer preprocessor used in normal NER task.
     """
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
+        """preprocess the data
+
+        Args:
+            model_dir (str): model path
+        """
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get(
             'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         self.label_all_tokens = kwargs.pop('label_all_tokens', False)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
-    def __call__(self, data: Union[str, Dict]) -> Dict[str, Any]:
+        if 'is_split_into_words' in kwargs:
+            self.is_split_into_words = kwargs.pop('is_split_into_words')
+        else:
+            self.is_split_into_words = self.tokenizer.init_kwargs.get(
+                'is_split_into_words', False)
+        if 'label2id' in kwargs:
+            kwargs.pop('label2id')
+        self.tokenize_kwargs = kwargs
+
+    @type_assert(object, str)
+    def __call__(self, data: str) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -618,23 +576,84 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
             Dict[str, Any]: the preprocessed data
         """
 
-        text_a = None
+        # preprocess the data for the model input
+        text = None
         labels_list = None
         if isinstance(data, str):
-            text_a = data
+            text = data
         elif isinstance(data, dict):
-            text_a = data.get(self.first_sequence)
+            text = data.get(self.first_sequence)
             labels_list = data.get(self.label)
 
-        if isinstance(text_a, str):
-            text_a = text_a.replace(' ', '').strip()
+        input_ids = []
+        label_mask = []
+        offset_mapping = []
+        if self.is_split_into_words:
+            for offset, token in enumerate(list(data)):
+                subtoken_ids = self.tokenizer.encode(
+                    token, add_special_tokens=False)
+                if len(subtoken_ids) == 0:
+                    subtoken_ids = [self.tokenizer.unk_token_id]
+                input_ids.extend(subtoken_ids)
+                label_mask.extend([1] + [0] * (len(subtoken_ids) - 1))
+                offset_mapping.extend([(offset, offset + 1)])
+        else:
+            if self.tokenizer.is_fast:
+                encodings = self.tokenizer(
+                    text,
+                    add_special_tokens=False,
+                    return_offsets_mapping=True,
+                    **self.tokenize_kwargs)
+                input_ids = encodings['input_ids']
+                word_ids = encodings.word_ids()
+                for i in range(len(word_ids)):
+                    if word_ids[i] is None:
+                        label_mask.append(0)
+                    elif word_ids[i] == word_ids[i - 1]:
+                        label_mask.append(0)
+                        offset_mapping[-1] = (
+                            offset_mapping[-1][0],
+                            encodings['offset_mapping'][i][1])
+                    else:
+                        label_mask.append(1)
+                        offset_mapping.append(encodings['offset_mapping'][i])
+            else:
+                encodings = self.tokenizer(
+                    text, add_special_tokens=False, **self.tokenize_kwargs)
+                input_ids = encodings['input_ids']
+                label_mask, offset_mapping = self.get_label_mask_and_offset_mapping(
+                    text)
 
-        tokenized_inputs = self.tokenizer(
-            [t for t in text_a],
-            return_tensors='pt' if self._mode == ModeKeys.INFERENCE else None,
-            is_split_into_words=True,
-            **self.tokenize_kwargs)
+        if len(input_ids) >= self.sequence_length - 2:
+            input_ids = input_ids[:self.sequence_length - 2]
+            label_mask = label_mask[:self.sequence_length - 2]
+        input_ids = [self.tokenizer.cls_token_id
+                     ] + input_ids + [self.tokenizer.sep_token_id]
+        label_mask = [0] + label_mask + [0]
+        attention_mask = [1] * len(input_ids)
+        offset_mapping = offset_mapping[:sum(label_mask)]
 
+        if not self.is_transformer_based_model:
+            input_ids = input_ids[1:-1]
+            attention_mask = attention_mask[1:-1]
+            label_mask = label_mask[1:-1]
+
+        if self._mode == ModeKeys.INFERENCE:
+            input_ids = torch.tensor(input_ids).unsqueeze(0)
+            attention_mask = torch.tensor(attention_mask).unsqueeze(0)
+            label_mask = torch.tensor(
+                label_mask, dtype=torch.bool).unsqueeze(0)
+
+        # the token classification
+        output = {
+            'text': text,
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'label_mask': label_mask,
+            'offset_mapping': offset_mapping
+        }
+
+        # align the labels with tokenized text
         if labels_list is not None:
             assert self.label2id is not None
             # Map that sends B-Xxx label to its I-Xxx counterpart
@@ -653,7 +672,6 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                     b_to_i_label.append(idx)
 
             label_row = [self.label2id[lb] for lb in labels_list]
-            word_ids = tokenized_inputs.word_ids()
             previous_word_idx = None
             label_ids = []
             for word_idx in word_ids:
@@ -668,229 +686,66 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                         label_ids.append(-100)
                 previous_word_idx = word_idx
             labels = label_ids
-            tokenized_inputs['labels'] = labels
-            # new code end
+            output['labels'] = labels
+        return output
 
-        if self._mode == ModeKeys.INFERENCE:
-            tokenized_inputs[OutputKeys.TEXT] = text_a
-        return tokenized_inputs
+    def get_tokenizer_class(self):
+        tokenizer_class = self.tokenizer.__class__.__name__
+        if tokenizer_class.endswith(
+                'Fast') and tokenizer_class != 'PreTrainedTokenizerFast':
+            tokenizer_class = tokenizer_class[:-4]
+        return tokenizer_class
 
-
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.ner_tokenizer)
-class NERPreprocessor(Preprocessor):
-    """The tokenizer preprocessor used in normal NER task.
-
-    NOTE: This preprocessor may be merged with the TokenClassificationPreprocessor in the next edition.
-    """
-
-    def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data
-
-        Args:
-            model_dir (str): model path
-        """
-
-        super().__init__(*args, **kwargs)
-
-        self.model_dir: str = model_dir
-        self.sequence_length = kwargs.pop('sequence_length', 512)
-        self.is_transformer_based_model = 'lstm' not in model_dir
-        if self.is_transformer_based_model:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_dir, use_fast=True)
-        else:
-            self.tokenizer = BertTokenizerFast.from_pretrained(
-                model_dir, use_fast=True)
-        self.is_split_into_words = self.tokenizer.init_kwargs.get(
-            'is_split_into_words', False)
-
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
-
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
-
-        # preprocess the data for the model input
-        text = data
-        if self.is_split_into_words:
-            input_ids = []
-            label_mask = []
-            offset_mapping = []
-            for offset, token in enumerate(list(data)):
-                subtoken_ids = self.tokenizer.encode(
-                    token, add_special_tokens=False)
-                if len(subtoken_ids) == 0:
-                    subtoken_ids = [self.tokenizer.unk_token_id]
-                input_ids.extend(subtoken_ids)
-                label_mask.extend([1] + [0] * (len(subtoken_ids) - 1))
-                offset_mapping.extend([(offset, offset + 1)]
-                                      + [(offset + 1, offset + 1)]
-                                      * (len(subtoken_ids) - 1))
-            if len(input_ids) >= self.sequence_length - 2:
-                input_ids = input_ids[:self.sequence_length - 2]
-                label_mask = label_mask[:self.sequence_length - 2]
-                offset_mapping = offset_mapping[:self.sequence_length - 2]
-            input_ids = [self.tokenizer.cls_token_id
-                         ] + input_ids + [self.tokenizer.sep_token_id]
-            label_mask = [0] + label_mask + [0]
-            attention_mask = [1] * len(input_ids)
-        else:
-            encodings = self.tokenizer(
-                text,
-                add_special_tokens=True,
-                padding=True,
-                truncation=True,
-                max_length=self.sequence_length,
-                return_offsets_mapping=True)
-            input_ids = encodings['input_ids']
-            attention_mask = encodings['attention_mask']
-            word_ids = encodings.word_ids()
-            label_mask = []
-            offset_mapping = []
-            for i in range(len(word_ids)):
-                if word_ids[i] is None:
-                    label_mask.append(0)
-                elif word_ids[i] == word_ids[i - 1]:
-                    label_mask.append(0)
-                    offset_mapping[-1] = (offset_mapping[-1][0],
-                                          encodings['offset_mapping'][i][1])
+    def get_label_mask_and_offset_mapping(self, text):
+        label_mask = []
+        offset_mapping = []
+        tokens = self.tokenizer.tokenize(text)
+        offset = 0
+        if self.get_tokenizer_class() == 'BertTokenizer':
+            for token in tokens:
+                is_start = (token[:2] != '##')
+                if is_start:
+                    label_mask.append(True)
                 else:
-                    label_mask.append(1)
-                    offset_mapping.append(encodings['offset_mapping'][i])
-
-        if not self.is_transformer_based_model:
-            input_ids = input_ids[1:-1]
-            attention_mask = attention_mask[1:-1]
-            label_mask = label_mask[1:-1]
-        return {
-            'text': text,
-            'input_ids': input_ids,
-            'attention_mask': attention_mask,
-            'label_mask': label_mask,
-            'offset_mapping': offset_mapping
-        }
-
-
-@PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.sequence_labeling_tokenizer)
-class SequenceLabelingPreprocessor(Preprocessor):
-    """The tokenizer preprocessor used in normal NER task.
-
-    NOTE: This preprocessor may be merged with the TokenClassificationPreprocessor in the next edition.
-    """
-
-    def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data via the vocab.txt from the `model_dir` path
-
-        Args:
-            model_dir (str): model path
-        """
-
-        super().__init__(*args, **kwargs)
-
-        self.model_dir: str = model_dir
-        self.sequence_length = kwargs.pop('sequence_length', 512)
-
-        if 'lstm' in model_dir or 'gcnn' in model_dir:
-            self.tokenizer = BertTokenizerFast.from_pretrained(
-                model_dir, use_fast=False)
-        elif 'structbert' in model_dir:
-            self.tokenizer = SbertTokenizerFast.from_pretrained(
-                model_dir, use_fast=False)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_dir, use_fast=False)
-        self.is_split_into_words = self.tokenizer.init_kwargs.get(
-            'is_split_into_words', False)
-
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
-        """process the raw input data
-
-        Args:
-            data (str): a sentence
-                Example:
-                    'you are so handsome.'
-
-        Returns:
-            Dict[str, Any]: the preprocessed data
-        """
-
-        # preprocess the data for the model input
-        text = data
-        if self.is_split_into_words:
-            input_ids = []
-            label_mask = []
-            offset_mapping = []
-            for offset, token in enumerate(list(data)):
-                subtoken_ids = self.tokenizer.encode(
-                    token, add_special_tokens=False)
-                if len(subtoken_ids) == 0:
-                    subtoken_ids = [self.tokenizer.unk_token_id]
-                input_ids.extend(subtoken_ids)
-                label_mask.extend([1] + [0] * (len(subtoken_ids) - 1))
-                offset_mapping.extend([(offset, offset + 1)]
-                                      + [(offset + 1, offset + 1)]
-                                      * (len(subtoken_ids) - 1))
-            if len(input_ids) >= self.sequence_length - 2:
-                input_ids = input_ids[:self.sequence_length - 2]
-                label_mask = label_mask[:self.sequence_length - 2]
-                offset_mapping = offset_mapping[:self.sequence_length - 2]
-            input_ids = [self.tokenizer.cls_token_id
-                         ] + input_ids + [self.tokenizer.sep_token_id]
-            label_mask = [0] + label_mask + [0]
-            attention_mask = [1] * len(input_ids)
-        else:
-            encodings = self.tokenizer(
-                text,
-                add_special_tokens=True,
-                padding=True,
-                truncation=True,
-                max_length=self.sequence_length,
-                return_offsets_mapping=True)
-            input_ids = encodings['input_ids']
-            attention_mask = encodings['attention_mask']
-            word_ids = encodings.word_ids()
-            label_mask = []
-            offset_mapping = []
-            for i in range(len(word_ids)):
-                if word_ids[i] is None:
-                    label_mask.append(0)
-                elif word_ids[i] == word_ids[i - 1]:
-                    label_mask.append(0)
-                    offset_mapping[-1] = (offset_mapping[-1][0],
-                                          encodings['offset_mapping'][i][1])
+                    token = token[2:]
+                    label_mask.append(False)
+                start = offset + text[offset:].index(token)
+                end = start + len(token)
+                if is_start:
+                    offset_mapping.append((start, end))
                 else:
-                    label_mask.append(1)
-                    offset_mapping.append(encodings['offset_mapping'][i])
+                    offset_mapping[-1] = (offset_mapping[-1][0], end)
+                offset = end
+        elif self.get_tokenizer_class() == 'XLMRobertaTokenizer':
+            last_is_blank = False
+            for token in tokens:
+                is_start = (token[0] == '▁')
+                if is_start:
+                    token = token[1:]
+                    label_mask.append(True)
+                    if len(token) == 0:
+                        last_is_blank = True
+                        continue
+                else:
+                    label_mask.append(False)
+                start = offset + text[offset:].index(token)
+                end = start + len(token)
+                if last_is_blank or is_start:
+                    offset_mapping.append((start, end))
+                else:
+                    offset_mapping[-1] = (offset_mapping[-1][0], end)
+                offset = end
+                last_is_blank = False
+        else:
+            raise NotImplementedError
 
-        if not self.is_transformer_based_model:
-            input_ids = input_ids[1:-1]
-            attention_mask = attention_mask[1:-1]
-            label_mask = label_mask[1:-1]
-        return {
-            'text': text,
-            'input_ids': input_ids,
-            'attention_mask': attention_mask,
-            'label_mask': label_mask,
-            'offset_mapping': offset_mapping
-        }
+        return label_mask, offset_mapping
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.re_tokenizer)
 class RelationExtractionPreprocessor(Preprocessor):
-    """The tokenizer preprocessor used in normal RE task.
-
-    NOTE: This preprocessor may be merged with the TokenClassificationPreprocessor in the next edition.
+    """The relation extraction preprocessor used in normal RE task.
     """
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -937,7 +792,7 @@ class FaqQuestionAnsweringPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super(FaqQuestionAnsweringPreprocessor, self).__init__(
-            model_dir, pair=False, mode=ModeKeys.INFERENCE, **kwargs)
+            model_dir, mode=ModeKeys.INFERENCE, **kwargs)
         import os
         from transformers import BertTokenizer
 
@@ -1026,7 +881,7 @@ class DocumentSegmentationPreprocessor(Preprocessor):
         """
 
         super().__init__(*args, **kwargs)
-
+        from transformers import BertTokenizerFast
         self.tokenizer = BertTokenizerFast.from_pretrained(
             model_dir,
             use_fast=True,

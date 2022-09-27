@@ -9,7 +9,8 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import NERPreprocessor, Preprocessor
+from modelscope.preprocessors import (Preprocessor,
+                                      TokenClassificationPreprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['NamedEntityRecognitionPipeline']
@@ -46,7 +47,7 @@ class NamedEntityRecognitionPipeline(Pipeline):
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
         if preprocessor is None:
-            preprocessor = NERPreprocessor(
+            preprocessor = TokenClassificationPreprocessor(
                 model.model_dir,
                 sequence_length=kwargs.pop('sequence_length', 512))
         model.eval()

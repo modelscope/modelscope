@@ -115,6 +115,7 @@ class NLPTasks(object):
     conversational_text_to_sql = 'conversational-text-to-sql'
     information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
 
 class AudioTasks(object):

@@ -151,6 +151,12 @@ TASK_OUTPUTS = {
     Tasks.image_segmentation:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
 
+    # semantic segmentation result for single sample
+    #   {
+    #       "masks": [np.array # 2D array containing only 0, 255]
+    #   }
+    Tasks.semantic_segmentation: [OutputKeys.MASKS],
+
     # image matting result for single sample
     # {
     #   "output_img": np.array with shape(h, w, 4)

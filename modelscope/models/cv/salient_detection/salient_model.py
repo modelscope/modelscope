@@ -13,7 +13,8 @@ from modelscope.utils.constant import ModelFile, Tasks
 from .models import U2NET
 
 
-@MODELS.register_module(Tasks.image_segmentation, module_name=Models.detection)
+@MODELS.register_module(
+    Tasks.semantic_segmentation, module_name=Models.detection)
 class SalientDetection(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

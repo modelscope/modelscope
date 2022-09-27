@@ -38,6 +38,7 @@ class CVTasks(object):
     image_object_detection = 'image-object-detection'
 
     image_segmentation = 'image-segmentation'
+    semantic_segmentation = 'semantic-segmentation'
     portrait_matting = 'portrait-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'

@@ -65,7 +65,7 @@ class OFATrainer(EpochBasedTrainer):
             kwargs['launcher'] = cfg.train.launcher
         if 'use_fp16' not in kwargs and cfg.train.get('use_fp16', False):
             kwargs['use_fp16'] = cfg.train.use_fp16
-
+        kwargs['to_tensor'] = False
         super().__init__(
             cfg_file=cfg_file,
             model=model,

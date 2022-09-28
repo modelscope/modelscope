@@ -94,8 +94,11 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_text_classification_with_model(self):
+        # model = Model.from_pretrained(
+        #     'damo/ofa_text-classification_mnli_large_en')
         model = Model.from_pretrained(
-            'damo/ofa_text-classification_mnli_large_en')
+            '/apsarapangu/disk2/yichang.zyc/ckpt/MaaS/ofa_text-classification_mnli_large_en'
+        )
         ofa_pipe = pipeline(Tasks.text_classification, model=model)
         text = 'One of our number will carry out your instructions minutely.'
         text2 = 'A member of my team will execute your orders with immense precision.'

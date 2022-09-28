@@ -129,8 +129,7 @@ class OfaForAllTasks(TorchModel):
             result_l = list()
             for cap in caption:
                 result_l.append(cap.translate(self.transtab).strip())
-            input[OutputKeys.CAPTION] = caption
-
+            input[OutputKeys.CAPTION] = result_l
         return input
 
     def _text_gen_inference(self, input):
@@ -182,6 +181,8 @@ class OfaForAllTasks(TorchModel):
             encoder_input[key] = input['net_input'][key]
         encoder_out = self.model.encoder(**encoder_input)
         valid_result = []
+        import pdb
+        pdb.set_trace()
         for val_ans, val_masks in zip(self.val_ans_l, self.val_masks_l):
             valid_size = len(val_ans)
             valid_tgt_items = [

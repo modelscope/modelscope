@@ -30,7 +30,7 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             f'pipeline1: {pipeline1(self.input)}\npipeline2: {pipeline2(self.input)}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_instance(self):
         model = Model.from_pretrained(self.model_id)
         preprocessor = Text2TextGenerationPreprocessor(model.model_dir)
@@ -40,7 +40,7 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             preprocessor=preprocessor)
         print(pipeline_ins(self.input))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_id(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation, model=self.model_id)

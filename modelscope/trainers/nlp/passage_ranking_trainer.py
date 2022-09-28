@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union

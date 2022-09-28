@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
 
 import torch
@@ -49,6 +50,4 @@ class SwinLPanopticSegmentation(TorchModel):
         return results
 
     def forward(self, Inputs):
-        import pdb
-        pdb.set_trace()
         return self.model(**Inputs)

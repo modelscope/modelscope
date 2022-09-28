@@ -12,6 +12,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+    sentence1 = 'i like this wonderful place'
 
     def setUp(self) -> None:
         self.model_id = 'damo/bert-base-sst2'
@@ -46,7 +47,8 @@ class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.text_classification,
             model=model,
             preprocessor=preprocessor)
-        self.predict(pipeline_ins)
+        print(f'sentence1: {self.sentence1}\n'
+              f'pipeline1:{pipeline_ins(input=self.sentence1)}')
 
     # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skip('nlp model does not support tensor input, skipped')

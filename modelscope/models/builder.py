@@ -37,13 +37,16 @@ def build_backbone(cfg: ConfigDict,
         cfg, BACKBONES, group_key=field, default_args=default_args)
 
 
-def build_head(cfg: ConfigDict, default_args: dict = None):
+def build_head(cfg: ConfigDict,
+               group_key: str = None,
+               default_args: dict = None):
     """ build head given config dict
 
     Args:
         cfg (:obj:`ConfigDict`): config dict for head object.
         default_args (dict, optional): Default initialization arguments.
     """
-
+    if group_key is None:
+        group_key = cfg[TYPE_NAME]
     return build_from_cfg(
-        cfg, HEADS, group_key=cfg[TYPE_NAME], default_args=default_args)
+        cfg, HEADS, group_key=group_key, default_args=default_args)

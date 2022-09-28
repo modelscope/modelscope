@@ -1,3 +1,6 @@
+# The implementation is adopted from https://github.com/TengdaHan/CoCLR,
+# made pubicly available under the Apache License, Version 2.0 at https://github.com/TengdaHan/CoCLR
+# Copyright 2021-2022 The Alibaba FVI Team Authors. All rights reserved.
 import torch
 import torch.nn as nn
 

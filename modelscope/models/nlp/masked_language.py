@@ -1,11 +1,9 @@
-from typing import Any, Dict, Optional, Union
-
-import numpy as np
-from transformers import BertForMaskedLM as BertForMaskedLMTransformer
-
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.bert import \
+    BertForMaskedLM as BertForMaskedLMTransformer
 from modelscope.models.nlp.deberta_v2 import \
     DebertaV2ForMaskedLM as DebertaV2ForMaskedLMTransformer
 from modelscope.models.nlp.structbert import SbertForMaskedLM

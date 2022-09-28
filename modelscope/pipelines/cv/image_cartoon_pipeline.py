@@ -37,8 +37,8 @@ class ImageCartoonPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        with device_placement(self.framework, self.device_name):
-            self.facer = FaceAna(self.model)
+        self.facer = FaceAna(self.model)
+        with tf.Graph().as_default():
             self.sess_anime_head = self.load_sess(
                 os.path.join(self.model, 'cartoon_h.pb'), 'model_anime_head')
             self.sess_anime_bg = self.load_sess(

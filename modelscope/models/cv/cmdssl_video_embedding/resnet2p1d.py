@@ -1,3 +1,11 @@
+# Copyright (c) 2022 Kensho Hara.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+
+# The implementation here is modified based on 3D-ResNets-PyTorch,
+# originally MIT License, Copyright (c) 2022 Kensho Hara,
+# and publicly available at https://github.com/kenshohara/3D-ResNets-PyTorch/blob/master/models/resnet2p1d.py
+""" ResNet2plus1d Model Architecture."""
+
 import torch
 import torch.nn as nn
 

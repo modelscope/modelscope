@@ -38,9 +38,11 @@ class CVTasks(object):
     image_object_detection = 'image-object-detection'
 
     image_segmentation = 'image-segmentation'
+    semantic_segmentation = 'semantic-segmentation'
     portrait_matting = 'portrait-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'
+    hand_static = 'hand-static'
 
     # image editing
     skin_retouching = 'skin-retouching'
@@ -97,6 +99,7 @@ class NLPTasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    text2text_generation = 'text2text-generation'
     task_oriented_conversation = 'task-oriented-conversation'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_state_tracking = 'dialog-state-tracking'
@@ -112,6 +115,7 @@ class NLPTasks(object):
     conversational_text_to_sql = 'conversational-text-to-sql'
     information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
 
 class AudioTasks(object):

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
@@ -11,12 +13,10 @@ from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.audio.tts_exceptions import (
     TtsFrontendInitializeFailedException,
-    TtsFrontendLanguageTypeInvalidException, TtsModelConfigurationExcetion,
+    TtsFrontendLanguageTypeInvalidException, TtsModelConfigurationException,
     TtsVoiceNotExistsException)
 from modelscope.utils.constant import Tasks
 from .voice import Voice
-
-import tensorflow as tf  # isort:skip
 
 __all__ = ['SambertHifigan']
 
@@ -28,14 +28,15 @@ class SambertHifigan(Model):
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
         if 'am' not in kwargs:
-            raise TtsModelConfigurationExcetion(
-                'configuration model field missing am!')
+            raise TtsModelConfigurationException(
+                'modelscope error: configuration model field missing am!')
         if 'vocoder' not in kwargs:
-            raise TtsModelConfigurationExcetion(
-                'configuration model field missing vocoder!')
+            raise TtsModelConfigurationException(
+                'modelscope error: configuration model field missing vocoder!')
         if 'lang_type' not in kwargs:
-            raise TtsModelConfigurationExcetion(
-                'configuration model field missing lang_type!')
+            raise TtsModelConfigurationException(
+                'modelscope error: configuration model field missing lang_type!'
+            )
         am_cfg = kwargs['am']
         voc_cfg = kwargs['vocoder']
         # initialize frontend
@@ -47,10 +48,12 @@ class SambertHifigan(Model):
             zip_ref.extractall(model_dir)
         if not frontend.initialize(self.__res_path):
             raise TtsFrontendInitializeFailedException(
-                'resource invalid: {}'.format(self.__res_path))
+                'modelscope error: resource invalid: {}'.format(
+                    self.__res_path))
         if not frontend.set_lang_type(kwargs['lang_type']):
             raise TtsFrontendLanguageTypeInvalidException(
-                'language type invalid: {}'.format(kwargs['lang_type']))
+                'modelscope error: language type invalid: {}'.format(
+                    kwargs['lang_type']))
         self.__frontend = frontend
         zip_file = os.path.join(model_dir, 'voices.zip')
         self.__voice_path = os.path.join(model_dir, 'voices')
@@ -60,7 +63,8 @@ class SambertHifigan(Model):
         with open(voice_cfg_path, 'r') as f:
             voice_cfg = json.load(f)
         if 'voices' not in voice_cfg:
-            raise TtsModelConfigurationExcetion('voices invalid')
+            raise TtsModelConfigurationException(
+                'modelscope error: voices invalid')
         self.__voice = {}
         for name in voice_cfg['voices']:
             voice_path = os.path.join(self.__voice_path, name)
@@ -70,11 +74,13 @@ class SambertHifigan(Model):
         if voice_cfg['voices']:
             self.__default_voice_name = voice_cfg['voices'][0]
         else:
-            raise TtsVoiceNotExistsException('voices is empty in voices.json')
+            raise TtsVoiceNotExistsException(
+                'modelscope error: voices is empty in voices.json')
 
     def __synthesis_one_sentences(self, voice_name, text):
         if voice_name not in self.__voice:
-            raise TtsVoiceNotExistsException(f'Voice {voice_name} not exists')
+            raise TtsVoiceNotExistsException(
+                f'modelscope error: Voice {voice_name} not exists')
         return self.__voice[voice_name].forward(text)
 
     def forward(self, text: str, voice_name: str = None):

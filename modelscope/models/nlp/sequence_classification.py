@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from abc import abstractmethod
 
 from torch import nn
@@ -5,6 +7,7 @@ from torch import nn
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.bert import BertPreTrainedModel
 from modelscope.models.nlp.structbert import SbertPreTrainedModel
 from modelscope.models.nlp.veco import \
     VecoForSequenceClassification as VecoForSequenceClassificationTransform
@@ -14,7 +17,10 @@ from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.tensor_utils import (torch_nested_detach,
                                            torch_nested_numpify)
 
-__all__ = ['SbertForSequenceClassification', 'VecoForSequenceClassification']
+__all__ = [
+    'SbertForSequenceClassification', 'VecoForSequenceClassification',
+    'BertForSequenceClassification'
+]
 
 
 class SequenceClassificationBase(TorchModel):
@@ -130,7 +136,7 @@ class SbertForSequenceClassification(SequenceClassificationBase,
             label2id = parse_label_mapping(model_dir)
             if label2id is not None and len(label2id) > 0:
                 num_labels = len(label2id)
-
+            cls.id2label = {id: label for label, id in label2id.items()}
         model_args = {} if num_labels is None else {'num_labels': num_labels}
         return super(SbertPreTrainedModel,
                      SbertForSequenceClassification).from_pretrained(
@@ -201,6 +207,81 @@ class VecoForSequenceClassification(TorchModel,
         model_args = {} if num_labels is None else {'num_labels': num_labels}
         return super(VecoForSequenceClassificationTransform,
                      VecoForSequenceClassification).from_pretrained(
+                         pretrained_model_name_or_path=kwargs.get('model_dir'),
+                         model_dir=kwargs.get('model_dir'),
+                         **model_args)
+
+
+@MODELS.register_module(Tasks.sentence_similarity, module_name=Models.bert)
+@MODELS.register_module(
+    Tasks.sentiment_classification, module_name=Models.bert)
+@MODELS.register_module(Tasks.nli, module_name=Models.bert)
+@MODELS.register_module(Tasks.text_classification, module_name=Models.bert)
+class BertForSequenceClassification(SequenceClassificationBase,
+                                    BertPreTrainedModel):
+    """Bert sequence classification model.
+
+        Inherited from SequenceClassificationBase.
+    """
+    base_model_prefix: str = 'bert'
+    supports_gradient_checkpointing = True
+    _keys_to_ignore_on_load_missing = [r'position_ids']
+
+    def __init__(self, config, model_dir):
+        if hasattr(config, 'base_model_prefix'):
+            BertForSequenceClassification.base_model_prefix = config.base_model_prefix
+        super().__init__(config, model_dir)
+
+    def build_base_model(self):
+        from .bert import BertModel
+        return BertModel(self.config, add_pooling_layer=True)
+
+    def forward(self,
+                input_ids=None,
+                attention_mask=None,
+                token_type_ids=None,
+                position_ids=None,
+                head_mask=None,
+                inputs_embeds=None,
+                labels=None,
+                output_attentions=None,
+                output_hidden_states=None,
+                return_dict=None,
+                **kwargs):
+        return super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict)
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        """Instantiate the model.
+
+        @param kwargs: Input args.
+                    model_dir: The model dir used to load the checkpoint and the label information.
+                    num_labels: An optional arg to tell the model how many classes to initialize.
+                                    Method will call utils.parse_label_mapping if num_labels not supplied.
+                                    If num_labels is not found, the model will use the default setting (2 classes).
+        @return: The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
+        """
+
+        model_dir = kwargs.get('model_dir')
+        num_labels = kwargs.get('num_labels')
+        if num_labels is None:
+            label2id = parse_label_mapping(model_dir)
+            if label2id is not None and len(label2id) > 0:
+                num_labels = len(label2id)
+
+        model_args = {} if num_labels is None else {'num_labels': num_labels}
+        return super(BertPreTrainedModel,
+                     BertForSequenceClassification).from_pretrained(
                          pretrained_model_name_or_path=kwargs.get('model_dir'),
                          model_dir=kwargs.get('model_dir'),
                          **model_args)

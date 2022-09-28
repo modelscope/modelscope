@@ -1,3 +1,7 @@
+# The implementation is adopted from https://github.com/facebookresearch/ConvNeXt,
+# made pubicly available under the MIT License at https://github.com/facebookresearch/ConvNeXt
+# Copyright 2021-2022 The Alibaba FVI Team Authors. All rights reserved.
+
 import math
 
 import torch

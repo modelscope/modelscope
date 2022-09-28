@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
 import numpy as np
@@ -30,9 +31,6 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
         if 'base_model_prefix' in kwargs:
             self._base_model_prefix = kwargs['base_model_prefix']
 
-        backbone_cfg = self.cfg.backbone
-        head_cfg = self.cfg.head
-
         # get the num_labels
         num_labels = kwargs.get('num_labels')
         if num_labels is None:
@@ -40,12 +38,12 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
             if label2id is not None and len(label2id) > 0:
                 num_labels = len(label2id)
             self.id2label = {id: label for label, id in label2id.items()}
-        head_cfg['num_labels'] = num_labels
+        self.head_cfg['num_labels'] = num_labels
 
-        self.build_backbone(backbone_cfg)
-        self.build_head(head_cfg)
+        self.build_backbone(self.backbone_cfg)
+        self.build_head(self.head_cfg)
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         labels = None
         if OutputKeys.LABEL in input:
             labels = input.pop(OutputKeys.LABEL)
@@ -69,10 +67,6 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
         if hasattr(self.backbone, 'extract_sequence_outputs'):
             sequence_output = self.backbone.extract_sequence_outputs(outputs)
         return sequence_output, pooled_output
-
-    def compute_loss(self, outputs, labels):
-        loss = self.head.compute_loss(outputs, labels)
-        return loss
 
     def postprocess(self, input, **kwargs):
         logits = self.extract_logits(input)

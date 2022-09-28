@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Callable, Optional, Tuple, Union
 

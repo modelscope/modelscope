@@ -52,7 +52,8 @@ if TYPE_CHECKING:
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
-    from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipeline
+    from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
+    from .hand_static_pipeline import HandStaticPipeline
 
 else:
     _import_structure = {
@@ -119,6 +120,7 @@ else:
         'facial_expression_recognition_pipelin':
         ['FacialExpressionRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
+        'hand_static_pipeline': ['HandStaticPipeline'],
     }
 
     import sys

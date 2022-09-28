@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict, Optional, Union
 
 import torch
@@ -47,7 +49,7 @@ class TokenClassificationPipeline(Pipeline):
         text = inputs.pop(OutputKeys.TEXT)
         with torch.no_grad():
             return {
-                **self.model(inputs, **forward_params), OutputKeys.TEXT: text
+                **self.model(**inputs, **forward_params), OutputKeys.TEXT: text
             }
 
     def postprocess(self, inputs: Dict[str, Any],

@@ -21,21 +21,12 @@ from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
-_import_structure = {
-    'configuration_deberta_v2': [
-        'DEBERTA_V2_PRETRAINED_CONFIG_ARCHIVE_MAP', 'DebertaV2Config',
-        'DebertaV2OnnxConfig'
-    ],
-    'tokenization_deberta_v2': ['DebertaV2Tokenizer'],
-}
-
 if TYPE_CHECKING:
     from .configuration_deberta_v2 import DebertaV2Config
     from .tokenization_deberta_v2 import DebertaV2Tokenizer
     from .tokenization_deberta_v2_fast import DebertaV2TokenizerFast
 
     from .modeling_deberta_v2 import (
-        DEBERTA_V2_PRETRAINED_MODEL_ARCHIVE_LIST,
         DebertaV2ForMaskedLM,
         DebertaV2ForMultipleChoice,
         DebertaV2ForQuestionAnswering,
@@ -55,7 +46,6 @@ else:
         'DebertaV2TokenizerFast'
     ]
     _import_structure['modeling_deberta_v2'] = [
-        'DEBERTA_V2_PRETRAINED_MODEL_ARCHIVE_LIST',
         'DebertaV2ForMaskedLM',
         'DebertaV2ForMultipleChoice',
         'DebertaV2ForQuestionAnswering',

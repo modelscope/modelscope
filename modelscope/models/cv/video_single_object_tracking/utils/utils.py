@@ -238,3 +238,10 @@ def check_box(box: list, image_height, image_width) -> bool:
     if box[3] < 0 or box[3] >= image_height:
         return False
     return True
+
+
+def timestamp_format(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    time = '%02d:%02d:%06.3f' % (h, m, s)
+    return time

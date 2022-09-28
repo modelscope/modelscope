@@ -1,11 +1,9 @@
-""" FPNHead
-Base modules are adapted from https://github.com/open-mmlab/mmcv/,
-originally Apache 2.0 License, Copyright (c) 2018-2022 OpenMMLab,
-https://github.com/open-mmlab/mmsegmentation/,
-originally Apache 2.0 License, Copyright (c) 2020-2021 OpenMMLab,
-and adapted from https://github.com/raoyongming/DenseCLIP/,
-originally MIT License, Copyright (c) 2022 Rao, Yongming.
-"""
+# Base modules are adapted from https://github.com/open-mmlab/mmcv/,
+# originally Apache 2.0 License, Copyright (c) 2018-2022 OpenMMLab,
+# https://github.com/open-mmlab/mmsegmentation/,
+# originally Apache 2.0 License, Copyright (c) 2020-2021 OpenMMLab,
+# and adapted from https://github.com/raoyongming/DenseCLIP/,
+# originally MIT License, Copyright (c) 2022 Rao, Yongming.
 
 import numpy as np
 import torch

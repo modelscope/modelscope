@@ -11,23 +11,24 @@ if TYPE_CHECKING:
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
+    from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
-    from .fill_mask_ponet_pipeline import FillMaskPoNetPreprocessor
+    from .fill_mask_ponet_pipeline import FillMaskPonetPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
-    from .pair_sentence_classification_pipeline import PairSentenceClassificationPipeline
-    from .single_sentence_classification_pipeline import SingleSentenceClassificationPipeline
+    from .passage_ranking_pipeline import PassageRankingPipeline
+    from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
     from .sequence_classification_pipeline import SequenceClassificationPipeline
     from .summarization_pipeline import SummarizationPipeline
     from .text_classification_pipeline import TextClassificationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .text_generation_pipeline import TextGenerationPipeline
+    from .text2text_generation_pipeline import Text2TextGenerationPipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
-    from .passage_ranking_pipeline import PassageRankingPipeline
-    from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
+
 else:
     _import_structure = {
         'conversational_text_to_sql_pipeline':
@@ -40,27 +41,25 @@ else:
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline'],
+        'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'fill_mask_ponet_pipeline': ['FillMaskPoNetPipeline'],
+        'information_extraction_pipeline': ['InformationExtractionPipeline'],
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
-        'information_extraction_pipeline': ['InformationExtractionPipeline'],
-        'pair_sentence_classification_pipeline':
-        ['PairSentenceClassificationPipeline'],
+        'passage_ranking_pipeline': ['PassageRankingPipeline'],
+        'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline'],
         'sequence_classification_pipeline': ['SequenceClassificationPipeline'],
-        'single_sentence_classification_pipeline':
-        ['SingleSentenceClassificationPipeline'],
         'summarization_pipeline': ['SummarizationPipeline'],
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'text_generation_pipeline': ['TextGenerationPipeline'],
+        'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
-        'passage_ranking_pipeline': ['PassageRankingPipeline'],
-        'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline']
     }
 
     import sys

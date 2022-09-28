@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import importlib
 from typing import Dict, List, Optional, Union
 

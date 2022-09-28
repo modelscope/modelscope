@@ -42,5 +42,6 @@ class YoloXNanoExp(YoloXExp):
                 act=self.act,
                 depthwise=True)
             self.model = YOLOX(backbone, head)
-
+        self.model.apply(init_yolo)
+        self.model.head.initialize_biases(1e-2)
         return self.model

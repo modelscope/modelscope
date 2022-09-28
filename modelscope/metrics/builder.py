@@ -18,6 +18,10 @@ class MetricKeys(object):
     SSIM = 'ssim'
     AVERAGE_LOSS = 'avg_loss'
     FScore = 'fscore'
+    BLEU_1 = 'bleu-1'
+    BLEU_4 = 'bleu-4'
+    ROUGE_1 = 'rouge-1'
+    ROUGE_L = 'rouge-l'
 
 
 task_default_metrics = {

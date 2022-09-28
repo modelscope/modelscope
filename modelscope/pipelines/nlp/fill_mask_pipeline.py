@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Any, Dict, Optional, Union
 
@@ -8,7 +10,7 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import FillMaskPreprocessor, Preprocessor
+from modelscope.preprocessors import NLPPreprocessor, Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -55,7 +57,7 @@ class FillMaskPipeline(Pipeline):
             model, Model) else Model.from_pretrained(model)
 
         if preprocessor is None:
-            preprocessor = FillMaskPreprocessor(
+            preprocessor = NLPPreprocessor(
                 fill_mask_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=None,
@@ -116,7 +118,10 @@ class FillMaskPipeline(Pipeline):
         logits = inputs[OutputKeys.LOGITS].detach().cpu().numpy()
         input_ids = inputs[OutputKeys.INPUT_IDS].detach().cpu().numpy()
         pred_ids = np.argmax(logits, axis=-1)
-        model_type = self.model.config.model_type
+        if hasattr(self.model.config, 'backbone'):
+            model_type = self.model.config.backbone.type
+        else:
+            model_type = self.model.config.model_type
         process_type = model_type if model_type in self.mask_id else _type_map[
             model_type]
         rst_ids = np.where(input_ids == self.mask_id[process_type], pred_ids,

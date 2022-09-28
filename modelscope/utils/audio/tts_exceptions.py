@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 """
 Define TTS exceptions
 """
@@ -10,7 +11,7 @@ class TtsException(Exception):
     pass
 
 
-class TtsModelConfigurationExcetion(TtsException):
+class TtsModelConfigurationException(TtsException):
     """
     TTS model configuration exceptions.
     """

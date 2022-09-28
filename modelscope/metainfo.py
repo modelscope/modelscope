@@ -39,6 +39,7 @@ class Models(object):
     mtcnn = 'mtcnn'
     ulfd = 'ulfd'
     video_inpainting = 'video-inpainting'
+    hand_static = 'hand-static'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -65,6 +66,7 @@ class Models(object):
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
+    T5 = 'T5'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -89,17 +91,22 @@ class TaskModels(object):
     text_classification = 'text-classification'
     token_classification = 'token-classification'
     information_extraction = 'information-extraction'
+    fill_mask = 'fill-mask'
+    feature_extraction = 'feature-extraction'
 
 
 class Heads(object):
     # nlp heads
+
+    # text cls
     text_classification = 'text-classification'
-    # mlm
+    # fill mask
+    fill_mask = 'fill-mask'
     bert_mlm = 'bert-mlm'
-    # roberta mlm
     roberta_mlm = 'roberta-mlm'
     # token cls
     token_classification = 'token-classification'
+    # extraction
     information_extraction = 'information-extraction'
 
 
@@ -172,6 +179,7 @@ class Pipelines(object):
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
     video_inpainting = 'video-inpainting'
+    hand_static = 'hand-static'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
@@ -179,6 +187,7 @@ class Pipelines(object):
     part_of_speech = 'part-of-speech'
     named_entity_recognition = 'named-entity-recognition'
     text_generation = 'text-generation'
+    text2text_generation = 'text2text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
     text_classification = 'text-classification'
@@ -199,6 +208,7 @@ class Pipelines(object):
     passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -281,6 +291,7 @@ class Preprocessors(object):
     cross_encoder_tokenizer = 'cross-encoder-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     text_gen_tokenizer = 'text-gen-tokenizer'
+    text2text_gen_preprocessor = 'text2text-gen-preprocessor'
     token_cls_tokenizer = 'token-cls-tokenizer'
     ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
@@ -302,6 +313,7 @@ class Preprocessors(object):
     table_question_answering_preprocessor = 'table-question-answering-preprocessor'
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

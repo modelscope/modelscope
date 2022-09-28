@@ -1,7 +1,5 @@
-"""
-Adapted from https://github.com/isl-org/lang-seg.
-Originally MIT License, Copyright (c) 2021 Intelligent Systems Lab Org.
-"""
+# Adapted from https://github.com/isl-org/lang-seg.
+# Originally MIT License, Copyright (c) 2021 Intelligent Systems Lab Org.
 
 from collections import OrderedDict
 from typing import Tuple, Union

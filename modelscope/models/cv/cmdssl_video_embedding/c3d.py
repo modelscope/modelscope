@@ -1,3 +1,11 @@
+# Copyright 2022 Davide Abati.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+
+# The implementation here is modified based on c3d-pytorch,
+# originally MIT License, Copyright (c) 2022 Davide Abati,
+# and publicly available at https://github.com/DavideA/c3d-pytorch
+""" C3D Model Architecture."""
+
 import torch
 import torch.nn as nn
 

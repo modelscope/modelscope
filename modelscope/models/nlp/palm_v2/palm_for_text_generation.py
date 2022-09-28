@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Dict, List
 
 from modelscope.metainfo import Models

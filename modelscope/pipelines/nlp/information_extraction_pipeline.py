@@ -1,11 +1,12 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict, Optional, Union
 
 import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import (Preprocessor,
                                       RelationExtractionPreprocessor)
@@ -35,7 +36,7 @@ class InformationExtractionPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:

@@ -1,3 +1,6 @@
+# The implementation is also open-sourced by the authors,
+# and available at https://github.com/alibaba-mmai-research/TAdaConv
+# Copyright 2021-2022 The Alibaba FVI Team Authors. All rights reserved.
 import torch.nn as nn
 
 from .s3dg import Inception3D

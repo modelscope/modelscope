@@ -1,7 +1,6 @@
-""" CLIP
-Adapted from https://github.com/openai/CLIP.
-Originally MIT License, Copyright (c) 2021 OpenAI.
-"""
+# CLIP
+# Adapted from https://github.com/openai/CLIP.
+# Originally MIT License, Copyright (c) 2021 OpenAI.
 
 import gzip
 import html

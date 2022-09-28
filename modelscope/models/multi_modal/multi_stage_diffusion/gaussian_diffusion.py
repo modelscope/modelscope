@@ -1,5 +1,6 @@
-# The implementation here is modified based on latent diffusion, publicly available
-# at https://github.com/CompVis/latent-diffusion.
+# Part of the implementation is borrowed and modified from latent-diffusion,
+# publicly avaialbe at https://github.com/CompVis/latent-diffusion.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import math
 

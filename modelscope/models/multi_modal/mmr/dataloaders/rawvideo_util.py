@@ -1,3 +1,6 @@
+# The implementation is adopted from Huaishao Luo,
+# made pubicly available under the MIT License at https://github.com/ArrowLuo/CLIP4Clip
+
 import cv2
 import numpy as np
 import torch as th

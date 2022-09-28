@@ -1,3 +1,6 @@
+# The implementation is adopated from the CLIP4Clip implementation,
+# made pubicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
+
 import random
 from os.path import exists
 from typing import Any, Dict

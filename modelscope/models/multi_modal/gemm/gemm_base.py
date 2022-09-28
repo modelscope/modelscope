@@ -1,9 +1,14 @@
-""" Generative Multimodal Model
-Base modules are adapted from https://github.com/openai/CLIP/,
-originally MIT License, Copyright (c) 2021 OpenAI,
-and adapted from https://github.com/lucidrains/CoCa-pytorch/,
-originally MIT License, Copyright (c) 2022 Phil Wang.
-"""
+# Copyright 2021 The OpenAI Team Authors.
+# Copyright 2022 Phil Wang.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+#
+# The implementation here is modified based on OpenAI CLIP,
+# originally MIT License, Copyright (c) 2021 OpenAI,
+# and publicly available at https://github.com/openai/CLIP/.
+# The implementation here is modified based on Coca-pytorch,
+# originally MIT License, Copyright (c) 2022 Phil Wang,
+# and publicly available at https://github.com/lucidrains/CoCa-pytorch/,
+""" Generative Multimodal Model Architecture."""
 
 import os
 from collections import OrderedDict

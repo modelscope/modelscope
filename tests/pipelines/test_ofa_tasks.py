@@ -37,6 +37,19 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = img_captioning({'image': image})
         print(result[OutputKeys.CAPTION])
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_image_captioning_zh_with_model(self):
+        model = Model.from_pretrained(
+            '/apsarapangu/disk2/yichang.zyc/ckpt/MaaS/ofa_image-caption_coco_base_zh'
+        )
+        img_captioning = pipeline(
+            task=Tasks.image_captioning,
+            model=model,
+        )
+        image = 'data/test/images/image_captioning.png'
+        result = img_captioning({'image': image})
+        print(result[OutputKeys.CAPTION])
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_image_captioning_with_name(self):
         img_captioning = pipeline(

@@ -12,7 +12,6 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import Dataset
 
 from modelscope.preprocessors.multi_modal import OfaPreprocessor
-from .ofa_file_dataset import OFAFileDataset
 
 
 class OFADataset(Dataset):

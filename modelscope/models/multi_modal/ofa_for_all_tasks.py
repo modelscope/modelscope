@@ -183,8 +183,6 @@ class OfaForAllTasks(TorchModel):
             encoder_input[key] = input['net_input'][key]
         encoder_out = self.model.encoder(**encoder_input)
         valid_result = []
-        import pdb
-        pdb.set_trace()
         for val_ans, val_masks in zip(self.val_ans_l, self.val_masks_l):
             valid_size = len(val_ans)
             valid_tgt_items = [

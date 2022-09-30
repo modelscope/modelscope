@@ -11,7 +11,7 @@ from .builder import METRICS, MetricKeys
 
 @METRICS.register_module(group_key=default_group, module_name=Metrics.accuracy)
 class AccuracyMetric(Metric):
-    """The metric computation class for sequence classification classes.
+    """The metric computation class for classification classes.
 
     This metric class calculates accuracy for the whole input batches.
     """

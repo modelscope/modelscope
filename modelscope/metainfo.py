@@ -334,6 +334,9 @@ class Metrics(object):
     accuracy = 'accuracy'
     audio_noise_metric = 'audio-noise-metric'
 
+    # text gen
+    bleu = 'bleu'
+
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
 

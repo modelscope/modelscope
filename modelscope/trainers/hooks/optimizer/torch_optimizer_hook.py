@@ -79,6 +79,5 @@ class TorchAMPOptimizerHook(OptimizerHook):
             self.scaler.step(trainer.optimizer)
             self.scaler.update(self._scale_update_param)
             trainer.optimizer.zero_grad()
-            print('xcxcxcxcxc: optimizer step')
 
         setattr(self._model, 'forward', self._ori_model_forward)

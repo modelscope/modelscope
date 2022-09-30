@@ -66,4 +66,6 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True])
         }
+        if 'text' in data:
+            sample['label'] = data['text']
         return sample

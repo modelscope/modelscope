@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import re
+import string
 from os import path as osp
 
 import json
@@ -58,6 +59,9 @@ class OfaBasePreprocessor:
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
+        self.transtab = str.maketrans(
+            {key: None
+             for key in string.punctuation})
         self.constraint_trie = None
         if self.cfg.model.get('answer2label', None):
             ans2label_file = osp.join(model_dir, self.cfg.model.answer2label)

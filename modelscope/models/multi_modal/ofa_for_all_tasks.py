@@ -126,7 +126,7 @@ class OfaForAllTasks(TorchModel):
         return ret
 
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        if self.cfg.task == Tasks.image_captioning:
+        if not self.model.training and self.cfg.task == Tasks.image_captioning:
             caption = input[OutputKeys.CAPTION]
             result_l = list()
             for cap in caption:

@@ -216,7 +216,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._max_epochs = self.cfg.train.max_epochs
         else:
             self._max_epochs = kwargs['max_epochs']
-
         self._train_iters_per_epoch = kwargs.get('train_iters_per_epoch', None)
         self._eval_iters_per_epoch = kwargs.get('val_iters_per_epoch', None)
         if self._train_iters_per_epoch is None and hasattr(

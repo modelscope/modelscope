@@ -649,8 +649,17 @@ TASK_OUTPUTS = {
     #     'output': ['Done' / 'Decode_Error']
     # }
     Tasks.video_inpainting: [OutputKeys.OUTPUT],
+
     # {
     #     'output': ['bixin']
     # }
-    Tasks.hand_static: [OutputKeys.OUTPUT]
+    Tasks.hand_static: [OutputKeys.OUTPUT],
+
+    # {
+    #     'output': [
+    #                [2, 75, 287, 240, 510, 0.8335018754005432],
+    #                [1, 127, 83, 332, 366, 0.9175254702568054],
+    #                [0, 0, 0, 367, 639, 0.9693422317504883]]
+    # }
+    Tasks.face_human_hand_detection: [OutputKeys.OUTPUT],
 }

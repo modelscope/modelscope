@@ -183,6 +183,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_video-inpainting'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
+    Tasks.face_human_hand_detection:
+    (Pipelines.face_human_hand_detection,
+     'damo/cv_nanodet_face-human-hand-detection'),
 }
 
 

@@ -40,6 +40,7 @@ class Models(object):
     ulfd = 'ulfd'
     video_inpainting = 'video-inpainting'
     hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -181,6 +182,7 @@ class Pipelines(object):
     video_inpainting = 'video-inpainting'
     pst_action_recognition = 'patchshift-action-recognition'
     hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

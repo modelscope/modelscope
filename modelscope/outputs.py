@@ -21,6 +21,7 @@ class OutputKeys(object):
     POLYGONS = 'polygons'
     OUTPUT = 'output'
     OUTPUT_IMG = 'output_img'
+    OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
@@ -218,13 +219,21 @@ TASK_OUTPUTS = {
 
     # 3D human body keypoints detection result for single sample
     # {
-    #   "poses": [
-    #               [[x, y, z]*17],
-    #               [[x, y, z]*17],
-    #               [[x, y, z]*17]
-    #             ]
+    #   "poses": [		    # 3d pose coordinate in camera coordinate
+    #     	[[x, y, z]*17],	# joints of per image
+    #     	[[x, y, z]*17],
+    #     	...
+    #     ],
+    #   "timestamps": [     # timestamps of all frames
+    #     "00:00:0.230",
+    #     "00:00:0.560",
+    #     "00:00:0.690",
+    #   ],
+    #   "output_video": "path_to_rendered_video" , this is optional
+    # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints: [OutputKeys.POSES],
+    Tasks.body_3d_keypoints:
+    [OutputKeys.POSES, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
     # 2D hand keypoints result for single sample
     # {

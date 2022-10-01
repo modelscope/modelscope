@@ -44,6 +44,7 @@ class CVTasks(object):
     shop_segmentation = 'shop-segmentation'
     hand_static = 'hand-static'
     face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
 
     # image editing
     skin_retouching = 'skin-retouching'

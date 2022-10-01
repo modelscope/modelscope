@@ -186,6 +186,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_human_hand_detection:
     (Pipelines.face_human_hand_detection,
      'damo/cv_nanodet_face-human-hand-detection'),
+    Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
 }
 
 

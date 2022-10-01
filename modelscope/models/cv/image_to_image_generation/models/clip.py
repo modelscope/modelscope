@@ -1,3 +1,5 @@
+# Part of the implementation is borrowed and modified from CLIP, publicly avaialbe at https://github.com/openai/CLIP.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import math
 
 import torch

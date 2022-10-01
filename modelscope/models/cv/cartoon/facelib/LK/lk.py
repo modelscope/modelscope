@@ -1,3 +1,5 @@
+# The implementation is adopted from https://github.com/610265158/Peppa_Pig_Face_Engine
+
 import numpy as np
 
 from modelscope.models.cv.cartoon.facelib.config import config as cfg

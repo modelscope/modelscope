@@ -179,6 +179,7 @@ class Pipelines(object):
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
     video_inpainting = 'video-inpainting'
+    pst_action_recognition = 'patchshift-action-recognition'
     hand_static = 'hand-static'
 
     # nlp tasks

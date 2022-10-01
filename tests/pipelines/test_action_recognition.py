@@ -30,6 +30,14 @@ class ActionRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         print(f'recognition output: {result}.')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_pst(self):
+        pst_recognition_pipeline = pipeline(
+            self.task, model='damo/cv_pathshift_action-recognition')
+        result = pst_recognition_pipeline(
+            'data/test/videos/action_recognition_test_video.mp4')
+        print('pst recognition results:', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

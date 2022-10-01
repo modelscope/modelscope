@@ -1,3 +1,5 @@
+# The implementation is based on HRNET, available at https://github.com/HRNet/HigherHRNet-Human-Pose-Estimation.
+
 cfg_128x128_15 = {
     'DATASET': {
         'TYPE': 'DAMO',

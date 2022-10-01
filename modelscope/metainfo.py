@@ -42,6 +42,7 @@ class Models(object):
     hand_static = 'hand-static'
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -185,6 +186,7 @@ class Pipelines(object):
     hand_static = 'hand-static'
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'

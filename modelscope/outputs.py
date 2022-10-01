@@ -674,5 +674,12 @@ TASK_OUTPUTS = {
     # {
     #   {'output': 'Happiness', 'boxes': (203, 104, 663, 564)}
     # }
-    Tasks.face_emotion: [OutputKeys.OUTPUT, OutputKeys.BOXES]
+    Tasks.face_emotion: [OutputKeys.OUTPUT, OutputKeys.BOXES],
+
+    # {
+    #     "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    # }
+    Tasks.product_segmentation: [OutputKeys.MASKS],
 }

@@ -187,13 +187,14 @@ class OfaForAllTasks(TorchModel):
             valid_size = len(val_ans)
             valid_tgt_items = [
                 torch.cat([
-                    torch.tensor(decoder_prompt[1:]), valid_answer,
+                    torch.tensor(decoder_prompt[1:]).to('cpu'), valid_answer,
                     self.eos_item
                 ]) for decoder_prompt in input['decoder_prompts']
                 for valid_answer in val_ans
             ]
             valid_prev_items = [
-                torch.cat([torch.tensor(decoder_prompt), valid_answer])
+                torch.cat(
+                    [torch.tensor(decoder_prompt).to('cpu'), valid_answer])
                 for decoder_prompt in input['decoder_prompts']
                 for valid_answer in val_ans
             ]

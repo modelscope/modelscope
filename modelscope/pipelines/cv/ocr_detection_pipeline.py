@@ -1,9 +1,8 @@
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os.path as osp
 import tensorflow as tf
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
@@ -60,7 +59,7 @@ class OCRDetectionPipeline(Pipeline):
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         self._session = tf.Session(config=config)
-        
+
         with self._graph.as_default():
             with device_placement(self.framework, self.device_name):
                 self.input_images = tf.placeholder(
@@ -84,7 +83,8 @@ class OCRDetectionPipeline(Pipeline):
                     # decode local predictions
                     all_nodes, all_links, all_reg = [], [], []
                     for i, maps in enumerate(all_maps):
-                        cls_maps, lnk_maps, reg_maps = maps[0], maps[1], maps[2]
+                        cls_maps, lnk_maps, reg_maps = maps[0], maps[1], maps[
+                            2]
                         reg_maps = tf.multiply(reg_maps, OFFSET_VARIANCE)
 
                         cls_prob = tf.nn.softmax(tf.reshape(cls_maps, [-1, 2]))
@@ -93,7 +93,8 @@ class OCRDetectionPipeline(Pipeline):
                             tf.reshape(lnk_maps, [-1, 4])[:, :2])
                         lnk_prob_mut = tf.nn.softmax(
                             tf.reshape(lnk_maps, [-1, 4])[:, 2:])
-                        lnk_prob = tf.concat([lnk_prob_pos, lnk_prob_mut], axis=1)
+                        lnk_prob = tf.concat([lnk_prob_pos, lnk_prob_mut],
+                                             axis=1)
 
                         all_nodes.append(cls_prob)
                         all_links.append(lnk_prob)
@@ -147,7 +148,8 @@ class OCRDetectionPipeline(Pipeline):
         with self._graph.as_default():
             with self._session.as_default():
                 feed_dict = {self.input_images: input['img']}
-                sess_outputs = self._session.run(self.output, feed_dict=feed_dict)
+                sess_outputs = self._session.run(
+                    self.output, feed_dict=feed_dict)
                 return sess_outputs
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

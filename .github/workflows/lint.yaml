@@ -18,7 +18,6 @@ jobs:
       - name: Install pre-commit hook
         run: |
           pip install pre-commit
-          cp .github/hooks/pre-commit .git/hooks/
       - name: Linting
         run: pre-commit run --all-files
 

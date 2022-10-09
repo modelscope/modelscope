@@ -1,3 +1,5 @@
+# Part of the implementation is borrowed and modified from MMDetection, publicly available at
+# https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py
 import os
 from collections import OrderedDict
 

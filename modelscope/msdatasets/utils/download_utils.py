@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Optional
 
 from datasets.utils.download_manager import DownloadConfig, DownloadManager
@@ -34,8 +36,8 @@ class DatasetDownloadManager(DownloadManager):
         url_or_filename = str(url_or_filename)
         if is_relative_path(url_or_filename):
             # fetch oss files
-            return self.oss_utilities.download(url_or_filename,
-                                               self.download_config.cache_dir)
+            return self.oss_utilities.download(
+                url_or_filename, download_config=download_config)
         else:
             return cached_path(
                 url_or_filename, download_config=download_config)

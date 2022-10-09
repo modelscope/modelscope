@@ -1,5 +1,4 @@
 """
-mmdet_patch is based on
-https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet,
-all duplicate functions from official mmdetection are removed.
+The implementation here is modified based on insightface, originally MIT license and publicly avaialbe at
+https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet
 """

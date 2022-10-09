@@ -1,15 +1,20 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import unittest
 
 from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class GEMMMultiModalEmbeddingTest(unittest.TestCase):
-    model_id = 'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
+class GEMMMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.generative_multi_modal_embedding
+        self.model_id = 'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
+
     test_input = {
         'image': 'data/test/images/generative_multimodal.jpg',
         'text':
@@ -62,6 +67,10 @@ class GEMMMultiModalEmbeddingTest(unittest.TestCase):
         test_input = {'text': self.test_input['text']}
         output = generative_multi_modal_embedding_pipeline(test_input)
         print(output)
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

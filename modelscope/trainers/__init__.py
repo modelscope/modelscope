@@ -4,25 +4,28 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .audio.ans_trainer import ANSTrainer
     from .base import DummyTrainer
     from .builder import build_trainer
     from .cv import (ImageInstanceSegmentationTrainer,
-                     ImagePortraitEnhancementTrainer)
+                     ImagePortraitEnhancementTrainer,
+                     MovieSceneSegmentationTrainer)
     from .multi_modal import CLIPTrainer
-    from .nlp import SequenceClassificationTrainer
+    from .nlp import SequenceClassificationTrainer, PassageRankingTrainer
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
     from .trainer import EpochBasedTrainer
 
 else:
     _import_structure = {
+        'audio.ans_trainer': ['ANSTrainer'],
         'base': ['DummyTrainer'],
         'builder': ['build_trainer'],
         'cv': [
             'ImageInstanceSegmentationTrainer',
-            'ImagePortraitEnhancementTrainer'
+            'ImagePortraitEnhancementTrainer', 'MovieSceneSegmentationTrainer'
         ],
         'multi_modal': ['CLIPTrainer'],
-        'nlp': ['SequenceClassificationTrainer'],
+        'nlp': ['SequenceClassificationTrainer', 'PassageRankingTrainer'],
         'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
         'trainer': ['EpochBasedTrainer']
     }

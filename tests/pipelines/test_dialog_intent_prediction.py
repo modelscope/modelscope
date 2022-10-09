@@ -8,11 +8,16 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import DialogIntentPredictionPipeline
 from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DialogIntentPredictionTest(unittest.TestCase):
-    model_id = 'damo/nlp_space_dialog-intent-prediction'
+class DialogIntentPredictionTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.task_oriented_conversation
+        self.model_id = 'damo/nlp_space_dialog-intent-prediction'
+
     test_case = [
         'How do I locate my card?',
         'I still have not received my new card, I ordered over a week ago.'
@@ -61,12 +66,14 @@ class DialogIntentPredictionTest(unittest.TestCase):
     def test_run_with_model_name(self):
         pipelines = [
             pipeline(
-                task=Tasks.task_oriented_conversation,
-                model=self.model_id,
-                model_revision='update')
+                task=self.task, model=self.model_id, model_revision='update')
         ]
         for my_pipeline, item in list(zip(pipelines, self.test_case)):
             print(my_pipeline(item))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

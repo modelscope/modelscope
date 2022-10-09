@@ -1,4 +1,6 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright (c) OpenMMLab. All rights reserved.
+# Major implementation is borrowed and modified from
+# https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
 import copy
 import os
@@ -9,9 +11,11 @@ import sys
 import tempfile
 import types
 from pathlib import Path
+from types import FunctionType
 from typing import Dict, Union
 
 import addict
+import json
 from yapf.yapflib.yapf_api import FormatCode
 
 from modelscope.utils.constant import ConfigFields, ModelFile
@@ -627,3 +631,22 @@ def check_config(cfg: Union[str, ConfigDict]):
         check_attr(ConfigFields.model)
         check_attr(ConfigFields.preprocessor)
         check_attr(ConfigFields.evaluation)
+
+
+class JSONIteratorEncoder(json.JSONEncoder):
+    """Implement this method in order that supporting arbitrary iterators, it returns
+        a serializable object for ``obj``, or calls the base implementation
+        (to raise a ``TypeError``).
+
+    """
+
+    def default(self, obj):
+        if isinstance(obj, FunctionType):
+            return None
+        try:
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return json.JSONEncoder.default(self, obj)

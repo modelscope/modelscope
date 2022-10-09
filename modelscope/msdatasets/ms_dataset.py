@@ -1,9 +1,13 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
+import math
 import os
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import json
 import numpy as np
+import torch
 from datasets import Dataset, DatasetDict
 from datasets import load_dataset as hf_load_dataset
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
@@ -12,9 +16,11 @@ from datasets.utils.download_manager import DownloadConfig
 from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
-from modelscope.msdatasets.config import MS_DATASETS_CACHE
+from modelscope.hub.repository import DatasetRepository
 from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+from modelscope.utils.config_ds import MS_DATASETS_CACHE
+from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
+                                       DEFAULT_DATASET_REVISION,
                                        DatasetFormations, DownloadMode, Hubs)
 from modelscope.utils.logger import get_logger
 from .task_datasets.builder import build_task_dataset
@@ -23,6 +29,7 @@ from .utils.dataset_utils import (get_dataset_files,
                                   get_target_dataset_structure,
                                   load_dataset_builder)
 from .utils.download_utils import DatasetDownloadManager
+from .utils.upload_utils import DatasetUploadManager
 
 logger = get_logger()
 
@@ -35,6 +42,42 @@ def format_list(para) -> List:
     elif len(set(para)) < len(para):
         raise ValueError(f'List columns contains duplicates: {para}')
     return para
+
+
+class MsMapDataset(torch.utils.data.Dataset):
+
+    def __init__(self, dataset: Iterable, preprocessor_list, retained_columns,
+                 columns, to_tensor):
+        super(MsDataset).__init__()
+        self.dataset = dataset
+        self.preprocessor_list = preprocessor_list
+        self.to_tensor = to_tensor
+        self.retained_columns = retained_columns
+        self.columns = columns
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def type_converter(self, x):
+        if self.to_tensor:
+            return torch.tensor(x)
+        else:
+            return x
+
+    def __getitem__(self, index):
+        item_dict = self.dataset[index]
+        res = {
+            k: self.type_converter(item_dict[k])
+            for k in self.columns
+            if (not self.to_tensor) or k in self.retained_columns
+        }
+        for preprocessor in self.preprocessor_list:
+            res.update({
+                k: self.type_converter(v)
+                for k, v in preprocessor(item_dict).items()
+                if (not self.to_tensor) or k in self.retained_columns
+            })
+        return res
 
 
 class MsDataset:
@@ -97,7 +140,7 @@ class MsDataset:
     @staticmethod
     def load(
         dataset_name: Union[str, list],
-        namespace: Optional[str] = 'modelscope',
+        namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
         target: Optional[str] = None,
         version: Optional[str] = DEFAULT_DATASET_REVISION,
         hub: Optional[Hubs] = Hubs.modelscope,
@@ -171,20 +214,27 @@ class MsDataset:
                              Mapping[str, Union[str, Sequence[str]]]]] = None,
                          download_mode: Optional[DownloadMode] = None,
                          **config_kwargs) -> Union[dict, 'MsDataset']:
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        download_dataset = ''
         if isinstance(dataset_name, str):
             dataset_formation = DatasetFormations.native
-            if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(dataset_name) or \
-                    (os.path.isfile(dataset_name) and dataset_name.endswith('.py')):
+            if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
+                    dataset_name):
                 dataset_formation = DatasetFormations.hf_compatible
+            elif os.path.isfile(dataset_name) and dataset_name.endswith('.py'):
+                dataset_formation = DatasetFormations.hf_compatible
+                file_name = os.path.basename(dataset_name)
+                download_dataset = os.path.splitext(file_name)[0]
             elif is_relative_path(dataset_name) and dataset_name.count(
                     '/') == 0:
-                from modelscope.hub.api import HubApi
-                api = HubApi()
+                download_dataset = dataset_name
                 dataset_scripts, dataset_formation, download_dir = api.fetch_dataset_scripts(
                     dataset_name, namespace, download_mode, version)
                 # dataset organized to be compatible with hf format
                 if dataset_formation == DatasetFormations.hf_compatible:
                     dataset_name = dataset_scripts['.py'][0]
+                    download_dataset = dataset_name
             else:
                 raise FileNotFoundError(
                     f"Couldn't find a dataset script at {relative_to_absolute_path(dataset_name)} "
@@ -219,6 +269,14 @@ class MsDataset:
         else:
             raise TypeError('path must be a str or a list, but got'
                             f' {type(dataset_name)}')
+
+        if download_dataset:
+            try:
+                api.on_dataset_download(
+                    dataset_name=download_dataset, namespace=namespace)
+            except Exception as e:
+                logger.error(e)
+
         return MsDataset.from_hf_dataset(dataset, target=target)
 
     @staticmethod
@@ -238,15 +296,15 @@ class MsDataset:
                 break
         target_subset_name, target_dataset_structure = get_target_dataset_structure(
             dataset_json, subset_name, split)
-        meta_map, file_map = get_dataset_files(target_dataset_structure,
-                                               dataset_name, namespace,
-                                               version)
+        meta_map, file_map, args_map = get_dataset_files(
+            target_dataset_structure, dataset_name, namespace, version)
         builder = load_dataset_builder(
             dataset_name,
             subset_name,
             namespace,
             meta_data_files=meta_map,
             zip_data_files=file_map,
+            args_map=args_map,
             cache_dir=MS_DATASETS_CACHE,
             version=version,
             split=list(target_dataset_structure.keys()),
@@ -279,6 +337,7 @@ class MsDataset:
         self,
         preprocessors: Union[Callable, List[Callable]],
         columns: Union[str, List[str]] = None,
+        to_tensor: bool = True,
     ):
         preprocessor_list = preprocessors if isinstance(
             preprocessors, list) else [preprocessors]
@@ -288,65 +347,29 @@ class MsDataset:
         columns = [
             key for key in self._hf_ds.features.keys() if key in columns
         ]
-        sample = next(iter(self._hf_ds))
-
-        sample_res = {k: np.array(sample[k]) for k in columns}
-        for processor in preprocessor_list:
-            sample_res.update(
-                {k: np.array(v)
-                 for k, v in processor(sample).items()})
-
-        def is_numpy_number(value):
-            return np.issubdtype(value.dtype, np.integer) or np.issubdtype(
-                value.dtype, np.floating)
-
         retained_columns = []
-        for k in sample_res.keys():
-            if not is_numpy_number(sample_res[k]):
-                logger.warning(
-                    f'Data of column {k} is non-numeric, will be removed')
-                continue
-            retained_columns.append(k)
+        if to_tensor:
+            sample = next(iter(self._hf_ds))
 
-        import math
-        import torch
+            sample_res = {k: np.array(sample[k]) for k in columns}
+            for processor in preprocessor_list:
+                sample_res.update(
+                    {k: np.array(v)
+                     for k, v in processor(sample).items()})
 
-        class MsIterableDataset(torch.utils.data.IterableDataset):
+            def is_numpy_number(value):
+                return np.issubdtype(value.dtype, np.integer) or np.issubdtype(
+                    value.dtype, np.floating)
 
-            def __init__(self, dataset: Iterable):
-                super(MsIterableDataset).__init__()
-                self.dataset = dataset
+            for k in sample_res.keys():
+                if not is_numpy_number(sample_res[k]):
+                    logger.warning(
+                        f'Data of column {k} is non-numeric, will be removed')
+                    continue
+                retained_columns.append(k)
 
-            def __len__(self):
-                return len(self.dataset)
-
-            def __iter__(self):
-                worker_info = torch.utils.data.get_worker_info()
-                if worker_info is None:  # single-process data loading
-                    iter_start = 0
-                    iter_end = len(self.dataset)
-                else:  # in a worker process
-                    per_worker = math.ceil(
-                        len(self.dataset) / float(worker_info.num_workers))
-                    worker_id = worker_info.id
-                    iter_start = worker_id * per_worker
-                    iter_end = min(iter_start + per_worker, len(self.dataset))
-
-                for idx in range(iter_start, iter_end):
-                    item_dict = self.dataset[idx]
-                    res = {
-                        k: np.array(item_dict[k])
-                        for k in columns if k in retained_columns
-                    }
-                    for preprocessor in preprocessor_list:
-                        res.update({
-                            k: np.array(v)
-                            for k, v in preprocessor(item_dict).items()
-                            if k in retained_columns
-                        })
-                    yield res
-
-        return MsIterableDataset(self._hf_ds)
+        return MsMapDataset(self._hf_ds, preprocessor_list, retained_columns,
+                            columns, to_tensor)
 
     def to_torch_dataset(
         self,
@@ -354,6 +377,7 @@ class MsDataset:
         preprocessors: Union[Callable, List[Callable]] = None,
         task_name: str = None,
         task_data_config: ConfigDict = None,
+        to_tensor: bool = True,
         **format_kwargs,
     ):
         """Create a torch.utils.data.Dataset from the MS Dataset. The torch.utils.data.Dataset can be passed to
@@ -361,13 +385,14 @@ class MsDataset:
 
         Args:
             preprocessors (Callable or List[Callable], default None): (list of) Preprocessor object used to process
-                every sample of the dataset. The output type of processors is dict, and each numeric field of the dict
+                every sample of the dataset. The output type of processors is dict, and each (numeric) field of the dict
                 will be used as a field of torch.utils.data.Dataset.
-            columns (str or List[str], default None): Dataset column(s) to be loaded (numeric data only). If the
-                preprocessor is None, the arg columns must have at least one column. If the `preprocessors` is not None,
-                the output fields of processors will also be added.
+            columns (str or List[str], default None): Dataset column(s) to be loaded (numeric data only if
+                `to_tensor` is True). If the preprocessor is None, the arg columns must have at least one column.
+                If the `preprocessors` is not None, the output fields of processors will also be added.
             task_name (str, default None):  task name, refer to :obj:`Tasks` for more details
             task_data_config (ConfigDict, default None): config dict for model object.
+            to_tensor (bool, default None): whether convert the data types of dataset column(s) to torch.tensor or not.
             format_kwargs: A `dict` of arguments to be passed to the `torch.tensor`.
 
         Returns:
@@ -380,11 +405,11 @@ class MsDataset:
             )
         if isinstance(self._hf_ds, ExternalDataset):
             task_data_config.update({'preprocessor': preprocessors})
-            return build_task_dataset(task_data_config, task_name,
-                                      self._hf_ds.config_kwargs)
+            task_data_config.update(self._hf_ds.config_kwargs)
+            return build_task_dataset(task_data_config, task_name)
         if preprocessors is not None:
             return self.to_torch_dataset_with_processors(
-                preprocessors, columns=columns)
+                preprocessors, columns=columns, to_tensor=to_tensor)
         else:
             self._hf_ds.reset_format()
             self._hf_ds.set_format(
@@ -539,3 +564,93 @@ class MsDataset:
     def to_hf_dataset(self) -> Dataset:
         self._hf_ds.reset_format()
         return self._hf_ds
+
+    @staticmethod
+    def upload(object_name: str,
+               local_file_path: str,
+               dataset_name: str,
+               namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
+               version: Optional[str] = DEFAULT_DATASET_REVISION) -> None:
+        """Upload dataset file to the ModelScope Hub. Please login to the ModelScope Hub first.
+
+        Args:
+            object_name (str): The object name on ModelScope, in the form of your-dataset-name.zip
+            local_file_path (str): Local file to upload
+            dataset_name (str): Name of the dataset
+            namespace(str, optional): Namespace of the dataset
+            version: Optional[str]: Version of the dataset
+
+        Returns:
+            None
+
+        """
+        _upload_manager = DatasetUploadManager(
+            dataset_name=dataset_name, namespace=namespace, version=version)
+        _upload_manager.upload(object_name, local_file_path)
+
+    @staticmethod
+    def clone_meta(dataset_work_dir: str,
+                   dataset_id: str,
+                   revision: Optional[str] = DEFAULT_DATASET_REVISION,
+                   auth_token: Optional[str] = None,
+                   git_path: Optional[str] = None) -> None:
+        """Clone meta-file of dataset from the ModelScope Hub.
+        Args:
+            dataset_work_dir (str): Current git working directory.
+            dataset_id (str): Dataset id, in the form of your-namespace/your-dataset-name .
+            revision(`Optional[str]`):
+                revision of the model you want to clone from. Can be any of a branch, tag or commit hash
+            auth_token(`Optional[str]`):
+                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
+                as the token is already saved when you login the first time, if None, we will use saved token.
+            git_path:(`Optional[str]`):
+                The git command line path, if None, we use 'git'
+        Returns:
+            None
+        """
+
+        _repo = DatasetRepository(
+            repo_work_dir=dataset_work_dir,
+            dataset_id=dataset_id,
+            revision=revision,
+            auth_token=auth_token,
+            git_path=git_path)
+        clone_work_dir = _repo.clone()
+        if clone_work_dir:
+            logger.info('Already cloned repo to: {}'.format(clone_work_dir))
+        else:
+            logger.warning(
+                'Repo dir already exists: {}'.format(clone_work_dir))
+
+    @staticmethod
+    def upload_meta(dataset_work_dir: str,
+                    commit_message: str,
+                    revision: Optional[str] = DEFAULT_DATASET_REVISION,
+                    auth_token: Optional[str] = None,
+                    git_path: Optional[str] = None,
+                    force: bool = False) -> None:
+        """Upload meta-file of dataset to the ModelScope Hub. Please clone the meta-data from the ModelScope Hub first.
+
+        Args:
+            dataset_work_dir (str): Current working directory.
+            commit_message (str): Commit message.
+            revision(`Optional[str]`):
+                revision of the model you want to clone from. Can be any of a branch, tag or commit hash
+            auth_token(`Optional[str]`):
+                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
+                as the token is already saved when you login the first time, if None, we will use saved token.
+            git_path:(`Optional[str]`):
+                The git command line path, if None, we use 'git'
+            force (Optional[bool]): whether to use forced-push.
+
+        Returns:
+            None
+
+        """
+        _repo = DatasetRepository(
+            repo_work_dir=dataset_work_dir,
+            dataset_id='',
+            revision=revision,
+            auth_token=auth_token,
+            git_path=git_path)
+        _repo.push(commit_message=commit_message, branch=revision, force=force)

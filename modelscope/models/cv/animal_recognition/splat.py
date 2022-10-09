@@ -1,3 +1,6 @@
+# The implementation is adopted from Split-Attention Network, A New ResNet Variant,
+# made pubicly available under the Apache License 2.0 License
+# at https://github.com/zhanghang1989/ResNeSt/blob/master/resnest/torch/models/splat.py
 """Split-Attention"""
 
 import torch

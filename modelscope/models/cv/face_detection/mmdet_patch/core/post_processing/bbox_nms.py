@@ -1,5 +1,6 @@
 """
-based on https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/core/post_processing/bbox_nms.py
+The implementation here is modified based on insightface, originally MIT license and publicly avaialbe at
+https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/core/post_processing/bbox_nms.py
 """
 import torch
 

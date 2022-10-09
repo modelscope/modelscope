@@ -34,7 +34,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-${a
     cp /tmp/resources/conda.tuna  ~/.condarc && \
     source /root/.bashrc && \
     conda install --yes python==${PYTHON_VERSION} && \
-    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set install.trusted-host pypi.tuna.tsinghua.edu.cn
 
 ARG USE_GPU=True
 
@@ -42,15 +43,15 @@ ARG USE_GPU=True
 ARG TORCH_VERSION=1.12.0
 ARG CUDATOOLKIT_VERSION=11.3
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        conda install --yes pytorch==$TORCH_VERSION torchvision torchaudio cudatoolkit=$CUDATOOLKIT_VERSION -c pytorch && conda clean --yes --all; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113; \
     else \
-        conda install pytorch==$TORCH_VERSION torchvision torchaudio cpuonly -c pytorch; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi
 
 # install tensorflow
 ARG TENSORFLOW_VERSION=1.15.5
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir --use-deprecated=legacy-resolver tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     else \
         pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
     fi
@@ -64,7 +65,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 # install modelscope
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /var/modelscope/runtime.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
@@ -75,7 +76,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 ENV SHELL=/bin/bash
 
 # install special package
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 datasets==2.1.0
+RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets==2.1.0 numpy==1.18.5 ipykernel fairseq
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \

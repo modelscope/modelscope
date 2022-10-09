@@ -60,6 +60,18 @@ class LoggerHook(Hook):
         else:
             return False
 
+    def fetch_tensor(self, trainer, n=0):
+        """Fetch latest n values or all values, process tensor type, convert to numpy for dump logs."""
+        assert n >= 0
+        for key in trainer.log_buffer.val_history:
+            values = trainer.log_buffer.val_history[key][-n:]
+
+            for i, v in enumerate(values):
+                if isinstance(v, torch.Tensor):
+                    values[i] = v.clone().detach().cpu().numpy()
+
+            trainer.log_buffer.val_history[key][-n:] = values
+
     def get_epoch(self, trainer):
         if trainer.mode in [ModeKeys.TRAIN, ModeKeys.EVAL]:
             epoch = trainer.epoch + 1
@@ -88,11 +100,14 @@ class LoggerHook(Hook):
 
     def after_train_iter(self, trainer):
         if self.by_epoch and self.every_n_inner_iters(trainer, self.interval):
+            self.fetch_tensor(trainer, self.interval)
             trainer.log_buffer.average(self.interval)
         elif not self.by_epoch and self.every_n_iters(trainer, self.interval):
+            self.fetch_tensor(trainer, self.interval)
             trainer.log_buffer.average(self.interval)
         elif self.end_of_epoch(trainer) and not self.ignore_last:
             # not precise but more stable
+            self.fetch_tensor(trainer, self.interval)
             trainer.log_buffer.average(self.interval)
 
         if trainer.log_buffer.ready:
@@ -107,6 +122,7 @@ class LoggerHook(Hook):
                 trainer.log_buffer.clear_output()
 
     def after_val_epoch(self, trainer):
+        self.fetch_tensor(trainer)
         trainer.log_buffer.average()
         self.log(trainer)
         if self.reset_flag:

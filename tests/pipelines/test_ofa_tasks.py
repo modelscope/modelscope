@@ -11,10 +11,11 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import created_boxed_image
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class OfaTasksTest(unittest.TestCase):
+class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.output_dir = 'unittest_output'
@@ -146,8 +147,10 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-2]
-        self.save_img(image, result[OutputKeys.BOXES],
-                      osp.join('large_en_model_' + image_name + '.png'))
+        self.save_img(
+            image,
+            result[OutputKeys.BOXES][0],  # just one box
+            osp.join('large_en_model_' + image_name + '.png'))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_grounding_with_name(self):
@@ -160,7 +163,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-2]
-        self.save_img(image, result[OutputKeys.BOXES],
+        self.save_img(image, result[OutputKeys.BOXES][0],
                       osp.join('large_en_name_' + image_name + '.png'))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -173,7 +176,7 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
         image_name = image.split('/')[-1]
-        self.save_img(image, result[OutputKeys.BOXES],
+        self.save_img(image, result[OutputKeys.BOXES][0],
                       osp.join('large_zh_name_' + image_name))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -250,6 +253,10 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMG].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

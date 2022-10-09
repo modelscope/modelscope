@@ -4,7 +4,10 @@ from collections import OrderedDict
 import json
 import numpy as np
 
+from modelscope.utils.logger import get_logger
 from . import ontology
+
+logger = get_logger()
 
 
 def max_lens(X):
@@ -117,8 +120,8 @@ class MultiWOZVocab(object):
     def construct(self):
         freq_dict_sorted = sorted(
             self._freq_dict.keys(), key=lambda x: -self._freq_dict[x])
-        print('Vocabulary size including oov: %d' %
-              (len(freq_dict_sorted) + len(self._idx2word)))
+        logger.info('Vocabulary size including oov: %d' %
+                    (len(freq_dict_sorted) + len(self._idx2word)))
         if len(freq_dict_sorted) + len(self._idx2word) < self.vocab_size:
             logging.warning(
                 'actual label set smaller than that configured: {}/{}'.format(
@@ -148,8 +151,9 @@ class MultiWOZVocab(object):
         for w, idx in self._word2idx.items():
             self._idx2word[idx] = w
         self.vocab_size_oov = len(self._idx2word)
-        print('vocab file loaded from "' + vocab_path + '"')
-        print('Vocabulary size including oov: %d' % (self.vocab_size_oov))
+        logger.info('vocab file loaded from "' + vocab_path + '"')
+        logger.info('Vocabulary size including oov: %d' %
+                    (self.vocab_size_oov))
 
     def save_vocab(self, vocab_path):
         _freq_dict = OrderedDict(

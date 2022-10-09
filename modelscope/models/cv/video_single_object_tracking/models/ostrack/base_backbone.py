@@ -1,4 +1,5 @@
-# The implementation is based on OSTrack, available at https://github.com/botaoye/OSTrack/
+# The implementation is adopted from OSTrack,
+# made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
 import torch.nn as nn
 from timm.models.layers import to_2tuple
 

@@ -17,12 +17,23 @@ PIPELINES = Registry('pipelines')
 
 DEFAULT_MODEL_FOR_PIPELINE = {
     # TaskName: (pipeline_module_name, model_repo)
+    Tasks.sentence_embedding:
+    (Pipelines.sentence_embedding,
+     'damo/nlp_corom_sentence-embedding_english-base'),
+    Tasks.passage_ranking: (Pipelines.passage_ranking,
+                            'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.token_classification:
+    (Pipelines.part_of_speech,
+     'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.information_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
@@ -41,8 +52,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                    'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoising: (Pipelines.image_denoise,
                             'damo/cv_nafnet_image-denoise_sidd'),
-    Tasks.text_classification: (Pipelines.sentiment_analysis,
-                                'damo/bert-base-sst2'),
+    Tasks.text_classification:
+    (Pipelines.sentiment_classification,
+     'damo/nlp_structbert_sentiment-classification_chinese-base'),
     Tasks.text_generation: (Pipelines.text_generation,
                             'damo/nlp_palm2.0_text-generation_chinese-base'),
     Tasks.zero_shot_classification:
@@ -55,6 +67,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.conversational_text_to_sql:
     (Pipelines.conversational_text_to_sql,
      'damo/nlp_star_conversational-text-to-sql'),
+    Tasks.table_question_answering:
+    (Pipelines.table_question_answering_pipeline,
+     'damo/nlp-convai-text2sql-pretrain-cn'),
     Tasks.text_error_correction:
     (Pipelines.text_error_correction,
      'damo/nlp_bart_text-error-correction_chinese'),
@@ -66,8 +81,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
+    Tasks.feature_extraction: (Pipelines.feature_extraction,
+                               'damo/pert_feature-extraction_base-test'),
     Tasks.action_recognition: (Pipelines.action_recognition,
                                'damo/cv_TAdaConv_action-recognition'),
+    Tasks.action_detection: (Pipelines.action_detection,
+                             'damo/cv_ResNetC3D_action-detection_detection2d'),
     Tasks.live_category: (Pipelines.live_category,
                           'damo/cv_resnet50_live-category'),
     Tasks.video_category: (Pipelines.video_category,
@@ -79,6 +98,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.generative_multi_modal_embedding,
      'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
      ),
+    Tasks.multi_modal_similarity:
+    (Pipelines.multi_modal_similarity,
+     'damo/multi-modal_team-vit-large-patch14_multi-modal-similarity'),
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),
@@ -89,10 +111,20 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_diffusion_text-to-image-synthesis_tiny'),
     Tasks.body_2d_keypoints: (Pipelines.body_2d_keypoints,
                               'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
+    Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,
+                              'damo/cv_canonical_body-3d-keypoints_video'),
+    Tasks.hand_2d_keypoints:
+    (Pipelines.hand_2d_keypoints,
+     'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
+    Tasks.facial_expression_recognition:
+    (Pipelines.facial_expression_recognition,
+     'damo/cv_vgg19_facial-expression-recognition_fer'),
+    Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
+                              'damo/cv_mobilenet_face-2d-keypoints_alignment'),
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
@@ -129,6 +161,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
+    Tasks.faq_question_answering:
+    (Pipelines.faq_question_answering,
+     'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
     Tasks.video_single_object_tracking:
@@ -136,6 +171,24 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
+    Tasks.text_driven_segmentation:
+    (Pipelines.text_driven_segmentation,
+     'damo/cv_vitl16_segmentation_text-driven-seg'),
+    Tasks.movie_scene_segmentation:
+    (Pipelines.movie_scene_segmentation,
+     'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
+    Tasks.shop_segmentation: (Pipelines.shop_segmentation,
+                              'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.video_inpainting: (Pipelines.video_inpainting,
+                             'damo/cv_video-inpainting'),
+    Tasks.hand_static: (Pipelines.hand_static,
+                        'damo/cv_mobileface_hand-static'),
+    Tasks.face_human_hand_detection:
+    (Pipelines.face_human_hand_detection,
+     'damo/cv_nanodet_face-human-hand-detection'),
+    Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
+    Tasks.product_segmentation: (Pipelines.product_segmentation,
+                                 'damo/cv_F3Net_product-segmentation'),
 }
 
 
@@ -218,7 +271,6 @@ def pipeline(task: str = None,
         f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
 
     model = normalize_model_input(model, model_revision)
-
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \

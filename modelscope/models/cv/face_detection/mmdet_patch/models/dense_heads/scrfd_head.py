@@ -1,5 +1,6 @@
 """
-based on https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/models/dense_heads/scrfd_head.py
+The implementation here is modified based on insightface, originally MIT license and publicly avaialbe at
+https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/models/dense_heads/scrfd_head.py
 """
 import numpy as np
 import torch

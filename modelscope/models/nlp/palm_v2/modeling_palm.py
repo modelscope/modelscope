@@ -1,3 +1,19 @@
+# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors.
+# Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team.
+# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import codecs
 import copy
 import math
@@ -6,6 +22,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
+import addict
 import json
 import numpy as np
 import torch
@@ -591,11 +608,11 @@ class AbsSummarizer(PalmPreTrainedModel):  # Model
         self.generator.dense.weight = self.decoder.embeddings.weight
 
         if checkpoint is not None:
-            for key in list(checkpoint['model'].keys()):
-                checkpoint['model'][key.replace('module.',
-                                                '')] = checkpoint['model'][key]
-            msg = self.load_state_dict(checkpoint['model'], strict=False)
-            print(msg)
+            if 'model' in checkpoint:
+                checkpoint = checkpoint['model']
+            for key in list(checkpoint.keys()):
+                checkpoint[key.replace('model.palm.', '')] = checkpoint[key]
+            self.load_state_dict(checkpoint, strict=False)
         else:
             for module in self.decoder.modules():
                 if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -726,13 +743,14 @@ class PalmForConditionalGeneration(PalmPreTrainedModel):
                                    self.palm.vocab_size,
                                    config.label_smoothing)
 
-    def forward(self, src, tgt, mask_src):
-        output = self.palm(src, tgt, mask_src)[0]
-        loss = self.loss(tgt, output)
-        return loss
+    def forward(self, input_ids, attention_mask, labels):
+        output = self.palm(
+            src=input_ids, tgt=labels, mask_src=attention_mask)[0]
+        loss = self.loss(labels, output)
+        return addict.Dict(loss=loss)
 
 
-class Translator(nn.Module):
+class Translator(object):
     """
     Uses a model to translate a batch of sentences.
     """
@@ -1296,8 +1314,8 @@ class Translator(nn.Module):
 
         return results
 
-    def forward(self, input_ids: torch.Tensor,
-                attention_mask: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def __call__(self, input_ids: torch.Tensor,
+                 attention_mask: torch.Tensor) -> Dict[str, torch.Tensor]:
         batch = self.Batch(
             batch_size=input_ids.size()[0],
             src=input_ids,

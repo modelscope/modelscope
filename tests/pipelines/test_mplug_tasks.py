@@ -7,10 +7,15 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class MplugTasksTest(unittest.TestCase):
+class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = 'visual-question-answering'
+        self.model_id = 'damo/mplug_visual-question-answering_coco_large_en'
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_captioning_with_model(self):
@@ -39,8 +44,8 @@ class MplugTasksTest(unittest.TestCase):
             'damo/mplug_visual-question-answering_coco_large_en')
         pipeline_vqa = pipeline(Tasks.visual_question_answering, model=model)
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        question = 'What is the woman doing?'
-        input = {'image': image, 'question': question}
+        text = 'What is the woman doing?'
+        input = {'image': image, 'text': text}
         result = pipeline_vqa(input)
         print(result)
 
@@ -49,10 +54,35 @@ class MplugTasksTest(unittest.TestCase):
         model = 'damo/mplug_visual-question-answering_coco_large_en'
         pipeline_vqa = pipeline(Tasks.visual_question_answering, model=model)
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        question = 'What is the woman doing?'
-        input = {'image': image, 'question': question}
+        text = 'What is the woman doing?'
+        input = {'image': image, 'text': text}
         result = pipeline_vqa(input)
         print(result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_run_with_image_text_retrieval_with_model(self):
+        model = Model.from_pretrained(
+            'damo/mplug_image-text-retrieval_flickr30k_large_en')
+        pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
+        image = Image.open('data/test/images/image-text-retrieval.jpg')
+        text = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'text': text}
+        result = pipeline_retrieval(input)
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_image_text_retrieval_with_name(self):
+        model = 'damo/mplug_image-text-retrieval_flickr30k_large_en'
+        pipeline_retrieval = pipeline(Tasks.image_text_retrieval, model=model)
+        image = Image.open('data/test/images/image-text-retrieval.jpg')
+        text = 'Two young guys with shaggy hair look at their hands while hanging out in the yard.'
+        input = {'image': image, 'text': text}
+        result = pipeline_retrieval(input)
+        print(result)
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

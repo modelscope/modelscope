@@ -1,5 +1,5 @@
-# Modified from: https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
-
+# The implementation is adopted from Swin Transformer, made publicly available under the MIT License at
+# https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
 import numpy as np
 import torch
 import torch.nn as nn

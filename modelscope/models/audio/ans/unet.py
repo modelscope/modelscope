@@ -1,3 +1,10 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+#
+# The implementation here is modified based on
+# Jongho Choi(sweetcocoa@snu.ac.kr / Seoul National Univ., ESTsoft )
+# and publicly available at
+# https://github.com/sweetcocoa/DeepComplexUNetPyTorch
+
 import torch
 import torch.nn as nn
 

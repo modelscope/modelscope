@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os.path as osp
 from typing import Dict, Optional
 
@@ -241,8 +243,10 @@ def input_fn(src_file,
     trg_dataset = tf.data.TextLineDataset(trg_file)
     src_trg_dataset = tf.data.Dataset.zip((src_dataset, trg_dataset))
     src_trg_dataset = src_trg_dataset.map(
-        lambda src, trg:
-        (tf.string_split([src]).values, tf.string_split([trg]).values),
+        lambda src, trg: (tf.string_split([src]), tf.string_split([trg])),
+        num_parallel_calls=10).prefetch(1000000)
+    src_trg_dataset = src_trg_dataset.map(
+        lambda src, trg: (src.values, trg.values),
         num_parallel_calls=10).prefetch(1000000)
     src_trg_dataset = src_trg_dataset.map(
         lambda src, trg: (src_vocab.lookup(src), trg_vocab.lookup(trg)),

@@ -15,7 +15,7 @@ from modelscope.msdatasets.task_datasets import \
     ImageInstanceSegmentationCocoDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import DownloadMode, ModelFile
 from modelscope.utils.test_utils import test_level
 
 
@@ -41,34 +41,26 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         if train_data_cfg is None:
             # use default toy data
             train_data_cfg = ConfigDict(
-                name='pets_small',
-                split='train',
-                classes=('Cat', 'Dog'),
-                test_mode=False)
+                name='pets_small', split='train', test_mode=False)
         if val_data_cfg is None:
             val_data_cfg = ConfigDict(
-                name='pets_small',
-                split='validation',
-                classes=('Cat', 'Dog'),
-                test_mode=True)
+                name='pets_small', split='validation', test_mode=True)
 
         self.train_dataset = MsDataset.load(
             dataset_name=train_data_cfg.name,
             split=train_data_cfg.split,
-            classes=train_data_cfg.classes,
-            test_mode=train_data_cfg.test_mode)
-        assert self.train_dataset.config_kwargs[
-            'classes'] == train_data_cfg.classes
+            test_mode=train_data_cfg.test_mode,
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+        assert self.train_dataset.config_kwargs['classes']
         assert next(
             iter(self.train_dataset.config_kwargs['split_config'].values()))
 
         self.eval_dataset = MsDataset.load(
             dataset_name=val_data_cfg.name,
             split=val_data_cfg.split,
-            classes=val_data_cfg.classes,
-            test_mode=val_data_cfg.test_mode)
-        assert self.eval_dataset.config_kwargs[
-            'classes'] == val_data_cfg.classes
+            test_mode=val_data_cfg.test_mode,
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+        assert self.eval_dataset.config_kwargs['classes']
         assert next(
             iter(self.eval_dataset.config_kwargs['split_config'].values()))
 

@@ -1,4 +1,5 @@
-# The implementation is based on OSTrack, available at https://github.com/botaoye/OSTrack/
+# The implementation is adopted from OSTrack,
+# made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
 import torch
 
 from modelscope.models.cv.video_single_object_tracking.config.ostrack import \

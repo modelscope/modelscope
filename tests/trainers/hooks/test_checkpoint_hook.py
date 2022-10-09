@@ -11,10 +11,13 @@ from torch import nn
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
+from modelscope.models.base import Model
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.registry import default_group
 from modelscope.utils.test_utils import create_dummy_test_dataset
+
+SRC_DIR = os.path.dirname(__file__)
 
 
 def create_dummy_metric():
@@ -39,12 +42,13 @@ dummy_dataset = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 20)
 
 
-class DummyModel(nn.Module):
+class DummyModel(nn.Module, Model):
 
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(5, 4)
         self.bn = nn.BatchNorm1d(4)
+        self.model_dir = SRC_DIR
 
     def forward(self, feat, labels):
         x = self.linear(feat)
@@ -123,6 +127,14 @@ class CheckpointHookTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
 
+        output_files = os.listdir(
+            os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
+        self.assertIn(ModelFile.CONFIGURATION, output_files)
+        self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE, output_files)
+        copy_src_files = os.listdir(SRC_DIR)
+        self.assertIn(copy_src_files[0], output_files)
+        self.assertIn(copy_src_files[-1], output_files)
+
 
 class BestCkptSaverHookTest(unittest.TestCase):
 
@@ -192,11 +204,16 @@ class BestCkptSaverHookTest(unittest.TestCase):
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
-        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
-        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
         self.assertIn(f'best_{LogKeys.EPOCH}1_{MetricKeys.ACCURACY}0.1.pth',
                       results_files)
+
+        output_files = os.listdir(
+            os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
+        self.assertIn(ModelFile.CONFIGURATION, output_files)
+        self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE, output_files)
+        copy_src_files = os.listdir(SRC_DIR)
+        self.assertIn(copy_src_files[0], output_files)
+        self.assertIn(copy_src_files[-1], output_files)
 
 
 if __name__ == '__main__':

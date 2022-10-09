@@ -8,7 +8,7 @@ from modelscope.utils.test_utils import test_level
 
 class Image2ImageTranslationTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub(self):
         r"""We provide three translation modes, i.e., uncropping, colorization and combination.
             You can pass the following parameters for different mode.

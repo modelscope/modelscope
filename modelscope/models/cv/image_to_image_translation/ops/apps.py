@@ -1,3 +1,4 @@
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 # APPs that facilitate the use of pretrained neural networks.
 
 import os.path as osp

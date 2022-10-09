@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Any, Dict, Optional, Union
 
@@ -8,12 +10,15 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import FillMaskPreprocessor, Preprocessor
+from modelscope.preprocessors import NLPPreprocessor, Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['FillMaskPipeline']
-_type_map = {'veco': 'roberta', 'sbert': 'bert'}
+_type_map = {
+    'veco': 'roberta',
+    'sbert': 'bert',
+}
 
 
 @PIPELINES.register_module(Tasks.fill_mask, module_name=Pipelines.fill_mask)
@@ -52,7 +57,7 @@ class FillMaskPipeline(Pipeline):
             model, Model) else Model.from_pretrained(model)
 
         if preprocessor is None:
-            preprocessor = FillMaskPreprocessor(
+            preprocessor = NLPPreprocessor(
                 fill_mask_model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=None,
@@ -65,7 +70,7 @@ class FillMaskPipeline(Pipeline):
         self.config = Config.from_file(
             os.path.join(fill_mask_model.model_dir, ModelFile.CONFIGURATION))
         self.tokenizer = preprocessor.tokenizer
-        self.mask_id = {'roberta': 250001, 'bert': 103}
+        self.mask_id = {'roberta': 250001, 'bert': 103, 'deberta_v2': 4}
 
         self.rep_map = {
             'bert': {
@@ -85,13 +90,20 @@ class FillMaskPipeline(Pipeline):
                 '<s>': '',
                 '</s>': '',
                 '<unk>': ' '
-            }
+            },
+            'deberta_v2': {
+                '[PAD]': '',
+                r' +': ' ',
+                '[SEP]': '',
+                '[CLS]': '',
+                '[UNK]': ''
+            },
         }
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return self.model(inputs, **forward_params)
+            return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """process the prediction results
@@ -106,7 +118,10 @@ class FillMaskPipeline(Pipeline):
         logits = inputs[OutputKeys.LOGITS].detach().cpu().numpy()
         input_ids = inputs[OutputKeys.INPUT_IDS].detach().cpu().numpy()
         pred_ids = np.argmax(logits, axis=-1)
-        model_type = self.model.config.model_type
+        if hasattr(self.model.config, 'backbone'):
+            model_type = self.model.config.backbone.type
+        else:
+            model_type = self.model.config.model_type
         process_type = model_type if model_type in self.mask_id else _type_map[
             model_type]
         rst_ids = np.where(input_ids == self.mask_id[process_type], pred_ids,

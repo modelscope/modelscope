@@ -1,7 +1,11 @@
-""" CLIP Tokenizer
-Adapted from https://github.com/openai/CLIP.
-Originally MIT License, Copyright (c) 2021 OpenAI.
-"""
+# Copyright 2021 The OpenAI Team Authors.
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+#
+# The implementation here is modified based on OpenAI CLIP,
+# originally MIT License, Copyright (c) 2021 OpenAI,
+# and publicly available at https://github.com/openai/CLIP/.
+""" CLIP Tokenizer."""
+
 import gzip
 import html
 import os

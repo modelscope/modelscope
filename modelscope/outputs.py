@@ -7,6 +7,7 @@ class OutputKeys(object):
     LOSS = 'loss'
     LOGITS = 'logits'
     SCORES = 'scores'
+    SCORE = 'score'
     LABEL = 'label'
     LABELS = 'labels'
     INPUT_IDS = 'input_ids'
@@ -20,6 +21,7 @@ class OutputKeys(object):
     POLYGONS = 'polygons'
     OUTPUT = 'output'
     OUTPUT_IMG = 'output_img'
+    OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
@@ -34,6 +36,10 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    HISTORY = 'history'
+    TIMESTAMPS = 'timestamps'
+    SPLIT_VIDEO_NUM = 'split_video_num'
+    SPLIT_META_LIST = 'split_meta_list'
 
 
 TASK_OUTPUTS = {
@@ -53,6 +59,15 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
+    # face 2d keypoint result for single sample
+    #   {
+    #       "keypoints": [
+    #           [x1, y1]*106
+    #       ],
+    #       "poses": [pitch, roll, yaw]
+    #   }
+    Tasks.face_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.POSES],
+
     # face detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]
@@ -71,6 +86,14 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
+
+    # facial expression recognition result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
+    #       "labels": ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+    #   }
+    Tasks.facial_expression_recognition:
+    [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # face recognition result for single sample
     #   {
@@ -129,6 +152,12 @@ TASK_OUTPUTS = {
     Tasks.image_segmentation:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
 
+    # semantic segmentation result for single sample
+    #   {
+    #       "masks": [np.array # 2D array with shape [height, width]]
+    #   }
+    Tasks.semantic_segmentation: [OutputKeys.MASKS],
+
     # image matting result for single sample
     # {
     #   "output_img": np.array with shape(h, w, 4)
@@ -180,13 +209,46 @@ TASK_OUTPUTS = {
     #               [[score]*15]
     #              ]
     #   "boxes": [
-    #               [[x1, y1], [x2, y2]],
-    #               [[x1, y1], [x2, y2]],
-    #               [[x1, y1], [x2, y2]],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
     #             ]
     # }
     Tasks.body_2d_keypoints:
     [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
+
+    # 3D human body keypoints detection result for single sample
+    # {
+    #   "poses": [		    # 3d pose coordinate in camera coordinate
+    #     	[[x, y, z]*17],	# joints of per image
+    #     	[[x, y, z]*17],
+    #     	...
+    #     ],
+    #   "timestamps": [     # timestamps of all frames
+    #     "00:00:0.230",
+    #     "00:00:0.560",
+    #     "00:00:0.690",
+    #   ],
+    #   "output_video": "path_to_rendered_video" , this is optional
+    # and is only avaialbe when the "render" option is enabled.
+    # }
+    Tasks.body_3d_keypoints:
+    [OutputKeys.POSES, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+
+    # 2D hand keypoints result for single sample
+    # {
+    #     "keypoints": [
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                     [[x, y, score] * 21],
+    #                  ],
+    #     "boxes": [
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #                 [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.hand_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.BOXES],
 
     # video single object tracking result for single video
     # {
@@ -194,9 +256,11 @@ TASK_OUTPUTS = {
     #               [x1, y1, x2, y2],
     #               [x1, y1, x2, y2],
     #               [x1, y1, x2, y2],
-    #             ]
+    #             ],
+    #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     # }
-    Tasks.video_single_object_tracking: [OutputKeys.BOXES],
+    Tasks.video_single_object_tracking:
+    [OutputKeys.BOXES, OutputKeys.TIMESTAMPS],
 
     # live category recognition result for single video
     # {
@@ -229,6 +293,35 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.virtual_try_on: [OutputKeys.OUTPUT_IMG],
+    # text driven segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.text_driven_segmentation: [OutputKeys.MASKS],
+    # shop segmentation result for single sample
+    #   {
+    #       "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    #   }
+    Tasks.shop_segmentation: [OutputKeys.MASKS],
+    # movide scene segmentation result for a single video
+    # {
+    #        "split_video_num":3,
+    #        "split_meta_list":
+    #        [
+    #           {
+    #               "shot": [0,1,2],
+    #               "frame": [start_frame, end_frame],
+    #               "timestamp": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
+    #           }
+    #        ]
+    #
+    # }
+    Tasks.movie_scene_segmentation:
+    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_LIST],
 
     # ============ nlp tasks ===================
 
@@ -273,8 +366,7 @@ TASK_OUTPUTS = {
     #     "text": "《父老乡亲》是由是由由中国人民解放军海政文工团创作的军旅歌曲，石顺义作词，王锡仁作曲，范琳琳演唱",
     #     "spo_list": [{"subject": "石顺义", "predicate": "国籍", "object": "中国"}]
     # }
-    Tasks.relation_extraction:
-    [OutputKeys.UUID, OutputKeys.TEXT, OutputKeys.SPO_LIST],
+    Tasks.relation_extraction: [OutputKeys.SPO_LIST],
 
     # translation result for a source sentence
     #   {
@@ -285,26 +377,20 @@ TASK_OUTPUTS = {
     # word segmentation result for single sample
     # {
     #   "output": "今天 天气 不错 ， 适合 出去 游玩"
-    # }
-    Tasks.word_segmentation: [OutputKeys.OUTPUT],
-
-    # part-of-speech result for single sample
-    # [
-    #     {'word': '诸葛', 'label': 'PROPN'},
-    #     {'word': '亮', 'label': 'PROPN'},
-    #     {'word': '发明', 'label': 'VERB'},
-    #     {'word': '八', 'label': 'NUM'},
-    #     {'word': '阵', 'label': 'NOUN'},
-    #     {'word': '图', 'label': 'PART'},
-    #     {'word': '以', 'label': 'ADV'},
-    #     {'word': '利', 'label': 'VERB'},
-    #     {'word': '立营', 'label': 'VERB'},
-    #     {'word': '练兵', 'label': 'VERB'},
-    #     {'word': '.', 'label': 'PUNCT'}
+    #   "labels": [
+    #     {'word': '今天', 'label': 'PROPN'},
+    #     {'word': '天气', 'label': 'PROPN'},
+    #     {'word': '不错', 'label': 'VERB'},
+    #     {'word': ',', 'label': 'NUM'},
+    #     {'word': '适合', 'label': 'NOUN'},
+    #     {'word': '出去', 'label': 'PART'},
+    #     {'word': '游玩', 'label': 'ADV'},
     # ]
-    # TODO @wenmeng.zwm support list of result check
-    Tasks.part_of_speech: [OutputKeys.WORD, OutputKeys.LABEL],
+    # }
+    Tasks.word_segmentation: [OutputKeys.OUTPUT, OutputKeys.LABELS],
+    Tasks.part_of_speech: [OutputKeys.OUTPUT, OutputKeys.LABELS],
 
+    # TODO @wenmeng.zwm support list of result check
     # named entity recognition result for single sample
     # {
     #   "output": [
@@ -319,6 +405,8 @@ TASK_OUTPUTS = {
     #    "output": "我想吃苹果"
     # }
     Tasks.text_error_correction: [OutputKeys.OUTPUT],
+    Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+    Tasks.passage_ranking: [OutputKeys.SCORES],
 
     # text generation result for single sample
     # {
@@ -326,17 +414,33 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_generation: [OutputKeys.TEXT],
 
-    # text feature extraction for single sample
+    # text generation result for single sample
     # {
-    #   "text_embedding": np.array with shape [1, D]
+    #   "text": "北京"
     # }
-    Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING],
+    Tasks.text2text_generation: [OutputKeys.TEXT],
 
     # fill mask result for single sample
     # {
     #   "text": "this is the text which masks filled by model."
     # }
     Tasks.fill_mask: [OutputKeys.TEXT],
+
+    # feature extraction result for single sample
+    # {
+    #   "text_embedding": [[
+    #     [1.08599677e-04, 1.72710388e-05, 2.95618793e-05, 1.93638436e-04],
+    #     [6.45841064e-05, 1.15997791e-04, 5.11605394e-05, 9.87020373e-01],
+    #     [2.66957268e-05, 4.72324500e-05, 9.74208378e-05, 4.18022355e-05]
+    #   ],
+    #   [
+    #     [2.97343540e-05, 5.81317654e-05, 5.44203431e-05, 6.28319322e-05],
+    #     [8.24327726e-05, 4.66077945e-05, 5.32869453e-05, 4.16190960e-05],
+    #     [3.61441926e-05, 3.38475402e-05, 3.44323053e-05, 5.70138109e-05]
+    #   ]
+    # ]
+    # }
+    Tasks.feature_extraction: [OutputKeys.TEXT_EMBEDDING],
 
     # (Deprecated) dialog intent prediction result for single sample
     # {'output': {'prediction': array([2.62349960e-03, 4.12110658e-03, 4.12748595e-05, 3.77560973e-05,
@@ -407,6 +511,13 @@ TASK_OUTPUTS = {
     #   "text": "SELECT shop.Name FROM shop."
     # }
     Tasks.conversational_text_to_sql: [OutputKeys.TEXT],
+
+    # table-question-answering result for single sample
+    # {
+    #   "sql": "SELECT shop.Name FROM shop."
+    #   "sql_history": {sel: 0, agg: 0, conds: [[0, 0, 'val']]}
+    # }
+    Tasks.table_question_answering: [OutputKeys.OUTPUT, OutputKeys.HISTORY],
 
     # ============ audio tasks ===================
     # asr result for single sample
@@ -488,6 +599,15 @@ TASK_OUTPUTS = {
     Tasks.generative_multi_modal_embedding:
     [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
 
+    # multi-modal similarity result for single sample
+    # {
+    #   "img_embedding": np.array with shape [1, D],
+    #   "text_embedding": np.array with shape [1, D],
+    #   "similarity": float
+    # }
+    Tasks.multi_modal_similarity:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+
     # VQA result for a sample
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],
@@ -504,9 +624,62 @@ TASK_OUTPUTS = {
     # }
     Tasks.visual_entailment: [OutputKeys.SCORES, OutputKeys.LABELS],
 
+    # {
+    #     'labels': ['吸烟', '打电话', '吸烟'],
+    #     'scores': [0.7527753114700317, 0.753358006477356, 0.6880350708961487],
+    #     'boxes': [[547, 2, 1225, 719], [529, 8, 1255, 719], [584, 0, 1269, 719]],
+    #     'timestamps': [1, 3, 5]
+    # }
+    Tasks.action_detection: [
+        OutputKeys.TIMESTAMPS,
+        OutputKeys.LABELS,
+        OutputKeys.SCORES,
+        OutputKeys.BOXES,
+    ],
+
+    # {
+    #   'output': [
+    #     [{'label': '6527856', 'score': 0.9942756295204163}, {'label': '1000012000', 'score': 0.0379515215754509},
+    #      {'label': '13421097', 'score': 2.2825044965202324e-08}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}],
+    #     [{'label': '1000012000', 'score': 0.910681426525116}, {'label': '6527856', 'score': 0.0005046309670433402},
+    #      {'label': '13421097', 'score': 2.75914817393641e-06}]]
+    # }
+    Tasks.faq_question_answering: [OutputKeys.OUTPUT],
+
     # image person reid result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],
     #   }
     Tasks.image_reid_person: [OutputKeys.IMG_EMBEDDING],
+
+    # {
+    #     'output': ['Done' / 'Decode_Error']
+    # }
+    Tasks.video_inpainting: [OutputKeys.OUTPUT],
+
+    # {
+    #     'output': ['bixin']
+    # }
+    Tasks.hand_static: [OutputKeys.OUTPUT],
+
+    #     'output': [
+    #                [2, 75, 287, 240, 510, 0.8335018754005432],
+    #                [1, 127, 83, 332, 366, 0.9175254702568054],
+    #                [0, 0, 0, 367, 639, 0.9693422317504883]]
+    # }
+    Tasks.face_human_hand_detection: [OutputKeys.OUTPUT],
+
+    # {
+    #   {'output': 'Happiness', 'boxes': (203, 104, 663, 564)}
+    # }
+    Tasks.face_emotion: [OutputKeys.OUTPUT, OutputKeys.BOXES],
+
+    # {
+    #     "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    # }
+    Tasks.product_segmentation: [OutputKeys.MASKS],
 }

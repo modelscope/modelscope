@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
@@ -9,7 +11,7 @@ from modelscope.utils.constant import Tasks
 
 
 @PIPELINES.register_module(
-    Tasks.image_segmentation, module_name=Pipelines.salient_detection)
+    Tasks.semantic_segmentation, module_name=Pipelines.salient_detection)
 class ImageSalientDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -39,9 +41,5 @@ class ImageSalientDetectionPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
 
         data = self.model.postprocess(inputs)
-        outputs = {
-            OutputKeys.SCORES: None,
-            OutputKeys.LABELS: None,
-            OutputKeys.MASKS: data
-        }
+        outputs = {OutputKeys.MASKS: data}
         return outputs

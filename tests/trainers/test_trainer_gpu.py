@@ -15,8 +15,9 @@ from torch.utils.data import IterableDataset
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
+from modelscope.models.base import Model
 from modelscope.trainers import EpochBasedTrainer, build_trainer
-from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile
+from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
 
@@ -37,7 +38,7 @@ dummy_dataset_big = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 40)
 
 
-class DummyModel(nn.Module):
+class DummyModel(nn.Module, Model):
 
     def __init__(self):
         super().__init__()
@@ -52,8 +53,20 @@ class DummyModel(nn.Module):
         return dict(logits=x, loss=loss)
 
 
-def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
+class DummyModelForwardInputs(DummyModel):
+
+    def forward(self, inputs):
+        feat, labels = inputs['feat'], inputs['labels']
+        return super().forward(feat, labels)
+
+
+def train_func(work_dir,
+               dist=False,
+               iterable_dataset=False,
+               forward_inputs=False,
+               **kwargs):
     json_cfg = {
+        'task': Tasks.image_classification,
         'train': {
             'work_dir': work_dir,
             'dataloader': {
@@ -79,7 +92,10 @@ def train_func(work_dir, dist=False, iterable_dataset=False, **kwargs):
     with open(config_path, 'w') as f:
         json.dump(json_cfg, f)
 
-    model = DummyModel()
+    if forward_inputs:
+        model = DummyModelForwardInputs()
+    else:
+        model = DummyModel()
     optimmizer = SGD(model.parameters(), lr=0.01)
     lr_scheduler = StepLR(optimmizer, 2)
     trainer_name = Trainers.default
@@ -118,7 +134,7 @@ class TrainerTestSingleGpu(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_single_gpu(self):
         train_func(self.tmp_dir)
 
@@ -270,6 +286,22 @@ class TrainerTestMultiGpus(DistributedTestCase):
             self.assertIn(LogKeys.ITER_TIME, lines[i])
         for i in [1, 3, 5]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_multi_gpus_forward_inputs(self):
+        self.start(
+            train_func,
+            num_gpus=2,
+            work_dir=self.tmp_dir,
+            dist=True,
+            forward_inputs=True)
+
+        results_files = os.listdir(self.tmp_dir)
+        json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
+        self.assertEqual(len(json_files), 1)
+        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
 
     # TODO: support iters_per_epoch for dist mode
     @unittest.skipIf(True, 'need to adapt to DistributedSampler')

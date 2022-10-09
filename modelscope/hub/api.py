@@ -1,7 +1,8 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 import pickle
 import shutil
-import subprocess
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -16,8 +17,7 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH)
-from modelscope.msdatasets.config import (DOWNLOADED_DATASETS_PATH,
-                                          HUB_DATASET_ENDPOINT)
+from modelscope.utils.config_ds import DOWNLOADED_DATASETS_PATH
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DatasetFormations, DatasetMetaFormats,
@@ -26,7 +26,8 @@ from modelscope.utils.logger import get_logger
 from .errors import (InvalidParameter, NotExistError, RequestError,
                      datahub_raise_on_error, handle_http_response, is_ok,
                      raise_on_error)
-from .utils.utils import get_endpoint, model_id_to_group_owner_name
+from .utils.utils import (get_dataset_hub_endpoint, get_endpoint,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -35,7 +36,8 @@ class HubApi:
 
     def __init__(self, endpoint=None, dataset_endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
-        self.dataset_endpoint = dataset_endpoint if dataset_endpoint is not None else HUB_DATASET_ENDPOINT
+        self.dataset_endpoint = dataset_endpoint if dataset_endpoint is not None else get_dataset_hub_endpoint(
+        )
 
     def login(
         self,
@@ -376,12 +378,36 @@ class HubApi:
                       f'ststoken?Revision={revision}'
         return self.datahub_remote_call(datahub_url)
 
+    def get_dataset_access_config_session(
+            self,
+            cookies: CookieJar,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION):
+
+        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
+                      f'ststoken?Revision={revision}'
+
+        cookies = requests.utils.dict_from_cookiejar(cookies)
+        r = requests.get(url=datahub_url, cookies=cookies)
+        resp = r.json()
+        raise_on_error(resp)
+        return resp['Data']
+
+    def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
+        r = requests.post(url)
+        r.raise_for_status()
+
     @staticmethod
     def datahub_remote_call(url):
         r = requests.get(url)
         resp = r.json()
         datahub_raise_on_error(url, resp)
         return resp['Data']
+
+    def check_cookies_upload_data(self, use_cookies) -> CookieJar:
+        return self._check_cookie(use_cookies=use_cookies)
 
 
 class ModelScopeConfig:

@@ -38,24 +38,24 @@ def gather(var, idx):
         return var
 
 
-class Generator(object):
+class SpaceGenerator(object):
     """ Genrator class. """
 
     _registry = dict()
 
     @classmethod
     def register(cls, name):
-        Generator._registry[name] = cls
+        SpaceGenerator._registry[name] = cls
         return
 
     @staticmethod
     def by_name(name):
-        return Generator._registry[name]
+        return SpaceGenerator._registry[name]
 
     @staticmethod
     def create(config, *args, **kwargs):
         """ Create generator. """
-        generator_cls = Generator.by_name(config.Generator.generator)
+        generator_cls = SpaceGenerator.by_name(config.Generator.generator)
         return generator_cls(config, *args, **kwargs)
 
     def __init__(self, config, reader):
@@ -83,7 +83,7 @@ class Generator(object):
         raise NotImplementedError
 
 
-class BeamSearch(Generator):
+class BeamSearch(SpaceGenerator):
     """ BeamSearch generator. """
 
     def __init__(self, config, reader):

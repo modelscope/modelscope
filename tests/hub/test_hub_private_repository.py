@@ -10,7 +10,8 @@ from modelscope.hub.errors import GitError
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
 from .test_utils import (TEST_ACCESS_TOKEN1, TEST_ACCESS_TOKEN2,
-                         TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG)
+                         TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
+                         delete_credential)
 
 DEFAULT_GIT_PATH = 'git'
 
@@ -64,6 +65,18 @@ class HubPrivateRepositoryTest(unittest.TestCase):
             auth_token=self.token)  # skip clone
         print(repo2.model_dir)
         assert repo1.model_dir == repo2.model_dir
+
+    def test_clone_private_model_without_token(self):
+        delete_credential()
+        temporary_dir = tempfile.mkdtemp()
+        local_dir = os.path.join(temporary_dir, self.model_name)
+        with self.assertRaises(GitError) as cm:
+            Repository(local_dir, clone_from=self.model_id)
+
+        print(cm.exception)
+        assert not os.path.exists(os.path.join(local_dir, ModelFile.README))
+
+        self.api.login(TEST_ACCESS_TOKEN1)  # re-login for delete
 
 
 if __name__ == '__main__':

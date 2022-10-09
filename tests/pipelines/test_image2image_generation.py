@@ -11,7 +11,7 @@ from modelscope.utils.test_utils import test_level
 
 class Image2ImageGenerationTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub(self):
         r"""We provide two generation modes, i.e., Similar Image Generation and Interpolation.
             You can pass the following parameters for different mode.

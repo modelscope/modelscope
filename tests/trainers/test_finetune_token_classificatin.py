@@ -47,6 +47,11 @@ class TestFinetuneTokenClassification(unittest.TestCase):
 
     @unittest.skip
     def test_word_segmentation(self):
+        """This unittest is used to reproduce the icwb2:pku dataset + structbert model training results.
+
+        User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
+        """
+
         os.system(
             f'curl http://sighan.cs.uchicago.edu/bakeoff2005/data/icwb2-data.zip > {self.tmp_dir}/icwb2-data.zip'
         )
@@ -87,7 +92,7 @@ class TestFinetuneTokenClassification(unittest.TestCase):
                 }
             }
             cfg['preprocessor'] = {'type': 'token-cls-tokenizer'}
-            cfg.train.max_epochs = 3
+            cfg.train.max_epochs = 2
             cfg.train.lr_scheduler = {
                 'type': 'LinearLR',
                 'start_factor': 1.0,
@@ -114,7 +119,7 @@ class TestFinetuneTokenClassification(unittest.TestCase):
             return cfg
 
         self.finetune(
-            'damo/nlp_structbert_backbone_tiny_std',
+            'damo/nlp_structbert_backbone_base_std',
             train_dataset,
             dev_dataset,
             cfg_modify_fn=cfg_modify_fn)

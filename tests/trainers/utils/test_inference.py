@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from modelscope.metrics.builder import MetricKeys
 from modelscope.metrics.sequence_classification_metric import \
     SequenceClassificationMetric
+from modelscope.models.base import Model
 from modelscope.trainers.utils.inference import multi_gpu_test, single_gpu_test
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
@@ -20,7 +21,7 @@ dummy_dataset = create_dummy_test_dataset(
     torch.rand((5, )), torch.randint(0, 4, (1, )), 20)
 
 
-class DummyModel(nn.Module):
+class DummyModel(nn.Module, Model):
 
     def __init__(self):
         super().__init__()

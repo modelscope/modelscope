@@ -1,3 +1,6 @@
+# The implementation is adopated from the CLIP4Clip implementation,
+# made pubicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
+
 import random
 from os.path import exists
 from typing import Any, Dict
@@ -42,7 +45,10 @@ class VideoCLIPForMultiModalEmbedding(TorchModel):
         self.max_frames = model_config['max_frames']
         self.feature_framerate = model_config['feature_framerate']
         self.image_resolution = 224
-        self.device = model_config['device']
+        if torch.cuda.is_available():
+            self.device = model_config['device']
+        else:
+            self.device = 'cpu'
         self.init_model = f'{model_dir}/{ModelFile.TORCH_MODEL_BIN_FILE}'
 
         self.tokenizer = ClipTokenizer(model_dir)

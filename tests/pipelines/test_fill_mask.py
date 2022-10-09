@@ -1,18 +1,27 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+from regex import R
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import (BertForMaskedLM, StructBertForMaskedLM,
                                    VecoForMaskedLM)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
-from modelscope.preprocessors import FillMaskPreprocessor
+from modelscope.preprocessors import NLPPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
+from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class FillMaskTest(unittest.TestCase):
+class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.task = Tasks.fill_mask
+        self.model_id = 'damo/nlp_veco_fill-mask-large'
+
     model_id_sbert = {
         'zh': 'damo/nlp_structbert_fill-mask_chinese-large',
         'en': 'damo/nlp_structbert_fill-mask_english-large'
@@ -37,13 +46,14 @@ class FillMaskTest(unittest.TestCase):
         'Everything in [MASK] you call reality is really [MASK] a reflection of your '
         '[MASK]. Your [MASK] universe is just a mirror [MASK] of your story.'
     }
+    regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         # sbert
-        for language in ['zh', 'en']:
+        for language in ['zh']:
             model_dir = snapshot_download(self.model_id_sbert[language])
-            preprocessor = FillMaskPreprocessor(
+            preprocessor = NLPPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
             model = StructBertForMaskedLM.from_pretrained(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -58,7 +68,7 @@ class FillMaskTest(unittest.TestCase):
 
         # veco
         model_dir = snapshot_download(self.model_id_veco)
-        preprocessor = FillMaskPreprocessor(
+        preprocessor = NLPPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
         model = VecoForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -72,12 +82,12 @@ class FillMaskTest(unittest.TestCase):
                 f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n'
             )
 
-        # zh bert
+        # bert
         language = 'zh'
-        model_dir = snapshot_download(self.model_id_bert)
-        preprocessor = FillMaskPreprocessor(
+        model_dir = snapshot_download(self.model_id_bert, revision='beta')
+        preprocessor = NLPPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
-        model = BertForMaskedLM.from_pretrained(model_dir)
+        model = Model.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -88,43 +98,49 @@ class FillMaskTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
+
         # sbert
-        for language in ['zh', 'en']:
+        for language in ['zh']:
             print(self.model_id_sbert[language])
             model = Model.from_pretrained(self.model_id_sbert[language])
-            preprocessor = FillMaskPreprocessor(
+            preprocessor = NLPPreprocessor(
                 model.model_dir,
                 first_sequence='sentence',
                 second_sequence=None)
             pipeline_ins = pipeline(
                 task=Tasks.fill_mask, model=model, preprocessor=preprocessor)
-            print(
-                f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
-                f'{pipeline_ins(self.test_inputs[language])}\n')
+            with self.regress_tool.monitor_module_single_forward(
+                    pipeline_ins.model, f'fill_mask_sbert_{language}'):
+                print(
+                    f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+                    f'{pipeline_ins(self.test_inputs[language])}\n')
 
         # veco
         model = Model.from_pretrained(self.model_id_veco)
-        preprocessor = FillMaskPreprocessor(
+        preprocessor = NLPPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
         for language in ['zh', 'en']:
             ori_text = self.ori_texts[language]
             test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
-            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
-                  f'{pipeline_ins(test_input)}\n')
+            with self.regress_tool.monitor_module_single_forward(
+                    pipeline_ins.model, f'fill_mask_veco_{language}'):
+                print(
+                    f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                    f'{pipeline_ins(test_input)}\n')
 
-        # zh bert
-        model = Model.from_pretrained(self.model_id_bert)
-        preprocessor = FillMaskPreprocessor(
+        # bert
+        language = 'zh'
+        model = Model.from_pretrained(self.model_id_bert, revision='beta')
+        preprocessor = NLPPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
-        language = 'zh'
-        ori_text = self.ori_texts[language]
-        test_input = self.test_inputs[language]
-        print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
-              f'{pipeline_ins(test_input)}\n')
+        pipeline_ins.model, f'fill_mask_bert_{language}'
+        print(
+            f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+            f'{pipeline_ins(self.test_inputs[language])}\n')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
@@ -144,8 +160,12 @@ class FillMaskTest(unittest.TestCase):
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')
 
-        # bert
-        pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_bert)
+        # Bert
+        language = 'zh'
+        pipeline_ins = pipeline(
+            task=Tasks.fill_mask,
+            model=self.model_id_bert,
+            model_revision='beta')
         print(
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')
@@ -158,6 +178,10 @@ class FillMaskTest(unittest.TestCase):
         test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
         print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
               f'{pipeline_ins(test_input)}\n')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

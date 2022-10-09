@@ -9,8 +9,11 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    tinynas_detection = 'tinynas-detection'
+
     # vision models
     detection = 'detection'
+    realtime_object_detection = 'realtime-object-detection'
     scrfd = 'scrfd'
     classification_model = 'ClassificationModel'
     nafnet = 'nafnet'
@@ -19,23 +22,54 @@ class Models(object):
     gpen = 'gpen'
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
+    body_3d_keypoints = 'body-3d-keypoints'
     crowd_counting = 'HRNetCrowdCounting'
+    face_2d_keypoints = 'face-2d-keypoints'
+    panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
     video_summarization = 'pgl-video-summarization'
+    swinL_semantic_segmentation = 'swinL-semantic-segmentation'
+    vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
+    text_driven_segmentation = 'text-driven-segmentation'
+    resnet50_bert = 'resnet50-bert'
+    fer = 'fer'
+    retinaface = 'retinaface'
+    shop_segmentation = 'shop-segmentation'
+    mogface = 'mogface'
+    mtcnn = 'mtcnn'
+    ulfd = 'ulfd'
+    video_inpainting = 'video-inpainting'
+    hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
+
+    # EasyCV models
+    yolox = 'YOLOX'
+    segformer = 'Segformer'
 
     # nlp models
     bert = 'bert'
     palm = 'palm-v2'
     structbert = 'structbert'
+    deberta_v2 = 'deberta_v2'
     veco = 'veco'
     translation = 'csanmt-translation'
     space_dst = 'space-dst'
     space_intent = 'space-intent'
     space_modeling = 'space-modeling'
     star = 'star'
+    star3 = 'star3'
     tcrf = 'transformer-crf'
+    transformer_softmax = 'transformer-softmax'
+    lcrf = 'lstm-crf'
+    gcnncrf = 'gcnn-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    plug = 'plug'
+    bert_for_ds = 'bert-for-document-segmentation'
+    ponet = 'ponet'
+    T5 = 'T5'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -50,21 +84,33 @@ class Models(object):
     gemm = 'gemm-generative-multi-modal'
     mplug = 'mplug'
     diffusion = 'diffusion-text-to-image-synthesis'
+    multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
+    team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
 
 
 class TaskModels(object):
     # nlp task
     text_classification = 'text-classification'
+    token_classification = 'token-classification'
+    information_extraction = 'information-extraction'
+    fill_mask = 'fill-mask'
+    feature_extraction = 'feature-extraction'
 
 
 class Heads(object):
     # nlp heads
+
+    # text cls
     text_classification = 'text-classification'
-    # mlm
+    # fill mask
+    fill_mask = 'fill-mask'
     bert_mlm = 'bert-mlm'
-    # roberta mlm
     roberta_mlm = 'roberta-mlm'
+    # token cls
+    token_classification = 'token-classification'
+    # extraction
+    information_extraction = 'information-extraction'
 
 
 class Pipelines(object):
@@ -86,12 +132,23 @@ class Pipelines(object):
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
     cmdssl_video_embedding = 'cmdssl-r2p1d_video_embedding'
+    hicossl_video_embedding = 'hicossl-s3dg-video_embedding'
     body_2d_keypoints = 'hrnetv2w32_body-2d-keypoints_image'
+    body_3d_keypoints = 'canonical_body-3d-keypoints_video'
+    hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    easycv_detection = 'easycv-detection'
+    easycv_segmentation = 'easycv-segmentation'
+    face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    ulfd_face_detection = 'manual-face-detection-ulfd'
+    facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
+    retina_face_detection = 'resnet50-face-detection-retinaface'
+    mog_face_detection = 'resnet101-face-detection-cvpr22papermogface'
+    mtcnn_face_detection = 'manual-face-detection-mtcnn'
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
@@ -102,6 +159,7 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
+    realtime_object_detection = 'cspnet_realtime-object-detection_yolox'
     face_recognition = 'ir101-face-recognition-cfglint'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'
@@ -112,20 +170,36 @@ class Pipelines(object):
     image_to_image_generation = 'image-to-image-generation'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
+    tinynas_detection = 'tinynas-detection'
     crowd_counting = 'hrnet-crowd-counting'
+    action_detection = 'ResNetC3D-action-detection'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
+    image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'
+    image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
+    text_driven_segmentation = 'text-driven-segmentation'
+    movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
+    shop_segmentation = 'shop-segmentation'
+    video_inpainting = 'video-inpainting'
+    pst_action_recognition = 'patchshift-action-recognition'
+    hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # nlp tasks
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
+    part_of_speech = 'part-of-speech'
     named_entity_recognition = 'named-entity-recognition'
     text_generation = 'text-generation'
+    text2text_generation = 'text2text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
     text_classification = 'text-classification'
     fill_mask = 'fill-mask'
+    fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -133,7 +207,15 @@ class Pipelines(object):
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'
+    plug_generation = 'plug-generation'
+    faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    table_question_answering_pipeline = 'table-question-answering-pipeline'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
+    relation_extraction = 'relation-extraction'
+    document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -150,8 +232,10 @@ class Pipelines(object):
     visual_question_answering = 'visual-question-answering'
     visual_grounding = 'visual-grounding'
     visual_entailment = 'visual-entailment'
+    multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    image_text_retrieval = 'image-text-retrieval'
 
 
 class Trainers(object):
@@ -165,6 +249,7 @@ class Trainers(object):
     """
 
     default = 'trainer'
+    easycv = 'easycv'
 
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
@@ -173,11 +258,18 @@ class Trainers(object):
     image_instance_segmentation = 'image-instance-segmentation'
     image_portrait_enhancement = 'image-portrait-enhancement'
     video_summarization = 'video-summarization'
+    movie_scene_segmentation = 'movie-scene-segmentation'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
+    dialog_modeling_trainer = 'dialog-modeling-trainer'
+    dialog_intent_trainer = 'dialog-intent-trainer'
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
+    nlp_passage_ranking_trainer = 'nlp-passage-ranking-trainer'
+
+    # audio trainers
+    speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
 
 
 class Preprocessors(object):
@@ -198,11 +290,14 @@ class Preprocessors(object):
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
+    movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
+    cross_encoder_tokenizer = 'cross-encoder-tokenizer'
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     text_gen_tokenizer = 'text-gen-tokenizer'
+    text2text_gen_preprocessor = 'text2text-gen-preprocessor'
     token_cls_tokenizer = 'token-cls-tokenizer'
     ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'
@@ -213,9 +308,18 @@ class Preprocessors(object):
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
+    sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
+    fill_mask_ponet = 'fill-mask-ponet'
+    faq_question_answering_preprocessor = 'faq-question-answering-preprocessor'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    table_question_answering_preprocessor = 'table-question-answering-preprocessor'
+    re_tokenizer = 're-tokenizer'
+    document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -234,6 +338,7 @@ class Metrics(object):
 
     # accuracy
     accuracy = 'accuracy'
+    audio_noise_metric = 'audio-noise-metric'
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
@@ -251,6 +356,8 @@ class Metrics(object):
     # metrics for image-portrait-enhancement task
     image_portrait_enhancement_metric = 'image-portrait-enhancement-metric'
     video_summarization_metric = 'video-summarization-metric'
+    # metric for movie-scene-segmentation task
+    movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
 
 
 class Optimizers(object):
@@ -300,3 +407,13 @@ class LR_Schedulers(object):
     LinearWarmup = 'LinearWarmup'
     ConstantWarmup = 'ConstantWarmup'
     ExponentialWarmup = 'ExponentialWarmup'
+
+
+class Datasets(object):
+    """ Names for different datasets.
+    """
+    ClsDataset = 'ClsDataset'
+    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    SegDataset = 'SegDataset'
+    DetDataset = 'DetDataset'
+    DetImagesMixDataset = 'DetImagesMixDataset'

@@ -2,7 +2,6 @@
     "framework": "pytorch",
 
     "task": "image_classification",
-    "work_dir": "./work_dir",
 
     "model": {
         "type": "classification",
@@ -119,6 +118,7 @@
     },
 
     "train": {
+        "work_dir": "./work_dir",
         "dataloader": {
             "batch_size_per_gpu": 2,
             "workers_per_gpu": 1

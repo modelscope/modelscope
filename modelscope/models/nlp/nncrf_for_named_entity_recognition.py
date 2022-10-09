@@ -1,3 +1,7 @@
+# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors. All rights reserved.
+# The CRF implementation borrows mostly from AllenNLP CRF module (https://github.com/allenai/allennlp)
+# and pytorch-crf (https://github.com/kmkurn/pytorch-crf) with some modifications.
+
 import os
 from typing import Any, Dict, List, Optional
 
@@ -10,26 +14,24 @@ from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
 
-__all__ = ['TransformerCRFForNamedEntityRecognition']
+__all__ = [
+    'TransformerCRFForNamedEntityRecognition',
+    'LSTMCRFForNamedEntityRecognition'
+]
 
 
-@MODELS.register_module(
-    Tasks.named_entity_recognition, module_name=Models.tcrf)
-class TransformerCRFForNamedEntityRecognition(TorchModel):
-    """This model wraps the TransformerCRF model to register into model sets.
-    """
+class SequenceLabelingForNamedEntityRecognition(TorchModel):
 
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
-
-        self.config = AutoConfig.from_pretrained(model_dir)
-        num_labels = self.config.num_labels
-
-        self.model = TransformerCRF(model_dir, num_labels)
+        self.model = self.init_model(model_dir, *args, **kwargs)
 
         model_ckpt = os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
         self.model.load_state_dict(
             torch.load(model_ckpt, map_location=torch.device('cpu')))
+
+    def init_model(self, model_dir, *args, **kwargs):
+        raise NotImplementedError
 
     def train(self):
         return self.model.train()
@@ -39,12 +41,9 @@ class TransformerCRFForNamedEntityRecognition(TorchModel):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         input_tensor = {
-            'input_ids':
-            torch.tensor(input['input_ids']).unsqueeze(0),
-            'attention_mask':
-            torch.tensor(input['attention_mask']).unsqueeze(0),
-            'label_mask':
-            torch.tensor(input['label_mask'], dtype=torch.bool).unsqueeze(0)
+            'input_ids': input['input_ids'],
+            'attention_mask': input['attention_mask'],
+            'label_mask': input['label_mask'],
         }
         output = {
             'text': input['text'],
@@ -64,6 +63,39 @@ class TransformerCRFForNamedEntityRecognition(TorchModel):
         return output
 
 
+@MODELS.register_module(
+    Tasks.named_entity_recognition, module_name=Models.tcrf)
+class TransformerCRFForNamedEntityRecognition(
+        SequenceLabelingForNamedEntityRecognition):
+    """This model wraps the TransformerCRF model to register into model sets.
+    """
+
+    def init_model(self, model_dir, *args, **kwargs):
+        self.config = AutoConfig.from_pretrained(model_dir)
+        num_labels = self.config.num_labels
+
+        model = TransformerCRF(model_dir, num_labels)
+        return model
+
+
+@MODELS.register_module(
+    Tasks.named_entity_recognition, module_name=Models.lcrf)
+class LSTMCRFForNamedEntityRecognition(
+        SequenceLabelingForNamedEntityRecognition):
+    """This model wraps the LSTMCRF model to register into model sets.
+    """
+
+    def init_model(self, model_dir, *args, **kwargs):
+        self.config = AutoConfig.from_pretrained(model_dir)
+        vocab_size = self.config.vocab_size
+        embed_width = self.config.embed_width
+        num_labels = self.config.num_labels
+        lstm_hidden_size = self.config.lstm_hidden_size
+
+        model = LSTMCRF(vocab_size, embed_width, num_labels, lstm_hidden_size)
+        return model
+
+
 class TransformerCRF(nn.Module):
     """A transformer based model to NER tasks.
 
@@ -81,6 +113,56 @@ class TransformerCRF(nn.Module):
         embed = self.encoder(
             inputs['input_ids'], attention_mask=inputs['attention_mask'])[0]
         logits = self.linear(embed)
+
+        if 'label_mask' in inputs:
+            mask = inputs['label_mask']
+            masked_lengths = mask.sum(-1).long()
+            masked_logits = torch.zeros_like(logits)
+            for i in range(len(mask)):
+                masked_logits[
+                    i, :masked_lengths[i], :] = logits[i].masked_select(
+                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
+            logits = masked_logits
+
+        outputs = {'logits': logits}
+        return outputs
+
+    def decode(self, inputs):
+        seq_lens = inputs['label_mask'].sum(-1).long()
+        mask = torch.arange(
+            inputs['label_mask'].shape[1],
+            device=seq_lens.device)[None, :] < seq_lens[:, None]
+        predicts = self.crf.decode(inputs['logits'], mask=mask).squeeze(0)
+        outputs = {'predicts': predicts}
+        return outputs
+
+
+class LSTMCRF(nn.Module):
+    """
+    A standard bilstm-crf model for fast prediction.
+    """
+
+    def __init__(self,
+                 vocab_size,
+                 embed_width,
+                 num_labels,
+                 lstm_hidden_size=100,
+                 **kwargs):
+        super(LSTMCRF, self).__init__()
+        self.embedding = Embedding(vocab_size, embed_width)
+        self.lstm = nn.LSTM(
+            embed_width,
+            lstm_hidden_size,
+            num_layers=1,
+            bidirectional=True,
+            batch_first=True)
+        self.ffn = nn.Linear(lstm_hidden_size * 2, num_labels)
+        self.crf = CRF(num_labels, batch_first=True)
+
+    def forward(self, inputs):
+        embedding = self.embedding(inputs['input_ids'])
+        lstm_output, _ = self.lstm(embedding)
+        logits = self.ffn(lstm_output)
 
         if 'label_mask' in inputs:
             mask = inputs['label_mask']
@@ -127,8 +209,6 @@ class CRF(nn.Module):
        Learning*. Morgan Kaufmann. pp. 282–289.
     .. _Viterbi algorithm: https://en.wikipedia.org/wiki/Viterbi_algorithm
 
-    The implementation borrows mostly from AllenNLP CRF module (https://github.com/allenai/allennlp)
-    and pytorch-crf (https://github.com/kmkurn/pytorch-crf) with some modifications.
     """
 
     def __init__(self, num_tags: int, batch_first: bool = False) -> None:
@@ -547,3 +627,14 @@ class CRF(nn.Module):
 
         return torch.where(mask.unsqueeze(-1), best_tags_arr,
                            oor_tag).permute(2, 1, 0)
+
+
+class Embedding(nn.Module):
+
+    def __init__(self, vocab_size, embed_width):
+        super(Embedding, self).__init__()
+
+        self.embedding = nn.Embedding(vocab_size, embed_width)
+
+    def forward(self, input_ids):
+        return self.embedding(input_ids)

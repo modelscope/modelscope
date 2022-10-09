@@ -6,14 +6,17 @@ from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import SequenceClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
-from modelscope.utils.constant import Hubs, Tasks
+from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SequenceClassificationTest(unittest.TestCase):
+class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+    sentence1 = 'i like this wonderful place'
 
     def setUp(self) -> None:
         self.model_id = 'damo/bert-base-sst2'
+        self.task = Tasks.text_classification
 
     def predict(self, pipeline_ins: SequenceClassificationPipeline):
         from easynlp.appzoo import load_dataset
@@ -44,7 +47,8 @@ class SequenceClassificationTest(unittest.TestCase):
             task=Tasks.text_classification,
             model=model,
             preprocessor=preprocessor)
-        self.predict(pipeline_ins)
+        print(f'sentence1: {self.sentence1}\n'
+              f'pipeline1:{pipeline_ins(input=self.sentence1)}')
 
     # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skip('nlp model does not support tensor input, skipped')
@@ -86,6 +90,10 @@ class SequenceClassificationTest(unittest.TestCase):
             target='premise')
         result = text_classification(dataset)
         self.printDataset(result)
+
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

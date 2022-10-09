@@ -199,14 +199,14 @@ class Hook:
         Whether to reach the last epoch
         Returns: bool
         """
-        return trainer.epoch + 1 == trainer._max_epochs
+        return trainer.epoch + 1 == trainer.max_epochs
 
     def is_last_iter(self, trainer):
         """
         Whether to reach the last iteration in the entire training process
         Returns: bool
         """
-        return trainer.iter + 1 == trainer._max_iters
+        return trainer.iter + 1 == trainer.max_iters
 
     def get_triggered_stages(self):
         trigger_stages = set()
@@ -215,3 +215,9 @@ class Hook:
                 trigger_stages.add(stage)
 
         return [stage for stage in Hook.stages if stage in trigger_stages]
+
+    def state_dict(self):
+        return {}
+
+    def load_state_dict(self, state_dict):
+        pass

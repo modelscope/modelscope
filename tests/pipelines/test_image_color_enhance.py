@@ -8,13 +8,15 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageColorEnhanceTest(unittest.TestCase):
+class ImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_csrnet_image-color-enhance-models'
+        self.task = Tasks.image_color_enhancement
 
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)
@@ -35,6 +37,10 @@ class ImageColorEnhanceTest(unittest.TestCase):
         img_color_enhance = pipeline(Tasks.image_color_enhancement)
         self.pipeline_inference(img_color_enhance,
                                 'data/test/images/image_color_enhance.png')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

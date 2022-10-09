@@ -56,6 +56,4 @@ class VisualQuestionAnsweringPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        if isinstance(self.model, OfaForAllTasks):
-            return inputs
-        return {OutputKeys.TEXT: inputs}
+        return inputs

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import io
 from typing import Any, Dict
 
@@ -6,23 +8,13 @@ import numpy as np
 import soundfile as sf
 import torch
 
+from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.utils.audio.audio_utils import audio_norm
 from modelscope.utils.constant import Tasks
-
-
-def audio_norm(x):
-    rms = (x**2).mean()**0.5
-    scalar = 10**(-25 / 20) / rms
-    x = x * scalar
-    pow_x = x**2
-    avg_pow_x = pow_x.mean()
-    rmsx = pow_x[pow_x > avg_pow_x].mean()**0.5
-    scalarx = 10**(-25 / 20) / rmsx
-    x = x * scalarx
-    return x
 
 
 @PIPELINES.register_module(
@@ -45,11 +37,12 @@ class ANSPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         self.model.eval()
 
-    def preprocess(self, inputs: Input) -> Dict[str, Any]:
+    def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         if isinstance(inputs, bytes):
             data1, fs = sf.read(io.BytesIO(inputs))
         elif isinstance(inputs, str):
-            data1, fs = sf.read(inputs)
+            file_bytes = File.read(inputs)
+            data1, fs = sf.read(io.BytesIO(file_bytes))
         else:
             raise TypeError(f'Unsupported type {type(inputs)}.')
         if len(data1.shape) > 1:
@@ -61,7 +54,8 @@ class ANSPipeline(Pipeline):
         inputs = np.reshape(data, [1, data.shape[0]])
         return {'ndarray': inputs, 'nsamples': data.shape[0]}
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
         ndarray = inputs['ndarray']
         if isinstance(ndarray, torch.Tensor):
             ndarray = ndarray.cpu().numpy()
@@ -98,7 +92,8 @@ class ANSPipeline(Pipeline):
                 current_idx = 0
                 while current_idx + window <= t:
                     print('current_idx: {}'.format(current_idx))
-                    tmp_input = ndarray[:, current_idx:current_idx + window]
+                    tmp_input = dict(noisy=ndarray[:, current_idx:current_idx
+                                                   + window])
                     tmp_output = self.model(
                         tmp_input, )['wav_l2'][0].cpu().numpy()
                     end_index = current_idx + window - give_up_length
@@ -111,7 +106,8 @@ class ANSPipeline(Pipeline):
                                     give_up_length:-give_up_length]
                     current_idx += stride
             else:
-                outputs = self.model(ndarray)['wav_l2'][0].cpu().numpy()
+                outputs = self.model(
+                    dict(noisy=ndarray))['wav_l2'][0].cpu().numpy()
         outputs = (outputs[:nsamples] * 32768).astype(np.int16).tobytes()
         return {OutputKeys.OUTPUT_PCM: outputs}
 

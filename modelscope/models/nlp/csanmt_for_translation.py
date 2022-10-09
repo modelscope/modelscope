@@ -1,3 +1,6 @@
+# Part of the implementation is borrowed and modified from THUMT,
+# publicly available at https://github.com/THUNLP-MT/THUMT
+# Copyright 2017-2022 The Alibaba MT Team Authors. All rights reserved.
 import math
 from collections import namedtuple
 from typing import Dict

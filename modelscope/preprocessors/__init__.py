@@ -15,18 +15,30 @@ if TYPE_CHECKING:
                         ImageDenoisePreprocessor)
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
-    from .nlp import (Tokenize, SequenceClassificationPreprocessor,
-                      TextGenerationPreprocessor,
-                      TokenClassificationPreprocessor,
-                      SingleSentenceClassificationPreprocessor,
-                      PairSentenceClassificationPreprocessor,
-                      FillMaskPreprocessor, ZeroShotClassificationPreprocessor,
-                      NERPreprocessor, TextErrorCorrectionPreprocessor)
+    from .nlp import (
+        DocumentSegmentationPreprocessor,
+        FaqQuestionAnsweringPreprocessor,
+        FillMaskPoNetPreprocessor,
+        NLPPreprocessor,
+        NLPTokenizerPreprocessorBase,
+        PassageRankingPreprocessor,
+        RelationExtractionPreprocessor,
+        SentenceEmbeddingPreprocessor,
+        SequenceClassificationPreprocessor,
+        TokenClassificationPreprocessor,
+        TextErrorCorrectionPreprocessor,
+        TextGenerationPreprocessor,
+        Text2TextGenerationPreprocessor,
+        Tokenize,
+        WordSegmentationBlankSetToLabelPreprocessor,
+        ZeroShotClassificationPreprocessor,
+    )
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
-    from .video import ReadVideoData
+    from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
     from .star import ConversationalTextToSqlPreprocessor
+    from .star3 import TableQuestionAnsweringPreprocessor
 
 else:
     _import_structure = {
@@ -35,7 +47,7 @@ else:
         'common': ['Compose', 'ToTensor', 'Filter'],
         'audio': ['LinearAECAndFbank'],
         'asr': ['WavToScp'],
-        'video': ['ReadVideoData'],
+        'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [
             'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
             'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
@@ -43,18 +55,29 @@ else:
         'kws': ['WavToLists'],
         'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
-            'Tokenize', 'SequenceClassificationPreprocessor',
-            'TextGenerationPreprocessor', 'TokenClassificationPreprocessor',
-            'SingleSentenceClassificationPreprocessor',
-            'PairSentenceClassificationPreprocessor', 'FillMaskPreprocessor',
-            'ZeroShotClassificationPreprocessor', 'NERPreprocessor',
-            'TextErrorCorrectionPreprocessor'
+            'DocumentSegmentationPreprocessor',
+            'FaqQuestionAnsweringPreprocessor',
+            'FillMaskPoNetPreprocessor',
+            'NLPPreprocessor',
+            'NLPTokenizerPreprocessorBase',
+            'PassageRankingPreprocessor',
+            'RelationExtractionPreprocessor',
+            'SentenceEmbeddingPreprocessor',
+            'SequenceClassificationPreprocessor',
+            'TokenClassificationPreprocessor',
+            'TextErrorCorrectionPreprocessor',
+            'TextGenerationPreprocessor',
+            'Tokenize',
+            'Text2TextGenerationPreprocessor',
+            'WordSegmentationBlankSetToLabelPreprocessor',
+            'ZeroShotClassificationPreprocessor',
         ],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor', 'InputFeatures'
         ],
         'star': ['ConversationalTextToSqlPreprocessor'],
+        'star3': ['TableQuestionAnsweringPreprocessor'],
     }
 
     import sys

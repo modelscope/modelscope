@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import torch.nn as nn
 
 from .layer_base import LayerBase

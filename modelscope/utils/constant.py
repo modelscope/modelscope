@@ -20,10 +20,14 @@ class CVTasks(object):
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
     face_recognition = 'face-recognition'
+    facial_expression_recognition = 'facial-expression-recognition'
+    face_2d_keypoints = 'face-2d-keypoints'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
     body_2d_keypoints = 'body-2d-keypoints'
+    body_3d_keypoints = 'body-3d-keypoints'
+    hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
 
     image_classification = 'image-classification'
@@ -34,7 +38,14 @@ class CVTasks(object):
     image_object_detection = 'image-object-detection'
 
     image_segmentation = 'image-segmentation'
+    semantic_segmentation = 'semantic-segmentation'
     portrait_matting = 'portrait-matting'
+    text_driven_segmentation = 'text-driven-segmentation'
+    shop_segmentation = 'shop-segmentation'
+    hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # image editing
     skin_retouching = 'skin-retouching'
@@ -57,10 +68,15 @@ class CVTasks(object):
     # video recognition
     live_category = 'live-category'
     action_recognition = 'action-recognition'
+    action_detection = 'action-detection'
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
     crowd_counting = 'crowd-counting'
+    movie_scene_segmentation = 'movie-scene-segmentation'
+
+    # video editing
+    video_inpainting = 'video-inpainting'
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
@@ -78,12 +94,15 @@ class NLPTasks(object):
     sentiment_analysis = 'sentiment-analysis'
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
+    sentence_embedding = 'sentence-embedding'
+    passage_ranking = 'passage-ranking'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    text2text_generation = 'text2text-generation'
     task_oriented_conversation = 'task-oriented-conversation'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_state_tracking = 'dialog-state-tracking'
@@ -95,7 +114,11 @@ class NLPTasks(object):
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
     text_error_correction = 'text-error-correction'
+    faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
+    information_extraction = 'information-extraction'
+    document_segmentation = 'document-segmentation'
+    feature_extraction = 'feature-extraction'
 
 
 class AudioTasks(object):
@@ -115,9 +138,27 @@ class MultiModalTasks(object):
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
+    multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    image_text_retrieval = 'image-text-retrieval'
+
+
+class TasksIODescriptions(object):
+    image_to_image = 'image_to_image',
+    images_to_image = 'images_to_image',
+    image_to_text = 'image_to_text',
+    seed_to_image = 'seed_to_image',
+    text_to_speech = 'text_to_speech',
+    text_to_text = 'text_to_text',
+    speech_to_text = 'speech_to_text',
+    speech_to_speech = 'speech_to_speech'
+    speeches_to_speech = 'speeches_to_speech',
+    visual_grounding = 'visual_grounding',
+    visual_question_answering = 'visual_question_answering',
+    visual_entailment = 'visual_entailment',
+    generative_multi_modal_embedding = 'generative_multi_modal_embedding'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
@@ -211,6 +252,8 @@ class ModelFile(object):
     VOCAB_FILE = 'vocab.txt'
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
+    TRAIN_OUTPUT_DIR = 'output'
+    TS_MODEL_FILE = 'model.ts'
 
 
 class ConfigFields(object):
@@ -253,6 +296,7 @@ class Frameworks(object):
 
 DEFAULT_MODEL_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
+DEFAULT_DATASET_NAMESPACE = 'modelscope'
 
 
 class ModeKeys:

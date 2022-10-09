@@ -1,3 +1,5 @@
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+
 import os
 import platform
 from collections import OrderedDict
@@ -84,9 +86,6 @@ class CLIP4Clip(nn.Module):
             transformer_layers - cut_top_layer,
             linear_patch=config['linear_patch'],
             use_gc=config['use_gc']).float()
-
-        if (platform.system() != 'Darwin'):
-            convert_weights(self.clip)  # fp16
 
         if backbone in ['ViT-B/32', 'ViT-B/16']:
             cross_config = SimpleNamespace(**{

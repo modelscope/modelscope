@@ -7,7 +7,9 @@ gpus='7 6 5 4 3 2 1 0'
 cpu_sets='0-7 8-15 16-23 24-30 31-37 38-44 45-51 52-58'
 cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
-CI_COMMAND=${CI_COMMAND:-'bash .dev_scripts/ci_container_test.sh'}
+# export RUN_CASE_COMMAND='python tests/run.py --run_config tests/run_config.yaml'
+CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh $RUN_CASE_BASE_COMMAND}
+echo "ci command: $CI_COMMAND"
 for gpu in $gpus
 do
   exec {lock_fd}>"/tmp/gpu$gpu" || exit 1
@@ -15,6 +17,7 @@ do
   echo "get gpu lock $gpu"
   CONTAINER_NAME="modelscope-ci-$gpu"
   let is_get_file_lock=true
+
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
   docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
@@ -32,10 +35,13 @@ do
              -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
              -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
              -e TEST_LEVEL=$TEST_LEVEL \
+             -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
+             -e MODEL_TAG_URL=$MODEL_TAG_URL \
              --workdir=$CODE_DIR_IN_CONTAINER \
              --net host  \
              ${IMAGE_NAME}:${IMAGE_VERSION} \
              $CI_COMMAND
+
   if [ $? -ne 0 ]; then
     echo "Running test case failed, please check the log!"
     exit -1

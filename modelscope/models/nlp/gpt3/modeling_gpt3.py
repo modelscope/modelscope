@@ -1,3 +1,4 @@
+# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors.
 # Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,10 @@ import math
 import os
 from typing import Optional, Union
 
+import addict
 import torch
-from addict import Dict
-from torch.nn import Dropout, Embedding, LayerNorm, Linear, Module, Softmax
+from torch.nn import (CrossEntropyLoss, Dropout, Embedding, LayerNorm, Linear,
+                      Module, Softmax)
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
@@ -308,20 +310,25 @@ class GPT3Model(PreTrainedModel):
                 input_ids,
                 attention_mask=None,
                 position_ids=None,
+                labels=None,
                 **kwargs):
         seq_length = input_ids.size(1)
-        if attention_mask is None:
-            attention_mask = torch.tril(
-                torch.ones((1, seq_length, seq_length),
-                           dtype=torch.long,
-                           device=input_ids.device))
+        attention_mask = torch.tril(
+            torch.ones((1, 1, seq_length, seq_length),
+                       dtype=torch.long,
+                       device=input_ids.device))
         if position_ids is None:
             position_ids = torch.arange(
                 seq_length, dtype=torch.long, device=input_ids.device)
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
         logits = self.language_model(input_ids, attention_mask, position_ids)
-        return Dict(logits=logits)
+        loss = None
+        if labels is not None:
+            loss_fct = CrossEntropyLoss()
+            loss = loss_fct(
+                logits.view(-1, self.config.vocab_size), labels.view(-1))
+        return addict.Dict(loss=loss, logits=logits)
 
     @classmethod
     def from_pretrained(
@@ -333,5 +340,9 @@ class GPT3Model(PreTrainedModel):
         state_dict_file = os.path.join(pretrained_model_name_or_path,
                                        ModelFile.TORCH_MODEL_BIN_FILE)
         state_dict = torch.load(state_dict_file)
+        state_dict = {
+            k.replace('model.language_model', 'language_model'): v
+            for k, v in state_dict.items()
+        }
         model.load_state_dict(state_dict)
         return model

@@ -15,25 +15,9 @@ from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
 from modelscope.trainers.nlp.space.metrics.metrics_tracker import \
     MetricsTracker
+from modelscope.utils.constant import ModelFile
+from modelscope.utils.logger import get_logger
 from modelscope.utils.nlp.space import ontology
-
-
-def get_logger(log_path, name='default'):
-    logger = logging.getLogger(name)
-    logger.propagate = False
-    logger.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(message)s')
-
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(formatter)
-    logger.addHandler(sh)
-
-    fh = logging.FileHandler(log_path, mode='w')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    return logger
 
 
 class Trainer(object):
@@ -51,15 +35,16 @@ class Trainer(object):
 
         self.do_train = config.do_train
         self.do_infer = config.do_infer
-        self.is_decreased_valid_metric = config.Trainer.valid_metric_name[
-            0] == '-'
-        self.valid_metric_name = config.Trainer.valid_metric_name[1:]
-        self.num_epochs = config.Trainer.num_epochs
-        # self.save_dir = config.Trainer.save_dir
-        self.log_steps = config.Trainer.log_steps
-        self.valid_steps = config.Trainer.valid_steps
-        self.save_checkpoint = config.Trainer.save_checkpoint
-        self.save_summary = config.Trainer.save_summary
+        if self.do_train:
+            self.is_decreased_valid_metric = config.Trainer.valid_metric_name[
+                0] == '-'
+            self.valid_metric_name = config.Trainer.valid_metric_name[1:]
+            self.num_epochs = config.Trainer.num_epochs
+            self.save_dir = config.Trainer.save_dir
+            self.log_steps = config.Trainer.log_steps
+            self.valid_steps = config.Trainer.valid_steps
+            self.save_checkpoint = config.Trainer.save_checkpoint
+            self.save_summary = config.Trainer.save_summary
         self.lr = config.Model.lr
         self.weight_decay = config.Model.weight_decay
         self.batch_size = config.Trainer.batch_size
@@ -71,22 +56,21 @@ class Trainer(object):
         self.optimizer = optimizer
 
         self.model = model
-        self.func_model = self.model.module if self.gpu > 1 else self.model
+        self.func_model = self.model.module if self.gpu > 1 and config.use_gpu else self.model
         self.reader = reader
         self.evaluator = evaluator
         self.tokenizer = reader.tokenizer
 
-        # if not os.path.exists(self.save_dir):
-        #     os.makedirs(self.save_dir)
-
-        # self.logger = logger or get_logger(os.path.join(self.save_dir, "trainer.log"), "trainer")
-        self.logger = logger or get_logger('trainer.log', 'trainer')
+        self.logger = get_logger()
 
         self.batch_metrics_tracker = MetricsTracker()
         self.token_metrics_tracker = MetricsTracker()
 
-        self.best_valid_metric = float(
-            'inf' if self.is_decreased_valid_metric else '-inf')
+        if self.do_train:
+            if not os.path.exists(self.save_dir):
+                os.makedirs(self.save_dir)
+            self.best_valid_metric = float(
+                'inf' if self.is_decreased_valid_metric else '-inf')
         self.epoch = 0
 
     def decode_generated_bspn_resp(self, generated):
@@ -248,9 +232,12 @@ class Trainer(object):
 
         # Save current best model
         if is_best:
-            best_model_file = os.path.join(self.save_dir, 'best.model')
+            best_model_file = os.path.join(self.save_dir,
+                                           ModelFile.TORCH_MODEL_BIN_FILE)
             torch.save(self.model.state_dict(), best_model_file)
-            best_train_file = os.path.join(self.save_dir, 'best.train')
+            best_train_file = os.path.join(
+                self.save_dir,
+                '{}.train'.format(ModelFile.TORCH_MODEL_BIN_FILE))
             torch.save(train_state, best_train_file)
             self.logger.info(
                 f"Saved best model state to '{best_model_file}' with new best valid metric "
@@ -324,8 +311,7 @@ class Trainer(object):
 
             self.func_model.load_state_dict(model_state_dict)
             self.logger.info(
-                f"Loaded model state from '{self.func_model.init_checkpoint}.model'"
-            )
+                f"Loaded model state from '{self.func_model.init_checkpoint}'")
 
         def _load_train_state():
             train_file = f'{self.func_model.init_checkpoint}.train'
@@ -558,19 +544,17 @@ class MultiWOZTrainer(Trainer):
                         generated_bs = outputs[0].cpu().numpy().tolist()
                         bspn_gen = self.decode_generated_bspn(generated_bs)
                         # check DB result
-                        if self.reader.use_true_db_pointer:  # To control whether current db is ground truth
+                        if self.reader.use_true_db_pointer:
                             db = turn['db']
                         else:
                             db_result = self.reader.bspan_to_DBpointer(
                                 self.tokenizer.decode(bspn_gen),
                                 turn['turn_domain'])
-                            assert len(turn['db']) == 4
-                            book_result = turn['db'][2]
+                            assert len(turn['db']) == 3
                             assert isinstance(db_result, str)
                             db = \
                                 [self.reader.sos_db_id] + \
                                 self.tokenizer.convert_tokens_to_ids([db_result]) + \
-                                [book_result] + \
                                 [self.reader.eos_db_id]
                             prompt_id = self.reader.sos_a_id
 
@@ -636,7 +620,7 @@ class MultiWOZTrainer(Trainer):
         score = 0.5 * (success + match) + bleu
 
         # log results
-        metrics_message = 'match: %2.2f  success: %2.2f  bleu: %2.2f  score: %.2f' %\
+        metrics_message = 'match: %2.2f  success: %2.2f  bleu: %2.2f  score: %.2f' % \
                           (match, success, bleu, score)
         message_prefix = f'[Infer][{self.epoch}]'
         time_cost = f'TIME-{time.time() - begin_time:.3f}'

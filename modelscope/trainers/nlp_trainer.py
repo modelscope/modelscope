@@ -1,6 +1,9 @@
-import os
-from typing import Callable, Dict, Optional, Tuple, Union
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
+from typing import Callable, Optional, Tuple, Union
+
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import Dataset
@@ -11,9 +14,10 @@ from modelscope.metrics.builder import build_metric
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import Preprocessor, build_preprocessor
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ModeKeys,
                                        ModelFile, Tasks)
+from modelscope.utils.hub import parse_label_mapping
 from .base import TRAINERS
 from .trainer import EpochBasedTrainer
 
@@ -81,19 +85,32 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             assert cfg_file is not None, 'Config file should not be None if model is an nn.Module class'
             model_dir = os.path.dirname(cfg_file)
 
+        self.label2id = None
+        self.id2label = None
+        self.num_labels = None
         self.cfg_modify_fn = cfg_modify_fn
         self.cfg = self.rebuild_config(Config.from_file(cfg_file))
-        try:
-            labels = self.cfg.dataset.train.labels
-        except AttributeError:
-            labels = None
 
-        self.label2id = None
-        self.num_labels = None
-        if labels is not None and len(labels) > 0:
-            self.label2id = {label: idx for idx, label in enumerate(labels)}
-            self.id2label = {idx: label for idx, label in enumerate(labels)}
-            self.num_labels = len(labels)
+        label2id = parse_label_mapping(model_dir)
+        if label2id is not None:
+            self.label2id = label2id
+            self.id2label = {id: label for label, id in label2id.items()}
+            self.num_labels = len(label2id)
+        else:
+            try:
+                labels = self.cfg.dataset.train.labels
+                if labels is not None and len(labels) > 0:
+                    self.label2id = {
+                        label: idx
+                        for idx, label in enumerate(labels)
+                    }
+                    self.id2label = {
+                        idx: label
+                        for idx, label in enumerate(labels)
+                    }
+                    self.num_labels = len(labels)
+            except AttributeError:
+                pass
 
         def build_dataset_keys(cfg):
             if cfg is not None:
@@ -130,7 +147,13 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
 
     def rebuild_config(self, cfg: Config):
         if self.cfg_modify_fn is not None:
-            return self.cfg_modify_fn(cfg)
+            cfg = self.cfg_modify_fn(cfg)
+        if not hasattr(cfg.model, 'label2id') and not hasattr(
+                cfg.model, 'id2label'):
+            if self.id2label is not None:
+                cfg.model['id2label'] = self.id2label
+            if self.label2id is not None:
+                cfg.model['label2id'] = self.label2id
         return cfg
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -203,6 +226,9 @@ class VecoTrainer(NlpEpochBasedTrainer):
 
         """
         from modelscope.msdatasets.task_datasets import VecoDataset
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import CheckpointHook
+            CheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
         metric_values = {}
@@ -223,12 +249,10 @@ class VecoTrainer(NlpEpochBasedTrainer):
                 self.eval_dataset, **self.cfg.evaluation.get('dataloader', {}))
             self.data_loader = self.eval_dataloader
 
-            metric_classes = [
-                build_metric(metric, default_args={'trainer': self})
-                for metric in self.metrics
-            ]
-            self.evaluation_loop(self.eval_dataloader, checkpoint_path,
-                                 metric_classes)
+            metric_classes = [build_metric(metric) for metric in self.metrics]
+            for m in metric_classes:
+                m.trainer = self
+            self.evaluation_loop(self.eval_dataloader, metric_classes)
 
             for m_idx, metric_cls in enumerate(metric_classes):
                 if f'eval_dataset[{idx}]' not in metric_values:
@@ -241,5 +265,9 @@ class VecoTrainer(NlpEpochBasedTrainer):
                 self.eval_dataset.switch_dataset(idx)
             else:
                 break
+
+        for metric_name in self.metrics:
+            metric_values[metric_name] = np.average(
+                [m[metric_name] for m in metric_values.values()])
 
         return metric_values

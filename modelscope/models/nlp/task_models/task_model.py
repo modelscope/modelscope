@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path
 import re
 from abc import ABC
@@ -73,7 +74,7 @@ class BaseTaskModel(TorchModel, ABC):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
-        self.cfg = ConfigDict(kwargs)
+        self.config = ConfigDict(kwargs)
 
     def __repr__(self):
         # only log backbone and head name
@@ -396,6 +397,9 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
+        self.backbone_cfg = self.config.get('backbone', None)
+        assert self.backbone_cfg is not None
+        self.head_cfg = self.config.get('head', None)
 
     def build_backbone(self, cfg):
         if 'prefix' in cfg:
@@ -404,9 +408,13 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
         setattr(self, cfg['prefix'], backbone)
 
     def build_head(self, cfg):
+        if cfg is None:
+            raise ValueError(
+                'Head config is missing, check if this was a backbone-only model'
+            )
         if 'prefix' in cfg:
             self._head_prefix = cfg['prefix']
-        head = build_head(cfg)
+        head = build_head(cfg, group_key=self.group_key)
         setattr(self, self._head_prefix, head)
         return head
 
@@ -430,8 +438,18 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
             outputs = self.backbone.forward(**input)
         return outputs
 
-    def compute_loss(self, outputs: Dict[str, Any], labels):
-        raise NotImplementedError()
+    def compute_loss(self, outputs, labels):
+        loss = self.head.compute_loss(outputs, labels)
+        return loss
+
+    def extract_backbone_outputs(self, outputs):
+        sequence_output = None
+        pooled_output = None
+        if hasattr(self.backbone, 'extract_sequence_outputs'):
+            sequence_output = self.backbone.extract_sequence_outputs(outputs)
+        if hasattr(self.backbone, 'extract_pooled_outputs'):
+            pooled_output = self.backbone.extract_pooled_outputs(outputs)
+        return sequence_output, pooled_output
 
 
 class EncoderDecoderTaskModelBase(BaseTaskModel):
@@ -452,7 +470,7 @@ class EncoderDecoderTaskModelBase(BaseTaskModel):
 
     def build_encoder(self):
         encoder = build_backbone(
-            self.cfg,
+            self.config,
             type_name=self._encoder_key_in_cfg,
             task_name=Tasks.backbone)
         setattr(self, self._encoder_prefix, encoder)
@@ -460,7 +478,7 @@ class EncoderDecoderTaskModelBase(BaseTaskModel):
 
     def build_decoder(self):
         decoder = build_backbone(
-            self.cfg,
+            self.config,
             type_name=self._decoder_key_in_cfg,
             task_name=Tasks.backbone)
         setattr(self, self._decoder_prefix, decoder)

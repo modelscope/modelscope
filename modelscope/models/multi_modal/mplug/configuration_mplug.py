@@ -64,6 +64,10 @@ class MPlugConfig(PretrainedConfig):
             clip_transformer_width=768,
             clip_transformer_heads=12,
             clip_transformer_layers=12,
+            # retrieval
+            queue_size=65536,
+            embed_dim=256,
+            temp=0.07,
             **kwargs):
 
         super().__init__(**kwargs)
@@ -99,6 +103,10 @@ class MPlugConfig(PretrainedConfig):
         self.clip_transformer_width = clip_transformer_width
         self.clip_transformer_heads = clip_transformer_heads
         self.clip_transformer_layers = clip_transformer_layers
+        # retrieval
+        self.queue_size = queue_size
+        self.embed_dim = embed_dim
+        self.temp = temp
 
     @classmethod
     def from_yaml_file(cls, yaml_file: Union[str,

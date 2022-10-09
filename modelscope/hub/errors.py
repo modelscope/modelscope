@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from http import HTTPStatus
 
 from requests.exceptions import HTTPError
@@ -49,8 +51,8 @@ def handle_http_response(response, logger, cookies, model_id):
     except HTTPError:
         if cookies is None:  # code in [403] and
             logger.error(
-                f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be private. \
-                  Please login first.')
+                f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
+                private. Please login first.')
         raise
 
 
@@ -60,7 +62,7 @@ def raise_on_error(rsp):
     Args:
         rsp (_type_): The server response
     """
-    if rsp['Code'] == HTTPStatus.OK and rsp['Success']:
+    if rsp['Code'] == HTTPStatus.OK:
         return True
     else:
         raise RequestError(rsp['Message'])

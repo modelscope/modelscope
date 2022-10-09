@@ -1,7 +1,5 @@
-"""
-Created on Mon Apr 24 15:43:29 2017
-@author: zhaoy
-"""
+# The implementation is adopted from https://github.com/TreB1eN/InsightFace_Pytorch/tree/master/mtcnn_pytorch
+
 import cv2
 import numpy as np
 

@@ -132,12 +132,7 @@ class Body3DKeypointsPipeline(Pipeline):
             device='gpu' if torch.cuda.is_available() else 'cpu')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        video_url = input.get('input_video')
-        self.output_video_path = input.get('output_video_path')
-        if self.output_video_path is None:
-            self.output_video_path = tempfile.NamedTemporaryFile(
-                suffix='.mp4').name
-
+        video_url = input
         video_frames = self.read_video_frames(video_url)
         if 0 == len(video_frames):
             res = {'success': False, 'msg': 'get video frame failed.'}
@@ -194,9 +189,13 @@ class Body3DKeypointsPipeline(Pipeline):
             pred_3d_pose = poses.data.cpu().numpy()[
                 0]  # [frame_num, joint_num, joint_dim]
 
+            output_video_path = kwargs.get('output_video', None)
+            if output_video_path is None:
+                output_video_path = tempfile.NamedTemporaryFile(
+                    suffix='.mp4').name
             if 'render' in self.keypoint_model_3d.cfg.keys():
-                self.render_prediction(pred_3d_pose)
-                res[OutputKeys.OUTPUT_VIDEO] = self.output_video_path
+                self.render_prediction(pred_3d_pose, output_video_path)
+                res[OutputKeys.OUTPUT_VIDEO] = output_video_path
 
             res[OutputKeys.POSES] = pred_3d_pose
             res[OutputKeys.TIMESTAMPS] = self.timestamps
@@ -252,12 +251,12 @@ class Body3DKeypointsPipeline(Pipeline):
         cap.release()
         return frames
 
-    def render_prediction(self, pose3d_cam_rr):
+    def render_prediction(self, pose3d_cam_rr, output_video_path):
         """render predict result 3d poses.
 
         Args:
             pose3d_cam_rr (nd.array): [frame_num, joint_num, joint_dim], 3d pose joints
-
+            output_video_path (str): output path for video
         Returns:
         """
         frame_num = pose3d_cam_rr.shape[0]
@@ -359,4 +358,4 @@ class Body3DKeypointsPipeline(Pipeline):
         # save mp4
         Writer = writers['ffmpeg']
         writer = Writer(fps=self.fps, metadata={}, bitrate=4096)
-        ani.save(self.output_video_path, writer=writer)
+        ani.save(output_video_path, writer=writer)

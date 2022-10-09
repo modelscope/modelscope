@@ -20,4 +20,3 @@ jobs:
           pip install pre-commit
       - name: Linting
         run: pre-commit run --all-files
-

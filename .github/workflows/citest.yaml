@@ -52,4 +52,4 @@ jobs:
         run: |
           set -e
           source ~/ci_env.sh
-          bash .dev_scripts/dockerci.sh  
+          bash .dev_scripts/dockerci.sh

@@ -1,8 +1,9 @@
+import os.path as osp
+from typing import Any, Dict
+
 import cv2
 import numpy as np
-import os.path as osp
 import tensorflow as tf
-from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

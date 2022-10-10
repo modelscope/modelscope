@@ -9,7 +9,9 @@ git config --global --add safe.directory /Maas-lib
 
 # linter test
 # use internal project for pre-commit due to the network problem
-pre-commit run -c .pre-commit-config_local.yaml --all-files
+if [ `git remote -v | grep alibaba  | wc -l` -gt 1 ]; then
+    pre-commit run -c .pre-commit-config_local.yaml --all-files
+fi
 if [ $? -ne 0 ]; then
     echo "linter test failed, please run 'pre-commit run --all-files' to check"
     exit -1

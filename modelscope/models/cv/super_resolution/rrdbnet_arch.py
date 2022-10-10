@@ -1,3 +1,5 @@
+# The implementation is adopted from BasicSR, made public available under the Apache 2.0 License
+# at https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/rrdbnet_arch.py
 import torch
 from torch import nn as nn
 from torch.nn import functional as F

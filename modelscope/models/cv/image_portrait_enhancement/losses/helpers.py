@@ -1,3 +1,5 @@
+# The implementation is adopted from InsightFace_Pytorch,
+# made publicly available under the MIT License at https://github.com/TreB1eN/InsightFace_Pytorch/blob/master/model.py
 from collections import namedtuple
 
 import torch

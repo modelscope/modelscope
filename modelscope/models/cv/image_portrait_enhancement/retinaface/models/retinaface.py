@@ -1,3 +1,5 @@
+# The implementation is adopted from Pytorch_Retinaface, made pubicly available under the MIT License
+# at https://github.com/biubug6/Pytorch_Retinaface/tree/master/models/retinaface.py
 from collections import OrderedDict
 
 import torch

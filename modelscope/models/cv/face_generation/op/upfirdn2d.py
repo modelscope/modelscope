@@ -1,3 +1,5 @@
+# The implementation is adopted from stylegan2-pytorch, made public available under the MIT License
+# at https://github.com/rosinality/stylegan2-pytorch/blob/master/op/upfirdn2d.py
 import os
 from collections import abc
 

@@ -22,15 +22,23 @@ def pred2scene(shot2keyf, anno_dict):
     scene_list, pair_list = get_demo_scene_list(shot2keyf, anno_dict)
 
     scene_dict_lst = []
+    shot_num = len(shot2keyf)
+    shot_dict_lst = []
+    for item in shot2keyf:
+        tmp = item.split(' ')
+        shot_dict_lst.append({
+            'frame': [tmp[0], tmp[1]],
+            'timestamps': [tmp[-2], tmp[-1]]
+        })
     assert len(scene_list) == len(pair_list)
     for scene_ind, scene_item in enumerate(scene_list):
         scene_dict_lst.append({
             'shot': pair_list[scene_ind],
             'frame': scene_item[0],
-            'timestamp': scene_item[1]
+            'timestamps': scene_item[1]
         })
 
-    return scene_dict_lst, scene_list
+    return scene_dict_lst, scene_list, shot_num, shot_dict_lst
 
 
 def scene2video(source_movie_fn, scene_list, thres):

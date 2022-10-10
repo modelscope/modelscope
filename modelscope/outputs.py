@@ -38,8 +38,10 @@ class OutputKeys(object):
     KWS_LIST = 'kws_list'
     HISTORY = 'history'
     TIMESTAMPS = 'timestamps'
-    SPLIT_VIDEO_NUM = 'split_video_num'
-    SPLIT_META_LIST = 'split_meta_list'
+    SHOT_NUM = 'shot_num'
+    SCENE_NUM = 'scene_num'
+    SCENE_META_LIST = 'scene_meta_list'
+    SHOT_META_LIST = 'shot_meta_list'
 
 
 TASK_OUTPUTS = {
@@ -309,19 +311,30 @@ TASK_OUTPUTS = {
     Tasks.shop_segmentation: [OutputKeys.MASKS],
     # movide scene segmentation result for a single video
     # {
-    #        "split_video_num":3,
-    #        "split_meta_list":
+    #        "shot_num":15,
+    #        "shot_meta_list":
+    #        [
+    #           {
+    #               "frame": [start_frame, end_frame],
+    #               "timestamps": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
+    #
+    #           }
+    #         ]
+    #        "scene_num":3,
+    #        "scene_meta_list":
     #        [
     #           {
     #               "shot": [0,1,2],
     #               "frame": [start_frame, end_frame],
-    #               "timestamp": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
+    #               "timestamps": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
     #           }
     #        ]
     #
     # }
-    Tasks.movie_scene_segmentation:
-    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_LIST],
+    Tasks.movie_scene_segmentation: [
+        OutputKeys.SHOT_NUM, OutputKeys.SHOT_META_LIST, OutputKeys.SCENE_NUM,
+        OutputKeys.SCENE_META_LIST
+    ],
 
     # ============ nlp tasks ===================
 

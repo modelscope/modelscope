@@ -13,6 +13,7 @@ import numpy as np
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import TASK_OUTPUTS
+from modelscope.pipeline_inputs import TASK_INPUTS, check_input_type
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Frameworks, ModelFile
@@ -210,7 +211,7 @@ class Pipeline(ABC):
         preprocess_params = kwargs.get('preprocess_params', {})
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
-
+        self._check_input(input)
         out = self.preprocess(input, **preprocess_params)
         with device_placement(self.framework, self.device_name):
             if self.framework == Frameworks.torch:
@@ -224,6 +225,42 @@ class Pipeline(ABC):
         out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out
+
+    def _check_input(self, input):
+        task_name = self.group_key
+        if task_name in TASK_INPUTS:
+            input_type = TASK_INPUTS[task_name]
+
+            # if multiple input formats are defined, we first
+            # found the one that match input data and check
+            if isinstance(input_type, list):
+                matched_type = None
+                for t in input_type:
+                    if type(t) == type(input):
+                        matched_type = t
+                        break
+                if matched_type is None:
+                    err_msg = 'input data format for current pipeline should be one of following: \n'
+                    for t in input_type:
+                        err_msg += f'{t}\n'
+                    raise ValueError(err_msg)
+                else:
+                    input_type = matched_type
+
+            if isinstance(input_type, str):
+                check_input_type(input_type, input)
+            elif isinstance(input_type, tuple):
+                for t, input_ele in zip(input_type, input):
+                    check_input_type(t, input_ele)
+            elif isinstance(input_type, dict):
+                for k in input_type.keys():
+                    # allow single input for multi-modal models
+                    if k in input:
+                        check_input_type(input_type[k], input[k])
+            else:
+                raise ValueError(f'invalid input_type definition {input_type}')
+        else:
+            logger.warning(f'task {task_name} input definition is missing')
 
     def _check_output(self, input):
         # this attribute is dynamically attached by registry

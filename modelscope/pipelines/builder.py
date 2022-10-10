@@ -75,6 +75,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_bart_text-error-correction_chinese'),
     Tasks.image_captioning: (Pipelines.image_captioning,
                              'damo/ofa_image-caption_coco_large_en'),
+    Tasks.image_body_reshaping: (Pipelines.image_body_reshaping,
+                                 'damo/cv_flow-based-body-reshaping_damo'),
     Tasks.image_portrait_stylization:
     (Pipelines.person_image_cartoon,
      'damo/cv_unet_person-image-cartoon_compound-models'),

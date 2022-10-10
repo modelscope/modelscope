@@ -13,6 +13,7 @@ ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0
 networkx>=2.5
+numba
 onnxruntime>=1.10
 pai-easycv>=0.6.3.6
 pandas

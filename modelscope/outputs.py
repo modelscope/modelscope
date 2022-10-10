@@ -184,6 +184,7 @@ TASK_OUTPUTS = {
     Tasks.image_to_image_translation: [OutputKeys.OUTPUT_IMG],
     Tasks.image_style_transfer: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_stylization: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_body_reshaping: [OutputKeys.OUTPUT_IMG],
 
     # live category recognition result for single video
     # {

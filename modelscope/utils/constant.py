@@ -60,7 +60,7 @@ class CVTasks(object):
     image_to_image_generation = 'image-to-image-generation'
     image_style_transfer = 'image-style-transfer'
     image_portrait_stylization = 'image-portrait-stylization'
-
+    image_body_reshaping = 'image-body-reshaping'
     image_embedding = 'image-embedding'
 
     product_retrieval_embedding = 'product-retrieval-embedding'

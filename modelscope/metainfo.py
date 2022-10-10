@@ -43,6 +43,7 @@ class Models(object):
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
+    image_body_reshaping = 'image-body-reshaping'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -187,6 +188,7 @@ class Pipelines(object):
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
+    image_body_reshaping = 'flow-based-body-reshaping'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

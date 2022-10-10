@@ -51,5 +51,5 @@ jobs:
         shell: bash
         run: |
           set -e
-          source ~/ci_env.sh
+          source /mnt/modelscope/ci_env.sh
           bash .dev_scripts/dockerci.sh

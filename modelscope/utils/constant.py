@@ -267,6 +267,7 @@ class ConfigFields(object):
     preprocessor = 'preprocessor'
     train = 'train'
     evaluation = 'evaluation'
+    postprocessor = 'postprocessor'
 
 
 class ConfigKeys(object):

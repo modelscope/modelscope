@@ -189,6 +189,9 @@ class Pipelines(object):
     product_segmentation = 'product-segmentation'
 
     # nlp tasks
+    automatic_post_editing = 'automatic-post-editing'
+    translation_quality_estimation = 'translation-quality-estimation'
+    domain_classification = 'domain-classification'
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
     part_of_speech = 'part-of-speech'

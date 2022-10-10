@@ -1,3 +1,5 @@
+# The implementation is adopted from stylegan2-pytorch, made public available under the MIT License
+# at https://github.com/rosinality/stylegan2-pytorch/blob/master/op/conv2d_gradfix.py
 import contextlib
 import warnings
 

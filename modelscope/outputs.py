@@ -21,6 +21,7 @@ class OutputKeys(object):
     POLYGONS = 'polygons'
     OUTPUT = 'output'
     OUTPUT_IMG = 'output_img'
+    OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
@@ -37,8 +38,10 @@ class OutputKeys(object):
     KWS_LIST = 'kws_list'
     HISTORY = 'history'
     TIMESTAMPS = 'timestamps'
-    SPLIT_VIDEO_NUM = 'split_video_num'
-    SPLIT_META_LIST = 'split_meta_list'
+    SHOT_NUM = 'shot_num'
+    SCENE_NUM = 'scene_num'
+    SCENE_META_LIST = 'scene_meta_list'
+    SHOT_META_LIST = 'shot_meta_list'
 
 
 TASK_OUTPUTS = {
@@ -218,13 +221,21 @@ TASK_OUTPUTS = {
 
     # 3D human body keypoints detection result for single sample
     # {
-    #   "poses": [
-    #               [[x, y, z]*17],
-    #               [[x, y, z]*17],
-    #               [[x, y, z]*17]
-    #             ]
+    #   "poses": [		    # 3d pose coordinate in camera coordinate
+    #     	[[x, y, z]*17],	# joints of per image
+    #     	[[x, y, z]*17],
+    #     	...
+    #     ],
+    #   "timestamps": [     # timestamps of all frames
+    #     "00:00:0.230",
+    #     "00:00:0.560",
+    #     "00:00:0.690",
+    #   ],
+    #   "output_video": "path_to_rendered_video" , this is optional
+    # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints: [OutputKeys.POSES],
+    Tasks.body_3d_keypoints:
+    [OutputKeys.POSES, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
     # 2D hand keypoints result for single sample
     # {
@@ -300,19 +311,30 @@ TASK_OUTPUTS = {
     Tasks.shop_segmentation: [OutputKeys.MASKS],
     # movide scene segmentation result for a single video
     # {
-    #        "split_video_num":3,
-    #        "split_meta_list":
+    #        "shot_num":15,
+    #        "shot_meta_list":
+    #        [
+    #           {
+    #               "frame": [start_frame, end_frame],
+    #               "timestamps": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
+    #
+    #           }
+    #         ]
+    #        "scene_num":3,
+    #        "scene_meta_list":
     #        [
     #           {
     #               "shot": [0,1,2],
     #               "frame": [start_frame, end_frame],
-    #               "timestamp": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
+    #               "timestamps": [start_timestamp, end_timestamp] # ['00:00:01.133', '00:00:02.245']
     #           }
     #        ]
     #
     # }
-    Tasks.movie_scene_segmentation:
-    [OutputKeys.SPLIT_VIDEO_NUM, OutputKeys.SPLIT_META_LIST],
+    Tasks.movie_scene_segmentation: [
+        OutputKeys.SHOT_NUM, OutputKeys.SHOT_META_LIST, OutputKeys.SCENE_NUM,
+        OutputKeys.SCENE_META_LIST
+    ],
 
     # ============ nlp tasks ===================
 
@@ -649,8 +671,28 @@ TASK_OUTPUTS = {
     #     'output': ['Done' / 'Decode_Error']
     # }
     Tasks.video_inpainting: [OutputKeys.OUTPUT],
+
     # {
     #     'output': ['bixin']
     # }
-    Tasks.hand_static: [OutputKeys.OUTPUT]
+    Tasks.hand_static: [OutputKeys.OUTPUT],
+
+    #     'output': [
+    #                [2, 75, 287, 240, 510, 0.8335018754005432],
+    #                [1, 127, 83, 332, 366, 0.9175254702568054],
+    #                [0, 0, 0, 367, 639, 0.9693422317504883]]
+    # }
+    Tasks.face_human_hand_detection: [OutputKeys.OUTPUT],
+
+    # {
+    #   {'output': 'Happiness', 'boxes': (203, 104, 663, 564)}
+    # }
+    Tasks.face_emotion: [OutputKeys.OUTPUT, OutputKeys.BOXES],
+
+    # {
+    #     "masks": [
+    #           np.array # 2D array containing only 0, 255
+    #       ]
+    # }
+    Tasks.product_segmentation: [OutputKeys.MASKS],
 }

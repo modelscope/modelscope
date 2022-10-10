@@ -1,8 +1,4 @@
-"""
-Created on Tue Jul 11 06:54:28 2017
-
-@author: zhaoyafei
-"""
+# The implementation is adopted from https://github.com/TreB1eN/InsightFace_Pytorch/tree/master/mtcnn_pytorch
 
 import numpy as np
 from numpy.linalg import inv, lstsq

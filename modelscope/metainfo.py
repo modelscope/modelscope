@@ -40,6 +40,9 @@ class Models(object):
     ulfd = 'ulfd'
     video_inpainting = 'video-inpainting'
     hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -179,9 +182,16 @@ class Pipelines(object):
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
     video_inpainting = 'video-inpainting'
+    pst_action_recognition = 'patchshift-action-recognition'
     hand_static = 'hand-static'
+    face_human_hand_detection = 'face-human-hand-detection'
+    face_emotion = 'face-emotion'
+    product_segmentation = 'product-segmentation'
 
     # nlp tasks
+    automatic_post_editing = 'automatic-post-editing'
+    translation_quality_estimation = 'translation-quality-estimation'
+    domain_classification = 'domain-classification'
     sentence_similarity = 'sentence-similarity'
     word_segmentation = 'word-segmentation'
     part_of_speech = 'part-of-speech'

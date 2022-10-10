@@ -1,3 +1,4 @@
+# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 r"""SVD of linear degradation matrices described in the paper
     ``Denoising Diffusion Restoration Models.''
     @article{kawar2022denoising,

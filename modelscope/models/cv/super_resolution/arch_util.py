@@ -1,3 +1,5 @@
+# The implementation is adopted from BasicSR, made public available under the Apache 2.0 License
+# at https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/arch_util.py
 import collections.abc
 import math
 import warnings

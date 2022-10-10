@@ -1,4 +1,4 @@
-# The implementation is based on OSTrack, available at https://github.com/facebookresearch/VideoPose3D
+# The implementation is based on VideoPose3D, available at https://github.com/facebookresearch/VideoPose3D
 import torch
 import torch.nn as nn
 

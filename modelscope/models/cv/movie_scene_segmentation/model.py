@@ -67,7 +67,6 @@ class MovieSceneSegmentationModel(TorchModel):
                 mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-        self.infer_result = {'vid': [], 'sid': [], 'pred': []}
         sampling_method = self.cfg.dataset.sampling_method.name
         self.neighbor_size = self.cfg.dataset.sampling_method.params[
             sampling_method].neighbor_size
@@ -104,6 +103,8 @@ class MovieSceneSegmentationModel(TorchModel):
         shot_num = len(sids)
         cnt = shot_num // bs + 1
 
+        infer_sid, infer_pred = [], []
+        infer_result = {}
         for i in range(cnt):
             start = i * bs
             end = (i + 1) * bs if (i + 1) * bs < shot_num else shot_num
@@ -112,13 +113,14 @@ class MovieSceneSegmentationModel(TorchModel):
             input_ = torch.stack(input_)
             outputs = self.shared_step(input_)  # shape [b,2]
             prob = F.softmax(outputs, dim=1)
-            self.infer_result['sid'].extend(sid_.cpu().detach().numpy())
-            self.infer_result['pred'].extend(prob[:, 1].cpu().detach().numpy())
-        self.infer_result['pred'] = np.stack(self.infer_result['pred'])
+            infer_sid.extend(sid_.cpu().detach().numpy())
+            infer_pred.extend(prob[:, 1].cpu().detach().numpy())
+        infer_result.update({'pred': np.stack(infer_pred)})
+        infer_result.update({'sid': infer_sid})
 
-        assert len(self.infer_result['sid']) == len(sids)
-        assert len(self.infer_result['pred']) == len(inputs)
-        return self.infer_result
+        assert len(infer_result['sid']) == len(sids)
+        assert len(infer_result['pred']) == len(inputs)
+        return infer_result
 
     def shared_step(self, inputs):
         with torch.no_grad():
@@ -162,11 +164,12 @@ class MovieSceneSegmentationModel(TorchModel):
         thres = self.cfg.pipeline.save_threshold
 
         anno_dict = get_pred_boundary(pred_dict, thres)
-        scene_dict_lst, scene_list = pred2scene(self.shot2keyf, anno_dict)
+        scene_dict_lst, scene_list, shot_num, shot_dict_lst = pred2scene(
+            self.shot2keyf, anno_dict)
         if self.cfg.pipeline.save_split_scene:
             re_dir = scene2video(inputs['input_video_pth'], scene_list, thres)
             print(f'Split scene video saved to {re_dir}')
-        return len(scene_list), scene_dict_lst
+        return len(scene_list), scene_dict_lst, shot_num, shot_dict_lst
 
     def preprocess(self, inputs):
         logger.info('Begin shot detect......')

@@ -1,3 +1,5 @@
+# Part of the implementation is borrowed and modified from Face-Alignment,
+# publicly available at https://github.com/foamliu/Face-Alignment/blob/master/align_faces.py
 import cv2
 import numpy as np
 from skimage import transform as trans

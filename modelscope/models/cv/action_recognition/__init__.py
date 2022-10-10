@@ -7,11 +7,13 @@ if TYPE_CHECKING:
 
     from .models import BaseVideoModel
     from .tada_convnext import TadaConvNeXt
+    from .temporal_patch_shift_transformer import PatchShiftTransformer
 
 else:
     _import_structure = {
         'models': ['BaseVideoModel'],
         'tada_convnext': ['TadaConvNeXt'],
+        'temporal_patch_shift_transformer': ['PatchShiftTransformer']
     }
 
     import sys

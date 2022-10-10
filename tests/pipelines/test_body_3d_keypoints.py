@@ -20,7 +20,7 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.body_3d_keypoints
 
     def pipeline_inference(self, pipeline: Pipeline, pipeline_input):
-        output = pipeline(pipeline_input)
+        output = pipeline(pipeline_input, output_video='./result.mp4')
         poses = np.array(output[OutputKeys.POSES])
         print(f'result 3d points shape {poses.shape}')
 
@@ -28,7 +28,9 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_with_video_file(self):
         body_3d_keypoints = pipeline(
             Tasks.body_3d_keypoints, model=self.model_id)
-        self.pipeline_inference(body_3d_keypoints, self.test_video)
+        pipeline_input = self.test_video
+        self.pipeline_inference(
+            body_3d_keypoints, pipeline_input=pipeline_input)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub_with_video_stream(self):
@@ -37,12 +39,9 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
         if not cap.isOpened():
             raise Exception('modelscope error: %s cannot be decoded by OpenCV.'
                             % (self.test_video))
-        self.pipeline_inference(body_3d_keypoints, cap)
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_modelhub_default_model(self):
-        body_3d_keypoints = pipeline(Tasks.body_3d_keypoints)
-        self.pipeline_inference(body_3d_keypoints, self.test_video)
+        pipeline_input = self.test_video
+        self.pipeline_inference(
+            body_3d_keypoints, pipeline_input=pipeline_input)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_demo_compatibility(self):

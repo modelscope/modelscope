@@ -26,7 +26,7 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             model=model,
         )
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        result = pipeline_caption({'image': image})
+        result = pipeline_caption(image)
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -35,7 +35,7 @@ class MplugTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_captioning,
             model='damo/mplug_image-captioning_coco_base_en')
         image = Image.open('data/test/images/image_mplug_vqa.jpg')
-        result = pipeline_caption({'image': image})
+        result = pipeline_caption(image)
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

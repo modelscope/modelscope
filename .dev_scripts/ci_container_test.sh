@@ -6,6 +6,8 @@ awk -F: '/^[^#]/ { print $1 }' requirements/nlp.txt | xargs -n 1 pip install -f 
 pip install -r requirements/tests.txt
 
 git config --global --add safe.directory /Maas-lib
+git config --global user.email tmp
+git config --global user.name tmp.com
 
 # linter test
 # use internal project for pre-commit due to the network problem

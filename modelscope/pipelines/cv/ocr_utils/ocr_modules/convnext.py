@@ -1,11 +1,5 @@
-""" Contains various versions of ConvNext Networks.
-ConvNext Networks (ConvNext) were proposed in:
-  Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feichtenhofer, Trevor Darrell and Saining Xie
-  A ConvNet for the 2020s. CVPR 2022.
-Compared to https://github.com/facebookresearch/ConvNeXt,
-we obtain different ConvNext variants by changing the network depth, width,
-feature number, and downsample ratio.
-"""
+# Part of the implementation is borrowed and modified from ConvNext,
+# publicly available at https://github.com/facebookresearch/ConvNeXt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

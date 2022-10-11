@@ -113,12 +113,7 @@ def draw_face_detection_no_lm_result(img_path, detection_result):
 
 
 def draw_facial_expression_result(img_path, facial_expression_result):
-    label_idx = facial_expression_result[OutputKeys.LABELS]
-    map_list = [
-        'Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral'
-    ]
-    label = map_list[label_idx]
-
+    label = facial_expression_result[OutputKeys.LABELS]
     img = cv2.imread(img_path)
     assert img is not None, f"Can't read img: {img_path}"
     cv2.putText(

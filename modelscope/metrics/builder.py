@@ -18,6 +18,7 @@ class MetricKeys(object):
     SSIM = 'ssim'
     AVERAGE_LOSS = 'avg_loss'
     FScore = 'fscore'
+    FID = 'fid'
     BLEU_1 = 'bleu-1'
     BLEU_4 = 'bleu-4'
     ROUGE_1 = 'rouge-1'
@@ -39,6 +40,7 @@ task_default_metrics = {
     Tasks.image_captioning: [Metrics.text_gen_metric],
     Tasks.visual_question_answering: [Metrics.text_gen_metric],
     Tasks.movie_scene_segmentation: [Metrics.movie_scene_segmentation_metric],
+    Tasks.image_inpainting: [Metrics.image_inpainting_metric],
 }
 
 

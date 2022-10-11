@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .image_instance_segmentation_coco_dataset import ImageInstanceSegmentationCocoDataset
     from .movie_scene_segmentation import MovieSceneSegmentationDataset
     from .video_summarization_dataset import VideoSummarizationDataset
+    from .image_inpainting import ImageInpaintingDataset
     from .passage_ranking_dataset import PassageRankingDataset
 
 else:
@@ -24,6 +25,7 @@ else:
         ['ImageInstanceSegmentationCocoDataset'],
         'video_summarization_dataset': ['VideoSummarizationDataset'],
         'movie_scene_segmentation': ['MovieSceneSegmentationDataset'],
+        'image_inpainting': ['ImageInpaintingDataset'],
     }
     import sys
 

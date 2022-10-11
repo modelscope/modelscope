@@ -7,6 +7,8 @@ ffmpeg-python>=0.2.0
 ftfy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
+imgaug>=0.4.0
+kornia>=0.5.0
 lmdb
 lpips
 ml_collections

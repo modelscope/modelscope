@@ -181,6 +181,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
     Tasks.shop_segmentation: (Pipelines.shop_segmentation,
                               'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.image_inpainting: (Pipelines.image_inpainting,
+                             'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
     Tasks.hand_static: (Pipelines.hand_static,

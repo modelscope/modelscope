@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
+    from .image_inpainting_pipeline import ImageInpaintingPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .realtime_object_detection_pipeline import RealtimeObjectDetectionPipeline
     from .live_category_pipeline import LiveCategoryPipeline
@@ -99,6 +100,7 @@ else:
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generation_pipeline':
         ['Image2ImageGenerationPipeline'],
+        'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],

@@ -27,6 +27,7 @@ class Models(object):
     face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     image_reid_person = 'passvitb'
+    image_inpainting = 'FFTInpainting'
     video_summarization = 'pgl-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
@@ -179,6 +180,7 @@ class Pipelines(object):
     video_summarization = 'googlenet_pgl_video_summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
+    image_inpainting = 'fft-inpainting'
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
@@ -264,6 +266,7 @@ class Trainers(object):
     image_portrait_enhancement = 'image-portrait-enhancement'
     video_summarization = 'video-summarization'
     movie_scene_segmentation = 'movie-scene-segmentation'
+    image_inpainting = 'image-inpainting'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -363,6 +366,8 @@ class Metrics(object):
     video_summarization_metric = 'video-summarization-metric'
     # metric for movie-scene-segmentation task
     movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
+    # metric for inpainting task
+    image_inpainting_metric = 'image-inpainting-metric'
 
 
 class Optimizers(object):

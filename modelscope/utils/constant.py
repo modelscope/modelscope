@@ -47,6 +47,8 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
 
+    crowd_counting = 'crowd-counting'
+
     # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
@@ -54,6 +56,7 @@ class CVTasks(object):
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'
     image_portrait_enhancement = 'image-portrait-enhancement'
+    image_inpainting = 'image-inpainting'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
@@ -72,7 +75,6 @@ class CVTasks(object):
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
-    crowd_counting = 'crowd-counting'
     movie_scene_segmentation = 'movie-scene-segmentation'
 
     # video editing

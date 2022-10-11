@@ -1,3 +1,6 @@
+# The implementation is adopted from Jingwen He,
+# made publicly available at https://github.com/hejingwenhejingwen/CSRNet
+
 import functools
 import math
 

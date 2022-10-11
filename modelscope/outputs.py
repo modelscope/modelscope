@@ -337,6 +337,22 @@ TASK_OUTPUTS = {
         OutputKeys.SCENE_META_LIST
     ],
 
+    # video summarization result for a single video
+    # {
+    #        "output":
+    #        [
+    #           {
+    #               "frame": [start_frame, end_frame]
+    #               "timestamps": [start_time, end_time]
+    #           },
+    #           {
+    #               "frame": [start_frame, end_frame]
+    #               "timestamps": [start_time, end_time]
+    #           }
+    #        ]
+    # }
+    Tasks.video_summarization: [OutputKeys.OUTPUT],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample

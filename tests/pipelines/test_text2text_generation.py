@@ -18,7 +18,7 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id = 'damo/t5-cn-base-test'
         self.input = '中国的首都位于<extra_id_0>。'
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_T5(self):
         cache_path = snapshot_download(self.model_id)
         model = T5ForConditionalGeneration(cache_path)
@@ -40,7 +40,7 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             preprocessor=preprocessor)
         print(pipeline_ins(self.input))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_pipeline_with_model_id(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation, model=self.model_id)

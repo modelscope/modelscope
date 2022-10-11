@@ -417,14 +417,12 @@ class Text2TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
                  tokenizer=None,
                  mode=ModeKeys.INFERENCE,
                  **kwargs):
-        self.tokenizer = self.build_tokenizer(
-            model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = kwargs.get('truncation', 'do_not_truncate')
         kwargs['padding'] = kwargs.get('padding', False)
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
     def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         text_a, _, _ = self.parse_text_and_label(data)

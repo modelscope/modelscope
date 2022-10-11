@@ -404,6 +404,9 @@ class Hooks(object):
     IterTimerHook = 'IterTimerHook'
     EvaluationHook = 'EvaluationHook'
 
+    # Compression
+    SparsityHook = 'SparsityHook'
+
 
 class LR_Schedulers(object):
     """learning rate scheduler is defined here

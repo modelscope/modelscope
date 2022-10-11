@@ -222,7 +222,7 @@ TASK_OUTPUTS = {
 
     # 3D human body keypoints detection result for single sample
     # {
-    #   "poses": [		    # 3d pose coordinate in camera coordinate
+    #   "keypoints": [		    # 3d pose coordinate in camera coordinate
     #     	[[x, y, z]*17],	# joints of per image
     #     	[[x, y, z]*17],
     #     	...
@@ -236,7 +236,7 @@ TASK_OUTPUTS = {
     # and is only avaialbe when the "render" option is enabled.
     # }
     Tasks.body_3d_keypoints:
-    [OutputKeys.POSES, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
     # 2D hand keypoints result for single sample
     # {

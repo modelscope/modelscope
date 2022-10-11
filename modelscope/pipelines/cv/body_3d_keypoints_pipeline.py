@@ -180,7 +180,7 @@ class Body3DKeypointsPipeline(Pipeline):
         return res
 
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        res = {OutputKeys.POSES: [], OutputKeys.TIMESTAMPS: []}
+        res = {OutputKeys.KEYPOINTS: [], OutputKeys.TIMESTAMPS: []}
 
         if not input['success']:
             pass
@@ -197,7 +197,7 @@ class Body3DKeypointsPipeline(Pipeline):
                 self.render_prediction(pred_3d_pose, output_video_path)
                 res[OutputKeys.OUTPUT_VIDEO] = output_video_path
 
-            res[OutputKeys.POSES] = pred_3d_pose
+            res[OutputKeys.KEYPOINTS] = pred_3d_pose
             res[OutputKeys.TIMESTAMPS] = self.timestamps
         return res
 

@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from copy import deepcopy
 from typing import Any, Dict, Union

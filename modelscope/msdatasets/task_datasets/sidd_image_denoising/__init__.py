@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .image_denoise_dataset import PairedImageDataset
+    from .sidd_image_denoising_dataset import SiddImageDenoisingDataset
 
 else:
     _import_structure = {
-        'image_denoise_dataset': ['PairedImageDataset'],
+        'sidd_image_denoising_dataset': ['SiddImageDenoisingDataset'],
     }
 
     import sys

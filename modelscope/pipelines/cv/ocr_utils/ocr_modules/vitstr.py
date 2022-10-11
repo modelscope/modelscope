@@ -1,10 +1,5 @@
-""" Contains various versions of ViTSTR.
-ViTSTR were proposed in:
-  Rowel Atienza
-  Vision transformer for fast and efficient scene text recognition. ICDAR 2021.
-Compared to https://github.com/roatienza/deep-text-recognition-benchmark,
-we obtain different ViTSTR variants by changing the network patch_size and in_chans.
-"""
+# Part of the implementation is borrowed and modified from ViTSTR,
+# publicly available at https://github.com/roatienza/deep-text-recognition-benchmark
 from __future__ import absolute_import, division, print_function
 import logging
 from copy import deepcopy

@@ -1,7 +1,5 @@
-'''Referenced from rwightman's pytorch-image-models(timm).
-Github: https://github.com/rwightman/pytorch-image-models
-We use some modules and modify the parameters according to our network.
-'''
+# Part of the implementation is borrowed and modified from timm,
+# publicly available at https://github.com/rwightman/pytorch-image-models
 import collections.abc
 import logging
 import math

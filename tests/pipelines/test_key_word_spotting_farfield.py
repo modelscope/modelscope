@@ -22,18 +22,14 @@ class KWSFarfieldTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_normal(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
-        inputs = {'input_file': os.path.join(os.getcwd(), TEST_SPEECH_FILE)}
-        result = kws(inputs)
+        result = kws(os.path.join(os.getcwd(), TEST_SPEECH_FILE))
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_mono(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
-        inputs = {
-            'input_file': os.path.join(os.getcwd(), TEST_SPEECH_FILE_MONO)
-        }
-        result = kws(inputs)
+        result = kws(os.path.join(os.getcwd(), TEST_SPEECH_FILE_MONO))
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
 
@@ -41,17 +37,6 @@ class KWSFarfieldTest(unittest.TestCase):
     def test_url(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
         result = kws(TEST_SPEECH_URL)
-        self.assertEqual(len(result['kws_list']), 5)
-        print(result['kws_list'][-1])
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_output(self):
-        kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
-        inputs = {
-            'input_file': os.path.join(os.getcwd(), TEST_SPEECH_FILE),
-            'output_file': 'output.wav'
-        }
-        result = kws(inputs)
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
 

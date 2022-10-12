@@ -138,8 +138,8 @@ class GitCommandWrapper(metaclass=Singleton):
                 repo_base_dir, repo_name, user_name)
             response = self._run_git_command(*config_user_name_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))
-            config_user_email_args = '-C %s/%s config user.name %s' % (
-                repo_base_dir, repo_name, user_name)
+            config_user_email_args = '-C %s/%s config user.email %s' % (
+                repo_base_dir, repo_name, user_email)
             response = self._run_git_command(
                 *config_user_email_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))

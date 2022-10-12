@@ -122,11 +122,7 @@ class FacialExpressionRecognitionPipeline(Pipeline):
         result = self.fer(input)
         assert result is not None
         scores = result[0].tolist()
-        labels = result[1].tolist()
-        return {
-            OutputKeys.SCORES: scores,
-            OutputKeys.LABELS: self.map_list[labels]
-        }
+        return {OutputKeys.SCORES: scores, OutputKeys.LABELS: self.map_list}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

@@ -37,6 +37,7 @@ class OutputKeys(object):
     WORD = 'word'
     KWS_LIST = 'kws_list'
     HISTORY = 'history'
+    QUERT_RESULT = 'query_result'
     TIMESTAMPS = 'timestamps'
     SHOT_NUM = 'shot_num'
     SCENE_NUM = 'scene_num'

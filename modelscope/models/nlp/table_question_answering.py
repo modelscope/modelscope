@@ -3,9 +3,11 @@
 import os
 from typing import Dict
 
+import json
 import numpy
 import torch
 import torch.nn.functional as F
+import tqdm
 from transformers import BertTokenizer
 
 from modelscope.metainfo import Models
@@ -82,7 +84,6 @@ class TableQuestionAnswering(Model):
 
                 if ntok.startswith('##'):
                     ntok = ntok.replace('##', '')
-
                 tok = nlu1[idx:idx + 1].lower()
                 if ntok == tok:
                     conv_dict[i] = [idx, idx + 1]

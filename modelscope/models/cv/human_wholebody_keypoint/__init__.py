@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mmdet_model import DetectionModel
-    from .yolox_pai import YOLOX
+    from .human_wholebody_keypoint import HumanWholeBodyKeypoint
 
 else:
     _import_structure = {
-        'mmdet_model': ['DetectionModel'],
-        'yolox_pai': ['YOLOX'],
+        'human_wholebody_keypoint': ['HumanWholeBodyKeypoint']
     }
 
     import sys

@@ -203,7 +203,7 @@ TASK_OUTPUTS = {
 
     # human body keypoints detection result for single sample
     # {
-    #   "poses": [
+    #   "keypoints": [
     #               [[x, y]*15],
     #               [[x, y]*15],
     #               [[x, y]*15]
@@ -220,7 +220,7 @@ TASK_OUTPUTS = {
     #             ]
     # }
     Tasks.body_2d_keypoints:
-    [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
+    [OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES],
 
     # 3D human body keypoints detection result for single sample
     # {
@@ -338,6 +338,21 @@ TASK_OUTPUTS = {
         OutputKeys.SHOT_NUM, OutputKeys.SHOT_META_LIST, OutputKeys.SCENE_NUM,
         OutputKeys.SCENE_META_LIST
     ],
+
+    # human whole body keypoints detection result for single sample
+    # {
+    #   "keypoints": [
+    #               [[x, y]*133],
+    #               [[x, y]*133],
+    #               [[x, y]*133]
+    #             ]
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.human_wholebody_keypoint: [OutputKeys.KEYPOINTS, OutputKeys.BOXES],
 
     # video summarization result for a single video
     # {

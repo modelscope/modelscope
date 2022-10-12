@@ -80,7 +80,7 @@ def realtime_object_detection_bbox_vis(image, bboxes):
 
 
 def draw_keypoints(output, original_image):
-    poses = np.array(output[OutputKeys.POSES])
+    poses = np.array(output[OutputKeys.KEYPOINTS])
     scores = np.array(output[OutputKeys.SCORES])
     boxes = np.array(output[OutputKeys.BOXES])
     assert len(poses) == len(scores) and len(poses) == len(boxes)
@@ -234,3 +234,35 @@ def show_video_summarization_result(video_in_path, result, video_save_path):
             video_writer.write(frame)
     video_writer.release()
     cap.release()
+
+
+def show_image_object_detection_auto_result(img_path,
+                                            detection_result,
+                                            save_path=None):
+    scores = detection_result[OutputKeys.SCORES]
+    labels = detection_result[OutputKeys.LABELS]
+    bboxes = detection_result[OutputKeys.BOXES]
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+
+    for (score, label, box) in zip(scores, labels, bboxes):
+        cv2.rectangle(img, (int(box[0]), int(box[1])),
+                      (int(box[2]), int(box[3])), (0, 0, 255), 2)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (int(box[0]), int(box[1])),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+        cv2.putText(
+            img,
+            label, (int((box[0] + box[2]) * 0.5), int(box[1])),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+
+    if save_path is not None:
+        cv2.imwrite(save_path, img)
+    return img

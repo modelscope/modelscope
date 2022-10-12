@@ -59,6 +59,18 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_demo_compatibility(self):
         self.compatibility_check()
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_image_object_detection_auto_pipeline(self):
+        model_id = 'damo/cv_yolox_image-object-detection-auto'
+        test_image = 'data/test/images/auto_demo.jpg'
+
+        image_object_detection_auto = pipeline(
+            Tasks.image_object_detection, model=model_id)
+
+        result = image_object_detection_auto(test_image)[0]
+        image_object_detection_auto.show_result(test_image, result,
+                                                'auto_demo_ret.jpg')
+
 
 if __name__ == '__main__':
     unittest.main()

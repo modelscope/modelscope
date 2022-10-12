@@ -145,7 +145,7 @@ class Body3DKeypointsPipeline(Pipeline):
             kps_2d = self.human_body_2d_kps_detector(frame)
             box = kps_2d['boxes'][
                 0]  # box: [[[x1, y1], [x2, y2]]], N human boxes per frame, [0] represent using first detected bbox
-            pose = kps_2d['poses'][0]  # keypoints: [15, 2]
+            pose = kps_2d['keypoints'][0]  # keypoints: [15, 2]
             score = kps_2d['scores'][0]  # keypoints: [15, 2]
             all_2d_poses.append(pose)
             all_boxes_with_socre.append(

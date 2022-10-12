@@ -40,6 +40,7 @@ class Models(object):
     mtcnn = 'mtcnn'
     ulfd = 'ulfd'
     video_inpainting = 'video-inpainting'
+    human_wholebody_keypoint = 'human-wholebody-keypoint'
     hand_static = 'hand-static'
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
@@ -49,6 +50,7 @@ class Models(object):
     # EasyCV models
     yolox = 'YOLOX'
     segformer = 'Segformer'
+    image_object_detection_auto = 'image-object-detection-auto'
 
     # nlp models
     bert = 'bert'
@@ -170,6 +172,7 @@ class Pipelines(object):
     ocr_recognition = 'convnextTiny-ocr-recognition'
     image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
+    image_object_detection_auto = 'yolox_image-object-detection-auto'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     tinynas_detection = 'tinynas-detection'
@@ -185,6 +188,7 @@ class Pipelines(object):
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
     video_inpainting = 'video-inpainting'
+    human_wholebody_keypoint = 'hrnetw48_human-wholebody-keypoint_image'
     pst_action_recognition = 'patchshift-action-recognition'
     hand_static = 'hand-static'
     face_human_hand_detection = 'face-human-hand-detection'
@@ -427,6 +431,7 @@ class Datasets(object):
     """
     ClsDataset = 'ClsDataset'
     Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    HumanWholeBodyKeypointDataset = 'HumanWholeBodyKeypointDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'

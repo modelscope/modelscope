@@ -46,7 +46,10 @@ if TYPE_CHECKING:
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
     from .shop_segmentation_pipleline import ShopSegmentationPipeline
-    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
+    from .easycv_pipelines import (EasyCVDetectionPipeline,
+                                   EasyCVSegmentationPipeline,
+                                   Face2DKeypointsPipeline,
+                                   HumanWholebodyKeypointsPipeline)
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
     from .mog_face_detection_pipeline import MogFaceDetectionPipeline
@@ -109,8 +112,10 @@ else:
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
         'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
         'easycv_pipeline': [
-            'EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline',
-            'Face2DKeypointsPipeline'
+            'EasyCVDetectionPipeline',
+            'EasyCVSegmentationPipeline',
+            'Face2DKeypointsPipeline',
+            'HumanWholebodyKeypointsPipeline',
         ],
         'text_driven_segmentation_pipeline':
         ['TextDrivenSegmentationPipeline'],

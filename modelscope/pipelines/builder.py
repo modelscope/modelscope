@@ -75,8 +75,6 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_bart_text-error-correction_chinese'),
     Tasks.image_captioning: (Pipelines.image_captioning,
                              'damo/ofa_image-caption_coco_large_en'),
-    Tasks.image_body_reshaping: (Pipelines.image_body_reshaping,
-                                 'damo/cv_flow-based-body-reshaping_damo'),
     Tasks.image_portrait_stylization:
     (Pipelines.person_image_cartoon,
      'damo/cv_unet_person-image-cartoon_compound-models'),
@@ -159,6 +157,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_object_detection:
+    (Pipelines.image_object_detection_auto,
+     'damo/cv_yolox_image-object-detection-auto'),
     Tasks.ocr_recognition:
     (Pipelines.ocr_recognition,
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
@@ -186,6 +187,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.human_wholebody_keypoint:
+    (Pipelines.human_wholebody_keypoint,
+     'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
     Tasks.face_human_hand_detection:

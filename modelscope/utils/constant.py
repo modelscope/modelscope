@@ -29,6 +29,7 @@ class CVTasks(object):
     body_3d_keypoints = 'body-3d-keypoints'
     hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
+    human_wholebody_keypoint = 'human-wholebody-keypoint'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'

@@ -13,7 +13,7 @@ class RetinaFaceDataset(CustomDataset):
     CLASSES = ('FG', )
 
     def __init__(self, min_size=None, **kwargs):
-        self.NK = 5
+        self.NK = kwargs.pop('num_kps', 5)
         self.cat2label = {cat: i for i, cat in enumerate(self.CLASSES)}
         self.min_size = min_size
         self.gt_path = kwargs.get('gt_path')
@@ -33,7 +33,8 @@ class RetinaFaceDataset(CustomDataset):
         if len(values) > 4:
             if len(values) > 5:
                 kps = np.array(
-                    values[4:19], dtype=np.float32).reshape((self.NK, 3))
+                    values[4:4 + self.NK * 3], dtype=np.float32).reshape(
+                        (self.NK, 3))
                 for li in range(kps.shape[0]):
                     if (kps[li, :] == -1).all():
                         kps[li][2] = 0.0  # weight = 0, ignore

@@ -17,6 +17,7 @@ def multiclass_nms(multi_bboxes,
 
     Args:
         multi_bboxes (Tensor): shape (n, #class*4) or (n, 4)
+        multi_kps (Tensor): shape (n, #class*num_kps*2) or (n, num_kps*2)
         multi_scores (Tensor): shape (n, #class), where the last column
             contains scores of the background class, but this will be ignored.
         score_thr (float): bbox threshold, bboxes with scores lower than it
@@ -36,16 +37,18 @@ def multiclass_nms(multi_bboxes,
     num_classes = multi_scores.size(1) - 1
     # exclude background category
     kps = None
+    if multi_kps is not None:
+        num_kps = int((multi_kps.shape[1] / num_classes) / 2)
     if multi_bboxes.shape[1] > 4:
         bboxes = multi_bboxes.view(multi_scores.size(0), -1, 4)
         if multi_kps is not None:
-            kps = multi_kps.view(multi_scores.size(0), -1, 10)
+            kps = multi_kps.view(multi_scores.size(0), -1, num_kps * 2)
     else:
         bboxes = multi_bboxes[:, None].expand(
             multi_scores.size(0), num_classes, 4)
         if multi_kps is not None:
             kps = multi_kps[:, None].expand(
-                multi_scores.size(0), num_classes, 10)
+                multi_scores.size(0), num_classes, num_kps * 2)
 
     scores = multi_scores[:, :-1]
     if score_factors is not None:
@@ -56,7 +59,7 @@ def multiclass_nms(multi_bboxes,
 
     bboxes = bboxes.reshape(-1, 4)
     if kps is not None:
-        kps = kps.reshape(-1, 10)
+        kps = kps.reshape(-1, num_kps * 2)
     scores = scores.reshape(-1)
     labels = labels.reshape(-1)
 

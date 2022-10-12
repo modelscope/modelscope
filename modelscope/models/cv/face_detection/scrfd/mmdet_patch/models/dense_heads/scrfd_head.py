@@ -103,6 +103,7 @@ class SCRFDHead(AnchorHead):
                  scale_mode=1,
                  dw_conv=False,
                  use_kps=False,
+                 num_kps=5,
                  loss_kps=dict(
                      type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=0.1),
                  **kwargs):
@@ -116,7 +117,7 @@ class SCRFDHead(AnchorHead):
         self.scale_mode = scale_mode
         self.use_dfl = True
         self.dw_conv = dw_conv
-        self.NK = 5
+        self.NK = num_kps
         self.extra_flops = 0.0
         if loss_dfl is None or not loss_dfl:
             self.use_dfl = False
@@ -323,8 +324,8 @@ class SCRFDHead(AnchorHead):
                 batch_size, -1, self.cls_out_channels).sigmoid()
             bbox_pred = bbox_pred.permute(0, 2, 3,
                                           1).reshape(batch_size, -1, 4)
-            kps_pred = kps_pred.permute(0, 2, 3, 1).reshape(batch_size, -1, 10)
-
+            kps_pred = kps_pred.permute(0, 2, 3,
+                                        1).reshape(batch_size, -1, self.NK * 2)
         return cls_score, bbox_pred, kps_pred
 
     def forward_train(self,
@@ -788,7 +789,7 @@ class SCRFDHead(AnchorHead):
                 if self.use_dfl:
                     kps_pred = self.integral(kps_pred) * stride[0]
                 else:
-                    kps_pred = kps_pred.reshape((-1, 10)) * stride[0]
+                    kps_pred = kps_pred.reshape((-1, self.NK * 2)) * stride[0]
 
             nms_pre = cfg.get('nms_pre', -1)
             if nms_pre > 0 and scores.shape[0] > nms_pre:
@@ -815,7 +816,7 @@ class SCRFDHead(AnchorHead):
             mlvl_bboxes /= mlvl_bboxes.new_tensor(scale_factor)
             if mlvl_kps is not None:
                 scale_factor2 = torch.tensor(
-                    [scale_factor[0], scale_factor[1]] * 5)
+                    [scale_factor[0], scale_factor[1]] * self.NK)
                 mlvl_kps /= scale_factor2.to(mlvl_kps.device)
 
         mlvl_scores = torch.cat(mlvl_scores)

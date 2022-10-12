@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 
-def bbox2result(bboxes, labels, num_classes, kps=None):
+def bbox2result(bboxes, labels, num_classes, kps=None, num_kps=5):
     """Convert detection results to a list of numpy arrays.
 
     Args:
@@ -17,7 +17,7 @@ def bbox2result(bboxes, labels, num_classes, kps=None):
     Returns:
         list(ndarray): bbox results of each class
     """
-    bbox_len = 5 if kps is None else 5 + 10  # if has kps, add 10 kps into bbox
+    bbox_len = 5 if kps is None else 5 + num_kps * 2  # if has kps, add num_kps*2 into bbox
     if bboxes.shape[0] == 0:
         return [
             np.zeros((0, bbox_len), dtype=np.float32)

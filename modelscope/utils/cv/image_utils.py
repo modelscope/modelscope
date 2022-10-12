@@ -154,6 +154,54 @@ def draw_face_detection_result(img_path, detection_result):
     return img
 
 
+def draw_card_detection_result(img_path, detection_result):
+
+    def warp_img(src_img, kps, ratio):
+        short_size = 500
+        if ratio > 1:
+            obj_h = short_size
+            obj_w = int(obj_h * ratio)
+        else:
+            obj_w = short_size
+            obj_h = int(obj_w / ratio)
+        input_pts = np.float32([kps[0], kps[1], kps[2], kps[3]])
+        output_pts = np.float32([[0, obj_h - 1], [0, 0], [obj_w - 1, 0],
+                                 [obj_w - 1, obj_h - 1]])
+        M = cv2.getPerspectiveTransform(input_pts, output_pts)
+        obj_img = cv2.warpPerspective(src_img, M, (obj_w, obj_h))
+        return obj_img
+
+    bboxes = np.array(detection_result[OutputKeys.BOXES])
+    kpss = np.array(detection_result[OutputKeys.KEYPOINTS])
+    scores = np.array(detection_result[OutputKeys.SCORES])
+    img_list = []
+    ver_col = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255)]
+    img = cv2.imread(img_path)
+    img_list += [img]
+    assert img is not None, f"Can't read img: {img_path}"
+    for i in range(len(scores)):
+        bbox = bboxes[i].astype(np.int32)
+        kps = kpss[i].reshape(-1, 2).astype(np.int32)
+        _w = (kps[0][0] - kps[3][0])**2 + (kps[0][1] - kps[3][1])**2
+        _h = (kps[0][0] - kps[1][0])**2 + (kps[0][1] - kps[1][1])**2
+        ratio = 1.59 if _w >= _h else 1 / 1.59
+        card_img = warp_img(img, kps, ratio)
+        img_list += [card_img]
+        score = scores[i]
+        x1, y1, x2, y2 = bbox
+        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 4)
+        for k, kp in enumerate(kps):
+            cv2.circle(img, tuple(kp), 1, color=ver_col[k], thickness=10)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (x1, y2),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+    return img_list
+
+
 def created_boxed_image(image_in, box):
     image = load_image(image_in)
     img = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)

@@ -90,6 +90,25 @@ TASK_OUTPUTS = {
     Tasks.face_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
+    # card detection result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #       "keypoints": [
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #       ],
+    #   }
+    Tasks.card_detection:
+    [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
+
     # facial expression recognition result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],

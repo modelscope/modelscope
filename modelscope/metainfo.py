@@ -148,6 +148,7 @@ class Pipelines(object):
     salient_detection = 'u2net-salient-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
+    card_detection = 'resnet-card-detection-scrfd34gkps'
     ulfd_face_detection = 'manual-face-detection-ulfd'
     facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     retina_face_detection = 'resnet50-face-detection-retinaface'
@@ -270,6 +271,8 @@ class Trainers(object):
     image_portrait_enhancement = 'image-portrait-enhancement'
     video_summarization = 'video-summarization'
     movie_scene_segmentation = 'movie-scene-segmentation'
+    face_detection_scrfd = 'face-detection-scrfd'
+    card_detection_scrfd = 'card-detection-scrfd'
     image_inpainting = 'image-inpainting'
 
     # nlp trainers

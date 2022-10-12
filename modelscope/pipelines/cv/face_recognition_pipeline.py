@@ -49,7 +49,7 @@ class FaceRecognitionPipeline(Pipeline):
         # face detect pipeline
         det_model_id = 'damo/cv_resnet_facedetection_scrfd10gkps'
         self.face_detection = pipeline(
-            Tasks.face_detection, model=det_model_id)
+            Tasks.face_detection, model=det_model_id, model_revision='v2')
 
     def _choose_face(self,
                      det_result,

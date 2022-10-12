@@ -19,6 +19,7 @@ class CVTasks(object):
     # human face body related
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
+    card_detection = 'card-detection'
     face_recognition = 'face-recognition'
     facial_expression_recognition = 'facial-expression-recognition'
     face_2d_keypoints = 'face-2d-keypoints'

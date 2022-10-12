@@ -17,7 +17,7 @@ mmdet>=2.25.0
 networkx>=2.5
 numba
 onnxruntime>=1.10
-pai-easycv>=0.6.3.6
+pai-easycv>=0.6.3.7
 pandas
 psutil
 regex

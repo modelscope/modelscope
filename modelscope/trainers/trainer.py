@@ -828,7 +828,6 @@ class EpochBasedTrainer(BaseTrainer):
         self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
-            time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
                 if i < self.inner_iter:
                     # inner_iter may be read out from the checkpoint file, so skip the trained iters in the epoch.
@@ -852,7 +851,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._inner_iter = 0
             self._epoch += 1
 
-        time.sleep(1)  # wait for some hooks like loggers to finish
         self.invoke_hook(TrainerStages.after_run)
 
     def evaluation_loop(self, data_loader, metric_classes):

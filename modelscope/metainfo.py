@@ -285,6 +285,7 @@ class Trainers(object):
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
 
 
 class Preprocessors(object):

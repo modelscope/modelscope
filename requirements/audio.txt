@@ -14,7 +14,11 @@ nltk
 numpy<=1.18
 # protobuf version beyond 3.20.0 is not compatible with TensorFlow 1.x, therefore is discouraged.
 protobuf>3,<3.21.0
-py_sound_connect
+ptflops
+py_sound_connect>=0.1
+pytorch_wavelets
+PyWavelets>=1.0.0
+scikit-learn
 SoundFile>0.10
 sox
 torchaudio

@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Part of the implementation is borrowed from huggingface/transformers.
-from collections import Mapping
+from collections.abc import Mapping
 
 
 def torch_nested_numpify(tensors):

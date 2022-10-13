@@ -26,6 +26,7 @@ else:
         'video_summarization_dataset': ['VideoSummarizationDataset'],
         'movie_scene_segmentation': ['MovieSceneSegmentationDataset'],
         'image_inpainting': ['ImageInpaintingDataset'],
+        'sidd_image_denoising_dataset': ['SiddImageDenoisingDataset'],
     }
     import sys
 

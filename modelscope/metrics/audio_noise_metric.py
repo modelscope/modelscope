@@ -35,6 +35,8 @@ class AudioNoiseMetric(Metric):
         total_loss = avg_loss + avg_amp + avg_phase + avg_sisnr
         return {
             'total_loss': total_loss.item(),
-            'avg_sisnr': avg_sisnr.item(),
+            # model use opposite number of sisnr as a calculation shortcut.
+            # revert it in evaluation result
+            'avg_sisnr': -avg_sisnr.item(),
             MetricKeys.AVERAGE_LOSS: avg_loss.item()
         }

@@ -27,67 +27,50 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
 
     def setUp(self) -> None:
         self.task = Tasks.text_to_speech
-        zhcn_text = '今天北京天气怎么样'
-        en_text = 'How is the weather in Beijing?'
-        zhcn_voice = ['zhitian_emo', 'zhizhe_emo', 'zhiyan_emo', 'zhibei_emo']
-        enus_voice = ['andy', 'annie']
-        engb_voice = ['luca', 'luna']
-        self.tts_test_cases = []
-        for voice in zhcn_voice:
-            model_id = 'damo/speech_sambert-hifigan_tts_%s_%s_16k' % (voice,
-                                                                      'zh-cn')
-            self.tts_test_cases.append({
-                'voice': voice,
-                'model_id': model_id,
-                'text': zhcn_text
-            })
-        for voice in enus_voice:
-            model_id = 'damo/speech_sambert-hifigan_tts_%s_%s_16k' % (voice,
-                                                                      'en-us')
-            self.tts_test_cases.append({
-                'voice': voice,
-                'model_id': model_id,
-                'text': en_text
-            })
-        for voice in engb_voice:
-            model_id = 'damo/speech_sambert-hifigan_tts_%s_%s_16k' % (voice,
-                                                                      'en-gb')
-            self.tts_test_cases.append({
-                'voice': voice,
-                'model_id': model_id,
-                'text': en_text
-            })
-        zhcn_model_id = 'damo/speech_sambert-hifigan_tts_zh-cn_16k'
-        enus_model_id = 'damo/speech_sambert-hifigan_tts_en-us_16k'
-        engb_model_id = 'damo/speech_sambert-hifigan_tts_en-gb_16k'
-        self.tts_test_cases.append({
-            'voice': 'zhcn',
-            'model_id': zhcn_model_id,
-            'text': zhcn_text
-        })
-        self.tts_test_cases.append({
-            'voice': 'enus',
-            'model_id': enus_model_id,
-            'text': en_text
-        })
-        self.tts_test_cases.append({
-            'voice': 'engb',
-            'model_id': engb_model_id,
-            'text': en_text
-        })
+        self.zhcn_text = '今天北京天气怎么样'
+        self.en_text = 'How is the weather in Beijing?'
+        self.zhcn_voices = [
+            'zhitian_emo', 'zhizhe_emo', 'zhiyan_emo', 'zhibei_emo', 'zhcn'
+        ]
+        self.zhcn_models = [
+            'damo/speech_sambert-hifigan_tts_zhitian_emo_zh-cn_16k',
+            'damo/speech_sambert-hifigan_tts_zhizhe_emo_zh-cn_16k',
+            'damo/speech_sambert-hifigan_tts_zhiyan_emo_zh-cn_16k',
+            'damo/speech_sambert-hifigan_tts_zhibei_emo_zh-cn_16k',
+            'damo/speech_sambert-hifigan_tts_zh-cn_16k'
+        ]
+        self.en_voices = ['luca', 'luna', 'andy', 'annie', 'engb', 'enus']
+        self.en_models = [
+            'damo/speech_sambert-hifigan_tts_luca_en-gb_16k',
+            'damo/speech_sambert-hifigan_tts_luna_en-gb_16k',
+            'damo/speech_sambert-hifigan_tts_andy_en-us_16k',
+            'damo/speech_sambert-hifigan_tts_annie_en-us_16k',
+            'damo/speech_sambert-hifigan_tts_en-gb_16k',
+            'damo/speech_sambert-hifigan_tts_en-us_16k'
+        ]
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_pipeline(self):
-        for case in self.tts_test_cases:
-            logger.info('test %s' % case['voice'])
+        for i in range(len(self.zhcn_voices)):
+            logger.info('test %s' % self.zhcn_voices[i])
             model = Model.from_pretrained(
-                model_name_or_path=case['model_id'], revision='pytorch_am')
+                model_name_or_path=self.zhcn_models[i], revision='pytorch_am')
             sambert_hifigan_tts = pipeline(task=self.task, model=model)
             self.assertTrue(sambert_hifigan_tts is not None)
-            output = sambert_hifigan_tts(input=case['text'])
+            output = sambert_hifigan_tts(input=self.zhcn_text)
             self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
             pcm = output[OutputKeys.OUTPUT_PCM]
-            write('output_%s.wav' % case['voice'], 16000, pcm)
+            write('output_%s.wav' % self.zhcn_voices[i], 16000, pcm)
+        for i in range(len(self.en_voices)):
+            logger.info('test %s' % self.en_voices[i])
+            model = Model.from_pretrained(
+                model_name_or_path=self.en_models[i], revision='pytorch_am')
+            sambert_hifigan_tts = pipeline(task=self.task, model=model)
+            self.assertTrue(sambert_hifigan_tts is not None)
+            output = sambert_hifigan_tts(input=self.en_text)
+            self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
+            pcm = output[OutputKeys.OUTPUT_PCM]
+            write('output_%s.wav' % self.en_voices[i], 16000, pcm)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

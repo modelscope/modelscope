@@ -50,6 +50,7 @@ class Models(object):
     # EasyCV models
     yolox = 'YOLOX'
     segformer = 'Segformer'
+    hand_2d_keypoints = 'HRNet-Hand2D-Keypoints'
     image_object_detection_auto = 'image-object-detection-auto'
 
     # nlp models
@@ -439,6 +440,7 @@ class Datasets(object):
     """
     ClsDataset = 'ClsDataset'
     Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
     HumanWholeBodyKeypointDataset = 'HumanWholeBodyKeypointDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'

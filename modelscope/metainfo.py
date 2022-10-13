@@ -228,6 +228,9 @@ class Pipelines(object):
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    translation_en_to_de = 'translation_en_to_de'  # keep it underscore
+    translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
+    translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -314,6 +317,7 @@ class Preprocessors(object):
     bert_seq_cls_tokenizer = 'bert-seq-cls-tokenizer'
     text_gen_tokenizer = 'text-gen-tokenizer'
     text2text_gen_preprocessor = 'text2text-gen-preprocessor'
+    text2text_translate_preprocessor = 'text2text-translate-preprocessor'
     token_cls_tokenizer = 'token-cls-tokenizer'
     ner_tokenizer = 'ner-tokenizer'
     nli_tokenizer = 'nli-tokenizer'

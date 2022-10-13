@@ -12,7 +12,8 @@ from modelscope.metainfo import Models, Preprocessors
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.config import Config, ConfigFields
+from modelscope.utils.config import (Config, ConfigFields,
+                                     use_task_specific_params)
 from modelscope.utils.constant import Fields, InputFields, ModeKeys, ModelFile
 from modelscope.utils.hub import get_model_type, parse_label_mapping
 from modelscope.utils.logger import get_logger

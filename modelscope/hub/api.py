@@ -24,8 +24,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadMode)
 from modelscope.utils.logger import get_logger
 from .errors import (InvalidParameter, NotExistError, RequestError,
-                     datahub_raise_on_error, handle_http_response, is_ok,
-                     raise_on_error)
+                     datahub_raise_on_error, handle_http_post_error,
+                     handle_http_response, is_ok, raise_on_error)
 from .utils.utils import (get_dataset_hub_endpoint, get_endpoint,
                           model_id_to_group_owner_name)
 
@@ -105,17 +105,15 @@ class HubApi:
 
         path = f'{self.endpoint}/api/v1/models'
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        r = requests.post(
-            path,
-            json={
-                'Path': owner_or_group,
-                'Name': name,
-                'ChineseName': chinese_name,
-                'Visibility': visibility,  # server check
-                'License': license
-            },
-            cookies=cookies)
-        r.raise_for_status()
+        body = {
+            'Path': owner_or_group,
+            'Name': name,
+            'ChineseName': chinese_name,
+            'Visibility': visibility,  # server check
+            'License': license
+        }
+        r = requests.post(path, json=body, cookies=cookies)
+        handle_http_post_error(r, path, body)
         raise_on_error(r.json())
         model_repo_url = f'{get_endpoint()}/{model_id}'
         return model_repo_url

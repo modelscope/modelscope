@@ -14,5 +14,4 @@ spacy>=2.3.5
 subword_nmt>=0.3.8
 text2sql_lgesql
 tokenizers
-# recent 4.23.1 update introduce breaking api change, limit upper version temporarily.
-transformers>=4.12.0,<=4.22.0
+transformers

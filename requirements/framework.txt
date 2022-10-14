@@ -15,7 +15,6 @@ pyyaml
 requests
 scipy
 setuptools
-setuptools_scm
 tensorboard
 tqdm>=4.64.0
 yapf

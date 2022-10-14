@@ -691,11 +691,11 @@ class TableQuestionAnswering(Model):
                         sels.append(l_hs[ib] - 1)
                         aggs.append(sql['agg'][ia])
                     continue
-                sels.append(sel)
+                sels.append(int(sel))
                 if sql['agg'][ia] == -1:
                     aggs.append(0)
                 else:
-                    aggs.append(sql['agg'][ia])
+                    aggs.append(int(sql['agg'][ia]))
             if len(sels) == 0:
                 sels.append(l_hs[ib] - 1)
                 aggs.append(0)
@@ -712,7 +712,7 @@ class TableQuestionAnswering(Model):
             for i in range(wl):
                 if wc_os[i] == -1:
                     continue
-                conds.append([wc_os[i], wo_os[i], pr_wvi_str[ib][i]])
+                conds.append([int(wc_os[i]), int(wo_os[i]), pr_wvi_str[ib][i]])
             if len(conds) == 0:
                 conds.append([l_hs[ib] - 1, 2, 'Nulll'])
             sql['conds'] = conds

@@ -311,7 +311,8 @@ class TableQuestionAnsweringPipeline(Pipeline):
             tabledata = {'headers': [], 'cells': []}
 
         output = {
-            OutputKeys.OUTPUT: sql,
+            OutputKeys.SQL_STRING: sql.string,
+            OutputKeys.SQL_QUERY: sql.query,
             OutputKeys.HISTORY: result['sql'],
             OutputKeys.QUERT_RESULT: json.dumps(tabledata, ensure_ascii=False),
         }

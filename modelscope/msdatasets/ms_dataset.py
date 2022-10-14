@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import math
 import os
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
@@ -17,19 +16,18 @@ from datasets.utils.file_utils import (is_relative_path,
                                        relative_to_absolute_path)
 
 from modelscope.hub.repository import DatasetRepository
+from modelscope.msdatasets.task_datasets.builder import build_task_dataset
+from modelscope.msdatasets.utils.dataset_builder import ExternalDataset
+from modelscope.msdatasets.utils.dataset_utils import (
+    get_dataset_files, get_target_dataset_structure, load_dataset_builder)
+from modelscope.msdatasets.utils.download_utils import DatasetDownloadManager
+from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION,
                                        DatasetFormations, DownloadMode, Hubs)
 from modelscope.utils.logger import get_logger
-from .task_datasets.builder import build_task_dataset
-from .utils.dataset_builder import ExternalDataset
-from .utils.dataset_utils import (get_dataset_files,
-                                  get_target_dataset_structure,
-                                  load_dataset_builder)
-from .utils.download_utils import DatasetDownloadManager
-from .utils.upload_utils import DatasetUploadManager
 
 logger = get_logger()
 
@@ -234,7 +232,6 @@ class MsDataset:
                 # dataset organized to be compatible with hf format
                 if dataset_formation == DatasetFormations.hf_compatible:
                     dataset_name = dataset_scripts['.py'][0]
-                    download_dataset = dataset_name
             else:
                 raise FileNotFoundError(
                     f"Couldn't find a dataset script at {relative_to_absolute_path(dataset_name)} "
@@ -270,7 +267,8 @@ class MsDataset:
             raise TypeError('path must be a str or a list, but got'
                             f' {type(dataset_name)}')
 
-        if download_dataset:
+        is_ci_test = os.getenv('CI_TEST') == 'True'
+        if download_dataset and not is_ci_test:
             try:
                 api.on_dataset_download(
                     dataset_name=download_dataset, namespace=namespace)
@@ -570,15 +568,26 @@ class MsDataset:
                local_file_path: str,
                dataset_name: str,
                namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
-               version: Optional[str] = DEFAULT_DATASET_REVISION) -> None:
-        """Upload dataset file to the ModelScope Hub. Please login to the ModelScope Hub first.
+               version: Optional[str] = DEFAULT_DATASET_REVISION,
+               num_processes: Optional[int] = None,
+               chunksize: Optional[int] = 1,
+               filter_hidden_files: Optional[bool] = True) -> None:
+        """Upload dataset file or directory to the ModelScope Hub. Please login to the ModelScope Hub first.
 
         Args:
-            object_name (str): The object name on ModelScope, in the form of your-dataset-name.zip
-            local_file_path (str): Local file to upload
+            object_name (str): The object name on ModelScope, in the form of your-dataset-name.zip or your-dataset-name
+            local_file_path (str): Local file or directory to upload
             dataset_name (str): Name of the dataset
             namespace(str, optional): Namespace of the dataset
             version: Optional[str]: Version of the dataset
+            num_processes: Optional[int]: The number of processes used for multi-process uploading.
+                This is only applicable when local_file_path is a directory, and we are uploading mutliple-files
+                insided the directory. When None provided, the number returned by os.cpu_count() is used as default.
+            chunksize: Optional[int]: The chunksize of objects to upload.
+                For very long iterables using a large value for chunksize can make the job complete much faster than
+                using the default value of 1. Available if local_file_path is a directory.
+            filter_hidden_files: Optional[bool]: Whether to filter hidden files.
+                Available if local_file_path is a directory.
 
         Returns:
             None
@@ -586,7 +595,20 @@ class MsDataset:
         """
         _upload_manager = DatasetUploadManager(
             dataset_name=dataset_name, namespace=namespace, version=version)
-        _upload_manager.upload(object_name, local_file_path)
+
+        if os.path.isfile(local_file_path):
+            _upload_manager.upload(
+                object_name=object_name, local_file_path=local_file_path)
+        elif os.path.isdir(local_file_path):
+            _upload_manager.upload_dir(
+                object_dir_name=object_name,
+                local_dir_path=local_file_path,
+                num_processes=num_processes,
+                chunksize=chunksize,
+                filter_hidden_files=filter_hidden_files)
+        else:
+            raise ValueError(
+                f'{local_file_path} is not a valid file path or directory')
 
     @staticmethod
     def clone_meta(dataset_work_dir: str,

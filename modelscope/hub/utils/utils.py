@@ -4,7 +4,8 @@ import hashlib
 import os
 from typing import Optional
 
-from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
+from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DATA_ENDPOINT,
+                                      DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR,
                                       MODELSCOPE_URL_SCHEME)
@@ -41,6 +42,11 @@ def get_endpoint():
     modelscope_domain = os.getenv('MODELSCOPE_DOMAIN',
                                   DEFAULT_MODELSCOPE_DOMAIN)
     return MODELSCOPE_URL_SCHEME + modelscope_domain
+
+
+def get_dataset_hub_endpoint():
+    return os.environ.get('HUB_DATASET_ENDPOINT',
+                          DEFAULT_MODELSCOPE_DATA_ENDPOINT)
 
 
 def compute_hash(file_path):

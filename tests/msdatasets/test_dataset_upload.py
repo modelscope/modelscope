@@ -6,12 +6,8 @@ import unittest
 import zipfile
 
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.utils.dataset_utils import list_dataset_objects
-from modelscope.utils import logger as logging
-from modelscope.utils.constant import DEFAULT_DATASET_REVISION, ModelFile
+from modelscope.utils.constant import ModelFile
 from modelscope.utils.test_utils import test_level
-
-logger = logging.get_logger(__name__)
 
 KEY_EXTRACTED = 'extracted'
 
@@ -43,8 +39,7 @@ class DatasetUploadTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.old_dir)
         shutil.rmtree(self.temp_dir, ignore_errors=True)
-        logger.info(
-            f'Temporary directory {self.temp_dir} successfully removed!')
+        print('The test dir successfully removed!')
 
     @staticmethod
     def get_raw_downloaded_file_path(extracted_path):
@@ -72,40 +67,6 @@ class DatasetUploadTest(unittest.TestCase):
             local_file_path=raw_zipfile_path,
             dataset_name=self.dataset_name,
             namespace=self.namespace)
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_ds_upload_dir(self):
-        ms_ds_train = MsDataset.load(self.prepared_dataset_name, split='train')
-        config_train = ms_ds_train._hf_ds.config_kwargs
-        extracted_path_train = config_train.get('split_config').get('train')
-
-        MsDataset.upload(
-            object_name='train',
-            local_file_path=os.path.join(extracted_path_train,
-                                         'Pets/images/train'),
-            dataset_name=self.dataset_name,
-            namespace=self.namespace)
-        MsDataset.upload(
-            object_name='val',
-            local_file_path=os.path.join(extracted_path_train,
-                                         'Pets/images/val'),
-            dataset_name=self.dataset_name,
-            namespace=self.namespace)
-
-        objects = list_dataset_objects(
-            hub_api=self.api,
-            max_limit=-1,
-            is_recursive=True,
-            dataset_name=self.dataset_name,
-            namespace=self.namespace,
-            version=DEFAULT_DATASET_REVISION)
-
-        logger.info(f'{len(objects)} objects have been uploaded: {objects}')
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_ds_download_dir(self):
-        test_ds = MsDataset.load(self.dataset_name, self.namespace)
-        assert test_ds.config_kwargs['split_config'].values()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_clone_meta(self):

@@ -1,5 +1,4 @@
 en_core_web_sm>=2.3.5
-fasttext
 jieba>=0.42.1
 megatron_util
 pai-easynlp
@@ -14,4 +13,4 @@ spacy>=2.3.5
 subword_nmt>=0.3.8
 text2sql_lgesql
 tokenizers
-transformers
+transformers>=4.12.0

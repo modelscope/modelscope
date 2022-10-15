@@ -292,6 +292,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),
     ('deepspeed', (is_package_available('deepspeed'), DEEPSPEED_IMPORT_ERROR)),
     ('fairseq', (is_package_available('fairseq'), FAIRSEQ_IMPORT_ERROR)),
+    ('fasttext', (is_package_available('fasttext'), FASTTEXT_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

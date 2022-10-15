@@ -50,11 +50,16 @@ class OssUtilities:
                 progress_callback=self._percentage)
         return local_path
 
-    def upload(self, oss_object_name: str, local_file_path: str) -> str:
+    def upload(self, oss_object_name: str, local_file_path: str,
+               indicate_individual_progress: bool) -> str:
         retry_count = 0
         object_key = os.path.join(self.oss_dir, oss_object_name)
         resumable_store = oss2.ResumableStore(
             root=self.upload_resumable_tmp_store)
+        if indicate_individual_progress:
+            progress_callback = self._percentage
+        else:
+            progress_callback = None
 
         while True:
             try:
@@ -66,7 +71,7 @@ class OssUtilities:
                     store=resumable_store,
                     multipart_threshold=self.upload_multipart_threshold,
                     part_size=self.upload_part_size,
-                    progress_callback=self._percentage,
+                    progress_callback=progress_callback,
                     num_threads=self.upload_num_threads)
                 break
             except Exception:

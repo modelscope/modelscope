@@ -609,11 +609,12 @@ class Config:
         return parse_fn(args)
 
 
-def check_config(cfg: Union[str, ConfigDict]):
+def check_config(cfg: Union[str, ConfigDict], is_training=False):
     """ Check whether configuration file is valid, If anything wrong, exception will be raised.
 
     Args:
         cfg (str or ConfigDict): Config file path or config object.
+        is_training: indicate if checking training related elements
     """
 
     if isinstance(cfg, str):
@@ -627,8 +628,9 @@ def check_config(cfg: Union[str, ConfigDict]):
     check_attr(ConfigFields.task)
     check_attr(ConfigFields.pipeline)
 
-    if hasattr(cfg, ConfigFields.train):
+    if is_training:
         check_attr(ConfigFields.model)
+        check_attr(ConfigFields.train)
         check_attr(ConfigFields.preprocessor)
         check_attr(ConfigFields.evaluation)
 

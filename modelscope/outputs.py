@@ -36,6 +36,8 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    SQL_STRING = 'sql_string'
+    SQL_QUERY = 'sql_query'
     HISTORY = 'history'
     QUERT_RESULT = 'query_result'
     TIMESTAMPS = 'timestamps'
@@ -583,7 +585,10 @@ TASK_OUTPUTS = {
     #   "sql": "SELECT shop.Name FROM shop."
     #   "sql_history": {sel: 0, agg: 0, conds: [[0, 0, 'val']]}
     # }
-    Tasks.table_question_answering: [OutputKeys.OUTPUT, OutputKeys.HISTORY],
+    Tasks.table_question_answering: [
+        OutputKeys.SQL_STRING, OutputKeys.SQL_QUERY, OutputKeys.HISTORY,
+        OutputKeys.QUERT_RESULT
+    ],
 
     # ============ audio tasks ===================
     # asr result for single sample

@@ -3,10 +3,12 @@ import os
 import unittest
 from typing import List
 
+import json
 from transformers import BertTokenizer
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TableQuestionAnsweringPipeline
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
@@ -38,11 +40,12 @@ def tableqa_tracking_and_print_results_with_history(
                 'history_sql': historical_queries
             })
             print('question', question)
-            print('sql text:', output_dict['output'].string)
-            print('sql query:', output_dict['output'].query)
-            print('query result:', output_dict['query_result'])
+            print('sql text:', output_dict[OutputKeys.SQL_STRING])
+            print('sql query:', output_dict[OutputKeys.SQL_QUERY])
+            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('json dumps', json.dumps(output_dict))
             print()
-            historical_queries = output_dict['history']
+            historical_queries = output_dict[OutputKeys.HISTORY]
 
 
 def tableqa_tracking_and_print_results_without_history(
@@ -60,9 +63,10 @@ def tableqa_tracking_and_print_results_without_history(
         for question in test_case['utterance']:
             output_dict = p({'question': question})
             print('question', question)
-            print('sql text:', output_dict['output'].string)
-            print('sql query:', output_dict['output'].query)
-            print('query result:', output_dict['query_result'])
+            print('sql text:', output_dict[OutputKeys.SQL_STRING])
+            print('sql query:', output_dict[OutputKeys.SQL_QUERY])
+            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('json dumps', json.dumps(output_dict))
             print()
 
 

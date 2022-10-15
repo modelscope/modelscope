@@ -26,18 +26,15 @@ from modelscope.utils.logger import get_logger
 from .errors import (InvalidParameter, NotExistError, RequestError,
                      datahub_raise_on_error, handle_http_post_error,
                      handle_http_response, is_ok, raise_on_error)
-from .utils.utils import (get_dataset_hub_endpoint, get_endpoint,
-                          model_id_to_group_owner_name)
+from .utils.utils import get_endpoint, model_id_to_group_owner_name
 
 logger = get_logger()
 
 
 class HubApi:
 
-    def __init__(self, endpoint=None, dataset_endpoint=None):
+    def __init__(self, endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
-        self.dataset_endpoint = dataset_endpoint if dataset_endpoint is not None else get_dataset_hub_endpoint(
-        )
 
     def login(
         self,
@@ -288,7 +285,7 @@ class HubApi:
         return files
 
     def list_datasets(self):
-        path = f'{self.dataset_endpoint}/api/v1/datasets'
+        path = f'{self.endpoint}/api/v1/datasets'
         headers = None
         params = {}
         r = requests.get(path, params=params, headers=headers)
@@ -315,13 +312,13 @@ class HubApi:
                 cache_dir):
             shutil.rmtree(cache_dir)
         os.makedirs(cache_dir, exist_ok=True)
-        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         r = requests.get(datahub_url)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
-        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
         r = requests.get(datahub_url)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
@@ -339,7 +336,7 @@ class HubApi:
             file_path = file_info['Path']
             extension = os.path.splitext(file_path)[-1]
             if extension in dataset_meta_format:
-                datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+                datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                               f'Revision={revision}&FilePath={file_path}'
                 r = requests.get(datahub_url)
                 r.raise_for_status()
@@ -363,7 +360,7 @@ class HubApi:
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
         if file_name.endswith('.csv'):
-            file_name = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+            file_name = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                         f'Revision={revision}&FilePath={file_name}'
         return file_name
 
@@ -372,7 +369,7 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
-        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
         return self.datahub_remote_call(datahub_url)
 
@@ -383,7 +380,7 @@ class HubApi:
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
 
-        datahub_url = f'{self.dataset_endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
 
         cookies = requests.utils.dict_from_cookiejar(cookies)
@@ -391,6 +388,19 @@ class HubApi:
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
+
+    def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
+                                 is_recursive, is_filter_dir, revision,
+                                 cookies):
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
+            f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
+        cookies = requests.utils.dict_from_cookiejar(cookies)
+
+        resp = requests.get(url=url, cookies=cookies)
+        resp = resp.json()
+        raise_on_error(resp)
+        resp = resp['Data']
+        return resp
 
     def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'

@@ -133,6 +133,19 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_demo_compatibility(self):
         self.compatibility_check()
 
+    @unittest.skip("Langboat's checkpoint has not been uploaded to modelhub")
+    def test_gpt_neo(self):
+        pipe = pipeline(
+            task=Tasks.text_generation, model='Langboat/mengzi-gpt-neo-base')
+        print(
+            pipe(
+                '我是',
+                do_sample=True,
+                top_k=5,
+                top_p=1,
+                max_length=20,
+                repetition_penalty=0.5))
+
 
 if __name__ == '__main__':
     unittest.main()

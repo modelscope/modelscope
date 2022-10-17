@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .sequence_classification import SequenceClassificationModel
     from .task_model import SingleBackboneTaskModelBase
     from .token_classification import TokenClassificationModel
+    from .text_generation import TaskModelForTextGeneration
 
 else:
     _import_structure = {
@@ -19,6 +20,7 @@ else:
         'sequence_classification': ['SequenceClassificationModel'],
         'task_model': ['SingleBackboneTaskModelBase'],
         'token_classification': ['TokenClassificationModel'],
+        'text_generation': ['TaskModelForTextGeneration'],
     }
 
     import sys

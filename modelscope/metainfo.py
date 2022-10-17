@@ -71,6 +71,7 @@ class Models(object):
     gcnncrf = 'gcnn-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    gpt_neo = 'gpt-neo'
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
@@ -101,6 +102,7 @@ class TaskModels(object):
     information_extraction = 'information-extraction'
     fill_mask = 'fill-mask'
     feature_extraction = 'feature-extraction'
+    text_generation = 'text-generation'
 
 
 class Heads(object):
@@ -116,6 +118,8 @@ class Heads(object):
     token_classification = 'token-classification'
     # extraction
     information_extraction = 'information-extraction'
+    # text gen
+    text_generation = 'text-generation'
 
 
 class Pipelines(object):
@@ -341,6 +345,7 @@ class Preprocessors(object):
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    sentence_piece = 'sentence-piece'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

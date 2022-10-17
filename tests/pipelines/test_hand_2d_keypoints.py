@@ -15,10 +15,8 @@ class Hand2DKeypointsPipelineTest(unittest.TestCase):
         model_id = 'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'
 
         hand_keypoint = pipeline(task=Tasks.hand_2d_keypoints, model=model_id)
-        outputs = hand_keypoint(img_path)
-        self.assertEqual(len(outputs), 1)
+        results = hand_keypoint(img_path)
 
-        results = outputs[0]
         self.assertIn(OutputKeys.KEYPOINTS, results.keys())
         self.assertIn(OutputKeys.BOXES, results.keys())
         self.assertEqual(results[OutputKeys.KEYPOINTS].shape[1], 21)
@@ -30,10 +28,7 @@ class Hand2DKeypointsPipelineTest(unittest.TestCase):
         img_path = 'data/test/images/hand_keypoints.jpg'
 
         hand_keypoint = pipeline(task=Tasks.hand_2d_keypoints)
-        outputs = hand_keypoint(img_path)
-        self.assertEqual(len(outputs), 1)
-
-        results = outputs[0]
+        results = hand_keypoint(img_path)
         self.assertIn(OutputKeys.KEYPOINTS, results.keys())
         self.assertIn(OutputKeys.BOXES, results.keys())
         self.assertEqual(results[OutputKeys.KEYPOINTS].shape[1], 21)

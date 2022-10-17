@@ -18,7 +18,7 @@ class EasyCVFace2DKeypointsPipelineTest(unittest.TestCase):
 
         human_wholebody_keypoint_pipeline = pipeline(
             task=Tasks.human_wholebody_keypoint, model=model_id)
-        output = human_wholebody_keypoint_pipeline(img_path)[0]
+        output = human_wholebody_keypoint_pipeline(img_path)
 
         output_keypoints = output[OutputKeys.KEYPOINTS]
         output_pose = output[OutputKeys.BOXES]

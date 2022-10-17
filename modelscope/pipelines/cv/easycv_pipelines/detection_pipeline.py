@@ -57,4 +57,7 @@ class EasyCVDetectionPipeline(EasyCVPipeline):
             OutputKeys.BOXES: boxes
         } for output in outputs]
 
+        if self._is_single_inputs(inputs):
+            results = results[0]
+
         return results

@@ -40,4 +40,7 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
             OutputKeys.POSES: output['pose']
         } for output in outputs]
 
+        if self._is_single_inputs(inputs):
+            results = results[0]
+
         return results

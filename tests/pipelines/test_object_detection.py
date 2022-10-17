@@ -55,7 +55,7 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         image_object_detection_auto = pipeline(
             Tasks.image_object_detection, model=model_id)
 
-        result = image_object_detection_auto(test_image)[0]
+        result = image_object_detection_auto(test_image)
         image_object_detection_auto.show_result(test_image, result,
                                                 'auto_demo_ret.jpg')
 

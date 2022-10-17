@@ -44,7 +44,7 @@ There are mainly three test levels:
 * level 2: scenario tests for all the implemented modules such as model, pipeline in different algorithm filed.
 
 Default test level is 0, which will only run those cases of level 0, you can set test level
-via environment variable `TEST_LEVEL`. For more details, you can refer to [test-doc](https://alidocs.dingtalk.com/i/nodes/mdvQnONayjBJKLXy1Bp38PY2MeXzp5o0?dontjump=true&nav=spaces&navQuery=spaceId%3Dnb9XJNlZxbgrOXyA)
+via environment variable `TEST_LEVEL`.
 
 
 ```bash
@@ -159,9 +159,7 @@ git pull origin branch_name
     git push --set-upstream origin dev/my-dev-branch
     ```
    Note that you may push multiple times to the same branch with 'git push' commands later.
-5. Open the remote url `https://code.alibaba-inc.com/Ali-MaaS/MaaS-lib/codereview/new` to create a new merge request that merges your development branch (aka, the "dev/my-dev-branch in this example) into master branch. Please follow the instruction on aone page to submit the merge request a code review.
-
-
+5. Create a pull request on github to merge your code into master.
 
 ## Build pip package
 ```bash

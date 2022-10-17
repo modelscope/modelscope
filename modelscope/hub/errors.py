@@ -53,8 +53,8 @@ def handle_http_post_error(response, url, request_body):
     try:
         response.raise_for_status()
     except HTTPError as error:
-        logger.error('Request %s with body: %s exception, respoonse body: %s' %
-                     (url, request_body, response.body))
+        logger.error('Request %s with body: %s exception' %
+                     (url, request_body))
         raise error
 
 

@@ -97,8 +97,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_to_image_translation:
     InputType.IMAGE,
-    Tasks.image_style_transfer:
-    InputType.IMAGE,
+    Tasks.image_style_transfer: {
+        'content': InputType.IMAGE,
+        'style': InputType.IMAGE,
+    },
     Tasks.image_portrait_stylization:
     InputType.IMAGE,
     Tasks.live_category:
@@ -147,8 +149,9 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.translation:
     InputType.TEXT,
-    Tasks.word_segmentation:
-    InputType.TEXT,
+    Tasks.word_segmentation: [InputType.TEXT, {
+        'text': InputType.TEXT,
+    }],
     Tasks.part_of_speech:
     InputType.TEXT,
     Tasks.named_entity_recognition:
@@ -194,8 +197,9 @@ TASK_INPUTS = {
     InputType.AUDIO,
 
     # ============ multi-modal tasks ===================
-    Tasks.image_captioning:
-    InputType.IMAGE,
+    Tasks.image_captioning: [InputType.IMAGE, {
+        'image': InputType.IMAGE,
+    }],
     Tasks.visual_grounding: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT

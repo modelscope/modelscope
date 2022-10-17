@@ -13,6 +13,8 @@ def get_exp_by_name(exp_name):
         from .default import YoloXNanoExp as YoloXExp
     elif exp == 'yolox_tiny':
         from .default import YoloXTinyExp as YoloXExp
+    elif exp == 'streamyolo':
+        from .default import StreamYoloExp as YoloXExp
     else:
         pass
     return YoloXExp()

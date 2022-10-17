@@ -38,6 +38,7 @@ class CVTasks(object):
     image_classification_dailylife = 'image-classification-dailylife'
 
     image_object_detection = 'image-object-detection'
+    video_object_detection = 'video-object-detection'
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'

@@ -231,6 +231,66 @@ def show_video_tracking_result(video_in_path, bboxes, video_save_path):
     cap.release()
 
 
+def show_video_object_detection_result(video_in_path, bboxes_list, labels_list,
+                                       video_save_path):
+
+    PALETTE = {
+        'person': [128, 0, 0],
+        'bicycle': [128, 128, 0],
+        'car': [64, 0, 0],
+        'motorcycle': [0, 128, 128],
+        'bus': [64, 128, 0],
+        'truck': [192, 128, 0],
+        'traffic light': [64, 0, 128],
+        'stop sign': [192, 0, 128],
+    }
+    from tqdm import tqdm
+    import math
+    cap = cv2.VideoCapture(video_in_path)
+    with tqdm(total=len(bboxes_list)) as pbar:
+        pbar.set_description(
+            'Writing results to video: {}'.format(video_save_path))
+        for i in range(len(bboxes_list)):
+            bboxes = bboxes_list[i].astype(int)
+            labels = labels_list[i]
+            success, frame = cap.read()
+            if success is False:
+                raise Exception(video_in_path,
+                                ' can not be correctly decoded by OpenCV.')
+            if i == 0:
+                size = (frame.shape[1], frame.shape[0])
+                fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+                video_writer = cv2.VideoWriter(video_save_path, fourcc,
+                                               cap.get(cv2.CAP_PROP_FPS), size,
+                                               True)
+
+            FONT_SCALE = 1e-3  # Adjust for larger font size in all images
+            THICKNESS_SCALE = 1e-3  # Adjust for larger thickness in all images
+            TEXT_Y_OFFSET_SCALE = 1e-2  # Adjust for larger Y-offset of text and bounding box
+            H, W, _ = frame.shape
+            zeros_mask = np.zeros((frame.shape)).astype(np.uint8)
+            for bbox, l in zip(bboxes, labels):
+                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                              PALETTE[l], 1)
+                cv2.putText(
+                    frame,
+                    l, (bbox[0], bbox[1] - int(TEXT_Y_OFFSET_SCALE * H)),
+                    fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                    fontScale=min(H, W) * FONT_SCALE,
+                    thickness=math.ceil(min(H, W) * THICKNESS_SCALE),
+                    color=PALETTE[l])
+                zeros_mask = cv2.rectangle(
+                    zeros_mask, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                    color=PALETTE[l],
+                    thickness=-1)
+
+            frame = cv2.addWeighted(frame, 1., zeros_mask, .65, 0)
+            video_writer.write(frame)
+            pbar.update(1)
+    video_writer.release
+    cap.release()
+
+
 def panoptic_seg_masks_to_image(masks):
     draw_img = np.zeros([masks[0].shape[0], masks[0].shape[1], 3])
     from mmdet.core.visualization.palette import get_palette

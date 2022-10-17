@@ -165,6 +165,32 @@ TASK_OUTPUTS = {
     Tasks.image_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
+    # video object detection result for single sample
+    #   {
+
+    #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]
+    #         "labels": [["person", "traffic light", "car", "bus"],
+    #                     ["person", "traffic light", "car", "bus"]]
+    #         "boxes":
+    #          [
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #              ],
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #               ]
+    #           ],
+
+    #   }
+    Tasks.video_object_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+
     # instance segmentation result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05],
@@ -676,8 +702,9 @@ TASK_OUTPUTS = {
     #   "text_embedding": np.array with shape [1, D],
     #   "similarity": float
     # }
-    Tasks.multi_modal_similarity:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+    Tasks.multi_modal_similarity: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES
+    ],
 
     # VQA result for a sample
     # {"text": "this is a text answser. "}

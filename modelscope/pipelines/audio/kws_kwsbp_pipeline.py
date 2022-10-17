@@ -37,6 +37,12 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                  **kwargs) -> Dict[str, Any]:
         if 'keywords' in kwargs.keys():
             self.keywords = kwargs['keywords']
+            if isinstance(self.keywords, str):
+                word_list = []
+                word = {}
+                word['keyword'] = self.keywords
+                word_list.append(word)
+                self.keywords = word_list
         else:
             self.keywords = None
 
@@ -95,6 +101,9 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             kws_type=inputs['kws_type'],
             pos_list=pos_kws_list,
             neg_list=neg_kws_list)
+
+        if 'kws_list' not in rst_dict:
+            rst_dict['kws_list'] = []
 
         return rst_dict
 

@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import re
 import subprocess
 from typing import List
 from xmlrpc.client import Boolean
@@ -176,6 +177,15 @@ class GitCommandWrapper(metaclass=Singleton):
     def new_branch(self, repo_dir: str, revision: str):
         cmds = ['-C', '%s' % repo_dir, 'checkout', '-b', revision]
         return self._run_git_command(*cmds)
+
+    def get_remote_branches(self, repo_dir: str):
+        cmds = ['-C', '%s' % repo_dir, 'branch', '-r']
+        rsp = self._run_git_command(*cmds)
+        info = [
+            line.strip()
+            for line in rsp.stdout.decode('utf8').strip().split(os.linesep)
+        ][1:]
+        return ['/'.join(line.split('/')[1:]) for line in info]
 
     def pull(self, repo_dir: str):
         cmds = ['-C', repo_dir, 'pull']

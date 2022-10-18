@@ -33,11 +33,13 @@ class ImageDenoiseTrainerTest(unittest.TestCase):
         dataset_train = MsDataset.load(
             'SIDD',
             namespace='huizheng',
+            subset_name='default',
             split='validation',
             download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS)._hf_ds
         dataset_val = MsDataset.load(
             'SIDD',
             namespace='huizheng',
+            subset_name='default',
             split='test',
             download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS)._hf_ds
         self.dataset_train = SiddImageDenoisingDataset(

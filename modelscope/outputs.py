@@ -417,6 +417,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.video_summarization: [OutputKeys.OUTPUT],
 
+    # referring video object segmentation result for a single video
+    #   {
+    #       "masks": [np.array # 2D array with shape [height, width]]
+    #   }
+    Tasks.referring_video_object_segmentation: [OutputKeys.MASKS],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample

@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
+    from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
 
 else:
     _import_structure = {
@@ -128,6 +129,9 @@ else:
         ['FacialExpressionRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
+        'referring_video_object_segmentation_pipeline': [
+            'ReferringVideoObjectSegmentationPipeline'
+        ],
     }
 
     import sys

@@ -1,4 +1,5 @@
 albumentations>=1.0.3
+av>=9.2.0
 easydict
 fairscale>=0.4.1
 fastai>=1.0.51
@@ -14,6 +15,7 @@ lpips
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0
+moviepy>=1.0.3
 networkx>=2.5
 numba
 onnxruntime>=1.10

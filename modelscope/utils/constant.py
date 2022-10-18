@@ -80,6 +80,9 @@ class CVTasks(object):
     virtual_try_on = 'virtual-try-on'
     movie_scene_segmentation = 'movie-scene-segmentation'
 
+    # video segmentation
+    referring_video_object_segmentation = 'referring-video-object-segmentation'
+
     # video editing
     video_inpainting = 'video-inpainting'
 

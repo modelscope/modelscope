@@ -202,6 +202,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),
+    Tasks.referring_video_object_segmentation:
+    (Pipelines.referring_video_object_segmentation,
+     'damo/cv_swin-t_referring_video-object-segmentation'),
 }
 
 

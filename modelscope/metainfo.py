@@ -34,6 +34,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     resnet50_bert = 'resnet50-bert'
+    referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
     fer = 'fer'
     retinaface = 'retinaface'
     shop_segmentation = 'shop-segmentation'
@@ -203,6 +204,7 @@ class Pipelines(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'flow-based-body-reshaping'
+    referring_video_object_segmentation = 'referring-video-object-segmentation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

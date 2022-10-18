@@ -1,3 +1,5 @@
+# Part of the implementation is borrowed and modified from SegLink,
+# publicly available at https://github.com/bgshih/seglink
 import tensorflow as tf
 
 from . import ops, resnet18_v1, resnet_utils

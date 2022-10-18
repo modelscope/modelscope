@@ -4,6 +4,10 @@ from http import HTTPStatus
 
 from requests.exceptions import HTTPError
 
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
+
 
 class NotExistError(Exception):
     pass
@@ -45,15 +49,24 @@ def is_ok(rsp):
     return rsp['Code'] == HTTPStatus.OK and rsp['Success']
 
 
+def handle_http_post_error(response, url, request_body):
+    try:
+        response.raise_for_status()
+    except HTTPError as error:
+        logger.error('Request %s with body: %s exception' %
+                     (url, request_body))
+        raise error
+
+
 def handle_http_response(response, logger, cookies, model_id):
     try:
         response.raise_for_status()
-    except HTTPError:
+    except HTTPError as error:
         if cookies is None:  # code in [403] and
             logger.error(
                 f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
                 private. Please login first.')
-        raise
+        raise error
 
 
 def raise_on_error(rsp):

@@ -25,8 +25,9 @@ class ImageStyleTransferTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_style_transfer, model=snapshot_path)
 
         result = image_style_transfer(
-            'data/test/images/style_transfer_content.jpg',
-            style='data/test/images/style_transfer_style.jpg')
+            dict(
+                content='data/test/images/style_transfer_content.jpg',
+                style='data/test/images/style_transfer_style.jpg'))
         cv2.imwrite('result_styletransfer1.png', result[OutputKeys.OUTPUT_IMG])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -35,8 +36,9 @@ class ImageStyleTransferTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_style_transfer, model=self.model_id)
 
         result = image_style_transfer(
-            'data/test/images/style_transfer_content.jpg',
-            style='data/test/images/style_transfer_style.jpg')
+            dict(
+                content='data/test/images/style_transfer_content.jpg',
+                style='data/test/images/style_transfer_style.jpg'))
         cv2.imwrite('result_styletransfer2.png', result[OutputKeys.OUTPUT_IMG])
         print('style_transfer.test_run_modelhub done')
 
@@ -45,8 +47,9 @@ class ImageStyleTransferTest(unittest.TestCase, DemoCompatibilityCheck):
         image_style_transfer = pipeline(Tasks.image_style_transfer)
 
         result = image_style_transfer(
-            'data/test/images/style_transfer_content.jpg',
-            style='data/test/images/style_transfer_style.jpg')
+            dict(
+                content='data/test/images/style_transfer_content.jpg',
+                style='data/test/images/style_transfer_style.jpg'))
         cv2.imwrite('result_styletransfer3.png', result[OutputKeys.OUTPUT_IMG])
         print('style_transfer.test_run_modelhub_default_model done')
 

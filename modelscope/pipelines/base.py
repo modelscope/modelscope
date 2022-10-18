@@ -236,7 +236,11 @@ class Pipeline(ABC):
             if isinstance(input_type, list):
                 matched_type = None
                 for t in input_type:
-                    if type(t) == type(input):
+                    if isinstance(input, (dict, tuple)):
+                        if type(t) == type(input):
+                            matched_type = t
+                            break
+                    elif isinstance(t, str):
                         matched_type = t
                         break
                 if matched_type is None:

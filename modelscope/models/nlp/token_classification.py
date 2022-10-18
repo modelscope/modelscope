@@ -176,7 +176,7 @@ class SbertForTokenClassification(TokenClassification, SbertPreTrainedModel):
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.bert)
 @MODELS.register_module(Tasks.token_classification, module_name=Models.bert)
-class BertForSequenceClassification(TokenClassification, BertPreTrainedModel):
+class BertForTokenClassification(TokenClassification, BertPreTrainedModel):
     """Bert token classification model.
 
         Inherited from TokenClassificationBase.
@@ -187,7 +187,7 @@ class BertForSequenceClassification(TokenClassification, BertPreTrainedModel):
 
     def __init__(self, config, model_dir):
         if hasattr(config, 'base_model_prefix'):
-            BertForSequenceClassification.base_model_prefix = config.base_model_prefix
+            BertForTokenClassification.base_model_prefix = config.base_model_prefix
         super().__init__(config, model_dir)
 
     def build_base_model(self):
@@ -218,3 +218,28 @@ class BertForSequenceClassification(TokenClassification, BertPreTrainedModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
             **kwargs)
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        """Instantiate the model.
+
+        @param kwargs: Input args.
+                    model_dir: The model dir used to load the checkpoint and the label information.
+                    num_labels: An optional arg to tell the model how many classes to initialize.
+                                    Method will call utils.parse_label_mapping if num_labels not supplied.
+                                    If num_labels is not found, the model will use the default setting (2 classes).
+        @return: The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
+        """
+        model_dir = kwargs.get('model_dir')
+        num_labels = kwargs.get('num_labels')
+        if num_labels is None:
+            label2id = parse_label_mapping(model_dir)
+            if label2id is not None and len(label2id) > 0:
+                num_labels = len(label2id)
+
+        model_args = {} if num_labels is None else {'num_labels': num_labels}
+        return super(BertPreTrainedModel,
+                     BertForTokenClassification).from_pretrained(
+                         pretrained_model_name_or_path=kwargs.get('model_dir'),
+                         model_dir=kwargs.get('model_dir'),
+                         **model_args)

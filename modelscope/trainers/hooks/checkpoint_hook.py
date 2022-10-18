@@ -216,6 +216,7 @@ class BestCkptSaverHook(CheckpointHook):
         by_epoch (bool): Save best checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): Output directory to save best checkpoint.
+        restore_best (bool): Whether to restore the best checkpoint after training.
     """
 
     PRIORITY = Priority.LOW
@@ -228,6 +229,7 @@ class BestCkptSaverHook(CheckpointHook):
                  save_optimizer=True,
                  save_dir=None,
                  save_file_name=None,
+                 restore_best=False,
                  interval=0):
         assert rule in ['max', 'min'], 'Only support "max" or "min" rule now.'
         super().__init__(
@@ -241,6 +243,7 @@ class BestCkptSaverHook(CheckpointHook):
         self._best_metric = None
         self._best_ckpt_file = None
         self.save_file_name = save_file_name
+        self.restore_best = restore_best
 
     def _should_save(self, trainer):
         return self._is_best_metric(trainer.metric_values)
@@ -305,3 +308,7 @@ class BestCkptSaverHook(CheckpointHook):
             self.logger.warn(
                 'The state_dict is not available, the best metric value will be affected.'
             )
+
+    def after_run(self, trainer):
+        if self.restore_best:
+            self.load_checkpoint(self._best_ckpt_file, trainer)

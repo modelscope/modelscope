@@ -118,6 +118,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
+    Tasks.card_detection: (Pipelines.card_detection,
+                           'damo/cv_resnet_carddetection_scrfd34gkps'),
+    Tasks.face_detection:
+    (Pipelines.face_detection,
+     'damo/cv_resnet101_face-detection_cvpr22papermogface'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
     Tasks.facial_expression_recognition:
@@ -156,6 +161,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_object_detection:
+    (Pipelines.image_object_detection_auto,
+     'damo/cv_yolox_image-object-detection-auto'),
     Tasks.ocr_recognition:
     (Pipelines.ocr_recognition,
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
@@ -179,8 +187,13 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
     Tasks.shop_segmentation: (Pipelines.shop_segmentation,
                               'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.image_inpainting: (Pipelines.image_inpainting,
+                             'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.human_wholebody_keypoint:
+    (Pipelines.human_wholebody_keypoint,
+     'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
     Tasks.face_human_hand_detection:
@@ -189,6 +202,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),
+    Tasks.referring_video_object_segmentation:
+    (Pipelines.referring_video_object_segmentation,
+     'damo/cv_swin-t_referring_video-object-segmentation'),
 }
 
 

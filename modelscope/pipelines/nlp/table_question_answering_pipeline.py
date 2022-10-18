@@ -2,6 +2,8 @@
 import os
 from typing import Any, Dict, Union
 
+import json
+import torch
 from transformers import BertTokenizer
 
 from modelscope.metainfo import Pipelines
@@ -230,14 +232,16 @@ class TableQuestionAnsweringPipeline(Pipeline):
                 str_sel_list.append(header_name)
                 sql_sel_list.append(header_id)
             else:
-                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '( '
-                                    + header_name + ' )')
-                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '( '
-                                    + header_id + ' )')
+                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_name + ')')
+                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_id + ')')
 
         str_cond_list, sql_cond_list = [], []
         for cond in sql['conds']:
             header_name = header_names[cond[0]]
+            if header_name == '空列':
+                continue
             header_id = '`%s`.`%s`' % (table['table_id'], header_ids[cond[0]])
             op = self.cond_ops[cond[1]]
             value = cond[2]
@@ -248,12 +252,17 @@ class TableQuestionAnsweringPipeline(Pipeline):
 
         cond = ' ' + self.cond_conn_ops[sql['cond_conn_op']] + ' '
 
-        final_str = 'SELECT %s FROM %s WHERE %s' % (', '.join(str_sel_list),
-                                                    table['table_name'],
-                                                    cond.join(str_cond_list))
-        final_sql = 'SELECT %s FROM `%s` WHERE %s' % (', '.join(sql_sel_list),
-                                                      table['table_id'],
-                                                      cond.join(sql_cond_list))
+        if len(str_cond_list) != 0:
+            final_str = 'SELECT %s FROM %s WHERE %s' % (', '.join(
+                str_sel_list), table['table_name'], cond.join(str_cond_list))
+            final_sql = 'SELECT %s FROM `%s` WHERE %s' % (', '.join(
+                sql_sel_list), table['table_id'], cond.join(sql_cond_list))
+        else:
+            final_str = 'SELECT %s FROM %s' % (', '.join(str_sel_list),
+                                               table['table_name'])
+            final_sql = 'SELECT %s FROM `%s`' % (', '.join(sql_sel_list),
+                                                 table['table_id'])
+
         sql = SQLQuery(
             string=final_str, query=final_sql, sql_result=result['sql'])
 
@@ -274,9 +283,40 @@ class TableQuestionAnsweringPipeline(Pipeline):
             history_sql=history_sql,
             result=result,
             table=self.db.tables[result['table_id']])
+        result['sql']['from'] = [result['table_id']]
         sql = self.sql_dict_to_str(
             result=result, table=self.db.tables[result['table_id']])
-        output = {OutputKeys.OUTPUT: sql, OutputKeys.HISTORY: result['sql']}
+
+        # add sqlite
+        if self.db.is_use_sqlite:
+            try:
+                cursor = self.db.connection_obj.cursor().execute(sql.query)
+                names = [{
+                    'name':
+                    description[0],
+                    'label':
+                    self.db.tables[result['table_id']]['headerid2name'].get(
+                        description[0], description[0])
+                } for description in cursor.description]
+                cells = []
+                for res in cursor.fetchall():
+                    row = {}
+                    for name, cell in zip(names, res):
+                        row[name['name']] = cell
+                    cells.append(row)
+                tabledata = {'headers': names, 'cells': cells}
+            except Exception:
+                tabledata = {'headers': [], 'cells': []}
+        else:
+            tabledata = {'headers': [], 'cells': []}
+
+        output = {
+            OutputKeys.SQL_STRING: sql.string,
+            OutputKeys.SQL_QUERY: sql.query,
+            OutputKeys.HISTORY: result['sql'],
+            OutputKeys.QUERT_RESULT: json.dumps(tabledata, ensure_ascii=False),
+        }
+
         return output
 
     def _collate_fn(self, data):

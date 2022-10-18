@@ -30,7 +30,8 @@ if TYPE_CHECKING:
                               InformationExtractionModel,
                               SequenceClassificationModel,
                               SingleBackboneTaskModelBase,
-                              TokenClassificationModel)
+                              TokenClassificationModel,
+                              TaskModelForTextGeneration)
     from .token_classification import SbertForTokenClassification
     from .sentence_embedding import SentenceEmbedding
     from .passage_ranking import PassageRanking
@@ -69,6 +70,7 @@ else:
             'SequenceClassificationModel',
             'SingleBackboneTaskModelBase',
             'TokenClassificationModel',
+            'TaskModelForTextGeneration',
         ],
         'token_classification': ['SbertForTokenClassification'],
         'table_question_answering': ['TableQuestionAnswering'],

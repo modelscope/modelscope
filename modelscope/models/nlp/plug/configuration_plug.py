@@ -40,8 +40,6 @@ class PlugNLUConfig(PretrainedConfig):
                  max_position_embeddings=2048,
                  type_vocab_size=3,
                  initializer_range=0.00707,
-                 deep_init=False,
-                 deepspeed=False,
                  lr_decay_style='linear',
                  weight_decay=1e-2,
                  clip_grad=1.0,
@@ -53,20 +51,7 @@ class PlugNLUConfig(PretrainedConfig):
                  fp32_tokentypes=False,
                  layernorm_epsilon=1e-5,
                  dec_hidden_layers=6,
-                 pruning_method=None,
-                 pruning_mask_init='constant',
-                 pruning_mask_scale=0.0,
-                 pruning_initial_threshold=1.0,
-                 pruning_final_threshold=0.01,
-                 pruning_initial_warmup=1,
-                 pruning_final_warmup=20,
-                 pruning_module='decoder',
-                 pruning_decay_step=50,
-                 pruning_decay_type='exp',
-                 ft_module=None,
                  attn_separate=False,
-                 LR_weight_rank=8,
-                 LR_mask_rank=8,
                  **kwargs):
         super().__init__(layer_norm_eps=layernorm_epsilon, **kwargs)
 
@@ -82,8 +67,6 @@ class PlugNLUConfig(PretrainedConfig):
         self.max_position_embeddings = max_position_embeddings
         self.type_vocab_size = type_vocab_size
         self.initializer_range = initializer_range
-        self.deep_init = deep_init
-        self.deepspeed = deepspeed
         self.lr_decay_style = lr_decay_style
         self.weight_decay = weight_decay
         self.clip_grad = clip_grad
@@ -95,20 +78,7 @@ class PlugNLUConfig(PretrainedConfig):
         self.layernorm_epsilon = layernorm_epsilon
         self.fp32_tokentypes = fp32_tokentypes
         self.dec_hidden_layers = dec_hidden_layers
-        self.pruning_method = pruning_method
-        self.pruning_mask_init = pruning_mask_init
-        self.pruning_mask_scale = pruning_mask_scale
-        self.pruning_module = pruning_module
-        self.pruning_initial_threshold = pruning_initial_threshold
-        self.pruning_final_threshold = pruning_final_threshold
-        self.pruning_initial_warmup = pruning_initial_warmup
-        self.pruning_final_warmup = pruning_final_warmup
-        self.pruning_decay_step = pruning_decay_step
-        self.pruning_decay_type = pruning_decay_type
-        self.ft_module = ft_module
         self.attn_separate = attn_separate
-        self.LR_weight_rank = LR_weight_rank
-        self.LR_mask_rank = LR_mask_rank
 
     @classmethod
     def from_dict(cls, json_object):
@@ -148,47 +118,115 @@ class PlugNLUConfig(PretrainedConfig):
 
 
 class PlugNLGConfig(PlugNLUConfig):
+    """
+    This is the configuration class to store the configuration of a [`PlugModel`]. It is used to instantiate a
+    PLUG understanding model according to the specified arguments, defining the model architecture. Instantiating a
+    configuration with the defaults will yield a similar configuration to that of the PLUG
+    [PLUG](https://modelscope.cn/models/damo/nlp_plug_text-generation_27B/summary) architecture.
+
+    Configuration objects inherit from [`PlugNLUConfig`] and can be used to control the model outputs. Read the
+    documentation from [`PlugNLUConfig`] for more information.
+
+    Args:
+        vocab_size (`int`, *optional*, defaults to 21504):
+            Padded vocabulary size of the PLUG model for vocab tensor parallel. Defines the number of different tokens
+            that can be represented by the `inputs_ids` passed when calling [`PlugModel`].
+        original_vocab_size (`int`, *optional*, defaults to 21128):
+            True vocabulary size of the PLUG model. Defines the number of different tokens that can be represented.
+        hidden_size (`int`, *optional*, defaults to 8192):
+            Dimensionality of the encoder layers and the pooler layer.
+        num_hidden_layers (`int`, *optional*, defaults to 24):
+            Number of hidden layers in the Transformer encoder.
+        dec_hidden_layers (`int`, *optional*, defaults to 6):
+            Number of hidden layers in the Transformer decoder.
+        num_attention_heads (`int`, *optional*, defaults to 128):
+            Number of attention heads for each attention layer in the Transformer encoder.
+        intermediate_size (`int`, *optional*, defaults to 32768):
+            Dimensionality of the "intermediate" (i.e., feed-forward) layer in the Transformer encoder.
+        hidden_act (`str`, *optional*, defaults to `"gelu"`):
+            The non-linear activation function (function or string) in the encoder and pooler. If string, `"gelu"`,
+            `"relu"`, `"selu"` and `"gelu_new"` are supported.
+        hidden_dropout_prob (`float`, *optional*, defaults to 0.1):
+            The dropout ratio for all fully connected layers in the embeddings, encoder, and pooler.
+        attention_probs_dropout_prob (`float`, *optional*, defaults to 0.1):
+            The dropout ratio for the Transformer Attention.
+        max_position_embeddings (`int`, *optional*, defaults to 2048):
+            The maximum sequence length that this model might ever be used with. Typically set this to something large
+            just in case (e.g., 512 or 1024 or 2048).
+        type_vocab_size (`int`, *optional*, defaults to 3):
+            The vocabulary size of the `token_type_ids` passed when calling [`PlugModel`].
+        initializer_range (`float`, *optional*, defaults to 0.00707):
+            The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
+        lr_decay_style (`str`, *optional*, defaults to 'linear'):
+            The decay style of learning rate during fine-tunining. If string, `"linear"`, `"cosine"`, `"exponential"`,
+            `"constant"`, `"None"` are supported.
+        weight_decay (`float`, *optional*, defaults to 1e-2):
+            Decoupled weight decay to apply.
+        clip_grad (`float`, *optional*, defaults to 1.0):
+            Maximum gradient norm for gradient clipping.
+        warmup (`float`, *optional*, defaults to 0.01):
+            Ratio of total training steps used for a linear warmup from 0 to `learning_rate`.
+        pre_ln (`boolean`, *optional*, defaults to `True`):
+            Whether or not to apply LayerNorm to the input instead of the output in the blocks.
+        fp16 (`boolean`, *optional*, defaults to `True`):
+            Whether to use fp16 16-bit (mixed) precision training instead of 32-bit training.
+        fp32_layernorm (`boolean`, *optional*, defaults to `True`):
+            Whether to use fp32 32-bit precision LayerNorm training while the argument `fp16` set to `True`.
+        fp32_embedding (`boolean`, *optional*, defaults to `False`):
+            Whether to use fp32 32-bit precision Embedding training while the argument `fp16` set to `True`.
+        fp32_tokentypes (`boolean`, *optional*, defaults to `False`):
+            Whether to use fp32 32-bit precision token types training while the argument `fp16` set to `True`.
+        layernorm_epsilon (`float`, *optional*, defaults to 1e-5):
+            The epsilon to use in the layer normalization layers.
+        attn_separate (`boolean`, *optional*, defaults to `False`):
+            Whether or not to separate query-key-value to query, key, value in the Attention.
+
+    Example:
+
+    ```python
+    >>> # The PLUG model has 27B parameters and usually need to run on multiple GPUs. The example given
+    >>> # here only initializes a slice of the model on a single GPU.
+    >>> # Check out the [`~DistributedPipeline.__init__`] method to initialize entire PLUG model.
+    >>> from modelscope.models.nlp.plug import PlugNLGConfig, PlugModel
+
+    >>> # Initializing a Plug configuration
+    >>> configuration = PlugNLGConfig()
+
+    >>> # Initializing a model from the configuration
+    >>> model = PlugModel(configuration)
+
+    >>> # Accessing the model configuration
+    >>> configuration = model.config
+    ```
+    """
+
     model_type = 'plugNLG'
 
     def __init__(self,
                  vocab_size=21504,
-                 hidden_size=768,
-                 num_hidden_layers=12,
-                 num_attention_heads=12,
-                 intermediate_size=3072,
+                 original_vocab_size=21128,
+                 hidden_size=8192,
+                 num_hidden_layers=24,
+                 dec_hidden_layers=6,
+                 num_attention_heads=128,
+                 intermediate_size=32768,
                  hidden_act='gelu',
                  hidden_dropout_prob=0.1,
                  attention_probs_dropout_prob=0.1,
-                 max_position_embeddings=512,
-                 type_vocab_size=2,
+                 max_position_embeddings=2048,
+                 type_vocab_size=3,
                  initializer_range=0.00707,
-                 deep_init=False,
-                 deepspeed=False,
                  lr_decay_style='linear',
                  weight_decay=1e-2,
                  clip_grad=1.0,
                  warmup=0.01,
-                 pre_ln=False,
-                 fp16=False,
-                 fp32_layernorm=False,
+                 pre_ln=True,
+                 fp16=True,
+                 fp32_layernorm=True,
                  fp32_embedding=False,
                  fp32_tokentypes=False,
-                 layernorm_epsilon=1e-12,
-                 dec_hidden_layers=6,
-                 pruning_method=None,
-                 pruning_mask_init='constant',
-                 pruning_mask_scale=0.0,
-                 pruning_initial_threshold=1.0,
-                 pruning_final_threshold=0.01,
-                 pruning_initial_warmup=1,
-                 pruning_final_warmup=20,
-                 pruning_module='decoder',
-                 pruning_decay_step=50,
-                 pruning_decay_type='exp',
-                 ft_module=None,
+                 layernorm_epsilon=1e-5,
                  attn_separate=False,
-                 LR_weight_rank=8,
-                 LR_mask_rank=8,
                  **kwargs):
         super().__init__(layer_norm_eps=layernorm_epsilon, **kwargs)
 
@@ -203,8 +241,6 @@ class PlugNLGConfig(PlugNLUConfig):
         self.max_position_embeddings = max_position_embeddings
         self.type_vocab_size = type_vocab_size
         self.initializer_range = initializer_range
-        self.deep_init = deep_init
-        self.deepspeed = deepspeed
         self.lr_decay_style = lr_decay_style
         self.weight_decay = weight_decay
         self.clip_grad = clip_grad
@@ -216,17 +252,4 @@ class PlugNLGConfig(PlugNLUConfig):
         self.layernorm_epsilon = layernorm_epsilon
         self.fp32_tokentypes = fp32_tokentypes
         self.dec_hidden_layers = dec_hidden_layers
-        self.pruning_method = pruning_method
-        self.pruning_mask_init = pruning_mask_init
-        self.pruning_mask_scale = pruning_mask_scale
-        self.pruning_module = pruning_module
-        self.pruning_initial_threshold = pruning_initial_threshold
-        self.pruning_final_threshold = pruning_final_threshold
-        self.pruning_initial_warmup = pruning_initial_warmup
-        self.pruning_final_warmup = pruning_final_warmup
-        self.pruning_decay_step = pruning_decay_step
-        self.pruning_decay_type = pruning_decay_type
-        self.ft_module = ft_module
         self.attn_separate = attn_separate
-        self.LR_weight_rank = LR_weight_rank
-        self.LR_mask_rank = LR_mask_rank

@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
+    from .image_inpainting_pipeline import ImageInpaintingPipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
     from .realtime_object_detection_pipeline import RealtimeObjectDetectionPipeline
     from .live_category_pipeline import LiveCategoryPipeline
@@ -45,7 +46,10 @@ if TYPE_CHECKING:
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
     from .shop_segmentation_pipleline import ShopSegmentationPipeline
-    from .easycv_pipelines import EasyCVDetectionPipeline, EasyCVSegmentationPipeline, Face2DKeypointsPipeline
+    from .easycv_pipelines import (EasyCVDetectionPipeline,
+                                   EasyCVSegmentationPipeline,
+                                   Face2DKeypointsPipeline,
+                                   HumanWholebodyKeypointsPipeline)
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
     from .mog_face_detection_pipeline import MogFaceDetectionPipeline
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
+    from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
 
 else:
     _import_structure = {
@@ -99,6 +104,7 @@ else:
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generation_pipeline':
         ['Image2ImageGenerationPipeline'],
+        'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
@@ -107,8 +113,10 @@ else:
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
         'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
         'easycv_pipeline': [
-            'EasyCVDetectionPipeline', 'EasyCVSegmentationPipeline',
-            'Face2DKeypointsPipeline'
+            'EasyCVDetectionPipeline',
+            'EasyCVSegmentationPipeline',
+            'Face2DKeypointsPipeline',
+            'HumanWholebodyKeypointsPipeline',
         ],
         'text_driven_segmentation_pipeline':
         ['TextDrivenSegmentationPipeline'],
@@ -121,6 +129,9 @@ else:
         ['FacialExpressionRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
+        'referring_video_object_segmentation_pipeline': [
+            'ReferringVideoObjectSegmentationPipeline'
+        ],
     }
 
     import sys

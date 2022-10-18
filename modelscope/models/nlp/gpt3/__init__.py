@@ -7,11 +7,13 @@ if TYPE_CHECKING:
     from .configuration_gpt3 import GPT3Config
     from .modeling_gpt3 import GPT3Model
     from .gpt3_for_text_generation import GPT3ForTextGeneration
+    from .tokenizer_gpt3 import JiebaBPETokenizer
 else:
     _import_structure = {
         'configuration_gpt3': ['GPT3Config'],
         'modeling_gpt3': ['GPT3Model'],
         'gpt3_for_text_generation': ['GPT3ForTextGeneration'],
+        'tokenizer_gpt3': ['JiebaBPETokenizer'],
     }
 
     import sys

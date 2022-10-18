@@ -36,7 +36,10 @@ class OutputKeys(object):
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
+    SQL_STRING = 'sql_string'
+    SQL_QUERY = 'sql_query'
     HISTORY = 'history'
+    QUERT_RESULT = 'query_result'
     TIMESTAMPS = 'timestamps'
     SHOT_NUM = 'shot_num'
     SCENE_NUM = 'scene_num'
@@ -87,6 +90,25 @@ TASK_OUTPUTS = {
     #       ],
     #   }
     Tasks.face_detection:
+    [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
+
+    # card detection result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #       "keypoints": [
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #           [x1, y1, x2, y2, x3, y3, x4, y4],
+    #       ],
+    #   }
+    Tasks.card_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
     # facial expression recognition result for single sample
@@ -143,6 +165,32 @@ TASK_OUTPUTS = {
     Tasks.image_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
+    # video object detection result for single sample
+    #   {
+
+    #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]
+    #         "labels": [["person", "traffic light", "car", "bus"],
+    #                     ["person", "traffic light", "car", "bus"]]
+    #         "boxes":
+    #          [
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #              ],
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #               ]
+    #           ],
+
+    #   }
+    Tasks.video_object_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+
     # instance segmentation result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05],
@@ -177,6 +225,7 @@ TASK_OUTPUTS = {
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
+    Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],
 
     # image generation task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}
@@ -184,6 +233,7 @@ TASK_OUTPUTS = {
     Tasks.image_to_image_translation: [OutputKeys.OUTPUT_IMG],
     Tasks.image_style_transfer: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_stylization: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_body_reshaping: [OutputKeys.OUTPUT_IMG],
 
     # live category recognition result for single video
     # {
@@ -200,7 +250,7 @@ TASK_OUTPUTS = {
 
     # human body keypoints detection result for single sample
     # {
-    #   "poses": [
+    #   "keypoints": [
     #               [[x, y]*15],
     #               [[x, y]*15],
     #               [[x, y]*15]
@@ -217,11 +267,11 @@ TASK_OUTPUTS = {
     #             ]
     # }
     Tasks.body_2d_keypoints:
-    [OutputKeys.POSES, OutputKeys.SCORES, OutputKeys.BOXES],
+    [OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES],
 
     # 3D human body keypoints detection result for single sample
     # {
-    #   "poses": [		    # 3d pose coordinate in camera coordinate
+    #   "keypoints": [		    # 3d pose coordinate in camera coordinate
     #     	[[x, y, z]*17],	# joints of per image
     #     	[[x, y, z]*17],
     #     	...
@@ -235,7 +285,7 @@ TASK_OUTPUTS = {
     # and is only avaialbe when the "render" option is enabled.
     # }
     Tasks.body_3d_keypoints:
-    [OutputKeys.POSES, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
     # 2D hand keypoints result for single sample
     # {
@@ -335,6 +385,43 @@ TASK_OUTPUTS = {
         OutputKeys.SHOT_NUM, OutputKeys.SHOT_META_LIST, OutputKeys.SCENE_NUM,
         OutputKeys.SCENE_META_LIST
     ],
+
+    # human whole body keypoints detection result for single sample
+    # {
+    #   "keypoints": [
+    #               [[x, y]*133],
+    #               [[x, y]*133],
+    #               [[x, y]*133]
+    #             ]
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    # }
+    Tasks.human_wholebody_keypoint: [OutputKeys.KEYPOINTS, OutputKeys.BOXES],
+
+    # video summarization result for a single video
+    # {
+    #        "output":
+    #        [
+    #           {
+    #               "frame": [start_frame, end_frame]
+    #               "timestamps": [start_time, end_time]
+    #           },
+    #           {
+    #               "frame": [start_frame, end_frame]
+    #               "timestamps": [start_time, end_time]
+    #           }
+    #        ]
+    # }
+    Tasks.video_summarization: [OutputKeys.OUTPUT],
+
+    # referring video object segmentation result for a single video
+    #   {
+    #       "masks": [np.array # 2D array with shape [height, width]]
+    #   }
+    Tasks.referring_video_object_segmentation: [OutputKeys.MASKS],
 
     # ============ nlp tasks ===================
 
@@ -530,7 +617,10 @@ TASK_OUTPUTS = {
     #   "sql": "SELECT shop.Name FROM shop."
     #   "sql_history": {sel: 0, agg: 0, conds: [[0, 0, 'val']]}
     # }
-    Tasks.table_question_answering: [OutputKeys.OUTPUT, OutputKeys.HISTORY],
+    Tasks.table_question_answering: [
+        OutputKeys.SQL_STRING, OutputKeys.SQL_QUERY, OutputKeys.HISTORY,
+        OutputKeys.QUERT_RESULT
+    ],
 
     # ============ audio tasks ===================
     # asr result for single sample
@@ -618,8 +708,9 @@ TASK_OUTPUTS = {
     #   "text_embedding": np.array with shape [1, D],
     #   "similarity": float
     # }
-    Tasks.multi_modal_similarity:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
+    Tasks.multi_modal_similarity: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES
+    ],
 
     # VQA result for a sample
     # {"text": "this is a text answser. "}

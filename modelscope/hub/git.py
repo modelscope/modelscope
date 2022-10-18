@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import re
 import subprocess
 from typing import List
 from xmlrpc.client import Boolean
@@ -138,8 +139,8 @@ class GitCommandWrapper(metaclass=Singleton):
                 repo_base_dir, repo_name, user_name)
             response = self._run_git_command(*config_user_name_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))
-            config_user_email_args = '-C %s/%s config user.name %s' % (
-                repo_base_dir, repo_name, user_name)
+            config_user_email_args = '-C %s/%s config user.email %s' % (
+                repo_base_dir, repo_name, user_email)
             response = self._run_git_command(
                 *config_user_email_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))
@@ -176,6 +177,15 @@ class GitCommandWrapper(metaclass=Singleton):
     def new_branch(self, repo_dir: str, revision: str):
         cmds = ['-C', '%s' % repo_dir, 'checkout', '-b', revision]
         return self._run_git_command(*cmds)
+
+    def get_remote_branches(self, repo_dir: str):
+        cmds = ['-C', '%s' % repo_dir, 'branch', '-r']
+        rsp = self._run_git_command(*cmds)
+        info = [
+            line.strip()
+            for line in rsp.stdout.decode('utf8').strip().split(os.linesep)
+        ][1:]
+        return ['/'.join(line.split('/')[1:]) for line in info]
 
     def pull(self, repo_dir: str):
         cmds = ['-C', repo_dir, 'pull']

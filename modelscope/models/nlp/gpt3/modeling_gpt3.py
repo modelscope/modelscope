@@ -19,8 +19,7 @@ from typing import Optional, Union
 
 import addict
 import torch
-from torch.nn import (CrossEntropyLoss, Dropout, Embedding, LayerNorm, Linear,
-                      Module, Softmax)
+from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
@@ -28,7 +27,7 @@ from modelscope.utils.constant import ModelFile
 from .configuration_gpt3 import GPT3Config
 
 
-class GPT3SelfAttention(Module):
+class GPT3SelfAttention(nn.Module):
     """Parallel self-attention layer abstract class.
 
     Self-attention layer takes input with size [s, b, h]
@@ -44,13 +43,15 @@ class GPT3SelfAttention(Module):
         self.hidden_size_per_attention_head = \
             self.hidden_size // self.num_attention_heads
 
-        self.query_key_value = Linear(self.hidden_size, 3 * self.hidden_size)
-        self.softmax = Softmax(dim=-1)
-        self.attention_dropout = Dropout(config.attention_probs_dropout_prob)
+        self.query_key_value = nn.Linear(self.hidden_size,
+                                         3 * self.hidden_size)
+        self.softmax = nn.Softmax(dim=-1)
+        self.attention_dropout = nn.Dropout(
+            config.attention_probs_dropout_prob)
 
         # Output.
-        self.dense = Linear(self.hidden_size, self.hidden_size)
-        self.output_dropout = torch.nn.Dropout(config.hidden_dropout_prob)
+        self.dense = nn.Linear(self.hidden_size, self.hidden_size)
+        self.output_dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def _transpose_for_scores(self, tensor):
         """Transpose a 3D tensor [b, s, np*hn] into a 4D tensor with
@@ -133,7 +134,7 @@ class GPT3SelfAttention(Module):
         return output
 
 
-class GPT3MLP(Module):
+class GPT3MLP(nn.Module):
     """MLP.
 
     MLP will take the input with h hidden state, project it to 4*h
@@ -146,12 +147,12 @@ class GPT3MLP(Module):
 
         hidden_size = config.hidden_size
         # Project to 4h.
-        self.dense_h_to_4h = Linear(hidden_size, 4 * hidden_size)
+        self.dense_h_to_4h = nn.Linear(hidden_size, 4 * hidden_size)
         self.activation_func = F.gelu
         # Project back to h.
-        self.dense_4h_to_h = Linear(4 * hidden_size, hidden_size)
+        self.dense_4h_to_h = nn.Linear(4 * hidden_size, hidden_size)
 
-        self.dropout = Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states):
 
@@ -164,7 +165,7 @@ class GPT3MLP(Module):
         return output
 
 
-class GPT3TransformerLayer(Module):
+class GPT3TransformerLayer(nn.Module):
     """A single transformer layer.
 
     Transformer layer takes input with size [s, b, h] and returns an
@@ -175,14 +176,14 @@ class GPT3TransformerLayer(Module):
         super().__init__()
 
         # Layernorm on the input data.
-        self.input_layernorm = LayerNorm(
+        self.input_layernorm = nn.LayerNorm(
             config.hidden_size, eps=config.layernorm_epsilon)
 
         # Self attention.
         self.attention = GPT3SelfAttention(config)
 
         # Layernorm on the attention output
-        self.post_attention_layernorm = LayerNorm(
+        self.post_attention_layernorm = nn.LayerNorm(
             config.hidden_size, eps=config.layernorm_epsilon)
 
         # MLP
@@ -208,7 +209,7 @@ class GPT3TransformerLayer(Module):
         return output
 
 
-class GPT3Transformer(Module):
+class GPT3Transformer(nn.Module):
     """Transformer class."""
 
     def __init__(self, config):
@@ -223,7 +224,7 @@ class GPT3Transformer(Module):
             [GPT3TransformerLayer(config) for _ in range(self.num_layers)])
 
         # Final layer norm before output.
-        self.final_layernorm = LayerNorm(
+        self.final_layernorm = nn.LayerNorm(
             config.hidden_size, eps=config.layernorm_epsilon)
 
     def _get_layer(self, layer_number):
@@ -242,7 +243,7 @@ class GPT3Transformer(Module):
         return hidden_states
 
 
-class GPT3TransformerLanguageModel(Module):
+class GPT3TransformerLanguageModel(nn.Module):
     """Transformer language model.
 
     Arguments:
@@ -259,10 +260,11 @@ class GPT3TransformerLanguageModel(Module):
         super().__init__()
 
         # Embeddings.
-        self.word_embeddings = Embedding(config.vocab_size, config.hidden_size)
-        self.position_embeddings = Embedding(config.max_position_embeddings,
-                                             config.hidden_size)
-        self.embedding_dropout = Dropout(config.hidden_dropout_prob)
+        self.word_embeddings = nn.Embedding(config.vocab_size,
+                                            config.hidden_size)
+        self.position_embeddings = nn.Embedding(config.max_position_embeddings,
+                                                config.hidden_size)
+        self.embedding_dropout = nn.Dropout(config.hidden_dropout_prob)
 
         # Transformer.
         self.transformer = GPT3Transformer(config)
@@ -286,19 +288,19 @@ class GPT3Model(PreTrainedModel):
 
     def _init_weights(self, module):
         """Initialize the weights"""
-        if isinstance(module, Linear):
+        if isinstance(module, nn.Linear):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
             module.weight.data.normal_(
                 mean=0.0, std=self.config.initializer_range)
             if module.bias is not None:
                 module.bias.data.zero_()
-        elif isinstance(module, Embedding):
+        elif isinstance(module, nn.Embedding):
             module.weight.data.normal_(
                 mean=0.0, std=self.config.initializer_range)
             if module.padding_idx is not None:
                 module.weight.data[module.padding_idx].zero_()
-        elif isinstance(module, LayerNorm):
+        elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
@@ -325,7 +327,7 @@ class GPT3Model(PreTrainedModel):
         logits = self.language_model(input_ids, attention_mask, position_ids)
         loss = None
         if labels is not None:
-            loss_fct = CrossEntropyLoss()
+            loss_fct = nn.CrossEntropyLoss()
             loss = loss_fct(
                 logits.view(-1, self.config.vocab_size), labels.view(-1))
         return addict.Dict(loss=loss, logits=logits)
@@ -346,3 +348,6 @@ class GPT3Model(PreTrainedModel):
         }
         model.load_state_dict(state_dict)
         return model
+
+    def prepare_inputs_for_generation(self, input_ids, *args, **kwargs):
+        return {'input_ids': input_ids}

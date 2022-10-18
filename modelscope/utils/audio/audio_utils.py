@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import re
 import struct
 from typing import Union
 from urllib.parse import urlparse
@@ -35,6 +36,23 @@ def audio_norm(x):
     scalarx = 10**(-25 / 20) / rmsx
     x = x * scalarx
     return x
+
+
+def update_conf(origin_config_file, new_config_file, conf_item: [str, str]):
+
+    def repl(matched):
+        key = matched.group(1)
+        if key in conf_item:
+            return conf_item[key]
+        else:
+            return None
+
+    with open(origin_config_file) as f:
+        lines = f.readlines()
+    with open(new_config_file, 'w') as f:
+        for line in lines:
+            line = re.sub(r'\$\{(.*)\}', repl, line)
+            f.write(line)
 
 
 def extract_pcm_from_wav(wav: bytes) -> bytes:

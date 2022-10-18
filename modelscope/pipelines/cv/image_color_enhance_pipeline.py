@@ -55,5 +55,5 @@ class ImageColorEnhancePipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         output_img = (inputs['outputs'].squeeze(0) * 255.).type(
-            torch.uint8).cpu().permute(1, 2, 0).numpy()
+            torch.uint8).cpu().permute(1, 2, 0).numpy()[:, :, ::-1]
         return {OutputKeys.OUTPUT_IMG: output_img}

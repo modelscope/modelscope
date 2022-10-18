@@ -21,6 +21,8 @@ if TYPE_CHECKING:
         Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
         ZeroShotClassificationPreprocessor,
+        TextGenerationJiebaPreprocessor,
+        SentencePiecePreprocessor,
     )
 
 else:
@@ -41,6 +43,8 @@ else:
             'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
+            'TextGenerationJiebaPreprocessor',
+            'SentencePiecePreprocessor',
         ],
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',

@@ -32,6 +32,8 @@ if TYPE_CHECKING:
         Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
         ZeroShotClassificationPreprocessor,
+        TextGenerationJiebaPreprocessor,
+        SentencePiecePreprocessor,
     )
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
@@ -71,6 +73,8 @@ else:
             'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
+            'TextGenerationJiebaPreprocessor',
+            'SentencePiecePreprocessor',
         ],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',

@@ -19,6 +19,7 @@ class CVTasks(object):
     # human face body related
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
+    card_detection = 'card-detection'
     face_recognition = 'face-recognition'
     facial_expression_recognition = 'facial-expression-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
@@ -29,6 +30,7 @@ class CVTasks(object):
     body_3d_keypoints = 'body-3d-keypoints'
     hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
+    human_wholebody_keypoint = 'human-wholebody-keypoint'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'
@@ -36,6 +38,7 @@ class CVTasks(object):
     image_classification_dailylife = 'image-classification-dailylife'
 
     image_object_detection = 'image-object-detection'
+    video_object_detection = 'video-object-detection'
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
@@ -47,6 +50,8 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
 
+    crowd_counting = 'crowd-counting'
+
     # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
@@ -54,13 +59,14 @@ class CVTasks(object):
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'
     image_portrait_enhancement = 'image-portrait-enhancement'
+    image_inpainting = 'image-inpainting'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
     image_to_image_generation = 'image-to-image-generation'
     image_style_transfer = 'image-style-transfer'
     image_portrait_stylization = 'image-portrait-stylization'
-
+    image_body_reshaping = 'image-body-reshaping'
     image_embedding = 'image-embedding'
 
     product_retrieval_embedding = 'product-retrieval-embedding'
@@ -72,8 +78,10 @@ class CVTasks(object):
     video_category = 'video-category'
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
-    crowd_counting = 'crowd-counting'
     movie_scene_segmentation = 'movie-scene-segmentation'
+
+    # video segmentation
+    referring_video_object_segmentation = 'referring-video-object-segmentation'
 
     # video editing
     video_inpainting = 'video-inpainting'
@@ -221,6 +229,13 @@ class DownloadMode(enum.Enum):
     """
     REUSE_DATASET_IF_EXISTS = 'reuse_dataset_if_exists'
     FORCE_REDOWNLOAD = 'force_redownload'
+
+
+class DownloadParams(enum.Enum):
+    """
+        Parameters for downloading dataset.
+    """
+    MAX_LIST_OBJECTS_NUM = 50000
 
 
 class DatasetFormations(enum.Enum):

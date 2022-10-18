@@ -21,7 +21,7 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def pipeline_inference(self, pipeline: Pipeline, pipeline_input):
         output = pipeline(pipeline_input, output_video='./result.mp4')
-        poses = np.array(output[OutputKeys.POSES])
+        poses = np.array(output[OutputKeys.KEYPOINTS])
         print(f'result 3d points shape {poses.shape}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

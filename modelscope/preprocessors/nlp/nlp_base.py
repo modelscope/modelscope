@@ -5,6 +5,7 @@ import re
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
+import sentencepiece as spm
 import torch
 from transformers import AutoTokenizer
 
@@ -12,7 +13,8 @@ from modelscope.metainfo import Models, Preprocessors
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.config import Config, ConfigFields
+from modelscope.utils.config import (Config, ConfigFields,
+                                     use_task_specific_params)
 from modelscope.utils.constant import Fields, InputFields, ModeKeys, ModelFile
 from modelscope.utils.hub import get_model_type, parse_label_mapping
 from modelscope.utils.logger import get_logger
@@ -417,14 +419,12 @@ class Text2TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
                  tokenizer=None,
                  mode=ModeKeys.INFERENCE,
                  **kwargs):
-        self.tokenizer = self.build_tokenizer(
-            model_dir) if tokenizer is None else tokenizer
         kwargs['truncation'] = kwargs.get('truncation', 'do_not_truncate')
         kwargs['padding'] = kwargs.get('padding', False)
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
-        super().__init__(model_dir, pair=False, mode=mode, **kwargs)
+        super().__init__(model_dir, mode=mode, **kwargs)
 
     def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         text_a, _, _ = self.parse_text_and_label(data)
@@ -491,6 +491,41 @@ class TextGenerationPreprocessor(NLPTokenizerPreprocessorBase):
             'input_ids': src_input_ids,
             'attention_mask': src_attention_mask,
             'labels': labels,
+        }
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.text_gen_jieba_tokenizer)
+class TextGenerationJiebaPreprocessor(Preprocessor):
+    """The jieba tokenizer preprocessor used in text generation.
+    """
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
+        super().__init__(*args, **kwargs)
+        self.tokenizer = JiebaBPETokenizer(
+            osp.join(model_dir, 'tokenizer.json'))
+
+    def __call__(self, data: str) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data (str): a sentence
+                Example:
+                    '深蓝的天空中挂着一轮金黄的圆月，下面是海边的沙地'
+        Returns:
+            Dict[str, Any]: the preprocessed data
+            Example:
+            {'net_input':
+                {'src_tokens':tensor([1,2,3,4]),
+                'src_lengths': tensor([4])}
+            }
+        """
+        import torch
+
+        return {
+            'input_ids':
+            torch.tensor(self.tokenizer.tokenize(data)).unsqueeze_(0)
         }
 
 
@@ -1161,3 +1196,23 @@ class FillMaskPoNetPreprocessor(NLPTokenizerPreprocessorBase):
 
         self.labels_to_id(labels, output)
         return output
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sentence_piece)
+class SentencePiecePreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        import os
+
+        super().__init__(*args, **kwargs)
+        self.tokenizer = None
+        for file_name in os.listdir(model_dir):
+            if file_name.endswith('.model'):
+                m_file = osp.join(model_dir, file_name)
+                self.tokenizer = spm.SentencePieceProcessor(model_file=m_file)
+                break
+        assert self.tokenizer is not None, 'Can not find .model file'
+
+    def __call__(self, data: str) -> Dict[str, Any]:
+        return torch.tensor(self.tokenizer.encode([data]), dtype=torch.long)

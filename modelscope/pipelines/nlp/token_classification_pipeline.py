@@ -40,7 +40,12 @@ class TokenClassificationPipeline(Pipeline):
                 sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.id2label = getattr(model, 'id2label')
+        if hasattr(model, 'id2label'):
+            self.id2label = getattr(model, 'id2label')
+        else:
+            model_config = getattr(model, 'config')
+            self.id2label = getattr(model_config, 'id2label')
+
         assert self.id2label is not None, 'Cannot convert id to the original label, please pass in the mapping ' \
                                           'as a parameter or make sure the preprocessor has the attribute.'
 

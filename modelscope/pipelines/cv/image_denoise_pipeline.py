@@ -105,4 +105,4 @@ class ImageDenoisePipeline(Pipeline):
     def postprocess(self, input: Dict[str, Any]) -> Dict[str, Any]:
         output_img = (input['output_tensor'].squeeze(0) * 255).cpu().permute(
             1, 2, 0).numpy().astype('uint8')
-        return {OutputKeys.OUTPUT_IMG: output_img}
+        return {OutputKeys.OUTPUT_IMG: output_img[:, :, ::-1]}

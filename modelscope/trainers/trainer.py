@@ -669,6 +669,12 @@ class EpochBasedTrainer(BaseTrainer):
         dataset = self.to_task_dataset(torch_dataset, mode)
         return dataset
 
+    def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
+        return build_optimizer(self.model, cfg=cfg, default_args=default_args)
+
+    def build_lr_scheduler(self, cfg: ConfigDict, default_args: dict = None):
+        return build_lr_scheduler(cfg=cfg, default_args=default_args)
+
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler
 
@@ -685,7 +691,7 @@ class EpochBasedTrainer(BaseTrainer):
         optim_options = {}
         if optimizer_cfg is not None:
             optim_options = optimizer_cfg.pop('options', {})
-            optimizer = build_optimizer(self.model, cfg=optimizer_cfg)
+            optimizer = self.build_optimizer(cfg=optimizer_cfg)
 
         if lr_scheduler is None:
             lr_scheduler_cfg = self.cfg.train.get('lr_scheduler', None)
@@ -696,7 +702,7 @@ class EpochBasedTrainer(BaseTrainer):
         if lr_scheduler_cfg is not None:
             assert optimizer is not None
             lr_options = lr_scheduler_cfg.pop('options', {})
-            lr_scheduler = build_lr_scheduler(
+            lr_scheduler = self.build_lr_scheduler(
                 cfg=lr_scheduler_cfg, default_args={'optimizer': optimizer})
 
         self.optimizer = optimizer
@@ -827,7 +833,6 @@ class EpochBasedTrainer(BaseTrainer):
         self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
-            time.sleep(2)  # Prevent possible deadlock during epoch transition
             for i, data_batch in enumerate(data_loader):
                 if i < self.inner_iter:
                     # inner_iter may be read out from the checkpoint file, so skip the trained iters in the epoch.
@@ -851,7 +856,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._inner_iter = 0
             self._epoch += 1
 
-        time.sleep(1)  # wait for some hooks like loggers to finish
         self.invoke_hook(TrainerStages.after_run)
 
     def evaluation_loop(self, data_loader, metric_classes):

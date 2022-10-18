@@ -1,4 +1,5 @@
-# The implementation is based on KTS, available at https://github.com/TatsuyaShirakawa/KTS.
+# Part of the implementation is borrowed and modified from KTS,
+# publicly available at https://github.com/TatsuyaShirakawa/KTS
 
 import numpy as np
 

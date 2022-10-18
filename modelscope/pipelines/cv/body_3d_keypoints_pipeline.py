@@ -145,7 +145,7 @@ class Body3DKeypointsPipeline(Pipeline):
             kps_2d = self.human_body_2d_kps_detector(frame)
             box = kps_2d['boxes'][
                 0]  # box: [[[x1, y1], [x2, y2]]], N human boxes per frame, [0] represent using first detected bbox
-            pose = kps_2d['poses'][0]  # keypoints: [15, 2]
+            pose = kps_2d['keypoints'][0]  # keypoints: [15, 2]
             score = kps_2d['scores'][0]  # keypoints: [15, 2]
             all_2d_poses.append(pose)
             all_boxes_with_socre.append(
@@ -180,7 +180,7 @@ class Body3DKeypointsPipeline(Pipeline):
         return res
 
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        res = {OutputKeys.POSES: [], OutputKeys.TIMESTAMPS: []}
+        res = {OutputKeys.KEYPOINTS: [], OutputKeys.TIMESTAMPS: []}
 
         if not input['success']:
             pass
@@ -197,7 +197,7 @@ class Body3DKeypointsPipeline(Pipeline):
                 self.render_prediction(pred_3d_pose, output_video_path)
                 res[OutputKeys.OUTPUT_VIDEO] = output_video_path
 
-            res[OutputKeys.POSES] = pred_3d_pose
+            res[OutputKeys.KEYPOINTS] = pred_3d_pose
             res[OutputKeys.TIMESTAMPS] = self.timestamps
         return res
 

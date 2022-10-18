@@ -287,7 +287,13 @@ class SchemaLinker:
 
         return match_len / (len(nlu_t) + 0.1)
 
-    def get_entity_linking(self, tokenizer, nlu, nlu_t, tables, col_syn_dict):
+    def get_entity_linking(self,
+                           tokenizer,
+                           nlu,
+                           nlu_t,
+                           tables,
+                           col_syn_dict,
+                           history_sql=None):
         """
         get linking between question and schema column
         """
@@ -305,8 +311,7 @@ class SchemaLinker:
             typeinfos = []
             for ii, column in enumerate(table['header_name']):
                 column = column.lower()
-                column_new = re.sub('(.*?)', '', column)
-                column_new = re.sub('（.*?）', '', column_new)
+                column_new = column
                 cphrase, cscore = self.get_match_phrase(
                     nlu.lower(), column_new)
                 if cscore > 0.3 and cphrase.strip() != '':
@@ -330,7 +335,6 @@ class SchemaLinker:
                 for cell in ans.keys():
                     vphrase = cell
                     vscore = 1.0
-                    # print("trie_set find:", cell, ans[cell])
                     phrase_tok = tokenizer.tokenize(vphrase)
                     if len(phrase_tok) == 0 or len(vphrase) < 2:
                         continue
@@ -408,16 +412,25 @@ class SchemaLinker:
             match_score = self.get_table_match_score(nlu_t, schema_link)
 
             search_result = {
-                'table_id': table['table_id'],
-                'question_knowledge': final_question,
-                'header_knowledge': final_header,
-                'schema_link': schema_link,
-                'match_score': match_score
+                'table_id':
+                table['table_id'],
+                'question_knowledge':
+                final_question,
+                'header_knowledge':
+                final_header,
+                'schema_link':
+                schema_link,
+                'match_score':
+                match_score,
+                'table_score':
+                int(table['table_id'] == history_sql['from'][0])
+                if history_sql is not None else 0
             }
             search_result_list.append(search_result)
 
         search_result_list = sorted(
-            search_result_list, key=lambda x: x['match_score'],
+            search_result_list,
+            key=lambda x: (x['match_score'], x['table_score']),
             reverse=True)[0:4]
 
         return search_result_list

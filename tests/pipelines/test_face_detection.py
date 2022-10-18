@@ -25,10 +25,11 @@ class FaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_dataset(self):
-        input_location = ['data/test/images/face_detection.png']
+        input_location = ['data/test/images/face_detection2.jpeg']
 
         dataset = MsDataset.load(input_location, target='image')
-        face_detection = pipeline(Tasks.face_detection, model=self.model_id)
+        face_detection = pipeline(
+            Tasks.face_detection, model=self.model_id, model_revision='v2')
         # note that for dataset output, the inference-output is a Generator that can be iterated.
         result = face_detection(dataset)
         result = next(result)
@@ -36,8 +37,9 @@ class FaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        face_detection = pipeline(Tasks.face_detection, model=self.model_id)
-        img_path = 'data/test/images/face_detection.png'
+        face_detection = pipeline(
+            Tasks.face_detection, model=self.model_id, model_revision='v2')
+        img_path = 'data/test/images/face_detection2.jpeg'
 
         result = face_detection(img_path)
         self.show_result(img_path, result)
@@ -45,7 +47,7 @@ class FaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         face_detection = pipeline(Tasks.face_detection)
-        img_path = 'data/test/images/face_detection.png'
+        img_path = 'data/test/images/face_detection2.jpeg'
         result = face_detection(img_path)
         self.show_result(img_path, result)
 

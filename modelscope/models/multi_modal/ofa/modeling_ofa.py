@@ -54,6 +54,7 @@ OFA_PRETRAINED_MODEL_ARCHIVE_LIST = [
     'ofa-medium',
     'ofa-base',
     'ofa-large',
+    'ofa-huge',
 ]
 
 try:

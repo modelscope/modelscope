@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import uuid
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
@@ -23,7 +24,9 @@ class HubUploadTest(unittest.TestCase):
         self.api = HubApi()
         self.user = os.environ.get('TEST_MODEL_ORG', 'citest')
         logger.info(self.user)
-        self.create_model_name = '%s/%s' % (self.user, 'test_model_upload')
+        self.create_model_name = '%s/%s_%s' % (self.user, 'test_model_upload',
+                                               uuid.uuid4().hex)
+        logger.info('create %s' % self.create_model_name)
         temporary_dir = tempfile.mkdtemp()
         self.work_dir = temporary_dir
         self.model_dir = os.path.join(temporary_dir, self.create_model_name)

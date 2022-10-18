@@ -14,7 +14,6 @@ class GiraffeNeckV2(nn.Module):
         self,
         depth=1.0,
         width=1.0,
-        in_features=[2, 3, 4],
         in_channels=[256, 512, 1024],
         out_channels=[256, 512, 1024],
         depthwise=False,
@@ -24,7 +23,6 @@ class GiraffeNeckV2(nn.Module):
         block_name='BasicBlock',
     ):
         super().__init__()
-        self.in_features = in_features
         self.in_channels = in_channels
         Conv = DWConv if depthwise else BaseConv
 
@@ -169,8 +167,7 @@ class GiraffeNeckV2(nn.Module):
         """
 
         #  backbone
-        features = [out_features[f] for f in self.in_features]
-        [x2, x1, x0] = features
+        [x2, x1, x0] = out_features
 
         # node x3
         x13 = self.bu_conv13(x1)

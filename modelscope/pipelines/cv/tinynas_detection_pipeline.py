@@ -12,6 +12,8 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
+from modelscope.utils.cv.image_utils import \
+    show_image_object_detection_auto_result
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -52,10 +54,18 @@ class TinynasDetectionPipeline(Pipeline):
 
         bboxes, scores, labels = self.model.postprocess(inputs['data'])
         if bboxes is None:
-            return None
-        outputs = {
-            OutputKeys.SCORES: scores,
-            OutputKeys.LABELS: labels,
-            OutputKeys.BOXES: bboxes
-        }
+            outputs = {
+                OutputKeys.SCORES: [],
+                OutputKeys.LABELS: [],
+                OutputKeys.BOXES: []
+            }
+        else:
+            outputs = {
+                OutputKeys.SCORES: scores,
+                OutputKeys.LABELS: labels,
+                OutputKeys.BOXES: bboxes
+            }
         return outputs
+
+    def show_result(self, img_path, result, save_path=None):
+        show_image_object_detection_auto_result(img_path, result, save_path)

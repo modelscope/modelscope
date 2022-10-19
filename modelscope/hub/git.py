@@ -184,8 +184,11 @@ class GitCommandWrapper(metaclass=Singleton):
         info = [
             line.strip()
             for line in rsp.stdout.decode('utf8').strip().split(os.linesep)
-        ][1:]
-        return ['/'.join(line.split('/')[1:]) for line in info]
+        ]
+        if len(info) == 1:
+            return ['/'.join(info[0].split('/')[1:])]
+        else:
+            return ['/'.join(line.split('/')[1:]) for line in info[1:]]
 
     def pull(self, repo_dir: str):
         cmds = ['-C', repo_dir, 'pull']

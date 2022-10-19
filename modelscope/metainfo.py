@@ -9,7 +9,9 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    # tinynas models
     tinynas_detection = 'tinynas-detection'
+    tinynas_damoyolo = 'tinynas-damoyolo'
 
     # vision models
     detection = 'detection'

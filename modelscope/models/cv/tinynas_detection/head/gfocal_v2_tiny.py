@@ -124,11 +124,13 @@ class GFocalHead_Tiny(nn.Module):
             simOTA_iou_weight=3.0,
             octbase=8,
             simlqe=False,
+            use_lqe=True,
             **kwargs):
         self.simlqe = simlqe
         self.num_classes = num_classes
         self.in_channels = in_channels
         self.strides = strides
+        self.use_lqe = use_lqe
         self.feat_channels = feat_channels if isinstance(feat_channels, list) \
             else [feat_channels] * len(self.strides)
 
@@ -181,15 +183,20 @@ class GFocalHead_Tiny(nn.Module):
                     groups=self.conv_groups,
                     norm=self.norm,
                     act=self.act))
-        if not self.simlqe:
-            conf_vector = [nn.Conv2d(4 * self.total_dim, self.reg_channels, 1)]
+        if self.use_lqe:
+            if not self.simlqe:
+                conf_vector = [
+                    nn.Conv2d(4 * self.total_dim, self.reg_channels, 1)
+                ]
+            else:
+                conf_vector = [
+                    nn.Conv2d(4 * (self.reg_max + 1), self.reg_channels, 1)
+                ]
+            conf_vector += [self.relu]
+            conf_vector += [nn.Conv2d(self.reg_channels, 1, 1), nn.Sigmoid()]
+            reg_conf = nn.Sequential(*conf_vector)
         else:
-            conf_vector = [
-                nn.Conv2d(4 * (self.reg_max + 1), self.reg_channels, 1)
-            ]
-        conf_vector += [self.relu]
-        conf_vector += [nn.Conv2d(self.reg_channels, 1, 1), nn.Sigmoid()]
-        reg_conf = nn.Sequential(*conf_vector)
+            reg_conf = None
 
         return cls_convs, reg_convs, reg_conf
 
@@ -290,21 +297,27 @@ class GFocalHead_Tiny(nn.Module):
         N, C, H, W = bbox_pred.size()
         prob = F.softmax(
             bbox_pred.reshape(N, 4, self.reg_max + 1, H, W), dim=2)
-        if not self.simlqe:
-            prob_topk, _ = prob.topk(self.reg_topk, dim=2)
+        if self.use_lqe:
+            if not self.simlqe:
+                prob_topk, _ = prob.topk(self.reg_topk, dim=2)
 
-            if self.add_mean:
-                stat = torch.cat(
-                    [prob_topk, prob_topk.mean(dim=2, keepdim=True)], dim=2)
+                if self.add_mean:
+                    stat = torch.cat(
+                        [prob_topk,
+                         prob_topk.mean(dim=2, keepdim=True)],
+                        dim=2)
+                else:
+                    stat = prob_topk
+
+                quality_score = reg_conf(
+                    stat.reshape(N, 4 * self.total_dim, H, W))
             else:
-                stat = prob_topk
+                quality_score = reg_conf(
+                    bbox_pred.reshape(N, 4 * (self.reg_max + 1), H, W))
 
-            quality_score = reg_conf(stat.reshape(N, 4 * self.total_dim, H, W))
+            cls_score = gfl_cls(cls_feat).sigmoid() * quality_score
         else:
-            quality_score = reg_conf(
-                bbox_pred.reshape(N, 4 * (self.reg_max + 1), H, W))
-
-        cls_score = gfl_cls(cls_feat).sigmoid() * quality_score
+            cls_score = gfl_cls(cls_feat).sigmoid()
 
         flatten_cls_score = cls_score.flatten(start_dim=2).transpose(1, 2)
         flatten_bbox_pred = bbox_pred.flatten(start_dim=2).transpose(1, 2)

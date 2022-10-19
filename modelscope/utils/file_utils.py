@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
+import os
 from pathlib import Path
 
 
@@ -35,3 +36,10 @@ def get_default_cache_dir():
     """
     default_cache_dir = Path.home().joinpath('.cache', 'modelscope')
     return default_cache_dir
+
+
+def read_file(path):
+
+    with open(path, 'r') as f:
+        text = f.read()
+    return text

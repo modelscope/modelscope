@@ -30,7 +30,7 @@ class SingleStageDetector(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
 
-        config_path = osp.join(model_dir, 'airdet_s.py')
+        config_path = osp.join(model_dir, self.config_name)
         config = parse_config(config_path)
         self.cfg = config
         model_path = osp.join(model_dir, config.model.name)
@@ -41,6 +41,9 @@ class SingleStageDetector(TorchModel):
         self.conf_thre = config.model.head.nms_conf_thre
         self.nms_thre = config.model.head.nms_iou_thre
 
+        if self.cfg.model.backbone.name == 'TinyNAS':
+            self.cfg.model.backbone.structure_file = osp.join(
+                model_dir, self.cfg.model.backbone.structure_file)
         self.backbone = build_backbone(self.cfg.model.backbone)
         self.neck = build_neck(self.cfg.model.neck)
         self.head = build_head(self.cfg.model.head)

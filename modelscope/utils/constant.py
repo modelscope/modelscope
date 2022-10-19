@@ -231,13 +231,6 @@ class DownloadMode(enum.Enum):
     FORCE_REDOWNLOAD = 'force_redownload'
 
 
-class DownloadParams(enum.Enum):
-    """
-        Parameters for downloading dataset.
-    """
-    MAX_LIST_OBJECTS_NUM = 50000
-
-
 class DatasetFormations(enum.Enum):
     """ How a dataset is organized and interpreted
     """

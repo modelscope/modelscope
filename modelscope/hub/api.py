@@ -390,11 +390,13 @@ class HubApi:
         return resp['Data']
 
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
-                                 is_recursive, is_filter_dir, revision,
-                                 cookies):
+                                 is_recursive, is_filter_dir, revision):
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
             f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
-        cookies = requests.utils.dict_from_cookiejar(cookies)
+
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies:
+            cookies = requests.utils.dict_from_cookiejar(cookies)
 
         resp = requests.get(url=url, cookies=cookies)
         resp = resp.json()

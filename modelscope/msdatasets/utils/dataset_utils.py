@@ -7,7 +7,7 @@ from typing import Any, Mapping, Optional, Sequence, Union
 from datasets.builder import DatasetBuilder
 
 from modelscope.hub.api import HubApi
-from modelscope.utils.constant import DEFAULT_DATASET_REVISION, DownloadParams
+from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 from modelscope.utils.logger import get_logger
 from .dataset_builder import MsCsvDatasetBuilder, TaskSpecificDatasetBuilder
 
@@ -95,15 +95,13 @@ def list_dataset_objects(hub_api: HubApi, max_limit: int, is_recursive: bool,
         res (list): List of objects, i.e., ['train/images/001.png', 'train/images/002.png', 'val/images/001.png', ...]
     """
     res = []
-    cookies = hub_api.check_cookies_upload_data(use_cookies=True)
     objects = hub_api.list_oss_dataset_objects(
         dataset_name=dataset_name,
         namespace=namespace,
         max_limit=max_limit,
         is_recursive=is_recursive,
         is_filter_dir=True,
-        revision=version,
-        cookies=cookies)
+        revision=version)
 
     for item in objects:
         object_key = item.get('Key')
@@ -174,7 +172,7 @@ def get_dataset_files(subset_split_into: dict,
     modelscope_api = HubApi()
     objects = list_dataset_objects(
         hub_api=modelscope_api,
-        max_limit=DownloadParams.MAX_LIST_OBJECTS_NUM.value,
+        max_limit=-1,
         is_recursive=True,
         dataset_name=dataset_name,
         namespace=namespace,

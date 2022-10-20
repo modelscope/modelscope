@@ -51,10 +51,10 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
         if isinstance(audio_in, str):
             # load pcm data from url if audio_in is url str
-            audio_in = load_bytes_from_url(audio_in)
+            audio_in, audio_fs = load_bytes_from_url(audio_in)
         elif isinstance(audio_in, bytes):
             # load pcm data from wav data if audio_in is wave format
-            audio_in = extract_pcm_from_wav(audio_in)
+            audio_in, audio_fs = extract_pcm_from_wav(audio_in)
 
         output = self.preprocessor.forward(self.model.forward(), audio_in)
         output = self.forward(output)

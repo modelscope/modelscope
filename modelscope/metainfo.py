@@ -456,9 +456,9 @@ class Datasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'
-    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    Face2dKeypointsDataset = 'FaceKeypointDataset'
     HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
-    HumanWholeBodyKeypointDataset = 'HumanWholeBodyKeypointDataset'
+    HumanWholeBodyKeypointDataset = 'WholeBodyCocoTopDownDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'

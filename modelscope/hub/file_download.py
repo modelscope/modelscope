@@ -11,13 +11,12 @@ from typing import Dict, Optional, Union
 from uuid import uuid4
 
 import requests
-from filelock import FileLock
 from tqdm import tqdm
 
 from modelscope import __version__
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .api import HubApi, ModelScopeConfig
 from .constants import FILE_HASH
 from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache

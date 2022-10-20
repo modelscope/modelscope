@@ -9,7 +9,6 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import HTTPError, NotLoginException
 from modelscope.hub.repository import Repository
-from modelscope.hub.upload import upload_folder
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
@@ -54,14 +53,14 @@ class HubUploadTest(unittest.TestCase):
             license=Licenses.APACHE_V2)
         os.system("echo '111'>%s"
                   % os.path.join(self.finetune_path, 'add1.py'))
-        upload_folder(
+        self.api.push_model(
             model_id=self.create_model_name, model_dir=self.finetune_path)
         Repository(model_dir=self.repo_path, clone_from=self.create_model_name)
         assert os.path.exists(os.path.join(self.repo_path, 'add1.py'))
         shutil.rmtree(self.repo_path, ignore_errors=True)
         os.system("echo '222'>%s"
                   % os.path.join(self.finetune_path, 'add2.py'))
-        upload_folder(
+        self.api.push_model(
             model_id=self.create_model_name,
             model_dir=self.finetune_path,
             revision='new_revision/version1')
@@ -73,7 +72,7 @@ class HubUploadTest(unittest.TestCase):
         shutil.rmtree(self.repo_path, ignore_errors=True)
         os.system("echo '333'>%s"
                   % os.path.join(self.finetune_path, 'add3.py'))
-        upload_folder(
+        self.api.push_model(
             model_id=self.create_model_name,
             model_dir=self.finetune_path,
             revision='new_revision/version2',
@@ -88,7 +87,7 @@ class HubUploadTest(unittest.TestCase):
         add4_path = os.path.join(self.finetune_path, 'temp')
         os.mkdir(add4_path)
         os.system("echo '444'>%s" % os.path.join(add4_path, 'add4.py'))
-        upload_folder(
+        self.api.push_model(
             model_id=self.create_model_name,
             model_dir=self.finetune_path,
             revision='new_revision/version1')
@@ -105,7 +104,7 @@ class HubUploadTest(unittest.TestCase):
         self.api.login(TEST_ACCESS_TOKEN1)
         os.system("echo '111'>%s"
                   % os.path.join(self.finetune_path, 'add1.py'))
-        upload_folder(
+        self.api.push_model(
             model_id=self.create_model_name,
             model_dir=self.finetune_path,
             revision='new_model_new_revision',
@@ -124,7 +123,7 @@ class HubUploadTest(unittest.TestCase):
         self.api.login(TEST_ACCESS_TOKEN1)
         delete_credential()
         with self.assertRaises(NotLoginException):
-            upload_folder(
+            self.api.push_model(
                 model_id=self.create_model_name,
                 model_dir=self.finetune_path,
                 visibility=ModelVisibility.PUBLIC,
@@ -135,7 +134,7 @@ class HubUploadTest(unittest.TestCase):
         logger.info('test upload to invalid repo!')
         self.api.login(TEST_ACCESS_TOKEN1)
         with self.assertRaises(HTTPError):
-            upload_folder(
+            self.api.push_model(
                 model_id='%s/%s' % ('speech_tts', 'invalid_model_test'),
                 model_dir=self.finetune_path,
                 visibility=ModelVisibility.PUBLIC,

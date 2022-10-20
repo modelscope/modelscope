@@ -1,13 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import re
 import subprocess
 from typing import List
-from xmlrpc.client import Boolean
 
 from modelscope.utils.logger import get_logger
-from .api import ModelScopeConfig
 from .errors import GitError
 
 logger = get_logger()
@@ -132,6 +129,7 @@ class GitCommandWrapper(metaclass=Singleton):
         return response
 
     def add_user_info(self, repo_base_dir, repo_name):
+        from modelscope.hub.api import ModelScopeConfig
         user_name, user_email = ModelScopeConfig.get_user_info()
         if user_name and user_email:
             # config user.name and user.email if exist

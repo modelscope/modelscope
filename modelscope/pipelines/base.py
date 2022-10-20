@@ -433,6 +433,8 @@ def collate_fn(data, device):
     if isinstance(data, dict) or isinstance(data, Mapping):
         return type(data)({k: collate_fn(v, device) for k, v in data.items()})
     elif isinstance(data, (tuple, list)):
+        if 0 == len(data):
+            return torch.Tensor([])
         if isinstance(data[0], (int, float)):
             return default_collate(data).to(device)
         else:

@@ -24,12 +24,13 @@ from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
 @TRAINERS.register_module(module_name=Trainers.ofa_tasks)
 class OFATrainer(EpochBasedTrainer):
 
-    def __init__(self, model: str, *args, **kwargs):
+    def __init__(self, model: str, cfg_file, work_dir, train_dataset,
+                 eval_dataset, *args, **kwargs):
         model = Model.from_pretrained(model)
         model_dir = model.model_dir
-        cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
+        # cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
         cfg = Config.from_file(cfg_file)
-        dataset = self._build_dataset_with_config(cfg)
+        # dataset = self._build_dataset_with_config(cfg)
         preprocessor = {
             ConfigKeys.train:
             OfaPreprocessor(
@@ -41,7 +42,7 @@ class OFATrainer(EpochBasedTrainer):
         # use torchrun launch
         world_size = int(os.environ.get('WORLD_SIZE', 1))
         epoch_steps = math.ceil(
-            len(dataset['train']) /  # noqa
+            len(train_dataset) /  # noqa
             (cfg.train.dataloader.batch_size_per_gpu * world_size))  # noqa
         cfg.train.lr_scheduler.num_train_steps = epoch_steps * cfg.train.max_epochs
         cfg.train.criterion.tokenizer = model.tokenizer
@@ -68,11 +69,11 @@ class OFATrainer(EpochBasedTrainer):
             cfg_file=cfg_file,
             model=model,
             data_collator=collator,
-            train_dataset=dataset['train'],
-            eval_dataset=dataset['valid'],
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
             preprocessor=preprocessor,
             optimizers=(optimizer, lr_scheduler),
-            work_dir=cfg.train.work_dir,
+            work_dir=work_dir,
             *args,
             **kwargs,
         )

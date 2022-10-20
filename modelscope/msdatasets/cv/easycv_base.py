@@ -26,11 +26,16 @@ class EasyCVBaseDataset(object):
         if self.split_config is not None:
             self._update_data_source(kwargs['data_source'])
 
+    def _update_data_root(self, input_dict, data_root):
+        for k, v in input_dict.items():
+            if isinstance(v, str) and self.DATA_ROOT_PATTERN in v:
+                input_dict.update(
+                    {k: v.replace(self.DATA_ROOT_PATTERN, data_root)})
+            elif isinstance(v, dict):
+                self._update_data_root(v, data_root)
+
     def _update_data_source(self, data_source):
         data_root = next(iter(self.split_config.values()))
         data_root = data_root.rstrip(osp.sep)
 
-        for k, v in data_source.items():
-            if isinstance(v, str) and self.DATA_ROOT_PATTERN in v:
-                data_source.update(
-                    {k: v.replace(self.DATA_ROOT_PATTERN, data_root)})
+        self._update_data_root(data_source, data_root)

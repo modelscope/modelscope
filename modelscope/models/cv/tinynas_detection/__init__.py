@@ -7,10 +7,12 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .tinynas_detector import Tinynas_detector
+    from .tinynas_damoyolo import DamoYolo
 
 else:
     _import_structure = {
         'tinynas_detector': ['TinynasDetector'],
+        'tinynas_damoyolo': ['DamoYolo'],
     }
 
     import sys

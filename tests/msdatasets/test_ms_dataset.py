@@ -52,7 +52,8 @@ class MsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ms_csv_basic(self):
         ms_ds_train = MsDataset.load(
-            'afqmc_small', namespace='userxiaoming', split='train')
+            'clue', subset_name='afqmc',
+            split='train').to_hf_dataset().select(range(5))
         print(next(iter(ms_ds_train)))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

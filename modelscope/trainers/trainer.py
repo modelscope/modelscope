@@ -656,7 +656,7 @@ class EpochBasedTrainer(BaseTrainer):
         # TODO: support MsDataset load for cv
         if hasattr(data_cfg, 'name'):
             dataset = MsDataset.load(
-                dataset_name=data_cfg.name,
+                dataset_name=data_cfg.pop('name'),
                 **data_cfg,
             )
             cfg = ConfigDict(type=self.cfg.model.type, mode=mode)

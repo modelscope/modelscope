@@ -45,6 +45,10 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             'checking_item': OutputKeys.TEXT,
             'example': 'wav_example'
         },
+        'test_run_with_url_pytorch': {
+            'checking_item': OutputKeys.TEXT,
+            'example': 'wav_example'
+        },
         'test_run_with_url_tf': {
             'checking_item': OutputKeys.TEXT,
             'example': 'wav_example'
@@ -74,6 +78,170 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
         }
     }
 
+    all_models_info = [
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id': 'speech_paraformer_asr_nat-aishell1-pytorch',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_paraformer_asr_nat-zh-cn-8k-common-vocab8358-tensorflow1',
+            'wav_path': 'data/test/audios/asr_example_8K.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_8K.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_8K.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR-large_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_cn_en.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_cn_en.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_cn_dialect.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_cn_dialect.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_paraformer_asr_nat-zh-cn-16k-common-vocab3444-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_paraformer_asr_nat-zh-cn-8k-common-vocab3444-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_8K.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_en.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_en.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_ru.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_ru.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_es.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_es.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_ko.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_ko.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_ja.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_ja.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_group': 'damo',
+            'model_id':
+            'speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+    ]
+
     def setUp(self) -> None:
         self.am_pytorch_model_id = 'damo/speech_paraformer_asr_nat-aishell1-pytorch'
         self.am_tf_model_id = 'damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1'
@@ -90,7 +258,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
     def run_pipeline(self,
                      model_id: str,
                      audio_in: Union[str, bytes],
-                     sr: int = 16000) -> Dict[str, Any]:
+                     sr: int = None) -> Dict[str, Any]:
         inference_16k_pipline = pipeline(
             task=Tasks.auto_speech_recognition, model=model_id)
 
@@ -136,46 +304,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
         return audio, fs
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_wav_pytorch(self):
-        """run with single waveform file
-        """
-
-        logger.info('Run ASR test with waveform file (pytorch)...')
-
-        wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_pytorch_model_id, audio_in=wav_file_path)
-        self.check_result('test_run_with_wav_pytorch', rec_result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_pcm_pytorch(self):
-        """run with wav data
-        """
-
-        logger.info('Run ASR test with wav data (pytorch)...')
-
-        audio, sr = self.wav2bytes(os.path.join(os.getcwd(), WAV_FILE))
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_pytorch_model_id, audio_in=audio, sr=sr)
-        self.check_result('test_run_with_pcm_pytorch', rec_result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_wav_tf(self):
-        """run with single waveform file
-        """
-
-        logger.info('Run ASR test with waveform file (tensorflow)...')
-
-        wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_tf_model_id, audio_in=wav_file_path)
-        self.check_result('test_run_with_wav_tf', rec_result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_pcm_tf(self):
+    def test_run_with_pcm(self):
         """run with wav data
         """
 
@@ -187,8 +316,33 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             model_id=self.am_tf_model_id, audio_in=audio, sr=sr)
         self.check_result('test_run_with_pcm_tf', rec_result)
 
+        logger.info('Run ASR test with wav data (pytorch)...')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=audio, sr=sr)
+        self.check_result('test_run_with_pcm_pytorch', rec_result)
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_url_tf(self):
+    def test_run_with_wav(self):
+        """run with single waveform file
+        """
+
+        logger.info('Run ASR test with waveform file (tensorflow)...')
+
+        wav_file_path = os.path.join(os.getcwd(), WAV_FILE)
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=wav_file_path)
+        self.check_result('test_run_with_wav_tf', rec_result)
+
+        logger.info('Run ASR test with waveform file (pytorch)...')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=wav_file_path)
+        self.check_result('test_run_with_wav_pytorch', rec_result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_url(self):
         """run with single url file
         """
 
@@ -197,6 +351,12 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
         rec_result = self.run_pipeline(
             model_id=self.am_tf_model_id, audio_in=URL_FILE)
         self.check_result('test_run_with_url_tf', rec_result)
+
+        logger.info('Run ASR test with url file (pytorch)...')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_pytorch_model_id, audio_in=URL_FILE)
+        self.check_result('test_run_with_url_pytorch', rec_result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_wav_dataset_pytorch(self):
@@ -217,48 +377,45 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
                  data.text  # hypothesis text
         """
 
-        logger.info('Run ASR test with waveform dataset (pytorch)...')
         logger.info('Downloading waveform testsets file ...')
 
         dataset_path = download_and_untar(
             os.path.join(self.workspace, LITTLE_TESTSETS_FILE),
             LITTLE_TESTSETS_URL, self.workspace)
         dataset_path = os.path.join(dataset_path, 'wav', 'test')
+
+        logger.info('Run ASR test with waveform dataset (tensorflow)...')
+
+        rec_result = self.run_pipeline(
+            model_id=self.am_tf_model_id, audio_in=dataset_path)
+        self.check_result('test_run_with_wav_dataset_tf', rec_result)
+
+        logger.info('Run ASR test with waveform dataset (pytorch)...')
 
         rec_result = self.run_pipeline(
             model_id=self.am_pytorch_model_id, audio_in=dataset_path)
         self.check_result('test_run_with_wav_dataset_pytorch', rec_result)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_run_with_wav_dataset_tf(self):
-        """run with datasets, and audio format is waveform
-           datasets directory:
-             <dataset_path>
-               wav
-                 test   # testsets
-                   xx.wav
-                   ...
-                 dev    # devsets
-                   yy.wav
-                   ...
-                 train  # trainsets
-                   zz.wav
-                   ...
-               transcript
-                 data.text  # hypothesis text
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_all_models(self):
+        """run with all models
         """
 
-        logger.info('Run ASR test with waveform dataset (tensorflow)...')
-        logger.info('Downloading waveform testsets file ...')
+        logger.info('Run ASR test with all models')
 
-        dataset_path = download_and_untar(
-            os.path.join(self.workspace, LITTLE_TESTSETS_FILE),
-            LITTLE_TESTSETS_URL, self.workspace)
-        dataset_path = os.path.join(dataset_path, 'wav', 'test')
-
-        rec_result = self.run_pipeline(
-            model_id=self.am_tf_model_id, audio_in=dataset_path)
-        self.check_result('test_run_with_wav_dataset_tf', rec_result)
+        for item in self.all_models_info:
+            model_id = item['model_group'] + '/' + item['model_id']
+            wav_path = item['wav_path']
+            rec_result = self.run_pipeline(
+                model_id=model_id, audio_in=wav_path)
+            if rec_result.__contains__(OutputKeys.TEXT):
+                logger.info(ColorCodes.MAGENTA + str(item['model_id']) + ' '
+                            + ColorCodes.YELLOW
+                            + str(rec_result[OutputKeys.TEXT])
+                            + ColorCodes.END)
+            else:
+                logger.info(ColorCodes.MAGENTA + str(rec_result)
+                            + ColorCodes.END)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

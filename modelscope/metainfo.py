@@ -9,7 +9,9 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    # tinynas models
     tinynas_detection = 'tinynas-detection'
+    tinynas_damoyolo = 'tinynas-damoyolo'
 
     # vision models
     detection = 'detection'
@@ -454,9 +456,9 @@ class Datasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'
-    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    Face2dKeypointsDataset = 'FaceKeypointDataset'
     HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
-    HumanWholeBodyKeypointDataset = 'HumanWholeBodyKeypointDataset'
+    HumanWholeBodyKeypointDataset = 'WholeBodyCocoTopDownDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'

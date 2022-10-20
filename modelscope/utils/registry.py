@@ -176,7 +176,7 @@ def build_from_cfg(cfg,
         raise TypeError('default_args must be a dict or None, '
                         f'but got {type(default_args)}')
 
-    # dynamic load installation reqruiements for this module
+    # dynamic load installation requirements for this module
     from modelscope.utils.import_utils import LazyImportModule
     sig = (registry.name.upper(), group_key, cfg['type'])
     LazyImportModule.import_module(sig)
@@ -193,8 +193,11 @@ def build_from_cfg(cfg,
     if isinstance(obj_type, str):
         obj_cls = registry.get(obj_type, group_key=group_key)
         if obj_cls is None:
-            raise KeyError(f'{obj_type} is not in the {registry.name}'
-                           f' registry group {group_key}')
+            raise KeyError(
+                f'{obj_type} is not in the {registry.name}'
+                f' registry group {group_key}. Please make'
+                f' sure the correct version of 1qqQModelScope library is used.'
+            )
         obj_cls.group_key = group_key
     elif inspect.isclass(obj_type) or inspect.isfunction(obj_type):
         obj_cls = obj_type

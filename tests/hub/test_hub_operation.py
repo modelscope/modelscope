@@ -127,7 +127,7 @@ class HubOperationTest(unittest.TestCase):
         return None
 
     def test_list_model(self):
-        data = self.api.list_model(TEST_MODEL_ORG)
+        data = self.api.list_models(TEST_MODEL_ORG)
         assert len(data['Models']) >= 1
 
 

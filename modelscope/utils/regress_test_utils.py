@@ -65,7 +65,8 @@ class RegressTool:
     def monitor_module_single_forward(self,
                                       module: nn.Module,
                                       file_name: str,
-                                      compare_fn=None):
+                                      compare_fn=None,
+                                      **kwargs):
         """Monitor a pytorch module in a single forward.
 
         @param module: A torch module
@@ -107,7 +108,7 @@ class RegressTool:
             baseline = os.path.join(tempfile.gettempdir(), name)
             self.load(baseline, name)
             with open(baseline, 'rb') as f:
-                baseline_json = pickle.load(f)
+                base = pickle.load(f)
 
             class NumpyEncoder(json.JSONEncoder):
                 """Special json encoder for numpy types
@@ -122,9 +123,9 @@ class RegressTool:
                         return obj.tolist()
                     return json.JSONEncoder.default(self, obj)
 
-            print(f'baseline: {json.dumps(baseline_json, cls=NumpyEncoder)}')
+            print(f'baseline: {json.dumps(base, cls=NumpyEncoder)}')
             print(f'latest  : {json.dumps(io_json, cls=NumpyEncoder)}')
-            if not compare_io_and_print(baseline_json, io_json, compare_fn):
+            if not compare_io_and_print(base, io_json, compare_fn, **kwargs):
                 raise ValueError('Result not match!')
 
     @contextlib.contextmanager
@@ -136,7 +137,8 @@ class RegressTool:
                              ignore_keys=None,
                              compare_random=True,
                              reset_dropout=True,
-                             lazy_stop_callback=None):
+                             lazy_stop_callback=None,
+                             **kwargs):
         """Monitor a pytorch module's backward data and cfg data within a step of the optimizer.
 
         This is usually useful when you try to change some dangerous code
@@ -265,14 +267,15 @@ class RegressTool:
                 baseline_json = pickle.load(f)
 
             if level == 'strict' and not compare_io_and_print(
-                    baseline_json['forward'], io_json, compare_fn):
+                    baseline_json['forward'], io_json, compare_fn, **kwargs):
                 raise RuntimeError('Forward not match!')
             if not compare_backward_and_print(
                     baseline_json['backward'],
                     bw_json,
                     compare_fn=compare_fn,
                     ignore_keys=ignore_keys,
-                    level=level):
+                    level=level,
+                    **kwargs):
                 raise RuntimeError('Backward not match!')
             cfg_opt1 = {
                 'optimizer': baseline_json['optimizer'],
@@ -286,7 +289,8 @@ class RegressTool:
                 'cfg': summary['cfg'],
                 'state': None if not compare_random else summary['state']
             }
-            if not compare_cfg_and_optimizers(cfg_opt1, cfg_opt2, compare_fn):
+            if not compare_cfg_and_optimizers(cfg_opt1, cfg_opt2, compare_fn,
+                                              **kwargs):
                 raise RuntimeError('Cfg or optimizers not match!')
 
 
@@ -303,7 +307,8 @@ class MsRegressTool(RegressTool):
                          compare_fn=None,
                          ignore_keys=None,
                          compare_random=True,
-                         lazy_stop_callback=None):
+                         lazy_stop_callback=None,
+                         **kwargs):
 
         if lazy_stop_callback is None:
 
@@ -319,7 +324,7 @@ class MsRegressTool(RegressTool):
 
                 trainer.register_hook(EarlyStopHook())
 
-        def _train_loop(trainer, *args, **kwargs):
+        def _train_loop(trainer, *args_train, **kwargs_train):
             with self.monitor_module_train(
                     trainer,
                     file_name,
@@ -327,9 +332,11 @@ class MsRegressTool(RegressTool):
                     compare_fn=compare_fn,
                     ignore_keys=ignore_keys,
                     compare_random=compare_random,
-                    lazy_stop_callback=lazy_stop_callback):
+                    lazy_stop_callback=lazy_stop_callback,
+                    **kwargs):
                 try:
-                    return trainer.train_loop_origin(*args, **kwargs)
+                    return trainer.train_loop_origin(*args_train,
+                                                     **kwargs_train)
                 except MsRegressTool.EarlyStopError:
                     pass
 
@@ -530,7 +537,8 @@ def compare_arguments_nested(print_content,
                 )
             return False
         if not all([
-                compare_arguments_nested(None, sub_arg1, sub_arg2)
+                compare_arguments_nested(
+                    None, sub_arg1, sub_arg2, rtol=rtol, atol=atol)
                 for sub_arg1, sub_arg2 in zip(arg1, arg2)
         ]):
             if print_content is not None:
@@ -551,7 +559,8 @@ def compare_arguments_nested(print_content,
                 print(f'{print_content}, key diff:{set(keys1) - set(keys2)}')
             return False
         if not all([
-                compare_arguments_nested(None, arg1[key], arg2[key])
+                compare_arguments_nested(
+                    None, arg1[key], arg2[key], rtol=rtol, atol=atol)
                 for key in keys1
         ]):
             if print_content is not None:
@@ -574,7 +583,7 @@ def compare_arguments_nested(print_content,
         raise ValueError(f'type not supported: {type1}')
 
 
-def compare_io_and_print(baseline_json, io_json, compare_fn=None):
+def compare_io_and_print(baseline_json, io_json, compare_fn=None, **kwargs):
     if compare_fn is None:
 
         def compare_fn(*args, **kwargs):
@@ -602,10 +611,10 @@ def compare_io_and_print(baseline_json, io_json, compare_fn=None):
         else:
             match = compare_arguments_nested(
                 f'unmatched module {key} input args', v1input['args'],
-                v2input['args']) and match
+                v2input['args'], **kwargs) and match
             match = compare_arguments_nested(
                 f'unmatched module {key} input kwargs', v1input['kwargs'],
-                v2input['kwargs']) and match
+                v2input['kwargs'], **kwargs) and match
         v1output = numpify_tensor_nested(v1['output'])
         v2output = numpify_tensor_nested(v2['output'])
         res = compare_fn(v1output, v2output, key, 'output')
@@ -615,8 +624,11 @@ def compare_io_and_print(baseline_json, io_json, compare_fn=None):
             )
             match = match and res
         else:
-            match = compare_arguments_nested(f'unmatched module {key} outputs',
-                                             v1output, v2output) and match
+            match = compare_arguments_nested(
+                f'unmatched module {key} outputs',
+                arg1=v1output,
+                arg2=v2output,
+                **kwargs) and match
     return match
 
 
@@ -624,7 +636,8 @@ def compare_backward_and_print(baseline_json,
                                bw_json,
                                level,
                                ignore_keys=None,
-                               compare_fn=None):
+                               compare_fn=None,
+                               **kwargs):
     if compare_fn is None:
 
         def compare_fn(*args, **kwargs):
@@ -653,18 +666,26 @@ def compare_backward_and_print(baseline_json,
             data2, grad2, data_after2 = bw_json[key]['data'], bw_json[key][
                 'grad'], bw_json[key]['data_after']
             match = compare_arguments_nested(
-                f'unmatched module {key} tensor data', data1, data2) and match
+                f'unmatched module {key} tensor data',
+                arg1=data1,
+                arg2=data2,
+                **kwargs) and match
             if level == 'strict':
                 match = compare_arguments_nested(
-                    f'unmatched module {key} grad data', grad1,
-                    grad2) and match
+                    f'unmatched module {key} grad data',
+                    arg1=grad1,
+                    arg2=grad2,
+                    **kwargs) and match
                 match = compare_arguments_nested(
                     f'unmatched module {key} data after step', data_after1,
-                    data_after2) and match
+                    data_after2, **kwargs) and match
     return match
 
 
-def compare_cfg_and_optimizers(baseline_json, cfg_json, compare_fn=None):
+def compare_cfg_and_optimizers(baseline_json,
+                               cfg_json,
+                               compare_fn=None,
+                               **kwargs):
     if compare_fn is None:
 
         def compare_fn(*args, **kwargs):
@@ -686,12 +707,12 @@ def compare_cfg_and_optimizers(baseline_json, cfg_json, compare_fn=None):
             print(
                 f"Optimizer type not equal:{optimizer1['type']} and {optimizer2['type']}"
             )
-        match = compare_arguments_nested('unmatched optimizer defaults',
-                                         optimizer1['defaults'],
-                                         optimizer2['defaults']) and match
-        match = compare_arguments_nested('unmatched optimizer state_dict',
-                                         optimizer1['state_dict'],
-                                         optimizer2['state_dict']) and match
+        match = compare_arguments_nested(
+            'unmatched optimizer defaults', optimizer1['defaults'],
+            optimizer2['defaults'], **kwargs) and match
+        match = compare_arguments_nested(
+            'unmatched optimizer state_dict', optimizer1['state_dict'],
+            optimizer2['state_dict'], **kwargs) and match
 
     res = compare_fn(lr_scheduler1, lr_scheduler2, None, 'lr_scheduler')
     if res is not None:
@@ -703,16 +724,17 @@ def compare_cfg_and_optimizers(baseline_json, cfg_json, compare_fn=None):
             print(
                 f"Optimizer type not equal:{lr_scheduler1['type']} and {lr_scheduler2['type']}"
             )
-        match = compare_arguments_nested('unmatched lr_scheduler state_dict',
-                                         lr_scheduler1['state_dict'],
-                                         lr_scheduler2['state_dict']) and match
+        match = compare_arguments_nested(
+            'unmatched lr_scheduler state_dict', lr_scheduler1['state_dict'],
+            lr_scheduler2['state_dict'], **kwargs) and match
 
     res = compare_fn(cfg1, cfg2, None, 'cfg')
     if res is not None:
         print(f'cfg compared with user compare_fn with result:{res}\n')
         match = match and res
     else:
-        match = compare_arguments_nested('unmatched cfg', cfg1, cfg2) and match
+        match = compare_arguments_nested(
+            'unmatched cfg', arg1=cfg1, arg2=cfg2, **kwargs) and match
 
     res = compare_fn(state1, state2, None, 'state')
     if res is not None:
@@ -721,6 +743,6 @@ def compare_cfg_and_optimizers(baseline_json, cfg_json, compare_fn=None):
         match = match and res
     else:
         match = compare_arguments_nested('unmatched random state', state1,
-                                         state2) and match
+                                         state2, **kwargs) and match
 
     return match

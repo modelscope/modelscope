@@ -2,7 +2,7 @@
 
 import os.path as osp
 import re
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import sentencepiece as spm
@@ -217,7 +217,7 @@ class NLPTokenizerPreprocessorBase(Preprocessor):
             return isinstance(label, str) or isinstance(label, int)
 
         if labels is not None:
-            if isinstance(labels, Iterable) and all([label_can_be_mapped(label) for label in labels]) \
+            if isinstance(labels, (tuple, list)) and all([label_can_be_mapped(label) for label in labels]) \
                     and self.label2id is not None:
                 output[OutputKeys.LABELS] = [
                     self.label2id[str(label)] for label in labels
@@ -314,8 +314,7 @@ class SequenceClassificationPreprocessor(NLPTokenizerPreprocessorBase):
 
     def __init__(self, model_dir: str, mode=ModeKeys.INFERENCE, **kwargs):
         kwargs['truncation'] = kwargs.get('truncation', True)
-        kwargs['padding'] = kwargs.get(
-            'padding', False if mode == ModeKeys.INFERENCE else 'max_length')
+        kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['max_length'] = kwargs.pop('sequence_length', 128)
         super().__init__(model_dir, mode=mode, **kwargs)
 

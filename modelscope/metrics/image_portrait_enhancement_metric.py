@@ -2,6 +2,7 @@
 # https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/metrics/psnr_ssim.py
 from typing import Dict
 
+import cv2
 import numpy as np
 
 from modelscope.metainfo import Metrics
@@ -37,6 +38,7 @@ class ImagePortraitEnhancementMetric(Metric):
     def add(self, outputs: Dict, inputs: Dict):
         ground_truths = outputs['target']
         eval_results = outputs['pred']
+
         self.preds.extend(eval_results)
         self.targets.extend(ground_truths)
 

@@ -45,6 +45,14 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = img_captioning('data/test/images/image_captioning.png')
         print(result[OutputKeys.CAPTION])
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_ocr_recognize_with_name(self):
+        ocr_recognize = pipeline(
+            Tasks.ofa_ocr_recognition,
+            model='damo/ofa_ocr-recognition_scene_base_zh')
+        result = ocr_recognize('data/test/images/image_ocr_recognition.jpg')
+        print(result[OutputKeys.TEXT])
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_classification_with_model(self):
         model = Model.from_pretrained(

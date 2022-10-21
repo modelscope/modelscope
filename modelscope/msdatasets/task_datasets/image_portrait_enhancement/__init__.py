@@ -1,14 +1,15 @@
-# Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .transforms import PadToSquare
+    from .image_portrait_enhancement_dataset import ImagePortraitEnhancementDataset
 
 else:
     _import_structure = {
-        'transforms': ['PadToSquare'],
+        'image_portrait_enhancement_dataset':
+        ['ImagePortraitEnhancementDataset'],
     }
 
     import sys
@@ -20,5 +21,3 @@ else:
         module_spec=__spec__,
         extra_objects={},
     )
-
-# from .transforms import *  # noqa F403

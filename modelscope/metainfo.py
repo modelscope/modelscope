@@ -263,6 +263,7 @@ class Pipelines(object):
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    ofa_ocr_recognition = 'ofa-ocr-recognition'
 
 
 class Trainers(object):
@@ -462,3 +463,4 @@ class Datasets(object):
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'
+    PairedDataset = 'PairedDataset'

@@ -459,3 +459,4 @@ class Datasets(object):
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'
+    PairedDataset = 'PairedDataset'

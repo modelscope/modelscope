@@ -661,6 +661,7 @@ TASK_OUTPUTS = {
     #   "caption": "this is an image caption text."
     # }
     Tasks.image_captioning: [OutputKeys.CAPTION],
+    Tasks.ofa_ocr_recognition: [OutputKeys.TEXT],
 
     # visual grounding result for single sample
     # {

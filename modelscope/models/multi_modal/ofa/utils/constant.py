@@ -3,6 +3,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 
 OFA_TASK_KEY_MAPPING = {
+    Tasks.ofa_ocr_recognition: OutputKeys.TEXT,
     Tasks.image_captioning: OutputKeys.CAPTION,
     Tasks.summarization: OutputKeys.TEXT,
     Tasks.visual_question_answering: OutputKeys.TEXT,

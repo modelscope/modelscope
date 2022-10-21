@@ -27,6 +27,7 @@ __all__ = ['OfaForAllTasks']
 
 
 @MODELS.register_module(Tasks.image_captioning, module_name=Models.ofa)
+@MODELS.register_module(Tasks.ofa_ocr_recognition, module_name=Models.ofa)
 @MODELS.register_module(Tasks.visual_grounding, module_name=Models.ofa)
 @MODELS.register_module(
     Tasks.visual_question_answering, module_name=Models.ofa)
@@ -96,6 +97,7 @@ class OfaForAllTasks(TorchModel):
             'traverse': self._traverse_inference,
         }
         self.task_inference_mapping = {
+            Tasks.ofa_ocr_recognition: self._text_gen_inference,
             Tasks.image_captioning: self._text_gen_inference,
             Tasks.summarization: self._text_gen_inference,
             Tasks.visual_grounding: self._visual_grounding_inference,

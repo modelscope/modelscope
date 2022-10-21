@@ -151,6 +151,7 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    ofa_ocr_recognition = 'ofa-ocr-recognition'
 
 
 class TasksIODescriptions(object):

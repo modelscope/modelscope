@@ -34,8 +34,9 @@ if TYPE_CHECKING:
                               TaskModelForTextGeneration)
     from .token_classification import SbertForTokenClassification
     from .sentence_embedding import SentenceEmbedding
-    from .passage_ranking import PassageRanking
+    from .text_ranking import TextRanking
     from .T5 import T5ForConditionalGeneration
+
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -75,7 +76,7 @@ else:
         'token_classification': ['SbertForTokenClassification'],
         'table_question_answering': ['TableQuestionAnswering'],
         'sentence_embedding': ['SentenceEmbedding'],
-        'passage_ranking': ['PassageRanking'],
+        'text_ranking': ['TextRanking'],
         'T5': ['T5ForConditionalGeneration'],
     }
 

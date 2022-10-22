@@ -506,7 +506,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_error_correction: [OutputKeys.OUTPUT],
     Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
-    Tasks.passage_ranking: [OutputKeys.SCORES],
+    Tasks.text_ranking: [OutputKeys.SCORES],
 
     # text generation result for single sample
     # {

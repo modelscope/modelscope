@@ -29,7 +29,7 @@ __all__ = [
     'NLPPreprocessor',
     'FillMaskPoNetPreprocessor',
     'NLPTokenizerPreprocessorBase',
-    'PassageRankingPreprocessor',
+    'TextRankingPreprocessor',
     'RelationExtractionPreprocessor',
     'SentenceEmbeddingPreprocessor',
     'SequenceClassificationPreprocessor',
@@ -245,9 +245,9 @@ class NLPPreprocessor(NLPTokenizerPreprocessorBase):
 
 
 @PREPROCESSORS.register_module(
-    Fields.nlp, module_name=Preprocessors.passage_ranking)
-class PassageRankingPreprocessor(NLPTokenizerPreprocessorBase):
-    """The tokenizer preprocessor used in passage ranking model.
+    Fields.nlp, module_name=Preprocessors.text_ranking)
+class TextRankingPreprocessor(NLPTokenizerPreprocessorBase):
+    """The tokenizer preprocessor used in text-ranking model.
     """
 
     def __init__(self,

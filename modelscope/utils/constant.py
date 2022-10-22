@@ -103,7 +103,7 @@ class NLPTasks(object):
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
     sentence_embedding = 'sentence-embedding'
-    passage_ranking = 'passage-ranking'
+    text_ranking = 'text-ranking'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'

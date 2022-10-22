@@ -16,8 +16,8 @@ from .torch_base_dataset import TorchTaskDataset
 
 
 @TASK_DATASETS.register_module(
-    group_key=Tasks.passage_ranking, module_name=Models.bert)
-class PassageRankingDataset(TorchTaskDataset):
+    group_key=Tasks.text_ranking, module_name=Models.bert)
+class TextRankingDataset(TorchTaskDataset):
 
     def __init__(self,
                  datasets: Union[Any, List[Any]],
@@ -35,8 +35,8 @@ class PassageRankingDataset(TorchTaskDataset):
                                                     'positive_passages')
         self.neg_sequence = self.dataset_config.get('neg_sequence',
                                                     'negative_passages')
-        self.passage_text_fileds = self.dataset_config.get(
-            'passage_text_fileds', ['title', 'text'])
+        self.text_fileds = self.dataset_config.get('text_fileds',
+                                                   ['title', 'text'])
         self.qid_field = self.dataset_config.get('qid_field', 'query_id')
         if mode == ModeKeys.TRAIN:
             train_config = kwargs.get('train', {})
@@ -58,14 +58,14 @@ class PassageRankingDataset(TorchTaskDataset):
 
         pos_sequences = group[self.pos_sequence]
         pos_sequences = [
-            ' '.join([ele[key] for key in self.passage_text_fileds])
+            ' '.join([ele[key] for key in self.text_fileds])
             for ele in pos_sequences
         ]
         labels.extend([1] * len(pos_sequences))
 
         neg_sequences = group[self.neg_sequence]
         neg_sequences = [
-            ' '.join([ele[key] for key in self.passage_text_fileds])
+            ' '.join([ele[key] for key in self.text_fileds])
             for ele in neg_sequences
         ]
 
@@ -88,13 +88,13 @@ class PassageRankingDataset(TorchTaskDataset):
 
         pos_sequences = group[self.pos_sequence]
         pos_sequences = [
-            ' '.join([ele[key] for key in self.passage_text_fileds])
+            ' '.join([ele[key] for key in self.text_fileds])
             for ele in pos_sequences
         ]
 
         neg_sequences = group[self.neg_sequence]
         neg_sequences = [
-            ' '.join([ele[key] for key in self.passage_text_fileds])
+            ' '.join([ele[key] for key in self.text_fileds])
             for ele in neg_sequences
         ]
 

@@ -16,23 +16,15 @@ if TYPE_CHECKING:
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
     from .nlp import (
-        DocumentSegmentationPreprocessor,
-        FaqQuestionAnsweringPreprocessor,
-        FillMaskPoNetPreprocessor,
-        NLPPreprocessor,
-        NLPTokenizerPreprocessorBase,
-        PassageRankingPreprocessor,
-        RelationExtractionPreprocessor,
-        SentenceEmbeddingPreprocessor,
-        SequenceClassificationPreprocessor,
-        TokenClassificationPreprocessor,
-        TextErrorCorrectionPreprocessor,
-        TextGenerationPreprocessor,
-        Text2TextGenerationPreprocessor,
-        Tokenize,
+        DocumentSegmentationPreprocessor, FaqQuestionAnsweringPreprocessor,
+        FillMaskPoNetPreprocessor, NLPPreprocessor,
+        NLPTokenizerPreprocessorBase, PassageRankingPreprocessor,
+        RelationExtractionPreprocessor, SentenceEmbeddingPreprocessor,
+        SequenceClassificationPreprocessor, TokenClassificationPreprocessor,
+        TextErrorCorrectionPreprocessor, TextGenerationPreprocessor,
+        Text2TextGenerationPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
-        ZeroShotClassificationPreprocessor,
-    )
+        ZeroShotClassificationPreprocessor, mglmSummarizationPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -71,6 +63,7 @@ else:
             'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
+            'mglmSummarizationPreprocessor',
         ],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',

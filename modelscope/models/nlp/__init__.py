@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .sentence_embedding import SentenceEmbedding
     from .passage_ranking import PassageRanking
     from .T5 import T5ForConditionalGeneration
+    from .mglm import mGlmForTextSummarization
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -75,6 +76,7 @@ else:
         'sentence_embedding': ['SentenceEmbedding'],
         'passage_ranking': ['PassageRanking'],
         'T5': ['T5ForConditionalGeneration'],
+        'mglm': ['mGlmForTextSummarization']
     }
 
     import sys

@@ -70,6 +70,7 @@ class Models(object):
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
     T5 = 'T5'
+    mglm = 'mglm'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -216,6 +217,7 @@ class Pipelines(object):
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    mglm_text_summarization = 'mglm-text-summarization'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -320,6 +322,7 @@ class Preprocessors(object):
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    mglm_summarization = 'mglm-summarization'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

@@ -27,13 +27,13 @@ __all__ = ['OfaForAllTasks']
 
 
 @MODELS.register_module(Tasks.image_captioning, module_name=Models.ofa)
-@MODELS.register_module(Tasks.ofa_ocr_recognition, module_name=Models.ofa)
+@MODELS.register_module(Tasks.ocr_recognition, module_name=Models.ofa)
 @MODELS.register_module(Tasks.visual_grounding, module_name=Models.ofa)
 @MODELS.register_module(
     Tasks.visual_question_answering, module_name=Models.ofa)
 @MODELS.register_module(Tasks.visual_entailment, module_name=Models.ofa)
 @MODELS.register_module(Tasks.image_classification, module_name=Models.ofa)
-@MODELS.register_module(Tasks.summarization, module_name=Models.ofa)
+@MODELS.register_module(Tasks.text_summarization, module_name=Models.ofa)
 @MODELS.register_module(Tasks.text_classification, module_name=Models.ofa)
 class OfaForAllTasks(TorchModel):
 
@@ -97,9 +97,9 @@ class OfaForAllTasks(TorchModel):
             'traverse': self._traverse_inference,
         }
         self.task_inference_mapping = {
-            Tasks.ofa_ocr_recognition: self._text_gen_inference,
+            Tasks.ocr_recognition: self._text_gen_inference,
             Tasks.image_captioning: self._text_gen_inference,
-            Tasks.summarization: self._text_gen_inference,
+            Tasks.text_summarization: self._text_gen_inference,
             Tasks.visual_grounding: self._visual_grounding_inference,
             Tasks.visual_entailment: inference_d[self.gen_type],
             Tasks.visual_question_answering: inference_d[self.gen_type],

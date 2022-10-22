@@ -117,7 +117,7 @@ class NLPTasks(object):
     table_question_answering = 'table-question-answering'
     sentence_embedding = 'sentence-embedding'
     fill_mask = 'fill-mask'
-    summarization = 'summarization'
+    text_summarization = 'text-summarization'
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
@@ -151,7 +151,6 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
-    ofa_ocr_recognition = 'ofa-ocr-recognition'
 
 
 class TasksIODescriptions(object):

@@ -31,6 +31,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.relation_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
     Tasks.information_extraction:
     (Pipelines.relation_extraction,
      'damo/nlp_bert_relation-extraction_chinese-base'),

@@ -16,6 +16,8 @@ __all__ = ['InformationExtractionModel']
 @MODELS.register_module(
     Tasks.information_extraction,
     module_name=TaskModels.information_extraction)
+@MODELS.register_module(
+    Tasks.relation_extraction, module_name=TaskModels.information_extraction)
 class InformationExtractionModel(SingleBackboneTaskModelBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):

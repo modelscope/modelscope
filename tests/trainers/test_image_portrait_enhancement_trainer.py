@@ -37,13 +37,13 @@ class TestImagePortraitEnhancementTrainer(unittest.TestCase):
             namespace='modelscope',
             subset_name='default',
             split='test',
-            download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS)._hf_ds
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)._hf_ds
         dataset_val = MsDataset.load(
             'image-portrait-enhancement-dataset',
             namespace='modelscope',
             subset_name='default',
             split='test',
-            download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS)._hf_ds
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)._hf_ds
 
         self.dataset_train = ImagePortraitEnhancementDataset(
             dataset_train, is_train=True)

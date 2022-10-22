@@ -17,12 +17,12 @@ class TextGPT3GenerationTest(unittest.TestCase):
         self.model_dir_13B = snapshot_download(self.model_id_13B)
         self.input = '好的'
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('distributed gpt3 1.3B, skipped')
     def test_gpt3_1_3B(self):
         pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
         print(pipe(self.input))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('distributed gpt3 2.7B, skipped')
     def test_gpt3_2_7B(self):
         pipe = pipeline(Tasks.text_generation, model=self.model_id_2_7B)
         print(pipe(self.input))

@@ -38,7 +38,8 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skip(
+        'Skip testing trainer repeatable, because it\'s unstable in daily UT')
     def test_trainer_repeatable(self):
         import torch  # noqa
 

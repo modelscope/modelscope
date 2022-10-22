@@ -56,9 +56,6 @@ class OneStageDetector(nn.Module):
 
     def inference(self, meta):
         with torch.no_grad():
-            torch.cuda.synchronize()
             preds = self(meta['img'])
-            torch.cuda.synchronize()
             results = self.head.post_process(preds, meta)
-            torch.cuda.synchronize()
         return results

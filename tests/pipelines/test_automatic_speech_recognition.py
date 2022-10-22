@@ -80,164 +80,141 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
 
     all_models_info = [
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
+            'damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
-            'model_id': 'speech_paraformer_asr_nat-aishell1-pytorch',
+            'model_id': 'damo/speech_paraformer_asr_nat-aishell1-pytorch',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
-            'model_id':
-            'speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
+            'model_id': 'damo/speech_paraformer_asr_nat-aishell2-pytorch',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_paraformer_asr_nat-zh-cn-8k-common-vocab8358-tensorflow1',
+            'damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8358-tensorflow1',
+            'wav_path': 'data/test/audios/asr_example.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformer_asr_nat-zh-cn-8k-common-vocab8358-tensorflow1',
             'wav_path': 'data/test/audios/asr_example_8K.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_8K.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-zh-cn-8k-common-vocab8358-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_8K.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR-large_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
+            'damo/speech_UniASR-large_asr_2pass-zh-cn-16k-common-vocab8358-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_cn_en.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-cn-en-moe-16k-vocab8358-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_cn_en.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_cn_dialect.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-cn-dialect-16k-vocab8358-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_cn_dialect.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_paraformer_asr_nat-zh-cn-16k-common-vocab3444-tensorflow1-online',
+            'damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab3444-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_paraformer_asr_nat-zh-cn-8k-common-vocab3444-tensorflow1-online',
+            'damo/speech_paraformer_asr_nat-zh-cn-8k-common-vocab3444-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_8K.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_en.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-en-16k-common-vocab1080-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_en.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_ru.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-ru-16k-common-vocab1664-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_ru.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_es.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-es-16k-common-vocab3445-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_es.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_ko.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_ko.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_ja.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_ja.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-online',
+            'damo/speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_id.wav'
         },
         {
-            'model_group': 'damo',
             'model_id':
-            'speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-offline',
+            'damo/speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_id.wav'
         },
     ]
@@ -404,7 +381,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
         logger.info('Run ASR test with all models')
 
         for item in self.all_models_info:
-            model_id = item['model_group'] + '/' + item['model_id']
+            model_id = item['model_id']
             wav_path = item['wav_path']
             rec_result = self.run_pipeline(
                 model_id=model_id, audio_in=wav_path)

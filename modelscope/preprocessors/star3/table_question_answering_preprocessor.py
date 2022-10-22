@@ -95,6 +95,7 @@ class TableQuestionAnsweringPreprocessor(Preprocessor):
 
         # tokenize question
         question = data['question']
+        table_id = data.get('table_id', None)
         history_sql = data.get('history_sql', None)
         nlu = question.lower()
         nlu_t = self.tokenizer.tokenize(nlu)
@@ -106,6 +107,7 @@ class TableQuestionAnsweringPreprocessor(Preprocessor):
             nlu_t=nlu_t,
             tables=self.db.tables,
             col_syn_dict=self.db.syn_dict,
+            table_id=table_id,
             history_sql=history_sql)
 
         # collect data

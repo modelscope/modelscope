@@ -17,6 +17,8 @@ __all__ = ['InformationExtractionPipeline']
 
 @PIPELINES.register_module(
     Tasks.information_extraction, module_name=Pipelines.relation_extraction)
+@PIPELINES.register_module(
+    Tasks.relation_extraction, module_name=Pipelines.relation_extraction)
 class InformationExtractionPipeline(Pipeline):
 
     def __init__(self,

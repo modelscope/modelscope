@@ -196,8 +196,7 @@ def build_from_cfg(cfg,
             raise KeyError(
                 f'{obj_type} is not in the {registry.name}'
                 f' registry group {group_key}. Please make'
-                f' sure the correct version of 1qqQModelScope library is used.'
-            )
+                f' sure the correct version of ModelScope library is used.')
         obj_cls.group_key = group_key
     elif inspect.isclass(obj_type) or inspect.isfunction(obj_type):
         obj_cls = obj_type

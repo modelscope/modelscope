@@ -43,7 +43,7 @@ def tableqa_tracking_and_print_results_with_history(
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
             print('query result:', output_dict[OutputKeys.QUERT_RESULT])
-            print('json dumps', json.dumps(output_dict))
+            print('json dumps', json.dumps(output_dict, ensure_ascii=False))
             print()
             historical_queries = output_dict[OutputKeys.HISTORY]
 
@@ -66,8 +66,40 @@ def tableqa_tracking_and_print_results_without_history(
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
             print('query result:', output_dict[OutputKeys.QUERT_RESULT])
-            print('json dumps', json.dumps(output_dict))
+            print('json dumps', json.dumps(output_dict, ensure_ascii=False))
             print()
+
+
+def tableqa_tracking_and_print_results_with_tableid(
+        pipelines: List[TableQuestionAnsweringPipeline]):
+    test_case = {
+        'utterance': [
+            ['有哪些风险类型？', 'fund'],
+            ['风险类型有多少种？', 'reservoir'],
+            ['珠江流域的小(2)型水库的库容总量是多少？', 'reservoir'],
+            ['那平均值是多少？', 'reservoir'],
+            ['那水库的名称呢？', 'reservoir'],
+            ['换成中型的呢？', 'reservoir'],
+            ['枣庄营业厅的电话', 'business'],
+            ['那地址呢？', 'business'],
+            ['枣庄营业厅的电话和地址', 'business'],
+        ],
+    }
+    for p in pipelines:
+        historical_queries = None
+        for question, table_id in test_case['utterance']:
+            output_dict = p({
+                'question': question,
+                'table_id': table_id,
+                'history_sql': historical_queries
+            })
+            print('question', question)
+            print('sql text:', output_dict[OutputKeys.SQL_STRING])
+            print('sql query:', output_dict[OutputKeys.SQL_QUERY])
+            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('json dumps', json.dumps(output_dict, ensure_ascii=False))
+            print()
+            historical_queries = output_dict[OutputKeys.HISTORY]
 
 
 class TableQuestionAnswering(unittest.TestCase):
@@ -93,15 +125,27 @@ class TableQuestionAnswering(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
+        self.tokenizer = BertTokenizer(
+            os.path.join(model.model_dir, ModelFile.VOCAB_FILE))
+        db = Database(
+            tokenizer=self.tokenizer,
+            table_file_path=[
+                os.path.join(model.model_dir, 'databases', fname)
+                for fname in os.listdir(
+                    os.path.join(model.model_dir, 'databases'))
+            ],
+            syn_dict_file_path=os.path.join(model.model_dir, 'synonym.txt'),
+            is_use_sqlite=False)
         preprocessor = TableQuestionAnsweringPreprocessor(
-            model_dir=model.model_dir)
+            model_dir=model.model_dir, db=db)
         pipelines = [
             pipeline(
                 Tasks.table_question_answering,
                 model=model,
-                preprocessor=preprocessor)
+                preprocessor=preprocessor,
+                db=db)
         ]
-        tableqa_tracking_and_print_results_with_history(pipelines)
+        tableqa_tracking_and_print_results_with_tableid(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_task(self):
@@ -132,7 +176,6 @@ class TableQuestionAnswering(unittest.TestCase):
                 db=db)
         ]
         tableqa_tracking_and_print_results_without_history(pipelines)
-        tableqa_tracking_and_print_results_with_history(pipelines)
 
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .fill_mask_ponet_pipeline import FillMaskPonetPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
-    from .passage_ranking_pipeline import PassageRankingPipeline
+    from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
     from .sequence_classification_pipeline import SequenceClassificationPipeline
     from .summarization_pipeline import SummarizationPipeline
@@ -51,7 +51,7 @@ else:
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
-        'passage_ranking_pipeline': ['PassageRankingPipeline'],
+        'text_ranking_pipeline': ['TextRankingPipeline'],
         'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline'],
         'sequence_classification_pipeline': ['SequenceClassificationPipeline'],
         'summarization_pipeline': ['SummarizationPipeline'],

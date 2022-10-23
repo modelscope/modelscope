@@ -40,7 +40,7 @@ class OfaPreprocessor(Preprocessor):
         """
         super().__init__(*args, **kwargs)
         preprocess_mapping = {
-            Tasks.ofa_ocr_recognition: OfaOcrRecognitionPreprocessor,
+            Tasks.ocr_recognition: OfaOcrRecognitionPreprocessor,
             Tasks.image_captioning: OfaImageCaptioningPreprocessor,
             Tasks.visual_grounding: OfaVisualGroundingPreprocessor,
             Tasks.visual_question_answering:
@@ -48,14 +48,14 @@ class OfaPreprocessor(Preprocessor):
             Tasks.visual_entailment: OfaVisualEntailmentPreprocessor,
             Tasks.image_classification: OfaImageClassificationPreprocessor,
             Tasks.text_classification: OfaTextClassificationPreprocessor,
-            Tasks.summarization: OfaSummarizationPreprocessor,
+            Tasks.text_summarization: OfaSummarizationPreprocessor,
             Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
         }
         input_key_mapping = {
-            Tasks.ofa_ocr_recognition: ['image'],
+            Tasks.ocr_recognition: ['image'],
             Tasks.image_captioning: ['image'],
             Tasks.image_classification: ['image'],
-            Tasks.summarization: ['text'],
+            Tasks.text_summarization: ['text'],
             Tasks.text_classification: ['text', 'text2'],
             Tasks.visual_grounding: ['image', 'text'],
             Tasks.visual_question_answering: ['image', 'text'],

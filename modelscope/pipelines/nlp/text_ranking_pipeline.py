@@ -9,15 +9,15 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import PassageRankingPreprocessor, Preprocessor
+from modelscope.preprocessors import Preprocessor, TextRankingPreprocessor
 from modelscope.utils.constant import Tasks
 
-__all__ = ['PassageRankingPipeline']
+__all__ = ['TextRankingPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.passage_ranking, module_name=Pipelines.passage_ranking)
-class PassageRankingPipeline(Pipeline):
+    Tasks.text_ranking, module_name=Pipelines.text_ranking)
+class TextRankingPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
@@ -36,7 +36,7 @@ class PassageRankingPipeline(Pipeline):
                                     Model) else Model.from_pretrained(model)
 
         if preprocessor is None:
-            preprocessor = PassageRankingPreprocessor(
+            preprocessor = TextRankingPreprocessor(
                 model.model_dir if isinstance(model, Model) else model,
                 sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()

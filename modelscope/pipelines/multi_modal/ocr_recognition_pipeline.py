@@ -16,7 +16,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.ofa_ocr_recognition, module_name=Pipelines.ofa_ocr_recognition)
+    Tasks.ocr_recognition, module_name=Pipelines.ofa_ocr_recognition)
 class OcrRecognitionPipeline(Pipeline):
 
     def __init__(self,

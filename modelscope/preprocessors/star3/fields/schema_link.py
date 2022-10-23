@@ -293,12 +293,16 @@ class SchemaLinker:
                            nlu_t,
                            tables,
                            col_syn_dict,
+                           table_id=None,
                            history_sql=None):
         """
         get linking between question and schema column
         """
         typeinfos = []
         numbers = re.findall(r'[-]?\d*\.\d+|[-]?\d+|\d+', nlu)
+
+        if table_id is not None and table_id in tables:
+            tables = {table_id: tables[table_id]}
 
         # search schema link in every table
         search_result_list = []
@@ -411,26 +415,25 @@ class SchemaLinker:
             # get the match score of each table
             match_score = self.get_table_match_score(nlu_t, schema_link)
 
+            # cal table_score
+            if history_sql is not None and 'from' in history_sql:
+                table_score = int(table['table_id'] == history_sql['from'][0])
+            else:
+                table_score = 0
+
             search_result = {
-                'table_id':
-                table['table_id'],
-                'question_knowledge':
-                final_question,
-                'header_knowledge':
-                final_header,
-                'schema_link':
-                schema_link,
-                'match_score':
-                match_score,
-                'table_score':
-                int(table['table_id'] == history_sql['from'][0])
-                if history_sql is not None else 0
+                'table_id': table['table_id'],
+                'question_knowledge': final_question,
+                'header_knowledge': final_header,
+                'schema_link': schema_link,
+                'match_score': match_score,
+                'table_score': table_score
             }
             search_result_list.append(search_result)
 
         search_result_list = sorted(
             search_result_list,
             key=lambda x: (x['match_score'], x['table_score']),
-            reverse=True)[0:4]
+            reverse=True)[0:1]
 
         return search_result_list

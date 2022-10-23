@@ -41,7 +41,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                  model_id,
                  train_dataset,
                  eval_dataset,
-                 name=Trainers.nlp_passage_ranking_trainer,
+                 name=Trainers.nlp_text_ranking_trainer,
                  cfg_modify_fn=None,
                  **kwargs):
         kwargs = dict(
@@ -61,8 +61,8 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
     def test_finetune_msmarco(self):
 
         def cfg_modify_fn(cfg):
-            cfg.task = 'passage-ranking'
-            cfg['preprocessor'] = {'type': 'passage-ranking'}
+            cfg.task = 'text-ranking'
+            cfg['preprocessor'] = {'type': 'text-ranking'}
             cfg.train.optimizer.lr = 2e-5
             cfg['dataset'] = {
                 'train': {
@@ -105,7 +105,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             }, {
                 'type': 'EvaluationHook',
                 'by_epoch': False,
-                'interval': 3000
+                'interval': 15
             }]
             return cfg
 
@@ -114,18 +114,19 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         train_ds = ds['train'].to_hf_dataset()
         dev_ds = ds['train'].to_hf_dataset()
 
+        model_id = 'damo/nlp_corom_passage-ranking_english-base'
         self.finetune(
-            model_id='damo/nlp_corom_passage-ranking_english-base',
+            model_id=model_id,
             train_dataset=train_ds,
             eval_dataset=dev_ds,
             cfg_modify_fn=cfg_modify_fn)
 
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
-        self.pipeline_passage_ranking(output_dir)
+        self.pipeline_text_ranking(output_dir)
 
-    def pipeline_passage_ranking(self, model_dir):
+    def pipeline_text_ranking(self, model_dir):
         model = Model.from_pretrained(model_dir)
-        pipeline_ins = pipeline(task=Tasks.passage_ranking, model=model)
+        pipeline_ins = pipeline(task=Tasks.text_ranking, model=model)
         print(pipeline_ins(input=self.inputs))
 
 

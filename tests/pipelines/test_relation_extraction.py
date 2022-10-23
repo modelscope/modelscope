@@ -15,7 +15,7 @@ from modelscope.utils.test_utils import test_level
 class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.task = Tasks.information_extraction
+        self.task = Tasks.relation_extraction
         self.model_id = 'damo/nlp_bert_relation-extraction_chinese-base'
 
     sentence = '高捷，祖籍江苏，本科毕业于东南大学'
@@ -28,7 +28,7 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline1 = InformationExtractionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
-            Tasks.information_extraction, model=model, preprocessor=tokenizer)
+            Tasks.relation_extraction, model=model, preprocessor=tokenizer)
         print(f'sentence: {self.sentence}\n'
               f'pipeline1:{pipeline1(input=self.sentence)}')
         print()
@@ -39,7 +39,7 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
         model = Model.from_pretrained(self.model_id)
         tokenizer = RelationExtractionPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
-            task=Tasks.information_extraction,
+            task=Tasks.relation_extraction,
             model=model,
             preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence))
@@ -47,12 +47,12 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
-            task=Tasks.information_extraction, model=self.model_id)
+            task=Tasks.relation_extraction, model=self.model_id)
         print(pipeline_ins(input=self.sentence))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.information_extraction)
+        pipeline_ins = pipeline(task=Tasks.relation_extraction)
         print(pipeline_ins(input=self.sentence))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')

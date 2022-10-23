@@ -12,14 +12,14 @@ if TYPE_CHECKING:
     from .movie_scene_segmentation import MovieSceneSegmentationDataset
     from .video_summarization_dataset import VideoSummarizationDataset
     from .image_inpainting import ImageInpaintingDataset
-    from .passage_ranking_dataset import PassageRankingDataset
+    from .text_ranking_dataset import TextRankingDataset
 
 else:
     _import_structure = {
         'base': ['TaskDataset'],
         'builder': ['TASK_DATASETS', 'build_task_dataset'],
         'torch_base_dataset': ['TorchTaskDataset'],
-        'passage_ranking_dataset': ['PassageRankingDataset'],
+        'text_ranking_dataset': ['TextRankingDataset'],
         'veco_dataset': ['VecoDataset'],
         'image_instance_segmentation_coco_dataset':
         ['ImageInstanceSegmentationCocoDataset'],

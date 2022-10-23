@@ -12,6 +12,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
+    Tasks.image_text_retrieval, module_name=Pipelines.multi_modal_embedding)
+@PIPELINES.register_module(
     Tasks.multi_modal_embedding, module_name=Pipelines.multi_modal_embedding)
 class MultiModalEmbeddingPipeline(Pipeline):
 

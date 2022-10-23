@@ -13,18 +13,18 @@ from modelscope.models.nlp.structbert import SbertPreTrainedModel
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 
-__all__ = ['PassageRanking']
+__all__ = ['TextRanking']
 
 
-@MODELS.register_module(Tasks.passage_ranking, module_name=Models.bert)
-class PassageRanking(SbertForSequenceClassification, SbertPreTrainedModel):
+@MODELS.register_module(Tasks.text_ranking, module_name=Models.bert)
+class TextRanking(SbertForSequenceClassification, SbertPreTrainedModel):
     base_model_prefix: str = 'bert'
     supports_gradient_checkpointing = True
     _keys_to_ignore_on_load_missing = [r'position_ids']
 
     def __init__(self, config, model_dir, *args, **kwargs):
         if hasattr(config, 'base_model_prefix'):
-            PassageRanking.base_model_prefix = config.base_model_prefix
+            TextRanking.base_model_prefix = config.base_model_prefix
         super().__init__(config, model_dir)
         self.train_batch_size = kwargs.get('train_batch_size', 4)
         self.register_buffer(
@@ -74,7 +74,7 @@ class PassageRanking(SbertForSequenceClassification, SbertPreTrainedModel):
         num_labels = kwargs.get('num_labels', 1)
         model_args = {} if num_labels is None else {'num_labels': num_labels}
 
-        return super(SbertPreTrainedModel, PassageRanking).from_pretrained(
+        return super(SbertPreTrainedModel, TextRanking).from_pretrained(
             pretrained_model_name_or_path=kwargs.get('model_dir'),
             model_dir=kwargs.get('model_dir'),
             **model_args)

@@ -13,7 +13,7 @@ class Database:
                  tokenizer,
                  table_file_path,
                  syn_dict_file_path,
-                 is_use_sqlite=False):
+                 is_use_sqlite=True):
         self.tokenizer = tokenizer
         self.is_use_sqlite = is_use_sqlite
         if self.is_use_sqlite:

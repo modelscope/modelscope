@@ -19,7 +19,7 @@ __all__ = ['ConversationalTextToSqlPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.conversational_text_to_sql,
+    Tasks.table_question_answering,
     module_name=Pipelines.conversational_text_to_sql)
 class ConversationalTextToSqlPipeline(Pipeline):
 
@@ -62,7 +62,7 @@ class ConversationalTextToSqlPipeline(Pipeline):
             Dict[str, str]: the prediction results
         """
         sql = Example.evaluator.obtain_sql(inputs['predict'][0], inputs['db'])
-        result = {OutputKeys.TEXT: sql}
+        result = {OutputKeys.OUTPUT: {OutputKeys.TEXT: sql}}
         return result
 
     def _collate_fn(self, data):

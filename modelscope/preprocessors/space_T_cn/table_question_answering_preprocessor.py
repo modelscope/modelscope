@@ -8,8 +8,8 @@ from transformers import BertTokenizer
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.preprocessors.star3.fields.database import Database
-from modelscope.preprocessors.star3.fields.schema_link import SchemaLinker
+from modelscope.preprocessors.space_T_cn.fields.database import Database
+from modelscope.preprocessors.space_T_cn.fields.schema_link import SchemaLinker
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Fields, ModelFile
 from modelscope.utils.type_assert import type_assert

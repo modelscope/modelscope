@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import re
 
-from modelscope.preprocessors.star3.fields.struct import TypeInfo
+from modelscope.preprocessors.space_T_cn.fields.struct import TypeInfo
 
 
 class SchemaLinker:

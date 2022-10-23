@@ -13,8 +13,9 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
-from modelscope.preprocessors.star3.fields.database import Database
-from modelscope.preprocessors.star3.fields.struct import Constant, SQLQuery
+from modelscope.preprocessors.space_T_cn.fields.database import Database
+from modelscope.preprocessors.space_T_cn.fields.struct import (Constant,
+                                                               SQLQuery)
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['TableQuestionAnsweringPipeline']
@@ -320,7 +321,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             OutputKeys.QUERT_RESULT: tabledata,
         }
 
-        return output
+        return {OutputKeys.OUTPUT: output}
 
     def _collate_fn(self, data):
         return data

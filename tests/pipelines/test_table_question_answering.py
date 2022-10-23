@@ -12,7 +12,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TableQuestionAnsweringPipeline
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
-from modelscope.preprocessors.star3.fields.database import Database
+from modelscope.preprocessors.space_T_cn.fields.database import Database
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -38,7 +38,7 @@ def tableqa_tracking_and_print_results_with_history(
             output_dict = p({
                 'question': question,
                 'history_sql': historical_queries
-            })
+            })[OutputKeys.OUTPUT]
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
@@ -61,7 +61,7 @@ def tableqa_tracking_and_print_results_without_history(
     }
     for p in pipelines:
         for question in test_case['utterance']:
-            output_dict = p({'question': question})
+            output_dict = p({'question': question})[OutputKeys.OUTPUT]
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
@@ -92,7 +92,7 @@ def tableqa_tracking_and_print_results_with_tableid(
                 'question': question,
                 'table_id': table_id,
                 'history_sql': historical_queries
-            })
+            })[OutputKeys.OUTPUT]
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
@@ -146,11 +146,6 @@ class TableQuestionAnswering(unittest.TestCase):
                 db=db)
         ]
         tableqa_tracking_and_print_results_with_tableid(pipelines)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_model_from_task(self):
-        pipelines = [pipeline(Tasks.table_question_answering, self.model_id)]
-        tableqa_tracking_and_print_results_with_history(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub_with_other_classes(self):

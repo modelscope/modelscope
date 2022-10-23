@@ -18,6 +18,8 @@ __all__ = ['TokenClassificationPipeline']
 
 @PIPELINES.register_module(
     Tasks.token_classification, module_name=Pipelines.part_of_speech)
+@PIPELINES.register_module(
+    Tasks.part_of_speech, module_name=Pipelines.part_of_speech)
 class TokenClassificationPipeline(Pipeline):
 
     def __init__(self,

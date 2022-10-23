@@ -19,6 +19,8 @@ __all__ = ['TokenClassificationModel']
 
 @MODELS.register_module(
     Tasks.token_classification, module_name=TaskModels.token_classification)
+@MODELS.register_module(
+    Tasks.part_of_speech, module_name=TaskModels.token_classification)
 class TokenClassificationModel(SingleBackboneTaskModelBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):

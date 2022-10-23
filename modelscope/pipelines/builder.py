@@ -25,6 +25,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.part_of_speech: (Pipelines.part_of_speech,
+                           'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.token_classification:
     (Pipelines.part_of_speech,
      'damo/nlp_structbert_part-of-speech_chinese-base'),

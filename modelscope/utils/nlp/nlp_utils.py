@@ -20,7 +20,7 @@ def text2sql_tracking_and_print_results(
             results = p(case)
             print({'question': item})
             print(results)
-            last_sql = results['text']
+            last_sql = results[OutputKeys.OUTPUT][OutputKeys.TEXT]
             history.append(item)
 
 

@@ -27,7 +27,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from modelscope.models.nlp.star3.configuration_star3 import Star3Config
+from modelscope.models.nlp.space_T_cn.configuration_space_T_cn import \
+    SpaceTCnConfig
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 
@@ -609,9 +610,9 @@ class PreTrainedBertModel(nn.Module):
 
     def __init__(self, config, *inputs, **kwargs):
         super(PreTrainedBertModel, self).__init__()
-        if not isinstance(config, Star3Config):
+        if not isinstance(config, SpaceTCnConfig):
             raise ValueError(
-                'Parameter config in `{}(config)` should be an instance of class `Star3Config`. '
+                'Parameter config in `{}(config)` should be an instance of class `SpaceTCnConfig`. '
                 'To create a model from a Google pretrained model use '
                 '`model = {}.from_pretrained(PRETRAINED_MODEL_NAME)`'.format(
                     self.__class__.__name__, self.__class__.__name__))
@@ -676,7 +677,7 @@ class PreTrainedBertModel(nn.Module):
             serialization_dir = tempdir
         # Load config
         config_file = os.path.join(serialization_dir, CONFIG_NAME)
-        config = Star3Config.from_json_file(config_file)
+        config = SpaceTCnConfig.from_json_file(config_file)
         logger.info('Model config {}'.format(config))
         # Instantiate model.
         model = cls(config, *inputs, **kwargs)
@@ -742,11 +743,11 @@ class PreTrainedBertModel(nn.Module):
         return model
 
 
-class Star3Model(PreTrainedBertModel):
-    """Star3Model model ("Bidirectional Embedding Representations from a Transformer pretrained on STAR3.0").
+class SpaceTCnModel(PreTrainedBertModel):
+    """SpaceTCnModel model ("Bidirectional Embedding Representations from a Transformer pretrained on STAR-T-CN").
 
     Params:
-        config: a Star3Config class instance with the configuration to build a new model
+        config: a SpaceTCnConfig class instance with the configuration to build a new model
 
     Inputs:
         `input_ids`: a torch.LongTensor of shape [batch_size, sequence_length]
@@ -780,16 +781,16 @@ class Star3Model(PreTrainedBertModel):
     input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
     token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = modeling.Star3Config(vocab_size_or_config_json_file=32000, hidden_size=768,
+    config = modeling.SpaceTCnConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
         num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = modeling.Star3Model(config=config)
+    model = modeling.SpaceTCnModel(config=config)
     all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
     ```
     """
 
     def __init__(self, config, schema_link_module='none'):
-        super(Star3Model, self).__init__(config)
+        super(SpaceTCnModel, self).__init__(config)
         self.embeddings = BertEmbeddings(config)
         self.encoder = BertEncoder(
             config, schema_link_module=schema_link_module)

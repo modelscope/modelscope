@@ -69,9 +69,6 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                        'damo/nlp_space_dialog-modeling'),
     Tasks.dialog_state_tracking: (Pipelines.dialog_state_tracking,
                                   'damo/nlp_space_dialog-state-tracking'),
-    Tasks.conversational_text_to_sql:
-    (Pipelines.conversational_text_to_sql,
-     'damo/nlp_star_conversational-text-to-sql'),
     Tasks.table_question_answering:
     (Pipelines.table_question_answering_pipeline,
      'damo/nlp-convai-text2sql-pretrain-cn'),

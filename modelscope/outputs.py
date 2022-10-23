@@ -606,21 +606,12 @@ TASK_OUTPUTS = {
     # }
     Tasks.task_oriented_conversation: [OutputKeys.OUTPUT],
 
-    # conversational text-to-sql result for single sample
-    # {
-    #   "text": "SELECT shop.Name FROM shop."
-    # }
-    Tasks.conversational_text_to_sql: [OutputKeys.TEXT],
-
     # table-question-answering result for single sample
     # {
     #   "sql": "SELECT shop.Name FROM shop."
     #   "sql_history": {sel: 0, agg: 0, conds: [[0, 0, 'val']]}
     # }
-    Tasks.table_question_answering: [
-        OutputKeys.SQL_STRING, OutputKeys.SQL_QUERY, OutputKeys.HISTORY,
-        OutputKeys.QUERT_RESULT
-    ],
+    Tasks.table_question_answering: [OutputKeys.OUTPUT],
 
     # ============ audio tasks ===================
     # asr result for single sample

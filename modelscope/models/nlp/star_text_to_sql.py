@@ -20,7 +20,7 @@ __all__ = ['StarForTextToSql']
 
 
 @MODELS.register_module(
-    Tasks.conversational_text_to_sql, module_name=Models.star)
+    Tasks.table_question_answering, module_name=Models.space_T_en)
 class StarForTextToSql(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):

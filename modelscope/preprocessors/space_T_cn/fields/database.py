@@ -4,7 +4,7 @@ import sqlite3
 import json
 import tqdm
 
-from modelscope.preprocessors.star3.fields.struct import Trie
+from modelscope.preprocessors.space_T_cn.fields.struct import Trie
 
 
 class Database:

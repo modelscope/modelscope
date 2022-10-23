@@ -3,27 +3,25 @@
 import os
 from typing import Dict
 
-import json
 import numpy
 import torch
 import torch.nn.functional as F
-import tqdm
 from transformers import BertTokenizer
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor
 from modelscope.models.builder import MODELS
-from modelscope.models.nlp.star3.configuration_star3 import Star3Config
-from modelscope.models.nlp.star3.modeling_star3 import Seq2SQL, Star3Model
-from modelscope.preprocessors.star3.fields.struct import Constant
+from modelscope.preprocessors.space_T_cn.fields.struct import Constant
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import verify_device
+from .space_T_cn.configuration_space_T_cn import SpaceTCnConfig
+from .space_T_cn.modeling_space_T_cn import Seq2SQL, SpaceTCnModel
 
 __all__ = ['TableQuestionAnswering']
 
 
 @MODELS.register_module(
-    Tasks.table_question_answering, module_name=Models.star3)
+    Tasks.table_question_answering, module_name=Models.space_T_cn)
 class TableQuestionAnswering(Model):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -43,9 +41,9 @@ class TableQuestionAnswering(Model):
             os.path.join(self.model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
             map_location='cpu')
 
-        self.backbone_config = Star3Config.from_json_file(
+        self.backbone_config = SpaceTCnConfig.from_json_file(
             os.path.join(self.model_dir, ModelFile.CONFIGURATION))
-        self.backbone_model = Star3Model(
+        self.backbone_model = SpaceTCnModel(
             config=self.backbone_config, schema_link_module='rat')
         self.backbone_model.load_state_dict(state_dict['backbone_model'])
 

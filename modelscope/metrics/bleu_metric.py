@@ -11,7 +11,7 @@ from .builder import METRICS, MetricKeys
 EVAL_BLEU_ORDER = 4
 
 
-@METRICS.register_module(group_key=default_group, module_name=Metrics.bleu)
+@METRICS.register_module(group_key=default_group, module_name=Metrics.BLEU)
 class BleuMetric(Metric):
     """The metric computation bleu for text generation classes.
 

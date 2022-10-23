@@ -6,9 +6,12 @@ from os import path as osp
 import json
 import numpy as np
 import torch
+from PIL import Image
 
 from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.trie import Trie
+from .utils.constant import OFA_TASK_KEY_MAPPING
 from .utils.random_help import set_torch_seed
 
 
@@ -59,6 +62,14 @@ class OfaBasePreprocessor:
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
+        self.column_map = {
+            key: key
+            for key in OFA_TASK_KEY_MAPPING[self.cfg.task]
+        }
+        if hasattr(self.cfg,
+                   'dataset') and self.cfg.dataset.column_map is not None:
+            for k, v in self.cfg.dataset.column_map.items():
+                self.column_map[k] = v
         self.transtab = str.maketrans(
             {key: None
              for key in string.punctuation})
@@ -147,3 +158,8 @@ class OfaBasePreprocessor:
                     constraint_prefix_token)
                 constraint_mask[i][constraint_nodes] = True
             sample['constraint_mask'] = constraint_mask
+
+    def get_img_pil(self, path_or_url_or_pil):
+        image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
+            else load_image(path_or_url_or_pil)
+        return image

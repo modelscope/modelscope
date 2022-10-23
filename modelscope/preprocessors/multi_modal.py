@@ -16,6 +16,7 @@ from .base import Preprocessor
 from .builder import PREPROCESSORS
 from .ofa import *  # noqa
 from .ofa.utils.collate import collate_fn
+from .ofa.utils.constant import OFA_TASK_KEY_MAPPING
 
 __all__ = [
     'OfaPreprocessor',
@@ -51,24 +52,13 @@ class OfaPreprocessor(Preprocessor):
             Tasks.text_summarization: OfaSummarizationPreprocessor,
             Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
         }
-        input_key_mapping = {
-            Tasks.ocr_recognition: ['image'],
-            Tasks.image_captioning: ['image'],
-            Tasks.image_classification: ['image'],
-            Tasks.text_summarization: ['text'],
-            Tasks.text_classification: ['text', 'text2'],
-            Tasks.visual_grounding: ['image', 'text'],
-            Tasks.visual_question_answering: ['image', 'text'],
-            Tasks.visual_entailment: ['image', 'text', 'text2'],
-            Tasks.text_to_image_synthesis: ['text']
-        }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
             model_dir)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
         self.preprocess = preprocess_mapping[self.cfg.task](
             cfg=self.cfg, model_dir=model_dir, mode=mode)
-        self.keys = input_key_mapping[self.cfg.task]
+        self.keys = OFA_TASK_KEY_MAPPING[self.cfg.task]
         self.tokenizer = self.preprocess.tokenizer
         if kwargs.get('no_collate', None):
             self.no_collate = True

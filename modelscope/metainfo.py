@@ -377,7 +377,7 @@ class Metrics(object):
     audio_noise_metric = 'audio-noise-metric'
 
     # text gen
-    bleu = 'bleu'
+    BLEU = 'bleu'
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
@@ -399,6 +399,8 @@ class Metrics(object):
     movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
     # metric for inpainting task
     image_inpainting_metric = 'image-inpainting-metric'
+    # metric for ocr
+    NED = 'ned'
 
 
 class Optimizers(object):

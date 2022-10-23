@@ -1,12 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import torch
-from PIL import Image
 from torchvision import transforms
 
-from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
@@ -46,7 +43,7 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         sample = self._build_infer_sample(data)
-        target = data['text']
+        target = data[self.column_map['text']]
         target = target.translate(self.transtab).strip()
         target_token_list = target.strip().split()
         target = ' '.join(target_token_list[:self.max_tgt_length])
@@ -56,8 +53,7 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
         return sample
 
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        image = data['image'] if isinstance(
-            data['image'], Image.Image) else load_image(data['image'])
+        image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
         prompt = self.cfg.model.get('prompt', ' what does the image describe?')
         inputs = self.tokenize_text(prompt)
@@ -66,6 +62,6 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True])
         }
-        if 'text' in data:
-            sample['label'] = data['text']
+        if self.column_map['text'] in data:
+            sample['label'] = data[self.column_map['text']]
         return sample

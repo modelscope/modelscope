@@ -36,10 +36,10 @@ class TestOfaTrainer(unittest.TestCase):
                        # 'launcher': 'pytorch',
                        'max_epochs': 1,
                        'use_fp16': True,
-                       'dataloader': {'batch_size_per_gpu': 4, 'workers_per_gpu': 0},
+                       'dataloader': {'batch_size_per_gpu': 1, 'workers_per_gpu': 0},
                        'lr_scheduler': {'name': 'polynomial_decay',
                                         'warmup_proportion': 0.01,
-                                        'lr_end': 1e-07},
+                                        'lr_endo': 1e-07},
                        'lr_scheduler_hook': {'type': 'LrSchedulerHook', 'by_epoch': False},
                        'optimizer': {'type': 'AdamW', 'lr': 5e-05, 'weight_decay': 0.01},
                        'optimizer_hook': {'type': 'TorchAMPOptimizerHook',
@@ -86,11 +86,11 @@ class TestOfaTrainer(unittest.TestCase):
             train_dataset=MsDataset.load(
                 'coco_2014_caption',
                 namespace='modelscope',
-                split='train[:100]'),
+                split='train[:20]'),
             eval_dataset=MsDataset.load(
                 'coco_2014_caption',
                 namespace='modelscope',
-                split='validation[:20]'),
+                split='validation[:10]'),
             metrics=[Metrics.BLEU],
             cfg_file=config_file)
         trainer = build_trainer(name=Trainers.ofa_tasks, default_args=args)

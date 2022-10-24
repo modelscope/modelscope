@@ -77,21 +77,22 @@ class ImageInpaintingPipeline(Pipeline):
             img, ((0, 0), (0, out_height - height), (0, out_width - width)),
             mode='symmetric')
 
-    def preprocess(self, input: Input) -> Dict[str, Any]:
-        if isinstance(input, str):
-            image_name, mask_name = input.split('+')
+    def preprocess(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if isinstance(input['img'], str):
+            image_name, mask_name = input['img'], input['mask']
             img = LoadImage.convert_to_ndarray(image_name)
             img = self.transforms(img)
             mask = np.array(LoadImage(mode='L')(mask_name)['img'])
             mask = self.transforms(mask)
-        elif isinstance(input, PIL.Image.Image):
-            img = input.crop((0, 0, int(input.width / 2), input.height))
+        elif isinstance(input['img'], PIL.Image.Image):
+            img = input['img']
             img = self.transforms(np.array(img))
-            mask = input.crop((int(input.width / 2), 0, input.width,
-                               input.height)).convert('L')
+            mask = input['mask'].convert('L')
             mask = self.transforms(np.array(mask))
         else:
-            raise TypeError('input should be either str or PIL.Image')
+            raise TypeError(
+                'input should be either str or PIL.Image, and both inputs should have the same type'
+            )
         result = dict(image=img, mask=mask[None, ...])
 
         if self.pad_out_to_modulo is not None and self.pad_out_to_modulo > 1:

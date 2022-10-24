@@ -12,6 +12,7 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import List, Optional, Tuple, Union
 
+import attrs
 import requests
 
 from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
@@ -21,9 +22,14 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH, Licenses,
                                       ModelVisibility)
+from modelscope.hub.deploy import (DeleteServiceParameters,
+                                   DeployServiceParameters,
+                                   GetServiceParameters, ListServiceParameters,
+                                   ServiceParameters, ServiceResourceConfig,
+                                   Vendor)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
-                                   NotLoginException, RequestError,
-                                   datahub_raise_on_error,
+                                   NotLoginException, NotSupportError,
+                                   RequestError, datahub_raise_on_error,
                                    handle_http_post_error,
                                    handle_http_response, is_ok, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
@@ -296,6 +302,169 @@ class HubApi:
             (owner_or_group, page_number, page_size),
             cookies=cookies)
         handle_http_response(r, logger, cookies, 'list_model')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def deploy_model(self, model_id: str, revision: str, instance_name: str,
+                     resource: ServiceResourceConfig,
+                     provider: ServiceParameters):
+        """Deploy model to cloud, current we only support PAI EAS, this is asynchronous
+        call , please check instance status through the console or query the instance status.
+        At the same time, this call may take a long time.
+
+        Args:
+            model_id (str): The deployed model id
+            revision (str): The model revision
+            instance_name (str): The deployed model instance name.
+            resource (DeployResource): The resource information.
+            provider (CreateParameter): The cloud service provider parameter
+
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            NotSupportError: Not supported platform.
+            RequestError: The server return error.
+
+        Returns:
+            InstanceInfo: The instance information.
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise NotLoginException(
+                'Token does not exist, please login first.')
+        if provider.vendor != Vendor.EAS:
+            raise NotSupportError(
+                'Not support vendor: %s ,only support EAS current.' %
+                (provider.vendor))
+        create_params = DeployServiceParameters(
+            instance_name=instance_name,
+            model_id=model_id,
+            revision=revision,
+            resource=resource,
+            provider=provider)
+        path = f'{self.endpoint}/api/v1/deployer/endpoint'
+        body = attrs.asdict(create_params)
+        r = requests.post(
+            path,
+            json=body,
+            cookies=cookies,
+        )
+        handle_http_response(r, logger, cookies, 'create_eas_instance')
+        if r.status_code >= HTTPStatus.OK and r.status_code < HTTPStatus.MULTIPLE_CHOICES:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def list_deployed_model_instances(self,
+                                      provider: ServiceParameters,
+                                      skip: int = 0,
+                                      limit: int = 100):
+        """List deployed model instances.
+
+        Args:
+            provider (ListServiceParameter): The cloud service provider parameter,
+            for eas, need access_key_id and access_key_secret.
+            skip: start of the list, current not support.
+            limit: maximum number of instances return, current not support
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            RequestError: The request is failed from server.
+
+        Returns:
+            List: List of instance information
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise NotLoginException(
+                'Token does not exist, please login first.')
+        params = ListServiceParameters(
+            provider=provider, skip=skip, limit=limit)
+        path = '%s/api/v1/deployer/endpoint?%s' % (self.endpoint,
+                                                   params.to_query_str())
+        r = requests.get(path, cookies=cookies)
+        handle_http_response(r, logger, cookies, 'list_deployed_model')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def get_deployed_model_instance(self, instance_name: str,
+                                    provider: ServiceParameters):
+        """Query the specified instance information.
+
+        Args:
+            instance_name (str): The deployed instance name.
+            provider (GetParameter): The cloud provider information, for eas
+            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            RequestError: The request is failed from server.
+
+        Returns:
+            Dict: The request instance information
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise NotLoginException(
+                'Token does not exist, please login first.')
+        params = GetServiceParameters(provider=provider)
+        path = '%s/api/v1/deployer/endpoint/%s?%s' % (
+            self.endpoint, instance_name, params.to_query_str())
+        r = requests.get(path, cookies=cookies)
+        handle_http_response(r, logger, cookies, 'get_deployed_model')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def delete_deployed_model_instance(self, instance_name: str,
+                                       provider: ServiceParameters):
+        """Delete deployed model, this api send delete command and return, it will take
+        some to delete, please check through the cloud console.
+
+        Args:
+            instance_name (str): The instance name you want to delete.
+            provider (DeleteParameter): The cloud provider information, for eas
+            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+
+        Raises:
+            NotLoginException: To call this api, you need login first.
+            RequestError: The request is failed.
+
+        Returns:
+            Dict: The deleted instance information.
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise NotLoginException(
+                'Token does not exist, please login first.')
+        params = DeleteServiceParameters(provider=provider)
+        path = '%s/api/v1/deployer/endpoint/%s?%s' % (
+            self.endpoint, instance_name, params.to_query_str())
+        r = requests.delete(path, cookies=cookies)
+        handle_http_response(r, logger, cookies, 'delete_deployed_model')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
                 data = r.json()[API_RESPONSE_FIELD_DATA]

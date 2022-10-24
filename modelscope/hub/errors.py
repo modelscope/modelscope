@@ -9,6 +9,10 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
+class NotSupportError(Exception):
+    pass
+
+
 class NotExistError(Exception):
     pass
 
@@ -66,6 +70,7 @@ def handle_http_response(response, logger, cookies, model_id):
             logger.error(
                 f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
                 private. Please login first.')
+        logger.error('Response details: %s' % response.content)
         raise error
 
 

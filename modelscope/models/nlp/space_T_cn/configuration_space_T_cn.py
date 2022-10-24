@@ -24,8 +24,8 @@ import json
 logger = logging.getLogger(__name__)
 
 
-class Star3Config(object):
-    """Configuration class to store the configuration of a `Star3Model`.
+class SpaceTCnConfig(object):
+    """Configuration class to store the configuration of a `SpaceTCnModel`.
     """
 
     def __init__(self,
@@ -40,10 +40,10 @@ class Star3Config(object):
                  max_position_embeddings=512,
                  type_vocab_size=2,
                  initializer_range=0.02):
-        """Constructs Star3Config.
+        """Constructs SpaceTCnConfig.
 
         Args:
-            vocab_size_or_config_json_file: Vocabulary size of `inputs_ids` in `Star3Model`.
+            vocab_size_or_config_json_file: Vocabulary size of `inputs_ids` in `SpaceTCnConfig`.
             hidden_size: Size of the encoder layers and the pooler layer.
             num_hidden_layers: Number of hidden layers in the Transformer encoder.
             num_attention_heads: Number of attention heads for each attention layer in
@@ -59,7 +59,7 @@ class Star3Config(object):
             max_position_embeddings: The maximum sequence length that this model might
                 ever be used with. Typically set this to something large just in case
                 (e.g., 512 or 1024 or 2048).
-            type_vocab_size: The vocabulary size of the `token_type_ids` passed into `Star3Model`.
+            type_vocab_size: The vocabulary size of the `token_type_ids` passed into `SpaceTCnConfig`.
             initializer_range: The sttdev of the truncated_normal_initializer for
                 initializing all weight matrices.
         """
@@ -89,15 +89,15 @@ class Star3Config(object):
 
     @classmethod
     def from_dict(cls, json_object):
-        """Constructs a `Star3Config` from a Python dictionary of parameters."""
-        config = Star3Config(vocab_size_or_config_json_file=-1)
+        """Constructs a `SpaceTCnConfig` from a Python dictionary of parameters."""
+        config = SpaceTCnConfig(vocab_size_or_config_json_file=-1)
         for key, value in json_object.items():
             config.__dict__[key] = value
         return config
 
     @classmethod
     def from_json_file(cls, json_file):
-        """Constructs a `Star3Config` from a json file of parameters."""
+        """Constructs a `SpaceTCnConfig` from a json file of parameters."""
         with open(json_file, 'r', encoding='utf-8') as reader:
             text = reader.read()
         return cls.from_dict(json.loads(text))

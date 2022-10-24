@@ -53,6 +53,7 @@ class ImageReidPersonPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         img = input['img']
         img_embedding = self.model(img)
+        img_embedding = img_embedding.detach().cpu().numpy()
         return {OutputKeys.IMG_EMBEDDING: img_embedding}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

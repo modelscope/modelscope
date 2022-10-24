@@ -103,7 +103,7 @@ class NLPTasks(object):
     sentence_similarity = 'sentence-similarity'
     text_classification = 'text-classification'
     sentence_embedding = 'sentence-embedding'
-    passage_ranking = 'passage-ranking'
+    text_ranking = 'text-ranking'
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'
@@ -117,7 +117,7 @@ class NLPTasks(object):
     table_question_answering = 'table-question-answering'
     sentence_embedding = 'sentence-embedding'
     fill_mask = 'fill-mask'
-    summarization = 'summarization'
+    text_summarization = 'text-summarization'
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
@@ -231,13 +231,6 @@ class DownloadMode(enum.Enum):
     FORCE_REDOWNLOAD = 'force_redownload'
 
 
-class DownloadParams(enum.Enum):
-    """
-        Parameters for downloading dataset.
-    """
-    MAX_LIST_OBJECTS_NUM = 50000
-
-
 class DatasetFormations(enum.Enum):
     """ How a dataset is organized and interpreted
     """
@@ -289,6 +282,7 @@ class ConfigKeys(object):
     """Fixed keywords in configuration file"""
     train = 'train'
     val = 'val'
+    test = 'test'
 
 
 class Requirements(object):

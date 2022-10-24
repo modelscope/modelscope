@@ -7,7 +7,6 @@ from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION)
 from modelscope.utils.logger import get_logger
-from .api import ModelScopeConfig
 from .git import GitCommandWrapper
 from .utils.utils import get_endpoint
 
@@ -47,6 +46,7 @@ class Repository:
             err_msg = 'a non-default value of revision cannot be empty.'
             raise InvalidParameter(err_msg)
 
+        from modelscope.hub.api import ModelScopeConfig
         if auth_token:
             self.auth_token = auth_token
         else:
@@ -166,7 +166,7 @@ class DatasetRepository:
             err_msg = 'a non-default value of revision cannot be empty.'
             raise InvalidParameter(err_msg)
         self.revision = revision
-
+        from modelscope.hub.api import ModelScopeConfig
         if auth_token:
             self.auth_token = auth_token
         else:

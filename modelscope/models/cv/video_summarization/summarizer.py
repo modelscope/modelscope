@@ -161,7 +161,7 @@ def summary_format(summary, fps):
                 is_summary_frame = False
 
     if is_summary_frame and summary[-1] == 1:
-        end_frame = len(frame_idxes) - 1
+        end_frame = len(summary) - 1
         frames_list.append([start_frame, end_frame])
 
     output = []

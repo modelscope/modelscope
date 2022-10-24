@@ -162,7 +162,7 @@ TASK_INPUTS = {
         'source_sentence': InputType.LIST,
         'sentences_to_compare': InputType.LIST,
     },
-    Tasks.passage_ranking: (InputType.TEXT, InputType.TEXT),
+    Tasks.text_ranking: (InputType.TEXT, InputType.TEXT),
     Tasks.text_generation:
     InputType.TEXT,
     Tasks.fill_mask:

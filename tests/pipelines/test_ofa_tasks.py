@@ -45,6 +45,14 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = img_captioning('data/test/images/image_captioning.png')
         print(result[OutputKeys.CAPTION])
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_ocr_recognize_with_name(self):
+        ocr_recognize = pipeline(
+            Tasks.ocr_recognition,
+            model='damo/ofa_ocr-recognition_scene_base_zh')
+        result = ocr_recognize('data/test/images/image_ocr_recognition.jpg')
+        print(result[OutputKeys.TEXT])
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_classification_with_model(self):
         model = Model.from_pretrained(
@@ -67,7 +75,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_summarization_with_model(self):
         model = Model.from_pretrained(
             'damo/ofa_summarization_gigaword_large_en')
-        ofa_pipe = pipeline(Tasks.summarization, model=model)
+        ofa_pipe = pipeline(Tasks.text_summarization, model=model)
         text = 'five-time world champion michelle kwan withdrew' + \
                'from the #### us figure skating championships on wednesday ,' + \
                ' but will petition us skating officials for the chance to ' + \
@@ -79,7 +87,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_summarization_with_name(self):
         ofa_pipe = pipeline(
-            Tasks.summarization,
+            Tasks.text_summarization,
             model='damo/ofa_summarization_gigaword_large_en')
         text = 'five-time world champion michelle kwan withdrew' + \
                'from the #### us figure skating championships on wednesday ,' + \

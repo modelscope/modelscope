@@ -61,6 +61,8 @@ class FaceImageGenerationPipeline(Pipeline):
         return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if isinstance(input, str):
+            input = int(input)
         assert isinstance(input, int)
         torch.manual_seed(input)
         torch.cuda.manual_seed(input)

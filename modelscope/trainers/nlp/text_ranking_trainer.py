@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
@@ -42,8 +43,8 @@ class GroupCollator():
         return batch
 
 
-@TRAINERS.register_module(module_name=Trainers.nlp_passage_ranking_trainer)
-class PassageRankingTrainer(NlpEpochBasedTrainer):
+@TRAINERS.register_module(module_name=Trainers.nlp_text_ranking_trainer)
+class TextRankingTrainer(NlpEpochBasedTrainer):
 
     def __init__(
             self,
@@ -117,7 +118,7 @@ class PassageRankingTrainer(NlpEpochBasedTrainer):
             Example:
             {"accuracy": 0.5091743119266054, "f1": 0.673780487804878}
         """
-        from modelscope.models.nlp import PassageRanking
+        from modelscope.models.nlp import TextRanking
         # get the raw online dataset
         self.eval_dataloader = self._build_dataloader_with_dataset(
             self.eval_dataset,
@@ -126,7 +127,7 @@ class PassageRankingTrainer(NlpEpochBasedTrainer):
         # generate a standard dataloader
         # generate a model
         if checkpoint_path is not None:
-            model = PassageRanking.from_pretrained(checkpoint_path)
+            model = TextRanking.from_pretrained(checkpoint_path)
         else:
             model = self.model
 
@@ -141,7 +142,7 @@ class PassageRankingTrainer(NlpEpochBasedTrainer):
         total_spent_time = 0.0
         device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         model.to(device)
-        for _step, batch in enumerate(self.eval_dataloader):
+        for _step, batch in enumerate(tqdm(self.eval_dataloader)):
             try:
                 batch = {
                     key:

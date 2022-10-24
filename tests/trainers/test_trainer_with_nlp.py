@@ -29,7 +29,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             os.makedirs(self.tmp_dir)
 
         self.dataset = MsDataset.load(
-            'afqmc_small', namespace='userxiaoming', split='train')
+            'clue', subset_name='afqmc',
+            split='train').to_hf_dataset().select(range(2))
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -73,7 +74,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         pipeline_sentence_similarity(output_dir)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
     def test_trainer_with_backbone_head(self):
         model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
         kwargs = dict(
@@ -99,6 +100,8 @@ class TestTrainerWithNlp(unittest.TestCase):
         model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
         cfg = read_config(model_id, revision='beta')
         cfg.train.max_epochs = 20
+        cfg.preprocessor.train['label2id'] = {'0': 0, '1': 1}
+        cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
         cfg.train.work_dir = self.tmp_dir
         cfg_file = os.path.join(self.tmp_dir, 'config.json')
         cfg.dump(cfg_file)
@@ -120,22 +123,24 @@ class TestTrainerWithNlp(unittest.TestCase):
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
         self.assertTrue(Metrics.accuracy in eval_results)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_configured_datasets(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
         cfg: Config = read_config(model_id)
         cfg.train.max_epochs = 20
+        cfg.preprocessor.train['label2id'] = {'0': 0, '1': 1}
+        cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
         cfg.train.work_dir = self.tmp_dir
         cfg.dataset = {
             'train': {
-                'name': 'afqmc_small',
+                'name': 'clue',
+                'subset_name': 'afqmc',
                 'split': 'train',
-                'namespace': 'userxiaoming'
             },
             'val': {
-                'name': 'afqmc_small',
+                'name': 'clue',
+                'subset_name': 'afqmc',
                 'split': 'train',
-                'namespace': 'userxiaoming'
             },
         }
         cfg_file = os.path.join(self.tmp_dir, 'config.json')
@@ -159,11 +164,30 @@ class TestTrainerWithNlp(unittest.TestCase):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
         cfg: Config = read_config(model_id)
         cfg.train.max_epochs = 3
+        cfg.preprocessor.first_sequence = 'sentence1'
+        cfg.preprocessor.second_sequence = 'sentence2'
+        cfg.preprocessor.label = 'label'
+        cfg.preprocessor.train['label2id'] = {'0': 0, '1': 1}
+        cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
+        cfg.train.dataloader.batch_size_per_gpu = 2
+        cfg.train.hooks = [{
+            'type': 'CheckpointHook',
+            'interval': 3,
+            'by_epoch': False,
+        }, {
+            'type': 'TextLoggerHook',
+            'interval': 1
+        }, {
+            'type': 'IterTimerHook'
+        }, {
+            'type': 'EvaluationHook',
+            'interval': 1
+        }]
         cfg.train.work_dir = self.tmp_dir
         cfg_file = os.path.join(self.tmp_dir, 'config.json')
         cfg.dump(cfg_file)
         dataset = MsDataset.load('clue', subset_name='afqmc', split='train')
-        dataset = dataset.to_hf_dataset().select(range(128))
+        dataset = dataset.to_hf_dataset().select(range(4))
         kwargs = dict(
             model=model_id,
             train_dataset=dataset,
@@ -180,7 +204,7 @@ class TestTrainerWithNlp(unittest.TestCase):
                 PRIORITY = Priority.VERY_LOW
 
                 def after_iter(self, trainer):
-                    if trainer.iter == 12:
+                    if trainer.iter == 3:
                         raise MsRegressTool.EarlyStopError('Test finished.')
 
             if 'EarlyStopHook' not in [
@@ -197,12 +221,11 @@ class TestTrainerWithNlp(unittest.TestCase):
 
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-
         trainer = build_trainer(default_args=kwargs)
         regress_tool = MsRegressTool(baseline=False)
         with regress_tool.monitor_ms_train(
                 trainer, 'trainer_continue_train', level='strict'):
-            trainer.train(os.path.join(self.tmp_dir, 'iter_12.pth'))
+            trainer.train(os.path.join(self.tmp_dir, 'iter_3.pth'))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):

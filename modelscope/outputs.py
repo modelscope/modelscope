@@ -506,7 +506,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.text_error_correction: [OutputKeys.OUTPUT],
     Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
-    Tasks.passage_ranking: [OutputKeys.SCORES],
+    Tasks.text_ranking: [OutputKeys.SCORES],
 
     # text generation result for single sample
     # {
@@ -661,6 +661,7 @@ TASK_OUTPUTS = {
     #   "caption": "this is an image caption text."
     # }
     Tasks.image_captioning: [OutputKeys.CAPTION],
+    Tasks.ocr_recognition: [OutputKeys.TEXT],
 
     # visual grounding result for single sample
     # {

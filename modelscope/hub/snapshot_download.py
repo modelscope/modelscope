@@ -5,9 +5,9 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .api import HubApi, ModelScopeConfig
 from .constants import FILE_HASH
 from .errors import NotExistError
 from .file_download import (get_file_download_url, http_get_file,

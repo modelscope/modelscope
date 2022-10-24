@@ -72,6 +72,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
         action = self.action_ops[result['action']]
         headers = table['header_name']
         current_sql = result['sql']
+        current_sql['from'] = [table['table_id']]
 
         if history_sql is None:
             return current_sql
@@ -216,10 +217,11 @@ class TableQuestionAnsweringPipeline(Pipeline):
         else:
             return current_sql
 
-    def sql_dict_to_str(self, result, table):
+    def sql_dict_to_str(self, result, tables):
         """
         convert sql struct to string
         """
+        table = tables[result['sql']['from'][0]]
         header_names = table['header_name'] + ['空列']
         header_ids = table['header_id'] + ['null']
         sql = result['sql']
@@ -279,42 +281,43 @@ class TableQuestionAnsweringPipeline(Pipeline):
         """
         result = inputs['result']
         history_sql = inputs['history_sql']
-        result['sql'] = self.post_process_multi_turn(
-            history_sql=history_sql,
-            result=result,
-            table=self.db.tables[result['table_id']])
-        result['sql']['from'] = [result['table_id']]
-        sql = self.sql_dict_to_str(
-            result=result, table=self.db.tables[result['table_id']])
+        try:
+            result['sql'] = self.post_process_multi_turn(
+                history_sql=history_sql,
+                result=result,
+                table=self.db.tables[result['table_id']])
+        except Exception:
+            result['sql'] = history_sql
+        sql = self.sql_dict_to_str(result=result, tables=self.db.tables)
 
         # add sqlite
         if self.db.is_use_sqlite:
             try:
                 cursor = self.db.connection_obj.cursor().execute(sql.query)
-                names = [{
-                    'name':
-                    description[0],
-                    'label':
-                    self.db.tables[result['table_id']]['headerid2name'].get(
-                        description[0], description[0])
-                } for description in cursor.description]
-                cells = []
+                header_ids, header_names = [], []
+                for description in cursor.description:
+                    header_ids.append(self.db.tables[result['table_id']]
+                                      ['headerid2name'].get(
+                                          description[0], description[0]))
+                    header_names.append(description[0])
+                rows = []
                 for res in cursor.fetchall():
-                    row = {}
-                    for name, cell in zip(names, res):
-                        row[name['name']] = cell
-                    cells.append(row)
-                tabledata = {'headers': names, 'cells': cells}
+                    rows.append(list(res))
+                tabledata = {
+                    'header_id': header_ids,
+                    'header_name': header_names,
+                    'rows': rows
+                }
             except Exception:
-                tabledata = {'headers': [], 'cells': []}
+                tabledata = {'header_id': [], 'header_name': [], 'rows': []}
         else:
-            tabledata = {'headers': [], 'cells': []}
+            tabledata = {'header_id': [], 'header_name': [], 'rows': []}
 
         output = {
             OutputKeys.SQL_STRING: sql.string,
             OutputKeys.SQL_QUERY: sql.query,
             OutputKeys.HISTORY: result['sql'],
-            OutputKeys.QUERT_RESULT: json.dumps(tabledata, ensure_ascii=False),
+            OutputKeys.QUERT_RESULT: tabledata,
         }
 
         return output

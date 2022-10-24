@@ -9,7 +9,9 @@ class Models(object):
 
         Model name should only contain model info but not task info.
     """
+    # tinynas models
     tinynas_detection = 'tinynas-detection'
+    tinynas_damoyolo = 'tinynas-damoyolo'
 
     # vision models
     detection = 'detection'
@@ -234,7 +236,7 @@ class Pipelines(object):
     conversational_text_to_sql = 'conversational-text-to-sql'
     table_question_answering_pipeline = 'table-question-answering-pipeline'
     sentence_embedding = 'sentence-embedding'
-    passage_ranking = 'passage-ranking'
+    text_ranking = 'text-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
@@ -261,6 +263,7 @@ class Pipelines(object):
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    ofa_ocr_recognition = 'ofa-ocr-recognition'
 
 
 class Trainers(object):
@@ -295,7 +298,7 @@ class Trainers(object):
     dialog_intent_trainer = 'dialog-intent-trainer'
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
-    nlp_passage_ranking_trainer = 'nlp-passage-ranking-trainer'
+    nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
@@ -341,7 +344,7 @@ class Preprocessors(object):
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
     sentence_embedding = 'sentence-embedding'
-    passage_ranking = 'passage-ranking'
+    text_ranking = 'text-ranking'
     sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
     word_segment_text_to_label_preprocessor = 'word-segment-text-to-label-preprocessor'
     fill_mask = 'fill-mask'
@@ -374,7 +377,7 @@ class Metrics(object):
     audio_noise_metric = 'audio-noise-metric'
 
     # text gen
-    bleu = 'bleu'
+    BLEU = 'bleu'
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
@@ -396,6 +399,8 @@ class Metrics(object):
     movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
     # metric for inpainting task
     image_inpainting_metric = 'image-inpainting-metric'
+    # metric for ocr
+    NED = 'ned'
 
 
 class Optimizers(object):
@@ -454,9 +459,10 @@ class Datasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'
-    Face2dKeypointsDataset = 'Face2dKeypointsDataset'
+    Face2dKeypointsDataset = 'FaceKeypointDataset'
     HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
-    HumanWholeBodyKeypointDataset = 'HumanWholeBodyKeypointDataset'
+    HumanWholeBodyKeypointDataset = 'WholeBodyCocoTopDownDataset'
     SegDataset = 'SegDataset'
     DetDataset = 'DetDataset'
     DetImagesMixDataset = 'DetImagesMixDataset'
+    PairedDataset = 'PairedDataset'

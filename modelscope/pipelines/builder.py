@@ -20,17 +20,22 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_embedding:
     (Pipelines.sentence_embedding,
      'damo/nlp_corom_sentence-embedding_english-base'),
-    Tasks.passage_ranking: (Pipelines.passage_ranking,
-                            'damo/nlp_corom_passage-ranking_english-base'),
+    Tasks.text_ranking: (Pipelines.text_ranking,
+                         'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.part_of_speech: (Pipelines.part_of_speech,
+                           'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.token_classification:
     (Pipelines.part_of_speech,
      'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.relation_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
     Tasks.information_extraction:
     (Pipelines.relation_extraction,
      'damo/nlp_bert_relation-extraction_chinese-base'),

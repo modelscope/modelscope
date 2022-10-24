@@ -23,6 +23,7 @@ class MetricKeys(object):
     BLEU_4 = 'bleu-4'
     ROUGE_1 = 'rouge-1'
     ROUGE_L = 'rouge-l'
+    NED = 'ned'  # ocr metric
 
 
 task_default_metrics = {
@@ -32,6 +33,7 @@ task_default_metrics = {
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.token_classification: [Metrics.token_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
+    Tasks.text_classification: [Metrics.seq_cls_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
     Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],
     Tasks.image_portrait_enhancement:

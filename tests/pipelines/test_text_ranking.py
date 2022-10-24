@@ -4,15 +4,15 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import PassageRanking
+from modelscope.models.nlp import TextRanking
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import PassageRankingPipeline
-from modelscope.preprocessors import PassageRankingPreprocessor
+from modelscope.pipelines.nlp import TextRankingPipeline
+from modelscope.preprocessors import TextRankingPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class PassageRankingTest(unittest.TestCase):
+class TextRankingTest(unittest.TestCase):
     model_id = 'damo/nlp_corom_passage-ranking_english-base'
     inputs = {
         'source_sentence': ["how long it take to get a master's degree"],
@@ -27,11 +27,11 @@ class PassageRankingTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = PassageRankingPreprocessor(cache_path)
-        model = PassageRanking.from_pretrained(cache_path)
-        pipeline1 = PassageRankingPipeline(model, preprocessor=tokenizer)
+        tokenizer = TextRankingPreprocessor(cache_path)
+        model = TextRanking.from_pretrained(cache_path)
+        pipeline1 = TextRankingPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
-            Tasks.passage_ranking, model=model, preprocessor=tokenizer)
+            Tasks.text_ranking, model=model, preprocessor=tokenizer)
         print(f'sentence: {self.inputs}\n'
               f'pipeline1:{pipeline1(input=self.inputs)}')
         print()
@@ -40,20 +40,19 @@ class PassageRankingTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = PassageRankingPreprocessor(model.model_dir)
+        tokenizer = TextRankingPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
-            task=Tasks.passage_ranking, model=model, preprocessor=tokenizer)
+            task=Tasks.text_ranking, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipeline_ins = pipeline(
-            task=Tasks.passage_ranking, model=self.model_id)
+        pipeline_ins = pipeline(task=Tasks.text_ranking, model=self.model_id)
         print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.passage_ranking)
+        pipeline_ins = pipeline(task=Tasks.text_ranking)
         print(pipeline_ins(input=self.inputs))
 
 

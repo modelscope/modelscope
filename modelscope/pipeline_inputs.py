@@ -91,6 +91,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.crowd_counting:
     InputType.IMAGE,
+    Tasks.image_inpainting: {
+        'img': InputType.IMAGE,
+        'mask': InputType.IMAGE,
+    },
 
     # image generation task result for a single image
     Tasks.image_to_image_generation:

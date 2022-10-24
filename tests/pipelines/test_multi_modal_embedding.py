@@ -19,14 +19,11 @@ class MultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id = 'damo/multi-modal_clip-vit-base-patch16_zh'
 
     test_input = {'text': '皮卡丘'}
-    model_version = 'dev'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
         pipeline_multi_modal_embedding = pipeline(
-            Tasks.multi_modal_embedding,
-            model=self.model_id,
-            model_revision=self.model_version)
+            Tasks.multi_modal_embedding, model=self.model_id)
         text_embedding = pipeline_multi_modal_embedding(
             self.test_input)[OutputKeys.TEXT_EMBEDDING]
         print('l1-norm: {}'.format(
@@ -36,8 +33,7 @@ class MultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(
-            self.model_id, revision=self.model_version)
+        model = Model.from_pretrained(self.model_id)
         pipeline_multi_modal_embedding = pipeline(
             task=Tasks.multi_modal_embedding, model=model)
         text_embedding = pipeline_multi_modal_embedding(
@@ -50,8 +46,7 @@ class MultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_multi_modal_embedding = pipeline(
-            task=Tasks.multi_modal_embedding,
-            model_revision=self.model_version)
+            task=Tasks.multi_modal_embedding)
         text_embedding = pipeline_multi_modal_embedding(
             self.test_input)[OutputKeys.TEXT_EMBEDDING]
         print('l1-norm: {}'.format(

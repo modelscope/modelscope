@@ -14,6 +14,7 @@ from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.test_utils import test_level
 
 
 class TestFinetuneSequenceClassification(unittest.TestCase):
@@ -58,6 +59,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_finetune_msmarco(self):
 
         def cfg_modify_fn(cfg):
@@ -70,7 +72,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'query_sequence': 'query',
                     'pos_sequence': 'positive_passages',
                     'neg_sequence': 'negative_passages',
-                    'passage_text_fileds': ['title', 'text'],
+                    'text_fileds': ['title', 'text'],
                     'qid_field': 'query_id'
                 },
                 'val': {
@@ -78,7 +80,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'query_sequence': 'query',
                     'pos_sequence': 'positive_passages',
                     'neg_sequence': 'negative_passages',
-                    'passage_text_fileds': ['title', 'text'],
+                    'text_fileds': ['title', 'text'],
                     'qid_field': 'query_id'
                 },
             }
@@ -112,7 +114,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         # load dataset
         ds = MsDataset.load('passage-ranking-demo', 'zyznull')
         train_ds = ds['train'].to_hf_dataset()
-        dev_ds = ds['train'].to_hf_dataset()
+        dev_ds = ds['dev'].to_hf_dataset()
 
         model_id = 'damo/nlp_corom_passage-ranking_english-base'
         self.finetune(
@@ -123,6 +125,70 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
 
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         self.pipeline_text_ranking(output_dir)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_finetune_dureader(self):
+
+        def cfg_modify_fn(cfg):
+            cfg.task = 'text-ranking'
+            cfg['preprocessor'] = {'type': 'text-ranking'}
+            cfg.train.optimizer.lr = 2e-5
+            cfg['dataset'] = {
+                'train': {
+                    'type': 'bert',
+                    'query_sequence': 'query',
+                    'pos_sequence': 'positive_passages',
+                    'neg_sequence': 'negative_passages',
+                    'text_fileds': ['text'],
+                    'qid_field': 'query_id'
+                },
+                'val': {
+                    'type': 'bert',
+                    'query_sequence': 'query',
+                    'pos_sequence': 'positive_passages',
+                    'neg_sequence': 'negative_passages',
+                    'text_fileds': ['text'],
+                    'qid_field': 'query_id'
+                },
+            }
+            cfg['train']['neg_samples'] = 4
+            cfg['evaluation']['dataloader']['batch_size_per_gpu'] = 30
+            cfg.train.max_epochs = 1
+            cfg.train.train_batch_size = 4
+            cfg.train.lr_scheduler = {
+                'type': 'LinearLR',
+                'start_factor': 1.0,
+                'end_factor': 0.0,
+                'options': {
+                    'by_epoch': False
+                }
+            }
+            cfg.train.hooks = [{
+                'type': 'CheckpointHook',
+                'interval': 1
+            }, {
+                'type': 'TextLoggerHook',
+                'interval': 1
+            }, {
+                'type': 'IterTimerHook'
+            }, {
+                'type': 'EvaluationHook',
+                'by_epoch': False,
+                'interval': 5000
+            }]
+            return cfg
+
+        # load dataset
+        ds = MsDataset.load('dureader-retrieval-ranking', 'zyznull')
+        train_ds = ds['train'].to_hf_dataset()
+        dev_ds = ds['dev'].to_hf_dataset()
+
+        model_id = 'damo/nlp_rom_passage-ranking_chinese-base'
+        self.finetune(
+            model_id=model_id,
+            train_dataset=train_ds,
+            eval_dataset=dev_ds,
+            cfg_modify_fn=cfg_modify_fn)
 
     def pipeline_text_ranking(self, model_dir):
         model = Model.from_pretrained(model_dir)

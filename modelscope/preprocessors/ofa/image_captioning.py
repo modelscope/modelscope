@@ -62,6 +62,6 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True])
         }
-        if self.column_map['text'] in data:
+        if 'text' in self.column_map and self.column_map['text'] in data:
             sample['label'] = data[self.column_map['text']]
         return sample

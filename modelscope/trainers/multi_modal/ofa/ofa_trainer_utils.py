@@ -83,8 +83,8 @@ def label_smoothed_nll_loss(lprobs,
             lprobs = lprobs[indices]
 
     ntokens = loss.numel()
-    nll_loss = nll_loss.sum()
-    loss = loss.sum()
+    nll_loss = nll_loss.sum() / ntokens  # 后面在grads里面处理
+    loss = loss.sum() / ntokens  # 后面在grads里面处理
     if use_rdrop:
         true_batch_size = lprobs.size(0) // 2
         p = lprobs[:true_batch_size]

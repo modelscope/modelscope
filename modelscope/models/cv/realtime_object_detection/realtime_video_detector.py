@@ -16,6 +16,7 @@ from modelscope.models.builder import MODELS
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from .utils import timestamp_format
 from .yolox.data.data_augment import ValTransform
 from .yolox.exp import get_exp_by_name
 from .yolox.utils import postprocess
@@ -99,14 +100,17 @@ class RealtimeVideoDetector(TorchModel):
     def inference_video(self, v_path):
         outputs = []
         desc = 'Detecting video: {}'.format(v_path)
-        for frame, result in tqdm(
-                self.inference_video_iter(v_path), desc=desc):
+        for frame_idx, (frame, result) in enumerate(
+                tqdm(self.inference_video_iter(v_path), desc=desc)):
+            result = result + (timestamp_format(seconds=frame_idx
+                                                / self.fps), )
             outputs.append(result)
 
         return outputs
 
     def inference_video_iter(self, v_path):
         capture = cv2.VideoCapture(v_path)
+        self.fps = capture.get(cv2.CAP_PROP_FPS)
         while capture.isOpened():
             ret, frame = capture.read()
             if not ret:

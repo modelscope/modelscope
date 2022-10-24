@@ -45,15 +45,17 @@ class RealtimeVideoObjectDetectionPipeline(Pipeline):
                     **kwargs) -> str:
         forward_output = input['forward_output']
 
-        scores, boxes, labels = [], [], []
+        scores, boxes, labels, timestamps = [], [], [], []
         for result in forward_output:
-            box, score, label = result
+            box, score, label, timestamp = result
             scores.append(score)
             boxes.append(box)
             labels.append(label)
+            timestamps.append(timestamp)
 
         return {
             OutputKeys.BOXES: boxes,
             OutputKeys.SCORES: scores,
             OutputKeys.LABELS: labels,
+            OutputKeys.TIMESTAMPS: timestamps,
         }

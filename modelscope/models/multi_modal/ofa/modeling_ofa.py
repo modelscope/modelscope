@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import torch
+from packaging import version
 from torch import Tensor, nn
 from torch.nn import functional as F
 from transformers.activations import ACT2FN
@@ -40,6 +41,8 @@ logger = logging.get_logger(__name__)
 _CHECKPOINT_FOR_DOC = 'ofa-base'
 _CONFIG_FOR_DOC = 'OFAConfig'
 _TOKENIZER_FOR_DOC = 'OFATokenizer'
+TORCH_VERSION = version.parse(torch.__version__)
+TORCH_MESH_GRID_WARNING_VERSION = version.parse('1.9.1')
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
@@ -51,6 +54,7 @@ OFA_PRETRAINED_MODEL_ARCHIVE_LIST = [
     'ofa-medium',
     'ofa-base',
     'ofa-large',
+    'ofa-huge',
 ]
 
 try:
@@ -114,7 +118,11 @@ def make_image_bucket_position(bucket_size, num_relative_distance):
     """
     coords_h = torch.arange(bucket_size)
     coords_w = torch.arange(bucket_size)
-    coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
+    if TORCH_VERSION > TORCH_MESH_GRID_WARNING_VERSION:
+        coords = torch.stack(
+            torch.meshgrid([coords_h, coords_w], indexing='ij'))  # 2, Wh, Ww
+    else:
+        coords = torch.stack(torch.meshgrid([coords_h, coords_w]))
     coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
     relative_coords = coords_flatten[:, :, None] - \
         coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww

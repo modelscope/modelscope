@@ -23,6 +23,7 @@ class MetricKeys(object):
     BLEU_4 = 'bleu-4'
     ROUGE_1 = 'rouge-1'
     ROUGE_L = 'rouge-l'
+    NED = 'ned'  # ocr metric
 
 
 task_default_metrics = {

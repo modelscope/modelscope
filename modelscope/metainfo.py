@@ -281,6 +281,7 @@ class Trainers(object):
 
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
+    ofa = 'ofa'
 
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
@@ -375,6 +376,9 @@ class Metrics(object):
     accuracy = 'accuracy'
     audio_noise_metric = 'audio-noise-metric'
 
+    # text gen
+    BLEU = 'bleu'
+
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
 
@@ -395,6 +399,8 @@ class Metrics(object):
     movie_scene_segmentation_metric = 'movie-scene-segmentation-metric'
     # metric for inpainting task
     image_inpainting_metric = 'image-inpainting-metric'
+    # metric for ocr
+    NED = 'ned'
 
 
 class Optimizers(object):

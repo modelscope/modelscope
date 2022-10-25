@@ -168,19 +168,20 @@ class EpochBasedTrainer(BaseTrainer):
             device_name = f'cuda:{local_rank}'
 
         self.device = create_device(device_name)
-
         self.train_dataset = self.to_task_dataset(
             train_dataset,
             mode=ModeKeys.TRAIN,
             task_data_config=self.cfg.dataset.get('train', None) if hasattr(
                 self.cfg, 'dataset') else None,
-            preprocessor=self.train_preprocessor)
+            preprocessor=self.train_preprocessor,
+            **kwargs)
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
             task_data_config=self.cfg.dataset.get('val', None) if hasattr(
                 self.cfg, 'dataset') else None,
-            preprocessor=self.eval_preprocessor)
+            preprocessor=self.eval_preprocessor,
+            **kwargs)
 
         self.train_data_collator, self.eval_default_collate = None, None
         if isinstance(data_collator, Mapping):
@@ -216,7 +217,6 @@ class EpochBasedTrainer(BaseTrainer):
             self._max_epochs = self.cfg.train.max_epochs
         else:
             self._max_epochs = kwargs['max_epochs']
-
         self._train_iters_per_epoch = kwargs.get('train_iters_per_epoch', None)
         self._eval_iters_per_epoch = kwargs.get('val_iters_per_epoch', None)
         if self._train_iters_per_epoch is None and hasattr(
@@ -306,13 +306,15 @@ class EpochBasedTrainer(BaseTrainer):
                         datasets: Union[Dataset, List[Dataset]],
                         mode: str,
                         task_data_config: Config = None,
-                        preprocessor: Optional[Preprocessor] = None):
+                        preprocessor: Optional[Preprocessor] = None,
+                        **kwargs):
         """Build the task specific dataset processor for this trainer.
 
         Returns: The task dataset processor for the task. If no result for the very model-type and task,
         the default TaskDataset will be returned.
         """
         try:
+            to_tensor = kwargs.get('to_tensor', True)
             if not datasets:
                 return datasets
             if isinstance(datasets, TorchTaskDataset):
@@ -328,7 +330,8 @@ class EpochBasedTrainer(BaseTrainer):
                 return datasets.to_torch_dataset(
                     task_data_config=task_data_config,
                     task_name=self.cfg.task,
-                    preprocessors=preprocessor)
+                    preprocessors=preprocessor,
+                    to_tensor=to_tensor)
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
                 if task_data_config is None:
@@ -342,7 +345,8 @@ class EpochBasedTrainer(BaseTrainer):
                     d.to_torch_dataset(
                         task_data_config=task_data_config,
                         task_name=self.cfg.task,
-                        preprocessors=preprocessor) for d in datasets
+                        preprocessors=preprocessor,
+                        to_tensor=to_tensor) for d in datasets
                 ]
                 cfg = ConfigDict(
                     type=self.cfg.model.type, mode=mode, datasets=datasets)
@@ -497,6 +501,7 @@ class EpochBasedTrainer(BaseTrainer):
         dp_cfg = dict(
             type='DistributedDataParallel',
             module=model,
+            find_unused_parameters=True,
             device_ids=[torch.cuda.current_device()])
 
         return build_parallel(dp_cfg)
@@ -779,7 +784,7 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist:
+        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
             sampler = DistributedSampler(
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:

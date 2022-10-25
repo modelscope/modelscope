@@ -280,6 +280,7 @@ class ConfigKeys(object):
     """Fixed keywords in configuration file"""
     train = 'train'
     val = 'val'
+    test = 'test'
 
 
 class Requirements(object):

@@ -79,7 +79,7 @@ class TextGenerationPipeline(Pipeline):
             return self.model.generate(inputs, **forward_params)
 
     def sentence_piece(self, inputs) -> Dict[str, Tensor]:
-        return self.preprocessor.tokenizer.decode(inputs.tolist())[0]
+        return self.preprocessor.tokenizer.decode(inputs.tolist()[0])
 
     def postprocess(self, inputs: Dict[str, Tensor],
                     **postprocess_params) -> Dict[str, str]:

@@ -80,6 +80,7 @@ class Models(object):
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
     T5 = 'T5'
+    bloom = 'bloom'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

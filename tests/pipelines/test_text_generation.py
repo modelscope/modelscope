@@ -182,6 +182,12 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
                 max_length=20,
                 repetition_penalty=0.5))
 
+    @unittest.skip("Langboat's checkpoint has not been uploaded to modelhub")
+    def test_bloom(self):
+        pipe = pipeline(
+            task=Tasks.text_generation, model='Langboat/bloom-1b4-zh')
+        print(pipe('中国的首都是'))
+
 
 if __name__ == '__main__':
     unittest.main()

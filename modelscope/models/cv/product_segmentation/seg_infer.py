@@ -59,9 +59,8 @@ mean, std = np.array([[[124.55, 118.90,
                         102.94]]]), np.array([[[56.77, 55.97, 57.50]]])
 
 
-def inference(model, device, input_path):
-    img = Image.open(input_path)
-    img = np.array(img.convert('RGB')).astype(np.float32)
+def inference(model, device, img):
+    img = img.cpu().numpy()
     img = (img - mean) / std
     img = cv2.resize(img, dsize=(448, 448), interpolation=cv2.INTER_LINEAR)
     img = torch.from_numpy(img)

@@ -25,9 +25,9 @@ emotion_list = [
 ]
 
 
-def inference(image_path, model, face_model, score_thre=0.5, GPU=0):
-    image = Image.open(image_path).convert('RGB')
-
+def inference(image, model, face_model, score_thre=0.5, GPU=0):
+    image = image.cpu().numpy()
+    image = Image.fromarray(image)
     face, bbox = face_detection_PIL_v2(image, face_model)
     if bbox is None:
         logger.warn('no face detected!')

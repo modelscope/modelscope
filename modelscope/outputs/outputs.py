@@ -762,12 +762,13 @@ TASK_OUTPUTS = {
     # }
     Tasks.hand_static: [OutputKeys.OUTPUT],
 
-    #     'output': [
-    #                [2, 75, 287, 240, 510, 0.8335018754005432],
-    #                [1, 127, 83, 332, 366, 0.9175254702568054],
-    #                [0, 0, 0, 367, 639, 0.9693422317504883]]
+    # {    'labels': [2, 1, 0],
+    #      'boxes':[[[78, 282, 240, 504], [127, 87, 332, 370], [0, 0, 367, 639]]
+    #      'scores':[0.8202137351036072, 0.8987470269203186, 0.9679114818572998]
     # }
-    Tasks.face_human_hand_detection: [OutputKeys.OUTPUT],
+    Tasks.face_human_hand_detection: [
+        OutputKeys.LABELS, OutputKeys.BOXES, OutputKeys.SCORES
+    ],
 
     # {
     #   {'output': 'Happiness', 'boxes': (203, 104, 663, 564)}

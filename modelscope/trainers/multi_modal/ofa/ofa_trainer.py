@@ -27,7 +27,7 @@ from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
                                 get_schedule)
 
 
-@TRAINERS.register_module(module_name=Trainers.ofa_tasks)
+@TRAINERS.register_module(module_name=Trainers.ofa)
 class OFATrainer(EpochBasedTrainer):
 
     def __init__(

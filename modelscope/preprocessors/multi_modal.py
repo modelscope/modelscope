@@ -74,9 +74,7 @@ class OfaPreprocessor(Preprocessor):
             data[key] = item
         return data
 
-    def _compatible_with_pretrain(self, data):
-        # 预训练的时候使用的image都是经过pil转换的，PIL save的时候一般会进行有损压缩，为了保证和预训练一致
-        # 所以增加了这个逻辑
+    def _ofa_input_compatibility_conversion(self, data):
         if 'image' in data and self.cfg.model.get('type', None) == 'ofa':
             if isinstance(data['image'], str):
                 image = load_image(data['image'])
@@ -95,7 +93,7 @@ class OfaPreprocessor(Preprocessor):
             data = input
         else:
             data = self._build_dict(input)
-        data = self._compatible_with_pretrain(data)
+        data = self._ofa_input_compatibility_conversion(data)
         sample = self.preprocess(data)
         str_data = dict()
         for k, v in data.items():

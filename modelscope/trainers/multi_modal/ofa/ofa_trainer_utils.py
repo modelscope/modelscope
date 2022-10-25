@@ -144,7 +144,7 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         sample_size = (
             sample['target'].size(0) if self.sentence_avg else ntokens)
         logging_output = {
-            'loss': loss.data / 100,
+            'loss': loss.data,
             'nll_loss': nll_loss.data,
             'ntokens': sample['ntokens'],
             'nsentences': sample['nsentences'],

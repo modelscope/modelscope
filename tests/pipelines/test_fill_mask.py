@@ -83,7 +83,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
 
         # bert
         language = 'zh'
-        model_dir = snapshot_download(self.model_id_bert, revision='beta')
+        model_dir = snapshot_download(self.model_id_bert)
         preprocessor = NLPPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
         model = Model.from_pretrained(model_dir)
@@ -149,10 +149,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
 
         # Bert
         language = 'zh'
-        pipeline_ins = pipeline(
-            task=Tasks.fill_mask,
-            model=self.model_id_bert,
-            model_revision='beta')
+        pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_bert)
         print(
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')

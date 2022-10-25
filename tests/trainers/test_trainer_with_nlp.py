@@ -37,13 +37,12 @@ class TestTrainerWithNlp(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
-        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         kwargs = dict(
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            work_dir=self.tmp_dir,
-            model_revision='beta')
+            work_dir=self.tmp_dir)
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -80,8 +79,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            work_dir=self.tmp_dir,
-            model_revision='beta')
+            work_dir=self.tmp_dir)
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -97,7 +95,7 @@ class TestTrainerWithNlp(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_user_defined_config(self):
         model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
-        cfg = read_config(model_id, revision='beta')
+        cfg = read_config(model_id)
         cfg.train.max_epochs = 20
         cfg.preprocessor.train['label2id'] = {'0': 0, '1': 1}
         cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
@@ -108,8 +106,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             model=model_id,
             train_dataset=self.dataset,
             eval_dataset=self.dataset,
-            cfg_file=cfg_file,
-            model_revision='beta')
+            cfg_file=cfg_file)
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -233,7 +230,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             os.makedirs(tmp_dir)
 
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
-        cache_path = snapshot_download(model_id, revision='beta')
+        cache_path = snapshot_download(model_id)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),

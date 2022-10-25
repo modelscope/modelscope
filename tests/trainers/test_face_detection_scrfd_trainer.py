@@ -28,7 +28,7 @@ def _setup():
     val_root = val_dir + '/' + os.listdir(val_dir)[0] + '/'
     max_epochs = 1  # run epochs in unit test
 
-    cache_path = snapshot_download(model_id, revision='v2')
+    cache_path = snapshot_download(model_id)
 
     tmp_dir = tempfile.TemporaryDirectory().name
     if not os.path.exists(tmp_dir):

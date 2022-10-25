@@ -17,6 +17,9 @@ from modelscope.preprocessors.space_T_cn.fields.database import Database
 from modelscope.preprocessors.space_T_cn.fields.struct import (Constant,
                                                                SQLQuery)
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 __all__ = ['TableQuestionAnsweringPipeline']
 
@@ -309,7 +312,8 @@ class TableQuestionAnsweringPipeline(Pipeline):
                     'header_name': header_names,
                     'rows': rows
                 }
-            except Exception:
+            except Exception as e:
+                logger.error(e)
                 tabledata = {'header_id': [], 'header_name': [], 'rows': []}
         else:
             tabledata = {'header_id': [], 'header_name': [], 'rows': []}

@@ -86,9 +86,8 @@ class TestOfaTrainer(unittest.TestCase):
             model=pretrained_model,
             work_dir=WORKSPACE,
             train_dataset=MsDataset.load(
-                'coco_2014_caption',
-                namespace='modelscope',
-                split='train[:12]'),
+                'coco_2014_caption', namespace='modelscope',
+                split='train[:4]'),
             eval_dataset=MsDataset.load(
                 'coco_2014_caption',
                 namespace='modelscope',
@@ -99,7 +98,7 @@ class TestOfaTrainer(unittest.TestCase):
         trainer.train()
 
         self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE,
-                      os.path.join(WORKSPACE, 'output'))
+                      os.listdir(os.path.join(WORKSPACE, 'output')))
         shutil.rmtree(WORKSPACE)
 
 

@@ -98,7 +98,7 @@ class TestOfaTrainer(unittest.TestCase):
 
         self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE,
                       os.listdir(os.path.join(WORKSPACE, 'output')))
-        # shutil.rmtree(WORKSPACE)
+        shutil.rmtree(WORKSPACE)
 
 
 if __name__ == '__main__':

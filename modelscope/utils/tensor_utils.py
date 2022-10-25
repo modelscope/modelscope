@@ -8,8 +8,11 @@ def torch_nested_numpify(tensors):
 
     NOTE: If the type of input tensors is dict-like(Mapping, dict, OrderedDict, etc.), the return type will be dict.
 
-    @param tensors: Nested torch tensors.
-    @return: The numpify tensors.
+    Args:
+        tensors: Nested torch tensors.
+
+    Returns:
+        The numpify tensors.
     """
 
     import torch
@@ -30,8 +33,11 @@ def torch_nested_detach(tensors):
 
     NOTE: If the type of input tensors is dict-like(Mapping, dict, OrderedDict, etc.), the return type will be dict.
 
-    @param tensors: Nested torch tensors.
-    @return: The detached tensors.
+    Args:
+        tensors: Nested torch tensors.
+
+    Returns:
+        The detached tensors.
     """
 
     import torch

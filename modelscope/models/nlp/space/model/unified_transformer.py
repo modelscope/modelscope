@@ -119,15 +119,12 @@ class UnifiedTransformer(SpaceModelBase):
                      input_mask,
                      append_head=False,
                      auto_regressive=False):
-        """
-        Create attention mask.
+        """Create attention mask.
         from sequence to matrix：[batch_size, max_seq_len， 1] -> [batch_size, max_seq_len, max_seq_len]
 
-        @param : input_mask
-        @type : Variable(shape: [batch_size, max_seq_len])
-
-        @param : auto_regressive
-        @type : bool
+        Args:
+            input_mask (Variable(shape: [batch_size, max_seq_len]))
+            auto_regressive(bool)
         """
         seq_len = input_mask.shape[1]
 
@@ -150,15 +147,12 @@ class UnifiedTransformer(SpaceModelBase):
         return mask
 
     def _join_mask(self, mask1, mask2):
-        """
-        Merge source attention mask and target attention mask.
+        """Merge source attention mask and target attention mask.
         There are four parts：left upper (lu) / right upper (ru) / left below (lb) / right below (rb)
 
-        @param : mask1 : source attention mask
-        @type : Variable(shape: [batch_size, max_src_len, max_src_len])
-
-        @param : mask1 : target attention mask
-        @type : Variable(shape: [batch_size, max_tgt_len, max_tgt_len])
+        Args:
+            mask1(Variable(shape: [batch_size, max_src_len, max_src_len])) : source attention mask
+            mask2(Variable(shape: [batch_size, max_tgt_len, max_tgt_len])) : target attention mask
         """
         batch_size = mask1.shape[0]
         seq_len1 = mask1.shape[1]

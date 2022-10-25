@@ -37,9 +37,9 @@ class TokenClassificationHead(TorchHead):
             sequence_output = inputs
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        return {OutputKeys.LOGITS: logits}
+        return logits
 
     def compute_loss(self, outputs: Dict[str, torch.Tensor],
                      labels) -> Dict[str, torch.Tensor]:
         logits = outputs[OutputKeys.LOGITS]
-        return {OutputKeys.LOSS: F.cross_entropy(logits, labels)}
+        return F.cross_entropy(logits, labels)

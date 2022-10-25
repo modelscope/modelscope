@@ -285,9 +285,6 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
-    assert isinstance(model, (type(None), str, Model, list)), \
-        f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
-
     model = normalize_model_input(model, model_revision)
     if pipeline_name is None:
         # get default pipeline for this task
@@ -304,8 +301,7 @@ def pipeline(task: str = None,
             else:
                 # used for test case, when model is str and is not hub path
                 pipeline_name = get_pipeline_by_model_name(task, model)
-        elif isinstance(model, Model) or \
-                (isinstance(model, list) and isinstance(model[0], Model)):
+        elif model is not None:
             # get pipeline info from Model object
             first_model = model[0] if isinstance(model, list) else model
             if not hasattr(first_model, 'pipeline'):

@@ -9,8 +9,7 @@ import numpy as np
 from modelscope.metainfo import Trainers
 from modelscope.models.nlp.space.model.generator import SpaceGenerator
 from modelscope.models.nlp.space.model.model_base import SpaceModelBase
-from modelscope.preprocessors.space.fields.gen_field import \
-    MultiWOZBPETextField
+from modelscope.preprocessors.nlp import MultiWOZBPETextField
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.nlp.space.eval import MultiWOZEvaluator

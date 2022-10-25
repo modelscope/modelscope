@@ -7,6 +7,9 @@ if TYPE_CHECKING:
     from .information_extraction import InformationExtractionModel
     from .feature_extraction import FeatureExtractionModel
     from .fill_mask import FillMaskModel
+    from .nncrf_for_named_entity_recognition import (
+        TransformerCRFForNamedEntityRecognition,
+        LSTMCRFForNamedEntityRecognition)
     from .sequence_classification import SequenceClassificationModel
     from .task_model import SingleBackboneTaskModelBase
     from .token_classification import TokenClassificationModel
@@ -17,6 +20,10 @@ else:
         'information_extraction': ['InformationExtractionModel'],
         'feature_extraction': ['FeatureExtractionModel'],
         'fill_mask': ['FillMaskModel'],
+        'nncrf_for_named_entity_recognition': [
+            'TransformerCRFForNamedEntityRecognition',
+            'LSTMCRFForNamedEntityRecognition'
+        ],
         'sequence_classification': ['SequenceClassificationModel'],
         'task_model': ['SingleBackboneTaskModelBase'],
         'token_classification': ['TokenClassificationModel'],

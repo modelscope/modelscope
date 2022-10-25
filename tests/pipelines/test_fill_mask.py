@@ -5,8 +5,7 @@ from regex import R
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (BertForMaskedLM, StructBertForMaskedLM,
-                                   VecoForMaskedLM)
+from modelscope.models.nlp import SbertForMaskedLM, VecoForMaskedLM
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import NLPPreprocessor
@@ -55,7 +54,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
             model_dir = snapshot_download(self.model_id_sbert[language])
             preprocessor = NLPPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
-            model = StructBertForMaskedLM.from_pretrained(model_dir)
+            model = SbertForMaskedLM.from_pretrained(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
             pipeline2 = pipeline(
                 Tasks.fill_mask, model=model, preprocessor=preprocessor)
@@ -129,18 +128,6 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
                 print(
                     f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
                     f'{pipeline_ins(test_input)}\n')
-
-        # bert
-        language = 'zh'
-        model = Model.from_pretrained(self.model_id_bert, revision='beta')
-        preprocessor = NLPPreprocessor(
-            model.model_dir, first_sequence='sentence', second_sequence=None)
-        pipeline_ins = pipeline(
-            Tasks.fill_mask, model=model, preprocessor=preprocessor)
-        pipeline_ins.model, f'fill_mask_bert_{language}'
-        print(
-            f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
-            f'{pipeline_ins(self.test_inputs[language])}\n')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

@@ -4,7 +4,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SentenceEmbedding
+from modelscope.models.nlp import BertForSentenceEmbedding
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import SentenceEmbeddingPipeline
 from modelscope.preprocessors import SentenceEmbeddingPreprocessor
@@ -40,7 +40,7 @@ class SentenceEmbeddingTest(unittest.TestCase):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = SentenceEmbeddingPreprocessor(cache_path)
-        model = SentenceEmbedding.from_pretrained(cache_path)
+        model = BertForSentenceEmbedding.from_pretrained(cache_path)
         pipeline1 = SentenceEmbeddingPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.sentence_embedding, model=model, preprocessor=tokenizer)

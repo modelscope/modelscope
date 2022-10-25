@@ -115,7 +115,6 @@ class NLPTasks(object):
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_state_tracking = 'dialog-state-tracking'
     table_question_answering = 'table-question-answering'
-    sentence_embedding = 'sentence-embedding'
     fill_mask = 'fill-mask'
     text_summarization = 'text-summarization'
     question_answering = 'question-answering'

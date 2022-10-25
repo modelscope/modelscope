@@ -18,18 +18,22 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_veco import VecoConfig
-    from .modeling_veco import (VecoForMaskedLM, VecoForSequenceClassification,
-                                VecoModel)
-    from .tokenization_veco import VecoTokenizer
-    from .tokenization_veco_fast import VecoTokenizerFast
+    from .configuration import VecoConfig
+    from .backbone import VecoModel
+    from .text_classification import VecoForSequenceClassification
+    from .token_classification import VecoForTokenClassification
+    from .fill_mask import VecoForMaskedLM
+    from .tokenization import VecoTokenizer
+    from .tokenization_fast import VecoTokenizerFast
 else:
     _import_structure = {
-        'configuration_veco': ['VecoConfig'],
-        'modeling_veco':
-        ['VecoForMaskedLM', 'VecoForSequenceClassification', 'VecoModel'],
-        'tokenization_veco': ['VecoTokenizer'],
-        'tokenization_veco_fast': ['VecoTokenizerFast'],
+        'configuration': ['VecoConfig'],
+        'backbone': ['VecoModel'],
+        'text_classification': ['VecoForSequenceClassification'],
+        'fill_mask': ['VecoForMaskedLM'],
+        'token_classification': ['VecoForTokenClassification'],
+        'tokenization': ['VecoTokenizer'],
+        'tokenization_fast': ['VecoTokenizerFast'],
     }
 
     import sys

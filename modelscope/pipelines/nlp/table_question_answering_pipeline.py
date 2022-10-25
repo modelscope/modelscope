@@ -13,9 +13,9 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
-from modelscope.preprocessors.space_T_cn.fields.database import Database
-from modelscope.preprocessors.space_T_cn.fields.struct import (Constant,
-                                                               SQLQuery)
+from modelscope.preprocessors.nlp.space_T_cn.fields.database import Database
+from modelscope.preprocessors.nlp.space_T_cn.fields.struct import (Constant,
+                                                                   SQLQuery)
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 

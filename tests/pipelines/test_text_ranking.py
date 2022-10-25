@@ -4,7 +4,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import TextRanking
+from modelscope.models.nlp import BertForTextRanking
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextRankingPipeline
 from modelscope.preprocessors import TextRankingPreprocessor
@@ -33,7 +33,7 @@ class TextRankingTest(unittest.TestCase):
         for model_id in self.models:
             cache_path = snapshot_download(model_id)
             tokenizer = TextRankingPreprocessor(cache_path)
-            model = TextRanking.from_pretrained(cache_path)
+            model = BertForTextRanking.from_pretrained(cache_path)
             pipeline1 = TextRankingPipeline(model, preprocessor=tokenizer)
             pipeline2 = pipeline(
                 Tasks.text_ranking, model=model, preprocessor=tokenizer)

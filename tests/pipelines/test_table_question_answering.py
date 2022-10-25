@@ -13,7 +13,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TableQuestionAnsweringPipeline
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
-from modelscope.preprocessors.space_T_cn.fields.database import Database
+from modelscope.preprocessors.nlp.space_T_cn.fields.database import Database
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.test_utils import test_level
 

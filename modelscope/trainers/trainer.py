@@ -4,7 +4,7 @@ import time
 from collections.abc import Mapping
 from distutils.version import LooseVersion
 from functools import partial
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import json
 import torch
@@ -22,18 +22,18 @@ from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.msdatasets.task_datasets.builder import build_task_dataset
 from modelscope.msdatasets.task_datasets.torch_base_dataset import \
     TorchTaskDataset
+from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.preprocessors.builder import build_preprocessor
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
-                                       ConfigKeys, Hubs, ModeKeys, ModelFile,
-                                       Tasks, TrainerStages)
+                                       ConfigKeys, ModeKeys, ModelFile,
+                                       TrainerStages)
 from modelscope.utils.data_utils import to_device
-from modelscope.utils.device import create_device, verify_device
+from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
@@ -146,7 +146,8 @@ class EpochBasedTrainer(BaseTrainer):
             if ConfigKeys.val in preprocessor:
                 assert isinstance(preprocessor[ConfigKeys.val], Preprocessor)
                 self.eval_preprocessor = preprocessor[ConfigKeys.val]
-        elif hasattr(self.cfg, ConfigFields.preprocessor):
+        elif hasattr(self.cfg, ConfigFields.preprocessor
+                     ) and self.cfg.preprocessor is not None:
             self.train_preprocessor, self.eval_preprocessor = self.build_preprocessor(
             )
 
@@ -344,23 +345,32 @@ class EpochBasedTrainer(BaseTrainer):
                         preprocessors=preprocessor) for d in datasets
                 ]
                 cfg = ConfigDict(
-                    type=self.cfg.task, mode=mode, datasets=datasets)
-                return build_task_dataset(cfg, self.cfg.task)
+                    type=self.cfg.model.type, mode=mode, datasets=datasets)
+                task_dataset = build_task_dataset(cfg, self.cfg.task)
+                task_dataset.trainer = self
+                return task_dataset
             else:
                 # avoid add no str value datasets, preprocessors in cfg
                 task_data_build_config = ConfigDict(
-                    mode=mode, datasets=datasets, preprocessor=preprocessor)
+                    type=self.cfg.model.type,
+                    mode=mode,
+                    datasets=datasets,
+                    preprocessor=preprocessor)
                 task_data_build_config.update(task_data_config)
-                return build_task_dataset(task_data_build_config,
-                                          self.cfg.task)
+                task_dataset = build_task_dataset(task_data_build_config,
+                                                  self.cfg.task)
+                task_dataset.trainer = self
+                return task_dataset
         except Exception:
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
-                return TorchTaskDataset(
+                task_dataset = TorchTaskDataset(
                     datasets,
                     mode=mode,
                     preprocessor=preprocessor,
                     **(dict(type=self.cfg.model.type) if hasattr(
                         self.cfg, 'model') else {}))
+                task_dataset.trainer = self
+                return task_dataset
             else:
                 return datasets
 
@@ -372,35 +382,12 @@ class EpochBasedTrainer(BaseTrainer):
         Returns: The train preprocessor and eval preprocessor instance.
 
         """
-        field_name = Tasks.find_field_by_task(self.cfg.task)
-        train_preprocessor, eval_preprocessor = None, None
-        _train_cfg, _eval_cfg = {}, {}
-        _dafault_args = {'model_dir': self.model_dir}
-
-        if 'type' not in self.cfg.preprocessor and (
-                'train' in self.cfg.preprocessor
-                or 'val' in self.cfg.preprocessor):
-            if 'train' in self.cfg.preprocessor:
-                _train_cfg = self.cfg.preprocessor.train
-            if 'val' in self.cfg.preprocessor:
-                _eval_cfg = self.cfg.preprocessor.val
-        else:
-            _train_cfg = self.cfg.preprocessor
-            _eval_cfg = self.cfg.preprocessor
-
-        if len(_train_cfg):
-            if isinstance(_train_cfg, Sequence):
-                # TODO: for Sequence, need adapt to `mode` and `mode_dir` args,
-                # and add mode for Compose or other plans
-                raise NotImplementedError('Not supported yet!')
-            _train_cfg.update(_dafault_args)
-            train_preprocessor = build_preprocessor(_train_cfg, field_name)
-        if len(_eval_cfg):
-            if isinstance(_eval_cfg, Sequence):
-                raise NotImplementedError('Not supported yet!')
-            _eval_cfg.update(_dafault_args)
-            eval_preprocessor = build_preprocessor(_eval_cfg, field_name)
-
+        train_preprocessor = Preprocessor.from_pretrained(
+            self.model_dir,
+            cfg_dict=self.cfg,
+            preprocessor_mode=ModeKeys.TRAIN)
+        eval_preprocessor = Preprocessor.from_pretrained(
+            self.model_dir, cfg_dict=self.cfg, preprocessor_mode=ModeKeys.EVAL)
         return train_preprocessor, eval_preprocessor
 
     def get_metrics(self) -> List[Union[str, Dict]]:
@@ -547,6 +534,8 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             train_outputs = model.forward(inputs)
 
+        if isinstance(train_outputs, ModelOutputBase):
+            train_outputs = train_outputs.to_dict()
         if not isinstance(train_outputs, dict):
             raise TypeError('"model.forward()" must return a dict')
 
@@ -650,8 +639,9 @@ class EpochBasedTrainer(BaseTrainer):
         """
         # TODO: support MsDataset load for cv
         if hasattr(data_cfg, 'name'):
+            dataset_name = data_cfg.pop('name')
             dataset = MsDataset.load(
-                dataset_name=data_cfg.pop('name'),
+                dataset_name=dataset_name,
                 **data_cfg,
             )
             cfg = ConfigDict(type=self.cfg.model.type, mode=mode)

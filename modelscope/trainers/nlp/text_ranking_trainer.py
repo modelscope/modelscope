@@ -12,9 +12,9 @@ from tqdm import tqdm
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
+from modelscope.models.nlp import BertForTextRanking
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
@@ -118,7 +118,6 @@ class TextRankingTrainer(NlpEpochBasedTrainer):
             Example:
             {"accuracy": 0.5091743119266054, "f1": 0.673780487804878}
         """
-        from modelscope.models.nlp import TextRanking
         # get the raw online dataset
         self.eval_dataloader = self._build_dataloader_with_dataset(
             self.eval_dataset,
@@ -127,7 +126,7 @@ class TextRankingTrainer(NlpEpochBasedTrainer):
         # generate a standard dataloader
         # generate a model
         if checkpoint_path is not None:
-            model = TextRanking.from_pretrained(checkpoint_path)
+            model = BertForTextRanking.from_pretrained(checkpoint_path)
         else:
             model = self.model
 
@@ -156,13 +155,16 @@ class TextRankingTrainer(NlpEpochBasedTrainer):
             with torch.no_grad():
                 label_ids = batch.pop('labels').detach().cpu().numpy()
                 qids = batch.pop('qid').detach().cpu().numpy()
-                outputs = model(batch)
+                outputs = model(**batch)
             infer_end_time = time.time()
             total_spent_time += infer_end_time - infer_start_time
             total_samples += self.eval_dataloader.batch_size
 
-            assert 'scores' in outputs
-            logits = outputs['scores']
+            def sigmoid(logits):
+                return np.exp(logits) / (1 + np.exp(logits))
+
+            logits = outputs['logits'].squeeze(-1).detach().cpu().numpy()
+            logits = sigmoid(logits).tolist()
 
             label_list.extend(label_ids)
             logits_list.extend(logits)

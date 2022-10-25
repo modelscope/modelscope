@@ -4,42 +4,32 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .modeling_bert import (
-        BertForMaskedLM,
-        BertForMultipleChoice,
-        BertForNextSentencePrediction,
-        BertForPreTraining,
-        BertForQuestionAnswering,
-        BertForSequenceClassification,
-        BertForTokenClassification,
+    from .backbone import (
         BertLayer,
-        BertLMHeadModel,
         BertModel,
         BertPreTrainedModel,
-        load_tf_weights_in_bert,
     )
-
-    from .configuration_bert import BertConfig, BertOnnxConfig
-
+    from .configuration import BertConfig
+    from .fill_mask import BertForMaskedLM
+    from .text_ranking import BertForTextRanking
+    from .sentence_embedding import BertForSentenceEmbedding
+    from .text_classification import BertForSequenceClassification
+    from .token_classification import BertForTokenClassification
+    from .document_segmentation import BertForDocumentSegmentation
 else:
     _import_structure = {
-        'configuration_bert': ['BertConfig', 'BertOnnxConfig'],
+        'backbone': [
+            'BertModel',
+            'BertPreTrainedModel',
+        ],
+        'configuration': ['BertConfig'],
+        'fill_mask': ['BertForMaskedLM'],
+        'text_ranking': ['BertForTextRanking'],
+        'sentence_embedding': ['BertForSentenceEmbedding'],
+        'text_classification': ['BertForSequenceClassification'],
+        'token_classification': ['BertForTokenClassification'],
+        'document_segmentation': ['BertForDocumentSegmentation'],
     }
-
-    _import_structure['modeling_bert'] = [
-        'BertForMaskedLM',
-        'BertForMultipleChoice',
-        'BertForNextSentencePrediction',
-        'BertForPreTraining',
-        'BertForQuestionAnswering',
-        'BertForSequenceClassification',
-        'BertForTokenClassification',
-        'BertLayer',
-        'BertLMHeadModel',
-        'BertModel',
-        'BertPreTrainedModel',
-        'load_tf_weights_in_bert',
-    ]
 
     import sys
 

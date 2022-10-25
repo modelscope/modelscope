@@ -33,7 +33,7 @@ if is_tf_available():
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 Input = Union[str, tuple, MsDataset, 'Image.Image', 'numpy.ndarray']
-InputModel = Union[str, Model]
+InputModel = Union[str, Model, 'torch.nn.Module']
 
 logger = get_logger()
 
@@ -49,13 +49,7 @@ class Pipeline(ABC):
             return Model.from_pretrained(
                 model, model_prefetched=True,
                 device=self.device_name) if is_model(model) else model
-        elif isinstance(model, Model):
-            return model
         else:
-            if model and not isinstance(model, str):
-                raise ValueError(
-                    f'model type for single model is either str or Model, but got type {type(model)}'
-                )
             return model
 
     def initiate_multiple_models(self, input_models: List[InputModel]):
@@ -139,12 +133,10 @@ class Pipeline(ABC):
     def _get_framework(self) -> str:
         frameworks = []
         for m in self.models:
-            if isinstance(m, Model):
-                model_dir = m.model_dir
-            else:
-                assert isinstance(m,
-                                  str), 'model should be either str or Model.'
+            if isinstance(m, str):
                 model_dir = m
+            else:
+                model_dir = m.model_dir
             cfg_file = osp.join(model_dir, ModelFile.CONFIGURATION)
             cfg = Config.from_file(cfg_file)
             frameworks.append(cfg.framework)
@@ -387,10 +379,13 @@ class DistributedPipeline(Pipeline):
     def _instantiate_one(cls, rank, model_dir, **kwargs):
         """Instantiate one model piece.
 
-        @param rank: The model rank.
-        @param model_dir: The model_dir in the node.
-        @param kwargs: Any extra args.
-        @return: None. The model handler should be kept in the class field.
+        Args:
+            rank: The model rank.
+            model_dir: The model_dir in the node.
+            kwargs: Any extra args.
+
+        Returns:
+            None. The model handler should be kept in the class field.
         """
         pass
 
@@ -410,8 +405,11 @@ class DistributedPipeline(Pipeline):
 
         Use the model handler kept in the class field to forward.
 
-        @param inputs: The inputs after the preprocessing.
-        @return: The forward results.
+        Args:
+            inputs: The inputs after the preprocessing.
+
+        Returns:
+            The forward results.
         """
         pass
 
@@ -429,7 +427,7 @@ def collate_fn(data, device):
 
     """
     from torch.utils.data.dataloader import default_collate
-    from modelscope.preprocessors import InputFeatures
+    from modelscope.preprocessors.nlp import InputFeatures
     if isinstance(data, dict) or isinstance(data, Mapping):
         return type(data)({k: collate_fn(v, device) for k, v in data.items()})
     elif isinstance(data, (tuple, list)):

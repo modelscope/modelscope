@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.builder import build_model
-from modelscope.utils.checkpoint import save_pretrained
+from modelscope.models.builder import MODELS, build_model
+from modelscope.utils.checkpoint import save_checkpoint, save_pretrained
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
-from modelscope.utils.device import device_placement, verify_device
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile, Tasks
+from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -66,7 +66,6 @@ class Model(ABC):
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         cfg_dict: Config = None,
                         device: str = None,
-                        *model_args,
                         **kwargs):
         """ Instantiate a model from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.
@@ -90,11 +89,11 @@ class Model(ABC):
             cfg = Config.from_file(
                 osp.join(local_model_dir, ModelFile.CONFIGURATION))
         task_name = cfg.task
+        if 'task' in kwargs:
+            task_name = kwargs.pop('task')
         model_cfg = cfg.model
-
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
-
         model_cfg.model_dir = local_model_dir
         for k, v in kwargs.items():
             model_cfg[k] = v
@@ -109,15 +108,19 @@ class Model(ABC):
         # dynamically add pipeline info to model for pipeline inference
         if hasattr(cfg, 'pipeline'):
             model.pipeline = cfg.pipeline
+
+        if not hasattr(model, 'cfg'):
+            model.cfg = cfg
         return model
 
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         save_checkpoint_names: Union[str, List[str]] = None,
-                        save_function: Callable = None,
+                        save_function: Callable = save_checkpoint,
                         config: Optional[dict] = None,
                         **kwargs):
-        """save the pretrained model, its configuration and other related files to a directory, so that it can be re-loaded
+        """save the pretrained model, its configuration and other related files to a directory,
+            so that it can be re-loaded
 
         Args:
             target_folder (Union[str, os.PathLike]):
@@ -133,5 +136,10 @@ class Model(ABC):
             The config for the configuration.json, might not be identical with model.config
 
         """
+        if config is None and hasattr(self, 'cfg'):
+            config = self.cfg
+        assert config is not None, 'Cannot save the model because the model config is empty.'
+        if isinstance(config, Config):
+            config = config.to_dict()
         save_pretrained(self, target_folder, save_checkpoint_names,
                         save_function, config, **kwargs)

@@ -86,8 +86,7 @@ class ZeroShotClassificationPipeline(Pipeline):
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
-        with torch.no_grad():
-            return self.model(**inputs, **forward_params)
+        return self.model(**inputs, **forward_params)
 
     def postprocess(self,
                     inputs: Dict[str, Any],
@@ -99,7 +98,7 @@ class ZeroShotClassificationPipeline(Pipeline):
         Returns:
             Dict[str, Any]: the prediction results
         """
-        logits = inputs[OutputKeys.LOGITS]
+        logits = inputs[OutputKeys.LOGITS].cpu().numpy()
         if multi_label or len(candidate_labels) == 1:
             logits = logits[..., [self.contradiction_id, self.entailment_id]]
             scores = softmax(logits, axis=-1)[..., 1]

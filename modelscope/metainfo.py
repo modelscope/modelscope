@@ -69,7 +69,6 @@ class Models(object):
     space_modeling = 'space-modeling'
     space_T_en = 'space-T-en'
     space_T_cn = 'space-T-cn'
-
     tcrf = 'transformer-crf'
     transformer_softmax = 'transformer-softmax'
     lcrf = 'lstm-crf'

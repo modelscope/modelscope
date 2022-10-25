@@ -34,17 +34,24 @@ class TokenClassificationMetric(Metric):
         self.labels.append(
             torch_nested_numpify(torch_nested_detach(ground_truths)))
 
-    def __init__(self, return_entity_level_metrics=False, *args, **kwargs):
+    def __init__(self,
+                 return_entity_level_metrics=False,
+                 label2id=None,
+                 *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.return_entity_level_metrics = return_entity_level_metrics
         self.preds = []
         self.labels = []
+        self.label2id = label2id
 
     def evaluate(self):
-        self.id2label = {
-            id: label
-            for label, id in self.trainer.label2id.items()
-        }
+        label2id = self.label2id
+        if label2id is None:
+            assert hasattr(self, 'trainer')
+            label2id = self.trainer.label2id
+
+        self.id2label = {id: label for label, id in label2id.items()}
         self.preds = np.concatenate(self.preds, axis=0)
         self.labels = np.concatenate(self.labels, axis=0)
         predictions = np.argmax(self.preds, axis=-1)

@@ -129,10 +129,9 @@ class OFATrainer(EpochBasedTrainer):
 
     def train_step(self, model, inputs):
         model.train()
-        model_outputs = model.forward(inputs)
-        loss, sample_size, logging_output = self.criterion(
-            model_outputs, inputs)
-        train_outputs = {'loss': loss}
+        # model_outputs = model.forward(inputs)
+        loss, sample_size, logging_output = self.criterion(model, inputs)
+        train_outputs = {'loss': loss / 100}
         # add model output info to log
         if 'log_vars' not in train_outputs:
             default_keys_pattern = ['loss']

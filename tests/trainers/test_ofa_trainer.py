@@ -1,5 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import glob
 import os
+import os.path as osp
 import shutil
 import unittest
 
@@ -57,7 +59,7 @@ class TestOfaTrainer(unittest.TestCase):
                                      'report_accuracy': False,
                                      'sample_patch_num': 196,
                                      'sentence_avg': False,
-                                     'use_rdrop': False},
+                                     'use_rdrop': True},
                        'hooks': [{'type': 'BestCkptSaverHook',
                                   'metric_key': 'bleu-4',
                                   'interval': 100},

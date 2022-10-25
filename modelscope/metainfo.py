@@ -99,6 +99,10 @@ class Models(object):
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
 
+    # science models
+    unifold = 'unifold'
+    unifold_symmetry = 'unifold-symmetry'
+
 
 class TaskModels(object):
     # nlp task
@@ -266,6 +270,9 @@ class Pipelines(object):
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
 
+    # science tasks
+    protein_structure = 'unifold-protein-structure'
+
 
 class Trainers(object):
     """ Names for different trainer.
@@ -367,6 +374,9 @@ class Preprocessors(object):
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
     mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
+
+    # science preprocessor
+    unifold_preprocessor = 'unifold-preprocessor'
 
 
 class Metrics(object):

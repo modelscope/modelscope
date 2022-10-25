@@ -9,6 +9,7 @@ class Fields(object):
     nlp = 'nlp'
     audio = 'audio'
     multi_modal = 'multi-modal'
+    science = 'science'
 
 
 class CVTasks(object):
@@ -151,6 +152,10 @@ class MultiModalTasks(object):
     image_text_retrieval = 'image-text-retrieval'
 
 
+class ScienceTasks(object):
+    protein_structure = 'protein-structure'
+
+
 class TasksIODescriptions(object):
     image_to_image = 'image_to_image',
     images_to_image = 'images_to_image',
@@ -167,7 +172,7 @@ class TasksIODescriptions(object):
     generative_multi_modal_embedding = 'generative_multi_modal_embedding'
 
 
-class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
+class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):
     """ Names for tasks supported by modelscope.
 
     Holds the standard task name to use for identifying different tasks.
@@ -194,6 +199,10 @@ class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks):
                 ],
                 Fields.multi_modal: [
                     getattr(Tasks, attr) for attr in dir(MultiModalTasks)
+                    if not attr.startswith('__')
+                ],
+                Fields.science: [
+                    getattr(Tasks, attr) for attr in dir(ScienceTasks)
                     if not attr.startswith('__')
                 ],
             }

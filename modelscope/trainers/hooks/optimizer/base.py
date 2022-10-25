@@ -44,6 +44,7 @@ class OptimizerHook(Hook):
 
     def before_run(self, trainer):
         trainer.optimizer.zero_grad()
+        trainer.cumulative_iters = self.cumulative_iters
 
     def after_train_iter(self, trainer):
         for k in self.loss_keys:

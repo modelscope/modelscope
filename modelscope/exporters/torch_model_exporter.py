@@ -13,8 +13,8 @@ from modelscope.models import TorchModel
 from modelscope.pipelines.base import collate_fn
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
-from modelscope.utils.regress_test_utils import compare_arguments_nested
-from modelscope.utils.tensor_utils import torch_nested_numpify
+from modelscope.utils.regress_test_utils import (compare_arguments_nested,
+                                                 numpify_tensor_nested)
 from .base import Exporter
 
 logger = get_logger(__name__)
@@ -28,49 +28,61 @@ class TorchModelExporter(Exporter):
     and to provide implementations for generate_dummy_inputs/inputs/outputs methods.
     """
 
-    def export_onnx(self, outputs: str, opset=11, **kwargs):
+    def export_onnx(self, output_dir: str, opset=13, **kwargs):
         """Export the model as onnx format files.
 
         In some cases,  several files may be generated,
         So please return a dict which contains the generated name with the file path.
 
-        @param opset: The version of the ONNX operator set to use.
-        @param outputs: The output dir.
-        @param kwargs: In this default implementation,
-            you can pass the arguments needed by _torch_export_onnx, other unrecognized args
-            will be carried to generate_dummy_inputs as extra arguments (such as input shape).
-        @return: A dict containing the model key - model file path pairs.
+        Args:
+            opset: The version of the ONNX operator set to use.
+            output_dir: The output dir.
+            kwargs:
+                model: A model instance which will replace the exporting of self.model.
+                In this default implementation,
+                you can pass the arguments needed by _torch_export_onnx, other unrecognized args
+                will be carried to generate_dummy_inputs as extra arguments (such as input shape).
+
+        Returns:
+            A dict containing the model key - model file path pairs.
         """
-        model = self.model
+        model = self.model if 'model' not in kwargs else kwargs.pop('model')
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             model = model.model
-        onnx_file = os.path.join(outputs, ModelFile.ONNX_MODEL_FILE)
+        onnx_file = os.path.join(output_dir, ModelFile.ONNX_MODEL_FILE)
         self._torch_export_onnx(model, onnx_file, opset=opset, **kwargs)
         return {'model': onnx_file}
 
-    def export_torch_script(self, outputs: str, **kwargs):
+    def export_torch_script(self, output_dir: str, **kwargs):
         """Export the model as torch script files.
 
         In some cases,  several files may be generated,
         So please return a dict which contains the generated name with the file path.
 
-        @param outputs: The output dir.
-        @param kwargs: In this default implementation,
+        Args:
+            output_dir: The output dir.
+            kwargs:
+            model: A model instance which will replace the exporting of self.model.
+            In this default implementation,
             you can pass the arguments needed by _torch_export_torch_script, other unrecognized args
             will be carried to generate_dummy_inputs as extra arguments (like input shape).
-        @return: A dict contains the model name with the model file path.
+
+        Returns:
+            A dict contains the model name with the model file path.
         """
-        model = self.model
+        model = self.model if 'model' not in kwargs else kwargs.pop('model')
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             model = model.model
-        ts_file = os.path.join(outputs, ModelFile.TS_MODEL_FILE)
+        ts_file = os.path.join(output_dir, ModelFile.TS_MODEL_FILE)
         # generate ts by tracing
         self._torch_export_torch_script(model, ts_file, **kwargs)
         return {'model': ts_file}
 
     def generate_dummy_inputs(self, **kwargs) -> Dict[str, Any]:
         """Generate dummy inputs for model exportation to onnx or other formats by tracing.
-        @return: Dummy inputs.
+
+        Returns:
+            Dummy inputs.
         """
         return None
 
@@ -93,7 +105,7 @@ class TorchModelExporter(Exporter):
     def _torch_export_onnx(self,
                            model: nn.Module,
                            output: str,
-                           opset: int = 11,
+                           opset: int = 13,
                            device: str = 'cpu',
                            validation: bool = True,
                            rtol: float = None,
@@ -101,18 +113,27 @@ class TorchModelExporter(Exporter):
                            **kwargs):
         """Export the model to an onnx format file.
 
-        @param model: A torch.nn.Module instance to export.
-        @param output: The output file.
-        @param opset: The version of the ONNX operator set to use.
-        @param device: The device used to forward.
-        @param validation: Whether validate the export file.
-        @param rtol: The rtol used to regress the outputs.
-        @param atol: The atol used to regress the outputs.
+        Args:
+            model: A torch.nn.Module instance to export.
+            output: The output file.
+            opset: The version of the ONNX operator set to use.
+            device: The device used to forward.
+            validation: Whether validate the export file.
+            rtol: The rtol used to regress the outputs.
+            atol: The atol used to regress the outputs.
+            kwargs:
+                dummy_inputs: A dummy inputs which will replace the calling of self.generate_dummy_inputs().
+                inputs: An inputs structure which will replace the calling of self.inputs.
+                outputs: An outputs structure which will replace the calling of self.outputs.
         """
 
-        dummy_inputs = self.generate_dummy_inputs(**kwargs)
-        inputs = self.inputs
-        outputs = self.outputs
+        dummy_inputs = self.generate_dummy_inputs(
+            **kwargs) if 'dummy_inputs' not in kwargs else kwargs.pop(
+                'dummy_inputs')
+        inputs = self.inputs if 'inputs' not in kwargs else kwargs.pop(
+            'inputs')
+        outputs = self.outputs if 'outputs' not in kwargs else kwargs.pop(
+            'outputs')
         if dummy_inputs is None or inputs is None or outputs is None:
             raise NotImplementedError(
                 'Model property dummy_inputs,inputs,outputs must be set.')
@@ -125,7 +146,7 @@ class TorchModelExporter(Exporter):
 
             if isinstance(dummy_inputs, Mapping):
                 dummy_inputs = dict(dummy_inputs)
-            onnx_outputs = list(self.outputs.keys())
+            onnx_outputs = list(outputs.keys())
 
             with replace_call():
                 onnx_export(
@@ -160,11 +181,13 @@ class TorchModelExporter(Exporter):
                 outputs_origin = model.forward(
                     *_decide_input_format(model, dummy_inputs))
             if isinstance(outputs_origin, Mapping):
-                outputs_origin = torch_nested_numpify(
+                outputs_origin = numpify_tensor_nested(
                     list(outputs_origin.values()))
+            elif isinstance(outputs_origin, (tuple, list)):
+                outputs_origin = numpify_tensor_nested(outputs_origin)
             outputs = ort_session.run(
                 onnx_outputs,
-                torch_nested_numpify(dummy_inputs),
+                numpify_tensor_nested(dummy_inputs),
             )
 
             tols = {}
@@ -184,19 +207,26 @@ class TorchModelExporter(Exporter):
                                    validation: bool = True,
                                    rtol: float = None,
                                    atol: float = None,
+                                   strict: bool = True,
                                    **kwargs):
         """Export the model to a torch script file.
 
-        @param model: A torch.nn.Module instance to export.
-        @param output: The output file.
-        @param device: The device used to forward.
-        @param validation: Whether validate the export file.
-        @param rtol: The rtol used to regress the outputs.
-        @param atol: The atol used to regress the outputs.
+        Args:
+            model: A torch.nn.Module instance to export.
+            output: The output file.
+            device: The device used to forward.
+            validation: Whether validate the export file.
+            rtol: The rtol used to regress the outputs.
+            atol: The atol used to regress the outputs.
+            strict: strict mode in torch script tracing.
+            kwargs:
+                dummy_inputs: A dummy inputs which will replace the calling of self.generate_dummy_inputs().
         """
 
         model.eval()
-        dummy_inputs = self.generate_dummy_inputs(**kwargs)
+        dummy_param = 'dummy_inputs' not in kwargs
+        dummy_inputs = self.generate_dummy_inputs(
+            **kwargs) if dummy_param else kwargs.pop('dummy_inputs')
         if dummy_inputs is None:
             raise NotImplementedError(
                 'Model property dummy_inputs must be set.')
@@ -207,7 +237,7 @@ class TorchModelExporter(Exporter):
             model.eval()
             with replace_call():
                 traced_model = torch.jit.trace(
-                    model, dummy_inputs, strict=False)
+                    model, dummy_inputs, strict=strict)
         torch.jit.save(traced_model, output)
 
         if validation:
@@ -216,9 +246,9 @@ class TorchModelExporter(Exporter):
                 model.eval()
                 ts_model.eval()
                 outputs = ts_model.forward(*dummy_inputs)
-                outputs = torch_nested_numpify(outputs)
+                outputs = numpify_tensor_nested(outputs)
                 outputs_origin = model.forward(*dummy_inputs)
-                outputs_origin = torch_nested_numpify(outputs_origin)
+                outputs_origin = numpify_tensor_nested(outputs_origin)
             tols = {}
             if rtol is not None:
                 tols['rtol'] = rtol
@@ -240,7 +270,6 @@ def replace_call():
     problems. Here we recover the call method to the default implementation of torch.nn.Module, and change it
     back after the tracing was done.
     """
-
     TorchModel.call_origin, TorchModel.__call__ = TorchModel.__call__, TorchModel._call_impl
     yield
     TorchModel.__call__ = TorchModel.call_origin

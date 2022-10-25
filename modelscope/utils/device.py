@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os
 from contextlib import contextmanager
 
 from modelscope.utils.constant import Devices, Frameworks
@@ -106,3 +106,17 @@ def create_device(device_name):
         device = torch.device('cpu')
 
     return device
+
+
+def get_device():
+    import torch
+    from torch import distributed as dist
+    if torch.cuda.is_available():
+        if dist.is_available() and dist.is_initialized(
+        ) and 'LOCAL_RANK' in os.environ:
+            device_id = f"cuda:{os.environ['LOCAL_RANK']}"
+        else:
+            device_id = 'cuda:0'
+    else:
+        device_id = 'cpu'
+    return torch.device(device_id)

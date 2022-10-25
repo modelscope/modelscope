@@ -1,10 +1,6 @@
-"""
-Trainer class.
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
-import logging
 import os
-import sys
 import time
 from collections import OrderedDict
 
@@ -16,24 +12,8 @@ from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
 from modelscope.trainers.nlp.space.metrics.metrics_tracker import \
     MetricsTracker
-
-
-def get_logger(log_path, name='default'):
-    logger = logging.getLogger(name)
-    logger.propagate = False
-    logger.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(message)s')
-
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(formatter)
-    logger.addHandler(sh)
-
-    fh = logging.FileHandler(log_path, mode='w')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    return logger
+from modelscope.utils.constant import ModelFile
+from modelscope.utils.logger import get_logger
 
 
 class Trainer(object):
@@ -76,11 +56,7 @@ class Trainer(object):
         self.lr_scheduler = lr_scheduler
         self.optimizer = optimizer
 
-        # if not os.path.exists(self.save_dir):
-        #     os.makedirs(self.save_dir)
-
-        # self.logger = logger or get_logger(os.path.join(self.save_dir, "trainer.log"), "trainer")
-        self.logger = logger or get_logger('trainer.log', 'trainer')
+        self.logger = logger or get_logger()
 
         self.batch_metrics_tracker_label = MetricsTracker()
         self.token_metrics_tracker_label = MetricsTracker()
@@ -201,9 +177,12 @@ class Trainer(object):
 
         # Save current best model
         if is_best:
-            best_model_file = os.path.join(self.save_dir, 'best.model')
+            best_model_file = os.path.join(self.save_dir,
+                                           ModelFile.TORCH_MODEL_BIN_FILE)
             torch.save(self.model.state_dict(), best_model_file)
-            best_train_file = os.path.join(self.save_dir, 'best.train')
+            best_train_file = os.path.join(
+                self.save_dir,
+                '{}.train'.format(ModelFile.TORCH_MODEL_BIN_FILE))
             torch.save(train_state, best_train_file)
             self.logger.info(
                 f"Saved best model state to '{best_model_file}' with new best valid metric "
@@ -215,7 +194,7 @@ class Trainer(object):
 
         def _load_model_state():
             model_state_dict = torch.load(
-                f'{self.func_model.init_checkpoint}.model',
+                f'{self.func_model.init_checkpoint}',
                 map_location=lambda storage, loc: storage)
 
             if 'module.' in list(model_state_dict.keys())[0]:
@@ -303,8 +282,13 @@ class Trainer(object):
             self.logger.info('Loaded no model !!!')
             return
 
-        _load_model_state()
-        _load_train_state()
+        if self.do_train:
+            _load_model_state()
+            return
+
+        if self.do_infer:
+            _load_model_state()
+            _load_train_state()
 
 
 class IntentTrainer(Trainer):
@@ -719,104 +703,3 @@ class IntentTrainer(Trainer):
 
         assert 'loss' in metrics
         return metrics['loss'], metrics
-
-    def load(self):
-        """ load """
-
-        def _load_model_state():
-            model_state_dict = torch.load(
-                f'{self.func_model.init_checkpoint}',
-                map_location=lambda storage, loc: storage)
-
-            if 'module.' in list(model_state_dict.keys())[0]:
-                new_model_state_dict = OrderedDict()
-                for k, v in model_state_dict.items():
-                    assert k[:7] == 'module.'
-                    new_model_state_dict[k[7:]] = v
-                model_state_dict = new_model_state_dict
-
-            new_model_state_dict = OrderedDict()
-            parameters = {
-                name: param
-                for name, param in self.func_model.named_parameters()
-            }
-            for name, param in model_state_dict.items():
-                if name in parameters:
-                    if param.shape != parameters[name].shape:
-                        assert hasattr(param, 'numpy')
-                        arr = param.numpy()
-                        z = np.random.normal(
-                            scale=self.func_model.initializer_range,
-                            size=parameters[name].shape).astype('float32')
-                        if name == 'embedder.token_embedding.weight':
-                            z[-param.shape[0]:] = arr
-                            print(
-                                f'part of parameter({name}) random normlize initialize'
-                            )
-                        else:
-                            if z.shape[0] < param.shape[0]:
-                                z = arr[:z.shape[0]]
-                                print(f'part of parameter({name}) are dropped')
-                            else:
-                                z[:param.shape[0]] = arr
-                                print(
-                                    f'part of parameter({name}) random normlize initialize'
-                                )
-                        dtype, device = param.dtype, param.device
-                        z = torch.tensor(z, dtype=dtype, device=device)
-                        new_model_state_dict[name] = z
-                    else:
-                        new_model_state_dict[name] = param
-                else:
-                    print(f'parameter({name}) are dropped')
-            model_state_dict = new_model_state_dict
-
-            for name in parameters:
-                if name not in model_state_dict:
-                    if parameters[name].requires_grad:
-                        print(f'parameter({name}) random normlize initialize')
-                        z = np.random.normal(
-                            scale=self.func_model.initializer_range,
-                            size=parameters[name].shape).astype('float32')
-                        dtype, device = parameters[name].dtype, parameters[
-                            name].device
-                        model_state_dict[name] = torch.tensor(
-                            z, dtype=dtype, device=device)
-                    else:
-                        model_state_dict[name] = parameters[name]
-
-            self.func_model.load_state_dict(model_state_dict)
-            self.logger.info(
-                f"Loaded model state from '{self.func_model.init_checkpoint}.model'"
-            )
-
-        def _load_train_state():
-            train_file = f'{self.func_model.init_checkpoint}.train'
-            if os.path.exists(train_file):
-                train_state_dict = torch.load(
-                    train_file, map_location=lambda storage, loc: storage)
-                self.epoch = train_state_dict['epoch']
-                self.best_valid_metric = train_state_dict['best_valid_metric']
-                if self.optimizer is not None and 'optimizer' in train_state_dict:
-                    self.optimizer.load_state_dict(
-                        train_state_dict['optimizer'])
-                if self.lr_scheduler is not None and 'lr_scheduler' in train_state_dict:
-                    self.lr_scheduler.load_state_dict(
-                        train_state_dict['lr_scheduler'])
-                self.logger.info(
-                    f"Loaded train state from '{train_file}' with (epoch-{self.epoch} "
-                    f'best_valid_metric={self.best_valid_metric:.3f})')
-            else:
-                self.logger.info('Loaded no train state')
-
-        if self.func_model.init_checkpoint is None:
-            self.logger.info('Loaded no model !!!')
-            return
-
-        if self.do_train:
-            _load_model_state()
-            return
-
-        if self.do_infer:
-            _load_model_state()
-            _load_train_state()

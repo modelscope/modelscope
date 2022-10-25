@@ -9,7 +9,8 @@ from modelscope.pipelines.nlp import ConversationalTextToSqlPipeline
 from modelscope.preprocessors import ConversationalTextToSqlPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.nlp.nlp_utils import text2sql_tracking_and_print_results
+from modelscope.utils.nlp.space_T_en.utils import \
+    text2sql_tracking_and_print_results
 from modelscope.utils.test_utils import test_level
 
 

@@ -6,6 +6,7 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .automatic_post_editing_pipeline import AutomaticPostEditingPipeline
     from .conversational_text_to_sql_pipeline import ConversationalTextToSqlPipeline
+    from .table_question_answering_pipeline import TableQuestionAnsweringPipeline
     from .dialog_intent_prediction_pipeline import DialogIntentPredictionPipeline
     from .dialog_modeling_pipeline import DialogModelingPipeline
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
@@ -14,16 +15,13 @@ if TYPE_CHECKING:
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
-    from .fill_mask_ponet_pipeline import FillMaskPonetPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
-    from .sequence_classification_pipeline import SequenceClassificationPipeline
-    from .summarization_pipeline import SummarizationPipeline
-    from .table_question_answering_pipeline import TableQuestionAnsweringPipeline
-    from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_classification_pipeline import TextClassificationPipeline
+    from .summarization_pipeline import SummarizationPipeline
+    from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .text_generation_pipeline import TextGenerationPipeline
     from .text2text_generation_pipeline import Text2TextGenerationPipeline
@@ -47,13 +45,11 @@ else:
         'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline'],
         'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
-        'fill_mask_ponet_pipeline': ['FillMaskPoNetPipeline'],
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
         'named_entity_recognition_pipeline':
         ['NamedEntityRecognitionPipeline'],
         'text_ranking_pipeline': ['TextRankingPipeline'],
         'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline'],
-        'sequence_classification_pipeline': ['SequenceClassificationPipeline'],
         'summarization_pipeline': ['SummarizationPipeline'],
         'table_question_answering_pipeline':
         ['TableQuestionAnsweringPipeline'],

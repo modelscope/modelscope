@@ -16,31 +16,20 @@ if TYPE_CHECKING:
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
     from .nlp import (
-        DocumentSegmentationPreprocessor,
-        FaqQuestionAnsweringPreprocessor,
-        FillMaskPoNetPreprocessor,
-        NLPPreprocessor,
-        NLPTokenizerPreprocessorBase,
-        TextRankingPreprocessor,
-        RelationExtractionPreprocessor,
-        SentenceEmbeddingPreprocessor,
-        SequenceClassificationPreprocessor,
-        TokenClassificationPreprocessor,
-        TextErrorCorrectionPreprocessor,
-        TextGenerationPreprocessor,
-        Text2TextGenerationPreprocessor,
-        Tokenize,
+        DocumentSegmentationPreprocessor, FaqQuestionAnsweringPreprocessor,
+        FillMaskPoNetPreprocessor, NLPPreprocessor,
+        NLPTokenizerPreprocessorBase, TextRankingPreprocessor,
+        RelationExtractionPreprocessor, SentenceEmbeddingPreprocessor,
+        SequenceClassificationPreprocessor, TokenClassificationPreprocessor,
+        TextErrorCorrectionPreprocessor, TextGenerationPreprocessor,
+        Text2TextGenerationPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
-        ZeroShotClassificationPreprocessor,
-        TextGenerationJiebaPreprocessor,
-        SentencePiecePreprocessor,
-    )
-    from .space import (DialogIntentPredictionPreprocessor,
-                        DialogModelingPreprocessor,
-                        DialogStateTrackingPreprocessor)
+        ZeroShotClassificationPreprocessor, TextGenerationJiebaPreprocessor,
+        SentencePiecePreprocessor, DialogIntentPredictionPreprocessor,
+        DialogModelingPreprocessor, DialogStateTrackingPreprocessor,
+        ConversationalTextToSqlPreprocessor,
+        TableQuestionAnsweringPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
-    from .star import ConversationalTextToSqlPreprocessor
-    from .space_T_cn import TableQuestionAnsweringPreprocessor
 
 else:
     _import_structure = {
@@ -58,30 +47,22 @@ else:
         'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
             'DocumentSegmentationPreprocessor',
-            'FaqQuestionAnsweringPreprocessor',
-            'FillMaskPoNetPreprocessor',
-            'NLPPreprocessor',
-            'NLPTokenizerPreprocessorBase',
-            'TextRankingPreprocessor',
-            'RelationExtractionPreprocessor',
+            'FaqQuestionAnsweringPreprocessor', 'FillMaskPoNetPreprocessor',
+            'NLPPreprocessor', 'NLPTokenizerPreprocessorBase',
+            'TextRankingPreprocessor', 'RelationExtractionPreprocessor',
             'SentenceEmbeddingPreprocessor',
             'SequenceClassificationPreprocessor',
             'TokenClassificationPreprocessor',
-            'TextErrorCorrectionPreprocessor',
-            'TextGenerationPreprocessor',
-            'Tokenize',
-            'Text2TextGenerationPreprocessor',
+            'TextErrorCorrectionPreprocessor', 'TextGenerationPreprocessor',
+            'Tokenize', 'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
-            'TextGenerationJiebaPreprocessor',
-            'SentencePiecePreprocessor',
-        ],
-        'space': [
+            'TextGenerationJiebaPreprocessor', 'SentencePiecePreprocessor',
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
-            'DialogStateTrackingPreprocessor', 'InputFeatures'
+            'DialogStateTrackingPreprocessor',
+            'ConversationalTextToSqlPreprocessor',
+            'TableQuestionAnsweringPreprocessor'
         ],
-        'star': ['ConversationalTextToSqlPreprocessor'],
-        'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
     }
 
     import sys

@@ -1,10 +1,24 @@
 import urllib
-from abc import ABC, abstractmethod
-from typing import Optional, Union
+from abc import ABC
+from http import HTTPStatus
+from typing import Optional
 
+import attrs
 import json
-from attr import fields
+import requests
 from attrs import asdict, define, field, validators
+
+from modelscope.hub.api import ModelScopeConfig
+from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
+                                      API_RESPONSE_FIELD_MESSAGE)
+from modelscope.hub.errors import (NotLoginException, NotSupportError,
+                                   RequestError, handle_http_response, is_ok)
+from modelscope.hub.utils.utils import get_endpoint
+from modelscope.utils.logger import get_logger
+
+# yapf: enable
+
+logger = get_logger()
 
 
 class Accelerator(object):
@@ -76,12 +90,12 @@ class ServiceResourceConfig(object):
 
 
 @define
-class ServiceParameters(ABC):
+class ServiceProviderParameters(ABC):
     pass
 
 
 @define
-class EASDeployParameters(ServiceParameters):
+class EASDeployParameters(ServiceProviderParameters):
     """Parameters for EAS Deployment.
 
     Args:
@@ -97,29 +111,10 @@ class EASDeployParameters(ServiceParameters):
     resource_group: Optional[str] = None
     vendor: str = field(
         default=Vendor.EAS, validator=validators.in_([Vendor.EAS]))
-    """
-    def __init__(self,
-                 instance_name: str,
-                 access_key_id: str,
-                 access_key_secret: str,
-                 region = EASRegion.beijing,
-                 instance_type: str  = EASCpuInstances.small,
-                 accelerator: str =  Accelerator.CPU,
-                 resource_group: Optional[str] = None,
-                 scaling: Optional[str] = None):
-        self.instance_name=instance_name
-        self.access_key_id=self.access_key_id
-        self.access_key_secret = access_key_secret
-        self.region = region
-        self.instance_type = instance_type
-        self.accelerator = accelerator
-        self.resource_group = resource_group
-        self.scaling = scaling
-    """
 
 
 @define
-class EASListParameters(ServiceParameters):
+class EASListParameters(ServiceProviderParameters):
     """EAS instance list parameters.
 
     Args:
@@ -152,7 +147,7 @@ class DeployServiceParameters(object):
     model_id: str
     revision: str
     resource: ServiceResourceConfig
-    provider: ServiceParameters
+    provider: ServiceProviderParameters
 
 
 class AttrsToQueryString(ABC):
@@ -174,16 +169,173 @@ class AttrsToQueryString(ABC):
 
 @define
 class ListServiceParameters(AttrsToQueryString):
-    provider: ServiceParameters
+    provider: ServiceProviderParameters
     skip: int = 0
     limit: int = 100
 
 
 @define
 class GetServiceParameters(AttrsToQueryString):
-    provider: ServiceParameters
+    provider: ServiceProviderParameters
 
 
 @define
 class DeleteServiceParameters(AttrsToQueryString):
-    provider: ServiceParameters
+    provider: ServiceProviderParameters
+
+
+class ServiceDeployer(object):
+
+    def __init__(self, endpoint=None):
+        self.endpoint = endpoint if endpoint is not None else get_endpoint()
+        self.cookies = ModelScopeConfig.get_cookies()
+        if self.cookies is None:
+            raise NotLoginException(
+                'Token does not exist, please login with HubApi first.')
+
+    # deploy_model
+    def create(self, model_id: str, revision: str, instance_name: str,
+               resource: ServiceResourceConfig,
+               provider: ServiceProviderParameters):
+        """Deploy model to cloud, current we only support PAI EAS, this is an async API ,
+        and the deployment could take a while to finish remotely. Please check deploy instance
+        status separately via checking the status.
+
+        Args:
+            model_id (str): The deployed model id
+            revision (str): The model revision
+            instance_name (str): The deployed model instance name.
+            resource (ServiceResourceConfig): The service resource information.
+            provider (ServiceProviderParameters): The service provider parameter
+
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            NotSupportError: Not supported platform.
+            RequestError: The server return error.
+
+        Returns:
+            ServiceInstanceInfo: The information of the deployed service instance.
+        """
+        if provider.vendor != Vendor.EAS:
+            raise NotSupportError(
+                'Not support vendor: %s ,only support EAS current.' %
+                (provider.vendor))
+        create_params = DeployServiceParameters(
+            instance_name=instance_name,
+            model_id=model_id,
+            revision=revision,
+            resource=resource,
+            provider=provider)
+        path = f'{self.endpoint}/api/v1/deployer/endpoint'
+        body = attrs.asdict(create_params)
+        r = requests.post(
+            path,
+            json=body,
+            cookies=self.cookies,
+        )
+        handle_http_response(r, logger, self.cookies, 'create_service')
+        if r.status_code >= HTTPStatus.OK and r.status_code < HTTPStatus.MULTIPLE_CHOICES:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def get(self, instance_name: str, provider: ServiceProviderParameters):
+        """Query the specified instance information.
+
+        Args:
+            instance_name (str): The deployed instance name.
+            provider (ServiceProviderParameters): The cloud provider information, for eas
+            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            RequestError: The request is failed from server.
+
+        Returns:
+            Dict: The information of the requested service instance.
+        """
+        params = GetServiceParameters(provider=provider)
+        path = '%s/api/v1/deployer/endpoint/%s?%s' % (
+            self.endpoint, instance_name, params.to_query_str())
+        r = requests.get(path, cookies=self.cookies)
+        handle_http_response(r, logger, self.cookies, 'get_service')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def delete(self, instance_name: str, provider: ServiceProviderParameters):
+        """Delete deployed model, this api send delete command and return, it will take
+        some to delete, please check through the cloud console.
+
+        Args:
+            instance_name (str): The instance name you want to delete.
+            provider (ServiceProviderParameters): The cloud provider information, for eas
+            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+
+        Raises:
+            NotLoginException: To call this api, you need login first.
+            RequestError: The request is failed.
+
+        Returns:
+            Dict: The deleted instance information.
+        """
+        params = DeleteServiceParameters(provider=provider)
+        path = '%s/api/v1/deployer/endpoint/%s?%s' % (
+            self.endpoint, instance_name, params.to_query_str())
+        r = requests.delete(path, cookies=self.cookies)
+        handle_http_response(r, logger, self.cookies, 'delete_service')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None
+
+    def list(self,
+             provider: ServiceProviderParameters,
+             skip: int = 0,
+             limit: int = 100):
+        """List deployed model instances.
+
+        Args:
+            provider (ServiceProviderParameters): The cloud service provider parameter,
+            for eas, need access_key_id and access_key_secret.
+            skip: start of the list, current not support.
+            limit: maximum number of instances return, current not support
+        Raises:
+            NotLoginException: To use this api, you need login first.
+            RequestError: The request is failed from server.
+
+        Returns:
+            List: List of instance information
+        """
+
+        params = ListServiceParameters(
+            provider=provider, skip=skip, limit=limit)
+        path = '%s/api/v1/deployer/endpoint?%s' % (self.endpoint,
+                                                   params.to_query_str())
+        r = requests.get(path, cookies=self.cookies)
+        handle_http_response(r, logger, self.cookies, 'list_service_instances')
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                data = r.json()[API_RESPONSE_FIELD_DATA]
+                return data
+            else:
+                raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            r.raise_for_status()
+        return None

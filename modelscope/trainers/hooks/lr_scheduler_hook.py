@@ -47,7 +47,8 @@ class LrSchedulerHook(Hook):
         return lr
 
     def before_train_iter(self, trainer):
-        if not self.by_epoch and trainer.iter > 0:
+        if not self.by_epoch and trainer.iter >= getattr(
+                trainer, 'cumulative_iters', 1):
             if self.warmup_lr_scheduler is not None:
                 self.warmup_lr_scheduler.step()
             else:

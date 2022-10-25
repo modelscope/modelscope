@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
+from io import BytesIO
 from typing import Any, Dict, List, Tuple, Union
 
 import torch
@@ -15,6 +16,7 @@ from .base import Preprocessor
 from .builder import PREPROCESSORS
 from .ofa import *  # noqa
 from .ofa.utils.collate import collate_fn
+from .ofa.utils.constant import OFA_TASK_KEY_MAPPING
 
 __all__ = [
     'OfaPreprocessor',
@@ -26,11 +28,16 @@ __all__ = [
     Fields.multi_modal, module_name=Preprocessors.ofa_tasks_preprocessor)
 class OfaPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self,
+                 model_dir: str,
+                 mode=ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
         """preprocess the data
 
         Args:
             model_dir (str): model path
+            mode: preprocessor mode (model mode)
         """
         super().__init__(*args, **kwargs)
         preprocess_mapping = {
@@ -45,25 +52,18 @@ class OfaPreprocessor(Preprocessor):
             Tasks.text_summarization: OfaSummarizationPreprocessor,
             Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
         }
-        input_key_mapping = {
-            Tasks.ocr_recognition: ['image'],
-            Tasks.image_captioning: ['image'],
-            Tasks.image_classification: ['image'],
-            Tasks.text_summarization: ['text'],
-            Tasks.text_classification: ['text', 'text2'],
-            Tasks.visual_grounding: ['image', 'text'],
-            Tasks.visual_question_answering: ['image', 'text'],
-            Tasks.visual_entailment: ['image', 'text', 'text2'],
-            Tasks.text_to_image_synthesis: ['text']
-        }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
             model_dir)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
-        self.preprocess = preprocess_mapping[self.cfg.task](self.cfg,
-                                                            model_dir)
-        self.keys = input_key_mapping[self.cfg.task]
+        self.preprocess = preprocess_mapping[self.cfg.task](
+            cfg=self.cfg, model_dir=model_dir, mode=mode)
+        self.keys = OFA_TASK_KEY_MAPPING[self.cfg.task]
         self.tokenizer = self.preprocess.tokenizer
+        if kwargs.get('no_collate', None):
+            self.no_collate = True
+        else:
+            self.no_collate = False
 
     # just for modelscope demo
     def _build_dict(self, input: Union[Input, List[Input]]) -> Dict[str, Any]:
@@ -74,20 +74,37 @@ class OfaPreprocessor(Preprocessor):
             data[key] = item
         return data
 
+    def _ofa_input_compatibility_conversion(self, data):
+        if 'image' in data and self.cfg.model.get('type', None) == 'ofa':
+            if isinstance(data['image'], str):
+                image = load_image(data['image'])
+            else:
+                image = data['image']
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            img_buffer = BytesIO()
+            image.save(img_buffer, format='JPEG')
+            data['image'] = Image.open(img_buffer)
+        return data
+
     def __call__(self, input: Union[str, tuple, Dict[str, Any]], *args,
                  **kwargs) -> Dict[str, Any]:
         if isinstance(input, dict):
             data = input
         else:
             data = self._build_dict(input)
+        data = self._ofa_input_compatibility_conversion(data)
         sample = self.preprocess(data)
         str_data = dict()
         for k, v in data.items():
             str_data[k] = str(v)
         sample['sample'] = str_data
-        return collate_fn([sample],
-                          pad_idx=self.tokenizer.pad_token_id,
-                          eos_idx=self.tokenizer.eos_token_id)
+        if self.no_collate:
+            return sample
+        else:
+            return collate_fn([sample],
+                              pad_idx=self.tokenizer.pad_token_id,
+                              eos_idx=self.tokenizer.eos_token_id)
 
 
 @PREPROCESSORS.register_module(
@@ -140,7 +157,7 @@ class MPlugPreprocessor(Preprocessor):
     def image_open(self, path: str) -> Tuple[Image.Image, int]:
         if path not in self._image_map:
             index = len(self._image_map)
-            self._image_map[path] = (load_image(path), index)
+            self._image_map[path] = (Image.open(path), index)
         return self._image_map[path]
 
     def __call__(

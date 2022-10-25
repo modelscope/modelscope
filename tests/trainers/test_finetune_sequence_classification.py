@@ -8,7 +8,7 @@ from modelscope.metainfo import Preprocessors, Trainers
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.trainers import build_trainer
+from modelscope.trainers import NlpTrainerArguments, build_trainer
 from modelscope.trainers.hooks import Hook
 from modelscope.trainers.nlp_trainer import (EpochBasedTrainer,
                                              NlpEpochBasedTrainer)
@@ -37,6 +37,52 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_trainer_cfg_class(self):
+        dataset = MsDataset.load('clue', subset_name='tnews')
+        train_dataset = dataset['train']
+        validation_dataset = dataset['validation']
+        cfg_modify_fn = NlpTrainerArguments(
+            task=Tasks.text_classification,
+            preprocessor_type=Preprocessors.sen_cls_tokenizer,
+            train_first_sequence='sentence',
+            train_label='label',
+            labels=[
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+                '12', '13', '14'
+            ],
+            max_epochs=5,
+            optimizer_args={
+                'lr': 3e-5,
+            },
+            lr_scheduler_args={
+                'total_iters': int(len(train_dataset) / 32) * 5,
+            },
+            checkpoint_saving_type='BestCkptSaverHook',
+            metric_key='accuracy',
+            train_batch_size_per_gpu=32,
+            checkpoint_interval=1,
+            train_workers_per_gpu=0,
+            checkpoint_by_epoch=False,
+            evaluation_interval=1,
+            evaluation_by_epoch=False,
+            eval_workers_per_gpu=0,
+            metrics=['seq-cls-metric'],
+        )
+
+        kwargs = dict(
+            model='damo/nlp_structbert_backbone_base_std',
+            train_dataset=train_dataset,
+            eval_dataset=validation_dataset,
+            work_dir=self.tmp_dir,
+            seed=42,
+            cfg_modify_fn=cfg_modify_fn)
+
+        os.environ['LOCAL_RANK'] = '0'
+        trainer: EpochBasedTrainer = build_trainer(
+            name=Trainers.nlp_base_trainer, default_args=kwargs)
+        trainer.train()
 
     @unittest.skip(
         'Skip testing trainer repeatable, because it\'s unstable in daily UT')
@@ -330,7 +376,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                 2,
                 'dataloader': {
                     'batch_size_per_gpu': 16,
-                    'workers_per_gpu': 1
+                    'workers_per_gpu': 0
                 },
                 'optimizer': {
                     'type': 'AdamW',
@@ -351,7 +397,6 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                 'hooks': [{
                     'type': 'CheckpointHook',
                     'interval': 1,
-                    'save_dir': '/root'
                 }, {
                     'type': 'TextLoggerHook',
                     'interval': 1
@@ -366,7 +411,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
             cfg['evaluation'] = {
                 'dataloader': {
                     'batch_size_per_gpu': 128,
-                    'workers_per_gpu': 1,
+                    'workers_per_gpu': 0,
                     'shuffle': False
                 }
             }

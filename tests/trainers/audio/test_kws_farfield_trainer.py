@@ -16,7 +16,6 @@ NOISE_2CH_FILE = 'data/test/audios/noise_2ch.wav'
 
 
 class TestKwsFarfieldTrainer(unittest.TestCase):
-    REVISION = 'beta'
 
     def setUp(self):
         self.tmp_dir = tempfile.TemporaryDirectory().name
@@ -70,7 +69,6 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
         kwargs = dict(
             model=self.model_id,
             work_dir=self.tmp_dir,
-            model_revision=self.REVISION,
             workers=2,
             max_epochs=2,
             train_iters_per_epoch=2,

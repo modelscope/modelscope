@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from typing import Dict
 
@@ -14,7 +15,7 @@ from modelscope.utils.nlp.distributed import initialize_distributed
 from modelscope.utils.nlp.load_checkpoint import pre_load
 from modelscope.utils.torch_utils import set_random_seed_mpu
 from . import PlugModel
-from .configuration_plug import PlugNLGConfig
+from .configuration import PlugNLGConfig
 
 logger = get_logger(__name__)
 

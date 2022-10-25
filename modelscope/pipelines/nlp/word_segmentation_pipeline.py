@@ -12,6 +12,8 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import (Preprocessor,
                                       TokenClassificationPreprocessor)
 from modelscope.utils.constant import Tasks
+from modelscope.utils.tensor_utils import (torch_nested_detach,
+                                           torch_nested_numpify)
 
 __all__ = ['WordSegmentationPipeline']
 
@@ -72,28 +74,56 @@ class WordSegmentationPipeline(Pipeline):
         """process the prediction results
 
         Args:
-            inputs (Dict[str, Any]): _description_
+            inputs (Dict[str, Any]): should be tensors from model
 
         Returns:
             Dict[str, str]: the prediction results
         """
+        text = inputs['text']
+        logits = inputs[OutputKeys.LOGITS]
+        predictions = torch.argmax(logits[0], dim=-1)
+        logits = torch_nested_numpify(torch_nested_detach(logits))
+        predictions = torch_nested_numpify(torch_nested_detach(predictions))
+        offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
 
-        pred_list = inputs['predictions']
-        labels = []
-        for pre in pred_list:
-            labels.append(self.id2label[pre])
-        labels = labels[1:-1]
+        labels = [self.id2label[x] for x in predictions]
+        if len(labels) > len(offset_mapping):
+            labels = labels[1:-1]
         chunks = []
-        chunk = ''
-        assert len(inputs['text']) == len(labels)
-        for token, label in zip(inputs['text'], labels):
-            if label[0] == 'B' or label[0] == 'I':
-                chunk += token
-            else:
-                chunk += token
-                chunks.append(chunk)
-                chunk = ''
+        chunk = {}
+        for label, offsets in zip(labels, offset_mapping):
+            if label[0] in 'BS':
+                if chunk:
+                    chunk['span'] = text[chunk['start']:chunk['end']]
+                    chunks.append(chunk)
+                chunk = {
+                    'type': label[2:],
+                    'start': offsets[0],
+                    'end': offsets[1]
+                }
+            if label[0] in 'IES':
+                if chunk:
+                    chunk['end'] = offsets[1]
+
+            if label[0] in 'ES':
+                if chunk:
+                    chunk['span'] = text[chunk['start']:chunk['end']]
+                    chunks.append(chunk)
+                    chunk = {}
+
         if chunk:
+            chunk['span'] = text[chunk['start']:chunk['end']]
             chunks.append(chunk)
-        seg_result = ' '.join(chunks)
-        return {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}
+
+        # for cws output
+        if len(chunks) > 0 and chunks[0]['type'] == 'cws':
+            spans = [
+                chunk['span'] for chunk in chunks if chunk['span'].strip()
+            ]
+            seg_result = ' '.join(spans)
+            outputs = {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}
+
+        # for ner outpus
+        else:
+            outputs = {OutputKeys.OUTPUT: chunks}
+        return outputs

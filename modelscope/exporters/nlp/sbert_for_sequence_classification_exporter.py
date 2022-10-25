@@ -27,11 +27,14 @@ class SbertForSequenceClassificationExporter(TorchModelExporter):
                               **kwargs) -> Dict[str, Any]:
         """Generate dummy inputs for model exportation to onnx or other formats by tracing.
 
-        @param shape: A tuple of input shape which should have at most two dimensions.
-            shape = (1, ) batch_size=1, sequence_length will be taken from the preprocessor.
-            shape = (8, 128) batch_size=1, sequence_length=128, which will cover the config of the preprocessor.
-        @param pair: Generate sentence pairs or single sentences for dummy inputs.
-        @return: Dummy inputs.
+        Args:
+            shape: A tuple of input shape which should have at most two dimensions.
+                shape = (1, ) batch_size=1, sequence_length will be taken from the preprocessor.
+                shape = (8, 128) batch_size=1, sequence_length=128, which will cover the config of the preprocessor.
+            pair(bool, `optional`): Whether to generate sentence pairs or single sentences.
+
+        Returns:
+            Dummy inputs.
         """
 
         cfg = Config.from_file(

@@ -49,11 +49,15 @@ def collate_fn(samples, pad_idx, eos_idx):
         batch['conf'] = torch.cat([s['conf'] for s in samples], dim=0)
     if samples[0].get('ref_dict', None) is not None:
         batch['ref_dict'] = np.array([s['ref_dict'] for s in samples])
+    if samples[0].get('label', None) is not None:
+        batch['labels'] = np.array([s['label'] for s in samples]).tolist()
     if samples[0].get('constraint_mask', None) is not None:
         batch['constraint_masks'] = merge('constraint_mask')
     if samples[0].get('decoder_prompt', None) is not None:
         batch['decoder_prompts'] = np.array(
             [s['decoder_prompt'].tolist() for s in samples])
+    if samples[0].get('prefix_token', None) is not None:
+        batch['prefix_tokens'] = merge('prefix_token')
     # For detection and visual grounding
     if samples[0].get('w_resize_ratio', None) is not None:
         batch['w_resize_ratios'] = torch.stack(

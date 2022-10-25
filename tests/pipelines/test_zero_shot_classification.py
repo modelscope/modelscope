@@ -21,6 +21,7 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
 
     sentence = '全新突破 解放军运20版空中加油机曝光'
     labels = ['文化', '体育', '娱乐', '财经', '家居', '汽车', '教育', '科技', '军事']
+    labels_str = '文化, 体育, 娱乐, 财经, 家居, 汽车, 教育, 科技, 军事'
     template = '这篇文章的标题是{}'
     regress_tool = MsRegressTool(baseline=False)
 
@@ -39,6 +40,10 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         print(
             f'sentence: {self.sentence}\n'
             f'pipeline1:{pipeline1(input=self.sentence,candidate_labels=self.labels)}'
+        )
+        print(
+            f'sentence: {self.sentence}\n'
+            f'pipeline2: {pipeline2(self.sentence,candidate_labels=self.labels_str,hypothesis_template=self.template)}'
         )
         print(
             f'sentence: {self.sentence}\n'

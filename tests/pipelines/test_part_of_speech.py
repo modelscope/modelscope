@@ -23,7 +23,7 @@ class PartOfSpeechTest(unittest.TestCase):
         model = TokenClassificationModel.from_pretrained(cache_path)
         pipeline1 = TokenClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
-            Tasks.token_classification, model=model, preprocessor=tokenizer)
+            Tasks.part_of_speech, model=model, preprocessor=tokenizer)
         print(f'sentence: {self.sentence}\n'
               f'pipeline1:{pipeline1(input=self.sentence)}')
         print()

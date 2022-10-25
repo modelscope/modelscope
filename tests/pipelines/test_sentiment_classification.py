@@ -6,7 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp.task_models.sequence_classification import \
     SequenceClassificationModel
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import SequenceClassificationPipeline
+from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -28,8 +28,7 @@ class SentimentClassificationTaskModelTest(unittest.TestCase,
         tokenizer = SequenceClassificationPreprocessor(cache_path)
         model = SequenceClassificationModel.from_pretrained(
             self.model_id, num_labels=2, revision='beta')
-        pipeline1 = SequenceClassificationPipeline(
-            model, preprocessor=tokenizer)
+        pipeline1 = TextClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.text_classification, model=model, preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\n'

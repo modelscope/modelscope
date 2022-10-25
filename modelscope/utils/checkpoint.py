@@ -207,6 +207,6 @@ def save_pretrained(model,
     # Dump the config to the configuration.json
     if ConfigFields.pipeline not in config:
         config[ConfigFields.pipeline] = {'type': config[ConfigFields.task]}
-    cfg_str = json.dumps(config, cls=JSONIteratorEncoder)
+    cfg_str = json.dumps(config, indent=4, cls=JSONIteratorEncoder)
     config_file = os.path.join(target_folder, ModelFile.CONFIGURATION)
     storage.write(cfg_str.encode(), config_file)

@@ -3,13 +3,14 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SpaceForDialogStateTracking
+from modelscope.models.nlp import SpaceForDST
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import DialogStateTrackingPipeline
 from modelscope.preprocessors import DialogStateTrackingPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.nlp.nlp_utils import tracking_and_print_dialog_states
+from modelscope.utils.nlp.space.utils_dst import \
+    tracking_and_print_dialog_states
 from modelscope.utils.test_utils import test_level
 
 
@@ -85,9 +86,9 @@ class DialogStateTrackingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
-        cache_path = snapshot_download(self.model_id, revision='update')
+        cache_path = snapshot_download(self.model_id)
 
-        model = SpaceForDialogStateTracking(cache_path)
+        model = SpaceForDST.from_pretrained(cache_path)
         preprocessor = DialogStateTrackingPreprocessor(model_dir=cache_path)
         pipelines = [
             DialogStateTrackingPipeline(
@@ -101,7 +102,7 @@ class DialogStateTrackingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(self.model_id, revision='update')
+        model = Model.from_pretrained(self.model_id)
 
         preprocessor = DialogStateTrackingPreprocessor(
             model_dir=model.model_dir)
@@ -115,10 +116,7 @@ class DialogStateTrackingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipelines = [
-            pipeline(
-                task=self.task, model=self.model_id, model_revision='update')
-        ]
+        pipelines = [pipeline(task=self.task, model=self.model_id)]
         tracking_and_print_dialog_states(self.test_case, pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

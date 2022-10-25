@@ -7,6 +7,7 @@ import pickle
 import random
 import shutil
 import tempfile
+from collections import OrderedDict
 from collections.abc import Mapping
 from pathlib import Path
 from types import FunctionType
@@ -14,6 +15,7 @@ from typing import Any, Dict, Union
 
 import json
 import numpy as np
+import torch
 import torch.optim
 from torch import nn
 
@@ -69,9 +71,10 @@ class RegressTool:
                                       **kwargs):
         """Monitor a pytorch module in a single forward.
 
-        @param module: A torch module
-        @param file_name: The file_name to store or load file
-        @param compare_fn: A custom fn used to compare the results manually.
+        Args:
+            module: A torch module
+            file_name: The file_name to store or load file
+            compare_fn: A custom fn used to compare the results manually.
 
         >>> def compare_fn(v1, v2, key, type):
         >>>     return None
@@ -80,6 +83,10 @@ class RegressTool:
         v2 is the value of current version
         key is the key of submodules
         type is in one of 'input', 'output'
+
+            kwargs:
+            atol: The absolute gap between two np arrays.
+            rtol: The relative gap between two np arrays.
         """
         baseline = os.getenv('REGRESSION_BASELINE')
         if baseline is None or self.baseline is None:
@@ -144,20 +151,24 @@ class RegressTool:
         This is usually useful when you try to change some dangerous code
         which has the risk of affecting the training loop.
 
-        @param trainer: A dict or an object contains the model/optimizer/lr_scheduler
-        @param file_name: The file_name to store or load file
-        @param level: The regression level.
+        Args:
+            trainer: A dict or an object contains the model/optimizer/lr_scheduler
+            file_name: The file_name to store or load file
+            level: The regression level.
             'strict' for matching every single tensor.
                      Please make sure the parameters of head are fixed
                      and the drop-out rate is zero.
             'config' for matching the initial config, like cfg file, optimizer param_groups,
                      lr_scheduler params and the random seed.
             'metric' for compare the best metrics in the evaluation loop.
-        @param compare_fn: A custom fn used to compare the results manually.
-        @param ignore_keys: The keys to ignore of the named_parameters.
-        @param compare_random: If to compare random setttings, default True.
-        @param reset_dropout: Reset all dropout modules to 0.0.
-        @param lazy_stop_callback: A callback passed in, when the moniting is over, this callback will be called.
+            compare_fn: A custom fn used to compare the results manually.
+            ignore_keys: The keys to ignore of the named_parameters.
+            compare_random: If to compare random setttings, default True.
+            reset_dropout: Reset all dropout modules to 0.0.
+            lazy_stop_callback: A callback passed in, when the moniting is over, this callback will be called.
+            kwargs:
+            atol: The absolute gap between two np arrays.
+            rtol: The relative gap between two np arrays.
 
         >>> def compare_fn(v1, v2, key, type):
         >>>     return None
@@ -353,16 +364,22 @@ def compare_module(module1: nn.Module, module2: nn.Module):
 
 
 def numpify_tensor_nested(tensors, reduction=None, clip_value=10000):
-    import torch
+    try:
+        from modelscope.outputs import ModelOutputBase
+    except ImportError:
+        ModelOutputBase = dict
     "Numpify `tensors` (even if it's a nested list/tuple of tensors)."
-    if isinstance(tensors, (list, tuple)):
-        return type(tensors)(
-            numpify_tensor_nested(t, reduction, clip_value) for t in tensors)
-    if isinstance(tensors, Mapping):
-        return {
+    if isinstance(tensors, (Mapping, ModelOutputBase)):
+        return OrderedDict({
             k: numpify_tensor_nested(t, reduction, clip_value)
             for k, t in tensors.items()
-        }
+        })
+    if isinstance(tensors, list):
+        return list(
+            numpify_tensor_nested(t, reduction, clip_value) for t in tensors)
+    if isinstance(tensors, tuple):
+        return tuple(
+            numpify_tensor_nested(t, reduction, clip_value) for t in tensors)
     if isinstance(tensors, torch.Tensor):
         t: np.ndarray = tensors.cpu().numpy()
         if clip_value is not None:
@@ -377,12 +394,19 @@ def numpify_tensor_nested(tensors, reduction=None, clip_value=10000):
 
 
 def detach_tensor_nested(tensors):
-    import torch
+    try:
+        from modelscope.outputs import ModelOutputBase
+    except ImportError:
+        ModelOutputBase = dict
     "Detach `tensors` (even if it's a nested list/tuple of tensors)."
-    if isinstance(tensors, (list, tuple)):
-        return type(tensors)(detach_tensor_nested(t) for t in tensors)
-    if isinstance(tensors, Mapping):
-        return {k: detach_tensor_nested(t) for k, t in tensors.items()}
+    if isinstance(tensors, (Mapping, ModelOutputBase)):
+        return OrderedDict(
+            {k: detach_tensor_nested(t)
+             for k, t in tensors.items()})
+    if isinstance(tensors, list):
+        return list(detach_tensor_nested(t) for t in tensors)
+    if isinstance(tensors, tuple):
+        return tuple(detach_tensor_nested(t) for t in tensors)
     if isinstance(tensors, torch.Tensor):
         return tensors.detach()
     return tensors

@@ -13,6 +13,7 @@ from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import OfaPreprocessor, Preprocessor, load_image
 from modelscope.utils.constant import Tasks
+from modelscope.utils.device import get_device
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -36,6 +37,7 @@ class ImageClassificationPipeline(Pipeline):
         else:
             raise NotImplementedError
         pipe_model.model.eval()
+        pipe_model.to(get_device())
         if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
             preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
         super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)

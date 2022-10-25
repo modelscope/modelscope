@@ -74,6 +74,7 @@ class Registry(object):
             raise KeyError(f'{module_name} is already registered in '
                            f'{self._name}[{group_key}]')
         self._modules[group_key][module_name] = module_cls
+        module_cls.group_key = group_key
 
     def register_module(self,
                         group_key: str = default_group,

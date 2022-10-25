@@ -71,14 +71,11 @@ class SpaceGenerator(object):
         return
 
     def __call__(self, step_fn, state):
-        """
-        Running generation.
+        """Running generation.
 
-        @param : step_fn : decoding one step
-        @type : function
-
-        @param : state : initial state
-        @type : dict
+        Args:
+            step_fn (`function`) : decoding one step
+            state(`dict`) : initial state
         """
         raise NotImplementedError
 
@@ -104,11 +101,9 @@ class BeamSearch(SpaceGenerator):
         """
         Running beam search.
 
-        @param : step_fn : decoding one step
-        @type : function
-
-        @param : state : initial state
-        @type : dict
+        Args:
+            step_fn(`function`) : decoding one step
+            state(`dict`) : initial state
         """
         if prev_input is not None:
 

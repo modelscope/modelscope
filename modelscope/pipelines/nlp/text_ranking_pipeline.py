@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional, Union
 
-import torch
+import numpy as np
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -32,20 +32,18 @@ class TextRankingPipeline(Pipeline):
             the model if supplied.
             sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
+        model = Model.from_pretrained(model) if isinstance(model,
+                                                           str) else model
 
         if preprocessor is None:
-            preprocessor = TextRankingPreprocessor(
-                model.model_dir if isinstance(model, Model) else model,
+            preprocessor = Preprocessor.from_pretrained(
+                model.model_dir,
                 sequence_length=kwargs.pop('sequence_length', 128))
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
-        with torch.no_grad():
-            return {**self.model(inputs, **forward_params)}
+        return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """process the prediction results
@@ -55,6 +53,10 @@ class TextRankingPipeline(Pipeline):
         Returns:
             Dict[str, Any]: the predicted text representation
         """
-        pred_list = inputs[OutputKeys.SCORES]
 
+        def sigmoid(logits):
+            return np.exp(logits) / (1 + np.exp(logits))
+
+        logits = inputs[OutputKeys.LOGITS].squeeze(-1).detach().cpu().numpy()
+        pred_list = sigmoid(logits).tolist()
         return {OutputKeys.SCORES: pred_list}

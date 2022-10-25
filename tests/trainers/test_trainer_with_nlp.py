@@ -7,8 +7,7 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
 from modelscope.models.base import Model
-from modelscope.models.nlp.sequence_classification import \
-    SbertForSequenceClassification
+from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.trainers import EpochBasedTrainer, build_trainer

@@ -1,6 +1,4 @@
-"""
-Parse argument.
-"""
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 import argparse
 

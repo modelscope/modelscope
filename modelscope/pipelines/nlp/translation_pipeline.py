@@ -34,7 +34,8 @@ class TranslationPipeline(Pipeline):
     def __init__(self, model: Model, **kwargs):
         """Build a translation pipeline with a model dir or a model id in the model hub.
 
-        @param model: A Model instance.
+        Args:
+            model: A Model instance.
         """
         super().__init__(model=model, **kwargs)
         model = self.model.model_dir

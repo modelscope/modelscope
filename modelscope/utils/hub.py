@@ -82,7 +82,8 @@ def get_model_type(model_dir):
     this file does not exist, the method will try to get the 'model_type' field
     from the config.json.
 
-    @param model_dir: The local model dir to use. @return: The model type
+    Args:
+        model_dir: The local model dir to use. @return: The model type
     string, returns None if nothing is found.
     """
     try:
@@ -112,8 +113,11 @@ def parse_label_mapping(model_dir):
     2. Try to read label-id mapping from the configuration.json
     3. Try to read label-id mapping from the config.json
 
-    @param model_dir: The local model dir to use.
-    @return: The label2id mapping if found.
+    Args:
+        model_dir: The local model dir to use.
+
+    Returns:
+        The label2id mapping if found.
     """
     import json
     import os

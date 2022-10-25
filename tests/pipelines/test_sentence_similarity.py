@@ -5,7 +5,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import SequenceClassificationPipeline
+from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -28,8 +28,7 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
         cache_path = snapshot_download(self.model_id)
         tokenizer = SequenceClassificationPreprocessor(cache_path)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
-        pipeline1 = SequenceClassificationPipeline(
-            model, preprocessor=tokenizer)
+        pipeline1 = TextClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.sentence_similarity, model=model, preprocessor=tokenizer)
         print('test1')

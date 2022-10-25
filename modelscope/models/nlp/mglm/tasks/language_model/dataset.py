@@ -1,3 +1,5 @@
+# Copyright (c) 2022 Zhipu.AI
+
 import math
 from bisect import bisect_right
 from itertools import accumulate

@@ -52,7 +52,7 @@ def make_tokenizer(tokenizer_type,
             model_type = 'gpt2'
         return GPT2BPETokenizer(model_type, **kwargs)
     elif tokenizer_class is ChineseSPTokenizer:
-        return ChineseSPTokenizer(**kwargs)
+        return ChineseSPTokenizer(model_path, **kwargs)
     text_tokenizer = tokenizer_class(
         corpus=corpus,
         vocab_size=vocab_size,
@@ -1255,11 +1255,12 @@ class GPT2BPETokenizer(Tokenizer):
 class ChineseSPTokenizer(Tokenizer):
 
     def __init__(self,
+                 model_path,
                  add_block_symbols=False,
                  add_task_mask=False,
                  add_decoder_mask=False,
                  **kwargs):
-        self.text_tokenizer = sp_tokenizer.from_pretrained()
+        self.text_tokenizer = sp_tokenizer.from_pretrained(model_path)
 
         self.num_command_tokens = 0
         self.num_text_tokens = self.text_tokenizer.sp.vocab_size()

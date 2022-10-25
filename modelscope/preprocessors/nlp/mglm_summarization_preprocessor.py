@@ -1,4 +1,4 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright (c) 2022 Zhipu.AI
 
 import os.path as osp
 import re
@@ -18,7 +18,7 @@ from modelscope.utils.type_assert import type_assert
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.mglm_summarization)
-class mglmSummarizationPreprocessor(Preprocessor):
+class MGLMSummarizationPreprocessor(Preprocessor):
 
     def __init__(self, *args, **kwargs):
         """preprocess the data

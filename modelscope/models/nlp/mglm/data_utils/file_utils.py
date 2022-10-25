@@ -1,3 +1,4 @@
+# Modified by Zhipu.AI
 # This file is provided as is from:
 #   https://github.com/huggingface/pytorch-pretrained-BERT
 # Please refer to their repository for copyright.

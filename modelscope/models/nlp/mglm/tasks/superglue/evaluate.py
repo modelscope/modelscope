@@ -1,3 +1,4 @@
+# Copyright (c) 2022 Zhipu.AI
 """
 Official evaluation script for ReCoRD v1.0.
 (Some functions are adopted from the SQuAD evaluation script.)

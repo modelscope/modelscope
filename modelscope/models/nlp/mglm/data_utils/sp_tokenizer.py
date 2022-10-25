@@ -1,3 +1,4 @@
+# Modified by Zhipu.AI
 """
 from https://github.com/openai/gpt-2/, changed for chinese
 """
@@ -17,8 +18,6 @@ or  git clone https://github.com/google/sentencepiece.git
 python setup.py install
 
 """
-
-PRETRAINED_MODEL_FILE = './modelscope/models/nlp/mglm/tokenizer/mglm250k/mglm250k-uni.model'
 
 
 def get_pairs(word):
@@ -133,7 +132,6 @@ class Encoder_SP:
 
 def get_encoder(encoder_file, bpe_file):
     import json
-    # 以下是为了同一个函数入兼容sentencepiece
     filepath, filename = os.path.split(encoder_file)
     shotname, extension = os.path.splitext(filename)
 
@@ -154,5 +152,5 @@ def get_encoder(encoder_file, bpe_file):
         )
 
 
-def from_pretrained():
-    return get_encoder(PRETRAINED_MODEL_FILE, '')
+def from_pretrained(model_path):
+    return get_encoder(model_path + '/tokenizer/mglm250k/mglm250k-uni.model', '')

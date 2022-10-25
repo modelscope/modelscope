@@ -1,3 +1,5 @@
+# Copyright (c) 2022 Zhipu.AI
+
 import deepspeed
 import torch
 from apex.optimizers import FusedAdam as Adam

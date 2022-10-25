@@ -1,4 +1,4 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright (c) 2022 Zhipu.AI
 
 import os
 import random
@@ -15,13 +15,15 @@ from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.hub.snapshot_download import snapshot_download
+
 from . import mpu
 from .arguments import get_args
 from .generation_utils import BeamSearchScorer
 from .train_utils import get_model
 from .utils import load_checkpoint
 
-__all__ = ['mGlmForTextSummarization']
+__all__ = ['MGLMForTextSummarization']
 
 
 def setup_args(args):
@@ -41,10 +43,10 @@ def setup_args(args):
     args.out_seq_length = 200
     args.seq_length = 512
     args.temperature = 0.9
-    args.top_k = 3
+    args.top_k = 2
     args.top_p = 0.8
-    args.frequency_penalty = 0.8
-    args.presence_penalty = 0.8
+    args.frequency_penalty = 0.1
+    args.presence_penalty = 0.1
     args.mem_length = args.seq_length + args.mem_length - 1
     return args
 
@@ -54,22 +56,10 @@ def setup_model(args):
 
     model = get_model(args, model_type='generation')
 
-    # if args.deepspeed:
-    #     print_rank_0("DeepSpeed is enabled.")
-    #
-    #     model, _, _, _ = deepspeed.initialize(
-    #         model=model,
-    #         model_parameters=model.parameters(),
-    #         args=args,
-    #         mpu=mpu,
-    #         dist_init_required=False
-    #     )
     if args.load_pretrained is not None:
         args.no_load_optim = True
         args.load = args.load_pretrained
         _ = load_checkpoint(model, None, None, args)
-    # if args.deepspeed:
-    #     model = model.module
 
     return model
 
@@ -303,7 +293,6 @@ def sample_sequence(model,
         next_token_logits = next_token_logits[:, -1]
 
         next_token_logits /= args.temperature
-        # 加入重复惩罚参数
         frequency_count = torch.zeros(next_token_logits.shape)
         for tk in output_tokens_list:
             frequency_count[0][tk] += 1
@@ -318,7 +307,6 @@ def sample_sequence(model,
             next_token_logits, top_k=args.top_k, top_p=args.top_p)
         log_probs = F.softmax(next_token_logits, dim=-1)
         prev = torch.multinomial(log_probs, num_samples=1)[0]
-        # 判断是否停止
         is_end = prev.item() in end_tokens
         if is_end:
             break
@@ -396,10 +384,10 @@ def read_context(tokenizer, args, context):
 
 
 @MODELS.register_module(Tasks.summarization, module_name=Models.mglm)
-class mGlmForTextSummarization(TorchModel):
+class MGLMForTextSummarization(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
-        """initialize the text generation model from the `model_dir` path.
+        """initialize the text summarization model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
@@ -418,12 +406,13 @@ class mGlmForTextSummarization(TorchModel):
         set_random_seed(self.args.seed)
         # setting default batch size to 1
         self.args.batch_size = 1
+        self.args.tokenizer_path = model_dir
         self.tokenizer = prepare_tokenizer(self.args)
         self.model = setup_model(self.args)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
 
-    def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
+    def forward(self, input: Dict[str, str]) -> Dict[str, str]:
         pass
 
     def generate(self, input: Dict[str, str]) -> Dict[str, str]:

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         WordSegmentationBlankSetToLabelPreprocessor,
         ZeroShotClassificationPreprocessor,
     )
-    from .mglm_summarization_preprocessor import mglmSummarizationPreprocessor
+    from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
 
 else:
     _import_structure = {
@@ -46,7 +46,7 @@ else:
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',
         ],
-        'mglm_summarization_preprocessor': ['mglmSummarizationPreprocessor']
+        'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor']
     }
 
     import sys

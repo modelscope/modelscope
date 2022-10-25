@@ -24,7 +24,7 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, TextGenerationPreprocessor,
         Text2TextGenerationPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
-        ZeroShotClassificationPreprocessor, mglmSummarizationPreprocessor)
+        ZeroShotClassificationPreprocessor, MGLMSummarizationPreprocessor)
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor)
@@ -63,7 +63,7 @@ else:
             'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
-            'mglmSummarizationPreprocessor',
+            'MGLMSummarizationPreprocessor',
         ],
         'space': [
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',

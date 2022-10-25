@@ -1,23 +1,25 @@
+# Copyright (c) 2022 Zhipu.AI
+
 from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.nlp import mGlmForTextSummarization
+from modelscope.models.nlp import MGLMForTextSummarization
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 
-__all__ = ['mglmTextSummarizationPipeline']
+__all__ = ['MGLMTextSummarizationPipeline']
 
 
 @PIPELINES.register_module(
     group_key=Tasks.summarization,
     module_name=Pipelines.mglm_text_summarization)
-class mglmTextSummarizationPipeline(Pipeline):
+class MGLMTextSummarizationPipeline(Pipeline):
 
-    def __init__(self, model: Union[mGlmForTextSummarization, str], *args,
+    def __init__(self, model: Union[MGLMForTextSummarization, str], *args,
                  **kwargs):
-        model = mGlmForTextSummarization(model) if isinstance(model,
+        model = MGLMForTextSummarization(model) if isinstance(model,
                                                               str) else model
         self.model = model
         self.model.eval()

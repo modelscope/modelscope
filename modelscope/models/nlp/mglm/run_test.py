@@ -1,3 +1,5 @@
+# Copyright (c) 2022 Zhipu.AI
+
 import sys
 
 if sys.argv[1] == 'block':

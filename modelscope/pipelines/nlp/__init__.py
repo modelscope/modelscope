@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
-    from .mglm_text_summarization_pipeline import mglmTextSummarizationPipeline
+    from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
 
 else:
     _import_structure = {
@@ -61,7 +61,7 @@ else:
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
-        'mglm_text_summarization_pipeline': ['mglmTextSummarizationPipeline'],
+        'mglm_text_summarization_pipeline': ['MGLMTextSummarizationPipeline'],
     }
 
     import sys

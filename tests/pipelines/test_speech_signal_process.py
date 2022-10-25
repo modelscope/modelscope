@@ -11,17 +11,14 @@ from modelscope.utils.test_utils import test_level
 
 NEAREND_MIC_FILE = 'data/test/audios/nearend_mic.wav'
 FAREND_SPEECH_FILE = 'data/test/audios/farend_speech.wav'
-NEAREND_MIC_URL = 'https://modelscope.cn/api/v1/models/damo/' \
-                  'speech_dfsmn_aec_psm_16k/repo?Revision=master' \
-                  '&FilePath=examples/nearend_mic.wav'
-FAREND_SPEECH_URL = 'https://modelscope.cn/api/v1/models/damo/' \
-                    'speech_dfsmn_aec_psm_16k/repo?Revision=master' \
-                    '&FilePath=examples/farend_speech.wav'
+NEAREND_MIC_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
+                  'test/audios/nearend_mic.wav'
+FAREND_SPEECH_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
+                    'test/audios/farend_speech.wav'
 
 NOISE_SPEECH_FILE = 'data/test/audios/speech_with_noise.wav'
-NOISE_SPEECH_URL = 'https://modelscope.cn/api/v1/models/damo/' \
-                   'speech_frcrn_ans_cirm_16k/repo?Revision=master' \
-                   '&FilePath=examples/speech_with_noise.wav'
+NOISE_SPEECH_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
+                   'test/audios/speech_with_noise.wav'
 
 
 class SpeechSignalProcessTest(unittest.TestCase, DemoCompatibilityCheck):

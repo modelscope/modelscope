@@ -9,9 +9,8 @@ from modelscope.utils.test_utils import test_level
 
 TEST_SPEECH_FILE = 'data/test/audios/3ch_nihaomiya.wav'
 TEST_SPEECH_FILE_MONO = 'data/test/audios/1ch_nihaomiya.wav'
-TEST_SPEECH_URL = 'https://modelscope.cn/api/v1/models/damo/' \
-                  'speech_dfsmn_kws_char_farfield_16k_nihaomiya/repo' \
-                  '?Revision=master&FilePath=examples/3ch_nihaomiya.wav'
+TEST_SPEECH_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
+                  'test/audios/3ch_nihaomiya.wav'
 
 
 class KWSFarfieldTest(unittest.TestCase):

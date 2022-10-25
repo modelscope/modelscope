@@ -17,7 +17,8 @@ class Database:
         self.tokenizer = tokenizer
         self.is_use_sqlite = is_use_sqlite
         if self.is_use_sqlite:
-            self.connection_obj = sqlite3.connect(':memory:')
+            self.connection_obj = sqlite3.connect(
+                ':memory:', check_same_thread=False)
             self.type_dict = {'text': 'TEXT', 'number': 'INT', 'date': 'TEXT'}
         self.tables = self.init_tables(table_file_path=table_file_path)
         self.syn_dict = self.init_syn_dict(

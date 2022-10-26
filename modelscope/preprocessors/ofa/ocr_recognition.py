@@ -91,8 +91,24 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         ])
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        image = data['image'] if isinstance(
-            data['image'], Image.Image) else load_image(data['image'])
+        if self.mode == ModeKeys.TRAIN:
+            return self._build_train_sample(data)
+        else:
+            return self._build_infer_sample(data)
+
+    def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        sample = self._build_infer_sample(data)
+        target = data[self.column_map['text']]
+        target = target.translate(self.transtab).strip()
+        target_token_list = target.strip().split()
+        target = ' '.join(target_token_list[:self.max_tgt_length])
+        sample['target'] = self.tokenize_text(target, add_bos=False)
+        sample['prev_output_tokens'] = torch.cat(
+            [self.bos_item, sample['target'][:-1]])
+        return sample
+
+    def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
         prompt = self.cfg.model.get('prompt', '图片上的文字是什么?')
         inputs = self.tokenize_text(prompt)
@@ -102,4 +118,6 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True])
         }
+        if 'text' in self.column_map and self.column_map['text'] in data:
+            sample['label'] = data[self.column_map['text']]
         return sample

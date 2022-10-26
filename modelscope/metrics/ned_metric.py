@@ -56,7 +56,7 @@ class NedMetric(Metric):
     @staticmethod
     def _distance(pred, ref):
         if pred is None or ref is None:
-            raise TypeError('Argument s0 is NoneType.')
+            raise TypeError('Argument (pred or ref) is NoneType.')
         if pred == ref:
             return 0.0
         if len(pred) == 0:

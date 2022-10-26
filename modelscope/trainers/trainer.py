@@ -354,6 +354,9 @@ class EpochBasedTrainer(BaseTrainer):
                 task_dataset.trainer = self
                 return task_dataset
             else:
+                if task_data_config is None:
+                    # adapt to some special models
+                    task_data_config = {}
                 # avoid add no str value datasets, preprocessors in cfg
                 task_data_build_config = ConfigDict(
                     type=self.cfg.model.type,
@@ -419,13 +422,17 @@ class EpochBasedTrainer(BaseTrainer):
         return metrics
 
     def set_checkpoint_file_to_hook(self, checkpoint_path):
-        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
-            from modelscope.trainers.hooks import CheckpointHook
-            checkpoint_hooks = list(
-                filter(lambda hook: isinstance(hook, CheckpointHook),
-                       self.hooks))
-            for hook in checkpoint_hooks:
-                hook.checkpoint_file = checkpoint_path
+        if checkpoint_path is not None:
+            if os.path.isfile(checkpoint_path):
+                from modelscope.trainers.hooks import CheckpointHook
+                checkpoint_hooks = list(
+                    filter(lambda hook: isinstance(hook, CheckpointHook),
+                           self.hooks))
+                for hook in checkpoint_hooks:
+                    hook.checkpoint_file = checkpoint_path
+            else:
+                self.logger.error(
+                    f'No {checkpoint_path} found in local file system.')
 
     def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN

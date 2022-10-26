@@ -19,6 +19,7 @@ if TYPE_CHECKING:
         SbertForSequenceClassification,
         SbertForTokenClassification,
         SbertTokenizer,
+        SbertModel,
         SbertTokenizerFast,
     )
     from .bert import (
@@ -61,6 +62,7 @@ else:
             'SbertForTokenClassification',
             'SbertTokenizer',
             'SbertTokenizerFast',
+            'SbertModel',
         ],
         'veco': [
             'VecoModel', 'VecoConfig', 'VecoForTokenClassification',

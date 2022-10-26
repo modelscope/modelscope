@@ -236,8 +236,10 @@ class VideoCLIPForMultiModalEmbedding(TorchModel):
         logger.info('text feature: {}'.format(sequence_output[0][0][0]))
         logger.info('video feature: {}'.format(visual_output[0][0][0]))
 
-        output[OutputKeys.VIDEO_EMBEDDING] = visual_output
-        output[OutputKeys.TEXT_EMBEDDING] = sequence_output
+        output[
+            OutputKeys.VIDEO_EMBEDDING] = visual_output.cpu().detach().numpy()
+        output[OutputKeys.TEXT_EMBEDDING] = sequence_output.cpu().detach(
+        ).numpy()
         return output
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

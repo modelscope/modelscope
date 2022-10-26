@@ -2,12 +2,18 @@
 
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import INDEX_KEY, LazyImportModule
 from modelscope.utils.registry import TYPE_NAME, Registry, build_from_cfg
 
 MODELS = Registry('models')
-BACKBONES = Registry('backbones')
-BACKBONES._modules = MODELS._modules
+BACKBONES = MODELS
 HEADS = Registry('heads')
+
+modules = LazyImportModule.AST_INDEX[INDEX_KEY]
+for module_index in list(modules.keys()):
+    if module_index[1] == Tasks.backbone and module_index[0] == 'BACKBONES':
+        modules[(MODELS.name.upper(), module_index[1],
+                 module_index[2])] = modules[module_index]
 
 
 def build_model(cfg: ConfigDict,

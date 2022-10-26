@@ -69,7 +69,7 @@ class CheckpointHook(Hook):
             self.rng_state = meta.get('rng_state')
             self.need_load_rng_state = True
 
-    def before_train_epoch(self, trainer):
+    def before_train_iter(self, trainer):
         if self.need_load_rng_state:
             if self.rng_state is not None:
                 random.setstate(self.rng_state['random'])
@@ -83,13 +83,6 @@ class CheckpointHook(Hook):
                     'Random state cannot be found in checkpoint file, '
                     'this may cause a random data order or model initialization.'
                 )
-
-        self.rng_state = {
-            'random': random.getstate(),
-            'numpy': np.random.get_state(),
-            'cpu': torch.random.get_rng_state(),
-            'cuda': torch.cuda.get_rng_state_all(),
-        }
 
     def after_train_epoch(self, trainer):
         if not self.by_epoch:
@@ -142,6 +135,12 @@ class CheckpointHook(Hook):
             cur_save_name = os.path.join(
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
+        self.rng_state = {
+            'random': random.getstate(),
+            'numpy': np.random.get_state(),
+            'cpu': torch.random.get_rng_state(),
+            'cuda': torch.cuda.get_rng_state_all(),
+        }
         meta = {
             'epoch': trainer.epoch,
             'iter': trainer.iter + 1,

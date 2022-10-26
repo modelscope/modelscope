@@ -18,14 +18,12 @@ logger = logging.get_logger(__name__)
 @MODELS.register_module(Tasks.text_ranking, module_name=Models.bert)
 class BertForTextRanking(BertForSequenceClassification):
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, *args, **kwargs):
         super().__init__(config)
-        self.train_batch_size = kwargs.get('train_batch_size', 4)
+        neg_sample = kwargs.get('neg_sample', 8)
+        self.neg_sample = neg_sample
         setattr(self, self.base_model_prefix,
                 BertModel(self.config, add_pooling_layer=True))
-        self.register_buffer(
-            'target_label',
-            torch.zeros(self.train_batch_size, dtype=torch.long))
 
     def forward(self,
                 input_ids=None,
@@ -55,9 +53,12 @@ class BertForTextRanking(BertForSequenceClassification):
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
         if self.base_model.training:
-            scores = logits.view(self.train_batch_size, -1)
+            scores = logits.view(-1, self.neg_sample + 1)
+            batch_size = scores.size(0)
             loss_fct = torch.nn.CrossEntropyLoss()
-            loss = loss_fct(scores, self.target_label)
+            target_label = torch.zeros(
+                batch_size, dtype=torch.long, device=scores.device)
+            loss = loss_fct(scores, target_label)
             return AttentionTextClassificationModelOutput(
                 loss=loss,
                 logits=logits,
@@ -78,9 +79,11 @@ class BertForTextRanking(BertForSequenceClassification):
         Returns:
             The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
         """
-
         num_labels = kwargs.get('num_labels', 1)
+        neg_sample = kwargs.get('neg_sample', 4)
         model_args = {} if num_labels is None else {'num_labels': num_labels}
+        if neg_sample is not None:
+            model_args['neg_sample'] = neg_sample
 
         model_dir = kwargs.get('model_dir')
         model = super(Model, cls).from_pretrained(

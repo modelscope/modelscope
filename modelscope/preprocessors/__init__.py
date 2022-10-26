@@ -28,7 +28,8 @@ if TYPE_CHECKING:
         SentencePiecePreprocessor, DialogIntentPredictionPreprocessor,
         DialogModelingPreprocessor, DialogStateTrackingPreprocessor,
         ConversationalTextToSqlPreprocessor,
-        TableQuestionAnsweringPreprocessor)
+        TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
+        NERPreprocessorThai, WordSegmentationPreprocessorThai)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -58,6 +59,8 @@ else:
             'WordSegmentationBlankSetToLabelPreprocessor',
             'ZeroShotClassificationPreprocessor',
             'TextGenerationJiebaPreprocessor', 'SentencePiecePreprocessor',
+            'NERPreprocessorViet', 'NERPreprocessorThai',
+            'WordSegmentationPreprocessorThai',
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',

@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from .text2text_generation_preprocessor import Text2TextGenerationPreprocessor
     from .token_classification_preprocessor import TokenClassificationPreprocessor, \
         WordSegmentationBlankSetToLabelPreprocessor
+    from .token_classification_thai_preprocessor import WordSegmentationPreprocessorThai, NERPreprocessorThai
+    from .token_classification_viet_preprocessor import NERPreprocessorViet
     from .zero_shot_classification_reprocessor import ZeroShotClassificationPreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
@@ -60,10 +62,20 @@ else:
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',
         ],
+        'token_classification_thai_preprocessor': [
+            'NERPreprocessorThai',
+            'WordSegmentationPreprocessorThai',
+        ],
+        'token_classification_viet_preprocessor': [
+            'NERPreprocessorViet',
+        ],
         'space': [
-            'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
-            'DialogStateTrackingPreprocessor', 'InputFeatures',
-            'MultiWOZBPETextField', 'IntentBPETextField'
+            'DialogIntentPredictionPreprocessor',
+            'DialogModelingPreprocessor',
+            'DialogStateTrackingPreprocessor',
+            'InputFeatures',
+            'MultiWOZBPETextField',
+            'IntentBPETextField',
         ],
         'space_T_en': ['ConversationalTextToSqlPreprocessor'],
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],

@@ -87,7 +87,7 @@ class TestOfaTrainer(unittest.TestCase):
                        'max_image_size': 480,
                        'imagenet_default_mean_and_std': False},
              'pipeline': {'type': 'ofa-ocr-recognition'},
-             'dataset': {'column_map': {'text': 'caption'}},
+             'dataset': {'column_map': {'text': 'label'}},
              'train': {'work_dir': 'work/ckpts/recognition',
                        # 'launcher': 'pytorch',
                        'max_epochs': 1,
@@ -116,7 +116,6 @@ class TestOfaTrainer(unittest.TestCase):
                                      'use_rdrop': True},
                        'hooks': [{'type': 'BestCkptSaverHook',
                                   'metric_key': 'ned',
-                                  'rule': 'min',
                                   'interval': 100},
                                  {'type': 'TextLoggerHook', 'interval': 1},
                                  {'type': 'IterTimerHook'},
@@ -138,11 +137,13 @@ class TestOfaTrainer(unittest.TestCase):
             model=pretrained_model,
             work_dir=WORKSPACE,
             train_dataset=MsDataset.load(
-                'coco_2014_caption',
+                'ocr_fudanvi_zh',
+                subset_name='scene',
                 namespace='modelscope',
                 split='train[:12]'),
             eval_dataset=MsDataset.load(
-                'coco_2014_caption',
+                'ocr_fudanvi_zh',
+                subset_name='scene',
                 namespace='modelscope',
                 split='validation[:4]'),
             cfg_file=config_file)

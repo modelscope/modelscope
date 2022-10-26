@@ -42,7 +42,7 @@ class AccuracyMetric(Metric):
             self.preds.extend(eval_results.tolist())
             self.labels.extend(ground_truths.tolist())
         else:
-            raise 'only support list or np.ndarray'
+            raise Exception('only support list or np.ndarray')
 
     def evaluate(self):
         assert len(self.preds) == len(self.labels)

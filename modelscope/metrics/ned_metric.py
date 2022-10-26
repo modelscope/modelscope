@@ -20,7 +20,6 @@ class NedMetric(Metric):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ned = NormalizedLevenshtein()
         self.preds = []
         self.labels = []
 

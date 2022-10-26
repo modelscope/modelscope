@@ -128,11 +128,13 @@ class TableQuestionAnswering(unittest.TestCase):
 
         def print_func(pl, i):
             result = pl({
-                'question': '长江流域的小(2)型水库的库容总量是多少？',
-                'table_id': 'reservoir',
+                'question': '上个月收益从低到高排前七的基金的名称和风险等级是什么',
+                'table_id': 'fund',
                 'history_sql': None
             })
-            print(i, json.dumps(result))
+            print(i, result[OutputKeys.OUTPUT][OutputKeys.SQL_QUERY],
+                  result[OutputKeys.OUTPUT][OutputKeys.QUERT_RESULT],
+                  json.dumps(result))
 
         procs = []
         for i in range(5):

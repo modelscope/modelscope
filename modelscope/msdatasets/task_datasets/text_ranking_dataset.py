@@ -39,8 +39,7 @@ class TextRankingDataset(TorchTaskDataset):
                                                    ['title', 'text'])
         self.qid_field = self.dataset_config.get('qid_field', 'query_id')
         if mode == ModeKeys.TRAIN:
-            train_config = kwargs.get('train', {})
-            self.neg_samples = train_config.get('neg_samples', 4)
+            self.neg_samples = self.dataset_config.get('neg_sample', 4)
 
         super().__init__(datasets, mode, preprocessor, **kwargs)
 

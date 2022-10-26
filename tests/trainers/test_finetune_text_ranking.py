@@ -63,6 +63,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
     def test_finetune_msmarco(self):
 
         def cfg_modify_fn(cfg):
+            neg_sample = 4
             cfg.task = 'text-ranking'
             cfg['preprocessor'] = {'type': 'text-ranking'}
             cfg.train.optimizer.lr = 2e-5
@@ -73,7 +74,8 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'pos_sequence': 'positive_passages',
                     'neg_sequence': 'negative_passages',
                     'text_fileds': ['title', 'text'],
-                    'qid_field': 'query_id'
+                    'qid_field': 'query_id',
+                    'neg_sample': neg_sample
                 },
                 'val': {
                     'type': 'bert',
@@ -84,7 +86,6 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'qid_field': 'query_id'
                 },
             }
-            cfg['train']['neg_samples'] = 4
             cfg['evaluation']['dataloader']['batch_size_per_gpu'] = 30
             cfg.train.max_epochs = 1
             cfg.train.train_batch_size = 4
@@ -96,6 +97,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'by_epoch': False
                 }
             }
+            cfg.model['neg_sample'] = 4
             cfg.train.hooks = [{
                 'type': 'CheckpointHook',
                 'interval': 1
@@ -151,7 +153,6 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
                     'qid_field': 'query_id'
                 },
             }
-            cfg['train']['neg_samples'] = 4
             cfg['evaluation']['dataloader']['batch_size_per_gpu'] = 30
             cfg.train.max_epochs = 1
             cfg.train.train_batch_size = 4
@@ -180,9 +181,8 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
 
         # load dataset
         ds = MsDataset.load('dureader-retrieval-ranking', 'zyznull')
-        train_ds = ds['train'].to_hf_dataset()
+        train_ds = ds['train'].to_hf_dataset().shard(1000, index=0)
         dev_ds = ds['dev'].to_hf_dataset()
-
         model_id = 'damo/nlp_rom_passage-ranking_chinese-base'
         self.finetune(
             model_id=model_id,

@@ -2,11 +2,12 @@
 
 import hashlib
 import os
+from datetime import datetime
 from typing import Optional
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
-                                      MODEL_ID_SEPARATOR,
+                                      MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.file_utils import get_default_cache_dir
@@ -35,6 +36,18 @@ def get_cache_dir(model_id: Optional[str] = None):
                           os.path.join(default_cache_dir, 'hub'))
     return base_path if model_id is None else os.path.join(
         base_path, model_id + '/')
+
+
+def get_release_datetime():
+    if MODELSCOPE_SDK_DEBUG in os.environ:
+        rt = int(round(datetime.now().timestamp()))
+    else:
+        from modelscope import version
+        rt = int(
+            round(
+                datetime.strptime(version.__release_datetime__,
+                                  '%Y-%m-%d %H:%M:%S').timestamp()))
+    return rt
 
 
 def get_endpoint():

@@ -675,4 +675,8 @@ class MsDataset:
             revision=revision,
             auth_token=auth_token,
             git_path=git_path)
-        _repo.push(commit_message=commit_message, branch=revision, force=force)
+        _repo.push(
+            commit_message=commit_message,
+            local_branch=revision,
+            remote_branch=revision,
+            force=force)

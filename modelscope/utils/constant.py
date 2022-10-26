@@ -311,7 +311,9 @@ class Frameworks(object):
     kaldi = 'kaldi'
 
 
-DEFAULT_MODEL_REVISION = 'master'
+DEFAULT_MODEL_REVISION = None
+MASTER_MODEL_BRANCH = 'master'
+DEFAULT_REPOSITORY_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
 DEFAULT_DATASET_NAMESPACE = 'modelscope'
 

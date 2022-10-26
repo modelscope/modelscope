@@ -5,6 +5,7 @@ import subprocess
 from typing import List
 
 from modelscope.utils.logger import get_logger
+from ..utils.constant import MASTER_MODEL_BRANCH
 from .errors import GitError
 
 logger = get_logger()
@@ -227,3 +228,22 @@ class GitCommandWrapper(metaclass=Singleton):
             files.append(line.split(' ')[-1])
 
         return files
+
+    def tag(self,
+            repo_dir: str,
+            tag_name: str,
+            message: str,
+            ref: str = MASTER_MODEL_BRANCH):
+        cmd_args = [
+            '-C', repo_dir, 'tag', tag_name, '-m',
+            '"%s"' % message, ref
+        ]
+        rsp = self._run_git_command(*cmd_args)
+        logger.debug(rsp.stdout.decode('utf8'))
+        return rsp
+
+    def push_tag(self, repo_dir: str, tag_name):
+        cmd_args = ['-C', repo_dir, 'push', 'origin', tag_name]
+        rsp = self._run_git_command(*cmd_args)
+        logger.debug(rsp.stdout.decode('utf8'))
+        return rsp

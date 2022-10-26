@@ -9,14 +9,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
-from modelscope.hub.snapshot_download import snapshot_download
-
 from . import mpu
 from .arguments import get_args
 from .generation_utils import BeamSearchScorer

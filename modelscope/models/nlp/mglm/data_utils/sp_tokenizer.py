@@ -4,6 +4,7 @@ from https://github.com/openai/gpt-2/, changed for chinese
 """
 import os  # yapf: disable
 
+
 """
 SentencePiece is an unsupervised text tokenizer and detokenizer mainly for Neural Network-based text generation
 systems where the vocabulary size is predetermined prior to the neural model training. SentencePiece implements
@@ -153,4 +154,5 @@ def get_encoder(encoder_file, bpe_file):
 
 
 def from_pretrained(model_path):
-    return get_encoder(model_path + '/tokenizer/mglm250k/mglm250k-uni.model', '')
+    return get_encoder(model_path + '/tokenizer/mglm250k/mglm250k-uni.model',
+                       '')

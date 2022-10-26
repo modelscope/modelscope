@@ -1,36 +1,36 @@
-en_core_web_sm>=2.3.5
-jieba>=0.42.1
-megatron_util
-pai-easynlp
-# rough-score was just recently updated from 0.0.4 to 0.0.7
-# which introduced compatability issues that are being investigated
-rouge_score<=0.0.4
-sacremoses>=0.0.41
-seqeval
-spacy>=2.3.5
-subword_nmt>=0.3.8
-text2sql_lgesql
-tokenizers
-transformers>=4.12.0
 boto3
 botocore
 deepspeed==0.3.16
+en_core_web_sm>=2.3.5
 fasttext
 filelock
 ftfy
+jieba>=0.42.1
 langdetect
 lsh
 matplotlib
+megatron_util
 mpi4py
 nltk
+pai-easynlp
 pandas
 regex
 requests
+# rough-score was just recently updated from 0.0.4 to 0.0.7
+# which introduced compatability issues that are being investigated
+rouge_score<=0.0.4
 rouge_score
+sacremoses>=0.0.41
 scikit_learn
 scipy
 sentencepiece
+seqeval
+spacy>=2.3.5
+subword_nmt>=0.3.8
 tensorboardX
 termcolor
+text2sql_lgesql
 tldextract
+tokenizers
 tqdm
+transformers>=4.12.0

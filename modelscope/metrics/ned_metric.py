@@ -3,6 +3,7 @@
 from typing import Dict
 
 import numpy as np
+from similarity.normalized_levenshtein import NormalizedLevenshtein
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys
@@ -11,8 +12,8 @@ from .base import Metric
 from .builder import METRICS, MetricKeys
 
 
-@METRICS.register_module(group_key=default_group, module_name=Metrics.accuracy)
-class AccuracyMetric(Metric):
+@METRICS.register_module(group_key=default_group, module_name=Metrics.NED)
+class NedMetric(Metric):
     """The metric computation class for classification classes.
 
     This metric class calculates accuracy for the whole input batches.
@@ -20,6 +21,7 @@ class AccuracyMetric(Metric):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.ned = NormalizedLevenshtein()
         self.preds = []
         self.labels = []
 
@@ -47,7 +49,8 @@ class AccuracyMetric(Metric):
     def evaluate(self):
         assert len(self.preds) == len(self.labels)
         return {
-            MetricKeys.ACCURACY: (np.asarray([
-                pred == ref for pred, ref in zip(self.preds, self.labels)
+            MetricKeys.NED: (np.asarray([
+                self.ned.distance(pred, ref)
+                for pred, ref in zip(self.preds, self.labels)
             ])).mean().item()
         }

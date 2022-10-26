@@ -22,7 +22,8 @@ def merge_cfg(cfg: Config):
 
     This function will pop the default CheckpointHook when the BestCkptSaverHook exists in the input cfg.
 
-    @param cfg: The input cfg to be merged into.
+    Aegs:
+        cfg: The input cfg to be merged into.
     """
     cfg.merge_from_dict(DEFAULT_CONFIG, force=False)
     # pop duplicate hook

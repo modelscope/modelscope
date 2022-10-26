@@ -6,10 +6,12 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.image_denoise import NAFNetForImageDenoise
-from modelscope.msdatasets.image_denoise_data import PairedImageDataset
+from modelscope.msdatasets import MsDataset
+from modelscope.msdatasets.task_datasets.sidd_image_denoising import \
+    SiddImageDenoisingDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import DownloadMode, ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -28,10 +30,22 @@ class ImageDenoiseTrainerTest(unittest.TestCase):
         self.cache_path = snapshot_download(self.model_id)
         self.config = Config.from_file(
             os.path.join(self.cache_path, ModelFile.CONFIGURATION))
-        self.dataset_train = PairedImageDataset(
-            self.config.dataset, self.cache_path, is_train=True)
-        self.dataset_val = PairedImageDataset(
-            self.config.dataset, self.cache_path, is_train=False)
+        dataset_train = MsDataset.load(
+            'SIDD',
+            namespace='huizheng',
+            subset_name='default',
+            split='test',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)._hf_ds
+        dataset_val = MsDataset.load(
+            'SIDD',
+            namespace='huizheng',
+            subset_name='default',
+            split='test',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)._hf_ds
+        self.dataset_train = SiddImageDenoisingDataset(
+            dataset_train, self.config.dataset, is_train=True)
+        self.dataset_val = SiddImageDenoisingDataset(
+            dataset_val, self.config.dataset, is_train=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)

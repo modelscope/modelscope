@@ -19,18 +19,18 @@ if TYPE_CHECKING:
         DocumentSegmentationPreprocessor, FaqQuestionAnsweringPreprocessor,
         FillMaskPoNetPreprocessor, NLPPreprocessor,
         NLPTokenizerPreprocessorBase, PassageRankingPreprocessor,
-        RelationExtractionPreprocessor, SentenceEmbeddingPreprocessor,
-        SequenceClassificationPreprocessor, TokenClassificationPreprocessor,
-        TextErrorCorrectionPreprocessor, TextGenerationPreprocessor,
-        Text2TextGenerationPreprocessor, Tokenize,
+        TextRankingPreprocessor, RelationExtractionPreprocessor,
+        SentenceEmbeddingPreprocessor, SequenceClassificationPreprocessor,
+        TokenClassificationPreprocessor, TextErrorCorrectionPreprocessor,
+        TextGenerationPreprocessor, Text2TextGenerationPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor,
-        ZeroShotClassificationPreprocessor, MGLMSummarizationPreprocessor)
-    from .space import (DialogIntentPredictionPreprocessor,
-                        DialogModelingPreprocessor,
-                        DialogStateTrackingPreprocessor)
+        MGLMSummarizationPreprocessor, ZeroShotClassificationPreprocessor,
+        TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
+        DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
+        DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
+        TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
+        NERPreprocessorThai, WordSegmentationPreprocessorThai)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
-    from .star import ConversationalTextToSqlPreprocessor
-    from .star3 import TableQuestionAnsweringPreprocessor
 
 else:
     _import_structure = {
@@ -48,29 +48,25 @@ else:
         'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
             'DocumentSegmentationPreprocessor',
-            'FaqQuestionAnsweringPreprocessor',
-            'FillMaskPoNetPreprocessor',
-            'NLPPreprocessor',
-            'NLPTokenizerPreprocessorBase',
-            'PassageRankingPreprocessor',
-            'RelationExtractionPreprocessor',
+            'FaqQuestionAnsweringPreprocessor', 'FillMaskPoNetPreprocessor',
+            'NLPPreprocessor', 'NLPTokenizerPreprocessorBase',
+            'TextRankingPreprocessor', 'RelationExtractionPreprocessor',
             'SentenceEmbeddingPreprocessor',
             'SequenceClassificationPreprocessor',
             'TokenClassificationPreprocessor',
-            'TextErrorCorrectionPreprocessor',
-            'TextGenerationPreprocessor',
-            'Tokenize',
-            'Text2TextGenerationPreprocessor',
+            'TextErrorCorrectionPreprocessor', 'TextGenerationPreprocessor',
+            'Tokenize', 'Text2TextGenerationPreprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
-            'ZeroShotClassificationPreprocessor',
             'MGLMSummarizationPreprocessor',
-        ],
-        'space': [
+            'ZeroShotClassificationPreprocessor',
+            'TextGenerationJiebaPreprocessor', 'SentencePiecePreprocessor',
+            'NERPreprocessorViet', 'NERPreprocessorThai',
+            'WordSegmentationPreprocessorThai',
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
-            'DialogStateTrackingPreprocessor', 'InputFeatures'
+            'DialogStateTrackingPreprocessor',
+            'ConversationalTextToSqlPreprocessor',
+            'TableQuestionAnsweringPreprocessor'
         ],
-        'star': ['ConversationalTextToSqlPreprocessor'],
-        'star3': ['TableQuestionAnsweringPreprocessor'],
     }
 
     import sys

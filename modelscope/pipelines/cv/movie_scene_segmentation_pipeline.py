@@ -60,9 +60,12 @@ class MovieSceneSegmentationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         data = {'input_video_pth': self.input_video_pth, 'feat': inputs}
-        video_num, meta_lst = self.model.postprocess(data)
+        scene_num, scene_meta_lst, shot_num, shot_meta_lst = self.model.postprocess(
+            data)
         result = {
-            OutputKeys.SPLIT_VIDEO_NUM: video_num,
-            OutputKeys.SPLIT_META_LIST: meta_lst
+            OutputKeys.SHOT_NUM: shot_num,
+            OutputKeys.SHOT_META_LIST: shot_meta_lst,
+            OutputKeys.SCENE_NUM: scene_num,
+            OutputKeys.SCENE_META_LIST: scene_meta_lst
         }
         return result

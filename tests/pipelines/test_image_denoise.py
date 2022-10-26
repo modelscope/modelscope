@@ -2,8 +2,6 @@
 
 import unittest
 
-from PIL import Image
-
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
@@ -20,16 +18,16 @@ class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.image_denoising
         self.model_id = 'damo/cv_nafnet_image-denoise_sidd'
 
-    demo_image_path = 'data/test/images/noisy-demo-1.png'
+    demo_image_path = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/noisy-demo-0.png'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         pipeline = ImageDenoisePipeline(cache_path)
+        pipeline.group_key = self.task
         denoise_img = pipeline(
-            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]
-        denoise_img = Image.fromarray(denoise_img)
-        w, h = denoise_img.size
+            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]  # BGR
+        h, w = denoise_img.shape[:2]
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -37,9 +35,8 @@ class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
         model = Model.from_pretrained(self.model_id)
         pipeline_ins = pipeline(task=Tasks.image_denoising, model=model)
         denoise_img = pipeline_ins(
-            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]
-        denoise_img = Image.fromarray(denoise_img)
-        w, h = denoise_img.size
+            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]  # BGR
+        h, w = denoise_img.shape[:2]
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -47,18 +44,16 @@ class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.image_denoising, model=self.model_id)
         denoise_img = pipeline_ins(
-            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]
-        denoise_img = Image.fromarray(denoise_img)
-        w, h = denoise_img.size
+            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]  # BGR
+        h, w = denoise_img.shape[:2]
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.image_denoising)
         denoise_img = pipeline_ins(
-            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]
-        denoise_img = Image.fromarray(denoise_img)
-        w, h = denoise_img.size
+            input=self.demo_image_path)[OutputKeys.OUTPUT_IMG]  # BGR
+        h, w = denoise_img.shape[:2]
         print('pipeline: the shape of output_img is {}x{}'.format(h, w))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')

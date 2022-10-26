@@ -1,8 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
+import os
 import string
+from functools import partial
 from os import path as osp
-from typing import Any, Dict
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import json
 import torch.cuda
@@ -10,7 +12,6 @@ import torch.nn.functional as F
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
-from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.ofa.utils.collate import collate_tokens
@@ -27,12 +28,13 @@ __all__ = ['OfaForAllTasks']
 
 
 @MODELS.register_module(Tasks.image_captioning, module_name=Models.ofa)
+@MODELS.register_module(Tasks.ocr_recognition, module_name=Models.ofa)
 @MODELS.register_module(Tasks.visual_grounding, module_name=Models.ofa)
 @MODELS.register_module(
     Tasks.visual_question_answering, module_name=Models.ofa)
 @MODELS.register_module(Tasks.visual_entailment, module_name=Models.ofa)
 @MODELS.register_module(Tasks.image_classification, module_name=Models.ofa)
-@MODELS.register_module(Tasks.summarization, module_name=Models.ofa)
+@MODELS.register_module(Tasks.text_summarization, module_name=Models.ofa)
 @MODELS.register_module(Tasks.text_classification, module_name=Models.ofa)
 class OfaForAllTasks(TorchModel):
 
@@ -65,10 +67,9 @@ class OfaForAllTasks(TorchModel):
         self.gen_type = self.cfg.model.get('gen_type', 'generation')
         assert self.gen_type in ['generation', 'traverse'], \
             'model.gen_type must be in ["generation", "traverse"]'
-        self._device = torch.device('cuda') if torch.cuda.is_available() \
-            else torch.device('cpu')
-        self.eos_item = torch.LongTensor([self.tokenizer.eos_token_id
-                                          ]).to(self._device)
+        self.bos_item = torch.LongTensor([self.tokenizer.bos_token_id])
+        self.pad_item = torch.LongTensor([self.tokenizer.pad_token_id])
+        self.eos_item = torch.LongTensor([self.tokenizer.eos_token_id])
         self.index2ans = {}
         self.ans2label_dict = {}
         self.load_ans2label()
@@ -89,15 +90,17 @@ class OfaForAllTasks(TorchModel):
             self.val_masks_l = []
             self.build_trie()
             sg_args['constraint_trie'] = self.constraint_trie
-        self.model.to(self._device)
+        else:
+            self.constraint_trie = None
         self.generator = sg.SequenceGenerator(**sg_args)
         inference_d = {
             'generation': self._text_gen_inference,
             'traverse': self._traverse_inference,
         }
         self.task_inference_mapping = {
+            Tasks.ocr_recognition: self._text_gen_inference,
             Tasks.image_captioning: self._text_gen_inference,
-            Tasks.summarization: self._text_gen_inference,
+            Tasks.text_summarization: self._text_gen_inference,
             Tasks.visual_grounding: self._visual_grounding_inference,
             Tasks.visual_entailment: inference_d[self.gen_type],
             Tasks.visual_question_answering: inference_d[self.gen_type],
@@ -106,8 +109,16 @@ class OfaForAllTasks(TorchModel):
         }
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        input = move_to_device(input, self.model.device)
+        if self.model.training:
+            return self.model(**input['net_input'])
+        else:
+            return self.inference(input)
+
+    def inference(self, input: Dict[str, Any]) -> Dict[str, Any]:
         ret = self.task_inference_mapping[self.cfg.task](input)
-        ret['samples'] = input['samples']
+        if 'samples' in input:
+            ret['samples'] = input['samples']
         for key in [
                 OutputKeys.CAPTION, OutputKeys.TEXT, OutputKeys.BOXES,
                 OutputKeys.LABELS, OutputKeys.SCORES
@@ -116,21 +127,33 @@ class OfaForAllTasks(TorchModel):
                 ret[key] = None
         return ret
 
-    def postprocess(self, input: Dict[str, Tensor],
-                    **kwargs) -> Dict[str, Tensor]:
-        if self.cfg.task == Tasks.image_captioning:
-            caption = [
-                cap.translate(self.transtab).strip()
-                for cap in input[OutputKeys.CAPTION]
-            ]
-            input[OutputKeys.CAPTION] = caption
+    def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        if not self.model.training and self.cfg.task == Tasks.image_captioning:
+            caption = input[OutputKeys.CAPTION]
+            result_l = list()
+            for cap in caption:
+                result_l.append(cap.translate(self.transtab).strip())
+            input[OutputKeys.CAPTION] = result_l
         return input
 
     def _text_gen_inference(self, input):
-        input = move_to_device(input, self._device)
-        gen_output = self.generator.generate([self.model], input)
-        gen = [gen_output[i][0]['tokens'] for i in range(len(gen_output))]
-        result = self.tokenizer.batch_decode(gen, skip_special_tokens=True)
+        gen_outputs = self.generator.generate([self.model],
+                                              input,
+                                              prefix_tokens=input.get(
+                                                  'prefix_tokens', None))
+        gen_l = list()
+        for idx, gen_out in enumerate(gen_outputs):
+            if len(gen_out) > 0:
+                decode_tokens = gen_out[0]['tokens']
+                if 'prefix_tokens' in input:
+                    prefix_len = input['prefix_tokens'][idx].ne(
+                        self.pad_item.to(self.model.device)).sum()
+                    decode_tokens = decode_tokens[prefix_len:]
+                gen_l.append(decode_tokens)
+            else:
+                gen_l.append('')
+        result = self.tokenizer.batch_decode(gen_l, skip_special_tokens=True)
+        result = [item.strip() for item in result]
         # text generation tasks have no score
         ret = {OFA_TASK_KEY_MAPPING[self.cfg.task]: result}
         if self.cfg.task.endswith('classification'):
@@ -138,7 +161,6 @@ class OfaForAllTasks(TorchModel):
         return ret
 
     def _visual_grounding_inference(self, input):
-        input = move_to_device(input, self._device)
         gen_output = self.generator.generate([self.model], input)
         tokens = [gen_output[i][0]['tokens'] for i in range(len(gen_output))]
         region_coord_l = list()
@@ -158,7 +180,6 @@ class OfaForAllTasks(TorchModel):
         }
 
     def _traverse_inference(self, input):
-        input = move_to_device(input, self._device)
         encoder_input = dict()
         for key in input['net_input'].keys():
             encoder_input[key] = input['net_input'][key]
@@ -168,13 +189,14 @@ class OfaForAllTasks(TorchModel):
             valid_size = len(val_ans)
             valid_tgt_items = [
                 torch.cat([
-                    torch.tensor(decoder_prompt[1:]), valid_answer,
+                    torch.tensor(decoder_prompt[1:]).to('cpu'), valid_answer,
                     self.eos_item
                 ]) for decoder_prompt in input['decoder_prompts']
                 for valid_answer in val_ans
             ]
             valid_prev_items = [
-                torch.cat([torch.tensor(decoder_prompt), valid_answer])
+                torch.cat(
+                    [torch.tensor(decoder_prompt).to('cpu'), valid_answer])
                 for decoder_prompt in input['decoder_prompts']
                 for valid_answer in val_ans
             ]
@@ -182,19 +204,19 @@ class OfaForAllTasks(TorchModel):
                 torch.cat([
                     torch.zeros(
                         len(decoder_prompt) - 1,
-                        valid_constraint_mask.size(1)).bool().to(self._device),
+                        valid_constraint_mask.size(1)).bool(),
                     valid_constraint_mask], dim=0)  # yapf: disable
                 for decoder_prompt in input['decoder_prompts']  # yapf: disable
                 for valid_constraint_mask in val_masks]  # yapf: disable
             valid_tgt = collate_tokens(
                 valid_tgt_items,
-                pad_idx=self.tokenizer.pad_token_id).to(self._device)
+                pad_idx=self.tokenizer.pad_token_id).to(self.model.device)
             valid_prev_output = collate_tokens(
                 valid_prev_items,
-                pad_idx=self.tokenizer.pad_token_id).to(self._device)
+                pad_idx=self.tokenizer.pad_token_id).to(self.model.device)
             val_masks = collate_tokens(
                 valid_constraint_mask_items,
-                pad_idx=self.tokenizer.pad_token_id).to(self._device)
+                pad_idx=self.tokenizer.pad_token_id).to(self.model.device)
             new_encoder_out = {
                 'last_hidden_state':
                 encoder_out['last_hidden_state'].repeat_interleave(
@@ -269,10 +291,23 @@ class OfaForAllTasks(TorchModel):
             self.val_masks_l += [
                 constraint_mask_list[i:i + self.val_batch_size]
             ]
-        self.val_ans_l = move_to_device(self.val_ans_l, self._device)
-        self.val_masks_l = move_to_device(self.val_masks_l, self._device)
 
     def load_ans2label(self):
         if self.cfg.model.get('answer2label', None):
-            filename = osp.join(self.model_dir, self.cfg.model.answer2label)
-            self.ans2label_dict = json.load(open(filename))
+            ans2label_file = osp.join(self.model_dir,
+                                      self.cfg.model.answer2label)
+            with open(ans2label_file, 'r') as reader:
+                self.ans2label_dict = json.load(reader)
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = None,
+                        config: Optional[dict] = None,
+                        **kwargs):
+        super(OfaForAllTasks, self). \
+            save_pretrained(target_folder=target_folder,
+                            save_checkpoint_names=save_checkpoint_names,
+                            save_function=partial(save_function, with_meta=False),
+                            config=config,
+                            **kwargs)

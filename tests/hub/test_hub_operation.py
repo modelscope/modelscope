@@ -25,10 +25,10 @@ class HubOperationTest(unittest.TestCase):
 
     def setUp(self):
         self.api = HubApi()
-        # note this is temporary before official account management is ready
         self.api.login(TEST_ACCESS_TOKEN1)
-        self.model_name = uuid.uuid4().hex
+        self.model_name = 'op-%s' % (uuid.uuid4().hex)
         self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
+        self.revision = 'v0.1_test_revision'
         self.api.create_model(
             model_id=self.model_id,
             visibility=ModelVisibility.PUBLIC,
@@ -46,6 +46,7 @@ class HubOperationTest(unittest.TestCase):
         os.system("echo 'testtest'>%s"
                   % os.path.join(self.model_dir, download_model_file_name))
         repo.push('add model')
+        repo.tag_and_push(self.revision, 'Test revision')
 
     def test_model_repo_creation(self):
         # change to proper model names before use
@@ -61,7 +62,9 @@ class HubOperationTest(unittest.TestCase):
     def test_download_single_file(self):
         self.prepare_case()
         downloaded_file = model_file_download(
-            model_id=self.model_id, file_path=download_model_file_name)
+            model_id=self.model_id,
+            file_path=download_model_file_name,
+            revision=self.revision)
         assert os.path.exists(downloaded_file)
         mdtime1 = os.path.getmtime(downloaded_file)
         # download again
@@ -78,17 +81,16 @@ class HubOperationTest(unittest.TestCase):
         assert os.path.exists(downloaded_file_path)
         mdtime1 = os.path.getmtime(downloaded_file_path)
         # download again
-        snapshot_path = snapshot_download(model_id=self.model_id)
+        snapshot_path = snapshot_download(
+            model_id=self.model_id, revision=self.revision)
         mdtime2 = os.path.getmtime(downloaded_file_path)
         assert mdtime1 == mdtime2
-        model_file_download(
-            model_id=self.model_id,
-            file_path=download_model_file_name)  # not add counter
 
     def test_download_public_without_login(self):
         self.prepare_case()
         rmtree(ModelScopeConfig.path_credential)
-        snapshot_path = snapshot_download(model_id=self.model_id)
+        snapshot_path = snapshot_download(
+            model_id=self.model_id, revision=self.revision)
         downloaded_file_path = os.path.join(snapshot_path,
                                             download_model_file_name)
         assert os.path.exists(downloaded_file_path)
@@ -96,25 +98,37 @@ class HubOperationTest(unittest.TestCase):
         downloaded_file = model_file_download(
             model_id=self.model_id,
             file_path=download_model_file_name,
+            revision=self.revision,
             cache_dir=temporary_dir)
         assert os.path.exists(downloaded_file)
         self.api.login(TEST_ACCESS_TOKEN1)
 
     def test_snapshot_delete_download_cache_file(self):
         self.prepare_case()
-        snapshot_path = snapshot_download(model_id=self.model_id)
+        snapshot_path = snapshot_download(
+            model_id=self.model_id, revision=self.revision)
         downloaded_file_path = os.path.join(snapshot_path,
                                             download_model_file_name)
         assert os.path.exists(downloaded_file_path)
         os.remove(downloaded_file_path)
         # download again in cache
         file_download_path = model_file_download(
-            model_id=self.model_id, file_path=ModelFile.README)
+            model_id=self.model_id,
+            file_path=ModelFile.README,
+            revision=self.revision)
         assert os.path.exists(file_download_path)
         # deleted file need download again
         file_download_path = model_file_download(
-            model_id=self.model_id, file_path=download_model_file_name)
+            model_id=self.model_id,
+            file_path=download_model_file_name,
+            revision=self.revision)
         assert os.path.exists(file_download_path)
+
+    def test_snapshot_download_default_revision(self):
+        pass  # TOTO
+
+    def test_file_download_default_revision(self):
+        pass  # TODO
 
     def get_model_download_times(self):
         url = f'{self.api.endpoint}/api/v1/models/{self.model_id}/downloads'
@@ -127,7 +141,7 @@ class HubOperationTest(unittest.TestCase):
         return None
 
     def test_list_model(self):
-        data = self.api.list_model(TEST_MODEL_ORG)
+        data = self.api.list_models(TEST_MODEL_ORG)
         assert len(data['Models']) >= 1
 
 

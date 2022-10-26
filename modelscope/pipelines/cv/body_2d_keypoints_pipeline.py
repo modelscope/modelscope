@@ -73,7 +73,7 @@ class Body2DKeypointsPipeline(Pipeline):
         if input[0] is None or input[1] is None:
             return {
                 OutputKeys.BOXES: [],
-                OutputKeys.POSES: [],
+                OutputKeys.KEYPOINTS: [],
                 OutputKeys.SCORES: []
             }
 
@@ -83,7 +83,7 @@ class Body2DKeypointsPipeline(Pipeline):
             result_boxes.append([box[0][0], box[0][1], box[1][0], box[1][1]])
         return {
             OutputKeys.BOXES: result_boxes,
-            OutputKeys.POSES: poses,
+            OutputKeys.KEYPOINTS: poses,
             OutputKeys.SCORES: scores
         }
 

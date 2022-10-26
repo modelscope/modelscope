@@ -1,3 +1,5 @@
+# The GPEN implementation is also open-sourced by the authors,
+# and available at https://github.com/yangxy/GPEN/tree/main/training/loss/id_loss.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

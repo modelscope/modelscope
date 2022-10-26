@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from typing import Any, Dict, List, Union
 
@@ -36,6 +37,12 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
                  **kwargs) -> Dict[str, Any]:
         if 'keywords' in kwargs.keys():
             self.keywords = kwargs['keywords']
+            if isinstance(self.keywords, str):
+                word_list = []
+                word = {}
+                word['keyword'] = self.keywords
+                word_list.append(word)
+                self.keywords = word_list
         else:
             self.keywords = None
 
@@ -44,10 +51,10 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
 
         if isinstance(audio_in, str):
             # load pcm data from url if audio_in is url str
-            audio_in = load_bytes_from_url(audio_in)
+            audio_in, audio_fs = load_bytes_from_url(audio_in)
         elif isinstance(audio_in, bytes):
             # load pcm data from wav data if audio_in is wave format
-            audio_in = extract_pcm_from_wav(audio_in)
+            audio_in, audio_fs = extract_pcm_from_wav(audio_in)
 
         output = self.preprocessor.forward(self.model.forward(), audio_in)
         output = self.forward(output)
@@ -94,6 +101,9 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             kws_type=inputs['kws_type'],
             pos_list=pos_kws_list,
             neg_list=neg_kws_list)
+
+        if 'kws_list' not in rst_dict:
+            rst_dict['kws_list'] = []
 
         return rst_dict
 

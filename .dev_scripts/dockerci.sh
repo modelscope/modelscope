@@ -20,28 +20,52 @@ do
 
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
-  docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
-             --cpuset-cpus=${cpu_sets_arr[$gpu]} \
-             --gpus="device=$gpu" \
-             -v $CODE_DIR:$CODE_DIR_IN_CONTAINER \
-             -v $MODELSCOPE_CACHE:$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
-             -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
-             -v /home/admin/pre-commit:/home/admin/pre-commit \
-             -e CI_TEST=True \
-             -e TEST_LEVEL=$TEST_LEVEL \
-             -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
-             -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
-             -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
-             -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
-             -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
-             -e TEST_LEVEL=$TEST_LEVEL \
-             -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
-             -e MODEL_TAG_URL=$MODEL_TAG_URL \
-             --workdir=$CODE_DIR_IN_CONTAINER \
-             --net host  \
-             ${IMAGE_NAME}:${IMAGE_VERSION} \
-             $CI_COMMAND
-
+  if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
+    docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
+              --cpuset-cpus=${cpu_sets_arr[$gpu]} \
+              --gpus="device=$gpu" \
+              -v $CODE_DIR:$CODE_DIR_IN_CONTAINER \
+              -v $MODELSCOPE_CACHE:$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
+              -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
+              -v /home/admin/pre-commit:/home/admin/pre-commit \
+              -e CI_TEST=True \
+              -e TEST_LEVEL=$TEST_LEVEL \
+              -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
+              -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
+              -e MODELSCOPE_SDK_DEBUG=True \
+              -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
+              -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
+              -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
+              -e TEST_LEVEL=$TEST_LEVEL \
+              -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
+              -e MODEL_TAG_URL=$MODEL_TAG_URL \
+              --workdir=$CODE_DIR_IN_CONTAINER \
+              --net host  \
+              ${IMAGE_NAME}:${IMAGE_VERSION} \
+              $CI_COMMAND
+  else
+    docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
+              --cpuset-cpus=${cpu_sets_arr[$gpu]} \
+              --gpus="device=$gpu" \
+              -v $CODE_DIR:$CODE_DIR_IN_CONTAINER \
+              -v $MODELSCOPE_CACHE:$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
+              -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
+              -v /home/admin/pre-commit:/home/admin/pre-commit \
+              -e CI_TEST=True \
+              -e TEST_LEVEL=$TEST_LEVEL \
+              -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
+              -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
+              -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
+              -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
+              -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
+              -e TEST_LEVEL=$TEST_LEVEL \
+              -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
+              -e MODEL_TAG_URL=$MODEL_TAG_URL \
+              --workdir=$CODE_DIR_IN_CONTAINER \
+              --net host  \
+              ${IMAGE_NAME}:${IMAGE_VERSION} \
+              $CI_COMMAND
+  fi
   if [ $? -ne 0 ]; then
     echo "Running test case failed, please check the log!"
     exit -1

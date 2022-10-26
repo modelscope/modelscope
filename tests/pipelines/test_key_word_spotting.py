@@ -245,7 +245,7 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_by_customized_keywords(self):
-        keywords = [{'keyword': '播放音乐'}]
+        keywords = '播放音乐'
 
         kws_result = self.run_pipeline(
             model_id=self.model_id,

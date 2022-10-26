@@ -111,3 +111,12 @@ You can install it with pip on linux:
 On windows, please checkout the instructions on the
 installation page: https://github.com/facebookresearch/fairseq and follow the ones that match your environment.
 """
+
+# docstyle-ignore
+FASTTEXT_IMPORT_ERROR = """
+{0} requires the fasttext library but it was not found in your environment.
+You can install it with pip on linux or mac:
+`pip install fasttext`
+Or you can checkout the instructions on the
+installation page: https://github.com/facebookresearch/fastText and follow the ones that match your environment.
+"""

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 else:
     _import_structure = {
         'mmdet_model': ['DetectionModel'],
-        'yolox_pai': ['YOLOX']
+        'yolox_pai': ['YOLOX'],
     }
 
     import sys

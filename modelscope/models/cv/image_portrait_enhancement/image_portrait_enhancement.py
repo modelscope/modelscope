@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import math
 import os.path as osp
 from copy import deepcopy
@@ -34,7 +35,7 @@ class ImagePortraitEnhancement(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
 
-        self.size = 512
+        self.size = 256
         self.style_dim = 512
         self.n_mlp = 8
         self.mean_path_length = 0
@@ -130,9 +131,9 @@ class ImagePortraitEnhancement(TorchModel):
         return path_penalty, path_mean.detach(), path_lengths
 
     @torch.no_grad()
-    def _evaluate_postprocess(self, src: Tensor,
+    def _evaluate_postprocess(self, input: Tensor,
                               target: Tensor) -> Dict[str, list]:
-        preds, _ = self.generator(src)
+        preds, _ = self.generator(input)
         preds = list(torch.split(preds, 1, 0))
         targets = list(torch.split(target, 1, 0))
 
@@ -143,11 +144,11 @@ class ImagePortraitEnhancement(TorchModel):
 
         return {'pred': preds, 'target': targets}
 
-    def _train_forward_d(self, src: Tensor, target: Tensor) -> Tensor:
+    def _train_forward_d(self, input: Tensor, target: Tensor) -> Tensor:
         self.requires_grad(self.generator, False)
         self.requires_grad(self.discriminator, True)
 
-        preds, _ = self.generator(src)
+        preds, _ = self.generator(input)
         fake_pred = self.discriminator(preds)
         real_pred = self.discriminator(target)
 
@@ -155,27 +156,27 @@ class ImagePortraitEnhancement(TorchModel):
 
         return d_loss
 
-    def _train_forward_d_r1(self, src: Tensor, target: Tensor) -> Tensor:
-        src.requires_grad = True
+    def _train_forward_d_r1(self, input: Tensor, target: Tensor) -> Tensor:
+        input.requires_grad = True
         target.requires_grad = True
         real_pred = self.discriminator(target)
         r1_loss = self.d_r1_loss(real_pred, target)
 
         return r1_loss
 
-    def _train_forward_g(self, src: Tensor, target: Tensor) -> Tensor:
+    def _train_forward_g(self, input: Tensor, target: Tensor) -> Tensor:
         self.requires_grad(self.generator, True)
         self.requires_grad(self.discriminator, False)
 
-        preds, _ = self.generator(src)
+        preds, _ = self.generator(input)
         fake_pred = self.discriminator(preds)
 
-        g_loss = self.g_nonsaturating_loss(fake_pred, preds, target, src)
+        g_loss = self.g_nonsaturating_loss(fake_pred, preds, target, input)
 
         return g_loss
 
-    def _train_forward_g_path(self, src: Tensor, target: Tensor) -> Tensor:
-        fake_img, latents = self.generator(src, return_latents=True)
+    def _train_forward_g_path(self, input: Tensor, target: Tensor) -> Tensor:
+        fake_img, latents = self.generator(input, return_latents=True)
 
         path_loss, self.mean_path_length, path_lengths = self.g_path_regularize(
             fake_img, latents, self.mean_path_length)
@@ -183,8 +184,8 @@ class ImagePortraitEnhancement(TorchModel):
         return path_loss
 
     @torch.no_grad()
-    def _inference_forward(self, src: Tensor) -> Dict[str, Tensor]:
-        return {'outputs': (self.generator(src)[0] * 0.5 + 0.5).clamp(0, 1)}
+    def _inference_forward(self, input: Tensor) -> Dict[str, Tensor]:
+        return {'outputs': (self.generator(input)[0] * 0.5 + 0.5).clamp(0, 1)}
 
     def forward(self, input: Dict[str,
                                   Tensor]) -> Dict[str, Union[list, Tensor]]:

@@ -14,6 +14,10 @@ mpi4py
 nltk
 pai-easynlp
 pandas
+# protobuf version beyond 3.20.0 is not compatible with TensorFlow 1.x, therefore is discouraged.
+protobuf>=3.19.0,<3.21.0
+pythainlp
+pyvi
 regex
 requests
 # rough-score was just recently updated from 0.0.4 to 0.0.7

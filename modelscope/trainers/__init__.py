@@ -9,10 +9,10 @@ if TYPE_CHECKING:
     from .builder import build_trainer
     from .cv import (ImageInstanceSegmentationTrainer,
                      ImagePortraitEnhancementTrainer,
-                     MovieSceneSegmentationTrainer)
+                     MovieSceneSegmentationTrainer, ImageInpaintingTrainer)
     from .multi_modal import CLIPTrainer
-    from .nlp import SequenceClassificationTrainer, PassageRankingTrainer
-    from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
+    from .nlp import SequenceClassificationTrainer, TextRankingTrainer
+    from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer, NlpTrainerArguments
     from .trainer import EpochBasedTrainer
 
 else:
@@ -22,11 +22,13 @@ else:
         'builder': ['build_trainer'],
         'cv': [
             'ImageInstanceSegmentationTrainer',
-            'ImagePortraitEnhancementTrainer', 'MovieSceneSegmentationTrainer'
+            'ImagePortraitEnhancementTrainer', 'MovieSceneSegmentationTrainer',
+            'ImageInpaintingTrainer'
         ],
         'multi_modal': ['CLIPTrainer'],
-        'nlp': ['SequenceClassificationTrainer', 'PassageRankingTrainer'],
-        'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
+        'nlp': ['SequenceClassificationTrainer', 'TextRankingTrainer'],
+        'nlp_trainer':
+        ['NlpEpochBasedTrainer', 'VecoTrainer', 'NlpTrainerArguments'],
         'trainer': ['EpochBasedTrainer']
     }
 

@@ -34,7 +34,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             model=model,
         )
         image = 'data/test/images/image_captioning.png'
-        result = img_captioning({'image': image})
+        result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -42,9 +42,16 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         img_captioning = pipeline(
             Tasks.image_captioning,
             model='damo/ofa_image-caption_coco_large_en')
-        result = img_captioning(
-            {'image': 'data/test/images/image_captioning.png'})
+        result = img_captioning('data/test/images/image_captioning.png')
         print(result[OutputKeys.CAPTION])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_ocr_recognize_with_name(self):
+        ocr_recognize = pipeline(
+            Tasks.ocr_recognition,
+            model='damo/ofa_ocr-recognition_scene_base_zh')
+        result = ocr_recognize('data/test/images/image_ocr_recognition.jpg')
+        print(result[OutputKeys.TEXT])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_classification_with_model(self):
@@ -52,8 +59,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             'damo/ofa_image-classification_imagenet_large_en')
         ofa_pipe = pipeline(Tasks.image_classification, model=model)
         image = 'data/test/images/image_classification.png'
-        input = {'image': image}
-        result = ofa_pipe(input)
+        result = ofa_pipe(image)
         print(result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -62,15 +68,14 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_classification,
             model='damo/ofa_image-classification_imagenet_large_en')
         image = 'data/test/images/image_classification.png'
-        input = {'image': image}
-        result = ofa_pipe(input)
+        result = ofa_pipe(image)
         print(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_summarization_with_model(self):
         model = Model.from_pretrained(
             'damo/ofa_summarization_gigaword_large_en')
-        ofa_pipe = pipeline(Tasks.summarization, model=model)
+        ofa_pipe = pipeline(Tasks.text_summarization, model=model)
         text = 'five-time world champion michelle kwan withdrew' + \
                'from the #### us figure skating championships on wednesday ,' + \
                ' but will petition us skating officials for the chance to ' + \
@@ -82,7 +87,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_summarization_with_name(self):
         ofa_pipe = pipeline(
-            Tasks.summarization,
+            Tasks.text_summarization,
             model='damo/ofa_summarization_gigaword_large_en')
         text = 'five-time world champion michelle kwan withdrew' + \
                'from the #### us figure skating championships on wednesday ,' + \
@@ -99,8 +104,8 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         ofa_pipe = pipeline(Tasks.text_classification, model=model)
         text = 'One of our number will carry out your instructions minutely.'
         text2 = 'A member of my team will execute your orders with immense precision.'
-        input = {'text': text, 'text2': text2}
-        result = ofa_pipe(input)
+        result = ofa_pipe((text, text2))
+        result = ofa_pipe({'text': text, 'text2': text2})
         print(result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -110,8 +115,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             model='damo/ofa_text-classification_mnli_large_en')
         text = 'One of our number will carry out your instructions minutely.'
         text2 = 'A member of my team will execute your orders with immense precision.'
-        input = {'text': text, 'text2': text2}
-        result = ofa_pipe(input)
+        result = ofa_pipe((text, text2))
         print(result)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

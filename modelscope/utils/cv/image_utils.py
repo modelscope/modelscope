@@ -80,7 +80,7 @@ def realtime_object_detection_bbox_vis(image, bboxes):
 
 
 def draw_keypoints(output, original_image):
-    poses = np.array(output[OutputKeys.POSES])
+    poses = np.array(output[OutputKeys.KEYPOINTS])
     scores = np.array(output[OutputKeys.SCORES])
     boxes = np.array(output[OutputKeys.BOXES])
     assert len(poses) == len(scores) and len(poses) == len(boxes)
@@ -113,12 +113,9 @@ def draw_face_detection_no_lm_result(img_path, detection_result):
 
 
 def draw_facial_expression_result(img_path, facial_expression_result):
-    label_idx = facial_expression_result[OutputKeys.LABELS]
-    map_list = [
-        'Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral'
-    ]
-    label = map_list[label_idx]
-
+    scores = facial_expression_result[OutputKeys.SCORES]
+    labels = facial_expression_result[OutputKeys.LABELS]
+    label = labels[np.argmax(scores)]
     img = cv2.imread(img_path)
     assert img is not None, f"Can't read img: {img_path}"
     cv2.putText(
@@ -157,6 +154,54 @@ def draw_face_detection_result(img_path, detection_result):
     return img
 
 
+def draw_card_detection_result(img_path, detection_result):
+
+    def warp_img(src_img, kps, ratio):
+        short_size = 500
+        if ratio > 1:
+            obj_h = short_size
+            obj_w = int(obj_h * ratio)
+        else:
+            obj_w = short_size
+            obj_h = int(obj_w / ratio)
+        input_pts = np.float32([kps[0], kps[1], kps[2], kps[3]])
+        output_pts = np.float32([[0, obj_h - 1], [0, 0], [obj_w - 1, 0],
+                                 [obj_w - 1, obj_h - 1]])
+        M = cv2.getPerspectiveTransform(input_pts, output_pts)
+        obj_img = cv2.warpPerspective(src_img, M, (obj_w, obj_h))
+        return obj_img
+
+    bboxes = np.array(detection_result[OutputKeys.BOXES])
+    kpss = np.array(detection_result[OutputKeys.KEYPOINTS])
+    scores = np.array(detection_result[OutputKeys.SCORES])
+    img_list = []
+    ver_col = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255)]
+    img = cv2.imread(img_path)
+    img_list += [img]
+    assert img is not None, f"Can't read img: {img_path}"
+    for i in range(len(scores)):
+        bbox = bboxes[i].astype(np.int32)
+        kps = kpss[i].reshape(-1, 2).astype(np.int32)
+        _w = (kps[0][0] - kps[3][0])**2 + (kps[0][1] - kps[3][1])**2
+        _h = (kps[0][0] - kps[1][0])**2 + (kps[0][1] - kps[1][1])**2
+        ratio = 1.59 if _w >= _h else 1 / 1.59
+        card_img = warp_img(img, kps, ratio)
+        img_list += [card_img]
+        score = scores[i]
+        x1, y1, x2, y2 = bbox
+        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 4)
+        for k, kp in enumerate(kps):
+            cv2.circle(img, tuple(kp), 1, color=ver_col[k], thickness=10)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (x1, y2),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+    return img_list
+
+
 def created_boxed_image(image_in, box):
     image = load_image(image_in)
     img = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
@@ -182,6 +227,66 @@ def show_video_tracking_result(video_in_path, bboxes, video_save_path):
         cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), (0, 255, 0),
                       5)
         video_writer.write(frame)
+    video_writer.release
+    cap.release()
+
+
+def show_video_object_detection_result(video_in_path, bboxes_list, labels_list,
+                                       video_save_path):
+
+    PALETTE = {
+        'person': [128, 0, 0],
+        'bicycle': [128, 128, 0],
+        'car': [64, 0, 0],
+        'motorcycle': [0, 128, 128],
+        'bus': [64, 128, 0],
+        'truck': [192, 128, 0],
+        'traffic light': [64, 0, 128],
+        'stop sign': [192, 0, 128],
+    }
+    from tqdm import tqdm
+    import math
+    cap = cv2.VideoCapture(video_in_path)
+    with tqdm(total=len(bboxes_list)) as pbar:
+        pbar.set_description(
+            'Writing results to video: {}'.format(video_save_path))
+        for i in range(len(bboxes_list)):
+            bboxes = bboxes_list[i].astype(int)
+            labels = labels_list[i]
+            success, frame = cap.read()
+            if success is False:
+                raise Exception(video_in_path,
+                                ' can not be correctly decoded by OpenCV.')
+            if i == 0:
+                size = (frame.shape[1], frame.shape[0])
+                fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+                video_writer = cv2.VideoWriter(video_save_path, fourcc,
+                                               cap.get(cv2.CAP_PROP_FPS), size,
+                                               True)
+
+            FONT_SCALE = 1e-3  # Adjust for larger font size in all images
+            THICKNESS_SCALE = 1e-3  # Adjust for larger thickness in all images
+            TEXT_Y_OFFSET_SCALE = 1e-2  # Adjust for larger Y-offset of text and bounding box
+            H, W, _ = frame.shape
+            zeros_mask = np.zeros((frame.shape)).astype(np.uint8)
+            for bbox, l in zip(bboxes, labels):
+                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                              PALETTE[l], 1)
+                cv2.putText(
+                    frame,
+                    l, (bbox[0], bbox[1] - int(TEXT_Y_OFFSET_SCALE * H)),
+                    fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                    fontScale=min(H, W) * FONT_SCALE,
+                    thickness=math.ceil(min(H, W) * THICKNESS_SCALE),
+                    color=PALETTE[l])
+                zeros_mask = cv2.rectangle(
+                    zeros_mask, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                    color=PALETTE[l],
+                    thickness=-1)
+
+            frame = cv2.addWeighted(frame, 1., zeros_mask, .65, 0)
+            video_writer.write(frame)
+            pbar.update(1)
     video_writer.release
     cap.release()
 
@@ -237,3 +342,35 @@ def show_video_summarization_result(video_in_path, result, video_save_path):
             video_writer.write(frame)
     video_writer.release()
     cap.release()
+
+
+def show_image_object_detection_auto_result(img_path,
+                                            detection_result,
+                                            save_path=None):
+    scores = detection_result[OutputKeys.SCORES]
+    labels = detection_result[OutputKeys.LABELS]
+    bboxes = detection_result[OutputKeys.BOXES]
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+
+    for (score, label, box) in zip(scores, labels, bboxes):
+        cv2.rectangle(img, (int(box[0]), int(box[1])),
+                      (int(box[2]), int(box[3])), (0, 0, 255), 2)
+        cv2.putText(
+            img,
+            f'{score:.2f}', (int(box[0]), int(box[1])),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+        cv2.putText(
+            img,
+            label, (int((box[0] + box[2]) * 0.5), int(box[1])),
+            1,
+            1.0, (0, 255, 0),
+            thickness=1,
+            lineType=8)
+
+    if save_path is not None:
+        cv2.imwrite(save_path, img)
+    return img

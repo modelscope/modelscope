@@ -1,4 +1,5 @@
 albumentations>=1.0.3
+av>=9.2.0
 easydict
 fairscale>=0.4.1
 fastai>=1.0.51
@@ -7,14 +8,18 @@ ffmpeg-python>=0.2.0
 ftfy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
+imgaug>=0.4.0
+kornia>=0.5.0
 lmdb
 lpips
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0
+moviepy>=1.0.3
 networkx>=2.5
+numba
 onnxruntime>=1.10
-pai-easycv>=0.6.3.6
+pai-easycv>=0.6.3.9
 pandas
 psutil
 regex

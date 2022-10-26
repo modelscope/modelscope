@@ -1,3 +1,5 @@
+# Part of the implementation is borrowed and modified from SegLink,
+# publicly available at https://github.com/bgshih/seglink
 import math
 import os
 import shutil

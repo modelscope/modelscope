@@ -13,7 +13,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class PartOfSpeechTest(unittest.TestCase):
-    model_id = 'damo/nlp_structbert_part-of-speech_chinese-base'
+    model_id = 'damo/nlp_structbert_part-of-speech_chinese-lite'
     sentence = '今天天气不错，适合出去游玩'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -23,7 +23,7 @@ class PartOfSpeechTest(unittest.TestCase):
         model = TokenClassificationModel.from_pretrained(cache_path)
         pipeline1 = TokenClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
-            Tasks.token_classification, model=model, preprocessor=tokenizer)
+            Tasks.part_of_speech, model=model, preprocessor=tokenizer)
         print(f'sentence: {self.sentence}\n'
               f'pipeline1:{pipeline1(input=self.sentence)}')
         print()
@@ -34,20 +34,17 @@ class PartOfSpeechTest(unittest.TestCase):
         model = Model.from_pretrained(self.model_id)
         tokenizer = TokenClassificationPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
-            task=Tasks.token_classification,
-            model=model,
-            preprocessor=tokenizer)
+            task=Tasks.part_of_speech, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipeline_ins = pipeline(
-            task=Tasks.token_classification, model=self.model_id)
+        pipeline_ins = pipeline(task=Tasks.part_of_speech, model=self.model_id)
         print(pipeline_ins(input=self.sentence))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.token_classification)
+        pipeline_ins = pipeline(task=Tasks.part_of_speech)
         print(pipeline_ins(input=self.sentence))
 
 

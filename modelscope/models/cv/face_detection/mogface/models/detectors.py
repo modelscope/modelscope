@@ -1,3 +1,5 @@
+# The implementation is based on MogFace, available at
+# https://github.com/damo-cv/MogFace
 import os
 
 import cv2

@@ -21,7 +21,7 @@ class mGLMTest(unittest.TestCase, DemoCompatibilityCheck):
         model = 'ZhipuAI/Multilingual-GLM-Summarization-zh'
         preprocessor = MGLMSummarizationPreprocessor()
         pipe = pipeline(
-            task=Tasks.summarization,
+            task=Tasks.text_summarization,
             model=model,
             preprocessor=preprocessor,
         )

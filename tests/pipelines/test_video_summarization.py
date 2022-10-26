@@ -3,7 +3,6 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.cv.image_utils import show_video_summarization_result
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
@@ -22,8 +21,6 @@ class VideoSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
         result = summarization_pipeline(video_path)
 
         print(f'video summarization output: \n{result}.')
-        show_video_summarization_result(video_path, result,
-                                        './summarization_result.avi')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub_default_model(self):

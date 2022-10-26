@@ -382,7 +382,7 @@ def read_context(tokenizer, args, context):
     return terminate_runs, raw_text, context_tokens_tensor, context_length
 
 
-@MODELS.register_module(Tasks.summarization, module_name=Models.mglm)
+@MODELS.register_module(Tasks.text_summarization, module_name=Models.mglm)
 class MGLMForTextSummarization(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

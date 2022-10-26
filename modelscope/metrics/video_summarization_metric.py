@@ -1,3 +1,6 @@
+# Part of the implementation is borrowed and modified from PGL-SUM,
+# publicly available at https://github.com/e-apostolidis/PGL-SUM
+
 from typing import Dict
 
 import numpy as np

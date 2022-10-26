@@ -22,38 +22,28 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_deberta_v2 import DebertaV2Config
-    from .tokenization_deberta_v2 import DebertaV2Tokenizer
-    from .tokenization_deberta_v2_fast import DebertaV2TokenizerFast
-
-    from .modeling_deberta_v2 import (
-        DebertaV2ForMaskedLM,
-        DebertaV2ForMultipleChoice,
-        DebertaV2ForQuestionAnswering,
-        DebertaV2ForSequenceClassification,
-        DebertaV2ForTokenClassification,
+    from .configuration import DebertaV2Config
+    from .tokenization import DebertaV2Tokenizer
+    from .tokenization_fast import DebertaV2TokenizerFast
+    from .backbone import (
         DebertaV2Model,
         DebertaV2PreTrainedModel,
     )
+    from .fill_mask import DebertaV2ForMaskedLM
 
 else:
     _import_structure = {
-        'configuration_deberta_v2':
-        ['DEBERTA_V2_PRETRAINED_CONFIG_ARCHIVE_MAP', 'DebertaV2Config'],
-        'tokenization_deberta_v2': ['DebertaV2Tokenizer']
+        'configuration': ['DebertaV2Config'],
+        'tokenization': ['DebertaV2Tokenizer'],
+        'tokenization_fast': ['DebertaV2TokenizerFast'],
+        'backbone': [
+            'DebertaV2Model',
+            'DebertaV2PreTrainedModel',
+        ],
+        'fill_mask': [
+            'DebertaV2ForMaskedLM',
+        ]
     }
-    _import_structure['tokenization_deberta_v2_fast'] = [
-        'DebertaV2TokenizerFast'
-    ]
-    _import_structure['modeling_deberta_v2'] = [
-        'DebertaV2ForMaskedLM',
-        'DebertaV2ForMultipleChoice',
-        'DebertaV2ForQuestionAnswering',
-        'DebertaV2ForSequenceClassification',
-        'DebertaV2ForTokenClassification',
-        'DebertaV2Model',
-        'DebertaV2PreTrainedModel',
-    ]
     import sys
 
     sys.modules[__name__] = LazyImportModule(

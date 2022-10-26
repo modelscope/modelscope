@@ -17,19 +17,19 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_palm import PalmConfig
-    from .modeling_palm import (
+    from .configuration import PalmConfig
+    from .backbone import (
         AbsSummarizer,
         PalmForConditionalGeneration,
         Translator,
     )
-    from .palm_for_text_generation import PalmForTextGeneration
+    from .text_generation import PalmForTextGeneration
 else:
     _import_structure = {
-        'configuration_palm': ['PalmConfig'],
-        'modeling_palm':
+        'configuration': ['PalmConfig'],
+        'backbone':
         ['AbsSummarizer', 'PalmForConditionalGeneration', 'Translator'],
-        'palm_for_text_generation': ['PalmForTextGeneration'],
+        'text_generation': ['PalmForTextGeneration'],
     }
 
     import sys

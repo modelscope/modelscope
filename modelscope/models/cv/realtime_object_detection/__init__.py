@@ -5,9 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .realtime_detector import RealtimeDetector
+    from .realtime_video_detector import RealtimeVideoDetector
 else:
     _import_structure = {
         'realtime_detector': ['RealtimeDetector'],
+        'realtime_video_detector': ['RealtimeVideoDetector'],
     }
 
     import sys

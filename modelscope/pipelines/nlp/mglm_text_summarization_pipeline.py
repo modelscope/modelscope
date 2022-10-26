@@ -13,7 +13,7 @@ __all__ = ['MGLMTextSummarizationPipeline']
 
 
 @PIPELINES.register_module(
-    group_key=Tasks.summarization,
+    group_key=Tasks.text_summarization,
     module_name=Pipelines.mglm_text_summarization)
 class MGLMTextSummarizationPipeline(Pipeline):
 

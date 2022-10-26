@@ -64,8 +64,8 @@ class SpaceModelBase(nn.Module):
         """
         Forward process, include real forward, collect metrices and optimize(optional)
 
-        @params : inputs : input data
-        @type : dict of numpy.ndarray/int/float/...
+        Args:
+            inputs(`dict` of numpy.ndarray/int/float/...) : input data
         """
         if is_training:
             self.train()
@@ -85,11 +85,10 @@ class SpaceModelBase(nn.Module):
               eos_id=None,
               max_gen_len=None,
               prev_input=None):
-        """
-        Inference process.
+        """Inference process.
 
-        @params : inputs : input data
-        @type : dict of numpy.ndarray/int/float/...
+        Args:
+            inputs(`dict` of numpy.ndarray/int/float/...) : input data
         """
         self.eval()
         results = self._infer(

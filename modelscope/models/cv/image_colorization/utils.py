@@ -1,3 +1,5 @@
+# The implementation here is modified based on DeOldify, originally MIT License and
+# publicly available at https://github.com/jantic/DeOldify/blob/master/fastai/callbacks/hooks.py
 import functools
 from enum import Enum
 

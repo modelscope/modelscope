@@ -401,7 +401,10 @@ class MGLMForTextSummarization(TorchModel):
         self.args = setup_args(get_args())
         self.args.load_pretrained = model_dir
         # Pytorch distributed.
-        initialize_distributed(self.args)
+        try:
+            initialize_distributed(self.args)
+        except (RuntimeError):
+            print('group process initialized twice')
         # Random seeds for reproducability.
         set_random_seed(self.args.seed)
         # setting default batch size to 1

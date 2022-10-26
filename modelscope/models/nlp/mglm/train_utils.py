@@ -7,7 +7,6 @@ from torch import distributed as dist
 
 from . import mpu
 from .fp16 import DynamicLossScaler, FP16_Module, FP16_Optimizer
-from .learning_rates import AnnealingLR
 from .model import DistributedDataParallel as LocalDDP
 from .model import (GLMForMultiTokenCloze, GLMForMultiTokenClozeFast,
                     GLMForSequenceClassification, GLMForSingleTokenCloze,

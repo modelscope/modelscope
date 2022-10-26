@@ -26,7 +26,18 @@ class mGLMTest(unittest.TestCase, DemoCompatibilityCheck):
             preprocessor=preprocessor,
         )
         result = pipe(
-            '二十大代表、中国航天科技集团有限公司党组书记、董事长吴燕生介绍：进入新时代，中国航天取得了历史性的成就。我在这里再以运载火箭的发射为例。党的十八大以来的十年，中国航天进行了274次发射。党的十九大以来的五年，我们进行了192次火箭发射，占长征系列火箭发射总数的43.2%。正是这些成就推动我国全面建成了航天大国，进入了航天强国的行列。'  # noqa
+        '昨天长沙12路公交车上一男子多次掏出打火机玩弄，将火苗对准携带的塑料袋。火苗蹿起的一刹那，一大叔一把夺过打火机，一大妈一掌将着火物拍熄，满车乘客全部跑出了车厢。该男子称只是要烧掉衣服线头长沙人民威武！安全反恐意识强悍！'
+        )
+        print(result)
+
+        model = 'ZhipuAI/Multilingual-GLM-Summarization-en'
+        preprocessor = MGLMSummarizationPreprocessor()
+        pipe = pipeline(
+            task=Tasks.summarization,
+            model=model,
+            preprocessor=preprocessor,
+        )
+        result = pipe('据中国载人航天工程办公室消息，北京时间2022年10月25日，梦天实验舱与长征五号B遥四运载火箭组合体已转运至发射区。后续将按计划开展发射前各项功能检查和联合测试等工作，计划于近日择机实施发射。目前，文昌航天发射场设施设备状态良好，参试各单位正在加紧开展任务准备，全力以赴确保空间站建造任务决战决胜。'
         )
         print(result)
 

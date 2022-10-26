@@ -3,7 +3,6 @@
 from typing import Dict
 
 import numpy as np
-from similarity.normalized_levenshtein import NormalizedLevenshtein
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys

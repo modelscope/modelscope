@@ -6,7 +6,6 @@ pycocotools>=2.0.4
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4
 sacrebleu
-strsim
 taming-transformers-rom1504
 timm
 tokenizers

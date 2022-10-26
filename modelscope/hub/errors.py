@@ -13,6 +13,10 @@ class NotSupportError(Exception):
     pass
 
 
+class NoValidRevisionError(Exception):
+    pass
+
+
 class NotExistError(Exception):
     pass
 
@@ -99,3 +103,33 @@ def datahub_raise_on_error(url, rsp):
         raise RequestError(
             f"Url = {url}, Status = {rsp.get('status')}, error = {rsp.get('error')}, message = {rsp.get('message')}"
         )
+
+
+def raise_for_http_status(rsp):
+    """
+    Attempt to decode utf-8 first since some servers
+    localize reason strings, for invalid utf-8, fall back
+    to decoding with iso-8859-1.
+    """
+    http_error_msg = ''
+    if isinstance(rsp.reason, bytes):
+        try:
+            reason = rsp.reason.decode('utf-8')
+        except UnicodeDecodeError:
+            reason = rsp.reason.decode('iso-8859-1')
+    else:
+        reason = rsp.reason
+
+    if 400 <= rsp.status_code < 500:
+        http_error_msg = u'%s Client Error: %s for url: %s' % (rsp.status_code,
+                                                               reason, rsp.url)
+
+    elif 500 <= rsp.status_code < 600:
+        http_error_msg = u'%s Server Error: %s for url: %s' % (rsp.status_code,
+                                                               reason, rsp.url)
+
+    if http_error_msg:
+        req = rsp.request
+        if req.method == 'POST':
+            http_error_msg = u'%s, body: %s' % (http_error_msg, req.body)
+        raise HTTPError(http_error_msg, response=rsp)

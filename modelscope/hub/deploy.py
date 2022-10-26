@@ -3,7 +3,6 @@ from abc import ABC
 from http import HTTPStatus
 from typing import Optional
 
-import attrs
 import json
 import requests
 from attrs import asdict, define, field, validators
@@ -12,7 +11,8 @@ from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE)
 from modelscope.hub.errors import (NotLoginException, NotSupportError,
-                                   RequestError, handle_http_response, is_ok)
+                                   RequestError, handle_http_response, is_ok,
+                                   raise_for_http_status)
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.utils.logger import get_logger
 
@@ -188,6 +188,7 @@ class ServiceDeployer(object):
 
     def __init__(self, endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
+        self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.cookies = ModelScopeConfig.get_cookies()
         if self.cookies is None:
             raise NotLoginException(
@@ -227,12 +228,9 @@ class ServiceDeployer(object):
             resource=resource,
             provider=provider)
         path = f'{self.endpoint}/api/v1/deployer/endpoint'
-        body = attrs.asdict(create_params)
+        body = asdict(create_params)
         r = requests.post(
-            path,
-            json=body,
-            cookies=self.cookies,
-        )
+            path, json=body, cookies=self.cookies, headers=self.headers)
         handle_http_response(r, logger, self.cookies, 'create_service')
         if r.status_code >= HTTPStatus.OK and r.status_code < HTTPStatus.MULTIPLE_CHOICES:
             if is_ok(r.json()):
@@ -241,7 +239,7 @@ class ServiceDeployer(object):
             else:
                 raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
         return None
 
     def get(self, instance_name: str, provider: ServiceProviderParameters):
@@ -262,7 +260,7 @@ class ServiceDeployer(object):
         params = GetServiceParameters(provider=provider)
         path = '%s/api/v1/deployer/endpoint/%s?%s' % (
             self.endpoint, instance_name, params.to_query_str())
-        r = requests.get(path, cookies=self.cookies)
+        r = requests.get(path, cookies=self.cookies, headers=self.headers)
         handle_http_response(r, logger, self.cookies, 'get_service')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -271,7 +269,7 @@ class ServiceDeployer(object):
             else:
                 raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
         return None
 
     def delete(self, instance_name: str, provider: ServiceProviderParameters):
@@ -293,7 +291,7 @@ class ServiceDeployer(object):
         params = DeleteServiceParameters(provider=provider)
         path = '%s/api/v1/deployer/endpoint/%s?%s' % (
             self.endpoint, instance_name, params.to_query_str())
-        r = requests.delete(path, cookies=self.cookies)
+        r = requests.delete(path, cookies=self.cookies, headers=self.headers)
         handle_http_response(r, logger, self.cookies, 'delete_service')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -302,7 +300,7 @@ class ServiceDeployer(object):
             else:
                 raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
         return None
 
     def list(self,
@@ -328,7 +326,7 @@ class ServiceDeployer(object):
             provider=provider, skip=skip, limit=limit)
         path = '%s/api/v1/deployer/endpoint?%s' % (self.endpoint,
                                                    params.to_query_str())
-        r = requests.get(path, cookies=self.cookies)
+        r = requests.get(path, cookies=self.cookies, headers=self.headers)
         handle_http_response(r, logger, self.cookies, 'list_service_instances')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -337,5 +335,5 @@ class ServiceDeployer(object):
             else:
                 raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
         return None

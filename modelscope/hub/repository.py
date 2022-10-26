@@ -5,7 +5,8 @@ from typing import Optional
 
 from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
-                                       DEFAULT_MODEL_REVISION)
+                                       DEFAULT_REPOSITORY_REVISION,
+                                       MASTER_MODEL_BRANCH)
 from modelscope.utils.logger import get_logger
 from .git import GitCommandWrapper
 from .utils.utils import get_endpoint
@@ -20,7 +21,7 @@ class Repository:
     def __init__(self,
                  model_dir: str,
                  clone_from: str,
-                 revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                 revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                  auth_token: Optional[str] = None,
                  git_path: Optional[str] = None):
         """
@@ -89,7 +90,8 @@ class Repository:
 
     def push(self,
              commit_message: str,
-             branch: Optional[str] = DEFAULT_MODEL_REVISION,
+             local_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+             remote_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
              force: bool = False):
         """Push local files to remote, this method will do.
            git pull
@@ -116,14 +118,48 @@ class Repository:
 
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
         self.git_wrapper.pull(self.model_dir)
+
         self.git_wrapper.add(self.model_dir, all_files=True)
         self.git_wrapper.commit(self.model_dir, commit_message)
         self.git_wrapper.push(
             repo_dir=self.model_dir,
             token=self.auth_token,
             url=url,
-            local_branch=branch,
-            remote_branch=branch)
+            local_branch=local_branch,
+            remote_branch=remote_branch)
+
+    def tag(self, tag_name: str, message: str, ref: str = MASTER_MODEL_BRANCH):
+        """Create a new tag.
+        Args:
+            tag_name (str): The name of the tag
+            message (str): The tag message.
+            ref (str): The tag reference, can be commit id or branch.
+        """
+        if tag_name is None or tag_name == '':
+            msg = 'We use tag-based revision, therefore tag_name cannot be None or empty.'
+            raise InvalidParameter(msg)
+        if message is None or message == '':
+            msg = 'We use annotated tag, therefore message cannot None or empty.'
+        self.git_wrapper.tag(
+            repo_dir=self.model_dir,
+            tag_name=tag_name,
+            message=message,
+            ref=ref)
+
+    def tag_and_push(self,
+                     tag_name: str,
+                     message: str,
+                     ref: str = MASTER_MODEL_BRANCH):
+        """Create tag and push to remote
+
+        Args:
+            tag_name (str): The name of the tag
+            message (str): The tag message.
+            ref (str, optional): The tag ref, can be commit id or branch. Defaults to MASTER_MODEL_BRANCH.
+        """
+        self.tag(tag_name, message, ref)
+
+        self.git_wrapper.push_tag(repo_dir=self.model_dir, tag_name=tag_name)
 
 
 class DatasetRepository:

@@ -4,40 +4,45 @@
 import datetime
 import os
 import pickle
+import platform
 import shutil
 import tempfile
+import uuid
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 
+from modelscope import __version__
 from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
-                                      DEFAULT_CREDENTIALS_PATH, Licenses,
-                                      ModelVisibility)
+                                      DEFAULT_CREDENTIALS_PATH,
+                                      MODELSCOPE_ENVIRONMENT, ONE_YEAR_SECONDS,
+                                      Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
-                                   NotLoginException, RequestError,
-                                   datahub_raise_on_error,
+                                   NotLoginException, NoValidRevisionError,
+                                   RequestError, datahub_raise_on_error,
                                    handle_http_post_error,
-                                   handle_http_response, is_ok, raise_on_error)
+                                   handle_http_response, is_ok,
+                                   raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
-from modelscope.hub.utils.utils import (get_endpoint,
-                                        model_id_to_group_owner_name)
 from modelscope.utils.config_ds import DOWNLOADED_DATASETS_PATH
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
-                                       DatasetFormations, DatasetMetaFormats,
-                                       DownloadMode, ModelFile)
+                                       DEFAULT_REPOSITORY_REVISION,
+                                       MASTER_MODEL_BRANCH, DatasetFormations,
+                                       DatasetMetaFormats, DownloadMode,
+                                       ModelFile)
 from modelscope.utils.logger import get_logger
-
-# yapf: enable
+from .utils.utils import (get_endpoint, get_release_datetime,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -46,6 +51,7 @@ class HubApi:
 
     def __init__(self, endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
+        self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
 
     def login(
         self,
@@ -65,8 +71,9 @@ class HubApi:
         </Tip>
         """
         path = f'{self.endpoint}/api/v1/login'
-        r = requests.post(path, json={'AccessToken': access_token})
-        r.raise_for_status()
+        r = requests.post(
+            path, json={'AccessToken': access_token}, headers=self.headers)
+        raise_for_http_status(r)
         d = r.json()
         raise_on_error(d)
 
@@ -120,7 +127,8 @@ class HubApi:
             'Visibility': visibility,  # server check
             'License': license
         }
-        r = requests.post(path, json=body, cookies=cookies)
+        r = requests.post(
+            path, json=body, cookies=cookies, headers=self.headers)
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
         model_repo_url = f'{get_endpoint()}/{model_id}'
@@ -140,8 +148,8 @@ class HubApi:
             raise ValueError('Token does not exist, please login first.')
         path = f'{self.endpoint}/api/v1/models/{model_id}'
 
-        r = requests.delete(path, cookies=cookies)
-        r.raise_for_status()
+        r = requests.delete(path, cookies=cookies, headers=self.headers)
+        raise_for_http_status(r)
         raise_on_error(r.json())
 
     def get_model_url(self, model_id):
@@ -170,7 +178,7 @@ class HubApi:
         owner_or_group, name = model_id_to_group_owner_name(model_id)
         path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
 
-        r = requests.get(path, cookies=cookies)
+        r = requests.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -178,7 +186,7 @@ class HubApi:
             else:
                 raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
 
     def push_model(self,
                    model_id: str,
@@ -187,7 +195,7 @@ class HubApi:
                    license: str = Licenses.APACHE_V2,
                    chinese_name: Optional[str] = None,
                    commit_message: Optional[str] = 'upload model',
-                   revision: Optional[str] = DEFAULT_MODEL_REVISION):
+                   revision: Optional[str] = DEFAULT_REPOSITORY_REVISION):
         """
         Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
@@ -258,6 +266,14 @@ class HubApi:
                 logger.info('Create new branch %s' % revision)
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
+            files_in_repo = os.listdir(tmp_dir)
+            for f in files_in_repo:
+                if f[0] != '.':
+                    src = os.path.join(tmp_dir, f)
+                    if os.path.isfile(src):
+                        os.remove(src)
+                    else:
+                        shutil.rmtree(src, ignore_errors=True)
             for f in files_to_save:
                 if f[0] != '.':
                     src = os.path.join(model_dir, f)
@@ -269,7 +285,7 @@ class HubApi:
                 date = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
                 commit_message = '[automsg] push model %s to hub at %s' % (
                     model_id, date)
-            repo.push(commit_message=commit_message, branch=revision)
+            repo.push(commit_message=commit_message, local_branch=revision, remote_branch=revision)
         except Exception:
             raise
         finally:
@@ -294,7 +310,8 @@ class HubApi:
             path,
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
             (owner_or_group, page_number, page_size),
-            cookies=cookies)
+            cookies=cookies,
+            headers=self.headers)
         handle_http_response(r, logger, cookies, 'list_model')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -303,7 +320,7 @@ class HubApi:
             else:
                 raise RequestError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
-            r.raise_for_status()
+            raise_for_http_status(r)
         return None
 
     def _check_cookie(self,
@@ -318,10 +335,70 @@ class HubApi:
                 raise ValueError('Token does not exist, please login first.')
         return cookies
 
+    def list_model_revisions(
+            self,
+            model_id: str,
+            cutoff_timestamp: int = None,
+            use_cookies: Union[bool, CookieJar] = False) -> List[str]:
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            cutoff_timestamp (int): Tags created before the cutoff will be included.
+                                    The timestamp is represented by the seconds elasped from the epoch time.
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
+                        will load cookie from local. Defaults to False.
+        Returns:
+            Tuple[List[str], List[str]]: Return list of branch name and tags
+        """
+        cookies = self._check_cookie(use_cookies)
+        if cutoff_timestamp is None:
+            cutoff_timestamp = get_release_datetime()
+        path = f'{self.endpoint}/api/v1/models/{model_id}/revisions?EndTime=%s' % cutoff_timestamp
+        r = requests.get(path, cookies=cookies, headers=self.headers)
+        handle_http_response(r, logger, cookies, model_id)
+        d = r.json()
+        raise_on_error(d)
+        info = d[API_RESPONSE_FIELD_DATA]
+        # tags returned from backend are guaranteed to be ordered by create-time
+        tags = [x['Revision'] for x in info['RevisionMap']['Tags']
+                ] if info['RevisionMap']['Tags'] else []
+        return tags
+
+    def get_valid_revision(self, model_id: str, revision=None, cookies: Optional[CookieJar] = None):
+        release_timestamp = get_release_datetime()
+        current_timestamp = int(round(datetime.datetime.now().timestamp()))
+        # for active development in library codes (non-release-branches), release_timestamp
+        # is set to be a far-away-time-in-the-future, to ensure that we shall
+        # get the master-HEAD version from model repo by default (when no revision is provided)
+        if release_timestamp > current_timestamp + ONE_YEAR_SECONDS:
+            branches, tags = self.get_model_branches_and_tags(
+                model_id, use_cookies=False if cookies is None else cookies)
+            if revision is None:
+                revision = MASTER_MODEL_BRANCH
+                logger.info('Model revision not specified, use default: %s in development mode' % revision)
+            if revision not in branches and revision not in tags:
+                raise NotExistError('The model: %s has no branch or tag : %s .' % revision)
+        else:
+            revisions = self.list_model_revisions(
+                model_id, cutoff_timestamp=release_timestamp, use_cookies=False if cookies is None else cookies)
+            if revision is None:
+                if len(revisions) == 0:
+                    raise NoValidRevisionError('The model: %s has no valid revision!' % model_id)
+                # tags (revisions) returned from backend are guaranteed to be ordered by create-time
+                # we shall obtain the latest revision created earlier than release version of this branch
+                revision = revisions[0]
+                logger.info('Model revision not specified, use the latest revision: %s' % revision)
+            else:
+                if revision not in revisions:
+                    raise NotExistError(
+                        'The model: %s has no revision: %s !' % (model_id, revision))
+        return revision
+
     def get_model_branches_and_tags(
         self,
         model_id: str,
-        use_cookies: Union[bool, CookieJar] = False
+        use_cookies: Union[bool, CookieJar] = False,
     ) -> Tuple[List[str], List[str]]:
         """Get model branch and tags.
 
@@ -335,7 +412,7 @@ class HubApi:
         cookies = self._check_cookie(use_cookies)
 
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions'
-        r = requests.get(path, cookies=cookies)
+        r = requests.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
@@ -376,7 +453,11 @@ class HubApi:
         if root is not None:
             path = path + f'&Root={root}'
 
-        r = requests.get(path, cookies=cookies, headers=headers)
+        r = requests.get(
+            path, cookies=cookies, headers={
+                **headers,
+                **self.headers
+            })
 
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
@@ -392,10 +473,9 @@ class HubApi:
 
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
-        headers = None
         params = {}
-        r = requests.get(path, params=params, headers=headers)
-        r.raise_for_status()
+        r = requests.get(path, params=params, headers=self.headers)
+        raise_for_http_status(r)
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
 
@@ -425,7 +505,7 @@ class HubApi:
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        r = requests.get(datahub_url)
+        r = requests.get(datahub_url, headers=self.headers)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']
@@ -445,7 +525,7 @@ class HubApi:
                 datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                               f'Revision={revision}&FilePath={file_path}'
                 r = requests.get(datahub_url)
-                r.raise_for_status()
+                raise_for_http_status(r)
                 local_path = os.path.join(cache_dir, file_path)
                 if os.path.exists(local_path):
                     logger.warning(
@@ -490,7 +570,8 @@ class HubApi:
                       f'ststoken?Revision={revision}'
 
         cookies = requests.utils.dict_from_cookiejar(cookies)
-        r = requests.get(url=datahub_url, cookies=cookies)
+        r = requests.get(
+            url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
@@ -512,12 +593,12 @@ class HubApi:
 
     def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
-        r = requests.post(url)
-        r.raise_for_status()
+        r = requests.post(url, headers=self.headers)
+        raise_for_http_status(r)
 
     @staticmethod
     def datahub_remote_call(url):
-        r = requests.get(url)
+        r = requests.get(url, headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
         datahub_raise_on_error(url, resp)
         return resp['Data']
@@ -531,6 +612,7 @@ class ModelScopeConfig:
     COOKIES_FILE_NAME = 'cookies'
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'
+    USER_SESSION_ID_FILE_NAME = 'session'
 
     @staticmethod
     def make_sure_credential_path_exist():
@@ -558,6 +640,23 @@ class ModelScopeConfig:
                         return None
                 return cookies
         return None
+
+    @staticmethod
+    def get_user_session_id():
+        session_path = os.path.join(ModelScopeConfig.path_credential,
+                                    ModelScopeConfig.USER_SESSION_ID_FILE_NAME)
+        session_id = ''
+        if os.path.exists(session_path):
+            with open(session_path, 'rb') as f:
+                session_id = str(f.readline().strip(), encoding='utf-8')
+                return session_id
+        if session_id == '' or len(session_id) != 32:
+            session_id = str(uuid.uuid4().hex)
+            ModelScopeConfig.make_sure_credential_path_exist()
+            with open(session_path, 'w+') as wf:
+                wf.write(session_id)
+
+        return session_id
 
     @staticmethod
     def save_token(token: str):
@@ -607,3 +706,32 @@ class ModelScopeConfig:
         except FileNotFoundError:
             pass
         return token
+
+    @staticmethod
+    def get_user_agent(user_agent: Union[Dict, str, None] = None, ) -> str:
+        """Formats a user-agent string with basic info about a request.
+
+        Args:
+            user_agent (`str`, `dict`, *optional*):
+                The user agent info in the form of a dictionary or a single string.
+
+        Returns:
+            The formatted user-agent string.
+        """
+        env = 'custom'
+        if MODELSCOPE_ENVIRONMENT in os.environ:
+            env = os.environ[MODELSCOPE_ENVIRONMENT]
+
+        ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s' % (
+            __version__,
+            platform.python_version(),
+            ModelScopeConfig.get_user_session_id(),
+            platform.platform(),
+            platform.processor(),
+            env,
+        )
+        if isinstance(user_agent, dict):
+            ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())
+        elif isinstance(user_agent, str):
+            ua += ';' + user_agent
+        return ua

@@ -165,14 +165,16 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(task=Tasks.text_generation)
         print(pipeline_ins(self.palm_input_zh))
 
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_bloom(self):
+        pipe = pipeline(
+            task=Tasks.text_generation, model='langboat/bloom-1b4-zh')
+        print(pipe('中国的首都是'))
 
     @unittest.skip("Langboat's checkpoint has not been uploaded to modelhub")
     def test_gpt_neo(self):
         pipe = pipeline(
-            task=Tasks.text_generation, model='Langboat/mengzi-gpt-neo-base')
+            task=Tasks.text_generation, model='langboat/mengzi-gpt-neo-base')
         print(
             pipe(
                 '我是',
@@ -182,11 +184,9 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
                 max_length=20,
                 repetition_penalty=0.5))
 
-    @unittest.skip("Langboat's checkpoint has not been uploaded to modelhub")
-    def test_bloom(self):
-        pipe = pipeline(
-            task=Tasks.text_generation, model='Langboat/bloom-1b4-zh')
-        print(pipe('中国的首都是'))
+    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
 
 
 if __name__ == '__main__':

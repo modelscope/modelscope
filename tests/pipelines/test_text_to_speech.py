@@ -9,7 +9,6 @@ import unittest
 import torch
 from scipy.io.wavfile import write
 
-from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -53,9 +52,8 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
     def test_pipeline(self):
         for i in range(len(self.zhcn_voices)):
             logger.info('test %s' % self.zhcn_voices[i])
-            model = Model.from_pretrained(
-                model_name_or_path=self.zhcn_models[i], revision='pytorch_am')
-            sambert_hifigan_tts = pipeline(task=self.task, model=model)
+            sambert_hifigan_tts = pipeline(
+                task=self.task, model=self.zhcn_models[i])
             self.assertTrue(sambert_hifigan_tts is not None)
             output = sambert_hifigan_tts(input=self.zhcn_text)
             self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])
@@ -63,9 +61,8 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
             write('output_%s.wav' % self.zhcn_voices[i], 16000, pcm)
         for i in range(len(self.en_voices)):
             logger.info('test %s' % self.en_voices[i])
-            model = Model.from_pretrained(
-                model_name_or_path=self.en_models[i], revision='pytorch_am')
-            sambert_hifigan_tts = pipeline(task=self.task, model=model)
+            sambert_hifigan_tts = pipeline(
+                task=self.task, model=self.en_models[i])
             self.assertTrue(sambert_hifigan_tts is not None)
             output = sambert_hifigan_tts(input=self.en_text)
             self.assertIsNotNone(output[OutputKeys.OUTPUT_PCM])

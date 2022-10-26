@@ -16,7 +16,9 @@ if TYPE_CHECKING:
     from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
-    from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
+    from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline, \
+        NamedEntityRecognitionThaiPipeline, \
+        NamedEntityRecognitionVietPipeline
     from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
     from .text_classification_pipeline import TextClassificationPipeline
@@ -29,6 +31,8 @@ if TYPE_CHECKING:
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
+    from .multilingual_word_segmentation_pipeline import MultilingualWordSegmentationPipeline, \
+        WordSegmentationThaiPipeline
 
 else:
     _import_structure = {
@@ -46,8 +50,11 @@ else:
         'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
-        'named_entity_recognition_pipeline':
-        ['NamedEntityRecognitionPipeline'],
+        'named_entity_recognition_pipeline': [
+            'NamedEntityRecognitionPipeline',
+            'NamedEntityRecognitionThaiPipeline',
+            'NamedEntityRecognitionVietPipeline'
+        ],
         'text_ranking_pipeline': ['TextRankingPipeline'],
         'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline'],
         'summarization_pipeline': ['SummarizationPipeline'],
@@ -64,6 +71,10 @@ else:
         'word_segmentation_pipeline': ['WordSegmentationPipeline'],
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
+        'multilingual_word_segmentation_pipeline': [
+            'MultilingualWordSegmentationPipeline',
+            'WordSegmentationThaiPipeline'
+        ],
     }
 
     import sys

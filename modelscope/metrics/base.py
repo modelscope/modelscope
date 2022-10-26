@@ -10,8 +10,8 @@ class Metric(ABC):
     complex metrics for a specific task with or without other Metric subclasses.
     """
 
-    def __init__(self, trainer=None, *args, **kwargs):
-        self.trainer = trainer
+    def __init__(self, *args, **kwargs):
+        pass
 
     @abstractmethod
     def add(self, outputs: Dict, inputs: Dict):

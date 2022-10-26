@@ -19,6 +19,7 @@ class TorchTaskDataset(TaskDataset, Dataset):
                  preprocessor=None,
                  **kwargs):
         TaskDataset.__init__(self, datasets, mode, preprocessor, **kwargs)
+        self.trainer = None
 
     def __getitem__(self, index) -> Any:
         return self.prepare_sample(self._inner_dataset[index])

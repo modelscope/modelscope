@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from .token_classification_metric import TokenClassificationMetric
     from .video_summarization_metric import VideoSummarizationMetric
     from .movie_scene_segmentation_metric import MovieSceneSegmentationMetric
+    from .accuracy_metric import AccuracyMetric
+    from .bleu_metric import BleuMetric
+    from .image_inpainting_metric import ImageInpaintingMetric
 
 else:
     _import_structure = {
@@ -34,6 +37,9 @@ else:
         'token_classification_metric': ['TokenClassificationMetric'],
         'video_summarization_metric': ['VideoSummarizationMetric'],
         'movie_scene_segmentation_metric': ['MovieSceneSegmentationMetric'],
+        'image_inpainting_metric': ['ImageInpaintingMetric'],
+        'accuracy_metric': ['AccuracyMetric'],
+        'bleu_metric': ['BleuMetric'],
     }
 
     import sys

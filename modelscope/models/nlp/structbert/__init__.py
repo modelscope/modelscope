@@ -18,20 +18,26 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_sbert import SbertConfig
-    from .modeling_sbert import (SbertForMaskedLM, SbertModel,
-                                 SbertPreTrainedModel)
-    from .tokenization_sbert import (BasicTokenizer, SbertTokenizer,
-                                     WordpieceTokenizer)
-    from .tokenization_sbert_fast import SbertTokenizerFast
+    from .backbone import (SbertModel, SbertPreTrainedModel)
+    from .configuration import SbertConfig
+    from .faq_question_answering import SbertForFaqQuestionAnswering
+    from .fill_mask import SbertForMaskedLM
+    from .text_classification import SbertForSequenceClassification
+    from .token_classification import SbertForTokenClassification
+    from .tokenization import (BasicTokenizer, SbertTokenizer,
+                               WordpieceTokenizer)
+    from .tokenization_fast import SbertTokenizerFast
 else:
     _import_structure = {
-        'configuration_sbert': ['SbertConfig'],
-        'modeling_sbert':
-        ['SbertForMaskedLM', 'SbertModel', 'SbertPreTrainedModel'],
-        'tokenization_sbert':
+        'backbone': ['SbertModel', 'SbertPreTrainedModel'],
+        'configuration': ['SbertConfig'],
+        'fill_mask': ['SbertForMaskedLM'],
+        'faq_question_answering': ['SbertForFaqQuestionAnswering'],
+        'text_classification': ['SbertForSequenceClassification'],
+        'token_classification': ['SbertForTokenClassification'],
+        'tokenization':
         ['BasicTokenizer', 'SbertTokenizer', 'WordpieceTokenizer'],
-        'tokenization_sbert_fast': ['SbertTokenizerFast'],
+        'tokenization_fast': ['SbertTokenizerFast'],
     }
 
     import sys

@@ -27,7 +27,8 @@ class DistributedPlugPipeline(DistributedPipeline):
                  **kwargs):
         """Create a plug pipeline instance.
 
-        @param model: The model_id of plug(damo/nlp_plug_text-generation_27B).
+        Args:
+            model: The model_id of plug(damo/nlp_plug_text-generation_27B).
         The default path to damo/nlp_plug_text-generation_27B can be obtained by function
         get_cache_dir("damo/nlp_plug_text-generation_27B"), the model should be downloaded to
         this path before calling this class by model_id.
@@ -52,11 +53,11 @@ class DistributedPlugPipeline(DistributedPipeline):
                 |_ mp_rank_05_model_states.pt
                 |_ mp_rank_06_model_states.pt
                 |_ mp_rank_07_model_states.pt
-        @param preprocessor: The optional preprocessor, if not passed in, a TextGenerationPreprocessor will
+            preprocessor: The optional preprocessor, if not passed in, a TextGenerationPreprocessor will
             be used as default.
-        @param first_sequence: The first_sequence key name if the input format is a dict.
-        @param kwargs:
-            sequence_length: The input sequence_length.
+            first_sequence: The first_sequence key name if the input format is a dict.
+            kwargs:
+                sequence_length: The input sequence_length.
         """
         if preprocessor is None:
             preprocessor = TextGenerationPreprocessor(

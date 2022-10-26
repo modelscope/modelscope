@@ -1,8 +1,8 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from copy import deepcopy
 from typing import Any, Dict, Union
 
-import numpy as np
 import torch.cuda
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
@@ -77,13 +77,8 @@ class NAFNetForImageDenoise(TorchModel):
     def _evaluate_postprocess(self, input: Tensor,
                               target: Tensor) -> Dict[str, list]:
         preds = self.model(input)
-        preds = list(torch.split(preds, 1, 0))
-        targets = list(torch.split(target, 1, 0))
-
-        preds = [(pred.data * 255.).squeeze(0).permute(
-            1, 2, 0).cpu().numpy().astype(np.uint8) for pred in preds]
-        targets = [(target.data * 255.).squeeze(0).permute(
-            1, 2, 0).cpu().numpy().astype(np.uint8) for target in targets]
+        preds = list(torch.split(preds.clamp(0, 1), 1, 0))
+        targets = list(torch.split(target.clamp(0, 1), 1, 0))
 
         return {'pred': preds, 'target': targets}
 

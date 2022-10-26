@@ -1,9 +1,6 @@
-"""
-Trainer class.
-"""
-import logging
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
-import sys
 import time
 from collections import OrderedDict
 
@@ -61,7 +58,7 @@ class Trainer(object):
         self.evaluator = evaluator
         self.tokenizer = reader.tokenizer
 
-        self.logger = get_logger()
+        self.logger = logger or get_logger()
 
         self.batch_metrics_tracker = MetricsTracker()
         self.token_metrics_tracker = MetricsTracker()

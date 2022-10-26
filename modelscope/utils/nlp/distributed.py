@@ -35,7 +35,10 @@ def initialize_distributed(rank, mpu, world_size, model_parallel_size,
     init_method = 'tcp://'
     init_method += master_ip + ':' + master_port
     torch.distributed.init_process_group(
-        backend='nccl', world_size=8, rank=rank, init_method=init_method)
+        backend='nccl',
+        world_size=world_size,
+        rank=rank,
+        init_method=init_method)
     # Set the model-parallel communicators.
     mpu.initialize_model_parallel(model_parallel_size)
 

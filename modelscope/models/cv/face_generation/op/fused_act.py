@@ -1,3 +1,5 @@
+# The implementation is adopted from stylegan2-pytorch, made public available under the MIT License
+# t https://github.com/rosinality/stylegan2-pytorch/blob/master/op/fused_act.py
 import os
 
 import torch

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 all_domains = [
     'restaurant', 'hotel', 'attraction', 'train', 'taxi', 'police', 'hospital'
 ]

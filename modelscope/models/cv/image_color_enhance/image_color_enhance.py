@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
 from copy import deepcopy
 from typing import Dict, Union

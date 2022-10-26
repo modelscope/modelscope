@@ -52,7 +52,8 @@ class MsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ms_csv_basic(self):
         ms_ds_train = MsDataset.load(
-            'afqmc_small', namespace='userxiaoming', split='train')
+            'clue', subset_name='afqmc',
+            split='train').to_hf_dataset().select(range(5))
         print(next(iter(ms_ds_train)))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -70,7 +71,7 @@ class MsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_text(self):
-        model_id = 'damo/bert-base-sst2'
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         nlp_model = Model.from_pretrained(model_id)
         preprocessor = SequenceClassificationPreprocessor(
             nlp_model.model_dir,
@@ -92,7 +93,7 @@ class MsDatasetTest(unittest.TestCase):
     def test_to_tf_dataset_text(self):
         import tensorflow as tf
         tf.compat.v1.enable_eager_execution()
-        model_id = 'damo/bert-base-sst2'
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         nlp_model = Model.from_pretrained(model_id)
         preprocessor = SequenceClassificationPreprocessor(
             nlp_model.model_dir,

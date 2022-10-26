@@ -4,7 +4,9 @@ import os
 import os.path as osp
 from typing import Any
 
+import numpy as np
 from easycv.utils.ms_utils import EasyCVMeta
+from PIL import ImageFile
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.pipelines.util import is_official_hub_path
@@ -94,5 +96,19 @@ class EasyCVPipeline(object):
 
         return easycv_config
 
+    def _is_single_inputs(self, inputs):
+        if isinstance(inputs, str) or (isinstance(inputs, list)
+                                       and len(inputs) == 1) or isinstance(
+                                           inputs, np.ndarray) or isinstance(
+                                               inputs, ImageFile.ImageFile):
+            return True
+
+        return False
+
     def __call__(self, inputs) -> Any:
-        return self.predict_op(inputs)
+        outputs = self.predict_op(inputs)
+
+        if self._is_single_inputs(inputs):
+            outputs = outputs[0]
+
+        return outputs

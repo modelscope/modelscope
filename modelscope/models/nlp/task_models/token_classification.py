@@ -8,7 +8,7 @@ from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import OutputKeys, TokenClassifierOutput
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.tensor_utils import (torch_nested_detach,
@@ -19,6 +19,8 @@ __all__ = ['TokenClassificationModel']
 
 @MODELS.register_module(
     Tasks.token_classification, module_name=TaskModels.token_classification)
+@MODELS.register_module(
+    Tasks.part_of_speech, module_name=TaskModels.token_classification)
 class TokenClassificationModel(SingleBackboneTaskModelBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -51,27 +53,20 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
             labels = input.pop(OutputKeys.LABELS)
 
         outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
-        outputs = self.head.forward(sequence_output)
+        sequence_output = outputs[0]
+        logits = self.head.forward(sequence_output)
+        loss = None
         if labels in input:
             loss = self.compute_loss(outputs, labels)
-            outputs.update(loss)
+
+        return TokenClassifierOutput(
+            loss=loss,
+            logits=logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+            offset_mapping=input['offset_mapping'],
+        )
         return outputs
 
     def extract_logits(self, outputs):
         return outputs[OutputKeys.LOGITS].cpu().detach()
-
-    def extract_backbone_outputs(self, outputs):
-        sequence_output = None
-        pooled_output = None
-        if hasattr(self.backbone, 'extract_sequence_outputs'):
-            sequence_output = self.backbone.extract_sequence_outputs(outputs)
-        return sequence_output, pooled_output
-
-    def postprocess(self, input, **kwargs):
-        logits = self.extract_logits(input)
-        pred = torch.argmax(logits[0], dim=-1)
-        pred = torch_nested_numpify(torch_nested_detach(pred))
-        logits = torch_nested_numpify(torch_nested_detach(logits))
-        res = {OutputKeys.PREDICTIONS: pred, OutputKeys.LOGITS: logits}
-        return res

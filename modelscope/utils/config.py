@@ -609,11 +609,12 @@ class Config:
         return parse_fn(args)
 
 
-def check_config(cfg: Union[str, ConfigDict]):
+def check_config(cfg: Union[str, ConfigDict], is_training=False):
     """ Check whether configuration file is valid, If anything wrong, exception will be raised.
 
     Args:
         cfg (str or ConfigDict): Config file path or config object.
+        is_training: indicate if checking training related elements
     """
 
     if isinstance(cfg, str):
@@ -627,10 +628,21 @@ def check_config(cfg: Union[str, ConfigDict]):
     check_attr(ConfigFields.task)
     check_attr(ConfigFields.pipeline)
 
-    if hasattr(cfg, ConfigFields.train):
+    if is_training:
         check_attr(ConfigFields.model)
+        check_attr(ConfigFields.train)
         check_attr(ConfigFields.preprocessor)
         check_attr(ConfigFields.evaluation)
+
+
+def use_task_specific_params(model, task):
+    """Update config with summarization specific params."""
+    task_specific_params = model.config.task_specific_params
+
+    if task_specific_params is not None:
+        pars = task_specific_params.get(task, {})
+        logger.info(f'using task specific params for {task}: {pars}')
+        model.config.update(pars)
 
 
 class JSONIteratorEncoder(json.JSONEncoder):

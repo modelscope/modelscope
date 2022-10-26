@@ -2,29 +2,25 @@
 
 import copy
 import os
-import sys
 import tempfile
 from functools import partial
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, Optional, Union
-from uuid import uuid4
 
 import requests
-from filelock import FileLock
 from tqdm import tqdm
 
 from modelscope import __version__
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .api import HubApi, ModelScopeConfig
 from .constants import FILE_HASH
 from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_cache_dir,
                           get_endpoint, model_id_to_group_owner_name)
 
-SESSION_ID = uuid4().hex
 logger = get_logger()
 
 
@@ -35,6 +31,7 @@ def model_file_download(
     cache_dir: Optional[str] = None,
     user_agent: Union[Dict, str, None] = None,
     local_files_only: Optional[bool] = False,
+    cookies: Optional[CookieJar] = None,
 ) -> Optional[str]:  # pragma: no cover
     """
     Download from a given URL and cache it if it's not already present in the
@@ -105,54 +102,47 @@ def model_file_download(
                 " online, set 'local_files_only' to False.")
 
     _api = HubApi()
-    headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
-    cookies = ModelScopeConfig.get_cookies()
-    branches, tags = _api.get_model_branches_and_tags(
-        model_id, use_cookies=False if cookies is None else cookies)
+    headers = {
+        'user-agent': ModelScopeConfig.get_user_agent(user_agent=user_agent, )
+    }
+    if cookies is None:
+        cookies = ModelScopeConfig.get_cookies()
+
+    revision = _api.get_valid_revision(
+        model_id, revision=revision, cookies=cookies)
     file_to_download_info = None
-    is_commit_id = False
-    if revision in branches or revision in tags:  # The revision is version or tag,
-        # we need to confirm the version is up to date
-        # we need to get the file list to check if the lateast version is cached, if so return, otherwise download
-        model_files = _api.get_model_files(
-            model_id=model_id,
-            revision=revision,
-            recursive=True,
-            use_cookies=False if cookies is None else cookies)
+    # we need to confirm the version is up-to-date
+    # we need to get the file list to check if the latest version is cached, if so return, otherwise download
+    model_files = _api.get_model_files(
+        model_id=model_id,
+        revision=revision,
+        recursive=True,
+        use_cookies=False if cookies is None else cookies)
 
-        for model_file in model_files:
-            if model_file['Type'] == 'tree':
-                continue
+    for model_file in model_files:
+        if model_file['Type'] == 'tree':
+            continue
 
-            if model_file['Path'] == file_path:
-                if cache.exists(model_file):
-                    return cache.get_file_by_info(model_file)
-                else:
-                    file_to_download_info = model_file
-                break
+        if model_file['Path'] == file_path:
+            if cache.exists(model_file):
+                logger.info(
+                    f'File {model_file["Name"]} already in cache, skip downloading!'
+                )
+                return cache.get_file_by_info(model_file)
+            else:
+                file_to_download_info = model_file
+            break
 
-        if file_to_download_info is None:
-            raise NotExistError('The file path: %s not exist in: %s' %
-                                (file_path, model_id))
-    else:  # the revision is commit id.
-        cached_file_path = cache.get_file_by_path_and_commit_id(
-            file_path, revision)
-        if cached_file_path is not None:
-            file_name = os.path.basename(cached_file_path)
-            logger.info(
-                f'File {file_name} already in cache, skip downloading!')
-            return cached_file_path  # the file is in cache.
-        is_commit_id = True
+    if file_to_download_info is None:
+        raise NotExistError('The file path: %s not exist in: %s' %
+                            (file_path, model_id))
+
     # we need to download again
     url_to_download = get_file_download_url(model_id, file_path, revision)
     file_to_download_info = {
-        'Path':
-        file_path,
-        'Revision':
-        revision if is_commit_id else file_to_download_info['Revision'],
-        FILE_HASH:
-        None if (is_commit_id or FILE_HASH not in file_to_download_info) else
-        file_to_download_info[FILE_HASH]
+        'Path': file_path,
+        'Revision': file_to_download_info['Revision'],
+        FILE_HASH: file_to_download_info[FILE_HASH]
     }
 
     temp_file_name = next(tempfile._get_candidate_names())
@@ -169,25 +159,6 @@ def model_file_download(
                                   file_to_download_info[FILE_HASH])
     return cache.put_file(file_to_download_info,
                           os.path.join(temporary_cache_dir, temp_file_name))
-
-
-def http_user_agent(user_agent: Union[Dict, str, None] = None, ) -> str:
-    """Formats a user-agent string with basic info about a request.
-
-    Args:
-        user_agent (`str`, `dict`, *optional*):
-            The user agent info in the form of a dictionary or a single string.
-
-    Returns:
-        The formatted user-agent string.
-    """
-    ua = f'modelscope/{__version__}; python/{sys.version.split()[0]}; session_id/{SESSION_ID}'
-
-    if isinstance(user_agent, dict):
-        ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())
-    elif isinstance(user_agent, str):
-        ua = user_agent
-    return ua
 
 
 def get_file_download_url(model_id: str, file_path: str, revision: str):

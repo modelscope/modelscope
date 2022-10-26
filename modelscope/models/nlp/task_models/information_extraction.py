@@ -16,6 +16,8 @@ __all__ = ['InformationExtractionModel']
 @MODELS.register_module(
     Tasks.information_extraction,
     module_name=TaskModels.information_extraction)
+@MODELS.register_module(
+    Tasks.relation_extraction, module_name=TaskModels.information_extraction)
 class InformationExtractionModel(SingleBackboneTaskModelBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -31,7 +33,7 @@ class InformationExtractionModel(SingleBackboneTaskModelBase):
 
     def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
         outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
+        sequence_output = outputs.last_hidden_state
         outputs = self.head.forward(sequence_output, input['text'],
                                     input['offsets'])
         return {OutputKeys.SPO_LIST: outputs}

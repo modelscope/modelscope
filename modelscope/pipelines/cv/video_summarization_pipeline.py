@@ -1,3 +1,6 @@
+# Part of the implementation is borrowed and modified from PGL-SUM,
+# publicly available at https://github.com/e-apostolidis/PGL-SUM
+
 import os.path as osp
 from typing import Any, Dict
 
@@ -7,7 +10,8 @@ import torch
 from tqdm import tqdm
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.video_summarization import PGLVideoSummarization
+from modelscope.models.cv.video_summarization import (PGLVideoSummarization,
+                                                      summary_format)
 from modelscope.models.cv.video_summarization.base_model import bvlc_googlenet
 from modelscope.models.cv.video_summarization.summarizer import (
     generate_summary, get_change_points)
@@ -56,6 +60,8 @@ class VideoSummarizationPipeline(Pipeline):
         frames = []
         picks = []
         cap = cv2.VideoCapture(input)
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
+        self.frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         frame_idx = 0
         while (cap.isOpened()):
             ret, frame = cap.read()
@@ -88,7 +94,9 @@ class VideoSummarizationPipeline(Pipeline):
         summary = self.inference(frame_features, input['n_frame'],
                                  input['picks'], change_points)
 
-        return {OutputKeys.OUTPUT: summary}
+        output = summary_format(summary, self.fps)
+
+        return {OutputKeys.OUTPUT: output}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

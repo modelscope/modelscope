@@ -4,77 +4,109 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbones import SbertModel
-    from .bart_for_text_error_correction import BartForTextErrorCorrection
-    from .bert_for_document_segmentation import BertForDocumentSegmentation
-    from .csanmt_for_translation import CsanmtForTranslation
-    from .heads import SequenceClassificationHead
+    from .bart import BartForTextErrorCorrection
+    from .bert import (
+        BertForMaskedLM,
+        BertForTextRanking,
+        BertForSentenceEmbedding,
+        BertForSequenceClassification,
+        BertForTokenClassification,
+        BertForDocumentSegmentation,
+        BertModel,
+        BertConfig,
+    )
+    from .csanmt import CsanmtForTranslation
+    from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
+    from .gpt_neo import GPTNeoModel
     from .gpt3 import GPT3ForTextGeneration
-    from .masked_language import (StructBertForMaskedLM, VecoForMaskedLM,
-                                  BertForMaskedLM, DebertaV2ForMaskedLM)
-    from .ponet_for_masked_language import PoNetForMaskedLM
-    from .nncrf_for_named_entity_recognition import (
-        TransformerCRFForNamedEntityRecognition,
-        LSTMCRFForNamedEntityRecognition)
+    from .heads import SequenceClassificationHead
     from .palm_v2 import PalmForTextGeneration
-    from .sbert_for_faq_question_answering import SbertForFaqQuestionAnswering
-    from .star_text_to_sql import StarForTextToSql
-    from .sequence_classification import (VecoForSequenceClassification,
-                                          SbertForSequenceClassification,
-                                          BertForSequenceClassification)
-    from .space import SpaceForDialogIntent
-    from .space import SpaceForDialogModeling
-    from .space import SpaceForDialogStateTracking
-    from .table_question_answering import TableQuestionAnswering
-    from .task_models import (FeatureExtractionModel,
-                              InformationExtractionModel,
-                              SequenceClassificationModel,
-                              SingleBackboneTaskModelBase,
-                              TokenClassificationModel)
-    from .token_classification import SbertForTokenClassification
-    from .sentence_embedding import SentenceEmbedding
-    from .passage_ranking import PassageRanking
+    from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
+    from .space import SpaceForDialogIntent, SpaceForDialogModeling, SpaceForDST
+    from .space_T_cn import TableQuestionAnswering
+    from .space_T_en import StarForTextToSql
+    from .structbert import (
+        SbertForFaqQuestionAnswering,
+        SbertForMaskedLM,
+        SbertForSequenceClassification,
+        SbertForTokenClassification,
+        SbertTokenizer,
+        SbertModel,
+        SbertTokenizerFast,
+    )
     from .T5 import T5ForConditionalGeneration
+    from .task_models import (
+        FeatureExtractionModel,
+        InformationExtractionModel,
+        LSTMCRFForNamedEntityRecognition,
+        SequenceClassificationModel,
+        SingleBackboneTaskModelBase,
+        TaskModelForTextGeneration,
+        TokenClassificationModel,
+        TransformerCRFForNamedEntityRecognition,
+    )
+    from .veco import (VecoConfig, VecoForMaskedLM,
+                       VecoForSequenceClassification,
+                       VecoForTokenClassification, VecoModel, VecoTokenizer,
+                       VecoTokenizerFast)
+
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
-        'bart_for_text_error_correction': ['BartForTextErrorCorrection'],
-        'bert_for_document_segmentation': ['BertForDocumentSegmentation'],
-        'csanmt_for_translation': ['CsanmtForTranslation'],
+        'bart': ['BartForTextErrorCorrection'],
+        'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
         'gpt3': ['GPT3ForTextGeneration'],
-        'masked_language': [
-            'StructBertForMaskedLM', 'VecoForMaskedLM', 'BertForMaskedLM',
-            'DebertaV2ForMaskedLM'
+        'structbert': [
+            'SbertForFaqQuestionAnswering',
+            'SbertForMaskedLM',
+            'SbertForSequenceClassification',
+            'SbertForTokenClassification',
+            'SbertTokenizer',
+            'SbertTokenizerFast',
+            'SbertModel',
         ],
-        'nncrf_for_named_entity_recognition': [
-            'TransformerCRFForNamedEntityRecognition',
-            'LSTMCRFForNamedEntityRecognition'
+        'veco': [
+            'VecoConfig',
+            'VecoForMaskedLM',
+            'VecoForSequenceClassification',
+            'VecoForTokenClassification',
+            'VecoModel',
+            'VecoTokenizer',
+            'VecoTokenizerFast',
         ],
-        'ponet_for_masked_language': ['PoNetForMaskedLM'],
+        'bert': [
+            'BertForMaskedLM',
+            'BertForTextRanking',
+            'BertForSentenceEmbedding',
+            'BertForSequenceClassification',
+            'BertForTokenClassification',
+            'BertForDocumentSegmentation',
+            'BertModel',
+            'BertConfig',
+        ],
+        'ponet': ['PoNetForMaskedLM', 'PoNetModel', 'PoNetConfig'],
         'palm_v2': ['PalmForTextGeneration'],
-        'sbert_for_faq_question_answering': ['SbertForFaqQuestionAnswering'],
-        'star_text_to_sql': ['StarForTextToSql'],
-        'sequence_classification': [
-            'VecoForSequenceClassification', 'SbertForSequenceClassification',
-            'BertForSequenceClassification'
-        ],
-        'space': [
-            'SpaceForDialogIntent', 'SpaceForDialogModeling',
-            'SpaceForDialogStateTracking'
-        ],
+        'deberta_v2': ['DebertaV2ForMaskedLM', 'DebertaV2Model'],
+        'space_T_en': ['StarForTextToSql'],
+        'space_T_cn': ['TableQuestionAnswering'],
+        'space':
+        ['SpaceForDialogIntent', 'SpaceForDialogModeling', 'SpaceForDST'],
         'task_models': [
             'FeatureExtractionModel',
             'InformationExtractionModel',
+            'LSTMCRFForNamedEntityRecognition',
+            'LSTMCRFForWordSegmentation',
             'SequenceClassificationModel',
             'SingleBackboneTaskModelBase',
+            'TaskModelForTextGeneration',
             'TokenClassificationModel',
+            'TransformerCRFForNamedEntityRecognition',
+            'TransformerCRFForWordSegmentation',
         ],
-        'token_classification': ['SbertForTokenClassification'],
-        'table_question_answering': ['TableQuestionAnswering'],
         'sentence_embedding': ['SentenceEmbedding'],
-        'passage_ranking': ['PassageRanking'],
         'T5': ['T5ForConditionalGeneration'],
+        'gpt_neo': ['GPTNeoModel'],
     }
 
     import sys

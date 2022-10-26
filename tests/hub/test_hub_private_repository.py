@@ -21,13 +21,12 @@ class HubPrivateRepositoryTest(unittest.TestCase):
     def setUp(self):
         self.old_cwd = os.getcwd()
         self.api = HubApi()
-        # note this is temporary before official account management is ready
         self.token, _ = self.api.login(TEST_ACCESS_TOKEN1)
-        self.model_name = uuid.uuid4().hex
+        self.model_name = 'pr-%s' % (uuid.uuid4().hex)
         self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
         self.api.create_model(
             model_id=self.model_id,
-            visibility=ModelVisibility.PRIVATE,  # 1-private, 5-public
+            visibility=ModelVisibility.PRIVATE,
             license=Licenses.APACHE_V2,
             chinese_name=TEST_MODEL_CHINESE_NAME,
         )

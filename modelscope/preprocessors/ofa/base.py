@@ -1,26 +1,31 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import re
+import string
 from os import path as osp
 
 import json
 import numpy as np
 import torch
+from PIL import Image
 
 from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.trie import Trie
+from .utils.constant import OFA_TASK_KEY_MAPPING
 from .utils.random_help import set_torch_seed
 
 
 class OfaBasePreprocessor:
 
-    def __init__(self, cfg, model_dir):
-        """preprocess the data
+    def __init__(self, cfg, model_dir, mode, *args, **kwargs):
+        """preprocess the data via the vocab.txt from the `model_dir` path
 
         Args:
             cfg(modelscope.utils.config.ConfigDict) : model config
             model_dir (str): model path
         """
         self.cfg = cfg
+        self.mode = mode
         self.language = self.cfg.model.get('language', 'en')
         if self.language == 'en':
             tokenizer = OFATokenizer.from_pretrained(model_dir)
@@ -41,6 +46,7 @@ class OfaBasePreprocessor:
             for key, value in tokenizer.get_vocab().items()
         }
         self.max_src_length = cfg.model.get('max_src_length', 256)
+        self.max_tgt_length = cfg.model.get('max_tgt_length', 256)
         self.max_image_size = cfg.model.get('max_image_size', 512)
         self.language = self.cfg.model.get('language', 'en')
         self.prompt_type = self.cfg.model.get('prompt_type', 'none')
@@ -56,26 +62,40 @@ class OfaBasePreprocessor:
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
+        self.column_map = {
+            key: key
+            for key in OFA_TASK_KEY_MAPPING[self.cfg.task]
+        }
+        if hasattr(self.cfg,
+                   'dataset') and self.cfg.dataset.column_map is not None:
+            for k, v in self.cfg.dataset.column_map.items():
+                self.column_map[k] = v
+        self.transtab = str.maketrans(
+            {key: None
+             for key in string.punctuation})
         self.constraint_trie = None
-        self.index2ans = {}
-        if self.cfg.model.get('answer2label', False):
+        if self.cfg.model.get('answer2label', None):
             ans2label_file = osp.join(model_dir, self.cfg.model.answer2label)
-            ans2label_dict = json.load(open(ans2label_file, 'r'))
+            with open(ans2label_file, 'r') as reader:
+                ans2label_dict = json.load(reader)
+            self.ans2label = ans2label_dict
+            self.label2ans = {v: k for k, v in self.ans2label.items()}
             self.constraint_trie = Trie(tokenizer.eos_token_id)
             for i, answer in enumerate(ans2label_dict.keys()):
-                answer_item = tokenizer(
-                    ' ' + answer,
-                    return_tensors='pt',
-                    add_special_tokens=False).input_ids.squeeze(0)
+                answer_item = self.tokenize_text(
+                    ' ' + answer, add_bos=False, add_eos=False)
                 self.constraint_trie.insert([tokenizer.bos_token_id]
                                             + answer_item.tolist()
                                             + [tokenizer.eos_token_id])
 
-    def get_inputs(self, text, add_bos=True, add_eos=True):
+    def tokenize_text(self, text, add_bos=True, add_eos=True):
+        if text is None:
+            return None
         inputs = self.tokenizer(
             text,
             max_length=self.max_src_length,
             add_special_tokens=False,
+            truncation=True,
             return_tensors='pt')['input_ids'].squeeze(0)
         if add_bos:
             inputs = torch.cat([self.bos_item, inputs])
@@ -85,7 +105,7 @@ class OfaBasePreprocessor:
 
     @staticmethod
     def pre_caption(caption, max_words=None):
-        caption = caption.lower().lstrip(',.!?*#:;~').replace('-', ' ')\
+        caption = caption.lower().lstrip(',.!?*#:;~').replace('-', ' ') \
             .replace('/', ' ').replace('<person>', 'person')
 
         caption = re.sub(
@@ -123,3 +143,23 @@ class OfaBasePreprocessor:
             question = ' '.join(question_words[:max_ques_words])
 
         return question
+
+    def add_constraint_mask(self, sample):
+        target_itm = sample['target']
+        len_label_itm = target_itm.ne(self.pad_item).sum(dim=0).item()
+        if self.constraint_trie:
+            constraint_mask = torch.zeros(
+                (len(target_itm), len(self.tgt_dict))).bool()
+            start_idx = len(target_itm) - len_label_itm
+            for i in range(start_idx, len(target_itm)):
+                constraint_prefix_token = self.bos_item.tolist(
+                ) + target_itm[start_idx:i].tolist()
+                constraint_nodes = self.constraint_trie.get_next_layer(
+                    constraint_prefix_token)
+                constraint_mask[i][constraint_nodes] = True
+            sample['constraint_mask'] = constraint_mask
+
+    def get_img_pil(self, path_or_url_or_pil):
+        image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
+            else load_image(path_or_url_or_pil)
+        return image

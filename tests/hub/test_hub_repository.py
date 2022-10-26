@@ -22,6 +22,7 @@ from .test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_CHINESE_NAME,
 logger = get_logger()
 logger.setLevel('DEBUG')
 DEFAULT_GIT_PATH = 'git'
+download_model_file_name = 'test.bin'
 
 
 class HubRepositoryTest(unittest.TestCase):
@@ -29,13 +30,13 @@ class HubRepositoryTest(unittest.TestCase):
     def setUp(self):
         self.old_cwd = os.getcwd()
         self.api = HubApi()
-        # note this is temporary before official account management is ready
         self.api.login(TEST_ACCESS_TOKEN1)
-        self.model_name = uuid.uuid4().hex
+        self.model_name = 'repo-%s' % (uuid.uuid4().hex)
         self.model_id = '%s/%s' % (TEST_MODEL_ORG, self.model_name)
+        self.revision = 'v0.1_test_revision'
         self.api.create_model(
             model_id=self.model_id,
-            visibility=ModelVisibility.PUBLIC,  # 1-private, 5-public
+            visibility=ModelVisibility.PUBLIC,
             license=Licenses.APACHE_V2,
             chinese_name=TEST_MODEL_CHINESE_NAME,
         )
@@ -67,9 +68,10 @@ class HubRepositoryTest(unittest.TestCase):
         os.system("echo 'lfs'>%s" % os.path.join(self.model_dir, lfs_file1))
         os.system("echo 'lfs2'>%s" % os.path.join(self.model_dir, lfs_file2))
         repo.push('test')
-        add1 = model_file_download(self.model_id, 'add1.py')
+        repo.tag_and_push(self.revision, 'Test revision')
+        add1 = model_file_download(self.model_id, 'add1.py', self.revision)
         assert os.path.exists(add1)
-        add2 = model_file_download(self.model_id, 'add2.py')
+        add2 = model_file_download(self.model_id, 'add2.py', self.revision)
         assert os.path.exists(add2)
         # check lfs files.
         git_wrapper = GitCommandWrapper()

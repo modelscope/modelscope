@@ -115,9 +115,9 @@ std = [57.375, 57.12, 58.395]
 class_names = ['person', 'face', 'hand']
 
 
-def inference(model, device, img_path):
+def inference(model, device, img):
+    img = img.cpu().numpy()
     img_info = {'id': 0}
-    img = cv2.imread(img_path)
     height, width = img.shape[:2]
     img_info['height'] = height
     img_info['width'] = width
@@ -130,4 +130,9 @@ def inference(model, device, img_path):
     with torch.no_grad():
         res = model(meta)
     result = overlay_bbox_cv(res[0], class_names, score_thresh=0.35)
-    return result
+    cls_list, bbox_list, score_list = [], [], []
+    for pred in result:
+        cls_list.append(pred[0])
+        bbox_list.append([pred[1], pred[2], pred[3], pred[4]])
+        score_list.append(pred[5])
+    return cls_list, bbox_list, score_list

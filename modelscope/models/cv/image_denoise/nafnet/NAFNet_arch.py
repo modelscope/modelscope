@@ -1,3 +1,8 @@
+# ------------------------------------------------------------------------
+# Modified from https://github.com/megvii-research/NAFNet/blob/main/basicsr/models/archs/NAFNet_arch.py
+# Copyright (c) 2022 megvii-model. All Rights Reserved.
+# ------------------------------------------------------------------------
+
 import numpy as np
 import torch
 import torch.nn as nn

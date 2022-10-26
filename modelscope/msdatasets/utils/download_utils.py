@@ -10,16 +10,14 @@ from .oss_utils import OssUtilities
 
 class DatasetDownloadManager(DownloadManager):
 
-    def __init__(
-        self,
-        dataset_name: str,
-        namespace: str,
-        version: str,
-        data_dir: Optional[str] = None,
-        download_config: Optional[DownloadConfig] = None,
-        base_path: Optional[str] = None,
-        record_checksums=True,
-    ):
+    def __init__(self,
+                 dataset_name: str,
+                 namespace: str,
+                 version: str,
+                 data_dir: Optional[str] = None,
+                 download_config: Optional[DownloadConfig] = None,
+                 base_path: Optional[str] = None,
+                 record_checksums=True):
         super().__init__(dataset_name, data_dir, download_config, base_path,
                          record_checksums)
         self._namespace = namespace

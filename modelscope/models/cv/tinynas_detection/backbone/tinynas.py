@@ -4,6 +4,7 @@
 import torch
 import torch.nn as nn
 
+from modelscope.utils.file_utils import read_file
 from ..core.base_ops import Focus, SPPBottleneck, get_activation
 from ..core.repvgg_block import RepVggBlock
 
@@ -49,12 +50,16 @@ class ResConvK1KX(nn.Module):
                  kernel_size,
                  stride,
                  force_resproj=False,
-                 act='silu'):
+                 act='silu',
+                 reparam=False):
         super(ResConvK1KX, self).__init__()
         self.stride = stride
         self.conv1 = ConvKXBN(in_c, btn_c, 1, 1)
-        self.conv2 = RepVggBlock(
-            btn_c, out_c, kernel_size, stride, act='identity')
+        if not reparam:
+            self.conv2 = ConvKXBN(btn_c, out_c, 3, stride)
+        else:
+            self.conv2 = RepVggBlock(
+                btn_c, out_c, kernel_size, stride, act='identity')
 
         if act is None:
             self.activation_function = torch.relu
@@ -97,7 +102,8 @@ class SuperResConvK1KX(nn.Module):
                  stride,
                  num_blocks,
                  with_spp=False,
-                 act='silu'):
+                 act='silu',
+                 reparam=False):
         super(SuperResConvK1KX, self).__init__()
         if act is None:
             self.act = torch.relu
@@ -124,7 +130,8 @@ class SuperResConvK1KX(nn.Module):
                 this_kernel_size,
                 this_stride,
                 force_resproj,
-                act=act)
+                act=act,
+                reparam=reparam)
             self.block_list.append(the_block)
             if block_id == 0 and with_spp:
                 self.block_list.append(
@@ -248,7 +255,8 @@ class TinyNAS(nn.Module):
                  with_spp=False,
                  use_focus=False,
                  need_conv1=True,
-                 act='silu'):
+                 act='silu',
+                 reparam=False):
         super(TinyNAS, self).__init__()
         assert len(out_indices) == len(out_channels)
         self.out_indices = out_indices
@@ -281,7 +289,8 @@ class TinyNAS(nn.Module):
                     block_info['s'],
                     block_info['L'],
                     spp,
-                    act=act)
+                    act=act,
+                    reparam=reparam)
                 self.block_list.append(the_block)
             elif the_block_class == 'SuperResConvKXKX':
                 spp = with_spp if idx == len(structure_info) - 1 else False
@@ -325,8 +334,8 @@ class TinyNAS(nn.Module):
 def load_tinynas_net(backbone_cfg):
     # load masternet model to path
     import ast
-
-    struct_str = ''.join([x.strip() for x in backbone_cfg.net_structure_str])
+    net_structure_str = read_file(backbone_cfg.structure_file)
+    struct_str = ''.join([x.strip() for x in net_structure_str])
     struct_info = ast.literal_eval(struct_str)
     for layer in struct_info:
         if 'nbitsA' in layer:
@@ -342,6 +351,6 @@ def load_tinynas_net(backbone_cfg):
         use_focus=backbone_cfg.use_focus,
         act=backbone_cfg.act,
         need_conv1=backbone_cfg.need_conv1,
-    )
+        reparam=backbone_cfg.reparam)
 
     return model

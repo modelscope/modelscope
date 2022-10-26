@@ -5,7 +5,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import SequenceClassificationPipeline
+from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -27,9 +27,8 @@ class NLITest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = SequenceClassificationPreprocessor(cache_path)
-        model = SbertForSequenceClassification.from_pretrained(cache_path)
-        pipeline1 = SequenceClassificationPipeline(
-            model, preprocessor=tokenizer)
+        model = Model.from_pretrained(cache_path)
+        pipeline1 = TextClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(Tasks.nli, model=model, preprocessor=tokenizer)
         print(f'sentence1: {self.sentence1}\nsentence2: {self.sentence2}\n'
               f'pipeline1:{pipeline1(input=(self.sentence1, self.sentence2))}')

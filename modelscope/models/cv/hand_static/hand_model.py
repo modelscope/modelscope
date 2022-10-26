@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from torch import nn
-from torchvision.transforms import transforms
+from torchvision import transforms
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
@@ -80,9 +80,9 @@ class HandStatic(TorchModel):
         return pred_result
 
 
-def infer(img_path, model, device):
-
-    img = Image.open(img_path)
+def infer(img, model, device):
+    img = img.cpu().numpy()
+    img = Image.fromarray(img)
     clip = spatial_transform(img)
     clip = clip.unsqueeze(0).to(device).float()
     outputs = model(clip)

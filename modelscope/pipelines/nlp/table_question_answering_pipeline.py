@@ -2,6 +2,8 @@
 import os
 from typing import Any, Dict, Union
 
+import json
+import torch
 from transformers import BertTokenizer
 
 from modelscope.metainfo import Pipelines
@@ -11,9 +13,13 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TableQuestionAnsweringPreprocessor
-from modelscope.preprocessors.star3.fields.database import Database
-from modelscope.preprocessors.star3.fields.struct import Constant, SQLQuery
+from modelscope.preprocessors.nlp.space_T_cn.fields.database import Database
+from modelscope.preprocessors.nlp.space_T_cn.fields.struct import (Constant,
+                                                                   SQLQuery)
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 __all__ = ['TableQuestionAnsweringPipeline']
 
@@ -63,6 +69,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
         self.max_where_num = constant.max_where_num
         self.col_type_dict = constant.col_type_dict
         self.schema_link_dict = constant.schema_link_dict
+        self.limit_dict = constant.limit_dict
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
@@ -70,6 +77,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
         action = self.action_ops[result['action']]
         headers = table['header_name']
         current_sql = result['sql']
+        current_sql['from'] = [table['table_id']]
 
         if history_sql is None:
             return current_sql
@@ -214,10 +222,11 @@ class TableQuestionAnsweringPipeline(Pipeline):
         else:
             return current_sql
 
-    def sql_dict_to_str(self, result, table):
+    def sql_dict_to_str(self, result, tables):
         """
         convert sql struct to string
         """
+        table = tables[result['sql']['from'][0]]
         header_names = table['header_name'] + ['空列']
         header_ids = table['header_id'] + ['null']
         sql = result['sql']
@@ -230,14 +239,22 @@ class TableQuestionAnsweringPipeline(Pipeline):
                 str_sel_list.append(header_name)
                 sql_sel_list.append(header_id)
             else:
-                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '( '
-                                    + header_name + ' )')
-                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '( '
-                                    + header_id + ' )')
+                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_name + ')')
+                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_id + ')')
 
         str_cond_list, sql_cond_list = [], []
+        where_conds, orderby_conds = [], []
         for cond in sql['conds']:
+            if cond[1] in [4, 5]:
+                orderby_conds.append(cond)
+            else:
+                where_conds.append(cond)
+        for cond in where_conds:
             header_name = header_names[cond[0]]
+            if header_name == '空列':
+                continue
             header_id = '`%s`.`%s`' % (table['table_id'], header_ids[cond[0]])
             op = self.cond_ops[cond[1]]
             value = cond[2]
@@ -245,15 +262,55 @@ class TableQuestionAnsweringPipeline(Pipeline):
                                  + '" )')
             sql_cond_list.append('( ' + header_id + ' ' + op + ' "' + value
                                  + '" )')
+        cond_str = ' ' + self.cond_conn_ops[sql['cond_conn_op']] + ' '
+        str_where_conds = cond_str.join(str_cond_list)
+        sql_where_conds = cond_str.join(sql_cond_list)
+        if len(orderby_conds) != 0:
+            str_orderby_column = ', '.join(
+                [header_names[cond[0]] for cond in orderby_conds])
+            sql_orderby_column = ', '.join([
+                '`%s`.`%s`' % (table['table_id'], header_ids[cond[0]])
+                for cond in orderby_conds
+            ])
+            str_orderby_op = self.cond_ops[orderby_conds[0][1]]
+            str_orderby = '%s %s' % (str_orderby_column, str_orderby_op)
+            sql_orderby = '%s %s' % (sql_orderby_column, str_orderby_op)
+            limit_key = orderby_conds[0][2]
+            is_in, limit_num = False, -1
+            for key in self.limit_dict:
+                if key in limit_key:
+                    is_in = True
+                    limit_num = self.limit_dict[key]
+                    break
+            if is_in:
+                str_orderby += ' LIMIT %d' % (limit_num)
+                sql_orderby += ' LIMIT %d' % (limit_num)
+        else:
+            str_orderby = ''
 
-        cond = ' ' + self.cond_conn_ops[sql['cond_conn_op']] + ' '
+        if len(str_cond_list) != 0 and len(str_orderby) != 0:
+            final_str = 'SELECT %s FROM %s WHERE %s ORDER BY %s' % (
+                ', '.join(str_sel_list), table['table_name'], str_where_conds,
+                str_orderby)
+            final_sql = 'SELECT %s FROM `%s` WHERE %s ORDER BY %s' % (
+                ', '.join(sql_sel_list), table['table_id'], sql_where_conds,
+                sql_orderby)
+        elif len(str_cond_list) != 0:
+            final_str = 'SELECT %s FROM %s WHERE %s' % (
+                ', '.join(str_sel_list), table['table_name'], str_where_conds)
+            final_sql = 'SELECT %s FROM `%s` WHERE %s' % (
+                ', '.join(sql_sel_list), table['table_id'], sql_where_conds)
+        elif len(str_orderby) != 0:
+            final_str = 'SELECT %s FROM %s ORDER BY %s' % (
+                ', '.join(str_sel_list), table['table_name'], str_orderby)
+            final_sql = 'SELECT %s FROM `%s` ORDER BY %s' % (
+                ', '.join(sql_sel_list), table['table_id'], sql_orderby)
+        else:
+            final_str = 'SELECT %s FROM %s' % (', '.join(str_sel_list),
+                                               table['table_name'])
+            final_sql = 'SELECT %s FROM `%s`' % (', '.join(sql_sel_list),
+                                                 table['table_id'])
 
-        final_str = 'SELECT %s FROM %s WHERE %s' % (', '.join(str_sel_list),
-                                                    table['table_name'],
-                                                    cond.join(str_cond_list))
-        final_sql = 'SELECT %s FROM `%s` WHERE %s' % (', '.join(sql_sel_list),
-                                                      table['table_id'],
-                                                      cond.join(sql_cond_list))
         sql = SQLQuery(
             string=final_str, query=final_sql, sql_result=result['sql'])
 
@@ -270,14 +327,47 @@ class TableQuestionAnsweringPipeline(Pipeline):
         """
         result = inputs['result']
         history_sql = inputs['history_sql']
-        result['sql'] = self.post_process_multi_turn(
-            history_sql=history_sql,
-            result=result,
-            table=self.db.tables[result['table_id']])
-        sql = self.sql_dict_to_str(
-            result=result, table=self.db.tables[result['table_id']])
-        output = {OutputKeys.OUTPUT: sql, OutputKeys.HISTORY: result['sql']}
-        return output
+        try:
+            result['sql'] = self.post_process_multi_turn(
+                history_sql=history_sql,
+                result=result,
+                table=self.db.tables[result['table_id']])
+        except Exception:
+            result['sql'] = history_sql
+        sql = self.sql_dict_to_str(result=result, tables=self.db.tables)
+
+        # add sqlite
+        if self.db.is_use_sqlite:
+            try:
+                cursor = self.db.connection_obj.cursor().execute(sql.query)
+                header_ids, header_names = [], []
+                for description in cursor.description:
+                    header_names.append(self.db.tables[result['table_id']]
+                                        ['headerid2name'].get(
+                                            description[0], description[0]))
+                    header_ids.append(description[0])
+                rows = []
+                for res in cursor.fetchall():
+                    rows.append(list(res))
+                tabledata = {
+                    'header_id': header_ids,
+                    'header_name': header_names,
+                    'rows': rows
+                }
+            except Exception as e:
+                logger.error(e)
+                tabledata = {'header_id': [], 'header_name': [], 'rows': []}
+        else:
+            tabledata = {'header_id': [], 'header_name': [], 'rows': []}
+
+        output = {
+            OutputKeys.SQL_STRING: sql.string,
+            OutputKeys.SQL_QUERY: sql.query,
+            OutputKeys.HISTORY: result['sql'],
+            OutputKeys.QUERT_RESULT: tabledata,
+        }
+
+        return {OutputKeys.OUTPUT: output}
 
     def _collate_fn(self, data):
         return data

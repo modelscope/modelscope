@@ -1,3 +1,5 @@
+# The GPEN implementation is also open-sourced by the authors,
+# and available at https://github.com/yangxy/GPEN/blob/main/face_model/gpen_model.py
 import functools
 import itertools
 import math

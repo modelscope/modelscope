@@ -12,5 +12,5 @@ from .detector import SingleStageDetector
 class TinynasDetector(SingleStageDetector):
 
     def __init__(self, model_dir, *args, **kwargs):
-
+        self.config_name = 'airdet_s.py'
         super(TinynasDetector, self).__init__(model_dir, *args, **kwargs)

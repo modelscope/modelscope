@@ -1,4 +1,5 @@
-# The implementation is based on PGL-SUM, available at https://github.com/e-apostolidis/PGL-SUM.
+# Part of the implementation is borrowed and modified from PGL-SUM,
+# publicly available at https://github.com/e-apostolidis/PGL-SUM
 
 import math
 

@@ -1,3 +1,5 @@
+# The GPEN implementation is also open-sourced by the authors,
+# and available at https://github.com/yangxy/GPEN/blob/main/face_detect/retinaface_detection.py
 import os
 
 import cv2

@@ -30,18 +30,13 @@ class TransformerBlock(nn.Module):
         return
 
     def forward(self, inp, mask=None, cache=None):
-        """
-        Forward process on one transformer layer.
+        """Forward process on one transformer layer.
 
-        @param : x
-        @type : Variable(shape: [batch_size, seq_len, hidden_size])
-
-        @param : memory
-        @type : Variable(shape: [batch_size, seq_len, hidden_size])
-
-        @param : mask
-
-        @param : cache
+        Args:
+            x(Variable(shape: [batch_size, seq_len, hidden_size]))
+            memory(Variable(shape: [batch_size, seq_len, hidden_size]))
+            mask
+            cache
         """
         attn_out = self.attn(inp, mask, cache)
         attn_out = self.dropout_layer(attn_out)

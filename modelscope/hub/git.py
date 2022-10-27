@@ -3,10 +3,9 @@
 import os
 import subprocess
 from typing import List
-from xmlrpc.client import Boolean
 
 from modelscope.utils.logger import get_logger
-from .api import ModelScopeConfig
+from ..utils.constant import MASTER_MODEL_BRANCH
 from .errors import GitError
 
 logger = get_logger()
@@ -131,6 +130,7 @@ class GitCommandWrapper(metaclass=Singleton):
         return response
 
     def add_user_info(self, repo_base_dir, repo_name):
+        from modelscope.hub.api import ModelScopeConfig
         user_name, user_email = ModelScopeConfig.get_user_info()
         if user_name and user_email:
             # config user.name and user.email if exist
@@ -138,8 +138,8 @@ class GitCommandWrapper(metaclass=Singleton):
                 repo_base_dir, repo_name, user_name)
             response = self._run_git_command(*config_user_name_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))
-            config_user_email_args = '-C %s/%s config user.name %s' % (
-                repo_base_dir, repo_name, user_name)
+            config_user_email_args = '-C %s/%s config user.email %s' % (
+                repo_base_dir, repo_name, user_email)
             response = self._run_git_command(
                 *config_user_email_args.split(' '))
             logger.debug(response.stdout.decode('utf8'))
@@ -176,6 +176,18 @@ class GitCommandWrapper(metaclass=Singleton):
     def new_branch(self, repo_dir: str, revision: str):
         cmds = ['-C', '%s' % repo_dir, 'checkout', '-b', revision]
         return self._run_git_command(*cmds)
+
+    def get_remote_branches(self, repo_dir: str):
+        cmds = ['-C', '%s' % repo_dir, 'branch', '-r']
+        rsp = self._run_git_command(*cmds)
+        info = [
+            line.strip()
+            for line in rsp.stdout.decode('utf8').strip().split(os.linesep)
+        ]
+        if len(info) == 1:
+            return ['/'.join(info[0].split('/')[1:])]
+        else:
+            return ['/'.join(line.split('/')[1:]) for line in info[1:]]
 
     def pull(self, repo_dir: str):
         cmds = ['-C', repo_dir, 'pull']
@@ -216,3 +228,22 @@ class GitCommandWrapper(metaclass=Singleton):
             files.append(line.split(' ')[-1])
 
         return files
+
+    def tag(self,
+            repo_dir: str,
+            tag_name: str,
+            message: str,
+            ref: str = MASTER_MODEL_BRANCH):
+        cmd_args = [
+            '-C', repo_dir, 'tag', tag_name, '-m',
+            '"%s"' % message, ref
+        ]
+        rsp = self._run_git_command(*cmd_args)
+        logger.debug(rsp.stdout.decode('utf8'))
+        return rsp
+
+    def push_tag(self, repo_dir: str, tag_name):
+        cmd_args = ['-C', repo_dir, 'push', 'origin', tag_name]
+        rsp = self._run_git_command(*cmd_args)
+        logger.debug(rsp.stdout.decode('utf8'))
+        return rsp

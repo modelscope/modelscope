@@ -1,5 +1,10 @@
 import math
+import os
 import random
+import uuid
+from os.path import exists
+from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import numpy as np
 import torch
@@ -9,6 +14,7 @@ import torchvision.transforms._transforms_video as transforms
 from decord import VideoReader
 from torchvision.transforms import Compose
 
+from modelscope.hub.file_download import http_get_file
 from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.type_assert import type_assert
@@ -30,7 +36,22 @@ def ReadVideoData(cfg,
     Returns:
         data (Tensor): the normalized video clips for model inputs
     """
-    data = _decode_video(cfg, video_path, num_temporal_views_override)
+    url_parsed = urlparse(video_path)
+    if url_parsed.scheme in ('file', '') and exists(
+            url_parsed.path):  # Possibly a local file
+        data = _decode_video(cfg, video_path, num_temporal_views_override)
+    else:
+        with TemporaryDirectory() as temporary_cache_dir:
+            random_str = uuid.uuid4().hex
+            http_get_file(
+                url=video_path,
+                local_dir=temporary_cache_dir,
+                file_name=random_str,
+                cookies=None)
+            temp_file_path = os.path.join(temporary_cache_dir, random_str)
+            data = _decode_video(cfg, temp_file_path,
+                                 num_temporal_views_override)
+
     if num_spatial_crops_override is not None:
         num_spatial_crops = num_spatial_crops_override
         transform = kinetics400_tranform(cfg, num_spatial_crops_override)

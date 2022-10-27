@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import yaml
@@ -46,12 +47,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
         if isinstance(audio_in, str):
             # load pcm data from url if audio_in is url str
-            self.audio_in = load_bytes_from_url(audio_in)
+            self.audio_in, checking_audio_fs = load_bytes_from_url(audio_in)
         elif isinstance(audio_in, bytes):
             # load pcm data from wav data if audio_in is wave format
-            self.audio_in = extract_pcm_from_wav(audio_in)
+            self.audio_in, checking_audio_fs = extract_pcm_from_wav(audio_in)
         else:
             self.audio_in = audio_in
+
+        # set the sample_rate of audio_in if checking_audio_fs is valid
+        if checking_audio_fs is not None:
+            self.audio_fs = checking_audio_fs
 
         if recog_type is None or audio_format is None:
             self.recog_type, self.audio_format, self.audio_in = asr_utils.type_checking(
@@ -59,9 +64,11 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 recog_type=recog_type,
                 audio_format=audio_format)
 
-        if hasattr(asr_utils, 'sample_rate_checking') and audio_fs is None:
-            self.audio_fs = asr_utils.sample_rate_checking(
+        if hasattr(asr_utils, 'sample_rate_checking'):
+            checking_audio_fs = asr_utils.sample_rate_checking(
                 self.audio_in, self.audio_format)
+            if checking_audio_fs is not None:
+                self.audio_fs = checking_audio_fs
 
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
@@ -79,13 +86,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
         logger.info(f"Decoding with {inputs['audio_format']} files ...")
 
-        data_cmd: Sequence[Tuple[str, str]]
+        data_cmd: Sequence[Tuple[str, str, str]]
         if inputs['audio_format'] == 'wav' or inputs['audio_format'] == 'pcm':
             data_cmd = ['speech', 'sound']
         elif inputs['audio_format'] == 'kaldi_ark':
             data_cmd = ['speech', 'kaldi_ark']
         elif inputs['audio_format'] == 'tfrecord':
             data_cmd = ['speech', 'tfrecord']
+
+        if inputs.__contains__('mvn_file'):
+            data_cmd.append(inputs['mvn_file'])
 
         # generate asr inference command
         cmd = {

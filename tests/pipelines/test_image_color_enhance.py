@@ -21,8 +21,7 @@ class ImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)
         if result is not None:
-            cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG][:, :,
-                                                                    [2, 1, 0]])
+            cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
             print(f'Output written to {osp.abspath("result.png")}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

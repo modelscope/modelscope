@@ -1,3 +1,5 @@
+# The implementation is adopted from FaceQuality, made publicly available under the MIT License
+# at https://github.com/deepcam-cn/FaceQuality/blob/master/models/model_resnet.py
 import torch
 from torch import nn
 

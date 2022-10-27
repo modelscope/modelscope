@@ -7,11 +7,12 @@ from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields
+from .nlp_base import NLPBasePreprocessor
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.text_error_correction)
-class TextErrorCorrectionPreprocessor(Preprocessor):
+class TextErrorCorrectionPreprocessor(NLPBasePreprocessor):
     """The preprocessor used in text correction task.
     """
 
@@ -22,7 +23,7 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
         Args:
             model_dir (str): model path
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(model_dir, *args, **kwargs)
         self.vocab = Dictionary.load(osp.join(model_dir, 'dict.src.txt'))
 
     def __call__(self, data: str) -> Dict[str, Any]:

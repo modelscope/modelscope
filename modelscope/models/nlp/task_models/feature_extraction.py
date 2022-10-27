@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
 import numpy as np
@@ -31,13 +32,8 @@ class FeatureExtractionModel(SingleBackboneTaskModelBase):
         self.build_backbone(self.backbone_cfg)
 
     def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
-
         # backbone do not need labels, only head need for loss compute
-        labels = input.pop(OutputKeys.LABELS, None)
-
+        input.pop(OutputKeys.LABELS, None)
         outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
-        if labels is not None:
-            input[OutputKeys.LABELS] = labels
-
+        sequence_output = outputs.last_hidden_state
         return {OutputKeys.TEXT_EMBEDDING: sequence_output}

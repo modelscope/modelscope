@@ -1,10 +1,10 @@
-# ------------------------------------------------------------------------------
-# Copyright (c) Microsoft
-# Licensed under the MIT License.
-# Written by Bin Xiao (Bin.Xiao@microsoft.com)
-# Modified by Ke Sun (sunk@mail.ustc.edu.cn)
-# https://github.com/HRNet/HRNet-Image-Classification/blob/master/lib/models/cls_hrnet.py
-# ------------------------------------------------------------------------------
+"""
+Copyright (c) Microsoft
+Licensed under the MIT License.
+Written by Bin Xiao (Bin.Xiao@microsoft.com)
+Modified by Ke Sun (sunk@mail.ustc.edu.cn)
+https://github.com/HRNet/HRNet-Image-Classification/blob/master/lib/models/cls_hrnet.py
+"""
 
 import functools
 import logging

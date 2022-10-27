@@ -4,14 +4,16 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_gpt3 import GPT3Config
-    from .modeling_gpt3 import GPT3Model
-    from .gpt3_for_text_generation import GPT3ForTextGeneration
+    from .configuration import GPT3Config
+    from .backbone import GPT3Model
+    from .text_generation import GPT3ForTextGeneration
+    from .tokenizer import JiebaBPETokenizer
 else:
     _import_structure = {
-        'configuration_gpt3': ['GPT3Config'],
-        'modeling_gpt3': ['GPT3Model'],
-        'gpt3_for_text_generation': ['GPT3ForTextGeneration'],
+        'configuration': ['GPT3Config'],
+        'backbone': ['GPT3Model'],
+        'text_generation': ['GPT3ForTextGeneration'],
+        'tokenizer': ['JiebaBPETokenizer'],
     }
 
     import sys

@@ -8,6 +8,7 @@ import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.cv.face_detection import ScrfdDetect
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -29,27 +30,8 @@ class FaceDetectionPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        from mmcv import Config
-        from mmcv.parallel import MMDataParallel
-        from mmcv.runner import load_checkpoint
-        from mmdet.models import build_detector
-        from modelscope.models.cv.face_detection.mmdet_patch.datasets import RetinaFaceDataset
-        from modelscope.models.cv.face_detection.mmdet_patch.datasets.pipelines import RandomSquareCrop
-        from modelscope.models.cv.face_detection.mmdet_patch.models.backbones import ResNetV1e
-        from modelscope.models.cv.face_detection.mmdet_patch.models.dense_heads import SCRFDHead
-        from modelscope.models.cv.face_detection.mmdet_patch.models.detectors import SCRFD
-        cfg = Config.fromfile(osp.join(model, 'mmcv_scrfd_10g_bnkps.py'))
-        detector = build_detector(
-            cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
-        ckpt_path = osp.join(model, ModelFile.TORCH_MODEL_BIN_FILE)
-        logger.info(f'loading model from {ckpt_path}')
-        device = torch.device(
-            f'cuda:{0}' if torch.cuda.is_available() else 'cpu')
-        load_checkpoint(detector, ckpt_path, map_location=device)
-        detector = MMDataParallel(detector, device_ids=[0])
-        detector.eval()
+        detector = ScrfdDetect(model_dir=model, **kwargs)
         self.detector = detector
-        logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)
@@ -85,22 +67,7 @@ class FaceDetectionPipeline(Pipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-
-        result = self.detector(
-            return_loss=False,
-            rescale=True,
-            img=[input['img'][0].unsqueeze(0)],
-            img_metas=[[dict(input['img_metas'][0].data)]])
-        assert result is not None
-        result = result[0][0]
-        bboxes = result[:, :4].tolist()
-        kpss = result[:, 5:].tolist()
-        scores = result[:, 4].tolist()
-        return {
-            OutputKeys.SCORES: scores,
-            OutputKeys.BOXES: bboxes,
-            OutputKeys.KEYPOINTS: kpss
-        }
+        return self.detector(input)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

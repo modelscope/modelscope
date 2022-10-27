@@ -543,6 +543,7 @@ class GEMMModel(nn.Module):
         img_feature, text_feature, caption = None, None, None
         if captioning and image is not None:
             img_feature, caption = self.model.image_to_text(image)
+            img_feature = self.parse_feat(img_feature)
         elif image is not None:
             img_feature = self.parse_feat(self.model.encode_image(image))
         if text is not None:

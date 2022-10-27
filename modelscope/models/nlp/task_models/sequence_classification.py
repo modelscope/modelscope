@@ -1,8 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 from typing import Any, Dict
 
-import json
 import numpy as np
 
 from modelscope.metainfo import TaskModels
@@ -16,11 +14,6 @@ from modelscope.utils.hub import parse_label_mapping
 __all__ = ['SequenceClassificationModel']
 
 
-@MODELS.register_module(
-    Tasks.sentence_similarity, module_name=TaskModels.text_classification)
-@MODELS.register_module(Tasks.nli, module_name=TaskModels.text_classification)
-@MODELS.register_module(
-    Tasks.sentiment_classification, module_name=TaskModels.text_classification)
 @MODELS.register_module(
     Tasks.text_classification, module_name=TaskModels.text_classification)
 class SequenceClassificationModel(SingleBackboneTaskModelBase):
@@ -54,25 +47,10 @@ class SequenceClassificationModel(SingleBackboneTaskModelBase):
         labels = input.pop(OutputKeys.LABELS, None)
 
         outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
+        pooled_output = outputs.pooler_output
         outputs = self.head.forward(pooled_output)
         if labels is not None:
             input[OutputKeys.LABELS] = labels
             loss = self.compute_loss(outputs, labels)
             outputs.update(loss)
         return outputs
-
-    def extract_logits(self, outputs):
-        return outputs[OutputKeys.LOGITS].cpu().detach()
-
-    def postprocess(self, input, **kwargs):
-        logits = self.extract_logits(input)
-        probs = logits.softmax(-1).numpy()
-        pred = logits.argmax(-1).numpy()
-        logits = logits.numpy()
-        res = {
-            OutputKeys.PREDICTIONS: pred,
-            OutputKeys.PROBABILITIES: probs,
-            OutputKeys.LOGITS: logits
-        }
-        return res

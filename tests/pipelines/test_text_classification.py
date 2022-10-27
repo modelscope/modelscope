@@ -4,7 +4,7 @@ import unittest
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import SequenceClassificationPipeline
+from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -18,7 +18,7 @@ class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id = 'damo/bert-base-sst2'
         self.task = Tasks.text_classification
 
-    def predict(self, pipeline_ins: SequenceClassificationPipeline):
+    def predict(self, pipeline_ins: TextClassificationPipeline):
         from easynlp.appzoo import load_dataset
 
         set = load_dataset('glue', 'sst2')

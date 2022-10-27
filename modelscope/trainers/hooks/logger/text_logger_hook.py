@@ -51,7 +51,7 @@ class TextLoggerHook(LoggerHook):
         if self.out_dir is None:
             self.out_dir = trainer.work_dir
 
-        if not osp.exists(self.out_dir):
+        if not osp.exists(self.out_dir) and is_master():
             os.makedirs(self.out_dir)
 
         trainer.logger.info('Text logs will be saved to {}'.format(

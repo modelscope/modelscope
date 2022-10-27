@@ -13,6 +13,7 @@ import numpy as np
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import TASK_OUTPUTS
+from modelscope.pipeline_inputs import TASK_INPUTS, check_input_type
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Frameworks, ModelFile
@@ -32,7 +33,7 @@ if is_tf_available():
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 Input = Union[str, tuple, MsDataset, 'Image.Image', 'numpy.ndarray']
-InputModel = Union[str, Model]
+InputModel = Union[str, Model, 'torch.nn.Module']
 
 logger = get_logger()
 
@@ -48,13 +49,7 @@ class Pipeline(ABC):
             return Model.from_pretrained(
                 model, model_prefetched=True,
                 device=self.device_name) if is_model(model) else model
-        elif isinstance(model, Model):
-            return model
         else:
-            if model and not isinstance(model, str):
-                raise ValueError(
-                    f'model type for single model is either str or Model, but got type {type(model)}'
-                )
             return model
 
     def initiate_multiple_models(self, input_models: List[InputModel]):
@@ -138,12 +133,10 @@ class Pipeline(ABC):
     def _get_framework(self) -> str:
         frameworks = []
         for m in self.models:
-            if isinstance(m, Model):
-                model_dir = m.model_dir
-            else:
-                assert isinstance(m,
-                                  str), 'model should be either str or Model.'
+            if isinstance(m, str):
                 model_dir = m
+            else:
+                model_dir = m.model_dir
             cfg_file = osp.join(model_dir, ModelFile.CONFIGURATION)
             cfg = Config.from_file(cfg_file)
             frameworks.append(cfg.framework)
@@ -210,7 +203,7 @@ class Pipeline(ABC):
         preprocess_params = kwargs.get('preprocess_params', {})
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
-
+        self._check_input(input)
         out = self.preprocess(input, **preprocess_params)
         with device_placement(self.framework, self.device_name):
             if self.framework == Frameworks.torch:
@@ -224,6 +217,46 @@ class Pipeline(ABC):
         out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out
+
+    def _check_input(self, input):
+        task_name = self.group_key
+        if task_name in TASK_INPUTS:
+            input_type = TASK_INPUTS[task_name]
+
+            # if multiple input formats are defined, we first
+            # found the one that match input data and check
+            if isinstance(input_type, list):
+                matched_type = None
+                for t in input_type:
+                    if isinstance(input, (dict, tuple)):
+                        if type(t) == type(input):
+                            matched_type = t
+                            break
+                    elif isinstance(t, str):
+                        matched_type = t
+                        break
+                if matched_type is None:
+                    err_msg = 'input data format for current pipeline should be one of following: \n'
+                    for t in input_type:
+                        err_msg += f'{t}\n'
+                    raise ValueError(err_msg)
+                else:
+                    input_type = matched_type
+
+            if isinstance(input_type, str):
+                check_input_type(input_type, input)
+            elif isinstance(input_type, tuple):
+                for t, input_ele in zip(input_type, input):
+                    check_input_type(t, input_ele)
+            elif isinstance(input_type, dict):
+                for k in input_type.keys():
+                    # allow single input for multi-modal models
+                    if k in input:
+                        check_input_type(input_type[k], input[k])
+            else:
+                raise ValueError(f'invalid input_type definition {input_type}')
+        else:
+            logger.warning(f'task {task_name} input definition is missing')
 
     def _check_output(self, input):
         # this attribute is dynamically attached by registry
@@ -346,10 +379,13 @@ class DistributedPipeline(Pipeline):
     def _instantiate_one(cls, rank, model_dir, **kwargs):
         """Instantiate one model piece.
 
-        @param rank: The model rank.
-        @param model_dir: The model_dir in the node.
-        @param kwargs: Any extra args.
-        @return: None. The model handler should be kept in the class field.
+        Args:
+            rank: The model rank.
+            model_dir: The model_dir in the node.
+            kwargs: Any extra args.
+
+        Returns:
+            None. The model handler should be kept in the class field.
         """
         pass
 
@@ -369,8 +405,11 @@ class DistributedPipeline(Pipeline):
 
         Use the model handler kept in the class field to forward.
 
-        @param inputs: The inputs after the preprocessing.
-        @return: The forward results.
+        Args:
+            inputs: The inputs after the preprocessing.
+
+        Returns:
+            The forward results.
         """
         pass
 
@@ -388,10 +427,12 @@ def collate_fn(data, device):
 
     """
     from torch.utils.data.dataloader import default_collate
-    from modelscope.preprocessors import InputFeatures
+    from modelscope.preprocessors.nlp import InputFeatures
     if isinstance(data, dict) or isinstance(data, Mapping):
         return type(data)({k: collate_fn(v, device) for k, v in data.items()})
     elif isinstance(data, (tuple, list)):
+        if 0 == len(data):
+            return torch.Tensor([])
         if isinstance(data[0], (int, float)):
             return default_collate(data).to(device)
         else:

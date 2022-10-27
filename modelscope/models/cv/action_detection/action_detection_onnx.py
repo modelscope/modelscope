@@ -4,6 +4,7 @@ import os
 import os.path as osp
 import shutil
 import subprocess
+import uuid
 
 import cv2
 import numpy as np
@@ -84,7 +85,9 @@ class ActionDetONNX(Model):
     def forward_video(self, video_name, scale):
         min_size, max_size = self._get_sizes(scale)
 
-        tmp_dir = osp.join(self.tmp_dir, osp.basename(video_name)[:-4])
+        tmp_dir = osp.join(
+            self.tmp_dir,
+            str(uuid.uuid1()) + '_' + osp.basename(video_name)[:-4])
         if osp.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
         os.makedirs(tmp_dir)
@@ -110,6 +113,7 @@ class ActionDetONNX(Model):
                   len(frame_names) * self.temporal_stride,
                   self.temporal_stride))
         batch_imgs = [self.parse_frames(names) for names in frame_names]
+        shutil.rmtree(tmp_dir)
 
         N, _, T, H, W = batch_imgs[0].shape
         scale_min = min_size / min(H, W)
@@ -128,7 +132,6 @@ class ActionDetONNX(Model):
             'timestamp': t,
             'actions': res
         } for t, res in zip(timestamp, results)]
-        shutil.rmtree(tmp_dir)
         return results
 
     def forward(self, video_name):

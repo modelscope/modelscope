@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import re
 import struct
 from typing import Union
 from urllib.parse import urlparse
@@ -37,8 +38,26 @@ def audio_norm(x):
     return x
 
 
+def update_conf(origin_config_file, new_config_file, conf_item: [str, str]):
+
+    def repl(matched):
+        key = matched.group(1)
+        if key in conf_item:
+            return conf_item[key]
+        else:
+            return None
+
+    with open(origin_config_file) as f:
+        lines = f.readlines()
+    with open(new_config_file, 'w') as f:
+        for line in lines:
+            line = re.sub(r'\$\{(.*)\}', repl, line)
+            f.write(line)
+
+
 def extract_pcm_from_wav(wav: bytes) -> bytes:
     data = wav
+    sample_rate = None
     if len(data) > 44:
         frame_len = 44
         file_len = len(data)
@@ -52,29 +71,33 @@ def extract_pcm_from_wav(wav: bytes) -> bytes:
                         'Subchunk1ID'] == 'fmt ':
                 header_fields['SubChunk1Size'] = struct.unpack(
                     '<I', data[16:20])[0]
+                header_fields['SampleRate'] = struct.unpack('<I',
+                                                            data[24:28])[0]
+                sample_rate = header_fields['SampleRate']
 
                 if header_fields['SubChunk1Size'] == 16:
                     frame_len = 44
                 elif header_fields['SubChunk1Size'] == 18:
                     frame_len = 46
                 else:
-                    return data
+                    return data, sample_rate
 
                 data = wav[frame_len:file_len]
         except Exception:
             # no treatment
             pass
 
-    return data
+    return data, sample_rate
 
 
 def load_bytes_from_url(url: str) -> Union[bytes, str]:
+    sample_rate = None
     result = urlparse(url)
     if result.scheme is not None and len(result.scheme) > 0:
         storage = HTTPStorage()
         data = storage.read(url)
-        data = extract_pcm_from_wav(data)
+        data, sample_rate = extract_pcm_from_wav(data)
     else:
         data = url
 
-    return data
+    return data, sample_rate

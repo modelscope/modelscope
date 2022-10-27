@@ -13,7 +13,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.summarization, module_name=Pipelines.text_generation)
+    Tasks.text_summarization, module_name=Pipelines.text_generation)
 class SummarizationPipeline(Pipeline):
 
     def __init__(self,

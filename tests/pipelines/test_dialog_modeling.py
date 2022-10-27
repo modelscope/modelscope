@@ -115,8 +115,7 @@ class DialogModelingTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
 
-        cache_path = snapshot_download(
-            self.model_id, revision='task_oriented_conversation')
+        cache_path = snapshot_download(self.model_id)
 
         preprocessor = DialogModelingPreprocessor(model_dir=cache_path)
         model = SpaceForDialogModeling(
@@ -130,8 +129,7 @@ class DialogModelingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        model = Model.from_pretrained(
-            self.model_id, revision='task_oriented_conversation')
+        model = Model.from_pretrained(self.model_id)
         preprocessor = DialogModelingPreprocessor(model_dir=model.model_dir)
 
         pipelines = [
@@ -142,20 +140,12 @@ class DialogModelingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
-        pipelines = [
-            pipeline(
-                task=self.task,
-                model=self.model_id,
-                model_revision='task_oriented_conversation')
-        ]
+        pipelines = [pipeline(task=self.task, model=self.model_id)]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipelines = [
-            pipeline(
-                task=self.task, model_revision='task_oriented_conversation')
-        ]
+        pipelines = [pipeline(task=self.task)]
         self.generate_and_print_dialog_response(pipelines)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

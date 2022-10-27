@@ -69,7 +69,7 @@ class CheckpointHook(Hook):
             self.rng_state = meta.get('rng_state')
             self.need_load_rng_state = True
 
-    def before_train_epoch(self, trainer):
+    def before_train_iter(self, trainer):
         if self.need_load_rng_state:
             if self.rng_state is not None:
                 random.setstate(self.rng_state['random'])
@@ -83,13 +83,6 @@ class CheckpointHook(Hook):
                     'Random state cannot be found in checkpoint file, '
                     'this may cause a random data order or model initialization.'
                 )
-
-        self.rng_state = {
-            'random': random.getstate(),
-            'numpy': np.random.get_state(),
-            'cpu': torch.random.get_rng_state(),
-            'cuda': torch.cuda.get_rng_state_all(),
-        }
 
     def after_train_epoch(self, trainer):
         if not self.by_epoch:
@@ -142,6 +135,12 @@ class CheckpointHook(Hook):
             cur_save_name = os.path.join(
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
 
+        self.rng_state = {
+            'random': random.getstate(),
+            'numpy': np.random.get_state(),
+            'cpu': torch.random.get_rng_state(),
+            'cuda': torch.cuda.get_rng_state_all(),
+        }
         meta = {
             'epoch': trainer.epoch,
             'iter': trainer.iter + 1,
@@ -216,6 +215,7 @@ class BestCkptSaverHook(CheckpointHook):
         by_epoch (bool): Save best checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): Output directory to save best checkpoint.
+        restore_best (bool): Whether to restore the best checkpoint after training.
     """
 
     PRIORITY = Priority.LOW
@@ -228,6 +228,7 @@ class BestCkptSaverHook(CheckpointHook):
                  save_optimizer=True,
                  save_dir=None,
                  save_file_name=None,
+                 restore_best=False,
                  interval=0):
         assert rule in ['max', 'min'], 'Only support "max" or "min" rule now.'
         super().__init__(
@@ -241,6 +242,7 @@ class BestCkptSaverHook(CheckpointHook):
         self._best_metric = None
         self._best_ckpt_file = None
         self.save_file_name = save_file_name
+        self.restore_best = restore_best
 
     def _should_save(self, trainer):
         return self._is_best_metric(trainer.metric_values)
@@ -305,3 +307,7 @@ class BestCkptSaverHook(CheckpointHook):
             self.logger.warn(
                 'The state_dict is not available, the best metric value will be affected.'
             )
+
+    def after_run(self, trainer):
+        if self.restore_best:
+            self.load_checkpoint(self._best_ckpt_file, trainer)

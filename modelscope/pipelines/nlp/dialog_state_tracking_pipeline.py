@@ -4,7 +4,7 @@ from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp import SpaceForDialogStateTracking
+from modelscope.models.nlp import SpaceForDST
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -20,7 +20,7 @@ __all__ = ['DialogStateTrackingPipeline']
 class DialogStateTrackingPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[SpaceForDialogStateTracking, str],
+                 model: Union[SpaceForDST, str],
                  preprocessor: DialogStateTrackingPreprocessor = None,
                  **kwargs):
         """use `model` and `preprocessor` to create a dialog state tracking pipeline for
@@ -33,8 +33,7 @@ class DialogStateTrackingPipeline(Pipeline):
         """
 
         model = model if isinstance(
-            model,
-            SpaceForDialogStateTracking) else Model.from_pretrained(model)
+            model, SpaceForDST) else Model.from_pretrained(model)
         self.model = model
         if preprocessor is None:
             preprocessor = DialogStateTrackingPreprocessor(model.model_dir)

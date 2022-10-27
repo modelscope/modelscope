@@ -43,11 +43,15 @@ class ImageDetectionPipeline(Pipeline):
 
         bboxes, scores, labels = self.model.postprocess(inputs['data'])
         if bboxes is None:
-            return None
+            outputs = {
+                OutputKeys.SCORES: [],
+                OutputKeys.LABELS: [],
+                OutputKeys.BOXES: []
+            }
+            return outputs
         outputs = {
             OutputKeys.SCORES: scores,
             OutputKeys.LABELS: labels,
             OutputKeys.BOXES: bboxes
         }
-
         return outputs

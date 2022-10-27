@@ -98,7 +98,7 @@ def compute_adv_loss(embedding,
     if is_nan:
         logger.warning('Nan occured when calculating adv loss.')
         return ori_loss
-    emb_grad = emb_grad / emb_grad_norm
+    emb_grad = emb_grad / (emb_grad_norm + 1e-6)
     embedding_2 = embedding_1 + adv_grad_factor * emb_grad
     embedding_2 = torch.max(embedding_1 - adv_bound, embedding_2)
     embedding_2 = torch.min(embedding_1 + adv_bound, embedding_2)

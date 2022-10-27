@@ -17,8 +17,8 @@ class VideoMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.video_multi_modal_embedding
         self.model_id = 'damo/multi_modal_clip_vtretrival_msrvtt_53'
 
-    video_path = 'data/test/videos/multi_modal_test_video_9770.mp4'
-    caption = ('a person is connecting something to system', None, None)
+    video_path = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/multi_modal_test_video_9770.mp4'
+    caption = 'a person is connecting something to system'
     _input = {'video': video_path, 'text': caption}
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

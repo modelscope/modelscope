@@ -10,6 +10,8 @@ from modelscope.utils.constant import Tasks
 
 @HEADS.register_module(
     Tasks.information_extraction, module_name=Heads.information_extraction)
+@HEADS.register_module(
+    Tasks.relation_extraction, module_name=Heads.information_extraction)
 class InformationExtractionHead(TorchHead):
 
     def __init__(self, **kwargs):

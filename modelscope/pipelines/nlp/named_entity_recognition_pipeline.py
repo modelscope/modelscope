@@ -9,11 +9,17 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (Preprocessor,
+from modelscope.preprocessors import (NERPreprocessorThai, NERPreprocessorViet,
+                                      Preprocessor,
                                       TokenClassificationPreprocessor)
 from modelscope.utils.constant import Tasks
+from modelscope.utils.tensor_utils import (torch_nested_detach,
+                                           torch_nested_numpify)
 
-__all__ = ['NamedEntityRecognitionPipeline']
+__all__ = [
+    'NamedEntityRecognitionPipeline', 'NamedEntityRecognitionThaiPipeline',
+    'NamedEntityRecognitionVietPipeline'
+]
 
 
 @PIPELINES.register_module(
@@ -59,37 +65,104 @@ class NamedEntityRecognitionPipeline(Pipeline):
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
+        text = inputs.pop(OutputKeys.TEXT)
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return {
+                **self.model(**inputs, **forward_params), OutputKeys.TEXT: text
+            }
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:
+        """process the prediction results
+
+        Args:
+            inputs (Dict[str, Any]): should be tensors from model
+
+        Returns:
+            Dict[str, str]: the prediction results
+        """
         text = inputs['text']
+        if OutputKeys.PREDICTIONS not in inputs:
+            logits = inputs[OutputKeys.LOGITS]
+            predictions = torch.argmax(logits[0], dim=-1)
+        else:
+            predictions = inputs[OutputKeys.PREDICTIONS].squeeze(
+                0).cpu().numpy()
+        predictions = torch_nested_numpify(torch_nested_detach(predictions))
         offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
-        labels = [self.id2label[x] for x in inputs['predicts']]
-        entities = []
-        entity = {}
+
+        labels = [self.id2label[x] for x in predictions]
+        chunks = []
+        chunk = {}
         for label, offsets in zip(labels, offset_mapping):
             if label[0] in 'BS':
-                if entity:
-                    entity['span'] = text[entity['start']:entity['end']]
-                    entities.append(entity)
-                entity = {
+                if chunk:
+                    chunk['span'] = text[chunk['start']:chunk['end']]
+                    chunks.append(chunk)
+                chunk = {
                     'type': label[2:],
                     'start': offsets[0],
                     'end': offsets[1]
                 }
             if label[0] in 'IES':
-                if entity:
-                    entity['end'] = offsets[1]
-            if label[0] in 'ES':
-                if entity:
-                    entity['span'] = text[entity['start']:entity['end']]
-                    entities.append(entity)
-                    entity = {}
-        if entity:
-            entity['span'] = text[entity['start']:entity['end']]
-            entities.append(entity)
-        outputs = {OutputKeys.OUTPUT: entities}
+                if chunk:
+                    chunk['end'] = offsets[1]
 
+            if label[0] in 'ES':
+                if chunk:
+                    chunk['span'] = text[chunk['start']:chunk['end']]
+                    chunks.append(chunk)
+                    chunk = {}
+
+        if chunk:
+            chunk['span'] = text[chunk['start']:chunk['end']]
+            chunks.append(chunk)
+
+        # for cws output
+        if len(chunks) > 0 and chunks[0]['type'] == 'cws':
+            spans = [
+                chunk['span'] for chunk in chunks if chunk['span'].strip()
+            ]
+            seg_result = ' '.join(spans)
+            outputs = {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}
+
+        # for ner outpus
+        else:
+            outputs = {OutputKeys.OUTPUT: chunks}
         return outputs
+
+
+@PIPELINES.register_module(
+    Tasks.named_entity_recognition,
+    module_name=Pipelines.named_entity_recognition_thai)
+class NamedEntityRecognitionThaiPipeline(NamedEntityRecognitionPipeline):
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 **kwargs):
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
+        if preprocessor is None:
+            preprocessor = NERPreprocessorThai(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
+
+@PIPELINES.register_module(
+    Tasks.named_entity_recognition,
+    module_name=Pipelines.named_entity_recognition_viet)
+class NamedEntityRecognitionVietPipeline(NamedEntityRecognitionPipeline):
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 **kwargs):
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
+        if preprocessor is None:
+            preprocessor = NERPreprocessorViet(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)

@@ -1,3 +1,6 @@
+# Part of the implementation is borrowed and modified from PGL-SUM,
+# publicly available at https://github.com/e-apostolidis/PGL-SUM
+
 import os
 
 import h5py
@@ -15,7 +18,7 @@ class VideoSummarizationDataset(TorchTaskDataset):
         self.mode = mode
         self.data_filename = os.path.join(root_dir, opt.dataset_file)
         self.split_filename = os.path.join(root_dir, opt.split_file)
-        self.split_index = opt.split_index  # it represents the current split (varies from 0 to 4)
+        self.split_index = opt.split_index
         hdf = h5py.File(self.data_filename, 'r')
         self.list_frame_features, self.list_gtscores = [], []
         self.list_user_summary = []

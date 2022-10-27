@@ -6,10 +6,12 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import TextGenerationPreprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.preprocessors import Preprocessor, build_preprocessor
+from modelscope.utils.constant import Fields, Tasks
+from modelscope.utils.hub import read_config
 
 __all__ = ['TextGenerationPipeline']
 
@@ -20,7 +22,7 @@ class TextGenerationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: Optional[TextGenerationPreprocessor] = None,
+                 preprocessor: Optional[Preprocessor] = None,
                  first_sequence='sentence',
                  **kwargs):
         """Use `model` and `preprocessor` to create a generation pipeline for prediction.
@@ -50,19 +52,63 @@ class TextGenerationPipeline(Pipeline):
         """
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
+        cfg = read_config(model.model_dir)
+        self.postprocessor = cfg.pop('postprocessor', 'decode')
         if preprocessor is None:
-            preprocessor = TextGenerationPreprocessor(
+            preprocessor_cfg = cfg.preprocessor
+            preprocessor_cfg.update({
+                'model_dir':
                 model.model_dir,
-                first_sequence=first_sequence,
-                second_sequence=None,
-                sequence_length=kwargs.pop('sequence_length', 128))
+                'first_sequence':
+                first_sequence,
+                'second_sequence':
+                None,
+                'sequence_length':
+                kwargs.pop('sequence_length', 128)
+            })
+            preprocessor = build_preprocessor(preprocessor_cfg, Fields.nlp)
         model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return self.model.generate(inputs)
+            return self.model.generate(inputs, **forward_params)
+
+    def _is_chinese_char(self, word: str):
+        chinese_punctuations = ('，', '。', '；', '：' '！', '？', '《', '》')
+        return len(word) == 1 \
+            and ('\u4e00' <= word <= '\u9fa5' or word in chinese_punctuations)
+
+    def _remove_space_between_chinese_chars(self, decoded: str):
+        old_word_list = decoded.split(' ')
+        new_word_list = []
+        start = -1
+        for i, word in enumerate(old_word_list):
+            if self._is_chinese_char(word):
+                if start == -1:
+                    start = i
+            else:
+                if start != -1:
+                    new_word_list.append(''.join(old_word_list[start:i]))
+                    start = -1
+                new_word_list.append(word)
+        if start != -1:
+            new_word_list.append(''.join(old_word_list[start:]))
+        return ' '.join(new_word_list)
+
+    def decode(self, inputs) -> str:
+        tokenizer = self.preprocessor.tokenizer
+        return tokenizer.decode(inputs.tolist(), skip_special_tokens=True)
+
+    def roberta(self, inputs) -> str:
+        tokenizer = self.preprocessor.tokenizer
+        decoded = tokenizer.decode(inputs.tolist())
+        return decoded.replace('<q>', '. ').replace('<mask>',
+                                                    '. ').replace('</s>', '')
 
     def postprocess(self, inputs: Dict[str, Tensor],
                     **postprocess_params) -> Dict[str, str]:
@@ -74,4 +120,9 @@ class TextGenerationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        return inputs
+        inputs = inputs['sequences']
+        if isinstance(inputs, list):
+            inputs = inputs[0]
+        decoded = getattr(self, self.postprocessor)(inputs)
+        text = self._remove_space_between_chinese_chars(decoded)
+        return {OutputKeys.TEXT: text}

@@ -8,6 +8,7 @@ if TYPE_CHECKING:
         ImageInstanceSegmentationTrainer
     from .image_portrait_enhancement_trainer import ImagePortraitEnhancementTrainer
     from .movie_scene_segmentation_trainer import MovieSceneSegmentationTrainer
+    from .image_inpainting_trainer import ImageInpaintingTrainer
 
 else:
     _import_structure = {
@@ -15,7 +16,8 @@ else:
         ['ImageInstanceSegmentationTrainer'],
         'image_portrait_enhancement_trainer':
         ['ImagePortraitEnhancementTrainer'],
-        'movie_scene_segmentation_trainer': ['MovieSceneSegmentationTrainer']
+        'movie_scene_segmentation_trainer': ['MovieSceneSegmentationTrainer'],
+        'image_inpainting_trainer': ['ImageInpaintingTrainer']
     }
 
     import sys

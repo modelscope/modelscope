@@ -47,9 +47,9 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
-        preprocessor = FaqQuestionAnsweringPreprocessor(cache_path)
-        model = SbertForFaqQuestionAnswering(cache_path)
-        model.load_checkpoint(cache_path)
+        preprocessor = FaqQuestionAnsweringPreprocessor.from_pretrained(
+            cache_path)
+        model = SbertForFaqQuestionAnswering.from_pretrained(cache_path)
         pipeline_ins = FaqQuestionAnsweringPipeline(
             model, preprocessor=preprocessor)
         result = pipeline_ins(self.param)

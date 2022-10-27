@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import os
 from typing import Any, Dict, List, Union
 
@@ -130,6 +132,12 @@ class WavToScp(Preprocessor):
                 inputs['asr_model_config'] = asr_model_wav_config
             else:
                 inputs['asr_model_config'] = asr_model_config
+
+            if inputs['model_config'].__contains__('mvn_file'):
+                mvn_file = os.path.join(inputs['model_workspace'],
+                                        inputs['model_config']['mvn_file'])
+                assert os.path.exists(mvn_file), 'mvn_file does not exist'
+                inputs['mvn_file'] = mvn_file
 
         elif inputs['model_type'] == Frameworks.tf:
             assert inputs['model_config'].__contains__(

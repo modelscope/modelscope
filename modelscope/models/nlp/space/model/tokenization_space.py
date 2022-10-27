@@ -1,5 +1,5 @@
-# Copyright 2018 Google AI, Google Brain and Carnegie Mellon University Authors and the HuggingFace Inc. team.
 # Copyright 2021-2022 The Alibaba DAMO NLP Team Authors.
+# Copyright 2018 Google AI, Google Brain and Carnegie Mellon University Authors and the HuggingFace Inc. team.
 # All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

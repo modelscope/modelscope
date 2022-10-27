@@ -20,17 +20,22 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_embedding:
     (Pipelines.sentence_embedding,
      'damo/nlp_corom_sentence-embedding_english-base'),
-    Tasks.passage_ranking: (Pipelines.passage_ranking,
-                            'damo/nlp_corom_passage-ranking_english-base'),
+    Tasks.text_ranking: (Pipelines.text_ranking,
+                         'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.part_of_speech: (Pipelines.part_of_speech,
+                           'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.token_classification:
     (Pipelines.part_of_speech,
      'damo/nlp_structbert_part-of-speech_chinese-base'),
     Tasks.named_entity_recognition:
     (Pipelines.named_entity_recognition,
      'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.relation_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
     Tasks.information_extraction:
     (Pipelines.relation_extraction,
      'damo/nlp_bert_relation-extraction_chinese-base'),
@@ -64,9 +69,6 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                        'damo/nlp_space_dialog-modeling'),
     Tasks.dialog_state_tracking: (Pipelines.dialog_state_tracking,
                                   'damo/nlp_space_dialog-state-tracking'),
-    Tasks.conversational_text_to_sql:
-    (Pipelines.conversational_text_to_sql,
-     'damo/nlp_star_conversational-text-to-sql'),
     Tasks.table_question_answering:
     (Pipelines.table_question_answering_pipeline,
      'damo/nlp-convai-text2sql-pretrain-cn'),
@@ -118,6 +120,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.face_detection: (Pipelines.face_detection,
                            'damo/cv_resnet_facedetection_scrfd10gkps'),
+    Tasks.card_detection: (Pipelines.card_detection,
+                           'damo/cv_resnet_carddetection_scrfd34gkps'),
+    Tasks.face_detection:
+    (Pipelines.face_detection,
+     'damo/cv_resnet101_face-detection_cvpr22papermogface'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
     Tasks.facial_expression_recognition:
@@ -156,6 +163,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_classification:
     (Pipelines.daily_image_classification,
      'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_object_detection:
+    (Pipelines.image_object_detection_auto,
+     'damo/cv_yolox_image-object-detection-auto'),
     Tasks.ocr_recognition:
     (Pipelines.ocr_recognition,
      'damo/cv_convnextTiny_ocr-recognition-general_damo'),
@@ -179,8 +189,13 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
     Tasks.shop_segmentation: (Pipelines.shop_segmentation,
                               'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.image_inpainting: (Pipelines.image_inpainting,
+                             'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.human_wholebody_keypoint:
+    (Pipelines.human_wholebody_keypoint,
+     'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
     Tasks.face_human_hand_detection:
@@ -189,6 +204,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),
+    Tasks.referring_video_object_segmentation:
+    (Pipelines.referring_video_object_segmentation,
+     'damo/cv_swin-t_referring_video-object-segmentation'),
 }
 
 
@@ -267,9 +285,6 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
-    assert isinstance(model, (type(None), str, Model, list)), \
-        f'model should be either None, str, List[str], Model, or List[Model], but got {type(model)}'
-
     model = normalize_model_input(model, model_revision)
     if pipeline_name is None:
         # get default pipeline for this task
@@ -286,8 +301,7 @@ def pipeline(task: str = None,
             else:
                 # used for test case, when model is str and is not hub path
                 pipeline_name = get_pipeline_by_model_name(task, model)
-        elif isinstance(model, Model) or \
-                (isinstance(model, list) and isinstance(model[0], Model)):
+        elif model is not None:
             # get pipeline info from Model object
             first_model = model[0] if isinstance(model, list) else model
             if not hasattr(first_model, 'pipeline'):

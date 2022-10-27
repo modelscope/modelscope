@@ -1,4 +1,5 @@
-# The implementation is based on PGL-SUM, available at https://github.com/e-apostolidis/PGL-SUM.
+# Part of the implementation is borrowed and modified from PGL-SUM,
+# publicly available at https://github.com/e-apostolidis/PGL-SUM
 
 import os.path as osp
 from copy import deepcopy
@@ -23,7 +24,8 @@ logger = get_logger()
 def get_change_points(video_feat, n_frame):
     video_feat = np.array(video_feat, np.float32)
     K = np.dot(video_feat, video_feat.T)
-    change_points, _ = cpd_auto(K, ncp=120, vmax=2.2 / 4.0, lmin=1)
+    change_points, _ = cpd_auto(
+        K, ncp=min(K.shape[0] - 1, 120), vmax=2.2 / 4.0, lmin=1)
     change_points = change_points * 15
     change_points = np.concatenate(([0], change_points, [n_frame - 1]))
 
@@ -133,6 +135,46 @@ def generate_summary(all_shot_bound, all_scores, all_nframes, all_positions):
         all_summaries.append(summary)
 
     return all_summaries
+
+
+def transform_time(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    time = '%02d:%02d:%06.3f' % (h, m, s)
+    return time
+
+
+def summary_format(summary, fps):
+    frames_list = []
+    start_frame = -1
+    end_frame = -1
+    is_summary_frame = False
+    for i, idx in enumerate(summary):
+        if idx:
+            if is_summary_frame is False:
+                start_frame = i
+                is_summary_frame = True
+        else:
+            if is_summary_frame:
+                end_frame = i - 1
+                frames_list.append([start_frame, end_frame])
+                is_summary_frame = False
+
+    if is_summary_frame and summary[-1] == 1:
+        end_frame = len(summary) - 1
+        frames_list.append([start_frame, end_frame])
+
+    output = []
+    for seg in frames_list:
+        output.append({
+            'frame':
+            seg,
+            'timestamps': [
+                transform_time(seg[0] / float(fps)),
+                transform_time(seg[1] / float(fps))
+            ]
+        })
+    return output
 
 
 @MODELS.register_module(

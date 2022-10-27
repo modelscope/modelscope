@@ -1,4 +1,5 @@
-# The implementation is based on pytorch-caffe-models, available at https://github.com/crowsonkb/pytorch-caffe-models.
+# Part of the implementation is borrowed and modified from pytorch-caffe-models,
+# publicly available at https://github.com/crowsonkb/pytorch-caffe-models
 
 import cv2
 import numpy as np

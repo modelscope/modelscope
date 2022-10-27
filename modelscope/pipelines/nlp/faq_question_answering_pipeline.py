@@ -2,15 +2,12 @@
 
 from typing import Any, Dict, Union
 
-import torch
-
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForFaqQuestionAnswering
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import FaqQuestionAnsweringPreprocessor
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['FaqQuestionAnsweringPipeline']
@@ -21,19 +18,15 @@ __all__ = ['FaqQuestionAnsweringPipeline']
 class FaqQuestionAnsweringPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[str, SbertForFaqQuestionAnswering],
-                 preprocessor: FaqQuestionAnsweringPreprocessor = None,
+                 model: Union[str, Model],
+                 preprocessor: Preprocessor = None,
                  **kwargs):
-        model = model if isinstance(
-            model,
-            SbertForFaqQuestionAnswering) else Model.from_pretrained(model)
-        model.eval()
+        model = Model.from_pretrained(model) if isinstance(model,
+                                                           str) else model
         if preprocessor is None:
-            preprocessor = FaqQuestionAnsweringPreprocessor(
+            preprocessor = Preprocessor.from_pretrained(
                 model.model_dir, **kwargs)
-        self.preprocessor = preprocessor
-        super(FaqQuestionAnsweringPipeline, self).__init__(
-            model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, pipeline_parameters, pipeline_parameters
@@ -46,8 +39,7 @@ class FaqQuestionAnsweringPipeline(Pipeline):
 
     def forward(self, inputs: [list, Dict[str, Any]],
                 **forward_params) -> Dict[str, Any]:
-        with torch.no_grad():
-            return self.model(inputs)
+        return self.model(inputs)
 
     def postprocess(self, inputs: [list, Dict[str, Any]],
                     **postprocess_params) -> Dict[str, Any]:

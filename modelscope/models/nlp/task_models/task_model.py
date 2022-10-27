@@ -404,7 +404,7 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
     def build_backbone(self, cfg):
         if 'prefix' in cfg:
             self._backbone_prefix = cfg['prefix']
-        backbone = build_backbone(cfg, field=Fields.nlp)
+        backbone = build_backbone(cfg)
         setattr(self, cfg['prefix'], backbone)
 
     def build_head(self, cfg):
@@ -414,7 +414,7 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
             )
         if 'prefix' in cfg:
             self._head_prefix = cfg['prefix']
-        head = build_head(cfg, group_key=self.group_key)
+        head = build_head(cfg, task_name=self.group_key)
         setattr(self, self._head_prefix, head)
         return head
 

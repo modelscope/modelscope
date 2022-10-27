@@ -26,6 +26,20 @@ class TranslationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(self.task, model=model_id)
         print(pipeline_ins(input=inputs))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_for_en2fr(self):
+        model_id = 'damo/nlp_csanmt_translation_en2fr'
+        inputs = 'When I was in my 20s, I saw my very first psychotherapy client.'
+        pipeline_ins = pipeline(self.task, model=model_id)
+        print(pipeline_ins(input=inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_for_fr2en(self):
+        model_id = 'damo/nlp_csanmt_translation_fr2en'
+        inputs = "Quand j'avais la vingtaine, j'ai vu mes tout premiers clients comme psychothérapeute."
+        pipeline_ins = pipeline(self.task, model=model_id)
+        print(pipeline_ins(input=inputs))
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         inputs = '声明补充说，沃伦的同事都深感震惊，并且希望他能够投案自首。'

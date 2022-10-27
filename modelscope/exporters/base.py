@@ -19,10 +19,13 @@ class Exporter(ABC):
     def from_model(cls, model: Model, **kwargs):
         """Build the Exporter instance.
 
-        @param model: A model instance. it will be used to output the generated file,
+        Args:
+            model: A Model instance. it will be used to generate the intermediate format file,
             and the configuration.json in its model_dir field will be used to create the exporter instance.
-        @param kwargs: Extra kwargs used to create the Exporter instance.
-        @return: The Exporter instance
+            kwargs: Extra kwargs used to create the Exporter instance.
+
+        Returns:
+            The Exporter instance
         """
         cfg = Config.from_file(
             os.path.join(model.model_dir, ModelFile.CONFIGURATION))
@@ -44,10 +47,13 @@ class Exporter(ABC):
         In some cases,  several files may be generated,
         So please return a dict which contains the generated name with the file path.
 
-        @param opset: The version of the ONNX operator set to use.
-        @param outputs: The output dir.
-        @param kwargs: In this default implementation,
-            kwargs will be carried to generate_dummy_inputs as extra arguments (like input shape).
-        @return: A dict contains the model name with the model file path.
+        Args:
+            opset: The version of the ONNX operator set to use.
+            outputs: The output dir.
+            kwargs: In this default implementation,
+                kwargs will be carried to generate_dummy_inputs as extra arguments (like input shape).
+
+        Returns:
+            A dict contains the model name with the model file path.
         """
         pass

@@ -1,13 +1,17 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .t5_for_text_generation import T5ForConditionalGeneration
+    from .backbone import T5Model
+    from .text2text_generation import T5ForConditionalGeneration
 
 else:
     _import_structure = {
-        't5_for_text_generation': ['T5ForConditionalGeneration'],
+        'backbone': ['T5Model'],
+        'text2text_generation': ['T5ForConditionalGeneration'],
     }
 
     import sys

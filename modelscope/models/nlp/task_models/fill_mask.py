@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
 import numpy as np
@@ -36,7 +37,7 @@ class FillMaskModel(SingleBackboneTaskModelBase):
         labels = input.pop(OutputKeys.LABELS, None)
 
         outputs = super().forward(input)
-        sequence_output, pooled_output = self.extract_backbone_outputs(outputs)
+        sequence_output = outputs.last_hidden_state
         outputs = self.head.forward(sequence_output)
 
         if labels is not None:

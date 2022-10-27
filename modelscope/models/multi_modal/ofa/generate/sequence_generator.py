@@ -385,12 +385,7 @@ class SequenceGenerator(nn.Module):
                     attn = torch.empty(bsz * beam_size,
                                        avg_attn_scores.size(1),
                                        max_len + 2).to(scores)
-                    # print("+++++++ debug attention shape +++++++")
-                    # print("attn", attn.shape)
-                    # print("avg_attn_scores", avg_attn_scores.shape)
                 attn[:, :, step + 1].copy_(avg_attn_scores)
-                # print("attn[:, :, step + 1]", attn[:, :, step + 1].shape)
-                # print("attn", attn.shape)
 
             scores = scores.type_as(lprobs)
             eos_bbsz_idx = torch.empty(0).to(
@@ -404,8 +399,28 @@ class SequenceGenerator(nn.Module):
                 self.search.set_src_lengths(src_lengths)
 
             if self.repeat_ngram_blocker is not None:
-                lprobs = self.repeat_ngram_blocker(tokens, lprobs, bsz,
-                                                   beam_size, step)
+                # process prefix_tokens
+                p_toks_len = prefix_tokens.ne(self.pad).sum(
+                    dim=1) if prefix_tokens is not None else None
+                if p_toks_len is not None:
+                    p_toks_len_beam = p_toks_len.unsqueeze(-1).repeat(
+                        1, beam_size).view(-1)
+                    no_repeat_ngram_size = self.repeat_ngram_blocker.no_repeat_ngram_size
+                    out_prefix = p_toks_len_beam < (
+                        step + no_repeat_ngram_size - 1)
+                else:
+                    out_prefix = torch.ones(bsz * beam_size).bool()
+                ngram_blocker_tokens = tokens[out_prefix]
+                ngram_blocker_lprobs = lprobs[out_prefix]
+                ngram_blocker_bsz = torch.div(
+                    out_prefix.sum(), beam_size, rounding_mode='trunc')
+
+                lprobs[out_prefix] = self.repeat_ngram_blocker(
+                    tokens=ngram_blocker_tokens,
+                    lprobs=ngram_blocker_lprobs,
+                    bsz=ngram_blocker_bsz,
+                    beam_size=beam_size,
+                    step=step)
 
             # Shape: (batch, cand_size)
             cand_scores, cand_indices, cand_beams = self.search.step(
@@ -415,7 +430,6 @@ class SequenceGenerator(nn.Module):
                 tokens[:, :step + 1],
                 original_batch_idxs,
             )
-
             # cand_bbsz_idx contains beam indices for the top candidate
             # hypotheses, with a range of values: [0, bsz*beam_size),
             # and dimensions: [bsz, cand_size]
@@ -671,7 +685,7 @@ class SequenceGenerator(nn.Module):
                 cum_unfin.append(prev)
         cum_fin_tensor = torch.tensor(cum_unfin, dtype=torch.int).to(bbsz_idx)
 
-        unfin_idx = bbsz_idx // beam_size
+        unfin_idx = torch.div(bbsz_idx, beam_size, rounding_mode='floor')
         sent = unfin_idx + torch.index_select(cum_fin_tensor, 0, unfin_idx)
 
         # Create a set of "{sent}{unfin_idx}", where

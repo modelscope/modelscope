@@ -2,16 +2,15 @@
 
 import os
 import tempfile
+from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .api import HubApi, ModelScopeConfig
 from .constants import FILE_HASH
-from .errors import NotExistError
-from .file_download import (get_file_download_url, http_get_file,
-                            http_user_agent)
+from .file_download import get_file_download_url, http_get_file
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_cache_dir,
                           model_id_to_group_owner_name)
@@ -23,7 +22,8 @@ def snapshot_download(model_id: str,
                       revision: Optional[str] = DEFAULT_MODEL_REVISION,
                       cache_dir: Union[str, Path, None] = None,
                       user_agent: Optional[Union[Dict, str]] = None,
-                      local_files_only: Optional[bool] = False) -> str:
+                      local_files_only: Optional[bool] = False,
+                      cookies: Optional[CookieJar] = None) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
     is useful when you want all files from a repo, because you don't know which
@@ -81,15 +81,15 @@ def snapshot_download(model_id: str,
         )  # we can not confirm the cached file is for snapshot 'revision'
     else:
         # make headers
-        headers = {'user-agent': http_user_agent(user_agent=user_agent, )}
+        headers = {
+            'user-agent':
+            ModelScopeConfig.get_user_agent(user_agent=user_agent, )
+        }
         _api = HubApi()
-        cookies = ModelScopeConfig.get_cookies()
-        # get file list from model repo
-        branches, tags = _api.get_model_branches_and_tags(
-            model_id, use_cookies=False if cookies is None else cookies)
-        if revision not in branches and revision not in tags:
-            raise NotExistError('The specified branch or tag : %s not exist!'
-                                % revision)
+        if cookies is None:
+            cookies = ModelScopeConfig.get_cookies()
+        revision = _api.get_valid_revision(
+            model_id, revision=revision, cookies=cookies)
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
             **headers,
@@ -110,7 +110,7 @@ def snapshot_download(model_id: str,
             for model_file in model_files:
                 if model_file['Type'] == 'tree':
                     continue
-                # check model_file is exist in cache, if exist, skip download, otherwise download
+                # check model_file is exist in cache, if existed, skip download, otherwise download
                 if cache.exists(model_file):
                     file_name = os.path.basename(model_file['Name'])
                     logger.info(

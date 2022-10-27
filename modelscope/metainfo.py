@@ -305,6 +305,7 @@ class Trainers(object):
     face_detection_scrfd = 'face-detection-scrfd'
     card_detection_scrfd = 'card-detection-scrfd'
     image_inpainting = 'image-inpainting'
+    image_classification_team = 'image-classification-team'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'

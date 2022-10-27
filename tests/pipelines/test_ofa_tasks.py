@@ -243,6 +243,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_text_to_image_synthesis_with_name(self):
         model = 'damo/ofa_text-to-image-synthesis_coco_large_en'
         ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)
+        ofa_pipe.model.generator.beam_size = 2
         example = {'text': 'a bear in the water.'}
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMG].save('result.png')
@@ -253,6 +254,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         model = Model.from_pretrained(
             'damo/ofa_text-to-image-synthesis_coco_large_en')
         ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)
+        ofa_pipe.model.generator.beam_size = 2
         example = {'text': 'a bear in the water.'}
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMG].save('result.png')

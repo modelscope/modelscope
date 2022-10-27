@@ -7,11 +7,13 @@ if TYPE_CHECKING:
     from .sequence_classification_trainer import SequenceClassificationTrainer
     from .csanmt_translation_trainer import CsanmtTranslationTrainer
     from .text_ranking_trainer import TextRankingTrainer
+    from .text_generation_trainer import TextGenerationTrainer
 else:
     _import_structure = {
         'sequence_classification_trainer': ['SequenceClassificationTrainer'],
         'csanmt_translation_trainer': ['CsanmtTranslationTrainer'],
-        'text_ranking_trainer': ['TextRankingTrainer']
+        'text_ranking_trainer': ['TextRankingTrainer'],
+        'text_generation_trainer': ['TextGenerationTrainer'],
     }
 
     import sys

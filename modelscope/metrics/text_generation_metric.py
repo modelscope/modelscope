@@ -36,20 +36,31 @@ class TextGenerationMetric(Metric):
             for char in string
         ]).split())
 
-    def add(self, outputs: Dict[str, List[str]], inputs: Dict = None):
-        ground_truths = outputs['tgts']
+    def add(self, outputs: Dict[str, List[str]], inputs: Dict[str, List[str]]):
+        ground_truths = inputs['tgts']
         eval_results = outputs['preds']
         for truth in ground_truths:
             self.tgts.append(self.rebuild_str(truth))
         for result in eval_results:
             self.preds.append(self.rebuild_str(result))
 
+    def _check(self, pred: str, tgt: str) -> bool:
+
+        def remove_useless(string: str) -> str:
+            return string.replace(' ', '').replace('.', '')
+
+        return remove_useless(pred) and remove_useless(tgt)
+
     def evaluate(self):
+        assert self.preds, 'preds in TextGenerationMetric must not be empty!'
+        tmp = [(pred, tgt) for pred, tgt in zip(self.preds, self.tgts)
+               if self._check(pred, tgt)]
+        preds, tgts = zip(*tmp)
 
         def mean(iter: Iterable) -> float:
             return sum(iter) / len(self.preds)
 
-        rouge_scores = self.rouge.get_scores(hyps=self.preds, refs=self.tgts)
+        rouge_scores = self.rouge.get_scores(hyps=preds, refs=tgts)
         rouge_1 = mean(map(lambda score: score['rouge-1']['f'], rouge_scores))
         rouge_l = mean(map(lambda score: score['rouge-l']['f'], rouge_scores))
         pred_split = tuple(pred.split(' ') for pred in self.preds)

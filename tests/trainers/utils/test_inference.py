@@ -12,6 +12,7 @@ from modelscope.metrics.builder import MetricKeys
 from modelscope.metrics.sequence_classification_metric import \
     SequenceClassificationMetric
 from modelscope.models.base import Model
+from modelscope.trainers import EpochBasedTrainer
 from modelscope.trainers.utils.inference import multi_gpu_test, single_gpu_test
 from modelscope.utils.test_utils import (DistributedTestCase,
                                          create_dummy_test_dataset, test_level)
@@ -34,6 +35,12 @@ class DummyModel(nn.Module, Model):
         x = self.bn(x)
         loss = torch.sum(x)
         return dict(logits=x, loss=loss)
+
+
+class DummyTrainer(EpochBasedTrainer):
+
+    def __init__(self, model):
+        self.model = model
 
 
 def test_func(dist=False):
@@ -62,8 +69,10 @@ def test_func(dist=False):
     else:
         test_func = single_gpu_test
 
+    dummy_trainer = DummyTrainer(dummy_model)
+
     metric_results = test_func(
-        dummy_model,
+        dummy_trainer,
         dummy_loader,
         device=device,
         metric_classes=[metric_class])

@@ -53,7 +53,7 @@ class TextGenerationPipeline(Pipeline):
         model = model if isinstance(model,
                                     Model) else Model.from_pretrained(model)
         cfg = read_config(model.model_dir)
-        self.postprocessor = cfg.pop('postprocessor', None)
+        self.postprocessor = cfg.pop('postprocessor', 'decode')
         if preprocessor is None:
             preprocessor_cfg = cfg.preprocessor
             preprocessor_cfg.update({
@@ -78,8 +78,37 @@ class TextGenerationPipeline(Pipeline):
         with torch.no_grad():
             return self.model.generate(inputs, **forward_params)
 
-    def sentence_piece(self, inputs) -> Dict[str, Tensor]:
-        return self.preprocessor.tokenizer.decode(inputs.tolist()[0])
+    def _is_chinese_char(self, word: str):
+        chinese_punctuations = ('，', '。', '；', '：' '！', '？', '《', '》')
+        return len(word) == 1 \
+            and ('\u4e00' <= word <= '\u9fa5' or word in chinese_punctuations)
+
+    def _remove_space_between_chinese_chars(self, decoded: str):
+        old_word_list = decoded.split(' ')
+        new_word_list = []
+        start = -1
+        for i, word in enumerate(old_word_list):
+            if self._is_chinese_char(word):
+                if start == -1:
+                    start = i
+            else:
+                if start != -1:
+                    new_word_list.append(''.join(old_word_list[start:i]))
+                    start = -1
+                new_word_list.append(word)
+        if start != -1:
+            new_word_list.append(''.join(old_word_list[start:]))
+        return ' '.join(new_word_list)
+
+    def decode(self, inputs) -> str:
+        tokenizer = self.preprocessor.tokenizer
+        return tokenizer.decode(inputs.tolist(), skip_special_tokens=True)
+
+    def roberta(self, inputs) -> str:
+        tokenizer = self.preprocessor.tokenizer
+        decoded = tokenizer.decode(inputs.tolist())
+        return decoded.replace('<q>', '. ').replace('<mask>',
+                                                    '. ').replace('</s>', '')
 
     def postprocess(self, inputs: Dict[str, Tensor],
                     **postprocess_params) -> Dict[str, str]:
@@ -91,7 +120,9 @@ class TextGenerationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
-        return inputs if self.postprocessor is None else {
-            OutputKeys.TEXT:
-            getattr(self, self.postprocessor.replace('-', '_'))(inputs)
-        }
+        inputs = inputs['sequences']
+        if isinstance(inputs, list):
+            inputs = inputs[0]
+        decoded = getattr(self, self.postprocessor)(inputs)
+        text = self._remove_space_between_chinese_chars(decoded)
+        return {OutputKeys.TEXT: text}

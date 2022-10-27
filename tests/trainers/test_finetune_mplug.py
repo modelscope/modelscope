@@ -24,17 +24,16 @@ class TestFinetuneMPlug(unittest.TestCase):
         datadict = MsDataset.load(
             'coco_captions_small_slice',
             download_mode=DownloadMode.FORCE_REDOWNLOAD)
-        self.train_dataset = MsDataset(datadict['train'].to_hf_dataset().map(
-            lambda _: {
-                'question': 'what the picture describes?'
-            }).rename_column('image:FILE',
-                             'image').rename_column('answer:Value', 'answer'))
-        self.test_dataset = MsDataset(datadict['test'].to_hf_dataset().map(
-            lambda _: {
-                'question': 'what the picture describes?'
-            }).rename_column('image:FILE',
-                             'image').rename_column('answer:Value', 'answer'))
-
+        self.train_dataset = MsDataset(
+            datadict['train'].remap_columns({
+                'image:FILE': 'image',
+                'answer:Value': 'answer'
+            }).map(lambda _: {'question': 'what the picture describes?'}))
+        self.test_dataset = MsDataset(
+            datadict['test'].remap_columns({
+                'image:FILE': 'image',
+                'answer:Value': 'answer'
+            }).map(lambda _: {'question': 'what the picture describes?'}))
         self.max_epochs = 2
 
     def tearDown(self):

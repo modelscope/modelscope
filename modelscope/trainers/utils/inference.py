@@ -4,29 +4,25 @@ import logging
 import os
 import pickle
 import shutil
-import time
-from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
-from modelscope.trainers.parallel.utils import is_parallel
 from modelscope.utils.data_utils import to_device
-from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
 
 
-def single_gpu_test(model,
+def single_gpu_test(trainer,
                     data_loader,
                     device,
                     metric_classes=None,
                     data_loader_iters=None):
-    """Test model with a single gpu.
+    """Test model in EpochBasedTrainer with a single gpu.
 
     Args:
-        model (nn.Module): Model to be tested.
+        trainer (modelscope.trainers.EpochBasedTrainer): Trainer to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
         device (str | torch.device): The target device for the data.
         metric_classes (List): List of Metric class that uses to collect metrics
@@ -35,7 +31,6 @@ def single_gpu_test(model,
     Returns:
         list: The prediction results.
     """
-    model.eval()
     dataset = data_loader.dataset
     progress_with_iters = False
     if data_loader_iters is None:
@@ -55,12 +50,7 @@ def single_gpu_test(model,
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
-            with torch.no_grad():
-                if isinstance(data, Mapping) and not func_receive_dict_inputs(
-                        model.forward):
-                    result = model.forward(**data)
-                else:
-                    result = model.forward(data)
+            result = trainer.evaluation_step(data)
             if metric_classes is not None:
                 for metric_cls in metric_classes:
                     metric_cls.add(result, data)
@@ -88,14 +78,14 @@ def single_gpu_test(model,
     return metric_values
 
 
-def multi_gpu_test(model,
+def multi_gpu_test(trainer,
                    data_loader,
                    device,
                    tmpdir=None,
                    gpu_collect=False,
                    metric_classes=None,
                    data_loader_iters_per_gpu=None):
-    """Test model with multiple gpus.
+    """Test model in EpochBasedTrainer with multiple gpus.
 
     This method tests model with multiple gpus and collects the results
     under two different modes: gpu and cpu modes. By setting
@@ -104,7 +94,7 @@ def multi_gpu_test(model,
     different gpus to ``tmpdir`` and collects them by the rank 0 worker.
 
     Args:
-        model (nn.Module): Model to be tested.
+        trainer (modelscope.trainers.EpochBasedTrainer): Trainer to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
         device: (str | torch.device): The target device for the data.
         tmpdir (str): Path of directory to save the temporary results from
@@ -115,7 +105,6 @@ def multi_gpu_test(model,
     Returns:
         list: The prediction results.
     """
-    model.eval()
     results = []
     data_list = []
     dataset = data_loader.dataset
@@ -138,21 +127,12 @@ def multi_gpu_test(model,
         data_len = data_loader_iters_per_gpu * world_size
         desc = 'Total test iterations with multi gpus'
 
-    if is_parallel(model):
-        receive_dict_inputs = func_receive_dict_inputs(model.module.forward)
-    else:
-        receive_dict_inputs = func_receive_dict_inputs(model.forward)
-
     count = 0
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
             data_list.append(data)
-            with torch.no_grad():
-                if isinstance(data, Mapping) and not receive_dict_inputs:
-                    result = model.forward(**data)
-                else:
-                    result = model.forward(data)
+            result = trainer.evaluation_step(data)
             results.append(result)
 
             if isinstance(data, dict):

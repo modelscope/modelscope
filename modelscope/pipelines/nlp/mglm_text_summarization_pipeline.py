@@ -7,6 +7,8 @@ from modelscope.models.base import Model
 from modelscope.models.nlp import MGLMForTextSummarization
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import (MGLMSummarizationPreprocessor,
+                                      Preprocessor)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['MGLMTextSummarizationPipeline']
@@ -17,13 +19,18 @@ __all__ = ['MGLMTextSummarizationPipeline']
     module_name=Pipelines.mglm_text_summarization)
 class MGLMTextSummarizationPipeline(Pipeline):
 
-    def __init__(self, model: Union[MGLMForTextSummarization, str], *args,
+    def __init__(self,
+                 model: Union[MGLMForTextSummarization, str],
+                 preprocessor: [Preprocessor] = None,
+                 *args,
                  **kwargs):
         model = MGLMForTextSummarization(model) if isinstance(model,
                                                               str) else model
         self.model = model
         self.model.eval()
-        super().__init__(model=model, **kwargs)
+        if preprocessor is None:
+            preprocessor = MGLMSummarizationPreprocessor()
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     # define the forward pass
     def forward(self, inputs: Union[Dict, str],

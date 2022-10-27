@@ -26,10 +26,6 @@ class FaqQuestionAnsweringPipeline(Pipeline):
         if preprocessor is None:
             preprocessor = Preprocessor.from_pretrained(
                 model.model_dir, **kwargs)
-            if preprocessor is None:
-                from modelscope.preprocessors import FaqQuestionAnsweringPreprocessor
-                preprocessor = FaqQuestionAnsweringPreprocessor(
-                    model.model_dir, **kwargs)
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def _sanitize_parameters(self, **pipeline_parameters):

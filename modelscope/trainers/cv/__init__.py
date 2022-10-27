@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .image_portrait_enhancement_trainer import ImagePortraitEnhancementTrainer
     from .movie_scene_segmentation_trainer import MovieSceneSegmentationTrainer
     from .image_inpainting_trainer import ImageInpaintingTrainer
+    from .referring_video_object_segmentation_trainer import ReferringVideoObjectSegmentationTrainer
 
 else:
     _import_structure = {
@@ -17,7 +18,9 @@ else:
         'image_portrait_enhancement_trainer':
         ['ImagePortraitEnhancementTrainer'],
         'movie_scene_segmentation_trainer': ['MovieSceneSegmentationTrainer'],
-        'image_inpainting_trainer': ['ImageInpaintingTrainer']
+        'image_inpainting_trainer': ['ImageInpaintingTrainer'],
+        'referring_video_object_segmentation_trainer':
+        ['ReferringVideoObjectSegmentationTrainer']
     }
 
     import sys

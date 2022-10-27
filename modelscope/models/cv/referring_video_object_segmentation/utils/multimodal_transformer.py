@@ -122,8 +122,8 @@ class MultimodalTransformer(nn.Module):
         with torch.inference_mode(mode=self.freeze_text_encoder):
             encoded_text = self.text_encoder(**tokenized_queries)
         # Transpose memory because pytorch's attention expects sequence first
-        txt_memory = rearrange(encoded_text.last_hidden_state,
-                               'b s c -> s b c')
+        tmp_last_hidden_state = encoded_text.last_hidden_state.clone()
+        txt_memory = rearrange(tmp_last_hidden_state, 'b s c -> s b c')
         txt_memory = self.txt_proj(
             txt_memory)  # change text embeddings dim to model dim
         # Invert attention mask that we get from huggingface because its the opposite in pytorch transformer

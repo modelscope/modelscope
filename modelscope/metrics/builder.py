@@ -43,6 +43,8 @@ task_default_metrics = {
     Tasks.visual_question_answering: [Metrics.text_gen_metric],
     Tasks.movie_scene_segmentation: [Metrics.movie_scene_segmentation_metric],
     Tasks.image_inpainting: [Metrics.image_inpainting_metric],
+    Tasks.referring_video_object_segmentation:
+    [Metrics.referring_video_object_segmentation_metric],
 }
 
 

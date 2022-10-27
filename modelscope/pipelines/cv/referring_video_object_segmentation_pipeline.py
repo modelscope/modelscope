@@ -157,7 +157,13 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                             * text_border_height_per_query, 0, 0))
                 W, H = vid_frame.size
                 draw = ImageDraw.Draw(vid_frame)
-                font = ImageFont.truetype(font='DejaVuSansMono.ttf', size=30)
+
+                if self.model.cfg.pipeline.output_font:
+                    font = ImageFont.truetype(
+                        font=self.model.cfg.pipeline.output_font,
+                        size=self.model.cfg.pipeline.output_font_size)
+                else:
+                    font = ImageFont.load_default()
                 for i, (text_query, color) in enumerate(
                         zip(self.text_queries, colors), start=1):
                     w, h = draw.textsize(text_query, font=font)

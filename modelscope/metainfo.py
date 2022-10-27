@@ -305,6 +305,7 @@ class Trainers(object):
     face_detection_scrfd = 'face-detection-scrfd'
     card_detection_scrfd = 'card-detection-scrfd'
     image_inpainting = 'image-inpainting'
+    referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_classification_team = 'image-classification-team'
 
     # nlp trainers
@@ -423,6 +424,8 @@ class Metrics(object):
     image_inpainting_metric = 'image-inpainting-metric'
     # metric for ocr
     NED = 'ned'
+    # metric for referring-video-object-segmentation task
+    referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
 
 
 class Optimizers(object):

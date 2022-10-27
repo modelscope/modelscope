@@ -62,7 +62,10 @@ def single_gpu_test(trainer,
                     if 'nsentences' in data:
                         batch_size = data['nsentences']
                     else:
-                        batch_size = len(next(iter(data.values())))
+                        try:
+                            batch_size = len(next(iter(data.values())))
+                        except Exception:
+                            batch_size = data_loader.batch_size
                 else:
                     batch_size = len(data)
             for _ in range(batch_size):

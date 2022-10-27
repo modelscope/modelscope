@@ -667,10 +667,25 @@ class EpochBasedTrainer(BaseTrainer):
         return dataset
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
-        return build_optimizer(self.model, cfg=cfg, default_args=default_args)
+        try:
+            return build_optimizer(
+                self.model, cfg=cfg, default_args=default_args)
+        except KeyError as e:
+            self.logger.error(
+                f'Build optimizer error, the optimizer {cfg} is native torch optimizer, '
+                f'please check if your torch with version: {torch.__version__} matches the config.'
+            )
+            raise e
 
     def build_lr_scheduler(self, cfg: ConfigDict, default_args: dict = None):
-        return build_lr_scheduler(cfg=cfg, default_args=default_args)
+        try:
+            return build_lr_scheduler(cfg=cfg, default_args=default_args)
+        except KeyError as e:
+            self.logger.error(
+                f'Build lr_scheduler error, the lr_scheduler {cfg} is native torch lr_scheduler, '
+                f'please check if your torch with version: {torch.__version__} matches the config.'
+            )
+            raise e
 
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler

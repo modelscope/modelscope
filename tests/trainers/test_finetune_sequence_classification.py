@@ -346,7 +346,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         train_datasets = []
         from datasets import DownloadConfig
         dc = DownloadConfig()
-        dc.local_files_only = True
+        dc.local_files_only = False
         for lang in langs:
             train_datasets.append(
                 load_dataset('xnli', lang, split='train', download_config=dc))

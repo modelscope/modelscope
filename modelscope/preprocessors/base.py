@@ -147,8 +147,50 @@ class Preprocessor(ABC):
                         cfg_dict: Config = None,
                         preprocessor_mode=ModeKeys.INFERENCE,
                         **kwargs):
-        """ Instantiate a model from local directory or remote model repo. Note
+        """Instantiate a preprocessor from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.
+
+        Args:
+            model_name_or_path(str): A model dir or a model id used to load the preprocessor out.
+            revision(str, `optional`): The revision used when the model_name_or_path is
+                a model id of the remote hub. default `master`.
+            cfg_dict(Config, `optional`): An optional config. If provided, it will replace
+                the config read out of the `model_name_or_path`
+            preprocessor_mode(str, `optional`): Specify the working mode of the preprocessor, can be `train`, `eval`,
+                or `inference`. Default value `inference`.
+                The preprocessor field in the config may contain two sub preprocessors:
+                >>> {
+                >>>     "train": {
+                >>>         "type": "some-train-preprocessor"
+                >>>     },
+                >>>     "val": {
+                >>>         "type": "some-eval-preprocessor"
+                >>>     }
+                >>> }
+                In this scenario, the `train` preprocessor will be loaded in the `train` mode, the `val` preprocessor
+                will be loaded in the `eval` or `inference` mode. The `mode` field in the preprocessor class
+                will be assigned in all the modes.
+                Or just one:
+                >>> {
+                >>>     "type": "some-train-preprocessor"
+                >>> }
+                In this scenario, the sole preprocessor will be loaded in all the modes,
+                and the `mode` field in the preprocessor class will be assigned.
+
+            **kwargs:
+                task(str, `optional`): The `Tasks` enumeration value to replace the task value
+                read out of config in the `model_name_or_path`.
+                This is useful when the preprocessor does not have a `type` field and the task to be used is not
+                equal to the task of which the model is saved.
+                Other kwargs will be directly fed into the preprocessor, to replace the default configs.
+
+        Returns:
+            The preprocessor instance.
+
+        Examples:
+            >>> from modelscope.preprocessors import Preprocessor
+            >>> Preprocessor.from_pretrained('damo/nlp_debertav2_fill-mask_chinese-base')
+
         """
         if not os.path.exists(model_name_or_path):
             model_dir = snapshot_download(

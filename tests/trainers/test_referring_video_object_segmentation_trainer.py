@@ -62,7 +62,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
 
         self.max_epochs = max_epochs
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,
@@ -77,7 +77,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         results_files = os.listdir(trainer.work_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_trainer_with_model_and_args(self):
 
         cache_path = snapshot_download(self.model_id)

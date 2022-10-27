@@ -176,7 +176,10 @@ class HubApi:
         """
         cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
+        if revision:
+            path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
+        else:
+            path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
 
         r = requests.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
@@ -447,8 +450,12 @@ class HubApi:
         Returns:
             List[dict]: Model file list.
         """
-        path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s' % (
-            self.endpoint, model_id, revision, recursive)
+        if revision:
+            path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s' % (
+                self.endpoint, model_id, revision, recursive)
+        else:
+            path = '%s/api/v1/models/%s/repo/files?Recursive=%s' % (
+                self.endpoint, model_id, recursive)
         cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'

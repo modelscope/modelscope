@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
-import addict
 import numpy as np
 from transformers.modeling_utils import PreTrainedModel
 
@@ -9,7 +8,8 @@ from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import (OutputKeys, TextGenerationModelOutput,
+                                TokenGeneratorOutput)
 from modelscope.utils.constant import Tasks
 
 __all__ = ['TaskModelForTextGeneration']
@@ -43,12 +43,12 @@ class TaskModelForTextGeneration(SingleBackboneTaskModelBase, PreTrainedModel):
         backbone_outputs = super().forward(input)
         hidden_states = backbone_outputs[0]
 
-        outputs = self.head.forward(hidden_states)
+        logits = self.head.forward(hidden_states)
+        loss = None
         if labels is not None:
             input[OutputKeys.LABELS] = labels
-            loss = self.compute_loss(outputs, labels)
-            outputs.update(loss)
-        return addict.Dict(outputs)
+            loss = self.compute_loss(logits, labels)
+        return TextGenerationModelOutput(logits=logits, loss=loss)
 
     def prepare_inputs_for_generation(self, input_ids, past=None, **kwargs):
         # only last token for inputs_ids if past is defined in kwargs
@@ -76,4 +76,12 @@ class TaskModelForTextGeneration(SingleBackboneTaskModelBase, PreTrainedModel):
 
     def generate(self, inputs, *args, **kwargs):
         input_ids = inputs['input_ids'] if isinstance(inputs, Dict) else inputs
-        return super().generate(input_ids, *args, **kwargs)
+        generate_output = super().generate(input_ids, *args, **kwargs)
+        if isinstance(generate_output, Dict):
+            return TokenGeneratorOutput(
+                sequences=generate_output.sequences,
+                scores=generate_output.scores,
+                attentions=generate_output.attentions,
+                hidden_states=generate_output.hidden_states)
+        else:
+            return TokenGeneratorOutput(sequences=generate_output)

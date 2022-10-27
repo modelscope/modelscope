@@ -50,7 +50,7 @@ if TYPE_CHECKING:
                        VecoForSequenceClassification,
                        VecoForTokenClassification, VecoModel, VecoTokenizer,
                        VecoTokenizerFast)
-
+    from .bloom import BloomModel
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -109,6 +109,7 @@ else:
         'T5': ['T5ForConditionalGeneration'],
         'mglm': ['MGLMForTextSummarization'],
         'gpt_neo': ['GPTNeoModel'],
+        'bloom': ['BloomModel'],
     }
 
     import sys

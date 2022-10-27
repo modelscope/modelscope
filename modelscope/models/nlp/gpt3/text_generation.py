@@ -42,7 +42,7 @@ class GPT3ForTextGeneration(TorchModel):
         """
         return self.model(**input)
 
-    def generate(self, input: Dict[str, Tensor]) -> Dict[str, str]:
+    def generate(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         assert 'input_ids' in input, "generate function must accept 'input_ids' key"
         input_ids = input['input_ids']
         if 'attention_mask' in input:
@@ -59,8 +59,4 @@ class GPT3ForTextGeneration(TorchModel):
         gen_params['top_k'] = input.pop('top_k', 10)
         gen_params['top_p'] = input.pop('top_p', None)
         sample_output = self.model.generate(**gen_params)
-        return {
-            OutputKeys.TEXT:
-            self.tokenizer.decode(sample_output[0],
-                                  skip_special_tokens=True).replace(' ', '')
-        }
+        return {'sequences': sample_output[0]}

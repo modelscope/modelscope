@@ -855,6 +855,28 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.invoke_hook(TrainerStages.after_run)
 
+    def evaluation_step(self, data):
+        """Perform a training step on a batch of inputs.
+
+        Subclass and override to inject custom behavior.
+
+        """
+        model = self.model
+        model.eval()
+
+        if is_parallel(model):
+            receive_dict_inputs = func_receive_dict_inputs(
+                model.module.forward)
+        else:
+            receive_dict_inputs = func_receive_dict_inputs(model.forward)
+
+        with torch.no_grad():
+            if isinstance(data, Mapping) and not receive_dict_inputs:
+                result = model.forward(**data)
+            else:
+                result = model.forward(data)
+        return result
+
     def evaluation_loop(self, data_loader, metric_classes):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
@@ -862,7 +884,7 @@ class EpochBasedTrainer(BaseTrainer):
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
             metric_values = multi_gpu_test(
-                self.model,
+                self,
                 data_loader,
                 device=self.device,
                 tmpdir=None,
@@ -872,7 +894,7 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
-                self.model,
+                self,
                 data_loader,
                 device=self.device,
                 metric_classes=metric_classes,

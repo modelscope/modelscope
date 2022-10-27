@@ -29,22 +29,6 @@ class PalmForTextGeneration(TorchModel):
         self.tokenizer = self.model.tokenizer
         self.generator = Translator(self.model)
 
-    def _evaluate_postprocess(self, ids_list: List[List[int]]) -> List[str]:
-        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''), ('[unused1]',
-                                                                  ''),
-                               (r' +', ' '), ('[SEP]', ''), ('[unused2]', ''),
-                               ('[CLS]', ''), ('[UNK]', ''), (' ', ''))
-        replace_tokens_roberta = ((r' +', ' '), ('<mask>', '. '),
-                                  ('<pad>', ''), ('<s>', ''), ('</s>', ''),
-                                  ('<unk>', ' '), ('<q>', '. '))
-
-        replace_tokens = replace_tokens_roberta \
-            if self.model.config.encoder == 'roberta' else replace_tokens_bert
-        strings = [self.tokenizer.decode(pred_ids) for pred_ids in ids_list]
-        for _old, _new in replace_tokens:
-            strings = [s.replace(_old, _new) for s in strings]
-        return strings
-
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
 
@@ -57,29 +41,10 @@ class PalmForTextGeneration(TorchModel):
                     {
                         'loss': Tensor([12.34]), # loss for backward
                     }
-                    or
-                    {
-                        'preds': List["hello word"...] # the predicted strings
-                        'tgts': List["hello world"...] # target strings
-                    }
         """
-        if self.training:
-            return self.model(**input)
-        else:
-            outputs = self.generator(input['input_ids'],
-                                     input['attention_mask'])
-            preds = outputs['predictions']
-            pred_ids_list = [
-                pred_batch[0].cpu().numpy().tolist() for pred_batch in preds
-            ]
-            tgt_ids_list = input['labels'].cpu().numpy().tolist()
-            return {
-                'preds': self._evaluate_postprocess(pred_ids_list),
-                'tgts': self._evaluate_postprocess(tgt_ids_list)
-            }
+        return self.model(**input)
 
-    def generate(self, input: Dict[str, Tensor]) -> Dict[str, str]:
+    def generate(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         outputs = self.generator(**input)
         preds = outputs['predictions']
-        pred_ids_list = [preds[0][0].cpu().numpy().tolist()]
-        return {OutputKeys.TEXT: self._evaluate_postprocess(pred_ids_list)[0]}
+        return {'sequences': [pred[0] for pred in preds]}

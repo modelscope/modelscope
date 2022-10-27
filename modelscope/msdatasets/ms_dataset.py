@@ -563,6 +563,18 @@ class MsDataset:
         self._hf_ds.reset_format()
         return self._hf_ds
 
+    def remap_columns(self, column_mapping: Dict[str, str]) -> Dataset:
+        """
+        Rename columns and return the underlying hf dataset directly
+        TODO: support native MsDataset column rename.
+        Args:
+            column_mapping: the mapping of the original and new column names
+        Returns:
+            underlying hf dataset
+        """
+        self._hf_ds.reset_format()
+        return self._hf_ds.rename_columns(column_mapping)
+
     @staticmethod
     def upload(object_name: str,
                local_file_path: str,

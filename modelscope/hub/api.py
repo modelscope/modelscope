@@ -266,6 +266,14 @@ class HubApi:
                 logger.info('Create new branch %s' % revision)
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
+            files_in_repo = os.listdir(tmp_dir)
+            for f in files_in_repo:
+                if f[0] != '.':
+                    src = os.path.join(tmp_dir, f)
+                    if os.path.isfile(src):
+                        os.remove(src)
+                    else:
+                        shutil.rmtree(src, ignore_errors=True)
             for f in files_to_save:
                 if f[0] != '.':
                     src = os.path.join(model_dir, f)

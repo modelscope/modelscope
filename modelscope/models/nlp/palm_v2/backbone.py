@@ -1314,8 +1314,8 @@ class Translator(object):
 
         return results
 
-    def __call__(self, input_ids: torch.Tensor,
-                 attention_mask: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def __call__(self, input_ids: torch.Tensor, attention_mask: torch.Tensor,
+                 **kwargs) -> Dict[str, torch.Tensor]:
         batch = self.Batch(
             batch_size=input_ids.size()[0],
             src=input_ids,

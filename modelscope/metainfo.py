@@ -254,6 +254,7 @@ class Pipelines(object):
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
+    token_classification = 'token-classification'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'

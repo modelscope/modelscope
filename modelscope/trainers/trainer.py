@@ -667,10 +667,25 @@ class EpochBasedTrainer(BaseTrainer):
         return dataset
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
-        return build_optimizer(self.model, cfg=cfg, default_args=default_args)
+        try:
+            return build_optimizer(
+                self.model, cfg=cfg, default_args=default_args)
+        except KeyError as e:
+            self.logger.error(
+                f'Build optimizer error, the optimizer {cfg} is native torch optimizer, '
+                f'please check if your torch with version: {torch.__version__} matches the config.'
+            )
+            raise e
 
     def build_lr_scheduler(self, cfg: ConfigDict, default_args: dict = None):
-        return build_lr_scheduler(cfg=cfg, default_args=default_args)
+        try:
+            return build_lr_scheduler(cfg=cfg, default_args=default_args)
+        except KeyError as e:
+            self.logger.error(
+                f'Build lr_scheduler error, the lr_scheduler {cfg} is native torch lr_scheduler, '
+                f'please check if your torch with version: {torch.__version__} matches the config.'
+            )
+            raise e
 
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler
@@ -855,6 +870,28 @@ class EpochBasedTrainer(BaseTrainer):
 
         self.invoke_hook(TrainerStages.after_run)
 
+    def evaluation_step(self, data):
+        """Perform a training step on a batch of inputs.
+
+        Subclass and override to inject custom behavior.
+
+        """
+        model = self.model
+        model.eval()
+
+        if is_parallel(model):
+            receive_dict_inputs = func_receive_dict_inputs(
+                model.module.forward)
+        else:
+            receive_dict_inputs = func_receive_dict_inputs(model.forward)
+
+        with torch.no_grad():
+            if isinstance(data, Mapping) and not receive_dict_inputs:
+                result = model.forward(**data)
+            else:
+                result = model.forward(data)
+        return result
+
     def evaluation_loop(self, data_loader, metric_classes):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
@@ -862,7 +899,7 @@ class EpochBasedTrainer(BaseTrainer):
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
             metric_values = multi_gpu_test(
-                self.model,
+                self,
                 data_loader,
                 device=self.device,
                 tmpdir=None,
@@ -872,7 +909,7 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
             metric_values = single_gpu_test(
-                self.model,
+                self,
                 data_loader,
                 device=self.device,
                 metric_classes=metric_classes,

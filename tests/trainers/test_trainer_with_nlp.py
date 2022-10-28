@@ -223,13 +223,31 @@ class TestTrainerWithNlp(unittest.TestCase):
                 trainer, 'trainer_continue_train', level='strict'):
             trainer.train(os.path.join(self.tmp_dir, 'iter_3.pth'))
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_trainer_with_evaluation(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+        cache_path = snapshot_download(model_id)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
+        kwargs = dict(
+            cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
+            model=model,
+            eval_dataset=self.dataset,
+            work_dir=self.tmp_dir)
+
+        trainer = build_trainer(default_args=kwargs)
+        print(trainer.evaluate(cache_path + '/pytorch_model.bin'))
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
 
-        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         cache_path = snapshot_download(model_id)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
         kwargs = dict(

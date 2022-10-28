@@ -87,21 +87,23 @@ class HubOperationTest(unittest.TestCase):
         assert mdtime1 == mdtime2
 
     def test_download_public_without_login(self):
-        self.prepare_case()
-        rmtree(ModelScopeConfig.path_credential)
-        snapshot_path = snapshot_download(
-            model_id=self.model_id, revision=self.revision)
-        downloaded_file_path = os.path.join(snapshot_path,
-                                            download_model_file_name)
-        assert os.path.exists(downloaded_file_path)
-        temporary_dir = tempfile.mkdtemp()
-        downloaded_file = model_file_download(
-            model_id=self.model_id,
-            file_path=download_model_file_name,
-            revision=self.revision,
-            cache_dir=temporary_dir)
-        assert os.path.exists(downloaded_file)
-        self.api.login(TEST_ACCESS_TOKEN1)
+        try:
+            self.prepare_case()
+            rmtree(ModelScopeConfig.path_credential)
+            snapshot_path = snapshot_download(
+                model_id=self.model_id, revision=self.revision)
+            downloaded_file_path = os.path.join(snapshot_path,
+                                                download_model_file_name)
+            assert os.path.exists(downloaded_file_path)
+            temporary_dir = tempfile.mkdtemp()
+            downloaded_file = model_file_download(
+                model_id=self.model_id,
+                file_path=download_model_file_name,
+                revision=self.revision,
+                cache_dir=temporary_dir)
+            assert os.path.exists(downloaded_file)
+        finally:
+            self.api.login(TEST_ACCESS_TOKEN1)
 
     def test_snapshot_delete_download_cache_file(self):
         self.prepare_case()

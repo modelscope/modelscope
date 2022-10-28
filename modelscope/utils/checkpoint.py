@@ -134,9 +134,7 @@ def load_checkpoint(filename,
     state_dict = checkpoint if 'state_dict' not in checkpoint else checkpoint[
         'state_dict']
     model.load_state_dict(state_dict)
-
-    if 'meta' in checkpoint:
-        return checkpoint.get('meta', {})
+    return checkpoint.get('meta', {})
 
 
 def save_pretrained(model,

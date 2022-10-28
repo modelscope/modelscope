@@ -59,7 +59,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.text_generation_trainer, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -98,7 +98,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.text_generation_trainer, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -130,10 +130,16 @@ class TestFinetuneTextGeneration(unittest.TestCase):
     def test_finetune_cnndm(self):
         from modelscope.msdatasets import MsDataset
         dataset_dict = MsDataset.load('DuReader_robust-QG')
-        train_dataset = dataset_dict['train'].to_hf_dataset() \
-            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'})
-        eval_dataset = dataset_dict['validation'].to_hf_dataset() \
-            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'})
+        train_dataset = dataset_dict['train'].remap_columns({
+            'text1': 'src_txt',
+            'text2': 'tgt_txt'
+        })
+        eval_dataset = dataset_dict['validation'].remap_columns({
+            'text1':
+            'src_txt',
+            'text2':
+            'tgt_txt'
+        })
         num_warmup_steps = 200
         os.environ['LOCAL_RANK'] = '0'
 

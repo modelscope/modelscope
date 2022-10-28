@@ -5,11 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
 
-    from .model import MovieSceneSegmentation
+    from .model import ReferringVideoObjectSegmentation
 
 else:
     _import_structure = {
-        'model': ['MovieSceneSegmentation'],
+        'model': ['ReferringVideoObjectSegmentation'],
     }
 
     import sys

@@ -82,7 +82,7 @@ def list_dataset_objects(hub_api: HubApi, max_limit: int, is_recursive: bool,
                          dataset_name: str, namespace: str,
                          version: str) -> list:
     """
-    List all of objects for specific dataset.
+    List all objects for specific dataset.
 
     Args:
         hub_api (class HubApi): HubApi instance.

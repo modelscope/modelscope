@@ -183,7 +183,7 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor=self.eval_preprocessor,
             **kwargs)
 
-        self.train_data_collator, self.eval_default_collate = None, None
+        self.train_data_collator, self.eval_data_collator = None, None
         if isinstance(data_collator, Mapping):
             if not (ConfigKeys.train in data_collator
                     or ConfigKeys.val in data_collator):

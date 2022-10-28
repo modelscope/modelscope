@@ -119,7 +119,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
         self.assertTrue(Metrics.accuracy in eval_results)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('skip for now before test is re-configured')
     def test_trainer_with_configured_datasets(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
         cfg: Config = read_config(model_id)

@@ -18,6 +18,8 @@ __all__ = ['TokenClassificationPipeline']
 
 
 @PIPELINES.register_module(
+    Tasks.token_classification, module_name=Pipelines.token_classification)
+@PIPELINES.register_module(
     Tasks.token_classification, module_name=Pipelines.part_of_speech)
 @PIPELINES.register_module(
     Tasks.token_classification, module_name=Pipelines.word_segmentation)
@@ -41,7 +43,7 @@ class TokenClassificationPipeline(Pipeline):
                                                            str) else model
 
         if preprocessor is None:
-            preprocessor = Model.from_pretrained(
+            preprocessor = Preprocessor.from_pretrained(
                 model.model_dir,
                 sequence_length=kwargs.pop('sequence_length', 128))
         model.eval()

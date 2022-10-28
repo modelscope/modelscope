@@ -63,6 +63,7 @@ def handle_http_post_error(response, url, request_body):
     except HTTPError as error:
         logger.error('Request %s with body: %s exception' %
                      (url, request_body))
+        logger.error('Response details: %s' % response.content)
         raise error
 
 

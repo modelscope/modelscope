@@ -3,6 +3,7 @@
 from typing import Dict
 
 import numpy as np
+from sklearn.metrics import accuracy_score, f1_score
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys
@@ -41,5 +42,11 @@ class SequenceClassificationMetric(Metric):
         preds = np.argmax(preds, axis=1)
         return {
             MetricKeys.ACCURACY:
-            (preds == labels).astype(np.float32).mean().item()
+            accuracy_score(labels, preds),
+            MetricKeys.F1:
+            f1_score(
+                labels,
+                preds,
+                average='micro' if any([label > 1
+                                        for label in labels]) else None),
         }

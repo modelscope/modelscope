@@ -20,16 +20,16 @@ class TinynasObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_object_detection, model='damo/cv_tinynas_detection')
         result = tinynas_object_detection(
             'data/test/images/image_detection.jpg')
-        print(result)
+        print('airdet', result)
 
-    @unittest.skip('will be enabled after damoyolo officially released')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_damoyolo(self):
         tinynas_object_detection = pipeline(
             Tasks.image_object_detection,
             model='damo/cv_tinynas_object-detection_damoyolo')
         result = tinynas_object_detection(
             'data/test/images/image_detection.jpg')
-        print(result)
+        print('damoyolo', result)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
@@ -39,7 +39,8 @@ class TinynasObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_image_object_detection_auto_pipeline(self):
         test_image = 'data/test/images/image_detection.jpg'
         tinynas_object_detection = pipeline(
-            Tasks.image_object_detection, model='damo/cv_tinynas_detection')
+            Tasks.image_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo')
         result = tinynas_object_detection(test_image)
         tinynas_object_detection.show_result(test_image, result,
                                              'demo_ret.jpg')

@@ -288,8 +288,8 @@ class InvariantPointAttention(nn.Module):
             pt_att *= pt_att
 
         pt_att = pt_att.sum(dim=-1)
-        head_weights = self.softplus(self.head_weights).view(
-            *((1, ) * len(pt_att.shape[:-2]) + (-1, 1)))
+        head_weights = self.softplus(self.head_weights).view(  # noqa
+            *((1, ) * len(pt_att.shape[:-2]) + (-1, 1)))  # noqa
         head_weights = head_weights * math.sqrt(
             1.0 / (3 * (self.num_qk_points * 9.0 / 2)))
         pt_att *= head_weights * (-0.5)

@@ -14,7 +14,7 @@ class ReferringVideoObjectSegmentationTest(unittest.TestCase,
         self.task = Tasks.referring_video_object_segmentation
         self.model_id = 'damo/cv_swin-t_referring_video-object-segmentation'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_referring_video_object_segmentation(self):
         input_location = 'data/test/videos/referring_video_object_segmentation_test_video.mp4'
         text_queries = [
@@ -31,7 +31,7 @@ class ReferringVideoObjectSegmentationTest(unittest.TestCase,
         else:
             raise ValueError('process error')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_referring_video_object_segmentation_with_default_task(self):
         input_location = 'data/test/videos/referring_video_object_segmentation_test_video.mp4'
         text_queries = [

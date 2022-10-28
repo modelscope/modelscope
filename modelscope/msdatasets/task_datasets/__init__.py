@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .video_summarization_dataset import VideoSummarizationDataset
     from .image_inpainting import ImageInpaintingDataset
     from .text_ranking_dataset import TextRankingDataset
+    from .referring_video_object_segmentation import ReferringVideoObjectSegmentationDataset
 
 else:
     _import_structure = {
@@ -29,6 +30,8 @@ else:
         'sidd_image_denoising_dataset': ['SiddImageDenoisingDataset'],
         'image_portrait_enhancement_dataset':
         ['ImagePortraitEnhancementDataset'],
+        'referring_video_object_segmentation':
+        ['ReferringVideoObjectSegmentationDataset'],
     }
     import sys
 

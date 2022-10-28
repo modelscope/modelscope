@@ -29,6 +29,7 @@ if TYPE_CHECKING:
                         MultiWOZBPETextField, IntentBPETextField)
     from .space_T_en import ConversationalTextToSqlPreprocessor
     from .space_T_cn import TableQuestionAnsweringPreprocessor
+    from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
 else:
     _import_structure = {
         'nlp_base': [
@@ -62,6 +63,7 @@ else:
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',
         ],
+        'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor'],
         'token_classification_thai_preprocessor': [
             'NERPreprocessorThai',
             'WordSegmentationPreprocessorThai',

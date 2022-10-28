@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         SbertTokenizerFast,
     )
     from .T5 import T5ForConditionalGeneration
+    from .mglm import MGLMForTextSummarization
     from .task_models import (
         FeatureExtractionModel,
         InformationExtractionModel,
@@ -106,6 +107,7 @@ else:
         ],
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],
+        'mglm': ['MGLMForTextSummarization'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
     }

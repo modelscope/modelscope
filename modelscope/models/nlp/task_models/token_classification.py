@@ -66,7 +66,6 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
             attentions=outputs.attentions,
             offset_mapping=input['offset_mapping'],
         )
-        return outputs
 
     def extract_logits(self, outputs):
         return outputs[OutputKeys.LOGITS].cpu().detach()

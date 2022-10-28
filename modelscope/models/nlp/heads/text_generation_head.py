@@ -8,7 +8,6 @@ from torch import nn
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead
 from modelscope.models.builder import HEADS
-from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 
 
@@ -27,9 +26,8 @@ class TextGenerationHead(TorchHead):
 
     def forward(self, inputs=None):
         logits = self.linear(inputs)
-        return {OutputKeys.LOGITS: logits}
+        return logits
 
-    def compute_loss(self, outputs: Dict[str, torch.Tensor],
+    def compute_loss(self, logits: torch.Tensor,
                      labels) -> Dict[str, torch.Tensor]:
-        logits = outputs[OutputKeys.LOGITS]
-        return {OutputKeys.LOSS: F.cross_entropy(logits, labels)}
+        return F.cross_entropy(logits, labels)

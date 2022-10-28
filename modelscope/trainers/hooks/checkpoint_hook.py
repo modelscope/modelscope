@@ -101,8 +101,9 @@ class CheckpointHook(Hook):
             model = trainer.model.module
         else:
             model = trainer.model
-        meta = load_checkpoint(filename, model, trainer.optimizer,
-                               trainer.lr_scheduler)
+        meta = load_checkpoint(filename, model,
+                               getattr(trainer, 'optimizer', None),
+                               getattr(trainer, 'lr_scheduler', None))
         trainer._epoch = meta.get('epoch', trainer._epoch)
         trainer._iter = meta.get('iter', trainer._iter)
         trainer._inner_iter = meta.get('inner_iter', trainer._inner_iter)
@@ -111,7 +112,7 @@ class CheckpointHook(Hook):
             # hook: Hook
             key = f'{hook.__class__}-{i}'
             if key in meta and hasattr(hook, 'load_state_dict'):
-                hook.load_state_dict(meta[key])
+                hook.load_state_dict(meta.get(key, {}))
             else:
                 trainer.logger.warn(
                     f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
@@ -123,7 +124,7 @@ class CheckpointHook(Hook):
                 f'The modelscope version of loaded checkpoint does not match the runtime version. '
                 f'The saved version: {version}, runtime version: {__version__}'
             )
-        trainer.logger.warn(
+        trainer.logger.info(
             f'Checkpoint {filename} saving time: {meta.get("time")}')
         return meta
 
@@ -171,12 +172,17 @@ class CheckpointHook(Hook):
         else:
             model = trainer.model
 
+        config = trainer.cfg.to_dict()
+        # override pipeline by tasks name after finetune done,
+        # avoid case like fill mask pipeline with a text cls task
+        config['pipeline'] = {'type': config['task']}
+
         if hasattr(model, 'save_pretrained'):
             model.save_pretrained(
                 output_dir,
                 ModelFile.TORCH_MODEL_BIN_FILE,
                 save_function=save_checkpoint,
-                config=trainer.cfg.to_dict(),
+                config=config,
                 with_meta=False)
 
     def after_train_iter(self, trainer):

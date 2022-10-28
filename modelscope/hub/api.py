@@ -176,7 +176,10 @@ class HubApi:
         """
         cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
+        if revision:
+            path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
+        else:
+            path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
 
         r = requests.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
@@ -447,8 +450,12 @@ class HubApi:
         Returns:
             List[dict]: Model file list.
         """
-        path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s' % (
-            self.endpoint, model_id, revision, recursive)
+        if revision:
+            path = '%s/api/v1/models/%s/repo/files?Revision=%s&Recursive=%s' % (
+                self.endpoint, model_id, revision, recursive)
+        else:
+            path = '%s/api/v1/models/%s/repo/files?Recursive=%s' % (
+                self.endpoint, model_id, recursive)
         cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'
@@ -499,13 +506,14 @@ class HubApi:
             shutil.rmtree(cache_dir)
         os.makedirs(cache_dir, exist_ok=True)
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
-        r = requests.get(datahub_url)
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.get(datahub_url, cookies=cookies)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        r = requests.get(datahub_url, headers=self.headers)
+        r = requests.get(datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']
@@ -524,7 +532,7 @@ class HubApi:
             if extension in dataset_meta_format:
                 datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                               f'Revision={revision}&FilePath={file_path}'
-                r = requests.get(datahub_url)
+                r = requests.get(datahub_url, cookies=cookies)
                 raise_for_http_status(r)
                 local_path = os.path.join(cache_dir, file_path)
                 if os.path.exists(local_path):
@@ -569,9 +577,7 @@ class HubApi:
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
 
-        cookies = requests.utils.dict_from_cookiejar(cookies)
-        r = requests.get(
-            url=datahub_url, cookies=cookies, headers=self.headers)
+        r = requests.get(url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
@@ -582,9 +588,6 @@ class HubApi:
             f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
-        if cookies:
-            cookies = requests.utils.dict_from_cookiejar(cookies)
-
         resp = requests.get(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
@@ -593,17 +596,48 @@ class HubApi:
 
     def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
-        r = requests.post(url, headers=self.headers)
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.post(url, cookies=cookies, headers=self.headers)
         raise_for_http_status(r)
+
+    def delete_oss_dataset_object(self, object_name: str, dataset_name: str,
+                                  namespace: str, revision: str) -> str:
+        if not object_name or not dataset_name or not namespace or not revision:
+            raise ValueError('Args cannot be empty!')
+
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss?Path={object_name}&Revision={revision}'
+
+        cookies = self.check_local_cookies(use_cookies=True)
+        resp = requests.delete(url=url, cookies=cookies)
+        resp = resp.json()
+        raise_on_error(resp)
+        resp = resp['Message']
+        return resp
+
+    def delete_oss_dataset_dir(self, object_name: str, dataset_name: str,
+                               namespace: str, revision: str) -> str:
+        if not object_name or not dataset_name or not namespace or not revision:
+            raise ValueError('Args cannot be empty!')
+
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
+            f'&Revision={revision}'
+
+        cookies = self.check_local_cookies(use_cookies=True)
+        resp = requests.delete(url=url, cookies=cookies)
+        resp = resp.json()
+        raise_on_error(resp)
+        resp = resp['Message']
+        return resp
 
     @staticmethod
     def datahub_remote_call(url):
-        r = requests.get(url, headers={'user-agent': ModelScopeConfig.get_user_agent()})
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.get(url, cookies=cookies, headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
         datahub_raise_on_error(url, resp)
         return resp['Data']
 
-    def check_cookies_upload_data(self, use_cookies) -> CookieJar:
+    def check_local_cookies(self, use_cookies) -> CookieJar:
         return self._check_cookie(use_cookies=use_cookies)
 
 

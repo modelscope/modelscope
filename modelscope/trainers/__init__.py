@@ -9,7 +9,8 @@ if TYPE_CHECKING:
     from .builder import build_trainer
     from .cv import (ImageInstanceSegmentationTrainer,
                      ImagePortraitEnhancementTrainer,
-                     MovieSceneSegmentationTrainer, ImageInpaintingTrainer)
+                     MovieSceneSegmentationTrainer, ImageInpaintingTrainer,
+                     ReferringVideoObjectSegmentationTrainer)
     from .multi_modal import CLIPTrainer
     from .nlp import SequenceClassificationTrainer, TextRankingTrainer
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer, NlpTrainerArguments

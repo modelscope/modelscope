@@ -183,7 +183,7 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.text_generation, model='langboat/bloom-1b4-zh')
         print(pipe('中国的首都是'))
 
-    @unittest.skip("Langboat's checkpoint has not been uploaded to modelhub")
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_gpt_neo(self):
         pipe = pipeline(
             task=Tasks.text_generation, model='langboat/mengzi-gpt-neo-base')

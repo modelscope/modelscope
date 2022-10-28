@@ -254,6 +254,7 @@ class Pipelines(object):
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
+    token_classification = 'token-classification'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -305,6 +306,8 @@ class Trainers(object):
     face_detection_scrfd = 'face-detection-scrfd'
     card_detection_scrfd = 'card-detection-scrfd'
     image_inpainting = 'image-inpainting'
+    referring_video_object_segmentation = 'referring-video-object-segmentation'
+    image_classification_team = 'image-classification-team'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -422,6 +425,8 @@ class Metrics(object):
     image_inpainting_metric = 'image-inpainting-metric'
     # metric for ocr
     NED = 'ned'
+    # metric for referring-video-object-segmentation task
+    referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
 
 
 class Optimizers(object):

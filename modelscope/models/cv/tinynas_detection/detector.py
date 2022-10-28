@@ -6,6 +6,7 @@ import pickle
 
 import cv2
 import torch
+import torch.nn as nn
 import torchvision
 
 from modelscope.metainfo import Models
@@ -47,6 +48,7 @@ class SingleStageDetector(TorchModel):
         self.backbone = build_backbone(self.cfg.model.backbone)
         self.neck = build_neck(self.cfg.model.neck)
         self.head = build_head(self.cfg.model.head)
+        self.apply(self.init_bn)
 
         self.load_pretrain_model(model_path)
 
@@ -58,6 +60,12 @@ class SingleStageDetector(TorchModel):
             k = k.replace('module.', '')
             new_state_dict[k] = v
         self.load_state_dict(new_state_dict, strict=True)
+
+    def init_bn(self, M):
+        for m in M.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eps = 1e-3
+                m.momentum = 0.03
 
     def inference(self, x):
 

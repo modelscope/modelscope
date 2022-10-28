@@ -104,6 +104,10 @@ class TextGenerationPipeline(Pipeline):
         tokenizer = self.preprocessor.tokenizer
         return tokenizer.decode(inputs.tolist(), skip_special_tokens=True)
 
+    def sentence_piece(self, inputs) -> str:
+        tokenizer = self.preprocessor.tokenizer
+        return tokenizer.decode(inputs.tolist())
+
     def roberta(self, inputs) -> str:
         tokenizer = self.preprocessor.tokenizer
         decoded = tokenizer.decode(inputs.tolist())
@@ -121,7 +125,7 @@ class TextGenerationPipeline(Pipeline):
             Dict[str, str]: the prediction results
         """
         inputs = inputs['sequences']
-        if isinstance(inputs, list):
+        if isinstance(inputs, list) or len(inputs.shape) > 1:
             inputs = inputs[0]
         decoded = getattr(self, self.postprocessor)(inputs)
         text = self._remove_space_between_chinese_chars(decoded)

@@ -23,7 +23,7 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skip
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_export_sbert_sequence_classification(self):
         model = Model.from_pretrained(self.model_id)
         print(

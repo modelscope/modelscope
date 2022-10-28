@@ -72,7 +72,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         pipeline_sentence_similarity(output_dir)
 
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skip
     def test_trainer_with_backbone_head(self):
         model_id = 'damo/nlp_structbert_sentiment-classification_chinese-base'
         kwargs = dict(

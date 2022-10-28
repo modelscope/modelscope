@@ -38,7 +38,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip
     def test_trainer_cfg_class(self):
         dataset = MsDataset.load('clue', subset_name='tnews')
         train_dataset = dataset['train']

@@ -269,8 +269,11 @@ class TinyNAS(nn.Module):
             the_block_class = block_info['class']
             if the_block_class == 'ConvKXBNRELU':
                 if use_focus:
-                    the_block = Focus(block_info['in'], block_info['out'],
-                                      block_info['k'])
+                    the_block = Focus(
+                        block_info['in'],
+                        block_info['out'],
+                        block_info['k'],
+                        act=act)
                 else:
                     the_block = ConvKXBNRELU(
                         block_info['in'],

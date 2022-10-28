@@ -16,7 +16,6 @@ rouge_score
 scikit_learn
 scipy
 sentencepiece
-tensorboardX
 termcolor
 tldextract
 tqdm

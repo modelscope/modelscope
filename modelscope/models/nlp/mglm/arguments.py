@@ -699,7 +699,7 @@ def get_args():
     # Include DeepSpeed configuration arguments
     parser = deepspeed.add_config_arguments(parser)
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=[])
     if not args.train_data and not args.data_dir:
         print('WARNING: No training data specified')
 

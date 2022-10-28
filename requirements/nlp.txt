@@ -31,7 +31,6 @@ sentencepiece
 seqeval
 spacy>=2.3.5
 subword_nmt>=0.3.8
-tensorboardX
 termcolor
 text2sql_lgesql
 tldextract

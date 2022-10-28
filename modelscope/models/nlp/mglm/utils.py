@@ -21,7 +21,6 @@ import time
 import json
 import numpy as np
 import torch
-from tensorboardX import SummaryWriter
 
 from . import mpu
 from .fp16 import FP16_Optimizer
@@ -31,12 +30,6 @@ SUMMARY_WRITER_DIR_NAME = 'runs'
 
 def get_log_dir(name, base):
     return os.path.join(base, SUMMARY_WRITER_DIR_NAME, name)
-
-
-def get_sample_writer(log_dir, iteration=0):
-    """Returns a tensorboard summary writer
-    """
-    return SummaryWriter(log_dir=log_dir, purge_step=iteration)
 
 
 def print_rank_0(message):

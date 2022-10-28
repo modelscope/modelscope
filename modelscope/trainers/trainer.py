@@ -672,7 +672,7 @@ class EpochBasedTrainer(BaseTrainer):
                 self.model, cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
-                f'Build optimizer error, the optimizer {cfg} is native torch optimizer, '
+                f'Build optimizer error, the optimizer {cfg} is a torch native component, '
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
@@ -682,7 +682,7 @@ class EpochBasedTrainer(BaseTrainer):
             return build_lr_scheduler(cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
-                f'Build lr_scheduler error, the lr_scheduler {cfg} is native torch lr_scheduler, '
+                f'Build lr_scheduler error, the lr_scheduler {cfg} is a torch native component, '
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e

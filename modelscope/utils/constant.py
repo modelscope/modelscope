@@ -238,6 +238,15 @@ class DownloadMode(enum.Enum):
     FORCE_REDOWNLOAD = 'force_redownload'
 
 
+class UploadMode(enum.Enum):
+    """ How to upload object to remote.
+    """
+    # Upload all objects from local, existing remote objects may be overwritten. (Default)
+    OVERWRITE = 'overwrite'
+    # Upload local objects in append mode, skipping all existing remote objects.
+    APPEND = 'append'
+
+
 class DatasetFormations(enum.Enum):
     """ How a dataset is organized and interpreted
     """

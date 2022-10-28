@@ -27,7 +27,11 @@ class DatasetDownloadManager(DownloadManager):
         oss_config = api.get_dataset_access_config(self._dataset_name,
                                                    self._namespace,
                                                    self._version)
-        self.oss_utilities = OssUtilities(oss_config)
+        self.oss_utilities = OssUtilities(
+            oss_config=oss_config,
+            dataset_name=self._dataset_name,
+            namespace=self._namespace,
+            revision=self._version)
 
     def _download(self, url_or_filename: str,
                   download_config: DownloadConfig) -> str:

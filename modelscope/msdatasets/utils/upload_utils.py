@@ -5,6 +5,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 from tqdm import tqdm
 
+from modelscope.utils.constant import UploadMode
 from .oss_utils import OssUtilities
 
 
@@ -13,38 +14,45 @@ class DatasetUploadManager(object):
     def __init__(self, dataset_name: str, namespace: str, version: str):
         from modelscope.hub.api import HubApi
         _hub_api = HubApi()
-        _cookies = _hub_api.check_cookies_upload_data(use_cookies=True)
+        _cookies = _hub_api.check_local_cookies(use_cookies=True)
         _oss_config = _hub_api.get_dataset_access_config_session(
             cookies=_cookies,
             dataset_name=dataset_name,
             namespace=namespace,
             revision=version)
 
-        self.oss_utilities = OssUtilities(_oss_config)
+        self.oss_utilities = OssUtilities(
+            oss_config=_oss_config,
+            dataset_name=dataset_name,
+            namespace=namespace,
+            revision=version)
 
-    def upload(self, object_name: str, local_file_path: str) -> str:
+    def upload(self, object_name: str, local_file_path: str,
+               upload_mode: UploadMode) -> str:
         object_key = self.oss_utilities.upload(
             oss_object_name=object_name,
             local_file_path=local_file_path,
-            indicate_individual_progress=True)
+            indicate_individual_progress=True,
+            upload_mode=upload_mode)
         return object_key
 
     def upload_dir(self, object_dir_name: str, local_dir_path: str,
                    num_processes: int, chunksize: int,
-                   filter_hidden_files: bool) -> int:
+                   filter_hidden_files: bool, upload_mode: UploadMode) -> int:
 
         def run_upload(args):
             self.oss_utilities.upload(
                 oss_object_name=args[0],
                 local_file_path=args[1],
-                indicate_individual_progress=False)
+                indicate_individual_progress=False,
+                upload_mode=upload_mode)
 
         files_list = []
         for root, dirs, files in os.walk(local_dir_path):
             for file_name in files:
                 if filter_hidden_files and file_name.startswith('.'):
                     continue
-                # Concatenate directory name and relative path into a oss object key. e.g., train/001/1_1230.png
+                # Concatenate directory name and relative path into oss object key. e.g., train/001/1_1230.png
                 object_name = os.path.join(
                     object_dir_name,
                     root.replace(local_dir_path, '', 1).strip('/'), file_name)

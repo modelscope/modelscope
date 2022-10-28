@@ -20,13 +20,15 @@ from modelscope.msdatasets.task_datasets.builder import build_task_dataset
 from modelscope.msdatasets.utils.dataset_builder import ExternalDataset
 from modelscope.msdatasets.utils.dataset_utils import (
     get_dataset_files, get_target_dataset_structure, load_dataset_builder)
+from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.download_utils import DatasetDownloadManager
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION,
-                                       DatasetFormations, DownloadMode, Hubs)
+                                       DatasetFormations, DownloadMode, Hubs,
+                                       UploadMode)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -576,15 +578,17 @@ class MsDataset:
         return self._hf_ds.rename_columns(column_mapping)
 
     @staticmethod
-    def upload(object_name: str,
-               local_file_path: str,
-               dataset_name: str,
-               namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
-               version: Optional[str] = DEFAULT_DATASET_REVISION,
-               num_processes: Optional[int] = None,
-               chunksize: Optional[int] = 1,
-               filter_hidden_files: Optional[bool] = True) -> None:
-        """Upload dataset file or directory to the ModelScope Hub. Please login to the ModelScope Hub first.
+    def upload(
+            object_name: str,
+            local_file_path: str,
+            dataset_name: str,
+            namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
+            version: Optional[str] = DEFAULT_DATASET_REVISION,
+            num_processes: Optional[int] = None,
+            chunksize: Optional[int] = 1,
+            filter_hidden_files: Optional[bool] = True,
+            upload_mode: Optional[UploadMode] = UploadMode.OVERWRITE) -> None:
+        """Upload dataset file or directory to the ModelScope Hub. Please log in to the ModelScope Hub first.
 
         Args:
             object_name (str): The object name on ModelScope, in the form of your-dataset-name.zip or your-dataset-name
@@ -592,7 +596,7 @@ class MsDataset:
             dataset_name (str): Name of the dataset
             namespace(str, optional): Namespace of the dataset
             version: Optional[str]: Version of the dataset
-            num_processes: Optional[int]: The number of processes used for multi-process uploading.
+            num_processes: Optional[int]: The number of processes used for multiprocess uploading.
                 This is only applicable when local_file_path is a directory, and we are uploading mutliple-files
                 insided the directory. When None provided, the number returned by os.cpu_count() is used as default.
             chunksize: Optional[int]: The chunksize of objects to upload.
@@ -600,24 +604,34 @@ class MsDataset:
                 using the default value of 1. Available if local_file_path is a directory.
             filter_hidden_files: Optional[bool]: Whether to filter hidden files.
                 Available if local_file_path is a directory.
+            upload_mode: Optional[UploadMode]: How to upload objects from local.  Default: UploadMode.OVERWRITE, upload
+                all objects from local, existing remote objects may be overwritten.
 
         Returns:
             None
 
         """
+        if not object_name:
+            raise ValueError('object_name cannot be empty!')
+
         _upload_manager = DatasetUploadManager(
             dataset_name=dataset_name, namespace=namespace, version=version)
 
+        upload_mode = UploadMode(upload_mode or UploadMode.OVERWRITE)
+
         if os.path.isfile(local_file_path):
             _upload_manager.upload(
-                object_name=object_name, local_file_path=local_file_path)
+                object_name=object_name,
+                local_file_path=local_file_path,
+                upload_mode=upload_mode)
         elif os.path.isdir(local_file_path):
             _upload_manager.upload_dir(
                 object_dir_name=object_name,
                 local_dir_path=local_file_path,
                 num_processes=num_processes,
                 chunksize=chunksize,
-                filter_hidden_files=filter_hidden_files)
+                filter_hidden_files=filter_hidden_files,
+                upload_mode=upload_mode)
         else:
             raise ValueError(
                 f'{local_file_path} is not a valid file path or directory')
@@ -672,7 +686,7 @@ class MsDataset:
                 revision of the model you want to clone from. Can be any of a branch, tag or commit hash
             auth_token(`Optional[str]`):
                 token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
-                as the token is already saved when you login the first time, if None, we will use saved token.
+                as the token is already saved when you log in the first time, if None, we will use saved token.
             git_path:(`Optional[str]`):
                 The git command line path, if None, we use 'git'
             force (Optional[bool]): whether to use forced-push.
@@ -687,8 +701,29 @@ class MsDataset:
             revision=revision,
             auth_token=auth_token,
             git_path=git_path)
-        _repo.push(
-            commit_message=commit_message,
-            local_branch=revision,
-            remote_branch=revision,
-            force=force)
+        _repo.push(commit_message=commit_message, branch=revision, force=force)
+
+    @staticmethod
+    def delete(object_name: str,
+               dataset_name: str,
+               namespace: Optional[str] = DEFAULT_DATASET_NAMESPACE,
+               version: Optional[str] = DEFAULT_DATASET_REVISION) -> str:
+        """ Delete object of dataset. Please log in first and make sure you have permission to manage the dataset.
+
+        Args:
+            object_name (str): The object name of dataset to be deleted. Could be a name of file or directory. If it's
+                directory, then ends with `/`.
+                For example: your-data-name.zip, train/001/img_001.png, train/, ...
+            dataset_name (str): Path or name of the dataset.
+            namespace(str, optional): Namespace of the dataset.
+            version (str, optional): Version of the dataset.
+
+        Returns:
+            res_msg (str): Response message.
+
+        """
+        _delete_manager = DatasetDeleteManager(
+            dataset_name=dataset_name, namespace=namespace, version=version)
+        resp_msg = _delete_manager.delete(object_name=object_name)
+        logger.info(f'Object {object_name} successfully removed!')
+        return resp_msg

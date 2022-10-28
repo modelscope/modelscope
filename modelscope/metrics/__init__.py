@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .accuracy_metric import AccuracyMetric
     from .bleu_metric import BleuMetric
     from .image_inpainting_metric import ImageInpaintingMetric
+    from .referring_video_object_segmentation_metric import ReferringVideoObjectSegmentationMetric
 
 else:
     _import_structure = {
@@ -40,6 +41,8 @@ else:
         'image_inpainting_metric': ['ImageInpaintingMetric'],
         'accuracy_metric': ['AccuracyMetric'],
         'bleu_metric': ['BleuMetric'],
+        'referring_video_object_segmentation_metric':
+        ['ReferringVideoObjectSegmentationMetric'],
     }
 
     import sys

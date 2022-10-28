@@ -6,25 +6,56 @@ import os
 import oss2
 from datasets.utils.file_utils import hash_url_to_filename
 
+from modelscope.hub.api import HubApi
+from modelscope.utils.constant import UploadMode
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
+
+ACCESS_ID = 'AccessId'
+ACCESS_SECRET = 'AccessSecret'
+SECURITY_TOKEN = 'SecurityToken'
+BUCKET = 'Bucket'
+BACK_DIR = 'BackupDir'
+DIR = 'Dir'
+
 
 class OssUtilities:
 
-    def __init__(self, oss_config):
-        self.key = oss_config['AccessId']
-        self.secret = oss_config['AccessSecret']
-        self.token = oss_config['SecurityToken']
-        self.endpoint = f"https://{oss_config['Region']}.aliyuncs.com"
-        self.bucket_name = oss_config['Bucket']
-        auth = oss2.StsAuth(self.key, self.secret, self.token)
-        self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
-        self.oss_dir = oss_config['Dir']
-        self.oss_backup_dir = oss_config['BackupDir']
+    def __init__(self, oss_config, dataset_name, namespace, revision):
+        self._do_init(oss_config=oss_config)
+
+        self.dataset_name = dataset_name
+        self.namespace = namespace
+        self.revision = revision
 
         self.upload_resumable_tmp_store = '/tmp/modelscope/tmp_dataset'
         self.upload_multipart_threshold = 50 * 1024 * 1024
         self.upload_part_size = 1 * 1024 * 1024
         self.upload_num_threads = 4
         self.upload_max_retries = 3
+
+        self.api = HubApi()
+
+    def _do_init(self, oss_config):
+        self.key = oss_config[ACCESS_ID]
+        self.secret = oss_config[ACCESS_SECRET]
+        self.token = oss_config[SECURITY_TOKEN]
+        self.endpoint = f"https://{oss_config['Region']}.aliyuncs.com"
+        self.bucket_name = oss_config[BUCKET]
+        auth = oss2.StsAuth(self.key, self.secret, self.token)
+        self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
+        self.oss_dir = oss_config[DIR]
+        self.oss_backup_dir = oss_config[BACK_DIR]
+
+    def _reload_sts(self):
+        cookies = self.api.check_local_cookies(use_cookies=True)
+        oss_config_refresh = self.api.get_dataset_access_config_session(
+            cookies=cookies,
+            dataset_name=self.dataset_name,
+            namespace=self.namespace,
+            revision=self.revision)
+        self._do_init(oss_config_refresh)
 
     @staticmethod
     def _percentage(consumed_bytes, total_bytes):
@@ -51,7 +82,8 @@ class OssUtilities:
         return local_path
 
     def upload(self, oss_object_name: str, local_file_path: str,
-               indicate_individual_progress: bool) -> str:
+               indicate_individual_progress: bool,
+               upload_mode: UploadMode) -> str:
         retry_count = 0
         object_key = os.path.join(self.oss_dir, oss_object_name)
         resumable_store = oss2.ResumableStore(
@@ -64,6 +96,13 @@ class OssUtilities:
         while True:
             try:
                 retry_count += 1
+                exist = self.bucket.object_exists(object_key)
+                if upload_mode == UploadMode.APPEND and exist:
+                    logger.info(
+                        f'Skip {oss_object_name} in case of {upload_mode.value} mode.'
+                    )
+                    break
+
                 oss2.resumable_upload(
                     self.bucket,
                     object_key,
@@ -74,7 +113,9 @@ class OssUtilities:
                     progress_callback=progress_callback,
                     num_threads=self.upload_num_threads)
                 break
-            except Exception:
+            except Exception as e:
+                if e.__getattribute__('status') == 403:
+                    self._reload_sts()
                 if retry_count >= self.upload_max_retries:
                     raise
 

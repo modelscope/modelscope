@@ -67,8 +67,28 @@ class Model(ABC):
                         cfg_dict: Config = None,
                         device: str = None,
                         **kwargs):
-        """ Instantiate a model from local directory or remote model repo. Note
+        """Instantiate a model from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.
+
+        Args:
+            model_name_or_path(str): A model dir or a model id to be loaded
+            revision(str, `optional`): The revision used when the model_name_or_path is
+                a model id of the remote hub. default `master`.
+            cfg_dict(Config, `optional`): An optional model config. If provided, it will replace
+                the config read out of the `model_name_or_path`
+            device(str, `optional`): The device to load the model.
+            **kwargs:
+                task(str, `optional`): The `Tasks` enumeration value to replace the task value
+                read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
+                equal to the model saved.
+                For example, load a `backbone` into a `text-classification` model.
+                Other kwargs will be directly fed into the `model` key, to replace the default configs.
+        Returns:
+            A model instance.
+
+        Examples:
+            >>> from modelscope.models import Model
+            >>> Model.from_pretrained('damo/nlp_structbert_backbone_base_std', task='text-classification')
         """
         prefetched = kwargs.get('model_prefetched')
         if prefetched is not None:

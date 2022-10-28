@@ -646,7 +646,9 @@ class VecoTrainer(NlpEpochBasedTrainer):
                 break
 
         for metric_name in self.metrics:
-            metric_values[metric_name] = np.average(
-                [m[metric_name] for m in metric_values.values()])
+            all_metrics = [m[metric_name] for m in metric_values.values()]
+            for key in all_metrics[0].keys():
+                metric_values[key] = np.average(
+                    [metric[key] for metric in all_metrics])
 
         return metric_values

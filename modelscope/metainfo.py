@@ -82,6 +82,7 @@ class Models(object):
     bert_for_ds = 'bert-for-document-segmentation'
     ponet = 'ponet'
     T5 = 'T5'
+    mglm = 'mglm'
     bloom = 'bloom'
 
     # audio models
@@ -251,6 +252,7 @@ class Pipelines(object):
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    mglm_text_summarization = 'mglm-text-summarization'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
@@ -376,6 +378,7 @@ class Preprocessors(object):
     re_tokenizer = 're-tokenizer'
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
+    mglm_summarization = 'mglm-summarization'
     sentence_piece = 'sentence-piece'
 
     # audio preprocessor

@@ -1,6 +1,5 @@
 boto3
 en_core_web_sm>=2.3.5
-fasttext
 filelock
 ftfy
 jieba>=0.42.1

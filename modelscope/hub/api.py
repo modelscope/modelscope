@@ -382,10 +382,11 @@ class HubApi:
                 logger.info('Model revision not specified, use default: %s in development mode' % revision)
             if revision not in branches and revision not in tags:
                 raise NotExistError('The model: %s has no branch or tag : %s .' % revision)
+            logger.info('Development mode use revision: %s' % revision)
         else:
-            revisions = self.list_model_revisions(
-                model_id, cutoff_timestamp=release_timestamp, use_cookies=False if cookies is None else cookies)
-            if revision is None:
+            if revision is None:  # user not specified revision, use latest revision before release time
+                revisions = self.list_model_revisions(
+                    model_id, cutoff_timestamp=release_timestamp, use_cookies=False if cookies is None else cookies)
                 if len(revisions) == 0:
                     raise NoValidRevisionError('The model: %s has no valid revision!' % model_id)
                 # tags (revisions) returned from backend are guaranteed to be ordered by create-time
@@ -393,9 +394,13 @@ class HubApi:
                 revision = revisions[0]
                 logger.info('Model revision not specified, use the latest revision: %s' % revision)
             else:
+                # use user-specified revision
+                revisions = self.list_model_revisions(
+                    model_id, cutoff_timestamp=current_timestamp, use_cookies=False if cookies is None else cookies)
                 if revision not in revisions:
                     raise NotExistError(
                         'The model: %s has no revision: %s !' % (model_id, revision))
+                logger.info('Use user-specified model revision: %s' % revision)
         return revision
 
     def get_model_branches_and_tags(

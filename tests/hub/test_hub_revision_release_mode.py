@@ -115,7 +115,7 @@ class HubRevisionTest(unittest.TestCase):
             time.sleep(10)
             self.add_new_file_and_tag_to_repo()
             t2 = datetime.now().isoformat(sep=' ', timespec='seconds')
-            logger.info('Secnod time: %s' % t2)
+            logger.info('Second time: %s' % t2)
             # set
             release_datetime_backup = version.__release_datetime__
             logger.info('Origin __release_datetime__: %s'
@@ -135,6 +135,43 @@ class HubRevisionTest(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
                     snapshot_path = snapshot_download(
                         self.model_id, cache_dir=temp_cache_dir)
+                    assert os.path.exists(
+                        os.path.join(snapshot_path, download_model_file_name))
+                    assert os.path.exists(
+                        os.path.join(snapshot_path, download_model_file_name2))
+            finally:
+                version.__release_datetime__ = release_datetime_backup
+
+    def test_snapshot_download_revision_user_set_revision(self):
+        with mock.patch.dict(os.environ, self.modified_environ, clear=True):
+            self.prepare_repo_data_and_tag()
+            t1 = datetime.now().isoformat(sep=' ', timespec='seconds')
+            logger.info('First time: %s' % t1)
+            time.sleep(10)
+            self.add_new_file_and_tag_to_repo()
+            t2 = datetime.now().isoformat(sep=' ', timespec='seconds')
+            logger.info('Secnod time: %s' % t2)
+            # set
+            release_datetime_backup = version.__release_datetime__
+            logger.info('Origin __release_datetime__: %s'
+                        % version.__release_datetime__)
+            try:
+                logger.info('Setting __release_datetime__ to: %s' % t1)
+                version.__release_datetime__ = t1
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    snapshot_path = snapshot_download(
+                        self.model_id,
+                        revision=self.revision,
+                        cache_dir=temp_cache_dir)
+                    assert os.path.exists(
+                        os.path.join(snapshot_path, download_model_file_name))
+                    assert not os.path.exists(
+                        os.path.join(snapshot_path, download_model_file_name2))
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    snapshot_path = snapshot_download(
+                        self.model_id,
+                        revision=self.revision2,
+                        cache_dir=temp_cache_dir)
                     assert os.path.exists(
                         os.path.join(snapshot_path, download_model_file_name))
                     assert os.path.exists(
@@ -175,11 +212,54 @@ class HubRevisionTest(unittest.TestCase):
                         self.model_id,
                         download_model_file_name,
                         cache_dir=temp_cache_dir)
-                    print('Downloaded file path: %s' % file_path)
                     assert os.path.exists(file_path)
                     file_path = model_file_download(
                         self.model_id,
                         download_model_file_name2,
+                        cache_dir=temp_cache_dir)
+                    assert os.path.exists(file_path)
+            finally:
+                version.__release_datetime__ = release_datetime_backup
+
+    def test_file_download_revision_user_set_revision(self):
+        with mock.patch.dict(os.environ, self.modified_environ, clear=True):
+            self.prepare_repo_data_and_tag()
+            t1 = datetime.now().isoformat(sep=' ', timespec='seconds')
+            logger.info('First time stamp: %s' % t1)
+            time.sleep(10)
+            self.add_new_file_and_tag_to_repo()
+            t2 = datetime.now().isoformat(sep=' ', timespec='seconds')
+            logger.info('Second time: %s' % t2)
+            release_datetime_backup = version.__release_datetime__
+            logger.info('Origin __release_datetime__: %s'
+                        % version.__release_datetime__)
+            try:
+                version.__release_datetime__ = t1
+                logger.info('Setting __release_datetime__ to: %s' % t1)
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    file_path = model_file_download(
+                        self.model_id,
+                        download_model_file_name,
+                        revision=self.revision,
+                        cache_dir=temp_cache_dir)
+                    assert os.path.exists(file_path)
+                    with self.assertRaises(NotExistError):
+                        model_file_download(
+                            self.model_id,
+                            download_model_file_name2,
+                            revision=self.revision,
+                            cache_dir=temp_cache_dir)
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    file_path = model_file_download(
+                        self.model_id,
+                        download_model_file_name,
+                        revision=self.revision2,
+                        cache_dir=temp_cache_dir)
+                    assert os.path.exists(file_path)
+                    file_path = model_file_download(
+                        self.model_id,
+                        download_model_file_name2,
+                        revision=self.revision2,
                         cache_dir=temp_cache_dir)
                     assert os.path.exists(file_path)
             finally:

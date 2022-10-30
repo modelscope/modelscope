@@ -24,6 +24,7 @@ class MetricKeys(object):
     ROUGE_1 = 'rouge-1'
     ROUGE_L = 'rouge-l'
     NED = 'ned'  # ocr metric
+    BatchAcc = 'inbatch_t2i_recall_at_1'
 
 
 task_default_metrics = {

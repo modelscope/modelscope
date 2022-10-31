@@ -85,7 +85,7 @@ class TestOfaTrainer(unittest.TestCase):
                 'ocr_fudanvi_zh',
                 subset_name='scene',
                 namespace='modelscope',
-                split='train[:200]',
+                split='train[800:900]',
                 download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS),
             eval_dataset=MsDataset.load(
                 'ocr_fudanvi_zh',

@@ -491,17 +491,8 @@ TASK_OUTPUTS = {
     # word segmentation result for single sample
     # {
     #   "output": "今天 天气 不错 ， 适合 出去 游玩"
-    #   "labels": [
-    #     {'word': '今天', 'label': 'PROPN'},
-    #     {'word': '天气', 'label': 'PROPN'},
-    #     {'word': '不错', 'label': 'VERB'},
-    #     {'word': ',', 'label': 'NUM'},
-    #     {'word': '适合', 'label': 'NOUN'},
-    #     {'word': '出去', 'label': 'PART'},
-    #     {'word': '游玩', 'label': 'ADV'},
-    # ]
     # }
-    Tasks.word_segmentation: [OutputKeys.OUTPUT, OutputKeys.LABELS],
+    Tasks.word_segmentation: [OutputKeys.OUTPUT],
 
     # TODO @wenmeng.zwm support list of result check
     # named entity recognition result for single sample

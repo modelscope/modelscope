@@ -586,14 +586,16 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             preprocessor_mode=ModeKeys.TRAIN,
             **model_args,
             **self.train_keys,
-            mode=ModeKeys.TRAIN)
+            mode=ModeKeys.TRAIN,
+            use_fast=True)
         eval_preprocessor = Preprocessor.from_pretrained(
             self.model_dir,
             cfg_dict=self.cfg,
             preprocessor_mode=ModeKeys.EVAL,
             **model_args,
             **self.eval_keys,
-            mode=ModeKeys.EVAL)
+            mode=ModeKeys.EVAL,
+            use_fast=True)
         return train_preprocessor, eval_preprocessor
 
 

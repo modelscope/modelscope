@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, Tuple, Union
 
+import numpy as np
 import torch
 
 from modelscope.metainfo import Preprocessors
@@ -20,9 +21,7 @@ class WordSegmentationBlankSetToLabelPreprocessor(NLPBasePreprocessor):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.first_sequence: str = kwargs.pop('first_sequence',
-                                              'first_sequence')
+        self.first_sequence: str = kwargs.pop('first_sequence', 'tokens')
         self.label = kwargs.pop('label', OutputKeys.LABELS)
 
     def __call__(self, data: str) -> Union[Dict[str, Any], Tuple]:
@@ -80,10 +79,9 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                 'is_split_into_words', False)
         if 'label2id' in kwargs:
             kwargs.pop('label2id')
-        self.tokenize_kwargs = kwargs
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, dict))
+    def __call__(self, data: Union[dict, str]) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -99,18 +97,24 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         text = None
         labels_list = None
         if isinstance(data, str):
+            # for inference inputs without label
             text = data
+            self.tokenize_kwargs['add_special_tokens'] = False
         elif isinstance(data, dict):
+            # for finetune inputs with label
             text = data.get(self.first_sequence)
             labels_list = data.get(self.label)
+            if isinstance(text, list):
+                self.tokenize_kwargs['is_split_into_words'] = True
 
         input_ids = []
         label_mask = []
         offset_mapping = []
-        if self.is_split_into_words:
-            for offset, token in enumerate(list(data)):
-                subtoken_ids = self.tokenizer.encode(
-                    token, add_special_tokens=False)
+        token_type_ids = []
+        if self.is_split_into_words and self._mode == ModeKeys.INFERENCE:
+            for offset, token in enumerate(list(text)):
+                subtoken_ids = self.tokenizer.encode(token,
+                                                     **self.tokenize_kwargs)
                 if len(subtoken_ids) == 0:
                     subtoken_ids = [self.tokenizer.unk_token_id]
                 input_ids.extend(subtoken_ids)
@@ -119,10 +123,9 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         else:
             if self.tokenizer.is_fast:
                 encodings = self.tokenizer(
-                    text,
-                    add_special_tokens=False,
-                    return_offsets_mapping=True,
-                    **self.tokenize_kwargs)
+                    text, return_offsets_mapping=True, **self.tokenize_kwargs)
+                attention_mask = encodings['attention_mask']
+                token_type_ids = encodings['token_type_ids']
                 input_ids = encodings['input_ids']
                 word_ids = encodings.word_ids()
                 for i in range(len(word_ids)):
@@ -143,69 +146,80 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                 label_mask, offset_mapping = self.get_label_mask_and_offset_mapping(
                     text)
 
-        if len(input_ids) >= self.sequence_length - 2:
-            input_ids = input_ids[:self.sequence_length - 2]
-            label_mask = label_mask[:self.sequence_length - 2]
-        input_ids = [self.tokenizer.cls_token_id
-                     ] + input_ids + [self.tokenizer.sep_token_id]
-        label_mask = [0] + label_mask + [0]
-        attention_mask = [1] * len(input_ids)
-        offset_mapping = offset_mapping[:sum(label_mask)]
-
-        if not self.is_transformer_based_model:
-            input_ids = input_ids[1:-1]
-            attention_mask = attention_mask[1:-1]
-            label_mask = label_mask[1:-1]
-
         if self._mode == ModeKeys.INFERENCE:
+            if len(input_ids) >= self.sequence_length - 2:
+                input_ids = input_ids[:self.sequence_length - 2]
+                label_mask = label_mask[:self.sequence_length - 2]
+            input_ids = [self.tokenizer.cls_token_id
+                         ] + input_ids + [self.tokenizer.sep_token_id]
+            label_mask = [0] + label_mask + [0]
+            attention_mask = [1] * len(input_ids)
+            offset_mapping = offset_mapping[:sum(label_mask)]
+
+            if not self.is_transformer_based_model:
+                input_ids = input_ids[1:-1]
+                attention_mask = attention_mask[1:-1]
+                label_mask = label_mask[1:-1]
+
             input_ids = torch.tensor(input_ids).unsqueeze(0)
             attention_mask = torch.tensor(attention_mask).unsqueeze(0)
             label_mask = torch.tensor(
                 label_mask, dtype=torch.bool).unsqueeze(0)
 
-        # the token classification
-        output = {
-            'text': text,
-            'input_ids': input_ids,
-            'attention_mask': attention_mask,
-            'label_mask': label_mask,
-            'offset_mapping': offset_mapping
-        }
+            # the token classification
+            output = {
+                'text': text,
+                'input_ids': input_ids,
+                'attention_mask': attention_mask,
+                'label_mask': label_mask,
+                'offset_mapping': offset_mapping
+            }
+        else:
+            output = {
+                'input_ids': input_ids,
+                'token_type_ids': token_type_ids,
+                'attention_mask': attention_mask,
+                'label_mask': label_mask,
+            }
 
-        # align the labels with tokenized text
-        if labels_list is not None:
-            assert self.label2id is not None
-            # Map that sends B-Xxx label to its I-Xxx counterpart
-            b_to_i_label = []
-            label_enumerate_values = [
-                k for k, v in sorted(
-                    self.label2id.items(), key=lambda item: item[1])
-            ]
-            for idx, label in enumerate(label_enumerate_values):
-                if label.startswith('B-') and label.replace(
-                        'B-', 'I-') in label_enumerate_values:
-                    b_to_i_label.append(
-                        label_enumerate_values.index(
-                            label.replace('B-', 'I-')))
-                else:
-                    b_to_i_label.append(idx)
-
-            label_row = [self.label2id[lb] for lb in labels_list]
-            previous_word_idx = None
-            label_ids = []
-            for word_idx in word_ids:
-                if word_idx is None:
-                    label_ids.append(-100)
-                elif word_idx != previous_word_idx:
-                    label_ids.append(label_row[word_idx])
-                else:
-                    if self.label_all_tokens:
-                        label_ids.append(b_to_i_label[label_row[word_idx]])
+            # align the labels with tokenized text
+            if labels_list is not None:
+                assert self.label2id is not None
+                # Map that sends B-Xxx label to its I-Xxx counterpart
+                b_to_i_label = []
+                label_enumerate_values = [
+                    k for k, v in sorted(
+                        self.label2id.items(), key=lambda item: item[1])
+                ]
+                for idx, label in enumerate(label_enumerate_values):
+                    if label.startswith('B-') and label.replace(
+                            'B-', 'I-') in label_enumerate_values:
+                        b_to_i_label.append(
+                            label_enumerate_values.index(
+                                label.replace('B-', 'I-')))
                     else:
+                        b_to_i_label.append(idx)
+
+                label_row = [self.label2id[lb] for lb in labels_list]
+                previous_word_idx = None
+                label_ids = []
+                for word_idx in word_ids:
+                    if word_idx is None:
                         label_ids.append(-100)
-                previous_word_idx = word_idx
-            labels = label_ids
-            output['labels'] = labels
+                    elif word_idx != previous_word_idx:
+                        label_ids.append(label_row[word_idx])
+                    else:
+                        if self.label_all_tokens:
+                            label_ids.append(b_to_i_label[label_row[word_idx]])
+                        else:
+                            label_ids.append(-100)
+                    previous_word_idx = word_idx
+                labels = label_ids
+                output['labels'] = labels
+            output = {
+                k: np.array(v) if isinstance(v, list) else v
+                for k, v in output.items()
+            }
         return output
 
     def get_tokenizer_class(self):

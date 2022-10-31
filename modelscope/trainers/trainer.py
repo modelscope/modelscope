@@ -876,7 +876,7 @@ class EpochBasedTrainer(BaseTrainer):
         Subclass and override to inject custom behavior.
 
         """
-        model = self.model
+        model = self.model.module if self._dist else self.model
         model.eval()
 
         if is_parallel(model):

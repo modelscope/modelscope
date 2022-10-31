@@ -91,6 +91,71 @@ def draw_keypoints(output, original_image):
     return image
 
 
+def draw_106face_keypoints(in_path,
+                           keypoints,
+                           boxes,
+                           scale=4.0,
+                           save_path=None):
+    face_contour_point_index = [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+    ]
+    left_eye_brow_point_index = [33, 34, 35, 36, 37, 38, 39, 40, 41, 33]
+    right_eye_brow_point_index = [42, 43, 44, 45, 46, 47, 48, 49, 50, 42]
+    left_eye_point_index = [66, 67, 68, 69, 70, 71, 72, 73, 66]
+    right_eye_point_index = [75, 76, 77, 78, 79, 80, 81, 82, 75]
+    nose_bridge_point_index = [51, 52, 53, 54]
+    nose_contour_point_index = [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
+    mouth_outer_point_index = [
+        84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 84
+    ]
+    mouth_inter_point_index = [96, 97, 98, 99, 100, 101, 102, 103, 96]
+
+    img = cv2.imread(in_path)
+
+    for i in range(len(boxes)):
+        draw_box(img, np.array(boxes[i]))
+
+    image = cv2.resize(img, dsize=None, fx=scale, fy=scale)
+
+    def draw_line(point_index, image, point):
+        for i in range(len(point_index) - 1):
+            cur_index = point_index[i]
+            next_index = point_index[i + 1]
+            cur_pt = (int(point[cur_index][0] * scale),
+                      int(point[cur_index][1] * scale))
+            next_pt = (int(point[next_index][0] * scale),
+                       int(point[next_index][1] * scale))
+            cv2.line(image, cur_pt, next_pt, (0, 0, 255), thickness=2)
+
+    for i in range(len(keypoints)):
+        points = keypoints[i]
+
+        draw_line(face_contour_point_index, image, points)
+        draw_line(left_eye_brow_point_index, image, points)
+        draw_line(right_eye_brow_point_index, image, points)
+        draw_line(left_eye_point_index, image, points)
+        draw_line(right_eye_point_index, image, points)
+        draw_line(nose_bridge_point_index, image, points)
+        draw_line(nose_contour_point_index, image, points)
+        draw_line(mouth_outer_point_index, image, points)
+        draw_line(mouth_inter_point_index, image, points)
+
+        size = len(points)
+        for i in range(size):
+            x = int(points[i][0])
+            y = int(points[i][1])
+            cv2.putText(image, str(i), (int(x * scale), int(y * scale)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.circle(image, (int(x * scale), int(y * scale)), 2, (0, 255, 0),
+                       cv2.FILLED)
+
+    if save_path is not None:
+        cv2.imwrite(save_path, image)
+
+    return image
+
+
 def draw_face_detection_no_lm_result(img_path, detection_result):
     bboxes = np.array(detection_result[OutputKeys.BOXES])
     scores = np.array(detection_result[OutputKeys.SCORES])

@@ -136,6 +136,12 @@ class OFAConfig(PretrainedConfig):
                  entangle_position_embedding=False,
                  interpolate_position=False,
                  orig_patch_image_size=224,
+                 share_attn_bias=False,
+                 use_image_feature=True,
+                 disable_entangle=False,
+                 use_ofasys=False,
+                 vit_type='vit_base',
+                 vit_drop_path_rate=0.0,
                  **kwargs):
         self.vocab_size = vocab_size
         self.max_position_embeddings = max_position_embeddings
@@ -177,6 +183,13 @@ class OFAConfig(PretrainedConfig):
         self.entangle_position_embedding = entangle_position_embedding
         self.interpolate_position = interpolate_position
         self.orig_patch_image_size = orig_patch_image_size
+
+        self.share_attn_bias = share_attn_bias
+        self.use_image_feature = use_image_feature
+        self.disable_entangle = disable_entangle
+        self.use_ofasys = use_ofasys
+        self.vit_type = vit_type
+        self.vit_drop_path_rate = vit_drop_path_rate
 
         super().__init__(
             pad_token_id=pad_token_id,

@@ -5,7 +5,7 @@ import unittest
 
 import json
 
-from modelscope.metainfo import Trainers
+from modelscope.metainfo import Metrics, Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode, ModelFile
@@ -85,7 +85,7 @@ class TestOfaTrainer(unittest.TestCase):
                 'ocr_fudanvi_zh',
                 subset_name='scene',
                 namespace='modelscope',
-                split='train[:200]',
+                split='train[800:900]',
                 download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS),
             eval_dataset=MsDataset.load(
                 'ocr_fudanvi_zh',
@@ -96,7 +96,6 @@ class TestOfaTrainer(unittest.TestCase):
             cfg_file=config_file)
         trainer = build_trainer(name=Trainers.ofa, default_args=args)
         trainer.train()
-
         self.assertIn(
             ModelFile.TORCH_MODEL_BIN_FILE,
             os.listdir(os.path.join(WORKSPACE, ModelFile.TRAIN_OUTPUT_DIR)))

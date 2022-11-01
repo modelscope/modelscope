@@ -140,8 +140,7 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                         label_mask.append(1)
                         offset_mapping.append(encodings['offset_mapping'][i])
             else:
-                encodings = self.tokenizer(
-                    text, add_special_tokens=False, **self.tokenize_kwargs)
+                encodings = self.tokenizer(text, **self.tokenize_kwargs)
                 input_ids = encodings['input_ids']
                 label_mask, offset_mapping = self.get_label_mask_and_offset_mapping(
                     text)

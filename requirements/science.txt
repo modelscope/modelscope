@@ -4,3 +4,5 @@ ml_collections
 scipy
 tensorboardX
 tokenizers
+biopython
+ipdb

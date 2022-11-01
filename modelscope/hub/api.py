@@ -646,6 +646,17 @@ class HubApi:
     def check_local_cookies(self, use_cookies) -> CookieJar:
         return self._check_cookie(use_cookies=use_cookies)
 
+    def count_uv_by_channel(self, dataset_name: str, namespace: str, channel: str):
+        # todo: 1. check args  2.
+
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}'
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.post(url, cookies=cookies, headers=self.headers)
+        resp = r.json()
+        raise_on_error(resp)
+        print(resp)
+        return resp['Message']
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)

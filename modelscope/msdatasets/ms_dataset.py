@@ -727,3 +727,17 @@ class MsDataset:
         resp_msg = _delete_manager.delete(object_name=object_name)
         logger.info(f'Object {object_name} successfully removed!')
         return resp_msg
+
+
+if __name__ == '__main__':
+    from modelscope.hub.api import HubApi
+    api = HubApi()
+    # api.login('c252d64a-ce7b-4c0c-b583-7bedf628c7da')  # online
+    # api.login('aa14716f-e2de-4f26-bf49-254d81eb8ac6')   # test
+
+    channel = 'local'  # dsw
+    dataset_name = 'small_coco_for_test'
+    namespace = 'wangxingjun778test'
+    resp = api.count_uv_by_channel(
+        dataset_name=dataset_name, namespace=namespace, channel=channel)
+    print(resp)

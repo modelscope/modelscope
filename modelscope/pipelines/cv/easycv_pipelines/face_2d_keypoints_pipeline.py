@@ -12,7 +12,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
 from .base import EasyCVPipeline
+
+logger = get_logger()
 
 
 @PIPELINES.register_module(
@@ -123,54 +126,28 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
             return s / 3 * sigma
 
     def rotate_crop_img(self, img, pts, M):
-        image_size = 256
-        enlarge_ratio = 1.1
-
         imgT = cv2.warpAffine(img, M, (int(img.shape[1]), int(img.shape[0])))
 
         x1 = pts[5][0]
+        x2 = pts[5][0]
         y1 = pts[5][1]
-        x2 = pts[6][0]
-        y2 = pts[6][1]
-        w = x2 - x1 + 1
-        h = y2 - y1 + 1
-        x1 = int(x1 - (enlarge_ratio - 1.0) / 2.0 * w)
-        y1 = int(y1 - (enlarge_ratio - 1.0) / 2.0 * h)
-
-        new_w = int(enlarge_ratio * (1 + self.random_normal() * 0.1) * w)
-        new_h = int(enlarge_ratio * (1 + self.random_normal() * 0.1) * h)
-        new_x1 = x1 + int(self.random_normal() * image_size * 0.05)
-        new_y1 = y1 + int(self.random_normal() * image_size * 0.05)
-        new_x2 = new_x1 + new_w
-        new_y2 = new_y1 + new_h
+        y2 = pts[5][1]
+        for i in range(0, 9):
+            x1 = min(x1, pts[i][0])
+            x2 = max(x2, pts[i][0])
+            y1 = min(y1, pts[i][1])
+            y2 = max(y2, pts[i][1])
 
         height, width, _ = imgT.shape
-        dx = max(0, -new_x1)
-        dy = max(0, -new_y1)
-        new_x1 = max(0, new_x1)
-        new_y1 = max(0, new_y1)
+        x1 = min(max(0, int(x1)), width)
+        y1 = min(max(0, int(y1)), height)
+        x2 = min(max(0, int(x2)), width)
+        y2 = min(max(0, int(y2)), height)
+        sub_imgT = imgT[y1:y2, x1:x2]
 
-        edx = max(0, new_x2 - width)
-        edy = max(0, new_y2 - height)
-        new_x2 = min(width, new_x2)
-        new_y2 = min(height, new_y2)
+        return sub_imgT, imgT, [x1, y1, x2, y2]
 
-        sub_imgT = imgT[new_y1:new_y2, new_x1:new_x2]
-        if dx > 0 or dy > 0 or edx > 0 or edy > 0:
-            sub_imgT = cv2.copyMakeBorder(
-                sub_imgT,
-                dy,
-                edy,
-                dx,
-                edx,
-                cv2.BORDER_CONSTANT,
-                value=(103.94, 116.78, 123.68))
-
-        return sub_imgT, imgT, [new_x1, new_y1, new_x2,
-                                new_y2], [dx, dy, edx, edy]
-
-    def crop_img(self, imgT, pts, angle):
-        image_size = 256
+    def crop_img(self, imgT, pts):
         enlarge_ratio = 1.1
 
         x1 = np.min(pts[:, 0])
@@ -181,94 +158,87 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
         h = y2 - y1 + 1
         x1 = int(x1 - (enlarge_ratio - 1.0) / 2.0 * w)
         y1 = int(y1 - (enlarge_ratio - 1.0) / 2.0 * h)
+        x1 = max(0, x1)
+        y1 = max(0, y1)
 
-        new_w = int(enlarge_ratio * (1 + self.random_normal() * 0.1) * w)
-        new_h = int(enlarge_ratio * (1 + self.random_normal() * 0.1) * h)
-        new_x1 = x1 + int(self.random_normal() * image_size * 0.05)
-        new_y1 = y1 + int(self.random_normal() * image_size * 0.05)
+        new_w = int(enlarge_ratio * w)
+        new_h = int(enlarge_ratio * h)
+        new_x1 = x1
+        new_y1 = y1
         new_x2 = new_x1 + new_w
         new_y2 = new_y1 + new_h
 
-        new_xy = new_x1, new_y1
-        pts = pts - new_xy
-
         height, width, _ = imgT.shape
-        dx = max(0, -new_x1)
-        dy = max(0, -new_y1)
-        new_x1 = max(0, new_x1)
-        new_y1 = max(0, new_y1)
 
-        edx = max(0, new_x2 - width)
-        edy = max(0, new_y2 - height)
-        new_x2 = min(width, new_x2)
-        new_y2 = min(height, new_y2)
+        new_x1 = min(max(0, new_x1), width)
+        new_y1 = min(max(0, new_y1), height)
+        new_x2 = max(min(width, new_x2), 0)
+        new_y2 = max(min(height, new_y2), 0)
 
         sub_imgT = imgT[new_y1:new_y2, new_x1:new_x2]
-        if dx > 0 or dy > 0 or edx > 0 or edy > 0:
-            sub_imgT = cv2.copyMakeBorder(
-                sub_imgT,
-                dy,
-                edy,
-                dx,
-                edx,
-                cv2.BORDER_CONSTANT,
-                value=(103.94, 116.78, 123.68))
 
-        return sub_imgT, [new_x1, new_y1, new_x2, new_y2], [dx, dy, edx, edy]
+        return sub_imgT, [new_x1, new_y1, new_x2, new_y2]
 
     def __call__(self, inputs) -> Any:
-        image_size = 256
-
         img = LoadImage.convert_to_ndarray(inputs)
         h, w, c = img.shape
         img_rgb = copy.deepcopy(img)
         img_rgb = img_rgb[:, :, ::-1]
         det_result = self.face_detection(img_rgb)
+
+        bboxes = np.array(det_result[OutputKeys.BOXES])
+        if bboxes.shape[0] == 0:
+            logger.warn('No face detected!')
+            results = {
+                OutputKeys.KEYPOINTS: [],
+                OutputKeys.POSES: [],
+                OutputKeys.BOXES: []
+            }
+            return results
+
         boxes, keypoints = self._choose_face(det_result)
 
         output_boxes = []
         output_keypoints = []
         output_poses = []
-        for idx, box_ori in enumerate(boxes):
-            box = self.expend_box(box_ori, w, h, scalex=0.15, scaley=0.15)
+        for index, box_ori in enumerate(boxes):
+            box = self.expend_box(box_ori, w, h, scalex=0.1, scaley=0.1)
             y0 = int(box[1])
             y1 = int(box[3])
             x0 = int(box[0])
             x1 = int(box[2])
             sub_img = img[y0:y1, x0:x1]
 
-            keypoint = keypoints[idx]
+            keypoint = keypoints[index]
             pts = [[keypoint[0], keypoint[1]], [keypoint[2], keypoint[3]],
                    [keypoint[4], keypoint[5]], [keypoint[6], keypoint[7]],
                    [keypoint[8], keypoint[9]], [box[0], box[1]],
-                   [box[2], box[3]]]
+                   [box[2], box[1]], [box[0], box[3]], [box[2], box[3]]]
             # radian
             angle = math.atan2((pts[1][1] - pts[0][1]),
                                (pts[1][0] - pts[0][0]))
             # angle
             theta = angle * (180 / np.pi)
 
-            center = [image_size // 2, image_size // 2]
+            center = [w // 2, h // 2]
             cx, cy = center
             M, landmark_ = self.rotate_point(theta, (cx, cy), pts)
-            sub_img, imgT, bbox, delta_border = self.rotate_crop_img(
-                img, pts, M)
+            sub_imgT, imgT, bbox = self.rotate_crop_img(img, landmark_, M)
 
-            outputs = self.predict_op([sub_img])[0]
+            outputs = self.predict_op([sub_imgT])[0]
             tmp_keypoints = outputs['point']
 
             for idx in range(0, len(tmp_keypoints)):
-                tmp_keypoints[idx][0] += (delta_border[0] + bbox[0])
-                tmp_keypoints[idx][1] += (delta_border[1] + bbox[1])
+                tmp_keypoints[idx][0] += bbox[0]
+                tmp_keypoints[idx][1] += bbox[1]
 
-            for idx in range(0, 3):
-                sub_img, bbox, delta_border = self.crop_img(
-                    imgT, tmp_keypoints, 0)
+            for idx in range(0, 6):
+                sub_img, bbox = self.crop_img(imgT, tmp_keypoints)
                 outputs = self.predict_op([sub_img])[0]
                 tmp_keypoints = outputs['point']
                 for idx in range(0, len(tmp_keypoints)):
-                    tmp_keypoints[idx][0] += (delta_border[0] + bbox[0])
-                    tmp_keypoints[idx][1] += (delta_border[1] + bbox[1])
+                    tmp_keypoints[idx][0] += bbox[0]
+                    tmp_keypoints[idx][1] += bbox[1]
 
             M2, tmp_keypoints = self.rotate_point(-theta, (cx, cy),
                                                   tmp_keypoints)

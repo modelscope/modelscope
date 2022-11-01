@@ -1,17 +1,16 @@
 # Introduction
 
-[ModelScope]( https://www.modelscope.cn) is a “Model-as-a-Service” (MaaS) platform that seeks to bringing together most advanced machine learning models from the AI community, and to streamlining the process of leveraging and applying AI models . The core ModelScope library enables developers to perform model inference, training and evaluation, through rich layers of API designs that facilitate a unified experience across state-of-the-art models from different AI domains.
+ModelScope library is targeted to support training, evaluation and inference for the state of the art models provided by Mind and further support third-party models provided by users outside alibaba.
 
-The Python library offers the layered-APIs necessary for model contributors to integrate models from CV, NLP, Speech, Multi-Modal, as well as Scientific-computation, into the ModelScope ecosystem. Implementations for all these different models are encapsulated within the library in a way that allows easy and unified access. With such integration, model inference, finetuning, and evaluations can be done within only a few lines of codes. In the meantime, flexibilities are provided so that different components in the model applications can be customized as well, where necessary.
+In order to enable ModelScope users to use the various models provided by ModelScope quickly and conveniently, we provide a set of complete Python library, which includes the implementation of ModelScope official models, inference, finetuning and evaluation support for those models such as preprocessor and evaluation metrics. We also provide easy-to-use APIs and rich usage examples. By calling the library, users can write just a few lines of code to complete tasks such as model inference, training, and evaluation, and can also quickly carry out secondary development on this basis to realize their own innovative ideas.
 
-Apart from harboring implementations of various models, ModelScope library also enables the necessary interactions with the backend services of ModelScope, particularly with the Model-Hub and Dataset-Hub. Such interactions facilitate various entity (models and datasets) management to be performed seamlessly under-the-hood, such as entity lookup, version control, and cache management. 
-
+At present, the algorithm models provided by library cover four main AI fields of image, natural language processing, speech, and multi-modality, and dozens of application scenarios and tasks.
 
 # Installation
 
 Please refer to [installation](https://modelscope.cn/docs/%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85).
 
-# Getting Started
+# Get Started
 
 You can refer to [quick_start](https://modelscope.cn/docs/%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B) for quick start.
 

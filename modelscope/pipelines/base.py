@@ -152,8 +152,9 @@ class Pipeline(ABC):
                  **kwargs) -> Union[Dict[str, Any], Generator]:
         # model provider should leave it as it is
         # modelscope library developer will handle this function
-        model_name = self.cfg.model.type
-        create_library_statistics("pipeline", model_name, None)
+        for single_model in self.models:
+            if hasattr(single_model, 'name'):
+                create_library_statistics("pipeline", single_model.name, None)
         # place model to cpu or gpu
         if (self.model or (self.has_multiple_models and self.models[0])):
             if not self._model_prepare:

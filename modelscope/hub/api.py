@@ -39,8 +39,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, DatasetFormations,
-                                       DatasetMetaFormats, DownloadMode,
-                                       ModelFile)
+                                       DatasetMetaFormats, DownloadChannel,
+                                       DownloadMode, ModelFile)
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_release_datetime,
                           model_id_to_group_owner_name)
@@ -646,15 +646,23 @@ class HubApi:
     def check_local_cookies(self, use_cookies) -> CookieJar:
         return self._check_cookie(use_cookies=use_cookies)
 
-    def count_uv_by_channel(self, dataset_name: str, namespace: str, channel: str):
-        # todo: 1. check args  2.
+    def dataset_download_uv(self, dataset_name: str, namespace: str):
+        if not dataset_name or not namespace:
+            raise ValueError('dataset_name or namespace cannot be empty!')
 
-        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}'
+        # get channel and user_name
+        channel = DownloadChannel.LOCAL.value
+        user_name = ''
+        if MODELSCOPE_ENVIRONMENT in os.environ:
+            channel = os.environ[MODELSCOPE_ENVIRONMENT]
+        if MODELSCOPE_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_USERNAME]
+
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}?user={user_name}'
         cookies = ModelScopeConfig.get_cookies()
         r = requests.post(url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
-        print(resp)
         return resp['Message']
 
 

@@ -131,6 +131,8 @@ class Model(ABC):
 
         if not hasattr(model, 'cfg'):
             model.cfg = cfg
+
+        model.name = model_name_or_path
         return model
 
     def save_pretrained(self,

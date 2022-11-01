@@ -23,7 +23,7 @@ from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import _find_free_port, _is_free_port
-from modelscope.hub.api import HubApi
+from modelscope.hub.utils.utils import create_library_statistics
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -152,9 +152,8 @@ class Pipeline(ABC):
                  **kwargs) -> Union[Dict[str, Any], Generator]:
         # model provider should leave it as it is
         # modelscope library developer will handle this function
-        _api = HubApi()
         model_name = self.cfg.task
-        _api.create_library_statistics("pipeline", model_name, None)
+        create_library_statistics("pipeline", model_name, None)
         # place model to cpu or gpu
         if (self.model or (self.has_multiple_models and self.models[0])):
             if not self._model_prepare:

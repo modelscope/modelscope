@@ -4,6 +4,7 @@ import hashlib
 import os
 from datetime import datetime
 from typing import Optional
+import requests
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
@@ -12,6 +13,7 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.file_utils import get_default_cache_dir
 from modelscope.utils.logger import get_logger
+from modelscope.hub.api import ModelScopeConfig
 
 logger = get_logger()
 
@@ -85,3 +87,14 @@ def file_integrity_validation(file_path, expected_sha256):
         msg = 'File %s integrity check failed, the download may be incomplete, please try again.' % file_path
         logger.error(msg)
         raise FileIntegrityError(msg)
+
+
+def create_library_statistics(method: str,
+                              name: str,
+                              cn_name: Optional[str]):
+    path = f'{get_endpoint()}/api/v1/statistics/library'
+    headers = {'user-agent': ModelScopeConfig.get_user_agent()}
+    params = {"Method": method, "Name": name, "CnName": cn_name}
+    r = requests.post(path, params=params, headers=headers)
+    r.raise_for_status()
+    return

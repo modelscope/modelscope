@@ -113,18 +113,6 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
                                 for (x, y) in landmark])
         return M, landmark_
 
-    def random_normal(self):
-        """
-        3-sigma rule
-        return: (-1, +1)
-        """
-        mu, sigma = 0, 1
-        while True:
-            s = np.random.normal(mu, sigma)
-            if s < mu - 3 * sigma or s > mu + 3 * sigma:
-                continue
-            return s / 3 * sigma
-
     def rotate_crop_img(self, img, pts, M):
         imgT = cv2.warpAffine(img, M, (int(img.shape[1]), int(img.shape[0])))
 

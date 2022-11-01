@@ -104,7 +104,11 @@ class DatasetUploadTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_download_dir(self):
-        test_ds = MsDataset.load(self.dataset_name, self.namespace)
+        from modelscope.utils.constant import DownloadMode
+        test_ds = MsDataset.load(
+            self.dataset_name,
+            namespace=self.namespace,
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
         assert test_ds.config_kwargs['split_config'].values()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

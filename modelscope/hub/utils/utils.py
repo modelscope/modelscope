@@ -2,10 +2,11 @@
 
 import hashlib
 import os
+import requests
 from datetime import datetime
 from typing import Optional
-import requests
 
+from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
@@ -13,7 +14,6 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.file_utils import get_default_cache_dir
 from modelscope.utils.logger import get_logger
-from modelscope.hub.api import ModelScopeConfig
 
 logger = get_logger()
 
@@ -89,9 +89,7 @@ def file_integrity_validation(file_path, expected_sha256):
         raise FileIntegrityError(msg)
 
 
-def create_library_statistics(method: str,
-                              name: str,
-                              cn_name: Optional[str]):
+def create_library_statistics(method: str, name: str, cn_name: Optional[str]):
     try:
         path = f'{get_endpoint()}/api/v1/statistics/library'
         headers = {'user-agent': ModelScopeConfig.get_user_agent()}

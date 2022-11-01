@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
+from modelscope.hub.utils.utils import create_library_statistics
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
@@ -39,7 +40,6 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
                                           init_dist, set_random_seed)
-from modelscope.hub.utils.utils import create_library_statistics
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg

@@ -7,7 +7,6 @@ from typing import Optional
 
 import requests
 
-from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
@@ -92,6 +91,7 @@ def file_integrity_validation(file_path, expected_sha256):
 
 def create_library_statistics(method: str, name: str, cn_name: Optional[str]):
     try:
+        from modelscope.hub.api import ModelScopeConfig
         path = f'{get_endpoint()}/api/v1/statistics/library'
         headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         params = {'Method': method, 'Name': name, 'CnName': cn_name}

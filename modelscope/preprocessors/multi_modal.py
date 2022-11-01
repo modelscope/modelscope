@@ -96,7 +96,6 @@ class OfaPreprocessor(Preprocessor):
             data = input
         else:
             data = self._build_dict(input)
-        data = self._ofa_input_compatibility_conversion(data)
         sample = self.preprocess(data)
         str_data = dict()
         for k, v in data.items():

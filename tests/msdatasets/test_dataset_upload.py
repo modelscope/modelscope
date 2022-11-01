@@ -8,7 +8,8 @@ import zipfile
 from modelscope.msdatasets import MsDataset
 from modelscope.msdatasets.utils.dataset_utils import list_dataset_objects
 from modelscope.utils import logger as logging
-from modelscope.utils.constant import DEFAULT_DATASET_REVISION, ModelFile
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION, DownloadMode,
+                                       ModelFile)
 from modelscope.utils.test_utils import test_level
 
 logger = logging.get_logger(__name__)
@@ -104,7 +105,6 @@ class DatasetUploadTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_download_dir(self):
-        from modelscope.utils.constant import DownloadMode
         test_ds = MsDataset.load(
             self.dataset_name,
             namespace=self.namespace,

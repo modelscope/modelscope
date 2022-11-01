@@ -23,7 +23,8 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
-                                      MODELSCOPE_ENVIRONMENT, ONE_YEAR_SECONDS,
+                                      MODELSCOPE_ENVIRONMENT,
+                                      MODELSCOPE_USERNAME, ONE_YEAR_SECONDS,
                                       Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -760,14 +761,18 @@ class ModelScopeConfig:
         env = 'custom'
         if MODELSCOPE_ENVIRONMENT in os.environ:
             env = os.environ[MODELSCOPE_ENVIRONMENT]
+        user_name = 'unknown'
+        if MODELSCOPE_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_USERNAME]
 
-        ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s' % (
+        ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s; user/%s' % (
             __version__,
             platform.python_version(),
             ModelScopeConfig.get_user_session_id(),
             platform.platform(),
             platform.processor(),
             env,
+            user_name,
         )
         if isinstance(user_agent, dict):
             ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())

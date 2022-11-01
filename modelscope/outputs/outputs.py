@@ -69,11 +69,23 @@ TASK_OUTPUTS = {
     # face 2d keypoint result for single sample
     #   {
     #       "keypoints": [
-    #           [x1, y1]*106
+    #           [[x, y]*106],
+    #           [[x, y]*106],
+    #           [[x, y]*106],
     #       ],
-    #       "poses": [pitch, roll, yaw]
+    #       "poses": [
+    #            [pitch, roll, yaw],
+    #            [pitch, roll, yaw],
+    #            [pitch, roll, yaw],
+    #        ],
+    #        "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ]
     #   }
-    Tasks.face_2d_keypoints: [OutputKeys.KEYPOINTS, OutputKeys.POSES],
+    Tasks.face_2d_keypoints:
+    [OutputKeys.KEYPOINTS, OutputKeys.POSES, OutputKeys.BOXES],
 
     # face detection result for single sample
     #   {
@@ -479,17 +491,8 @@ TASK_OUTPUTS = {
     # word segmentation result for single sample
     # {
     #   "output": "今天 天气 不错 ， 适合 出去 游玩"
-    #   "labels": [
-    #     {'word': '今天', 'label': 'PROPN'},
-    #     {'word': '天气', 'label': 'PROPN'},
-    #     {'word': '不错', 'label': 'VERB'},
-    #     {'word': ',', 'label': 'NUM'},
-    #     {'word': '适合', 'label': 'NOUN'},
-    #     {'word': '出去', 'label': 'PART'},
-    #     {'word': '游玩', 'label': 'ADV'},
-    # ]
     # }
-    Tasks.word_segmentation: [OutputKeys.OUTPUT, OutputKeys.LABELS],
+    Tasks.word_segmentation: [OutputKeys.OUTPUT],
 
     # TODO @wenmeng.zwm support list of result check
     # named entity recognition result for single sample
@@ -699,8 +702,9 @@ TASK_OUTPUTS = {
     #   "text_embedding": np.array with shape [1, D],
     #   "caption": "this is an image caption text."
     # }
-    Tasks.generative_multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION],
+    Tasks.generative_multi_modal_embedding: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING, OutputKeys.CAPTION
+    ],
 
     # multi-modal similarity result for single sample
     # {

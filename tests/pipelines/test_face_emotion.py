@@ -17,12 +17,12 @@ class FaceEmotionTest(unittest.TestCase):
         result = pipeline(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_run_modelhub(self):
         face_emotion = pipeline(Tasks.face_emotion, model=self.model)
         self.pipeline_inference(face_emotion, self.img)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_run_modelhub_default_model(self):
         face_emotion = pipeline(Tasks.face_emotion)
         self.pipeline_inference(face_emotion, self.img)

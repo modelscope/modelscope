@@ -15,15 +15,13 @@
 
 import os
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import json
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
-from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
@@ -351,11 +349,13 @@ class CLIP(nn.Module):
         text_num_hidden_layers: int,
         text_type_vocab_size: int,
         tokenizer: FullTokenizer,
+        # vision_head_width, added this param for ViT-H
+        vision_head_width: int = 64,
     ):
         super().__init__()
 
         if isinstance(vision_layers, (tuple, list)):
-            vision_heads = vision_width * 32 // 64
+            vision_heads = vision_width * 32 // vision_head_width
             self.visual = ModifiedResNet(
                 layers=vision_layers,
                 output_dim=embed_dim,
@@ -363,7 +363,7 @@ class CLIP(nn.Module):
                 input_resolution=image_resolution,
                 width=vision_width)
         else:
-            vision_heads = vision_width // 64
+            vision_heads = vision_width // vision_head_width
             self.visual = VisualTransformer(
                 input_resolution=image_resolution,
                 patch_size=vision_patch_size,
@@ -506,21 +506,6 @@ def convert_weights(model: nn.Module):
     model.apply(_convert_weights_to_fp16)
 
 
-def _convert_to_rgb(image):
-    return image.convert('RGB')
-
-
-def image_transform(image_size=224):
-    transform = Compose([
-        _convert_to_rgb,
-        Resize((image_size, image_size)),
-        ToTensor(),
-        Normalize((0.48145466, 0.4578275, 0.40821073),
-                  (0.26862954, 0.26130258, 0.27577711)),
-    ])
-    return transform
-
-
 @MODELS.register_module(Tasks.multi_modal_embedding, module_name=Models.clip)
 class CLIPForMultiModalEmbedding(TorchModel):
 
@@ -540,72 +525,40 @@ class CLIPForMultiModalEmbedding(TorchModel):
 
         with open(vision_model_config_file,
                   'r') as fv, open(text_model_config_file, 'r') as ft:
-            model_info = json.load(fv)
+            self.model_info = json.load(fv)
             for k, v in json.load(ft).items():
-                model_info[k] = v
+                self.model_info[k] = v
 
-        # image preprocess
-        self.img_preprocess = image_transform(model_info['image_resolution'])
-
-        # text tokenizer
         vocab_file = f'{model_dir}/{ModelFile.VOCAB_FILE}'
         self.tokenizer = FullTokenizer(vocab_file=vocab_file)
 
         # initialize the model
-        self.clip_model = CLIP(**model_info, tokenizer=self.tokenizer)
+        self.clip_model = CLIP(**self.model_info, tokenizer=self.tokenizer)
         convert_weights(self.clip_model)
 
         # restore the pretrained weight
         checkpoint = torch.load(
             f'{model_dir}/{ModelFile.TORCH_MODEL_BIN_FILE}', 'cpu')
-        sd = checkpoint['state_dict']
+        sd = checkpoint[
+            'state_dict'] if 'state_dict' in checkpoint else checkpoint
         if next(iter(sd.items()))[0].startswith('module'):
             sd = {k[len('module.'):]: v for k, v in sd.items()}
+        # support the finetuned model
+        if next(iter(sd.items()))[0].startswith('clip_model'):
+            sd = {k[len('clip_model.'):]: v for k, v in sd.items()}
         self.clip_model.load_state_dict(sd)
         self.clip_model.eval()
 
         # place the model
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        if self.device == 'cuda':
+        self.device = 'cuda:{}'.format(int(os.environ.get(
+            'LOCAL_RANK', 0))) if torch.cuda.is_available() else 'cpu'
+        if torch.cuda.is_available():
             self.clip_model.to(self.device)
-            logger.info('Use GPU for inference')
+            logger.info('Use GPU {} for finetuning & inference'.format(
+                int(os.environ.get('LOCAL_RANK', 0))))
         else:
             self.clip_model.float()
-            logger.info('Use CPU for inference')
-
-    def tokenize(self,
-                 texts: Union[str, List[str]],
-                 context_length: int = 52) -> torch.LongTensor:
-        """
-        Returns the tokenized representation of given input string(s)
-        Parameters
-        ----------
-        texts : Union[str, List[str]]
-            An input string or a list of input strings to tokenize
-        context_length : int
-            The context length to use; all baseline models use 24 as the context length
-        Returns
-        -------
-        A two-dimensional tensor containing the resulting tokens, shape = [number of input strings, context_length]
-        """
-        if isinstance(texts, str):
-            texts = [texts]
-
-        all_tokens = []
-        for text in texts:
-            all_tokens.append(
-                [self.tokenizer.vocab['[CLS]']]
-                + self.tokenizer.convert_tokens_to_ids(
-                    self.tokenizer.tokenize(text))[:context_length - 2]
-                + [self.tokenizer.vocab['[SEP]']])
-
-        result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
-
-        for i, tokens in enumerate(all_tokens):
-            assert len(tokens) <= context_length
-            result[i, :len(tokens)] = torch.tensor(tokens)
-
-        return result
+            logger.info('Use CPU for finetuning & inference')
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         from modelscope.outputs import OutputKeys
@@ -613,74 +566,35 @@ class CLIPForMultiModalEmbedding(TorchModel):
             OutputKeys.IMG_EMBEDDING: None,
             OutputKeys.TEXT_EMBEDDING: None
         }
-        if 'img' in input and input['img'] is not None:
-            image_input = input['img']
+        mode = input.get('mode', ModeKeys.INFERENCE)
 
-            # single image input
-            if isinstance(image_input, Image.Image):
-                image_tensor = self.img_preprocess(image_input).unsqueeze(0)
-            # multi images input
-            elif isinstance(image_input, list):
-                if all([isinstance(elem, Image.Image)
-                        for elem in image_input]):
-                    image_tensor = torch.stack(
-                        [self.img_preprocess(elem) for elem in image_input],
-                        dim=0)
-                else:
-                    unsupported_elem_type = [
-                        type(elem) for elem in image_input
-                        if not isinstance(elem, Image.Image)
-                    ][0]
-                    raise TypeError(
-                        f'img should be PIL.Image or List[PIL.Image], \
-                            but got a List containing one {unsupported_elem_type}'
-                    )
-            # others
-            else:
-                raise TypeError(
-                    f'img should be PIL.Image or List[PIL.Image], but got {type(image_input)}'
-                )
+        # encode the image
+        if 'img' in input and isinstance(input['img'], torch.Tensor):
+            image_tensor = input['img'].to(self.device)
+            if image_tensor.dim() == 5 and image_tensor.shape[1] == 1:
+                image_tensor = image_tensor.squeeze(1)
 
-            image_tensor = image_tensor.to(self.device)
-
-            with torch.no_grad():
+            with torch.autograd.set_grad_enabled(mode == ModeKeys.TRAIN):
                 image_features = self.clip_model.encode_image(image_tensor)
                 image_features /= image_features.norm(
                     dim=-1, keepdim=True)  # l2-normalize
 
             output[OutputKeys.IMG_EMBEDDING] = image_features
 
-        if 'text' in input and input['text'] is not None:
-            text_input = input['text']
+        if 'text' in input and isinstance(input['text'], torch.Tensor):
+            text_tensor = input['text'].to(self.device)
+            if text_tensor.dim() == 3 and text_tensor.shape[1] == 1:
+                text_tensor = text_tensor.squeeze(1)
 
-            # single text input
-            if isinstance(text_input, str):
-                text_tensor = self.tokenize(text_input)
-            # multi texts input
-            elif isinstance(text_input, list):
-                if all([isinstance(elem, str) for elem in text_input]):
-                    text_tensor = self.tokenize(text_input)
-                else:
-                    unsupported_elem_type = [
-                        type(elem) for elem in text_input
-                        if not isinstance(elem, str)
-                    ][0]
-                    raise TypeError(
-                        f'text should be str or List[str], but got a List containing one {unsupported_elem_type}'
-                    )
-            # others
-            else:
-                raise TypeError(
-                    f'text should be str or List[str], but got {type(text_input)}'
-                )
-
-            text_tensor = text_tensor.to(self.device)
-
-            with torch.no_grad():
+            with torch.autograd.set_grad_enabled(mode == ModeKeys.TRAIN):
                 text_features = self.clip_model.encode_text(text_tensor)
                 text_features /= text_features.norm(
                     dim=-1, keepdim=True)  # l2-normalize
             output[OutputKeys.TEXT_EMBEDDING] = text_features
+
+        if mode == ModeKeys.TRAIN:
+            output['logit_scale'] = (self.clip_model.logit_scale
+                                     * 1.0).exp().mean()
 
         return output
 

@@ -1,94 +1,125 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright 2022 The OFA-Sys Team.
+# All rights reserved.
+# This source code is licensed under the Apache 2.0 license
+# found in the LICENSE file in the root directory.
 
+import math
 import os
-import random
+from functools import partial
+from inspect import unwrap
 
-import json
 import torch
-import torch.nn.functional as F
-from PIL import Image
-from torch.utils.data import Dataset
-from torchvision import transforms
+import torch.distributed as dist
+from torch.optim.lr_scheduler import LambdaLR
 
-from modelscope.utils.constant import ModeKeys
-
-train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(
-        224, scale=(0.5, 1.0), interpolation=Image.BICUBIC),
-    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)],
-                           p=0.8),
-    transforms.RandomGrayscale(p=0.2),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.48145466, 0.4578275, 0.40821073),
-                         (0.26862954, 0.26130258, 0.27577711))
-])
-
-val_transform = transforms.Compose([
-    transforms.Resize((224, 224), interpolation=Image.BICUBIC),
-    transforms.ToTensor(),
-    transforms.Normalize((0.48145466, 0.4578275, 0.40821073),
-                         (0.26862954, 0.26130258, 0.27577711))
-])
+from modelscope.outputs import OutputKeys
 
 
-class ImageWithCaptionDataset(Dataset):
-
-    def __init__(self, json_file, img_dir, phase):
-        self.annotations = json.load(open(json_file))
-        self.img_dir = img_dir
-        if phase == ModeKeys.TRAIN:
-            self.transform = train_transform
-        elif phase == ModeKeys.EVAL:
-            self.transform = val_transform
-
-        self.img_name2img_id = {}
-        for anno_dict in self.annotations:
-            img_name = anno_dict['image']
-            if img_name not in self.img_name2img_id:
-                self.img_name2img_id[img_name] = len(self.img_name2img_id)
-
-    def __len__(self):
-        return len(self.annotations)
-
-    def __getitem__(self, index):
-        anno_dict = self.annotations[index]
-
-        img_path = os.path.join(self.img_dir, anno_dict['image'])
-        img_pil = Image.open(img_path).convert('RGB')
-        img_th = self.transform(img_pil)
-        img_id = self.img_name2img_id[anno_dict['image']]
-
-        text_str = random.choice(anno_dict['caption'])
-
-        return img_th, text_str, img_id
-
-
-def get_params_groups(ddp_model, weight_decay):
-    decay = []
-    no_decay = []
-    for name, param in ddp_model.named_parameters():
-        if not param.requires_grad:
-            continue
-        if len(param.shape) == 1 or name.endswith('.bias'):
-            no_decay.append(param)
-        else:
-            decay.append(param)
-    params_groups = [{
-        'params': no_decay,
-        'weight_decay': 0.
-    }, {
-        'params': decay,
-        'weight_decay': weight_decay
-    }]
-    return params_groups
+def get_optimizer_params(model_name, cfg):
+    # get default params
+    # Params from paper (https://arxiv.org/pdf/2103.00020.pdf)
+    # base model
+    if model_name in ['damo/multi-modal_clip-vit-base-patch16_zh']:
+        params = {
+            'lr': 5.0e-4,
+            'beta1': 0.9,
+            'beta2': 0.98,
+            'eps': 1.0e-6,
+            'weight_decay': 0.0
+        }
+    # large models
+    elif model_name in [
+            'damo/multi-modal_clip-vit-large-patch14_zh',
+            'damo/multi-modal_clip-vit-large-patch14_336_zh'
+    ]:
+        params = {
+            'lr': 4.0e-4,
+            'beta1': 0.9,
+            'beta2': 0.98,
+            'eps': 1.0e-6,
+            'weight_decay': 0.0
+        }
+    else:
+        params = {
+            'lr': 5.0e-4,
+            'beta1': 0.9,
+            'beta2': 0.999,
+            'eps': 1.0e-8,
+            'weight_decay': 0.0
+        }
+    # override with config params
+    for key in ['lr', 'beta1', 'beta2', 'eps', 'weight_decay']:
+        if hasattr(cfg.train, 'optimizer_hparams'):
+            params[key] = getattr(cfg.train.optimizer_hparams, key,
+                                  params[key])
+    return params
 
 
-def get_optimizer(ddp_model):
-    from torch.optim import AdamW
-    lr_init = 1e-5
-    betas = [0.9, 0.999]
-    weight_decay = 0.02
-    params_groups = get_params_groups(ddp_model, weight_decay=weight_decay)
-    return AdamW(
-        params_groups, lr=lr_init, betas=betas, weight_decay=weight_decay)
+def get_loss(model_outputs, loss_img, loss_txt, loss_cfg):
+    image_features = model_outputs[OutputKeys.IMG_EMBEDDING]
+    text_features = model_outputs[OutputKeys.TEXT_EMBEDDING]
+    logit_scale = model_outputs['logit_scale']
+    logit_scale = logit_scale.mean()
+    if loss_cfg.aggregate and int(os.environ.get('WORLD_SIZE', 1)) > 1:
+        world_size = dist.get_world_size()
+        rank = dist.get_rank()
+
+        # We gather tensors from all gpus to get more negatives to contrast with.
+        gathered_image_features = [
+            torch.zeros_like(image_features) for _ in range(world_size)
+        ]
+        gathered_text_features = [
+            torch.zeros_like(text_features) for _ in range(world_size)
+        ]
+        dist.all_gather(gathered_image_features, image_features)
+        dist.all_gather(gathered_text_features, text_features)
+
+        all_image_features = torch.cat([image_features]
+                                       + gathered_image_features[:rank]
+                                       + gathered_image_features[rank + 1:])
+        all_text_features = torch.cat([text_features]
+                                      + gathered_text_features[:rank]
+                                      + gathered_text_features[rank + 1:])
+
+        # this is needed to send gradients back everywhere.
+        logits_per_image = logit_scale * all_image_features @ all_text_features.t(
+        )
+        logits_per_text = logits_per_image.t()
+
+    else:
+        logits_per_image = logit_scale * image_features @ text_features.t()
+        logits_per_text = logit_scale * text_features @ image_features.t()
+
+    ground_truth = torch.arange(len(logits_per_image)).long()
+    ground_truth = ground_truth.cuda(
+        int(os.environ.get('LOCAL_RANK', 0)), non_blocking=True)
+
+    total_loss = (loss_img(logits_per_image, ground_truth)
+                  + loss_txt(logits_per_text, ground_truth)) / 2
+
+    return total_loss
+
+
+def lr_lambda(num_warmup_steps, num_training_steps, num_cycles, current_step):
+    if current_step < num_warmup_steps:
+        return float(current_step) / float(max(1, num_warmup_steps))
+    progress = float(current_step - num_warmup_steps) / float(
+        max(1, num_training_steps - num_warmup_steps))
+    return max(
+        0.0,
+        0.5 *  # noqa
+        (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))  # noqa
+
+
+def get_schedule(optimizer,
+                 scheduler,
+                 num_cycles: float = 0.5,
+                 last_epoch: int = -1):
+    num_warmup_steps = int(scheduler.warmup_proportion
+                           * scheduler.num_train_steps)
+    num_training_steps = scheduler.num_train_steps
+
+    return LambdaLR(
+        optimizer,
+        partial(lr_lambda, num_warmup_steps, num_training_steps, num_cycles),
+        last_epoch)

@@ -19,9 +19,11 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.named_entity_recognition
         self.model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
 
+    english_model_id = 'damo/nlp_raner_named-entity-recognition_english-large-ecom'
     tcrf_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
     lcrf_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-news'
     sentence = '这与温岭市新河镇的一个神秘的传说有关。'
+    sentence_en = 'pizza shovel'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download(self):
@@ -88,6 +90,12 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition, model=self.lcrf_model_id)
         print(pipeline_ins(input=self.sentence))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_english_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.english_model_id)
+        print(pipeline_ins(input='pizza shovel'))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

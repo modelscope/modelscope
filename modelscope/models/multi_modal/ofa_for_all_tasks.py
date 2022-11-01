@@ -53,8 +53,11 @@ class OfaForAllTasks(TorchModel):
             raise NotImplementedError
         # there is some diff between here and our ofa code,
         # there will be no need to use param: use_bpe
-        self.tokenizer.add_tokens(['<code_{}>'.format(i) for i in range(8192)])
-        self.tokenizer.add_tokens(['<bin_{}>'.format(i) for i in range(1000)])
+        if not model.use_ofasys:
+            self.tokenizer.add_tokens(
+                ['<code_{}>'.format(i) for i in range(8192)])
+            self.tokenizer.add_tokens(
+                ['<bin_{}>'.format(i) for i in range(1000)])
         self.cfg.update({'num_bins': 1000, 'num_codes': 8192})
         self.batch_size = self.cfg.model.get('batch_size', 1)
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)

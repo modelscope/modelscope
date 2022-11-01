@@ -647,7 +647,6 @@ class HubApi:
         return self._check_cookie(use_cookies=use_cookies)
 
 
-
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
     COOKIES_FILE_NAME = 'cookies'

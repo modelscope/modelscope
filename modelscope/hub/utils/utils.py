@@ -95,7 +95,7 @@ def create_library_statistics(method: str,
     try:
         path = f'{get_endpoint()}/api/v1/statistics/library'
         headers = {'user-agent': ModelScopeConfig.get_user_agent()}
-        params = {"Method": method, "Name": name, "CnName": cn_name}
+        params = {'Method': method, 'Name': name, 'CnName': cn_name}
         r = requests.post(path, params=params, headers=headers)
         r.raise_for_status()
     except Exception:

@@ -646,6 +646,30 @@ class HubApi:
     def check_local_cookies(self, use_cookies) -> CookieJar:
         return self._check_cookie(use_cookies=use_cookies)
 
+    def create_library_statistics(self,
+                                  method: str,
+                                  name: str,
+                                  cn_name: Optional[str]):
+        """
+            create library statistics. called by train()/evaluate()/pipeline()
+
+        Args:
+            method (str): called methed name,i.e train/evaluate/pipeline
+            name (str): model name, for example: damo/cv_unet_person-image-cartoon_compound-models
+            cn_name (str): model name in chinese, for example: 达摩卡通化模型
+        Raises:
+            ValueError: If user_cookies is True, but no local cookie.
+
+        Returns:
+            None
+        """
+        path = f'{self.endpoint}/api/v1/statistics/library'
+        headers = {'user-agent': ModelScopeConfig.get_user_agent()}
+        params = {"Method": method, "Name": name, "CnName": cn_name}
+        r = requests.post(path, params=params, headers=headers)
+        r.raise_for_status()
+        return
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)

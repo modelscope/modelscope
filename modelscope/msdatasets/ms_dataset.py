@@ -274,6 +274,8 @@ class MsDataset:
             try:
                 api.on_dataset_download(
                     dataset_name=download_dataset, namespace=namespace)
+                api.dataset_download_uv(
+                    dataset_name=download_dataset, namespace=namespace)
             except Exception as e:
                 logger.error(e)
 

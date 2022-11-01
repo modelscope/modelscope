@@ -238,6 +238,14 @@ class DownloadMode(enum.Enum):
     FORCE_REDOWNLOAD = 'force_redownload'
 
 
+class DownloadChannel(enum.Enum):
+    """ Channels of datasets downloading for uv/pv counting.
+    """
+    LOCAL = 'local'
+    DSW = 'dsw'
+    EAIS = 'eais'
+
+
 class UploadMode(enum.Enum):
     """ How to upload object to remote.
     """

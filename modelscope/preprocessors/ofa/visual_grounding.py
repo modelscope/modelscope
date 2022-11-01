@@ -60,7 +60,7 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         image = self.get_img_pil(data[self.column_map['image']])
         w, h = image.size
-        b_tgt = {
+        boxes_target = {
             'boxes': [],
             'labels': [],
             'area': [],
@@ -69,13 +69,15 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
         x0, y0, x1, y1 = data[self.column_map['region_coord']].strip().split(
             ',')
         region = torch.tensor([float(x0), float(y0), float(x1), float(y1)])
-        b_tgt['boxes'] = torch.tensor(
+        boxes_target['boxes'] = torch.tensor(
             [[float(x0), float(y0), float(x1),
               float(y1)]])
-        b_tgt['labels'] = np.array([0])
-        b_tgt['area'] = [(float(x1) - float(x0)) * (float(y1) - float(y0))]
+        boxes_target['labels'] = np.array([0])
+        area = [(float(x1) - float(x0)) * (float(y1) - float(y0))]
+        boxes_target['area'] = torch.tensor(area)
 
-        patch_image, patch_boxes = self.positioning_transform(image, b_tgt)
+        patch_image, patch_boxes = self.positioning_transform(
+            image, boxes_target)
         resize_h, resize_w = patch_boxes['size'][0], patch_boxes['size'][1]
         quant_x0 = '<bin_{}>'.format(
             int((patch_boxes['boxes'][0][0] * (self.num_bins - 1)).round()))

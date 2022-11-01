@@ -2,9 +2,10 @@
 
 import hashlib
 import os
-import requests
 from datetime import datetime
 from typing import Optional
+
+import requests
 
 from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,

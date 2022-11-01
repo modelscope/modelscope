@@ -10,6 +10,7 @@ from typing import Any, Dict, Generator, List, Mapping, Union
 
 import numpy as np
 
+from modelscope.hub.utils.utils import create_library_statistics
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import TASK_OUTPUTS
@@ -23,7 +24,6 @@ from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import _find_free_port, _is_free_port
-from modelscope.hub.utils.utils import create_library_statistics
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -154,7 +154,7 @@ class Pipeline(ABC):
         # modelscope library developer will handle this function
         for single_model in self.models:
             if hasattr(single_model, 'name'):
-                create_library_statistics("pipeline", single_model.name, None)
+                create_library_statistics('pipeline', single_model.name, None)
         # place model to cpu or gpu
         if (self.model or (self.has_multiple_models and self.models[0])):
             if not self._model_prepare:

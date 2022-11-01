@@ -1,6 +1,7 @@
 addict
 attrs
-datasets
+# version beyond 2.5.2 introduces compatbility issue and is being resolved
+datasets<=2.5.2
 easydict
 einops
 filelock>=3.3.0

@@ -11,3 +11,5 @@ timm
 tokenizers
 torchvision
 transformers>=4.12.0
+unicodedata2
+zhconv

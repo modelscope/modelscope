@@ -109,6 +109,6 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         }
         if 'text' in self.column_map and self.column_map['text'] in data:
             target = data[self.column_map['text']]
-            target = unicodedata2.normalize('NFKC', convert(target, 'zh-hans'))
-            sample['label'] = target
+            sample['label'] = unicodedata2.normalize(
+                'NFKC', convert(target, 'zh-hans'))
         return sample

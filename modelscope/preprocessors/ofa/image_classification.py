@@ -85,11 +85,11 @@ class OfaImageClassificationPreprocessor(OfaBasePreprocessor):
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         sample = self._build_infer_sample(data)
-        target = ' {}'.format(data[self.column_map['text']])
-        sample['ref_dict'] = {data[self.column_map['text']]: 1.0}
+        target = ' {}'.format(sample['label'])
+        sample['ref_dict'] = {sample['label']: 1.0}
         sample['target'] = self.tokenize_text(target, add_bos=False)
         sample['prev_output_tokens'] = torch.cat(
-            [self.bos_item, sample['target']])
+            [self.bos_item, sample['target'][:-1]])
 
         if self.constraint_trie is not None:
             constraint_mask = torch.zeros((len(sample['prev_output_tokens']),

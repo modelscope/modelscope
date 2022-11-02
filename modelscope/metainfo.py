@@ -389,6 +389,7 @@ class Preprocessors(object):
 
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
+    clip_preprocessor = 'clip-preprocessor'
     mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
 
     # science preprocessor
@@ -428,6 +429,8 @@ class Metrics(object):
     image_inpainting_metric = 'image-inpainting-metric'
     # metric for ocr
     NED = 'ned'
+    # metric for cross-modal retrieval
+    inbatch_recall = 'inbatch_recall'
     # metric for referring-video-object-segmentation task
     referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
 
@@ -473,6 +476,9 @@ class Hooks(object):
 
     # Compression
     SparsityHook = 'SparsityHook'
+
+    # CLIP logit_scale clamp
+    ClipClampLogitScaleHook = 'ClipClampLogitScaleHook'
 
 
 class LR_Schedulers(object):

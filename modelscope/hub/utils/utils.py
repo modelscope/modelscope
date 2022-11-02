@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 from typing import Optional
 
+import requests
+
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
@@ -85,3 +87,16 @@ def file_integrity_validation(file_path, expected_sha256):
         msg = 'File %s integrity check failed, the download may be incomplete, please try again.' % file_path
         logger.error(msg)
         raise FileIntegrityError(msg)
+
+
+def create_library_statistics(method: str, name: str, cn_name: Optional[str]):
+    try:
+        from modelscope.hub.api import ModelScopeConfig
+        path = f'{get_endpoint()}/api/v1/statistics/library'
+        headers = {'user-agent': ModelScopeConfig.get_user_agent()}
+        params = {'Method': method, 'Name': name, 'CnName': cn_name}
+        r = requests.post(path, params=params, headers=headers)
+        r.raise_for_status()
+    except Exception:
+        pass
+    return

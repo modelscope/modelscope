@@ -2,12 +2,12 @@
 from typing import Any, Dict
 
 import torch
-from PIL import Image
+import unicodedata2
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import functional as F
+from zhconv import convert
 
-from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
@@ -73,21 +73,14 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         """
         super(OfaOcrRecognitionPreprocessor,
               self).__init__(cfg, model_dir, mode, *args, **kwargs)
-        # Initialize transform
-        if self.cfg.model.imagenet_default_mean_and_std:
-            mean = IMAGENET_DEFAULT_MEAN
-            std = IMAGENET_DEFAULT_STD
-        else:
-            mean = [0.5, 0.5, 0.5]
-            std = [0.5, 0.5, 0.5]
 
         self.patch_resize_transform = transforms.Compose([
             lambda image: ocr_resize(
                 image,
-                self.cfg.model.patch_image_size,
-                is_document=self.cfg.model.is_document),
+                self.patch_image_size,
+                is_document=self.cfg.model.get('is_document', False)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
+            transforms.Normalize(mean=self.mean, std=self.std),
         ])
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -98,8 +91,7 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         sample = self._build_infer_sample(data)
-        target = data[self.column_map['text']]
-        target = target.translate(self.transtab).strip()
+        target = sample['label']
         target_token_list = target.strip().split()
         target = ' '.join(target_token_list[:self.max_tgt_length])
         sample['target'] = self.tokenize_text(target, add_bos=False)
@@ -119,5 +111,7 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
             'patch_mask': torch.tensor([True])
         }
         if 'text' in self.column_map and self.column_map['text'] in data:
-            sample['label'] = data[self.column_map['text']]
+            target = data[self.column_map['text']]
+            target = unicodedata2.normalize('NFKC', convert(target, 'zh-hans'))
+            sample['label'] = target
         return sample

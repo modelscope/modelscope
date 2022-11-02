@@ -61,7 +61,7 @@ class TextLoggerHook(LoggerHook):
         self.json_log_path = osp.join(self.out_dir,
                                       '{}.log.json'.format(trainer.timestamp))
         if hasattr(trainer, 'meta') and trainer.meta is not None:
-            self._dump_log(trainer.meta, trainer)
+            self._dump_log(trainer.meta)
 
     def _get_max_memory(self, trainer):
         device = getattr(trainer.model, 'output_device', None)

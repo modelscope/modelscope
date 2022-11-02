@@ -87,7 +87,7 @@ class TestFinetuneTokenClassification(unittest.TestCase):
             cfg['dataset'] = {
                 'train': {
                     'labels': label_enumerate_values,
-                    'first_sequence': 'first_sequence',
+                    'first_sequence': 'tokens',
                     'label': 'labels',
                 }
             }

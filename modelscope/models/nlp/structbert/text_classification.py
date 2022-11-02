@@ -109,6 +109,7 @@ class SbertForSequenceClassification(SbertPreTrainedModel):
                 output_attentions=None,
                 output_hidden_states=None,
                 return_dict=None,
+                *args,
                 **kwargs):
         r"""
         Args:

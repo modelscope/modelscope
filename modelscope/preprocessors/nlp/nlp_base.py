@@ -34,6 +34,7 @@ class NLPBasePreprocessor(Preprocessor, ABC):
                  label=None,
                  label2id=None,
                  mode=ModeKeys.INFERENCE,
+                 use_fast=None,
                  **kwargs):
         """The NLP preprocessor base class.
 
@@ -45,14 +46,18 @@ class NLPBasePreprocessor(Preprocessor, ABC):
             label2id: An optional label2id mapping, the class will try to call utils.parse_label_mapping
                 if this mapping is not supplied.
             mode: Run this preprocessor in either 'train'/'eval'/'inference' mode
+            use_fast: use the fast version of tokenizer
+
         """
         self.model_dir = model_dir
         self.first_sequence = first_sequence
         self.second_sequence = second_sequence
         self.label = label
 
-        self.use_fast = kwargs.pop('use_fast', None)
-        if self.use_fast is None and os.path.isfile(
+        self.use_fast = use_fast
+        if self.use_fast is None and model_dir is None:
+            self.use_fast = False
+        elif self.use_fast is None and os.path.isfile(
                 os.path.join(model_dir, 'tokenizer_config.json')):
             with open(os.path.join(model_dir, 'tokenizer_config.json'),
                       'r') as f:
@@ -61,8 +66,8 @@ class NLPBasePreprocessor(Preprocessor, ABC):
         self.use_fast = False if self.use_fast is None else self.use_fast
 
         self.label2id = label2id
-        if self.label2id is None:
-            self.label2id = parse_label_mapping(self.model_dir)
+        if self.label2id is None and model_dir is not None:
+            self.label2id = parse_label_mapping(model_dir)
         super().__init__(mode, **kwargs)
 
     @property
@@ -106,6 +111,7 @@ class NLPTokenizerPreprocessorBase(NLPBasePreprocessor):
                  label: str = 'label',
                  label2id: dict = None,
                  mode: str = ModeKeys.INFERENCE,
+                 use_fast: bool = None,
                  **kwargs):
         """The NLP tokenizer preprocessor base class.
 
@@ -122,11 +128,12 @@ class NLPTokenizerPreprocessorBase(NLPBasePreprocessor):
                 - config.json label2id/id2label
                 - label_mapping.json
             mode: Run this preprocessor in either 'train'/'eval'/'inference' mode, the behavior may be different.
+            use_fast: use the fast version of tokenizer
             kwargs: These kwargs will be directly fed into the tokenizer.
         """
 
         super().__init__(model_dir, first_sequence, second_sequence, label,
-                         label2id, mode)
+                         label2id, mode, use_fast, **kwargs)
         self.model_dir = model_dir
         self.tokenize_kwargs = kwargs
         self.tokenizer = self.build_tokenizer(model_dir)

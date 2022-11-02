@@ -23,7 +23,7 @@ class FacialExpressionRecognitionTest(unittest.TestCase):
         cv2.imwrite('result.png', img)
         print(f'output written to {osp.abspath("result.png")}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip since the model is set to private for now')
     def test_run_modelhub(self):
         fer = pipeline(
             Tasks.facial_expression_recognition, model=self.model_id)

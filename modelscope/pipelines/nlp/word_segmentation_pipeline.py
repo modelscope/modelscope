@@ -115,15 +115,15 @@ class WordSegmentationPipeline(Pipeline):
             chunk['span'] = text[chunk['start']:chunk['end']]
             chunks.append(chunk)
 
-        # for cws output
+        # for cws outputs
         if len(chunks) > 0 and chunks[0]['type'] == 'cws':
             spans = [
                 chunk['span'] for chunk in chunks if chunk['span'].strip()
             ]
             seg_result = ' '.join(spans)
-            outputs = {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}
+            outputs = {OutputKeys.OUTPUT: seg_result}
 
-        # for ner outpus
+        # for ner output
         else:
             outputs = {OutputKeys.OUTPUT: chunks}
         return outputs

@@ -18,7 +18,7 @@ class TextGenerationTrainer(NlpEpochBasedTrainer):
         return tokenizer.decode(tokens.tolist(), skip_special_tokens=True)
 
     def evaluation_step(self, data):
-        model = self.model
+        model = self.model.module if self._dist else self.model
         model.eval()
 
         with torch.no_grad():

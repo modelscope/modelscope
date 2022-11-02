@@ -4,11 +4,11 @@ import io
 
 import cv2
 import json
-import numpy as np
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks, TasksIODescriptions
+from modelscope.utils.service_utils import NumpyEncoder
 
 TASKS_INPUT_TEMPLATES = {
     # vision tasks
@@ -232,21 +232,6 @@ class DemoCompatibilityCheck(object):
         result = postprocess(req, output)
         print(result)
         return True
-
-
-class NumpyEncoder(json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-
-        if isinstance(obj, np.floating):
-            return float(obj)
-
-        if isinstance(obj, np.integer):
-            return int(obj)
-
-        return json.JSONEncoder.default(self, obj)
 
 
 def preprocess(req):

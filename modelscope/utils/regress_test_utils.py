@@ -19,6 +19,8 @@ import torch
 import torch.optim
 from torch import nn
 
+from modelscope.utils.service_utils import NumpyEncoder
+
 
 class RegressTool:
     """This class is used to stop inference/training results from changing by some unaware affections by unittests.
@@ -116,19 +118,6 @@ class RegressTool:
             self.load(baseline, name)
             with open(baseline, 'rb') as f:
                 base = pickle.load(f)
-
-            class NumpyEncoder(json.JSONEncoder):
-                """Special json encoder for numpy types
-                """
-
-                def default(self, obj):
-                    if isinstance(obj, np.integer):
-                        return int(obj)
-                    elif isinstance(obj, np.floating):
-                        return float(obj)
-                    elif isinstance(obj, np.ndarray):
-                        return obj.tolist()
-                    return json.JSONEncoder.default(self, obj)
 
             print(f'baseline: {json.dumps(base, cls=NumpyEncoder)}')
             print(f'latest  : {json.dumps(io_json, cls=NumpyEncoder)}')

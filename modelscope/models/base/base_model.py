@@ -131,6 +131,8 @@ class Model(ABC):
 
         if not hasattr(model, 'cfg'):
             model.cfg = cfg
+
+        model.name = model_name_or_path
         return model
 
     def save_pretrained(self,
@@ -161,5 +163,12 @@ class Model(ABC):
         assert config is not None, 'Cannot save the model because the model config is empty.'
         if isinstance(config, Config):
             config = config.to_dict()
+        if 'preprocessor' in config and config['preprocessor'] is not None:
+            if 'mode' in config['preprocessor']:
+                config['preprocessor']['mode'] = 'inference'
+            elif 'val' in config['preprocessor'] and 'mode' in config[
+                    'preprocessor']['val']:
+                config['preprocessor']['val']['mode'] = 'inference'
+
         save_pretrained(self, target_folder, save_checkpoint_names,
                         save_function, config, **kwargs)

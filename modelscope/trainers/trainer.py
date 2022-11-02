@@ -15,6 +15,7 @@ from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.hub.utils.utils import create_library_statistics
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.models.base import Model, TorchModel
@@ -183,7 +184,7 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor=self.eval_preprocessor,
             **kwargs)
 
-        self.train_data_collator, self.eval_default_collate = None, None
+        self.train_data_collator, self.eval_data_collator = None, None
         if isinstance(data_collator, Mapping):
             if not (ConfigKeys.train in data_collator
                     or ConfigKeys.val in data_collator):
@@ -436,6 +437,8 @@ class EpochBasedTrainer(BaseTrainer):
 
     def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN
+        if hasattr(self.model, 'name'):
+            create_library_statistics('train', self.model.name, None)
 
         if self.train_dataset is None:
             self.train_dataloader = self.get_train_dataloader()
@@ -456,6 +459,8 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_loop(self.train_dataloader)
 
     def evaluate(self, checkpoint_path=None):
+        if hasattr(self.model, 'name'):
+            create_library_statistics('evaluate', self.model.name, None)
         if checkpoint_path is not None and os.path.isfile(checkpoint_path):
             from modelscope.trainers.hooks import CheckpointHook
             CheckpointHook.load_checkpoint(checkpoint_path, self)
@@ -672,7 +677,7 @@ class EpochBasedTrainer(BaseTrainer):
                 self.model, cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
-                f'Build optimizer error, the optimizer {cfg} is native torch optimizer, '
+                f'Build optimizer error, the optimizer {cfg} is a torch native component, '
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
@@ -682,7 +687,7 @@ class EpochBasedTrainer(BaseTrainer):
             return build_lr_scheduler(cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
-                f'Build lr_scheduler error, the lr_scheduler {cfg} is native torch lr_scheduler, '
+                f'Build lr_scheduler error, the lr_scheduler {cfg} is a torch native component, '
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
@@ -876,7 +881,7 @@ class EpochBasedTrainer(BaseTrainer):
         Subclass and override to inject custom behavior.
 
         """
-        model = self.model
+        model = self.model.module if self._dist else self.model
         model.eval()
 
         if is_parallel(model):

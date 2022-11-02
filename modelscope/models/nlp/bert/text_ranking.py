@@ -36,6 +36,7 @@ class BertForTextRanking(BertForSequenceClassification):
                 output_attentions=None,
                 output_hidden_states=None,
                 return_dict=None,
+                *args,
                 **kwargs) -> AttentionTextClassificationModelOutput:
         outputs = self.base_model.forward(
             input_ids=input_ids,

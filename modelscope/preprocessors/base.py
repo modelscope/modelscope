@@ -205,9 +205,11 @@ class Preprocessor(ABC):
         if 'task' in kwargs:
             task = kwargs.pop('task')
         field_name = Tasks.find_field_by_task(task)
+        if 'field' in kwargs:
+            field_name = kwargs.pop('field')
         sub_key = 'train' if preprocessor_mode == ModeKeys.TRAIN else 'val'
 
-        if not hasattr(cfg, 'preprocessor'):
+        if not hasattr(cfg, 'preprocessor') or len(cfg.preprocessor) == 0:
             logger.error('No preprocessor field found in cfg.')
             preprocessor_cfg = ConfigDict()
         else:

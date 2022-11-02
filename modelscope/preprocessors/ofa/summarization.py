@@ -72,6 +72,7 @@ class OfaSummarizationPreprocessor(OfaBasePreprocessor):
                 'noise_ratio', 0.0)
         target[noise_indices] = torch.randint(
             4,
-            len(self.src_dict) - self.code_dict_size - self.num_bins,
+            len(self.src_dict) - self.cfg.model.get('num_codes', 8192)
+            - self.cfg.model.get('num_bins', 1000),
             size=(noise_indices.sum(), ))
         return target

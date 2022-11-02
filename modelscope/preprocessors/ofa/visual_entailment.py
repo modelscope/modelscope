@@ -61,7 +61,7 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
         else:
             raise NotImplementedError
 
-        target_item[:-len(tgt_item) - 1] = self.tgt_dict.pad()
+        target_item[:-len(tgt_item) - 1] = self.tokenizer.pad_token_id
         sample['target'] = target_item
         sample['prev_output_tokens'] = prev_output_item
 
@@ -85,14 +85,17 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
         image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
         if 'text2' not in data:
-            hypothesis = self.pre_caption(data['text'], self.max_src_length)
+            hypothesis = self.pre_caption(data[self.column_map['text']],
+                                          self.max_src_length)
             prompt = self.cfg.model.get('prompt',
                                         ' does the image describe " {} "?')
             text = prompt.format(hypothesis)
         else:
             assert 'text' in data, f'text must be in the input {data.keys()}'
-            caption = self.pre_caption(data['text2'], self.max_src_length)
-            hypothesis = self.pre_caption(data['text'], self.max_src_length)
+            caption = self.pre_caption(data[self.column_map['text2']],
+                                       self.max_src_length)
+            hypothesis = self.pre_caption(data[self.column_map['text']],
+                                          self.max_src_length)
             prompt = self.cfg.model.get(
                 'prompt', ' can image and text1 " {} " imply text2 " {} "?')
             text = prompt.format(caption, hypothesis)

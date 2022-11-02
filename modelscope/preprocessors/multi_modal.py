@@ -77,7 +77,7 @@ class OfaPreprocessor(Preprocessor):
             data[key] = item
         return data
 
-    def _ofa_input_compatibility_conversion(self, data):
+    def _ofa_input_compatibility_conversion(self, data):  # fake
         if 'image' in data and self.cfg.model.get('type', None) == 'ofa':
             if isinstance(data['image'], str):
                 image = load_image(data['image'])

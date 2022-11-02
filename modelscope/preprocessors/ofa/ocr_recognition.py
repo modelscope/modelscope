@@ -73,21 +73,14 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         """
         super(OfaOcrRecognitionPreprocessor,
               self).__init__(cfg, model_dir, mode, *args, **kwargs)
-        # Initialize transform
-        if self.cfg.model.imagenet_default_mean_and_std:
-            mean = IMAGENET_DEFAULT_MEAN
-            std = IMAGENET_DEFAULT_STD
-        else:
-            mean = [0.5, 0.5, 0.5]
-            std = [0.5, 0.5, 0.5]
 
         self.patch_resize_transform = transforms.Compose([
             lambda image: ocr_resize(
                 image,
-                self.cfg.model.patch_image_size,
-                is_document=self.cfg.model.is_document),
+                self.patch_image_size,
+                is_document=self.cfg.model.get('is_document', False)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
+            transforms.Normalize(mean=self.mean, std=self.std),
         ])
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:

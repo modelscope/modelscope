@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
 import os
+import re
 import string
 from functools import partial
 from os import path as osp
@@ -110,6 +111,8 @@ class OfaForAllTasks(TorchModel):
             Tasks.text_classification: inference_d[self.gen_type],
             Tasks.image_classification: inference_d[self.gen_type],
         }
+        pattern_str = '((?<=[^ a-zA-Z0-9.,:!?]) +| +(?=[^ a-zA-Z0-9.,:!?]))'
+        self.pattern = re.compile(pattern_str)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         input = move_to_device(input, self.model.device)
@@ -135,8 +138,18 @@ class OfaForAllTasks(TorchModel):
             caption = input[OutputKeys.CAPTION]
             result_l = list()
             for cap in caption:
-                result_l.append(cap.translate(self.transtab).strip())
+                if self.language == 'en':
+                    result_l.append(cap.translate(self.transtab).strip())
+                else:
+                    result_l.append(cap)
             input[OutputKeys.CAPTION] = result_l
+        if self.gen_type == 'generation' and self.language in [
+                'zh', 'cn'
+        ] and self.cfg.task != Tasks.visual_grounding:
+            ret_l = list()
+            for text in input[OFA_TASK_KEY_MAPPING[self.cfg.task]]:
+                ret_l.append(self.detokenizer(text))
+            input[OFA_TASK_KEY_MAPPING[self.cfg.task]] = ret_l
         return input
 
     def _text_gen_inference(self, input):
@@ -314,3 +327,6 @@ class OfaForAllTasks(TorchModel):
                             save_function=partial(save_function, with_meta=False),
                             config=config,
                             **kwargs)
+
+    def detokenizer(self, text):
+        return self.pattern.sub('', text)

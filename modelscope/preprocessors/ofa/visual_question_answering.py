@@ -83,7 +83,7 @@ class OfaVisualQuestionAnsweringPreprocessor(OfaBasePreprocessor):
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
-        text = ' {}'.format(data[self.column_map['query']])
+        text = ' {}'.format(data[self.column_map['text']])
         inputs = self.tokenize_text(text)
         if self.prompt_type == 'none':
             decoder_prompt = self.bos_item

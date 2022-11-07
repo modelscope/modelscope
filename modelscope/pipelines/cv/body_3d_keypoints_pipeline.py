@@ -132,8 +132,8 @@ class Body3DKeypointsPipeline(Pipeline):
             device='gpu' if torch.cuda.is_available() else 'cpu')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        video_url = input
-        video_frames = self.read_video_frames(video_url)
+        self.video_url = input
+        video_frames = self.read_video_frames(self.video_url)
         if 0 == len(video_frames):
             res = {'success': False, 'msg': 'get video frame failed.'}
             return res
@@ -198,7 +198,7 @@ class Body3DKeypointsPipeline(Pipeline):
         }
 
         if not input['success']:
-            pass
+            res[OutputKeys.OUTPUT_VIDEO] = self.video_url
         else:
             poses = input[KeypointsTypes.POSES_CAMERA]
             pred_3d_pose = poses.data.cpu().numpy()[

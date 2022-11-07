@@ -9,6 +9,7 @@ from torchvision import transforms
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
+from .utils import transforms as T
 
 
 class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
@@ -29,13 +30,14 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
         super(OfaVisualGroundingPreprocessor,
               self).__init__(cfg, model_dir, mode, *args, **kwargs)
 
+        self.num_bins = self.cfg.model.get('num_bins', 1000)
         if self.mode == ModeKeys.TRAIN:
             # for positioning
-            self.positioning_transform = transforms.Compose([
-                transforms.RandomResize([self.patch_image_size],
-                                        max_size=self.patch_image_size),
-                transforms.ToTensor(),
-                transforms.Normalize(
+            self.positioning_transform = T.Compose([
+                T.RandomResize([self.patch_image_size],
+                               max_size=self.patch_image_size),
+                T.ToTensor(),
+                T.Normalize(
                     mean=self.mean,
                     std=self.std,
                     max_image_size=self.max_image_size)
@@ -130,4 +132,10 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
             'w_resize_ratio': w_resize_ratio,
             'h_resize_ratio': h_resize_ratio,
         }
+
+        if 'region_coord' in self.column_map and self.column_map[
+                'region_coord'] in data:
+            x0, y0, x1, y1 = data[
+                self.column_map['region_coord']].strip().split(',')
+            sample['label'] = [float(x0), float(y0), float(x1), float(y1)]
         return sample

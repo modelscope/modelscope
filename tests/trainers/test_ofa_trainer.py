@@ -5,10 +5,10 @@ import unittest
 
 import json
 
-from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode, ModelFile
+from modelscope.utils.hub import read_config
 from modelscope.utils.test_utils import test_level
 
 
@@ -73,11 +73,12 @@ class TestOfaTrainer(unittest.TestCase):
     def test_trainer_std(self):
         WORKSPACE = './workspace/ckpts/recognition'
         os.makedirs(WORKSPACE, exist_ok=True)
-        config_file = os.path.join(WORKSPACE, ModelFile.CONFIGURATION)
-        with open(config_file, 'w') as writer:
-            json.dump(self.finetune_cfg, writer)
 
         pretrained_model = 'damo/ofa_ocr-recognition_scene_base_zh'
+        cfg = read_config(pretrained_model)
+        config_file = os.path.join(WORKSPACE, ModelFile.CONFIGURATION)
+        cfg.dump(config_file)
+
         args = dict(
             model=pretrained_model,
             work_dir=WORKSPACE,
@@ -94,7 +95,7 @@ class TestOfaTrainer(unittest.TestCase):
                 split='test[:20]',
                 download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS),
             cfg_file=config_file)
-        trainer = build_trainer(name=Trainers.ofa, default_args=args)
+        trainer = build_trainer(name='ofa', default_args=args)
         trainer.train()
 
         self.assertIn(

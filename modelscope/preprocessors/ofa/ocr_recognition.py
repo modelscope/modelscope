@@ -74,8 +74,8 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         self.patch_resize_transform = transforms.Compose([
             lambda image: ocr_resize(
                 image,
-                self.cfg.model.patch_image_size,
-                is_document=self.cfg.model.is_document),
+                self.patch_image_size,
+                is_document=self.cfg.model.get('is_document', False)),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.mean, std=self.std),
         ])

@@ -23,7 +23,8 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
-                                      MODELSCOPE_ENVIRONMENT, ONE_YEAR_SECONDS,
+                                      MODELSCOPE_ENVIRONMENT,
+                                      MODELSCOPE_USERNAME, ONE_YEAR_SECONDS,
                                       Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -38,8 +39,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, DatasetFormations,
-                                       DatasetMetaFormats, DownloadMode,
-                                       ModelFile)
+                                       DatasetMetaFormats, DownloadChannel,
+                                       DownloadMode, ModelFile)
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_release_datetime,
                           model_id_to_group_owner_name)
@@ -645,6 +646,25 @@ class HubApi:
     def check_local_cookies(self, use_cookies) -> CookieJar:
         return self._check_cookie(use_cookies=use_cookies)
 
+    def dataset_download_uv(self, dataset_name: str, namespace: str):
+        if not dataset_name or not namespace:
+            raise ValueError('dataset_name or namespace cannot be empty!')
+
+        # get channel and user_name
+        channel = DownloadChannel.LOCAL.value
+        user_name = ''
+        if MODELSCOPE_ENVIRONMENT in os.environ:
+            channel = os.environ[MODELSCOPE_ENVIRONMENT]
+        if MODELSCOPE_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_USERNAME]
+
+        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}?user={user_name}'
+        cookies = ModelScopeConfig.get_cookies()
+        r = requests.post(url, cookies=cookies, headers=self.headers)
+        resp = r.json()
+        raise_on_error(resp)
+        return resp['Message']
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
@@ -760,14 +780,18 @@ class ModelScopeConfig:
         env = 'custom'
         if MODELSCOPE_ENVIRONMENT in os.environ:
             env = os.environ[MODELSCOPE_ENVIRONMENT]
+        user_name = 'unknown'
+        if MODELSCOPE_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_USERNAME]
 
-        ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s' % (
+        ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s; user/%s' % (
             __version__,
             platform.python_version(),
             ModelScopeConfig.get_user_session_id(),
             platform.platform(),
             platform.processor(),
             env,
+            user_name,
         )
         if isinstance(user_agent, dict):
             ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())

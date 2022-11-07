@@ -21,9 +21,10 @@ class TestModelOutput(unittest.TestCase):
         self.assertEqual(outputs['logits'], torch.Tensor([1]))
         self.assertEqual(outputs[0], torch.Tensor([1]))
         self.assertEqual(outputs.logits, torch.Tensor([1]))
+        outputs.loss = torch.Tensor([2])
         logits, loss = outputs
         self.assertEqual(logits, torch.Tensor([1]))
-        self.assertTrue(loss is None)
+        self.assertTrue(loss is not None)
 
 
 if __name__ == '__main__':

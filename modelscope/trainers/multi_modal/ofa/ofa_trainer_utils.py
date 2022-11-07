@@ -103,20 +103,20 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
 
     def __init__(self, args):
         super().__init__()
-        self.sentence_avg = args.sentence_avg
-        self.eps = args.label_smoothing
-        self.ignore_prefix_size = args.ignore_prefix_size
-        self.ignore_eos = args.ignore_eos
-        self.report_accuracy = args.report_accuracy
-        self.drop_worst_ratio = args.drop_worst_ratio
-        self.drop_worst_after = args.drop_worst_after
-        self.use_rdrop = args.use_rdrop
-        self.reg_alpha = args.reg_alpha
-        self.sample_patch_num = args.sample_patch_num
+        self.sentence_avg = args.get('sentence_avg', False)
+        self.eps = args.get('label_smoothing', 0.1)
+        self.ignore_prefix_size = args.get('ignore_prefix_size', 0)
+        self.ignore_eos = args.get('ignore_eos', False)
+        self.report_accuracy = args.get('report_accuracy', False)
+        self.drop_worst_ratio = args.get('drop_worst_ratio', 0.0)
+        self.drop_worst_after = args.get('drop_worst_after', 0)
+        self.use_rdrop = args.get('use_rdrop', False)
+        self.reg_alpha = args.get('reg_alpha', 1.0)
+        self.sample_patch_num = args.get('sample_patch_num', 196)
 
         self.constraint_start = None
         self.constraint_end = None
-        if args.constraint_range:
+        if args.get('constraint_range', None):
             constraint_start, constraint_end = args.constraint_range.split(',')
             self.constraint_start = int(constraint_start)
             self.constraint_end = int(constraint_end)

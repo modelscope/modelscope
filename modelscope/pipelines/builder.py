@@ -93,9 +93,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                           'damo/cv_resnet50_live-category'),
     Tasks.video_category: (Pipelines.video_category,
                            'damo/cv_resnet50_video-category'),
-    Tasks.multi_modal_embedding:
-    (Pipelines.multi_modal_embedding,
-     'damo/multi-modal_clip-vit-large-patch14_zh'),
+    Tasks.multi_modal_embedding: (Pipelines.multi_modal_embedding,
+                                  'damo/multi-modal_clip-vit-base-patch16_zh'),
     Tasks.generative_multi_modal_embedding:
     (Pipelines.generative_multi_modal_embedding,
      'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'

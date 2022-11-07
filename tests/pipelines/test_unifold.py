@@ -19,7 +19,7 @@ class UnifoldProteinStructureTest(unittest.TestCase, DemoCompatibilityCheck):
         self.protein_multimer = 'GAMGLPEEPSSPQESTLKALSLYEAHLSSYIMYLQTFLVKTKQKVNNKNYPEFTLFDTSKLKKDQTLKSIKT' + \
             'NIAALKNHIDKIKPIAMQIYKKYSKNIP'
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         model_dir = snapshot_download(self.model_id)
         mono_pipeline_ins = pipeline(task=self.task, model=model_dir)

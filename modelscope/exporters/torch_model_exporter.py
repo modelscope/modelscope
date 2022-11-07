@@ -128,7 +128,7 @@ class TorchModelExporter(Exporter):
                 args_list = list(args)
             else:
                 args_list = [args]
-            if isinstance(args_list[-1], dict):
+            if isinstance(args_list[-1], Mapping):
                 args_dict = args_list[-1]
                 args_list = args_list[:-1]
             n_nonkeyword = len(args_list)
@@ -284,9 +284,8 @@ class TorchModelExporter(Exporter):
                 'Model property dummy_inputs must be set.')
         dummy_inputs = collate_fn(dummy_inputs, device)
         if isinstance(dummy_inputs, Mapping):
-            dummy_inputs = self._decide_input_format(model, dummy_inputs)
             dummy_inputs_filter = []
-            for _input in dummy_inputs:
+            for _input in self._decide_input_format(model, dummy_inputs):
                 if _input is not None:
                     dummy_inputs_filter.append(_input)
                 else:

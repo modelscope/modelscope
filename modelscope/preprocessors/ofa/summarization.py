@@ -46,7 +46,6 @@ class OfaSummarizationPreprocessor(OfaBasePreprocessor):
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         source = super().pre_caption(
             data[self.column_map['text']], max_words=self.max_src_length)
-        # source = source.strip()[:self.max_src_length]
         source = source.replace('[unk]', 'unk').replace('<unk>', 'unk')
         prompt = self.cfg.model.get(
             'prompt', ' " {} " Summarize the article with a title: ')

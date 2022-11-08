@@ -3,14 +3,13 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
-from modelscope.metainfo import Pipelines
+from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models.base import Model
-from modelscope.models.multi_modal import OfaForAllTasks
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import OfaPreprocessor, Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.preprocessors import Preprocessor
+from modelscope.utils.constant import Fields, Tasks
 
 
 @PIPELINES.register_module(
@@ -58,8 +57,11 @@ class TextClassificationPipeline(Pipeline):
                                                            str) else model
 
         if preprocessor is None:
-            if isinstance(model, OfaForAllTasks):
-                preprocessor = OfaPreprocessor(model_dir=model.model_dir)
+            if model.__class__.__name__ == 'OfaForAllTasks':
+                preprocessor = Preprocessor.from_pretrained(
+                    model_name_or_path=model.model_dir,
+                    type=Preprocessors.ofa_tasks_preprocessor,
+                    field=Fields.multi_modal)
             else:
                 first_sequence = kwargs.pop('first_sequence', 'first_sequence')
                 second_sequence = kwargs.pop('second_sequence', None)
@@ -76,7 +78,7 @@ class TextClassificationPipeline(Pipeline):
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
-        if isinstance(self.model, OfaForAllTasks):
+        if self.model.__class__.__name__ == 'OfaForAllTasks':
             return super().forward(inputs, **forward_params)
         return self.model(**inputs, **forward_params)
 
@@ -95,7 +97,7 @@ class TextClassificationPipeline(Pipeline):
                 labels: The real labels.
             Label at index 0 is the smallest probability.
         """
-        if isinstance(self.model, OfaForAllTasks):
+        if self.model.__class__.__name__ == 'OfaForAllTasks':
             return inputs
         else:
             assert self.id2label is not None, 'Cannot convert id to the original label, please pass in the mapping ' \

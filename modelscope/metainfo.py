@@ -402,6 +402,7 @@ class Metrics(object):
 
     # accuracy
     accuracy = 'accuracy'
+    multi_average_precision = 'mAP'
     audio_noise_metric = 'audio-noise-metric'
 
     # text gen

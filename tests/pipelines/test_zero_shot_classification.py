@@ -9,7 +9,7 @@ from modelscope.pipelines.nlp import ZeroShotClassificationPipeline
 from modelscope.preprocessors import ZeroShotClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.regress_test_utils import MsRegressTool
+from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -65,7 +65,9 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.zero_shot_classification, model=self.model_id)
         with self.regress_tool.monitor_module_single_forward(
-                pipeline_ins.model, 'sbert_zero_shot'):
+                pipeline_ins.model,
+                'sbert_zero_shot',
+                compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(
                 pipeline_ins(
                     input=self.sentence, candidate_labels=self.labels))

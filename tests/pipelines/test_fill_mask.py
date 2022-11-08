@@ -11,7 +11,7 @@ from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import NLPPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.regress_test_utils import MsRegressTool
+from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -109,7 +109,9 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
             pipeline_ins = pipeline(
                 task=Tasks.fill_mask, model=model, preprocessor=preprocessor)
             with self.regress_tool.monitor_module_single_forward(
-                    pipeline_ins.model, f'fill_mask_sbert_{language}'):
+                    pipeline_ins.model,
+                    f'fill_mask_sbert_{language}',
+                    compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
                 print(
                     f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
                     f'{pipeline_ins(self.test_inputs[language])}\n')
@@ -124,7 +126,9 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
             ori_text = self.ori_texts[language]
             test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
             with self.regress_tool.monitor_module_single_forward(
-                    pipeline_ins.model, f'fill_mask_veco_{language}'):
+                    pipeline_ins.model,
+                    f'fill_mask_veco_{language}',
+                    compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
                 print(
                     f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
                     f'{pipeline_ins(test_input)}\n')

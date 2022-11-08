@@ -3,13 +3,12 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.regress_test_utils import MsRegressTool
+from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -48,7 +47,9 @@ class NLITest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(task=Tasks.nli, model=self.model_id)
         with self.regress_tool.monitor_module_single_forward(
-                pipeline_ins.model, 'sbert_nli'):
+                pipeline_ins.model,
+                'sbert_nli',
+                compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

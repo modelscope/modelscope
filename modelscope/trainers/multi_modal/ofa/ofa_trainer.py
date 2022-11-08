@@ -34,6 +34,7 @@ class OFATrainer(EpochBasedTrainer):
             self,
             model: Optional[Union[TorchModel, nn.Module, str]] = None,
             cfg_file: Optional[str] = None,
+            cfg_modify_fn: Optional[Callable] = None,
             arg_parse_fn: Optional[Callable] = None,
             data_collator: Optional[Union[Callable, Dict[str,
                                                          Callable]]] = None,
@@ -49,7 +50,8 @@ class OFATrainer(EpochBasedTrainer):
             **kwargs):
         model = Model.from_pretrained(model, revision=model_revision)
         model_dir = model.model_dir
-        cfg = Config.from_file(cfg_file)
+        self.cfg_modify_fn = cfg_modify_fn
+        cfg = self.rebuild_config(Config.from_file(cfg_file))
         if 'work_dir' not in kwargs or len(kwargs['work_dir']) == 0:
             work_dir = cfg.train.work_dir
         else:
@@ -57,10 +59,12 @@ class OFATrainer(EpochBasedTrainer):
         tokenizer_files = {
             'zh': [
                 'tokenizer.json', 'tokenizer_config.json', 'vocab.txt',
-                'config.json'
+                'config.json', 'ans2label.json'
             ],
-            'en':
-            ['tokenizer.json', 'vocab.json', 'merges.txt', 'config.json'],
+            'en': [
+                'tokenizer.json', 'vocab.json', 'merges.txt', 'config.json',
+                'ans2label.json'
+            ],
         }
         for filename in tokenizer_files[cfg.model.get('language', 'en')]:
             finetune_file = os.path.join(work_dir, filename)
@@ -126,6 +130,11 @@ class OFATrainer(EpochBasedTrainer):
             seed=seed,
             **kwargs,
         )
+
+    def rebuild_config(self, cfg: Config):
+        if self.cfg_modify_fn is not None:
+            cfg = self.cfg_modify_fn(cfg)
+        return cfg
 
     def train_step(self, model, inputs):
         model.train()

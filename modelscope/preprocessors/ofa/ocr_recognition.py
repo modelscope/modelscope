@@ -11,9 +11,6 @@ from zhconv import convert
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
 
-IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
-
 
 def ocr_resize(img, patch_image_size, is_document=False):
     img = img.convert('RGB')
@@ -112,6 +109,6 @@ class OfaOcrRecognitionPreprocessor(OfaBasePreprocessor):
         }
         if 'text' in self.column_map and self.column_map['text'] in data:
             target = data[self.column_map['text']]
-            target = unicodedata2.normalize('NFKC', convert(target, 'zh-hans'))
-            sample['label'] = target
+            sample['label'] = unicodedata2.normalize(
+                'NFKC', convert(target, 'zh-hans'))
         return sample

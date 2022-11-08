@@ -45,10 +45,6 @@ class MPlugForAllTasks(TorchModel):
                     }
         """
 
-        replace_tokens_bert = (('[unused0]', ''), ('[PAD]', ''),
-                               ('[unused1]', ''), (r' +', ' '), ('[SEP]', ''),
-                               ('[unused2]', ''), ('[CLS]', ''), ('[UNK]', ''))
-
         # get task from config file
         task = Config.from_file(
             osp.join(self.model_dir, ModelFile.CONFIGURATION)).task
@@ -60,10 +56,7 @@ class MPlugForAllTasks(TorchModel):
                 return {OutputKeys.SCORES: output[0].tolist()}
             topk_ids, _ = output
             pred_string: List[str] = \
-                self.tokenizer.decode(topk_ids[0][0])
-            for _old, _new in replace_tokens_bert:
-                pred_string = pred_string.replace(_old, _new)
-            pred_string = pred_string.strip()
+                self.tokenizer.decode(topk_ids[0][0], skip_special_tokens=True)
             output_key = OutputKeys.CAPTION \
                 if task == Tasks.image_captioning else OutputKeys.TEXT
             return {output_key: pred_string}
@@ -87,19 +80,4 @@ class MPlugForAllTasks(TorchModel):
 
         # evaluate
         topk_ids, _ = output
-        preds: List[str] = [
-            self.tokenizer.decode(batch[0]) for batch in topk_ids
-        ]
-        for i in range(len(preds)):
-            for _old, _new in replace_tokens_bert:
-                preds[i] = preds[i].replace(_old, _new)
-            preds[i] = preds[i].strip()
-        tgts: List[str] = [
-            self.tokenizer.decode(batch)
-            for batch in input['answer_input_ids'].cpu().numpy().tolist()
-        ]
-        for i in range(len(tgts)):
-            for _old, _new in replace_tokens_bert:
-                tgts[i] = tgts[i].replace(_old, _new)
-            preds[i] = preds[i].strip()
-        return {'preds': preds, 'tgts': tgts}
+        return {'sequences': [list_tensor[0] for list_tensor in topk_ids]}

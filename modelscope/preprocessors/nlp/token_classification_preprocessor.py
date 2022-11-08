@@ -73,10 +73,12 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         super().__init__(model_dir, mode=mode, **kwargs)
 
         if 'is_split_into_words' in kwargs:
-            self.is_split_into_words = kwargs.pop('is_split_into_words')
+            self.tokenize_kwargs['is_split_into_words'] = kwargs.pop(
+                'is_split_into_words')
         else:
-            self.is_split_into_words = self.tokenizer.init_kwargs.get(
-                'is_split_into_words', False)
+            self.tokenize_kwargs[
+                'is_split_into_words'] = self.tokenizer.init_kwargs.get(
+                    'is_split_into_words', False)
         if 'label2id' in kwargs:
             kwargs.pop('label2id')
 
@@ -99,7 +101,6 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
         if isinstance(data, str):
             # for inference inputs without label
             text = data
-            self.tokenize_kwargs['add_special_tokens'] = False
         elif isinstance(data, dict):
             # for finetune inputs with label
             text = data.get(self.first_sequence)
@@ -107,11 +108,15 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
             if isinstance(text, list):
                 self.tokenize_kwargs['is_split_into_words'] = True
 
+        if self._mode == ModeKeys.INFERENCE:
+            self.tokenize_kwargs['add_special_tokens'] = False
+
         input_ids = []
         label_mask = []
         offset_mapping = []
         token_type_ids = []
-        if self.is_split_into_words and self._mode == ModeKeys.INFERENCE:
+        if self.tokenize_kwargs[
+                'is_split_into_words'] and self._mode == ModeKeys.INFERENCE:
             for offset, token in enumerate(list(text)):
                 subtoken_ids = self.tokenizer.encode(token,
                                                      **self.tokenize_kwargs)
@@ -125,7 +130,8 @@ class TokenClassificationPreprocessor(NLPTokenizerPreprocessorBase):
                 encodings = self.tokenizer(
                     text, return_offsets_mapping=True, **self.tokenize_kwargs)
                 attention_mask = encodings['attention_mask']
-                token_type_ids = encodings['token_type_ids']
+                if 'token_type_ids' in encodings:
+                    token_type_ids = encodings['token_type_ids']
                 input_ids = encodings['input_ids']
                 word_ids = encodings.word_ids()
                 for i in range(len(word_ids)):

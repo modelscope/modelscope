@@ -10,6 +10,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor, build_preprocessor
+from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.hub import read_config
 
@@ -78,28 +79,6 @@ class TextGenerationPipeline(Pipeline):
         with torch.no_grad():
             return self.model.generate(inputs, **forward_params)
 
-    def _is_chinese_char(self, word: str):
-        chinese_punctuations = ('，', '。', '；', '：' '！', '？', '《', '》')
-        return len(word) == 1 \
-            and ('\u4e00' <= word <= '\u9fa5' or word in chinese_punctuations)
-
-    def _remove_space_between_chinese_chars(self, decoded: str):
-        old_word_list = decoded.split(' ')
-        new_word_list = []
-        start = -1
-        for i, word in enumerate(old_word_list):
-            if self._is_chinese_char(word):
-                if start == -1:
-                    start = i
-            else:
-                if start != -1:
-                    new_word_list.append(''.join(old_word_list[start:i]))
-                    start = -1
-                new_word_list.append(word)
-        if start != -1:
-            new_word_list.append(''.join(old_word_list[start:]))
-        return ' '.join(new_word_list)
-
     def decode(self, inputs) -> str:
         tokenizer = self.preprocessor.tokenizer
         return tokenizer.decode(inputs.tolist(), skip_special_tokens=True)
@@ -128,5 +107,5 @@ class TextGenerationPipeline(Pipeline):
         if isinstance(inputs, list) or len(inputs.shape) > 1:
             inputs = inputs[0]
         decoded = getattr(self, self.postprocessor)(inputs)
-        text = self._remove_space_between_chinese_chars(decoded)
+        text = remove_space_between_chinese_chars(decoded)
         return {OutputKeys.TEXT: text}

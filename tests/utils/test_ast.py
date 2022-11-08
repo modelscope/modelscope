@@ -41,7 +41,7 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(from_imports, dict)
         self.assertIsInstance(decorators, list)
         self.assertListEqual(list(set(imports.keys()) - set(['torch'])), [])
-        self.assertEqual(len(from_imports.keys()), 9)
+        self.assertEqual(len(from_imports.keys()), 10)
         self.assertTrue(from_imports['modelscope.metainfo'] is not None)
         self.assertEqual(from_imports['modelscope.metainfo'], ['Pipelines'])
         self.assertEqual(decorators,

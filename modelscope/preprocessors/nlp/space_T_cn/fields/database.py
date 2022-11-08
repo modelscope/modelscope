@@ -20,9 +20,9 @@ class Database:
             self.connection_obj = sqlite3.connect(
                 ':memory:', check_same_thread=False)
             self.type_dict = {'text': 'TEXT', 'number': 'INT', 'date': 'TEXT'}
-        self.tables = self.init_tables(table_file_path=table_file_path)
         self.syn_dict = self.init_syn_dict(
             syn_dict_file_path=syn_dict_file_path)
+        self.tables = self.init_tables(table_file_path=table_file_path)
 
     def __del__(self):
         if self.is_use_sqlite:
@@ -75,6 +75,10 @@ class Database:
                         continue
                     word = str(cell).strip().lower()
                     trie_set[ii].insert(word, word)
+                    if word in self.syn_dict.keys():
+                        for term in self.syn_dict[word]:
+                            if term.strip() != '':
+                                trie_set[ii].insert(term, word)
 
             table['value_trie'] = trie_set
 

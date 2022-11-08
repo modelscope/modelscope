@@ -24,6 +24,7 @@ class MetricKeys(object):
     ROUGE_1 = 'rouge-1'
     ROUGE_L = 'rouge-l'
     NED = 'ned'  # ocr metric
+    mAP = 'mAP'
     BatchAcc = 'inbatch_t2i_recall_at_1'
 
 
@@ -40,8 +41,8 @@ task_default_metrics = {
     Tasks.image_portrait_enhancement:
     [Metrics.image_portrait_enhancement_metric],
     Tasks.video_summarization: [Metrics.video_summarization_metric],
-    Tasks.image_captioning: [Metrics.text_gen_metric],
-    Tasks.visual_question_answering: [Metrics.text_gen_metric],
+    Tasks.image_captioning: [Metrics.accuracy],
+    Tasks.visual_question_answering: [Metrics.accuracy],
     Tasks.movie_scene_segmentation: [Metrics.movie_scene_segmentation_metric],
     Tasks.image_inpainting: [Metrics.image_inpainting_metric],
     Tasks.referring_video_object_segmentation:

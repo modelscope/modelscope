@@ -5,6 +5,7 @@ import hashlib
 import os
 import pickle
 import random
+import re
 import shutil
 import tempfile
 from collections import OrderedDict
@@ -759,3 +760,20 @@ def compare_cfg_and_optimizers(baseline_json,
                                          state2, **kwargs) and match
 
     return match
+
+
+class IgnoreKeyFn:
+
+    def __init__(self, keys):
+        if isinstance(keys, str):
+            keys = [keys]
+        self.keys = keys if isinstance(keys, list) else []
+
+    def __call__(self, v1output, v2output, key, type):
+        if key == 'encoder.encoder.layer.0.intermediate.intermediate_act_fn':
+            print()
+        for _key in self.keys:
+            pattern = re.compile(_key)
+            if key is not None and pattern.fullmatch(key):
+                return True
+        return None

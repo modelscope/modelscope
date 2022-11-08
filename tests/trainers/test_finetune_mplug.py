@@ -20,10 +20,7 @@ class TestFinetuneMPlug(unittest.TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
-        from modelscope.utils.constant import DownloadMode
-        datadict = MsDataset.load(
-            'coco_captions_small_slice',
-            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+        datadict = MsDataset.load('coco_captions_small_slice')
         self.train_dataset = MsDataset(
             datadict['train'].remap_columns({
                 'image:FILE': 'image',
@@ -40,18 +37,6 @@ class TestFinetuneMPlug(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    def _cfg_modify_fn(self, cfg):
-        cfg.train.hooks = [{
-            'type': 'CheckpointHook',
-            'interval': self.max_epochs
-        }, {
-            'type': 'TextLoggerHook',
-            'interval': 1
-        }, {
-            'type': 'IterTimerHook'
-        }]
-        return cfg
-
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_caption(self):
         kwargs = dict(
@@ -59,11 +44,10 @@ class TestFinetuneMPlug(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
             max_epochs=self.max_epochs,
-            work_dir=self.tmp_dir,
-            cfg_modify_fn=self._cfg_modify_fn)
+            work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -80,7 +64,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -94,11 +78,10 @@ class TestFinetuneMPlug(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
             max_epochs=self.max_epochs,
-            work_dir=self.tmp_dir,
-            cfg_modify_fn=self._cfg_modify_fn)
+            work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -115,7 +98,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -129,11 +112,10 @@ class TestFinetuneMPlug(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.test_dataset,
             max_epochs=self.max_epochs,
-            work_dir=self.tmp_dir,
-            cfg_modify_fn=self._cfg_modify_fn)
+            work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -150,7 +132,7 @@ class TestFinetuneMPlug(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer: EpochBasedTrainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.mplug, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)

@@ -27,6 +27,9 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
     viet_tcrf_model_id = 'damo/nlp_xlmr_named-entity-recognition_viet-ecommerce-title'
     viet_sentence = 'Nón vành dễ thương cho bé gái'
 
+    multilingual_model_id = 'damo/nlp_raner_named-entity-recognition_multilingual-large-generic'
+    ml_stc = 'সমস্ত বেতন নিলামের সাধারণ ব্যবহারিক উদাহরণ বিভিন্ন পেনি নিলাম / বিডিং ফি নিলাম ওয়েবসাইটে পাওয়া যাবে।'
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download_thai(self):
         cache_path = snapshot_download(self.thai_tcrf_model_id)
@@ -59,6 +62,13 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition, model=self.thai_tcrf_model_id)
         print(pipeline_ins(input=self.thai_sentence))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_tcrf_with_model_name_multilingual(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition,
+            model=self.multilingual_model_id)
+        print(pipeline_ins(input=self.ml_stc))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download_viet(self):

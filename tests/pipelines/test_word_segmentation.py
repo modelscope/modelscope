@@ -9,7 +9,7 @@ from modelscope.pipelines.nlp import WordSegmentationPipeline
 from modelscope.preprocessors import TokenClassificationPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
-from modelscope.utils.regress_test_utils import MsRegressTool
+from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -48,10 +48,14 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.word_segmentation, model=self.model_id)
         with self.regress_tool.monitor_module_single_forward(
-                pipeline_ins.model, 'sbert_ws_zh'):
+                pipeline_ins.model,
+                'sbert_ws_zh',
+                compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(pipeline_ins(input=self.sentence))
         with self.regress_tool.monitor_module_single_forward(
-                pipeline_ins.model, 'sbert_ws_en'):
+                pipeline_ins.model,
+                'sbert_ws_en',
+                compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(pipeline_ins(input=self.sentence_eng))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

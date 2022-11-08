@@ -366,6 +366,7 @@ class DistributedPipeline(Pipeline):
                 master_port=master_port,
                 **self.cfg.model,
                 **kwargs), ranks)
+        self.models = []
 
     def __del__(self):
         if hasattr(self, 'model_pool') and self.model_pool is not None:

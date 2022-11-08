@@ -43,7 +43,7 @@ class OfaImageCaptioningPreprocessor(OfaBasePreprocessor):
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         sample = self._build_infer_sample(data)
-        target = data[self.column_map['text']]
+        target = sample['label']
         target = target.translate(self.transtab).strip()
         target_token_list = target.strip().split()
         target = ' '.join(target_token_list[:self.max_tgt_length])

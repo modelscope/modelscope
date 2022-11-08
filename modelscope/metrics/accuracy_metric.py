@@ -6,6 +6,7 @@ import numpy as np
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys
+from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.registry import default_group
 from .base import Metric
 from .builder import METRICS, MetricKeys
@@ -26,10 +27,10 @@ class AccuracyMetric(Metric):
     def add(self, outputs: Dict, inputs: Dict):
         label_name = OutputKeys.LABEL if OutputKeys.LABEL in inputs else OutputKeys.LABELS
         ground_truths = inputs[label_name]
-        eval_results = outputs[label_name]
+        eval_results = None
         for key in [
                 OutputKeys.CAPTION, OutputKeys.TEXT, OutputKeys.BOXES,
-                OutputKeys.LABELS, OutputKeys.SCORES
+                OutputKeys.LABEL, OutputKeys.LABELS, OutputKeys.SCORES
         ]:
             if key in outputs and outputs[key] is not None:
                 eval_results = outputs[key]
@@ -39,7 +40,7 @@ class AccuracyMetric(Metric):
             self.labels.append(truth)
         for result in eval_results:
             if isinstance(truth, str):
-                self.preds.append(result.strip().replace(' ', ''))
+                self.preds.append(remove_space_between_chinese_chars(result))
             else:
                 self.preds.append(result)
 

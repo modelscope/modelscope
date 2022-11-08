@@ -299,6 +299,7 @@ class Trainers(object):
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
     ofa = 'ofa'
+    mplug = 'mplug'
 
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'

@@ -118,6 +118,7 @@ class NLPTasks(object):
     table_question_answering = 'table-question-answering'
     fill_mask = 'fill-mask'
     text_summarization = 'text-summarization'
+    fast_poem = 'fast-poem'
     question_answering = 'question-answering'
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'

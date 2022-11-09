@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from .word_segmentation_pipeline import WordSegmentationPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
+    from .txl_fast_poem_pipeline import TXLFastPoemPipeline
     from .multilingual_word_segmentation_pipeline import MultilingualWordSegmentationPipeline, \
         WordSegmentationThaiPipeline
 
@@ -73,6 +74,7 @@ else:
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
         'mglm_text_summarization_pipeline': ['MGLMTextSummarizationPipeline'],
+        'txl_fast_poem_pipeline': ['TXLFastPoemPipeline'],
         'multilingual_word_segmentation_pipeline': [
             'MultilingualWordSegmentationPipeline',
             'WordSegmentationThaiPipeline'

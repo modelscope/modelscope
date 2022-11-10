@@ -7,6 +7,7 @@ ENV PATH="${CONDA_DIR}/bin:${PATH}"
 ENV arch=x86_64
 SHELL ["/bin/bash", "-c"]
 COPY docker/rcfiles /tmp/resources
+COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
 RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
     cp /tmp/resources/ubuntu20.04_sources.tuna /etc/apt/sources.list && \
     apt-get update && \
@@ -26,7 +27,7 @@ ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
 
 #install and config python
 ARG PYTHON_VERSION=3.7.13
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-${arch}.sh -O ./miniconda.sh && \
+RUN wget --quiet https://mirrors.aliyun.com/anaconda/miniconda/Miniconda3-latest-Linux-${arch}.sh -O ./miniconda.sh && \
     /bin/bash  miniconda.sh -b -p /opt/conda && \
     rm  -f miniconda.sh && \
     ln  -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
@@ -34,8 +35,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-${a
     cp /tmp/resources/conda.tuna  ~/.condarc && \
     source /root/.bashrc && \
     conda install --yes python==${PYTHON_VERSION} && \
-    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
-    pip config set install.trusted-host pypi.tuna.tsinghua.edu.cn
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set install.trusted-host mirrors.aliyun.com
 
 ARG USE_GPU=True
 
@@ -83,3 +84,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     else \
         pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
     fi
+
+# install  jupyter plugin
+RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
+    cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/

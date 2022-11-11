@@ -71,14 +71,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /var/modelscope/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip cache purge
 
 # default shell bash
 ENV SHELL=/bin/bash
 
 # install special package
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets==2.1.0 numpy==1.18.5 ipykernel fairseq fasttext https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/xtcocotools-1.12-cp37-cp37m-linux_x86_64.whl
-
 RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
     else \
@@ -88,3 +87,22 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 # install  jupyter plugin
 RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
     cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/
+
+COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
+RUN pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/xtcocotools-1.12-cp37-cp37m-linux_x86_64.whl --force
+
+# for uniford
+COPY docker/scripts/install_unifold.sh /tmp/install_unifold.sh
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_unifold.sh; \
+    else \
+     echo 'cpu unsupport uniford'; \
+    fi
+
+RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets==2.1.0 numpy==1.18.5 ipykernel fairseq fasttext deepspeed
+COPY docker/scripts/install_apex.sh /tmp/install_apex.sh
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_apex.sh; \
+    else \
+     echo 'cpu unsupport uniford'; \
+    fi

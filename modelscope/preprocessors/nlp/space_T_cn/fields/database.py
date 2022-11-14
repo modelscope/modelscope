@@ -32,12 +32,12 @@ class Database:
         tables = {}
         lines = []
         if type(table_file_path) == str:
-            with open(table_file_path, 'r') as fo:
+            with open(table_file_path, 'r', encoding='utf-8') as fo:
                 for line in fo:
                     lines.append(line)
         elif type(table_file_path) == list:
             for path in table_file_path:
-                with open(path, 'r') as fo:
+                with open(path, 'r', encoding='utf-8') as fo:
                     for line in fo:
                         lines.append(line)
         else:

@@ -155,7 +155,7 @@ def _parse_release_dates(path: str) -> Mapping[str, datetime.datetime]:
     """Parses release dates file, returns a mapping from PDBs to release dates."""
     if path.endswith('txt'):
         release_dates = {}
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             for line in f:
                 pdb_id, date = line.split(':')
                 date = date.strip()

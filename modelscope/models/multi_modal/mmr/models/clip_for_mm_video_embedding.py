@@ -35,7 +35,9 @@ class VideoCLIPForMultiModalEmbedding(TorchModel):
     def __init__(self, model_dir, **kwargs):
         super().__init__(model_dir=model_dir, **kwargs)
         # model config parameters
-        with open(f'{model_dir}/{ModelFile.CONFIGURATION}', 'r') as json_file:
+        with open(
+                f'{model_dir}/{ModelFile.CONFIGURATION}', 'r',
+                encoding='utf-8') as json_file:
             model_config = json.load(json_file)
         model_config = model_config['paras']
         model_config['model_dir'] = model_dir

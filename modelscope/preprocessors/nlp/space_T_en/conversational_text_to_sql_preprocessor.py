@@ -45,7 +45,7 @@ class ConversationalTextToSqlPreprocessor(Preprocessor):
             and torch.cuda.is_available() else 'cpu'
         self.processor = None
         self.table_path = os.path.join(self.model_dir, 'tables.json')
-        self.tables = json.load(open(self.table_path, 'r'))
+        self.tables = json.load(open(self.table_path, 'r', encoding='utf-8'))
         self.output_tables = None
         self.path_cache = []
         self.graph_processor = GraphProcessor()
@@ -89,7 +89,7 @@ class ConversationalTextToSqlPreprocessor(Preprocessor):
                 'local_db_path'] not in self.path_cache:
             self.path_cache.append(data['local_db_path'])
             path = os.path.join(data['local_db_path'], 'tables.json')
-            self.tables = json.load(open(path, 'r'))
+            self.tables = json.load(open(path, 'r', encoding='utf-8'))
             self.processor.db_dir = os.path.join(data['local_db_path'], 'db')
             self.output_tables = process_tables(self.processor, self.tables)
             Example.configuration(

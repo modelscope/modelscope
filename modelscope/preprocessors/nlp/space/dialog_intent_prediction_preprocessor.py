@@ -35,7 +35,10 @@ class DialogIntentPredictionPreprocessor(Preprocessor):
             self.model_dir, config=self.config)
 
         self.categories = None
-        with open(os.path.join(self.model_dir, 'categories.json'), 'r') as f:
+        with open(
+                os.path.join(self.model_dir, 'categories.json'),
+                'r',
+                encoding='utf-8') as f:
             self.categories = json.load(f)
         assert len(self.categories) == 77
 

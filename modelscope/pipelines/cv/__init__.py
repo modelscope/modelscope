@@ -56,6 +56,7 @@ if TYPE_CHECKING:
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+    from .face_attribute_recognition_pipeline import FaceAttributeRecognitionPipeline
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
@@ -125,8 +126,11 @@ else:
         'mog_face_detection_pipeline': ['MogFaceDetectionPipeline'],
         'ulfd_face_detection_pipeline': ['UlfdFaceDetectionPipeline'],
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
-        'facial_expression_recognition_pipelin':
+        'facial_expression_recognition_pipeline':
         ['FacialExpressionRecognitionPipeline'],
+        'face_attribute_recognition_pipeline': [
+            'FaceAttributeRecognitionPipeline'
+        ],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
         'referring_video_object_segmentation_pipeline': [

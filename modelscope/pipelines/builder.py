@@ -129,6 +129,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.facial_expression_recognition:
     (Pipelines.facial_expression_recognition,
      'damo/cv_vgg19_facial-expression-recognition_fer'),
+    Tasks.face_attribute_recognition:
+    (Pipelines.face_attribute_recognition,
+     'damo/cv_resnet34_face-attribute-recognition_fairface'),
     Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
                               'damo/cv_mobilenet_face-2d-keypoints_alignment'),
     Tasks.video_multi_modal_embedding:

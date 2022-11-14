@@ -133,6 +133,13 @@ TASK_OUTPUTS = {
     Tasks.facial_expression_recognition:
     [OutputKeys.SCORES, OutputKeys.LABELS],
 
+    # face attribute recognition result for single sample
+    #   {
+    #       "scores": [[0.9, 0.1], [0.92, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    #       "labels": [['Male', 'Female'], [0-2, 3-9, 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70+]]
+    #   }
+    Tasks.face_attribute_recognition: [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # face recognition result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],

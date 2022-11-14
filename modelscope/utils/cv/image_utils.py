@@ -194,6 +194,33 @@ def draw_facial_expression_result(img_path, facial_expression_result):
     return img
 
 
+def draw_face_attribute_result(img_path, face_attribute_result):
+    scores = face_attribute_result[OutputKeys.SCORES]
+    labels = face_attribute_result[OutputKeys.LABELS]
+    label_gender = labels[0][np.argmax(scores[0])]
+    label_age = labels[1][np.argmax(scores[1])]
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+    cv2.putText(
+        img,
+        'face gender: {}'.format(label_gender), (10, 10),
+        1,
+        1.0, (0, 255, 0),
+        thickness=1,
+        lineType=8)
+
+    cv2.putText(
+        img,
+        'face age interval: {}'.format(label_age), (10, 40),
+        1,
+        1.0, (255, 0, 0),
+        thickness=1,
+        lineType=8)
+    print('face gender: {}'.format(label_gender))
+    print('face age interval: {}'.format(label_age))
+    return img
+
+
 def draw_face_detection_result(img_path, detection_result):
     bboxes = np.array(detection_result[OutputKeys.BOXES])
     kpss = np.array(detection_result[OutputKeys.KEYPOINTS])

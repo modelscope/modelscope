@@ -248,7 +248,7 @@ class TrainerTest(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
 
         json_file = os.path.join(self.tmp_dir, f'{trainer.timestamp}.log.json')
-        with open(json_file, 'r') as f:
+        with open(json_file, 'r', encoding='utf-8') as f:
             lines = [i.strip() for i in f.readlines()]
         self.assertDictContainsSubset(
             {
@@ -367,7 +367,7 @@ class TrainerTest(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         json_file = os.path.join(self.tmp_dir, f'{trainer.timestamp}.log.json')
-        with open(json_file, 'r') as f:
+        with open(json_file, 'r', encoding='utf-8') as f:
             lines = [i.strip() for i in f.readlines()]
         self.assertDictContainsSubset(
             {

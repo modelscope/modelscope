@@ -739,7 +739,7 @@ class ModelScopeConfig:
             with open(
                     os.path.join(ModelScopeConfig.path_credential,
                                  ModelScopeConfig.USER_INFO_FILE_NAME),
-                    'r') as f:
+                    'r', encoding='utf-8') as f:
                 info = f.read()
                 return info.split(':')[0], info.split(':')[1]
         except FileNotFoundError:
@@ -760,7 +760,7 @@ class ModelScopeConfig:
             with open(
                     os.path.join(ModelScopeConfig.path_credential,
                                  ModelScopeConfig.GIT_TOKEN_FILE_NAME),
-                    'r') as f:
+                    'r', encoding='utf-8') as f:
                 token = f.read()
         except FileNotFoundError:
             pass

@@ -99,7 +99,7 @@ def run_msa_tool(
             f.write(result[msa_format])
     else:
         logging.warning('Reading MSA from file %s', msa_out_path)
-        with open(msa_out_path, 'r') as f:
+        with open(msa_out_path, 'r', encoding='utf-8') as f:
             result = {msa_format: f.read()}
     return result
 
@@ -153,7 +153,7 @@ class DataPipeline:
     def process(self, input_fasta_path: str,
                 msa_output_dir: str) -> FeatureDict:
         """Runs alignment tools on the input sequence and creates features."""
-        with open(input_fasta_path) as f:
+        with open(input_fasta_path, encoding='utf-8') as f:
             input_fasta_str = f.read()
         input_seqs, input_descs = parsers.parse_fasta(input_fasta_str)
         if len(input_seqs) != 1:

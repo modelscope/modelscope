@@ -59,8 +59,10 @@ class NLPBasePreprocessor(Preprocessor, ABC):
             self.use_fast = False
         elif self.use_fast is None and os.path.isfile(
                 os.path.join(model_dir, 'tokenizer_config.json')):
-            with open(os.path.join(model_dir, 'tokenizer_config.json'),
-                      'r') as f:
+            with open(
+                    os.path.join(model_dir, 'tokenizer_config.json'),
+                    'r',
+                    encoding='utf-8') as f:
                 json_config = json.load(f)
                 self.use_fast = json_config.get('use_fast')
         self.use_fast = False if self.use_fast is None else self.use_fast

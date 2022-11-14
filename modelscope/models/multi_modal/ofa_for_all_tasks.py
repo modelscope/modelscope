@@ -312,7 +312,7 @@ class OfaForAllTasks(TorchModel):
         if self.cfg.model.get('answer2label', None):
             ans2label_file = osp.join(self.model_dir,
                                       self.cfg.model.answer2label)
-            with open(ans2label_file, 'r') as reader:
+            with open(ans2label_file, 'r', encoding='utf-8') as reader:
                 self.ans2label_dict = json.load(reader)
 
     def save_pretrained(self,

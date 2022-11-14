@@ -443,7 +443,7 @@ def load_stereo_chemical_props():
     stereo_chemical_props_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         'stereo_chemical_props.txt')
-    with open(stereo_chemical_props_path, 'rt') as f:
+    with open(stereo_chemical_props_path, 'rt', encoding='utf-8') as f:
         stereo_chemical_props = f.read()
     lines_iter = iter(stereo_chemical_props.splitlines())
     # Load bond lengths.

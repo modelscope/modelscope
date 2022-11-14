@@ -15,7 +15,7 @@ from modelscope.utils.constant import Fields
 
 
 def load_kaldi_feature_transform(filename):
-    fp = open(filename, 'r')
+    fp = open(filename, 'r', encoding='utf-8')
     all_str = fp.read()
     pos1 = all_str.find('AddShift')
     pos2 = all_str.find('[', pos1)

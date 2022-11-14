@@ -184,7 +184,7 @@ class multiwoz22Processor(DSTProcessor):
     # Loads the dialogue_acts.json and returns a list
     # of slot-value pairs.
     def load_acts(self, input_file):
-        with open(input_file) as f:
+        with open(input_file, encoding='utf-8') as f:
             acts = json.load(f)
         s_dict = {}
         for d in acts:

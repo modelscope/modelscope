@@ -145,8 +145,9 @@ class CLIPPreprocessor(Preprocessor):
             self.image_resolution = kwargs['resolution']
         else:
             self.image_resolution = json.load(
-                open('{}/vision_model_config.json'.format(
-                    model_dir)))['image_resolution']
+                open(
+                    '{}/vision_model_config.json'.format(model_dir),
+                    encoding='utf-8'))['image_resolution']
         self.img_preprocess = self._build_image_transform()
         # key mapping
         # specify the input keys, compatible with training and inference whose key names may be different

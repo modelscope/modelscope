@@ -47,7 +47,7 @@ def update_conf(origin_config_file, new_config_file, conf_item: [str, str]):
         else:
             return None
 
-    with open(origin_config_file) as f:
+    with open(origin_config_file, encoding='utf-8') as f:
         lines = f.readlines()
     with open(new_config_file, 'w') as f:
         for line in lines:

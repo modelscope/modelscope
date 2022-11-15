@@ -16,7 +16,6 @@ import torch.nn.functional as F
 from pypinyin import FINALS, FINALS_TONE, TONE3, pinyin
 
 from .arguments import get_args
-
 from .gpt2 import mpu
 from .gpt2.configure_data import configure_data
 from .gpt2.data_utils import make_tokenizer
@@ -28,11 +27,12 @@ from .gpt2.utils import (Timers, get_checkpoint_iteration, load_checkpoint,
 
 open_old_pronounce = 1
 
+
 class APIException(Exception):
 
     def __init__(self, message):
         super().__init__(message)
-        
+
 
 class CanNotReturnException(APIException):
 
@@ -40,11 +40,13 @@ class CanNotReturnException(APIException):
         self.payload = payload
         super().__init__(message)
 
+
 class InputTooLongException(APIException):
 
     def __init__(self, message, payload=None):
         self.payload = payload
         super().__init__(message)
+
 
 def get_model(args):
     """Build the model."""

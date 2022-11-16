@@ -50,7 +50,8 @@ class UnCLIP(nn.Module):
     def __init__(self, model_dir):
         super(UnCLIP, self).__init__()
         self.model_dir = model_dir
-        self.config = json.load(open(f'{model_dir}/{ModelFile.CONFIGURATION}'))
+        self.config = json.load(
+            open(f'{model_dir}/{ModelFile.CONFIGURATION}', encoding='utf-8'))
 
         # modules
         self.clip = CLIP(**self.config['clip']).fp16()

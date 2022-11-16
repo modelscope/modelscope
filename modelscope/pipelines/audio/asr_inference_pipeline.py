@@ -116,7 +116,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         }
 
         if self.framework == Frameworks.torch:
-            config_file = open(inputs['asr_model_config'])
+            config_file = open(inputs['asr_model_config'], encoding='utf-8')
             root = yaml.full_load(config_file)
             config_file.close()
             frontend_conf = None

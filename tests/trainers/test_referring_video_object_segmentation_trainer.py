@@ -7,8 +7,8 @@ import zipfile
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.cv.movie_scene_segmentation import \
-    MovieSceneSegmentationModel
+from modelscope.models.cv.referring_video_object_segmentation import \
+    ReferringVideoObjectSegmentation
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
@@ -46,7 +46,6 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
             dataset_name=train_data_cfg.name,
             split=train_data_cfg.split,
             cfg=train_data_cfg.cfg,
-            namespace='damo',
             test_mode=train_data_cfg.test_mode)
         assert next(
             iter(self.train_dataset.config_kwargs['split_config'].values()))
@@ -55,14 +54,13 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
             dataset_name=test_data_cfg.name,
             split=test_data_cfg.split,
             cfg=test_data_cfg.cfg,
-            namespace='damo',
             test_mode=test_data_cfg.test_mode)
         assert next(
             iter(self.test_dataset.config_kwargs['split_config'].values()))
 
         self.max_epochs = max_epochs
 
-    @unittest.skip('skip since the model is set to private for now')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,
@@ -77,11 +75,11 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         results_files = os.listdir(trainer.work_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skip('skip since the model is set to private for now')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
 
         cache_path = snapshot_download(self.model_id)
-        model = MovieSceneSegmentationModel.from_pretrained(cache_path)
+        model = ReferringVideoObjectSegmentation.from_pretrained(cache_path)
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
             model=model,

@@ -156,7 +156,7 @@ class DataReader:
         def read_input_to_queue():
             for path in paths:
                 print_rank_0(f'Start reading {path}')
-                with open(path) as file:
+                with open(path, encoding='utf-8') as file:
                     items = json.load(file)
                     for item in items:
                         task_queue.put(item)

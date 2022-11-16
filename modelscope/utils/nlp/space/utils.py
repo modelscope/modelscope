@@ -146,9 +146,9 @@ class MultiWOZVocab(object):
 
     def load_vocab(self, vocab_path):
         self._freq_dict = json.loads(
-            open(vocab_path + '.freq.json', 'r').read())
+            open(vocab_path + '.freq.json', 'r', encoding='utf-8').read())
         self._word2idx = json.loads(
-            open(vocab_path + '.word2idx.json', 'r').read())
+            open(vocab_path + '.word2idx.json', 'r', encoding='utf-8').read())
         self._idx2word = {}
         for w, idx in self._word2idx.items():
             self._idx2word[idx] = w

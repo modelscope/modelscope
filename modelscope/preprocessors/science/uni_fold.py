@@ -201,7 +201,7 @@ def run_mmseqs2(
     a3m_lines = {}
     for a3m_file in a3m_files:
         update_M, M = True, None
-        with open(a3m_file, 'r') as f:
+        with open(a3m_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             for line in lines:
                 if len(line) > 0:

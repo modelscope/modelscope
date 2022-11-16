@@ -522,7 +522,9 @@ class GEMMModel(nn.Module):
 
     def __init__(self, model_dir):
         super().__init__()
-        with open('{}/encoder_config.json'.format(model_dir), 'r') as f:
+        with open(
+                '{}/encoder_config.json'.format(model_dir), 'r',
+                encoding='utf-8') as f:
             model_config = json.loads(f.read())
         model_name = list(model_config.keys())[0]
         config_args = model_config[model_name]

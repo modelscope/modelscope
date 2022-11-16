@@ -110,7 +110,7 @@ class GeneralRecognitionPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         label_mapping_path = osp.join(self.local_path, 'meta_info.txt')
-        with open(label_mapping_path, 'r') as f:
+        with open(label_mapping_path, 'r', encoding='utf-8') as f:
             label_mapping = f.readlines()
         score = torch.max(inputs['outputs'])
         inputs = {

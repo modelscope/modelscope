@@ -111,6 +111,6 @@ class MPlugConfig(PretrainedConfig):
     @classmethod
     def from_yaml_file(cls, yaml_file: Union[str,
                                              os.PathLike]) -> Dict[str, Any]:
-        with open(yaml_file, 'r') as reader:
+        with open(yaml_file, 'r', encoding='utf-8') as reader:
             config_dict = yaml.load(reader, Loader=yaml.Loader)
         return cls(**config_dict)

@@ -59,8 +59,9 @@ def load_feature_for_one_target(
 
     else:
         uniprot_msa_dir = data_folder
-        sequence_ids = open(os.path.join(data_folder,
-                                         'chains.txt')).readline().split()
+        sequence_ids = open(
+            os.path.join(data_folder, 'chains.txt'),
+            encoding='utf-8').readline().split()
 
     if symmetry_group is None:
         batch, _ = load_and_process(

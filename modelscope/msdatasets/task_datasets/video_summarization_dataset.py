@@ -26,7 +26,7 @@ class VideoSummarizationDataset(TorchTaskDataset):
         self.list_n_frames = []
         self.list_positions = []
 
-        with open(self.split_filename) as f:
+        with open(self.split_filename, encoding='utf-8') as f:
             data = json.loads(f.read())
             for i, split in enumerate(data):
                 if i == self.split_index:

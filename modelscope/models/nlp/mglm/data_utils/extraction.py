@@ -29,7 +29,9 @@ with open(output_path, 'w') as output:
             print(filename)
             article_lines = []
             article_open = False
-            with open(filename, mode='r', newline='\n') as file:
+            with open(
+                    filename, mode='r', newline='\n',
+                    encoding='utf-8') as file:
                 for line in file:
                     line = line.rstrip()
                     if '<doc id=' in line:

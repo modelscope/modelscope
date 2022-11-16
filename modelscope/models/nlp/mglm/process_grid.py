@@ -19,7 +19,7 @@ for dir_path in glob.glob(path_pattern, recursive=True):
     valid_path = os.path.join(dir_path, 'results.json')
     if os.path.exists(valid_path):
         print(entry)
-        with open(valid_path) as file:
+        with open(valid_path, encoding='utf-8') as file:
             valid_result = json.load(file)
     else:
         print(f'{entry} no validation results')

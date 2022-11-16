@@ -24,13 +24,10 @@ def tableqa_tracking_and_print_results_with_history(
         'utterance': [
             '有哪些风险类型？',
             '风险类型有多少种？',
-            '珠江流域的小(2)型水库的库容总量是多少？',
+            '珠江流域的小型水库的库容总量是多少？',
             '那平均值是多少？',
             '那水库的名称呢？',
             '换成中型的呢？',
-            '枣庄营业厅的电话',
-            '那地址呢？',
-            '枣庄营业厅的电话和地址',
         ]
     }
     for p in pipelines:
@@ -55,9 +52,7 @@ def tableqa_tracking_and_print_results_without_history(
         'utterance': [
             '有哪些风险类型？',
             '风险类型有多少种？',
-            '珠江流域的小(2)型水库的库容总量是多少？',
-            '枣庄营业厅的电话',
-            '枣庄营业厅的电话和地址',
+            '珠江流域的小型水库的库容总量是多少？',
         ]
     }
     for p in pipelines:
@@ -77,13 +72,10 @@ def tableqa_tracking_and_print_results_with_tableid(
         'utterance': [
             ['有哪些风险类型？', 'fund'],
             ['风险类型有多少种？', 'reservoir'],
-            ['珠江流域的小(2)型水库的库容总量是多少？', 'reservoir'],
+            ['珠江流域的小型水库的库容总量是多少？', 'reservoir'],
             ['那平均值是多少？', 'reservoir'],
             ['那水库的名称呢？', 'reservoir'],
             ['换成中型的呢？', 'reservoir'],
-            ['枣庄营业厅的电话', 'business'],
-            ['那地址呢？', 'business'],
-            ['枣庄营业厅的电话和地址', 'business'],
         ],
     }
     for p in pipelines:
@@ -157,7 +149,7 @@ class TableQuestionAnswering(unittest.TestCase):
                     os.path.join(model.model_dir, 'databases'))
             ],
             syn_dict_file_path=os.path.join(model.model_dir, 'synonym.txt'),
-            is_use_sqlite=False)
+            is_use_sqlite=True)
         preprocessor = TableQuestionAnsweringPreprocessor(
             model_dir=model.model_dir, db=db)
         pipelines = [

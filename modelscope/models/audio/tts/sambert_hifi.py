@@ -60,7 +60,7 @@ class SambertHifigan(Model):
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
             zip_ref.extractall(model_dir)
         voice_cfg_path = os.path.join(self.__voice_path, 'voices.json')
-        with open(voice_cfg_path, 'r') as f:
+        with open(voice_cfg_path, 'r', encoding='utf-8') as f:
             voice_cfg = json.load(f)
         if 'voices' not in voice_cfg:
             raise TtsModelConfigurationException(

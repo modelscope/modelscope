@@ -523,8 +523,10 @@ class CLIPForMultiModalEmbedding(TorchModel):
         logger.info(f'Loading text model config from {text_model_config_file}')
         assert os.path.exists(text_model_config_file)
 
-        with open(vision_model_config_file,
-                  'r') as fv, open(text_model_config_file, 'r') as ft:
+        with open(
+                vision_model_config_file, 'r',
+                encoding='utf-8') as fv,\
+                open(text_model_config_file, 'r', encoding='utf-8') as ft:
             self.model_info = json.load(fv)
             for k, v in json.load(ft).items():
                 self.model_info[k] = v

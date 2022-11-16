@@ -78,7 +78,7 @@ class WavToLists(Preprocessor):
         assert os.path.exists(
             inputs['config_path']), 'model config yaml file does not exist'
 
-        config_file = open(inputs['config_path'])
+        config_file = open(inputs['config_path'], encoding='utf-8')
         root = yaml.full_load(config_file)
         config_file.close()
 

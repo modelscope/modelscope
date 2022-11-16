@@ -15,7 +15,9 @@ class MultiWozDB(object):
         self.dbs = {}
         self.sql_dbs = {}
         for domain in all_domains:
-            with open(os.path.join(db_dir, db_paths[domain]), 'r') as f:
+            with open(
+                    os.path.join(db_dir, db_paths[domain]), 'r',
+                    encoding='utf-8') as f:
                 self.dbs[domain] = json.loads(f.read().lower())
 
     def oneHotVector(self, domain, num):

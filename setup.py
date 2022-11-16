@@ -50,7 +50,7 @@ def get_hash():
 
 
 def get_version():
-    with open(version_file, 'r') as f:
+    with open(version_file, 'r', encoding='utf-8') as f:
         exec(compile(f.read(), version_file, 'exec'))
     return locals()['__version__']
 
@@ -109,7 +109,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
             yield info
 
     def parse_require_file(fpath):
-        with open(fpath, 'r') as f:
+        with open(fpath, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 line = line.strip()
                 if line.startswith('http'):

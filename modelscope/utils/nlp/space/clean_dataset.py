@@ -59,7 +59,9 @@ def clean_text(data_dir, text):
                   text)  # 'abc.xyz' -> 'abc . xyz'
     text = re.sub(r'(\w+)\.\.? ', r'\1 . ', text)  # if 'abc. ' -> 'abc . '
 
-    with open(os.path.join(data_dir, 'mapping.pair'), 'r') as fin:
+    with open(
+            os.path.join(data_dir, 'mapping.pair'), 'r',
+            encoding='utf-8') as fin:
         for line in fin.readlines():
             fromx, tox = line.replace('\n', '').split('\t')
             text = ' ' + text + ' '

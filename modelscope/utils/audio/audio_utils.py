@@ -43,7 +43,10 @@ def update_conf(origin_config_file, new_config_file, conf_item: [str, str]):
     def repl(matched):
         key = matched.group(1)
         if key in conf_item:
-            return conf_item[key]
+            value = conf_item[key]
+            if not isinstance(value, str):
+                value = str(value)
+            return value
         else:
             return None
 

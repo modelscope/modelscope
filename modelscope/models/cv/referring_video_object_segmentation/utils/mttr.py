@@ -19,6 +19,7 @@ class MTTR(nn.Module):
                  num_queries,
                  mask_kernels_dim=8,
                  aux_loss=False,
+                 transformer_cfg_dir=None,
                  **kwargs):
         """
         Parameters:
@@ -29,7 +30,9 @@ class MTTR(nn.Module):
         """
         super().__init__()
         self.backbone = init_backbone(**kwargs)
-        self.transformer = MultimodalTransformer(**kwargs)
+        assert transformer_cfg_dir is not None
+        self.transformer = MultimodalTransformer(
+            transformer_cfg_dir=transformer_cfg_dir, **kwargs)
         d_model = self.transformer.d_model
         self.is_referred_head = nn.Linear(
             d_model,

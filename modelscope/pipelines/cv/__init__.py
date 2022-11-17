@@ -47,92 +47,91 @@ if TYPE_CHECKING:
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
     from .shop_segmentation_pipleline import ShopSegmentationPipeline
-    from .easycv_pipelines import (EasyCVDetectionPipeline,
-                                   EasyCVSegmentationPipeline,
-                                   Face2DKeypointsPipeline,
-                                   HumanWholebodyKeypointsPipeline)
+    from .easycv_pipelines import (
+        EasyCVDetectionPipeline,
+        EasyCVSegmentationPipeline,
+        Face2DKeypointsPipeline,
+        HumanWholebodyKeypointsPipeline,
+    )
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
     from .mog_face_detection_pipeline import MogFaceDetectionPipeline
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
-    from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+    from .facial_expression_recognition_pipeline import (
+        FacialExpressionRecognitionPipeline,
+    )
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
-    from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
+    from .referring_video_object_segmentation_pipeline import (
+        ReferringVideoObjectSegmentationPipeline,
+    )
 
 else:
     _import_structure = {
-        'action_recognition_pipeline': ['ActionRecognitionPipeline'],
-        'action_detection_pipeline': ['ActionDetectionPipeline'],
-        'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
-        'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
-        'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
-        'hand_2d_keypoints_pipeline': ['Hand2DKeypointsPipeline'],
-        'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
-        'hicossl_video_embedding_pipeline': ['HICOSSLVideoEmbeddingPipeline'],
-        'crowd_counting_pipeline': ['CrowdCountingPipeline'],
-        'image_detection_pipeline': ['ImageDetectionPipeline'],
-        'image_salient_detection_pipeline': ['ImageSalientDetectionPipeline'],
-        'face_detection_pipeline': ['FaceDetectionPipeline'],
-        'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
-        'face_recognition_pipeline': ['FaceRecognitionPipeline'],
-        'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
-        'image_classification_pipeline':
-        ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
-        'image_cartoon_pipeline': ['ImageCartoonPipeline'],
-        'image_denoise_pipeline': ['ImageDenoisePipeline'],
-        'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
-        'image_colorization_pipeline': ['ImageColorizationPipeline'],
-        'image_instance_segmentation_pipeline':
-        ['ImageInstanceSegmentationPipeline'],
-        'image_matting_pipeline': ['ImageMattingPipeline'],
-        'image_panoptic_segmentation_pipeline':
-        ['ImagePanopticSegmentationPipeline'],
-        'image_portrait_enhancement_pipeline':
-        ['ImagePortraitEnhancementPipeline'],
-        'image_reid_person_pipeline': ['ImageReidPersonPipeline'],
-        'image_semantic_segmentation_pipeline':
-        ['ImageSemanticSegmentationPipeline'],
-        'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
-        'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
-        'image_to_image_translation_pipeline':
-        ['Image2ImageTranslationPipeline'],
-        'product_retrieval_embedding_pipeline':
-        ['ProductRetrievalEmbeddingPipeline'],
-        'realtime_object_detection_pipeline':
-        ['RealtimeObjectDetectionPipeline'],
-        'live_category_pipeline': ['LiveCategoryPipeline'],
-        'image_to_image_generation_pipeline':
-        ['Image2ImageGenerationPipeline'],
-        'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
-        'ocr_detection_pipeline': ['OCRDetectionPipeline'],
-        'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
-        'table_recognition_pipeline': ['TableRecognitionPipeline'],
-        'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
-        'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
-        'video_category_pipeline': ['VideoCategoryPipeline'],
-        'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
-        'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
-        'easycv_pipeline': [
-            'EasyCVDetectionPipeline',
-            'EasyCVSegmentationPipeline',
-            'Face2DKeypointsPipeline',
-            'HumanWholebodyKeypointsPipeline',
+        "action_recognition_pipeline": ["ActionRecognitionPipeline"],
+        "action_detection_pipeline": ["ActionDetectionPipeline"],
+        "animal_recognition_pipeline": ["AnimalRecognitionPipeline"],
+        "body_2d_keypoints_pipeline": ["Body2DKeypointsPipeline"],
+        "body_3d_keypoints_pipeline": ["Body3DKeypointsPipeline"],
+        "hand_2d_keypoints_pipeline": ["Hand2DKeypointsPipeline"],
+        "cmdssl_video_embedding_pipeline": ["CMDSSLVideoEmbeddingPipeline"],
+        "hicossl_video_embedding_pipeline": ["HICOSSLVideoEmbeddingPipeline"],
+        "crowd_counting_pipeline": ["CrowdCountingPipeline"],
+        "image_detection_pipeline": ["ImageDetectionPipeline"],
+        "image_salient_detection_pipeline": ["ImageSalientDetectionPipeline"],
+        "face_detection_pipeline": ["FaceDetectionPipeline"],
+        "face_image_generation_pipeline": ["FaceImageGenerationPipeline"],
+        "face_recognition_pipeline": ["FaceRecognitionPipeline"],
+        "general_recognition_pipeline": ["GeneralRecognitionPipeline"],
+        "image_classification_pipeline": [
+            "GeneralImageClassificationPipeline",
+            "ImageClassificationPipeline",
         ],
-        'text_driven_segmentation_pipeline':
-        ['TextDrivenSegmentationPipeline'],
-        'movie_scene_segmentation_pipeline':
-        ['MovieSceneSegmentationPipeline'],
-        'mog_face_detection_pipeline': ['MogFaceDetectionPipeline'],
-        'ulfd_face_detection_pipeline': ['UlfdFaceDetectionPipeline'],
-        'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
-        'facial_expression_recognition_pipelin':
-        ['FacialExpressionRecognitionPipeline'],
-        'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
-        'hand_static_pipeline': ['HandStaticPipeline'],
-        'referring_video_object_segmentation_pipeline': [
-            'ReferringVideoObjectSegmentationPipeline'
+        "image_cartoon_pipeline": ["ImageCartoonPipeline"],
+        "image_denoise_pipeline": ["ImageDenoisePipeline"],
+        "image_color_enhance_pipeline": ["ImageColorEnhancePipeline"],
+        "image_colorization_pipeline": ["ImageColorizationPipeline"],
+        "image_instance_segmentation_pipeline": ["ImageInstanceSegmentationPipeline"],
+        "image_matting_pipeline": ["ImageMattingPipeline"],
+        "image_panoptic_segmentation_pipeline": ["ImagePanopticSegmentationPipeline"],
+        "image_portrait_enhancement_pipeline": ["ImagePortraitEnhancementPipeline"],
+        "image_reid_person_pipeline": ["ImageReidPersonPipeline"],
+        "image_semantic_segmentation_pipeline": ["ImageSemanticSegmentationPipeline"],
+        "image_style_transfer_pipeline": ["ImageStyleTransferPipeline"],
+        "image_super_resolution_pipeline": ["ImageSuperResolutionPipeline"],
+        "image_to_image_translation_pipeline": ["Image2ImageTranslationPipeline"],
+        "product_retrieval_embedding_pipeline": ["ProductRetrievalEmbeddingPipeline"],
+        "realtime_object_detection_pipeline": ["RealtimeObjectDetectionPipeline"],
+        "live_category_pipeline": ["LiveCategoryPipeline"],
+        "image_to_image_generation_pipeline": ["Image2ImageGenerationPipeline"],
+        "image_inpainting_pipeline": ["ImageInpaintingPipeline"],
+        "ocr_detection_pipeline": ["OCRDetectionPipeline"],
+        "ocr_recognition_pipeline": ["OCRRecognitionPipeline"],
+        "table_recognition_pipeline": ["TableRecognitionPipeline"],
+        "skin_retouching_pipeline": ["SkinRetouchingPipeline"],
+        "tinynas_classification_pipeline": ["TinynasClassificationPipeline"],
+        "video_category_pipeline": ["VideoCategoryPipeline"],
+        "virtual_try_on_pipeline": ["VirtualTryonPipeline"],
+        "shop_segmentation_pipleline": ["ShopSegmentationPipeline"],
+        "easycv_pipeline": [
+            "EasyCVDetectionPipeline",
+            "EasyCVSegmentationPipeline",
+            "Face2DKeypointsPipeline",
+            "HumanWholebodyKeypointsPipeline",
+        ],
+        "text_driven_segmentation_pipeline": ["TextDrivenSegmentationPipeline"],
+        "movie_scene_segmentation_pipeline": ["MovieSceneSegmentationPipeline"],
+        "mog_face_detection_pipeline": ["MogFaceDetectionPipeline"],
+        "ulfd_face_detection_pipeline": ["UlfdFaceDetectionPipeline"],
+        "retina_face_detection_pipeline": ["RetinaFaceDetectionPipeline"],
+        "facial_expression_recognition_pipelin": [
+            "FacialExpressionRecognitionPipeline"
+        ],
+        "mtcnn_face_detection_pipeline": ["MtcnnFaceDetectionPipeline"],
+        "hand_static_pipeline": ["HandStaticPipeline"],
+        "referring_video_object_segmentation_pipeline": [
+            "ReferringVideoObjectSegmentationPipeline"
         ],
     }
 
@@ -140,7 +139,7 @@ else:
 
     sys.modules[__name__] = LazyImportModule(
         __name__,
-        globals()['__file__'],
+        globals()["__file__"],
         _import_structure,
         module_spec=__spec__,
         extra_objects={},

@@ -212,7 +212,6 @@ def gbox_post_process(gbox, c, s, h, w):
 def nms(dets, thresh):
     if len(dets) < 2:
         return dets
-    scores = dets[:, 8]
     index_keep = []
     keep = []
     for i in range(len(dets)):

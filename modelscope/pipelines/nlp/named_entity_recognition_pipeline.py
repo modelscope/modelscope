@@ -92,6 +92,8 @@ class NamedEntityRecognitionPipeline(Pipeline):
         offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
 
         labels = [self.id2label[x] for x in predictions]
+        if len(labels) > len(offset_mapping):
+            labels = labels[1:-1]
         chunks = []
         chunk = {}
         for label, offsets in zip(labels, offset_mapping):
@@ -104,6 +106,20 @@ class NamedEntityRecognitionPipeline(Pipeline):
                     'start': offsets[0],
                     'end': offsets[1]
                 }
+            if label[0] in 'I':
+                if not chunk:
+                    chunk = {
+                        'type': label[2:],
+                        'start': offsets[0],
+                        'end': offsets[1]
+                    }
+            if label[0] in 'E':
+                if not chunk:
+                    chunk = {
+                        'type': label[2:],
+                        'start': offsets[0],
+                        'end': offsets[1]
+                    }
             if label[0] in 'IES':
                 if chunk:
                     chunk['end'] = offsets[1]
@@ -118,15 +134,15 @@ class NamedEntityRecognitionPipeline(Pipeline):
             chunk['span'] = text[chunk['start']:chunk['end']]
             chunks.append(chunk)
 
-        # for cws output
+        # for cws outputs
         if len(chunks) > 0 and chunks[0]['type'] == 'cws':
             spans = [
                 chunk['span'] for chunk in chunks if chunk['span'].strip()
             ]
             seg_result = ' '.join(spans)
-            outputs = {OutputKeys.OUTPUT: seg_result, OutputKeys.LABELS: []}
+            outputs = {OutputKeys.OUTPUT: seg_result}
 
-        # for ner outpus
+        # for ner outputs
         else:
             outputs = {OutputKeys.OUTPUT: chunks}
         return outputs

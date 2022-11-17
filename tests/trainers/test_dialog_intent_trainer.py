@@ -94,7 +94,7 @@ class TestDialogIntentTrainer(unittest.TestCase):
         cfg.Model.update(config['Model'])
         if self.debugging:
             cfg.Trainer.save_checkpoint = False
-            cfg.Trainer.num_epochs = 5
+            cfg.Trainer.num_epochs = 1
             cfg.Trainer.batch_size_label = 64
         return cfg
 

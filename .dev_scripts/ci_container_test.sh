@@ -1,6 +1,3 @@
-echo "Testing envs"
-printenv
-echo "ENV END"
 if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     pip install -r requirements/tests.txt
     git config --global --add safe.directory /Maas-lib
@@ -23,7 +20,7 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     awk -F: '/^[^#]/ { print $1 }' requirements/multi-modal.txt | xargs -n 1 pip install -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
     awk -F: '/^[^#]/ { print $1 }' requirements/nlp.txt | xargs -n 1 pip install -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
     awk -F: '/^[^#]/ { print $1 }' requirements/science.txt | xargs -n 1 pip install -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-     pip install -r requirements/tests.txt
+
     # test with install
     python setup.py install
 else

@@ -18,7 +18,6 @@ class RetinaFaceDetection(TorchModel):
 
     def __init__(self, model_path, device='cuda'):
         super().__init__(model_path)
-        torch.set_grad_enabled(False)
         cudnn.benchmark = True
         self.model_path = model_path
         self.cfg = Config.from_file(

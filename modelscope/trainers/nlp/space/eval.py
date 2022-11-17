@@ -771,7 +771,8 @@ class CamRestEvaluator(GenericEvaluator):
     def get_entities(self, entity_path):
         entities_flat = []
         entitiy_to_slot_dict = {}
-        raw_entities = json.loads(open(entity_path).read().lower())
+        raw_entities = json.loads(
+            open(entity_path, encoding='utf-8').read().lower())
         for s in raw_entities['informable']:
             entities_flat.extend(raw_entities['informable'][s])
             for v in raw_entities['informable'][s]:

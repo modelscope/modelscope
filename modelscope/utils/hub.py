@@ -124,7 +124,7 @@ def parse_label_mapping(model_dir):
     label2id = None
     label_path = os.path.join(model_dir, ModelFile.LABEL_MAPPING)
     if os.path.exists(label_path):
-        with open(label_path) as f:
+        with open(label_path, encoding='utf-8') as f:
             label_mapping = json.load(f)
         label2id = {name: idx for name, idx in label_mapping.items()}
 

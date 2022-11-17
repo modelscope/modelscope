@@ -62,7 +62,7 @@ class ImageDenoiseTrainerTest(unittest.TestCase):
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(2):
+        for i in range(1):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -73,13 +73,13 @@ class ImageDenoiseTrainerTest(unittest.TestCase):
             model=model,
             train_dataset=self.dataset_train,
             eval_dataset=self.dataset_val,
-            max_epochs=2,
+            max_epochs=1,
             work_dir=self.tmp_dir)
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(2):
+        for i in range(1):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
 

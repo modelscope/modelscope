@@ -21,7 +21,7 @@ class KanTtsText2MelDataset(Dataset):
 
         self.cache = cache
 
-        with open(config_filename) as f:
+        with open(config_filename, encoding='utf-8') as f:
             self._config = json.loads(f.read())
 
         # Load metadata:

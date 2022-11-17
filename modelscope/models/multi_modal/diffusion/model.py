@@ -76,7 +76,7 @@ class DiffusionModel(nn.Module):
         super(DiffusionModel, self).__init__()
         # including text and generator config
         model_config = json.load(
-            open('{}/model_config.json'.format(model_dir)))
+            open('{}/model_config.json'.format(model_dir), encoding='utf-8'))
 
         # text encoder
         text_config = model_config['text_config']
@@ -142,7 +142,9 @@ class DiffusionForTextToImageSynthesis(Model):
 
         # diffusion process
         diffusion_params = json.load(
-            open('{}/diffusion_config.json'.format(model_dir)))
+            open(
+                '{}/diffusion_config.json'.format(model_dir),
+                encoding='utf-8'))
         self.diffusion_generator = make_diffusion(
             **diffusion_params['generator_config'])
         self.diffusion_upsampler_256 = make_diffusion(

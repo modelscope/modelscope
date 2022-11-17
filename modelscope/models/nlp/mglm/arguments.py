@@ -743,7 +743,7 @@ def get_args():
 
     if hasattr(args, 'deepspeed'
                ) and args.deepspeed and args.deepspeed_config is not None:
-        with open(args.deepspeed_config) as file:
+        with open(args.deepspeed_config, encoding='utf-8') as file:
             deepspeed_config = json.load(file)
         if 'train_micro_batch_size_per_gpu' in deepspeed_config:
             args.batch_size = deepspeed_config[

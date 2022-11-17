@@ -36,7 +36,7 @@ class VideoCategoryPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading configuration from {config_path}')
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
             self.frame_num = config['frame_num']
             self.level_1_num = config['level_1_num']

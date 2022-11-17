@@ -121,7 +121,7 @@ class LambadaDataset(torch.utils.data.Dataset):
 
         self.tokens = []
         self.labels = []
-        with open(data_path, 'r') as f:
+        with open(data_path, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 text = json.loads(line)['text']
                 tokens, labels = self.get_tokens(text)

@@ -138,6 +138,19 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
             video_np = rearrange(self.video,
                                  't c h w -> t h w c').numpy() / 255.0
 
+            # set font for text query in output video
+            if self.model.cfg.pipeline.output_font:
+                try:
+                    font = ImageFont.truetype(
+                        font=self.model.cfg.pipeline.output_font,
+                        size=self.model.cfg.pipeline.output_font_size)
+                except OSError:
+                    logger.error('can\'t open resource %s, load default font'
+                                 % self.model.cfg.pipeline.output_font)
+                    font = ImageFont.load_default()
+            else:
+                font = ImageFont.load_default()
+
             # del video
             pred_masks_per_frame = rearrange(
                 torch.stack(inputs), 'q t 1 h w -> t q h w').numpy()
@@ -158,12 +171,6 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                 W, H = vid_frame.size
                 draw = ImageDraw.Draw(vid_frame)
 
-                if self.model.cfg.pipeline.output_font:
-                    font = ImageFont.truetype(
-                        font=self.model.cfg.pipeline.output_font,
-                        size=self.model.cfg.pipeline.output_font_size)
-                else:
-                    font = ImageFont.load_default()
                 for i, (text_query, color) in enumerate(
                         zip(self.text_queries, colors), start=1):
                     w, h = draw.textsize(text_query, font=font)
@@ -173,9 +180,6 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                               fill=tuple(color) + (255, ),
                               font=font)
                 masked_video.append(np.array(vid_frame))
-            print(type(vid_frame))
-            print(type(masked_video[0]))
-            print(masked_video[0].shape)
             # generate and save the output clip:
 
             assert self.model.cfg.pipeline.output_path

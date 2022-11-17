@@ -247,7 +247,7 @@ def run_in_subprocess(args):
         test_suite_env_map[test_suite_file] = 'default'
 
     if args.run_config is not None and Path(args.run_config).exists():
-        with open(args.run_config) as f:
+        with open(args.run_config, encoding='utf-8') as f:
             run_config = yaml.load(f, Loader=yaml.FullLoader)
         if 'isolated' in run_config:
             isolated_cases = run_config['isolated']

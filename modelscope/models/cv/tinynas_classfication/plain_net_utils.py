@@ -39,7 +39,7 @@ class PlainNet(nn.Module):
                 plainnet_struct_txt = self.module_opt.plainnet_struct_txt
 
             if plainnet_struct_txt is not None:
-                with open(plainnet_struct_txt, 'r') as fid:
+                with open(plainnet_struct_txt, 'r', encoding='utf-8') as fid:
                     the_line = fid.readlines()[0].strip()
                     self.plainnet_struct = the_line
                 pass

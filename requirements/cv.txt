@@ -1,5 +1,7 @@
 albumentations>=1.0.3
 av>=9.2.0
+bmt_clipit>=1.0
+clip>=1.0
 easydict
 fairscale>=0.4.1
 fastai>=1.0.51
@@ -19,6 +21,7 @@ moviepy>=1.0.3
 networkx>=2.5
 numba
 onnxruntime>=1.10
+opencv-python
 pai-easycv>=0.6.3.9
 pandas
 psutil
@@ -32,3 +35,4 @@ tf_slim
 timm>=0.4.9
 torchmetrics>=0.6.2
 torchvision
+videofeatures_clipit>=1.0

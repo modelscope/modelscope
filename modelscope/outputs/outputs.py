@@ -59,6 +59,7 @@ TASK_OUTPUTS = {
     #       [x1, y1, x2, y2, x3, y3, x4, y4]
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
+    Tasks.table_recognition: [OutputKeys.POLYGONS],
 
     # ocr recognition result for single sample
     # {

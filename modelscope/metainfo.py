@@ -149,6 +149,7 @@ class Pipelines(object):
     image_denoise = 'nafnet-image-denoise'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
+    table_recognition = 'dla34-table-recognition'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'

@@ -636,7 +636,7 @@ class DLAUp(nn.Module):
                 IDAUp(3, channels[j], in_channels[j:], scales[j:] // scales[j]),
             )
             scales[j + 1:] = scales[j]
-            in_channels[j + 1 :] = [channels[j] for _ in channels[j + 1 :]]
+            in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
     def forward(self, layers):
         layers = list(layers)

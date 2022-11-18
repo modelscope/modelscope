@@ -23,9 +23,10 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
-                                      MODELSCOPE_ENVIRONMENT,
-                                      MODELSCOPE_USERNAME, ONE_YEAR_SECONDS,
-                                      Licenses, ModelVisibility)
+                                      MODELSCOPE_CLOUD_ENVIRONMENT,
+                                      MODELSCOPE_CLOUD_USERNAME,
+                                      ONE_YEAR_SECONDS, Licenses,
+                                      ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
                                    RequestError, datahub_raise_on_error,
@@ -653,10 +654,10 @@ class HubApi:
         # get channel and user_name
         channel = DownloadChannel.LOCAL.value
         user_name = ''
-        if MODELSCOPE_ENVIRONMENT in os.environ:
-            channel = os.environ[MODELSCOPE_ENVIRONMENT]
-        if MODELSCOPE_USERNAME in os.environ:
-            user_name = os.environ[MODELSCOPE_USERNAME]
+        if MODELSCOPE_CLOUD_ENVIRONMENT in os.environ:
+            channel = os.environ[MODELSCOPE_CLOUD_ENVIRONMENT]
+        if MODELSCOPE_CLOUD_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
 
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}?user={user_name}'
         cookies = ModelScopeConfig.get_cookies()
@@ -777,12 +778,15 @@ class ModelScopeConfig:
         Returns:
             The formatted user-agent string.
         """
+
+        # include some more telemetrics when executing in dedicated
+        # cloud containers
         env = 'custom'
-        if MODELSCOPE_ENVIRONMENT in os.environ:
-            env = os.environ[MODELSCOPE_ENVIRONMENT]
+        if MODELSCOPE_CLOUD_ENVIRONMENT in os.environ:
+            env = os.environ[MODELSCOPE_CLOUD_ENVIRONMENT]
         user_name = 'unknown'
-        if MODELSCOPE_USERNAME in os.environ:
-            user_name = os.environ[MODELSCOPE_USERNAME]
+        if MODELSCOPE_CLOUD_USERNAME in os.environ:
+            user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
 
         ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s; user/%s' % (
             __version__,

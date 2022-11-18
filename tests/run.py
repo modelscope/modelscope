@@ -3,11 +3,13 @@
 
 import argparse
 import datetime
+import math
 import multiprocessing
 import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from fnmatch import fnmatch
 from multiprocessing.managers import BaseManager
@@ -158,6 +160,21 @@ def run_command_with_popen(cmd):
             sys.stdout.write(line)
 
 
+def async_run_command_with_popen(cmd, device_id):
+    logger.info('Worker id: %s args: %s' % (device_id, cmd))
+    env = os.environ.copy()
+    env['CUDA_VISIBLE_DEVICES'] = '%s' % device_id
+    sub_process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+        universal_newlines=True,
+        env=env,
+        encoding='utf8')
+    return sub_process
+
+
 def save_test_result(df, args):
     if args.result_dir is not None:
         file_name = str(int(datetime.datetime.now().timestamp() * 1000))
@@ -197,6 +214,108 @@ def install_requirements(requirements):
             'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
         ]
         run_command(cmd)
+
+
+def wait_for_free_worker(workers):
+    while True:
+        for idx, worker in enumerate(workers):
+            if worker is None:
+                logger.info('return free worker: %s' % (idx))
+                return idx
+            if worker.poll() is None:  # running, get output
+                for line in iter(worker.stdout.readline, ''):
+                    if line != '':
+                        sys.stdout.write(line)
+                    else:
+                        break
+            else:  # worker process completed.
+                logger.info('Process end: %s' % (idx))
+                workers[idx] = None
+                return idx
+        time.sleep(0.001)
+
+
+def wait_for_workers(workers):
+    while True:
+        for idx, worker in enumerate(workers):
+            if worker is None:
+                continue
+            # check worker is completed.
+            if worker.poll() is None:
+                for line in iter(worker.stdout.readline, ''):
+                    if line != '':
+                        sys.stdout.write(line)
+                    else:
+                        break
+            else:
+                logger.info('Process idx: %s end!' % (idx))
+                workers[idx] = None
+
+        is_all_completed = True
+        for idx, worker in enumerate(workers):
+            if worker is not None:
+                is_all_completed = False
+                break
+
+        if is_all_completed:
+            logger.info('All sub porcess is completed!')
+            break
+        time.sleep(0.001)
+
+
+def parallel_run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
+                             result_dir, parallel):
+    logger.info('Running case in env: %s' % env_name)
+    # install requirements and deps # run_config['envs'][env]
+    if 'requirements' in env:
+        install_requirements(env['requirements'])
+    if 'dependencies' in env:
+        install_packages(env['dependencies'])
+    # case worker processes
+    worker_processes = [None] * parallel
+    for test_suite_file in isolated_cases:  # run case in subprocess
+        if test_suite_file in test_suite_env_map and test_suite_env_map[
+                test_suite_file] == env_name:
+            cmd = [
+                'python',
+                'tests/run.py',
+                '--pattern',
+                test_suite_file,
+                '--result_dir',
+                result_dir,
+            ]
+            worker_idx = wait_for_free_worker(worker_processes)
+            worker_process = async_run_command_with_popen(cmd, worker_idx)
+            os.set_blocking(worker_process.stdout.fileno(), False)
+            worker_processes[worker_idx] = worker_process
+        else:
+            pass  # case not in run list.
+
+    # run remain cases in a process.
+    remain_suite_files = []
+    for k, v in test_suite_env_map.items():
+        if k not in isolated_cases and v == env_name:
+            remain_suite_files.append(k)
+    if len(remain_suite_files) == 0:
+        return
+    # roughly split case in parallel
+    part_count = math.ceil(len(remain_suite_files) / parallel)
+    suites_chunks = [
+        remain_suite_files[x:x + part_count]
+        for x in range(0, len(remain_suite_files), part_count)
+    ]
+    for suites_chunk in suites_chunks:
+        worker_idx = wait_for_free_worker(worker_processes)
+        cmd = [
+            'python', 'tests/run.py', '--result_dir', result_dir, '--suites'
+        ]
+        for suite in suites_chunk:
+            cmd.append(suite)
+        worker_process = async_run_command_with_popen(cmd, worker_idx)
+        os.set_blocking(worker_process.stdout.fileno(), False)
+        worker_processes[worker_idx] = worker_process
+
+    wait_for_workers(worker_processes)
 
 
 def run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
@@ -264,8 +383,9 @@ def run_in_subprocess(args):
 
     with tempfile.TemporaryDirectory() as temp_result_dir:
         for env in set(test_suite_env_map.values()):
-            run_case_in_env(env, run_config['envs'][env], test_suite_env_map,
-                            isolated_cases, temp_result_dir)
+            parallel_run_case_in_env(env, run_config['envs'][env],
+                                     test_suite_env_map, isolated_cases,
+                                     temp_result_dir, args.parallel)
 
         result_dfs = []
         result_path = Path(temp_result_dir)
@@ -312,6 +432,10 @@ class TimeCostTextTestResult(TextTestResult):
         self.stream.writeln(
             'Test case: %s stop at: %s, cost time: %s(seconds)' %
             (test.test_full_name, test.stop_time, test.time_cost))
+        if torch.cuda.is_available(
+        ) and test.time_cost > 5.0:  # print nvidia-smi
+            cmd = ['nvidia-smi']
+            run_command_with_popen(cmd)
         super(TimeCostTextTestResult, self).stopTest(test)
 
     def addSuccess(self, test):
@@ -383,6 +507,8 @@ def main(args):
             os.path.abspath(args.test_dir), args.pattern, args.list_tests)
     if not args.list_tests:
         result = runner.run(test_suite)
+        logger.info('Running case completed, pid: %s, suites: %s' %
+                    (os.getpid(), args.suites))
         result = collect_test_results(result)
         df = test_cases_result_to_df(result)
         if args.result_dir is not None:
@@ -417,6 +543,12 @@ if __name__ == '__main__':
         '--result_dir',
         default=None,
         help='Save result to directory, internal use only')
+    parser.add_argument(
+        '--parallel',
+        default=1,
+        type=int,
+        help='Set case parallels, default single process, set with gpu number.'
+    )
     parser.add_argument(
         '--suites',
         nargs='*',

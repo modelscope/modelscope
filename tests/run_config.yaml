@@ -1,5 +1,5 @@
 # isolate cases in env, we can install different dependencies in each env.
-isolated:  # test cases that may require excessive anmount of GPU memory, which will be executed in dedicagted process.
+isolated:  # test cases that may require excessive anmount of GPU memory or run long time, which will be executed in dedicagted process.
   - test_text_to_speech.py
   - test_multi_modal_embedding.py
   - test_ofa_tasks.py
@@ -13,6 +13,33 @@ isolated:  # test cases that may require excessive anmount of GPU memory, which 
   - test_movie_scene_segmentation.py
   - test_image_inpainting.py
   - test_mglm_text_summarization.py
+  - test_team_transfer_trainer.py
+  - test_image_denoise_trainer.py
+  - test_dialog_intent_trainer.py
+  - test_finetune_mplug.py
+  - test_image_instance_segmentation_trainer.py
+  - test_image_portrait_enhancement_trainer.py
+  - test_translation_trainer.py
+  - test_unifold.py
+  - test_automatic_post_editing.py
+  - test_mplug_tasks.py
+  - test_movie_scene_segmentation.py
+  - test_body_3d_keypoints.py
+  - test_finetune_text_generation.py
+  - test_clip_trainer.py
+  - test_ofa_trainer.py
+  - test_fill_mask.py
+  - test_hand_2d_keypoints.py
+  - test_referring_video_object_segmentation.py
+  - test_easycv_trainer_hand_2d_keypoints.py
+  - test_card_detection_scrfd_trainer.py
+  - test_referring_video_object_segmentation_trainer.py
+  - test_person_image_cartoon.py
+  - test_image_style_transfer.py
+  - test_ocr_detection.py
+  - test_automatic_speech_recognition.py
+  - test_image_matting.py
+  - test_skin_retouching.py
 
 envs:
   default: # default env, case not in other env will in default, pytorch.

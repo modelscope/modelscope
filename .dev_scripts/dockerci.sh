@@ -3,30 +3,32 @@ MODELSCOPE_CACHE_DIR_IN_CONTAINER=/modelscope_cache
 CODE_DIR=$PWD
 CODE_DIR_IN_CONTAINER=/Maas-lib
 echo "$USER"
-gpus='7 6 5 4 3 2 1 0'
-cpu_sets='0-7 8-15 16-23 24-30 31-37 38-44 45-51 52-58'
+gpus='0,1 2,3 4,5 6,7'
+cpu_sets='45-58 31-44 16-30 0-15'
 cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
-# export RUN_CASE_COMMAND='python tests/run.py --run_config tests/run_config.yaml'
-CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh $RUN_CASE_BASE_COMMAND}
+CI_COMMAND='bash .dev_scripts/ci_container_test.sh python tests/run.py --parallel 2 --run_config tests/run_config.yaml'
 echo "ci command: $CI_COMMAND"
+idx=0
 for gpu in $gpus
 do
   exec {lock_fd}>"/tmp/gpu$gpu" || exit 1
-  flock -n "$lock_fd" || { echo "WARN: gpu $gpu is in use!" >&2; continue; }
+  flock -n "$lock_fd" || { echo "WARN: gpu $gpu is in use!" >&2; idx=$((idx+1)); continue; }
   echo "get gpu lock $gpu"
-  CONTAINER_NAME="modelscope-ci-$gpu"
+
+  CONTAINER_NAME="modelscope-ci-$idx"
   let is_get_file_lock=true
 
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
   if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
+    echo 'debugging'
     docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
-              --cpuset-cpus=${cpu_sets_arr[$gpu]} \
-              --gpus="device=$gpu" \
+              --cpuset-cpus=${cpu_sets_arr[$idx]} \
+              --gpus='"'"device=$gpu"'"' \
               -v $CODE_DIR:$CODE_DIR_IN_CONTAINER \
               -v $MODELSCOPE_CACHE:$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
-              -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
+              -v $MODELSCOPE_HOME_CACHE/$idx:/root \
               -v /home/admin/pre-commit:/home/admin/pre-commit \
               -e CI_TEST=True \
               -e TEST_LEVEL=$TEST_LEVEL \
@@ -41,16 +43,15 @@ do
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
               --workdir=$CODE_DIR_IN_CONTAINER \
-              --net host  \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
               $CI_COMMAND
   else
     docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
-              --cpuset-cpus=${cpu_sets_arr[$gpu]} \
-              --gpus="device=$gpu" \
+              --cpuset-cpus=${cpu_sets_arr[$idx]} \
+              --gpus='"'"device=$gpu"'"' \
               -v $CODE_DIR:$CODE_DIR_IN_CONTAINER \
               -v $MODELSCOPE_CACHE:$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
-              -v $MODELSCOPE_HOME_CACHE/$gpu:/root \
+              -v $MODELSCOPE_HOME_CACHE/$idx:/root \
               -v /home/admin/pre-commit:/home/admin/pre-commit \
               -e CI_TEST=True \
               -e TEST_LEVEL=$TEST_LEVEL \
@@ -64,7 +65,6 @@ do
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
               --workdir=$CODE_DIR_IN_CONTAINER \
-              --net host  \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
               $CI_COMMAND
   fi

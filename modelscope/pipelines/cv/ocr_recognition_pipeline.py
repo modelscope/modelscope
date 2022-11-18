@@ -49,7 +49,7 @@ class OCRRecognitionPipeline(Pipeline):
         self.infer_model.load_state_dict(
             torch.load(model_path, map_location=self.device))
         self.labelMapping = dict()
-        with open(label_path, 'r') as f:
+        with open(label_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             cnt = 2
             for line in lines:

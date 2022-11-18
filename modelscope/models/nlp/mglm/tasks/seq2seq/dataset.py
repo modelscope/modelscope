@@ -209,14 +209,16 @@ class XSumProcessor:
             raise NotImplementedError(split)
         print_rank_0(f'Creating XSUM-{split} dataset from {self.data_dir}')
         with open(
-                os.path.join(
-                    self.data_dir,
-                    'XSum-TRAINING-DEV-TEST-SPLIT-90-5-5.json')) as file:
+                os.path.join(self.data_dir,
+                             'XSum-TRAINING-DEV-TEST-SPLIT-90-5-5.json'),
+                encoding='utf-8') as file:
             id_list = json.load(file)
         id_list = id_list[key]
         source_texts, target_texts = [], []
         for i, idx in enumerate(id_list):
-            with open(os.path.join(self.data_dir, f'{idx}.summary')) as file:
+            with open(
+                    os.path.join(self.data_dir, f'{idx}.summary'),
+                    encoding='utf-8') as file:
                 key, sentences = None, []
                 source_text, target_text = None, None
                 for line in file:

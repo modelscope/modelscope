@@ -538,7 +538,7 @@ class PVP(ABC):
             dict)  # type: Dict[int, Dict[str, List[str]]]
         current_pattern_id = None
 
-        with open(path, 'r') as fh:
+        with open(path, 'r', encoding='utf-8') as fh:
             for line in fh.read().splitlines():
                 if line.isdigit():
                     current_pattern_id = int(line)

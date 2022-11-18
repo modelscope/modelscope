@@ -106,14 +106,14 @@ class MovieSceneSegmentationDataset(TorchTaskDataset):
         self.tmpl = '{}/shot_{}_img_{}.jpg'  # video_id, shot_id, shot_num
 
         if not self.test_mode:
-            with open(self.ann_file) as f:
+            with open(self.ann_file, encoding='utf-8') as f:
                 self.anno_data = json.load(f)
             self.vidsid2label = {
                 f"{it['video_id']}_{it['shot_id']}": it['boundary_label']
                 for it in self.anno_data
             }
         else:
-            with open(self.ann_file) as f:
+            with open(self.ann_file, encoding='utf-8') as f:
                 self.anno_data = json.load(f)
 
     def init_sampler(self, cfg):

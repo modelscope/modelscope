@@ -841,7 +841,7 @@ class RaceProcessor(DataProcessor):
             path, 'middle', '*.txt')) + glob.glob(
                 os.path.join(path, 'high', '*.txt'))
         for filename in filenames:
-            with open(filename, 'r') as f:
+            with open(filename, 'r', encoding='utf-8') as f:
                 for line in f:
                     data = json.loads(line)
                     idx = data['id']
@@ -1127,7 +1127,7 @@ class AgnewsProcessor(DataProcessor):
     def _create_examples(path: str, set_type: str) -> List[InputExample]:
         examples = []
 
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=',')
             for idx, row in enumerate(reader):
                 label, headline, body = row
@@ -1209,7 +1209,7 @@ class YelpPolarityProcessor(DataProcessor):
     def _create_examples(path: str, set_type: str) -> List[InputExample]:
         examples = []
 
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=',')
             for idx, row in enumerate(reader):
                 label, body = row
@@ -1419,7 +1419,7 @@ class SquadProcessor(DataProcessor):
     @staticmethod
     def _create_examples(path: str, set_type: str) -> List[InputExample]:
         examples = []
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             data = json.load(f)['data']
 
         for idx, passage in enumerate(data):

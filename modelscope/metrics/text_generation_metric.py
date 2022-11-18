@@ -8,6 +8,7 @@ from rouge import Rouge
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS, MetricKeys
+from modelscope.utils.chinese_utils import rebuild_chinese_str
 from modelscope.utils.registry import default_group
 
 
@@ -24,25 +25,13 @@ class TextGenerationMetric(Metric):
         self.tgts: List[str] = []
         self.rouge = Rouge()
 
-    @staticmethod
-    def is_chinese_char(char: str):
-        # the length of char must be 1
-        return '\u4e00' <= char <= '\u9fa5'
-
-    # add space for each chinese char
-    def rebuild_str(self, string: str):
-        return ' '.join(''.join([
-            f' {char} ' if self.is_chinese_char(char) else char
-            for char in string
-        ]).split())
-
     def add(self, outputs: Dict[str, List[str]], inputs: Dict[str, List[str]]):
         ground_truths = inputs['tgts']
         eval_results = outputs['preds']
         for truth in ground_truths:
-            self.tgts.append(self.rebuild_str(truth))
+            self.tgts.append(rebuild_chinese_str(truth))
         for result in eval_results:
-            self.preds.append(self.rebuild_str(result))
+            self.preds.append(rebuild_chinese_str(result))
 
     def _check(self, pred: str, tgt: str) -> bool:
 

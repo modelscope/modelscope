@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
+    from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
 
 else:
     _import_structure = {
@@ -132,6 +133,9 @@ else:
         'referring_video_object_segmentation_pipeline': [
             'ReferringVideoObjectSegmentationPipeline'
         ],
+        'language_guided_video_summarization_pipeline': [
+            'LanguageGuidedVideoSummarizationPipeline'
+        ]
     }
 
     import sys

@@ -37,6 +37,7 @@ do
               -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
               -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
               -e TEST_LEVEL=$TEST_LEVEL \
+              -e MODELSCOPE_ENVIRONMENT='ci' \
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
               --workdir=$CODE_DIR_IN_CONTAINER \
@@ -59,6 +60,7 @@ do
               -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
               -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
               -e TEST_LEVEL=$TEST_LEVEL \
+              -e MODELSCOPE_ENVIRONMENT='ci' \
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
               --workdir=$CODE_DIR_IN_CONTAINER \

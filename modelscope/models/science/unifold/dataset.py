@@ -250,7 +250,7 @@ class UnifoldDataset(UnicoreDataset):
         self.path = data_path
 
         def load_json(filename):
-            return json.load(open(filename, 'r'))
+            return json.load(open(filename, 'r', encoding='utf-8'))
 
         sample_weight = load_json(
             os.path.join(self.path,
@@ -400,7 +400,8 @@ class UnifoldMultimerDataset(UnifoldDataset):
         self.pdb_assembly = json.load(
             open(
                 os.path.join(self.data_path,
-                             json_prefix + 'pdb_assembly.json')))
+                             json_prefix + 'pdb_assembly.json'),
+                encoding='utf-8'))
         self.pdb_chains = self.get_chains(self.inverse_multi_label)
         self.monomer_feature_path = os.path.join(self.data_path,
                                                  'pdb_features')

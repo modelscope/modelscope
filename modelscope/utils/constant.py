@@ -80,6 +80,7 @@ class CVTasks(object):
     video_embedding = 'video-embedding'
     virtual_try_on = 'virtual-try-on'
     movie_scene_segmentation = 'movie-scene-segmentation'
+    language_guided_video_summarization = 'language-guided-video-summarization'
 
     # video segmentation
     referring_video_object_segmentation = 'referring-video-object-segmentation'

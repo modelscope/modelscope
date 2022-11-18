@@ -82,7 +82,7 @@ class TinynasClassificationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         label_mapping_path = osp.join(self.path, 'label_map.txt')
-        f = open(label_mapping_path)
+        f = open(label_mapping_path, encoding='utf-8')
         content = f.read()
         f.close()
         label_dict = eval(content)

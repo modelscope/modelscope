@@ -142,7 +142,7 @@ class TrainerTestSingleGpu(unittest.TestCase):
         json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
         self.assertEqual(len(json_files), 1)
 
-        with open(json_files[0], 'r') as f:
+        with open(json_files[0], 'r', encoding='utf-8') as f:
             lines = [i.strip() for i in f.readlines()]
         self.assertDictContainsSubset(
             {
@@ -236,7 +236,7 @@ class TrainerTestMultiGpus(DistributedTestCase):
         json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
         self.assertEqual(len(json_files), 1)
 
-        with open(json_files[0], 'r') as f:
+        with open(json_files[0], 'r', encoding='utf-8') as f:
             lines = [i.strip() for i in f.readlines()]
 
         self.assertDictContainsSubset(
@@ -320,7 +320,7 @@ class TrainerTestMultiGpus(DistributedTestCase):
         json_files = glob.glob(os.path.join(self.tmp_dir, '*.log.json'))
         self.assertEqual(len(json_files), 1)
 
-        with open(json_files[0], 'r') as f:
+        with open(json_files[0], 'r', encoding='utf-8') as f:
             lines = [i.strip() for i in f.readlines()]
 
         print(results_files, lines)

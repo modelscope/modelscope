@@ -32,6 +32,7 @@ class Models(object):
     image_reid_person = 'passvitb'
     image_inpainting = 'FFTInpainting'
     video_summarization = 'pgl-video-summarization'
+    language_guided_video_summarization = 'clip-it-language-guided-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
@@ -201,6 +202,7 @@ class Pipelines(object):
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
     video_summarization = 'googlenet_pgl_video_summarization'
+    language_guided_video_summarization = 'clip-it-video-summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
@@ -301,6 +303,7 @@ class Trainers(object):
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
     ofa = 'ofa'
+    mplug = 'mplug'
 
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
@@ -405,6 +408,7 @@ class Metrics(object):
 
     # accuracy
     accuracy = 'accuracy'
+    multi_average_precision = 'mAP'
     audio_noise_metric = 'audio-noise-metric'
 
     # text gen

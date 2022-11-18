@@ -231,19 +231,6 @@ class TableQuestionAnsweringPipeline(Pipeline):
         header_ids = table['header_id'] + ['null']
         sql = result['sql']
 
-        str_sel_list, sql_sel_list = [], []
-        for idx, sel in enumerate(sql['sel']):
-            header_name = header_names[sel]
-            header_id = '`%s`.`%s`' % (table['table_id'], header_ids[sel])
-            if sql['agg'][idx] == 0:
-                str_sel_list.append(header_name)
-                sql_sel_list.append(header_id)
-            else:
-                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
-                                    + header_name + ')')
-                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
-                                    + header_id + ')')
-
         str_cond_list, sql_cond_list = [], []
         where_conds, orderby_conds = [], []
         for cond in sql['conds']:
@@ -285,8 +272,33 @@ class TableQuestionAnsweringPipeline(Pipeline):
             if is_in:
                 str_orderby += ' LIMIT %d' % (limit_num)
                 sql_orderby += ' LIMIT %d' % (limit_num)
+            # post process null column
+            for idx, sel in enumerate(sql['sel']):
+                if sel == len(header_ids) - 1:
+                    primary_sel = 0
+                    for index, attrib in enumerate(table['header_attribute']):
+                        if attrib == 'PRIMARY':
+                            primary_sel = index
+                            break
+                    if primary_sel not in sql['sel']:
+                        sql['sel'][idx] = primary_sel
+                    else:
+                        del sql['sel'][idx]
         else:
             str_orderby = ''
+
+        str_sel_list, sql_sel_list = [], []
+        for idx, sel in enumerate(sql['sel']):
+            header_name = header_names[sel]
+            header_id = '`%s`.`%s`' % (table['table_id'], header_ids[sel])
+            if sql['agg'][idx] == 0:
+                str_sel_list.append(header_name)
+                sql_sel_list.append(header_id)
+            else:
+                str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_name + ')')
+                sql_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
+                                    + header_id + ')')
 
         if len(str_cond_list) != 0 and len(str_orderby) != 0:
             final_str = 'SELECT %s FROM %s WHERE %s ORDER BY %s' % (

@@ -20,10 +20,12 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
 
     english_model_id = 'damo/nlp_raner_named-entity-recognition_english-large-ecom'
+    chinese_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-large-generic'
     tcrf_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
     lcrf_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-news'
     sentence = '这与温岭市新河镇的一个神秘的传说有关。'
     sentence_en = 'pizza shovel'
+    sentence_zh = '他 继 续 与 貝 塞 斯 達 遊 戲 工 作 室 在 接 下 来 辐 射 4 游 戏 。'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download(self):
@@ -92,10 +94,16 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         print(pipeline_ins(input=self.sentence))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_lcrf_with_chinese_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.chinese_model_id)
+        print(pipeline_ins(input=self.sentence_zh))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_english_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition, model=self.english_model_id)
-        print(pipeline_ins(input='pizza shovel'))
+        print(pipeline_ins(input=self.sentence_en))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

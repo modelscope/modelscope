@@ -9,6 +9,7 @@ from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode, ModelFile
+from modelscope.utils.hub import read_config
 from modelscope.utils.test_utils import test_level
 
 
@@ -78,6 +79,7 @@ class TestOfaTrainer(unittest.TestCase):
             json.dump(self.finetune_cfg, writer)
 
         pretrained_model = 'damo/ofa_ocr-recognition_scene_base_zh'
+
         args = dict(
             model=pretrained_model,
             work_dir=WORKSPACE,

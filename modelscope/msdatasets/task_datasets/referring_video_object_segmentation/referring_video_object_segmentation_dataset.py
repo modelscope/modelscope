@@ -146,7 +146,7 @@ class ReferringVideoObjectSegmentationDataset(TorchTaskDataset):
         saved_annotations_file_path = osp.join(
             root_path, f'sentences_single_frame_{subset}_annotations.json')
         if osp.exists(saved_annotations_file_path):
-            with open(saved_annotations_file_path, 'r') as f:
+            with open(saved_annotations_file_path, 'r', encoding='utf-8') as f:
                 text_annotations_by_frame = [tuple(a) for a in json.load(f)]
                 return text_annotations_by_frame
         elif (distributed and dist.get_rank() == 0) or not distributed:
@@ -203,7 +203,7 @@ class ReferringVideoObjectSegmentationDataset(TorchTaskDataset):
                 json.dump(text_annotations_by_frame, f)
         if distributed:
             dist.barrier()
-            with open(saved_annotations_file_path, 'r') as f:
+            with open(saved_annotations_file_path, 'r', encoding='utf-8') as f:
                 text_annotations_by_frame = [tuple(a) for a in json.load(f)]
         return text_annotations_by_frame
 
@@ -267,8 +267,10 @@ def get_text_annotations_gt(root_path, subset):
         osp.join(root_path, 'Release/videoset.csv'), header=None)
     # 'vid', 'label', 'start_time', 'end_time', 'height', 'width', 'total_frames', 'annotated_frames', 'subset'
     a2d_data_info.columns = ['vid', '', '', '', '', '', '', '', 'subset']
-    with open(osp.join(root_path, 'text_annotations/missed_videos.txt'),
-              'r') as f:
+    with open(
+            osp.join(root_path, 'text_annotations/missed_videos.txt'),
+            'r',
+            encoding='utf-8') as f:
         unused_videos = f.read().splitlines()
     subsets = {'train': 0, 'test': 1}
     # filter unused videos and videos which do not belong to our train/test subset:

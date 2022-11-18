@@ -6,11 +6,15 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .clip import CLIPTrainer
     from .team import TEAMImgClsTrainer
+    from .ofa import OFATrainer
+    from .mplug import MPlugTrainer
 
 else:
     _import_structure = {
         'clip': ['CLIPTrainer'],
-        'team': ['TEAMImgClsTrainer']
+        'team': ['TEAMImgClsTrainer'],
+        'ofa': ['OFATrainer'],
+        'mplug': ['MPlugTrainer'],
     }
 
     import sys

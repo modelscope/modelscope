@@ -359,12 +359,14 @@ class MultiWOZBPETextField(BPETextField):
             test_list = [
                 line.strip().lower() for line in open(
                     os.path.join(kwargs['data_dir'], 'testListFile.json'),
-                    'r').readlines()
+                    'r',
+                    encoding='utf-8').readlines()
             ]
             dev_list = [
                 line.strip().lower() for line in open(
                     os.path.join(kwargs['data_dir'], 'valListFile.json'),
-                    'r').readlines()
+                    'r',
+                    encoding='utf-8').readlines()
             ]
 
             self.dev_files, self.test_files = {}, {}

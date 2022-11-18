@@ -76,7 +76,7 @@ class OfaBasePreprocessor:
         self.constraint_trie = None
         if self.cfg.model.get('answer2label', None):
             ans2label_file = osp.join(model_dir, self.cfg.model.answer2label)
-            with open(ans2label_file, 'r') as reader:
+            with open(ans2label_file, 'r', encoding='utf-8') as reader:
                 ans2label_dict = json.load(reader)
             self.ans2label = ans2label_dict
             self.label2ans = {v: k for k, v in self.ans2label.items()}

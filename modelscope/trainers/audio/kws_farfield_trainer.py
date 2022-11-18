@@ -117,8 +117,7 @@ class KWSFarfieldTrainer(BaseTrainer):
         self._batch_size = dataloader_config.batch_size_per_gpu
         if 'model_bin' in kwargs:
             model_bin_file = os.path.join(self.model_dir, kwargs['model_bin'])
-            checkpoint = torch.load(model_bin_file)
-            self.model.load_state_dict(checkpoint)
+            self.model = torch.load(model_bin_file)
         # build corresponding optimizer and loss function
         lr = self.cfg.train.optimizer.lr
         self.optimizer = optim.Adam(self.model.parameters(), lr)
@@ -219,7 +218,9 @@ class KWSFarfieldTrainer(BaseTrainer):
             # check point
             ckpt_name = 'checkpoint_{:04d}_loss_train_{:.4f}_loss_val_{:.4f}.pth'.format(
                 self._current_epoch, loss_train_epoch, loss_val_epoch)
-            torch.save(self.model, os.path.join(self.work_dir, ckpt_name))
+            save_path = os.path.join(self.work_dir, ckpt_name)
+            logger.info(f'Save model to {save_path}')
+            torch.save(self.model, save_path)
             # time spent per epoch
             epochtime = datetime.datetime.now() - epochtime
             logger.info('Epoch {:04d} time spent: {:.2f} hours'.format(

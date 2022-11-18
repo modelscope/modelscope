@@ -7,6 +7,7 @@ import time
 
 import cv2
 import json
+import numpy as np
 import torch
 from tqdm import tqdm
 
@@ -87,13 +88,17 @@ class RealtimeVideoDetector(TorchModel):
             self.nmsthre,
             class_agnostic=True)
 
-        if len(outputs) == 1:
+        if len(outputs) == 1 and (outputs[0] is not None):
             bboxes = outputs[0][:, 0:4].cpu().numpy() / self.ratio
             scores = outputs[0][:, 5].cpu().numpy()
             labels = outputs[0][:, 6].cpu().int().numpy()
             pred_label_names = []
             for lab in labels:
                 pred_label_names.append(self.label_mapping[lab])
+        else:
+            bboxes = np.asarray([])
+            scores = np.asarray([])
+            pred_label_names = np.asarray([])
 
         return bboxes, scores, pred_label_names
 

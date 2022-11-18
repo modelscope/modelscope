@@ -31,7 +31,10 @@ class ReferringVideoObjectSegmentation(TorchModel):
 
         config_path = osp.join(model_dir, ModelFile.CONFIGURATION)
         self.cfg = Config.from_file(config_path)
-        self.model = MTTR(**self.cfg.model)
+        transformer_cfg_dir = osp.join(model_dir, 'transformer_cfg_dir')
+
+        self.model = MTTR(
+            transformer_cfg_dir=transformer_cfg_dir, **self.cfg.model)
 
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
         params_dict = torch.load(model_path, map_location='cpu')

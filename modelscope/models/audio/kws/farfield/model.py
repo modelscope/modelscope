@@ -54,7 +54,8 @@ class FSMNSeleNetV2Decorator(TorchModel):
                 )
 
     def __del__(self):
-        self.tmp_dir.cleanup()
+        if hasattr(self, 'tmp_dir'):
+            self.tmp_dir.cleanup()
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         return self.model.forward(input)

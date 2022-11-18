@@ -95,6 +95,20 @@ class TokenClassificationPipeline(Pipeline):
                     'start': offsets[0],
                     'end': offsets[1]
                 }
+            if label[0] in 'I':
+                if not chunk:
+                    chunk = {
+                        'type': label[2:],
+                        'start': offsets[0],
+                        'end': offsets[1]
+                    }
+            if label[0] in 'E':
+                if not chunk:
+                    chunk = {
+                        'type': label[2:],
+                        'start': offsets[0],
+                        'end': offsets[1]
+                    }
             if label[0] in 'IES':
                 if chunk:
                     chunk['end'] = offsets[1]

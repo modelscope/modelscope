@@ -71,6 +71,7 @@ class Models(object):
     space_T_en = 'space-T-en'
     space_T_cn = 'space-T-cn'
     tcrf = 'transformer-crf'
+    token_classification_for_ner = 'token-classification-for-ner'
     tcrf_wseg = 'transformer-crf-for-word-segmentation'
     transformer_softmax = 'transformer-softmax'
     lcrf = 'lstm-crf'

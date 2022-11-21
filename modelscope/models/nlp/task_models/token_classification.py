@@ -4,7 +4,7 @@ from typing import Any, Dict
 import numpy as np
 import torch
 
-from modelscope.metainfo import TaskModels
+from modelscope.metainfo import Models, TaskModels
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
@@ -21,6 +21,9 @@ __all__ = ['TokenClassificationModel']
     Tasks.token_classification, module_name=TaskModels.token_classification)
 @MODELS.register_module(
     Tasks.part_of_speech, module_name=TaskModels.token_classification)
+@MODELS.register_module(
+    Tasks.named_entity_recognition,
+    module_name=Models.token_classification_for_ner)
 class TokenClassificationModel(SingleBackboneTaskModelBase):
 
     def __init__(self, model_dir: str, *args, **kwargs):
@@ -58,6 +61,9 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
         loss = None
         if labels in input:
             loss = self.compute_loss(outputs, labels)
+
+        # apply label mask to logits
+        logits = logits[input['label_mask']].unsqueeze(0)
 
         return TokenClassifierOutput(
             loss=loss,

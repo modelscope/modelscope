@@ -490,7 +490,10 @@ TASK_OUTPUTS = {
 
     # word segmentation result for single sample
     # {
-    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
+    #   "output": ["今天", "天气", "不错", "，", "适合", "出去", "游玩"]
+    # }
+    # {
+    #   'output': ['รถ', 'คัน', 'เก่า', 'ก็', 'ยัง', 'เก็บ', 'เอา']
     # }
     Tasks.word_segmentation: [OutputKeys.OUTPUT],
 

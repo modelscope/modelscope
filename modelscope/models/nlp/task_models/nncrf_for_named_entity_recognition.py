@@ -167,6 +167,14 @@ class TransformerCRFForNamedEntityRecognition(
         return model
 
 
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.tcrf_wseg)
+class TransformerCRFForWordSegmentation(TransformerCRFForNamedEntityRecognition
+                                        ):
+    """This model wraps the TransformerCRF model to register into model sets.
+    """
+    pass
+
+
 @MODELS.register_module(
     Tasks.named_entity_recognition, module_name=Models.lcrf)
 class LSTMCRFForNamedEntityRecognition(
@@ -183,6 +191,11 @@ class LSTMCRFForNamedEntityRecognition(
 
         model = LSTMCRF(vocab_size, embed_width, num_labels, lstm_hidden_size)
         return model
+
+
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf_wseg)
+class LSTMCRFForWordSegmentation(LSTMCRFForNamedEntityRecognition):
+    pass
 
 
 class TransformerCRF(nn.Module):

@@ -117,7 +117,12 @@ class TextClassificationPipeline(Pipeline):
             probs = np.take_along_axis(probs, top_indices, axis=-1).tolist()
 
             def map_to_label(id):
-                return self.id2label[id]
+                if id in self.id2label:
+                    return self.id2label[id]
+                elif str(id) in self.id2label:
+                    return self.id2label[str(id)]
+                else:
+                    raise Exception('id not found in id2label')
 
             v_func = np.vectorize(map_to_label)
             return {

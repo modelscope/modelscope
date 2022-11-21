@@ -154,4 +154,6 @@ def parse_label_mapping(model_dir):
         elif hasattr(config, 'id2label'):
             id2label = config.id2label
             label2id = {label: id for id, label in id2label.items()}
+    if label2id is not None:
+        label2id = {label: int(id) for label, id in label2id.items()}
     return label2id

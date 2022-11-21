@@ -70,8 +70,33 @@ class TokenClassificationPipeline(Pipeline):
         Returns:
             Dict[str, str]: the prediction results
         """
+        chunks = self._chunk_process(inputs, **postprocess_params)
+
+        # for cws outputs
+        if len(chunks) > 0 and chunks[0]['type'].lower() == 'cws':
+            spans = [
+                chunk['span'] for chunk in chunks if chunk['span'].strip()
+            ]
+            seg_result = [span for span in spans]
+            outputs = {OutputKeys.OUTPUT: seg_result}
+
+        # for ner outputs
+        else:
+            outputs = {OutputKeys.OUTPUT: chunks}
+        return outputs
+
+    def _chunk_process(self, inputs: Dict[str, Any],
+                       **postprocess_params) -> Dict[str, str]:
+        """process the prediction results and output as chunks
+
+        Args:
+            inputs (Dict[str, Any]): should be tensors from model
+
+        Returns:
+            Dict[str, str]: the prediction results
+        """
         text = inputs['text']
-        if not hasattr(inputs, 'predictions'):
+        if OutputKeys.PREDICTIONS not in inputs:
             logits = inputs[OutputKeys.LOGITS]
             predictions = torch.argmax(logits[0], dim=-1)
         else:
@@ -123,15 +148,4 @@ class TokenClassificationPipeline(Pipeline):
             chunk['span'] = text[chunk['start']:chunk['end']]
             chunks.append(chunk)
 
-        # for cws outputs
-        if len(chunks) > 0 and chunks[0]['type'] == 'cws':
-            spans = [
-                chunk['span'] for chunk in chunks if chunk['span'].strip()
-            ]
-            seg_result = ' '.join(spans)
-            outputs = {OutputKeys.OUTPUT: seg_result}
-
-        # for ner outputs
-        else:
-            outputs = {OutputKeys.OUTPUT: chunks}
-        return outputs
+        return chunks

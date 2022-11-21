@@ -23,9 +23,11 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     chinese_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-large-generic'
     tcrf_model_id = 'damo/nlp_raner_named-entity-recognition_chinese-base-news'
     lcrf_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-news'
+    addr_model_id = 'damo/nlp_structbert_address-parsing_chinese_base'
     sentence = '这与温岭市新河镇的一个神秘的传说有关。'
     sentence_en = 'pizza shovel'
     sentence_zh = '他 继 续 与 貝 塞 斯 達 遊 戲 工 作 室 在 接 下 来 辐 射 4 游 戏 。'
+    addr = '浙江省杭州市余杭区文一西路969号亲橙里'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_tcrf_by_direct_model_download(self):
@@ -70,6 +72,23 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
             model=model,
             preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_addrst_with_model_from_modelhub(self):
+        model = Model.from_pretrained(
+            'damo/nlp_structbert_address-parsing_chinese_base')
+        tokenizer = TokenClassificationPreprocessor(model.model_dir)
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition,
+            model=model,
+            preprocessor=tokenizer)
+        print(pipeline_ins(input=self.addr))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_addrst_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.addr_model_id)
+        print(pipeline_ins(input=self.addr))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_lcrf_with_model_from_modelhub(self):

@@ -40,11 +40,13 @@ if TYPE_CHECKING:
         FeatureExtractionModel,
         InformationExtractionModel,
         LSTMCRFForNamedEntityRecognition,
+        LSTMCRFForWordSegmentation,
         SequenceClassificationModel,
         SingleBackboneTaskModelBase,
         TaskModelForTextGeneration,
         TokenClassificationModel,
         TransformerCRFForNamedEntityRecognition,
+        TransformerCRFForWordSegmentation,
     )
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,

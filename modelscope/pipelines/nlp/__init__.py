@@ -29,11 +29,9 @@ if TYPE_CHECKING:
     from .text2text_generation_pipeline import Text2TextGenerationPipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
-    from .word_segmentation_pipeline import WordSegmentationPipeline
+    from .word_segmentation_pipeline import WordSegmentationPipeline, WordSegmentationThaiPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
-    from .multilingual_word_segmentation_pipeline import MultilingualWordSegmentationPipeline, \
-        WordSegmentationThaiPipeline
 
 else:
     _import_structure = {
@@ -69,14 +67,11 @@ else:
         'translation_pipeline': ['TranslationPipeline'],
         'translation_quality_estimation_pipeline':
         ['TranslationQualityEstimationPipeline'],
-        'word_segmentation_pipeline': ['WordSegmentationPipeline'],
+        'word_segmentation_pipeline':
+        ['WordSegmentationPipeline', 'WordSegmentationThaiPipeline'],
         'zero_shot_classification_pipeline':
         ['ZeroShotClassificationPipeline'],
         'mglm_text_summarization_pipeline': ['MGLMTextSummarizationPipeline'],
-        'multilingual_word_segmentation_pipeline': [
-            'MultilingualWordSegmentationPipeline',
-            'WordSegmentationThaiPipeline'
-        ],
     }
 
     import sys

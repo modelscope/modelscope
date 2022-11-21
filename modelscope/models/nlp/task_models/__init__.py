@@ -9,10 +9,8 @@ if TYPE_CHECKING:
     from .fill_mask import FillMaskModel
     from .nncrf_for_named_entity_recognition import (
         LSTMCRFForNamedEntityRecognition,
-        TransformerCRFForNamedEntityRecognition,
-    )
-    from .nncrf_for_word_segmentation import (
         LSTMCRFForWordSegmentation,
+        TransformerCRFForNamedEntityRecognition,
         TransformerCRFForWordSegmentation,
     )
     from .sequence_classification import SequenceClassificationModel
@@ -26,11 +24,11 @@ else:
         'feature_extraction': ['FeatureExtractionModel'],
         'fill_mask': ['FillMaskModel'],
         'nncrf_for_named_entity_recognition': [
+            'LSTMCRFForNamedEntityRecognition',
+            'LSTMCRFForWordSegmentation',
             'TransformerCRFForNamedEntityRecognition',
-            'LSTMCRFForNamedEntityRecognition'
+            'TransformerCRFForWordSegmentation',
         ],
-        'nncrf_for_word_segmentation':
-        ['TransformerCRFForWordSegmentation', 'LSTMCRFForWordSegmentation'],
         'sequence_classification': ['SequenceClassificationModel'],
         'task_model': ['SingleBackboneTaskModelBase'],
         'token_classification': ['TokenClassificationModel'],

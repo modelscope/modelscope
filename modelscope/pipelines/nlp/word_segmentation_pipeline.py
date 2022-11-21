@@ -9,18 +9,20 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.nlp import TokenClassificationPipeline
 from modelscope.preprocessors import (Preprocessor,
-                                      TokenClassificationPreprocessor)
+                                      TokenClassificationPreprocessor,
+                                      WordSegmentationPreprocessorThai)
 from modelscope.utils.constant import Tasks
 from modelscope.utils.tensor_utils import (torch_nested_detach,
                                            torch_nested_numpify)
 
-__all__ = ['WordSegmentationPipeline']
+__all__ = ['WordSegmentationPipeline', 'WordSegmentationThaiPipeline']
 
 
 @PIPELINES.register_module(
     Tasks.word_segmentation, module_name=Pipelines.word_segmentation)
-class WordSegmentationPipeline(Pipeline):
+class WordSegmentationPipeline(TokenClassificationPipeline):
 
     def __init__(self,
                  model: Union[Model, str],
@@ -58,89 +60,38 @@ class WordSegmentationPipeline(Pipeline):
         self.id2label = kwargs.get('id2label')
         if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label
-        assert self.id2label is not None, 'Cannot convert id to the original label, please pass in the mapping ' \
-                                          'as a parameter or make sure the preprocessor has the attribute.'
 
-    def forward(self, inputs: Dict[str, Any],
-                **forward_params) -> Dict[str, Any]:
-        text = inputs.pop(OutputKeys.TEXT)
-        with torch.no_grad():
-            return {
-                **self.model(**inputs, **forward_params), OutputKeys.TEXT: text
-            }
+
+@PIPELINES.register_module(
+    Tasks.word_segmentation,
+    module_name=Pipelines.multilingual_word_segmentation)
+class MultilingualWordSegmentationPipeline(WordSegmentationPipeline):
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:
-        """process the prediction results
+        chunks = self._chunk_process(inputs, **postprocess_params)
+        word_segments = [entity['span'] for entity in chunks]
+        return {OutputKeys.OUTPUT: word_segments}
 
-        Args:
-            inputs (Dict[str, Any]): should be tensors from model
 
-        Returns:
-            Dict[str, str]: the prediction results
-        """
-        text = inputs['text']
-        if not hasattr(inputs, 'predictions'):
-            logits = inputs[OutputKeys.LOGITS]
-            predictions = torch.argmax(logits[0], dim=-1)
-        else:
-            predictions = inputs[OutputKeys.PREDICTIONS].squeeze(
-                0).cpu().numpy()
-        predictions = torch_nested_numpify(torch_nested_detach(predictions))
-        offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
+@PIPELINES.register_module(
+    Tasks.word_segmentation, module_name=Pipelines.word_segmentation_thai)
+class WordSegmentationThaiPipeline(MultilingualWordSegmentationPipeline):
 
-        labels = [self.id2label[x] for x in predictions]
-        if len(labels) > len(offset_mapping):
-            labels = labels[1:-1]
-        chunks = []
-        chunk = {}
-        for label, offsets in zip(labels, offset_mapping):
-            if label[0] in 'BS':
-                if chunk:
-                    chunk['span'] = text[chunk['start']:chunk['end']]
-                    chunks.append(chunk)
-                chunk = {
-                    'type': label[2:],
-                    'start': offsets[0],
-                    'end': offsets[1]
-                }
-            if label[0] in 'I':
-                if not chunk:
-                    chunk = {
-                        'type': label[2:],
-                        'start': offsets[0],
-                        'end': offsets[1]
-                    }
-            if label[0] in 'E':
-                if not chunk:
-                    chunk = {
-                        'type': label[2:],
-                        'start': offsets[0],
-                        'end': offsets[1]
-                    }
-            if label[0] in 'IES':
-                if chunk:
-                    chunk['end'] = offsets[1]
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 **kwargs):
+        model = model if isinstance(model,
+                                    Model) else Model.from_pretrained(model)
+        if preprocessor is None:
+            preprocessor = WordSegmentationPreprocessorThai(
+                model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
-            if label[0] in 'ES':
-                if chunk:
-                    chunk['span'] = text[chunk['start']:chunk['end']]
-                    chunks.append(chunk)
-                    chunk = {}
-
-        if chunk:
-            chunk['span'] = text[chunk['start']:chunk['end']]
-            chunks.append(chunk)
-
-        # for cws outputs
-        if len(chunks) > 0 and chunks[0]['type'] == 'cws':
-            spans = [
-                chunk['span'] for chunk in chunks if chunk['span'].strip()
-            ]
-            seg_result = ' '.join(spans)
-            outputs = {OutputKeys.OUTPUT: seg_result}
-
-        # for ner outputs
-        else:
-            outputs = {OutputKeys.OUTPUT: chunks}
-        return outputs
+    def postprocess(self, inputs: Dict[str, Any],
+                    **postprocess_params) -> Dict[str, str]:
+        chunks = self._chunk_process(inputs, **postprocess_params)
+        word_segments = [entity['span'].replace(' ', '') for entity in chunks]
+        return {OutputKeys.OUTPUT: word_segments}

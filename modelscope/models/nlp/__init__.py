@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     )
     from .T5 import T5ForConditionalGeneration
     from .mglm import MGLMForTextSummarization
+    from .codegeex import CodeGeeXForCodeTranslation
     from .task_models import (
         FeatureExtractionModel,
         InformationExtractionModel,
@@ -108,6 +109,7 @@ else:
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],
         'mglm': ['MGLMForTextSummarization'],
+        'codegeex': ['CodeGeeXForCodeTranslation'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
     }

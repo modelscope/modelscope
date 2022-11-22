@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .space_T_en import ConversationalTextToSqlPreprocessor
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
+    from .codegeex_preprocessor import CodeGeeXPreprocessor
 else:
     _import_structure = {
         'nlp_base': [
@@ -64,6 +65,7 @@ else:
             'TextErrorCorrectionPreprocessor',
         ],
         'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor'],
+        'codegeex_preprocessor': ['CodeGeeXPreprocessor'],
         'token_classification_thai_preprocessor': [
             'NERPreprocessorThai',
             'WordSegmentationPreprocessorThai',

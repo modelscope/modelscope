@@ -8,6 +8,7 @@ from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 
+import json
 import wenetruntime as wenet
 
 __all__ = ['WeNetAutomaticSpeechRecognition']
@@ -23,23 +24,15 @@ class WeNetAutomaticSpeechRecognition(Model):
 
         Args:
             model_dir (str): the model path.
-            am_model_name (str): the am model name from configuration.json
-            model_config (Dict[str, Any]): the detail config about model from configuration.json
         """
         super().__init__(model_dir, am_model_name, model_config, *args,
                          **kwargs)
-        self.model_cfg = {
-            # the recognition model dir path
-            'model_dir': model_dir,
-            # the recognition model config dict
-            'model_config': model_config
-        }
-        self.decoder = None
-
-    def forward(self) -> Dict[str, Any]:
-        """preload model and return the info of the model
-        """
-        model_dir = self.model_cfg['model_dir']
         self.decoder = wenet.Decoder(model_dir, lang='chs')
 
-        return self.model_cfg
+    def forward(self, inputs: Dict[str, Any]) -> str:
+        if inputs['audio_format'] == 'wav':
+            rst = self.decoder.decode_wav(inputs['audio'])
+        else:
+            rst = self.decoder.decode(inputs['audio'])
+        text = json.loads(rst)['nbest'][0]['sentence']
+        return {'text': text}

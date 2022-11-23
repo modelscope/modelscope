@@ -29,8 +29,6 @@ class WeNetAutomaticSpeechRecognitionPipeline(Pipeline):
         """use `model` and `preprocessor` to create an asr pipeline for prediction
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.model_cfg = self.model.forward()
-        self.decoder = self.model.decoder
 
     def __call__(self,
                  audio_in: Union[str, bytes],
@@ -68,17 +66,19 @@ class WeNetAutomaticSpeechRecognitionPipeline(Pipeline):
             if checking_audio_fs is not None:
                 self.audio_fs = checking_audio_fs
 
-        self.model_cfg['audio'] = self.audio_in
-        self.model_cfg['audio_fs'] = self.audio_fs
-
-        output = self.forward(self.model_cfg)
+        inputs = {
+            'audio': self.audio_in,
+            'audio_format': self.audio_format,
+            'audio_fs': self.audio_fs
+        }
+        output = self.forward(inputs)
         rst = self.postprocess(output['asr_result'])
         return rst
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Decoding
         """
-        inputs['asr_result'] = self.decoder.decode(inputs['audio'])
+        inputs['asr_result'] = self.model(inputs)
         return inputs
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

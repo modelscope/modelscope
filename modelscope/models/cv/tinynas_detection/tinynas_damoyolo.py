@@ -11,5 +11,5 @@ from .detector import SingleStageDetector
 class DamoYolo(SingleStageDetector):
 
     def __init__(self, model_dir, *args, **kwargs):
-        self.config_name = 'damoyolo_s.py'
+        self.config_name = 'damoyolo.py'
         super(DamoYolo, self).__init__(model_dir, *args, **kwargs)

@@ -25,3 +25,4 @@ torchaudio
 tqdm
 ttsfrd>=0.0.3
 unidecode
+wenetruntime

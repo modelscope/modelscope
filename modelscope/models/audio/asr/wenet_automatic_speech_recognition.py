@@ -3,13 +3,13 @@
 import os
 from typing import Any, Dict
 
+import json
+import wenetruntime as wenet
+
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-
-import json
-import wenetruntime as wenet
 
 __all__ = ['WeNetAutomaticSpeechRecognition']
 

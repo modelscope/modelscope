@@ -1,13 +1,12 @@
 # Copyright (c) 2022 Zhipu.AI
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.base import Model
 from modelscope.models.nlp import CodeGeeXForCodeTranslation
-from modelscope.pipelines.base import Pipeline, Tensor
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import CodeGeeXPreprocessor, Preprocessor
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Tasks
 
 
@@ -27,16 +26,18 @@ class CodeGeeXCodeTranslationPipeline(Pipeline):
         self.model.eval()
         self.model.half()
         self.model.cuda()
-        if preprocessor is None:
-            preprocessor = CodeGeeXPreprocessor()
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
+        super().__init__(model=model, **kwargs)
+        
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+           return inputs
 
     # define the forward pass
     def forward(self, inputs: Union[Dict], **forward_params) -> Dict[str, Any]:
         # check input format
         for para in ['prompt', 'source language', 'target language']:
             if para not in inputs:
-                return ('please check your input format.')
+                raise Exception('please check your input format.')
         return self.model(inputs)
 
     # format the outputs from pipeline

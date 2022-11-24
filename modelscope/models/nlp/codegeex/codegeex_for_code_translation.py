@@ -1,20 +1,15 @@
 # Copyright (c) 2022 Zhipu.AI
-
 import copy
-import os
-import random
-import time
-from typing import Dict
+from typing import Any, Dict
 
-import numpy as np
 import torch
-from IPython import embed
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Tensor, TorchModel
+from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
+from modelscope.utils.logger import get_logger
 from .codegeex import CodeGeeXModel
 from .inference import get_token_stream
 from .tokenizer import CodeGeeXTokenizer
@@ -45,18 +40,18 @@ class CodeGeeXForCodeTranslation(TorchModel):
             model_dir (str): the model path.
         """
         super().__init__(model_dir, *args, **kwargs)
-
+        logger = get_logger()
         # loading tokenizer
-        print('Loading tokenizer ...')
+        logger.info('Loading tokenizer ...')
         self.tokenizer = CodeGeeXTokenizer(
             tokenizer_path=model_dir + '/tokenizer', mode='codegeex-13b')
         # loading model
         state_dict_path = model_dir + '/ckpt_ms_translation_0817.pt'
-        print('Loading state dict ...')
+        logger.info('Loading state dict ...')
         state_dict = torch.load(state_dict_path, map_location='cpu')
         state_dict = state_dict['module']
 
-        print('Building CodeGeeX model ...')
+        logger.info('Building CodeGeeX model ...')
         self.model = model_provider()
         self.model.load_state_dict(state_dict)
         self.model.eval()
@@ -68,21 +63,16 @@ class CodeGeeXForCodeTranslation(TorchModel):
         seq_length = 2048
         out_seq_length = 256
         bad_ids = None
-        print('Generating ...')
         src_lang = input['source language']
         dst_lang = input['target language']
         prompt = input['prompt']
         prompt = f'code translation\n{src_lang}:\n{prompt}\n{dst_lang}:\n'
-        t0 = time.perf_counter()
+        logger = get_logger()
         tokenizer = self.tokenizer
         model = self.model
         for prompt in [prompt]:
             tokens = tokenizer.encode_code(prompt)
-            print(tokens)
-            print('Current prompt:')
-            print(prompt)
             n_token_prompt = len(tokens)
-            print('N_token_prompt:', n_token_prompt)
             token_stream = get_token_stream(
                 model,
                 tokenizer,
@@ -108,19 +98,10 @@ class CodeGeeXForCodeTranslation(TorchModel):
                         generated_code = tokenizer.decode_code(
                             generated_tokens_[n_token_prompt:])
                         generated_code = ''.join(generated_code)
-                        t1 = time.perf_counter()
-                        print('Total generation time:', t1 - t0, '# Tokens:',
-                              len(generated_tokens_) - n_token_prompt)
-                        print(
-                            f'{(t1 - t0) / (len(generated_tokens_) - n_token_prompt)}s/token'
-                        )
-                        print(
-                            '================================= Generated code:'
-                        )
-                        print(generated_code)
-                        t0 = time.perf_counter()
+                        logger.info('================================= Generated code:')
+                        logger.info(generated_code)
                     if all(is_finished):
                         break
 
-        print('Generation finished.')
+        logger.info('Generation finished.')
         return {OutputKeys.TEXT: generated_code}

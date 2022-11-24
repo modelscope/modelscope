@@ -1,12 +1,8 @@
-import copy
-import os
-import time
-import typing
-from dataclasses import dataclass
+# Copyright (c) 2022 Zhipu.AI
 
-import json
 import torch
 import torch.nn.functional as F
+from typing import List
 
 
 def get_ltor_masks_and_position_ids(
@@ -128,38 +124,7 @@ def pad_batch(batch, pad_id, seq_length):
             tokens.extend([pad_id] * (seq_length - context_length))
         context_lengths.append(context_length)
     return batch, context_lengths
-
-
-def forward_step(
-    model,
-    tokens,
-    seq_length,
-    position_ids,
-    attention_mask,
-    layer_past=None,
-    get_key_value=None,
-    prompt_length=None,
-    context_length=None,
-):
-    # Forward pass through the model.
-    output_tensor = model(
-        tokens,
-        position_ids,
-        attention_mask,
-        layer_past=layer_past,
-        get_key_value=get_key_value,
-        prompt_length=prompt_length,
-        context_length=context_length,
-    )
-
-    if get_key_value:
-        output_tensor, layer_past = output_tensor
-
-    if get_key_value:
-        return output_tensor, layer_past
-
-    return output_tensor
-
+    
 
 def get_token_stream(
     model,

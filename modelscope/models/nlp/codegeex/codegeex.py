@@ -1,8 +1,8 @@
+# Copyright (c) 2022 Zhipu.AI
 import math
 
 import torch
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 
 
 def fast_gelu(x):

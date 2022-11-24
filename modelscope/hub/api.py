@@ -2,6 +2,7 @@
 
 # yapf: disable
 import datetime
+import functools
 import os
 import pickle
 import platform
@@ -14,10 +15,12 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
 
-import requests
+from requests import Session
+from requests.adapters import HTTPAdapter, Retry
 
 from modelscope import __version__
-from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
+from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
+                                      API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
@@ -25,7 +28,8 @@ from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       DEFAULT_CREDENTIALS_PATH,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
-                                      ONE_YEAR_SECONDS, Licenses,
+                                      ONE_YEAR_SECONDS,
+                                      REQUESTS_API_HTTP_METHOD, Licenses,
                                       ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -54,6 +58,17 @@ class HubApi:
     def __init__(self, endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
+        self.session = Session()
+        retry = Retry(total=2, read=2, connect=2, backoff_factor=1,
+                      status_forcelist=(500, 502, 503, 504),)
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+        # set http timeout
+        for method in REQUESTS_API_HTTP_METHOD:
+            setattr(self.session,
+                    method,
+                    functools.partial(getattr(self.session, method), timeout=API_HTTP_CLIENT_TIMEOUT))
 
     def login(
         self,
@@ -73,7 +88,7 @@ class HubApi:
         </Tip>
         """
         path = f'{self.endpoint}/api/v1/login'
-        r = requests.post(
+        r = self.session.post(
             path, json={'AccessToken': access_token}, headers=self.headers)
         raise_for_http_status(r)
         d = r.json()
@@ -129,7 +144,7 @@ class HubApi:
             'Visibility': visibility,  # server check
             'License': license
         }
-        r = requests.post(
+        r = self.session.post(
             path, json=body, cookies=cookies, headers=self.headers)
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
@@ -150,7 +165,7 @@ class HubApi:
             raise ValueError('Token does not exist, please login first.')
         path = f'{self.endpoint}/api/v1/models/{model_id}'
 
-        r = requests.delete(path, cookies=cookies, headers=self.headers)
+        r = self.session.delete(path, cookies=cookies, headers=self.headers)
         raise_for_http_status(r)
         raise_on_error(r.json())
 
@@ -183,7 +198,7 @@ class HubApi:
         else:
             path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
 
-        r = requests.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -311,7 +326,7 @@ class HubApi:
         """
         cookies = ModelScopeConfig.get_cookies()
         path = f'{self.endpoint}/api/v1/models/'
-        r = requests.put(
+        r = self.session.put(
             path,
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
             (owner_or_group, page_number, page_size),
@@ -360,7 +375,7 @@ class HubApi:
         if cutoff_timestamp is None:
             cutoff_timestamp = get_release_datetime()
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions?EndTime=%s' % cutoff_timestamp
-        r = requests.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
@@ -422,7 +437,7 @@ class HubApi:
         cookies = self._check_cookie(use_cookies)
 
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions'
-        r = requests.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies, headers=self.headers)
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
@@ -467,7 +482,7 @@ class HubApi:
         if root is not None:
             path = path + f'&Root={root}'
 
-        r = requests.get(
+        r = self.session.get(
             path, cookies=cookies, headers={
                 **headers,
                 **self.headers
@@ -488,7 +503,7 @@ class HubApi:
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
         params = {}
-        r = requests.get(path, params=params, headers=self.headers)
+        r = self.session.get(path, params=params, headers=self.headers)
         raise_for_http_status(r)
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
@@ -514,13 +529,13 @@ class HubApi:
         os.makedirs(cache_dir, exist_ok=True)
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         cookies = ModelScopeConfig.get_cookies()
-        r = requests.get(datahub_url, cookies=cookies)
+        r = self.session.get(datahub_url, cookies=cookies)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        r = requests.get(datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']
@@ -539,7 +554,7 @@ class HubApi:
             if extension in dataset_meta_format:
                 datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                               f'Revision={revision}&FilePath={file_path}'
-                r = requests.get(datahub_url, cookies=cookies)
+                r = self.session.get(datahub_url, cookies=cookies)
                 raise_for_http_status(r)
                 local_path = os.path.join(cache_dir, file_path)
                 if os.path.exists(local_path):
@@ -584,7 +599,7 @@ class HubApi:
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
 
-        r = requests.get(url=datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
@@ -595,7 +610,7 @@ class HubApi:
             f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
-        resp = requests.get(url=url, cookies=cookies)
+        resp = self.session.get(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Data']
@@ -604,7 +619,7 @@ class HubApi:
     def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
         cookies = ModelScopeConfig.get_cookies()
-        r = requests.post(url, cookies=cookies, headers=self.headers)
+        r = self.session.post(url, cookies=cookies, headers=self.headers)
         raise_for_http_status(r)
 
     def delete_oss_dataset_object(self, object_name: str, dataset_name: str,
@@ -615,7 +630,7 @@ class HubApi:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss?Path={object_name}&Revision={revision}'
 
         cookies = self.check_local_cookies(use_cookies=True)
-        resp = requests.delete(url=url, cookies=cookies)
+        resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Message']
@@ -630,16 +645,15 @@ class HubApi:
             f'&Revision={revision}'
 
         cookies = self.check_local_cookies(use_cookies=True)
-        resp = requests.delete(url=url, cookies=cookies)
+        resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Message']
         return resp
 
-    @staticmethod
-    def datahub_remote_call(url):
+    def datahub_remote_call(self, url):
         cookies = ModelScopeConfig.get_cookies()
-        r = requests.get(url, cookies=cookies, headers={'user-agent': ModelScopeConfig.get_user_agent()})
+        r = self.session.get(url, cookies=cookies, headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
         datahub_raise_on_error(url, resp)
         return resp['Data']
@@ -661,7 +675,7 @@ class HubApi:
 
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}?user={user_name}'
         cookies = ModelScopeConfig.get_cookies()
-        r = requests.post(url, cookies=cookies, headers=self.headers)
+        r = self.session.post(url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Message']

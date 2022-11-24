@@ -12,6 +12,11 @@ from modelscope.utils.constant import Tasks
 
 @PIPELINES.register_module(
     Tasks.semantic_segmentation, module_name=Pipelines.salient_detection)
+@PIPELINES.register_module(
+    Tasks.semantic_segmentation,
+    module_name=Pipelines.salient_boudary_detection)
+@PIPELINES.register_module(
+    Tasks.semantic_segmentation, module_name=Pipelines.camouflaged_detection)
 class ImageSalientDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

@@ -165,6 +165,8 @@ class Pipelines(object):
     easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
+    salient_boudary_detection = 'res2net-salient-detection'
+    camouflaged_detection = 'res2net-camouflaged-detection'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     card_detection = 'resnet-card-detection-scrfd34gkps'

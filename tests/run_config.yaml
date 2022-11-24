@@ -39,6 +39,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_automatic_speech_recognition.py
   - test_image_matting.py
   - test_skin_retouching.py
+  - test_table_recognition.py
 
 envs:
   default: # default env, case not in other env will in default, pytorch.

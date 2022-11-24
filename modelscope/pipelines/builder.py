@@ -82,6 +82,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_unet_person-image-cartoon_compound-models'),
     Tasks.ocr_detection: (Pipelines.ocr_detection,
                           'damo/cv_resnet18_ocr-detection-line-level_damo'),
+    Tasks.table_recognition:
+    (Pipelines.table_recognition,
+     'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),

@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
+    from .table_recognition_pipeline import TableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
@@ -108,6 +109,7 @@ else:
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
+        'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],

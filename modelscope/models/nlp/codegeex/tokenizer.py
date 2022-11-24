@@ -1,8 +1,9 @@
 # Copyright (c) 2022 Zhipu.AI
+from typing import List, Union
+
 import torch
 from transformers import AutoTokenizer
 from transformers.models.gpt2 import GPT2TokenizerFast
-from typing import List, Union
 
 
 def encode_whitespaces(text, start_extra_id: int, max_len: int):

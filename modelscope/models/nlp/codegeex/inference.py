@@ -1,8 +1,9 @@
 # Copyright (c) 2022 Zhipu.AI
 
+from typing import List
+
 import torch
 import torch.nn.functional as F
-from typing import List
 
 
 def get_ltor_masks_and_position_ids(
@@ -124,7 +125,7 @@ def pad_batch(batch, pad_id, seq_length):
             tokens.extend([pad_id] * (seq_length - context_length))
         context_lengths.append(context_length)
     return batch, context_lengths
-    
+
 
 def get_token_stream(
     model,

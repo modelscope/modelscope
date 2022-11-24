@@ -28,9 +28,9 @@ class CodeGeeXCodeTranslationPipeline(Pipeline):
         self.model.cuda()
 
         super().__init__(model=model, **kwargs)
-        
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
-           return inputs
+        return inputs
 
     # define the forward pass
     def forward(self, inputs: Union[Dict], **forward_params) -> Dict[str, Any]:

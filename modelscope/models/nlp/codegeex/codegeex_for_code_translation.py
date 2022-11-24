@@ -98,7 +98,9 @@ class CodeGeeXForCodeTranslation(TorchModel):
                         generated_code = tokenizer.decode_code(
                             generated_tokens_[n_token_prompt:])
                         generated_code = ''.join(generated_code)
-                        logger.info('================================= Generated code:')
+                        logger.info(
+                            '================================= Generated code:'
+                        )
                         logger.info(generated_code)
                     if all(is_finished):
                         break

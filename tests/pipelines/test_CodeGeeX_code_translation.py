@@ -17,10 +17,7 @@ class CodeGeeXCodeTranslationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_CodeGeeX_with_name(self):
         model = 'ZhipuAI/CodeGeeX-Code-Translation-13B'
-        pipe = pipeline(
-            task=Tasks.code_translation,
-            model=model
-        )
+        pipe = pipeline(task=Tasks.code_translation, model=model)
         inputs = {
             'prompt': 'for i in range(10):\n\tprint(i)\n',
             'source language': 'Python',

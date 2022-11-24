@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .space_T_en import ConversationalTextToSqlPreprocessor
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
+    from .txl_fast_poem_preprocessor import TXLFastPoemPreprocessor
 else:
     _import_structure = {
         'nlp_base': [
@@ -64,6 +65,7 @@ else:
             'TextErrorCorrectionPreprocessor',
         ],
         'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor'],
+        'txl_fast_poem_preprocessor': ['TXLFastPoemPreprocessor'],
         'token_classification_thai_preprocessor': [
             'NERPreprocessorThai',
             'WordSegmentationPreprocessorThai',

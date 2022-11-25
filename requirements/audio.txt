@@ -25,4 +25,5 @@ torchaudio
 tqdm
 ttsfrd>=0.0.3
 unidecode
-wenetruntime
+# wenetruntime version should be the same as torch
+wenetruntime==1.11

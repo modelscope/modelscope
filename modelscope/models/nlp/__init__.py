@@ -109,7 +109,8 @@ else:
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],
         'mglm': ['MGLMForTextSummarization'],
-        'codegeex': ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
+        'codegeex':
+        ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
     }

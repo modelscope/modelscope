@@ -65,7 +65,7 @@ class CodeGeeXForCodeGeneration(TorchModel):
         bad_ids = None
         lang = input['language']
         prompt = input['prompt']
-        prompt = f"# language: {lang}\n{prompt}"
+        prompt = f'# language: {lang}\n{prompt}'
         logger = get_logger()
         tokenizer = self.tokenizer
         model = self.model
@@ -83,8 +83,7 @@ class CodeGeeXForCodeGeneration(TorchModel):
                 topk=1,
                 topp=0.9,
                 temperature=0.9,
-                greedy=True
-            )
+                greedy=True)
             is_finished = [False for _ in range(micro_batch_size)]
             for i, generated in enumerate(token_stream):
                 generated_tokens = generated[0]

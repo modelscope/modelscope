@@ -38,11 +38,25 @@ class CodeGeeXCodeTranslationPipeline(Pipeline):
         for para in ['prompt', 'source language', 'target language']:
             if para not in inputs:
                 raise Exception('please check your input format.')
-        if inputs['source language'] not in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]: # noqa
-            raise Exception('Make sure the source language is in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]') # noqa
+        if inputs['source language'] not in [
+                'C++', 'C', 'C#', 'Cuda', 'Objective-C', 'Objective-C++',
+                'Python', 'Java', 'Scala', 'TeX', 'HTML', 'PHP', 'JavaScript',
+                'TypeScript', 'Go', 'Shell', 'Rust', 'CSS', 'SQL', 'Kotlin',
+                'Pascal', 'R', 'Fortran', 'Lean'
+        ]:
+            raise Exception(
+                'Make sure the source language is in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]'  # noqa
+            )  # noqa
 
-        if inputs['target language'] not in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]: # noqa
-            raise Exception('Make sure the target language is in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]') # noqa
+        if inputs['target language'] not in [
+                'C++', 'C', 'C#', 'Cuda', 'Objective-C', 'Objective-C++',
+                'Python', 'Java', 'Scala', 'TeX', 'HTML', 'PHP', 'JavaScript',
+                'TypeScript', 'Go', 'Shell', 'Rust', 'CSS', 'SQL', 'Kotlin',
+                'Pascal', 'R', 'Fortran', 'Lean'
+        ]:
+            raise Exception(
+                'Make sure the target language is in ["C++","C","C#","Cuda","Objective-C","Objective-C++","Python","Java","Scala","TeX","HTML","PHP","JavaScript","TypeScript","Go","Shell","Rust","CSS","SQL","Kotlin","Pascal","R","Fortran","Lean"]'  # noqa
+            )  # noqa
 
         return self.model(inputs)
 

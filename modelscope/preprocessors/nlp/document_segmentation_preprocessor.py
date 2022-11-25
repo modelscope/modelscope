@@ -37,7 +37,7 @@ class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
         self.max_seq_length = config.max_position_embeddings
         self.label_list = ['B-EOP', 'O']
 
-    def __call__(self, examples) -> Dict[str, Any]:
+    def __call__(self, examples, model_cfg=None) -> Dict[str, Any]:
         questions = examples[self.question_column_name]
         contexts = examples[self.context_column_name]
         example_ids = examples[self.example_id_column_name]
@@ -72,6 +72,8 @@ class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
             example_token_labels = []
             segment_id = []
             cur_seg_id = 1
+            para_segment_id = []
+            cut_para_seg_id = 1
             for token_index in range(len(example_input_ids)):
                 if example_input_ids[token_index] in self.target_specical_ids:
                     example_token_labels.append(example_labels[cur_seg_id - 1])
@@ -81,7 +83,17 @@ class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
                     example_token_labels.append(-100)
                     segment_id.append(cur_seg_id)
 
-            segment_ids.append(segment_id)
+                if example_token_labels[token_index] != -100:
+                    para_segment_id.append(cut_para_seg_id)
+                    cut_para_seg_id += 1
+                else:
+                    para_segment_id.append(cut_para_seg_id)
+
+            if model_cfg is not None and model_cfg[
+                    'type'] == 'ponet' and model_cfg['level'] == 'topic':
+                segment_ids.append(para_segment_id)
+            else:
+                segment_ids.append(segment_id)
             token_seq_labels.append(example_token_labels)
 
         tokenized_examples['segment_ids'] = segment_ids

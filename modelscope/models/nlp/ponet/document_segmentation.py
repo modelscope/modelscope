@@ -6,20 +6,21 @@ import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers.modeling_outputs import TokenClassifierOutput
-from transformers.models.bert.modeling_bert import (BertModel,
-                                                    BertPreTrainedModel)
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
+from .backbone import PoNetModel, PoNetPreTrainedModelV2
 
-__all__ = ['BertForDocumentSegmentation']
+__all__ = ['PoNetForDocumentSegmentation']
 
 
 @MODELS.register_module(
-    Tasks.document_segmentation, module_name=Models.bert_for_ds)
-class BertForDocumentSegmentation(Model):
+    Tasks.document_segmentation, module_name=Models.ponet_for_ds)
+@MODELS.register_module(
+    Tasks.extractive_summarization, module_name=Models.ponet_for_ds)
+class PoNetForDocumentSegmentation(Model):
 
     def __init__(self, model_dir: str, model_config: Dict[str, Any], *args,
                  **kwargs):
@@ -27,48 +28,53 @@ class BertForDocumentSegmentation(Model):
         self.model_cfg = model_config
 
     def build_with_config(self, config):
-        self.bert_model = BertForDocumentSegmentationBase.from_pretrained(
-            self.model_dir, from_tf=False, config=config)
-        return self.bert_model
+        self.ponet_model = PoNetForDocumentSegmentationBase.from_pretrained(
+            self.model_dir, config=config)
+        return self.ponet_model
 
     def forward(self) -> Dict[str, Any]:
         return self.model_cfg
 
 
-class BertForDocumentSegmentationBase(BertPreTrainedModel):
-
+class PoNetForDocumentSegmentationBase(PoNetPreTrainedModelV2):
     _keys_to_ignore_on_load_unexpected = [r'pooler']
 
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.sentence_pooler_type = None
-        self.bert = BertModel(config, add_pooling_layer=False)
 
-        classifier_dropout = config.hidden_dropout_prob
-        self.dropout = nn.Dropout(classifier_dropout)
+        self.ponet = PoNetModel(config, add_pooling_layer=False)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.class_weights = None
+
         self.init_weights()
 
-    def forward(self,
-                input_ids=None,
-                attention_mask=None,
-                token_type_ids=None,
-                position_ids=None,
-                head_mask=None,
-                sentence_attention_mask=None,
-                inputs_embeds=None,
-                labels=None,
-                output_attentions=None,
-                output_hidden_states=None,
-                return_dict=None):
-
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        segment_ids=None,
+        position_ids=None,
+        head_mask=None,
+        inputs_embeds=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None,
+    ):
+        r"""
+        labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+            Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
+        1]``.
+        """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-        outputs = self.bert(
+
+        outputs = self.ponet(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
+            segment_ids=segment_ids,
             position_ids=position_ids,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
@@ -78,18 +84,16 @@ class BertForDocumentSegmentationBase(BertPreTrainedModel):
         )
 
         sequence_output = outputs[0]
-        if self.sentence_pooler_type is not None:
-            raise NotImplementedError
-        else:
-            sequence_output = self.dropout(sequence_output)
 
+        sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
 
         loss = None
         if labels is not None:
-            loss_fct = CrossEntropyLoss(weight=self.class_weights)
-            if sentence_attention_mask is not None:
-                active_loss = sentence_attention_mask.view(-1) == 1
+            loss_fct = CrossEntropyLoss()
+            # Only keep active parts of the loss
+            if attention_mask is not None:
+                active_loss = attention_mask.view(-1) == 1
                 active_logits = logits.view(-1, self.num_labels)
                 active_labels = torch.where(
                     active_loss, labels.view(-1),

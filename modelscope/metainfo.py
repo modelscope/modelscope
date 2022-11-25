@@ -82,6 +82,7 @@ class Models(object):
     gpt_neo = 'gpt-neo'
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
+    ponet_for_ds = 'ponet-for-document-segmentation'
     ponet = 'ponet'
     T5 = 'T5'
     mglm = 'mglm'
@@ -257,6 +258,7 @@ class Pipelines(object):
     text_ranking = 'text-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
+    extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
     mglm_text_summarization = 'mglm-text-summarization'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore

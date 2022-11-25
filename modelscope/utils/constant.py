@@ -127,6 +127,7 @@ class NLPTasks(object):
     faq_question_answering = 'faq-question-answering'
     information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'
+    extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
 
 

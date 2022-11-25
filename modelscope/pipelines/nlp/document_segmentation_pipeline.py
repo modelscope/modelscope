@@ -10,6 +10,7 @@ from transformers.models.bert.modeling_bert import BertConfig
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
+from modelscope.models.nlp.ponet.configuration import PoNetConfig
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
@@ -35,7 +36,12 @@ class DocumentSegmentationPipeline(Pipeline):
                                     Model) else Model.from_pretrained(model)
 
         self.model_dir = model.model_dir
-        config = BertConfig.from_pretrained(model.model_dir, num_labels=2)
+        self.model_cfg = model.forward()
+
+        if self.model_cfg['type'] == 'bert':
+            config = BertConfig.from_pretrained(model.model_dir, num_labels=2)
+        elif self.model_cfg['type'] == 'ponet':
+            config = PoNetConfig.from_pretrained(model.model_dir, num_labels=2)
 
         self.document_segmentation_model = model.build_with_config(
             config=config)
@@ -47,23 +53,33 @@ class DocumentSegmentationPipeline(Pipeline):
 
         self.preprocessor = preprocessor
 
-    def __call__(self, documents: Union[List[str], str]) -> Dict[str, Any]:
+    def __call__(
+            self, documents: Union[List[List[str]], List[str],
+                                   str]) -> Dict[str, Any]:
         output = self.predict(documents)
         output = self.postprocess(output)
         return output
 
-    def predict(self, documents: Union[List[str], str]) -> Dict[str, Any]:
+    def predict(
+            self, documents: Union[List[List[str]], List[str],
+                                   str]) -> Dict[str, Any]:
         pred_samples = self.cut_documents(documents)
+
+        if self.model_cfg['level'] == 'topic':
+            paragraphs = pred_samples.pop('paragraphs')
+
         predict_examples = Dataset.from_dict(pred_samples)
 
         # Predict Feature Creation
-        predict_dataset = self.preprocessor(predict_examples)
+        predict_dataset = self.preprocessor(predict_examples, self.model_cfg)
         num_examples = len(
             predict_examples[self.preprocessor.context_column_name])
         num_samples = len(
             predict_dataset[self.preprocessor.context_column_name])
 
-        predict_dataset.pop('segment_ids')
+        if self.model_cfg['type'] == 'bert':
+            predict_dataset.pop('segment_ids')
+
         labels = predict_dataset.pop('labels')
         sentences = predict_dataset.pop('sentences')
         example_ids = predict_dataset.pop(
@@ -82,6 +98,7 @@ class DocumentSegmentationPipeline(Pipeline):
             predictions), 'sample {}  infer_sample {} prediction {}'.format(
                 num_samples, len(sentences), len(predictions))
         # Remove ignored index (special tokens)
+
         true_predictions = [
             [
                 self.preprocessor.label_list[p]
@@ -99,20 +116,37 @@ class DocumentSegmentationPipeline(Pipeline):
         # Save predictions
         out = []
         for i in range(num_examples):
-            out.append({'sentences': [], 'labels': [], 'predictions': []})
+            if self.model_cfg['level'] == 'topic':
+                out.append({
+                    'sentences': [],
+                    'labels': [],
+                    'predictions': [],
+                    'paragraphs': paragraphs[i]
+                })
+            else:
+                out.append({'sentences': [], 'labels': [], 'predictions': []})
 
         for prediction, sentence_list, label, example_id in zip(
                 true_predictions, sentences, true_labels, example_ids):
-            if len(label) < len(sentence_list):
-                label.append('B-EOP')
-                prediction.append('B-EOP')
-            assert len(sentence_list) == len(prediction), '{} {}'.format(
-                len(sentence_list), len(prediction))
-            assert len(sentence_list) == len(label), '{} {}'.format(
-                len(sentence_list), len(label))
+            if self.model_cfg['level'] == 'doc':
+                if len(label) < len(sentence_list):
+                    label.append('B-EOP')
+                    prediction.append('B-EOP')
+                assert len(sentence_list) == len(prediction), '{} {}'.format(
+                    len(sentence_list), len(prediction))
+                assert len(sentence_list) == len(label), '{} {}'.format(
+                    len(sentence_list), len(label))
+
             out[example_id]['sentences'].extend(sentence_list)
             out[example_id]['labels'].extend(label)
             out[example_id]['predictions'].extend(prediction)
+
+        if self.model_cfg['level'] == 'topic':
+            for i in range(num_examples):
+                assert len(out[i]['predictions']) + 1 == len(
+                    out[i]['paragraphs'])
+                out[i]['predictions'].append('B-EOP')
+                out[i]['labels'].append('B-EOP')
 
         return out
 
@@ -126,45 +160,97 @@ class DocumentSegmentationPipeline(Pipeline):
             Dict[str, str]: the prediction results
         """
         result = []
+        res_preds = []
         list_count = len(inputs)
-        for num in range(list_count):
-            res = []
-            for s, p in zip(inputs[num]['sentences'],
-                            inputs[num]['predictions']):
-                s = s.strip()
-                if p == 'B-EOP':
-                    s = ''.join([s, '\n\t'])
-                res.append(s)
 
-            document = ('\t' + ''.join(res))
-            result.append(document)
+        if self.model_cfg['level'] == 'topic':
+            for num in range(list_count):
+                res = []
+                pred = []
+                for s, p, l in zip(inputs[num]['paragraphs'],
+                                   inputs[num]['predictions'],
+                                   inputs[num]['labels']):
+                    s = s.strip()
+                    if p == 'B-EOP':
+                        s = ''.join([s, '\n\n\t'])
+                        pred.append(1)
+                    else:
+                        s = ''.join([s, '\n\t'])
+                        pred.append(0)
+                    res.append(s)
+                res_preds.append(pred)
+                document = ('\t' + ''.join(res).strip())
+                result.append(document)
+        else:
+            for num in range(list_count):
+                res = []
+                for s, p in zip(inputs[num]['sentences'],
+                                inputs[num]['predictions']):
+                    s = s.strip()
+                    if p == 'B-EOP':
+                        s = ''.join([s, '\n\t'])
+                    res.append(s)
+
+                document = ('\t' + ''.join(res))
+                result.append(document)
 
         if list_count == 1:
             return {OutputKeys.TEXT: result[0]}
         else:
             return {OutputKeys.TEXT: result}
 
-    def cut_documents(self, para: Union[List[str], str]):
+    def cut_documents(self, para: Union[List[List[str]], List[str], str]):
         document_list = para
-        if isinstance(para, str):
-            document_list = [para]
+        paragraphs = []
         sentences = []
         labels = []
         example_id = []
         id = 0
-        for document in document_list:
-            sentence = self.cut_sentence(document)
-            label = ['O'] * (len(sentence) - 1) + ['B-EOP']
-            sentences.append(sentence)
-            labels.append(label)
-            example_id.append(id)
-            id += 1
 
-        return {
-            'example_id': example_id,
-            'sentences': sentences,
-            'labels': labels
-        }
+        if self.model_cfg['level'] == 'topic':
+            if isinstance(para, str):
+                document_list = [[para]]
+            elif isinstance(para[0], str):
+                document_list = [para]
+
+            for document in document_list:
+                sentence = []
+                label = []
+                for item in document:
+                    sentence_of_current_paragraph = self.cut_sentence(item)
+                    sentence.extend(sentence_of_current_paragraph)
+                    label.extend(['-100']
+                                 * (len(sentence_of_current_paragraph) - 1)
+                                 + ['B-EOP'])
+                paragraphs.append(document)
+                sentences.append(sentence)
+                labels.append(label)
+                example_id.append(id)
+                id += 1
+
+            return {
+                'example_id': example_id,
+                'sentences': sentences,
+                'paragraphs': paragraphs,
+                'labels': labels
+            }
+        else:
+            if isinstance(para, str):
+                document_list = [para]
+
+            for document in document_list:
+                sentence = self.cut_sentence(document)
+                label = ['O'] * (len(sentence) - 1) + ['B-EOP']
+                sentences.append(sentence)
+                labels.append(label)
+                example_id.append(id)
+                id += 1
+
+            return {
+                'example_id': example_id,
+                'sentences': sentences,
+                'labels': labels
+            }
 
     def cut_sentence(self, para):
         para = re.sub(r'([。！.!？\?])([^”’])', r'\1\n\2', para)  # noqa *

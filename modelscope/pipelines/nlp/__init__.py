@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .dialog_modeling_pipeline import DialogModelingPipeline
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
+    from .extractive_summarization_pipeline import ExtractiveSummarizationPipeline
     from .fasttext_sequence_classification_pipeline import FasttextSequenceClassificationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .feature_extraction_pipeline import FeatureExtractionPipeline
@@ -45,6 +46,8 @@ else:
         'domain_classification_pipeline':
         ['FasttextSequenceClassificationPipeline'],
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
+        'extractive_summarization_pipeline':
+        ['ExtractiveSummarizationPipeline'],
         'faq_question_answering_pipeline': ['FaqQuestionAnsweringPipeline'],
         'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],

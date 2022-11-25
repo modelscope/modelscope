@@ -257,6 +257,7 @@ class Pipelines(object):
     feature_extraction = 'feature-extraction'
     mglm_text_summarization = 'mglm-text-summarization'
     codegeex_code_translation = 'codegeex-code-translation'
+    codegeex_code_generation = 'codegeex-code-generation'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
@@ -384,7 +385,6 @@ class Preprocessors(object):
     document_segmentation = 'document-segmentation'
     feature_extraction = 'feature-extraction'
     mglm_summarization = 'mglm-summarization'
-    codegeex = 'codegeex'
     sentence_piece = 'sentence-piece'
 
     # audio preprocessor

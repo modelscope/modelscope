@@ -6,9 +6,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .codegeex_for_code_translation import CodeGeeXForCodeTranslation
+    from .codegeex_for_code_generation import CodeGeeXForCodeGeneration
 else:
     _import_structure = {
         'codegeex_for_code_translation': ['CodeGeeXForCodeTranslation'],
+        'codegeex_for_code_generation': ['CodeGeeXForCodeGeneration'],
     }
 
     import sys

@@ -245,6 +245,10 @@ def is_torch_cuda_available():
         return False
 
 
+def is_wenetruntime_available():
+    return importlib.util.find_spec('wenetruntime') is not None
+
+
 def is_tf_available():
     return _tf_available
 
@@ -280,6 +284,9 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('timm', (is_timm_available, TIMM_IMPORT_ERROR)),
     ('tokenizers', (is_tokenizers_available, TOKENIZERS_IMPORT_ERROR)),
     ('torch', (is_torch_available, PYTORCH_IMPORT_ERROR)),
+    ('wenetruntime',
+     (is_wenetruntime_available,
+      WENETRUNTIME_IMPORT_ERROR.replace('TORCH_VER', _torch_version))),
     ('scipy', (is_scipy_available, SCIPY_IMPORT_ERROR)),
     ('cv2', (is_opencv_available, OPENCV_IMPORT_ERROR)),
     ('PIL', (is_pillow_available, PILLOW_IMPORT_ERROR)),

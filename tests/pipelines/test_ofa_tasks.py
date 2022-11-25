@@ -273,6 +273,14 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result[OutputKeys.OUTPUT_IMG].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_asr_with_name(self):
+        model = 'damo/ofa_asr_pretrain_base_zh'
+        ofa_pipe = pipeline(Tasks.auto_speech_recognition, model=model)
+        example = {'wav': 'data/test/audios/asr_example_ofa.wav'}
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
+
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()

@@ -6,11 +6,14 @@ from os import path as osp
 import json
 import numpy as np
 import torch
+import torchaudio
 from PIL import Image
 
 from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.trie import Trie
+from .utils.audio_helper import (_get_kaldi_fbank, _get_torchaudio_fbank,
+                                 convert_waveform)
 from .utils.constant import OFA_TASK_KEY_MAPPING
 from .utils.random_help import set_torch_seed
 
@@ -88,6 +91,9 @@ class OfaBasePreprocessor:
                                             + answer_item.tolist()
                                             + [tokenizer.eos_token_id])
 
+        self.train_audio_feature_transforms = None
+        self.test_audio_feature_transforms = None
+
     def tokenize_text(self, text, add_bos=True, add_eos=True):
         if text is None:
             return None
@@ -163,3 +169,36 @@ class OfaBasePreprocessor:
         image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
             else load_image(path_or_url_or_pil)
         return image
+
+    def prepare_fbank(self, waveform, sample_rate, speed, is_train):
+        waveform, _ = torchaudio.sox_effects.apply_effects_tensor(
+            waveform, sample_rate,
+            [['speed', str(speed)], ['rate', str(sample_rate)]])
+        _waveform, _ = convert_waveform(
+            waveform, sample_rate, to_mono=True, normalize_volume=True)
+        # Kaldi compliance: 16-bit signed integers
+        _waveform = _waveform * (2**15)
+        _waveform = _waveform.numpy()
+        fbank = _get_kaldi_fbank(_waveform, sample_rate, 80)
+        if fbank is None:
+            fbank = _get_torchaudio_fbank(_waveform, sample_rate, 80)
+        if fbank is None:
+            raise ImportError(
+                'Please install pyKaldi or torchaudio to enable fbank feature extraction'
+            )
+        if is_train and self.train_audio_feature_transforms is not None:
+            fbank = self.train_audio_feature_transforms(fbank)
+        elif ~is_train and self.test_audio_feature_transforms(
+                fbank) is not None:
+            fbank = self.test_audio_feature_transforms(fbank)
+
+        fbank = torch.from_numpy(fbank).float()
+        fbank = self.pack_frames(fbank)
+        return fbank
+
+    def pack_frames(self, feature: torch.Tensor):
+        if self.cfg.n_frames_per_step == 1:
+            return feature
+        n_packed_frames = feature.shape[0] // self.cfg.n_frames_per_step
+        feature = feature[:self.cfg.n_frames_per_step * n_packed_frames]
+        return feature.reshape(n_packed_frames, -1)

@@ -227,6 +227,9 @@ class SequenceGenerator(nn.Module):
                 - net_input['padding_mask'].sum(-1)
                 if net_input['padding_mask'] is not None else torch.tensor(
                     src_tokens.size(-1)).to(src_tokens))
+        elif 'fbank' in net_input:
+            src_tokens = net_input['fbank']
+            src_lengths = net_input['fbank_length']
         else:
             raise Exception(
                 'expected src_tokens or source in net input. input keys: '

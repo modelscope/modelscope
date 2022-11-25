@@ -284,6 +284,7 @@ class Pipelines(object):
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
+    ofa_asr = 'ofa-asr'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

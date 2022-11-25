@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from .asr import OfaASRPreprocessor
 from .image_captioning import OfaImageCaptioningPreprocessor
 from .image_classification import OfaImageClassificationPreprocessor
 from .ocr_recognition import OfaOcrRecognitionPreprocessor

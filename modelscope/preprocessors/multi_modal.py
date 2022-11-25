@@ -53,7 +53,8 @@ class OfaPreprocessor(Preprocessor):
             Tasks.image_classification: OfaImageClassificationPreprocessor,
             Tasks.text_classification: OfaTextClassificationPreprocessor,
             Tasks.text_summarization: OfaSummarizationPreprocessor,
-            Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
+            Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor,
+            Tasks.auto_speech_recognition: OfaASRPreprocessor
         }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
             model_dir)

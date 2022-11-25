@@ -19,7 +19,7 @@ from modelscope.preprocessors.ofa.utils.collate import collate_tokens
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.trie import Trie
-from .ofa import OFAModel, OFATokenizer, OFATokenizerZH
+from .ofa import MMSpeechModel, OFAModel, OFATokenizer, OFATokenizerZH
 from .ofa.generate import sequence_generator as sg
 from .ofa.generate.utils import move_to_device
 from .ofa.utils.constant import OFA_TASK_KEY_MAPPING, Tasks
@@ -37,13 +37,20 @@ __all__ = ['OfaForAllTasks']
 @MODELS.register_module(Tasks.image_classification, module_name=Models.ofa)
 @MODELS.register_module(Tasks.text_summarization, module_name=Models.ofa)
 @MODELS.register_module(Tasks.text_classification, module_name=Models.ofa)
+@MODELS.register_module(Tasks.auto_speech_recognition, module_name=Models.ofa)
 class OfaForAllTasks(TorchModel):
 
     def __init__(self, model_dir, *args, **kwargs):
         super().__init__(model_dir=model_dir, *args, **kwargs)
-        model = OFAModel.from_pretrained(model_dir)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
+        multimodal_type = self.cfg.model.get('multimodal_type', 'default')
+        if multimodal_type == 'default':
+            model = OFAModel.from_pretrained(model_dir)
+        elif multimodal_type == 'mmspeech':
+            model = MMSpeechModel.from_pretrained(model_dir)
+        else:
+            raise NotImplementedError
         self.model = model.module if hasattr(model, 'module') else model
         self.language = self.cfg.model.get('language', 'en')
         if self.language == 'en':
@@ -54,12 +61,20 @@ class OfaForAllTasks(TorchModel):
             raise NotImplementedError
         # there is some diff between here and our ofa code,
         # there will be no need to use param: use_bpe
+
         if not model.use_ofasys:
-            self.tokenizer.add_tokens(
-                ['<code_{}>'.format(i) for i in range(8192)])
-            self.tokenizer.add_tokens(
-                ['<bin_{}>'.format(i) for i in range(1000)])
-        self.cfg.update({'num_bins': 1000, 'num_codes': 8192})
+            if multimodal_type == 'default':
+                self.tokenizer.add_tokens(
+                    ['<code_{}>'.format(i) for i in range(8192)])
+                self.tokenizer.add_tokens(
+                    ['<bin_{}>'.format(i) for i in range(1000)])
+                self.cfg.update({'num_bins': 1000, 'num_codes': 8192})
+            elif multimodal_type == 'mmspeech':
+                self.tokenizer.add_tokens('<blank>')
+                self.tokenizer.add_tokens(
+                    ['<audio_{}>'.format(i) for i in range(30000)])
+                self.cfg.update({'num_bins': 0, 'num_codes': 30000})
+
         self.batch_size = self.cfg.model.get('batch_size', 1)
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
         self.max_image_size = self.cfg.model.get('max_image_size', 512)
@@ -110,6 +125,7 @@ class OfaForAllTasks(TorchModel):
             Tasks.visual_question_answering: inference_d[self.gen_type],
             Tasks.text_classification: inference_d[self.gen_type],
             Tasks.image_classification: inference_d[self.gen_type],
+            Tasks.auto_speech_recognition: self._text_gen_inference,
         }
         pattern_str = '((?<=[^ a-zA-Z0-9.,:!?]) +| +(?=[^ a-zA-Z0-9.,:!?]))'
         self.pattern = re.compile(pattern_str)

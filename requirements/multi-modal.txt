@@ -8,6 +8,7 @@ pytorch_lightning<=1.7.7
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4
 sacrebleu
+soundfile
 taming-transformers-rom1504
 timm
 tokenizers

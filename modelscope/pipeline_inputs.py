@@ -186,7 +186,10 @@ TASK_INPUTS = {
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:
-    InputType.AUDIO,
+    [InputType.AUDIO, {
+        'wav': InputType.AUDIO,
+        'text': InputType.TEXT
+    }],
     Tasks.speech_signal_process:
     InputType.AUDIO,
     Tasks.acoustic_echo_cancellation: {

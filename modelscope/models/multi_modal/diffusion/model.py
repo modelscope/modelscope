@@ -197,60 +197,155 @@ class DiffusionForTextToImageSynthesis(Model):
             attention_mask=attention_mask)
         context = context[-1]
 
-        # generation
-        img = self.diffusion_generator.ddim_sample_loop(
-            noise=torch.randn(1, 3, 64, 64).to(self.device),
-            model=self.unet_generator,
-            model_kwargs=[{
-                'y': y,
-                'context': context,
-                'mask': attention_mask
-            }, {
-                'y': torch.zeros_like(y),
-                'context': torch.zeros_like(context),
-                'mask': attention_mask
-            }],
-            percentile=input.get('generator_percentile', 0.995),
-            guide_scale=input.get('generator_guide_scale', 5.0),
-            ddim_timesteps=input.get('generator_ddim_timesteps', 250),
-            eta=input.get('generator_ddim_eta', 0.0))
+        # choose a proper solver
+        solver = input.get('solver', 'dpm-solver')
+        if solver == 'dpm-solver':
+            # generation
+            img = self.diffusion_generator.dpm_solver_sample_loop(
+                noise=torch.randn(1, 3, 64, 64).to(self.device),
+                model=self.unet_generator,
+                model_kwargs=[{
+                    'y': y,
+                    'context': context,
+                    'mask': attention_mask
+                }, {
+                    'y': torch.zeros_like(y),
+                    'context': torch.zeros_like(context),
+                    'mask': attention_mask
+                }],
+                percentile=input.get('generator_percentile', 0.995),
+                guide_scale=input.get('generator_guide_scale', 5.0),
+                dpm_solver_timesteps=input.get('dpm_solver_timesteps', 20),
+                order=3,
+                skip_type='logSNR',
+                method='singlestep',
+                t_start=0.9946)
 
-        # upsampling (64->256)
-        if not input.get('debug', False):
-            img = F.interpolate(
-                img, scale_factor=4.0, mode='bilinear', align_corners=False)
-        img = self.diffusion_upsampler_256.ddim_sample_loop(
-            noise=torch.randn_like(img),
-            model=self.unet_upsampler_256,
-            model_kwargs=[{
-                'lx': img,
-                'lt': torch.zeros(1).to(self.device),
-                'y': y,
-                'context': context,
-                'mask': attention_mask
-            }, {
-                'lx': img,
-                'lt': torch.zeros(1).to(self.device),
-                'y': torch.zeros_like(y),
-                'context': torch.zeros_like(context),
-                'mask': torch.zeros_like(attention_mask)
-            }],
-            percentile=input.get('upsampler_256_percentile', 0.995),
-            guide_scale=input.get('upsampler_256_guide_scale', 5.0),
-            ddim_timesteps=input.get('upsampler_256_ddim_timesteps', 50),
-            eta=input.get('upsampler_256_ddim_eta', 0.0))
+            # upsampling (64->256)
+            if not input.get('debug', False):
+                img = F.interpolate(
+                    img,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+            img = self.diffusion_upsampler_256.dpm_solver_sample_loop(
+                noise=torch.randn_like(img),
+                model=self.unet_upsampler_256,
+                model_kwargs=[{
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': y,
+                    'context': context,
+                    'mask': attention_mask
+                }, {
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': torch.zeros_like(y),
+                    'context': torch.zeros_like(context),
+                    'mask': torch.zeros_like(attention_mask)
+                }],
+                percentile=input.get('upsampler_256_percentile', 0.995),
+                guide_scale=input.get('upsampler_256_guide_scale', 5.0),
+                dpm_solver_timesteps=input.get('dpm_solver_timesteps', 20),
+                order=3,
+                skip_type='logSNR',
+                method='singlestep',
+                t_start=0.9946)
 
-        # upsampling (256->1024)
-        if not input.get('debug', False):
-            img = F.interpolate(
-                img, scale_factor=4.0, mode='bilinear', align_corners=False)
-        img = self.diffusion_upsampler_1024.ddim_sample_loop(
-            noise=torch.randn_like(img),
-            model=self.unet_upsampler_1024,
-            model_kwargs={'concat': img},
-            percentile=input.get('upsampler_1024_percentile', 0.995),
-            ddim_timesteps=input.get('upsampler_1024_ddim_timesteps', 20),
-            eta=input.get('upsampler_1024_ddim_eta', 0.0))
+            # upsampling (256->1024)
+            if not input.get('debug', False):
+                img = F.interpolate(
+                    img,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+            img = self.diffusion_upsampler_1024.dpm_solver_sample_loop(
+                noise=torch.randn_like(img),
+                model=self.unet_upsampler_256,
+                model_kwargs=[{
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': y,
+                    'context': context,
+                    'mask': attention_mask
+                }, {
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': torch.zeros_like(y),
+                    'context': torch.zeros_like(context),
+                    'mask': torch.zeros_like(attention_mask)
+                }],
+                percentile=input.get('upsampler_256_percentile', 0.995),
+                guide_scale=input.get('upsampler_256_guide_scale', 5.0),
+                dpm_solver_timesteps=input.get('dpm_solver_timesteps', 10),
+                order=3,
+                skip_type='logSNR',
+                method='singlestep',
+                t_start=None)
+        elif solver == 'ddim':
+            # generation
+            img = self.diffusion_generator.ddim_sample_loop(
+                noise=torch.randn(1, 3, 64, 64).to(self.device),
+                model=self.unet_generator,
+                model_kwargs=[{
+                    'y': y,
+                    'context': context,
+                    'mask': attention_mask
+                }, {
+                    'y': torch.zeros_like(y),
+                    'context': torch.zeros_like(context),
+                    'mask': attention_mask
+                }],
+                percentile=input.get('generator_percentile', 0.995),
+                guide_scale=input.get('generator_guide_scale', 5.0),
+                ddim_timesteps=input.get('generator_ddim_timesteps', 250),
+                eta=input.get('generator_ddim_eta', 0.0))
+
+            # upsampling (64->256)
+            if not input.get('debug', False):
+                img = F.interpolate(
+                    img,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+            img = self.diffusion_upsampler_256.ddim_sample_loop(
+                noise=torch.randn_like(img),
+                model=self.unet_upsampler_256,
+                model_kwargs=[{
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': y,
+                    'context': context,
+                    'mask': attention_mask
+                }, {
+                    'lx': img,
+                    'lt': torch.zeros(1).to(self.device),
+                    'y': torch.zeros_like(y),
+                    'context': torch.zeros_like(context),
+                    'mask': torch.zeros_like(attention_mask)
+                }],
+                percentile=input.get('upsampler_256_percentile', 0.995),
+                guide_scale=input.get('upsampler_256_guide_scale', 5.0),
+                ddim_timesteps=input.get('upsampler_256_ddim_timesteps', 50),
+                eta=input.get('upsampler_256_ddim_eta', 0.0))
+
+            # upsampling (256->1024)
+            if not input.get('debug', False):
+                img = F.interpolate(
+                    img,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+            img = self.diffusion_upsampler_1024.ddim_sample_loop(
+                noise=torch.randn_like(img),
+                model=self.unet_upsampler_1024,
+                model_kwargs={'concat': img},
+                percentile=input.get('upsampler_1024_percentile', 0.995),
+                ddim_timesteps=input.get('upsampler_1024_ddim_timesteps', 20),
+                eta=input.get('upsampler_1024_ddim_eta', 0.0))
+        else:
+            raise ValueError(
+                'currently only supports "ddim" and "dpm-solve" solvers')
 
         # output
         img = img.clamp(-1, 1).add(1).mul(127.5).squeeze(0).permute(

@@ -95,7 +95,8 @@ class UnCLIP(nn.Module):
                   eta_prior=0.0,
                   eta_64=0.0,
                   eta_256=0.0,
-                  eta_1024=0.0):
+                  eta_1024=0.0,
+                  solver='dpm-solver'):
         device = next(self.parameters()).device
 
         # check params
@@ -141,71 +142,160 @@ class UnCLIP(nn.Module):
 
         # synthesis
         with amp.autocast(enabled=True):
-            # prior
-            x0 = self.prior_diffusion.ddim_sample_loop(
-                noise=torch.randn_like(y),
-                model=self.prior,
-                model_kwargs=[{
-                    'y': y
-                }, {
-                    'y': zero_y
-                }],
-                guide_scale=guide_prior,
-                ddim_timesteps=timesteps_prior,
-                eta=eta_prior)
+            # choose a proper solver
+            if solver == 'dpm-solver':
+                # prior
+                x0 = self.prior_diffusion.dpm_solver_sample_loop(
+                    noise=torch.randn_like(y),
+                    model=self.prior,
+                    model_kwargs=[{
+                        'y': y
+                    }, {
+                        'y': zero_y
+                    }],
+                    guide_scale=guide_prior,
+                    dpm_solver_timesteps=timesteps_prior,
+                    order=3,
+                    skip_type='logSNR',
+                    method='singlestep',
+                    t_start=0.9946)
 
-            # decoder
-            imgs64 = self.decoder_diffusion.ddim_sample_loop(
-                noise=torch.randn(batch_size, 3, 64, 64).to(device),
-                model=self.decoder,
-                model_kwargs=[{
-                    'y': x0
-                }, {
-                    'y': torch.zeros_like(x0)
-                }],
-                guide_scale=guide_64,
-                percentile=0.995,
-                ddim_timesteps=timesteps_64,
-                eta=eta_64).clamp_(-1, 1)
+                # decoder
+                imgs64 = self.decoder_diffusion.dpm_solver_sample_loop(
+                    noise=torch.randn(batch_size, 3, 64, 64).to(device),
+                    model=self.decoder,
+                    model_kwargs=[{
+                        'y': x0
+                    }, {
+                        'y': torch.zeros_like(x0)
+                    }],
+                    guide_scale=guide_64,
+                    percentile=0.995,
+                    dpm_solver_timesteps=timesteps_64,
+                    order=3,
+                    skip_type='logSNR',
+                    method='singlestep',
+                    t_start=0.9946).clamp_(-1, 1)
 
-            # upsampler256
-            imgs256 = F.interpolate(
-                imgs64, scale_factor=4.0, mode='bilinear', align_corners=False)
-            imgs256 = self.upsampler256_diffusion.ddim_sample_loop(
-                noise=torch.randn_like(imgs256),
-                model=self.upsampler256,
-                model_kwargs=[{
-                    'y': y,
-                    'concat': imgs256
-                }, {
-                    'y': zero_y,
-                    'concat': imgs256
-                }],
-                guide_scale=guide_256,
-                percentile=0.995,
-                ddim_timesteps=timesteps_256,
-                eta=eta_256).clamp_(-1, 1)
+                # upsampler256
+                imgs256 = F.interpolate(
+                    imgs64,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+                imgs256 = self.upsampler256_diffusion.dpm_solver_sample_loop(
+                    noise=torch.randn_like(imgs256),
+                    model=self.upsampler256,
+                    model_kwargs=[{
+                        'y': y,
+                        'concat': imgs256
+                    }, {
+                        'y': zero_y,
+                        'concat': imgs256
+                    }],
+                    guide_scale=guide_256,
+                    percentile=0.995,
+                    dpm_solver_timesteps=timesteps_256,
+                    order=3,
+                    skip_type='logSNR',
+                    method='singlestep',
+                    t_start=0.9946).clamp_(-1, 1)
 
-            # upsampler1024
-            imgs1024 = F.interpolate(
-                imgs256,
-                scale_factor=4.0,
-                mode='bilinear',
-                align_corners=False)
-            imgs1024 = self.upsampler1024_diffusion.ddim_sample_loop(
-                noise=torch.randn_like(imgs1024),
-                model=self.upsampler1024,
-                model_kwargs=[{
-                    'y': y,
-                    'concat': imgs1024
-                }, {
-                    'y': zero_y,
-                    'concat': imgs1024
-                }],
-                guide_scale=guide_1024,
-                percentile=0.995,
-                ddim_timesteps=timesteps_1024,
-                eta=eta_1024).clamp_(-1, 1)
+                # upsampler1024
+                imgs1024 = F.interpolate(
+                    imgs256,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+                imgs1024 = self.upsampler1024_diffusion.dpm_solver_sample_loop(
+                    noise=torch.randn_like(imgs1024),
+                    model=self.upsampler1024,
+                    model_kwargs=[{
+                        'y': y,
+                        'concat': imgs1024
+                    }, {
+                        'y': zero_y,
+                        'concat': imgs1024
+                    }],
+                    guide_scale=guide_1024,
+                    percentile=0.995,
+                    dpm_solver_timesteps=timesteps_1024,
+                    order=3,
+                    skip_type='logSNR',
+                    method='singlestep',
+                    t_start=None).clamp_(-1, 1)
+            elif solver == 'ddim':
+                # prior
+                x0 = self.prior_diffusion.ddim_sample_loop(
+                    noise=torch.randn_like(y),
+                    model=self.prior,
+                    model_kwargs=[{
+                        'y': y
+                    }, {
+                        'y': zero_y
+                    }],
+                    guide_scale=guide_prior,
+                    ddim_timesteps=timesteps_prior,
+                    eta=eta_prior)
+
+                # decoder
+                imgs64 = self.decoder_diffusion.ddim_sample_loop(
+                    noise=torch.randn(batch_size, 3, 64, 64).to(device),
+                    model=self.decoder,
+                    model_kwargs=[{
+                        'y': x0
+                    }, {
+                        'y': torch.zeros_like(x0)
+                    }],
+                    guide_scale=guide_64,
+                    percentile=0.995,
+                    ddim_timesteps=timesteps_64,
+                    eta=eta_64).clamp_(-1, 1)
+
+                # upsampler256
+                imgs256 = F.interpolate(
+                    imgs64,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+                imgs256 = self.upsampler256_diffusion.ddim_sample_loop(
+                    noise=torch.randn_like(imgs256),
+                    model=self.upsampler256,
+                    model_kwargs=[{
+                        'y': y,
+                        'concat': imgs256
+                    }, {
+                        'y': zero_y,
+                        'concat': imgs256
+                    }],
+                    guide_scale=guide_256,
+                    percentile=0.995,
+                    ddim_timesteps=timesteps_256,
+                    eta=eta_256).clamp_(-1, 1)
+
+                # upsampler1024
+                imgs1024 = F.interpolate(
+                    imgs256,
+                    scale_factor=4.0,
+                    mode='bilinear',
+                    align_corners=False)
+                imgs1024 = self.upsampler1024_diffusion.ddim_sample_loop(
+                    noise=torch.randn_like(imgs1024),
+                    model=self.upsampler1024,
+                    model_kwargs=[{
+                        'y': y,
+                        'concat': imgs1024
+                    }, {
+                        'y': zero_y,
+                        'concat': imgs1024
+                    }],
+                    guide_scale=guide_1024,
+                    percentile=0.995,
+                    ddim_timesteps=timesteps_1024,
+                    eta=eta_1024).clamp_(-1, 1)
+            else:
+                raise ValueError(
+                    'currently only supports "ddim" and "dpm-solve" solvers')
 
         # output ([B, C, H, W] within range [0, 1])
         imgs1024 = imgs1024.add_(1).mul_(255 / 2.0).permute(0, 2, 3, 1).cpu()
@@ -245,7 +335,7 @@ class MultiStageDiffusionForTextToImageSynthesis(TorchModel):
         if 'text' not in input:
             raise ValueError('input should contain "text", but not found')
 
-        # ddim sampling
+        # sampling
         imgs = self.model.synthesis(
             text=input.get('text'),
             tokenizer=input.get('tokenizer', 'clip'),
@@ -261,6 +351,7 @@ class MultiStageDiffusionForTextToImageSynthesis(TorchModel):
             eta_prior=input.get('eta_prior', 0.0),
             eta_64=input.get('eta_64', 0.0),
             eta_256=input.get('eta_256', 0.0),
-            eta_1024=input.get('eta_1024', 0.0))
+            eta_1024=input.get('eta_1024', 0.0),
+            solver=input.get('solver', 'dpm-solver'))
         imgs = [np.array(u)[..., ::-1] for u in imgs]
         return imgs

@@ -21,7 +21,7 @@ class MGLMTextSummarizationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[MGLMForTextSummarization, str],
-                 preprocessor: [Preprocessor] = None,
+                 preprocessor: Optional[Preprocessor] = None,
                  *args,
                  **kwargs):
         model = MGLMForTextSummarization(model) if isinstance(model,

@@ -63,16 +63,14 @@ class Text2TextGenerationPipeline(Pipeline):
 
             To view other examples plese check the tests/pipelines/test_text_generation.py.
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = Text2TextGenerationPreprocessor(
-                model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 128))
-        self.tokenizer = preprocessor.tokenizer
-        self.pipeline = model.pipeline.type
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = Text2TextGenerationPreprocessor(
+                self.model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 128))
+        self.tokenizer = self.preprocessor.tokenizer
+        self.pipeline = self.model.pipeline.type
+        self.model.eval()
 
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         """ Provide specific preprocess for text2text generation pipeline in order to handl multi tasks

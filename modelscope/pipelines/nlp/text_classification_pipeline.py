@@ -53,25 +53,24 @@ class TextClassificationPipeline(Pipeline):
         NOTE: Inputs of type 'str' are also supported. In this scenario, the 'first_sequence' and 'second_sequence'
             param will have no affection.
         """
-        model = Model.from_pretrained(model) if isinstance(model,
-                                                           str) else model
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
         if preprocessor is None:
-            if model.__class__.__name__ == 'OfaForAllTasks':
-                preprocessor = Preprocessor.from_pretrained(
-                    model_name_or_path=model.model_dir,
+            if self.model.__class__.__name__ == 'OfaForAllTasks':
+                self.preprocessor = Preprocessor.from_pretrained(
+                    model_name_or_path=self.model.model_dir,
                     type=Preprocessors.ofa_tasks_preprocessor,
                     field=Fields.multi_modal)
             else:
                 first_sequence = kwargs.pop('first_sequence', 'first_sequence')
                 second_sequence = kwargs.pop('second_sequence', None)
-                preprocessor = Preprocessor.from_pretrained(
-                    model if isinstance(model, str) else model.model_dir,
+                self.preprocessor = Preprocessor.from_pretrained(
+                    self.model
+                    if isinstance(self.model, str) else self.model.model_dir,
                     first_sequence=first_sequence,
                     second_sequence=second_sequence,
                     sequence_length=kwargs.pop('sequence_length', 512))
 
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.id2label = kwargs.get('id2label')
         if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label

@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.builder import MODELS, build_model
+from modelscope.models.builder import build_model
 from modelscope.utils.checkpoint import save_checkpoint, save_pretrained
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile, Tasks
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
 
@@ -94,6 +94,10 @@ class Model(ABC):
         if prefetched is not None:
             kwargs.pop('model_prefetched')
 
+        invoked_by = kwargs.get(Invoke.KEY)
+        if invoked_by is not None:
+            kwargs.pop(Invoke.KEY)
+
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
@@ -101,7 +105,13 @@ class Model(ABC):
                 raise RuntimeError(
                     'Expecting model is pre-fetched locally, but is not found.'
                 )
-            local_model_dir = snapshot_download(model_name_or_path, revision)
+
+            if invoked_by is not None:
+                invoked_by = {Invoke.KEY: invoked_by}
+            else:
+                invoked_by = {Invoke.KEY: Invoke.PRETRAINED}
+            local_model_dir = snapshot_download(
+                model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')
         if cfg_dict is not None:
             cfg = cfg_dict
@@ -133,6 +143,7 @@ class Model(ABC):
             model.cfg = cfg
 
         model.name = model_name_or_path
+        model.model_dir = local_model_dir
         return model
 
     def save_pretrained(self,

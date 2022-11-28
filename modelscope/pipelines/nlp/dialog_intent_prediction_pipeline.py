@@ -30,13 +30,11 @@ class DialogIntentPredictionPipeline(Pipeline):
             or a SpaceForDialogIntent instance.
             preprocessor (DialogIntentPredictionPreprocessor): An optional preprocessor instance.
         """
-        model = model if isinstance(
-            model, SpaceForDialogIntent) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = DialogIntentPredictionPreprocessor(model.model_dir)
-        self.model = model
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.categories = preprocessor.categories
+        if preprocessor is None:
+            self.preprocessor = DialogIntentPredictionPreprocessor(
+                self.model.model_dir)
+        self.categories = self.preprocessor.categories
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results

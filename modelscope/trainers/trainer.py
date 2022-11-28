@@ -14,7 +14,6 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.models.base import Model, TorchModel
@@ -98,12 +97,8 @@ class EpochBasedTrainer(BaseTrainer):
         self._seed = seed
         set_random_seed(self._seed)
         if isinstance(model, str):
-            if os.path.exists(model):
-                self.model_dir = model if os.path.isdir(
-                    model) else os.path.dirname(model)
-            else:
-                self.model_dir = snapshot_download(
-                    model, revision=model_revision)
+            self.model_dir = self.get_or_download_model_dir(
+                model, model_revision)
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)

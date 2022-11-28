@@ -21,7 +21,6 @@ class Hand2DKeypointsPipeline(EasyCVPipeline):
             model (str): model id on modelscope hub or local model path.
             model_file_pattern (str): model file pattern.
         """
-        self.model_dir = model
         super(Hand2DKeypointsPipeline, self).__init__(
             model=model,
             model_file_pattern=model_file_pattern,

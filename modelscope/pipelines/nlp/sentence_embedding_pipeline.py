@@ -32,14 +32,13 @@ class SentenceEmbeddingPipeline(Pipeline):
             the model if supplied.
             sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
         """
-        model = Model.from_pretrained(model) if isinstance(model,
-                                                           str) else model
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         if preprocessor is None:
-            preprocessor = Preprocessor.from_pretrained(
-                model.model_dir if isinstance(model, Model) else model,
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir
+                if isinstance(self.model, Model) else model,
                 first_sequence=first_sequence,
                 sequence_length=kwargs.pop('sequence_length', 128))
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

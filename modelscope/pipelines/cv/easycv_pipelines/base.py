@@ -11,7 +11,7 @@ from PIL import ImageFile
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.pipelines.util import is_official_hub_path
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import create_device
 
 
@@ -37,7 +37,9 @@ class EasyCVPipeline(object):
             assert is_official_hub_path(
                 model), 'Only support local model path and official hub path!'
             model_dir = snapshot_download(
-                model_id=model, revision=DEFAULT_MODEL_REVISION)
+                model_id=model,
+                revision=DEFAULT_MODEL_REVISION,
+                user_agent={Invoke.KEY: Invoke.PIPELINE})
 
         assert osp.isdir(model_dir)
         model_files = glob.glob(
@@ -48,6 +50,7 @@ class EasyCVPipeline(object):
 
         model_path = model_files[0]
         self.model_path = model_path
+        self.model_dir = model_dir
 
         # get configuration file from source model dir
         self.config_file = os.path.join(model_dir, ModelFile.CONFIGURATION)

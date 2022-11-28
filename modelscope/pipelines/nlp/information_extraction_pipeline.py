@@ -25,15 +25,12 @@ class InformationExtractionPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
-
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = RelationExtractionPreprocessor(
-                model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 512))
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = RelationExtractionPreprocessor(
+                self.model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 512))
+        self.model.eval()
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

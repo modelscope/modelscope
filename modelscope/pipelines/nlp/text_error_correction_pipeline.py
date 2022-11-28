@@ -40,14 +40,12 @@ class TextErrorCorrectionPipeline(Pipeline):
 
         To view other examples plese check the tests/pipelines/test_text_error_correction.py.
         """
-
-        model = model if isinstance(
-            model,
-            BartForTextErrorCorrection) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = TextErrorCorrectionPreprocessor(model.model_dir)
-        self.vocab = preprocessor.vocab
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
+        if preprocessor is None:
+            self.preprocessor = TextErrorCorrectionPreprocessor(
+                self.model.model_dir)
+        self.vocab = self.preprocessor.vocab
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

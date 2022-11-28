@@ -6,7 +6,8 @@ from typing import Any, Dict, Optional, Sequence
 
 from modelscope.metainfo import Models, Preprocessors
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModeKeys, Tasks
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
+                                       ModeKeys, Tasks)
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.logger import get_logger
 from .builder import build_preprocessor
@@ -194,7 +195,9 @@ class Preprocessor(ABC):
         """
         if not os.path.exists(model_name_or_path):
             model_dir = snapshot_download(
-                model_name_or_path, revision=revision)
+                model_name_or_path,
+                revision=revision,
+                user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
         else:
             model_dir = model_name_or_path
         if cfg_dict is None:

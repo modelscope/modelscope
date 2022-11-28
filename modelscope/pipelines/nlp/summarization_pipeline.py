@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal import OfaForAllTasks
@@ -18,7 +18,7 @@ class SummarizationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: [Preprocessor] = None,
+                 preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
         """Use `model` and `preprocessor` to create a Summarization pipeline for prediction.
 
@@ -27,19 +27,10 @@ class SummarizationPipeline(Pipeline):
             or a model id from the model hub, or a model instance.
             preprocessor (Preprocessor): An optional preprocessor instance.
         """
-        super().__init__(model=model)
-        assert isinstance(model, str) or isinstance(model, Model), \
-            'model must be a single str or OfaForAllTasks'
-        if isinstance(model, str):
-            pipe_model = Model.from_pretrained(model)
-        elif isinstance(model, Model):
-            pipe_model = model
-        else:
-            raise NotImplementedError
-        pipe_model.model.eval()
-        if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
-            preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
-        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
+        if preprocessor is None and isinstance(self.model, OfaForAllTasks):
+            self.preprocessor = OfaPreprocessor(model_dir=self.model.model_dir)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

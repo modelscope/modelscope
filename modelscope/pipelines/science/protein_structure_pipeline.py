@@ -105,22 +105,16 @@ class ProteinStructurePipeline(Pipeline):
             >>> print(pipeline_ins(protein))
 
         """
-        import copy
-        model_path = copy.deepcopy(model) if isinstance(model, str) else None
-        cfg = read_config(model_path)  # only model is str
-        self.cfg = cfg
-        self.config = model_config(
-            cfg['pipeline']['model_name'])  # alphafold config
-        model = model if isinstance(
-            model, Model) else Model.from_pretrained(model_path)
-        self.postprocessor = cfg.pop('postprocessor', None)
-        if preprocessor is None:
-            preprocessor_cfg = cfg.preprocessor
-            preprocessor = build_preprocessor(preprocessor_cfg, Fields.science)
-        model.eval()
-        model.model.inference_mode()
-        model.model_dir = model_path
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.cfg = read_config(self.model.model_dir)
+        self.config = model_config(
+            self.cfg['pipeline']['model_name'])  # alphafold config
+        self.postprocessor = self.cfg.pop('postprocessor', None)
+        if preprocessor is None:
+            preprocessor_cfg = self.cfg.preprocessor
+            self.preprocessor = build_preprocessor(preprocessor_cfg,
+                                                   Fields.science)
+        self.model.eval()
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, pipeline_parameters, pipeline_parameters

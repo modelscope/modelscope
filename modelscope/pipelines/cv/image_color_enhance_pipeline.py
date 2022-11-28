@@ -32,10 +32,8 @@ class ImageColorEnhancePipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        model = model if isinstance(
-            model, ImageColorEnhance) else Model.from_pretrained(model)
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
 
         if torch.cuda.is_available():
             self._device = torch.device('cuda')

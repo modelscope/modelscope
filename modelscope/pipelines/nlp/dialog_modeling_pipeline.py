@@ -29,13 +29,10 @@ class DialogModelingPipeline(Pipeline):
             or a SpaceForDialogModeling instance.
             preprocessor (DialogModelingPreprocessor): An optional preprocessor instance.
         """
-        model = model if isinstance(
-            model, SpaceForDialogModeling) else Model.from_pretrained(model)
-        self.model = model
-        if preprocessor is None:
-            preprocessor = DialogModelingPreprocessor(model.model_dir)
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.preprocessor = preprocessor
+        if preprocessor is None:
+            self.preprocessor = DialogModelingPreprocessor(
+                self.model.model_dir)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
         """process the prediction results

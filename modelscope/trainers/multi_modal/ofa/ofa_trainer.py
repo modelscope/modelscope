@@ -23,7 +23,7 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.parallel.utils import is_parallel
 from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigKeys,
-                                       ModeKeys)
+                                       Invoke, ModeKeys)
 from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
                                 get_schedule)
 
@@ -49,7 +49,8 @@ class OFATrainer(EpochBasedTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             **kwargs):
-        model = Model.from_pretrained(model, revision=model_revision)
+        model = Model.from_pretrained(
+            model, revision=model_revision, invoked_by=Invoke.TRAINER)
         model_dir = model.model_dir
         self.cfg_modify_fn = cfg_modify_fn
         cfg = self.rebuild_config(Config.from_file(cfg_file))

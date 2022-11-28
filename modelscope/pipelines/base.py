@@ -16,7 +16,7 @@ from modelscope.outputs import TASK_OUTPUTS
 from modelscope.pipeline_inputs import TASK_INPUTS, check_input_type
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Frameworks, ModelFile
+from modelscope.utils.constant import Frameworks, Invoke, ModelFile
 from modelscope.utils.device import (create_device, device_placement,
                                      verify_device)
 from modelscope.utils.hub import read_config, snapshot_download
@@ -47,8 +47,10 @@ class Pipeline(ABC):
             logger.info(f'initiate model from location {model}.')
             # expecting model has been prefetched to local cache beforehand
             return Model.from_pretrained(
-                model, model_prefetched=True,
-                device=self.device_name) if is_model(model) else model
+                model,
+                device=self.device_name,
+                model_prefetched=True,
+                invoked_by=Invoke.PIPELINE) if is_model(model) else model
         else:
             return model
 
@@ -383,15 +385,12 @@ class DistributedPipeline(Pipeline):
                  preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
                  auto_collate=True,
                  **kwargs):
-        self.preprocessor = preprocessor
+        super().__init__(model=model, preprocessor=preprocessor, kwargs=kwargs)
         self._model_prepare = False
         self._model_prepare_lock = Lock()
         self._auto_collate = auto_collate
 
-        if os.path.exists(model):
-            self.model_dir = model
-        else:
-            self.model_dir = snapshot_download(model)
+        self.model_dir = self.model.model_dir
         self.cfg = read_config(self.model_dir)
         self.world_size = self.cfg.model.world_size
         self.model_pool = None

@@ -7,7 +7,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict, check_config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Tasks
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, Tasks
 from modelscope.utils.hub import read_config
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline
@@ -209,6 +209,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.referring_video_object_segmentation:
     (Pipelines.referring_video_object_segmentation,
      'damo/cv_swin-t_referring_video-object-segmentation'),
+    Tasks.video_summarization: (Pipelines.video_summarization,
+                                'damo/cv_googlenet_pgl-video-summarization'),
 }
 
 
@@ -220,14 +222,19 @@ def normalize_model_input(model, model_revision):
         # skip revision download if model is a local directory
         if not os.path.exists(model):
             # note that if there is already a local copy, snapshot_download will check and skip downloading
-            model = snapshot_download(model, revision=model_revision)
+            model = snapshot_download(
+                model,
+                revision=model_revision,
+                user_agent={Invoke.KEY: Invoke.PIPELINE})
     elif isinstance(model, list) and isinstance(model[0], str):
         for idx in range(len(model)):
             if is_official_hub_path(
                     model[idx],
                     model_revision) and not os.path.exists(model[idx]):
                 model[idx] = snapshot_download(
-                    model[idx], revision=model_revision)
+                    model[idx],
+                    revision=model_revision,
+                    user_agent={Invoke.KEY: Invoke.PIPELINE})
     return model
 
 

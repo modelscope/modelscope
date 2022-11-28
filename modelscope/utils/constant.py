@@ -291,6 +291,14 @@ class ModelFile(object):
     TS_MODEL_FILE = 'model.ts'
 
 
+class Invoke(object):
+    KEY = 'invoked_by'
+    PRETRAINED = 'from_pretrained'
+    PIPELINE = 'pipeline'
+    TRAINER = 'trainer'
+    PREPROCESSOR = 'preprocessor'
+
+
 class ConfigFields(object):
     """ First level keyword in configuration file
     """

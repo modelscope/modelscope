@@ -31,16 +31,13 @@ class DialogStateTrackingPipeline(Pipeline):
             from the model hub, or a SpaceForDialogStateTracking instance.
             preprocessor (DialogStateTrackingPreprocessor): An optional preprocessor instance.
         """
-
-        model = model if isinstance(
-            model, SpaceForDST) else Model.from_pretrained(model)
-        self.model = model
-        if preprocessor is None:
-            preprocessor = DialogStateTrackingPreprocessor(model.model_dir)
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = DialogStateTrackingPreprocessor(
+                self.model.model_dir)
 
-        self.tokenizer = preprocessor.tokenizer
-        self.config = preprocessor.config
+        self.tokenizer = self.preprocessor.tokenizer
+        self.config = self.preprocessor.config
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results

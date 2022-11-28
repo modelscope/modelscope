@@ -39,15 +39,14 @@ class TokenClassificationPipeline(Pipeline):
             model (str or Model): A model instance or a model local dir or a model id in the model hub.
             preprocessor (Preprocessor): a preprocessor instance, must not be None.
         """
-        model = Model.from_pretrained(model) if isinstance(model,
-                                                           str) else model
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
         if preprocessor is None:
-            preprocessor = Preprocessor.from_pretrained(
-                model.model_dir,
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir,
                 sequence_length=kwargs.pop('sequence_length', 128))
-        model.eval()
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
+
         self.id2label = kwargs.get('id2label')
         if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label

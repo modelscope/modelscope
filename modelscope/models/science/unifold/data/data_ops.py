@@ -730,7 +730,7 @@ def make_msa_feat_v2(batch):
         batch['cluster_profile'],
         deletion_mean_value,
     ]
-    batch['msa_feat'] = torch.concat(msa_feat, dim=-1)
+    batch['msa_feat'] = torch.cat(msa_feat, dim=-1)
     return batch
 
 
@@ -1320,7 +1320,7 @@ def get_contiguous_crop_idx(
                              asym_offset + this_start + csz))
             asym_offset += ll
 
-    return torch.concat(crop_idxs)
+    return torch.cat(crop_idxs)
 
 
 def get_spatial_crop_idx(

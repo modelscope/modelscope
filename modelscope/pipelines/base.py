@@ -233,7 +233,7 @@ class Pipeline(ABC):
                 batch_data[k] = value_list
         for k in batch_data.keys():
             if isinstance(batch_data[k][0], torch.Tensor):
-                batch_data[k] = torch.concat(batch_data[k])
+                batch_data[k] = torch.cat(batch_data[k])
         return batch_data
 
     def _process_batch(self, input: List[Input], batch_size,

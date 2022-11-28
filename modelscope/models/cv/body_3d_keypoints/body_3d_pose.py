@@ -224,8 +224,8 @@ class BodyKeypointsDetection3D(TorchModel):
             lst_pose2d_cannoical.append(pose2d_canonical[:,
                                                          i - pad:i + pad + 1])
 
-        input_pose2d_rr = torch.concat(lst_pose2d_cannoical, axis=0)
-        input_pose2d_cannoical = torch.concat(lst_pose2d_cannoical, axis=0)
+        input_pose2d_rr = torch.cat(lst_pose2d_cannoical, axis=0)
+        input_pose2d_cannoical = torch.cat(lst_pose2d_cannoical, axis=0)
 
         if self.cfg.model.MODEL.USE_CANONICAL_COORDS:
             input_pose2d_abs = input_pose2d_cannoical.clone()

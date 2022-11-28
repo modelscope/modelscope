@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 
 from modelscope.outputs import OutputKeys
@@ -439,3 +440,11 @@ def show_image_object_detection_auto_result(img_path,
     if save_path is not None:
         cv2.imwrite(save_path, img)
     return img
+
+
+def depth_to_color(depth):
+    colormap = plt.get_cmap('plasma')
+    depth_color = (colormap(
+        (depth.max() - depth) / depth.max()) * 2**8).astype(np.uint8)[:, :, :3]
+    depth_color = cv2.cvtColor(depth_color, cv2.COLOR_RGB2BGR)
+    return depth_color

@@ -107,9 +107,9 @@ class Model(ABC):
                 )
 
             if invoked_by is not None:
-                invoked_by = {Invoke.KEY: invoked_by}
+                invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
             else:
-                invoked_by = {Invoke.KEY: Invoke.PRETRAINED}
+                invoked_by = '%s/%s' % (Invoke.KEY, Invoke.PRETRAINED)
             local_model_dir = snapshot_download(
                 model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')

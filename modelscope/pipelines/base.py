@@ -168,7 +168,6 @@ class Pipeline(ABC):
         kwargs['preprocess_params'] = preprocess_params
         kwargs['forward_params'] = forward_params
         kwargs['postprocess_params'] = postprocess_params
-
         if isinstance(input, list):
             if batch_size is None:
                 output = []

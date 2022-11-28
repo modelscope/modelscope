@@ -28,7 +28,7 @@ class ExtractiveSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
         result = p(documents=documents)
         return result
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_doc(self):
         logger.info(
             'Run doc extractive summarization (PoNet) with one document ...')
@@ -37,7 +37,7 @@ class ExtractiveSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
             model_id=self.ponet_doc_model_id, documents=self.sentences)
         print(result[OutputKeys.TEXT])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_topic(self):
         logger.info(
             'Run topic extractive summarization (PoNet) with one document ...')

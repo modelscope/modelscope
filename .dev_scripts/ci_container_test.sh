@@ -1,4 +1,5 @@
 if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
     pip install -r requirements/tests.txt
     git config --global --add safe.directory /Maas-lib
     git config --global user.email tmp

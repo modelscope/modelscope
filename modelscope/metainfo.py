@@ -92,6 +92,7 @@ class Models(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
+    wenet_asr = 'wenet-asr'
 
     # multi-modal models
     ofa = 'ofa'
@@ -267,6 +268,7 @@ class Pipelines(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     asr_inference = 'asr-inference'
+    asr_wenet_inference = 'asr-wenet-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

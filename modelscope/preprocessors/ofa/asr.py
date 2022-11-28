@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 from typing import Any, Dict
 
+import librosa
 import soundfile as sf
 import torch
 from fairseq.data.audio.feature_transforms import \
@@ -54,9 +55,13 @@ class OfaASRPreprocessor(OfaBasePreprocessor):
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         speed = random.choice([0.9, 1.0, 1.1])
-        wav, sr = sf.read(self.column_map['wav'])
+        wav, sr = librosa.load(data[self.column_map['wav']], 16000, mono=True)
         fbank = self.prepare_fbank(
-            torch.tensor([wav], dtype=torch.float32), sr, speed, is_train=True)
+            torch.tensor([wav], dtype=torch.float32),
+            sr,
+            speed,
+            target_sample_rate=16000,
+            is_train=True)
         fbank_mask = torch.tensor([True])
         sample = {
             'fbank': fbank,
@@ -86,11 +91,12 @@ class OfaASRPreprocessor(OfaBasePreprocessor):
 
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
         speed = 1.0
-        wav, sr = sf.read(data[self.column_map['wav']])
+        wav, sr = librosa.load(data[self.column_map['wav']], 16000, mono=True)
         fbank = self.prepare_fbank(
             torch.tensor([wav], dtype=torch.float32),
             sr,
             speed,
+            target_sample_rate=16000,
             is_train=False)
         fbank_mask = torch.tensor([True])
 

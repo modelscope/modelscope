@@ -9,11 +9,11 @@ import pandas as pd
 import pyarrow as pa
 from datasets.info import DatasetInfo
 from datasets.naming import camelcase_to_snakecase
-from datasets.packaged_modules import _EXTENSION_TO_MODULE as exts
 from datasets.packaged_modules import csv
 from datasets.utils.filelock import FileLock
 
-from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
+from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
+                                       EXTENSIONS_TO_LOAD, DownloadMode)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -198,22 +198,27 @@ class ExternalDataset(object):
         self.ext_dataset = None
         self.split_data_files = {k: [] for k, _ in split_path_dict.items()}
         file_ext = ''
+
         for split_name, split_dir in split_path_dict.items():
-            if os.path.isdir(split_dir):
+            if isinstance(split_dir, str) and os.path.isdir(split_dir):
                 split_file_names = os.listdir(split_dir)
                 set_files_exts = set([
                     os.path.splitext(file_name)[-1].strip('.')
                     for file_name in split_file_names
                 ])
+                if '' in set_files_exts:
+                    continue
                 # ensure these files have same extensions
                 if len(set_files_exts) != 1:
-                    supported_exts = ','.join(exts.keys())
+                    supported_exts = ','.join(EXTENSIONS_TO_LOAD.keys())
                     logger.error(
                         f'Split-{split_name} has been ignored, please flatten your folder structure, '
                         f'and make sure these files have same extensions. '
                         f'Supported extensions: {supported_exts} .')
                     continue
                 file_ext = list(set_files_exts)[0]
+                if file_ext not in EXTENSIONS_TO_LOAD:
+                    continue
 
                 split_file_paths = [
                     os.path.join(split_dir, file_name)
@@ -221,8 +226,8 @@ class ExternalDataset(object):
                 ]
                 self.split_data_files[split_name] = split_file_paths
 
-        if file_ext and file_ext in exts:
-            file_ext = exts.get(file_ext)
+        if file_ext:
+            file_ext = EXTENSIONS_TO_LOAD.get(file_ext)
             self.ext_dataset = datasets.load_dataset(
                 file_ext, data_files=self.split_data_files, **config_kwargs)
 

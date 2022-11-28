@@ -390,3 +390,14 @@ class Devices:
     """device used for training and inference"""
     cpu = 'cpu'
     gpu = 'gpu'
+
+
+# Supported extensions for text datasets.
+EXTENSIONS_TO_LOAD = {
+    'csv': 'csv',
+    'tsv': 'csv',
+    'json': 'json',
+    'jsonl': 'json',
+    'parquet': 'parquet',
+    'txt': 'text'
+}

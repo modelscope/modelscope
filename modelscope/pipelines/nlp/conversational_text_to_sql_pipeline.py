@@ -32,12 +32,10 @@ class ConversationalTextToSqlPipeline(Pipeline):
             preprocessor (ConversationalTextToSqlPreprocessor):
                 a preprocessor instance
         """
-        model = model if isinstance(
-            model, StarForTextToSql) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = ConversationalTextToSqlPreprocessor(model.model_dir)
-
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = ConversationalTextToSqlPreprocessor(
+                self.model.model_dir)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results

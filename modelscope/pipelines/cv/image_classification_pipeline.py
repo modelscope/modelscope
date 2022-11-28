@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import cv2
 import numpy as np
@@ -25,22 +25,15 @@ class ImageClassificationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: [Preprocessor] = None,
+                 preprocessor: Optional[Preprocessor] = None,
                  **kwargs):
-        super().__init__(model=model)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         assert isinstance(model, str) or isinstance(model, Model), \
             'model must be a single str or OfaForAllTasks'
-        if isinstance(model, str):
-            pipe_model = Model.from_pretrained(model)
-        elif isinstance(model, Model):
-            pipe_model = model
-        else:
-            raise NotImplementedError
-        pipe_model.model.eval()
-        pipe_model.to(get_device())
-        if preprocessor is None and isinstance(pipe_model, OfaForAllTasks):
-            preprocessor = OfaPreprocessor(model_dir=pipe_model.model_dir)
-        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
+        self.model.to(get_device())
+        if preprocessor is None and isinstance(self.model, OfaForAllTasks):
+            self.preprocessor = OfaPreprocessor(model_dir=self.model.model_dir)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

@@ -8,7 +8,6 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.animal_recognition import resnet
 from modelscope.outputs import OutputKeys
@@ -67,16 +66,12 @@ class GeneralRecognitionPipeline(Pipeline):
             filter_param(src_params, own_state)
             model.load_state_dict(own_state)
 
-        self.model = resnest101(num_classes=54092)
-        local_model_dir = model
         device = 'cpu'
-        if osp.exists(model):
-            local_model_dir = model
-        else:
-            local_model_dir = snapshot_download(model)
-        self.local_path = local_model_dir
+        self.local_path = self.model
         src_params = torch.load(
-            osp.join(local_model_dir, ModelFile.TORCH_MODEL_FILE), device)
+            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), device)
+
+        self.model = resnest101(num_classes=54092)
         load_pretrained(self.model, src_params)
         logger.info('load model done')
 

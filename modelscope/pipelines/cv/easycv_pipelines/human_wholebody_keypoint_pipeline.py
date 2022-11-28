@@ -24,7 +24,6 @@ class HumanWholebodyKeypointsPipeline(EasyCVPipeline):
             model (str): model id on modelscope hub or local model path.
             model_file_pattern (str): model file pattern.
         """
-        self.model_dir = model
         super(HumanWholebodyKeypointsPipeline, self).__init__(
             model=model,
             model_file_pattern=model_file_pattern,

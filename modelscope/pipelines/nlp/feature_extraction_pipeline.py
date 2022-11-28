@@ -46,21 +46,18 @@ class FeatureExtractionPipeline(Pipeline):
 
 
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-
-        if preprocessor is None:
-            preprocessor = NLPPreprocessor(
-                model.model_dir,
-                padding=kwargs.pop('padding', False),
-                sequence_length=kwargs.pop('sequence_length', 128))
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
-        self.preprocessor = preprocessor
+        if preprocessor is None:
+            self.preprocessor = NLPPreprocessor(
+                self.model.model_dir,
+                padding=kwargs.pop('padding', False),
+                sequence_length=kwargs.pop('sequence_length', 128))
+        self.model.eval()
+
         self.config = Config.from_file(
-            os.path.join(model.model_dir, ModelFile.CONFIGURATION))
-        self.tokenizer = preprocessor.tokenizer
+            os.path.join(self.model.model_dir, ModelFile.CONFIGURATION))
+        self.tokenizer = self.preprocessor.tokenizer
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

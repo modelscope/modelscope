@@ -1,11 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 import time
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.config import Config
+from modelscope.utils.constant import Invoke
 from .utils.log_buffer import LogBuffer
 
 
@@ -31,6 +34,17 @@ class BaseTrainer(ABC):
             self.args = None
         self.log_buffer = LogBuffer()
         self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
+    def get_or_download_model_dir(self, model, model_revision=None):
+        if os.path.exists(model):
+            model_cache_dir = model if os.path.isdir(
+                model) else os.path.dirname(model)
+        else:
+            model_cache_dir = snapshot_download(
+                model,
+                revision=model_revision,
+                user_agent={Invoke.KEY: Invoke.TRAINER})
+        return model_cache_dir
 
     @abstractmethod
     def train(self, *args, **kwargs):

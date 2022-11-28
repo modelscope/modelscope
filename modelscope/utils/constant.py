@@ -44,6 +44,7 @@ class CVTasks(object):
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
+    image_depth_estimation = 'image-depth-estimation'
     portrait_matting = 'portrait-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'
@@ -291,6 +292,14 @@ class ModelFile(object):
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
     TS_MODEL_FILE = 'model.ts'
+
+
+class Invoke(object):
+    KEY = 'invoked_by'
+    PRETRAINED = 'from_pretrained'
+    PIPELINE = 'pipeline'
+    TRAINER = 'trainer'
+    PREPROCESSOR = 'preprocessor'
 
 
 class ConfigFields(object):

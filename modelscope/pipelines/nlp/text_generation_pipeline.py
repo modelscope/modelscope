@@ -51,15 +51,14 @@ class TextGenerationPipeline(Pipeline):
 
             To view other examples plese check the tests/pipelines/test_text_generation.py.
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-        cfg = read_config(model.model_dir)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        cfg = read_config(self.model.model_dir)
         self.postprocessor = cfg.pop('postprocessor', 'decode')
         if preprocessor is None:
             preprocessor_cfg = cfg.preprocessor
             preprocessor_cfg.update({
                 'model_dir':
-                model.model_dir,
+                self.model.model_dir,
                 'first_sequence':
                 first_sequence,
                 'second_sequence':
@@ -67,9 +66,9 @@ class TextGenerationPipeline(Pipeline):
                 'sequence_length':
                 kwargs.pop('sequence_length', 128)
             })
-            preprocessor = build_preprocessor(preprocessor_cfg, Fields.nlp)
-        model.eval()
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+            self.preprocessor = build_preprocessor(preprocessor_cfg,
+                                                   Fields.nlp)
+        self.model.eval()
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}

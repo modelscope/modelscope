@@ -120,6 +120,8 @@ class NLPTasks(object):
     fill_mask = 'fill-mask'
     text_summarization = 'text-summarization'
     question_answering = 'question-answering'
+    code_translation = 'code-translation'
+    code_generation = 'code-generation'
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
     text_error_correction = 'text-error-correction'

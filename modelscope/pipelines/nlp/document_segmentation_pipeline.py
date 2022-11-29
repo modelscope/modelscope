@@ -31,27 +31,22 @@ class DocumentSegmentationPipeline(Pipeline):
                  model: Union[Model, str],
                  preprocessor: DocumentSegmentationPreprocessor = None,
                  **kwargs):
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-
-        self.model_dir = model.model_dir
-        self.model_cfg = model.forward()
+        self.model_dir = self.model.model_dir
+        self.model_cfg = self.model.forward()
 
         if self.model_cfg['type'] == 'bert':
-            config = BertConfig.from_pretrained(model.model_dir, num_labels=2)
+            config = BertConfig.from_pretrained(self.model_dir, num_labels=2)
         elif self.model_cfg['type'] == 'ponet':
-            config = PoNetConfig.from_pretrained(model.model_dir, num_labels=2)
+            config = PoNetConfig.from_pretrained(self.model_dir, num_labels=2)
 
-        self.document_segmentation_model = model.build_with_config(
+        self.document_segmentation_model = self.model.build_with_config(
             config=config)
 
         if preprocessor is None:
-            preprocessor = DocumentSegmentationPreprocessor(
-                self.model_dir, config)
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-
-        self.preprocessor = preprocessor
+            self.preprocessor = DocumentSegmentationPreprocessor(
+                self.model.model_dir, config)
 
     def __call__(
             self, documents: Union[List[List[str]], List[str],

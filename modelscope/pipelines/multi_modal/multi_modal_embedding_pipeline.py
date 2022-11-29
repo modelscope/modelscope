@@ -28,20 +28,13 @@ class MultiModalEmbeddingPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        if isinstance(model, str):
-            pipe_model = Model.from_pretrained(model)
-        elif isinstance(model, Model):
-            pipe_model = model
-        else:
-            raise NotImplementedError('model must be a single str')
-        pipe_model.eval()
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
         if preprocessor is None:
-            if isinstance(pipe_model, CLIPForMultiModalEmbedding):
-                preprocessor = CLIPPreprocessor(pipe_model.model_dir)
+            if isinstance(self.model, CLIPForMultiModalEmbedding):
+                self.preprocessor = CLIPPreprocessor(self.model.model_dir)
             else:
                 raise NotImplementedError
-
-        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         return self.model(self.preprocess(input))

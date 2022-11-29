@@ -53,22 +53,18 @@ class FillMaskPipeline(Pipeline):
             If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
             To view other examples plese check the tests/pipelines/test_fill_mask.py.
         """
-
-        fill_mask_model = Model.from_pretrained(model) if isinstance(
-            model, str) else model
-
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         if preprocessor is None:
-            preprocessor = Preprocessor.from_pretrained(
-                fill_mask_model.model_dir,
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir,
                 first_sequence=first_sequence,
                 second_sequence=None,
                 sequence_length=kwargs.pop('sequence_length', 128))
-        fill_mask_model.eval()
-        assert hasattr(
-            preprocessor, 'mask_id'
-        ), 'The input preprocessor should have the mask_id attribute.'
-        super().__init__(
-            model=fill_mask_model, preprocessor=preprocessor, **kwargs)
+            assert hasattr(
+                self.preprocessor, 'mask_id'
+            ), 'The input preprocessor should have the mask_id attribute.'
+
+        self.model.eval()
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

@@ -10,7 +10,6 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import build_metric
 from modelscope.models.base import Model, TorchModel
@@ -478,11 +477,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         """
 
         if isinstance(model, str):
-            if os.path.exists(model):
-                model_dir = model if os.path.isdir(model) else os.path.dirname(
-                    model)
-            else:
-                model_dir = snapshot_download(model, revision=model_revision)
+            model_dir = self.get_or_download_model_dir(model, model_revision)
             if cfg_file is None:
                 cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
         else:

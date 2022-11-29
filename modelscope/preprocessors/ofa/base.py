@@ -170,10 +170,15 @@ class OfaBasePreprocessor:
             else load_image(path_or_url_or_pil)
         return image
 
-    def prepare_fbank(self, waveform, sample_rate, speed, is_train):
-        waveform, _ = torchaudio.sox_effects.apply_effects_tensor(
+    def prepare_fbank(self,
+                      waveform,
+                      sample_rate,
+                      speed,
+                      target_sample_rate=16000,
+                      is_train=False):
+        waveform, sample_rate = torchaudio.sox_effects.apply_effects_tensor(
             waveform, sample_rate,
-            [['speed', str(speed)], ['rate', str(sample_rate)]])
+            [['speed', str(speed)], ['rate', str(target_sample_rate)]])
         _waveform, _ = convert_waveform(
             waveform, sample_rate, to_mono=True, normalize_volume=True)
         # Kaldi compliance: 16-bit signed integers

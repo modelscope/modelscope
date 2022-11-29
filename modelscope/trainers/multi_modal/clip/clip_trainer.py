@@ -20,7 +20,7 @@ from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigKeys,
-                                       ModeKeys)
+                                       Invoke, ModeKeys)
 from .clip_trainer_utils import get_loss, get_optimizer_params, get_schedule
 
 
@@ -52,7 +52,8 @@ class CLIPTrainer(EpochBasedTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             **kwargs):
-        model = Model.from_pretrained(model, revision=model_revision)
+        model = Model.from_pretrained(
+            model, revision=model_revision, invoked_by=Invoke.TRAINER)
         # for training & eval, we convert the model from FP16 back to FP32
         # to compatible with modelscope amp training
         convert_models_to_fp32(model)

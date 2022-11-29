@@ -49,14 +49,13 @@ class WordSegmentationPipeline(TokenClassificationPipeline):
 
             To view other examples plese check the tests/pipelines/test_word_segmentation.py.
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-        if preprocessor is None:
-            preprocessor = TokenClassificationPreprocessor(
-                model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 128))
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = TokenClassificationPreprocessor(
+                self.model.model_dir,
+                sequence_length=kwargs.pop('sequence_length', 128))
+        self.model.eval()
+
         self.id2label = kwargs.get('id2label')
         if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label

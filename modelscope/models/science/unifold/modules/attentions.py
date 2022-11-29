@@ -217,7 +217,7 @@ class MSAAttention(nn.Module):
                 if mask is not None else None)
             outputs.append(
                 self.mha(q=cur_m, k=cur_m, v=cur_m, mask=cur_mask, bias=bias))
-        return torch.concat(outputs, dim=-3)
+        return torch.cat(outputs, dim=-3)
 
     def _attn_forward(self, m, mask, bias: Optional[torch.Tensor] = None):
         m = self.layer_norm_m(m)

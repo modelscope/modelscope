@@ -41,21 +41,22 @@ class TableQuestionAnsweringPipeline(Pipeline):
             preprocessor (TableQuestionAnsweringPreprocessor): a preprocessor instance
             db (Database): a database to store tables in the database
         """
-        model = model if isinstance(
-            model, TableQuestionAnswering) else Model.from_pretrained(model)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         if preprocessor is None:
-            preprocessor = TableQuestionAnsweringPreprocessor(model.model_dir)
+            self.preprocessor = TableQuestionAnsweringPreprocessor(
+                self.model.model_dir)
 
         # initilize tokenizer
         self.tokenizer = BertTokenizer(
-            os.path.join(model.model_dir, ModelFile.VOCAB_FILE))
+            os.path.join(self.model.model_dir, ModelFile.VOCAB_FILE))
 
         # initialize database
         if db is None:
             self.db = Database(
                 tokenizer=self.tokenizer,
-                table_file_path=os.path.join(model.model_dir, 'table.json'),
-                syn_dict_file_path=os.path.join(model.model_dir,
+                table_file_path=os.path.join(self.model.model_dir,
+                                             'table.json'),
+                syn_dict_file_path=os.path.join(self.model.model_dir,
                                                 'synonym.txt'))
         else:
             self.db = db
@@ -70,8 +71,6 @@ class TableQuestionAnsweringPipeline(Pipeline):
         self.col_type_dict = constant.col_type_dict
         self.schema_link_dict = constant.schema_link_dict
         self.limit_dict = constant.limit_dict
-
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def post_process_multi_turn(self, history_sql, result, table):
         action = self.action_ops[result['action']]

@@ -21,12 +21,10 @@ class FaqQuestionAnsweringPipeline(Pipeline):
                  model: Union[str, Model],
                  preprocessor: Preprocessor = None,
                  **kwargs):
-        model = Model.from_pretrained(model) if isinstance(model,
-                                                           str) else model
-        if preprocessor is None:
-            preprocessor = Preprocessor.from_pretrained(
-                model.model_dir, **kwargs)
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir, **kwargs)
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, pipeline_parameters, pipeline_parameters
@@ -37,11 +35,11 @@ class FaqQuestionAnsweringPipeline(Pipeline):
         sentence_vecs = sentence_vecs.detach().tolist()
         return sentence_vecs
 
-    def forward(self, inputs: [list, Dict[str, Any]],
+    def forward(self, inputs: Union[list, Dict[str, Any]],
                 **forward_params) -> Dict[str, Any]:
         return self.model(inputs)
 
-    def postprocess(self, inputs: [list, Dict[str, Any]],
+    def postprocess(self, inputs: Union[list, Dict[str, Any]],
                     **postprocess_params) -> Dict[str, Any]:
         scores = inputs['scores']
         labels = []

@@ -1,5 +1,5 @@
 ftfy>=6.0.3
-ofa>=0.0.2
+librosa
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
 # compatible with taming-transformers-rom1504

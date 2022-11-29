@@ -27,10 +27,10 @@ class TranslationQualityEstimationPipeline(Pipeline):
 
     def __init__(self, model: str, device: str = 'gpu', **kwargs):
         super().__init__(model=model, device=device)
-        model_file = os.path.join(model, ModelFile.TORCH_MODEL_FILE)
+        model_file = os.path.join(self.model, ModelFile.TORCH_MODEL_FILE)
         with open(model_file, 'rb') as f:
             buffer = io.BytesIO(f.read())
-        self.tokenizer = XLMRobertaTokenizer.from_pretrained(model)
+        self.tokenizer = XLMRobertaTokenizer.from_pretrained(self.model)
         self.model = torch.jit.load(
             buffer, map_location=self.device).to(self.device)
 

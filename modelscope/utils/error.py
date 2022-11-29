@@ -70,6 +70,11 @@ PYTORCH_IMPORT_ERROR = """
 installation page: https://pytorch.org/get-started/locally/ and follow the ones that match your environment.
 """
 
+WENETRUNTIME_IMPORT_ERROR = """
+{0} requires the wenetruntime library but it was not found in your environment. You can install it with pip:
+`pip install wenetruntime==TORCH_VER`
+"""
+
 # docstyle-ignore
 SCIPY_IMPORT_ERROR = """
 {0} requires the scipy library but it was not found in your environment. You can install it with pip:

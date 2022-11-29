@@ -435,9 +435,11 @@ TASK_OUTPUTS = {
 
     # referring video object segmentation result for a single video
     #   {
-    #       "masks": [np.array # 2D array with shape [height, width]]
+    #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
+    #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     #   }
-    Tasks.referring_video_object_segmentation: [OutputKeys.MASKS],
+    Tasks.referring_video_object_segmentation:
+    [OutputKeys.MASKS, OutputKeys.TIMESTAMPS],
 
     # ============ nlp tasks ===================
 
@@ -698,8 +700,9 @@ TASK_OUTPUTS = {
     #   "img_embedding": np.array with shape [1, D],
     #   "text_embedding": np.array with shape [1, D]
     # }
-    Tasks.multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
+    Tasks.multi_modal_embedding: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING
+    ],
 
     # generative multi-modal embedding result for single sample
     # {

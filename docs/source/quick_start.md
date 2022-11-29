@@ -74,7 +74,7 @@ pip install "modelscope[multi-modal]" -f https://modelscope.oss-cn-beijing.aliyu
 ModelScope的源码可以直接clone到本地：
 
 ```shell
-git clone git@gitlab.alibaba-inc.com:Ali-MaaS/MaaS-lib.git modelscope
+git clone git@github.com:modelscope/modelscope.git
 cd modelscope
 git fetch origin master
 git checkout master

@@ -10,6 +10,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_easycv_trainer.py
   - test_segformer.py
   - test_segmentation_pipeline.py
+  - test_movie_scene_segmentation.py
   - test_image_inpainting.py
   - test_mglm_text_summarization.py
   - test_team_transfer_trainer.py

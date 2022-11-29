@@ -87,6 +87,7 @@ class Models(object):
     ponet = 'ponet'
     T5 = 'T5'
     mglm = 'mglm'
+    codegeex = 'codegeex'
     bloom = 'bloom'
 
     # audio models
@@ -95,6 +96,7 @@ class Models(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
+    wenet_asr = 'wenet-asr'
 
     # multi-modal models
     ofa = 'ofa'
@@ -263,6 +265,8 @@ class Pipelines(object):
     extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
     mglm_text_summarization = 'mglm-text-summarization'
+    codegeex_code_translation = 'codegeex-code-translation'
+    codegeex_code_generation = 'codegeex-code-generation'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
@@ -275,6 +279,7 @@ class Pipelines(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     kws_kwsbp = 'kws-kwsbp'
     asr_inference = 'asr-inference'
+    asr_wenet_inference = 'asr-wenet-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

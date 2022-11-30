@@ -391,7 +391,7 @@ class CsanmtForTranslation(Model):
                         # Optimization
                         trainable_vars_list = [
                             v for v in tf.compat.v1.trainable_variables()
-                            if 'Shared_Semantic_Embedding' not in v.name
+                            if 'Semantic_Embedding' not in v.name
                             and 'mini_xlm_encoder' not in v.name
                         ]
                         grads_and_vars = opt.compute_gradients(

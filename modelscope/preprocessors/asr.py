@@ -103,6 +103,12 @@ class WavToScp(Preprocessor):
         else:
             code_base = None
         inputs['code_base'] = code_base
+        # decoding mode
+        if 'mode' in inputs['model_config']:
+            mode = inputs['model_config']['mode']
+        else:
+            mode = None
+        inputs['mode'] = mode
 
         if inputs['model_type'] == Frameworks.torch:
             assert inputs['model_config'].__contains__(
@@ -111,8 +117,6 @@ class WavToScp(Preprocessor):
                 'am_model_config'), 'am_model_config does not exist'
             assert inputs['model_config'].__contains__(
                 'asr_model_config'), 'asr_model_config does not exist'
-            assert inputs['model_config'].__contains__(
-                'asr_model_wav_config'), 'asr_model_wav_config does not exist'
 
             am_model_config: str = os.path.join(
                 inputs['model_workspace'],
@@ -127,9 +131,14 @@ class WavToScp(Preprocessor):
             assert os.path.exists(
                 asr_model_config), 'asr_model_config does not exist'
 
-            asr_model_wav_config: str = os.path.join(
-                inputs['model_workspace'],
-                inputs['model_config']['asr_model_wav_config'])
+            if 'asr_model_wav_config' in inputs['model_config']:
+                asr_model_wav_config: str = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['asr_model_wav_config'])
+            else:
+                asr_model_wav_config: str = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['asr_model_config'])
             assert os.path.exists(
                 asr_model_wav_config), 'asr_model_wav_config does not exist'
 

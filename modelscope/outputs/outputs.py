@@ -20,6 +20,7 @@ class OutputKeys(object):
     KEYPOINTS = 'keypoints'
     MASKS = 'masks'
     DEPTHS = 'depths'
+    DEPTHS_COLOR = 'depths_color'
     TEXT = 'text'
     POLYGONS = 'polygons'
     OUTPUT = 'output'

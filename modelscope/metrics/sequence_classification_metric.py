@@ -19,18 +19,27 @@ from .builder import METRICS, MetricKeys
 class SequenceClassificationMetric(Metric):
     """The metric computation class for sequence classification tasks.
 
-    This metric class calculates accuracy of the whole input batches.
+    This metric class calculates accuracy/F1 of all the input batches.
+
+    Args:
+        label_name: The key of label column in the 'inputs' arg.
+        logit_name: The key of logits column in the 'inputs' arg.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,
+                 label_name=OutputKeys.LABELS,
+                 logit_name=OutputKeys.LOGITS,
+                 *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.preds = []
         self.labels = []
+        self.label_name = label_name
+        self.logit_name = logit_name
 
     def add(self, outputs: Dict, inputs: Dict):
-        label_name = OutputKeys.LABEL if OutputKeys.LABEL in inputs else OutputKeys.LABELS
-        ground_truths = inputs[label_name]
-        eval_results = outputs[OutputKeys.LOGITS]
+        ground_truths = inputs[self.label_name]
+        eval_results = outputs[self.logit_name]
         self.preds.append(
             torch_nested_numpify(torch_nested_detach(eval_results)))
         self.labels.append(

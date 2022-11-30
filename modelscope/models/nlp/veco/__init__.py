@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from .text_classification import VecoForSequenceClassification
     from .token_classification import VecoForTokenClassification
     from .fill_mask import VecoForMaskedLM
-    from .tokenization import VecoTokenizer
-    from .tokenization_fast import VecoTokenizerFast
 else:
     _import_structure = {
         'configuration': ['VecoConfig'],
@@ -32,8 +30,6 @@ else:
         'text_classification': ['VecoForSequenceClassification'],
         'fill_mask': ['VecoForMaskedLM'],
         'token_classification': ['VecoForTokenClassification'],
-        'tokenization': ['VecoTokenizer'],
-        'tokenization_fast': ['VecoTokenizerFast'],
     }
 
     import sys

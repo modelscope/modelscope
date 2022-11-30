@@ -5,7 +5,7 @@ import os
 import time
 from collections import OrderedDict
 from shutil import copytree, ignore_patterns, rmtree
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, Optional, Union
 
 import json
 import torch
@@ -137,11 +137,18 @@ def load_checkpoint(filename,
     return checkpoint.get('meta', {})
 
 
+def save_configuration(target_folder, config: Dict):
+    if ConfigFields.pipeline not in config:
+        config[ConfigFields.pipeline] = {'type': config[ConfigFields.task]}
+    cfg_str = json.dumps(config, indent=4, cls=JSONIteratorEncoder)
+    config_file = os.path.join(target_folder, ModelFile.CONFIGURATION)
+    storage.write(cfg_str.encode(), config_file)
+
+
 def save_pretrained(model,
                     target_folder: Union[str, os.PathLike],
                     save_checkpoint_name: str = None,
                     save_function: Callable = None,
-                    config: Optional[dict] = None,
                     **kwargs):
     """save the pretrained model, its configuration and other related files to a directory, so that it can be re-loaded
 
@@ -154,11 +161,8 @@ def save_pretrained(model,
         save_checkpoint_name (str):
         The checkpoint name to be saved in the target_folder
 
-        save_function (Callable, optional):
+        save_function (Callable):
         The function to use to save the state dictionary.
-
-        config (Optional[dict], optional):
-        The config for the configuration.json, might not be identical with model.config
     """
 
     if save_function is None or not isinstance(save_function, Callable):
@@ -172,9 +176,6 @@ def save_pretrained(model,
     if save_checkpoint_name is None:
         raise Exception(
             'At least pass in one checkpoint name for saving method')
-
-    if config is None:
-        raise ValueError('Configuration is not valid')
 
     # Clean the folder from a previous save
     if os.path.exists(target_folder):
@@ -201,10 +202,3 @@ def save_pretrained(model,
         raise Exception(
             f'During saving checkpoints, the error of "{type(e).__name__} '
             f'with msg {e} throwed')
-
-    # Dump the config to the configuration.json
-    if ConfigFields.pipeline not in config:
-        config[ConfigFields.pipeline] = {'type': config[ConfigFields.task]}
-    cfg_str = json.dumps(config, indent=4, cls=JSONIteratorEncoder)
-    config_file = os.path.join(target_folder, ModelFile.CONFIGURATION)
-    storage.write(cfg_str.encode(), config_file)

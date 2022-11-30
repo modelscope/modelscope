@@ -10,7 +10,7 @@ from modelscope.models.nlp import BartForTextErrorCorrection
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import TextErrorCorrectionPreprocessor
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['TextErrorCorrectionPipeline']
@@ -20,17 +20,20 @@ __all__ = ['TextErrorCorrectionPipeline']
     Tasks.text_error_correction, module_name=Pipelines.text_error_correction)
 class TextErrorCorrectionPipeline(Pipeline):
 
-    def __init__(
-            self,
-            model: Union[BartForTextErrorCorrection, str],
-            preprocessor: Optional[TextErrorCorrectionPreprocessor] = None,
-            **kwargs):
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Optional[Preprocessor] = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 **kwargs):
         """use `model` and `preprocessor` to create a nlp text correction pipeline.
 
         Args:
             model (BartForTextErrorCorrection): A model instance, or a model local dir, or a model id in the model hub.
             preprocessor (TextErrorCorrectionPreprocessor): An optional preprocessor instance.
-
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         Example:
         >>> from modelscope.pipelines import pipeline
         >>> pipeline_ins = pipeline(
@@ -38,13 +41,17 @@ class TextErrorCorrectionPipeline(Pipeline):
         >>> sentence1 = '随着中国经济突飞猛近，建造工业与日俱增'
         >>> print(pipeline_ins(sentence1))
 
-        To view other examples plese check the tests/pipelines/test_text_error_correction.py.
+        To view other examples plese check tests/pipelines/test_text_error_correction.py.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         if preprocessor is None:
-            self.preprocessor = TextErrorCorrectionPreprocessor(
-                self.model.model_dir)
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir, **kwargs)
         self.vocab = self.preprocessor.vocab
 
     def forward(self, inputs: Dict[str, Any],

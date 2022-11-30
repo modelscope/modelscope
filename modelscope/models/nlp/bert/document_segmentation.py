@@ -5,37 +5,22 @@ from typing import Any, Dict
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from transformers.modeling_outputs import TokenClassifierOutput
-from transformers.models.bert.modeling_bert import (BertModel,
-                                                    BertPreTrainedModel)
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
+from modelscope.models import Model
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.ponet import PoNetConfig
+from modelscope.outputs import AttentionTokenClassificationModelOutput
 from modelscope.utils.constant import Tasks
+from .backbone import BertModel, BertPreTrainedModel
+from .configuration import BertConfig
 
 __all__ = ['BertForDocumentSegmentation']
 
 
 @MODELS.register_module(
     Tasks.document_segmentation, module_name=Models.bert_for_ds)
-class BertForDocumentSegmentation(Model):
-
-    def __init__(self, model_dir: str, model_config: Dict[str, Any], *args,
-                 **kwargs):
-        super().__init__(model_dir, model_config, *args, **kwargs)
-        self.model_cfg = model_config
-
-    def build_with_config(self, config):
-        self.bert_model = BertForDocumentSegmentationBase.from_pretrained(
-            self.model_dir, from_tf=False, config=config)
-        return self.bert_model
-
-    def forward(self) -> Dict[str, Any]:
-        return self.model_cfg
-
-
-class BertForDocumentSegmentationBase(BertPreTrainedModel):
+class BertForDocumentSegmentation(BertPreTrainedModel):
 
     _keys_to_ignore_on_load_unexpected = [r'pooler']
 
@@ -103,9 +88,25 @@ class BertForDocumentSegmentationBase(BertPreTrainedModel):
             output = (logits, ) + outputs[2:]
             return ((loss, ) + output) if loss is not None else output
 
-        return TokenClassifierOutput(
+        return AttentionTokenClassificationModelOutput(
             loss=loss,
             logits=logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+
+    @classmethod
+    def _instantiate(cls, model_dir, model_config: Dict[str, Any], **kwargs):
+        if model_config['type'] == 'bert':
+            config = BertConfig.from_pretrained(model_dir, num_labels=2)
+        elif model_config['type'] == 'ponet':
+            config = PoNetConfig.from_pretrained(model_dir, num_labels=2)
+        else:
+            raise ValueError(
+                f'Expected config type bert and ponet, which is : {model_config["type"]}'
+            )
+        model = super(Model, cls).from_pretrained(
+            model_dir, from_tf=False, config=config)
+        model.model_dir = model_dir
+        model.model_cfg = model_config
+        return model

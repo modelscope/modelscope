@@ -61,6 +61,8 @@ class EasyCVPipeline(object):
         self.cfg = Config.from_file(self.config_file)
         if 'device' in kwargs:
             kwargs['device'] = create_device(kwargs['device'])
+        if 'predictor_config' in kwargs:
+            kwargs.pop('predictor_config')
         self.predict_op = self._build_predict_op(**kwargs)
 
     def _build_predict_op(self, **kwargs):

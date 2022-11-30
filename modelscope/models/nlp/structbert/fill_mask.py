@@ -105,7 +105,7 @@ class SbertForMaskedLM(SbertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of StructBERT, the preprocessor of this model
-        is `modelscope.preprocessors.NLPPreprocessor`.
+        is `modelscope.preprocessors.FillMaskTransformersPreprocessor`.
 
     Parameters:
         config (:class:`~modelscope.models.nlp.structbert.SbertConfig`): Model configuration class with
@@ -213,9 +213,9 @@ class SbertForMaskedLM(SbertPreTrainedModel):
 
         Examples:
             >>> from modelscope.models import Model
-            >>> from modelscope.preprocessors import Preprocessor, NLPPreprocessor
+            >>> from modelscope.preprocessors import Preprocessor, FillMaskTransformersPreprocessor
             >>> model = Model.from_pretrained('damo/nlp_structbert_fill-mask_chinese-large')
-            >>> preprocessor = NLPPreprocessor('damo/nlp_structbert_fill-mask_chinese-large')
+            >>> preprocessor = FillMaskTransformersPreprocessor('damo/nlp_structbert_fill-mask_chinese-large')
             >>> # Call the model, return some tensors
             >>> print(model(**preprocessor('你师父差得动你，你师父可[MASK]不动我。')))
             >>> # Call the pipeline

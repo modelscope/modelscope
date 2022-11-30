@@ -12,7 +12,7 @@ import numpy as np
 
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.outputs import TASK_OUTPUTS
+from modelscope.outputs import TASK_OUTPUTS, ModelOutputBase
 from modelscope.pipeline_inputs import TASK_INPUTS, check_input_type
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
@@ -321,6 +321,8 @@ class Pipeline(ABC):
             return
         output_keys = TASK_OUTPUTS[task_name]
         missing_keys = []
+        input = input.keys() if isinstance(input,
+                                           (dict, ModelOutputBase)) else input
         for k in output_keys:
             if k not in input:
                 missing_keys.append(k)

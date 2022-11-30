@@ -10,8 +10,7 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (Preprocessor,
-                                      ZeroShotClassificationPreprocessor)
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['ZeroShotClassificationPipeline']
@@ -25,6 +24,10 @@ class ZeroShotClassificationPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Preprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 sequence_length=512,
                  **kwargs):
         """Use `model` and `preprocessor` to create a nlp zero shot classifiction for prediction.
 
@@ -44,7 +47,8 @@ class ZeroShotClassificationPipeline(Pipeline):
             or a model id from the model hub, or a torch model instance.
             preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
             the model if supplied.
-            sequence_length: Max sequence length in the user's custom scenario. 512 will be used as a default value.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
 
             Example:
             >>> from modelscope.pipelines import pipeline
@@ -55,17 +59,22 @@ class ZeroShotClassificationPipeline(Pipeline):
             >>> template = '这篇文章的标题是{}'
             >>> print(pipeline_ins(sentence1, candidate_labels=labels, hypothesis_template=template))
 
-            To view other examples plese check the tests/pipelines/test_zero_shot_classification.py.
+            To view other examples plese check tests/pipelines/test_zero_shot_classification.py.
         """
-        assert isinstance(model, str) or isinstance(model, Model), \
-            'model must be a single str or Model'
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         self.entailment_id = 0
         self.contradiction_id = 2
         if preprocessor is None:
-            self.preprocessor = ZeroShotClassificationPreprocessor(
+            sequence_length = kwargs.pop('sequence_length', 512)
+            self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 512))
+                sequence_length=sequence_length,
+                **kwargs)
         self.model.eval()
 
     def _sanitize_parameters(self, **kwargs):

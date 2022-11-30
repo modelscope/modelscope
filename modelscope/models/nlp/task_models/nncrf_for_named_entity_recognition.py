@@ -12,7 +12,7 @@ from transformers import AutoConfig, AutoModel
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.outputs import TokenClassifierWithPredictionsOutput
+from modelscope.outputs import AttentionTokenClassificationModelOutput
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = [
@@ -115,7 +115,7 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
             - 0 for tokens that are **masked**.
 
         Returns:
-            Returns `modelscope.outputs.TokenClassifierOutput`
+            Returns `modelscope.outputs.AttentionTokenClassificationModelOutput`
 
         Examples:
             >>> from modelscope.models import Model
@@ -138,17 +138,16 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
 
     def postprocess(self, input: Dict[str, Any], **kwargs):
         predicts = self.model.decode(input)
-        offset_len = len(input['offset_mapping'])
-        predictions = torch.narrow(
-            predicts, 1, 0,
-            offset_len)  # index_select only move loc, not resize
-        return TokenClassifierWithPredictionsOutput(
+        offset_mapping = input.get('offset_mapping')
+        mask = input.get('label_mask')
+        return AttentionTokenClassificationModelOutput(
             loss=None,
             logits=None,
             hidden_states=None,
             attentions=None,
-            offset_mapping=input['offset_mapping'],
-            predictions=predictions,
+            label_mask=mask,
+            offset_mapping=offset_mapping,
+            predictions=predicts,
         )
 
 

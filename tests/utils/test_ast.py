@@ -40,12 +40,18 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(imports, dict)
         self.assertIsInstance(from_imports, dict)
         self.assertIsInstance(decorators, list)
-        self.assertListEqual(list(set(imports.keys()) - set(['torch'])), [])
+        self.assertListEqual(
+            list(set(imports.keys()) - set(['torch', 'os'])), [])
         self.assertEqual(len(from_imports.keys()), 10)
         self.assertTrue(from_imports['modelscope.metainfo'] is not None)
         self.assertEqual(from_imports['modelscope.metainfo'], ['Pipelines'])
-        self.assertEqual(decorators,
-                         [('PIPELINES', 'text-generation', 'text-generation')])
+        self.assertEqual(
+            decorators,
+            [('PIPELINES', 'text-generation', 'text-generation'),
+             ('PIPELINES', 'text2text-generation', 'translation_en_to_de'),
+             ('PIPELINES', 'text2text-generation', 'translation_en_to_ro'),
+             ('PIPELINES', 'text2text-generation', 'translation_en_to_fr'),
+             ('PIPELINES', 'text2text-generation', 'text2text-generation')])
 
     def test_files_scaning_method(self):
         fileScaner = FilesAstScaning()

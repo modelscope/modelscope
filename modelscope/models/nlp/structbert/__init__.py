@@ -24,9 +24,6 @@ if TYPE_CHECKING:
     from .fill_mask import SbertForMaskedLM
     from .text_classification import SbertForSequenceClassification
     from .token_classification import SbertForTokenClassification
-    from .tokenization import (BasicTokenizer, SbertTokenizer,
-                               WordpieceTokenizer)
-    from .tokenization_fast import SbertTokenizerFast
 else:
     _import_structure = {
         'backbone': ['SbertModel', 'SbertPreTrainedModel'],
@@ -35,9 +32,6 @@ else:
         'faq_question_answering': ['SbertForFaqQuestionAnswering'],
         'text_classification': ['SbertForSequenceClassification'],
         'token_classification': ['SbertForTokenClassification'],
-        'tokenization':
-        ['BasicTokenizer', 'SbertTokenizer', 'WordpieceTokenizer'],
-        'tokenization_fast': ['SbertTokenizerFast'],
     }
 
     import sys

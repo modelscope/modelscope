@@ -9,11 +9,9 @@ from fasttext import load_model
 from fasttext.FastText import _FastText
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['FasttextSequenceClassificationPipeline']
@@ -36,8 +34,7 @@ class FasttextSequenceClassificationPipeline(Pipeline):
         """use `model` and `preprocessor` to create a nlp text classification pipeline for prediction
 
         Args:
-            model: a model directory including model.bin and spm.model
-            preprocessor (SequenceClassificationPreprocessor): a preprocessor instance
+            model: A model directory including model.bin and spm.model
         """
         super().__init__(model=model)
         model_file = os.path.join(model, ModelFile.TORCH_MODEL_BIN_FILE)
@@ -53,8 +50,11 @@ class FasttextSequenceClassificationPipeline(Pipeline):
         text_sp = sentencepiece_tokenize(self.spm, text)
         return {'text_sp': text_sp, 'text': text}
 
-    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        topk = inputs.get('topk', -1)
+    def forward(self,
+                inputs: Dict[str, Any],
+                topk: int = None) -> Dict[str, Any]:
+        if topk is None:
+            topk = inputs.get('topk', -1)
         label, probs = self.model.predict(inputs['text_sp'], k=topk)
         label = [x.replace('__label__', '') for x in label]
         result = {

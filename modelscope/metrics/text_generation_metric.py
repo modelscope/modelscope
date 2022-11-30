@@ -18,16 +18,22 @@ class TextGenerationMetric(Metric):
     """The metric computation class for text generation classes.
 
     This metric class calculates F1 of the rouge scores for the whole evaluation dataset.
+
+    Args:
+        target_text: The key of the target text column in the `inputs` arg.
+        pred_text: The key of the predicted text column in the `outputs` arg.
     """
 
-    def __init__(self):
+    def __init__(self, target_text='tgts', pred_text='preds'):
         self.preds: List[str] = []
         self.tgts: List[str] = []
         self.rouge = Rouge()
+        self.target_text = target_text
+        self.pred_text = pred_text
 
     def add(self, outputs: Dict[str, List[str]], inputs: Dict[str, List[str]]):
-        ground_truths = inputs['tgts']
-        eval_results = outputs['preds']
+        ground_truths = inputs[self.target_text]
+        eval_results = outputs[self.pred_text]
         for truth in ground_truths:
             self.tgts.append(rebuild_chinese_str(truth))
         for result in eval_results:

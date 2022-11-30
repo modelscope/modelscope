@@ -8,8 +8,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (Preprocessor,
-                                      RelationExtractionPreprocessor)
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['InformationExtractionPipeline']
@@ -24,12 +23,33 @@ class InformationExtractionPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 sequence_length=512,
                  **kwargs):
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        if preprocessor is None:
-            self.preprocessor = RelationExtractionPreprocessor(
+        """
+
+        Args:
+            model (str or Model): Supply either a local model dir which supported information extraction task, or a
+            model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        """
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
+        if self.preprocessor is None:
+            self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 512))
+                sequence_length=sequence_length,
+                **kwargs)
         self.model.eval()
 
     def forward(self, inputs: Dict[str, Any],

@@ -22,7 +22,7 @@ from torch.nn import CrossEntropyLoss
 
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS
-from modelscope.outputs import TokenClassifierOutput
+from modelscope.outputs import AttentionTokenClassificationModelOutput
 from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
@@ -47,7 +47,7 @@ class BertForTokenClassification(BertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Bert, the preprocessor of this model
-        is `modelscope.preprocessors.SequenceClassificationPreprocessor`.
+        is `modelscope.preprocessors.TokenClassificationTransformersPreprocessor`.
 
     Trainer:
         This model is a normal PyTorch model, and can be trained by variable trainers, like EpochBasedTrainer,
@@ -169,7 +169,7 @@ class BertForTokenClassification(BertPreTrainedModel):
             - 0 for tokens that are **masked**.
 
         Returns:
-            Returns `modelscope.outputs.TokenClassifierOutput`
+            Returns `modelscope.outputs.AttentionTokenClassificationModelOutput`
 
         Examples:
             >>> from modelscope.models import Model
@@ -212,14 +212,25 @@ class BertForTokenClassification(BertPreTrainedModel):
                 loss = loss_fct(
                     logits.view(-1, self.num_labels), labels.view(-1))
 
+        if label_mask is not None:
+            mask = label_mask
+            masked_lengths = mask.sum(-1).long()
+            masked_logits = torch.zeros_like(logits)
+            for i in range(len(mask)):
+                masked_logits[
+                    i, :masked_lengths[i], :] = logits[i].masked_select(
+                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
+            logits = masked_logits
+
         if not return_dict:
             output = (logits, ) + outputs[2:]
             return ((loss, ) + output) if loss is not None else output
 
-        return TokenClassifierOutput(
+        return AttentionTokenClassificationModelOutput(
             loss=loss,
             logits=logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
             offset_mapping=offset_mapping,
+            label_mask=label_mask,
         )

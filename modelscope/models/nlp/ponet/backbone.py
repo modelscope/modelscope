@@ -23,8 +23,6 @@ import torch.utils.checkpoint
 from packaging import version
 from torch import nn
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import \
-    BaseModelOutputWithPastAndCrossAttentions
 from transformers.modeling_utils import (PreTrainedModel,
                                          apply_chunking_to_forward,
                                          find_pruneable_heads_and_indices,
@@ -573,7 +571,7 @@ class PoNetEncoder(nn.Module):
                 all_self_attentions,
                 all_cross_attentions,
             ] if v is not None)
-        return BaseModelOutputWithPastAndCrossAttentions(
+        return AttentionBackboneModelOutput(
             last_hidden_state=hidden_states,
             past_key_values=next_decoder_cache,
             hidden_states=all_hidden_states,
@@ -640,34 +638,6 @@ class PoNetPreTrainedModel(TorchModel, PreTrainedModel):
                 Model,
                 cls).from_pretrained(pretrained_model_name_or_path=model_dir)
         return model
-
-
-class PoNetPreTrainedModelV2(PreTrainedModel):
-    """
-    A base class to handle weights initialization and a simple interface for loading pretrained models.
-    """
-
-    config_class = PoNetConfig
-    base_model_prefix = 'ponet'
-    _keys_to_ignore_on_load_missing = [r'position_ids']
-
-    def _init_weights(self, module):
-        """Initialize the weights"""
-        if isinstance(module, nn.Linear):
-            # Slightly different from the TF version which uses truncated_normal for initialization
-            # cf https://github.com/pytorch/pytorch/pull/5617
-            module.weight.data.normal_(
-                mean=0.0, std=self.config.initializer_range)
-            if module.bias is not None:
-                module.bias.data.zero_()
-        elif isinstance(module, nn.Embedding):
-            module.weight.data.normal_(
-                mean=0.0, std=self.config.initializer_range)
-            if module.padding_idx is not None:
-                module.weight.data[module.padding_idx].zero_()
-        elif isinstance(module, nn.LayerNorm):
-            module.bias.data.zero_()
-            module.weight.data.fill_(1.0)
 
 
 @MODELS.register_module(Tasks.backbone, module_name=Models.ponet)

@@ -36,9 +36,7 @@ from transformers.utils.model_parallel_utils import (assert_device_map,
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor, TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.outputs import (BaseModelOutput,
-                                BaseModelOutputWithPastAndCrossAttentions,
-                                Seq2SeqModelOutput)
+from modelscope.outputs import AttentionBackboneModelOutput, Seq2SeqModelOutput
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .configuration import T5Config
@@ -1182,7 +1180,7 @@ class T5Stack(T5PreTrainedModel):
                 all_attentions,
                 all_cross_attentions,
             ] if v is not None)
-        return BaseModelOutputWithPastAndCrossAttentions(
+        return AttentionBackboneModelOutput(
             last_hidden_state=hidden_states,
             past_key_values=present_key_value_states,
             hidden_states=all_hidden_states,
@@ -1475,8 +1473,9 @@ class T5Model(T5PreTrainedModel):
                 output_hidden_states=output_hidden_states,
                 return_dict=return_dict,
             )
-        elif return_dict and not isinstance(encoder_outputs, BaseModelOutput):
-            encoder_outputs = BaseModelOutput(
+        elif return_dict and not isinstance(encoder_outputs,
+                                            AttentionBackboneModelOutput):
+            encoder_outputs = AttentionBackboneModelOutput(
                 last_hidden_state=encoder_outputs[0],
                 hidden_states=encoder_outputs[1]
                 if len(encoder_outputs) > 1 else None,

@@ -33,6 +33,9 @@ class TableQuestionAnsweringPipeline(Pipeline):
                  model: Union[TableQuestionAnswering, str],
                  preprocessor: TableQuestionAnsweringPreprocessor = None,
                  db: Database = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """use `model` and `preprocessor` to create a table question answering prediction pipeline
 
@@ -40,11 +43,19 @@ class TableQuestionAnsweringPipeline(Pipeline):
             model (TableQuestionAnswering): a model instance
             preprocessor (TableQuestionAnsweringPreprocessor): a preprocessor instance
             db (Database): a database to store tables in the database
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
         if preprocessor is None:
             self.preprocessor = TableQuestionAnsweringPreprocessor(
-                self.model.model_dir)
+                self.model.model_dir, **kwargs)
 
         # initilize tokenizer
         self.tokenizer = BertTokenizer(

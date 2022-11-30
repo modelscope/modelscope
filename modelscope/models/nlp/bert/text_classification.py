@@ -51,7 +51,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Bert, the preprocessor of this model
-        is `modelscope.preprocessors.SequenceClassificationPreprocessor`.
+        is `modelscope.preprocessors.TextClassificationTransformersPreprocessor`.
 
     Trainer:
         This model is a normal PyTorch model, and can be trained by variable trainers, like EpochBasedTrainer,

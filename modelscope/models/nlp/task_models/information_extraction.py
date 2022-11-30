@@ -7,7 +7,7 @@ from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import InformationExtractionOutput, OutputKeys
 from modelscope.utils.constant import Tasks
 
 __all__ = ['InformationExtractionModel']
@@ -31,9 +31,9 @@ class InformationExtractionModel(SingleBackboneTaskModelBase):
         self.build_backbone(self.backbone_cfg)
         self.build_head(self.head_cfg)
 
-    def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def forward(self, **input: Dict[str, Any]) -> InformationExtractionOutput:
         outputs = super().forward(input)
         sequence_output = outputs.last_hidden_state
         outputs = self.head.forward(sequence_output, input['text'],
                                     input['offsets'])
-        return {OutputKeys.SPO_LIST: outputs}
+        return InformationExtractionOutput(spo_list=outputs)

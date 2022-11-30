@@ -23,7 +23,11 @@ class FillMaskPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
-                 first_sequence: str = 'sentence',
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 first_sequence='sentence',
+                 sequence_length=128,
                  **kwargs):
         """The inference pipeline for all the fill mask sub-tasks.
 
@@ -31,11 +35,8 @@ class FillMaskPipeline(Pipeline):
             model (`str` or `Model` or module instance): A model instance or a model local dir
                 or a model id in the model hub.
             preprocessor (`Preprocessor`, `optional`): A Preprocessor instance.
-            first_sequence (`str`， `optional`): The key to read the sentence in.
-            sequence_length (`int`， `optional`): Max sequence length in the user's custom scenario, default 128.
-
-            NOTE1: Inputs of type 'str' are also supported. In this scenario, the 'first_sequence'
-            param will have no effect.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
 
             Example1:
             >>> from modelscope.pipelines import pipeline
@@ -51,20 +52,25 @@ class FillMaskPipeline(Pipeline):
             NOTE2: Please pay attention to the model's special tokens.
             If bert based model(bert, structbert, etc.) is used, the mask token is '[MASK]'.
             If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
-            To view other examples plese check the tests/pipelines/test_fill_mask.py.
+            To view other examples plese check tests/pipelines/test_fill_mask.py.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,
                 first_sequence=first_sequence,
-                second_sequence=None,
-                sequence_length=kwargs.pop('sequence_length', 128))
-            assert hasattr(
-                self.preprocessor, 'mask_id'
-            ), 'The input preprocessor should have the mask_id attribute.'
-
+                sequence_length=sequence_length,
+                **kwargs)
         self.model.eval()
+        assert hasattr(
+            self.preprocessor, 'mask_id'
+        ), 'The input preprocessor should have the mask_id attribute.'
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

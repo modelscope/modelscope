@@ -18,18 +18,16 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .configuration import PalmConfig
-    from .backbone import (
+    from .text_generation import (
         AbsSummarizer,
-        PalmForConditionalGeneration,
+        PalmForTextGeneration,
         Translator,
     )
-    from .text_generation import PalmForTextGeneration
 else:
     _import_structure = {
         'configuration': ['PalmConfig'],
-        'backbone':
-        ['AbsSummarizer', 'PalmForConditionalGeneration', 'Translator'],
-        'text_generation': ['PalmForTextGeneration'],
+        'text_generation':
+        ['AbsSummarizer', 'Translator', 'PalmForTextGeneration'],
     }
 
     import sys

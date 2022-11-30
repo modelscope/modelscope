@@ -1,18 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
-import numpy as np
 import torch
 
 from modelscope.metainfo import Models, TaskModels
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
-from modelscope.outputs import OutputKeys, TokenClassifierOutput
+from modelscope.outputs import (AttentionTokenClassificationModelOutput,
+                                OutputKeys)
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import parse_label_mapping
-from modelscope.utils.tensor_utils import (torch_nested_detach,
-                                           torch_nested_numpify)
 
 __all__ = ['TokenClassificationModel']
 
@@ -48,7 +46,10 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
         self.build_backbone(self.backbone_cfg)
         self.build_head(self.head_cfg)
 
-    def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def forward(
+            self,
+            **input: Dict[str,
+                          Any]) -> AttentionTokenClassificationModelOutput:
         labels = None
         if OutputKeys.LABEL in input:
             labels = input.pop(OutputKeys.LABEL)
@@ -62,16 +63,23 @@ class TokenClassificationModel(SingleBackboneTaskModelBase):
         if labels in input:
             loss = self.compute_loss(outputs, labels)
 
-        # apply label mask to logits
-        logits = logits[input['label_mask']].unsqueeze(0)
+        if 'label_mask' in input:
+            mask = input['label_mask']
+            masked_lengths = mask.sum(-1).long()
+            masked_logits = torch.zeros_like(logits)
+            for i in range(len(mask)):
+                masked_logits[
+                    i, :masked_lengths[i], :] = logits[i].masked_select(
+                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
+            logits = masked_logits
 
-        return TokenClassifierOutput(
+        return AttentionTokenClassificationModelOutput(
             loss=loss,
             logits=logits,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
-            offset_mapping=input['offset_mapping'],
-        )
+            offset_mapping=input.get('offset_mapping'),
+            label_mask=input.get('label_mask'))
 
     def extract_logits(self, outputs):
         return outputs[OutputKeys.LOGITS].cpu().detach()

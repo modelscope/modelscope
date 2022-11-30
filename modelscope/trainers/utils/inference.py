@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import shutil
+from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
@@ -58,7 +59,7 @@ def single_gpu_test(trainer,
             if progress_with_iters:
                 batch_size = 1  # iteration count
             else:
-                if isinstance(data, dict):
+                if isinstance(data, Mapping):
                     if 'nsentences' in data:
                         batch_size = data['nsentences']
                     else:
@@ -138,7 +139,7 @@ def multi_gpu_test(trainer,
             result = trainer.evaluation_step(data)
             results.append(result)
 
-            if isinstance(data, dict):
+            if isinstance(data, Mapping):
                 if 'nsentences' in data:
                     batch_size = data['nsentences']
                 else:

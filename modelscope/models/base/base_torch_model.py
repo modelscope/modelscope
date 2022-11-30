@@ -6,6 +6,7 @@ import torch
 from torch import nn
 
 from modelscope.utils.file_utils import func_receive_dict_inputs
+from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.logger import get_logger
 from .base_model import Model
 

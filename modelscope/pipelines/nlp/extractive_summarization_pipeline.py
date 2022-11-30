@@ -6,15 +6,14 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import torch
 from datasets import Dataset
-from transformers.models.bert.modeling_bert import BertConfig
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp.ponet.configuration import PoNetConfig
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import DocumentSegmentationPreprocessor
+from modelscope.preprocessors import \
+    DocumentSegmentationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -28,31 +27,29 @@ __all__ = ['ExtractiveSummarizationPipeline']
     module_name=Pipelines.extractive_summarization)
 class ExtractiveSummarizationPipeline(Pipeline):
 
-    def __init__(self,
-                 model: Union[Model, str],
-                 preprocessor: DocumentSegmentationPreprocessor = None,
-                 **kwargs):
+    def __init__(
+            self,
+            model: Union[Model, str],
+            preprocessor: DocumentSegmentationTransformersPreprocessor = None,
+            config_file: str = None,
+            device: str = 'gpu',
+            auto_collate=True,
+            **kwargs):
 
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
 
-        self.model_dir = model.model_dir
-        self.model_cfg = model.forward()
-
-        if self.model_cfg['type'] == 'bert':
-            config = BertConfig.from_pretrained(model.model_dir, num_labels=2)
-        elif self.model_cfg['type'] == 'ponet':
-            config = PoNetConfig.from_pretrained(model.model_dir, num_labels=2)
-
-        self.extractive_summarization_model = model.build_with_config(
-            config=config)
+        self.model_dir = self.model.model_dir
+        self.model_cfg = self.model.model_cfg
 
         if preprocessor is None:
-            preprocessor = DocumentSegmentationPreprocessor(
-                self.model_dir, config)
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-
-        self.preprocessor = preprocessor
+            self.preprocessor = DocumentSegmentationTransformersPreprocessor(
+                self.model_dir, self.model.config.max_position_embeddings,
+                **kwargs)
 
     def __call__(self, documents: Union[List[str], str]) -> Dict[str, Any]:
         output = self.predict(documents)
@@ -80,8 +77,7 @@ class ExtractiveSummarizationPipeline(Pipeline):
                 key: torch.tensor(val)
                 for key, val in predict_dataset.items()
             }
-            logits = self.extractive_summarization_model.forward(
-                **input).logits
+            logits = self.model.forward(**input).logits
 
         predictions = np.argmax(logits, axis=2)
         assert len(sentences) == len(

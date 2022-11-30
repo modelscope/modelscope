@@ -47,6 +47,9 @@ class ImageDepthEstimationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         results = self.model.postprocess(inputs)
-        outputs = {OutputKeys.DEPTHS: results[OutputKeys.DEPTHS]}
+        depths = results[OutputKeys.DEPTHS]
+        if isinstance(depths, torch.Tensor):
+            depths = depths.detach().cpu().squeeze().numpy()
+        outputs = {OutputKeys.DEPTHS: depths}
 
         return outputs

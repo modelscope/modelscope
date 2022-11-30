@@ -25,7 +25,7 @@ class ImageDepthEstimationTest(unittest.TestCase, DemoCompatibilityCheck):
         estimator = pipeline(Tasks.image_depth_estimation, model=self.model_id)
         result = estimator(input_location)
         depths = result[OutputKeys.DEPTHS]
-        depth_viz = depth_to_color(depths[0].squeeze().cpu().numpy())
+        depth_viz = depth_to_color(depths)
         cv2.imwrite('result.jpg', depth_viz)
 
         print('test_image_depth_estimation DONE')

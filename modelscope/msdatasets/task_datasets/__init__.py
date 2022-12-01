@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .image_instance_segmentation_coco_dataset import ImageInstanceSegmentationCocoDataset
     from .movie_scene_segmentation import MovieSceneSegmentationDataset
     from .video_summarization_dataset import VideoSummarizationDataset
+    from .language_guided_video_summarization_dataset import LanguageGuidedVideoSummarizationDataset
     from .image_inpainting import ImageInpaintingDataset
     from .text_ranking_dataset import TextRankingDataset
     from .referring_video_object_segmentation import ReferringVideoObjectSegmentationDataset
@@ -25,6 +26,8 @@ else:
         'image_instance_segmentation_coco_dataset':
         ['ImageInstanceSegmentationCocoDataset'],
         'video_summarization_dataset': ['VideoSummarizationDataset'],
+        'language_guided_video_summarization_dataset':
+        ['LanguageGuidedVideoSummarizationDataset'],
         'movie_scene_segmentation': ['MovieSceneSegmentationDataset'],
         'image_inpainting': ['ImageInpaintingDataset'],
         'sidd_image_denoising_dataset': ['SiddImageDenoisingDataset'],

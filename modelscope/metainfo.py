@@ -338,6 +338,7 @@ class Trainers(object):
     nlp_veco_trainer = 'nlp-veco-trainer'
     nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
     text_generation_trainer = 'text-generation-trainer'
+    nlp_plug_trainer = 'nlp-plug-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
@@ -499,6 +500,9 @@ class Hooks(object):
 
     # CLIP logit_scale clamp
     ClipClampLogitScaleHook = 'ClipClampLogitScaleHook'
+
+    # train
+    DeepspeedHook = 'DeepspeedHook'
 
 
 class LR_Schedulers(object):

@@ -80,7 +80,8 @@ class TextLoggerHook(LoggerHook):
                               dtype=torch.int,
                               device=device)
         _, world_size = get_dist_info()
-        if world_size > 1:
+        if world_size > 1 and getattr(trainer.cfg.model, 'model_parallel_size',
+                                      1) < world_size:
             dist.reduce(mem_mb, 0, op=dist.ReduceOp.MAX)
         return mem_mb.item()
 

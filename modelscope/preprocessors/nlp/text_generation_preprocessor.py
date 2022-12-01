@@ -122,6 +122,8 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
         kwargs['max_length'] = sequence_length
+        self.src_length = kwargs['max_length']
+        self.tgt_length = kwargs.pop('target_max_length', kwargs['max_length'])
         model_type = None
         if model_dir is not None:
             model_type = get_model_type(model_dir)
@@ -154,10 +156,14 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
                 'return_tensors'] = 'pt' if self.mode == ModeKeys.INFERENCE else None
 
         output = self.nlp_tokenizer(sequence1, **kwargs)
-
         if self.mode != ModeKeys.INFERENCE:
             if sequence2 is not None:
+                self.nlp_tokenizer.tokenize_kwargs[
+                    'max_length'] = self.tgt_length
                 labels = self.nlp_tokenizer(sequence2)['input_ids']
+                self.nlp_tokenizer.tokenize_kwargs[
+                    'max_length'] = self.src_length
+
                 src_input_ids = output['input_ids']
                 src_attention_mask = output['attention_mask']
             else:

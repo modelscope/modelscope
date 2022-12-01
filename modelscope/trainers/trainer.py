@@ -845,7 +845,10 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
+        if dist and not isinstance(
+                dataset,
+                torch.utils.data.IterableDataset) and self.cfg.model.get(
+                    'model_parallel_size', 1) == 1:
             sampler = DistributedSampler(
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:
@@ -935,7 +938,7 @@ class EpochBasedTrainer(BaseTrainer):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
-        if self._dist:
+        if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
             metric_values = multi_gpu_test(
                 self,

@@ -104,7 +104,8 @@ class CheckpointHook(Hook):
             return
 
         if self._should_save(trainer):
-            if is_master():
+            if is_master() or trainer.cfg.model.get('model_parallel_size',
+                                                    1) != 1:
                 self.logger.info(
                     f'Saving checkpoint at {trainer.epoch + 1} epoch')
                 self._save_checkpoint(trainer)
@@ -260,7 +261,8 @@ class CheckpointHook(Hook):
             return
 
         if self._should_save(trainer):
-            if is_master():
+            if is_master() or trainer.cfg.model.get('model_parallel_size',
+                                                    1) != 1:
                 self.logger.info(
                     f'Saving checkpoint at {trainer.iter + 1} iterations')
                 self._save_checkpoint(trainer)

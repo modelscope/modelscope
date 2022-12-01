@@ -7,7 +7,7 @@ gpus='0,1 2,3 4,5 6,7'
 cpu_sets='45-58 31-44 16-30 0-15'
 cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
-CI_COMMAND='bash .dev_scripts/ci_container_test.sh python tests/run.py --parallel 2 --run_config tests/run_config.yaml'
+CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh python tests/run.py --parallel 2 --run_config tests/run_config.yaml}
 echo "ci command: $CI_COMMAND"
 idx=0
 for gpu in $gpus

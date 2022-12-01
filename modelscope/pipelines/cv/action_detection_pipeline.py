@@ -33,6 +33,7 @@ class ActionDetectionPipeline(Pipeline):
         logger.info(f'loading config from {config_path}')
         self.cfg = Config.from_file(config_path)
         self.cfg.MODEL.model_file = model_path
+        self.cfg.MODEL.update(kwargs)
         self.model = ActionDetONNX(self.model, self.cfg.MODEL,
                                    self.device_name)
         logger.info('load model done')

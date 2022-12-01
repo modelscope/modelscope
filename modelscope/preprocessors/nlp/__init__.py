@@ -30,10 +30,6 @@ if TYPE_CHECKING:
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
 else:
     _import_structure = {
-        'nlp_base': [
-            'NLPTokenizerPreprocessorBase',
-            'NLPBasePreprocessor',
-        ],
         'sentence_piece_preprocessor': ['SentencePiecePreprocessor'],
         'bert_seq_cls_tokenizer': ['Tokenize'],
         'document_segmentation_preprocessor':

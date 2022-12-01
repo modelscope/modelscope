@@ -119,6 +119,6 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
 
     def batch_encode(self, sentence_list: list, max_length=None):
         if not max_length:
-            max_length = self.MAX_LEN
+            max_length = self.max_len
         return self.tokenizer.batch_encode_plus(
             sentence_list, padding=True, max_length=max_length)

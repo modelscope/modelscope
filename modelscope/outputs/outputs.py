@@ -62,6 +62,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
     Tasks.table_recognition: [OutputKeys.POLYGONS],
+    Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
 
     # ocr recognition result for single sample
     # {

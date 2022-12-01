@@ -85,6 +85,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_recognition:
     (Pipelines.table_recognition,
      'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.license_plate_detection:
+    (Pipelines.license_plate_detection,
+     'damo/cv_resnet18_license-plate-detection_damo'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),

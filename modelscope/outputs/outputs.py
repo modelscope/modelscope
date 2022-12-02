@@ -443,6 +443,12 @@ TASK_OUTPUTS = {
     Tasks.referring_video_object_segmentation:
     [OutputKeys.MASKS, OutputKeys.TIMESTAMPS],
 
+    # video human matting result for a single video
+    #   {
+    #       "masks": [np.array # 2D array with shape [height, width]]
+    #   }
+    Tasks.video_human_matting: [OutputKeys.MASKS],
+
     # ============ nlp tasks ===================
 
     # text classification result for single sample

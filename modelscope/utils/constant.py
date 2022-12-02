@@ -87,6 +87,7 @@ class CVTasks(object):
 
     # video segmentation
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    video_human_matting = 'video-human-matting'
 
     # video editing
     video_inpainting = 'video-inpainting'

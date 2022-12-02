@@ -201,6 +201,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.video_human_matting: (Pipelines.video_human_matting,
+                                'damo/cv_effnetv2_video-human-matting'),
     Tasks.human_wholebody_keypoint:
     (Pipelines.human_wholebody_keypoint,
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),

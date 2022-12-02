@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 set -o pipefail
-# chieck git is install
+# check git is install
 git --version >/dev/null 2>&1 || { echo 'git not installed' ; exit 0; }
 
 if [ -z "$MODELSCOPE_USERNAME" ]  || [ -z "$MODELSCOPE_GITLAB_ACCESS_TOKEN" ]; then

@@ -33,6 +33,7 @@ class BaseTrainer(ABC):
         else:
             self.args = None
         self.log_buffer = LogBuffer()
+        self.visualization_buffer = LogBuffer()
         self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
     def get_or_download_model_dir(self, model, model_revision=None):

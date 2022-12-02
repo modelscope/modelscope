@@ -1,6 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 
+import numpy as np
+import torch
+
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.utils.constant import LogKeys
@@ -50,10 +53,14 @@ class TensorboardHook(LoggerHook):
 
         if self.out_dir is None:
             self.out_dir = os.path.join(trainer.work_dir, 'tensorboard_output')
+        trainer.logger.info(
+            f'tensorboard files will be saved to {self.out_dir}')
         self.writer = SummaryWriter(self.out_dir)
 
     @master_only
     def log(self, trainer):
+        if len(trainer.visualization_buffer.output) > 0:
+            self.visualization_log(trainer)
         for key, val in trainer.log_buffer.output.items():
             if key in self.skip_keys:
                 continue
@@ -63,6 +70,45 @@ class TensorboardHook(LoggerHook):
                 self.writer.add_scalar(key, val, self.get_iter(trainer))
             else:
                 pass
+        self.writer.flush()
+
+    def visualization_log(self, trainer):
+        """ Images Visulization.
+        `visualization_buffer` is a dictionary containing:
+            images (list): list of visulaized images.
+            filenames (list of str, optional): image filenames.
+        """
+        visual_results = trainer.visualization_buffer.output
+        for vis_key, vis_result in visual_results.items():
+            images = vis_result.get('images', [])
+            filenames = vis_result.get('filenames', None)
+            if filenames is not None:
+                assert len(images) == len(
+                    filenames
+                ), 'Output `images` and `filenames` must keep the same length!'
+
+            for i, img in enumerate(images):
+                if isinstance(img, np.ndarray):
+                    img = torch.from_numpy(img)
+                else:
+                    assert isinstance(
+                        img, torch.Tensor
+                    ), f'Only support np.ndarray and torch.Tensor type! Got {type(img)} for img {filenames[i]}'
+
+                default_name = 'image_%i' % i
+                filename = filenames[
+                    i] if filenames is not None else default_name
+                self.writer.add_image(
+                    f'{vis_key}/{filename}',
+                    img,
+                    self.get_iter(trainer),
+                    dataformats='HWC')
+
+    def after_train_iter(self, trainer):
+        super(TensorboardHook, self).after_train_iter(trainer)
+        # clear visualization_buffer after each iter to ensure that it is only written once,
+        # avoiding repeated writing of the same image buffer every self.interval
+        trainer.visualization_buffer.clear_output()
 
     @master_only
     def after_run(self, trainer):

@@ -37,7 +37,8 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, set_random_seed)
+                                          init_dist, is_master,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg
@@ -940,26 +941,72 @@ class EpochBasedTrainer(BaseTrainer):
         """
         if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
-            metric_values = multi_gpu_test(
+            # list of batched result and data samples
+            results, data_list = multi_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
                 tmpdir=None,
                 gpu_collect=False,
-                metric_classes=metric_classes,
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            metric_values = single_gpu_test(
+            results, data_list = single_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
-                metric_classes=metric_classes,
                 data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
+        # evaluation result processing
+        if hasattr(self.cfg.evaluation, 'visualization'):
+            flatten_results = []
+            for r in results:
+                flatten_results.extend(r)
+            vis_cfg = self.cfg.evaluation.visualization
+            self.visualization(results, self.eval_dataset, **vis_cfg)
+
+        # do evaluation on rank0
+        metric_values = {}
+        if not self._dist or is_master():
+            assert len(data_list) == len(
+                results), f'size mismatch {len(data_list)} and {len(results)}'
+            for metric_cls in metric_classes:
+                for idx in range(len(data_list)):
+                    metric_cls.add(results[idx], data_list[idx])
+
+            for metric_cls in metric_classes:
+                metric_values.update(metric_cls.evaluate())
+
         return metric_values
+
+    def visualization(self, results, dataset, **kwargs):
+        """ visualization function for evaluation results.
+
+        Args:
+            results (list(dict)):  a list of result dict.
+            dataset (:obj:`Dataset`): torch dataset object to access original data.
+
+        Implementation Examples:
+        ```python
+        # draw list of images as numpy array
+        images = draw_images(num_of_visualization)
+
+        # set displayed name for each image
+        filenames = get_image_display_names()
+        vis_results = {
+            'images': images,
+            'filenames' : filenames
+        }
+
+        # visualization results will be displayed in group named eva_vis
+        self.visualization_buffer.output['eval_vis'] = vis_results
+        ```
+        """
+        # TODO @wenmeng.zwm add visualization support for cv evaluation
+        raise NotImplementedError(
+            'visualization for evaluation will be supported in the future')
 
     def register_hook(self, hook: Hook) -> None:
         """Register a hook into the hook list.

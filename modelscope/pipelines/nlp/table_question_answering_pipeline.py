@@ -83,6 +83,13 @@ class TableQuestionAnsweringPipeline(Pipeline):
         self.schema_link_dict = constant.schema_link_dict
         self.limit_dict = constant.limit_dict
 
+    def prepare_model(self):
+        """ Place model on certain device for pytorch models before first inference
+                """
+        self._model_prepare_lock.acquire(timeout=600)
+        self.model.to(self.device)
+        self._model_prepare_lock.release()
+
     def post_process_multi_turn(self, history_sql, result, table):
         action = self.action_ops[result['action']]
         headers = table['header_name']

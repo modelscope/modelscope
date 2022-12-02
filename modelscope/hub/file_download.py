@@ -15,7 +15,8 @@ from tqdm import tqdm
 from modelscope import __version__
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
-                                      API_FILE_DOWNLOAD_RETRY_TIMES, FILE_HASH)
+                                      API_FILE_DOWNLOAD_RETRY_TIMES,
+                                      API_FILE_DOWNLOAD_TIMEOUT, FILE_HASH)
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
 from .errors import FileDownloadError, NotExistError
@@ -220,7 +221,7 @@ def http_get_file(
                     stream=True,
                     headers=get_headers,
                     cookies=cookies,
-                    timeout=5)
+                    timeout=API_FILE_DOWNLOAD_TIMEOUT)
                 r.raise_for_status()
                 content_length = r.headers.get('Content-Length')
                 total = int(

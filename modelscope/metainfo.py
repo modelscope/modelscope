@@ -185,6 +185,7 @@ class Pipelines(object):
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
+    nextvit_small_daily_image_classification = 'nextvit-small_image-classification_Dailylife-labels'
     image_color_enhance = 'csrnet-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'
@@ -330,6 +331,7 @@ class Trainers(object):
     image_inpainting = 'image-inpainting'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_classification_team = 'image-classification-team'
+    image_classification = 'image-classification'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -365,6 +367,7 @@ class Preprocessors(object):
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
+    image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

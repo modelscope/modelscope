@@ -45,6 +45,9 @@ class ImageClassificationPipeline(Pipeline):
 @PIPELINES.register_module(
     Tasks.image_classification,
     module_name=Pipelines.daily_image_classification)
+@PIPELINES.register_module(
+    Tasks.image_classification,
+    module_name=Pipelines.nextvit_small_daily_image_classification)
 class GeneralImageClassificationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -60,6 +63,7 @@ class GeneralImageClassificationPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
         from mmcls.datasets.pipelines import Compose
         from mmcv.parallel import collate, scatter
+        from modelscope.models.cv.image_classification.utils import preprocess_transform
         if isinstance(input, str):
             img = np.array(load_image(input))
         elif isinstance(input, PIL.Image.Image):
@@ -72,12 +76,20 @@ class GeneralImageClassificationPipeline(Pipeline):
             raise TypeError(f'input should be either str, PIL.Image,'
                             f' np.array, but got {type(input)}')
 
-        mmcls_cfg = self.model.cfg
-        # build the data pipeline
-        if mmcls_cfg.data.test.pipeline[0]['type'] == 'LoadImageFromFile':
-            mmcls_cfg.data.test.pipeline.pop(0)
-        data = dict(img=img)
-        test_pipeline = Compose(mmcls_cfg.data.test.pipeline)
+        cfg = self.model.cfg
+
+        if self.model.config_type == 'mmcv_config':
+            if cfg.data.test.pipeline[0]['type'] == 'LoadImageFromFile':
+                cfg.data.test.pipeline.pop(0)
+            data = dict(img=img)
+            test_pipeline = Compose(cfg.data.test.pipeline)
+        else:
+            if cfg.preprocessor.val[0]['type'] == 'LoadImageFromFile':
+                cfg.preprocessor.val.pop(0)
+            data = dict(img=img)
+            data_pipeline = preprocess_transform(cfg.preprocessor.val)
+            test_pipeline = Compose(data_pipeline)
+
         data = test_pipeline(data)
         data = collate([data], samples_per_gpu=1)
         if next(self.model.parameters()).is_cuda:

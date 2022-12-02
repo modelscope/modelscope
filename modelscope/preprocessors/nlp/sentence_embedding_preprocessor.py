@@ -22,7 +22,7 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
                  second_sequence='sentences_to_compare',
                  mode=ModeKeys.INFERENCE,
                  use_fast: bool = None,
-                 sequence_length: int = 128,
+                 max_length: int = None,
                  **kwargs):
         """The preprocessor for sentence embedding task, based on transformers' tokenizer.
 
@@ -32,13 +32,16 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
             second_sequence: The key of the second sequence.
             mode: The mode for the preprocessor.
             use_fast: Use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         self.first_sequence = first_sequence
         self.second_sequence = second_sequence
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         model_type = None
         if model_dir is not None:
             model_type = get_model_type(model_dir)

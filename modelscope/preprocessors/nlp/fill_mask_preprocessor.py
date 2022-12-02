@@ -111,7 +111,7 @@ class FillMaskTransformersPreprocessor(FillMaskPreprocessorBase):
                  first_sequence: str = None,
                  second_sequence: str = None,
                  mode: str = ModeKeys.INFERENCE,
-                 sequence_length: int = 128,
+                 max_length: int = None,
                  use_fast: bool = None,
                  **kwargs):
         """The preprocessor for fill mask task, based on transformers' tokenizer.
@@ -119,13 +119,16 @@ class FillMaskTransformersPreprocessor(FillMaskPreprocessorBase):
         Args:
             model_dir: The model dir used to initialize the tokenizer.
             use_fast: Use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      True)
         super().__init__(first_sequence, second_sequence, mode)
@@ -183,7 +186,7 @@ class FillMaskPoNetPreprocessor(FillMaskPreprocessorBase):
                  first_sequence: str = None,
                  second_sequence: str = None,
                  mode: str = ModeKeys.INFERENCE,
-                 sequence_length: int = 512,
+                 max_length: int = None,
                  use_fast: bool = None,
                  **kwargs):
         """The tokenizer preprocessor used in PoNet model's MLM task.
@@ -191,13 +194,16 @@ class FillMaskPoNetPreprocessor(FillMaskPreprocessorBase):
         Args:
             model_dir: The model dir used to initialize the tokenizer.
             use_fast: Use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 512)
+        kwargs.pop('sequence_length', None)
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      True)
         super().__init__(first_sequence, second_sequence, mode)

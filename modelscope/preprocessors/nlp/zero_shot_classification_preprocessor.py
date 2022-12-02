@@ -20,7 +20,7 @@ class ZeroShotClassificationTransformersPreprocessor(Preprocessor):
                  model_dir: str,
                  first_sequence=None,
                  mode=ModeKeys.INFERENCE,
-                 sequence_length=512,
+                 max_length=None,
                  use_fast=None,
                  **kwargs):
         """preprocess the data
@@ -28,7 +28,10 @@ class ZeroShotClassificationTransformersPreprocessor(Preprocessor):
         Args:
             model_dir (str): model path
         """
-        self.sequence_length = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 512)
+        kwargs.pop('sequence_length', None)
         model_type = None
         if model_dir is not None:
             model_type = get_model_type(model_dir)

@@ -129,20 +129,23 @@ class TextClassificationTransformersPreprocessor(
                  label: Union[str, List] = 'label',
                  label2id: Dict = None,
                  mode: str = ModeKeys.INFERENCE,
-                 sequence_length: int = 128,
+                 max_length: int = None,
                  use_fast: bool = None,
                  **kwargs):
         """The tokenizer preprocessor used in sequence classification.
 
         Args:
             use_fast: Whether to use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         model_type = None
         if model_dir is not None:
             model_type = get_model_type(model_dir)

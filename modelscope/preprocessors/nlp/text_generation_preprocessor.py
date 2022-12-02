@@ -99,7 +99,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
                  tgt_txt='tgt_txt',
-                 sequence_length: int = 128,
+                 max_length: int = None,
                  use_fast: bool = None,
                  **kwargs):
         """The tokenizer preprocessor used in text generation.
@@ -109,7 +109,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
             mode: The mode for the preprocessor.
             src_txt: The key of the source sentence.
             tgt_txt: The key of the generated sentence.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             use_fast: Whether to use the fast tokenizer or not.
             **kwargs: Extra args input into the tokenizer's __call__ method.
@@ -121,7 +121,10 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         self.src_length = kwargs['max_length']
         self.tgt_length = kwargs.pop('target_max_length', kwargs['max_length'])
         model_type = None
@@ -237,7 +240,6 @@ class TextGenerationT5Preprocessor(TextGenerationTransformersPreprocessor):
                  src_txt='src_txt',
                  tgt_txt='tgt_txt',
                  use_fast: bool = None,
-                 sequence_length: int = 128,
                  **kwargs):
         """The preprocessor for text to text generation task, based on transformers' tokenizer.
 
@@ -245,8 +247,6 @@ class TextGenerationT5Preprocessor(TextGenerationTransformersPreprocessor):
             model_dir: The model dir used to initialize the tokenizer.
             src_txt: The key of the first sequence.
             use_fast: Use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
-                will be passed into tokenizer as the 'max_length' param.
             mode: The mode for the preprocessor.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
@@ -255,7 +255,6 @@ class TextGenerationT5Preprocessor(TextGenerationTransformersPreprocessor):
             mode=mode,
             src_txt=src_txt,
             tgt_txt=tgt_txt,
-            sequence_length=sequence_length,
             use_fast=use_fast,
             truncation=kwargs.pop('truncation', True),
             padding=kwargs.pop('padding', 'max_length'),

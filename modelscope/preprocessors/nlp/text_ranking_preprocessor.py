@@ -22,7 +22,7 @@ class TextRankingTransformersPreprocessor(Preprocessor):
                  second_sequence='sentences_to_compare',
                  label='labels',
                  qid='qid',
-                 sequence_length=128,
+                 max_length=None,
                  **kwargs):
         """The tokenizer preprocessor class for the text ranking preprocessor.
 
@@ -33,7 +33,7 @@ class TextRankingTransformersPreprocessor(Preprocessor):
             label(str, `optional`): The keys of the label columns, default `labels`.
             qid(str, `optional`): The qid info.
             mode: The mode for the preprocessor.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
         """
         super().__init__(mode)
@@ -42,7 +42,9 @@ class TextRankingTransformersPreprocessor(Preprocessor):
         self.second_sequence = second_sequence
         self.label = label
         self.qid = qid
-        self.sequence_length = sequence_length
+        self.sequence_length = max_length if max_length is not None else kwargs.get(
+            'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
 
     @type_assert(object, dict)

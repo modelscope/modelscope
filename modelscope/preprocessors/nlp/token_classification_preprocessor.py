@@ -198,14 +198,14 @@ class TokenClassificationTransformersPreprocessor(
                  label2id: Dict = None,
                  label_all_tokens: bool = False,
                  mode: str = ModeKeys.INFERENCE,
-                 sequence_length=128,
+                 max_length=None,
                  use_fast=None,
                  **kwargs):
         """
 
         Args:
             use_fast: Whether to use the fast tokenizer or not.
-            sequence_length: The max sequence length which the model supported,
+            max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
@@ -219,7 +219,10 @@ class TokenClassificationTransformersPreprocessor(
             model_type = get_model_type(model_dir)
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
-        kwargs['max_length'] = sequence_length
+        kwargs[
+            'max_length'] = max_length if max_length is not None else kwargs.get(
+                'sequence_length', 128)
+        kwargs.pop('sequence_length', None)
         kwargs['add_special_tokens'] = model_type != 'lstm'
         self.nlp_tokenizer = NLPTokenizerForLSTM(
             model_dir=model_dir,

@@ -51,6 +51,7 @@ if TYPE_CHECKING:
                        VecoForSequenceClassification,
                        VecoForTokenClassification, VecoModel)
     from .bloom import BloomModel
+    from .unite import UniTEModel
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -108,6 +109,7 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
+        'unite': ['UniTEModel']
     }
 
     import sys

@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from .space_T_en import ConversationalTextToSqlPreprocessor
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
+    from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
 else:
     _import_structure = {
         'sentence_piece_preprocessor': ['SentencePiecePreprocessor'],
@@ -76,6 +77,8 @@ else:
         ],
         'space_T_en': ['ConversationalTextToSqlPreprocessor'],
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
+        'translation_evaluation_preprocessor':
+        ['TranslationEvaluationPreprocessor'],
     }
 
     import sys

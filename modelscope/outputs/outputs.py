@@ -801,6 +801,11 @@ TASK_OUTPUTS = {
     #       ]
     # }
     Tasks.product_segmentation: [OutputKeys.MASKS],
+
+    # {
+    #     'scores': [0.1, 0.2, 0.3, ...]
+    # }
+    Tasks.translation_evaluation: [OutputKeys.SCORES]
 }
 
 

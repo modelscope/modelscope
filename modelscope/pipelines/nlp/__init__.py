@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
     from .codegeex_code_translation_pipeline import CodeGeeXCodeTranslationPipeline
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
+    from .translation_evaluation_pipeline import TranslationEvaluationPipeline
 
 else:
     _import_structure = {
@@ -77,6 +78,7 @@ else:
         ['CodeGeeXCodeTranslationPipeline'],
         'codegeex_code_generation_pipeline':
         ['CodeGeeXCodeGenerationPipeline'],
+        'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
     }
 
     import sys

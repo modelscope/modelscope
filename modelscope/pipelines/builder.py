@@ -217,6 +217,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_swin-t_referring_video-object-segmentation'),
     Tasks.video_summarization: (Pipelines.video_summarization,
                                 'damo/cv_googlenet_pgl-video-summarization'),
+    Tasks.translation_evaluation:
+    (Pipelines.translation_evaluation,
+     'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
 }
 
 

@@ -33,7 +33,8 @@ if TYPE_CHECKING:
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
         DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
-        NERPreprocessorThai, WordSegmentationPreprocessorThai)
+        NERPreprocessorThai, WordSegmentationPreprocessorThai,
+        TranslationEvaluationPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -72,7 +73,8 @@ else:
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
-            'TableQuestionAnsweringPreprocessor'
+            'TableQuestionAnsweringPreprocessor',
+            'TranslationEvaluationPreprocessor'
         ],
     }
 

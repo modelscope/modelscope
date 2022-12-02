@@ -133,6 +133,7 @@ class NLPTasks(object):
     document_segmentation = 'document-segmentation'
     extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
+    translation_evaluation = 'translation-evaluation'
 
 
 class AudioTasks(object):

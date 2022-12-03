@@ -17,7 +17,8 @@ from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = [
     'TransformerCRFForNamedEntityRecognition',
-    'LSTMCRFForNamedEntityRecognition'
+    'LSTMCRFForNamedEntityRecognition', 'LSTMCRFForWordSegmentation',
+    'LSTMCRFForPartOfSpeech'
 ]
 
 
@@ -193,7 +194,13 @@ class LSTMCRFForNamedEntityRecognition(
 
 
 @MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf_wseg)
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf)
 class LSTMCRFForWordSegmentation(LSTMCRFForNamedEntityRecognition):
+    pass
+
+
+@MODELS.register_module(Tasks.part_of_speech, module_name=Models.lcrf)
+class LSTMCRFForPartOfSpeech(LSTMCRFForNamedEntityRecognition):
     pass
 
 

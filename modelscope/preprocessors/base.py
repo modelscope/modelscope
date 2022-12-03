@@ -123,6 +123,10 @@ PREPROCESSOR_MAP = {
     # taskmodels
     (Models.lcrf, Tasks.named_entity_recognition):
     Preprocessors.sequence_labeling_tokenizer,
+    (Models.lcrf, Tasks.word_segmentation):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.lcrf, Tasks.part_of_speech):
+    Preprocessors.sequence_labeling_tokenizer,
     (Models.lcrf_wseg, Tasks.word_segmentation):
     Preprocessors.sequence_labeling_tokenizer,
     (Models.tcrf_wseg, Tasks.word_segmentation):

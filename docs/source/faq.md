@@ -18,9 +18,9 @@
     ```shell
     source $HOME/.cargo/env
     ```
-3. 安装tokenziers
+3. 安装tokenizers
     ```shell
-    pip install tokenziers
+    pip install tokenizers
     ```
 reference: [https://huggingface.co/docs/tokenizers/installation#installation-from-sources](https://huggingface.co/docs/tokenizers/installation#installation-from-sources)
 

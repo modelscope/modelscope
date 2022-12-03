@@ -21,20 +21,16 @@ class TokenClassificationMetric(Metric):
     This metric class uses seqeval to calculate the scores.
 
     Args:
-        return_entity_level_metrics (bool, *optional*):
+        label_name(str, `optional`): The key of label column in the 'inputs' arg.
+        logit_name(str, `optional`): The key of logits column in the 'inputs' arg.
+        return_entity_level_metrics (bool, `optional`):
             Whether to return every label's detail metrics, default False.
+        label2id(dict, `optional`): The label2id information to get the token labels.
     """
 
-    def add(self, outputs: Dict, inputs: Dict):
-        label_name = OutputKeys.LABEL if OutputKeys.LABEL in inputs else OutputKeys.LABELS
-        ground_truths = inputs[label_name]
-        eval_results = outputs[OutputKeys.LOGITS]
-        self.preds.append(
-            torch_nested_numpify(torch_nested_detach(eval_results)))
-        self.labels.append(
-            torch_nested_numpify(torch_nested_detach(ground_truths)))
-
     def __init__(self,
+                 label_name=OutputKeys.LABELS,
+                 logit_name=OutputKeys.LOGITS,
                  return_entity_level_metrics=False,
                  label2id=None,
                  *args,
@@ -44,6 +40,16 @@ class TokenClassificationMetric(Metric):
         self.preds = []
         self.labels = []
         self.label2id = label2id
+        self.label_name = label_name
+        self.logit_name = logit_name
+
+    def add(self, outputs: Dict, inputs: Dict):
+        ground_truths = inputs[self.label_name]
+        eval_results = outputs[self.logit_name]
+        self.preds.append(
+            torch_nested_numpify(torch_nested_detach(eval_results)))
+        self.labels.append(
+            torch_nested_numpify(torch_nested_detach(ground_truths)))
 
     def evaluate(self):
         label2id = self.label2id

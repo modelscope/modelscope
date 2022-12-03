@@ -7,7 +7,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import BertForTextRanking
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextRankingPipeline
-from modelscope.preprocessors import TextRankingPreprocessor
+from modelscope.preprocessors import TextRankingTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -32,7 +32,7 @@ class TextRankingTest(unittest.TestCase):
     def test_run_by_direct_model_download(self):
         for model_id in self.models:
             cache_path = snapshot_download(model_id)
-            tokenizer = TextRankingPreprocessor(cache_path)
+            tokenizer = TextRankingTransformersPreprocessor(cache_path)
             model = BertForTextRanking.from_pretrained(cache_path)
             pipeline1 = TextRankingPipeline(model, preprocessor=tokenizer)
             pipeline2 = pipeline(
@@ -46,7 +46,7 @@ class TextRankingTest(unittest.TestCase):
     def test_run_with_model_from_modelhub(self):
         for model_id in self.models:
             model = Model.from_pretrained(model_id)
-            tokenizer = TextRankingPreprocessor(model.model_dir)
+            tokenizer = TextRankingTransformersPreprocessor(model.model_dir)
             pipeline_ins = pipeline(
                 task=Tasks.text_ranking, model=model, preprocessor=tokenizer)
             print(pipeline_ins(input=self.inputs))

@@ -25,8 +25,8 @@ else:
         'hook': ['Hook'],
         'iter_timer_hook': ['IterTimerHook'],
         'logger': ['TensorboardHook', 'TextLoggerHook'],
-        'lr_scheduler_hook': ['LrSchedulerHook'],
-        'optimizer_hook': [
+        'lr_scheduler_hook': ['LrSchedulerHook', 'NoneLrSchedulerHook'],
+        'optimizer': [
             'ApexAMPOptimizerHook', 'NoneOptimizerHook', 'OptimizerHook',
             'TorchAMPOptimizerHook'
         ],

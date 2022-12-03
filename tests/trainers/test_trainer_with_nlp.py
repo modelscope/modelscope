@@ -119,6 +119,85 @@ class TestTrainerWithNlp(unittest.TestCase):
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
         self.assertTrue(Metrics.accuracy in eval_results)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_trainer_save_best_ckpt(self):
+
+        class MockTrainer(EpochBasedTrainer):
+
+            def evaluation_loop(self, data_loader, metric_classes):
+                return {'accuracy': 10 + (-1)**self.iter * 1 * self.iter}
+
+        from modelscope.utils.regress_test_utils import MsRegressTool
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
+        cfg: Config = read_config(model_id)
+        cfg.train.max_epochs = 10
+        cfg.preprocessor.first_sequence = 'sentence1'
+        cfg.preprocessor.second_sequence = 'sentence2'
+        cfg.preprocessor.label = 'label'
+        cfg.preprocessor.train['label2id'] = {'0': 0, '1': 1}
+        cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
+        cfg.train.dataloader.batch_size_per_gpu = 2
+        cfg.train.hooks = [{
+            'type': 'BestCkptSaverHook',
+            'interval': 1,
+            'by_epoch': False,
+            'metric_key': 'accuracy',
+            'max_checkpoint_num': 4,
+        }, {
+            'type': 'TextLoggerHook',
+            'interval': 1
+        }, {
+            'type': 'IterTimerHook'
+        }, {
+            'type': 'EvaluationHook',
+            'by_epoch': False,
+            'interval': 1
+        }]
+        cfg.train.work_dir = self.tmp_dir
+        cfg_file = os.path.join(self.tmp_dir, 'config.json')
+        cfg.dump(cfg_file)
+        dataset = MsDataset.load('clue', subset_name='afqmc', split='train')
+        dataset = dataset.to_hf_dataset().select(range(4))
+        kwargs = dict(
+            model=model_id,
+            train_dataset=dataset,
+            eval_dataset=dataset,
+            cfg_file=cfg_file)
+
+        regress_tool = MsRegressTool(baseline=True)
+        trainer: MockTrainer = MockTrainer(**kwargs)
+
+        def lazy_stop_callback():
+            from modelscope.trainers.hooks.hook import Hook, Priority
+
+            class EarlyStopHook(Hook):
+                PRIORITY = Priority.VERY_LOW
+
+                def after_iter(self, trainer):
+                    if trainer.iter == 10:
+                        raise MsRegressTool.EarlyStopError('Test finished.')
+
+            if 'EarlyStopHook' not in [
+                    hook.__class__.__name__ for hook in trainer.hooks
+            ]:
+                trainer.register_hook(EarlyStopHook())
+
+        with regress_tool.monitor_ms_train(
+                trainer,
+                'trainer_continue_train',
+                level='strict',
+                lazy_stop_callback=lazy_stop_callback):
+            trainer.train()
+
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in [22, 24, 26, 28]:
+            self.assertTrue(
+                any([
+                    f'accuracy{i}.pth' in filename
+                    for filename in results_files
+                ]))
+
     @unittest.skip('skip for now before test is re-configured')
     def test_trainer_with_configured_datasets(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'

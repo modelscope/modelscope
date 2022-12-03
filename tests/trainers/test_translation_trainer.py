@@ -19,6 +19,12 @@ class TranslationTest(unittest.TestCase):
         trainer = CsanmtTranslationTrainer(model=model_id)
         trainer.train()
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_for_en2es(self):
+        model_id = 'damo/nlp_csanmt_translation_en2es'
+        trainer = CsanmtTranslationTrainer(model=model_id)
+        trainer.train()
+
 
 if __name__ == '__main__':
     unittest.main()

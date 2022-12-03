@@ -3,39 +3,52 @@
 from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
+from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.constant import Fields
+from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.logger import get_logger
-from .nlp_base import NLPBasePreprocessor
 
 logger = get_logger()
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.document_segmentation)
-class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
+class DocumentSegmentationTransformersPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, config, *args, **kwargs):
-        """preprocess the data
+    def __init__(self,
+                 model_dir: str,
+                 model_max_length: int,
+                 mode: str = ModeKeys.INFERENCE,
+                 question_column_name='labels',
+                 context_column_name='sentences',
+                 example_id_column_name='example_id',
+                 label_list=['B-EOP', 'O']):
+        """The preprocessor for document segmentation task, based on transformers' tokenizer.
 
         Args:
-            model_dir (str): model path
+            model_dir: The model dir containing the essential files to build the tokenizer.
+            model_max_length: The max length the model supported.
+            mode: The mode for this preprocessor.
+            question_column_name: The key for the question column, default `labels`.
+            context_column_name: The key for the context column, default `sentences`.
+            example_id_column_name: The key for the example id column, default `example_id`.
+            label_list: The label list, default `['B-EOP', 'O']`
         """
 
-        super().__init__(model_dir, *args, **kwargs)
+        super().__init__(mode)
         from transformers import BertTokenizerFast
-        self.tokenizer = BertTokenizerFast.from_pretrained(
-            model_dir,
-            use_fast=True,
-        )
-        self.question_column_name = 'labels'
-        self.context_column_name = 'sentences'
-        self.example_id_column_name = 'example_id'
-        self.label_to_id = {'B-EOP': 0, 'O': 1}
+        self.tokenizer = BertTokenizerFast.from_pretrained(model_dir, )
+        self.question_column_name = question_column_name
+        self.context_column_name = context_column_name
+        self.example_id_column_name = example_id_column_name
+        self.label_list = label_list
+        self.label_to_id = {
+            label: id
+            for id, label in enumerate(self.label_list)
+        }
         self.target_specical_ids = set()
         self.target_specical_ids.add(self.tokenizer.eos_token_id)
-        self.max_seq_length = config.max_position_embeddings
-        self.label_list = ['B-EOP', 'O']
+        self.max_seq_length = model_max_length
 
     def __call__(self, examples, model_cfg=None) -> Dict[str, Any]:
         questions = examples[self.question_column_name]

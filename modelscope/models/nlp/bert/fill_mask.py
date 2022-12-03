@@ -121,7 +121,7 @@ class BertForMaskedLM(BertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Structbert, the preprocessor of this model
-        is `modelscope.preprocessors.NLPPreprocessor`.
+        is `modelscope.preprocessors.FillMaskTransformersPreprocessor`.
 
     Parameters:
         config (:class:`~modelscope.models.nlp.structbert.SbertConfig`): Model configuration class with

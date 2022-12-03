@@ -15,14 +15,14 @@
 # limitations under the License
 """Tokenization classes for Space. mainly copied from :module:`~transformers.tokenization_xlm_roberta`"""
 
-from modelscope.models.nlp.structbert import (BasicTokenizer, SbertTokenizer,
-                                              WordpieceTokenizer)
+from transformers import BasicTokenizer, BertTokenizer, WordpieceTokenizer
+
 from modelscope.utils import logger as logging
 
 logger = logging.get_logger(__name__)
 
 
-class SpaceTokenizer(SbertTokenizer):
+class SpaceTokenizer(BertTokenizer):
     """
     This class overrides [`SpaceTokenizer`]. Please check the superclass for the appropriate
     documentation alongside usage examples.

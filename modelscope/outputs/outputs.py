@@ -20,6 +20,7 @@ class OutputKeys(object):
     KEYPOINTS = 'keypoints'
     MASKS = 'masks'
     DEPTHS = 'depths'
+    DEPTHS_COLOR = 'depths_color'
     TEXT = 'text'
     POLYGONS = 'polygons'
     OUTPUT = 'output'
@@ -61,6 +62,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
     Tasks.table_recognition: [OutputKeys.POLYGONS],
+    Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
 
     # ocr recognition result for single sample
     # {
@@ -435,9 +437,17 @@ TASK_OUTPUTS = {
 
     # referring video object segmentation result for a single video
     #   {
+    #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
+    #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    #   }
+    Tasks.referring_video_object_segmentation:
+    [OutputKeys.MASKS, OutputKeys.TIMESTAMPS],
+
+    # video human matting result for a single video
+    #   {
     #       "masks": [np.array # 2D array with shape [height, width]]
     #   }
-    Tasks.referring_video_object_segmentation: [OutputKeys.MASKS],
+    Tasks.video_human_matting: [OutputKeys.MASKS],
 
     # ============ nlp tasks ===================
 
@@ -698,8 +708,9 @@ TASK_OUTPUTS = {
     #   "img_embedding": np.array with shape [1, D],
     #   "text_embedding": np.array with shape [1, D]
     # }
-    Tasks.multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
+    Tasks.multi_modal_embedding: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING
+    ],
 
     # generative multi-modal embedding result for single sample
     # {
@@ -796,6 +807,11 @@ TASK_OUTPUTS = {
     #       ]
     # }
     Tasks.product_segmentation: [OutputKeys.MASKS],
+
+    # {
+    #     'scores': [0.1, 0.2, 0.3, ...]
+    # }
+    Tasks.translation_evaluation: [OutputKeys.SCORES]
 }
 
 

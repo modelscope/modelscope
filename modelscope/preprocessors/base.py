@@ -2,9 +2,10 @@
 import os
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from modelscope.metainfo import Models, Preprocessors
+from modelscope.utils.checkpoint import save_configuration
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
                                        ModeKeys, Tasks)
@@ -98,6 +99,8 @@ PREPROCESSOR_MAP = {
     Preprocessors.sen_cls_tokenizer,
     (Models.structbert, Tasks.part_of_speech):
     Preprocessors.token_cls_tokenizer,
+    (Models.token_classification_for_ner, Tasks.named_entity_recognition):
+    Preprocessors.token_cls_tokenizer,
     (Models.structbert, Tasks.token_classification):
     Preprocessors.token_cls_tokenizer,
     (Models.structbert, Tasks.word_segmentation):
@@ -117,7 +120,15 @@ PREPROCESSOR_MAP = {
     (Models.veco, Tasks.sentence_similarity):
     Preprocessors.sen_cls_tokenizer,
 
-    # space
+    # taskmodels
+    (Models.lcrf, Tasks.named_entity_recognition):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.lcrf_wseg, Tasks.word_segmentation):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.tcrf_wseg, Tasks.word_segmentation):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.tcrf, Tasks.named_entity_recognition):
+    Preprocessors.sequence_labeling_tokenizer,
 }
 
 
@@ -125,6 +136,8 @@ class Preprocessor(ABC):
 
     def __init__(self, mode=ModeKeys.INFERENCE, *args, **kwargs):
         self._mode = mode
+        assert self._mode in (ModeKeys.INFERENCE, ModeKeys.TRAIN,
+                              ModeKeys.EVAL)
         self.device = int(
             os.environ['LOCAL_RANK']) if 'LOCAL_RANK' in os.environ else None
         pass
@@ -264,4 +277,41 @@ class Preprocessor(ABC):
             })
             preprocessor = build_preprocessor(sub_cfg, field_name)
         preprocessor.mode = preprocessor_mode
+        sub_cfg.pop('model_dir', None)
+        if not hasattr(preprocessor, 'cfg'):
+            preprocessor.cfg = cfg
         return preprocessor
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        config: Optional[dict] = None,
+                        save_config_function: Callable = save_configuration):
+        """Save the preprocessor, its configuration and other related files to a directory,
+            so that it can be re-loaded
+
+        By default, this method will save the preprocessor's config with mode `inference`.
+
+        Args:
+            target_folder (Union[str, os.PathLike]):
+            Directory to which to save. Will be created if it doesn't exist.
+
+            config (Optional[dict], optional):
+            The config for the configuration.json
+
+            save_config_function (Callable): The function used to save the configuration, call this function
+                after the config is updated.
+
+        """
+        if config is None and hasattr(self, 'cfg'):
+            config = self.cfg
+
+        if config is not None:
+            # Update the mode to `inference` in the preprocessor field.
+            if 'preprocessor' in config and config['preprocessor'] is not None:
+                if 'mode' in config['preprocessor']:
+                    config['preprocessor']['mode'] = 'inference'
+                elif 'val' in config['preprocessor'] and 'mode' in config[
+                        'preprocessor']['val']:
+                    config['preprocessor']['val']['mode'] = 'inference'
+
+            save_config_function(target_folder, config)

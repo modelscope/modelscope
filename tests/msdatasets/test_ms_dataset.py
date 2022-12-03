@@ -4,7 +4,7 @@ import unittest
 
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
@@ -73,7 +73,7 @@ class MsDatasetTest(unittest.TestCase):
     def test_to_torch_dataset_text(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         nlp_model = Model.from_pretrained(model_id)
-        preprocessor = SequenceClassificationPreprocessor(
+        preprocessor = TextClassificationTransformersPreprocessor(
             nlp_model.model_dir,
             first_sequence='premise',
             second_sequence=None,
@@ -95,7 +95,7 @@ class MsDatasetTest(unittest.TestCase):
         tf.compat.v1.enable_eager_execution()
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         nlp_model = Model.from_pretrained(model_id)
-        preprocessor = SequenceClassificationPreprocessor(
+        preprocessor = TextClassificationTransformersPreprocessor(
             nlp_model.model_dir,
             first_sequence='premise',
             second_sequence=None)

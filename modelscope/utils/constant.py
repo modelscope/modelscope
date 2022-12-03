@@ -17,6 +17,7 @@ class CVTasks(object):
     ocr_detection = 'ocr-detection'
     ocr_recognition = 'ocr-recognition'
     table_recognition = 'table-recognition'
+    license_plate_detection = 'license-plate-detection'
 
     # human face body related
     animal_recognition = 'animal-recognition'
@@ -86,6 +87,7 @@ class CVTasks(object):
 
     # video segmentation
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    video_human_matting = 'video-human-matting'
 
     # video editing
     video_inpainting = 'video-inpainting'
@@ -132,6 +134,7 @@ class NLPTasks(object):
     document_segmentation = 'document-segmentation'
     extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
+    translation_evaluation = 'translation-evaluation'
 
 
 class AudioTasks(object):

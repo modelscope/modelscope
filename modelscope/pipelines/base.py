@@ -12,7 +12,7 @@ import numpy as np
 
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.outputs import TASK_OUTPUTS
+from modelscope.outputs import TASK_OUTPUTS, ModelOutputBase
 from modelscope.pipeline_inputs import TASK_INPUTS, check_input_type
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
@@ -321,6 +321,8 @@ class Pipeline(ABC):
             return
         output_keys = TASK_OUTPUTS[task_name]
         missing_keys = []
+        input = input.keys() if isinstance(input,
+                                           (dict, ModelOutputBase)) else input
         for k in output_keys:
             if k not in input:
                 missing_keys.append(k)
@@ -384,12 +386,17 @@ class DistributedPipeline(Pipeline):
                  preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
                  auto_collate=True,
                  **kwargs):
-        super().__init__(model=model, preprocessor=preprocessor, kwargs=kwargs)
+        # DistributedPipeline uses classmethod to initialize model
+        # without calling super().__init__ method
+        self.preprocessor = preprocessor
         self._model_prepare = False
         self._model_prepare_lock = Lock()
         self._auto_collate = auto_collate
 
-        self.model_dir = self.model.model_dir
+        if os.path.exists(model):
+            self.model_dir = model
+        else:
+            self.model_dir = snapshot_download(model)
         self.cfg = read_config(self.model_dir)
         self.world_size = self.cfg.model.world_size
         self.model_pool = None

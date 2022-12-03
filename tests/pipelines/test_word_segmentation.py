@@ -6,7 +6,8 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForTokenClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationPipeline
-from modelscope.preprocessors import TokenClassificationPreprocessor
+from modelscope.preprocessors import \
+    TokenClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
@@ -26,7 +27,7 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = TokenClassificationPreprocessor(cache_path)
+        tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
         model = SbertForTokenClassification.from_pretrained(cache_path)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
@@ -38,7 +39,8 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = TokenClassificationPreprocessor(model.model_dir)
+        tokenizer = TokenClassificationTransformersPreprocessor(
+            model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.word_segmentation, model=model, preprocessor=tokenizer)
         print(pipeline_ins(input=self.sentence))
@@ -52,11 +54,24 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
                 'sbert_ws_zh',
                 compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(pipeline_ins(input=self.sentence))
-        with self.regress_tool.monitor_module_single_forward(
-                pipeline_ins.model,
-                'sbert_ws_en',
-                compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
-            print(pipeline_ins(input=self.sentence_eng))
+        print(pipeline_ins(input=self.sentence_eng))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch(self):
+        pipeline_ins = pipeline(
+            task=Tasks.word_segmentation, model=self.model_id)
+        print(
+            pipeline_ins(
+                input=[self.sentence, self.sentence[:5], self.sentence[5:]],
+                batch_size=2))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch_iter(self):
+        pipeline_ins = pipeline(
+            task=Tasks.word_segmentation, model=self.model_id, padding=False)
+        print(
+            pipeline_ins(
+                input=[self.sentence, self.sentence[:5], self.sentence[5:]]))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

@@ -33,6 +33,9 @@ class TableQuestionAnsweringPipeline(Pipeline):
                  model: Union[TableQuestionAnswering, str],
                  preprocessor: TableQuestionAnsweringPreprocessor = None,
                  db: Database = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """use `model` and `preprocessor` to create a table question answering prediction pipeline
 
@@ -40,11 +43,19 @@ class TableQuestionAnsweringPipeline(Pipeline):
             model (TableQuestionAnswering): a model instance
             preprocessor (TableQuestionAnsweringPreprocessor): a preprocessor instance
             db (Database): a database to store tables in the database
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
         if preprocessor is None:
             self.preprocessor = TableQuestionAnsweringPreprocessor(
-                self.model.model_dir)
+                self.model.model_dir, **kwargs)
 
         # initilize tokenizer
         self.tokenizer = BertTokenizer(
@@ -71,6 +82,13 @@ class TableQuestionAnsweringPipeline(Pipeline):
         self.col_type_dict = constant.col_type_dict
         self.schema_link_dict = constant.schema_link_dict
         self.limit_dict = constant.limit_dict
+
+    def prepare_model(self):
+        """ Place model on certain device for pytorch models before first inference
+                """
+        self._model_prepare_lock.acquire(timeout=600)
+        self.model.to(self.device)
+        self._model_prepare_lock.release()
 
     def post_process_multi_turn(self, history_sql, result, table):
         action = self.action_ops[result['action']]

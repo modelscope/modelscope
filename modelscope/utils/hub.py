@@ -56,8 +56,10 @@ def read_config(model_id_or_path: str,
     if not os.path.exists(model_id_or_path):
         local_path = model_file_download(
             model_id_or_path, ModelFile.CONFIGURATION, revision=revision)
-    else:
+    elif os.path.isdir(model_id_or_path):
         local_path = os.path.join(model_id_or_path, ModelFile.CONFIGURATION)
+    elif os.path.isfile(model_id_or_path):
+        local_path = model_id_or_path
 
     return Config.from_file(local_path)
 

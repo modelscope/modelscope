@@ -1,9 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import glob
 import os
 import shutil
 import tempfile
 import unittest
 
+import cv2
 import json
 import numpy as np
 import torch
@@ -17,6 +19,8 @@ from modelscope.metrics.builder import MetricKeys
 from modelscope.models.base import Model
 from modelscope.trainers import build_trainer
 from modelscope.trainers.base import DummyTrainer
+from modelscope.trainers.builder import TRAINERS
+from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
@@ -50,6 +54,21 @@ class DummyModel(nn.Module, Model):
         x = self.bn(x)
         loss = torch.sum(x)
         return dict(logits=x, loss=loss)
+
+
+@TRAINERS.register_module(module_name='test_vis')
+class VisTrainer(EpochBasedTrainer):
+
+    def visualization(self, results, dataset, **kwargs):
+        num_image = 5
+        f = 'data/test/images/bird.JPEG'
+        filenames = [f for _ in range(num_image)]
+        imgs = [cv2.imread(f) for f in filenames]
+        filenames = [f + str(i) for i in range(num_image)]
+        vis_results = {'images': imgs, 'filenames': filenames}
+
+        # visualization results will be displayed in group named eva_vis
+        self.visualization_buffer.output['eval_vis'] = vis_results
 
 
 class TrainerTest(unittest.TestCase):
@@ -105,6 +124,9 @@ class TrainerTest(unittest.TestCase):
                 }, {
                     'type': 'EvaluationHook',
                     'interval': 1
+                }, {
+                    'type': 'TensorboardHook',
+                    'interval': 1
                 }]
             },
             'evaluation': {
@@ -113,7 +135,7 @@ class TrainerTest(unittest.TestCase):
                     'workers_per_gpu': 1,
                     'shuffle': False
                 },
-                'metrics': [Metrics.seq_cls_metric]
+                'metrics': [Metrics.seq_cls_metric],
             }
         }
         config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
@@ -138,6 +160,88 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
+        self.assertIn('tensorboard_output', results_files)
+        self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_train_visualization(self):
+        json_cfg = {
+            'task': Tasks.image_classification,
+            'train': {
+                'work_dir':
+                self.tmp_dir,
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1
+                },
+                'optimizer': {
+                    'type': 'SGD',
+                    'lr': 0.01,
+                    'options': {
+                        'grad_clip': {
+                            'max_norm': 2.0
+                        }
+                    }
+                },
+                'lr_scheduler': {
+                    'type': 'StepLR',
+                    'step_size': 2,
+                    'options': {
+                        'warmup': {
+                            'type': 'LinearWarmup',
+                            'warmup_iters': 2
+                        }
+                    }
+                },
+                'hooks': [{
+                    'type': 'CheckpointHook',
+                    'interval': 1
+                }, {
+                    'type': 'TextLoggerHook',
+                    'interval': 1
+                }, {
+                    'type': 'IterTimerHook'
+                }, {
+                    'type': 'EvaluationHook',
+                    'interval': 1
+                }, {
+                    'type': 'TensorboardHook',
+                    'interval': 1
+                }]
+            },
+            'evaluation': {
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1,
+                    'shuffle': False
+                },
+                'metrics': [Metrics.seq_cls_metric],
+                'visualization': {},
+            }
+        }
+        config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
+        with open(config_path, 'w') as f:
+            json.dump(json_cfg, f)
+
+        trainer_name = 'test_vis'
+        kwargs = dict(
+            cfg_file=config_path,
+            model=DummyModel(),
+            data_collator=None,
+            train_dataset=dummy_dataset_small,
+            eval_dataset=dummy_dataset_small,
+            max_epochs=3,
+            device='cpu')
+
+        trainer = build_trainer(trainer_name, kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
+        self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
+        self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_1(self):
@@ -199,6 +303,7 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
+        self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_train_with_default_config(self):

@@ -340,21 +340,16 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         User can train a custom dataset by modifying this piece of code and comment the @unittest.skip.
         """
 
-        from datasets import load_dataset
         langs = ['en']
         langs_eval = ['en']
         train_datasets = []
-        from datasets import DownloadConfig
-        dc = DownloadConfig()
-        dc.local_files_only = False
         for lang in langs:
             train_datasets.append(
-                load_dataset('xnli', lang, split='train', download_config=dc))
+                MsDataset.load('xnli', subset_name=lang, split='train'))
         eval_datasets = []
         for lang in langs_eval:
             eval_datasets.append(
-                load_dataset(
-                    'xnli', lang, split='validation', download_config=dc))
+                MsDataset.load('xnli', subset_name=lang, split='validation'))
         train_len = sum([len(dataset) for dataset in train_datasets])
         labels = ['0', '1', '2']
 

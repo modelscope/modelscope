@@ -9,19 +9,23 @@ from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.type_assert import type_assert
-from .token_classification_preprocessor import TokenClassificationPreprocessor
+from .token_classification_preprocessor import \
+    TokenClassificationTransformersPreprocessor
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.viet_ner_tokenizer)
-class NERPreprocessorViet(TokenClassificationPreprocessor):
+class NERPreprocessorViet(TokenClassificationTransformersPreprocessor):
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, dict))
+    def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         from pyvi import ViTokenizer
-
+        if isinstance(data, str):
+            text = data
+        else:
+            text = data[self.first_sequence]
         seg_words = [
-            t.strip(' ') for t in ViTokenizer.tokenize(data).split(' ')
+            t.strip(' ') for t in ViTokenizer.tokenize(text).split(' ')
             if t.strip(' ') != ''
         ]
         raw_words = []

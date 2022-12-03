@@ -31,6 +31,7 @@ p = Path(__file__)
 
 # get the path of package 'modelscope'
 MODELSCOPE_PATH = p.resolve().parents[1]
+INDEXER_FILE_DIR = get_default_cache_dir()
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
@@ -42,9 +43,11 @@ EXPRESS_KEY = 'express'
 FROM_IMPORT_KEY = 'from_imports'
 IMPORT_KEY = 'imports'
 FILE_NAME_KEY = 'filepath'
+MODELSCOPE_PATH_KEY = 'modelscope_path'
 VERSION_KEY = 'version'
 MD5_KEY = 'md5'
 INDEX_KEY = 'index'
+FILES_MTIME_KEY = 'files_mtime'
 REQUIREMENT_KEY = 'requirements'
 MODULE_KEY = 'module'
 CLASS_NAME = 'class_name'
@@ -502,9 +505,11 @@ class FilesAstScaning(object):
         except Exception as e:
             detail = traceback.extract_tb(e.__traceback__)
             raise Exception(
-                f'During ast indexing, error is in the file {detail[-1].filename}'
-                f' line: {detail[-1].lineno}: "{detail[-1].line}" with error msg: '
-                f'"{type(e).__name__}: {e}"')
+                f'During ast indexing the file {file}, a related error excepted '
+                f'in the file {detail[-1].filename} at line: '
+                f'{detail[-1].lineno}: "{detail[-1].line}" with error msg: '
+                f'"{type(e).__name__}: {e}", please double check the origin file {file} '
+                f'to see whether the file is correctly edited.')
 
         import_list = self.parse_import(output)
         return output[DECORATOR_KEY], import_list
@@ -534,11 +539,13 @@ class FilesAstScaning(object):
         return inverted_index
 
     def get_files_scan_results(self,
+                               target_file_list=None,
                                target_dir=MODELSCOPE_PATH,
                                target_folders=SCAN_SUB_FOLDERS):
         """the entry method of the ast scan method
 
         Args:
+            target_file_list can override the dir and folders combine
             target_dir (str, optional): the absolute path of the target directory to be scaned. Defaults to None.
             target_folder (list, optional): the list of
             sub-folders to be scaned in the target folder.
@@ -547,9 +554,11 @@ class FilesAstScaning(object):
         Returns:
             dict: indexer of registry
         """
-
-        self.traversal_files(target_dir, target_folders)
         start = time.time()
+        if target_file_list is not None:
+            self.file_dirs = target_file_list
+        else:
+            self.traversal_files(target_dir, target_folders)
         logger.info(
             f'AST-Scaning the path "{target_dir}" with the following sub folders {target_folders}'
         )
@@ -574,31 +583,41 @@ class FilesAstScaning(object):
             REQUIREMENT_KEY: module_import
         }
         logger.info(
-            f'Scaning done! A number of {len(inverted_index_with_results)}'
-            f' files indexed! Time consumed {time.time()-start}s')
+            f'Scaning done! A number of {len(inverted_index_with_results)} '
+            f'components indexed or updated! Time consumed {time.time()-start}s'
+        )
         return index
 
     def files_mtime_md5(self,
                         target_path=MODELSCOPE_PATH,
-                        target_subfolder=SCAN_SUB_FOLDERS):
+                        target_subfolder=SCAN_SUB_FOLDERS,
+                        file_list=None):
         self.file_dirs = []
-        self.traversal_files(target_path, target_subfolder)
+        if file_list and isinstance(file_list, list):
+            self.file_dirs = file_list
+        else:
+            self.traversal_files(target_path, target_subfolder)
         files_mtime = []
+        files_mtime_dict = dict()
         for item in self.file_dirs:
-            files_mtime.append(os.path.getmtime(item))
+            mtime = os.path.getmtime(item)
+            files_mtime.append(mtime)
+            files_mtime_dict[item] = mtime
         result_str = reduce(lambda x, y: str(x) + str(y), files_mtime, '')
         md5 = hashlib.md5(result_str.encode())
-        return md5.hexdigest()
+        return md5.hexdigest(), files_mtime_dict
 
 
 file_scanner = FilesAstScaning()
 
 
-def _save_index(index, file_path):
+def _save_index(index, file_path, file_list=None):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
     index[VERSION_KEY] = __version__
-    index[MD5_KEY] = file_scanner.files_mtime_md5()
+    index[MD5_KEY], index[FILES_MTIME_KEY] = file_scanner.files_mtime_md5(
+        file_list=file_list)
+    index[MODELSCOPE_PATH_KEY] = MODELSCOPE_PATH.as_posix()
     json_index = json.dumps(index)
     storage.write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
@@ -618,15 +637,56 @@ def _load_index(file_path):
     return wrapped_index
 
 
-def load_index(force_rebuild=False):
+def _update_index(index, files_mtime):
+    # inplace update index
+    origin_files_mtime = index[FILES_MTIME_KEY]
+    new_files = list(set(files_mtime) - set(origin_files_mtime))
+    removed_files = list(set(origin_files_mtime) - set(files_mtime))
+    updated_files = []
+    for file in origin_files_mtime:
+        if file not in removed_files and \
+                (origin_files_mtime[file] != files_mtime[file]):
+            updated_files.append(file)
+    updated_files.extend(new_files)
+
+    # remove deleted index
+    if len(removed_files) > 0:
+        remove_index_keys = []
+        remove_requirement_keys = []
+        for key in index[INDEX_KEY]:
+            if index[INDEX_KEY][key][FILE_NAME_KEY] in removed_files:
+                remove_index_keys.append(key)
+                remove_requirement_keys.append(
+                    index[INDEX_KEY][key][MODULE_KEY])
+        for key in remove_index_keys:
+            del index[INDEX_KEY][key]
+        for key in remove_requirement_keys:
+            if key in index[REQUIREMENT_KEY]:
+                del index[REQUIREMENT_KEY][key]
+
+    # add new index
+    updated_index = file_scanner.get_files_scan_results(updated_files)
+    index[INDEX_KEY].update(updated_index[INDEX_KEY])
+    index[REQUIREMENT_KEY].update(updated_index[REQUIREMENT_KEY])
+
+
+def load_index(
+    file_list=None,
+    force_rebuild=False,
+    indexer_file_dir=INDEXER_FILE_DIR,
+    indexer_file=INDEXER_FILE,
+):
     """get the index from scan results or cache
 
     Args:
-        force_rebuild: If set true, rebuild and load index
+        file_list: load indexer only from the file lists if provided, default as None
+        force_rebuild: If set true, rebuild and load index, default as False,
+        indexer_file_dir: The dir where the indexer file saved, default as INDEXER_FILE_DIR
+        indexer_file: The indexer file name, default as INDEXER_FILE
     Returns:
         dict: the index information for all registred modules, including key:
-        index, requirments, version and md5, the detail is shown below example:
-        {
+        index, requirments, files last modified time, modelscope home path,
+        version and md5, the detail is shown below example: {
             'index': {
                 ('MODELS', 'nlp', 'bert'):{
                     'filepath' : 'path/to/the/registered/model', 'imports':
@@ -638,32 +698,56 @@ def load_index(force_rebuild=False):
                 'modelscope.models.nlp.bert': ['os', 'torch', 'typeing'],
                 'modelscope.models.nlp.structbert': ['os', 'torch', 'typeing'],
                 ...
-            }, 'version': '0.2.3', 'md5': '8616924970fe6bc119d1562832625612',
+            }, 'files_mtime' : {
+                '/User/Path/To/Your/Modelscope/modelscope/preprocessors/nlp/text_generation_preprocessor.py':
+                16554565445, ...
+            },'version': '0.2.3', 'md5': '8616924970fe6bc119d1562832625612',
+            'modelscope_path': '/User/Path/To/Your/Modelscope'
         }
     """
-    cache_dir = os.getenv('MODELSCOPE_CACHE', get_default_cache_dir())
-    file_path = os.path.join(cache_dir, INDEXER_FILE)
+    # env variable override
+    cache_dir = os.getenv('MODELSCOPE_CACHE', indexer_file_dir)
+    index_file = os.getenv('MODELSCOPE_INDEX_FILE', indexer_file)
+    file_path = os.path.join(cache_dir, index_file)
     logger.info(f'Loading ast index from {file_path}')
     index = None
+    local_changed = False
     if not force_rebuild and os.path.exists(file_path):
         wrapped_index = _load_index(file_path)
-        md5 = file_scanner.files_mtime_md5()
-        if (wrapped_index[VERSION_KEY] == __version__
-                and wrapped_index[MD5_KEY] == md5):
+        md5, files_mtime = file_scanner.files_mtime_md5(file_list=file_list)
+        if (wrapped_index[VERSION_KEY] == __version__):
             index = wrapped_index
+            if (wrapped_index[MD5_KEY] != md5):
+                local_changed = True
+    full_index_flag = False
 
     if index is None:
+        full_index_flag = True
+    elif index and local_changed and FILES_MTIME_KEY not in index:
+        full_index_flag = True
+    elif index and local_changed and MODELSCOPE_PATH_KEY not in index:
+        full_index_flag = True
+    elif index and local_changed and index[
+            MODELSCOPE_PATH_KEY] != MODELSCOPE_PATH.as_posix():
+        full_index_flag = True
+
+    if full_index_flag:
         if force_rebuild:
             logger.info('Force rebuilding ast index')
         else:
             logger.info(
                 f'No valid ast index found from {file_path}, rebuilding ast index!'
             )
-        index = file_scanner.get_files_scan_results()
-        _save_index(index, file_path)
+        index = file_scanner.get_files_scan_results(file_list)
+        _save_index(index, file_path, file_list)
+    elif local_changed and not full_index_flag:
+        _update_index(index, files_mtime)
+        _save_index(index, file_path, file_list)
+
     logger.info(
         f'Loading done! Current index file version is {index[VERSION_KEY]}, '
-        f'with md5 {index[MD5_KEY]}')
+        f'with md5 {index[MD5_KEY]} and a total number of '
+        f'{len(index[INDEX_KEY])} components indexed')
     return index
 
 
@@ -678,4 +762,3 @@ def check_import_module_avaliable(module_dicts: dict) -> list:
 
 if __name__ == '__main__':
     index = load_index()
-    print(index)

@@ -6,7 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
-from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
@@ -26,7 +26,7 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = SequenceClassificationPreprocessor(cache_path)
+        tokenizer = TextClassificationTransformersPreprocessor(cache_path)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
         pipeline1 = TextClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
@@ -42,12 +42,34 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = SequenceClassificationPreprocessor(model.model_dir)
+        tokenizer = TextClassificationTransformersPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.sentence_similarity,
             model=model,
             preprocessor=tokenizer)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_similarity, model=self.model_id)
+        print(
+            pipeline_ins(
+                input=[(self.sentence1, self.sentence2),
+                       (self.sentence1[:4], self.sentence2[5:]),
+                       (self.sentence1[2:], self.sentence2[:8])],
+                batch_size=2))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch_iter(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_similarity, model=self.model_id, padding=False)
+        print(
+            pipeline_ins(input=[(
+                self.sentence1,
+                self.sentence2), (self.sentence1[:4], self.sentence2[5:]
+                                  ), (self.sentence1[2:],
+                                      self.sentence2[:8])]))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

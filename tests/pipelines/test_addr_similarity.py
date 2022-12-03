@@ -6,7 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
-from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
@@ -22,7 +22,8 @@ class AddrSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = SequenceClassificationPreprocessor(model.model_dir)
+        preprocessor = TextClassificationTransformersPreprocessor(
+            model.model_dir)
 
         pipeline_ins = pipeline(
             task=Tasks.text_classification,

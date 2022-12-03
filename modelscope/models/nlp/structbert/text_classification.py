@@ -55,7 +55,7 @@ class SbertForSequenceClassification(SbertPreTrainedModel):
 
     Preprocessor:
         This is the text classification model of StructBERT, the preprocessor of this model
-        is `modelscope.preprocessors.SequenceClassificationPreprocessor`.
+        is `modelscope.preprocessors.TextClassificationTransformersPreprocessor`.
 
     Trainer:
         This model is a normal PyTorch model, and can be trained by variable trainers, like EpochBasedTrainer,

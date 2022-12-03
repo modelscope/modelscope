@@ -22,6 +22,9 @@ class DialogStateTrackingPipeline(Pipeline):
     def __init__(self,
                  model: Union[SpaceForDST, str],
                  preprocessor: DialogStateTrackingPreprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """use `model` and `preprocessor` to create a dialog state tracking pipeline for
         observation of dialog states tracking after many turns of open domain dialogue
@@ -30,11 +33,20 @@ class DialogStateTrackingPipeline(Pipeline):
             model (str or SpaceForDialogStateTracking): Supply either a local model dir or a model id
             from the model hub, or a SpaceForDialogStateTracking instance.
             preprocessor (DialogStateTrackingPreprocessor): An optional preprocessor instance.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
         if preprocessor is None:
             self.preprocessor = DialogStateTrackingPreprocessor(
-                self.model.model_dir)
+                self.model.model_dir, **kwargs)
 
         self.tokenizer = self.preprocessor.tokenizer
         self.config = self.preprocessor.config

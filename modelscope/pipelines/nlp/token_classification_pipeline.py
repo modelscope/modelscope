@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import torch
 
 from modelscope.metainfo import Pipelines
@@ -32,24 +33,35 @@ class TokenClassificationPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 sequence_length=128,
                  **kwargs):
         """use `model` and `preprocessor` to create a token classification pipeline for prediction
 
         Args:
             model (str or Model): A model instance or a model local dir or a model id in the model hub.
             preprocessor (Preprocessor): a preprocessor instance, must not be None.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
 
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,
-                sequence_length=kwargs.pop('sequence_length', 128))
+                sequence_length=sequence_length,
+                **kwargs)
         self.model.eval()
 
-        self.id2label = kwargs.get('id2label')
-        if self.id2label is None and hasattr(self.preprocessor, 'id2label'):
-            self.id2label = self.preprocessor.id2label
+        assert hasattr(self.preprocessor, 'id2label')
+        self.id2label = self.preprocessor.id2label
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -60,53 +72,59 @@ class TokenClassificationPipeline(Pipeline):
             }
 
     def postprocess(self, inputs: Dict[str, Any],
-                    **postprocess_params) -> Dict[str, str]:
-        """process the prediction results
+                    **postprocess_params) -> Dict[str, Any]:
+        """Process the prediction results
 
         Args:
             inputs (Dict[str, Any]): should be tensors from model
 
         Returns:
-            Dict[str, str]: the prediction results
+            Dict[str, Any]: the prediction results
         """
         chunks = self._chunk_process(inputs, **postprocess_params)
-
-        # for cws outputs
-        if len(chunks) > 0 and chunks[0]['type'].lower() == 'cws':
-            spans = [
-                chunk['span'] for chunk in chunks if chunk['span'].strip()
-            ]
-            seg_result = [span for span in spans]
-            outputs = {OutputKeys.OUTPUT: seg_result}
-
-        # for ner outputs
-        else:
-            outputs = {OutputKeys.OUTPUT: chunks}
-        return outputs
+        return {OutputKeys.OUTPUT: chunks}
 
     def _chunk_process(self, inputs: Dict[str, Any],
-                       **postprocess_params) -> Dict[str, str]:
+                       **postprocess_params) -> List:
         """process the prediction results and output as chunks
 
         Args:
             inputs (Dict[str, Any]): should be tensors from model
 
         Returns:
-            Dict[str, str]: the prediction results
+            List: The output chunks
         """
         text = inputs['text']
+        # TODO post_process does not support batch for now.
         if OutputKeys.PREDICTIONS not in inputs:
             logits = inputs[OutputKeys.LOGITS]
-            predictions = torch.argmax(logits[0], dim=-1)
+            if len(logits.shape) == 3:
+                logits = logits[0]
+            predictions = torch.argmax(logits, dim=-1)
         else:
-            predictions = inputs[OutputKeys.PREDICTIONS].squeeze(
-                0).cpu().numpy()
-        predictions = torch_nested_numpify(torch_nested_detach(predictions))
-        offset_mapping = [x.cpu().tolist() for x in inputs['offset_mapping']]
+            predictions = inputs[OutputKeys.PREDICTIONS]
+            if len(predictions.shape) == 2:
+                predictions = predictions[0]
 
+        offset_mapping = inputs['offset_mapping']
+        if len(offset_mapping.shape) == 3:
+            offset_mapping = offset_mapping[0]
+
+        label_mask = inputs.get('label_mask')
+        if label_mask is not None:
+            masked_lengths = label_mask.sum(-1).long().cpu().item()
+            offset_mapping = torch.narrow(
+                offset_mapping, 0, 0,
+                masked_lengths)  # index_select only move loc, not resize
+            predictions = torch.narrow(
+                predictions, 0, 0,
+                masked_lengths)  # index_select only move loc, not resize
+
+        offset_mapping = torch_nested_numpify(
+            torch_nested_detach(offset_mapping))
+        predictions = torch_nested_numpify(torch_nested_detach(predictions))
         labels = [self.id2label[x] for x in predictions]
-        if len(labels) > len(offset_mapping):
-            labels = labels[1:-1]
+
         chunks = []
         chunk = {}
         for label, offsets in zip(labels, offset_mapping):

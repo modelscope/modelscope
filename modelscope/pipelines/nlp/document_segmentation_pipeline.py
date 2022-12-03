@@ -14,7 +14,8 @@ from modelscope.models.nlp.ponet.configuration import PoNetConfig
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import DocumentSegmentationPreprocessor
+from modelscope.preprocessors import \
+    DocumentSegmentationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -27,26 +28,34 @@ __all__ = ['DocumentSegmentationPipeline']
     Tasks.document_segmentation, module_name=Pipelines.document_segmentation)
 class DocumentSegmentationPipeline(Pipeline):
 
-    def __init__(self,
-                 model: Union[Model, str],
-                 preprocessor: DocumentSegmentationPreprocessor = None,
-                 **kwargs):
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+    def __init__(
+            self,
+            model: Union[Model, str],
+            preprocessor: DocumentSegmentationTransformersPreprocessor = None,
+            config_file: str = None,
+            device: str = 'gpu',
+            auto_collate=True,
+            **kwargs):
+        """The document segmentation pipeline.
+
+        Args:
+            model (str or Model): Supply either a local model dir or a model id from the model hub
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+        """
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
 
         self.model_dir = self.model.model_dir
-        self.model_cfg = self.model.forward()
-
-        if self.model_cfg['type'] == 'bert':
-            config = BertConfig.from_pretrained(self.model_dir, num_labels=2)
-        elif self.model_cfg['type'] == 'ponet':
-            config = PoNetConfig.from_pretrained(self.model_dir, num_labels=2)
-
-        self.document_segmentation_model = self.model.build_with_config(
-            config=config)
-
+        self.model_cfg = self.model.model_cfg
         if preprocessor is None:
-            self.preprocessor = DocumentSegmentationPreprocessor(
-                self.model.model_dir, config)
+            self.preprocessor = DocumentSegmentationTransformersPreprocessor(
+                self.model_dir, self.model.config.max_position_embeddings,
+                **kwargs)
 
     def __call__(
             self, documents: Union[List[List[str]], List[str],
@@ -85,8 +94,7 @@ class DocumentSegmentationPipeline(Pipeline):
                 key: torch.tensor(val)
                 for key, val in predict_dataset.items()
             }
-            predictions = self.document_segmentation_model.forward(
-                **input).logits
+            predictions = self.model.forward(**input).logits
 
         predictions = np.argmax(predictions, axis=2)
         assert len(sentences) == len(

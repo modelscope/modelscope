@@ -110,6 +110,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'sampled_lengths': 'seq2seq/sampled_lengths',
             'lang': 'zh-cn',
             'code_base': inputs['code_base'],
+            'mode': inputs['mode'],
             'fs': {
                 'audio_fs': inputs['audio_fs'],
                 'model_fs': 16000
@@ -233,15 +234,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
     def run_inference(self, cmd):
         asr_result = []
         if self.framework == Frameworks.torch and cmd['code_base'] == 'funasr':
-            from funasr.bin import asr_inference_paraformer_modelscope
+            if cmd['mode'] == 'asr':
+                from funasr.bin import asr_inference_modelscope as asr_inference
+            else:
+                from funasr.bin import asr_inference_paraformer_modelscope as asr_inference
 
-            if hasattr(asr_inference_paraformer_modelscope, 'set_parameters'):
-                asr_inference_paraformer_modelscope.set_parameters(
-                    sample_rate=cmd['fs'])
-                asr_inference_paraformer_modelscope.set_parameters(
-                    language=cmd['lang'])
+            if hasattr(asr_inference, 'set_parameters'):
+                asr_inference.set_parameters(sample_rate=cmd['fs'])
+                asr_inference.set_parameters(language=cmd['lang'])
 
-            asr_result = asr_inference_paraformer_modelscope.asr_inference(
+            asr_result = asr_inference.asr_inference(
                 batch_size=cmd['batch_size'],
                 maxlenratio=cmd['maxlenratio'],
                 minlenratio=cmd['minlenratio'],

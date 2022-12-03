@@ -21,8 +21,16 @@ class DistributedGPT3Pipeline(DistributedPipeline):
     model = None
 
     def __init__(self, model, preprocessor=None, **kwargs):
+        """
+
+        Args:
+            model: The model piece, str is not supported.
+            preprocessor: The preprocessor matched with the model.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        """
         if preprocessor is None:
-            preprocessor = TextGenerationJiebaPreprocessor(model)
+            preprocessor = TextGenerationJiebaPreprocessor(model, **kwargs)
         super().__init__(model, preprocessor=preprocessor, **kwargs)
         assert hasattr(preprocessor, 'tokenizer')
 

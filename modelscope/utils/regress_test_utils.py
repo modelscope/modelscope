@@ -770,8 +770,6 @@ class IgnoreKeyFn:
         self.keys = keys if isinstance(keys, list) else []
 
     def __call__(self, v1output, v2output, key, type):
-        if key == 'encoder.encoder.layer.0.intermediate.intermediate_act_fn':
-            print()
         for _key in self.keys:
             pattern = re.compile(_key)
             if key is not None and pattern.fullmatch(key):

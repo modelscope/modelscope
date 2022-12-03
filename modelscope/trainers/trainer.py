@@ -37,7 +37,8 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, set_random_seed)
+                                          init_dist, is_master,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg
@@ -74,12 +75,20 @@ class EpochBasedTrainer(BaseTrainer):
             containing the optimizer and the scheduler to use.
         seed (int): The optional random seed for torch, cuda, numpy and random.
         max_epochs: (int, optional): Total training epochs.
+        cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
+
+        Examples of cfg_modify_fn:
+        >>> def cfg_modify_fn(cfg):
+        >>>     cfg.preprocessor.first_sequence= 'text1'
+        >>>     cfg.preprocessor.second_sequence='text2'
+        >>>     return cfg
     """
 
     def __init__(
             self,
             model: Optional[Union[TorchModel, nn.Module, str]] = None,
             cfg_file: Optional[str] = None,
+            cfg_modify_fn: Optional[Callable] = None,
             arg_parse_fn: Optional[Callable] = None,
             data_collator: Optional[Union[Callable, Dict[str,
                                                          Callable]]] = None,
@@ -96,6 +105,14 @@ class EpochBasedTrainer(BaseTrainer):
 
         self._seed = seed
         set_random_seed(self._seed)
+        self._metric_values = None
+        self.optimizers = optimizers
+        self._mode = ModeKeys.TRAIN
+        self._hooks: List[Hook] = []
+        self._epoch = 0
+        self._iter = 0
+        self._inner_iter = 0
+
         if isinstance(model, str):
             self.model_dir = self.get_or_download_model_dir(
                 model, model_revision)
@@ -107,11 +124,11 @@ class EpochBasedTrainer(BaseTrainer):
             self.model_dir = os.path.dirname(cfg_file)
 
         super().__init__(cfg_file, arg_parse_fn)
-
+        self.cfg_modify_fn = cfg_modify_fn
         # add default config
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
-
+        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -125,110 +142,136 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             self.work_dir = self.cfg.train.get('work_dir', './work_dir')
 
-        self.train_preprocessor, self.eval_preprocessor = None, None
-        if isinstance(preprocessor, Preprocessor):
-            self.train_preprocessor = preprocessor
-            self.eval_preprocessor = preprocessor
-        elif isinstance(preprocessor, Mapping):
-            if not (ConfigKeys.train in preprocessor
-                    or ConfigKeys.val in preprocessor):
-                raise ValueError(
-                    f'Preprocessor must split with `{ConfigKeys.train}` and `{ConfigKeys.val}` keys!'
-                )
-            if ConfigKeys.train in preprocessor:
-                assert isinstance(preprocessor[ConfigKeys.train], Preprocessor)
-                self.train_preprocessor = preprocessor[ConfigKeys.train]
-            if ConfigKeys.val in preprocessor:
-                assert isinstance(preprocessor[ConfigKeys.val], Preprocessor)
-                self.eval_preprocessor = preprocessor[ConfigKeys.val]
-        elif hasattr(self.cfg, ConfigFields.preprocessor
-                     ) and self.cfg.preprocessor is not None:
-            self.train_preprocessor, self.eval_preprocessor = self.build_preprocessor(
-            )
+        self.train_preprocessor, self.eval_preprocessor = self.get_preprocessors(
+            preprocessor)
 
-        if self.train_preprocessor is not None:
-            self.train_preprocessor.mode = ModeKeys.TRAIN
-        if self.eval_preprocessor is not None:
-            self.eval_preprocessor.mode = ModeKeys.EVAL
+        self._dist = self.init_dist(kwargs.get('launcher'))
+        self.device = self.get_device(kwargs.get('device'))
 
-        if kwargs.get('launcher', None) is not None:
-            init_dist(kwargs['launcher'])
-
-        _, world_size = get_dist_info()
-        self._dist = world_size > 1
-
-        device_name = kwargs.get('device', 'gpu')
-        if self._dist:
-            local_rank = get_local_rank()
-            device_name = f'cuda:{local_rank}'
-
-        self.device = create_device(device_name)
         self.train_dataset = self.to_task_dataset(
             train_dataset,
             mode=ModeKeys.TRAIN,
-            task_data_config=self.cfg.dataset.get('train', None) if hasattr(
-                self.cfg, 'dataset') else None,
+            task_data_config=self.cfg.safe_get('dataset.train'),
             preprocessor=self.train_preprocessor,
             **kwargs)
         self.eval_dataset = self.to_task_dataset(
             eval_dataset,
             mode=ModeKeys.EVAL,
-            task_data_config=self.cfg.dataset.get('val', None) if hasattr(
-                self.cfg, 'dataset') else None,
+            task_data_config=self.cfg.safe_get('dataset.val'),
             preprocessor=self.eval_preprocessor,
             **kwargs)
 
-        self.train_data_collator, self.eval_data_collator = None, None
-        if isinstance(data_collator, Mapping):
-            if not (ConfigKeys.train in data_collator
-                    or ConfigKeys.val in data_collator):
-                raise ValueError(
-                    f'data_collator must split with `{ConfigKeys.train}` and `{ConfigKeys.val}` keys!'
-                )
-            if ConfigKeys.train in data_collator:
-                assert isinstance(data_collator[ConfigKeys.train], Callable)
-                self.train_data_collator = data_collator[ConfigKeys.train]
-            if ConfigKeys.val in data_collator:
-                assert isinstance(data_collator[ConfigKeys.val], Callable)
-                self.eval_data_collator = data_collator[ConfigKeys.val]
-        else:
-            collate_fn = default_collate if data_collator is None else data_collator
-            self.train_data_collator = collate_fn
-            self.eval_data_collator = collate_fn
-
+        self.train_data_collator, self.eval_data_collator = self.get_data_collator(
+            data_collator)
         self.metrics = self.get_metrics()
-        self._metric_values = None
-        self.optimizers = optimizers
-        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
-        self._mode = ModeKeys.TRAIN
-        self._hooks: List[Hook] = []
-        self._epoch = 0
-        self._iter = 0
-        self._inner_iter = 0
-        if 'max_epochs' not in kwargs:
-            assert hasattr(
-                self.cfg.train,
-                'max_epochs'), 'max_epochs is missing in configuration file'
-            self._max_epochs = self.cfg.train.max_epochs
-        else:
-            self._max_epochs = kwargs['max_epochs']
-        self._train_iters_per_epoch = kwargs.get('train_iters_per_epoch', None)
-        self._eval_iters_per_epoch = kwargs.get('val_iters_per_epoch', None)
-        if self._train_iters_per_epoch is None and hasattr(
-                self.cfg.train, 'train_iters_per_epoch'):
-            self._train_iters_per_epoch = self.cfg.train.train_iters_per_epoch
-        if self._eval_iters_per_epoch is None and hasattr(
-                self.cfg, 'evaluation') and hasattr(self.cfg.evaluation,
-                                                    'val_iters_per_epoch'):
-            self._eval_iters_per_epoch = self.cfg.evaluation.val_iters_per_epoch
-
+        self._max_epochs = kwargs.get('max_epochs',
+                                      self.cfg.safe_get('train.max_epochs'))
+        assert self._max_epochs is not None, 'max_epochs should be provided by the init arguments or configured ' \
+                                             'in the `train.max_epochs` key in the configuration file.'
+        self._train_iters_per_epoch = kwargs.get(
+            'train_iters_per_epoch',
+            self.cfg.safe_get('train.train_iters_per_epoch'))
+        self._eval_iters_per_epoch = kwargs.get(
+            'val_iters_per_epoch',
+            self.cfg.safe_get('evaluation.val_iters_per_epoch'))
         self.use_fp16 = kwargs.get('use_fp16', False)
-
         # model placement
+        self.place_model()
+
+    def place_model(self):
+        """Place model to device, or to DDP
+        """
         if self.device.type == 'cuda':
             self.model.to(self.device)
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
+
+    def get_data_collator(self, data_collator):
+        """Get the data collator for both training and evaluating.
+
+        Args:
+            data_collator: The input data_collator param.
+
+        Returns:
+            The train_data_collator and eval_data_collator, can be None.
+        """
+
+        train_data_collator, eval_data_collator = None, None
+        if isinstance(data_collator, Mapping):
+            if ConfigKeys.train in data_collator:
+                assert isinstance(data_collator[ConfigKeys.train], Callable)
+                train_data_collator = data_collator[ConfigKeys.train]
+            if ConfigKeys.val in data_collator:
+                assert isinstance(data_collator[ConfigKeys.val], Callable)
+                eval_data_collator = data_collator[ConfigKeys.val]
+        else:
+            collate_fn = default_collate if data_collator is None else data_collator
+            train_data_collator = collate_fn
+            eval_data_collator = collate_fn
+        return train_data_collator, eval_data_collator
+
+    def init_dist(self, launcher=None):
+        """Init dist and returns the dist information.
+
+        Args:
+            launcher: The launcher info.
+
+        Returns:
+            _dist: If world_size is greater than 1.
+        """
+        if launcher is not None:
+            init_dist(launcher)
+
+        _, world_size = get_dist_info()
+        _dist = world_size > 1
+        return _dist
+
+    def get_device(self, device=None):
+        """Get the device information.
+
+        Args:
+            device: The input device info.
+
+        Returns:
+            device_name: The final device name.
+        """
+        device_name = device if device is not None else 'gpu'
+        if self._dist:
+            local_rank = get_local_rank()
+            device_name = f'cuda:{local_rank}'
+
+        return create_device(device_name)
+
+    def get_preprocessors(self, preprocessor):
+        """Get the preprocessors information.
+
+        Args:
+            preprocessor: The input preprocessor info.
+
+        Returns:
+            The train_preprocessor and eval_preprocessor, can be None.
+        """
+        train_preprocessor = None
+        eval_preprocessor = None
+        if isinstance(preprocessor, Preprocessor):
+            train_preprocessor = preprocessor
+            eval_preprocessor = preprocessor
+        elif isinstance(preprocessor, Mapping):
+            if ConfigKeys.train in preprocessor:
+                assert isinstance(preprocessor[ConfigKeys.train], Callable)
+                train_preprocessor = preprocessor[ConfigKeys.train]
+            if ConfigKeys.val in preprocessor:
+                assert isinstance(preprocessor[ConfigKeys.val], Callable)
+                eval_preprocessor = preprocessor[ConfigKeys.val]
+        elif hasattr(self.cfg, ConfigFields.preprocessor
+                     ) and self.cfg.preprocessor is not None:
+            train_preprocessor, eval_preprocessor = self.build_preprocessor()
+
+        if train_preprocessor is not None:
+            train_preprocessor.mode = ModeKeys.TRAIN
+        if eval_preprocessor is not None:
+            eval_preprocessor.mode = ModeKeys.EVAL
+        return train_preprocessor, eval_preprocessor
 
     def rebuild_config(self, cfg: Config):
         """A method used to rebuild the config, any subclass can override this method.
@@ -236,6 +279,8 @@ class EpochBasedTrainer(BaseTrainer):
         Returns: The rebuilt config
 
         """
+        if self.cfg_modify_fn is not None:
+            cfg = self.cfg_modify_fn(cfg)
         return cfg
 
     @property
@@ -801,7 +846,10 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
+        if dist and not isinstance(
+                dataset,
+                torch.utils.data.IterableDataset) and self.cfg.model.get(
+                    'model_parallel_size', 1) == 1:
             sampler = DistributedSampler(
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:
@@ -891,28 +939,74 @@ class EpochBasedTrainer(BaseTrainer):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
-        if self._dist:
+        if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
-            metric_values = multi_gpu_test(
+            # list of batched result and data samples
+            results, data_list = multi_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
                 tmpdir=None,
                 gpu_collect=False,
-                metric_classes=metric_classes,
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            metric_values = single_gpu_test(
+            results, data_list = single_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
-                metric_classes=metric_classes,
                 data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
+        # evaluation result processing
+        if hasattr(self.cfg.evaluation, 'visualization'):
+            flatten_results = []
+            for r in results:
+                flatten_results.extend(r)
+            vis_cfg = self.cfg.evaluation.visualization
+            self.visualization(results, self.eval_dataset, **vis_cfg)
+
+        # do evaluation on rank0
+        metric_values = {}
+        if not self._dist or is_master():
+            assert len(data_list) == len(
+                results), f'size mismatch {len(data_list)} and {len(results)}'
+            for metric_cls in metric_classes:
+                for idx in range(len(data_list)):
+                    metric_cls.add(results[idx], data_list[idx])
+
+            for metric_cls in metric_classes:
+                metric_values.update(metric_cls.evaluate())
+
         return metric_values
+
+    def visualization(self, results, dataset, **kwargs):
+        """ visualization function for evaluation results.
+
+        Args:
+            results (list(dict)):  a list of result dict.
+            dataset (:obj:`Dataset`): torch dataset object to access original data.
+
+        Implementation Examples:
+        ```python
+        # draw list of images as numpy array
+        images = draw_images(num_of_visualization)
+
+        # set displayed name for each image
+        filenames = get_image_display_names()
+        vis_results = {
+            'images': images,
+            'filenames' : filenames
+        }
+
+        # visualization results will be displayed in group named eva_vis
+        self.visualization_buffer.output['eval_vis'] = vis_results
+        ```
+        """
+        # TODO @wenmeng.zwm add visualization support for cv evaluation
+        raise NotImplementedError(
+            'visualization for evaluation will be supported in the future')
 
     def register_hook(self, hook: Hook) -> None:
         """Register a hook into the hook list.

@@ -50,7 +50,7 @@ class TableRecognitionPipeline(Pipeline):
             self.infer_model.load_state_dict(checkpoint)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        img = LoadImage.convert_to_ndarray(input)
+        img = LoadImage.convert_to_ndarray(input)[:, :, ::-1]
 
         mean = np.array([0.408, 0.447, 0.470],
                         dtype=np.float32).reshape(1, 1, 3)

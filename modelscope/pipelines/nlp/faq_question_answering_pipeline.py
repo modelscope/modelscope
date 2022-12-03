@@ -20,8 +20,24 @@ class FaqQuestionAnsweringPipeline(Pipeline):
     def __init__(self,
                  model: Union[str, Model],
                  preprocessor: Preprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        """The faq question answering pipeline.
+
+        Args:
+            model (str or Model): A model instance or a model local dir or a model id in the model hub.
+            preprocessor (Preprocessor, `optional`): a preprocessor instance
+            kwargs (dict, `optional`):
+                The preprocessor kwargs passed into the preprocessor's constructor.
+        """
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir, **kwargs)

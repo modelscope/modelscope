@@ -12,6 +12,7 @@ from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
+from modelscope.utils.cv.image_utils import depth_to_color
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -47,6 +48,13 @@ class ImageDepthEstimationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         results = self.model.postprocess(inputs)
-        outputs = {OutputKeys.DEPTHS: results[OutputKeys.DEPTHS]}
+        depths = results[OutputKeys.DEPTHS]
+        if isinstance(depths, torch.Tensor):
+            depths = depths.detach().cpu().squeeze().numpy()
+        depths_color = depth_to_color(depths)
+        outputs = {
+            OutputKeys.DEPTHS: depths,
+            OutputKeys.DEPTHS_COLOR: depths_color
+        }
 
         return outputs

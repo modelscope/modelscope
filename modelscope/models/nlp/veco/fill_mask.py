@@ -40,7 +40,7 @@ class VecoForMaskedLM(TorchModel, RobertaForMaskedLM):
 
     Preprocessor:
         This is the fill_mask model of StructBERT, the preprocessor of this model
-        is `modelscope.preprocessors.NLPPreprocessor`.
+        is `modelscope.preprocessors.FillMaskTransformersPreprocessor`.
 
     Parameters:
         config ([`VecoConfig`]): Model configuration class with all the parameters of the

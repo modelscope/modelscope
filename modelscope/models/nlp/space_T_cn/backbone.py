@@ -891,6 +891,9 @@ class Seq2SQL(nn.Module):
         self.slen_model = nn.Linear(iS, max_select_num + 1)
         self.wlen_model = nn.Linear(iS, max_where_num + 1)
 
+    def set_device(self, device):
+        self.device = device
+
     def forward(self, wemb_layer, l_n, l_hs, start_index, column_index, tokens,
                 ids):
         # chunk input lists for multi-gpu

@@ -85,6 +85,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_recognition:
     (Pipelines.table_recognition,
      'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.license_plate_detection:
+    (Pipelines.license_plate_detection,
+     'damo/cv_resnet18_license-plate-detection_damo'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),
@@ -198,6 +201,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_fft_inpainting_lama'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
+    Tasks.video_human_matting: (Pipelines.video_human_matting,
+                                'damo/cv_effnetv2_video-human-matting'),
     Tasks.human_wholebody_keypoint:
     (Pipelines.human_wholebody_keypoint,
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
@@ -214,6 +219,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_swin-t_referring_video-object-segmentation'),
     Tasks.video_summarization: (Pipelines.video_summarization,
                                 'damo/cv_googlenet_pgl-video-summarization'),
+    Tasks.translation_evaluation:
+    (Pipelines.translation_evaluation,
+     'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
 }
 
 
@@ -298,6 +306,7 @@ def pipeline(task: str = None,
         raise ValueError('task or pipeline_name is required')
 
     model = normalize_model_input(model, model_revision)
+    pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
         if isinstance(model, str) \
@@ -309,10 +318,7 @@ def pipeline(task: str = None,
                         model, str) else read_config(
                             model[0], revision=model_revision)
                 check_config(cfg)
-                pipeline_name = cfg.pipeline.type
-            else:
-                # used for test case, when model is str and is not hub path
-                pipeline_name = get_pipeline_by_model_name(task, model)
+                pipeline_props = cfg.pipeline
         elif model is not None:
             # get pipeline info from Model object
             first_model = model[0] if isinstance(model, list) else model
@@ -321,13 +327,15 @@ def pipeline(task: str = None,
                 cfg = read_config(first_model.model_dir)
                 check_config(cfg)
                 first_model.pipeline = cfg.pipeline
-            pipeline_name = first_model.pipeline.type
+            pipeline_props = first_model.pipeline
         else:
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
             model = normalize_model_input(default_model_repo, model_revision)
+            pipeline_props = {'type': pipeline_name}
 
-    cfg = ConfigDict(type=pipeline_name, model=model)
-    cfg.device = device
+    pipeline_props['model'] = model
+    pipeline_props['device'] = device
+    cfg = ConfigDict(pipeline_props)
 
     if kwargs:
         cfg.update(kwargs)
@@ -375,19 +383,3 @@ def get_default_pipeline_info(task):
     else:
         pipeline_name, default_model = DEFAULT_MODEL_FOR_PIPELINE[task]
     return pipeline_name, default_model
-
-
-def get_pipeline_by_model_name(task: str, model: Union[str, List[str]]):
-    """ Get pipeline name by task name and model name
-
-    Args:
-        task (str): task name.
-        model (str| list[str]): model names
-    """
-    if isinstance(model, str):
-        model_key = model
-    else:
-        model_key = '_'.join(model)
-    assert model_key in PIPELINES.modules[task], \
-        f'pipeline for task {task} model {model_key} not found.'
-    return model_key

@@ -52,6 +52,7 @@ class Models(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'image-body-reshaping'
+    video_human_matting = 'video-human-matting'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -80,6 +81,7 @@ class Models(object):
     gcnncrf = 'gcnn-crf'
     bart = 'bart'
     gpt3 = 'gpt3'
+    gpt_moe = 'gpt-moe'
     gpt_neo = 'gpt-neo'
     plug = 'plug'
     bert_for_ds = 'bert-for-document-segmentation'
@@ -89,6 +91,7 @@ class Models(object):
     mglm = 'mglm'
     codegeex = 'codegeex'
     bloom = 'bloom'
+    unite = 'unite'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -156,6 +159,7 @@ class Pipelines(object):
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
+    license_plate_detection = 'resnet18-license-plate-detection'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
@@ -183,6 +187,7 @@ class Pipelines(object):
     live_category = 'live-category'
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
+    nextvit_small_daily_image_classification = 'nextvit-small_image-classification_Dailylife-labels'
     image_color_enhance = 'csrnet-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'
@@ -226,6 +231,7 @@ class Pipelines(object):
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'flow-based-body-reshaping'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    video_human_matting = 'video-human-matting'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -255,6 +261,7 @@ class Pipelines(object):
     text_error_correction = 'text-error-correction'
     plug_generation = 'plug-generation'
     gpt3_generation = 'gpt3-generation'
+    gpt_moe_generation = 'gpt-moe-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
     table_question_answering_pipeline = 'table-question-answering-pipeline'
@@ -271,6 +278,7 @@ class Pipelines(object):
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
     token_classification = 'token-classification'
+    translation_evaluation = 'translation-evaluation'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -327,6 +335,7 @@ class Trainers(object):
     image_inpainting = 'image-inpainting'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_classification_team = 'image-classification-team'
+    image_classification = 'image-classification'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -336,6 +345,7 @@ class Trainers(object):
     nlp_veco_trainer = 'nlp-veco-trainer'
     nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
     text_generation_trainer = 'text-generation-trainer'
+    nlp_plug_trainer = 'nlp-plug-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
@@ -361,6 +371,7 @@ class Preprocessors(object):
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
+    image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -397,6 +408,7 @@ class Preprocessors(object):
     feature_extraction = 'feature-extraction'
     mglm_summarization = 'mglm-summarization'
     sentence_piece = 'sentence-piece'
+    translation_evaluation = 'translation-evaluation-preprocessor'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -497,6 +509,9 @@ class Hooks(object):
 
     # CLIP logit_scale clamp
     ClipClampLogitScaleHook = 'ClipClampLogitScaleHook'
+
+    # train
+    DeepspeedHook = 'DeepspeedHook'
 
 
 class LR_Schedulers(object):

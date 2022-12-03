@@ -129,6 +129,14 @@ def _topk(scores, K=40):
     return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
 
+def decode_by_ind(heat, inds, K=100):
+    batch, cat, height, width = heat.size()
+    score = _tranpose_and_gather_feat(heat, inds)
+    score = score.view(batch, K, cat)
+    _, Type = torch.max(score, 2)
+    return Type
+
+
 def bbox_decode(heat, wh, reg=None, K=100):
     batch, cat, height, width = heat.size()
 
@@ -163,7 +171,7 @@ def bbox_decode(heat, wh, reg=None, K=100):
     )
     detections = torch.cat([bboxes, scores, clses], dim=2)
 
-    return detections, keep
+    return detections, inds
 
 
 def gbox_decode(mk, st_reg, reg=None, K=400):

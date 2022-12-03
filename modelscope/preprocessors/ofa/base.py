@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import io
 import re
 import string
 from os import path as osp
@@ -9,6 +10,7 @@ import torch
 import torchaudio
 from PIL import Image
 
+from modelscope.fileio import File
 from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.trie import Trie
@@ -169,6 +171,16 @@ class OfaBasePreprocessor:
         image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
             else load_image(path_or_url_or_pil)
         return image
+
+    def get_audio_bytes(self, path_or_url):
+        if isinstance(path_or_url, bytes):
+            audio_bytes = io.BytesIO(path_or_url)
+        elif isinstance(path_or_url, str):
+            file_bytes = File.read(path_or_url)
+            audio_bytes = io.BytesIO(file_bytes)
+        else:
+            raise TypeError(f'Unsupported input type: {type(path_or_url)}.')
+        return audio_bytes
 
     def prepare_fbank(self,
                       waveform,

@@ -48,6 +48,23 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.word_segmentation, model=self.model_id)
         print(pipeline_ins(input=self.sentence))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch(self):
+        pipeline_ins = pipeline(
+            task=Tasks.word_segmentation, model=self.model_id)
+        print(
+            pipeline_ins(
+                input=[self.sentence, self.sentence[:10], self.sentence[6:]],
+                batch_size=2))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_batch_iter(self):
+        pipeline_ins = pipeline(
+            task=Tasks.word_segmentation, model=self.model_id, padding=False)
+        print(
+            pipeline_ins(
+                input=[self.sentence, self.sentence[:10], self.sentence[6:]]))
+
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()

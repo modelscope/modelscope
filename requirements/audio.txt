@@ -1,6 +1,6 @@
 easyasr>=0.0.2
 espnet==202204
-funasr>=0.1.0
+funasr>=0.1.3
 h5py
 inflect
 keras

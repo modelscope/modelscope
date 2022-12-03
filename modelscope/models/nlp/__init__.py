@@ -30,9 +30,7 @@ if TYPE_CHECKING:
         SbertForMaskedLM,
         SbertForSequenceClassification,
         SbertForTokenClassification,
-        SbertTokenizer,
         SbertModel,
-        SbertTokenizerFast,
     )
     from .T5 import T5ForConditionalGeneration
     from .mglm import MGLMForTextSummarization
@@ -51,9 +49,9 @@ if TYPE_CHECKING:
     )
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,
-                       VecoForTokenClassification, VecoModel, VecoTokenizer,
-                       VecoTokenizerFast)
+                       VecoForTokenClassification, VecoModel)
     from .bloom import BloomModel
+    from .unite import UniTEModel
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -66,8 +64,6 @@ else:
             'SbertForMaskedLM',
             'SbertForSequenceClassification',
             'SbertForTokenClassification',
-            'SbertTokenizer',
-            'SbertTokenizerFast',
             'SbertModel',
         ],
         'veco': [
@@ -76,8 +72,6 @@ else:
             'VecoForSequenceClassification',
             'VecoForTokenClassification',
             'VecoModel',
-            'VecoTokenizer',
-            'VecoTokenizerFast',
         ],
         'bert': [
             'BertForMaskedLM',
@@ -115,6 +109,7 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
+        'unite': ['UniTEModel']
     }
 
     import sys

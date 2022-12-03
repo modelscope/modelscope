@@ -12,22 +12,19 @@ if TYPE_CHECKING:
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .extractive_summarization_pipeline import ExtractiveSummarizationPipeline
-    from .fasttext_sequence_classification_pipeline import FasttextSequenceClassificationPipeline
+    from .fasttext_text_classification_pipeline import FasttextSequenceClassificationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
-    from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline, \
-        NamedEntityRecognitionThaiPipeline, \
-        NamedEntityRecognitionVietPipeline
+    from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
     from .text_classification_pipeline import TextClassificationPipeline
     from .summarization_pipeline import SummarizationPipeline
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
-    from .text_generation_pipeline import TextGenerationPipeline
-    from .text2text_generation_pipeline import Text2TextGenerationPipeline
+    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline, WordSegmentationThaiPipeline
@@ -35,6 +32,7 @@ if TYPE_CHECKING:
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
     from .codegeex_code_translation_pipeline import CodeGeeXCodeTranslationPipeline
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
+    from .translation_evaluation_pipeline import TranslationEvaluationPipeline
 
 else:
     _import_structure = {
@@ -56,8 +54,6 @@ else:
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
         'named_entity_recognition_pipeline': [
             'NamedEntityRecognitionPipeline',
-            'NamedEntityRecognitionThaiPipeline',
-            'NamedEntityRecognitionVietPipeline'
         ],
         'text_ranking_pipeline': ['TextRankingPipeline'],
         'sentence_embedding_pipeline': ['SentenceEmbeddingPipeline'],
@@ -66,7 +62,8 @@ else:
         ['TableQuestionAnsweringPipeline'],
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
-        'text_generation_pipeline': ['TextGenerationPipeline'],
+        'text_generation_pipeline':
+        ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
         'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
@@ -81,6 +78,7 @@ else:
         ['CodeGeeXCodeTranslationPipeline'],
         'codegeex_code_generation_pipeline':
         ['CodeGeeXCodeGenerationPipeline'],
+        'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
     }
 
     import sys

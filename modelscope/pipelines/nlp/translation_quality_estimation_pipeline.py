@@ -2,19 +2,15 @@
 
 import io
 import os
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
-import numpy as np
 import torch
 from transformers import XLMRobertaTokenizer
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
-from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['TranslationQualityEstimationPipeline']

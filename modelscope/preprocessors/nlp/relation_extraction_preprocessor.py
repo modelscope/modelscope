@@ -5,34 +5,36 @@ from typing import Any, Dict
 from transformers import AutoTokenizer
 
 from modelscope.metainfo import Preprocessors
+from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.constant import Fields
+from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.type_assert import type_assert
-from .nlp_base import NLPBasePreprocessor
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.re_tokenizer)
-class RelationExtractionPreprocessor(NLPBasePreprocessor):
-    """The relation extraction preprocessor used in normal RE task.
-    """
+class RelationExtractionTransformersPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
-        """preprocess the data
+    def __init__(
+        self,
+        model_dir: str,
+        mode: str = ModeKeys.INFERENCE,
+        **kwargs,
+    ):
+        """The preprocessor for relation Extraction task, based on transformers' tokenizer.
 
         Args:
-            model_dir (str): model path
+            model_dir: The model dir used to initialize the tokenizer.
+            mode: The mode for the preprocessor.
         """
 
-        super().__init__(model_dir, *args, **kwargs)
-
+        super().__init__(mode)
         self.model_dir: str = model_dir
-        self.sequence_length = kwargs.pop('sequence_length', 512)
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_dir, use_fast=True)
 
     @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    def __call__(self, data: str, **kwargs) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
@@ -46,7 +48,9 @@ class RelationExtractionPreprocessor(NLPBasePreprocessor):
 
         # preprocess the data for the model input
         text = data
-        output = self.tokenizer([text], return_tensors='pt')
+        if 'return_tensors' not in kwargs:
+            kwargs['return_tensors'] = 'pt'
+        output = self.tokenizer([text], **kwargs)
         return {
             'text': text,
             'input_ids': output['input_ids'],

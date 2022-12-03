@@ -275,7 +275,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_asr_with_name(self):
-        model = 'damo/ofa_asr_pretrain_base_zh'
+        model = 'damo/ofa_mmspeech_pretrain_base_zh'
         ofa_pipe = pipeline(Tasks.auto_speech_recognition, model=model)
         example = {'wav': 'data/test/audios/asr_example_ofa.wav'}
         result = ofa_pipe(example)

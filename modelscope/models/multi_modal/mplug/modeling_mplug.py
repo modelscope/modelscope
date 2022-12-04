@@ -1850,7 +1850,7 @@ class MPlug(PreTrainedModel):
             self.config_fusion, add_pooling_layer=False)
 
     @classmethod
-    def from_pretrained(cls, model_dir, load_checkpoint=True):
+    def from_pretrained(cls, model_dir, task=None, load_checkpoint=True):
         from modelscope.utils.constant import Tasks
 
         task_mapping = {
@@ -1861,7 +1861,9 @@ class MPlug(PreTrainedModel):
         config = cls.config_class.from_yaml_file(
             os.path.join(model_dir, CONFIG_NAME))
         config.model_dir = model_dir
-        model = task_mapping[config.task](config)
+        if task is None:
+            task = config.task
+        model = task_mapping[task](config)
         if load_checkpoint:
             checkpoint_path = os.path.join(model_dir,
                                            ModelFile.TORCH_MODEL_BIN_FILE)

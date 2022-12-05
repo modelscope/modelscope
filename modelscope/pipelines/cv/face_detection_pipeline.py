@@ -8,11 +8,12 @@ import PIL
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.face_detection import ScrfdDetect
+from modelscope.models.cv.face_detection import ScrfdDetect, TinyMogDetect
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
+from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -30,7 +31,13 @@ class FaceDetectionPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        detector = ScrfdDetect(model_dir=model, **kwargs)
+        config_path = osp.join(model, ModelFile.CONFIGURATION)
+        cfg = Config.from_file(config_path)
+        cfg_model = getattr(cfg, 'model', None)
+        if cfg_model is None:
+            detector = ScrfdDetect(model_dir=model, **kwargs)
+        elif cfg_model.type == 'tinymog':
+            detector = self.model.to(self.device)
         self.detector = detector
 
     def preprocess(self, input: Input) -> Dict[str, Any]:

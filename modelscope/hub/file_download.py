@@ -204,7 +204,7 @@ def http_get_file(
     total = -1
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
-    get_headers = copy.deepcopy(headers)
+    get_headers = {} if headers is None else copy.deepcopy(headers)
     with temp_file_manager() as temp_file:
         logger.info('downloading %s to %s', url, temp_file.name)
         # retry sleep 0.5s, 1s, 2s, 4s

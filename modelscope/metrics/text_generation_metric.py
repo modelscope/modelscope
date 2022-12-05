@@ -44,7 +44,7 @@ class TextGenerationMetric(Metric):
         def remove_useless(string: str) -> str:
             return string.replace(' ', '').replace('.', '')
 
-        return remove_useless(pred) and remove_useless(tgt)
+        return len(remove_useless(pred)) != 0 and len(remove_useless(tgt)) != 0
 
     def evaluate(self):
         assert self.preds, 'preds in TextGenerationMetric must not be empty!'

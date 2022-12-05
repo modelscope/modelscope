@@ -65,8 +65,7 @@ class DistributedPlugPipeline(DistributedPipeline):
                 sequence_length=sequence_length,
                 **kwargs)
         super().__init__(model, preprocessor=preprocessor, **kwargs)
-        assert hasattr(preprocessor, 'tokenizer')
-        self.cls_token_id = preprocessor.tokenizer.cls_token_id
+        self.cls_token_id = preprocessor.nlp_tokenizer.tokenizer.cls_token_id
 
     @classmethod
     def _forward_one(cls, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -105,6 +104,6 @@ class DistributedPlugPipeline(DistributedPipeline):
         from modelscope.outputs import OutputKeys
         generate_context = inputs['generate_context']
         generate_context = ''.join(
-            self.preprocessor.tokenizer.convert_ids_to_tokens(
+            self.preprocessor.nlp_tokenizer.tokenizer.convert_ids_to_tokens(
                 generate_context)).replace('[UNK]', '“').replace('##', '')
         return {OutputKeys.TEXT: generate_context}

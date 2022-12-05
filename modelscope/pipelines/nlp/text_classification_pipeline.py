@@ -12,7 +12,7 @@ from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 @PIPELINES.register_module(

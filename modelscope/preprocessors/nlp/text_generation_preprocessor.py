@@ -15,7 +15,7 @@ from modelscope.utils.logger import get_logger
 from .transformers_tokenizer import NLPTokenizer
 from .utils import parse_text_and_label
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class TextGenerationPreprocessorBase(Preprocessor):
@@ -192,7 +192,9 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                  model_dir: str,
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
-                 tgt_txt=None):
+                 tgt_txt=None,
+                 sequence_length: int = 128,
+                 use_fast=None):
         from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
         super().__init__(mode, src_txt, tgt_txt)
         if self.tgt_txt is not None:
@@ -202,6 +204,7 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
         self.src_txt = src_txt
         self.tokenizer = JiebaBPETokenizer(
             osp.join(model_dir, 'tokenizer.json'))
+        self.max_length = sequence_length
 
     def decode(self, tokens, **kwargs):
         """Decode the tokens to real text.
@@ -214,6 +217,14 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
         """
         return self.tokenizer.detokenize(tokens)
 
+    def _truncate(self, array: np.ndarray) -> np.ndarray:
+        if len(array) < self.max_length:
+            return np.pad(
+                array, (0, self.max_length - len(array)),
+                constant_values=self.tokenizer.eod)
+        else:
+            return array[:self.max_length]
+
     def _tokenize_text(self, sequence1, sequence2=None, **kwargs):
         """Tokenize the text.
 
@@ -224,10 +235,22 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
         Returns:
             The encoded sequence.
         """
-        return {
-            'input_ids':
-            torch.tensor(self.tokenizer.tokenize(sequence1)).unsqueeze_(0)
-        }
+        if self.mode == ModeKeys.INFERENCE:
+            return {
+                'input_ids':
+                torch.tensor(self.tokenizer.tokenize(sequence1)).unsqueeze_(0)
+            }
+        else:
+            tokens = self.tokenizer.tokenize(sequence1)
+            prompt_length = min(len(tokens), self.max_length - 1)
+            if sequence2 is not None:
+                tokens += self.tokenizer.tokenize(sequence2)
+            tokens = self._truncate(np.array(tokens))
+            return {
+                'tokens': tokens[:-1],
+                'labels': tokens[1:],
+                'prompt_length': prompt_length,
+            }
 
 
 @PREPROCESSORS.register_module(

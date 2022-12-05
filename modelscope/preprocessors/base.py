@@ -13,7 +13,7 @@ from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.logger import get_logger
 from .builder import build_preprocessor
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 PREPROCESSOR_MAP = {
     # nlp
@@ -122,6 +122,10 @@ PREPROCESSOR_MAP = {
 
     # taskmodels
     (Models.lcrf, Tasks.named_entity_recognition):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.lcrf, Tasks.word_segmentation):
+    Preprocessors.sequence_labeling_tokenizer,
+    (Models.lcrf, Tasks.part_of_speech):
     Preprocessors.sequence_labeling_tokenizer,
     (Models.lcrf_wseg, Tasks.word_segmentation):
     Preprocessors.sequence_labeling_tokenizer,

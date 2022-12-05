@@ -29,7 +29,7 @@ from modelscope.utils.constant import Tasks
 from .backbone import SbertModel, SbertPreTrainedModel
 from .configuration import SbertConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class SbertPredictionHeadTransform(nn.Module):

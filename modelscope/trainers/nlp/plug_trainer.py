@@ -66,9 +66,9 @@ class PlugTrainer(NlpEpochBasedTrainer):
         from deepspeed.ops.adam import DeepSpeedCPUAdam
         model = self.model
 
-        embeddings = model.module.module.model.bert.embeddings
-        layers = model.module.module.model.bert.encoder.layer
-        dec_layers = model.module.module.model.decoder.decoder
+        embeddings = model.module.model.bert.embeddings
+        layers = model.module.model.bert.encoder.layer
+        dec_layers = model.module.model.decoder.decoder
         param_groups = []
         param_groups += list(
             self._get_params_for_weight_decay_optimization(layers))
@@ -160,7 +160,7 @@ class PlugTrainer(NlpEpochBasedTrainer):
 
     def evaluation_step(self, data):
         # wapper 1: DeepspeedEngine, wapper 2: DDP
-        model = self.model.module.module
+        model = self.model.module
         model.eval()
 
         # model: fp16 wapper; model.module : distributedPlug

@@ -137,6 +137,33 @@ TASK_OUTPUTS = {
     Tasks.facial_expression_recognition:
     [OutputKeys.SCORES, OutputKeys.LABELS],
 
+    # face processing base result for single img
+    #   {
+    #       "scores": [0.85]
+    #       "boxes": [x1, y1, x2, y2]
+    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
+    #   }
+    Tasks.face_processing_base: [
+        OutputKeys.OUTPUT_IMG, OutputKeys.SCORES, OutputKeys.BOXES,
+        OutputKeys.KEYPOINTS
+    ],
+
+    # facial landmark confidence result for single sample
+    #   {
+    #       "output_img": np.array with shape(h, w, 3) (output_img = aligned_img)
+    #       "scores": [0.85]
+    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.facial_landmark_confidence:
+    [OutputKeys.SCORES, OutputKeys.KEYPOINTS, OutputKeys.BOXES],
+    # face attribute recognition result for single sample
+    #   {
+    #       "scores": [[0.9, 0.1], [0.92, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    #       "labels": [['Male', 'Female'], [0-2, 3-9, 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70+]]
+    #   }
+    Tasks.face_attribute_recognition: [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # face recognition result for single sample
     #   {
     #       "img_embedding": np.array with shape [1, D],
@@ -440,8 +467,9 @@ TASK_OUTPUTS = {
     #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
     #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     #   }
-    Tasks.referring_video_object_segmentation:
-    [OutputKeys.MASKS, OutputKeys.TIMESTAMPS],
+    Tasks.referring_video_object_segmentation: [
+        OutputKeys.MASKS, OutputKeys.TIMESTAMPS
+    ],
 
     # video human matting result for a single video
     #   {

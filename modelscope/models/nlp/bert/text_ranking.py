@@ -12,7 +12,7 @@ from modelscope.utils.constant import Tasks
 from .backbone import BertModel
 from .text_classification import BertForSequenceClassification
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 @MODELS.register_module(Tasks.text_ranking, module_name=Models.bert)

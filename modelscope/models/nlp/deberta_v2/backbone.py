@@ -33,7 +33,7 @@ from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .configuration import DebertaV2Config
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 # Copied from transformers.models.deberta.modeling_deberta.ContextPooler

@@ -16,7 +16,7 @@ from modelscope.utils.type_assert import type_assert
 from .transformers_tokenizer import NLPTokenizer
 from .utils import parse_text_and_label
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 @PREPROCESSORS.register_module(

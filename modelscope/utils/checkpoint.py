@@ -18,7 +18,7 @@ from modelscope.utils.config import JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 storage = LocalStorage()
 

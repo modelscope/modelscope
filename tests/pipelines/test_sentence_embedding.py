@@ -36,6 +36,16 @@ class SentenceEmbeddingTest(unittest.TestCase):
         'sentences_to_compare': []
     }
 
+    el_model_id = 'damo/nlp_bert_entity-embedding_chinese-base'
+    el_inputs = {
+        'source_sentence': ['宋小宝小品《美人鱼》， [ENT_S] 大鹏 [ENT_E] 上演生死离别，关键时刻美人鱼登场'],
+        'sentences_to_compare': [
+            '董成鹏； 类型： Person； 别名： Da Peng， 大鹏;',
+            '超级飞侠； 类型： Work； 别名： 超飞， 출동!슈퍼윙스， Super Wings;',
+            '王源； 类型： Person； 别名： Roy;',
+        ]
+    }
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
@@ -76,6 +86,12 @@ class SentenceEmbeddingTest(unittest.TestCase):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.sentence_embedding)
         print(pipeline_ins(input=self.inputs))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_el_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.el_model_id)
+        print(pipeline_ins(input=self.el_inputs))
 
 
 if __name__ == '__main__':

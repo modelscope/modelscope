@@ -70,7 +70,7 @@ class CheckpointHook(Hook):
             os.makedirs(self.save_dir)
 
         if not hasattr(trainer, 'logger'):
-            self.logger = get_logger(__name__)
+            self.logger = get_logger()
         else:
             self.logger = trainer.logger
 

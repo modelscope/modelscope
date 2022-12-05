@@ -10,7 +10,7 @@ from modelscope.utils.hub import parse_label_mapping
 from modelscope.utils.logger import get_logger
 from .base_model import Model
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class TorchModel(Model, torch.nn.Module):

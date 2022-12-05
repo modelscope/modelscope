@@ -14,7 +14,7 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ModelFile)
 from .logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def create_model_if_not_exist(

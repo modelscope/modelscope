@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .nncrf_for_named_entity_recognition import (
         LSTMCRFForNamedEntityRecognition,
         LSTMCRFForWordSegmentation,
+        LSTMCRFForPartOfSpeech,
         TransformerCRFForNamedEntityRecognition,
         TransformerCRFForWordSegmentation,
     )
@@ -26,6 +27,7 @@ else:
         'nncrf_for_named_entity_recognition': [
             'LSTMCRFForNamedEntityRecognition',
             'LSTMCRFForWordSegmentation',
+            'LSTMCRFForPartOfSpeech',
             'TransformerCRFForNamedEntityRecognition',
             'TransformerCRFForWordSegmentation',
         ],

@@ -6,7 +6,7 @@ import torch
 from modelscope.models.base.base_head import Head
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class TorchHead(Head, torch.nn.Module):

@@ -44,7 +44,7 @@ from .generate import utils
 from .modeling_ofa import (Embedding, OFADecoder, OFAModel, OFAPreTrainedModel,
                            _expand_mask, shift_tokens_right)
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 _CHECKPOINT_FOR_DOC = 'mmspeech-base'
 _CONFIG_FOR_DOC = 'MMSpeechConfig'

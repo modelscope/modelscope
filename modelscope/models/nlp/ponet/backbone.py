@@ -36,7 +36,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .configuration import PoNetConfig
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 is_pytorch_12plus = LooseVersion(torch.__version__) >= LooseVersion('1.12.0')
 

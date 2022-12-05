@@ -38,7 +38,7 @@ from .resnet import ResNet
 from .utils.utils import DropPath
 from .vit import vit_base, vit_huge, vit_large, vit_large_336
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 _CHECKPOINT_FOR_DOC = 'ofa-base'
 _CONFIG_FOR_DOC = 'OFAConfig'

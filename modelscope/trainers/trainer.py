@@ -37,7 +37,7 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, is_master,
+                                          init_dist, is_dist, is_master,
                                           set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
@@ -236,7 +236,7 @@ class EpochBasedTrainer(BaseTrainer):
             device_name: The final device name.
         """
         device_name = device if device is not None else 'gpu'
-        if self._dist:
+        if is_dist():
             local_rank = get_local_rank()
             device_name = f'cuda:{local_rank}'
 
@@ -603,7 +603,7 @@ class EpochBasedTrainer(BaseTrainer):
             for key in match_keys:
                 value = train_outputs.get(key, None)
                 if value is not None:
-                    if dist.is_available() and dist.is_initialized():
+                    if is_dist():
                         value = value.data.clone().to('cuda')
                         dist.all_reduce(value.div_(dist.get_world_size()))
                     log_vars.update({key: value.item()})

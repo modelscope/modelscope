@@ -14,7 +14,7 @@ from modelscope.utils.logger import get_logger
 from .transformers_tokenizer import NLPTokenizer
 from .utils import labels_to_id, parse_text_and_label
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class TextClassificationPreprocessorBase(Preprocessor):

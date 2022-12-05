@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
     from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
     from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
     from .general_recognition_pipeline import GeneralRecognitionPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
@@ -59,6 +60,8 @@ if TYPE_CHECKING:
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+    from .facial_landmark_confidence_pipeline import FacialLandmarkConfidencePipeline
+    from .face_processing_base_pipeline import FaceProcessingBasePipeline
     from .face_attribute_recognition_pipeline import FaceAttributeRecognitionPipeline
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
@@ -81,6 +84,7 @@ else:
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],
+        'arc_face_recognition_pipeline': ['ArcFaceRecognitionPipeline'],
         'mask_face_recognition_pipeline': ['MaskFaceRecognitionPipeline'],
         'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
         'image_classification_pipeline':
@@ -135,6 +139,10 @@ else:
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
         'facial_expression_recognition_pipeline':
         ['FacialExpressionRecognitionPipeline'],
+        'facial_landmark_confidence_pipeline': [
+            'FacialLandmarkConfidencePipeline'
+        ],
+        'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
         'face_attribute_recognition_pipeline': [
             'FaceAttributeRecognitionPipeline'
         ],

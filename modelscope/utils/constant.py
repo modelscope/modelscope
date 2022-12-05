@@ -25,6 +25,8 @@ class CVTasks(object):
     card_detection = 'card-detection'
     face_recognition = 'face-recognition'
     facial_expression_recognition = 'facial-expression-recognition'
+    facial_landmark_confidence = 'facial-landmark-confidence'
+    face_processing_base = 'face-processing-base'
     face_attribute_recognition = 'face-attribute-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
     human_detection = 'human-detection'

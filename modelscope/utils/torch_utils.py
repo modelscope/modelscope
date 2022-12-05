@@ -106,7 +106,7 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
 
 
 def get_dist_info() -> Tuple[int, int]:
-    if dist.is_available() and dist.is_initialized():
+    if is_dist():
         try:
             from megatron import mpu
             assert mpu.model_parallel_is_initialized()
@@ -125,8 +125,12 @@ def get_local_rank():
     return int(os.environ.get('LOCAL_RANK', 0))
 
 
+def is_dist():
+    return dist.is_available() and dist.is_initialized()
+
+
 def is_master():
-    return dist.get_rank() == 0 if dist.is_initialized() else True
+    return dist.get_rank() == 0 if is_dist() else True
 
 
 def master_only(func: Callable) -> Callable:
@@ -142,7 +146,7 @@ def master_only(func: Callable) -> Callable:
 def make_tmp_dir():
     """Make sure each rank has the same temporary directory on the distributed mode.
     """
-    if not dist.is_initialized():
+    if not is_dist():
         return tempfile.mkdtemp()
 
     tmpdir = None

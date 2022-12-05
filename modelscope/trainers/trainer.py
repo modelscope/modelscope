@@ -236,7 +236,7 @@ class EpochBasedTrainer(BaseTrainer):
             device_name: The final device name.
         """
         device_name = device if device is not None else 'gpu'
-        if self._dist:
+        if dist.is_initialized():
             local_rank = get_local_rank()
             device_name = f'cuda:{local_rank}'
 

@@ -8,12 +8,14 @@ if TYPE_CHECKING:
     from .backbone import GPT3Model
     from .text_generation import GPT3ForTextGeneration
     from .tokenizer import JiebaBPETokenizer
+    from .distributed_gpt3 import DistributedGPT3
 else:
     _import_structure = {
         'configuration': ['GPT3Config'],
         'backbone': ['GPT3Model'],
         'text_generation': ['GPT3ForTextGeneration'],
         'tokenizer': ['JiebaBPETokenizer'],
+        'distributed_gpt3': ['DistributedGPT3'],
     }
 
     import sys

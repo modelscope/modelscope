@@ -349,6 +349,7 @@ class Trainers(object):
     nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
     text_generation_trainer = 'text-generation-trainer'
     nlp_plug_trainer = 'nlp-plug-trainer'
+    gpt3_trainer = 'nlp-gpt3-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'

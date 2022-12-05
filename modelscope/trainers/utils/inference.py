@@ -137,7 +137,8 @@ def multi_gpu_test(trainer,
             else:
                 batch_size = len(data)
             if i >= (data_len // world_size) - 1:
-                total_samples = torch.LongTensor([batch_size]).to(model.device)
+                total_samples = torch.LongTensor([batch_size
+                                                  ]).to(trainer.model.device)
                 dist.all_reduce(total_samples, op=dist.reduce_op.SUM)
                 total_samples = total_samples.item()
             else:

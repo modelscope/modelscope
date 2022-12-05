@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
-    from .gpt3 import GPT3ForTextGeneration
+    from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .heads import SequenceClassificationHead
     from .palm_v2 import PalmForTextGeneration
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
@@ -59,7 +59,7 @@ else:
         'bart': ['BartForTextErrorCorrection'],
         'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
-        'gpt3': ['GPT3ForTextGeneration'],
+        'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
         'structbert': [
             'SbertForFaqQuestionAnswering',
             'SbertForMaskedLM',

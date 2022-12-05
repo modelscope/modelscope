@@ -74,7 +74,7 @@ class TextLoggerHook(LoggerHook):
             self._dump_log(trainer.meta)
 
     def _get_max_memory(self, trainer):
-        device = getattr(trainer.model, 'output_device', None)
+        device = torch.cuda.current_device()
         mem = torch.cuda.max_memory_allocated(device=device)
         mem_mb = torch.tensor([mem / (1024 * 1024)],
                               dtype=torch.int,

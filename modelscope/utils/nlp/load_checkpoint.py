@@ -55,16 +55,15 @@ def load_checkpoint(model,
     return load_path, client_states
 
 
-def _get_ckpt_name(mpu, checkpoints_path, tag):
-    mp_rank = 0 if mpu is None else mpu.get_model_parallel_rank()
+def _get_ckpt_name(mp_rank, checkpoints_path, tag):
     ckpt_name = os.path.join(
         checkpoints_path, str(tag),
         'mp_rank_{:02d}'.format(mp_rank) + '_model_states.pt')
     return ckpt_name
 
 
-def pre_load(mpu, load_dir, tag=''):
-    load_path = _get_ckpt_name(mpu, load_dir, tag)
+def pre_load(mp_rank, load_dir, tag=''):
+    load_path = _get_ckpt_name(mp_rank, load_dir, tag)
     checkpoint = torch.load(
         load_path, map_location=lambda storage, loc: storage)
     return checkpoint['module']

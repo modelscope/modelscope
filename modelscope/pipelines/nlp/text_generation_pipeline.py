@@ -30,7 +30,6 @@ class TextGenerationPipeline(Pipeline):
                  device: str = 'gpu',
                  auto_collate=True,
                  first_sequence='sentence',
-                 sequence_length=128,
                  **kwargs):
         """Use `model` and `preprocessor` to create a generation pipeline for prediction.
 
@@ -63,10 +62,7 @@ class TextGenerationPipeline(Pipeline):
 
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
-                self.model.model_dir,
-                first_sequence=first_sequence,
-                sequence_length=sequence_length,
-                **kwargs)
+                self.model.model_dir, first_sequence=first_sequence, **kwargs)
         self.model.eval()
         self.postprocessor = kwargs.pop('postprocessor', None)
         if self.postprocessor is None and hasattr(self.model, 'model_dir'):

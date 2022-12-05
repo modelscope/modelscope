@@ -107,8 +107,14 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
 
 def get_dist_info() -> Tuple[int, int]:
     if dist.is_available() and dist.is_initialized():
-        rank = dist.get_rank()
-        world_size = dist.get_world_size()
+        try:
+            from megatron import mpu
+            assert mpu.model_parallel_is_initialized()
+            rank = mpu.get_data_parallel_rank()
+            world_size = mpu.get_data_parallel_world_size()
+        except (ImportError, AssertionError):
+            rank = dist.get_rank()
+            world_size = dist.get_world_size()
     else:
         rank = 0
         world_size = 1
@@ -120,16 +126,14 @@ def get_local_rank():
 
 
 def is_master():
-    rank, _ = get_dist_info()
-    return rank == 0
+    return dist.get_rank() == 0 if dist.is_initialized() else True
 
 
 def master_only(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        rank, _ = get_dist_info()
-        if rank == 0:
+        if is_master():
             return func(*args, **kwargs)
 
     return wrapper
@@ -138,12 +142,11 @@ def master_only(func: Callable) -> Callable:
 def make_tmp_dir():
     """Make sure each rank has the same temporary directory on the distributed mode.
     """
-    rank, world_size = get_dist_info()
-    if world_size <= 1:
+    if not dist.is_initialized():
         return tempfile.mkdtemp()
 
     tmpdir = None
-    if rank == 0:
+    if is_master():
         tmpdir = tempfile.mkdtemp()
 
     dist.barrier()
@@ -162,7 +165,7 @@ def broadcast(inputs, src):
     Returns:
         Each rank returns the same value as src.
     """
-    rank, _ = get_dist_info()
+    rank = dist.get_rank()
     shape_tensor = torch.tensor([0], device='cuda')
 
     if rank == src:

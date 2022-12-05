@@ -110,7 +110,8 @@ class DistributedPlug(TorchModel):
                     if 'LayerNorm' in name:
                         _module.float()
 
-        load_model = pre_load(mpu, self.model_dir, tag=path_load_tag)
+        load_model = pre_load(
+            mpu.get_model_parallel_rank(), self.model_dir, tag=path_load_tag)
         model_dict = model.module.model.state_dict()
         for key in load_model:
             if key not in model_dict.keys():

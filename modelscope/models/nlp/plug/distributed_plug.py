@@ -17,7 +17,7 @@ from modelscope.utils.torch_utils import set_random_seed_mpu
 from . import PlugModel
 from .configuration import PlugNLGConfig
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class DistributedPlug(TorchModel):

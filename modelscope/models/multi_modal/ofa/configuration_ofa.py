@@ -17,7 +17,7 @@ import warnings
 from transformers import PretrainedConfig
 from transformers.utils import logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 OFA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     'ofa-medium': 'https://huggingface.co/ofa-base/resolve/main/config.json',

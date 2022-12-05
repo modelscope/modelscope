@@ -41,7 +41,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .configuration import T5Config
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 ###################################################

@@ -46,7 +46,7 @@ from modelscope.utils.constant import ModelFile
 
 transformers.logging.set_verbosity_error()
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 CONFIG_NAME = 'config.yaml'
 

@@ -13,7 +13,7 @@ from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.logger import get_logger
 from .builder import build_preprocessor
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 PREPROCESSOR_MAP = {
     # nlp

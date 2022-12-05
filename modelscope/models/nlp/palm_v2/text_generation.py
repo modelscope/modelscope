@@ -760,7 +760,7 @@ class Translator(object):
 
     def __init__(self, model, dataset: str = 'cnn'):
         super().__init__()
-        self.logger = logging.get_logger(__name__)
+        self.logger = logging.get_logger()
         self.args = model.config
         self.args.dataset = dataset
         self.model = model.palm

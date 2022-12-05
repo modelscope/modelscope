@@ -27,7 +27,7 @@ from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 @MODELS.register_module(Tasks.token_classification, module_name=Models.bert)

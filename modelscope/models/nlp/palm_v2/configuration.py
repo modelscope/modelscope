@@ -19,7 +19,7 @@ from transformers.configuration_utils import PretrainedConfig
 
 from modelscope.utils import logger as logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class PalmConfig(PretrainedConfig):

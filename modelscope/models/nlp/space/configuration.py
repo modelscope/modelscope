@@ -20,7 +20,7 @@
 from modelscope.models.nlp.structbert import SbertConfig
 from modelscope.utils import logger as logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class SpaceConfig(SbertConfig):

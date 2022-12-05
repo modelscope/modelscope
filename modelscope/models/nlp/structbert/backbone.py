@@ -39,7 +39,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.nlp.utils import parse_labels_in_order
 from .configuration import SbertConfig
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class SbertEmbeddings(nn.Module):

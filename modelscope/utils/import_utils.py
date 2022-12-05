@@ -21,8 +21,6 @@ from modelscope.utils.ast_utils import (INDEX_KEY, MODULE_KEY, REQUIREMENT_KEY,
 from modelscope.utils.error import *  # noqa
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
-
 if sys.version_info < (3, 8):
     import importlib_metadata
 else:

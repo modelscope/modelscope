@@ -28,7 +28,7 @@ from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
 from .configuration import BertConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class BertPredictionHeadTransform(nn.Module):

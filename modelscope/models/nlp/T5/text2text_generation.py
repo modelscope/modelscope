@@ -31,7 +31,7 @@ from modelscope.utils.logger import get_logger
 from .backbone import T5PreTrainedModel, T5Stack
 from .configuration import T5Config
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 # Warning message for FutureWarning: head_mask was separated into two input args - head_mask, decoder_head_mask
 __HEAD_MASK_WARNING_MSG = """

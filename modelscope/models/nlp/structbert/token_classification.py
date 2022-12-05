@@ -29,7 +29,7 @@ from .adv_utils import compute_adv_loss
 from .backbone import SbertModel, SbertPreTrainedModel
 from .configuration import SbertConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 @MODELS.register_module(

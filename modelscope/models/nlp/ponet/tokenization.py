@@ -24,7 +24,7 @@ from transformers.tokenization_utils import BatchEncoding, EncodedInput
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 VOCAB_FILES_NAMES = {'vocab_file': ModelFile.VOCAB_FILE}
 

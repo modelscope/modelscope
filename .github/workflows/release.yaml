@@ -1,6 +1,8 @@
 name: release
 
-on: push
+on:
+  release:
+    types: [published]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

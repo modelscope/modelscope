@@ -262,7 +262,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         self.lcrf_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-news'
         self.addr_model_id = 'damo/nlp_structbert_address-parsing_chinese_base'
         self.lstm_model_id = 'damo/nlp_lstm_named-entity-recognition_chinese-generic'
-        self.sentence = '这与温岭市新河镇的一个神秘的传说有关。'
+        self.sentence = '这与温岭市新河镇的一个神秘的传说有关。[SEP]地名'
         self.sentence_en = 'pizza shovel'
         self.sentence_zh = '他 继 续 与 貝 塞 斯 達 遊 戲 工 作 室 在 接 下 来 辐 射 4 游 戏 。'
         self.addr = '浙江省杭州市余杭区文一西路969号亲橙里'

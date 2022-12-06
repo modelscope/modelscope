@@ -6,7 +6,7 @@ on:
       - 'v**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-publish
   cancel-in-progress: true
 
 jobs:

@@ -1,0 +1,25 @@
+name: release
+
+on:
+  release:
+    types: [published,edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-n-publish:
+    runs-on: ubuntu-20.04
+    if: startsWith(github.event.ref, 'refs/tags')
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: Install wheel
+        run: |
+          echo "I got run"
+          echo ${{github.ref}}

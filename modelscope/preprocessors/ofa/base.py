@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
+import os
 import re
 import string
 from os import path as osp
@@ -32,6 +33,8 @@ class OfaBasePreprocessor:
         self.cfg = cfg
         self.mode = mode
         self.language = self.cfg.model.get('language', 'en')
+        if os.path.exists(model_dir):
+            model_dir = os.path.abspath(model_dir)
         if self.language == 'en':
             tokenizer = OFATokenizer.from_pretrained(model_dir)
         elif self.language in ['zh', 'cn']:

@@ -80,10 +80,11 @@ class OfaASRPreprocessor(OfaBasePreprocessor):
             target = ' '.join(target_token_list[:self.max_tgt_length])
             sample['target'] = self.tokenize_text(target, add_bos=False)
 
-        phone_item = self.to_phone(target) - 3
+        phone_item = self.to_phone(target) + 1
         phone_mask = torch.tensor([False])
 
-        sample['phone_item'] = phone_item
+        sample['phone_item'] = phone_item + 3
+        sample['phone_target'] = phone_item
         sample['phone_mask'] = phone_mask
 
         sample['prev_output_tokens'] = torch.cat(

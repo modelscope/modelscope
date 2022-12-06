@@ -83,6 +83,10 @@ def collate_fn(samples, pad_idx, eos_idx):
         batch['net_input']['phone_items'] = merge('phone_item')
         batch['net_input']['phone_masks'] = torch.cat(
             [s['phone_mask'] for s in samples])
+    if samples[0].get('phone_target', None) is not None:
+        batch['phone_target'] = merge('phone_target')
+        batch['phone_length'] = torch.tensor(
+            [s['phone_target'].size(0) for s in samples], dtype=torch.long)
 
     return batch
 

@@ -41,6 +41,8 @@ __all__ = ['OfaForAllTasks']
 class OfaForAllTasks(TorchModel):
 
     def __init__(self, model_dir, *args, **kwargs):
+        if os.path.exists(model_dir):
+            model_dir = os.path.abspath(model_dir)
         super().__init__(model_dir=model_dir, *args, **kwargs)
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))

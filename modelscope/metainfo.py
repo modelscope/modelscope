@@ -522,6 +522,7 @@ class Hooks(object):
     ClipClampLogitScaleHook = 'ClipClampLogitScaleHook'
 
     # train
+    EarlyStopHook = 'EarlyStopHook'
     DeepspeedHook = 'DeepspeedHook'
 
 

@@ -112,6 +112,7 @@ class EpochBasedTrainer(BaseTrainer):
         self._epoch = 0
         self._iter = 0
         self._inner_iter = 0
+        self._stop_training = False
 
         if isinstance(model, str):
             self.model_dir = self.get_or_download_model_dir(
@@ -910,6 +911,8 @@ class EpochBasedTrainer(BaseTrainer):
             # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
             self._inner_iter = 0
             self._epoch += 1
+            if self._stop_training:
+                break
 
         self.invoke_hook(TrainerStages.after_run)
 

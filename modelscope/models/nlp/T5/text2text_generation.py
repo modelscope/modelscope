@@ -57,7 +57,7 @@ class T5ForConditionalGeneration(T5PreTrainedModel):
         r'decoder\.block\.0\.layer\.1\.EncDecAttention\.relative_attention_bias\.weight',
     ]
 
-    def __init__(self, config: T5Config):
+    def __init__(self, config: T5Config, **kwargs):
         super().__init__(config)
         self.model_dim = config.d_model
 

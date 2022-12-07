@@ -5,6 +5,9 @@ import math
 
 import torch
 
+from modelscope.models.multi_modal.dpm_solver_pytorch import (
+    DPM_Solver, NoiseScheduleVP, model_wrapper, model_wrapper_guided_diffusion)
+
 __all__ = ['GaussianDiffusion', 'beta_schedule']
 
 
@@ -258,6 +261,61 @@ class GaussianDiffusion(object):
         elif clamp is not None:
             x0 = x0.clamp(-clamp, clamp)
         return mu, var, log_var, x0
+
+    @torch.no_grad()
+    def dpm_solver_sample_loop(self,
+                               noise,
+                               model,
+                               skip_type,
+                               order,
+                               method,
+                               model_kwargs={},
+                               clamp=None,
+                               percentile=None,
+                               condition_fn=None,
+                               guide_scale=None,
+                               dpm_solver_timesteps=20,
+                               t_start=None,
+                               t_end=None,
+                               lower_order_final=True,
+                               denoise_to_zero=False,
+                               solver_type='dpm_solver'):
+        r"""Sample using DPM-Solver-based method.
+            - condition_fn: for classifier-based guidance (guided-diffusion).
+            - guide_scale: for classifier-free guidance (glide/dalle-2).
+            Please check all the parameters in `dpm_solver.sample` before using.
+        """
+        noise_schedule = NoiseScheduleVP(
+            schedule='discrete', betas=self.betas.float())
+        model_fn = model_wrapper_guided_diffusion(
+            model=model,
+            noise_schedule=noise_schedule,
+            var_type=self.var_type,
+            mean_type=self.mean_type,
+            model_kwargs=model_kwargs,
+            clamp=clamp,
+            percentile=percentile,
+            rescale_timesteps=self.rescale_timesteps,
+            num_timesteps=self.num_timesteps,
+            guide_scale=guide_scale,
+            condition_fn=condition_fn,
+        )
+        dpm_solver = DPM_Solver(
+            model_fn=model_fn,
+            noise_schedule=noise_schedule,
+        )
+        xt = dpm_solver.sample(
+            noise,
+            steps=dpm_solver_timesteps,
+            order=order,
+            skip_type=skip_type,
+            method=method,
+            solver_type=solver_type,
+            t_start=t_start,
+            t_end=t_end,
+            lower_order_final=lower_order_final,
+            denoise_to_zero=denoise_to_zero)
+        return xt
 
     @torch.no_grad()
     def ddim_sample(self,

@@ -44,7 +44,7 @@ class DebertaV2ForMaskedLM(DebertaV2PreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Deberta_v2, the preprocessor of this model
-        is `modelscope.preprocessors.NLPPreprocessor`.
+        is `modelscope.preprocessors.FillMaskTransformersPreprocessor`.
 
     Parameters:
         config (`DebertaV2Config`): Model configuration class with all the parameters of the model.

@@ -120,8 +120,7 @@ class Body3DKeypointsPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
 
-        self.keypoint_model_3d = model if isinstance(
-            model, BodyKeypointsDetection3D) else Model.from_pretrained(model)
+        self.keypoint_model_3d = self.model
         self.keypoint_model_3d.eval()
 
         # init human body 2D keypoints detection pipeline

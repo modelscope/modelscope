@@ -97,6 +97,18 @@ class WavToScp(Preprocessor):
         assert inputs['model_config'].__contains__(
             'type'), 'model type does not exist'
         inputs['model_type'] = inputs['model_config']['type']
+        # code base
+        if 'code_base' in inputs['model_config']:
+            code_base = inputs['model_config']['code_base']
+        else:
+            code_base = None
+        inputs['code_base'] = code_base
+        # decoding mode
+        if 'mode' in inputs['model_config']:
+            mode = inputs['model_config']['mode']
+        else:
+            mode = None
+        inputs['mode'] = mode
 
         if inputs['model_type'] == Frameworks.torch:
             assert inputs['model_config'].__contains__(
@@ -105,8 +117,6 @@ class WavToScp(Preprocessor):
                 'am_model_config'), 'am_model_config does not exist'
             assert inputs['model_config'].__contains__(
                 'asr_model_config'), 'asr_model_config does not exist'
-            assert inputs['model_config'].__contains__(
-                'asr_model_wav_config'), 'asr_model_wav_config does not exist'
 
             am_model_config: str = os.path.join(
                 inputs['model_workspace'],
@@ -121,12 +131,38 @@ class WavToScp(Preprocessor):
             assert os.path.exists(
                 asr_model_config), 'asr_model_config does not exist'
 
-            asr_model_wav_config: str = os.path.join(
-                inputs['model_workspace'],
-                inputs['model_config']['asr_model_wav_config'])
+            if 'asr_model_wav_config' in inputs['model_config']:
+                asr_model_wav_config: str = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['asr_model_wav_config'])
+            else:
+                asr_model_wav_config: str = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['asr_model_config'])
             assert os.path.exists(
                 asr_model_wav_config), 'asr_model_wav_config does not exist'
 
+            # the lm model file path
+            if 'lm_model_name' in inputs['model_config']:
+                lm_model_path = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['lm_model_name'])
+            else:
+                lm_model_path = None
+            # the lm config file path
+            if 'lm_model_config' in inputs['model_config']:
+                lm_model_config = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['lm_model_config'])
+            else:
+                lm_model_config = None
+            if lm_model_path and lm_model_config and os.path.exists(
+                    lm_model_path) and os.path.exists(lm_model_config):
+                inputs['lm_model_path'] = lm_model_path
+                inputs['lm_model_config'] = lm_model_config
+            else:
+                inputs['lm_model_path'] = None
+                inputs['lm_model_config'] = None
             if inputs['audio_format'] == 'wav' or inputs[
                     'audio_format'] == 'pcm':
                 inputs['asr_model_config'] = asr_model_wav_config

@@ -3,12 +3,31 @@
 # This source code is licensed under the Apache 2.0 license
 # found in the LICENSE file in the root directory.
 import math
+import os
+import shutil
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 import transformers
 from torch.nn.modules.loss import _Loss
+
+
+def recursive_overwrite(src, dst, ignore=None):
+    if os.path.isdir(src):
+        if not os.path.isdir(dst):
+            os.makedirs(dst)
+        files = os.listdir(src)
+        if ignore is not None:
+            ignored = ignore(src, files)
+        else:
+            ignored = set()
+        for f in files:
+            if f not in ignored:
+                recursive_overwrite(
+                    os.path.join(src, f), os.path.join(dst, f), ignore)
+    else:
+        shutil.copyfile(src, dst)
 
 
 def construct_rdrop_sample(x):
@@ -113,6 +132,7 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         self.use_rdrop = args.get('use_rdrop', False)
         self.reg_alpha = args.get('reg_alpha', 1.0)
         self.sample_patch_num = args.get('sample_patch_num', 196)
+        self.ctc_weight = args.get('ctc_weight', 0.0)
 
         self.constraint_start = None
         self.constraint_end = None
@@ -141,6 +161,9 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         output = model.model(**sample['net_input'])
         loss, nll_loss, ntokens = self.compute_loss(
             output.logits, sample, update_num, reduce=reduce)
+        if self.ctc_weight > 0:
+            ctc_loss = self.compute_ctc_loss(model, output, sample)
+            loss = nll_loss + ctc_loss
         sample_size = (
             sample['target'].size(0) if self.sentence_avg else ntokens)
         logging_output = {
@@ -205,6 +228,32 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
             constraint_start=self.constraint_start,
             constraint_end=self.constraint_end)
         return loss, nll_loss, ntokens
+
+    def compute_ctc_loss(self, model, output, sample):
+        lprobs = model.model.get_encoder_normalized_probs(
+            output, log_probs=True).contiguous()  # (T, B, C) from the encoder
+
+        non_padding_mask = ~output.encoder_padding_mask
+        input_lengths = non_padding_mask.long().sum(-1)
+
+        target_lengths = sample['phone_length']
+        pad_mask = torch.arange(target_lengths.max()).expand([
+            target_lengths.shape[0], -1
+        ]).to(target_lengths) < target_lengths.unsqueeze(1)
+        targets_flat = sample['phone_target'].masked_select(pad_mask)
+
+        with torch.backends.cudnn.flags(enabled=False):
+            loss = F.ctc_loss(
+                lprobs,
+                targets_flat,
+                input_lengths,
+                target_lengths,
+                blank=0,
+                reduction='sum',
+                zero_infinity=True,
+            )
+
+            return loss / lprobs.shape[1]
 
 
 def get_schedule(scheduler):

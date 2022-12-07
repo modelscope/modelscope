@@ -1,4 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import io
+import os
 import re
 import string
 from os import path as osp
@@ -6,11 +8,15 @@ from os import path as osp
 import json
 import numpy as np
 import torch
+import torchaudio
 from PIL import Image
 
+from modelscope.fileio import File
 from modelscope.models.multi_modal.ofa import OFATokenizer, OFATokenizerZH
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.trie import Trie
+from .utils.audio_helper import (_get_kaldi_fbank, _get_torchaudio_fbank,
+                                 convert_waveform)
 from .utils.constant import OFA_TASK_KEY_MAPPING
 from .utils.random_help import set_torch_seed
 
@@ -27,6 +33,8 @@ class OfaBasePreprocessor:
         self.cfg = cfg
         self.mode = mode
         self.language = self.cfg.model.get('language', 'en')
+        if os.path.exists(model_dir):
+            model_dir = os.path.abspath(model_dir)
         if self.language == 'en':
             tokenizer = OFATokenizer.from_pretrained(model_dir)
         elif self.language in ['zh', 'cn']:
@@ -87,6 +95,9 @@ class OfaBasePreprocessor:
                 self.constraint_trie.insert([tokenizer.bos_token_id]
                                             + answer_item.tolist()
                                             + [tokenizer.eos_token_id])
+
+        self.train_audio_feature_transforms = None
+        self.test_audio_feature_transforms = None
 
     def tokenize_text(self, text, add_bos=True, add_eos=True):
         if text is None:
@@ -163,3 +174,51 @@ class OfaBasePreprocessor:
         image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
             else load_image(path_or_url_or_pil)
         return image
+
+    def get_audio_bytes(self, path_or_url):
+        if isinstance(path_or_url, bytes):
+            audio_bytes = io.BytesIO(path_or_url)
+        elif isinstance(path_or_url, str):
+            file_bytes = File.read(path_or_url)
+            audio_bytes = io.BytesIO(file_bytes)
+        else:
+            raise TypeError(f'Unsupported input type: {type(path_or_url)}.')
+        return audio_bytes
+
+    def prepare_fbank(self,
+                      waveform,
+                      sample_rate,
+                      speed,
+                      target_sample_rate=16000,
+                      is_train=False):
+        waveform, sample_rate = torchaudio.sox_effects.apply_effects_tensor(
+            waveform, sample_rate,
+            [['speed', str(speed)], ['rate', str(target_sample_rate)]])
+        _waveform, _ = convert_waveform(
+            waveform, sample_rate, to_mono=True, normalize_volume=True)
+        # Kaldi compliance: 16-bit signed integers
+        _waveform = _waveform * (2**15)
+        _waveform = _waveform.numpy()
+        fbank = _get_kaldi_fbank(_waveform, sample_rate, 80)
+        if fbank is None:
+            fbank = _get_torchaudio_fbank(_waveform, sample_rate, 80)
+        if fbank is None:
+            raise ImportError(
+                'Please install pyKaldi or torchaudio to enable fbank feature extraction'
+            )
+        if is_train and self.train_audio_feature_transforms is not None:
+            fbank = self.train_audio_feature_transforms(fbank)
+        elif ~is_train and self.test_audio_feature_transforms(
+                fbank) is not None:
+            fbank = self.test_audio_feature_transforms(fbank)
+
+        fbank = torch.from_numpy(fbank).float()
+        fbank = self.pack_frames(fbank)
+        return fbank
+
+    def pack_frames(self, feature: torch.Tensor):
+        if self.cfg.n_frames_per_step == 1:
+            return feature
+        n_packed_frames = feature.shape[0] // self.cfg.n_frames_per_step
+        feature = feature[:self.cfg.n_frames_per_step * n_packed_frames]
+        return feature.reshape(n_packed_frames, -1)

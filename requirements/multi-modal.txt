@@ -1,5 +1,5 @@
 ftfy>=6.0.3
-ofa>=0.0.2
+librosa
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
 # compatible with taming-transformers-rom1504
@@ -8,6 +8,7 @@ pytorch_lightning<=1.7.7
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4
 sacrebleu
+soundfile
 taming-transformers-rom1504
 timm
 tokenizers

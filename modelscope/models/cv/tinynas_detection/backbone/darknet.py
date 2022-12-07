@@ -1,12 +1,11 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
 
 import torch
 from torch import nn
 
-from ..core.base_ops import (BaseConv, CSPLayer, DWConv, Focus, ResLayer,
-                             SPPBottleneck)
+from modelscope.models.cv.tinynas_detection.core.base_ops import (
+    BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck)
 
 
 class CSPDarknet(nn.Module):

@@ -222,7 +222,8 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
             subset_name=subset_name,
             meta_data_files=meta_data_files,
             zip_data_files=zip_data_files,
-            hash=sub_dir)
+            hash=sub_dir,
+            **config_kwargs)
     else:
         raise NotImplementedError(
             f'Dataset mete file extensions "{os.path.splitext(meta_data_file)[-1]}" is not implemented yet'

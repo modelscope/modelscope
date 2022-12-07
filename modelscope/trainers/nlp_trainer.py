@@ -10,7 +10,6 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import build_metric
 from modelscope.models.base import Model, TorchModel
@@ -427,81 +426,51 @@ class NlpTrainerArguments:
 
 @TRAINERS.register_module(module_name=Trainers.nlp_base_trainer)
 class NlpEpochBasedTrainer(EpochBasedTrainer):
+    """Add code to adapt with nlp models.
 
-    def __init__(
-            self,
-            model: Optional[Union[TorchModel, nn.Module, str]] = None,
-            cfg_file: Optional[str] = None,
-            cfg_modify_fn: Optional[Callable] = None,
-            arg_parse_fn: Optional[Callable] = None,
-            data_collator: Optional[Callable] = None,
-            train_dataset: Optional[Union[MsDataset, Dataset]] = None,
-            eval_dataset: Optional[Union[MsDataset, Dataset]] = None,
-            preprocessor: Optional[Preprocessor] = None,
-            optimizers: Tuple[torch.optim.Optimizer,
-                              torch.optim.lr_scheduler._LRScheduler] = (None,
-                                                                        None),
-            model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
-            **kwargs):
-        """Add code to adapt with nlp models.
+    This trainer will accept the information of labels&text keys in the cfg, and then initialize
+    the nlp models/preprocessors with this information.
 
-        This trainer will accept the information of labels&text keys in the cfg, and then initialize
-        the nlp models/preprocessors with this information.
+    Labels&text key information may be carried in the cfg like this:
 
-        Labels&text key information may be carried in the cfg like this:
+    >>> cfg = {
+    >>>     ...
+    >>>     "dataset": {
+    >>>         "train": {
+    >>>             "first_sequence": "text1",
+    >>>             "second_sequence": "text2",
+    >>>             "label": "label",
+    >>>             "labels": [1, 2, 3, 4],
+    >>>         },
+    >>>         "val": {
+    >>>             "first_sequence": "text3",
+    >>>             "second_sequence": "text4",
+    >>>             "label": "label2",
+    >>>         },
+    >>>     }
+    >>> }
 
-        >>> cfg = {
-        >>>     ...
-        >>>     "dataset": {
-        >>>         "train": {
-        >>>             "first_sequence": "text1",
-        >>>             "second_sequence": "text2",
-        >>>             "label": "label",
-        >>>             "labels": [1, 2, 3, 4]
-        >>>         }
-        >>>     }
-        >>> }
+    To view some actual finetune examples, please check the test files listed below:
+    tests/trainers/test_finetune_sequence_classification.py
+    tests/trainers/test_finetune_token_classification.py
+    """
 
-
-        Args:
-            cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
-
-            Example:
-            >>> def cfg_modify_fn(cfg):
-            >>>     cfg.preprocessor.first_sequence= 'text1'
-            >>>     cfg.preprocessor.second_sequence='text2'
-            >>>     return cfg
-
-            To view some actual finetune examples, please check the test files listed below:
-            tests/trainers/test_finetune_sequence_classification.py
-            tests/trainers/test_finetune_token_classification.py
-        """
-
-        if isinstance(model, str):
-            if os.path.exists(model):
-                model_dir = model if os.path.isdir(model) else os.path.dirname(
-                    model)
-            else:
-                model_dir = snapshot_download(model, revision=model_revision)
-            if cfg_file is None:
-                cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
-        else:
-            assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
-            model_dir = os.path.dirname(cfg_file)
-
+    def __init__(self, *args, **kwargs):
         self.label2id = None
         self.id2label = None
         self.num_labels = None
-        self.cfg_modify_fn = cfg_modify_fn
-        self.cfg = self.rebuild_config(Config.from_file(cfg_file))
+        self.train_keys = None
+        self.eval_keys = None
+        super().__init__(*args, **kwargs)
 
+    def prepare_labels(self, cfg):
         try:
-            labels = self.cfg.dataset.train.labels
+            labels = cfg.dataset.train.labels
             self.label2id = {label: idx for idx, label in enumerate(labels)}
             self.id2label = {idx: label for idx, label in enumerate(labels)}
             self.num_labels = len(labels)
         except AttributeError:
-            label2id = parse_label_mapping(model_dir)
+            label2id = parse_label_mapping(self.model_dir)
             if label2id is not None:
                 self.label2id = label2id
                 self.id2label = {id: label for label, id in label2id.items()}
@@ -519,30 +488,15 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
 
             return {k: v for k, v in input_keys.items() if v is not None}
 
-        self.train_keys = build_dataset_keys(
-            self.cfg.dataset.train if hasattr(self.cfg, 'dataset')
-            and hasattr(self.cfg.dataset, 'train') else None)
-        self.eval_keys = build_dataset_keys(
-            self.cfg.dataset.val if hasattr(self.cfg, 'dataset')
-            and hasattr(self.cfg.dataset, 'val') else None)
+        self.train_keys = build_dataset_keys(cfg.safe_get('dataset.train'))
+        self.eval_keys = build_dataset_keys(cfg.safe_get('dataset.val'))
         if len(self.eval_keys) == 0:
             self.eval_keys = self.train_keys
-
-        super().__init__(
-            model=model_dir,
-            cfg_file=cfg_file,
-            arg_parse_fn=arg_parse_fn,
-            data_collator=data_collator,
-            preprocessor=preprocessor,
-            optimizers=optimizers,
-            model_revision=model_revision,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            **kwargs)
 
     def rebuild_config(self, cfg: Config):
         if self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
+        self.prepare_labels(cfg)
         if not hasattr(cfg.model, 'label2id') and not hasattr(
                 cfg.model, 'id2label'):
             if self.id2label is not None:
@@ -576,6 +530,8 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         Returns: The preprocessor instance.
 
         """
+
+        # Compatible with old logic
         model_args = {} if self.label2id is None else {
             'label2id': self.label2id
         }

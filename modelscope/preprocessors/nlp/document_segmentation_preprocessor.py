@@ -3,41 +3,54 @@
 from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
+from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.constant import Fields
+from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.logger import get_logger
-from .nlp_base import NLPBasePreprocessor
 
 logger = get_logger()
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.document_segmentation)
-class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
+class DocumentSegmentationTransformersPreprocessor(Preprocessor):
 
-    def __init__(self, model_dir: str, config, *args, **kwargs):
-        """preprocess the data
+    def __init__(self,
+                 model_dir: str,
+                 model_max_length: int,
+                 mode: str = ModeKeys.INFERENCE,
+                 question_column_name='labels',
+                 context_column_name='sentences',
+                 example_id_column_name='example_id',
+                 label_list=['B-EOP', 'O']):
+        """The preprocessor for document segmentation task, based on transformers' tokenizer.
 
         Args:
-            model_dir (str): model path
+            model_dir: The model dir containing the essential files to build the tokenizer.
+            model_max_length: The max length the model supported.
+            mode: The mode for this preprocessor.
+            question_column_name: The key for the question column, default `labels`.
+            context_column_name: The key for the context column, default `sentences`.
+            example_id_column_name: The key for the example id column, default `example_id`.
+            label_list: The label list, default `['B-EOP', 'O']`
         """
 
-        super().__init__(model_dir, *args, **kwargs)
+        super().__init__(mode)
         from transformers import BertTokenizerFast
-        self.tokenizer = BertTokenizerFast.from_pretrained(
-            model_dir,
-            use_fast=True,
-        )
-        self.question_column_name = 'labels'
-        self.context_column_name = 'sentences'
-        self.example_id_column_name = 'example_id'
-        self.label_to_id = {'B-EOP': 0, 'O': 1}
+        self.tokenizer = BertTokenizerFast.from_pretrained(model_dir, )
+        self.question_column_name = question_column_name
+        self.context_column_name = context_column_name
+        self.example_id_column_name = example_id_column_name
+        self.label_list = label_list
+        self.label_to_id = {
+            label: id
+            for id, label in enumerate(self.label_list)
+        }
         self.target_specical_ids = set()
         self.target_specical_ids.add(self.tokenizer.eos_token_id)
-        self.max_seq_length = config.max_position_embeddings
-        self.label_list = ['B-EOP', 'O']
+        self.max_seq_length = model_max_length
 
-    def __call__(self, examples) -> Dict[str, Any]:
+    def __call__(self, examples, model_cfg=None) -> Dict[str, Any]:
         questions = examples[self.question_column_name]
         contexts = examples[self.context_column_name]
         example_ids = examples[self.example_id_column_name]
@@ -72,6 +85,8 @@ class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
             example_token_labels = []
             segment_id = []
             cur_seg_id = 1
+            para_segment_id = []
+            cut_para_seg_id = 1
             for token_index in range(len(example_input_ids)):
                 if example_input_ids[token_index] in self.target_specical_ids:
                     example_token_labels.append(example_labels[cur_seg_id - 1])
@@ -81,7 +96,17 @@ class DocumentSegmentationPreprocessor(NLPBasePreprocessor):
                     example_token_labels.append(-100)
                     segment_id.append(cur_seg_id)
 
-            segment_ids.append(segment_id)
+                if example_token_labels[token_index] != -100:
+                    para_segment_id.append(cut_para_seg_id)
+                    cut_para_seg_id += 1
+                else:
+                    para_segment_id.append(cut_para_seg_id)
+
+            if model_cfg is not None and model_cfg[
+                    'type'] == 'ponet' and model_cfg['level'] == 'topic':
+                segment_ids.append(para_segment_id)
+            else:
+                segment_ids.append(segment_id)
             token_seq_labels.append(example_token_labels)
 
         tokenized_examples['segment_ids'] = segment_ids

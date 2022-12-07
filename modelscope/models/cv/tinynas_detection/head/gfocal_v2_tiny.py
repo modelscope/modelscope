@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import functools
 from functools import partial
@@ -9,7 +9,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..core.base_ops import BaseConv, DWConv
+from modelscope.models.cv.tinynas_detection.core.base_ops import (BaseConv,
+                                                                  DWConv)
 
 
 class Scale(nn.Module):

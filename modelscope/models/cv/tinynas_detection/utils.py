@@ -1,30 +1,33 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors, and available
+# at https://github.com/tinyvision/damo-yolo.
 
 import importlib
 import os
+import shutil
 import sys
+import tempfile
 from os.path import dirname, join
 
-
-def get_config_by_file(config_file):
-    try:
-        sys.path.append(os.path.dirname(config_file))
-        current_config = importlib.import_module(
-            os.path.basename(config_file).split('.')[0])
-        exp = current_config.Config()
-    except Exception:
-        raise ImportError(
-            "{} doesn't contains class named 'Config'".format(config_file))
-    return exp
+from easydict import EasyDict
 
 
-def parse_config(config_file):
-    """
-    get config object by file.
-    Args:
-        config_file (str): file path of config.
-    """
-    assert (config_file is not None), 'plz provide config file'
-    if config_file is not None:
-        return get_config_by_file(config_file)
+def parse_config(filename):
+    filename = str(filename)
+    if filename.endswith('.py'):
+        with tempfile.TemporaryDirectory() as temp_config_dir:
+            shutil.copyfile(filename, join(temp_config_dir, '_tempconfig.py'))
+            sys.path.insert(0, temp_config_dir)
+            mod = importlib.import_module('_tempconfig')
+            sys.path.pop(0)
+            cfg_dict = EasyDict({
+                name: value
+                for name, value in mod.__dict__.items()
+                if not name.startswith('__')
+            })
+            # delete imported module
+            del sys.modules['_tempconfig']
+    else:
+        raise IOError('Only .py type are supported now!')
+
+    return cfg_dict

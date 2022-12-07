@@ -16,20 +16,25 @@ if TYPE_CHECKING:
     from .kws import WavToLists
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
     from .nlp import (
-        DocumentSegmentationPreprocessor, FaqQuestionAnsweringPreprocessor,
-        FillMaskPoNetPreprocessor, NLPPreprocessor,
-        NLPTokenizerPreprocessorBase, PassageRankingPreprocessor,
-        TextRankingPreprocessor, RelationExtractionPreprocessor,
-        SentenceEmbeddingPreprocessor, SequenceClassificationPreprocessor,
-        TokenClassificationPreprocessor, TextErrorCorrectionPreprocessor,
-        TextGenerationPreprocessor, Text2TextGenerationPreprocessor, Tokenize,
+        DocumentSegmentationTransformersPreprocessor,
+        FaqQuestionAnsweringTransformersPreprocessor,
+        FillMaskPoNetPreprocessor, FillMaskTransformersPreprocessor,
+        TextRankingTransformersPreprocessor,
+        RelationExtractionTransformersPreprocessor,
+        SentenceEmbeddingTransformersPreprocessor,
+        TextClassificationTransformersPreprocessor,
+        TokenClassificationTransformersPreprocessor,
+        TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
+        TextGenerationTransformersPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor, CodeGeeXPreprocessor,
-        MGLMSummarizationPreprocessor, ZeroShotClassificationPreprocessor,
+        MGLMSummarizationPreprocessor,
+        ZeroShotClassificationTransformersPreprocessor,
         TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
         DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
-        NERPreprocessorThai, WordSegmentationPreprocessorThai)
+        NERPreprocessorThai, WordSegmentationPreprocessorThai,
+        TranslationEvaluationPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -47,25 +52,29 @@ else:
         'kws': ['WavToLists'],
         'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
-            'DocumentSegmentationPreprocessor',
-            'FaqQuestionAnsweringPreprocessor', 'FillMaskPoNetPreprocessor',
-            'NLPPreprocessor', 'NLPTokenizerPreprocessorBase',
-            'TextRankingPreprocessor', 'RelationExtractionPreprocessor',
-            'SentenceEmbeddingPreprocessor',
-            'SequenceClassificationPreprocessor',
-            'TokenClassificationPreprocessor',
-            'TextErrorCorrectionPreprocessor', 'TextGenerationPreprocessor',
-            'Tokenize', 'Text2TextGenerationPreprocessor',
+            'DocumentSegmentationTransformersPreprocessor',
+            'FaqQuestionAnsweringTransformersPreprocessor',
+            'FillMaskPoNetPreprocessor', 'FillMaskTransformersPreprocessor',
+            'NLPTokenizerPreprocessorBase',
+            'TextRankingTransformersPreprocessor',
+            'RelationExtractionTransformersPreprocessor',
+            'SentenceEmbeddingTransformersPreprocessor',
+            'TextClassificationTransformersPreprocessor',
+            'TokenClassificationTransformersPreprocessor',
+            'TextErrorCorrectionPreprocessor',
+            'TextGenerationTransformersPreprocessor', 'Tokenize',
+            'TextGenerationT5Preprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
             'MGLMSummarizationPreprocessor', 'CodeGeeXPreprocessor',
-            'ZeroShotClassificationPreprocessor',
+            'ZeroShotClassificationTransformersPreprocessor',
             'TextGenerationJiebaPreprocessor', 'SentencePiecePreprocessor',
             'NERPreprocessorViet', 'NERPreprocessorThai',
             'WordSegmentationPreprocessorThai',
             'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
-            'TableQuestionAnsweringPreprocessor'
+            'TableQuestionAnsweringPreprocessor',
+            'TranslationEvaluationPreprocessor'
         ],
     }
 

@@ -1,10 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import copy
 
 from .darknet import CSPDarknet
-from .tinynas import load_tinynas_net
+from .tinynas_csp import load_tinynas_net as load_tinynas_net_csp
+from .tinynas_res import load_tinynas_net as load_tinynas_net_res
 
 
 def build_backbone(cfg):
@@ -12,5 +13,7 @@ def build_backbone(cfg):
     name = backbone_cfg.pop('name')
     if name == 'CSPDarknet':
         return CSPDarknet(**backbone_cfg)
-    elif name == 'TinyNAS':
-        return load_tinynas_net(backbone_cfg)
+    elif name == 'TinyNAS_csp':
+        return load_tinynas_net_csp(backbone_cfg)
+    elif name == 'TinyNAS_res':
+        return load_tinynas_net_res(backbone_cfg)

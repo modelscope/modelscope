@@ -16,6 +16,8 @@ class CVTasks(object):
     # ocr
     ocr_detection = 'ocr-detection'
     ocr_recognition = 'ocr-recognition'
+    table_recognition = 'table-recognition'
+    license_plate_detection = 'license-plate-detection'
 
     # human face body related
     animal_recognition = 'animal-recognition'
@@ -23,6 +25,9 @@ class CVTasks(object):
     card_detection = 'card-detection'
     face_recognition = 'face-recognition'
     facial_expression_recognition = 'facial-expression-recognition'
+    facial_landmark_confidence = 'facial-landmark-confidence'
+    face_processing_base = 'face-processing-base'
+    face_attribute_recognition = 'face-attribute-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
@@ -43,6 +48,7 @@ class CVTasks(object):
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
+    image_depth_estimation = 'image-depth-estimation'
     portrait_matting = 'portrait-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'
@@ -84,6 +90,7 @@ class CVTasks(object):
 
     # video segmentation
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    video_human_matting = 'video-human-matting'
 
     # video editing
     video_inpainting = 'video-inpainting'
@@ -128,7 +135,9 @@ class NLPTasks(object):
     faq_question_answering = 'faq-question-answering'
     information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'
+    extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
+    translation_evaluation = 'translation-evaluation'
 
 
 class AudioTasks(object):
@@ -291,6 +300,14 @@ class ModelFile(object):
     TS_MODEL_FILE = 'model.ts'
 
 
+class Invoke(object):
+    KEY = 'invoked_by'
+    PRETRAINED = 'from_pretrained'
+    PIPELINE = 'pipeline'
+    TRAINER = 'trainer'
+    PREPROCESSOR = 'preprocessor'
+
+
 class ConfigFields(object):
     """ First level keyword in configuration file
     """
@@ -381,3 +398,14 @@ class Devices:
     """device used for training and inference"""
     cpu = 'cpu'
     gpu = 'gpu'
+
+
+# Supported extensions for text datasets.
+EXTENSIONS_TO_LOAD = {
+    'csv': 'csv',
+    'tsv': 'csv',
+    'json': 'json',
+    'jsonl': 'json',
+    'parquet': 'parquet',
+    'txt': 'text'
+}

@@ -28,7 +28,7 @@ if is_sentencepiece_available():
 else:
     DebertaV2Tokenizer = None
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 VOCAB_FILES_NAMES = {
     'vocab_file': 'spm.model',

@@ -20,7 +20,7 @@ from transformers.onnx import OnnxSeq2SeqConfigWithPast
 
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class T5Config(PretrainedConfig):

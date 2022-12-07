@@ -13,7 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 import math
+import os
+from os import path as osp
+from typing import Callable, Dict, List, Optional, Union
 
 import torch
 from megatron import mpu
@@ -25,8 +29,14 @@ from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
+from modelscope.fileio import File
+from modelscope.metainfo import Models
 from modelscope.models import TorchModel
+from modelscope.models.builder import MODELS
 from modelscope.models.nlp.gpt3 import GPT3Config
+from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
+from modelscope.utils.checkpoint import weights_to_cpu
+from modelscope.utils.constant import Tasks
 from modelscope.utils.nlp.distributed import initialize_distributed
 from modelscope.utils.nlp.load_checkpoint import pre_load
 from modelscope.utils.torch_utils import set_random_seed_mpu
@@ -435,7 +445,7 @@ class nullcontext:
 
 def bias_dropout_add(x, bias, residual, prob, training):
     # type: (Tensor, Tensor, Tensor, float, bool) -> Tensor
-    out = torch.nn.functional.dropout(x + bias, p=prob, training=training)
+    out = F.dropout(x + bias, p=prob, training=training)
     out = residual + out
     return out
 
@@ -747,10 +757,8 @@ class GPT3Model(PreTrainedModel):
 
     config_class = GPT3Config
 
-    def __init__(self, config, parallel_output=False):
+    def __init__(self, config):
         super().__init__(config)
-
-        self.parallel_output = parallel_output
 
         self.language_model = GPT3TransformerLanguageModel(
             config, init_method_normal(config.init_method_std),
@@ -764,9 +772,7 @@ class GPT3Model(PreTrainedModel):
     def build_attention_mask_and_position_ids(tokens):
         seq_length = tokens.size(1)
         attention_mask = torch.tril(
-            torch.ones((1, 1, seq_length, seq_length),
-                       dtype=torch.long,
-                       device=tokens.device))
+            torch.ones((1, 1, seq_length, seq_length), device=tokens.device))
         attention_mask = (attention_mask < 0.5)
 
         position_ids = torch.arange(
@@ -780,6 +786,7 @@ class GPT3Model(PreTrainedModel):
                 attention_mask=None,
                 position_ids=None,
                 inference_params=None,
+                labels=None,
                 **kwargs):
         if attention_mask is None and position_ids is None:
             attention_mask, position_ids = \
@@ -797,9 +804,18 @@ class GPT3Model(PreTrainedModel):
         # Gather if needed.
 
         output = logits_parallel
-        if not self.parallel_output:
+
+        if labels is None:
             output = mpu.gather_from_model_parallel_region(logits_parallel)
-        return output.transpose(0, 1).contiguous()
+            # [s b h] => [b s h]
+            return output.transpose(0, 1).contiguous()
+        else:
+            # [b s] => [s b]
+            labels = labels.transpose(0, 1).contiguous()
+            loss = mpu.vocab_parallel_cross_entropy(output.float(), labels)
+            # [s b] => [b s]
+            loss = loss.transpose(0, 1).contiguous()
+            return loss
 
 
 def modify_logits_for_top_k_filtering(logits, top_k):
@@ -911,6 +927,51 @@ class InferenceParams:
                 new_inference_key_memory, new_inference_value_memory)
 
 
+def split_into_partitions(tensor, num_partitions, partition_dim, stride):
+    per_partition_size = mpu.utils.divide(
+        tensor.size(partition_dim), num_partitions)
+    per_partition_per_stride_size = mpu.utils.divide(per_partition_size,
+                                                     stride)
+    partitions_list = torch.split(
+        tensor, per_partition_per_stride_size, dim=partition_dim)
+    partitions = []
+    for i in range(num_partitions):
+        partition = torch.cat(
+            partitions_list[i::num_partitions], dim=partition_dim)
+        partitions.append(partition)
+    return partitions
+
+
+def split_state_dict(state_dict: Dict[str, torch.Tensor], model: GPT3Model,
+                     partitions: int) -> Dict[str, torch.Tensor]:
+    if partitions == 1:
+        return state_dict
+    rank: int = mpu.get_model_parallel_rank()
+    for name, parameters in model.named_parameters():
+        if parameters.shape == state_dict[name].shape:
+            continue
+        dim = max(parameters.partition_dim, 0)
+        stride = parameters.partition_stride
+        state_dict[name] = split_into_partitions(state_dict[name], partitions,
+                                                 dim, stride)[rank]
+    return state_dict
+
+
+def save_checkpoint(model: torch.nn.Module, filename: str) -> None:
+    if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+        model = model.module
+
+    checkpoint = {'module': weights_to_cpu(model.state_dict())}
+    mp_rank = mpu.get_model_parallel_rank()
+    filename = osp.join(
+        osp.dirname(filename), 'model',
+        'mp_rank_{:02d}'.format(mp_rank) + '_model_states.pt')
+
+    with io.BytesIO() as f:
+        torch.save(checkpoint, f)
+        File.write(f.getvalue(), filename)
+
+
 class DistributedGPT3(TorchModel):
 
     def __init__(self,
@@ -942,33 +1003,63 @@ class DistributedGPT3(TorchModel):
             model = Float16Module(model, self.config)
 
         self.dist_model = model
-        load_model = pre_load(mpu, model_dir, tag=path_load_tag)
+
+        tensor_ws = mpu.get_model_parallel_world_size()
+        ckpt_ws = kwargs.pop('checkpoint_model_parallel_size', tensor_ws)
+        ckpt_rank = mpu.get_model_parallel_rank() * ckpt_ws // tensor_ws
+        load_model = pre_load(ckpt_rank, model_dir, tag=path_load_tag)
+        load_model = split_state_dict(load_model, model, tensor_ws // ckpt_ws)
+
         self.dist_model.load_state_dict(load_model)
 
         self.inference_params = None
 
-    def forward_step(self, tokens, attention_mask, position_ids):
-        logits = self.dist_model(
+    def train(self, mode: bool = True):
+        if mode:
+            self.inference_params = None
+        return super().train(mode)
+
+    def forward(self,
+                tokens,
+                attention_mask=None,
+                position_ids=None,
+                labels=None,
+                prompt_length=None):
+        outputs = self.dist_model(
             tokens,
             attention_mask,
             position_ids,
-            inference_params=self.inference_params)
-        self.inference_params.sequence_len_offset += tokens.size(1)
-        return logits
+            inference_params=self.inference_params,
+            labels=labels)
+        if labels is None:
+            self.inference_params.sequence_len_offset += tokens.size(1)
+            return TextGenerationModelOutput(logits=outputs)
+        else:
+            loss_mask = torch.ones(
+                tokens.size(), dtype=torch.float, device=tokens.device)
+
+            losses = outputs.float()
+            loss_mask = loss_mask.view(-1).float()
+            loss = torch.sum(losses.view(-1) * loss_mask) / loss_mask.sum()
+
+            return TextGenerationModelOutput(loss=loss)
 
     def generate(self,
                  tokens,
                  temperature=1.0,
                  use_eod_token_for_early_termination=True,
                  stop_on_double_eol=False,
-                 stop_on_eol=False):
-        lengths = torch.tensor([tokens.size(1)], device=tokens.device)
+                 stop_on_eol=False,
+                 **kwargs):
+        batch_size = tokens.size(0)
+        lengths = kwargs.pop(
+            'prompt_length',
+            torch.tensor([tokens.size(1)], device=tokens.device))
         pads = torch.ones(
-            1, self.config.tokens_to_generate,
+            batch_size, self.config.tokens_to_generate,
             device=tokens.device).long() * self.config.eod_id
         tokens = torch.cat((tokens, pads), dim=-1)
 
-        batch_size = tokens.size(0)
         min_prompt_length = lengths.min().item()
         max_sequence_length = tokens.size(1)
         max_sequence_length = min(max_sequence_length,
@@ -1009,8 +1100,8 @@ class DistributedGPT3(TorchModel):
                     ..., prev_context_length:context_length, :context_length]
 
                 # logits will be meanigful only in the last pipeline stage.
-                logits = self.forward_step(tokens2use, attention_mask2use,
-                                           positions2use)
+                logits = self(tokens2use, attention_mask2use,
+                              positions2use).logits
 
                 # Sample.
                 last_token_logits = logits[:, -1, :]
@@ -1054,4 +1145,16 @@ class DistributedGPT3(TorchModel):
                     break
 
         tokens = tokens[:, :(context_length + 1)]
-        return tokens
+        return TokenGeneratorOutput(sequences=tokens)
+
+    def state_dict(self):
+        return self.dist_model.state_dict()
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = save_checkpoint,
+                        config: Optional[dict] = None,
+                        **kwargs):
+        return super().save_pretrained(target_folder, save_checkpoint_names,
+                                       save_function, config, **kwargs)

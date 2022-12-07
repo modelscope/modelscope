@@ -5,10 +5,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.builder import MODELS, build_model
-from modelscope.utils.checkpoint import save_checkpoint, save_pretrained
+from modelscope.models.builder import build_model
+from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
+                                         save_pretrained)
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile, Tasks
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
 
@@ -94,6 +95,10 @@ class Model(ABC):
         if prefetched is not None:
             kwargs.pop('model_prefetched')
 
+        invoked_by = kwargs.get(Invoke.KEY)
+        if invoked_by is not None:
+            kwargs.pop(Invoke.KEY)
+
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
@@ -101,7 +106,13 @@ class Model(ABC):
                 raise RuntimeError(
                     'Expecting model is pre-fetched locally, but is not found.'
                 )
-            local_model_dir = snapshot_download(model_name_or_path, revision)
+
+            if invoked_by is not None:
+                invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
+            else:
+                invoked_by = '%s/%s' % (Invoke.KEY, Invoke.PRETRAINED)
+            local_model_dir = snapshot_download(
+                model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')
         if cfg_dict is not None:
             cfg = cfg_dict
@@ -119,11 +130,9 @@ class Model(ABC):
             model_cfg[k] = v
         if device is not None:
             model_cfg.device = device
-            model = build_model(
-                model_cfg, task_name=task_name, default_args=kwargs)
+            model = build_model(model_cfg, task_name=task_name)
         else:
-            model = build_model(
-                model_cfg, task_name=task_name, default_args=kwargs)
+            model = build_model(model_cfg, task_name=task_name)
 
         # dynamically add pipeline info to model for pipeline inference
         if hasattr(cfg, 'pipeline'):
@@ -132,7 +141,9 @@ class Model(ABC):
         if not hasattr(model, 'cfg'):
             model.cfg = cfg
 
+        model_cfg.pop('model_dir', None)
         model.name = model_name_or_path
+        model.model_dir = local_model_dir
         return model
 
     def save_pretrained(self,
@@ -140,6 +151,7 @@ class Model(ABC):
                         save_checkpoint_names: Union[str, List[str]] = None,
                         save_function: Callable = save_checkpoint,
                         config: Optional[dict] = None,
+                        save_config_function: Callable = save_configuration,
                         **kwargs):
         """save the pretrained model, its configuration and other related files to a directory,
             so that it can be re-loaded
@@ -157,18 +169,15 @@ class Model(ABC):
             config (Optional[dict], optional):
             The config for the configuration.json, might not be identical with model.config
 
+            save_config_function (Callble, optional):
+            The function to use to save the configuration.
+
         """
         if config is None and hasattr(self, 'cfg'):
             config = self.cfg
-        assert config is not None, 'Cannot save the model because the model config is empty.'
-        if isinstance(config, Config):
-            config = config.to_dict()
-        if 'preprocessor' in config and config['preprocessor'] is not None:
-            if 'mode' in config['preprocessor']:
-                config['preprocessor']['mode'] = 'inference'
-            elif 'val' in config['preprocessor'] and 'mode' in config[
-                    'preprocessor']['val']:
-                config['preprocessor']['val']['mode'] = 'inference'
+
+        if config is not None:
+            save_config_function(target_folder, config)
 
         save_pretrained(self, target_folder, save_checkpoint_names,
-                        save_function, config, **kwargs)
+                        save_function, **kwargs)

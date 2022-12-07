@@ -23,8 +23,6 @@ import torch.utils.checkpoint
 from packaging import version
 from torch import nn
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import \
-    BaseModelOutputWithPastAndCrossAttentions
 from transformers.modeling_utils import (PreTrainedModel,
                                          apply_chunking_to_forward,
                                          find_pruneable_heads_and_indices,
@@ -38,7 +36,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .configuration import PoNetConfig
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 is_pytorch_12plus = LooseVersion(torch.__version__) >= LooseVersion('1.12.0')
 
@@ -573,7 +571,7 @@ class PoNetEncoder(nn.Module):
                 all_self_attentions,
                 all_cross_attentions,
             ] if v is not None)
-        return BaseModelOutputWithPastAndCrossAttentions(
+        return AttentionBackboneModelOutput(
             last_hidden_state=hidden_states,
             past_key_values=next_decoder_cache,
             hidden_states=all_hidden_states,
@@ -600,8 +598,7 @@ class PoNetPooler(nn.Module):
 
 class PoNetPreTrainedModel(TorchModel, PreTrainedModel):
     """
-    An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
-    models.
+    A base class to handle weights initialization and a simple interface for loading pretrained models.
     """
 
     config_class = PoNetConfig

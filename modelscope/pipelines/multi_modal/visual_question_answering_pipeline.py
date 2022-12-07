@@ -31,15 +31,13 @@ class VisualQuestionAnsweringPipeline(Pipeline):
             model (MPlugForVisualQuestionAnswering): a model instance
             preprocessor (MPlugVisualQuestionAnsweringPreprocessor): a preprocessor instance
         """
-        model = model if isinstance(model,
-                                    Model) else Model.from_pretrained(model)
-        if preprocessor is None:
-            if isinstance(model, OfaForAllTasks):
-                preprocessor = OfaPreprocessor(model.model_dir)
-            elif isinstance(model, MPlugForAllTasks):
-                preprocessor = MPlugPreprocessor(model.model_dir)
-        model.model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None:
+            if isinstance(self.model, OfaForAllTasks):
+                self.preprocessor = OfaPreprocessor(self.model.model_dir)
+            elif isinstance(self.model, MPlugForAllTasks):
+                self.preprocessor = MPlugPreprocessor(self.model.model_dir)
+        self.model.eval()
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

@@ -39,7 +39,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_fs: int = None,
                  recog_type: str = None,
                  audio_format: str = None) -> Dict[str, Any]:
-        from easyasr.common import asr_utils
+        from funasr.utils import asr_utils
 
         self.recog_type = recog_type
         self.audio_format = audio_format
@@ -109,6 +109,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'sampled_ids': 'seq2seq/sampled_ids',
             'sampled_lengths': 'seq2seq/sampled_lengths',
             'lang': 'zh-cn',
+            'code_base': inputs['code_base'],
+            'mode': inputs['mode'],
             'fs': {
                 'audio_fs': inputs['audio_fs'],
                 'model_fs': 16000
@@ -122,6 +124,15 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             frontend_conf = None
             if 'frontend_conf' in root:
                 frontend_conf = root['frontend_conf']
+            token_num_relax = None
+            if 'token_num_relax' in root:
+                token_num_relax = root['token_num_relax']
+            decoding_ind = None
+            if 'decoding_ind' in root:
+                decoding_ind = root['decoding_ind']
+            decoding_mode = None
+            if 'decoding_mode' in root:
+                decoding_mode = root['decoding_mode']
 
             cmd['beam_size'] = root['beam_size']
             cmd['penalty'] = root['penalty']
@@ -130,10 +141,15 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             cmd['ctc_weight'] = root['ctc_weight']
             cmd['lm_weight'] = root['lm_weight']
             cmd['asr_train_config'] = inputs['am_model_config']
+            cmd['lm_file'] = inputs['lm_model_path']
+            cmd['lm_train_config'] = inputs['lm_model_config']
             cmd['batch_size'] = inputs['model_config']['batch_size']
             cmd['frontend_conf'] = frontend_conf
             if frontend_conf is not None and 'fs' in frontend_conf:
                 cmd['fs']['model_fs'] = frontend_conf['fs']
+            cmd['token_num_relax'] = token_num_relax
+            cmd['decoding_ind'] = decoding_ind
+            cmd['decoding_mode'] = decoding_mode
 
         elif self.framework == Frameworks.tf:
             cmd['fs']['model_fs'] = inputs['model_config']['fs']
@@ -161,7 +177,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """process the asr results
         """
-        from easyasr.common import asr_utils
+        from funasr.utils import asr_utils
 
         logger.info('Computing the result of ASR ...')
 
@@ -229,7 +245,35 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
     def run_inference(self, cmd):
         asr_result = []
-        if self.framework == Frameworks.torch:
+        if self.framework == Frameworks.torch and cmd['code_base'] == 'funasr':
+            from funasr.bin import asr_inference_launch
+
+            if hasattr(asr_inference_launch, 'set_parameters'):
+                asr_inference_launch.set_parameters(sample_rate=cmd['fs'])
+                asr_inference_launch.set_parameters(language=cmd['lang'])
+
+            asr_result = asr_inference_launch.inference_launch(
+                mode=cmd['mode'],
+                batch_size=cmd['batch_size'],
+                maxlenratio=cmd['maxlenratio'],
+                minlenratio=cmd['minlenratio'],
+                beam_size=cmd['beam_size'],
+                ngpu=cmd['ngpu'],
+                ctc_weight=cmd['ctc_weight'],
+                lm_weight=cmd['lm_weight'],
+                penalty=cmd['penalty'],
+                log_level=cmd['log_level'],
+                data_path_and_name_and_type=cmd['name_and_type'],
+                audio_lists=cmd['audio_in'],
+                asr_train_config=cmd['asr_train_config'],
+                asr_model_file=cmd['asr_model_file'],
+                lm_file=cmd['lm_file'],
+                lm_train_config=cmd['lm_train_config'],
+                frontend_conf=cmd['frontend_conf'],
+                token_num_relax=cmd['token_num_relax'],
+                decoding_ind=cmd['decoding_ind'],
+                decoding_mode=cmd['decoding_mode'])
+        elif self.framework == Frameworks.torch:
             from easyasr import asr_inference_paraformer_espnet
 
             if hasattr(asr_inference_paraformer_espnet, 'set_parameters'):
@@ -253,7 +297,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 asr_train_config=cmd['asr_train_config'],
                 asr_model_file=cmd['asr_model_file'],
                 frontend_conf=cmd['frontend_conf'])
-
         elif self.framework == Frameworks.tf:
             from easyasr import asr_inference_paraformer_tf
             if hasattr(asr_inference_paraformer_tf, 'set_parameters'):

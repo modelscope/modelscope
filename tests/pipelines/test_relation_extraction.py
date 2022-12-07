@@ -6,7 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import InformationExtractionModel
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import InformationExtractionPipeline
-from modelscope.preprocessors import RelationExtractionPreprocessor
+from modelscope.preprocessors import RelationExtractionTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -23,7 +23,7 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = RelationExtractionPreprocessor(cache_path)
+        tokenizer = RelationExtractionTransformersPreprocessor(cache_path)
         model = InformationExtractionModel.from_pretrained(cache_path)
         pipeline1 = InformationExtractionPipeline(
             model, preprocessor=tokenizer)
@@ -37,7 +37,7 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = RelationExtractionPreprocessor(model.model_dir)
+        tokenizer = RelationExtractionTransformersPreprocessor(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.relation_extraction,
             model=model,

@@ -7,6 +7,7 @@ import torch.cuda
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.outputs import TextErrorCorrectionOutput
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['BartForTextErrorCorrection']
@@ -55,7 +56,7 @@ class BartForTextErrorCorrection(TorchModel):
 
         self.task = task
 
-    def forward(self, input: Dict[str, Dict]) -> Dict[str, Any]:
+    def forward(self, input: Dict[str, Dict]) -> TextErrorCorrectionOutput:
         """return the result by the model
 
         Args:
@@ -91,4 +92,4 @@ class BartForTextErrorCorrection(TorchModel):
 
         # get 1-best List[Tensor]
         preds = translations[0][0]['tokens']
-        return {'predictions': preds}
+        return TextErrorCorrectionOutput(predictions=preds)

@@ -6,6 +6,7 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .builder import HOOKS, build_hook
     from .checkpoint_hook import BestCkptSaverHook, CheckpointHook
+    from .early_stop_hook import EarlyStopHook
     from .compression import SparsityHook
     from .evaluation_hook import EvaluationHook
     from .hook import Hook
@@ -25,8 +26,8 @@ else:
         'hook': ['Hook'],
         'iter_timer_hook': ['IterTimerHook'],
         'logger': ['TensorboardHook', 'TextLoggerHook'],
-        'lr_scheduler_hook': ['LrSchedulerHook'],
-        'optimizer_hook': [
+        'lr_scheduler_hook': ['LrSchedulerHook', 'NoneLrSchedulerHook'],
+        'optimizer': [
             'ApexAMPOptimizerHook', 'NoneOptimizerHook', 'OptimizerHook',
             'TorchAMPOptimizerHook'
         ],

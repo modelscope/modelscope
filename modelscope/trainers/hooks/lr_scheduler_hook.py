@@ -99,7 +99,7 @@ class PlateauLrSchedulerHook(LrSchedulerHook):
     def before_run(self, trainer):
         super().before_run(trainer)
         if not hasattr(trainer, 'logger'):
-            self.logger = get_logger(__name__)
+            self.logger = get_logger()
         else:
             self.logger = trainer.logger
 

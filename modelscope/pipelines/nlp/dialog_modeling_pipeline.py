@@ -21,6 +21,9 @@ class DialogModelingPipeline(Pipeline):
     def __init__(self,
                  model: Union[SpaceForDialogModeling, str],
                  preprocessor: DialogModelingPreprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """Use `model` and `preprocessor` to create a dialog modeling pipeline for dialog response generation
 
@@ -28,14 +31,18 @@ class DialogModelingPipeline(Pipeline):
             model (str or SpaceForDialogModeling): Supply either a local model dir or a model id from the model hub,
             or a SpaceForDialogModeling instance.
             preprocessor (DialogModelingPreprocessor): An optional preprocessor instance.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        model = model if isinstance(
-            model, SpaceForDialogModeling) else Model.from_pretrained(model)
-        self.model = model
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         if preprocessor is None:
-            preprocessor = DialogModelingPreprocessor(model.model_dir)
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.preprocessor = preprocessor
+            self.preprocessor = DialogModelingPreprocessor(
+                self.model.model_dir, **kwargs)
 
     def postprocess(self, inputs: Dict[str, Tensor]) -> Dict[str, str]:
         """process the prediction results

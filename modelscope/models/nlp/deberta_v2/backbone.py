@@ -22,7 +22,6 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import LayerNorm
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import BaseModelOutput
 from transformers.modeling_utils import PreTrainedModel
 from transformers.pytorch_utils import softmax_backward_data
 
@@ -34,7 +33,7 @@ from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .configuration import DebertaV2Config
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 # Copied from transformers.models.deberta.modeling_deberta.ContextPooler
@@ -574,7 +573,7 @@ class DebertaV2Encoder(nn.Module):
             return tuple(
                 v for v in [output_states, all_hidden_states, all_attentions]
                 if v is not None)
-        return BaseModelOutput(
+        return AttentionBackboneModelOutput(
             last_hidden_state=output_states,
             hidden_states=all_hidden_states,
             attentions=all_attentions)

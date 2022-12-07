@@ -2,19 +2,15 @@
 
 import io
 import os
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
-import numpy as np
 import torch
 from transformers import XLMRobertaTokenizer
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
-from modelscope.models.nlp import BertForSequenceClassification
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import SequenceClassificationPreprocessor
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['TranslationQualityEstimationPipeline']
@@ -27,10 +23,10 @@ class TranslationQualityEstimationPipeline(Pipeline):
 
     def __init__(self, model: str, device: str = 'gpu', **kwargs):
         super().__init__(model=model, device=device)
-        model_file = os.path.join(model, ModelFile.TORCH_MODEL_FILE)
+        model_file = os.path.join(self.model, ModelFile.TORCH_MODEL_FILE)
         with open(model_file, 'rb') as f:
             buffer = io.BytesIO(f.read())
-        self.tokenizer = XLMRobertaTokenizer.from_pretrained(model)
+        self.tokenizer = XLMRobertaTokenizer.from_pretrained(self.model)
         self.model = torch.jit.load(
             buffer, map_location=self.device).to(self.device)
 

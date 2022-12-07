@@ -80,7 +80,8 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             max_epochs=self.max_epochs,
             work_dir=self.tmp_dir)
 
-        trainer = build_trainer(default_args=kwargs)
+        trainer = build_trainer(
+            name=Trainers.text_generation_trainer, default_args=kwargs)
         trainer.train()
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)

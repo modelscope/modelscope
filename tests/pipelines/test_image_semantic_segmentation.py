@@ -38,8 +38,9 @@ class ImageSemanticSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_image_semantic_segmentation_vitadapter(self):
+        model_id = 'damo/cv_vitadapter_semantic-segmentation_cocostuff164k'
         input_location = 'data/test/images/image_semantic_segmentation.jpg'
-        segmenter = pipeline(Tasks.image_segmentation, model=self.model_id)
+        segmenter = pipeline(Tasks.image_segmentation, model=model_id)
         result = segmenter(input_location)
 
         draw_img = semantic_seg_masks_to_image(result[OutputKeys.MASKS])

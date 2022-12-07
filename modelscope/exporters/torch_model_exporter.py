@@ -17,7 +17,7 @@ from modelscope.utils.regress_test_utils import (compare_arguments_nested,
                                                  numpify_tensor_nested)
 from .base import Exporter
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class TorchModelExporter(Exporter):

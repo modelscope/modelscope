@@ -24,20 +24,27 @@ class ConversationalTextToSqlPipeline(Pipeline):
     def __init__(self,
                  model: Union[StarForTextToSql, str],
                  preprocessor: ConversationalTextToSqlPreprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """use `model` and `preprocessor` to create a conversational text-to-sql prediction pipeline
 
         Args:
-            model (StarForTextToSql): a model instance
-            preprocessor (ConversationalTextToSqlPreprocessor):
-                a preprocessor instance
+            model (StarForTextToSql): A model instance
+            preprocessor (ConversationalTextToSqlPreprocessor): A preprocessor instance
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        model = model if isinstance(
-            model, StarForTextToSql) else Model.from_pretrained(model)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         if preprocessor is None:
-            preprocessor = ConversationalTextToSqlPreprocessor(model.model_dir)
-
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+            self.preprocessor = ConversationalTextToSqlPreprocessor(
+                self.model.model_dir, **kwargs)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results

@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
     from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
+    from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
     from .general_recognition_pipeline import GeneralRecognitionPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
     from .image_classification_pipeline import GeneralImageClassificationPipeline
@@ -41,6 +43,8 @@ if TYPE_CHECKING:
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
+    from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
+    from .table_recognition_pipeline import TableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
@@ -56,6 +60,9 @@ if TYPE_CHECKING:
     from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
     from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
+    from .facial_landmark_confidence_pipeline import FacialLandmarkConfidencePipeline
+    from .face_processing_base_pipeline import FaceProcessingBasePipeline
+    from .face_attribute_recognition_pipeline import FaceAttributeRecognitionPipeline
     from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
@@ -77,6 +84,8 @@ else:
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],
+        'arc_face_recognition_pipeline': ['ArcFaceRecognitionPipeline'],
+        'mask_face_recognition_pipeline': ['MaskFaceRecognitionPipeline'],
         'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
         'image_classification_pipeline':
         ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
@@ -108,6 +117,8 @@ else:
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
+        'license_plate_detection_pipeline': ['LicensePlateDetectionPipeline'],
+        'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
@@ -126,8 +137,15 @@ else:
         'mog_face_detection_pipeline': ['MogFaceDetectionPipeline'],
         'ulfd_face_detection_pipeline': ['UlfdFaceDetectionPipeline'],
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
-        'facial_expression_recognition_pipelin':
+        'facial_expression_recognition_pipeline':
         ['FacialExpressionRecognitionPipeline'],
+        'facial_landmark_confidence_pipeline': [
+            'FacialLandmarkConfidencePipeline'
+        ],
+        'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
+        'face_attribute_recognition_pipeline': [
+            'FaceAttributeRecognitionPipeline'
+        ],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
         'referring_video_object_segmentation_pipeline': [

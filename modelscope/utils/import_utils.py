@@ -21,8 +21,6 @@ from modelscope.utils.ast_utils import (INDEX_KEY, MODULE_KEY, REQUIREMENT_KEY,
 from modelscope.utils.error import *  # noqa
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
-
 if sys.version_info < (3, 8):
     import importlib_metadata
 else:
@@ -295,6 +293,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('espnet', (is_espnet_available,
                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
+    ('funasr', (is_package_available('funasr'), AUDIO_IMPORT_ERROR)),
     ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR)),
     ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),
     ('deepspeed', (is_package_available('deepspeed'), DEEPSPEED_IMPORT_ERROR)),

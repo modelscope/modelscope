@@ -1,4 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from collections import OrderedDict
+
 from modelscope.metainfo import Hooks
 from .builder import HOOKS
 from .hook import Hook
@@ -30,11 +32,19 @@ class EvaluationHook(Hook):
         if self.by_epoch and self._should_evaluate(trainer):
             self.do_evaluate(trainer)
 
+    def add_visualization_info(self, trainer, results):
+        if trainer.visualization_buffer.output.get('eval_results',
+                                                   None) is None:
+            trainer.visualization_buffer.output['eval_results'] = OrderedDict()
+
+            trainer.visualization_buffer.output['eval_results'].update(
+                trainer.visualize(results))
+
     def do_evaluate(self, trainer):
         """Evaluate the results."""
         eval_res = trainer.evaluate()
         for name, val in eval_res.items():
-            trainer.log_buffer.output[name] = val
+            trainer.log_buffer.output['evaluation/' + name] = val
 
         trainer.log_buffer.ready = True
 

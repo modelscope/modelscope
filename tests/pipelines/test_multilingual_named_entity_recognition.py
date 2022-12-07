@@ -6,8 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import (LSTMCRFForNamedEntityRecognition,
                                    TransformerCRFForNamedEntityRecognition)
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.nlp import (NamedEntityRecognitionThaiPipeline,
-                                      NamedEntityRecognitionVietPipeline)
+from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import NERPreprocessorThai, NERPreprocessorViet
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -36,7 +35,7 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
         tokenizer = NERPreprocessorThai(cache_path)
         model = TransformerCRFForNamedEntityRecognition(
             cache_path, tokenizer=tokenizer)
-        pipeline1 = NamedEntityRecognitionThaiPipeline(
+        pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.named_entity_recognition,
@@ -76,7 +75,7 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
         tokenizer = NERPreprocessorViet(cache_path)
         model = TransformerCRFForNamedEntityRecognition(
             cache_path, tokenizer=tokenizer)
-        pipeline1 = NamedEntityRecognitionVietPipeline(
+        pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.named_entity_recognition,
@@ -102,6 +101,30 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
         pipeline_ins = pipeline(
             task=Tasks.named_entity_recognition, model=self.viet_tcrf_model_id)
         print(pipeline_ins(input=self.viet_sentence))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_tcrf_with_model_name_viet_batch(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.viet_tcrf_model_id)
+        print(
+            pipeline_ins(
+                input=[
+                    self.viet_sentence, self.viet_sentence[:10],
+                    self.viet_sentence[5:]
+                ],
+                batch_size=2))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_tcrf_with_model_name_viet_batch_iter(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition,
+            model=self.viet_tcrf_model_id,
+            padding=False)
+        print(
+            pipeline_ins(input=[
+                self.viet_sentence, self.viet_sentence[:10],
+                self.viet_sentence[5:]
+            ]))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

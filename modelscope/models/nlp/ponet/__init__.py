@@ -22,12 +22,14 @@ if TYPE_CHECKING:
     from .backbone import (PoNetModel, PoNetPreTrainedModel)
     from .tokenization import PoNetTokenizer
     from .fill_mask import PoNetForMaskedLM
+    from .document_segmentation import PoNetForDocumentSegmentation
 else:
     _import_structure = {
         'configuration': ['PoNetConfig'],
         'backbone': ['PoNetModel', 'PoNetPreTrainedModel'],
         'fill_mask': ['PoNetForMaskedLM'],
         'tokenization': ['PoNetTokenizer'],
+        'document_segmentation': ['PoNetForDocumentSegmentation']
     }
 
     import sys

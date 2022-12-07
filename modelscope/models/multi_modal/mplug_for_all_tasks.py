@@ -20,7 +20,7 @@ __all__ = ['MPlugForAllTasks']
 @MODELS.register_module(Tasks.image_text_retrieval, module_name=Models.mplug)
 class MPlugForAllTasks(TorchModel):
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self, model_dir: str, task=None, *args, **kwargs):
         """initialize the mplug model from the `model_dir` path.
         Args:
             model_dir (str): the model path.
@@ -28,7 +28,7 @@ class MPlugForAllTasks(TorchModel):
 
         super().__init__(model_dir, *args, **kwargs)
         from modelscope.models.multi_modal.mplug import MPlug
-        self.model = MPlug.from_pretrained(model_dir)
+        self.model = MPlug.from_pretrained(model_dir, task=task)
         self.tokenizer = self.model.tokenizer
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:

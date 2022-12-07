@@ -14,8 +14,8 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 class TextGenerationTrainer(NlpEpochBasedTrainer):
 
     def _decode(self, tokens):
-        tokenizer = self.eval_preprocessor.tokenizer
-        return tokenizer.decode(tokens.tolist(), skip_special_tokens=True)
+        return self.eval_preprocessor.decode(
+            tokens.tolist(), skip_special_tokens=True)
 
     def evaluation_step(self, data):
         model = self.model.module if self._dist else self.model

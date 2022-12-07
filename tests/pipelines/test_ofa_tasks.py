@@ -46,6 +46,19 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         print(result[OutputKeys.CAPTION])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_image_captioning_batch(self):
+        img_captioning = pipeline(
+            Tasks.image_captioning,
+            model='damo/ofa_image-caption_coco_large_en')
+        results = img_captioning(
+            [{
+                'image': 'data/test/images/image_captioning.png'
+            } for _ in range(6)],
+            batch_size=2)
+        for r in results:
+            print(r[OutputKeys.CAPTION])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_ocr_recognize_with_name(self):
         ocr_recognize = pipeline(
             Tasks.ocr_recognition,
@@ -259,6 +272,14 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMG].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_asr_with_name(self):
+        model = 'damo/ofa_mmspeech_pretrain_base_zh'
+        ofa_pipe = pipeline(Tasks.auto_speech_recognition, model=model)
+        example = {'wav': 'data/test/audios/asr_example_ofa.wav'}
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

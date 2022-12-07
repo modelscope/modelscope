@@ -31,18 +31,10 @@ class TextToImageSynthesisPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        device_id = 0 if torch.cuda.is_available() else -1
-        if isinstance(model, str):
-            pipe_model = Model.from_pretrained(model, device_id=device_id)
-        elif isinstance(model, Model):
-            pipe_model = model
-        else:
-            raise NotImplementedError(
-                f'expecting a Model instance or str, but get {type(model)}.')
-        if preprocessor is None and isinstance(pipe_model,
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        if preprocessor is None and isinstance(self.model,
                                                OfaForTextToImageSynthesis):
-            preprocessor = OfaPreprocessor(pipe_model.model_dir)
-        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+            self.preprocessor = OfaPreprocessor(self.model.model_dir)
 
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
         if self.preprocessor is not None:

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import math
+import os
 
 import torch
 import torch.distributed as dist
@@ -36,7 +37,7 @@ def initialize_distributed(rank, mpu, world_size, model_parallel_size,
     init_method += master_ip + ':' + master_port
     torch.distributed.init_process_group(
         backend='nccl',
-        world_size=world_size,
+        world_size=int(os.getenv('WORLD_SIZE', world_size)),
         rank=rank,
         init_method=init_method)
     # Set the model-parallel communicators.

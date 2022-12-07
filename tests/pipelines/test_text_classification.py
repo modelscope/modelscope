@@ -5,7 +5,7 @@ from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
-from modelscope.preprocessors import SequenceClassificationPreprocessor
+from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -41,7 +41,7 @@ class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skip('nlp model does not support tensor input, skipped')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = SequenceClassificationPreprocessor(
+        preprocessor = TextClassificationTransformersPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             task=Tasks.text_classification,

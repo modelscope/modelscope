@@ -14,7 +14,8 @@ from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
 from modelscope.preprocessors import load_image
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Fields, ModeKeys, ModelFile, Tasks
+from modelscope.utils.constant import (Fields, Invoke, ModeKeys, ModelFile,
+                                       Tasks)
 from .base import Preprocessor
 from .builder import PREPROCESSORS
 from .ofa import *  # noqa
@@ -53,10 +54,11 @@ class OfaPreprocessor(Preprocessor):
             Tasks.image_classification: OfaImageClassificationPreprocessor,
             Tasks.text_classification: OfaTextClassificationPreprocessor,
             Tasks.text_summarization: OfaSummarizationPreprocessor,
-            Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor
+            Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor,
+            Tasks.auto_speech_recognition: OfaASRPreprocessor
         }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
-            model_dir)
+            model_dir, user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
         self.preprocess = preprocess_mapping[self.cfg.task](
@@ -130,7 +132,7 @@ class CLIPPreprocessor(Preprocessor):
         """
         super().__init__(*args, **kwargs)
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
-            model_dir)
+            model_dir, user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
         self.mode = mode
         # text tokenizer
         from modelscope.models.multi_modal.clip.bert_tokenizer import FullTokenizer

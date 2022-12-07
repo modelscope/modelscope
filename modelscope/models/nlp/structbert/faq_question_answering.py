@@ -14,6 +14,7 @@ from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.structbert import SbertConfig, SbertModel
 from modelscope.models.nlp.task_models.task_model import BaseTaskModel
+from modelscope.outputs import FaqQuestionAnsweringOutput
 from modelscope.utils.config import Config, ConfigFields
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -208,10 +209,10 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
                     Predicted scores of all classes for each query.
         Examples:
             >>> from modelscope.hub.snapshot_download import snapshot_download
-            >>> from modelscope.preprocessors import FaqQuestionAnsweringPreprocessor
+            >>> from modelscope.preprocessors import FaqQuestionAnsweringTransformersPreprocessor
             >>> from modelscope.models.nlp import SbertForFaqQuestionAnswering
             >>> cache_path = snapshot_download('damo/nlp_structbert_faq-question-answering_chinese-base')
-            >>> preprocessor = FaqQuestionAnsweringPreprocessor.from_pretrained(cache_path)
+            >>> preprocessor = FaqQuestionAnsweringTransformersPreprocessor.from_pretrained(cache_path)
             >>> model = SbertForFaqQuestionAnswering.from_pretrained(cache_path)
             >>> param = {
             >>>            'query_set': ['如何使用优惠券', '在哪里领券', '在哪里领券'],
@@ -270,7 +271,7 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
         scores = self.metrics_layer(z_query, protos).view([n_query, num_cls])
         if self.metrics_layer.name == 'relation':
             scores = torch.sigmoid(scores)
-        return {'scores': scores}
+        return FaqQuestionAnsweringOutput(scores=scores)
 
     def _get_onehot_labels(self, labels, support_size, num_cls):
         labels_ = labels.view(support_size, 1)

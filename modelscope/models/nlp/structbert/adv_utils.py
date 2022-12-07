@@ -18,7 +18,7 @@ from torch import nn
 
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def _symmetric_kl_div(logits1, logits2, attention_mask=None):

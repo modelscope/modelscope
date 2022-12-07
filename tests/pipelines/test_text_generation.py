@@ -6,7 +6,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import GPT3ForTextGeneration, PalmForTextGeneration
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationPipeline
-from modelscope.preprocessors import TextGenerationPreprocessor
+from modelscope.preprocessors import TextGenerationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -44,7 +44,7 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def run_pipeline_with_model_instance(self, model_id, input):
         model = Model.from_pretrained(model_id)
-        preprocessor = TextGenerationPreprocessor(
+        preprocessor = TextGenerationTransformersPreprocessor(
             model.model_dir,
             model.tokenizer,
             first_sequence='sentence',
@@ -53,14 +53,37 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.text_generation, model=model, preprocessor=preprocessor)
         print(pipeline_ins(input))
 
-    def run_pipeline_with_model_id(self, model_id, input):
-        pipeline_ins = pipeline(task=Tasks.text_generation, model=model_id)
-        print(pipeline_ins(input))
+    def run_pipeline_with_model_id(self,
+                                   model_id,
+                                   input,
+                                   init_kwargs={},
+                                   run_kwargs={}):
+        pipeline_ins = pipeline(
+            task=Tasks.text_generation, model=model_id, **init_kwargs)
+        print(pipeline_ins(input, **run_kwargs))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_palm_zh_base_with_model_name(self):
         self.run_pipeline_with_model_id(self.palm_model_id_zh_base,
                                         self.palm_input_zh)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_palm_zh_base_with_model_name_batch(self):
+        self.run_pipeline_with_model_id(
+            self.palm_model_id_zh_base, [
+                self.palm_input_zh, self.palm_input_zh[:10],
+                self.palm_input_zh[10:]
+            ],
+            run_kwargs={'batch_size': 2})
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_palm_zh_base_with_model_name_batch_iter(self):
+        self.run_pipeline_with_model_id(
+            self.palm_model_id_zh_base, [
+                self.palm_input_zh, self.palm_input_zh[:10],
+                self.palm_input_zh[10:]
+            ],
+            init_kwargs={'padding': False})
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_palm_en_with_model_name(self):
@@ -144,11 +167,8 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
                                                        self.palm_input_en)):
             cache_path = snapshot_download(model_id)
             model = PalmForTextGeneration.from_pretrained(cache_path)
-            preprocessor = TextGenerationPreprocessor(
-                cache_path,
-                model.tokenizer,
-                first_sequence='sentence',
-                second_sequence=None)
+            preprocessor = TextGenerationTransformersPreprocessor(
+                cache_path, first_sequence='sentence', second_sequence=None)
             pipeline1 = TextGenerationPipeline(model, preprocessor)
             pipeline2 = pipeline(
                 Tasks.text_generation, model=model, preprocessor=preprocessor)
@@ -160,7 +180,7 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_gpt3(self):
         cache_path = snapshot_download(self.gpt3_base_model_id)
         model = GPT3ForTextGeneration(cache_path)
-        preprocessor = TextGenerationPreprocessor(
+        preprocessor = TextGenerationTransformersPreprocessor(
             cache_path,
             model.tokenizer,
             first_sequence='sentence',
@@ -175,7 +195,10 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_generation)
-        print(pipeline_ins(self.palm_input_zh))
+        print(
+            pipeline_ins(
+                [self.palm_input_zh, self.palm_input_zh, self.palm_input_zh],
+                batch_size=2))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_bloom(self):

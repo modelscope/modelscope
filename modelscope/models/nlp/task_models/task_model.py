@@ -15,7 +15,7 @@ from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 __all__ = ['EncoderDecoderTaskModelBase', 'SingleBackboneTaskModelBase']
 

@@ -26,7 +26,7 @@ from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .configuration import VecoConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 VECO_PRETRAINED_MODEL_ARCHIVE_LIST = []
 

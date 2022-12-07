@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
-    from .gpt3 import GPT3ForTextGeneration
+    from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .heads import SequenceClassificationHead
     from .palm_v2 import PalmForTextGeneration
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
@@ -30,9 +30,7 @@ if TYPE_CHECKING:
         SbertForMaskedLM,
         SbertForSequenceClassification,
         SbertForTokenClassification,
-        SbertTokenizer,
         SbertModel,
-        SbertTokenizerFast,
     )
     from .T5 import T5ForConditionalGeneration
     from .mglm import MGLMForTextSummarization
@@ -41,31 +39,32 @@ if TYPE_CHECKING:
         FeatureExtractionModel,
         InformationExtractionModel,
         LSTMCRFForNamedEntityRecognition,
+        LSTMCRFForWordSegmentation,
+        LSTMCRFForPartOfSpeech,
         SequenceClassificationModel,
         SingleBackboneTaskModelBase,
         TaskModelForTextGeneration,
         TokenClassificationModel,
         TransformerCRFForNamedEntityRecognition,
+        TransformerCRFForWordSegmentation,
     )
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,
-                       VecoForTokenClassification, VecoModel, VecoTokenizer,
-                       VecoTokenizerFast)
+                       VecoForTokenClassification, VecoModel)
     from .bloom import BloomModel
+    from .unite import UniTEModel
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
         'bart': ['BartForTextErrorCorrection'],
         'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
-        'gpt3': ['GPT3ForTextGeneration'],
+        'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
         'structbert': [
             'SbertForFaqQuestionAnswering',
             'SbertForMaskedLM',
             'SbertForSequenceClassification',
             'SbertForTokenClassification',
-            'SbertTokenizer',
-            'SbertTokenizerFast',
             'SbertModel',
         ],
         'veco': [
@@ -74,8 +73,6 @@ else:
             'VecoForSequenceClassification',
             'VecoForTokenClassification',
             'VecoModel',
-            'VecoTokenizer',
-            'VecoTokenizerFast',
         ],
         'bert': [
             'BertForMaskedLM',
@@ -99,6 +96,7 @@ else:
             'InformationExtractionModel',
             'LSTMCRFForNamedEntityRecognition',
             'LSTMCRFForWordSegmentation',
+            'LSTMCRFForPartOfSpeech',
             'SequenceClassificationModel',
             'SingleBackboneTaskModelBase',
             'TaskModelForTextGeneration',
@@ -113,6 +111,7 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
+        'unite': ['UniTEModel']
     }
 
     import sys

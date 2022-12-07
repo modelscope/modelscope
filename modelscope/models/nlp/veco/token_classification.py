@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 from transformers import RobertaForTokenClassification
 
 from modelscope.metainfo import Models
@@ -22,7 +23,7 @@ from modelscope.models import Model, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import AttentionTokenClassificationModelOutput
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import parse_label_mapping
+from modelscope.utils.nlp.utils import parse_labels_in_order
 from .configuration import VecoConfig
 
 
@@ -58,6 +59,7 @@ class VecoForTokenClassification(TorchModel, RobertaForTokenClassification):
     def forward(self, *args, **kwargs):
         kwargs['return_dict'] = True
         outputs = super(Model, self).forward(*args, **kwargs)
+
         return AttentionTokenClassificationModelOutput(
             loss=outputs.loss,
             logits=outputs.logits,
@@ -81,27 +83,13 @@ class VecoForTokenClassification(TorchModel, RobertaForTokenClassification):
         """
 
         model_dir = kwargs.pop('model_dir', None)
+        cfg = kwargs.pop('cfg', None)
+        model_args = parse_labels_in_order(model_dir, cfg, **kwargs)
+
         if model_dir is None:
-            config = VecoConfig(**kwargs)
+            config = VecoConfig(**model_args)
             model = cls(config)
         else:
-            model_kwargs = {}
-            label2id = kwargs.get('label2id', parse_label_mapping(model_dir))
-            id2label = kwargs.get(
-                'id2label', None if label2id is None else
-                {id: label
-                 for label, id in label2id.items()})
-            if id2label is not None and label2id is None:
-                label2id = {label: id for id, label in id2label.items()}
-
-            num_labels = kwargs.get(
-                'num_labels', None if label2id is None else len(label2id))
-            if num_labels is not None:
-                model_kwargs['num_labels'] = num_labels
-            if label2id is not None:
-                model_kwargs['label2id'] = label2id
-            if id2label is not None:
-                model_kwargs['id2label'] = id2label
             model = super(Model, cls).from_pretrained(
-                pretrained_model_name_or_path=model_dir, **model_kwargs)
+                pretrained_model_name_or_path=model_dir, **model_args)
         return model

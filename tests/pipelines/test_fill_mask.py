@@ -8,7 +8,7 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForMaskedLM, VecoForMaskedLM
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
-from modelscope.preprocessors import NLPPreprocessor
+from modelscope.preprocessors import FillMaskTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
@@ -52,7 +52,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
         # sbert
         for language in ['zh']:
             model_dir = snapshot_download(self.model_id_sbert[language])
-            preprocessor = NLPPreprocessor(
+            preprocessor = FillMaskTransformersPreprocessor(
                 model_dir, first_sequence='sentence', second_sequence=None)
             model = SbertForMaskedLM.from_pretrained(model_dir)
             pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -67,7 +67,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
 
         # veco
         model_dir = snapshot_download(self.model_id_veco)
-        preprocessor = NLPPreprocessor(
+        preprocessor = FillMaskTransformersPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
         model = VecoForMaskedLM.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -84,7 +84,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
         # bert
         language = 'zh'
         model_dir = snapshot_download(self.model_id_bert)
-        preprocessor = NLPPreprocessor(
+        preprocessor = FillMaskTransformersPreprocessor(
             model_dir, first_sequence='sentence', second_sequence=None)
         model = Model.from_pretrained(model_dir)
         pipeline1 = FillMaskPipeline(model, preprocessor)
@@ -102,7 +102,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
         for language in ['zh']:
             print(self.model_id_sbert[language])
             model = Model.from_pretrained(self.model_id_sbert[language])
-            preprocessor = NLPPreprocessor(
+            preprocessor = FillMaskTransformersPreprocessor(
                 model.model_dir,
                 first_sequence='sentence',
                 second_sequence=None)
@@ -118,7 +118,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
 
         # veco
         model = Model.from_pretrained(self.model_id_veco)
-        preprocessor = NLPPreprocessor(
+        preprocessor = FillMaskTransformersPreprocessor(
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)

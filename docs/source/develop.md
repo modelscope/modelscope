@@ -104,9 +104,9 @@ git lfs install
 ```
 
 for centos, please download rpm from git-lfs github release [website](https://github.com/git-lfs/git-lfs/releases/tag/v3.2.0)
+and then execute
 ```bash
-wget http://101374-public.oss-cn-hangzhou-zmf.aliyuncs.com/git-lfs-3.2.0-1.el7.x86_64.rpm
-sudo rpm -ivh git-lfs-3.2.0-1.el7.x86_64.rpm
+sudo rpm -ivh your_rpm_file_name.rpm
 git lfs install
 ```
 

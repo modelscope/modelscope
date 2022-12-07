@@ -70,6 +70,7 @@ def train_func(work_dir, dist=False, log_interval=3, imgs_per_gpu=4):
             },
             {
                 'type': 'TextLoggerHook',
+                'ignore_rounding_keys': None,
                 'interval': log_interval
             },
         ]

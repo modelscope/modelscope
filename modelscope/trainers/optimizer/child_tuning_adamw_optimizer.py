@@ -24,7 +24,7 @@ from torch.optim import Optimizer
 from modelscope.utils.logger import get_logger
 from .builder import OPTIMIZERS, default_group
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 __all__ = ['calculate_fisher', 'ChildTuningAdamW']
 

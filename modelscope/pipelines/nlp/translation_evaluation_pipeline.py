@@ -77,14 +77,14 @@ class TranslationEvaluationPipeline(Pipeline):
         self.preprocessor.eval_mode = eval_mode
         return
 
-    def __call__(self, input_dict: Dict[str, Union[str, List[str]]], **kwargs):
+    def __call__(self, input: Dict[str, Union[str, List[str]]], **kwargs):
         r"""Implementation of __call__ function.
 
         Args:
-            input_dict: The formatted dict containing the inputted sentences.
+            input: The formatted dict containing the inputted sentences.
             An example of the formatted dict:
                 ```
-                input_dict = {
+                input = {
                     'hyp': [
                         'This is a sentence.',
                         'This is another sentence.',
@@ -100,7 +100,7 @@ class TranslationEvaluationPipeline(Pipeline):
                 }
                 ```
         """
-        return super().__call__(input=input_dict, **kwargs)
+        return super().__call__(input=input, **kwargs)
 
     def forward(self,
                 input_ids: List[torch.Tensor]) -> Dict[str, torch.Tensor]:

@@ -50,7 +50,7 @@ class VideoHumanMattingPipeline(Pipeline):
         masks = []
         rec = [None] * 4
         self.model = self.model.to(self.device)
-        logger.info('matting start using ', self.device)
+        logger.info('matting start using ' + self.device)
         with torch.no_grad():
             while True:
                 if frame is None:

@@ -24,7 +24,7 @@ class BertForDocumentSegmentation(BertPreTrainedModel):
 
     _keys_to_ignore_on_load_unexpected = [r'pooler']
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.sentence_pooler_type = None

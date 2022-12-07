@@ -11,7 +11,7 @@ from .backbone import BertModel, BertPreTrainedModel
 @MODELS.register_module(Tasks.sentence_embedding, module_name=Models.bert)
 class BertForSentenceEmbedding(BertPreTrainedModel):
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         super().__init__(config)
         self.config = config
         setattr(self, self.base_model_prefix,

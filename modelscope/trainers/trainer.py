@@ -36,9 +36,9 @@ from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, is_dist, is_master,
-                                          set_random_seed)
+from modelscope.utils.torch_utils import (broadcast, get_dist_info,
+                                          get_local_rank, init_dist, is_dist,
+                                          is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg
@@ -982,6 +982,9 @@ class EpochBasedTrainer(BaseTrainer):
             for metric_cls in metric_classes:
                 metric_values.update(metric_cls.evaluate())
 
+        _, world_size = get_dist_info()
+        if world_size > 1:
+            metric_values = broadcast(metric_values, 0)
         return metric_values
 
     def visualization(self, results, dataset, **kwargs):

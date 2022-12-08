@@ -67,6 +67,7 @@ def train_func(work_dir,
                **kwargs):
     json_cfg = {
         'task': Tasks.image_classification,
+        'model': {},
         'train': {
             'work_dir': work_dir,
             'dataloader': {

@@ -27,7 +27,7 @@ from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 @MODELS.register_module(Tasks.text_classification, module_name=Models.bert)
@@ -51,7 +51,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Bert, the preprocessor of this model
-        is `modelscope.preprocessors.SequenceClassificationPreprocessor`.
+        is `modelscope.preprocessors.TextClassificationTransformersPreprocessor`.
 
     Trainer:
         This model is a normal PyTorch model, and can be trained by variable trainers, like EpochBasedTrainer,
@@ -66,7 +66,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
             weights.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.config = config

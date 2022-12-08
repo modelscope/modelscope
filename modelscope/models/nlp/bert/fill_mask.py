@@ -28,7 +28,7 @@ from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
 from .configuration import BertConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class BertPredictionHeadTransform(nn.Module):
@@ -121,7 +121,7 @@ class BertForMaskedLM(BertPreTrainedModel):
 
     Preprocessor:
         This is the fill_mask model of Structbert, the preprocessor of this model
-        is `modelscope.preprocessors.NLPPreprocessor`.
+        is `modelscope.preprocessors.FillMaskTransformersPreprocessor`.
 
     Parameters:
         config (:class:`~modelscope.models.nlp.structbert.SbertConfig`): Model configuration class with

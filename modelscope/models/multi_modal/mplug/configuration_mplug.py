@@ -23,7 +23,7 @@ from transformers.utils import logging
 
 from modelscope.utils.constant import Tasks
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class MPlugConfig(PretrainedConfig):

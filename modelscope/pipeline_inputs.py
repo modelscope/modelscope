@@ -61,6 +61,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.facial_expression_recognition:
     InputType.IMAGE,
+    Tasks.face_attribute_recognition:
+    InputType.IMAGE,
     Tasks.face_recognition:
     InputType.IMAGE,
     Tasks.human_detection:
@@ -183,10 +185,18 @@ TASK_INPUTS = {
         'query_set': InputType.LIST,
         'support_set': InputType.LIST,
     },
+    Tasks.translation_evaluation: {
+        'hyp': InputType.LIST,
+        'src': InputType.LIST,
+        'ref': InputType.LIST,
+    },
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:
-    InputType.AUDIO,
+    [InputType.AUDIO, {
+        'wav': InputType.AUDIO,
+        'text': InputType.TEXT
+    }],
     Tasks.speech_signal_process:
     InputType.AUDIO,
     Tasks.acoustic_echo_cancellation: {

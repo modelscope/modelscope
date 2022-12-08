@@ -12,12 +12,13 @@ from transformers import AutoConfig, AutoModel
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.outputs import TokenClassifierWithPredictionsOutput
+from modelscope.outputs import AttentionTokenClassificationModelOutput
 from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = [
     'TransformerCRFForNamedEntityRecognition',
-    'LSTMCRFForNamedEntityRecognition'
+    'LSTMCRFForNamedEntityRecognition', 'LSTMCRFForWordSegmentation',
+    'LSTMCRFForPartOfSpeech'
 ]
 
 
@@ -115,7 +116,7 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
             - 0 for tokens that are **masked**.
 
         Returns:
-            Returns `modelscope.outputs.TokenClassifierOutput`
+            Returns `modelscope.outputs.AttentionTokenClassificationModelOutput`
 
         Examples:
             >>> from modelscope.models import Model
@@ -138,17 +139,16 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
 
     def postprocess(self, input: Dict[str, Any], **kwargs):
         predicts = self.model.decode(input)
-        offset_len = len(input['offset_mapping'])
-        predictions = torch.narrow(
-            predicts, 1, 0,
-            offset_len)  # index_select only move loc, not resize
-        return TokenClassifierWithPredictionsOutput(
+        offset_mapping = input.get('offset_mapping')
+        mask = input.get('label_mask')
+        return AttentionTokenClassificationModelOutput(
             loss=None,
             logits=None,
             hidden_states=None,
             attentions=None,
-            offset_mapping=input['offset_mapping'],
-            predictions=predictions,
+            label_mask=mask,
+            offset_mapping=offset_mapping,
+            predictions=predicts,
         )
 
 
@@ -167,6 +167,14 @@ class TransformerCRFForNamedEntityRecognition(
         return model
 
 
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.tcrf_wseg)
+class TransformerCRFForWordSegmentation(TransformerCRFForNamedEntityRecognition
+                                        ):
+    """This model wraps the TransformerCRF model to register into model sets.
+    """
+    pass
+
+
 @MODELS.register_module(
     Tasks.named_entity_recognition, module_name=Models.lcrf)
 class LSTMCRFForNamedEntityRecognition(
@@ -183,6 +191,17 @@ class LSTMCRFForNamedEntityRecognition(
 
         model = LSTMCRF(vocab_size, embed_width, num_labels, lstm_hidden_size)
         return model
+
+
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf_wseg)
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf)
+class LSTMCRFForWordSegmentation(LSTMCRFForNamedEntityRecognition):
+    pass
+
+
+@MODELS.register_module(Tasks.part_of_speech, module_name=Models.lcrf)
+class LSTMCRFForPartOfSpeech(LSTMCRFForNamedEntityRecognition):
+    pass
 
 
 class TransformerCRF(nn.Module):

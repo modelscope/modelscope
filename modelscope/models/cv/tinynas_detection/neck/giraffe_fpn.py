@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import logging
 import math
@@ -15,7 +15,8 @@ from timm import create_model
 from timm.models.layers import (Swish, create_conv2d, create_pool2d,
                                 get_act_layer)
 
-from ..core.base_ops import CSPLayer, ShuffleBlock, ShuffleCSPLayer
+from modelscope.models.cv.tinynas_detection.core.base_ops import (
+    CSPLayer, ShuffleBlock, ShuffleCSPLayer)
 from .giraffe_config import get_graph_config
 
 _ACT_LAYER = Swish

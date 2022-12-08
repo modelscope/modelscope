@@ -230,6 +230,8 @@ class DistributedTestCase(unittest.TestCase):
         tmp_env = copy.deepcopy(os.environ)
         tmp_env['PYTHONPATH'] = ':'.join(
             (tmp_env.get('PYTHONPATH', ''), script_dir)).lstrip(':')
+        # avoid distributed test hang
+        tmp_env['NCCL_P2P_DISABLE'] = '1'
         script_params = '--save_all_ranks=%s --save_file=%s' % (save_all_ranks,
                                                                 tmp_res_file)
         script_cmd = '%s %s %s' % (dist_start_cmd, tmp_run_file, script_params)

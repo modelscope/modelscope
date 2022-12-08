@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .video_multi_modal_embedding_pipeline import \
         VideoMultiModalEmbeddingPipeline
     from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
+    from .asr_pipeline import AutomaticSpeechRecognitionPipeline
 
 else:
     _import_structure = {
@@ -26,7 +27,8 @@ else:
         'video_multi_modal_embedding_pipeline':
         ['VideoMultiModalEmbeddingPipeline'],
         'generative_multi_modal_embedding_pipeline':
-        ['GEMMMultiModalEmbeddingPipeline']
+        ['GEMMMultiModalEmbeddingPipeline'],
+        'asr_pipeline': ['AutomaticSpeechRecognitionPipeline'],
     }
 
     import sys

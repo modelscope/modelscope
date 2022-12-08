@@ -8,14 +8,13 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.animal_recognition import Bottleneck, ResNet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import Devices, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -67,15 +66,10 @@ class AnimalRecognitionPipeline(Pipeline):
             filter_param(src_params, own_state)
             model.load_state_dict(own_state)
 
-        self.model = resnest101(num_classes=8288)
-        local_model_dir = model
-        if osp.exists(model):
-            local_model_dir = model
-        else:
-            local_model_dir = snapshot_download(model)
-        self.local_path = local_model_dir
+        self.local_path = self.model
         src_params = torch.load(
-            osp.join(local_model_dir, 'pytorch_model.pt'), 'cpu')
+            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), Devices.cpu)
+        self.model = resnest101(num_classes=8288)
         load_pretrained(self.model, src_params)
         logger.info('load model done')
 

@@ -9,13 +9,14 @@ if TYPE_CHECKING:
     from .retinaface import RetinaFaceDetection
     from .ulfd_slim import UlfdFaceDetector
     from .scrfd import ScrfdDetect
+    from .scrfd import TinyMogDetect
 else:
     _import_structure = {
         'ulfd_slim': ['UlfdFaceDetector'],
         'retinaface': ['RetinaFaceDetection'],
         'mtcnn': ['MtcnnFaceDetector'],
         'mogface': ['MogFaceDetector'],
-        'scrfd': ['ScrfdDetect']
+        'scrfd': ['TinyMogDetect', 'ScrfdDetect'],
     }
 
     import sys

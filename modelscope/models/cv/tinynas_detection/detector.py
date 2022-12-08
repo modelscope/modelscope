@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import os.path as osp
 import pickle
@@ -42,7 +42,7 @@ class SingleStageDetector(TorchModel):
         self.conf_thre = config.model.head.nms_conf_thre
         self.nms_thre = config.model.head.nms_iou_thre
 
-        if self.cfg.model.backbone.name == 'TinyNAS':
+        if 'TinyNAS' in self.cfg.model.backbone.name:
             self.cfg.model.backbone.structure_file = osp.join(
                 model_dir, self.cfg.model.backbone.structure_file)
         self.backbone = build_backbone(self.cfg.model.backbone)

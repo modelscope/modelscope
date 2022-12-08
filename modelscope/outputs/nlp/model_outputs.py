@@ -1,177 +1,11 @@
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
+
+import numpy as np
 
 from modelscope.outputs.outputs import ModelOutputBase
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-
-
-@dataclass
-class TextClassificationModelOutput(ModelOutputBase):
-    """The output class for text classification models.
-
-    Args:
-        logits (`Tensor`): The logits output of the model. loss (`Tensor`,
-        *optional*) The loss of the model, available when training.
-        hidden_states (`Tensor`, *optional*) Hidden-states of the model at the
-        output of each layer plus the optional initial embedding outputs.
-    """
-
-    logits: Tensor = None
-    loss: Tensor = None
-
-
-@dataclass
-class TokenClassificationModelOutput(ModelOutputBase):
-    """The output class for token classification models.
-        logits (`Tensor`): The logits output of the model.
-        loss (`Tensor`, *optional*) The loss of the model, available when training.
-    """
-
-    logits: Tensor = None
-    loss: Tensor = None
-    offset_mapping: Tensor = None
-
-
-@dataclass
-class FillMaskModelOutput(ModelOutputBase):
-    """The output class for text classification models.
-
-    Args:
-        logits (`Tensor`): The logits output of the model.
-        loss (`Tensor`, *optional*) The loss of the model, available when training.
-        input_ids (`Tensor`, *optional*) The input id tensor fed into the model.
-        hidden_states (`Tensor`, *optional*) Hidden-states of the model at the
-            output of each layer plus the optional initial embedding outputs.
-    """
-
-    logits: Tensor = None
-    loss: Tensor = None
-    input_ids: Tensor = None
-    hidden_states: Tensor = None
-
-
-@dataclass
-class TokenClassifierOutput(ModelOutputBase):
-    """
-    Base class for outputs of token classification models.
-
-    Args:
-        loss (`torch.FloatTensor` of shape `(1,)`, *optional*, returned when
-        `labels` is provided) :
-            Classification loss.
-        logits (`torch.FloatTensor` of shape `(batch_size, sequence_length,
-        config.num_labels)`):
-            Classification scores (before SoftMax).
-        hidden_states (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_hidden_states=True` is passed or when
-        `config.output_hidden_states=True`):
-            Tuple of `torch.FloatTensor` (one for the output of the embeddings,
-            if the model has an embedding layer, + one for the output of each
-            layer) of shape `(batch_size, sequence_length, hidden_size)`.
-
-            Hidden-states of the model at the output of each layer plus the
-            optional initial embedding outputs.
-        attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_attentions=True` is passed or when
-        `config.output_attentions=True`):
-            Tuple of `torch.FloatTensor` (one for each layer) of shape
-            `(batch_size, num_heads, sequence_length, sequence_length)`.
-
-            Attentions weights after the attention softmax, used to compute the
-            weighted average in the self-attention heads.
-        offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the sentence.
-            Selected in the range ``[0, sequence_length - 1]``.
-
-    """
-
-    loss: Tensor = None
-    logits: Tensor = None
-    hidden_states: Tensor = None
-    attentions: Tensor = None
-    offset_mapping: Tensor = None
-
-
-@dataclass
-class TokenClassifierWithPredictionsOutput(ModelOutputBase):
-    """
-    Base class for outputs of token classification models.
-
-    Args:
-        loss (`torch.FloatTensor` of shape `(1,)`, *optional*, returned when
-        `labels` is provided) :
-            Classification loss.
-        logits (`torch.FloatTensor` of shape `(batch_size, sequence_length,
-        config.num_labels)`):
-            Classification scores (before SoftMax).
-        hidden_states (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_hidden_states=True` is passed or when
-        `config.output_hidden_states=True`):
-            Tuple of `torch.FloatTensor` (one for the output of the embeddings,
-            if the model has an embedding layer, + one for the output of each
-            layer) of shape `(batch_size, sequence_length, hidden_size)`.
-
-            Hidden-states of the model at the output of each layer plus the
-            optional initial embedding outputs.
-        attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_attentions=True` is passed or when
-        `config.output_attentions=True`):
-            Tuple of `torch.FloatTensor` (one for each layer) of shape
-            `(batch_size, num_heads, sequence_length, sequence_length)`.
-
-            Attentions weights after the attention softmax, used to compute the
-            weighted average in the self-attention heads.
-        offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the sentence.
-            Selected in the range ``[0, sequence_length - 1]``.
-        predictions: A PyTorch tensor of the best tag sequence for each batch of shape
-            (nbest, batch_size, seq_length)
-
-    """
-
-    loss: Tensor = None
-    logits: Tensor = None
-    hidden_states: Tensor = None
-    attentions: Tensor = None
-    offset_mapping: Tensor = None
-    predictions: Tensor = None
-
-
-@dataclass
-class BaseModelOutput(ModelOutputBase):
-    """
-    Base class for model's outputs, with potential hidden states and attentions.
-
-    Args:
-        last_hidden_state (`torch.FloatTensor` of shape `(batch_size,
-        sequence_length, hidden_size)`):
-            Sequence of hidden-states at the output of the last layer of the
-            model.
-        hidden_states (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_hidden_states=True` is passed or when
-        `config.output_hidden_states=True`):
-            Tuple of `torch.FloatTensor` (one for the output of the embeddings,
-            if the model has an embedding layer, + one for the output of each
-            layer) of shape `(batch_size, sequence_length, hidden_size)`.
-
-            Hidden-states of the model at the output of each layer plus the
-            optional initial embedding outputs.
-        attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_attentions=True` is passed or when
-        `config.output_attentions=True`):
-            Tuple of `torch.FloatTensor` (one for each layer) of shape
-            `(batch_size, num_heads, sequence_length, sequence_length)`.
-
-            Attentions weights after the attention softmax, used to compute the
-            weighted average in the self-attention heads.
-    """
-
-    last_hidden_state: Tensor = None
-    hidden_states: Optional[Tuple[Tensor]] = None
-    attentions: Optional[Tuple[Tensor]] = None
 
 
 @dataclass
@@ -196,81 +30,6 @@ class AttentionBackboneModelOutput(BackboneModelOutput):
     """The output class for backbones of attention based models.
 
     Args:
-        attentions (`tuple(Tensor)`, *optional* Attentions weights after the
-        attention softmax, used to compute the weighted average in the
-        self-attention heads.
-    """
-    attentions: Tensor = None
-    past_key_values: Tensor = None
-    cross_attentions: Tensor = None
-
-
-@dataclass
-class AttentionTextClassificationModelOutput(TextClassificationModelOutput):
-    """The output class for backbones of attention based models.
-
-    Args:
-        attentions (`tuple(Tensor)`, *optional* Attentions weights after the
-        attention softmax, used to compute the weighted average in the
-        self-attention heads.
-    """
-    attentions: Tensor = None
-    hidden_states: Tensor = None
-
-
-@dataclass
-class AttentionTokenClassificationModelOutput(TokenClassificationModelOutput):
-    """The output class for backbones of attention based models.
-
-    Args:
-        attentions (`tuple(Tensor)`, *optional* Attentions weights after the attention softmax,
-        used to compute the weighted average in the self-attention heads.
-    """
-    attentions: Tensor = None
-    hidden_states: Tensor = None
-
-
-@dataclass
-class AttentionFillMaskModelOutput(FillMaskModelOutput):
-    """The output class for the fill mask and attention based models.
-
-    Args:
-        attentions (`tuple(Tensor)`, *optional* Attentions weights after the
-        attention softmax, used to compute the weighted average in the
-        self-attention heads.
-    """
-    attentions: Tensor = None
-
-
-@dataclass
-class BaseModelOutputWithPoolingAndCrossAttentions(ModelOutputBase):
-    """
-    Base class for model's outputs that also contains a pooling of the last
-    hidden states.
-
-    Args:
-        last_hidden_state (`torch.FloatTensor` of shape `(batch_size,
-        sequence_length, hidden_size)`):
-            Sequence of hidden-states at the output of the last layer of the
-            model.
-        pooler_output (`torch.FloatTensor` of shape `(batch_size,
-        hidden_size)`):
-            Last layer hidden-state of the first token of the sequence
-            (classification token) after further processing through the layers
-            used for the auxiliary pretraining task. E.g. for BERT-family of
-            models, this returns the classification token after processing
-            through a linear layer and a tanh activation function. The linear
-            layer weights are trained from the next sentence prediction
-            (classification) objective during pretraining.
-        hidden_states (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_hidden_states=True` is passed or when
-        `config.output_hidden_states=True`):
-            Tuple of `torch.FloatTensor` (one for the output of the embeddings,
-            if the model has an embedding layer, + one for the output of each
-            layer) of shape `(batch_size, sequence_length, hidden_size)`.
-
-            Hidden-states of the model at the output of each layer plus the
-            optional initial embedding outputs.
         attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
         `output_attentions=True` is passed or when
         `config.output_attentions=True`):
@@ -303,75 +62,8 @@ class BaseModelOutputWithPoolingAndCrossAttentions(ModelOutputBase):
             can be used (see `past_key_values` input) to speed up sequential
             decoding.
     """
-
-    last_hidden_state: Tensor = None
-    pooler_output: Tensor = None
-    hidden_states: Tensor = None
-    past_key_values: Tensor = None
     attentions: Tensor = None
-    cross_attentions: Tensor = None
-
-
-@dataclass
-class BaseModelOutputWithPastAndCrossAttentions(ModelOutputBase):
-    """
-    Base class for model's outputs that may also contain a past key/values (to
-    speed up sequential decoding).
-
-    Args:
-        last_hidden_state (`torch.FloatTensor` of shape `(batch_size,
-        sequence_length, hidden_size)`):
-            Sequence of hidden-states at the output of the last layer of the
-            model.
-
-            If `past_key_values` is used only the last hidden-state of the
-            sequences of shape `(batch_size, 1, hidden_size)` is output.
-        past_key_values (`tuple(tuple(torch.FloatTensor))`, *optional*, returned
-        when `use_cache=True` is passed or when `config.use_cache=True`):
-            Tuple of `tuple(torch.FloatTensor)` of length `config.n_layers`,
-            with each tuple having 2 tensors of shape `(batch_size, num_heads,
-            sequence_length, embed_size_per_head)`) and optionally if
-            `config.is_encoder_decoder=True` 2 additional tensors of shape
-            `(batch_size, num_heads, encoder_sequence_length,
-            embed_size_per_head)`.
-
-            Contains pre-computed hidden-states (key and values in the
-            self-attention blocks and optionally if
-            `config.is_encoder_decoder=True` in the cross-attention blocks) that
-            can be used (see `past_key_values` input) to speed up sequential
-            decoding.
-        hidden_states (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_hidden_states=True` is passed or when
-        `config.output_hidden_states=True`):
-            Tuple of `torch.FloatTensor` (one for the output of the embeddings,
-            if the model has an embedding layer, + one for the output of each
-            layer) of shape `(batch_size, sequence_length, hidden_size)`.
-
-            Hidden-states of the model at the output of each layer plus the
-            optional initial embedding outputs.
-        attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_attentions=True` is passed or when
-        `config.output_attentions=True`):
-            Tuple of `torch.FloatTensor` (one for each layer) of shape
-            `(batch_size, num_heads, sequence_length, sequence_length)`.
-
-            Attentions weights after the attention softmax, used to compute the
-            weighted average in the self-attention heads.
-        cross_attentions (`tuple(torch.FloatTensor)`, *optional*, returned when
-        `output_attentions=True` and `config.add_cross_attention=True` is passed
-        or when `config.output_attentions=True`):
-            Tuple of `torch.FloatTensor` (one for each layer) of shape
-            `(batch_size, num_heads, sequence_length, sequence_length)`.
-
-            Attentions weights of the decoder's cross-attention layer, after the
-            attention softmax, used to compute the weighted average in the
-            cross-attention heads.
-    """
-
-    last_hidden_state: Tensor = None
     past_key_values: Tensor = None
-    hidden_states: Tensor = None
-    attentions: Tensor = None
     cross_attentions: Tensor = None
 
 
@@ -460,6 +152,60 @@ class Seq2SeqModelOutput(ModelOutputBase):
 
 
 @dataclass
+class FaqQuestionAnsweringOutput(ModelOutputBase):
+    """The output class for faq QA models.
+    """
+
+    scores: Tensor = None
+
+
+@dataclass
+class FeatureExtractionOutput(ModelOutputBase):
+    """The output class for feature extraction models.
+    """
+
+    text_embedding: Tensor = None
+
+
+@dataclass
+class FillMaskModelOutput(ModelOutputBase):
+    """The output class for text classification models.
+
+    Args:
+        logits (`Tensor`): The logits output of the model.
+        loss (`Tensor`, *optional*) The loss of the model, available when training.
+        input_ids (`Tensor`, *optional*) The input id tensor fed into the model.
+        hidden_states (`Tensor`, *optional*) Hidden-states of the model at the
+            output of each layer plus the optional initial embedding outputs.
+    """
+
+    logits: Tensor = None
+    loss: Tensor = None
+    input_ids: Tensor = None
+    hidden_states: Tensor = None
+
+
+@dataclass
+class AttentionFillMaskModelOutput(FillMaskModelOutput):
+    """The output class for the fill mask and attention based models.
+
+    Args:
+        attentions (`tuple(Tensor)`, *optional* Attentions weights after the
+        attention softmax, used to compute the weighted average in the
+        self-attention heads.
+    """
+    attentions: Tensor = None
+
+
+@dataclass
+class InformationExtractionOutput(ModelOutputBase):
+    """The output class for information extraction models.
+    """
+
+    spo_list: np.ndarray = None
+
+
+@dataclass
 class Seq2SeqLMOutput(ModelOutputBase):
     """
     Base class for sequence-to-sequence language models outputs.
@@ -544,6 +290,42 @@ class Seq2SeqLMOutput(ModelOutputBase):
 
 
 @dataclass
+class TextClassificationModelOutput(ModelOutputBase):
+    """The output class for text classification models.
+
+    Args:
+        logits (`Tensor`): The logits output of the model. loss (`Tensor`,
+        *optional*) The loss of the model, available when training.
+        hidden_states (`Tensor`, *optional*) Hidden-states of the model at the
+        output of each layer plus the optional initial embedding outputs.
+    """
+
+    logits: Tensor = None
+    loss: Tensor = None
+
+
+@dataclass
+class AttentionTextClassificationModelOutput(TextClassificationModelOutput):
+    """The output class for backbones of attention based models.
+
+    Args:
+        attentions (`tuple(Tensor)`, *optional* Attentions weights after the
+        attention softmax, used to compute the weighted average in the
+        self-attention heads.
+    """
+    attentions: Tensor = None
+    hidden_states: Tensor = None
+
+
+@dataclass
+class TextErrorCorrectionOutput(ModelOutputBase):
+    """The output class for information extraction models.
+    """
+
+    predictions: np.ndarray = None
+
+
+@dataclass
 class TextGenerationModelOutput(ModelOutputBase):
     """The output class for text generation models.
 
@@ -588,3 +370,35 @@ class TokenGeneratorOutput(ModelOutputBase):
     scores: Optional[Tuple[Tensor]] = None
     attentions: Optional[Tuple[Tuple[Tensor]]] = None
     hidden_states: Optional[Tuple[Tuple[Tensor]]] = None
+
+
+@dataclass
+class TokenClassificationModelOutput(ModelOutputBase):
+    """The output class for token classification models.
+        logits (`Tensor`): The logits output of the model.
+        loss (`Tensor`, *optional*) The loss of the model, available when training.
+        predictions: A PyTorch tensor of the best tag sequence for each batch of shape
+            (nbest, batch_size, seq_length)
+        offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
+        sequence_length)`, `optional`):
+            Indices of positions of each input sequence tokens in the sentence.
+            Selected in the range ``[0, sequence_length - 1]``.
+    """
+
+    logits: Tensor = None
+    loss: Tensor = None
+    offset_mapping: Tensor = None
+    predictions: Tensor = None
+    label_mask: Tensor = None
+
+
+@dataclass
+class AttentionTokenClassificationModelOutput(TokenClassificationModelOutput):
+    """The output class for backbones of attention based models.
+
+    Args:
+        attentions (`tuple(Tensor)`, *optional* Attentions weights after the attention softmax,
+        used to compute the weighted average in the self-attention heads.
+    """
+    attentions: Tensor = None
+    hidden_states: Tensor = None

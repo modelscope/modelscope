@@ -44,7 +44,7 @@ class LanguageGuidedVideoSummarizationPipeline(Pipeline):
         """
         super().__init__(model=model, auto_collate=False, **kwargs)
         logger.info(f'loading model from {model}')
-        self.model_dir = model
+        self.model_dir = self.model.model_dir
 
         self.tmp_dir = kwargs.get('tmp_dir', None)
         if self.tmp_dir is None:

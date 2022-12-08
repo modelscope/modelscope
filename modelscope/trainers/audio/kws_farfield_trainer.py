@@ -8,7 +8,6 @@ import torch
 from torch import nn as nn
 from torch import optim as optim
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel
 from modelscope.msdatasets.task_datasets.audio import KWSDataLoader, KWSDataset
@@ -54,12 +53,8 @@ class KWSFarfieldTrainer(BaseTrainer):
                  **kwargs):
 
         if isinstance(model, str):
-            if os.path.exists(model):
-                self.model_dir = model if os.path.isdir(
-                    model) else os.path.dirname(model)
-            else:
-                self.model_dir = snapshot_download(
-                    model, revision=model_revision)
+            self.model_dir = self.get_or_download_model_dir(
+                model, model_revision)
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)

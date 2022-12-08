@@ -7,7 +7,8 @@ from torch.utils.data.dataloader import default_collate
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter
 from modelscope.metainfo import Models
-from modelscope.preprocessors import Preprocessor, build_preprocessor
+from modelscope.preprocessors import (
+    TextClassificationTransformersPreprocessor, build_preprocessor)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModeKeys, Tasks
 
@@ -59,12 +60,13 @@ class SbertForSequenceClassificationExporter(TorchModelExporter):
             'mode': ModeKeys.TRAIN,
             **sequence_length
         })
-        preprocessor: Preprocessor = build_preprocessor(cfg, field_name)
+        preprocessor: TextClassificationTransformersPreprocessor = build_preprocessor(
+            cfg, field_name)
         if pair:
-            first_sequence = preprocessor.tokenizer.unk_token
-            second_sequence = preprocessor.tokenizer.unk_token
+            first_sequence = preprocessor.nlp_tokenizer.tokenizer.unk_token
+            second_sequence = preprocessor.nlp_tokenizer.tokenizer.unk_token
         else:
-            first_sequence = preprocessor.tokenizer.unk_token
+            first_sequence = preprocessor.nlp_tokenizer.tokenizer.unk_token
             second_sequence = None
 
         batched = []

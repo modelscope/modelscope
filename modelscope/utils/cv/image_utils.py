@@ -1,10 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
+from modelscope.utils import logger as logging
+
+logger = logging.get_logger(__name__)
 
 
 def numpy_to_cv2img(img_array):
@@ -191,6 +195,33 @@ def draw_facial_expression_result(img_path, facial_expression_result):
         thickness=1,
         lineType=8)
     print('facial expression: {}'.format(label))
+    return img
+
+
+def draw_face_attribute_result(img_path, face_attribute_result):
+    scores = face_attribute_result[OutputKeys.SCORES]
+    labels = face_attribute_result[OutputKeys.LABELS]
+    label_gender = labels[0][np.argmax(scores[0])]
+    label_age = labels[1][np.argmax(scores[1])]
+    img = cv2.imread(img_path)
+    assert img is not None, f"Can't read img: {img_path}"
+    cv2.putText(
+        img,
+        'face gender: {}'.format(label_gender), (10, 10),
+        1,
+        1.0, (0, 255, 0),
+        thickness=1,
+        lineType=8)
+
+    cv2.putText(
+        img,
+        'face age interval: {}'.format(label_age), (10, 40),
+        1,
+        1.0, (255, 0, 0),
+        thickness=1,
+        lineType=8)
+    logger.info('face gender: {}'.format(label_gender))
+    logger.info('face age interval: {}'.format(label_age))
     return img
 
 
@@ -439,3 +470,11 @@ def show_image_object_detection_auto_result(img_path,
     if save_path is not None:
         cv2.imwrite(save_path, img)
     return img
+
+
+def depth_to_color(depth):
+    colormap = plt.get_cmap('plasma')
+    depth_color = (colormap(
+        (depth.max() - depth) / depth.max()) * 2**8).astype(np.uint8)[:, :, :3]
+    depth_color = cv2.cvtColor(depth_color, cv2.COLOR_RGB2BGR)
+    return depth_color

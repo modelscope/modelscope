@@ -24,7 +24,7 @@ from transformers.utils import logging
 
 from modelscope.utils.constant import ModelFile
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 VOCAB_FILES_NAMES = {'vocab_file': 'vocab.json', 'merges_file': 'merges.txt'}
 

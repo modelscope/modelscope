@@ -1,10 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# The AIRDet implementation is also open-sourced by the authors, and available at https://github.com/tinyvision/AIRDet.
+# The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import copy
 
 from .giraffe_fpn import GiraffeNeck
-from .giraffe_fpn_v2 import GiraffeNeckV2
+from .giraffe_fpn_btn import GiraffeNeckV2
 
 
 def build_neck(cfg):

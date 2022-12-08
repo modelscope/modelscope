@@ -28,19 +28,10 @@ class ImageTextRetrievalPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        super().__init__(model=model)
-        assert isinstance(model, str) or isinstance(model, Model), \
-            f'model must be a single str or Model, but got {type(model)}'
-        if isinstance(model, str):
-            pipe_model = Model.from_pretrained(model)
-        elif isinstance(model, Model):
-            pipe_model = model
-        else:
-            raise NotImplementedError
-        pipe_model.model.eval()
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.model.eval()
         if preprocessor is None:
-            preprocessor = MPlugPreprocessor(pipe_model.model_dir)
-        super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+            self.preprocessor = MPlugPreprocessor(self.model.model_dir)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

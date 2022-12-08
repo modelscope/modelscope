@@ -32,17 +32,14 @@ class ImageDenoisePipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
-        model = model if isinstance(
-            model, NAFNetForImageDenoise) else Model.from_pretrained(model)
-        model.eval()
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
-        self.config = model.config
+        self.model.eval()
+        self.config = self.model.config
 
         if torch.cuda.is_available():
             self._device = torch.device('cuda')
         else:
             self._device = torch.device('cpu')
-        self.model = model
         logger.info('load image denoise model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:

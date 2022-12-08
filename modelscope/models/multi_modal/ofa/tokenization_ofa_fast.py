@@ -23,7 +23,7 @@ from transformers.utils import logging
 from modelscope.utils.constant import ModelFile
 from .tokenization_ofa import OFATokenizer, OFATokenizerZH
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 VOCAB_FILES_NAMES = {
     'vocab_file': 'vocab.json',

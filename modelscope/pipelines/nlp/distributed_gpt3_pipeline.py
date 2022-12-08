@@ -5,7 +5,7 @@ from typing import Any, Dict
 import torch
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.nlp.gpt3.distributed_gpt3 import DistributedGPT3
+from modelscope.models.nlp import DistributedGPT3
 from modelscope.pipelines.base import DistributedPipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import TextGenerationJiebaPreprocessor
@@ -21,6 +21,14 @@ class DistributedGPT3Pipeline(DistributedPipeline):
     model = None
 
     def __init__(self, model, preprocessor=None, **kwargs):
+        """
+
+        Args:
+            model: The model piece, str is not supported.
+            preprocessor: The preprocessor matched with the model.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        """
         if preprocessor is None:
             preprocessor = TextGenerationJiebaPreprocessor(model)
         super().__init__(model, preprocessor=preprocessor, **kwargs)
@@ -50,5 +58,6 @@ class DistributedGPT3Pipeline(DistributedPipeline):
         from modelscope.outputs import OutputKeys
         return {
             OutputKeys.TEXT:
-            self.preprocessor.tokenizer.detokenize(inputs[0].tolist())
+            self.preprocessor.tokenizer.detokenize(
+                inputs.sequences[0].tolist())
         }

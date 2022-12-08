@@ -21,8 +21,7 @@ class ReferringVideoObjectSegmentationTest(unittest.TestCase,
             'guy in black performing tricks on a bike',
             'a black bike used to perform tricks'
         ]
-        start_pt, end_pt = 4, 14
-        input_tuple = (input_location, text_queries, start_pt, end_pt)
+        input_tuple = (input_location, text_queries)
         pp = pipeline(
             Tasks.referring_video_object_segmentation, model=self.model_id)
         result = pp(input_tuple)
@@ -38,8 +37,7 @@ class ReferringVideoObjectSegmentationTest(unittest.TestCase,
             'guy in black performing tricks on a bike',
             'a black bike used to perform tricks'
         ]
-        start_pt, end_pt = 4, 14
-        input_tuple = (input_location, text_queries, start_pt, end_pt)
+        input_tuple = (input_location, text_queries)
         pp = pipeline(Tasks.referring_video_object_segmentation)
         result = pp(input_tuple)
         if result:

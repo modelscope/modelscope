@@ -9,13 +9,16 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import requests
+from requests.adapters import Retry
 from tqdm import tqdm
 
 from modelscope import __version__
 from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
+                                      API_FILE_DOWNLOAD_RETRY_TIMES,
+                                      API_FILE_DOWNLOAD_TIMEOUT, FILE_HASH)
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .constants import FILE_HASH
 from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_cache_dir,
@@ -184,10 +187,7 @@ def http_get_file(
     headers: Optional[Dict[str, str]] = None,
 ):
     """
-    Download remote file. Do not gobble up errors.
-    This method is only used by snapshot_download, since the behavior is quite different with single file download
-    TODO: consolidate with http_get_file() to avoild duplicate code
-
+    Download remote file, will retry 5 times before giving up on errors.
     Args:
         url(`str`):
             actual download url of the file
@@ -204,30 +204,46 @@ def http_get_file(
     total = -1
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
-
+    get_headers = {} if headers is None else copy.deepcopy(headers)
     with temp_file_manager() as temp_file:
         logger.info('downloading %s to %s', url, temp_file.name)
-        headers = copy.deepcopy(headers)
-
-        r = requests.get(url, stream=True, headers=headers, cookies=cookies)
-        r.raise_for_status()
-
-        content_length = r.headers.get('Content-Length')
-        total = int(content_length) if content_length is not None else None
-
-        progress = tqdm(
-            unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
-            total=total,
-            initial=0,
-            desc='Downloading',
-        )
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:  # filter out keep-alive new chunks
-                progress.update(len(chunk))
-                temp_file.write(chunk)
-        progress.close()
+        # retry sleep 0.5s, 1s, 2s, 4s
+        retry = Retry(
+            total=API_FILE_DOWNLOAD_RETRY_TIMES,
+            backoff_factor=1,
+            allowed_methods=['GET'])
+        while True:
+            try:
+                downloaded_size = temp_file.tell()
+                get_headers['Range'] = 'bytes=%d-' % downloaded_size
+                r = requests.get(
+                    url,
+                    stream=True,
+                    headers=get_headers,
+                    cookies=cookies,
+                    timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                r.raise_for_status()
+                content_length = r.headers.get('Content-Length')
+                total = int(
+                    content_length) if content_length is not None else None
+                progress = tqdm(
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    total=total,
+                    initial=downloaded_size,
+                    desc='Downloading',
+                )
+                for chunk in r.iter_content(
+                        chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        progress.update(len(chunk))
+                        temp_file.write(chunk)
+                progress.close()
+                break
+            except (Exception) as e:  # no matter what happen, we will retry.
+                retry = retry.increment('GET', url, error=e)
+                retry.sleep()
 
     logger.info('storing %s in cache at %s', url, local_dir)
     downloaded_length = os.path.getsize(temp_file.name)

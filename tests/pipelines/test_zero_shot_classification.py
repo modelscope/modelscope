@@ -6,7 +6,8 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import ZeroShotClassificationPipeline
-from modelscope.preprocessors import ZeroShotClassificationPreprocessor
+from modelscope.preprocessors import \
+    ZeroShotClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
@@ -28,7 +29,7 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
-        tokenizer = ZeroShotClassificationPreprocessor(cache_path)
+        tokenizer = ZeroShotClassificationTransformersPreprocessor(cache_path)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
         pipeline1 = ZeroShotClassificationPipeline(
             model, preprocessor=tokenizer)
@@ -53,7 +54,8 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        tokenizer = ZeroShotClassificationPreprocessor(model.model_dir)
+        tokenizer = ZeroShotClassificationTransformersPreprocessor(
+            model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.zero_shot_classification,
             model=model,

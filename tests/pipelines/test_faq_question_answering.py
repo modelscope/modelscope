@@ -9,7 +9,8 @@ from modelscope.models import Model
 from modelscope.models.nlp import SbertForFaqQuestionAnswering
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FaqQuestionAnsweringPipeline
-from modelscope.preprocessors import FaqQuestionAnsweringPreprocessor
+from modelscope.preprocessors import \
+    FaqQuestionAnsweringTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -47,7 +48,7 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
-        preprocessor = FaqQuestionAnsweringPreprocessor.from_pretrained(
+        preprocessor = FaqQuestionAnsweringTransformersPreprocessor.from_pretrained(
             cache_path)
         model = SbertForFaqQuestionAnswering.from_pretrained(cache_path)
         pipeline_ins = FaqQuestionAnsweringPipeline(
@@ -58,7 +59,8 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = FaqQuestionAnsweringPreprocessor(model.model_dir)
+        preprocessor = FaqQuestionAnsweringTransformersPreprocessor(
+            model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.faq_question_answering,
             model=model,

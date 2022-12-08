@@ -8,7 +8,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.models.nlp.plug import DistributedPlug
 from modelscope.pipelines.base import DistributedPipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import TextGenerationPreprocessor
+from modelscope.preprocessors import TextGenerationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
 
 
@@ -24,11 +24,12 @@ class DistributedPlugPipeline(DistributedPipeline):
                  model,
                  preprocessor=None,
                  first_sequence='sentence',
+                 sequence_length=512,
                  **kwargs):
         """Create a plug pipeline instance.
 
         Args:
-            model: The model_id of plug(damo/nlp_plug_text-generation_27B).
+        model: The model_id of plug(damo/nlp_plug_text-generation_27B).
         The default path to damo/nlp_plug_text-generation_27B can be obtained by function
         get_cache_dir("damo/nlp_plug_text-generation_27B"), the model should be downloaded to
         this path before calling this class by model_id.
@@ -53,20 +54,18 @@ class DistributedPlugPipeline(DistributedPipeline):
                 |_ mp_rank_05_model_states.pt
                 |_ mp_rank_06_model_states.pt
                 |_ mp_rank_07_model_states.pt
-            preprocessor: The optional preprocessor, if not passed in, a TextGenerationPreprocessor will
+        preprocessor: The optional preprocessor, if not passed in, a TextGenerationPreprocessor will
             be used as default.
-            first_sequence: The first_sequence key name if the input format is a dict.
-            kwargs:
-                sequence_length: The input sequence_length.
+        kwargs (dict, `optional`): Extra kwargs passed into the preprocessor's constructor.
         """
         if preprocessor is None:
-            preprocessor = TextGenerationPreprocessor(
+            preprocessor = TextGenerationTransformersPreprocessor(
                 model,
                 first_sequence=first_sequence,
-                sequence_length=kwargs.pop('sequence_length', 512))
+                sequence_length=sequence_length,
+                **kwargs)
         super().__init__(model, preprocessor=preprocessor, **kwargs)
-        assert hasattr(preprocessor, 'tokenizer')
-        self.cls_token_id = preprocessor.tokenizer.cls_token_id
+        self.cls_token_id = preprocessor.nlp_tokenizer.tokenizer.cls_token_id
 
     @classmethod
     def _forward_one(cls, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -105,6 +104,6 @@ class DistributedPlugPipeline(DistributedPipeline):
         from modelscope.outputs import OutputKeys
         generate_context = inputs['generate_context']
         generate_context = ''.join(
-            self.preprocessor.tokenizer.convert_ids_to_tokens(
+            self.preprocessor.nlp_tokenizer.tokenizer.convert_ids_to_tokens(
                 generate_context)).replace('[UNK]', '“').replace('##', '')
         return {OutputKeys.TEXT: generate_context}

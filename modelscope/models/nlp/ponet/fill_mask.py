@@ -26,7 +26,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .backbone import PoNetModel, PoNetPreTrainedModel
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class PoNetPredictionHeadTransform(nn.Module):

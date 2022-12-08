@@ -5,11 +5,14 @@ import os.path as osp
 import shutil
 import subprocess
 import uuid
+from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import cv2
 import numpy as np
 import onnxruntime as rt
 
+from modelscope.hub.file_download import http_get_file
 from modelscope.models import Model
 from modelscope.utils.constant import Devices
 from modelscope.utils.device import verify_device
@@ -22,8 +25,9 @@ class ActionDetONNX(Model):
         model_file = osp.join(config['model_file'])
         device_type, device_id = verify_device(self._device_name)
         options = rt.SessionOptions()
-        options.intra_op_num_threads = 1
-        options.inter_op_num_threads = 1
+        op_num_threads = config.get('op_num_threads', 1)
+        options.intra_op_num_threads = op_num_threads
+        options.inter_op_num_threads = op_num_threads
         if device_type == Devices.gpu:
             sess = rt.InferenceSession(
                 model_file,
@@ -84,37 +88,43 @@ class ActionDetONNX(Model):
 
     def forward_video(self, video_name, scale):
         min_size, max_size = self._get_sizes(scale)
-
-        tmp_dir = osp.join(
-            self.tmp_dir,
-            str(uuid.uuid1()) + '_' + osp.basename(video_name)[:-4])
-        if osp.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
-        os.makedirs(tmp_dir)
+        url_parsed = urlparse(video_name)
         frame_rate = 2
-        cmd = f'ffmpeg -y -loglevel quiet -ss 0 -t {self.video_length_limit}' + \
-              f' -i {video_name} -r {frame_rate} -f image2 {tmp_dir}/%06d.jpg'
+        with TemporaryDirectory() as temporary_cache_dir:
+            if url_parsed.scheme in ('file', '') and osp.exists(
+                    url_parsed.path):
+                local_video_name = video_name
+            else:
+                random_str = str(uuid.uuid1())
+                http_get_file(
+                    url=video_name,
+                    local_dir=temporary_cache_dir,
+                    file_name=random_str,
+                    headers={},
+                    cookies=None)
+                local_video_name = osp.join(temporary_cache_dir, random_str)
+            cmd = f'ffmpeg -y -loglevel quiet -ss 0 -t {self.video_length_limit}' + \
+                  f' -i {local_video_name} -r {frame_rate} -f' + \
+                  f' image2 {temporary_cache_dir}/%06d_out.jpg'
+            cmd = cmd.split(' ')
+            subprocess.call(cmd)
 
-        cmd = cmd.split(' ')
-        subprocess.call(cmd)
-
-        frame_names = [
-            osp.join(tmp_dir, name) for name in sorted(os.listdir(tmp_dir))
-            if name.endswith('.jpg')
-        ]
-        frame_names = [
-            frame_names[i:i + frame_rate * 2]
-            for i in range(0,
-                           len(frame_names) - frame_rate * 2 + 1, frame_rate
-                           * self.temporal_stride)
-        ]
-        timestamp = list(
-            range(1,
-                  len(frame_names) * self.temporal_stride,
-                  self.temporal_stride))
-        batch_imgs = [self.parse_frames(names) for names in frame_names]
-        shutil.rmtree(tmp_dir)
-
+            frame_names = [
+                osp.join(temporary_cache_dir, name)
+                for name in sorted(os.listdir(temporary_cache_dir))
+                if name.endswith('_out.jpg')
+            ]
+            frame_names = [
+                frame_names[i:i + frame_rate * 2]
+                for i in range(0,
+                               len(frame_names) - frame_rate * 2
+                               + 1, frame_rate * self.temporal_stride)
+            ]
+            timestamp = list(
+                range(1,
+                      len(frame_names) * self.temporal_stride,
+                      self.temporal_stride))
+            batch_imgs = [self.parse_frames(names) for names in frame_names]
         N, _, T, H, W = batch_imgs[0].shape
         scale_min = min_size / min(H, W)
         h, w = min(int(scale_min * H),

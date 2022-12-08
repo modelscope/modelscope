@@ -33,6 +33,9 @@ class TableQuestionAnsweringPipeline(Pipeline):
                  model: Union[TableQuestionAnswering, str],
                  preprocessor: TableQuestionAnsweringPreprocessor = None,
                  db: Database = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
                  **kwargs):
         """use `model` and `preprocessor` to create a table question answering prediction pipeline
 
@@ -40,22 +43,31 @@ class TableQuestionAnsweringPipeline(Pipeline):
             model (TableQuestionAnswering): a model instance
             preprocessor (TableQuestionAnsweringPreprocessor): a preprocessor instance
             db (Database): a database to store tables in the database
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        model = model if isinstance(
-            model, TableQuestionAnswering) else Model.from_pretrained(model)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
+
         if preprocessor is None:
-            preprocessor = TableQuestionAnsweringPreprocessor(model.model_dir)
+            self.preprocessor = TableQuestionAnsweringPreprocessor(
+                self.model.model_dir, **kwargs)
 
         # initilize tokenizer
         self.tokenizer = BertTokenizer(
-            os.path.join(model.model_dir, ModelFile.VOCAB_FILE))
+            os.path.join(self.model.model_dir, ModelFile.VOCAB_FILE))
 
         # initialize database
         if db is None:
             self.db = Database(
                 tokenizer=self.tokenizer,
-                table_file_path=os.path.join(model.model_dir, 'table.json'),
-                syn_dict_file_path=os.path.join(model.model_dir,
+                table_file_path=os.path.join(self.model.model_dir,
+                                             'table.json'),
+                syn_dict_file_path=os.path.join(self.model.model_dir,
                                                 'synonym.txt'))
         else:
             self.db = db
@@ -71,7 +83,12 @@ class TableQuestionAnsweringPipeline(Pipeline):
         self.schema_link_dict = constant.schema_link_dict
         self.limit_dict = constant.limit_dict
 
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+    def prepare_model(self):
+        """ Place model on certain device for pytorch models before first inference
+                """
+        self._model_prepare_lock.acquire(timeout=600)
+        self.model.to(self.device)
+        self._model_prepare_lock.release()
 
     def post_process_multi_turn(self, history_sql, result, table):
         action = self.action_ops[result['action']]

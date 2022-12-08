@@ -9,7 +9,6 @@ import PIL
 import torch
 from PIL import Image
 
-from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.virual_tryon import SDAFNet_Tryon
 from modelscope.outputs import OutputKeys
@@ -52,17 +51,12 @@ class VirtualTryonPipeline(Pipeline):
             filter_param(src_params, own_state)
             model.load_state_dict(own_state)
 
-        self.model = SDAFNet_Tryon(ref_in_channel=6).to(self.device)
-        local_model_dir = model
-        if osp.exists(model):
-            local_model_dir = model
-        else:
-            local_model_dir = snapshot_download(model)
-        self.local_path = local_model_dir
+        self.local_path = self.model
         src_params = torch.load(
-            osp.join(local_model_dir, ModelFile.TORCH_MODEL_FILE), 'cpu')
+            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), 'cpu')
+        self.model = SDAFNet_Tryon(ref_in_channel=6).to(self.device)
         load_pretrained(self.model, src_params)
-        self.model = self.model.eval()
+        self.model.eval()
         self.size = 192
         from torchvision import transforms
         self.test_transforms = transforms.Compose([

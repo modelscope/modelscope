@@ -509,8 +509,8 @@ def convert_weights(model: nn.Module):
 @MODELS.register_module(Tasks.multi_modal_embedding, module_name=Models.clip)
 class CLIPForMultiModalEmbedding(TorchModel):
 
-    def __init__(self, model_dir, device_id=-1):
-        super().__init__(model_dir=model_dir, device_id=device_id)
+    def __init__(self, model_dir, *args, **kwargs):
+        super().__init__(model_dir=model_dir, *args, **kwargs)
 
         # Initialize the model.
         vision_model_config_file = '{}/vision_model_config.json'.format(

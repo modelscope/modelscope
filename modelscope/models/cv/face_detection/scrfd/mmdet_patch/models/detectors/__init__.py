@@ -3,5 +3,6 @@ The implementation here is modified based on insightface, originally MIT license
 https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/models/detectors
 """
 from .scrfd import SCRFD
+from .tinymog import TinyMog
 
-__all__ = ['SCRFD']
+__all__ = ['SCRFD', 'TinyMog']

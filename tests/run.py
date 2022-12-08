@@ -297,6 +297,7 @@ def parallel_run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
         if k not in isolated_cases and v == env_name:
             remain_suite_files.append(k)
     if len(remain_suite_files) == 0:
+        wait_for_workers(worker_processes)
         return
     # roughly split case in parallel
     part_count = math.ceil(len(remain_suite_files) / parallel)

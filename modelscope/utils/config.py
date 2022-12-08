@@ -3,6 +3,7 @@
 # https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
 import copy
+import dataclasses
 import os
 import os.path as osp
 import platform
@@ -10,6 +11,7 @@ import shutil
 import sys
 import tempfile
 import types
+from dataclasses import fields
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Union
@@ -337,6 +339,37 @@ class Config:
         super(Config, self).__setattr__('_filename', _filename)
         super(Config, self).__setattr__('_text', _text)
 
+    def safe_get(self, key_chain: str, default=None):
+        """Get a value with a key-chain in str format, if key does not exist, the default value will be returned.
+
+        This method is safe to call, and will not edit any value.
+
+        Args:
+            key_chain: The input key chain, for example: 'train.hooks[0].type'
+            default: The default value returned when any key does not exist, default None.
+
+        Returns:
+            The value, or the default value.
+        """
+        try:
+            keys = key_chain.split('.')
+            _cfg_dict = self._cfg_dict
+            for key in keys:
+                val = None
+                if '[' in key:
+                    key, val = key.split('[')
+                    val, _ = val.split(']')
+                _cfg_dict = getattr(_cfg_dict, key)
+                if val is not None:
+                    _cfg_dict = _cfg_dict[int(val)]
+            return _cfg_dict
+        except Exception as e:
+            logger.debug(
+                f'Key not valid in Config: {key_chain}, return the default value: {default}'
+            )
+            logger.debug(e)
+            return default
+
     def dump(self, file: str = None):
         """Dumps config into a file or returns a string representation of the
         config.
@@ -633,16 +666,6 @@ def check_config(cfg: Union[str, ConfigDict], is_training=False):
         check_attr(ConfigFields.train)
         check_attr(ConfigFields.preprocessor)
         check_attr(ConfigFields.evaluation)
-
-
-def use_task_specific_params(model, task):
-    """Update config with summarization specific params."""
-    task_specific_params = model.config.task_specific_params
-
-    if task_specific_params is not None:
-        pars = task_specific_params.get(task, {})
-        logger.info(f'using task specific params for {task}: {pars}')
-        model.config.update(pars)
 
 
 class JSONIteratorEncoder(json.JSONEncoder):

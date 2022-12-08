@@ -11,4 +11,5 @@ OFA_TASK_KEY_MAPPING = {
     Tasks.text_classification: OutputKeys.LABELS,
     Tasks.image_classification: OutputKeys.LABELS,
     Tasks.visual_entailment: OutputKeys.LABELS,
+    Tasks.auto_speech_recognition: OutputKeys.TEXT
 }

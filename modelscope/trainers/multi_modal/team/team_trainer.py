@@ -7,21 +7,17 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import torch
 import torch.nn as nn
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
 from sklearn.metrics import confusion_matrix
-from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model
-from modelscope.msdatasets import MsDataset
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
-from modelscope.trainers.multi_modal.team.team_trainer_utils import (
-    get_optimizer, train_mapping, val_mapping)
+from modelscope.trainers.multi_modal.team.team_trainer_utils import \
+    get_optimizer
 from modelscope.utils.config import Config
-from modelscope.utils.constant import DownloadMode, ModeKeys
+from modelscope.utils.constant import Invoke
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -36,7 +32,7 @@ class TEAMImgClsTrainer(BaseTrainer):
         super().__init__(cfg_file)
 
         self.cfg = Config.from_file(cfg_file)
-        team_model = Model.from_pretrained(model)
+        team_model = Model.from_pretrained(model, invoked_by=Invoke.TRAINER)
         image_model = team_model.model.image_model.vision_transformer
         classification_model = nn.Sequential(
             OrderedDict([('encoder', image_model),

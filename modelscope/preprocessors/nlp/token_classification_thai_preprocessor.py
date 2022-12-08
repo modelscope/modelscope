@@ -9,19 +9,23 @@ from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.type_assert import type_assert
-from .token_classification_preprocessor import TokenClassificationPreprocessor
+from .token_classification_preprocessor import \
+    TokenClassificationTransformersPreprocessor
 
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.thai_ner_tokenizer)
-class NERPreprocessorThai(TokenClassificationPreprocessor):
+class NERPreprocessorThai(TokenClassificationTransformersPreprocessor):
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, dict))
+    def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         from pythainlp import word_tokenize
-
+        if isinstance(data, str):
+            text = data
+        else:
+            text = data[self.first_sequence]
         segmented_data = ' '.join([
-            w.strip(' ') for w in word_tokenize(text=data, engine='newmm')
+            w.strip(' ') for w in word_tokenize(text=text, engine='newmm')
             if w.strip(' ') != ''
         ])
         output = super().__call__(segmented_data)
@@ -31,12 +35,17 @@ class NERPreprocessorThai(TokenClassificationPreprocessor):
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.thai_wseg_tokenizer)
-class WordSegmentationPreprocessorThai(TokenClassificationPreprocessor):
+class WordSegmentationPreprocessorThai(
+        TokenClassificationTransformersPreprocessor):
 
-    @type_assert(object, str)
-    def __call__(self, data: str) -> Dict[str, Any]:
+    @type_assert(object, (str, dict))
+    def __call__(self, data: Union[Dict, str]) -> Dict[str, Any]:
         import regex
-        data = regex.findall(r'\X', data)
+        if isinstance(data, str):
+            text = data
+        else:
+            text = data[self.first_sequence]
+        data = regex.findall(r'\X', text)
         data = ' '.join([char for char in data])
 
         output = super().__call__(data)

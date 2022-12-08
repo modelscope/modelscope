@@ -52,17 +52,16 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
         """
         assert isinstance(input, tuple) and len(
             input
-        ) == 4, 'error - input type must be tuple and input length must be 4'
-        self.input_video_pth, text_queries, start_pt, end_pt = input
+        ) == 2, 'error - input type must be tuple and input length must be 2'
+        self.input_video_pth, text_queries = input
 
-        assert 0 < end_pt - start_pt <= 10, 'error - the subclip length must be 0-10 seconds long'
         assert 1 <= len(
             text_queries) <= 2, 'error - 1-2 input text queries are expected'
 
         # extract the relevant subclip:
         self.input_clip_pth = 'input_clip.mp4'
         with VideoFileClip(self.input_video_pth) as video:
-            subclip = video.subclip(start_pt, end_pt)
+            subclip = video.subclip()
             subclip.write_videofile(self.input_clip_pth)
 
         self.window_length = 24  # length of window during inference
@@ -191,7 +190,16 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                 output_clip_path, fps=self.meta['video_fps'], audio=True)
             del masked_video
 
-        result = {OutputKeys.MASKS: inputs}
+        masks = [mask.squeeze(1) for mask in inputs]
+
+        fps = self.meta['video_fps']
+        output_timestamps = []
+        for frame_idx in range(self.video.shape[0]):
+            output_timestamps.append(timestamp_format(seconds=frame_idx / fps))
+        result = {
+            OutputKeys.MASKS: masks,
+            OutputKeys.TIMESTAMPS: output_timestamps
+        }
         return result
 
 
@@ -201,3 +209,10 @@ def apply_mask(image, mask, color, transparency=0.7):
     color_matrix = np.ones(image.shape, dtype=np.float) * color
     out_image = color_matrix * mask + image * (1.0 - mask)
     return out_image
+
+
+def timestamp_format(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    time = '%02d:%02d:%06.3f' % (h, m, s)
+    return time

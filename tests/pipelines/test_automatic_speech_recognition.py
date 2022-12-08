@@ -217,6 +217,41 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             'damo/speech_UniASR_asr_2pass-id-16k-common-vocab1067-tensorflow1-offline',
             'wav_path': 'data/test/audios/asr_example_id.wav'
         },
+        {
+            'model_id':
+            'damo/speech_conformer_asr_nat-zh-cn-16k-aishell1-vocab4234-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_conformer_asr_nat-zh-cn-16k-aishell2-vocab5212-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformer_asr_nat-zh-cn-16k-aishell1-vocab4234-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformer_asr_nat-zh-cn-16k-aishell2-vocab5212-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformerbert_asr_nat-zh-cn-16k-aishell1-vocab4234-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformerbert_asr_nat-zh-cn-16k-aishell2-vocab5212-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
+            'wav_path': 'data/test/audios/asr_example_id.wav'
+        },
     ]
 
     def setUp(self) -> None:

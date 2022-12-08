@@ -19,6 +19,8 @@ class OutputKeys(object):
     BOXES = 'boxes'
     KEYPOINTS = 'keypoints'
     MASKS = 'masks'
+    DEPTHS = 'depths'
+    DEPTHS_COLOR = 'depths_color'
     TEXT = 'text'
     POLYGONS = 'polygons'
     OUTPUT = 'output'
@@ -59,6 +61,8 @@ TASK_OUTPUTS = {
     #       [x1, y1, x2, y2, x3, y3, x4, y4]
     # }
     Tasks.ocr_detection: [OutputKeys.POLYGONS],
+    Tasks.table_recognition: [OutputKeys.POLYGONS],
+    Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
 
     # ocr recognition result for single sample
     # {
@@ -132,6 +136,33 @@ TASK_OUTPUTS = {
     #   }
     Tasks.facial_expression_recognition:
     [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # face processing base result for single img
+    #   {
+    #       "scores": [0.85]
+    #       "boxes": [x1, y1, x2, y2]
+    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
+    #   }
+    Tasks.face_processing_base: [
+        OutputKeys.OUTPUT_IMG, OutputKeys.SCORES, OutputKeys.BOXES,
+        OutputKeys.KEYPOINTS
+    ],
+
+    # facial landmark confidence result for single sample
+    #   {
+    #       "output_img": np.array with shape(h, w, 3) (output_img = aligned_img)
+    #       "scores": [0.85]
+    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.facial_landmark_confidence:
+    [OutputKeys.SCORES, OutputKeys.KEYPOINTS, OutputKeys.BOXES],
+    # face attribute recognition result for single sample
+    #   {
+    #       "scores": [[0.9, 0.1], [0.92, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    #       "labels": [['Male', 'Female'], [0-2, 3-9, 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70+]]
+    #   }
+    Tasks.face_attribute_recognition: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # face recognition result for single sample
     #   {
@@ -433,9 +464,18 @@ TASK_OUTPUTS = {
 
     # referring video object segmentation result for a single video
     #   {
+    #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
+    #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    #   }
+    Tasks.referring_video_object_segmentation: [
+        OutputKeys.MASKS, OutputKeys.TIMESTAMPS
+    ],
+
+    # video human matting result for a single video
+    #   {
     #       "masks": [np.array # 2D array with shape [height, width]]
     #   }
-    Tasks.referring_video_object_segmentation: [OutputKeys.MASKS],
+    Tasks.video_human_matting: [OutputKeys.MASKS],
 
     # ============ nlp tasks ===================
 
@@ -490,7 +530,10 @@ TASK_OUTPUTS = {
 
     # word segmentation result for single sample
     # {
-    #   "output": "今天 天气 不错 ， 适合 出去 游玩"
+    #   "output": ["今天", "天气", "不错", "，", "适合", "出去", "游玩"]
+    # }
+    # {
+    #   'output': ['รถ', 'คัน', 'เก่า', 'ก็', 'ยัง', 'เก็บ', 'เอา']
     # }
     Tasks.word_segmentation: [OutputKeys.OUTPUT],
 
@@ -693,8 +736,9 @@ TASK_OUTPUTS = {
     #   "img_embedding": np.array with shape [1, D],
     #   "text_embedding": np.array with shape [1, D]
     # }
-    Tasks.multi_modal_embedding:
-    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
+    Tasks.multi_modal_embedding: [
+        OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING
+    ],
 
     # generative multi-modal embedding result for single sample
     # {
@@ -791,6 +835,11 @@ TASK_OUTPUTS = {
     #       ]
     # }
     Tasks.product_segmentation: [OutputKeys.MASKS],
+
+    # {
+    #     'scores': [0.1, 0.2, 0.3, ...]
+    # }
+    Tasks.translation_evaluation: [OutputKeys.SCORES]
 }
 
 

@@ -14,7 +14,7 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ModelFile)
 from .logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def create_model_if_not_exist(
@@ -56,8 +56,10 @@ def read_config(model_id_or_path: str,
     if not os.path.exists(model_id_or_path):
         local_path = model_file_download(
             model_id_or_path, ModelFile.CONFIGURATION, revision=revision)
-    else:
+    elif os.path.isdir(model_id_or_path):
         local_path = os.path.join(model_id_or_path, ModelFile.CONFIGURATION)
+    elif os.path.isfile(model_id_or_path):
+        local_path = model_id_or_path
 
     return Config.from_file(local_path)
 
@@ -154,4 +156,6 @@ def parse_label_mapping(model_dir):
         elif hasattr(config, 'id2label'):
             id2label = config.id2label
             label2id = {label: id for id, label in id2label.items()}
+    if label2id is not None:
+        label2id = {label: int(id) for label, id in label2id.items()}
     return label2id

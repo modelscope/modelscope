@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mglm_for_text_summarization import mGlmForSummarization
+    from .mglm_for_text_summarization import MGLMForTextSummarization
 else:
     _import_structure = {
         'mglm_for_text_summarization': ['MGLMForTextSummarization'],

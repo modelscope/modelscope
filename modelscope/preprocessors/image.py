@@ -289,3 +289,37 @@ class VideoSummarizationPreprocessor(Preprocessor):
             Dict[str, Any]: the preprocessed data
         """
         return data
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv,
+    module_name=Preprocessors.image_classification_bypass_preprocessor)
+class ImageClassificationBypassPreprocessor(Preprocessor):
+
+    def __init__(self, *args, **kwargs):
+        """image classification bypass preprocessor in the fine-tune scenario
+        """
+        super().__init__(*args, **kwargs)
+
+        self.training = kwargs.pop('training', True)
+        self.preprocessor_train_cfg = kwargs.pop('train', None)
+        self.preprocessor_val_cfg = kwargs.pop('val', None)
+
+    def train(self):
+        self.training = True
+        return
+
+    def eval(self):
+        self.training = False
+        return
+
+    def __call__(self, results: Dict[str, Any]):
+        """process the raw input data
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            Dict[str, Any] | None: the preprocessed data
+        """
+        pass

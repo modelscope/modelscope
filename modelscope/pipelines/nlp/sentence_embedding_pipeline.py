@@ -22,7 +22,10 @@ class SentenceEmbeddingPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str],
                  preprocessor: Optional[Preprocessor] = None,
-                 first_sequence='first_sequence',
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 sequence_length=128,
                  **kwargs):
         """Use `model` and `preprocessor` to create a nlp text dual encoder then generates the text representation.
         Args:
@@ -30,16 +33,20 @@ class SentenceEmbeddingPipeline(Pipeline):
             or a model id from the model hub, or a torch model instance.
             preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
             the model if supplied.
-            sequence_length: Max sequence length in the user's custom scenario. 128 will be used as a default value.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
         """
-        model = Model.from_pretrained(model) if isinstance(model,
-                                                           str) else model
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            config_file=config_file,
+            device=device,
+            auto_collate=auto_collate)
         if preprocessor is None:
-            preprocessor = Preprocessor.from_pretrained(
-                model.model_dir if isinstance(model, Model) else model,
-                first_sequence=first_sequence,
-                sequence_length=kwargs.pop('sequence_length', 128))
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+            self.preprocessor = Preprocessor.from_pretrained(
+                self.model.model_dir,
+                sequence_length=sequence_length,
+                **kwargs)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

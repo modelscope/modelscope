@@ -2,8 +2,8 @@
 
 import math
 import os
-import shutil
 from functools import partial
+from shutil import ignore_patterns
 from typing import Callable, Dict, Optional, Tuple, Union
 
 import torch
@@ -20,11 +20,12 @@ from modelscope.preprocessors.ofa.utils.collate import collate_fn
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.optimizer.builder import build_optimizer
+from modelscope.trainers.parallel.utils import is_parallel
 from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigKeys,
-                                       ModeKeys)
+                                       Invoke, ModeKeys, ModelFile)
 from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
-                                get_schedule)
+                                get_schedule, recursive_overwrite)
 
 
 @TRAINERS.register_module(module_name=Trainers.ofa)
@@ -48,7 +49,8 @@ class OFATrainer(EpochBasedTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             **kwargs):
-        model = Model.from_pretrained(model, revision=model_revision)
+        model = Model.from_pretrained(
+            model, revision=model_revision, invoked_by=Invoke.TRAINER)
         model_dir = model.model_dir
         self.cfg_modify_fn = cfg_modify_fn
         cfg = self.rebuild_config(Config.from_file(cfg_file))
@@ -56,23 +58,12 @@ class OFATrainer(EpochBasedTrainer):
             work_dir = cfg.train.work_dir
         else:
             work_dir = kwargs['work_dir']
-        tokenizer_files = {
-            'zh': [
-                'tokenizer.json', 'tokenizer_config.json', 'vocab.txt',
-                'config.json', 'ans2label.json'
-            ],
-            'en': [
-                'tokenizer.json', 'vocab.json', 'merges.txt', 'config.json',
-                'ans2label.json'
-            ],
-        }
-        for filename in tokenizer_files[cfg.model.get('language', 'en')]:
-            finetune_file = os.path.join(work_dir, filename)
-            pretrain_file = os.path.join(model_dir, filename)
-            if os.path.exists(finetune_file):
-                continue
-            if os.path.exists(pretrain_file):
-                shutil.copy(pretrain_file, finetune_file)
+
+        os.makedirs(work_dir, exist_ok=True)
+        ignore_file_set = set()
+        ignore_file_set.add(ModelFile.CONFIGURATION)
+        recursive_overwrite(
+            model_dir, work_dir, ignore=ignore_patterns(*ignore_file_set))
 
         if preprocessor is None:
             preprocessor = {
@@ -137,6 +128,7 @@ class OFATrainer(EpochBasedTrainer):
         return cfg
 
     def train_step(self, model, inputs):
+        model = model.module if self._dist or is_parallel(model) else model
         model.train()
         loss, sample_size, logging_output = self.criterion(model, inputs)
         train_outputs = {'loss': loss}

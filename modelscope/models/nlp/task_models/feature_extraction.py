@@ -5,12 +5,10 @@ import numpy as np
 
 from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS
-from modelscope.models.nlp.bert import BertConfig
 from modelscope.models.nlp.task_models.task_model import \
     SingleBackboneTaskModelBase
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import FeatureExtractionOutput, OutputKeys
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import parse_label_mapping
 
 __all__ = ['FeatureExtractionModel']
 
@@ -31,9 +29,9 @@ class FeatureExtractionModel(SingleBackboneTaskModelBase):
 
         self.build_backbone(self.backbone_cfg)
 
-    def forward(self, **input: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def forward(self, **input: Dict[str, Any]) -> FeatureExtractionOutput:
         # backbone do not need labels, only head need for loss compute
         input.pop(OutputKeys.LABELS, None)
         outputs = super().forward(input)
         sequence_output = outputs.last_hidden_state
-        return {OutputKeys.TEXT_EMBEDDING: sequence_output}
+        return FeatureExtractionOutput(text_embedding=sequence_output)

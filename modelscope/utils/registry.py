@@ -64,8 +64,9 @@ class Registry(object):
         if group_key not in self._modules:
             self._modules[group_key] = dict()
 
-        if not inspect.isclass(module_cls):
-            raise TypeError(f'module is not a class type: {type(module_cls)}')
+        # Some registered module_cls can be function type.
+        # if not inspect.isclass(module_cls):
+        #     raise TypeError(f'module is not a class type: {type(module_cls)}')
 
         if module_name is None:
             module_name = module_cls.__name__

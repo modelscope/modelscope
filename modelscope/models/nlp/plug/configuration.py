@@ -21,7 +21,7 @@ from transformers import PretrainedConfig
 
 from modelscope.utils import logger as logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class PlugNLUConfig(PretrainedConfig):
@@ -225,7 +225,7 @@ class PlugNLGConfig(PlugNLUConfig):
                  fp32_layernorm=True,
                  fp32_embedding=False,
                  fp32_tokentypes=False,
-                 layernorm_epsilon=1e-5,
+                 layernorm_epsilon=1e-12,
                  attn_separate=False,
                  **kwargs):
         super().__init__(layer_norm_eps=layernorm_epsilon, **kwargs)

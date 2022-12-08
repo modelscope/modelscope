@@ -76,8 +76,7 @@ class TestOfaTrainer(unittest.TestCase):
         os.makedirs(WORKSPACE, exist_ok=True)
         config_file = os.path.join(WORKSPACE, ModelFile.CONFIGURATION)
         with open(config_file, 'w') as writer:
-            json.dump(self.finetune_cfg, writer)
-
+            json.dump(self.finetune_cfg, writer, indent=4)
         pretrained_model = 'damo/ofa_ocr-recognition_scene_base_zh'
 
         args = dict(

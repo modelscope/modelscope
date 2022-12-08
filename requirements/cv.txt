@@ -21,7 +21,6 @@ moviepy>=1.0.3
 networkx>=2.5
 numba
 onnxruntime>=1.10
-opencv-python
 pai-easycv>=0.6.3.9
 pandas
 psutil

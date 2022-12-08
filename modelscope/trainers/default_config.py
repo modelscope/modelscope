@@ -4,15 +4,23 @@ from modelscope.utils.config import Config
 
 DEFAULT_CONFIG = {
     'train': {
-        'hooks': [{
-            'type': 'CheckpointHook',
-            'interval': 1
-        }, {
-            'type': 'TextLoggerHook',
-            'interval': 10
-        }, {
-            'type': 'IterTimerHook'
-        }]
+        'hooks': [
+            {
+                'type': 'CheckpointHook',
+                'interval': 1
+            },
+            {
+                'type': 'TextLoggerHook',
+                'interval': 10
+            },
+            {
+                'type': 'IterTimerHook'
+            },
+            {
+                'type': 'TensorboardHook',
+                'interval': 10
+            },
+        ]
     }
 }
 

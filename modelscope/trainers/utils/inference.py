@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import shutil
+from collections.abc import Mapping
 
 import torch
 from torch import distributed as dist
@@ -14,18 +15,13 @@ from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
 
 
-def single_gpu_test(trainer,
-                    data_loader,
-                    device,
-                    metric_classes=None,
-                    data_loader_iters=None):
+def single_gpu_test(trainer, data_loader, device, data_loader_iters=None):
     """Test model in EpochBasedTrainer with a single gpu.
 
     Args:
         trainer (modelscope.trainers.EpochBasedTrainer): Trainer to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
         device (str | torch.device): The target device for the data.
-        metric_classes (List): List of Metric class that uses to collect metrics
         data_loader_iters (int): Used when dataset has no attribute __len__ or only load part of dataset.
 
     Returns:
@@ -47,18 +43,19 @@ def single_gpu_test(trainer,
         data_len = data_loader_iters
         desc = 'Test iterations'
 
+    results = []
+    data_lists = []
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
             result = trainer.evaluation_step(data)
-            if metric_classes is not None:
-                for metric_cls in metric_classes:
-                    metric_cls.add(result, data)
+            results.append(result)
+            data_lists.append(data)
 
             if progress_with_iters:
                 batch_size = 1  # iteration count
             else:
-                if isinstance(data, dict):
+                if isinstance(data, Mapping):
                     if 'nsentences' in data:
                         batch_size = data['nsentences']
                     else:
@@ -74,11 +71,7 @@ def single_gpu_test(trainer,
             if progress_with_iters and (i + 1) >= data_len:
                 break
 
-    metric_values = {}
-    for metric_cls in metric_classes:
-        metric_values.update(metric_cls.evaluate())
-
-    return metric_values
+    return results, data_lists
 
 
 def multi_gpu_test(trainer,
@@ -86,7 +79,6 @@ def multi_gpu_test(trainer,
                    device,
                    tmpdir=None,
                    gpu_collect=False,
-                   metric_classes=None,
                    data_loader_iters_per_gpu=None):
     """Test model in EpochBasedTrainer with multiple gpus.
 
@@ -103,7 +95,6 @@ def multi_gpu_test(trainer,
         tmpdir (str): Path of directory to save the temporary results from
             different gpus under cpu mode.
         gpu_collect (bool): Option to use either gpu or cpu to collect results.
-        metric_classes(List): List of Metric class that uses to collect metrics
         data_loader_iters_per_gpu (int): Used when dataset has no attribute __len__ or only load part of dataset.
     Returns:
         list: The prediction results.
@@ -138,7 +129,7 @@ def multi_gpu_test(trainer,
             result = trainer.evaluation_step(data)
             results.append(result)
 
-            if isinstance(data, dict):
+            if isinstance(data, Mapping):
                 if 'nsentences' in data:
                     batch_size = data['nsentences']
                 else:
@@ -146,7 +137,8 @@ def multi_gpu_test(trainer,
             else:
                 batch_size = len(data)
             if i >= (data_len // world_size) - 1:
-                total_samples = torch.LongTensor([batch_size]).to(model.device)
+                total_samples = torch.LongTensor([batch_size
+                                                  ]).to(trainer.model.device)
                 dist.all_reduce(total_samples, op=dist.reduce_op.SUM)
                 total_samples = total_samples.item()
             else:
@@ -179,22 +171,7 @@ def multi_gpu_test(trainer,
         data_list = collect_results_cpu(data_list, total_samples,
                                         os.path.join(tmpdir, 'groundtruth'))
 
-    if is_master():
-        assert len(data_list) == len(
-            results), f'size mismatch {len(data_list)} and {len(results)}'
-        if metric_classes is not None:
-            for i in range(len(data_list)):
-                for metric_cls in metric_classes:
-                    metric_cls.add(results[i], data_list[i])
-
-    metric_values = {}
-    if rank == 0:
-        for metric_cls in metric_classes:
-            metric_values.update(metric_cls.evaluate())
-    if world_size > 1:
-        metric_values = broadcast(metric_values, 0)
-
-    return metric_values
+    return results, data_list
 
 
 def collect_results_cpu(result_part, size, tmpdir=None):

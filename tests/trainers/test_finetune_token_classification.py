@@ -91,8 +91,13 @@ class TestFinetuneTokenClassification(unittest.TestCase):
                     'label': 'labels',
                 }
             }
-            cfg['preprocessor'] = {'type': 'token-cls-tokenizer'}
+            cfg['preprocessor'] = {
+                'type': 'token-cls-tokenizer',
+                'padding': 'max_length'
+            }
             cfg.train.max_epochs = 2
+            cfg.train.dataloader.workers_per_gpu = 0
+            cfg.evaluation.dataloader.workers_per_gpu = 0
             cfg.train.lr_scheduler = {
                 'type': 'LinearLR',
                 'start_factor': 1.0,

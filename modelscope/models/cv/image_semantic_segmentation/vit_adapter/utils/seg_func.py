@@ -25,7 +25,14 @@ def seg_resize(input,
                         'the output would more aligned if '
                         f'input size {(input_h, input_w)} is `x+1` and '
                         f'out size {(output_h, output_w)} is `nx+1`')
-    return F.interpolate(input, size, scale_factor, mode, align_corners)
+
+    try:
+        return F.interpolate(input, size, scale_factor, mode, align_corners)
+    except ValueError:
+        if isinstance(size, tuple):
+            if len(size) == 3:
+                size = size[:2]
+        return F.interpolate(input, size, scale_factor, mode, align_corners)
 
 
 def add_prefix(inputs, prefix):

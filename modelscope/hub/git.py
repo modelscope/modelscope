@@ -94,7 +94,7 @@ class GitCommandWrapper(metaclass=Singleton):
             return False
 
     def git_lfs_install(self, repo_dir):
-        cmd = ['git', '-C', repo_dir, 'lfs', 'install']
+        cmd = ['-C', repo_dir, 'lfs', 'install']
         try:
             self._run_git_command(*cmd)
             return True

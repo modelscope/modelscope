@@ -15,6 +15,8 @@ from modelscope.utils.constant import Tasks
 @HEADS.register_module(
     Tasks.token_classification, module_name=Heads.token_classification)
 @HEADS.register_module(
+    Tasks.named_entity_recognition, module_name=Heads.token_classification)
+@HEADS.register_module(
     Tasks.part_of_speech, module_name=Heads.token_classification)
 class TokenClassificationHead(TorchHead):
 

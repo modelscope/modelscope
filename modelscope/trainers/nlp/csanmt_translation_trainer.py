@@ -24,8 +24,7 @@ logger = get_logger()
 class CsanmtTranslationTrainer(BaseTrainer):
 
     def __init__(self, model: str, cfg_file: str = None, *args, **kwargs):
-        if not osp.exists(model):
-            model = snapshot_download(model)
+        model = self.get_or_download_model_dir(model)
         tf.reset_default_graph()
 
         self.model_dir = model

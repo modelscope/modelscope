@@ -22,7 +22,7 @@ from transformers.onnx import OnnxConfig
 
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class BertConfig(PretrainedConfig):

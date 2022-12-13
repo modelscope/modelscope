@@ -115,11 +115,11 @@ def load_checkpoint(filename,
                     if key in optimizer_dict:
                         optimizer_ins.load_state_dict(optimizer_dict[key])
                     else:
-                        logger.warn(
+                        logger.warning(
                             f'The state dict of optimizer {key} cannot be found in checkpoint file: {filename}'
                         )
         else:
-            logger.warn(
+            logger.warning(
                 f'The state dict of optimizer cannot be found in checkpoint file: {filename}'
             )
 
@@ -127,7 +127,7 @@ def load_checkpoint(filename,
         if 'lr_scheduler' in checkpoint:
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
         else:
-            logger.warn(
+            logger.warning(
                 f'The state dict of lr_scheduler cannot be found in checkpoint file: {filename}'
             )
 

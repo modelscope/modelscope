@@ -75,8 +75,8 @@ def snapshot_download(model_id: str,
                 'Cannot find the requested files in the cached path and outgoing'
                 ' traffic has been disabled. To enable model look-ups and downloads'
                 " online, set 'local_files_only' to False.")
-        logger.warn('We can not confirm the cached file is for revision: %s'
-                    % revision)
+        logger.warning('We can not confirm the cached file is for revision: %s'
+                       % revision)
         return cache.get_root_location(
         )  # we can not confirm the cached file is for snapshot 'revision'
     else:

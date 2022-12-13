@@ -388,7 +388,7 @@ class LazyImportModule(ModuleType):
             try:
                 getattr(self, sub_module)
             except Exception as e:
-                logger.warn(
+                logger.warning(
                     f'pre load module {sub_module} error, please check {e}')
 
     # Needed for autocompletion in an IDE

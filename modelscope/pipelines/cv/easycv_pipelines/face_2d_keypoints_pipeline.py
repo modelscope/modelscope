@@ -57,7 +57,7 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
         bboxes = np.array(det_result[OutputKeys.BOXES])
         landmarks = np.array(det_result[OutputKeys.KEYPOINTS])
         if bboxes.shape[0] == 0:
-            logger.warn('No face detected!')
+            logger.warning('No face detected!')
             return None
         # face idx with enough size
         face_idx = []
@@ -66,7 +66,7 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
             if (box[2] - box[0]) >= min_face and (box[3] - box[1]) >= min_face:
                 face_idx += [i]
         if len(face_idx) == 0:
-            logger.warn(
+            logger.warning(
                 f'Face size not enough, less than {min_face}x{min_face}!')
             return None
         bboxes = bboxes[face_idx]
@@ -176,7 +176,7 @@ class Face2DKeypointsPipeline(EasyCVPipeline):
 
         bboxes = np.array(det_result[OutputKeys.BOXES])
         if bboxes.shape[0] == 0:
-            logger.warn('No face detected!')
+            logger.warning('No face detected!')
             results = {
                 OutputKeys.KEYPOINTS: [],
                 OutputKeys.POSES: [],

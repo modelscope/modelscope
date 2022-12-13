@@ -18,6 +18,7 @@ __all__ = ['ScrfdDetect']
 
 
 @MODELS.register_module(Tasks.face_detection, module_name=Models.scrfd)
+@MODELS.register_module(Tasks.card_detection, module_name=Models.scrfd)
 class ScrfdDetect(TorchModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):

@@ -34,7 +34,7 @@ class FaceDetectionPipeline(Pipeline):
         config_path = osp.join(model, ModelFile.CONFIGURATION)
         cfg = Config.from_file(config_path)
         cfg_model = getattr(cfg, 'model', None)
-        if cfg_model is None:
+        if cfg_model is None or cfg_model.type == 'scrfd':
             detector = ScrfdDetect(model_dir=model, **kwargs)
         elif cfg_model.type == 'tinymog':
             detector = self.model.to(self.device)

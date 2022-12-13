@@ -76,7 +76,19 @@ def load_feature_for_one_target(
             uniprot_msa_dir=uniprot_msa_dir,
         )
     else:
-        raise NotImplementedError
+        # Not for unifold-symmetry
+        # only for unifold-multimer
+        batch, _ = load_and_process(
+            config=config.data,
+            mode='predict',
+            seed=seed,
+            batch_idx=None,
+            data_idx=0,
+            is_distillation=False,
+            sequence_ids=sequence_ids,
+            monomer_feature_dir=data_folder,
+            uniprot_msa_dir=uniprot_msa_dir,
+        )
     batch = UnifoldDataset.collater([batch])
     return batch
 

@@ -610,7 +610,7 @@ class HubApi:
             f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
-        resp = self.session.get(url=url, cookies=cookies)
+        resp = self.session.get(url=url, cookies=cookies, timeout=1800)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Data']

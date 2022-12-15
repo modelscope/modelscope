@@ -123,12 +123,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.hand_2d_keypoints:
     (Pipelines.hand_2d_keypoints,
      'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
-    Tasks.face_detection: (Pipelines.face_detection,
-                           'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.card_detection: (Pipelines.card_detection,
                            'damo/cv_resnet_carddetection_scrfd34gkps'),
     Tasks.face_detection:
-    (Pipelines.face_detection,
+    (Pipelines.mog_face_detection,
      'damo/cv_resnet101_face-detection_cvpr22papermogface'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),

@@ -28,6 +28,14 @@ class MogFaceDetectionTest(unittest.TestCase):
         result = face_detection(img_path)
         self.show_result(img_path, result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_default_model(self):
+        face_detection = pipeline(Tasks.face_detection)
+        img_path = 'data/test/images/mog_face_detection.jpg'
+
+        result = face_detection(img_path)
+        self.show_result(img_path, result)
+
 
 if __name__ == '__main__':
     unittest.main()

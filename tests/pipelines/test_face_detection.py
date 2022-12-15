@@ -42,13 +42,6 @@ class FaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         result = face_detection(img_path)
         self.show_result(img_path, result)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    def test_run_modelhub_default_model(self):
-        face_detection = pipeline(Tasks.face_detection)
-        img_path = 'data/test/images/face_detection2.jpeg'
-        result = face_detection(img_path)
-        self.show_result(img_path, result)
-
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_demo_compatibility(self):
         self.compatibility_check()

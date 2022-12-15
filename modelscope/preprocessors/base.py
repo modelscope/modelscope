@@ -246,6 +246,8 @@ class Preprocessor(ABC):
         else:
             sub_cfg = preprocessor_cfg
 
+        # TODO @wenmeng.zwm refine this logic when preprocessor has no model_dir param
+        # for cv models.
         sub_cfg.update({'model_dir': model_dir})
         sub_cfg.update(kwargs)
         if 'type' in sub_cfg:

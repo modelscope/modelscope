@@ -383,6 +383,7 @@ class Preprocessors(object):
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
+    object_detection_scrfd = 'object-detection-scrfd'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

@@ -125,3 +125,12 @@ You can install it with pip on linux or mac:
 Or you can checkout the instructions on the
 installation page: https://github.com/facebookresearch/fastText and follow the ones that match your environment.
 """
+
+# docstyle-ignore
+EASYNLP_IMPORT_ERROR = """
+{0} requires the easynlp library but it was not found in your environment.
+You can install it with pip on linux or mac:
+`pip install pai-easynlp -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
+Or you can checkout the instructions on the
+installation page: https://github.com/alibaba/EasyNLP and follow the ones that match your environment.
+"""

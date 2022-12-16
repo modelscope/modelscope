@@ -461,7 +461,7 @@ def show_image_object_detection_auto_result(img_path,
             lineType=8)
         cv2.putText(
             img,
-            label, (int((box[0] + box[2]) * 0.5), int(box[1])),
+            label, (int(box[0]), int(box[3])),
             1,
             1.0, (0, 255, 0),
             thickness=1,

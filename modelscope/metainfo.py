@@ -216,6 +216,7 @@ class Pipelines(object):
     image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
     image_object_detection_auto = 'yolox_image-object-detection-auto'
+    hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     tinynas_detection = 'tinynas-detection'

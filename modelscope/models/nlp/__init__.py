@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
+    from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
     from .heads import SequenceClassificationHead
     from .palm_v2 import PalmForTextGeneration
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
@@ -60,6 +61,7 @@ else:
         'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
         'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
+        'gpt_moe': ['GPTMoEForTextGeneration', 'DistributedGPTMoE'],
         'structbert': [
             'SbertForFaqQuestionAnswering',
             'SbertForMaskedLM',

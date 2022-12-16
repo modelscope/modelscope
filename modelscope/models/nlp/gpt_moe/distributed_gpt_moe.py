@@ -27,6 +27,7 @@ from transformers.modeling_utils import PreTrainedModel
 
 from modelscope.models import TorchModel
 from modelscope.models.nlp.gpt_moe import GPTMoEConfig
+from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
 from modelscope.utils.nlp.distributed import initialize_distributed
 from modelscope.utils.torch_utils import set_random_seed_mpu
 from .checkpointing import load_checkpoint
@@ -42,7 +43,6 @@ class GPTMoEParallelMLP(nn.Module):
                  moe=False,
                  enable_expert_tensor_parallelism=False):
         super().__init__()
-
         # Project to 4h.
         self.dense_h_to_4h = mpu.ColumnParallelLinearV3(
             config,
@@ -606,6 +606,8 @@ class GPTMoEParallelTransformerLayer(nn.Module):
         # Layer norm post the self attention.
         layernorm_output = self.post_attention_layernorm(layernorm_input)
 
+        moe_loss = torch.tensor(
+            0.0, device=layernorm_output.device, dtype=layernorm_output.dtype)
         mlp_bias = torch.tensor(
             0.0, device=layernorm_output.device, dtype=layernorm_output.dtype)
 
@@ -635,7 +637,7 @@ class GPTMoEParallelTransformerLayer(nn.Module):
         output = mpu.make_viewless_tensor(
             inp=output, requires_grad=output.requires_grad, keep_graph=True)
 
-        return output
+        return output, moe_loss
 
 
 class GPTMoEParallelTransformer(nn.Module):
@@ -743,18 +745,19 @@ class GPTMoEParallelTransformer(nn.Module):
 
         with rng_context:
             # Forward pass.
+            moe_losses = []
             for index in range(self.num_layers):
                 layer = self._get_layer(index)
-                hidden_states = layer(
+                hidden_states, moe_loss = layer(
                     hidden_states,
                     attention_mask,
                     inference_params=inference_params)
+                moe_losses.append(moe_loss)
 
         # Final layer norm.
         if self.post_process and self.post_layer_norm:
             hidden_states = self.final_layernorm(hidden_states)
-
-        return hidden_states
+        return (hidden_states, *moe_losses)
 
 
 class GPTMoETransformerLanguageModel(nn.Module):
@@ -805,7 +808,7 @@ class GPTMoETransformerLanguageModel(nn.Module):
         # Run encoder.
         if enc_hidden_states is None:
             if self.encoder is not None:
-                encoder_output = self.encoder(
+                encoder_output, *moe_losses = self.encoder(
                     encoder_input,
                     enc_attn_mask,
                     inference_params=inference_params)
@@ -814,7 +817,7 @@ class GPTMoETransformerLanguageModel(nn.Module):
         else:
             encoder_output = enc_hidden_states.to(encoder_input.dtype)
 
-        return encoder_output
+        return (encoder_output, *moe_losses)
 
     def load_state_dict(self, state_dict, strict=True):
         """Customized load."""
@@ -929,31 +932,53 @@ class GPTMoEModel(PreTrainedModel):
 
         return attention_mask, position_ids
 
+    @staticmethod
+    def post_language_model_processing(input_, labels, word_embeddings_weight,
+                                       sequence_parallel):
+
+        # Output. Format [s b h]
+        # Parallel logits.
+        input_parallel = input_
+        # Matrix multiply.
+        logits_parallel = mpu.LinearWithGradAccumulationAndAsyncCommunication.apply(
+            input_parallel, word_embeddings_weight, None, False, False,
+            sequence_parallel)
+
+        output = logits_parallel
+
+        if labels is None:
+            # [s b h] => [b s h]
+            return output.transpose(0, 1).contiguous()
+        else:
+            # [b s] => [s b]
+            labels = labels.transpose(0, 1).contiguous()
+            loss = mpu.vocab_parallel_cross_entropy(output.float(), labels)
+            # [s b] => [b, s]
+            loss = loss.transpose(0, 1).contiguous()
+            return loss
+
     def forward(self,
                 input_ids,
                 attention_mask=None,
                 position_ids=None,
                 inference_params=None,
+                labels=None,
                 **kwargs):
         if attention_mask is None and position_ids is None:
             attention_mask, position_ids = \
                 self.build_attention_mask_and_position_ids(input_ids)
 
-        lm_output = self.language_model(
+        lm_output, *moe_losses = self.language_model(
             input_ids,
             position_ids,
             attention_mask,
             inference_params=inference_params)
 
-        logits_parallel = mpu.LinearWithGradAccumulationAndAsyncCommunication.apply(
-            lm_output, self.word_embeddings_weight(), None, False, True,
+        lm_output = self.post_language_model_processing(
+            lm_output, labels, self.word_embeddings_weight(),
             self.config.sequence_parallel)
-        # Gather if needed.
 
-        output = logits_parallel
-        if not self.parallel_output:
-            output = mpu.gather_from_model_parallel_region(logits_parallel)
-        return output.transpose(0, 1).contiguous()
+        return (lm_output, *moe_losses)
 
     def load_state_dict(self, state_dict, strict=True):
         """Customized load."""
@@ -1126,28 +1151,63 @@ class DistributedGPTMoE(TorchModel):
             load_ds_ckpts=self.config.load_ds_ckpts)
         self.inference_params = None
 
-    def forward_step(self, tokens, attention_mask, position_ids):
-        logits = self.dist_model(
+    def train(self, mode: bool = True):
+        if mode:
+            self.inference_params = None
+        return super().train(mode)
+
+    def forward(self,
+                tokens,
+                attention_mask=None,
+                position_ids=None,
+                labels=None,
+                prompt_length=None):
+
+        outputs, *other_losses = self.dist_model(
             tokens,
             attention_mask,
             position_ids,
-            inference_params=self.inference_params)
-        self.inference_params.sequence_len_offset += tokens.size(1)
-        return logits
+            inference_params=self.inference_params,
+            labels=labels)
+
+        if labels is None:
+            self.inference_params.sequence_len_offset += tokens.size(1)
+            return TextGenerationModelOutput(logits=outputs)
+        else:
+
+            moe_losses = []
+            for moe_loss in other_losses:
+                if moe_loss is not None:
+                    moe_losses.append(moe_loss)
+            moe_loss = sum(moe_losses) * 0.01
+
+            loss_mask = torch.ones(
+                tokens.size(), dtype=torch.float, device=tokens.device)
+
+            losses = outputs.float()
+            loss_mask = loss_mask.view(-1).float()
+            loss = torch.sum(losses.view(-1) * loss_mask) / loss_mask.sum()
+
+            loss = loss + moe_loss
+
+            return TextGenerationModelOutput(loss=loss)
 
     def generate(self,
                  tokens,
                  temperature=1.0,
                  use_eod_token_for_early_termination=True,
                  stop_on_double_eol=False,
-                 stop_on_eol=False):
-        lengths = torch.tensor([tokens.size(1)], device=tokens.device)
+                 stop_on_eol=False,
+                 **kwargs):
+        batch_size = tokens.size(0)
+        lengths = kwargs.pop(
+            'prompt_length',
+            torch.tensor([tokens.size(1)], device=tokens.device))
         pads = torch.ones(
-            1, self.config.tokens_to_generate,
+            batch_size, self.config.tokens_to_generate,
             device=tokens.device).long() * self.config.eod_id
         tokens = torch.cat((tokens, pads), dim=-1)
 
-        batch_size = tokens.size(0)
         min_prompt_length = lengths.min().item()
         max_sequence_length = tokens.size(1)
         max_sequence_length = min(max_sequence_length,
@@ -1176,6 +1236,7 @@ class DistributedGPTMoE(TorchModel):
         with torch.no_grad():
             attention_mask, position_ids = \
                 GPTMoEModel.build_attention_mask_and_position_ids(tokens)
+
             prev_context_length = 0
             for context_length in range(min_prompt_length,
                                         max_sequence_length):
@@ -1188,8 +1249,8 @@ class DistributedGPTMoE(TorchModel):
                     ..., prev_context_length:context_length, :context_length]
 
                 # logits will be meanigful only in the last pipeline stage.
-                logits = self.forward_step(tokens2use, attention_mask2use,
-                                           positions2use)
+                logits = self(tokens2use, attention_mask2use,
+                              positions2use).logits
 
                 # Sample.
                 last_token_logits = logits[:, -1, :]
@@ -1233,4 +1294,4 @@ class DistributedGPTMoE(TorchModel):
                     break
 
         tokens = tokens[:, :(context_length + 1)]
-        return tokens
+        return TokenGeneratorOutput(sequences=tokens)

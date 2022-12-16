@@ -27,6 +27,15 @@ from ..configuration import logger
 from .mappings import drop_tokens, gather_tokens
 
 try:
+    # To enable Tutel MoE optimizations:
+    # python3 -m pip install --user --upgrade git+https://github.com/microsoft/tutel@v0.1.x
+    from tutel import moe as tutel_moe
+    TUTEL_INSTALLED = True
+except ImportError:
+    # Fail silently so we don't spam logs unnecessarily if user isn't using tutel
+    TUTEL_INSTALLED = False
+
+try:
     from apex.normalization import FusedLayerNorm as _FusedLayerNorm
 
     has_fused_layernorm = True
@@ -444,7 +453,6 @@ class MOELayer(Base):
 
         # Implement Algorithm 2 from GShard paper.
         d_model = input[0].shape[-1]
-
         # Initial implementation -> Reshape into S tokens by dropping sequence dimension.
         # Reshape into G groups so that each group can distribute tokens equally
         # group_size = kwargs['group_size'] if 'group_size' in kwargs.keys() else 1

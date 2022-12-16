@@ -11,8 +11,9 @@ from modelscope.trainers import build_trainer
 
 class TestFinetuneTextGeneration(unittest.TestCase):
 
+    test_model_id = 'PAI/nlp_gpt3_text-generation_0.35B_MoE-64'
+
     def setUp(self):
-        print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
@@ -30,7 +31,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             {'text1': 'src_txt'})
         eval_dataset = dataset_dict['test'].remap_columns({'text1': 'src_txt'})
         max_epochs = 10
-        tmp_dir = './gpt3_poetry'
+        tmp_dir = './gpt_moe_poetry'
 
         num_warmup_steps = 100
 
@@ -49,13 +50,13 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             }
             cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
             cfg.train.dataloader = {
-                'batch_size_per_gpu': 16,
+                'batch_size_per_gpu': 1,
                 'workers_per_gpu': 1
             }
             return cfg
 
         kwargs = dict(
-            model='damo/nlp_gpt3_text-generation_1.3B',
+            model=self.test_model_id,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             max_epochs=max_epochs,
@@ -64,7 +65,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
 
         # Construct trainer and train
         trainer = build_trainer(
-            name=Trainers.gpt3_trainer, default_args=kwargs)
+            name=Trainers.gpt_moe_trainer, default_args=kwargs)
         trainer.train()
 
     @unittest.skip(
@@ -81,7 +82,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             .map(lambda example: {'src_txt': example['src_txt'].replace('[SEP]', '<sep>') + '\n'})
 
         max_epochs = 10
-        tmp_dir = './gpt3_dureader'
+        tmp_dir = './gpt_moe_dureader'
 
         num_warmup_steps = 200
 
@@ -113,7 +114,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             return cfg
 
         kwargs = dict(
-            model='damo/nlp_gpt3_text-generation_1.3B',
+            model=self.test_model_id,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             max_epochs=max_epochs,
@@ -122,7 +123,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
 
         # Construct trainer and train
         trainer = build_trainer(
-            name=Trainers.gpt3_trainer, default_args=kwargs)
+            name=Trainers.gpt_moe_trainer, default_args=kwargs)
         trainer.train()
 
 

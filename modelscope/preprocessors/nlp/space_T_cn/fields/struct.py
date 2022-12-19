@@ -151,7 +151,7 @@ class Constant:
 
         self.agg_ops = [
             '', 'AVG', 'MAX', 'MIN', 'COUNT', 'SUM', 'COMPARE', 'GROUP BY',
-            'SAME'
+            'SAME', 'M2M', 'Y2Y', 'TREND'
         ]
 
         self.cond_ops = ['>', '<', '==', '!=', 'ASC', 'DESC']

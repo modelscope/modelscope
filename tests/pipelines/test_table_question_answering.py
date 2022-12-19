@@ -49,15 +49,20 @@ def tableqa_tracking_and_print_results_with_history(
 def tableqa_tracking_and_print_results_without_history(
         pipelines: List[TableQuestionAnsweringPipeline]):
     test_case = {
-        'utterance': [
-            '有哪些风险类型？',
-            '风险类型有多少种？',
-            '珠江流域的小型水库的库容总量是多少？',
-        ]
+        'utterance': [['列出油耗大于8但是功率低于200的名称和价格', 'car'],
+                      ['油耗低于5的suv有哪些？', 'car'], ['上个月收益超过3的有几个基金？', 'fund'],
+                      ['净值不等于1的基金平均月收益率和年收益率是多少？', 'fund'],
+                      ['计算机或者成绩优秀的同学有哪些？学号是多少？', 'student'],
+                      ['本部博士生中平均身高是多少？', 'student'],
+                      ['长江流域和珠江流域的水库库容总量是多少？', 'reservoir'],
+                      ['今天星期几？', 'reservoir']]
     }
     for p in pipelines:
-        for question in test_case['utterance']:
-            output_dict = p({'question': question})[OutputKeys.OUTPUT]
+        for question, table_id in test_case['utterance']:
+            output_dict = p({
+                'question': question,
+                'table_id': table_id
+            })[OutputKeys.OUTPUT]
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
@@ -70,21 +75,26 @@ def tableqa_tracking_and_print_results_with_tableid(
         pipelines: List[TableQuestionAnsweringPipeline]):
     test_case = {
         'utterance': [
-            ['有哪些风险类型？', 'fund'],
-            ['风险类型有多少种？', 'reservoir'],
-            ['珠江流域的小型水库的库容总量是多少？', 'reservoir'],
-            ['那平均值是多少？', 'reservoir'],
-            ['那水库的名称呢？', 'reservoir'],
-            ['换成中型的呢？', 'reservoir'],
+            ['有哪些风险类型？', 'fund', False],
+            ['风险类型有多少种？', 'fund', True],
+            ['珠江流域的小型水库的库容总量是多少？', 'reservoir', False],
+            ['那平均值是多少？', 'reservoir', True],
+            ['那水库的名称呢？', 'reservoir', True],
+            ['换成中型的呢？', 'reservoir', True],
+            ['近7年来车辆的销量趋势？', 'car_sales', False],
+            ['近7年来车辆的销量月环比是多少呢？', 'car_sales', True],
         ],
     }
     for p in pipelines:
         historical_queries = None
-        for question, table_id in test_case['utterance']:
+        for question, table_id, use_history in test_case['utterance']:
             output_dict = p({
-                'question': question,
-                'table_id': table_id,
-                'history_sql': historical_queries
+                'question':
+                question,
+                'table_id':
+                table_id,
+                'history_sql':
+                historical_queries if use_history else None
             })[OutputKeys.OUTPUT]
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])

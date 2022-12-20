@@ -67,6 +67,7 @@ if TYPE_CHECKING:
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
+    from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
 
 else:
     _import_structure = {
@@ -153,7 +154,10 @@ else:
         ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
-        ]
+        ],
+        'video_object_segmentation_pipeline': [
+            'VideoObjectSegmentationPipeline'
+        ],
     }
 
     import sys

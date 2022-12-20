@@ -89,6 +89,7 @@ class CVTasks(object):
     language_guided_video_summarization = 'language-guided-video-summarization'
 
     # video segmentation
+    video_object_segmentation = 'video-object-segmentation'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     video_human_matting = 'video-human-matting'
 

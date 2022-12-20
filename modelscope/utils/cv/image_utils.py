@@ -1,8 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
@@ -478,3 +481,12 @@ def depth_to_color(depth):
         (depth.max() - depth) / depth.max()) * 2**8).astype(np.uint8)[:, :, :3]
     depth_color = cv2.cvtColor(depth_color, cv2.COLOR_RGB2BGR)
     return depth_color
+
+
+def masks_visualization(masks, palette):
+    vis_masks = []
+    for f in range(masks.shape[0]):
+        img_E = Image.fromarray(masks[f])
+        img_E.putpalette(palette)
+        vis_masks.append(img_E)
+    return vis_masks

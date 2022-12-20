@@ -226,6 +226,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.translation_evaluation:
     (Pipelines.translation_evaluation,
      'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
+    Tasks.video_object_segmentation:
+    (Pipelines.video_object_segmentation,
+     'damo/cv_rdevos_video-object-segmentation'),
 }
 
 

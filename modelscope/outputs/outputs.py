@@ -839,7 +839,13 @@ TASK_OUTPUTS = {
     # {
     #     'scores': [0.1, 0.2, 0.3, ...]
     # }
-    Tasks.translation_evaluation: [OutputKeys.SCORES]
+    Tasks.translation_evaluation: [OutputKeys.SCORES],
+
+    # video object segmentation result for a single video
+    #   {
+    #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
+    #   }
+    Tasks.video_object_segmentation: [OutputKeys.MASKS],
 }
 
 

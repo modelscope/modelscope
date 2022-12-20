@@ -363,6 +363,7 @@ class Trainers(object):
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
+    speech_kantts_trainer = 'speech-kantts-trainer'
 
 
 class Preprocessors(object):
@@ -429,6 +430,7 @@ class Preprocessors(object):
     text_to_tacotron_symbols = 'text-to-tacotron-symbols'
     wav_to_lists = 'wav-to-lists'
     wav_to_scp = 'wav-to-scp'
+    kantts_data_preprocessor = 'kantts-data-preprocessor'
 
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'

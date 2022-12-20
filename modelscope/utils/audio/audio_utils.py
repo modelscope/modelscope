@@ -9,6 +9,12 @@ from modelscope.fileio.file import HTTPStorage
 SEGMENT_LENGTH_TRAIN = 16000
 
 
+class TtsTrainType(object):
+    TRAIN_TYPE_SAMBERT = 'train-type-sambert'
+    TRAIN_TYPE_BERT = 'train-type-bert'
+    TRAIN_TYPE_VOC = 'train-type-voc'
+
+
 def to_segment(batch, segment_length=SEGMENT_LENGTH_TRAIN):
     """
     Dataset mapping function to split one audio into segments.

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
                         ImageInstanceSegmentationPreprocessor,
                         ImageDenoisePreprocessor)
     from .kws import WavToLists
+    from .tts import KanttsDataPreprocessor
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
@@ -50,6 +51,7 @@ else:
             'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
         ],
         'kws': ['WavToLists'],
+        'tts': ['KanttsDataPreprocessor'],
         'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',

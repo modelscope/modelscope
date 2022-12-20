@@ -481,12 +481,9 @@ class HubApi:
         cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'
-
+        headers = self.headers if headers is None else headers
         r = self.session.get(
-            path, cookies=cookies, headers={
-                **headers,
-                **self.headers
-            })
+            path, cookies=cookies, headers=headers)
 
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
@@ -813,7 +810,7 @@ class ModelScopeConfig:
             user_name,
         )
         if isinstance(user_agent, dict):
-            ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())
+            ua += '; '.join(f'{k}/{v}' for k, v in user_agent.items())
         elif isinstance(user_agent, str):
             ua += ';' + user_agent
         return ua

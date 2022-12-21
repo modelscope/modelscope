@@ -57,6 +57,7 @@ class Models(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'image-body-reshaping'
+    image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
 
@@ -243,6 +244,7 @@ class Pipelines(object):
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'flow-based-body-reshaping'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
 
@@ -389,6 +391,7 @@ class Preprocessors(object):
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
     object_detection_scrfd = 'object-detection-scrfd'
+    image_sky_change_preprocessor = 'image-sky-change-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

@@ -836,6 +836,11 @@ TASK_OUTPUTS = {
     # }
     Tasks.product_segmentation: [OutputKeys.MASKS],
 
+    # image_skychange result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.image_skychange: [OutputKeys.OUTPUT_IMG],
     # {
     #     'scores': [0.1, 0.2, 0.3, ...]
     # }

@@ -101,6 +101,10 @@ TASK_INPUTS = {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,
     },
+    Tasks.image_skychange: {
+        'sky_image': InputType.IMAGE,
+        'scene_image': InputType.IMAGE,
+    },
 
     # image generation task result for a single image
     Tasks.image_to_image_generation:

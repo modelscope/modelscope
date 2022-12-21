@@ -810,7 +810,7 @@ class ModelScopeConfig:
             user_name,
         )
         if isinstance(user_agent, dict):
-            ua += '; '.join(f'{k}/{v}' for k, v in user_agent.items())
+            ua += '; ' + '; '.join(f'{k}/{v}' for k, v in user_agent.items())
         elif isinstance(user_agent, str):
-            ua += ';' + user_agent
+            ua += '; ' + user_agent
         return ua

@@ -18,7 +18,7 @@ from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.logger import get_logger
 
 
@@ -202,7 +202,9 @@ class ImageClassifitionTrainer(BaseTrainer):
                     model) else os.path.dirname(model)
             else:
                 self.model_dir = snapshot_download(
-                    model, revision=model_revision)
+                    model,
+                    revision=model_revision,
+                    user_agent={Invoke.KEY: Invoke.TRAINER})
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)

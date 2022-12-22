@@ -3,6 +3,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
+import shutil
+import wave
 import zipfile
 
 import json
@@ -11,6 +13,7 @@ import numpy as np
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
+from modelscope.utils.audio.audio_utils import TtsTrainType, ndarray_pcm_to_wav
 from modelscope.utils.audio.tts_exceptions import (
     TtsFrontendInitializeFailedException,
     TtsFrontendLanguageTypeInvalidException, TtsModelConfigurationException,
@@ -39,6 +42,8 @@ class SambertHifigan(Model):
             )
         am_cfg = kwargs['am']
         voc_cfg = kwargs['vocoder']
+        self.__model_dir = model_dir
+        self.__sample_rate = kwargs.get('sample_rate', 16000)
         # initialize frontend
         import ttsfrd
         frontend = ttsfrd.TtsFrontendEngine()
@@ -94,4 +99,4 @@ class SambertHifigan(Model):
             line = line.strip().split('\t')
             audio = self.__synthesis_one_sentences(voice, line[1])
             audio_total = np.append(audio_total, audio, axis=0)
-        return audio_total
+        return ndarray_pcm_to_wav(self.__sample_rate, audio_total)

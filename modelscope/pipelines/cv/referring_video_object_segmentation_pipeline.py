@@ -60,6 +60,7 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
 
         # extract the relevant subclip:
         self.input_clip_pth = 'input_clip.mp4'
+
         with VideoFileClip(self.input_video_pth) as video:
             subclip = video.subclip()
             subclip.write_videofile(self.input_clip_pth)
@@ -185,12 +186,21 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
             output_clip_path = self.model.cfg.pipeline.output_path
             clip = ImageSequenceClip(
                 sequence=masked_video, fps=self.meta['video_fps'])
-            clip = clip.set_audio(AudioFileClip(self.input_clip_pth))
+
+            audio_flag = True
+            try:
+                audio = AudioFileClip(self.input_clip_pth)
+            except KeyError as e:
+                logger.error(f'key error: {e}!')
+                audio_flag = False
+
+            if audio_flag:
+                clip = clip.set_audio(audio)
             clip.write_videofile(
-                output_clip_path, fps=self.meta['video_fps'], audio=True)
+                output_clip_path, fps=self.meta['video_fps'], audio=audio_flag)
             del masked_video
 
-        masks = [mask.squeeze(1) for mask in inputs]
+        masks = [mask.squeeze(1).cpu().numpy() for mask in inputs]
 
         fps = self.meta['video_fps']
         output_timestamps = []
@@ -200,6 +210,7 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
             OutputKeys.MASKS: masks,
             OutputKeys.TIMESTAMPS: output_timestamps
         }
+
         return result
 
 

@@ -566,6 +566,17 @@ class HubApi:
 
         return local_paths, dataset_formation, cache_dir
 
+    def fetch_single_csv_script(self, script_url: str):
+        cookies = ModelScopeConfig.get_cookies()
+        resp = self.session.get(script_url, cookies=cookies, headers=self.headers)
+        if not resp or not resp.text:
+            raise 'The meta-csv file cannot be empty when the meta-args `big_data` is true.'
+        text_list = resp.text.split('\n')
+        text_headers = text_list[0]
+        text_content = text_list[1:]
+
+        return text_headers, text_content
+
     def get_dataset_file_url(
             self,
             file_name: str,

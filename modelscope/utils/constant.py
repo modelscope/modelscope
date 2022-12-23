@@ -411,3 +411,7 @@ EXTENSIONS_TO_LOAD = {
     'parquet': 'parquet',
     'txt': 'text'
 }
+
+
+class MetaDataFields:
+    ARGS_BIG_DATA = 'big_data'

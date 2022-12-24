@@ -150,6 +150,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             cmd['token_num_relax'] = token_num_relax
             cmd['decoding_ind'] = decoding_ind
             cmd['decoding_mode'] = decoding_mode
+            cmd['num_workers'] = 0
 
         elif self.framework == Frameworks.tf:
             cmd['fs']['model_fs'] = inputs['model_config']['fs']
@@ -259,6 +260,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 minlenratio=cmd['minlenratio'],
                 beam_size=cmd['beam_size'],
                 ngpu=cmd['ngpu'],
+                num_workers=cmd['num_workers'],
                 ctc_weight=cmd['ctc_weight'],
                 lm_weight=cmd['lm_weight'],
                 penalty=cmd['penalty'],

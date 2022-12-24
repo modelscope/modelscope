@@ -67,6 +67,7 @@ class CVTasks(object):
     image_denoising = 'image-denoising'
     image_portrait_enhancement = 'image-portrait-enhancement'
     image_inpainting = 'image-inpainting'
+    image_skychange = 'image-skychange'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
@@ -89,6 +90,7 @@ class CVTasks(object):
     language_guided_video_summarization = 'language-guided-video-summarization'
 
     # video segmentation
+    video_object_segmentation = 'video-object-segmentation'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     video_human_matting = 'video-human-matting'
 
@@ -409,3 +411,7 @@ EXTENSIONS_TO_LOAD = {
     'parquet': 'parquet',
     'txt': 'text'
 }
+
+
+class MetaDataFields:
+    ARGS_BIG_DATA = 'big_data'

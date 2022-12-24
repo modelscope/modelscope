@@ -8,12 +8,14 @@ if TYPE_CHECKING:
     from .backbone import GPTMoEModel
     from .text_generation import GPTMoEForTextGeneration
     from .tokenizer import JiebaBPETokenizer
+    from .distributed_gpt_moe import DistributedGPTMoE
 else:
     _import_structure = {
         'configuration': ['GPTMoEConfig'],
         'backbone': ['GPTMoEModel'],
         'text_generation': ['GPTMoEForTextGeneration'],
         'tokenizer': ['JiebaBPETokenizer'],
+        'distributed_gpt_moe': ['DistributedGPTMoE'],
     }
 
     import sys

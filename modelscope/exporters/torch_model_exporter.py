@@ -115,7 +115,7 @@ class TorchModelExporter(Exporter):
         try:
             sig = _signature(model)
         except ValueError as e:
-            logger.warn('%s, skipping _decide_input_format' % e)
+            logger.warning('%s, skipping _decide_input_format' % e)
             return args
         try:
             ordered_list_keys = list(sig.parameters.keys())
@@ -143,9 +143,10 @@ class TorchModelExporter(Exporter):
             args = args_list if isinstance(args, list) else tuple(args_list)
         # Cases of models with no input args
         except IndexError:
-            logger.warn('No input args, skipping _decide_input_format')
+            logger.warning('No input args, skipping _decide_input_format')
         except Exception as e:
-            logger.warn('Skipping _decide_input_format\n {}'.format(e.args[0]))
+            logger.warning('Skipping _decide_input_format\n {}'.format(
+                e.args[0]))
 
         return args
 
@@ -216,7 +217,7 @@ class TorchModelExporter(Exporter):
                 import onnx
                 import onnxruntime as ort
             except ImportError:
-                logger.warn(
+                logger.warning(
                     'Cannot validate the exported onnx file, because '
                     'the installation of onnx or onnxruntime cannot be found')
                 return
@@ -292,7 +293,7 @@ class TorchModelExporter(Exporter):
                     break
 
             if len(dummy_inputs) != len(dummy_inputs_filter):
-                logger.warn(
+                logger.warning(
                     f'Dummy inputs is not continuous in the forward method, '
                     f'origin length: {len(dummy_inputs)}, '
                     f'the length after filtering: {len(dummy_inputs_filter)}')

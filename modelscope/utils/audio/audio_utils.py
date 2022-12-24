@@ -1,12 +1,21 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import re
 import struct
+import sys
 from typing import Union
 from urllib.parse import urlparse
+
+import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
 
 SEGMENT_LENGTH_TRAIN = 16000
+
+
+class TtsTrainType(object):
+    TRAIN_TYPE_SAMBERT = 'train-type-sambert'
+    TRAIN_TYPE_BERT = 'train-type-bert'
+    TRAIN_TYPE_VOC = 'train-type-voc'
 
 
 def to_segment(batch, segment_length=SEGMENT_LENGTH_TRAIN):
@@ -91,6 +100,57 @@ def extract_pcm_from_wav(wav: bytes) -> bytes:
             pass
 
     return data, sample_rate
+
+
+# This implementation is adopted from scipy.io.wavfile.write,
+# made publicly available under the BSD-3-Clause license at
+# https://github.com/scipy/scipy/blob/v1.9.3/scipy/io/wavfile.py
+def ndarray_pcm_to_wav(fs: int, data: np.ndarray) -> bytes:
+    dkind = data.dtype.kind
+    if not (dkind == 'i' or dkind == 'f' or  # noqa W504
+            (dkind == 'u' and data.dtype.itemsize == 1)):
+        raise ValueError(f'Unsupported data type {data.dtype}')
+
+    header_data = bytearray()
+    header_data += b'RIFF'
+    header_data += b'\x00\x00\x00\x00'
+    header_data += b'WAVE'
+    header_data += b'fmt '
+    if dkind == 'f':
+        format_tag = 0x0003
+    else:
+        format_tag = 0x0001
+    if data.ndim == 1:
+        channels = 1
+    else:
+        channels = data.shape[1]
+    bit_depth = data.dtype.itemsize * 8
+    bytes_per_second = fs * (bit_depth // 8) * channels
+    block_align = channels * (bit_depth // 8)
+
+    fmt_chunk_data = struct.pack('<HHIIHH', format_tag, channels, fs,
+                                 bytes_per_second, block_align, bit_depth)
+    if not (dkind == 'i' or dkind == 'u'):
+        fmt_chunk_data += b'\x00\x00'
+    header_data += struct.pack('<I', len(fmt_chunk_data))
+    header_data += fmt_chunk_data
+
+    if not (dkind == 'i' or dkind == 'u'):
+        header_data += b'fact'
+        header_data += struct.pack('<II', 4, data.shape[0])
+
+    if ((len(header_data) - 8) + (8 + data.nbytes)) > 0xFFFFFFFF:
+        raise ValueError('Data exceeds wave file size limit')
+
+    header_data += b'data'
+    header_data += struct.pack('<I', data.nbytes)
+    if data.dtype.byteorder == '>' or (data.dtype.byteorder == '='
+                                       and sys.byteorder == 'big'):
+        data = data.byteswap()
+    header_data += data.ravel().view('b').data
+    size = len(header_data)
+    header_data[4:8] = struct.pack('<I', size - 8)
+    return bytes(header_data)
 
 
 def load_bytes_from_url(url: str) -> Union[bytes, str]:

@@ -29,12 +29,17 @@ class OssUtilities:
         self.namespace = namespace
         self.revision = revision
 
-        self.upload_resumable_tmp_store = '/tmp/modelscope/tmp_dataset'
-        self.upload_multipart_threshold = 50 * 1024 * 1024
-        self.upload_part_size = 1 * 1024 * 1024
-        self.upload_num_threads = 4
-        self.upload_max_retries = 3
+        self.upload_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/upload'
+        self.download_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/download'
+        self.num_threads = 4
+        self.part_size = 1 * 1024 * 1024
+        self.multipart_threshold = 50 * 1024 * 1024
+        self.max_retries = 3
 
+        self.upload_resumable_store = oss2.ResumableStore(
+            root=self.upload_resumable_store_root_path)
+        self.download_resumable_store = oss2.ResumableDownloadStore(
+            root=self.download_resumable_store_root_path)
         self.api = HubApi()
 
     def _do_init(self, oss_config):
@@ -71,14 +76,28 @@ class OssUtilities:
             candidate_key) else candidate_key_backup
         filename = hash_url_to_filename(file_oss_key, etag=None)
         local_path = os.path.join(cache_dir, filename)
+        retry_count = 0
+        while True:
+            try:
+                retry_count += 1
+                if download_config.force_download or not os.path.exists(
+                        local_path):
+                    oss2.resumable_download(
+                        self.bucket,
+                        file_oss_key,
+                        local_path,
+                        store=self.download_resumable_store,
+                        multiget_threshold=self.multipart_threshold,
+                        part_size=self.part_size,
+                        progress_callback=self._percentage,
+                        num_threads=self.num_threads)
+                break
+            except Exception as e:
+                if e.__getattribute__('status') == 403:
+                    self._reload_sts()
+                if retry_count >= self.max_retries:
+                    raise
 
-        if download_config.force_download or not os.path.exists(local_path):
-            oss2.resumable_download(
-                self.bucket,
-                file_oss_key,
-                local_path,
-                multiget_threshold=0,
-                progress_callback=self._percentage)
         return local_path
 
     def upload(self, oss_object_name: str, local_file_path: str,
@@ -86,8 +105,7 @@ class OssUtilities:
                upload_mode: UploadMode) -> str:
         retry_count = 0
         object_key = os.path.join(self.oss_dir, oss_object_name)
-        resumable_store = oss2.ResumableStore(
-            root=self.upload_resumable_tmp_store)
+
         if indicate_individual_progress:
             progress_callback = self._percentage
         else:
@@ -107,16 +125,16 @@ class OssUtilities:
                     self.bucket,
                     object_key,
                     local_file_path,
-                    store=resumable_store,
-                    multipart_threshold=self.upload_multipart_threshold,
-                    part_size=self.upload_part_size,
+                    store=self.upload_resumable_store,
+                    multipart_threshold=self.multipart_threshold,
+                    part_size=self.part_size,
                     progress_callback=progress_callback,
-                    num_threads=self.upload_num_threads)
+                    num_threads=self.num_threads)
                 break
             except Exception as e:
                 if e.__getattribute__('status') == 403:
                     self._reload_sts()
-                if retry_count >= self.upload_max_retries:
+                if retry_count >= self.max_retries:
                     raise
 
         return object_key

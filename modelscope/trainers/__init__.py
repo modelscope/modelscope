@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .audio.ans_trainer import ANSTrainer
+    from .audio import ANSTrainer, KanttsTrainer
     from .base import DummyTrainer
     from .builder import build_trainer
     from .cv import (ImageInstanceSegmentationTrainer,
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 else:
     _import_structure = {
-        'audio.ans_trainer': ['ANSTrainer'],
+        'audio': ['ANSTrainer', 'KanttsTrainer'],
         'base': ['DummyTrainer'],
         'builder': ['build_trainer'],
         'cv': [

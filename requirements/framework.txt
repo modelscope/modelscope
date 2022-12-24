@@ -8,7 +8,6 @@ filelock>=3.3.0
 gast>=0.2.2
 jsonplus
 numpy
-opencv-python
 oss2
 Pillow>=6.2.0
 # for pyarrow 9.0.0 event_loop core dump

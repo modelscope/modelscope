@@ -230,7 +230,7 @@ class Preprocessor(ABC):
         sub_key = 'train' if preprocessor_mode == ModeKeys.TRAIN else 'val'
 
         if not hasattr(cfg, 'preprocessor') or len(cfg.preprocessor) == 0:
-            logger.warn('No preprocessor field found in cfg.')
+            logger.warning('No preprocessor field found in cfg.')
             preprocessor_cfg = ConfigDict()
         else:
             preprocessor_cfg = cfg.preprocessor
@@ -239,12 +239,15 @@ class Preprocessor(ABC):
             if sub_key in preprocessor_cfg:
                 sub_cfg = getattr(preprocessor_cfg, sub_key)
             else:
-                logger.warn(f'No {sub_key} key and type key found in '
-                            f'preprocessor domain of configuration.json file.')
+                logger.warning(
+                    f'No {sub_key} key and type key found in '
+                    f'preprocessor domain of configuration.json file.')
                 sub_cfg = preprocessor_cfg
         else:
             sub_cfg = preprocessor_cfg
 
+        # TODO @wenmeng.zwm refine this logic when preprocessor has no model_dir param
+        # for cv models.
         sub_cfg.update({'model_dir': model_dir})
         sub_cfg.update(kwargs)
         if 'type' in sub_cfg:
@@ -256,7 +259,7 @@ class Preprocessor(ABC):
 
             preprocessor = build_preprocessor(sub_cfg, field_name)
         else:
-            logger.warn(
+            logger.warning(
                 f'Cannot find available config to build preprocessor at mode {preprocessor_mode}, '
                 f'current config: {sub_cfg}. trying to build by task and model information.'
             )
@@ -264,13 +267,13 @@ class Preprocessor(ABC):
             model_type = model_cfg.type if hasattr(
                 model_cfg, 'type') else getattr(model_cfg, 'model_type', None)
             if task is None or model_type is None:
-                logger.warn(
+                logger.warning(
                     f'Find task: {task}, model type: {model_type}. '
                     f'Insufficient information to build preprocessor, skip building preprocessor'
                 )
                 return None
             if (model_type, task) not in PREPROCESSOR_MAP:
-                logger.warn(
+                logger.warning(
                     f'No preprocessor key {(model_type, task)} found in PREPROCESSOR_MAP, '
                     f'skip building preprocessor.')
                 return None

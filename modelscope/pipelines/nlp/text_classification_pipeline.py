@@ -109,7 +109,7 @@ class TextClassificationPipeline(Pipeline):
             return inputs
         else:
             if getattr(self, 'id2label', None) is None:
-                logger.warn(
+                logger.warning(
                     'The id2label mapping is None, will return original ids.')
             logits = inputs[OutputKeys.LOGITS].cpu().numpy()
             if logits.shape[0] == 1:

@@ -27,6 +27,7 @@ class OutputKeys(object):
     OUTPUT_IMG = 'output_img'
     OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
+    OUTPUT_WAV = 'output_wav'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
     TEXT_EMBEDDING = 'text_embedding'
@@ -682,9 +683,9 @@ TASK_OUTPUTS = {
 
     # text_to_speech result for a single sample
     # {
-    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    #    "output_wav": {"input_label" : bytes}
     # }
-    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_WAV],
 
     # {
     #     "kws_list": [
@@ -727,9 +728,9 @@ TASK_OUTPUTS = {
 
     # text_to_speech result for a single sample
     # {
-    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    #    "output_wav": {"input_label" : bytes}
     # }
-    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_WAV],
 
     # multi-modal embedding result for single sample
     # {
@@ -836,10 +837,21 @@ TASK_OUTPUTS = {
     # }
     Tasks.product_segmentation: [OutputKeys.MASKS],
 
+    # image_skychange result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.image_skychange: [OutputKeys.OUTPUT_IMG],
     # {
     #     'scores': [0.1, 0.2, 0.3, ...]
     # }
-    Tasks.translation_evaluation: [OutputKeys.SCORES]
+    Tasks.translation_evaluation: [OutputKeys.SCORES],
+
+    # video object segmentation result for a single video
+    #   {
+    #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
+    #   }
+    Tasks.video_object_segmentation: [OutputKeys.MASKS],
 }
 
 

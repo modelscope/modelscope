@@ -68,7 +68,7 @@ class EarlyStopHook(Hook):
         current_score = metric_values[self.metric_key]
         if self.check_finite and not np.isfinite(current_score):
             should_stop = True
-            self.logger.warn(
+            self.logger.warning(
                 f'Metric {self.metric_key} = {current_score} is not finite. '
                 f'Previous best metric: {self.best_score:.4f}.')
         elif self.rule_map[self.rule](current_score - self.min_delta,

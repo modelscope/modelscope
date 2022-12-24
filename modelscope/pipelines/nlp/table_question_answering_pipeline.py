@@ -311,6 +311,11 @@ class TableQuestionAnsweringPipeline(Pipeline):
             if sql['agg'][idx] == 0:
                 str_sel_list.append(header_name)
                 sql_sel_list.append(header_id)
+            elif sql['agg'][idx] == 4:
+                str_sel_list.append(self.agg_ops[sql['agg'][idx]]
+                                    + '(DISTINCT ' + header_name + ')')
+                sql_sel_list.append(self.agg_ops[sql['agg'][idx]]
+                                    + '(DISTINCT ' + header_id + ')')
             else:
                 str_sel_list.append(self.agg_ops[sql['agg'][idx]] + '('
                                     + header_name + ')')

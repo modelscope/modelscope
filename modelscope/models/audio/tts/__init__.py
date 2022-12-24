@@ -7,12 +7,8 @@ if TYPE_CHECKING:
     from .sambert_hifi import SambertHifigan
 
 else:
-    _import_structure = {
-        'sambert_hifi': ['SambertHifigan'],
-    }
-
+    _import_structure = {'sambert_hifi': ['SambertHifigan']}
     import sys
-
     sys.modules[__name__] = LazyImportModule(
         __name__,
         globals()['__file__'],

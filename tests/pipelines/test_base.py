@@ -1,14 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 import unittest
 from typing import Any, Dict, Union
 
 import numpy as np
 from PIL import Image
 
+from modelscope.fileio import io
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import Pipeline, pipeline
 from modelscope.pipelines.builder import PIPELINES, add_default_pipeline_info
+from modelscope.utils.constant import (ConfigFields, Frameworks, ModelFile,
+                                       Tasks)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -17,6 +21,23 @@ Input = Union[str, 'PIL.Image', 'numpy.ndarray']
 
 
 class CustomPipelineTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.model_dir = '/tmp/custom-image'
+        self.prepare_dir(self.model_dir, 'custom-image')
+
+    def prepare_dir(self, dirname, pipeline_name):
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        cfg_file = os.path.join(dirname, ModelFile.CONFIGURATION)
+        cfg = {
+            ConfigFields.framework: 'dummy',
+            ConfigFields.task: 'dummy-task',
+            ConfigFields.pipeline: {
+                'type': pipeline_name,
+            }
+        }
+        io.dump(cfg, cfg_file)
 
     def test_abstract(self):
 
@@ -75,8 +96,11 @@ class CustomPipelineTest(unittest.TestCase):
 
         self.assertTrue('custom-image' in PIPELINES.modules[dummy_task])
         add_default_pipeline_info(dummy_task, 'custom-image', overwrite=True)
-        pipe = pipeline(task=dummy_task, pipeline_name='custom-image')
-        pipe2 = pipeline(dummy_task)
+        pipe = pipeline(
+            task=dummy_task,
+            pipeline_name='custom-image',
+            model=self.model_dir)
+        pipe2 = pipeline(dummy_task, model=self.model_dir)
         self.assertTrue(type(pipe) is type(pipe2))
 
         img_url = 'data/test/images/dogs.jpg'

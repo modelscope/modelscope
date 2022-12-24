@@ -7,7 +7,7 @@ from typing import Any, Mapping, Optional, Sequence, Union
 from datasets.builder import DatasetBuilder
 
 from modelscope.hub.api import HubApi
-from modelscope.utils.constant import DEFAULT_DATASET_REVISION
+from modelscope.utils.constant import DEFAULT_DATASET_REVISION, MetaDataFields
 from modelscope.utils.logger import get_logger
 from .dataset_builder import MsCsvDatasetBuilder, TaskSpecificDatasetBuilder
 
@@ -145,7 +145,7 @@ def get_split_objects_map(file_map, objects):
 
     for obj_key in objects:
         for k, v in file_map.items():
-            if obj_key.startswith(v):
+            if obj_key.startswith(v + '/'):
                 res[k].append(obj_key)
 
     return res
@@ -170,13 +170,6 @@ def get_dataset_files(subset_split_into: dict,
     file_map = defaultdict(dict)
     args_map = defaultdict(dict)
     modelscope_api = HubApi()
-    objects = list_dataset_objects(
-        hub_api=modelscope_api,
-        max_limit=-1,
-        is_recursive=True,
-        dataset_name=dataset_name,
-        namespace=namespace,
-        version=revision)
 
     for split, info in subset_split_into.items():
         meta_map[split] = modelscope_api.get_dataset_file_url(
@@ -185,8 +178,29 @@ def get_dataset_files(subset_split_into: dict,
             file_map[split] = info['file']
         args_map[split] = info.get('args')
 
-    if contains_dir(file_map):
-        file_map = get_split_objects_map(file_map, objects)
+    objects = []
+    # If `big_data` is true, then fetch objects from meta-csv file directly.
+    for split, args_dict in args_map.items():
+        if args_dict and args_dict.get(MetaDataFields.ARGS_BIG_DATA):
+            meta_csv_file_url = meta_map[split]
+            _, script_content = modelscope_api.fetch_single_csv_script(
+                meta_csv_file_url)
+            if not script_content:
+                raise 'Meta-csv file cannot be empty when meta-args `big_data` is true.'
+            objects = [item.split(',')[0] for item in script_content]
+            file_map[split] = objects
+    # More general but low-efficiency.
+    if not objects:
+        objects = list_dataset_objects(
+            hub_api=modelscope_api,
+            max_limit=-1,
+            is_recursive=True,
+            dataset_name=dataset_name,
+            namespace=namespace,
+            version=revision)
+        if contains_dir(file_map):
+            file_map = get_split_objects_map(file_map, objects)
+
     return meta_map, file_map, args_map
 
 
@@ -200,11 +214,12 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
                          **config_kwargs) -> DatasetBuilder:
     sub_dir = os.path.join(version, '_'.join(split))
     meta_data_file = next(iter(meta_data_files.values()))
-    if not meta_data_file:
-        args_map = next(iter(args_map.values()))
-        if args_map is None:
-            args_map = {}
-        args_map.update(config_kwargs)
+    args_map_value = next(iter(args_map.values()))
+    if args_map_value is None:
+        args_map_value = {}
+
+    if not meta_data_file or args_map_value.get(MetaDataFields.ARGS_BIG_DATA):
+        args_map_value.update(config_kwargs)
         builder_instance = TaskSpecificDatasetBuilder(
             dataset_name=dataset_name,
             namespace=namespace,
@@ -213,7 +228,7 @@ def load_dataset_builder(dataset_name: str, subset_name: str, namespace: str,
             meta_data_files=meta_data_files,
             zip_data_files=zip_data_files,
             hash=sub_dir,
-            **args_map)
+            **args_map_value)
     elif meta_data_file.endswith('.csv'):
         builder_instance = MsCsvDatasetBuilder(
             dataset_name=dataset_name,

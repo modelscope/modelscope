@@ -27,6 +27,7 @@ class OutputKeys(object):
     OUTPUT_IMG = 'output_img'
     OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
+    OUTPUT_WAV = 'output_wav'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
     TEXT_EMBEDDING = 'text_embedding'
@@ -682,9 +683,9 @@ TASK_OUTPUTS = {
 
     # text_to_speech result for a single sample
     # {
-    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    #    "output_wav": {"input_label" : bytes}
     # }
-    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_WAV],
 
     # {
     #     "kws_list": [
@@ -727,9 +728,9 @@ TASK_OUTPUTS = {
 
     # text_to_speech result for a single sample
     # {
-    #    "output_pcm": {"input_label" : np.ndarray with shape [D]}
+    #    "output_wav": {"input_label" : bytes}
     # }
-    Tasks.text_to_speech: [OutputKeys.OUTPUT_PCM],
+    Tasks.text_to_speech: [OutputKeys.OUTPUT_WAV],
 
     # multi-modal embedding result for single sample
     # {

@@ -74,7 +74,7 @@ class MovieSceneSegmentationModel(TorchModel):
         self.eps = 1e-5
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, torch.Tensor]:
-        data = inputs['video']
+        data = inputs.pop('video')
         labels = inputs['label']
         outputs = self.shared_step(data)
 

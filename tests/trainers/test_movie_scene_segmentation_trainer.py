@@ -44,7 +44,6 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         self.train_dataset = MsDataset.load(
             dataset_name=train_data_cfg.name,
             split=train_data_cfg.split,
-            namespace=train_data_cfg.namespace,
             cfg=train_data_cfg.cfg,
             test_mode=train_data_cfg.test_mode)
         assert next(
@@ -53,7 +52,6 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         self.test_dataset = MsDataset.load(
             dataset_name=test_data_cfg.name,
             split=test_data_cfg.split,
-            namespace=test_data_cfg.namespace,
             cfg=test_data_cfg.cfg,
             test_mode=test_data_cfg.test_mode)
         assert next(

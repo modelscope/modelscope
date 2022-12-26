@@ -38,10 +38,10 @@ INPUT_TYPE = {
 
 def check_input_type(input_type, input):
     expected_type = INPUT_TYPE[input_type]
-    if expected_type == 'cv2.VideoCapture':
+    if input_type == InputType.VIDEO:
         # special type checking using class name, to avoid introduction of opencv dependency into fundamental framework.
-        assert type(input).__name__ == 'VideoCapture',\
-            f'invalid input type for {input_type}, expected cv2.VideoCapture but got {type(input)}\n {input}'
+        assert type(input).__name__ == 'VideoCapture' or isinstance(input, expected_type),\
+            f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'
     else:
         assert isinstance(input, expected_type), \
             f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'

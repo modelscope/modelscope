@@ -39,9 +39,7 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
         if not cap.isOpened():
             raise Exception('modelscope error: %s cannot be decoded by OpenCV.'
                             % (self.test_video))
-        pipeline_input = self.test_video
-        self.pipeline_inference(
-            body_3d_keypoints, pipeline_input=pipeline_input)
+        self.pipeline_inference(body_3d_keypoints, pipeline_input=cap)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_demo_compatibility(self):

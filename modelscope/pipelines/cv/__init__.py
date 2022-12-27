@@ -69,6 +69,7 @@ if TYPE_CHECKING:
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
 
 else:
     _import_structure = {
@@ -160,6 +161,7 @@ else:
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
+        'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
     }
 
     import sys

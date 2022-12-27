@@ -96,6 +96,7 @@ class CVTasks(object):
 
     # video editing
     video_inpainting = 'video-inpainting'
+    video_super_resolution = 'video-super-resolution'
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'

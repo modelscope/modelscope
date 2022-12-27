@@ -281,6 +281,10 @@ TASK_OUTPUTS = {
     Tasks.image_portrait_stylization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_body_reshaping: [OutputKeys.OUTPUT_IMG],
 
+    # video editing task result for a single video
+    # {"output_video": "path_to_rendered_video"}
+    Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001]

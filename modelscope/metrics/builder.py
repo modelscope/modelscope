@@ -16,6 +16,7 @@ class MetricKeys(object):
     RECALL = 'recall'
     PSNR = 'psnr'
     SSIM = 'ssim'
+    NIQE = 'niqe'
     AVERAGE_LOSS = 'avg_loss'
     FScore = 'fscore'
     FID = 'fid'
@@ -37,6 +38,7 @@ task_default_metrics = {
     Tasks.text_generation: [Metrics.text_gen_metric],
     Tasks.text_classification: [Metrics.seq_cls_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
+    Tasks.video_super_resolution: [Metrics.video_super_resolution_metric],
     Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],
     Tasks.image_portrait_enhancement:
     [Metrics.image_portrait_enhancement_metric],

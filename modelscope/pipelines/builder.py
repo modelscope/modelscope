@@ -57,6 +57,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                    'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoising: (Pipelines.image_denoise,
                             'damo/cv_nafnet_image-denoise_sidd'),
+    Tasks.video_super_resolution:
+    (Pipelines.video_super_resolution,
+     'damo/cv_realbasicvsr_video-super-resolution_videolq'),
     Tasks.text_classification:
     (Pipelines.sentiment_classification,
      'damo/nlp_structbert_sentiment-classification_chinese-base'),

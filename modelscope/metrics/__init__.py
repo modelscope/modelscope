@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .bleu_metric import BleuMetric
     from .image_inpainting_metric import ImageInpaintingMetric
     from .referring_video_object_segmentation_metric import ReferringVideoObjectSegmentationMetric
+    from .video_super_resolution_metric.video_super_resolution_metric import VideoSuperResolutionMetric
 
 else:
     _import_structure = {

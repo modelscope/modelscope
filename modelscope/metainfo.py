@@ -60,6 +60,7 @@ class Models(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
+    real_basicvsr = 'real-basicvsr'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -247,6 +248,7 @@ class Pipelines(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
+    video_super_resolution = 'realbasicvsr-video-super-resolution'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -460,6 +462,8 @@ class Metrics(object):
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
+    # metrics for real-world video super-resolution task
+    video_super_resolution_metric = 'video-super-resolution-metric'
 
     # metric for image instance segmentation task
     image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'

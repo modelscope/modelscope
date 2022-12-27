@@ -160,6 +160,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_depth_estimation:
     (Pipelines.image_depth_estimation,
      'damo/cv_newcrfs_image-depth-estimation_indoor'),
+    Tasks.video_depth_estimation:
+    (Pipelines.video_depth_estimation,
+     'damo/cv_dro-resnet18_video-depth-estimation_indoor'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,

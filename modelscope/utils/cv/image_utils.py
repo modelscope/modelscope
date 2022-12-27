@@ -483,6 +483,15 @@ def depth_to_color(depth):
     return depth_color
 
 
+def show_video_depth_estimation_result(depths, video_save_path):
+    height, width, layers = depths[0].shape
+    out = cv2.VideoWriter(video_save_path, cv2.VideoWriter_fourcc(*'MP4V'), 25,
+                          (width, height))
+    for (i, img) in enumerate(depths):
+        out.write(cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_RGB2BGR))
+    out.release()
+
+
 def masks_visualization(masks, palette):
     vis_masks = []
     for f in range(masks.shape[0]):

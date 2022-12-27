@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import cv2
 import numpy as np
 from PIL import Image
 
@@ -29,7 +28,7 @@ INPUT_TYPE = {
     InputType.IMAGE: (str, np.ndarray, Image.Image),
     InputType.TEXT: str,
     InputType.AUDIO: (str, bytes, np.ndarray),
-    InputType.VIDEO: (str, np.ndarray, cv2.VideoCapture),
+    InputType.VIDEO: (str, np.ndarray, 'cv2.VideoCapture'),
     InputType.BOX: (list, np.ndarray),
     InputType.DICT: (dict, type(None)),
     InputType.LIST: (list, type(None)),
@@ -39,8 +38,13 @@ INPUT_TYPE = {
 
 def check_input_type(input_type, input):
     expected_type = INPUT_TYPE[input_type]
-    assert isinstance(input, expected_type), \
-        f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'
+    if expected_type == 'cv2.VideoCapture':
+        # special type checking using class name, to avoid introduction of opencv dependency into fundamental framework.
+        assert type(input).__name__ == 'VideoCapture',\
+            f'invalid input type for {input_type}, expected cv2.VideoCapture but got {type(input)}\n {input}'
+    else:
+        assert isinstance(input, expected_type), \
+            f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'
 
 
 TASK_INPUTS = {
@@ -96,6 +100,10 @@ TASK_INPUTS = {
     Tasks.image_inpainting: {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,
+    },
+    Tasks.image_skychange: {
+        'sky_image': InputType.IMAGE,
+        'scene_image': InputType.IMAGE,
     },
 
     # image generation task result for a single image

@@ -80,9 +80,6 @@ class Pipeline(ABC):
             device (str): device str, should be either cpu, cuda, gpu, gpu:X or cuda:X
             auto_collate (bool): automatically to convert data to tensor or not.
         """
-        if config_file is not None:
-            self.cfg = Config.from_file(config_file)
-
         verify_device(device)
         self.device_name = device
 
@@ -94,7 +91,21 @@ class Pipeline(ABC):
             self.models = self.initiate_multiple_models(model)
 
         self.has_multiple_models = len(self.models) > 1
-        self.preprocessor = preprocessor
+
+        if config_file is not None:
+            self.cfg = Config.from_file(config_file)
+        elif not self.has_multiple_models:
+            if isinstance(self.model, str):
+                model_dir = self.model
+            else:
+                model_dir = self.model.model_dir
+            self.cfg = read_config(model_dir)
+
+        if preprocessor is None and not self.has_multiple_models \
+           and hasattr(self.cfg, 'preprocessor'):
+            self.preprocessor = Preprocessor.from_pretrained(model_dir)
+        else:
+            self.preprocessor = preprocessor
 
         if self.model or (self.has_multiple_models and self.models[0]):
             self.framework = self._get_framework()
@@ -143,9 +154,10 @@ class Pipeline(ABC):
             cfg = Config.from_file(cfg_file)
             frameworks.append(cfg.framework)
         if not all(x == frameworks[0] for x in frameworks):
-            raise ValueError(
+            logger.warning(
                 f'got multiple models, but they are in different frameworks {frameworks}'
             )
+            return None
 
         return frameworks[0]
 
@@ -514,8 +526,8 @@ def collate_fn(data, device):
     elif isinstance(data, InputFeatures):
         return data
     else:
-        import mmcv
-        if isinstance(data, mmcv.parallel.data_container.DataContainer):
+        from mmcv.parallel import DataContainer
+        if isinstance(data, DataContainer):
             return data
         else:
             raise ValueError(f'Unsupported data type {type(data)}')

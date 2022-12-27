@@ -50,5 +50,6 @@ class DistributedGPTMoEPipeline(DistributedPipeline):
         from modelscope.outputs import OutputKeys
         return {
             OutputKeys.TEXT:
-            self.preprocessor.tokenizer.detokenize(inputs[0].tolist())
+            self.preprocessor.tokenizer.detokenize(
+                inputs.sequences[0].tolist())
         }

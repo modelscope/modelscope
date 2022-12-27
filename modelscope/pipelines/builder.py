@@ -123,12 +123,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.hand_2d_keypoints:
     (Pipelines.hand_2d_keypoints,
      'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
-    Tasks.face_detection: (Pipelines.face_detection,
-                           'damo/cv_resnet_facedetection_scrfd10gkps'),
     Tasks.card_detection: (Pipelines.card_detection,
                            'damo/cv_resnet_carddetection_scrfd34gkps'),
     Tasks.face_detection:
-    (Pipelines.face_detection,
+    (Pipelines.mog_face_detection,
      'damo/cv_resnet101_face-detection_cvpr22papermogface'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
@@ -225,9 +223,14 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_swin-t_referring_video-object-segmentation'),
     Tasks.video_summarization: (Pipelines.video_summarization,
                                 'damo/cv_googlenet_pgl-video-summarization'),
+    Tasks.image_skychange: (Pipelines.image_skychange,
+                            'damo/cv_hrnetocr_skychange'),
     Tasks.translation_evaluation:
     (Pipelines.translation_evaluation,
      'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
+    Tasks.video_object_segmentation:
+    (Pipelines.video_object_segmentation,
+     'damo/cv_rdevos_video-object-segmentation'),
 }
 
 

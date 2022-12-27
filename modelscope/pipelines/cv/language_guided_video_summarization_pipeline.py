@@ -91,7 +91,7 @@ class LanguageGuidedVideoSummarizationPipeline(Pipeline):
             frame_idx += 1
         n_frame = frame_idx
 
-        if sentences is None:
+        if sentences is None or len(sentences) == 0:
             logger.info('input sentences is none, using sentences from video!')
 
             tmp_path = os.path.join(self.tmp_dir, 'tmp')

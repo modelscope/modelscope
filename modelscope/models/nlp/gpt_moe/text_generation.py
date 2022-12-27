@@ -1,9 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Dict
 
+from transformers import BertTokenizer
+
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.gpt_moe import GPTMoEModel
 from modelscope.utils.constant import Tasks
 
 __all__ = ['GPTMoEForTextGeneration']
@@ -20,12 +23,15 @@ class GPTMoEForTextGeneration(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
 
-        from modelscope.models.nlp.gpt_moe import GPTMoEModel
-        from transformers import BertTokenizer
-        print('****')
-        print(model_dir)
-        self.model = GPTMoEModel.from_pretrained(model_dir)
-        self.tokenizer = BertTokenizer.from_pretrained(model_dir)
+        # Temporarily compatible with DistributedGPT3 and GPT3Model,
+        # the base/large model based on GPT3Model will be replaced in the future,
+        # and GPT3Model will be deprecated
+        if 'model_parallel_size' in kwargs:
+            from modelscope.models.nlp import DistributedGPTMoE
+            self.model = DistributedGPTMoE(model_dir, **kwargs)
+        else:
+            self.model = GPTMoEModel.from_pretrained(model_dir)
+            self.tokenizer = BertTokenizer.from_pretrained(model_dir)
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
         """return the result by the model
@@ -43,6 +49,8 @@ class GPTMoEForTextGeneration(TorchModel):
         return self.model(**input)
 
     def generate(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
+        if not isinstance(self.model, GPTMoEModel):
+            return self.model.generate(**input)
         assert 'input_ids' in input, "generate function must accept 'input_ids' key"
         input_ids = input['input_ids']
         if 'attention_mask' in input:

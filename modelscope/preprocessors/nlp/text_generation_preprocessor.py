@@ -198,7 +198,7 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
         from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
         super().__init__(mode, src_txt, tgt_txt)
         if self.tgt_txt is not None:
-            logger.warn(
+            logger.warning(
                 f'TextGenerationJiebaPreprocessor currently does not support training, '
                 f'the {self.tgt_txt} of the tgt_txt field will be ignored.')
         self.src_txt = src_txt

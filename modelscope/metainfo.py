@@ -57,7 +57,9 @@ class Models(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'image-body-reshaping'
+    image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    video_object_segmentation = 'video-object-segmentation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -216,6 +218,7 @@ class Pipelines(object):
     image_portrait_enhancement = 'gpen-image-portrait-enhancement'
     image_to_image_generation = 'image-to-image-generation'
     image_object_detection_auto = 'yolox_image-object-detection-auto'
+    hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
     tinynas_classification = 'tinynas-classification'
     tinynas_detection = 'tinynas-detection'
@@ -241,7 +244,9 @@ class Pipelines(object):
     product_segmentation = 'product-segmentation'
     image_body_reshaping = 'flow-based-body-reshaping'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
+    image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    video_object_segmentation = 'video-object-segmentation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -357,10 +362,12 @@ class Trainers(object):
     text_generation_trainer = 'text-generation-trainer'
     nlp_plug_trainer = 'nlp-plug-trainer'
     gpt3_trainer = 'nlp-gpt3-trainer'
+    gpt_moe_trainer = 'nlp-gpt-moe-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
+    speech_kantts_trainer = 'speech-kantts-trainer'
 
 
 class Preprocessors(object):
@@ -383,6 +390,8 @@ class Preprocessors(object):
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
+    object_detection_scrfd = 'object-detection-scrfd'
+    image_sky_change_preprocessor = 'image-sky-change-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -426,6 +435,7 @@ class Preprocessors(object):
     text_to_tacotron_symbols = 'text-to-tacotron-symbols'
     wav_to_lists = 'wav-to-lists'
     wav_to_scp = 'wav-to-scp'
+    kantts_data_preprocessor = 'kantts-data-preprocessor'
 
     # multi-modal preprocessor
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'

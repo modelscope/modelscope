@@ -21,13 +21,14 @@ class TestFinetuneTextGeneration(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skip
+    @unittest.skip(
+        'skip since the test requires multiple GPU and takes a long time to run'
+    )
     def test_finetune_poetry(self):
         dataset_dict = MsDataset.load('chinese-poetry-collection')
-        train_dataset = dataset_dict['train'].to_hf_dataset().rename_columns(
+        train_dataset = dataset_dict['train'].remap_columns(
             {'text1': 'src_txt'})
-        eval_dataset = dataset_dict['test'].to_hf_dataset().rename_columns(
-            {'text1': 'src_txt'})
+        eval_dataset = dataset_dict['test'].remap_columns({'text1': 'src_txt'})
         max_epochs = 10
         tmp_dir = './gpt3_poetry'
 
@@ -66,17 +67,17 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             name=Trainers.gpt3_trainer, default_args=kwargs)
         trainer.train()
 
-    @unittest.skip
+    @unittest.skip(
+        'skip since the test requires multiple GPU and takes a long time to run'
+    )
     def test_finetune_dureader(self):
         # DuReader_robust-QG is an example data set,
         # users can also use their own data set for training
         dataset_dict = MsDataset.load('DuReader_robust-QG')
 
-        train_dataset = dataset_dict['train'].to_hf_dataset() \
-            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'}) \
+        train_dataset = dataset_dict['train'].remap_columns({'text1': 'src_txt', 'text2': 'tgt_txt'}) \
             .map(lambda example: {'src_txt': example['src_txt'].replace('[SEP]', '<sep>') + '\n'})
-        eval_dataset = dataset_dict['validation'].to_hf_dataset() \
-            .rename_columns({'text1': 'src_txt', 'text2': 'tgt_txt'}) \
+        eval_dataset = dataset_dict['validation'].remap_columns({'text1': 'src_txt', 'text2': 'tgt_txt'}) \
             .map(lambda example: {'src_txt': example['src_txt'].replace('[SEP]', '<sep>') + '\n'})
 
         max_epochs = 10

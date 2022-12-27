@@ -30,7 +30,7 @@ def inference(image, model, face_model, score_thre=0.5, GPU=0):
     image = Image.fromarray(image)
     face, bbox = face_detection_PIL_v2(image, face_model)
     if bbox is None:
-        logger.warn('no face detected!')
+        logger.warning('no face detected!')
         result = {'emotion_result': None, 'box': None}
         return result
 

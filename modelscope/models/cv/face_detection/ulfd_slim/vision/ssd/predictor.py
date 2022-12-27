@@ -42,8 +42,7 @@ class Predictor:
         images = image.unsqueeze(0)
         images = images.to(self.device)
         with torch.no_grad():
-            for i in range(1):
-                scores, boxes = self.net.forward(images)
+            scores, boxes = self.net.forward(images)
         boxes = boxes[0]
         scores = scores[0]
         if not prob_threshold:

@@ -288,6 +288,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('scipy', (is_scipy_available, SCIPY_IMPORT_ERROR)),
     ('cv2', (is_opencv_available, OPENCV_IMPORT_ERROR)),
     ('PIL', (is_pillow_available, PILLOW_IMPORT_ERROR)),
+    ('pai-easynlp', (is_package_available('easynlp'), EASYNLP_IMPORT_ERROR)),
     ('espnet2', (is_espnet_available,
                  GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('espnet', (is_espnet_available,
@@ -388,7 +389,7 @@ class LazyImportModule(ModuleType):
             try:
                 getattr(self, sub_module)
             except Exception as e:
-                logger.warn(
+                logger.warning(
                     f'pre load module {sub_module} error, please check {e}')
 
     # Needed for autocompletion in an IDE

@@ -481,12 +481,9 @@ class HubApi:
         cookies = self._check_cookie(use_cookies)
         if root is not None:
             path = path + f'&Root={root}'
-
+        headers = self.headers if headers is None else headers
         r = self.session.get(
-            path, cookies=cookies, headers={
-                **headers,
-                **self.headers
-            })
+            path, cookies=cookies, headers=headers)
 
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
@@ -569,6 +566,17 @@ class HubApi:
 
         return local_paths, dataset_formation, cache_dir
 
+    def fetch_single_csv_script(self, script_url: str):
+        cookies = ModelScopeConfig.get_cookies()
+        resp = self.session.get(script_url, cookies=cookies, headers=self.headers)
+        if not resp or not resp.text:
+            raise 'The meta-csv file cannot be empty when the meta-args `big_data` is true.'
+        text_list = resp.text.split('\n')
+        text_headers = text_list[0]
+        text_content = text_list[1:]
+
+        return text_headers, text_content
+
     def get_dataset_file_url(
             self,
             file_name: str,
@@ -610,7 +618,7 @@ class HubApi:
             f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
-        resp = self.session.get(url=url, cookies=cookies)
+        resp = self.session.get(url=url, cookies=cookies, timeout=1800)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Data']
@@ -709,8 +717,9 @@ class ModelScopeConfig:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     if cookie.is_expired():
-                        logger.warn(
-                            'Authentication has expired, please re-login')
+                        logger.warning(
+                            'Authentication has expired, '
+                            'please re-login if you need to access private models or datasets.')
                         return None
                 return cookies
         return None
@@ -812,7 +821,7 @@ class ModelScopeConfig:
             user_name,
         )
         if isinstance(user_agent, dict):
-            ua = '; '.join(f'{k}/{v}' for k, v in user_agent.items())
+            ua += '; ' + '; '.join(f'{k}/{v}' for k, v in user_agent.items())
         elif isinstance(user_agent, str):
-            ua += ';' + user_agent
+            ua += '; ' + user_agent
         return ua

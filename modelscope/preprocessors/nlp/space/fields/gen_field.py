@@ -314,8 +314,8 @@ class MultiWOZBPETextField(BPETextField):
         try:
             import en_core_web_sm
         except ImportError:
-            logger.warn('Miss module en_core_web_sm!')
-            logger.warn('We will download en_core_web_sm automatically.')
+            logger.warning('Miss module en_core_web_sm!')
+            logger.warning('We will download en_core_web_sm automatically.')
             try:
                 spacy.cli.download('en_core_web_sm')
             except Exception as e:

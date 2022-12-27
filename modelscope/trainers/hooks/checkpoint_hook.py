@@ -94,7 +94,7 @@ class CheckpointHook(Hook):
                     torch.cuda.random.set_rng_state_all(self.rng_state['cuda'])
                 self.need_load_rng_state = False
             else:
-                self.logger.warn(
+                self.logger.warning(
                     'Random state cannot be found in checkpoint file, '
                     'this may cause a random data order or model initialization.'
                 )
@@ -132,13 +132,13 @@ class CheckpointHook(Hook):
                 if key in meta and hasattr(hook, 'load_state_dict'):
                     hook.load_state_dict(meta.get(key, {}))
                 else:
-                    trainer.logger.warn(
+                    trainer.logger.warning(
                         f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
                     )
 
         version = meta.get('modelscope')
         if version != __version__:
-            trainer.logger.warn(
+            trainer.logger.warning(
                 f'The modelscope version of loaded checkpoint does not match the runtime version. '
                 f'The saved version: {version}, runtime version: {__version__}'
             )
@@ -420,7 +420,7 @@ class BestCkptSaverHook(CheckpointHook):
         if state_dict is not None and len(state_dict) > 0:
             self._best_metric = state_dict.get('best_metric')
         else:
-            self.logger.warn(
+            self.logger.warning(
                 'The state_dict is not available, the best metric value will be affected.'
             )
 

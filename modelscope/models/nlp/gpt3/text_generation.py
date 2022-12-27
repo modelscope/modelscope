@@ -70,3 +70,8 @@ class GPT3ForTextGeneration(TorchModel):
         gen_params['top_p'] = input.pop('top_p', None)
         sample_output = self.model.generate(**gen_params)
         return {'sequences': sample_output[0]}
+
+    def save_pretrained(self, *args, **kwargs):
+        if not isinstance(self.model, GPT3Model):
+            return self.model.save_pretrained(*args, **kwargs)
+        return super().save_pretrained(*args, **kwargs)

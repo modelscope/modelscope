@@ -54,6 +54,7 @@ class OssUtilities:
         self.oss_backup_dir = oss_config[BACK_DIR]
 
     def _reload_sts(self):
+        logger.info('Reloading sts token automatically.')
         cookies = self.api.check_local_cookies(use_cookies=True)
         oss_config_refresh = self.api.get_dataset_access_config_session(
             cookies=cookies,
@@ -72,14 +73,15 @@ class OssUtilities:
         cache_dir = download_config.cache_dir
         candidate_key = os.path.join(self.oss_dir, oss_file_name)
         candidate_key_backup = os.path.join(self.oss_backup_dir, oss_file_name)
-        file_oss_key = candidate_key if self.bucket.object_exists(
-            candidate_key) else candidate_key_backup
-        filename = hash_url_to_filename(file_oss_key, etag=None)
-        local_path = os.path.join(cache_dir, filename)
         retry_count = 0
         while True:
             try:
                 retry_count += 1
+                file_oss_key = candidate_key if self.bucket.object_exists(
+                    candidate_key) else candidate_key_backup
+                filename = hash_url_to_filename(file_oss_key, etag=None)
+                local_path = os.path.join(cache_dir, filename)
+
                 if download_config.force_download or not os.path.exists(
                         local_path):
                     oss2.resumable_download(

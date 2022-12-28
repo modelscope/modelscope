@@ -11,6 +11,7 @@ from modelscope.models.multi_modal import OfaForAllTasks
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import OfaPreprocessor, Preprocessor, load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.device import get_device
@@ -34,6 +35,17 @@ class ImageClassificationPipeline(Pipeline):
         self.model.to(get_device())
         if preprocessor is None and isinstance(self.model, OfaForAllTasks):
             self.preprocessor = OfaPreprocessor(model_dir=self.model.model_dir)
+
+    def _batch(self, data):
+        if isinstance(self.model, OfaForAllTasks):
+            return batch_process(self.model, data)
+        else:
+            return super(ImageClassificationPipeline, self)._batch(data)
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

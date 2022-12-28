@@ -68,13 +68,16 @@ class OfaTextClassificationPreprocessor(OfaBasePreprocessor):
         instruction_itm = self._build_instruction(data)
         if self.prompt_type == 'none':
             prefix_token = []
+            decoder_prompt = self.bos_item
         elif self.prompt_type == 'prev_output':
             prefix_token = instruction_itm[:-1]  # remove eos
+            decoder_prompt = instruction_itm[:-1]
         else:
             raise NotImplementedError
         sample = {
             'source': instruction_itm,
             'prefix_token': prefix_token,
+            'decoder_prompt': decoder_prompt,
         }
         if 'label' in data:
             sample['label'] = self.label2ans[data['label']]

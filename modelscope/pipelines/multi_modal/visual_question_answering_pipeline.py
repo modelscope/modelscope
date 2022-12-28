@@ -6,9 +6,9 @@ import torch
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.models.multi_modal import MPlugForAllTasks, OfaForAllTasks
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
                                       Preprocessor)
 from modelscope.utils.constant import Tasks
@@ -38,6 +38,12 @@ class VisualQuestionAnsweringPipeline(Pipeline):
             elif isinstance(self.model, MPlugForAllTasks):
                 self.preprocessor = MPlugPreprocessor(self.model.model_dir)
         self.model.eval()
+
+    def _batch(self, data):
+        if isinstance(self.model, OfaForAllTasks):
+            return batch_process(self.model, data)
+        else:
+            return super(VisualQuestionAnsweringPipeline, self)._batch(data)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

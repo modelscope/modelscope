@@ -105,6 +105,8 @@ class OfaForAllTasks(TorchModel):
         }
         if hasattr(self.cfg.model, 'beam_search'):
             sg_args.update(self.cfg.model.beam_search)
+        self.num_return_sequences = self.cfg.model.get('num_return_sequences',
+                                                       1)
         if len(self.ans2label_dict) > 0:
             self.constraint_trie = Trie(self.tokenizer.eos_token_id)
             self.val_ans_l = []
@@ -140,15 +142,14 @@ class OfaForAllTasks(TorchModel):
             return self.inference(input)
 
     def inference(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        assert self.generator.beam_size >= self.num_return_sequences, \
+            'beam search can only return beam size sentences'
+        if self.ans2label_dict and self.gen_type == 'generation':
+            assert self.generator.beam_size <= len(self.ans2label_dict), \
+                'beam search will not work properly.'
         ret = self.task_inference_mapping[self.cfg.task](input)
         if 'samples' in input:
             ret['samples'] = input['samples']
-        for key in [
-                OutputKeys.CAPTION, OutputKeys.TEXT, OutputKeys.BOXES,
-                OutputKeys.LABELS, OutputKeys.SCORES
-        ]:
-            if key not in ret:
-                ret[key] = None
         return ret
 
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
@@ -157,7 +158,8 @@ class OfaForAllTasks(TorchModel):
             result_l = list()
             for cap in caption:
                 if self.language == 'en':
-                    result_l.append(cap.translate(self.transtab).strip())
+                    result_l.append(
+                        [c.translate(self.transtab).strip() for c in cap])
                 else:
                     result_l.append(cap)
             input[OutputKeys.CAPTION] = result_l
@@ -166,8 +168,18 @@ class OfaForAllTasks(TorchModel):
         ] and self.cfg.task != Tasks.visual_grounding:
             ret_l = list()
             for text in input[OFA_TASK_KEY_MAPPING[self.cfg.task]]:
-                ret_l.append(self.detokenizer(text))
+                ret_l.append([self.detokenizer(t) for t in text])
             input[OFA_TASK_KEY_MAPPING[self.cfg.task]] = ret_l
+        for key in [
+                OutputKeys.CAPTION, OutputKeys.TEXT, OutputKeys.BOXES,
+                OutputKeys.LABELS, OutputKeys.SCORES
+        ]:
+            if key not in input:
+                input[key] = None
+            else:
+                if (len(input[key]) == 1 and isinstance(input[key], list)) \
+                        and self.cfg.task != Tasks.visual_grounding:
+                    input[key] = input[key][0]
         return input
 
     def _text_gen_inference(self, input):
@@ -175,23 +187,25 @@ class OfaForAllTasks(TorchModel):
                                               input,
                                               prefix_tokens=input.get(
                                                   'prefix_tokens', None))
-        gen_l = list()
+        results = list()
         for idx, gen_out in enumerate(gen_outputs):
-            if len(gen_out) > 0:
-                decode_tokens = gen_out[0]['tokens']
+            gen_token_l = []
+            for beam_gen_out in gen_out[:self.num_return_sequences]:
+                decode_tokens = beam_gen_out['tokens']
                 if 'prefix_tokens' in input:
                     prefix_len = input['prefix_tokens'][idx].ne(
                         self.pad_item.to(self.model.device)).sum()
                     decode_tokens = decode_tokens[prefix_len:]
-                gen_l.append(decode_tokens)
-            else:
-                gen_l.append('')
-        result = self.tokenizer.batch_decode(gen_l, skip_special_tokens=True)
-        result = [item.strip() for item in result]
+                gen_token_l.append(decode_tokens)
+            result = self.tokenizer.batch_decode(
+                gen_token_l, skip_special_tokens=True)
+            result = [item.strip() for item in result]
+            result.extend([''] * (self.num_return_sequences - len(result)))
+            results.append(result)
         # text generation tasks have no score
-        ret = {OFA_TASK_KEY_MAPPING[self.cfg.task]: result}
-        if self.cfg.task.endswith('classification'):
-            ret[OutputKeys.SCORES] = [1.0] * len(result)
+        ret = {OFA_TASK_KEY_MAPPING[self.cfg.task]: results}
+        if self.ans2label_dict:
+            ret[OutputKeys.SCORES] = [[1.0]] * len(results)
         return ret
 
     def _visual_grounding_inference(self, input):

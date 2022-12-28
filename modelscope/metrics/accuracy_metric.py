@@ -40,6 +40,9 @@ class AccuracyMetric(Metric):
             self.labels.append(truth)
         for result in eval_results:
             if isinstance(truth, str):
+                if isinstance(result, list):
+                    result = result[0]
+                assert isinstance(result, str), 'both truth and pred are str'
                 self.preds.append(remove_space_between_chinese_chars(result))
             else:
                 self.preds.append(result)

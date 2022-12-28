@@ -2,12 +2,14 @@
 from typing import Any, Dict, Union
 
 import numpy as np
+import torch
 
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models.base import Model
 from modelscope.outputs import OutputKeys, TextClassificationModelOutput
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
@@ -83,10 +85,17 @@ class TextClassificationPipeline(Pipeline):
         if hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label
 
+    def _batch(self, data):
+        if self.model.__class__.__name__ == 'OfaForAllTasks':
+            return batch_process(self.model, data)
+        else:
+            return super(TextClassificationPipeline, self)._batch(data)
+
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         if self.model.__class__.__name__ == 'OfaForAllTasks':
-            return super().forward(inputs, **forward_params)
+            with torch.no_grad():
+                return super().forward(inputs, **forward_params)
         return self.model(**inputs, **forward_params)
 
     def postprocess(self,

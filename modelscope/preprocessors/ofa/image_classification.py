@@ -112,7 +112,8 @@ class OfaImageClassificationPreprocessor(OfaBasePreprocessor):
         sample = {
             'source': inputs,
             'patch_image': patch_image,
-            'patch_mask': torch.tensor([True])
+            'patch_mask': torch.tensor([True]),
+            'decoder_prompt': self.bos_item,
         }
         if 'text' in self.column_map and self.column_map['text'] in data:
             sample['label'] = data[self.column_map['text']]

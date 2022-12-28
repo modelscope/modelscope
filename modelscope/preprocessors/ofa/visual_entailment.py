@@ -101,10 +101,10 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
             text = prompt.format(caption, hypothesis)
         inputs = self.tokenize_text(text)
         if self.prompt_type == 'none':
+            prefix_token = []
             decoder_prompt = self.bos_item
-        elif self.prompt_type == 'src':
-            decoder_prompt = inputs
         elif self.prompt_type == 'prev_output':
+            prefix_token = inputs[:-1]  # remove eos
             decoder_prompt = inputs[:-1]
         else:
             raise NotImplementedError
@@ -112,6 +112,7 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
             'source': inputs,
             'patch_image': patch_image,
             'patch_mask': torch.tensor([True]),
+            'prefix_token': prefix_token,
             'decoder_prompt': decoder_prompt,
         }
         if 'relation' in self.column_map and self.column_map[

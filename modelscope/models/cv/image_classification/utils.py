@@ -73,12 +73,12 @@ def get_classes(classes=None):
 
 class MmDataset(BaseDataset):
 
-    def __init__(self, ms_dataset, pipeline, classes=None, test_mode=False):
+    def __init__(self, ms_dataset, pipeline, classes=None, test_mode=False, data_prefix=''):
         self.ms_dataset = ms_dataset
         if len(self.ms_dataset) < 1:
             raise ValueError('Dataset Error: dataset is empty')
         super(MmDataset, self).__init__(
-            data_prefix='',
+            data_prefix=data_prefix,
             pipeline=pipeline,
             classes=classes,
             test_mode=test_mode)

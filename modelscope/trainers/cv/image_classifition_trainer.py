@@ -352,11 +352,18 @@ class ImageClassifitionTrainer(BaseTrainer):
         else:
             classes = self.cfg.dataset.classes
 
+        # set img_prefix for image data path in csv files.
+        if self.cfg.dataset.data_prefix is None:
+            data_prefix = "",
+        else:
+            data_prefix = self.cfg.dataset.data_prefix      
+
         datasets = [
             MmDataset(
                 self.train_dataset,
                 pipeline=self.cfg.preprocessor.train,
-                classes=classes)
+                classes=classes,
+                data_prefix=data_prefix)
         ]
 
         if len(self.cfg.train.workflow) == 2:
@@ -366,7 +373,10 @@ class ImageClassifitionTrainer(BaseTrainer):
                 )
             val_data_pipeline = self.cfg.preprocessor.train
             val_dataset = MmDataset(
-                self.eval_dataset, pipeline=val_data_pipeline, classes=classes)
+                self.eval_dataset,
+                pipeline=val_data_pipeline,
+                classes=classes,
+                data_prefix=data_prefix)
             datasets.append(val_dataset)
 
         # save mmcls version, config file content and class names in
@@ -382,7 +392,8 @@ class ImageClassifitionTrainer(BaseTrainer):
             val_dataset = MmDataset(
                 self.eval_dataset,
                 pipeline=preprocess_transform(self.cfg.preprocessor.val),
-                classes=classes)
+                classes=classes,
+                data_prefix=data_prefix)
 
         # add an attribute for visualization convenience
         train_model(

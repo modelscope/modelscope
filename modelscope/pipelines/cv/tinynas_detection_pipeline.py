@@ -20,6 +20,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
+    Tasks.human_detection, module_name=Pipelines.tinynas_detection)
+@PIPELINES.register_module(
     Tasks.image_object_detection, module_name=Pipelines.tinynas_detection)
 class TinynasDetectionPipeline(Pipeline):
 

@@ -89,6 +89,7 @@ class Models(object):
     lcrf_wseg = 'lstm-crf-for-word-segmentation'
     gcnncrf = 'gcnn-crf'
     bart = 'bart'
+    gpt2 = 'gpt2'
     gpt3 = 'gpt3'
     gpt_moe = 'gpt-moe'
     gpt_neo = 'gpt-neo'

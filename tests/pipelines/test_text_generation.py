@@ -219,6 +219,13 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
                 max_length=20,
                 repetition_penalty=0.5))
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_gpt2(self):
+        pipe = pipeline(
+            task=Tasks.text_generation,
+            model='damo/nlp_gpt2_text-generation_english-base')
+        print(pipe('My name is Teven and I am'))
+
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()

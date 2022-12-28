@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
+    from .gpt2 import GPT2Model
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
     from .heads import SequenceClassificationHead
@@ -60,6 +61,7 @@ else:
         'bart': ['BartForTextErrorCorrection'],
         'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
+        'gpt2': ['GPT2Model'],
         'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
         'gpt_moe': ['GPTMoEForTextGeneration', 'DistributedGPTMoE'],
         'structbert': [

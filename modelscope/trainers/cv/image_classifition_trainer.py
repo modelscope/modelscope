@@ -350,7 +350,7 @@ class ImageClassifitionTrainer(BaseTrainer):
             classname_path = osp.join(data_root, 'classname.txt')
             classes = classname_path if osp.exists(classname_path) else None
         else:
-            classes = cfg.dataset.classes
+            classes = self.cfg.dataset.classes
 
         datasets = [
             MmDataset(

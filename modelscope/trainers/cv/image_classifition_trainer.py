@@ -353,7 +353,7 @@ class ImageClassifitionTrainer(BaseTrainer):
             classes = self.cfg.dataset.classes
 
         # set img_prefix for image data path in csv files.
-        if self.cfg.dataset.get("data_prefix", None) is None:
+        if self.cfg.dataset.get('data_prefix', None) is None:
             data_prefix = ''
         else:
             data_prefix = self.cfg.dataset.data_prefix

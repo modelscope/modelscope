@@ -71,6 +71,7 @@ if TYPE_CHECKING:
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
+    from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
 
 else:
     _import_structure = {
@@ -165,6 +166,9 @@ else:
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
         'pointcloud_sceneflow_estimation_pipeline': [
             'PointCloudSceneFlowEstimationPipeline'
+        ],
+        'maskdino_instance_segmentation_pipeline': [
+            'MaskDINOInstanceSegmentationPipeline'
         ]
     }
 

@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .swin_transformer import SwinTransformer
-    from .swin_transformer import D2SwinTransformer
+    from .maskdino_encoder import MaskDINOEncoder
+    from .maskdino_decoder import MaskDINODecoder
 
 else:
     _import_structure = {
-        'swin_transformer': ['SwinTransformer', 'D2SwinTransformer'],
+        'maskdino_encoder': ['MaskDINOEncoder'],
+        'maskdino_decoder': ['MaskDINODecoder'],
     }
 
     import sys

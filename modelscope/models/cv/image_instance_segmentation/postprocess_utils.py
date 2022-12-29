@@ -201,3 +201,42 @@ def show_result(
         img[idx[0], idx[1], :] += alpha * random_color
 
     cv2.imwrite(out_file, img)
+
+
+def get_maskdino_ins_seg_result(maskdino_seg_result,
+                                class_names,
+                                score_thr=0.3):
+    scores = maskdino_seg_result['scores'].detach().cpu().numpy()
+    pred_masks = maskdino_seg_result['pred_masks'].detach().cpu().numpy()
+    pred_boxes = maskdino_seg_result['pred_boxes'].detach().cpu().numpy()
+    pred_classes = maskdino_seg_result['pred_classes'].detach().cpu().numpy()
+
+    thresholded_idxs = np.array(scores) >= score_thr
+    scores = scores[thresholded_idxs]
+    pred_classes = pred_classes[thresholded_idxs]
+    pred_masks = pred_masks[thresholded_idxs]
+    pred_boxes = pred_boxes[thresholded_idxs]
+
+    results_dict = {
+        OutputKeys.BOXES: [],
+        OutputKeys.MASKS: [],
+        OutputKeys.LABELS: [],
+        OutputKeys.SCORES: []
+    }
+    for score, cls, mask, box in zip(scores, pred_classes, pred_masks,
+                                     pred_boxes):
+        score = np.float64(score)
+        label = class_names[int(cls)]
+        mask = np.array(mask, dtype=np.float64)
+        box = [
+            np.int64(box[0]),
+            np.int64(box[1]),
+            np.int64(box[2]),
+            np.int64(box[3])
+        ]
+        results_dict[OutputKeys.SCORES].append(score)
+        results_dict[OutputKeys.LABELS].append(label)
+        results_dict[OutputKeys.MASKS].append(mask)
+        results_dict[OutputKeys.BOXES].append(box)
+
+    return results_dict

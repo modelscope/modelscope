@@ -230,23 +230,20 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
         audio = audio.tobytes()
         return audio
 
-    # TODO: recover to test level 0 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav(self):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=POS_WAV_FILE)
         self.check_result('test_run_with_wav', kws_result)
 
-    # TODO: recover to test level 0 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_pcm(self):
         audio = self.wav2bytes(os.path.join(os.getcwd(), POS_WAV_FILE))
 
         kws_result = self.run_pipeline(model_id=self.model_id, audio_in=audio)
         self.check_result('test_run_with_pcm', kws_result)
 
-    # TODO: recover to test level 0 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_wav_by_customized_keywords(self):
         keywords = '播放音乐'
 
@@ -257,15 +254,13 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
         self.check_result('test_run_with_wav_by_customized_keywords',
                           kws_result)
 
-    # TODO: recover to test level 0 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_url(self):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=URL_FILE)
         self.check_result('test_run_with_url', kws_result)
 
-    # TODO: recover to test level 1 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_pos_testsets(self):
         wav_file_path = download_and_untar(
             os.path.join(self.workspace, POS_TESTSETS_FILE), POS_TESTSETS_URL,
@@ -276,8 +271,7 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
             model_id=self.model_id, audio_in=audio_list)
         self.check_result('test_run_with_pos_testsets', kws_result)
 
-    # TODO: recover to test level 1 once issue fixed
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_neg_testsets(self):
         wav_file_path = download_and_untar(
             os.path.join(self.workspace, NEG_TESTSETS_FILE), NEG_TESTSETS_URL,

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .team import TEAMForMultiModalSimilarity
     from .diffusion import DiffusionForTextToImageSynthesis
     from .mmr import VideoCLIPForMultiModalEmbedding
-    from .mplug_for_all_tasks import MPlugForAllTasks
+    from .mplug_for_all_tasks import MPlugForAllTasks, HiTeAForAllTasks
     from .ofa_for_all_tasks import OfaForAllTasks
     from .ofa_for_text_to_image_synthesis_model import \
         OfaForTextToImageSynthesis
@@ -24,7 +24,7 @@ else:
         'gemm': ['GEMMForMultiModalEmbedding'],
         'team': ['TEAMForMultiModalSimilarity'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
-        'mplug_for_all_tasks': ['MPlugForAllTasks'],
+        'mplug_for_all_tasks': ['MPlugForAllTasks', 'HiTeAForAllTasks'],
         'ofa_for_all_tasks': ['OfaForAllTasks'],
         'ofa_for_text_to_image_synthesis_model':
         ['OfaForTextToImageSynthesis'],

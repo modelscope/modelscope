@@ -120,6 +120,7 @@ class Models(object):
     multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
+    hitea = 'hitea'
 
     # science models
     unifold = 'unifold'
@@ -322,6 +323,8 @@ class Pipelines(object):
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
+    video_captioning = 'video-captioning'
+    video_question_answering = 'video-question-answering'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -446,6 +449,7 @@ class Preprocessors(object):
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
     clip_preprocessor = 'clip-preprocessor'
     mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
+    hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
 
     # science preprocessor
     unifold_preprocessor = 'unifold-preprocessor'

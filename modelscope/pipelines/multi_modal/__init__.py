@@ -14,7 +14,8 @@ if TYPE_CHECKING:
         VideoMultiModalEmbeddingPipeline
     from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
     from .asr_pipeline import AutomaticSpeechRecognitionPipeline
-
+    from .video_captioning_pipeline import VideoCaptioningPipeline
+    from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -29,6 +30,9 @@ else:
         'generative_multi_modal_embedding_pipeline':
         ['GEMMMultiModalEmbeddingPipeline'],
         'asr_pipeline': ['AutomaticSpeechRecognitionPipeline'],
+        'video_captioning_pipeline': ['VideoCaptioningPipeline'],
+        'video_question_answering_pipeline':
+        ['VideoQuestionAnsweringPipeline']
     }
 
     import sys

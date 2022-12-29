@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -222,6 +223,9 @@ TASK_INPUTS = {
     Tasks.image_captioning: [InputType.IMAGE, {
         'image': InputType.IMAGE,
     }],
+    Tasks.video_captioning: [InputType.VIDEO, {
+        'video': InputType.VIDEO,
+    }],
     Tasks.visual_grounding: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT
@@ -243,6 +247,10 @@ TASK_INPUTS = {
     },
     Tasks.visual_question_answering: {
         'image': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
+    Tasks.video_question_answering: {
+        'video': InputType.VIDEO,
         'text': InputType.TEXT
     },
     Tasks.visual_entailment: {

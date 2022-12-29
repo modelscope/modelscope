@@ -114,3 +114,67 @@ class MPlugConfig(PretrainedConfig):
         with open(yaml_file, 'r', encoding='utf-8') as reader:
             config_dict = yaml.load(reader, Loader=yaml.Loader)
         return cls(**config_dict)
+
+
+class HiTeAConfig(PretrainedConfig):
+
+    model_type = 'hitea'
+
+    def __init__(
+            self,
+            task=Tasks.video_question_answering,
+            bert_config='config_bert.json',
+            image_res=224,
+            num_frames=16,
+            batch_size_train=32,
+            vision_width=768,
+            distill=True,
+            batch_size_test=64,
+            k_test=128,
+            alpha=0.4,
+            warm_up=True,
+            eos='[SEP]',
+            optimizer=None,
+            schedular=None,
+            min_length=1,
+            max_length=10,
+            beam_size=5,
+            text_encoder='bert-base-uncased',
+            text_decoder='bert-base-uncased',
+            # retrieval
+            queue_size=65536,
+            embed_dim=256,
+            temp=0.07,
+            **kwargs):
+
+        super().__init__(**kwargs)
+        self.task = task
+        self.bert_config = bert_config
+        self.image_res = image_res
+        self.num_frames = num_frames
+        self.batch_size_train = batch_size_train
+        self.vision_width = vision_width
+        self.distill = distill
+        self.batch_size_test = batch_size_test
+        self.k_test = k_test
+        self.alpha = alpha
+        self.warm_up = warm_up
+        self.eos = eos
+        self.optimizer = optimizer
+        self.schedular = schedular
+        self.min_length = min_length
+        self.max_length = max_length
+        self.beam_size = beam_size
+        self.text_encoder = text_encoder
+        self.text_decoder = text_decoder
+        # retrieval
+        self.queue_size = queue_size
+        self.embed_dim = embed_dim
+        self.temp = temp
+
+    @classmethod
+    def from_yaml_file(cls, yaml_file: Union[str,
+                                             os.PathLike]) -> Dict[str, Any]:
+        with open(yaml_file, 'r', encoding='utf-8') as reader:
+            config_dict = yaml.load(reader, Loader=yaml.Loader)
+        return cls(**config_dict)

@@ -166,6 +166,8 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    video_captioning = 'video-captioning'
+    video_question_answering = 'video-question-answering'
 
 
 class ScienceTasks(object):

@@ -80,6 +80,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_bart_text-error-correction_chinese'),
     Tasks.image_captioning: (Pipelines.image_captioning,
                              'damo/ofa_image-caption_coco_large_en'),
+    Tasks.video_captioning:
+    (Pipelines.video_captioning,
+     'damo/multi-modal_hitea_video-captioning_base_en'),
     Tasks.image_portrait_stylization:
     (Pipelines.person_image_cartoon,
      'damo/cv_unet_person-image-cartoon_compound-models'),
@@ -114,6 +117,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),
+    Tasks.video_question_answering:
+    (Pipelines.video_question_answering,
+     'damo/multi-modal_hitea_video-question-answering_base_en'),
     Tasks.video_embedding: (Pipelines.cmdssl_video_embedding,
                             'damo/cv_r2p1d_video_embedding'),
     Tasks.text_to_image_synthesis:

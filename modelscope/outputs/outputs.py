@@ -711,6 +711,12 @@ TASK_OUTPUTS = {
     #   "caption": "this is an image caption text."
     # }
     Tasks.image_captioning: [OutputKeys.CAPTION],
+
+    # video caption result for single sample
+    # {
+    #   "caption": "this is an video caption text."
+    # }
+    Tasks.video_captioning: [OutputKeys.CAPTION],
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
     # visual grounding result for single sample
@@ -768,6 +774,10 @@ TASK_OUTPUTS = {
     # VQA result for a sample
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],
+
+    # VideoQA result for a sample
+    # {"text": "this is a text answser. "}
+    Tasks.video_question_answering: [OutputKeys.TEXT],
 
     # auto_speech_recognition result for a single sample
     # {

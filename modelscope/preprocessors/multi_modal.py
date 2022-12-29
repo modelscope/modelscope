@@ -3,7 +3,9 @@ import os.path as osp
 from io import BytesIO
 from typing import Any, Dict, List, Tuple, Union
 
+import decord
 import json
+import numpy as np
 import torch
 from PIL import Image
 from timm.data import create_transform
@@ -12,6 +14,8 @@ from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
 from modelscope.pipelines.base import Input
+from modelscope.pipelines.cv.cmdssl_video_embedding_pipeline import (
+    VCenterCrop, VCompose, VNormalize, VRescale, VToTensor)
 from modelscope.preprocessors import load_image
 from modelscope.utils.config import Config
 from modelscope.utils.constant import (Fields, Invoke, ModeKeys, ModelFile,
@@ -22,10 +26,7 @@ from .ofa import *  # noqa
 from .ofa.utils.collate import collate_fn
 from .ofa.utils.constant import OFA_TASK_KEY_MAPPING
 
-__all__ = [
-    'OfaPreprocessor',
-    'MPlugPreprocessor',
-]
+__all__ = ['OfaPreprocessor', 'MPlugPreprocessor', 'HiTeAPreprocessor']
 
 
 @PREPROCESSORS.register_module(
@@ -386,4 +387,142 @@ class MPlugPreprocessor(Preprocessor):
             }
             if self.cfg.task == Tasks.image_text_retrieval:
                 output['index'] = index
+            return output
+
+
+@PREPROCESSORS.register_module(
+    Fields.multi_modal, module_name=Preprocessors.hitea_tasks_preprocessor)
+class HiTeAPreprocessor(Preprocessor):
+
+    def __init__(self,
+                 model_dir: str,
+                 mode: str = ModeKeys.INFERENCE,
+                 tokenizer_max_length: int = 25,
+                 *args,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_dir = model_dir
+        self.mode = mode
+        self.tokenizer_max_length = tokenizer_max_length
+
+        self._tokenizer = None
+        self._patch_resize_transform = None
+        self._num_frames = None
+        self._video_map = {}
+
+    @property
+    def tokenizer(self):
+        from transformers import BertTokenizer
+
+        if self._tokenizer is None:
+            self._tokenizer = BertTokenizer.from_pretrained(self.model_dir)
+        return self._tokenizer
+
+    @property
+    def patch_resize_transform(self):
+        if self._patch_resize_transform is None:
+            from torchvision import transforms
+            from modelscope.models.multi_modal.mplug import CONFIG_NAME, HiTeAConfig
+
+            config = HiTeAConfig.from_yaml_file(
+                osp.join(self.model_dir, CONFIG_NAME))
+
+            mean = (0.48145466, 0.4578275, 0.40821073)
+            std = (0.26862954, 0.26130258, 0.27577711)
+
+            self._patch_resize_transform = transforms.Compose([
+                transforms.Resize((config.image_res, config.image_res),
+                                  interpolation=Image.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+            ])
+        return self._patch_resize_transform
+
+    @property
+    def num_frames(self):
+        if self._num_frames is None:
+            from torchvision import transforms
+            from modelscope.models.multi_modal.mplug import CONFIG_NAME, HiTeAConfig
+
+            config = HiTeAConfig.from_yaml_file(
+                osp.join(self.model_dir, CONFIG_NAME))
+
+            self._num_frames = config.num_frames
+        return self._num_frames
+
+    def video_open(self, path: str) -> Tuple[decord.VideoReader, int]:
+        if path not in self._video_map:
+            index = len(self._video_map)
+            vr = decord.VideoReader(path, ctx=decord.cpu(0))
+            self._video_map[path] = (vr, index)
+        return self._video_map[path]
+
+    def sample_frames(self, num_frames: int, vlen: int) -> List[int]:
+        acc_samples = min(num_frames, vlen)
+        # split the video into `acc_samples` intervals, and sample from each interval.
+        intervals = np.linspace(
+            start=0, stop=vlen, num=acc_samples + 1).astype(int)
+        ranges = []
+        for idx, interv in enumerate(intervals[:-1]):
+            ranges.append((interv, intervals[idx + 1] - 1))
+
+        frame_indices = [(x[0] + x[1]) // 2 for x in ranges]
+
+        if len(frame_indices) < num_frames:  # padded with last frame
+            padded_frame_indices = [frame_indices[-1]] * num_frames
+            padded_frame_indices[:len(frame_indices)] = frame_indices
+            frame_indices = padded_frame_indices
+        return frame_indices
+
+    def __call__(
+        self, data: Union[decord.VideoReader, tuple,
+                          Dict[str, Any]]) -> Dict[str, Any]:
+        self.cfg = Config.from_file(
+            osp.join(self.model_dir, ModelFile.CONFIGURATION))
+
+        if isinstance(data, (decord.VideoReader, str)):
+            video = data
+        elif isinstance(data, tuple):
+            video = data[0]
+        else:
+            video = data['video']
+        index = 0
+        if isinstance(video, str):
+            video, index = self.video_open(video)
+        frame_indices = self.sample_frames(self.num_frames, len(video))
+        video.seek(0)
+        video = torch.from_numpy(video.get_batch(frame_indices).asnumpy())
+        video = [
+            self.patch_resize_transform(Image.fromarray(f))
+            for f in video.numpy()
+        ]
+        video = torch.stack(video, dim=0)
+        question = '' if self.cfg.task == Tasks.video_captioning \
+            else data[1 if isinstance(data, tuple)
+                      else ('text' if 'text' in data else 'question')]
+        question = self.tokenizer(
+            question.lower(),
+            padding='max_length',
+            truncation=True,
+            max_length=self.tokenizer_max_length,
+            return_tensors='pt')
+
+        if self.mode == ModeKeys.INFERENCE:
+            video = torch.stack([video], dim=0)
+            return {'video': video, 'question': question}
+        else:
+            answer = data['answer']
+            answer = self.tokenizer(
+                answer,
+                padding='max_length',
+                truncation=True,
+                max_length=self.tokenizer_max_length,
+                return_tensors='pt')
+            output = {
+                'video': video,
+                'question_input_ids': question.input_ids.squeeze(),
+                'question_attention_mask': question.attention_mask.squeeze(),
+                'answer_input_ids': answer.input_ids.squeeze(),
+                'answer_attention_mask': answer.attention_mask.squeeze(),
+            }
             return output

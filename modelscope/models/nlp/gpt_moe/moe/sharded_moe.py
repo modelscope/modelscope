@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from megatron import mpu
+from megatron_util import mpu
 from scipy.special import binom
 from torch import Tensor, nn
 from torch.nn import Module

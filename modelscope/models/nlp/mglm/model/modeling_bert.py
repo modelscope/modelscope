@@ -26,10 +26,10 @@ import tarfile
 import tempfile
 
 import json
-import mpu
 import torch
 import torch.nn.functional as F
 from data_utils.file_utils import cached_path
+from megatron_util import mpu
 from torch import nn
 from torch.nn import CrossEntropyLoss
 

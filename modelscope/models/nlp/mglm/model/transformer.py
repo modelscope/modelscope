@@ -19,12 +19,7 @@ import deepspeed
 import torch
 import torch.nn.init as init
 from apex.normalization.fused_layer_norm import FusedLayerNorm as LayerNorm
-
-from .initialize import get_model_parallel_world_size
-from .layers import ColumnParallelLinear, RowParallelLinear
-from .mappings import gather_from_model_parallel_region
-from .random import checkpoint, get_cuda_rng_tracker
-from .utils import divide, split_tensor_along_last_dim
+from megatron_util import mpu
 
 
 class PositionalEmbedding(torch.nn.Module):
@@ -63,19 +58,19 @@ class ParallelCrossAttention(torch.nn.Module):
         if output_layer_init_method is None:
             output_layer_init_method = init_method
         # Per attention head and per partition values.
-        world_size = get_model_parallel_world_size()
-        self.hidden_size_per_partition = divide(hidden_size, world_size)
-        self.hidden_size_per_attention_head = divide(hidden_size,
-                                                     num_attention_heads)
-        self.num_attention_heads_per_partition = divide(
+        world_size = mpu.get_model_parallel_world_size()
+        self.hidden_size_per_partition = mpu.divide(hidden_size, world_size)
+        self.hidden_size_per_attention_head = mpu.divide(
+            hidden_size, num_attention_heads)
+        self.num_attention_heads_per_partition = mpu.divide(
             num_attention_heads, world_size)
         # Strided linear layer.
-        self.query = ColumnParallelLinear(
+        self.query = mpu.ColumnParallelLinear(
             hidden_size,
             hidden_size,
             gather_output=False,
             init_method=init_method)
-        self.key_value = ColumnParallelLinear(
+        self.key_value = mpu.ColumnParallelLinear(
             hidden_size,
             2 * hidden_size,
             stride=2,
@@ -87,7 +82,7 @@ class ParallelCrossAttention(torch.nn.Module):
         self.attention_dropout = torch.nn.Dropout(attention_dropout_prob)
 
         # Output.
-        self.dense = RowParallelLinear(
+        self.dense = mpu.RowParallelLinear(
             hidden_size,
             hidden_size,
             input_is_parallel=True,
@@ -95,9 +90,8 @@ class ParallelCrossAttention(torch.nn.Module):
         self.output_dropout = torch.nn.Dropout(output_dropout_prob)
 
         if deepspeed.checkpointing.is_configured():
-            global get_cuda_rng_tracker, checkpoint
-            get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
-            checkpoint = deepspeed.checkpointing.checkpoint
+            mpu.get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
+            mpu.checkpoint = deepspeed.checkpointing.checkpoint
 
     def _transpose_for_scores(self, tensor):
         """Transpose a 3D tensor [b, s, np*hn] into a 4D tensor with
@@ -116,8 +110,8 @@ class ParallelCrossAttention(torch.nn.Module):
         # Attention heads. [b, s, hp]
         mixed_query_layer = self.query(hidden_states)
         mixed_x_layer = self.key_value(encoder_states)
-        (mixed_key_layer,
-         mixed_value_layer) = split_tensor_along_last_dim(mixed_x_layer, 2)
+        (mixed_key_layer, mixed_value_layer) = mpu.split_tensor_along_last_dim(
+            mixed_x_layer, 2)
 
         # Reshape and transpose [b, np, s, hn]
         query_layer = self._transpose_for_scores(mixed_query_layer)
@@ -137,7 +131,7 @@ class ParallelCrossAttention(torch.nn.Module):
         attention_probs = torch.nn.Softmax(dim=-1)(attention_scores)
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
-        with get_cuda_rng_tracker().fork():
+        with mpu.get_cuda_rng_tracker().fork():
             attention_probs = self.attention_dropout(attention_probs)
 
         # Context layer.
@@ -200,23 +194,23 @@ class ParallelSelfAttention(torch.nn.Module):
         if output_layer_init_method is None:
             output_layer_init_method = init_method
         # Per attention head and per partition values.
-        world_size = get_model_parallel_world_size()
-        self.hidden_size_per_partition = divide(hidden_size, world_size)
-        self.hidden_size_per_attention_head = divide(hidden_size,
-                                                     num_attention_heads)
-        self.num_attention_heads_per_partition = divide(
+        world_size = mpu.get_model_parallel_world_size()
+        self.hidden_size_per_partition = mpu.divide(hidden_size, world_size)
+        self.hidden_size_per_attention_head = mpu.divide(
+            hidden_size, num_attention_heads)
+        self.num_attention_heads_per_partition = mpu.divide(
             num_attention_heads, world_size)
         self.relative_encoding = relative_encoding
         self.attention_scale = attention_scale
         # Strided linear layer.
-        self.query_key_value = ColumnParallelLinear(
+        self.query_key_value = mpu.ColumnParallelLinear(
             hidden_size,
             3 * hidden_size,
             stride=3,
             gather_output=False,
             init_method=init_method)
         if relative_encoding:
-            self.relative = ColumnParallelLinear(
+            self.relative = mpu.ColumnParallelLinear(
                 hidden_size,
                 hidden_size,
                 gather_output=False,
@@ -227,7 +221,7 @@ class ParallelSelfAttention(torch.nn.Module):
         self.attention_dropout = torch.nn.Dropout(attention_dropout_prob)
 
         # Output.
-        self.dense = RowParallelLinear(
+        self.dense = mpu.RowParallelLinear(
             hidden_size,
             hidden_size,
             input_is_parallel=True,
@@ -235,9 +229,8 @@ class ParallelSelfAttention(torch.nn.Module):
         self.output_dropout = torch.nn.Dropout(output_dropout_prob)
 
         if deepspeed.checkpointing.is_configured():
-            global get_cuda_rng_tracker, checkpoint
-            get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
-            checkpoint = deepspeed.checkpointing.checkpoint
+            mpu.get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
+            mpu.checkpoint = deepspeed.checkpointing.checkpoint
 
     def _transpose_for_scores(self, tensor):
         """Transpose a 3D tensor [b, s, np*hn] into a 4D tensor with
@@ -284,13 +277,13 @@ class ParallelSelfAttention(torch.nn.Module):
         if mem is None:
             mixed_x_layer = self.query_key_value(hidden_states)
             (mixed_query_layer, mixed_key_layer,
-             mixed_value_layer) = split_tensor_along_last_dim(
+             mixed_value_layer) = mpu.split_tensor_along_last_dim(
                  mixed_x_layer, 3)
         else:
             cat = torch.cat((mem, hidden_states), 1)
             mixed_x_layer = self.query_key_value(cat)
             (mixed_query_layer, mixed_key_layer,
-             mixed_value_layer) = split_tensor_along_last_dim(
+             mixed_value_layer) = mpu.split_tensor_along_last_dim(
                  mixed_x_layer, 3)
             mixed_query_layer = mixed_query_layer[:, -query_length:]
 
@@ -342,7 +335,7 @@ class ParallelSelfAttention(torch.nn.Module):
         attention_probs = torch.nn.Softmax(dim=-1)(attention_scores)
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
-        with get_cuda_rng_tracker().fork():
+        with mpu.get_cuda_rng_tracker().fork():
             attention_probs = self.attention_dropout(attention_probs)
 
         # Context layer.
@@ -403,13 +396,13 @@ class ParallelMLP(torch.nn.Module):
         if output_layer_init_method is None:
             output_layer_init_method = init_method
         # Project to 4h.
-        self.dense_h_to_4h = ColumnParallelLinear(
+        self.dense_h_to_4h = mpu.ColumnParallelLinear(
             hidden_size,
             4 * hidden_size,
             gather_output=False,
             init_method=init_method)
         # Project back to h.
-        self.dense_4h_to_h = RowParallelLinear(
+        self.dense_4h_to_h = mpu.RowParallelLinear(
             4 * hidden_size,
             hidden_size,
             input_is_parallel=True,
@@ -732,10 +725,10 @@ class GPT2ParallelTransformer(torch.nn.Module):
             # Relative position embedding
             self.position_embeddings = PositionalEmbedding(hidden_size)
             # Per attention head and per partition values.
-            world_size = get_model_parallel_world_size()
-            self.hidden_size_per_attention_head = divide(
+            world_size = mpu.get_model_parallel_world_size()
+            self.hidden_size_per_attention_head = mpu.divide(
                 hidden_size, num_attention_heads)
-            self.num_attention_heads_per_partition = divide(
+            self.num_attention_heads_per_partition = mpu.divide(
                 num_attention_heads, world_size)
             self.r_w_bias = torch.nn.Parameter(
                 torch.Tensor(self.num_attention_heads_per_partition,
@@ -798,9 +791,8 @@ class GPT2ParallelTransformer(torch.nn.Module):
         self.final_layernorm = LayerNorm(hidden_size, eps=layernorm_epsilon)
 
         if deepspeed.checkpointing.is_configured():
-            global get_cuda_rng_tracker, checkpoint
-            get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
-            checkpoint = deepspeed.checkpointing.checkpoint
+            mpu.get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
+            mpu.checkpoint = deepspeed.checkpointing.checkpoint
 
     def forward(self,
                 hidden_states,
@@ -917,7 +909,8 @@ class GPT2ParallelTransformer(torch.nn.Module):
                     args += [position_embeddings, self.r_w_bias, self.r_r_bias]
                 if memory_states:
                     args += memory_states[l:l + chunk_length]
-                hidden_states = checkpoint(custom(l, l + chunk_length), *args)
+                hidden_states = mpu.checkpoint(
+                    custom(l, l + chunk_length), *args)
                 l += chunk_length  # noqa
         else:
             for i, layer in enumerate(self.layers):
@@ -1000,14 +993,14 @@ class BertParallelSelfAttention(torch.nn.Module):
         self.dropout_prob = dropout_prob
         self.output_parallel = output_parallel
         # Per attention head and per partition values.
-        world_size = get_model_parallel_world_size()
-        self.hidden_size_per_partition = divide(hidden_size, world_size)
-        self.hidden_size_per_attention_head = divide(hidden_size,
-                                                     num_attention_heads)
-        self.num_attention_heads_per_partition = divide(
+        world_size = mpu.get_model_parallel_world_size()
+        self.hidden_size_per_partition = mpu.divide(hidden_size, world_size)
+        self.hidden_size_per_attention_head = mpu.divide(
+            hidden_size, num_attention_heads)
+        self.num_attention_heads_per_partition = mpu.divide(
             num_attention_heads, world_size)
         # Strided linear layer.
-        self.query_key_value = ColumnParallelLinear(
+        self.query_key_value = mpu.ColumnParallelLinear(
             hidden_size,
             3 * hidden_size,
             stride=3,
@@ -1019,9 +1012,8 @@ class BertParallelSelfAttention(torch.nn.Module):
         self.dropout = torch.nn.Dropout(dropout_prob)
 
         if deepspeed.checkpointing.is_configured():
-            global get_cuda_rng_tracker, checkpoint
-            get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
-            checkpoint = deepspeed.checkpointing.checkpoint
+            mpu.get_cuda_rng_tracker = deepspeed.checkpointing.get_cuda_rng_tracker
+            mpu.checkpoint = deepspeed.checkpointing.checkpoint
 
     def _transpose_for_scores(self, tensor):
         """Transpose a 3D tensor [b, s, np*hn] into a 4D tensor with
@@ -1038,7 +1030,8 @@ class BertParallelSelfAttention(torch.nn.Module):
         # Attention heads. [b, s, hp]
         mixed_x_layer = self.query_key_value(hidden_states)
         (mixed_query_layer, mixed_key_layer,
-         mixed_value_layer) = split_tensor_along_last_dim(mixed_x_layer, 3)
+         mixed_value_layer) = mpu.split_tensor_along_last_dim(
+             mixed_x_layer, 3)
 
         # Reshape and transpose [b, np, s, hn]
         query_layer = self._transpose_for_scores(mixed_query_layer)
@@ -1057,7 +1050,7 @@ class BertParallelSelfAttention(torch.nn.Module):
         attention_probs = torch.nn.Softmax(dim=-1)(attention_scores)
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
-        with get_cuda_rng_tracker().fork():
+        with mpu.get_cuda_rng_tracker().fork():
             attention_probs = self.dropout(attention_probs)
 
         # Context layer.
@@ -1074,7 +1067,7 @@ class BertParallelSelfAttention(torch.nn.Module):
         if self.output_parallel:
             output = context_layer
         else:
-            output = gather_from_model_parallel_region(context_layer)
+            output = mpu.gather_from_model_parallel_region(context_layer)
 
         return output
 
@@ -1092,7 +1085,7 @@ class BertParallelTransformerOutput(torch.nn.Module):
                  init_method=init.xavier_normal_):
         super(BertParallelTransformerOutput, self).__init__()
         # Components.
-        self.dense = RowParallelLinear(
+        self.dense = mpu.RowParallelLinear(
             input_size,
             output_size,
             input_is_parallel=input_is_parallel,
@@ -1167,7 +1160,7 @@ class BertParallelTransformerLayer(torch.nn.Module):
             input_is_parallel=True,
             init_method=init_method)
         # Intermediate.
-        self.intermediate = ColumnParallelLinear(
+        self.intermediate = mpu.ColumnParallelLinear(
             hidden_size,
             intermediate_size,
             gather_output=False,

@@ -1,19 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
 from typing import Dict
 
 import torch
-import torch.nn.functional as F
-from megatron import mpu
-from megatron.fp16 import FP16_Module
-from megatron.utils import print_rank_0
+from megatron_util import mpu, print_rank_0
+from megatron_util.fp16 import FP16_Module
+from torch.nn import functional as F
 
 from modelscope.models import TorchModel
 from modelscope.models.base import Tensor
 from modelscope.utils.logger import get_logger
-from modelscope.utils.nlp.distributed import initialize_distributed
+from modelscope.utils.megatron_utils import init_megatron_util
 from modelscope.utils.nlp.load_checkpoint import pre_load
-from modelscope.utils.torch_utils import set_random_seed_mpu
 from . import PlugModel
 from .configuration import PlugNLGConfig
 
@@ -69,11 +66,9 @@ class DistributedPlug(TorchModel):
         self.rank = rank
         self.model_cfg = kwargs
         self.config = PlugNLGConfig.from_pretrained(model_dir)
-        initialize_distributed(rank, mpu, kwargs['world_size'],
-                               kwargs['model_parallel_size'],
-                               kwargs['master_ip'], kwargs['master_port'])
-        seed = 42 if 'seed' not in kwargs else kwargs['seed']
-        set_random_seed_mpu(seed)
+
+        init_megatron_util(model_dir=model_dir, rank=rank)
+
         self.iteration = 0
         self.model = self.initialize_model(path_load_tag='model')
 
@@ -85,7 +80,7 @@ class DistributedPlug(TorchModel):
         if mpu.get_data_parallel_rank() == 0:
             logger.info(
                 ' > number of parameters on model parallel rank {}: {}'.format(
-                    mpu.get_model_parallel_rank(),
+                    mpu.get_tensor_model_parallel_rank(),
                     sum([p.nelement() for p in model.parameters()])))
 
         if self.config.deepspeed and self.config.fp16:
@@ -111,7 +106,9 @@ class DistributedPlug(TorchModel):
                         _module.float()
 
         load_model = pre_load(
-            mpu.get_model_parallel_rank(), self.model_dir, tag=path_load_tag)
+            mpu.get_tensor_model_parallel_rank(),
+            self.model_dir,
+            tag=path_load_tag)
         model_dict = model.module.model.state_dict()
         for key in load_model:
             if key not in model_dict.keys():

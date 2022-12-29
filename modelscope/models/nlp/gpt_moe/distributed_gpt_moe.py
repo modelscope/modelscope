@@ -16,11 +16,11 @@
 import math
 
 import torch
-from megatron import mpu
-from megatron.global_vars import get_global_memory_buffer, set_global_variables
-from megatron.model import (AttnMaskType, Float16Module, LayerNorm,
-                            bias_gelu_impl)
-from megatron.model.fused_softmax import FusedScaleMaskSoftmax
+from megatron_util import mpu
+from megatron_util.global_vars import get_global_memory_buffer
+from megatron_util.model import (AttnMaskType, Float16Module, LayerNorm,
+                                 bias_gelu_impl)
+from megatron_util.model.fused_softmax import FusedScaleMaskSoftmax
 from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
@@ -28,8 +28,7 @@ from transformers.modeling_utils import PreTrainedModel
 from modelscope.models import TorchModel
 from modelscope.models.nlp.gpt_moe import GPTMoEConfig
 from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
-from modelscope.utils.nlp.distributed import initialize_distributed
-from modelscope.utils.torch_utils import set_random_seed_mpu
+from modelscope.utils.megatron_utils import init_megatron_util
 from .checkpointing import load_checkpoint
 from .moe.layer import MoE
 
@@ -44,8 +43,7 @@ class GPTMoEParallelMLP(nn.Module):
                  enable_expert_tensor_parallelism=False):
         super().__init__()
         # Project to 4h.
-        self.dense_h_to_4h = mpu.ColumnParallelLinearV3(
-            config,
+        self.dense_h_to_4h = mpu.ColumnParallelLinear(
             config.hidden_size,
             config.ffn_hidden_size,
             gather_output=False,
@@ -57,8 +55,7 @@ class GPTMoEParallelMLP(nn.Module):
         self.bias_gelu_fusion = config.bias_gelu_fusion
         self.activation_func = F.gelu
         # Project back to h.
-        self.dense_4h_to_h = mpu.RowParallelLinearV3(
-            config,
+        self.dense_4h_to_h = mpu.RowParallelLinear(
             config.ffn_hidden_size,
             config.hidden_size,
             input_is_parallel=True,
@@ -219,7 +216,7 @@ class GPTMoECoreAttention(nn.Module):
         projection_size = config.kv_channels * config.num_attention_heads
 
         # Per attention head and per partition values.
-        world_size = mpu.get_model_parallel_world_size()
+        world_size = mpu.get_tensor_model_parallel_world_size()
         self.hidden_size_per_partition = mpu.divide(projection_size,
                                                     world_size)
         self.hidden_size_per_attention_head = mpu.divide(
@@ -345,15 +342,14 @@ class GPTMoEParallelAttention(nn.Module):
         projection_size = config.kv_channels * config.num_attention_heads
 
         # Per attention head and per partition values.
-        world_size = mpu.get_model_parallel_world_size()
+        world_size = mpu.get_tensor_model_parallel_world_size()
         self.hidden_size_per_attention_head = mpu.divide(
             projection_size, config.num_attention_heads)
         self.num_attention_heads_per_partition = mpu.divide(
             config.num_attention_heads, world_size)
 
         # Strided linear layer.
-        self.query_key_value = mpu.ColumnParallelLinearV3(
-            config,
+        self.query_key_value = mpu.ColumnParallelLinear(
             config.hidden_size,
             3 * projection_size,
             gather_output=False,
@@ -362,8 +358,7 @@ class GPTMoEParallelAttention(nn.Module):
         self.core_attention = GPTMoECoreAttention(config, self.layer_number)
 
         # Output.
-        self.dense = mpu.RowParallelLinearV3(
-            config,
+        self.dense = mpu.RowParallelLinear(
             projection_size,
             config.hidden_size,
             input_is_parallel=True,
@@ -1114,18 +1109,13 @@ class DistributedGPTMoE(TorchModel):
                  *args,
                  **kwargs):
         super().__init__(model_dir, *args, **kwargs)
-        initialize_distributed(rank, mpu, kwargs['world_size'],
-                               kwargs['model_parallel_size'],
-                               kwargs['master_ip'], kwargs['master_port'])
+
+        init_megatron_util(model_dir=model_dir, rank=rank)
 
         self.config = GPTMoEConfig.from_pretrained(model_dir)
         if self.config.num_experts[0] > 0:
             mpu.create_expert_and_data_parallel(
                 self.config.moe_expert_parallel_size)
-
-        seed = 0 if 'seed' not in kwargs else kwargs['seed']
-        set_random_seed_mpu(seed)
-        set_global_variables()
 
         # Build model.
         model = GPTMoEModel(self.config)

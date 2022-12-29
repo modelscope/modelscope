@@ -14,34 +14,13 @@
 # limitations under the License.
 
 import math
-import os
 
 import torch
 import torch.distributed as dist
-from megatron import mpu
+from megatron_util import mpu
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 from torch.autograd import Variable
 from torch.nn.modules import Module
-
-from modelscope.utils.torch_utils import init_dist
-
-
-def initialize_distributed(rank, mpu, world_size, model_parallel_size,
-                           master_ip, master_port):
-    """Initialize torch.distributed."""
-    # Manually set the device ids.
-    device = rank % torch.cuda.device_count()
-    torch.cuda.set_device(device)
-    # Call the init process
-    init_method = 'tcp://'
-    init_method += master_ip + ':' + master_port
-    torch.distributed.init_process_group(
-        backend='nccl',
-        world_size=int(os.getenv('WORLD_SIZE', world_size)),
-        rank=rank,
-        init_method=init_method)
-    # Set the model-parallel communicators.
-    mpu.initialize_model_parallel(model_parallel_size)
 
 
 def normal_init_method(mean, std):
@@ -70,7 +49,7 @@ class DistributedDataParallel(Module):
 
         self.module = module
         self.data_parallel_group = mpu.get_data_parallel_group()
-        src_rank = mpu.get_model_parallel_rank()
+        src_rank = mpu.get_tensor_model_parallel_rank()
         for p in self.module.parameters():
             if torch.is_tensor(p):
                 dist.broadcast(p, src_rank, group=self.data_parallel_group)

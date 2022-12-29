@@ -2,7 +2,7 @@ import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from megatron import mpu
+from megatron_util import mpu
 from torch import nn
 
 from modelscope.metainfo import Trainers

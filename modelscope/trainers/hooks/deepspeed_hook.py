@@ -3,7 +3,7 @@ import os
 from types import MethodType
 
 import deepspeed
-from megatron import mpu
+from megatron_util import mpu
 
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks import (BestCkptSaverHook, CheckpointHook,

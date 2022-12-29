@@ -20,26 +20,22 @@ from os import path as osp
 from typing import Callable, Dict, List, Optional, Union
 
 import torch
-from megatron import mpu
-from megatron.global_vars import get_global_memory_buffer, set_global_variables
-from megatron.model import (AttnMaskType, Float16Module, LayerNorm,
-                            bias_gelu_impl)
-from megatron.model.fused_softmax import FusedScaleMaskSoftmax
+from megatron_util import mpu
+from megatron_util.global_vars import get_global_memory_buffer
+from megatron_util.model import (AttnMaskType, Float16Module, LayerNorm,
+                                 bias_gelu_impl)
+from megatron_util.model.fused_softmax import FusedScaleMaskSoftmax
 from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
 from modelscope.fileio import File
-from modelscope.metainfo import Models
 from modelscope.models import TorchModel
-from modelscope.models.builder import MODELS
 from modelscope.models.nlp.gpt3 import GPT3Config
 from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
 from modelscope.utils.checkpoint import weights_to_cpu
-from modelscope.utils.constant import Tasks
-from modelscope.utils.nlp.distributed import initialize_distributed
+from modelscope.utils.megatron_utils import init_megatron_util
 from modelscope.utils.nlp.load_checkpoint import pre_load
-from modelscope.utils.torch_utils import set_random_seed_mpu
 
 
 class GPT3ParallelMLP(nn.Module):
@@ -54,8 +50,7 @@ class GPT3ParallelMLP(nn.Module):
         super().__init__()
 
         # Project to 4h.
-        self.dense_h_to_4h = mpu.ColumnParallelLinearV3(
-            config,
+        self.dense_h_to_4h = mpu.ColumnParallelLinear(
             config.hidden_size,
             config.ffn_hidden_size,
             gather_output=False,
@@ -66,8 +61,7 @@ class GPT3ParallelMLP(nn.Module):
         self.activation_func = F.gelu
 
         # Project back to h.
-        self.dense_4h_to_h = mpu.RowParallelLinearV3(
-            config,
+        self.dense_4h_to_h = mpu.RowParallelLinear(
             config.ffn_hidden_size,
             config.hidden_size,
             input_is_parallel=True,
@@ -198,7 +192,7 @@ class GPT3CoreAttention(nn.Module):
         projection_size = config.kv_channels * config.num_attention_heads
 
         # Per attention head and per partition values.
-        world_size = mpu.get_model_parallel_world_size()
+        world_size = mpu.get_tensor_model_parallel_world_size()
         self.hidden_size_per_partition = mpu.divide(projection_size,
                                                     world_size)
         self.hidden_size_per_attention_head = mpu.divide(
@@ -324,15 +318,14 @@ class GPT3ParallelAttention(nn.Module):
         projection_size = config.kv_channels * config.num_attention_heads
 
         # Per attention head and per partition values.
-        world_size = mpu.get_model_parallel_world_size()
+        world_size = mpu.get_tensor_model_parallel_world_size()
         self.hidden_size_per_attention_head = mpu.divide(
             projection_size, config.num_attention_heads)
         self.num_attention_heads_per_partition = mpu.divide(
             config.num_attention_heads, world_size)
 
         # Strided linear layer.
-        self.query_key_value = mpu.ColumnParallelLinearV3(
-            config,
+        self.query_key_value = mpu.ColumnParallelLinear(
             config.hidden_size,
             3 * projection_size,
             gather_output=False,
@@ -341,8 +334,7 @@ class GPT3ParallelAttention(nn.Module):
         self.core_attention = GPT3CoreAttention(config, self.layer_number)
 
         # Output.
-        self.dense = mpu.RowParallelLinearV3(
-            config,
+        self.dense = mpu.RowParallelLinear(
             projection_size,
             config.hidden_size,
             input_is_parallel=True,
@@ -806,7 +798,8 @@ class GPT3Model(PreTrainedModel):
         output = logits_parallel
 
         if labels is None:
-            output = mpu.gather_from_model_parallel_region(logits_parallel)
+            output = mpu.gather_from_tensor_model_parallel_region(
+                logits_parallel)
             # [s b h] => [b s h]
             return output.transpose(0, 1).contiguous()
         else:
@@ -946,7 +939,7 @@ def split_state_dict(state_dict: Dict[str, torch.Tensor], model: GPT3Model,
                      partitions: int) -> Dict[str, torch.Tensor]:
     if partitions == 1:
         return state_dict
-    rank: int = mpu.get_model_parallel_rank()
+    rank: int = mpu.get_tensor_model_parallel_rank()
     for name, parameters in model.named_parameters():
         if parameters.shape == state_dict[name].shape:
             continue
@@ -962,7 +955,7 @@ def save_checkpoint(model: torch.nn.Module, filename: str, **kwargs) -> None:
         model = model.module
 
     checkpoint = {'module': weights_to_cpu(model.state_dict())}
-    mp_rank = mpu.get_model_parallel_rank()
+    mp_rank = mpu.get_tensor_model_parallel_rank()
     filename = osp.join(
         osp.dirname(filename), 'model',
         'mp_rank_{:02d}'.format(mp_rank) + '_model_states.pt')
@@ -981,12 +974,8 @@ class DistributedGPT3(TorchModel):
                  *args,
                  **kwargs):
         super().__init__(model_dir, *args, **kwargs)
-        initialize_distributed(rank, mpu, kwargs['world_size'],
-                               kwargs['model_parallel_size'],
-                               kwargs['master_ip'], kwargs['master_port'])
-        seed = 0 if 'seed' not in kwargs else kwargs['seed']
-        set_random_seed_mpu(seed)
-        set_global_variables()
+
+        init_megatron_util(model_dir=model_dir, rank=rank)
 
         self.config = GPT3Config.from_pretrained(model_dir)
         # Build model.
@@ -1004,9 +993,9 @@ class DistributedGPT3(TorchModel):
 
         self.dist_model = model
 
-        tensor_ws = mpu.get_model_parallel_world_size()
+        tensor_ws = mpu.get_tensor_model_parallel_world_size()
         ckpt_ws = kwargs.pop('checkpoint_model_parallel_size', tensor_ws)
-        ckpt_rank = mpu.get_model_parallel_rank() * ckpt_ws // tensor_ws
+        ckpt_rank = mpu.get_tensor_model_parallel_rank() * ckpt_ws // tensor_ws
         load_model = pre_load(ckpt_rank, model_dir, tag=path_load_tag)
         load_model = split_state_dict(load_model, model, tensor_ws // ckpt_ws)
 

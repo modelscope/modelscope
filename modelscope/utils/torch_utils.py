@@ -108,7 +108,7 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
 def get_dist_info() -> Tuple[int, int]:
     if is_dist():
         try:
-            from megatron import mpu
+            from megatron_util import mpu
             assert mpu.model_parallel_is_initialized()
             rank = mpu.get_data_parallel_rank()
             world_size = mpu.get_data_parallel_world_size()
@@ -201,9 +201,3 @@ def set_random_seed(seed):
     else:
         raise ValueError(
             f'Random seed should be positive, current seed is {seed}')
-
-
-def set_random_seed_mpu(seed):
-    from megatron import mpu
-    set_random_seed(seed)
-    mpu.model_parallel_cuda_manual_seed(seed)

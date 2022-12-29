@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from typing import List
 
 import torch
-from megatron import mpu
+from megatron_util import mpu
 
 from modelscope.metainfo import Trainers
 from modelscope.models import TorchModel

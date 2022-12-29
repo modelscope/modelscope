@@ -419,8 +419,7 @@ class DistributedPipeline(Pipeline):
         self.device = create_device(self.device_name)
         self.has_multiple_models = False
         self.framework = self.cfg.framework
-        if torch.multiprocessing.get_start_method(allow_none=True) is None:
-            torch.multiprocessing.set_start_method('spawn')
+        torch.multiprocessing.set_start_method('spawn', force=True)
 
         ranks = list(range(self.world_size))
         self.model_pool = Pool(self.world_size)

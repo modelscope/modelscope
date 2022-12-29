@@ -18,12 +18,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import logging
 import math
-import os
 
 import torch
 import torch.nn.functional as F
-from deepspeed.utils.timer import SynchronizedWallClockTimer
-from megatron import mpu
+from megatron_util import mpu
 from torch import nn
 
 from modelscope.utils.nlp.distributed import (normal_init_method,
@@ -468,7 +466,6 @@ class BertLMPredictionHead(nn.Module):
 
         self.type_converter = convert_to_type
         self.converted = False
-        self.timers = SynchronizedWallClockTimer()
 
     def forward(self, hidden_states):
         if not self.converted:
@@ -478,9 +475,7 @@ class BertLMPredictionHead(nn.Module):
                 if self.fp32_layernorm:
                     self.transform.LayerNorm.float()
         hidden_states = self.transform(self.type_converter(hidden_states))
-        self.timers('final linear gather').start()
         hidden_states = mpu.copy_to_model_parallel_region(hidden_states)
-        self.timers('final linear gather').stop()
         hidden_states = F.linear(
             self.type_converter(hidden_states),
             self.type_converter(self.decoder_weight),

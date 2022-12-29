@@ -421,7 +421,7 @@ class ImageClassifitionTrainer(BaseTrainer):
         if self.cfg.dataset.classes is None:
             data_root = get_ms_dataset_root(self.eval_dataset)
             classname_path = osp.join(data_root, 'classname.txt')
-            classes = classname_path if osp.exists(classname_pßath) else None
+            classes = classname_path if osp.exists(classname_path) else None
         else:
             classes = self.cfg.dataset.classes
         dataset = MmDataset(

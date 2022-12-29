@@ -104,6 +104,9 @@ class CVTasks(object):
     video_summarization = 'video-summarization'
     image_reid_person = 'image-reid-person'
 
+    # pointcloud task
+    pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
+
 
 class NLPTasks(object):
     # nlp tasks

@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
+    from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
 
 else:
     _import_structure = {
@@ -162,6 +163,9 @@ else:
             'VideoObjectSegmentationPipeline'
         ],
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
+        'pointcloud_sceneflow_estimation_pipeline': [
+            'PointCloudSceneFlowEstimationPipeline'
+        ]
     }
 
     import sys

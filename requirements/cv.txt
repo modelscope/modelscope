@@ -24,6 +24,7 @@ onnxruntime>=1.10
 opencv-python
 pai-easycv>=0.6.3.9
 pandas
+plyfile>=0.7.4
 psutil
 regex
 scikit-image>=0.19.3

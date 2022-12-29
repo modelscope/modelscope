@@ -62,6 +62,7 @@ class Models(object):
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
     real_basicvsr = 'real-basicvsr'
+    rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -253,6 +254,7 @@ class Pipelines(object):
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
+    pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

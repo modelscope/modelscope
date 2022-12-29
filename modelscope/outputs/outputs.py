@@ -134,6 +134,13 @@ TASK_OUTPUTS = {
 
     # facial expression recognition result for single sample
     #   {
+    #       "scores": [0.9]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.face_liveness: [OutputKeys.SCORES, OutputKeys.BOXES],
+
+    # facial expression recognition result for single sample
+    #   {
     #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
     #       "labels": ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
     #   }

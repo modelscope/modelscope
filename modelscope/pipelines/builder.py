@@ -137,6 +137,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_detection:
     (Pipelines.mog_face_detection,
      'damo/cv_resnet101_face-detection_cvpr22papermogface'),
+    Tasks.face_liveness: (Pipelines.face_liveness_ir,
+                          'damo/cv_manual_face-liveness_flir'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
     Tasks.facial_expression_recognition:

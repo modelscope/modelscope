@@ -107,6 +107,85 @@ class FaceProcessingBasePipeline(Pipeline):
         result['lmks'] = face_lmks
         return result
 
+    def align_face_padding(self, img, rect, padding_size=16, pad_pixel=127):
+        rect = np.reshape(rect, (-1, 4))
+        if img is None:
+            return None
+        if img.ndim == 2:
+            w, h = img.shape
+            ret = np.empty((w, h, 3), dtype=np.uint8)
+            ret[:, :, 0] = ret[:, :, 1] = ret[:, :, 2] = img
+            img = ret
+        img = img[:, :, 0:3]
+        img = img[..., ::-1]
+        nrof = np.zeros((5, ), dtype=np.int32)
+
+        bounding_boxes = rect
+        nrof_faces = bounding_boxes.shape[0]
+        if nrof_faces > 0:
+            det = bounding_boxes[:, 0:4]
+            img_size = np.asarray(img.shape)[0:2]
+            bindex = 0
+            if nrof_faces > 1:
+                img_center = img_size / 2
+                offsets = np.vstack([
+                    (det[:, 0] + det[:, 2]) / 2 - img_center[1],
+                    (det[:, 1] + det[:, 3]) / 2 - img_center[0]
+                ])
+                offset_dist_squared = np.sum(np.power(offsets, 2.0), 0)
+                bindex = np.argmax(0 - offset_dist_squared * 2.0)
+            _bbox = bounding_boxes[bindex, 0:4]
+            nrof[0] += 1
+        else:
+            nrof[1] += 1
+        if _bbox is None:
+            nrof[2] += 1
+            return None
+        _bbox = [int(_bbox[0]), int(_bbox[1]), int(_bbox[2]), int(_bbox[3])]
+        x1 = _bbox[0] - int(
+            (_bbox[2] - _bbox[0] + 1) * padding_size * 1.0 / 112)
+        x2 = _bbox[2] + int(
+            (_bbox[2] - _bbox[0] + 1) * padding_size * 1.0 / 112)
+        y1 = _bbox[1] - int(
+            (_bbox[3] - _bbox[1] + 1) * padding_size * 1.0 / 112)
+        y2 = _bbox[3] + int(
+            (_bbox[3] - _bbox[1] + 1) * padding_size * 1.0 / 112)
+        _bbox[0] = max(0, x1)
+        _bbox[1] = max(0, y1)
+        _bbox[2] = min(img.shape[1] - 1, x2)
+        _bbox[3] = min(img.shape[0] - 1, y2)
+        padding_h = _bbox[3] - _bbox[1] + 1
+        padding_w = _bbox[2] - _bbox[0] + 1
+        if padding_w > padding_h:
+            offset = int((padding_w - padding_h) / 2)
+            _bbox[1] = _bbox[1] - offset
+            _bbox[3] = _bbox[1] + padding_w - 1
+            _bbox[1] = max(0, _bbox[1])
+            _bbox[3] = min(img.shape[0] - 1, _bbox[3])
+            dst_size = padding_w
+        else:
+            offset = int((padding_h - padding_w) / 2)
+            _bbox[0] = _bbox[0] - offset
+            _bbox[2] = _bbox[0] + padding_h - 1
+            _bbox[0] = max(0, _bbox[0])
+            _bbox[2] = min(img.shape[1] - 1, _bbox[2])
+            dst_size = padding_h
+
+        dst = np.full((dst_size, dst_size, 3), pad_pixel, dtype=np.uint8)
+        dst_x_offset = int((dst_size - (_bbox[2] - _bbox[0] + 1)) / 2)
+        dst_y_offset = int((dst_size - (_bbox[3] - _bbox[1] + 1)) / 2)
+
+        y_start = dst_y_offset
+        y_end = dst_y_offset + _bbox[3] + 1 - _bbox[1]
+        x_start = dst_x_offset
+        x_end = dst_x_offset + _bbox[2] + 1 - _bbox[0]
+        dst[y_start:y_end, x_start:x_end, :] = img[_bbox[1]:_bbox[3] + 1,
+                                                   _bbox[0]:_bbox[2] + 1, :]
+
+        dst = cv2.resize(dst, (128, 128), interpolation=cv2.INTER_LINEAR)
+
+        return dst
+
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         return {
             OutputKeys.OUTPUT_IMG: input['img'].cpu().numpy(),

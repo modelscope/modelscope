@@ -31,6 +31,13 @@ def recursive_overwrite(src, dst, ignore=None):
 
 
 def construct_rdrop_sample(x):
+    r"""
+    Construct a new sample which doubles each value.
+
+    .. note::
+        This function seems to only work when the type if `x` is `Tensor`,
+        other types should check the correctness.
+    """
     if isinstance(x, dict):
         for key in x:
             x[key] = construct_rdrop_sample(x[key])
@@ -46,6 +53,23 @@ def construct_rdrop_sample(x):
 
 
 def kl_loss(p, q):
+    r"""
+    The Kullback-Leibler divergence loss using in OFA
+
+    step 1. Calculate the Kullback-leibler divergence for each setting, see
+    more from :class:`~torch.nn.functional.kl_div` for details:
+        - `p` as input, `q` as target
+        - `q` as input, `p` as target
+    step 2. Average the two kl divergences as final loss.
+
+    Args:
+        p (Tensor): Tensor with arbitrary shape.
+        q (Tensor): Tensor with the same shape as p.
+
+    .. note::
+        :attr:`p` and :attr:`q` should be in the log space of observation and model
+        prediction values.
+    """
     p_loss = F.kl_div(p, torch.exp(q), reduction='sum')
     q_loss = F.kl_div(q, torch.exp(p), reduction='sum')
     loss = (p_loss + q_loss) / 2
@@ -64,6 +88,51 @@ def label_smoothed_nll_loss(lprobs,
                             constraint_masks=None,
                             constraint_start=None,
                             constraint_end=None):
+    r"""
+    Computing label smoothed negative log likelihood loss.
+
+    step 1. Calculating the negative log likelihood loss as `nll_loss`.
+    step 2. Calculating the smooth loss which is the sum of last dimension of
+        `nll_loss` as `smooth_loss`
+    step 3. Calculating the `esp_i`, which is the scale factor of `nll_loss`
+        and `smooth_loss` while calculating the `loss`.
+    step 4. Calculating the `loss` using :attr:`epsilon`, `eps_i`, `nll_loss`
+        and `smooth_loss`.
+    step 5. If `use_rdrop` is True, computing the Kullback-Leilber divergence
+        loss, making the doubled samples keep close after dropout. Add the kl
+        loss to the final `loss`.
+
+    Args:
+        lprobs (`Tensor` with shape `[bsz*seq_len, embed_dim]`):
+            log probabilities of the model.
+        target (`Tensor` with shape `[bsz*seq_len]`):
+            the target tokens
+        epsilon (`float`): scale factor of combine `nll_loss` and `smooth_loss`.
+        update_num (`int`): the number of updating parameters.
+        drop_worst_ratio (`float`, **optional**, default to `0.0`):
+            the ratio of dropped tokens whose score is worse then others.
+        drop_worst_after (`int`, **optional**, default to `0`):
+            the number of tokens after dropped by score.
+        use_rdrop (`bool`, **optional**, default to `False`):
+            whether or not to add Kullback-leilber divergence loss. if true, the
+            sample should be doubled in the preprocessing.
+        reg_alpha (`float`, **optional**, default to `1.0`):
+            the regular factor to add kl divergence loss to total loss.
+        constraint_masks (`tensor`, **optional**, default to `None`):
+            bool tensor with arbitrary shape which can be broadcast to the
+            shape of `lporbs`
+        constraint_start(`int`, **optional**, default to `None`):
+            the start of the token index.
+        constraint_start(`int`, **optional**, default to `None`):
+            the end of the token index.
+
+    Returns:
+        A tuple of:
+         - loss, scalar tensor with average total loss of total tokens.
+         - nll_loss, scalar tensor with average negative log likelihood loss
+         of total tokens.
+         - ntokens, the number of total tokens, should be `bsz * seq_len`.
+    """
     if target.dim() == lprobs.dim() - 1:
         target = target.unsqueeze(-1)
     nll_loss = -lprobs.gather(dim=-1, index=target).squeeze(-1)
@@ -176,6 +245,38 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
         return loss, sample_size, logging_output
 
     def get_lprobs_and_target(self, logits, sample):
+        r"""
+        Calculating the log probabilities from model's output `logits`, and processing the
+        target from `sample`.
+
+        step 1. Get the log probabilities from model's output logits.
+            - Get the scale factor `conf`, default is `1`.
+            - If some constrains are available, let the logits values out of
+            constraints be :obj:`-math.inf`
+            - Calculate the log softmax result and multiply scale factor `conf`,
+             see :class:`~torch.nn.functional.log_softmax` for details.
+            - If some ignore configs are available, remove the ignore token's
+            log probabilities.
+        step 2. Processing the target
+            - If some ignore configs are available, remove the ignore tokens
+            in the target.
+        step 3. Get the constraint mask
+            - If some ignore configs are available, remove the ignore tokens
+            in the constraint mask.
+
+        Args:
+            logits (:obj:`Tensor` with shape `[bsz, seq_len, embed_dim]`):
+                Model's output logits.
+            sample (`Dict[str, Tensor]`):
+                A sample for model's input, the key`target` must be in the
+                sample for training.
+
+        Returns:
+            A tuple of:
+             - log probabilities with shape `[bsz * (seq_len - 1), embed_dim]`
+             - target token index with shape `[bsz * (seq_len - 1),]`
+             - constraint mask with shape `[bsz * (seq_len - 1),]`
+        """
         conf = sample['conf'][:, None, None] if 'conf' in sample and sample[
             'conf'] is not None else 1
         constraint_masks = None
@@ -208,6 +309,32 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
                            lprobs.size(-1)), target.view(-1), constraint_masks
 
     def compute_loss(self, logits, sample, update_num, reduce=True):
+        r"""
+        Computing loss for adjust label smoothed cross entropy.
+
+        step 1. Getting log probabilities and target and constraints mask.
+        step 2. Remove the padding token result.
+        step 3. Computing the label smoothed negative log likelihood loss
+        as the final result.
+
+        Args:
+            logits (:obj:`Tensor` with shape `[bsz, seq_len, embed_dim]`):
+                Model's output logits.
+            sample (`Dict[str, Tensor]`):
+                A sample for model's input, the key`target` must be in the
+                sample for training.
+            update_num (`int`): The number of updating parameters.
+
+        .. note::
+            The parameter `reduce` is never used in this function, should be
+            removed.
+
+        Returns:
+            A tuple of:
+             - loss, a scalar tensor, the final loss.
+             - nll_loss, a scalar tensor, the negative log likelihood loss
+             - ntokens, int, the number of tokens in calculating the loss.
+        """
         lprobs, target, constraint_masks = self.get_lprobs_and_target(
             logits, sample)
         if constraint_masks is not None:
@@ -257,6 +384,14 @@ class AdjustLabelSmoothedCrossEntropyCriterion(_Loss):
 
 
 def get_schedule(scheduler):
+    r"""
+    Get the relative scheduler class and args by different input scheduler.
+    So far, we support for types of input scheduler:
+        - `const`
+        - `linear`
+        - `cosine`
+        - `polynomial_decay`
+    """
 
     if scheduler.name == 'const':
         scheduler_class = transformers.get_constant_schedule_with_warmup

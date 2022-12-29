@@ -80,7 +80,81 @@ class OFAConfig(PretrainedConfig):
             for more details.
         use_cache (`bool`, *optional*, defaults to `True`):
             Whether or not the model should return the last key/values attentions (not used by all models).
-    """
+        is_encoder_decoder (`bool`, *optional*, defaults to `True`):
+            Whether or not the model is used as an encoder/decoder.
+        scale_embedding (`bool`, *optional*, defaults to `False`):
+            Whether or not to scale the embedding. If True, embedding = Math.qrt(d_model) * embedding
+        pad_token_id (`int`, *optional*, defaults to `1`):
+            The id of the _padding_ token.
+        bos_token_id (`int`, *optional*, defaults to `0`):
+            The id of the _beginning-of-stream_ token.
+        decoder_start_token_id (`int`, *optional*, defaults to `0`):
+            If an encoder-decoder model starts decoding with a different token than _bos_, the id of that token.
+        eos_token_id (`int`, *optional*, defaults to `2`):
+            The id of the _end-of-stream_ token.
+        forced_eos_token_id (`int`, *optional*, defaults to `2`):
+            The id of the token to force as the last generated token when `max_length` is reached.
+        encoder_normalize_before (`bool`, *optional*, defaults to `True`):
+            Whether or not to use layer normalization before the self attention and fc layer within encoder layer
+        decoder_normalize_before (`bool`, *optional*, defaults to `True`):
+            Whether or not to use layer normalization before the self attention and fc layer within decoder layer
+        normformer (`bool`, *optional*, defaults to `True`):
+            Whether or not to use layer normalization between the self attention layers and fc layer within
+            encoder&decoder layer
+        encoder_drop_path_rate (`float`, *optional*, defaults to `0.0`):
+            The drop path rate using in the encoder. see more about drop path [drop path](https://arxiv.org/abs/1605.07648)
+        decoder_drop_path_rate (`float`, *optional*, defaults to `0.0`):
+            The drop path rate using in the decoder. see more about drop path [drop path](https://arxiv.org/abs/1605.07648)
+        layernorm_embedding (`bool`, *optional*, defaults to `True`):
+            Whether or not to use layer normalization for text input embedding in encoder and decoder.
+        patch_layernorm_embedding (`bool`, *optional*, defaults to `True`):
+            Whether or not to use layer normalization for image patch input embedding in encoder and decoder.
+        entangle_position_embedding (`bool`, *optional*, defaults to `False`):
+            Whether or not to entangle position embedding to input embedding.
+        resnet_type (`str`, *optional*, defaults to `"resnet101"`):
+            The image encoder's type in OFA, only works when use_ofasys=False. `"resnet18"`, `"resnet34"`,
+            `"resnet50"`, `"resnet101"` and `"resnet152"` are supported.
+        resnet_model_path (`str`, *optional*, defaults to `None`):
+            The path where can load resnet model. If None, will use random initialized weights.
+        resnet_drop_path_rate
+            The drop path rate using in resnet for image encoding, see more about drop path
+            [drop path](https://arxiv.org/abs/1605.07648)
+        token_bucket_size (`int`, *optional*, defaults to `256`):
+            The number of token buckets to use for each attention layer.
+        image_bucket_size (`int`, *optional*, defaults to `42`):
+            The number of image buckets to use for each attention layer.
+        add_type_embedding (`bool`, *optional*, defaults to `True`):
+            Whether or not to add type embedding to the input while encoding. So far, type means the type of modality,
+            and only Text&Image modalities is supported, `0`=Text, `1`=Image
+        share_decoder_input_output_embed (`bool`, *optional*, defaults to `True`):
+            Whether or not to share the input embedding table as the weights the output projection in decoder. If False,
+            using a new linear projection.
+        attn_scale_factor (`float`, *optional*, defaults to `2.0`):
+            The position embedding scaling factor. If it works,
+            position_embedding = position_embedding * float(d_model / num_attention_heads * attn_scale_factor)**-0.5
+        code_layernorm_embedding (`bool`, *optional*, defaults to `True`):
+            Whether or not to user layer normalization for code generation
+        code_image_size (`int`, *optional*, defaults to `128`):
+            Image size of generated images. Also used in calculating the image's position id for attention bias.
+        interpolate_position (`bool`, *optional*, defaults to `False`):
+            Deprecated now, will be deleted in next version.
+        orig_patch_image_size (`int`, *optional*, defaults to `224`):
+            Deprecated now, will be deleted in next version.
+        share_attn_bias (`bool`, *optional*, defaults to `False`):
+            Whether or not to share attn_bias cross transformer layers
+        use_image_feature (`bool`, *optional*, defaults to `True`):
+            Whether or not the model have image modality.
+        disable_entangle (`bool`, *optional*, defaults to `False`):
+            Whether or not to disable the entangle relative configs.
+        use_ofasys (`bool`, *optional*, defaults to `False`):
+            Whether or not the model is come from OFA-Sys. If True, the model structure will be some differences from OFA
+        vit_type (`str`, *optional*, defaults to `"vit_base"`):
+            The image encoder's type in OFA-Sys, only works when use_ofasys=True. `"vit_base"`, `"vit_large"`,
+            `"vit_large_336"` and `"vit_huge"` are supported.
+        vit_drop_path_rate
+            The drop path rate using the image encoder vit. see more about drop path
+            [drop path](https://arxiv.org/abs/1605.07648)
+    """ # noqa
 
     model_type = 'ofa'
     keys_to_ignore_at_inference = ['past_key_values']

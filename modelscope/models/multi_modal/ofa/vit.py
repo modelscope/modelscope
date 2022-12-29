@@ -1,3 +1,7 @@
+# Copyright (c) 2021 OpenAI
+#
+# This source code is licensed under the MIT license which can be found at
+# https://github.com/openai/CLIP/blob/main/LICENSE
 from collections import OrderedDict
 
 import torch
@@ -16,18 +20,39 @@ __all__ = [
 
 
 class QuickGELU(nn.Module):
+    r"""
+    An activation function module.
+    """
 
     def forward(self, x: torch.Tensor):
         return x * torch.sigmoid(1.702 * x)
 
 
 class ResidualAttentionBlock(nn.Module):
+    r"""
+    A residual attention block module.
+
+    step 1. Calculate the self attention in input with layer normalization.
+    step 2. Add input to the result of self attention's result as I.
+    step 3. Calculate the mlp of input I with layer normalization.
+    step 4. Add I to the result of mlp.
+    """
 
     def __init__(self,
                  d_model: int,
                  n_head: int,
                  attn_mask: torch.Tensor = None,
                  drop_path_rate=0.0):
+        r"""
+        Args:
+            d_model (`int`): The embedding dimensions.
+            n_head (`int`): The number of heads in self attention block.
+            attn_mask (`Tensor`, **optional**, default to None):
+                Attention mask using in self attention.
+            drop_path_rate (`float`, **optional**, default to 0.0):
+                Drop path rate. See more details about drop path from
+                https://arxiv.org/pdf/1605.07648v4.pdf.
+        """
         super().__init__()
 
         self.attn = nn.MultiheadAttention(d_model, n_head)
@@ -43,6 +68,9 @@ class ResidualAttentionBlock(nn.Module):
         self.drop_path = DropPath(drop_path_rate)
 
     def attention(self, x: torch.Tensor):
+        r"""
+        A wrapper of self attention .
+        """
         self.attn_mask = (
             self.attn_mask.to(dtype=x.dtype, device=x.device)
             if self.attn_mask is not None else None)
@@ -56,6 +84,11 @@ class ResidualAttentionBlock(nn.Module):
 
 
 class Transformer(nn.Module):
+    r"""
+    A transformer module using in `VisionTransformer`.
+
+    Execute a sequential of `ResidualAttentionBlock`.
+    """
 
     def __init__(
         self,
@@ -65,6 +98,17 @@ class Transformer(nn.Module):
         attn_mask: torch.Tensor = None,
         drop_path_rate: float = 0.0,
     ):
+        r"""
+        Args:
+            width (`int`): The width of input image.
+            layers (`int`): The number of `ResidualAttentionBlock` layers.
+            heads (int): The number of self attention heads.
+            attn_mask (`Tensor`, **optional**, default to None):
+                Attention mask using in self attention.
+            drop_path_rate (`float`, **optional**, default to 0.0):
+                Drop path rate. See more details about drop path from
+                https://arxiv.org/pdf/1605.07648v4.pdf.
+        """
         super().__init__()
         self.width = width
         self.layers = layers
@@ -78,6 +122,15 @@ class Transformer(nn.Module):
 
 
 class VisionTransformer(nn.Module):
+    r"""
+    Vision transformer module.
+
+    step 1. Using conv2d to get the image embedding.
+    step 2. If the resolution of input image doesn't equal to the initialized one
+        do `bilinear` interpolate to get new patch position embedding.
+    step 3. Add position embedding to image embedding to generate final image representation.
+    step 4. Do `Transformer` to the image representation.
+    """
 
     def __init__(
         self,
@@ -88,6 +141,17 @@ class VisionTransformer(nn.Module):
         heads: int,
         drop_path_rate: float = 0.0,
     ):
+        r"""
+        Args:
+            input_resolution (`int`): The resolution of input image.
+            patch_size  (`int`): The resolution of each patch image.
+            width (`int`): The dimension of each patch image.
+            layers (`int`): The number of `ResidualAttentionBlock` in `Transformer`.
+            heads (`int`): The number of heads in self attention block.
+            drop_path_rate (`float`, **optional**, default to 0.0):
+                Drop path rate. See more details about drop path from
+                https://arxiv.org/pdf/1605.07648v4.pdf.
+        """
         super().__init__()
         self.input_resolution = input_resolution
         self.patch_size = patch_size
@@ -140,16 +204,48 @@ class VisionTransformer(nn.Module):
 
 
 def vit_base(drop_path_rate: float = 0.0):
+    r"""
+    An instance of base vision transformer model.
+
+    Args:
+        drop_path_rate (`float`, **optional**, default to 0.0):
+            Drop path rate. See more details about drop path from
+            https://arxiv.org/pdf/1605.07648v4.pdf.
+    """
     return VisionTransformer(224, 16, 768, 9, 12, drop_path_rate)
 
 
 def vit_large(drop_path_rate: float = 0.0):
+    r"""
+    An instance of large vision transformer model.
+
+    Args:
+        drop_path_rate (`float`, **optional**, default to 0.0):
+            Drop path rate. See more details about drop path from
+            https://arxiv.org/pdf/1605.07648v4.pdf.
+    """
     return VisionTransformer(224, 14, 1024, 18, 16, drop_path_rate)
 
 
 def vit_large_336(drop_path_rate: float = 0.0):
+    r"""
+    An instance of large vision transformer model with 336 as input image width .
+
+    Args:
+        drop_path_rate (`float`, **optional**, default to 0.0):
+            Drop path rate. See more details about drop path from
+            https://arxiv.org/pdf/1605.07648v4.pdf.
+    """
     return VisionTransformer(336, 14, 1024, 18, 16, drop_path_rate)
 
 
 def vit_huge(drop_path_rate: float = 0.0):
+    r"""
+    An instance of huge vision transformer model.
+
+    Args:
+        drop_path_rate (`float`, **optional**, default to 0.0):
+            Drop path rate. See more details about drop path from
+            https://arxiv.org/pdf/1605.07648v4.pdf.
+    """
     return VisionTransformer(224, 14, 1280, 24, 16, drop_path_rate)

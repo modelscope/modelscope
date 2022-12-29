@@ -11,6 +11,9 @@ from .base import OfaBasePreprocessor
 
 
 class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
+    r"""
+    OFA preprocessor for visual entailment tasks.
+    """
 
     def __init__(self,
                  cfg,
@@ -44,6 +47,30 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
             return self._build_infer_sample(data)
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building training samples.
+
+        step 1. Preprocess the data using the logic of `_build_infer_sample`
+            and make sure the label data in the result.
+        step 2. Preprocess the label data to generate the `target` and
+        `prev_output_tokens`.
+            - tokenize the label data.
+            - calculate the target item.
+                1) if `promp_type` is `None`, using tokenized label data.
+                2) if `promp_type` is `src`, concatenating the `source` data
+                and tokenized label data.
+                3) if `promp_type` is `prev_output`, concatenating the `source`
+                data without eos token and tokenized label data
+        step 3. Add constraint mask
+
+      Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `text`
+                `text2` and `label` are optional.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])` value, decoder prompt, label, target, previous
+            output tokens and constraint mask.
+        """
         sample = self._build_infer_sample(data)
         target = ' {}'.format(sample['label'])
         sample['ref_dict'] = {sample['label']: 1.0}
@@ -82,6 +109,32 @@ class OfaVisualEntailmentPreprocessor(OfaBasePreprocessor):
         return sample
 
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building inference samples.
+
+        step 1. Preprocessing the image as model's image input.
+            - get the pillow image input from `data`
+            - do some transforms to the pillow image, such as resize, normalize etc.
+        step 2. Building the instruction as model's source text input.
+            - use text input to build instruction. so far, we support two kind of
+            input form, we will take different examples to both of them to explain
+            how to use them.
+                1) only `text` input in data. this setting can solve the tasks which
+                judge whether or not the input `text` describe the input image.
+                2) both `text` and `text2` input in data. this setting can solve the
+                tasks which judge whether or not the `text` together with input image
+                can imply the `text2`
+            - tokenize the instruction above.
+        step 3. Calculate the decoder prompt input.
+        step 4. Whether or not to add label data.
+
+        Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `text`
+                `text2` and `label` are optional.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])` value, decoder prompt and label.
+        """
         image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
         if 'text2' not in data:

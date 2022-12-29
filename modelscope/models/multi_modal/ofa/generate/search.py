@@ -52,7 +52,7 @@ class Search(nn.Module):
             original_batch_idxs: (bsz)
                 the tensor with the batch indices, in the range [0, bsz)
                 this is useful in case there has been applied a re-ordering
-                and we need to know the orignal indices
+                and we need to know the original indices
 
         Return: A tuple of (scores, indices, beams) where:
             scores: (bsz x output_beam_size)
@@ -111,6 +111,13 @@ class Search(nn.Module):
 
 
 class BeamSearch(Search):
+    r"""
+    Beam search strategy.
+
+    step 1. Calculate top k candidates in model's log-probability under descending order. While k is the minor of
+        `beam_size * 2` and `beam_size * vocabulary_size`.
+    step 2. Modify hypothesis score, relative indices, beam indices for the final result.
+    """
 
     def __init__(self, tgt_dict):
         super().__init__(tgt_dict)
@@ -125,6 +132,32 @@ class BeamSearch(Search):
         prev_output_tokens: Optional[Tensor] = None,
         original_batch_idxs: Optional[Tensor] = None,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            scores_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from.
+                `output_beam_size` is the minor of `2 * input_beam_size` and `vocab_size - 1`.
+                which cumulates the score before.
+            indices_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The indices of chosen elements.
+            beams_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The indices of each beam.
+        """
         bsz, beam_size, vocab_size = lprobs.size()
 
         if step == 0:
@@ -156,6 +189,15 @@ class BeamSearch(Search):
 
 
 class PrefixConstrainedBeamSearch(Search):
+    r"""
+    Prefix constrained beam search.
+
+    step 1. Calculate a mask according to a `prefix_allowed_tokens_fn`
+        function with input of previous hypothesis tokens and indices.
+    step 2. Calculate a candidate set of `lprobs` with `lprobs` and mask produced in step 1.
+    step 3. Just like beam search strategy to generate the hypothesis token.
+        And the difference is the k in top k function is the minor of `beam_size` and `vocab_size -1`
+    """
 
     def __init__(self, tgt_dict, prefix_allowed_tokens_fn):
         super().__init__(tgt_dict)
@@ -185,6 +227,31 @@ class PrefixConstrainedBeamSearch(Search):
         prev_output_tokens: Tensor,
         original_batch_idxs: Tensor,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            scores_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from.
+                which cumulates the score before.
+            indices_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of chosen elements.
+            beams_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of each beam.
+        """
         bsz, beam_size, vocab_size = lprobs.size()
 
         lprobs += self.apply_mask(
@@ -553,6 +620,15 @@ class LexicallyConstrainedBeamSearch(Search):
 
 
 class LengthConstrainedBeamSearch(Search):
+    r"""
+    Length constrained beam search for generation.
+
+    step 1. Build length constraints in model's log-probability. If `min_lens` > `step`,
+        set eos token's score to `-math.inf`, so the generation will not be easily stopped.
+        Otherwise, `max_lens` <= `step`, set eos token's score to `0`, so the generation will
+        be easily stopped.
+    step 2. Using beam search to generate the hypothesis tokens with scores.
+    """
 
     def __init__(self, tgt_dict, min_len_a, min_len_b, max_len_a, max_len_b):
         super().__init__(tgt_dict)
@@ -571,8 +647,37 @@ class LengthConstrainedBeamSearch(Search):
         prev_output_tokens: Optional[Tensor] = None,
         original_batch_idxs: Optional[Tensor] = None,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            scores_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from.
+                `output_beam_size` is the minor of `2 * input_beam_size` and `vocab_size - 1`.
+                which cumulates the score before.
+            indices_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The indices of chosen elements.
+            beams_buf (`Tensor` with size `(bsz, output_beam_size)`):
+                The indices of each beam.
+        """
         min_lens = self.min_len_a * self.src_lengths + self.min_len_b
         max_lens = self.max_len_a * self.src_lengths + self.max_len_b
+        # There seems to be a bug here. Should be right like:
+        # lprobs[[step < min_lens] * len(lprobs), :, self.eos] = -math.inf
+        # lprobs[[step >= max_lens] * len(lprobs), :, self.eos] = 0
         lprobs[step < min_lens, :, self.eos] = -math.inf
         lprobs[step >= max_lens, :, self.eos] = 0
         return self.beam.step(step, lprobs, scores)
@@ -603,6 +708,31 @@ class DiverseBeamSearch(Search):
         prev_output_tokens: Optional[Tensor] = None,
         original_batch_idxs: Optional[Tensor] = None,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            scores_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from,
+                which cumulates the score before.
+            indices_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of chosen elements.
+            beams_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of each beam.
+        """
         bsz, beam_size, vocab_size = lprobs.size()
         if beam_size % self.num_groups != 0:
             raise ValueError(
@@ -648,6 +778,24 @@ class DiverseBeamSearch(Search):
 
 
 class Sampling(Search):
+    r"""
+    Sampling search for generation.
+
+    1. Calculate the sample set.
+        1.1 If `sampling_topk` is not None, chose the candidates which cumulative sum of model's
+            log-probability under descending order is less than `sampling_topk`.
+        1.2 If `sampling_topp` is not None, chose the top k candidates by model's log-probability under
+            the descending order.
+        1.3 Chose the whole input set as sampling set.
+    2. Using multinomial sample strategy to sample candidates from sample set as hypothesis.
+    3. Modify hypothesis score, relative indices, beam indices for the final result.
+
+    Attributes:
+        sampling_topk (`int`, **optional**, default to `-1`):
+            The value of k in the sampling strategy of top k.
+        sampling_topp (`float`, **optional**, default to '-1.0'):
+            The value of p The sampling strategy of top p.
+    """
     sampling_topk: int
     sampling_topp: float
 
@@ -710,6 +858,31 @@ class Sampling(Search):
         prev_output_tokens: Optional[Tensor] = None,
         original_batch_idxs: Optional[Tensor] = None,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            scores_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from.
+                which cumulates the score before.
+            indices_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of chosen elements.
+            beams_buf (`Tensor` with size `(bsz, input_beam_size)`):
+                The indices of each beam.
+        """
         bsz, beam_size, vocab_size = lprobs.size()
 
         if step == 0:
@@ -800,6 +973,32 @@ class DiverseSiblingsSearch(Search):
         prev_output_tokens: Optional[Tensor] = None,
         original_batch_idxs: Optional[Tensor] = None,
     ):
+        r"""
+        Take a single search step.
+
+        Args:
+            step (`int`):  Current step, start with 0.
+            lprobs (`Tensor` with size `(bsz, input_beam_size, vocab_size)`):
+                the model's log-probabilities over the vocabulary at the current step.
+            scores (`Tensor` with size `(bsz, input_beam_size, step - 1)`):
+                Previous sampling scores for each beam.
+            prev_output_tokens (`Tensor`, **optional**. default to `None`):
+                Previous output tokens, no usage in this function, will be deprecated in next version.
+            original_batch_idxs (`Tensor`, **optional**, default to `None`):
+                the tensor with the batch indices, in the range [0, bsz)
+                this is useful in case there has been applied a re-ordering
+                and we need to know the original indices
+
+        Returns: A tuple of (scores_buf, indices_buf, beams_buf), where:
+            final_scores (`Tensor` with size `(bsz, output_beam_size)`):
+                The model's log-probabilities over the elements selected to sample from,
+                which cumulates the score before. `output_beam_size` is the minor of
+                `2 * input_beam_size` and `vocab_size - 1`.
+            final_indices (`Tensor` with size `(bsz, output_beam_size)`):
+                The indices of chosen elements.
+            final_beams (`Tensor` with size `(bsz, ourput_beam_size)`):
+                The indices of each beam.
+        """
         bsz, beam_size, vocab_size = lprobs.size()
         k = min(
             # Take the best 2 x beam_size predictions. We'll choose the first

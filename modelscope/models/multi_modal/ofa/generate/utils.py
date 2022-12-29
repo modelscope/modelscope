@@ -26,6 +26,9 @@ MANIFOLD_PATH_SEP = '|'
 
 
 def apply_to_sample(f, sample):
+    r"""
+    Apply some function to the sample. The f function will effect on the `Tensor` object, otherwise do nothing.
+    """
     if hasattr(sample, '__len__') and len(sample) == 0:
         return {}
 
@@ -53,7 +56,9 @@ def apply_to_sample(f, sample):
 
 
 def move_to_device(batch, device):
-    r"""Puts each data field to the device"""
+    r"""
+    Puts each data field to the device
+    """
     if isinstance(batch, torch.Tensor):
         return batch.to(device)
     elif isinstance(batch, (list, tuple)):
@@ -68,10 +73,22 @@ def move_to_device(batch, device):
 
 
 def strip_pad(tensor, pad):
+    r"""
+    Get the non pad value from input tensor
+    """
     return tensor[tensor.ne(pad)]
 
 
 def get_token_to_word_mapping(tokens, exclude_list):
+    r"""
+    Get the token to word mapping. The token indicates the original token index, while word indicates the token index
+    excluding the `exclude_list`.
+
+    >>> import torch
+    >>> all_tokens = torch.arange(4)
+    >>> exclude_tokens = [1]
+    >>> get_token_to_word_mapping(all_tokens, exclude_tokens) # {0: 1, 1: 1, 2: 2, 3: 3}
+    """
     n = len(tokens)
     word_start = [int(token not in exclude_list) for token in tokens]
     word_idx = list(accumulate(word_start))
@@ -80,6 +97,10 @@ def get_token_to_word_mapping(tokens, exclude_list):
 
 
 def extract_hard_alignment(attn, src_sent, tgt_sent, pad, eos):
+    r"""
+    @deprecated
+    There is no usage in this project, should be removed.
+    """
     tgt_valid = (((tgt_sent != pad) &  # noqa
                   (tgt_sent != eos)).nonzero(as_tuple=False).squeeze(dim=-1))
     src_invalid = (((src_sent == pad) |  # noqa
@@ -100,6 +121,9 @@ def extract_hard_alignment(attn, src_sent, tgt_sent, pad, eos):
 
 
 def softmax(x, dim: int, onnx_trace: bool = False):
+    r"""
+    softmax function. Using `torch.nn.functional.softmax`
+    """
     if onnx_trace:
         return F.softmax(x.float(), dim=dim)
     else:
@@ -107,6 +131,9 @@ def softmax(x, dim: int, onnx_trace: bool = False):
 
 
 def log_softmax(x, dim: int, onnx_trace: bool = False):
+    r"""
+    log softmax function. Using `torch.nn.functional.log_softmax`
+    """
     if onnx_trace:
         return F.log_softmax(x.float(), dim=dim)
     else:
@@ -114,6 +141,10 @@ def log_softmax(x, dim: int, onnx_trace: bool = False):
 
 
 def extract_soft_alignment(attn, src_sent, tgt_sent, pad, eos):
+    r"""
+    @deprecated
+    There is no usage in this project, should be removed.
+    """
     tgt_valid = (tgt_sent != pad).nonzero(as_tuple=False)
     src_valid = (src_sent != pad).nonzero(as_tuple=False).squeeze(dim=-1)
     alignment = []

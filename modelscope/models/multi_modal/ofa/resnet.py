@@ -177,6 +177,15 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
+    r"""
+    Deep residual network, copy from https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py.
+
+    You can see more details from https://arxiv.org/abs/1512.03385
+
+    step 1. Get image embedding with `7` as the patch image size, `2` as stride.
+    step 2. Do layer normalization, relu activation and max pooling.
+    step 3. Go through three times residual branch.
+    """
 
     def __init__(self,
                  layers,
@@ -186,6 +195,25 @@ class ResNet(nn.Module):
                  replace_stride_with_dilation=None,
                  norm_layer=None,
                  drop_path_rate=0.0):
+        r"""
+        Args:
+            layers (`Tuple[int]`): There are three layers in resnet, so the length
+                of layers should greater then three. And each element in `layers` is
+                the number of `Bottleneck` in relative residual branch.
+            zero_init_residual (`bool`, **optional**, default to `False`):
+                Whether or not to zero-initialize the last BN in each residual branch.
+            groups (`int`, **optional**, default to `1`):
+                The number of groups. So far, only the value of `1` is supported.
+            width_per_group (`int`, **optional**, default to `64`):
+                The width in each group. So far, only the value of `64` is supported.
+            replace_stride_with_dilation (`Tuple[bool]`, **optional**, default to `None`):
+                Whether or not to replace stride with dilation in each residual branch.
+            norm_layer (`torch.nn.Module`, **optional**, default to `None`):
+                The normalization module. If `None`, will use  `torch.nn.BatchNorm2d`.
+            drop_path_rate (`float`, **optional**, default to 0.0):
+                Drop path rate. See more details about drop path from
+                https://arxiv.org/pdf/1605.07648v4.pdf.
+        """
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -251,6 +279,29 @@ class ResNet(nn.Module):
                     stride=1,
                     dilate=False,
                     drop_path_rate=0.0):
+        r"""
+        Making a single residual branch.
+
+        step 1. If dilate==`True`, switch the value of dilate and stride.
+        step 2. If the input dimension doesn't equal to th output output dimension
+            in `block`, initialize a down sample module.
+        step 3. Build a sequential of `blocks` number of `block`.
+
+        Args:
+            block (`torch.nn.Module`): The basic block in residual branch.
+            planes (`int`): The output dimension of each basic block.
+            blocks (`int`): The number of `block` in residual branch.
+            stride (`int`, **optional**, default to `1`):
+                The stride using in conv.
+            dilate (`bool`, **optional**, default to `False`):
+                Whether or not to replace dilate with stride.
+            drop_path_rate (`float`, **optional**, default to 0.0):
+                Drop path rate. See more details about drop path from
+                https://arxiv.org/pdf/1605.07648v4.pdf.
+
+        Returns:
+            A sequential of basic layer with type `torch.nn.Sequential[block]`
+        """
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation

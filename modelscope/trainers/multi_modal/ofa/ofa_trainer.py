@@ -30,6 +30,36 @@ from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
 
 @TRAINERS.register_module(module_name=Trainers.ofa)
 class OFATrainer(EpochBasedTrainer):
+    r"""
+    OFA trainer for MaaS.
+
+    Args:
+        model (`str`): A model dir or a model id to be loaded
+        cfg_file (`str`, **optional**, default to `None`):
+            A config dir
+        cfg_modify_fn (`Callable`, **optional**, default to `None`):
+            A function which can rebuild the config file.
+        arg_parse_fn (`Callable`, **optional**, default to `None`):
+            Same as ``parse_fn`` in :obj:`Config.to_args`.
+        data_collator (`Callable`, **optional**, default to `None`):
+            The function to use to form a batch from a list of elements
+            of `train_dataset` or `eval_dataset`.
+        train_dataset (:obj:`MsDataset` or :obj:`Dataset`, **optional**, default to `None`):
+            Dataset for training.
+        eval_dataset (:obj:`MsDataset` or :obj:`Dataset`, **optional**, default to `None`):
+            Dataset for evaluation.
+        preprocessor (:obj:`Preprocessor`, **optional**, default to `None`):
+            The optional preprocessor.
+            NOTE: If the preprocessor has been called before the dataset fed into this trainer by user's custom code,
+            this parameter should be None, meanwhile remove the 'preprocessor' key from the cfg_file.
+            Else the preprocessor will be instantiated from the cfg_file or assigned from this parameter and
+            this preprocessing action will be executed every time the dataset's __getitem__ is called.
+        model_revision (`str`, **optional**, default to `None`):
+            The revision used when the model_name_or_path is
+                a model id of the remote hub. default `None`.
+        seed (`int`, **optional**, default to `42`):
+            The optional random seed for torch, cuda, numpy and random.
+    """
 
     def __init__(
             self,
@@ -123,11 +153,26 @@ class OFATrainer(EpochBasedTrainer):
         )
 
     def rebuild_config(self, cfg: Config):
+        r"""
+        rebuild config if `cfg_modify_fn` is not `None`.
+        """
         if self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
 
     def train_step(self, model, inputs):
+        r"""
+        A single training step.
+
+        step 1. Let the model in a trainable state.
+        step 2. Execute the criterion function.
+        step 3. Update the logging variable's value.
+        step 4. Update the training result.
+
+        Args:
+            model (:obj:`torch.nn.Module` or :obj:`TorchModel`): The model to be run.
+            inputs (`dict`): model inputs.
+        """
         model = model.module if self._dist or is_parallel(model) else model
         model.train()
         loss, sample_size, logging_output = self.criterion(model, inputs)

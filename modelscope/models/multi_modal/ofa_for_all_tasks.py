@@ -39,8 +39,55 @@ __all__ = ['OfaForAllTasks']
 @MODELS.register_module(Tasks.text_classification, module_name=Models.ofa)
 @MODELS.register_module(Tasks.auto_speech_recognition, module_name=Models.ofa)
 class OfaForAllTasks(TorchModel):
+    r"""
+    All ofa tasks using uniform ofa model structure. So far, we support three types of tasks:
+    1. text generation tasks: ocr_recognition, image_captioning and text_summarization
+    2. visual grounding tasks: visual grounding
+    3. classification tasks: text classification and image classification.
+
+    Attributes:
+        cfg: Task configs exclude model configs, such as generator's config.
+        model:  OFA uniform model using in this task.
+        language: The language using in the model. So far, we support three types of language, `en` for English,
+                `zh` and `cn` for Chinese, default to `en`.
+        tokenizer: OFA tokenizer for tokenizing the input for OFA model.
+        batch_size: Batch size.
+        patch_image_size: The image size of input image, default to 480.
+        val_batch_size: The validation batch size.
+        transtab: A translation table of punctuation.
+        gen_type: Generation type, so far, we support two types of gen_type, `generation` for generation tasks,
+                 `traverse` for classification tasks, default to `generation`.
+        bos_item: The id of beginning of a sequence.
+        pad_item: The id of padding of a sequence.
+        eos_item: The id of ending of a sequence.
+        index2ans: A mapping from index to label using in classification tasks.
+        ans2label_dict: A mapping from label to index using in classification tasks.
+        constraint_trie: A trie tree building from label using in classification tasks.
+        val_ans_l: A validation set of label using in classification tasks.
+        val_masks_l: A validation set of mask using in classification tasks.
+        generator: A sequence generator with OFA model to generate image code.
+        task_inference_mapping: A mapping from task name to execution function in task inference.
+        pattern: Regex pattern which find the blanks after/before the words except ` a-zA-Z0-9.,:!?`
+    """
 
     def __init__(self, model_dir, *args, **kwargs):
+        r"""
+        Args:
+            model_dir (`str` or `os.PathLike`)
+                Can be either:
+                    - A string, the *model id* of a pretrained model hosted inside a model repo on huggingface.co
+                      or modelscope.cn. Valid model ids can be located at the root-level, like `bert-base-uncased`,
+                      or namespaced under a user or organization name, like `dbmdz/bert-base-german-cased`.
+                    - A path to a *directory* containing model weights saved using
+                      [`~PreTrainedModel.save_pretrained`], e.g., `./my_model_directory/`.
+                    - A path or url to a *tensorflow index checkpoint file* (e.g, `./tf_model/model.ckpt.index`). In
+                      this case, `from_tf` should be set to `True` and a configuration object should be provided as
+                      `config` argument. This loading path is slower than converting the TensorFlow checkpoint in a
+                      PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
+                    - A path or url to a model folder containing a *flax checkpoint file* in *.msgpack* format (e.g,
+                      `./flax_model/` containing `flax_model.msgpack`). In this case, `from_flax` should be set to
+                      `True`.
+        """
         if os.path.exists(model_dir):
             model_dir = os.path.abspath(model_dir)
         super().__init__(model_dir=model_dir, *args, **kwargs)
@@ -135,6 +182,18 @@ class OfaForAllTasks(TorchModel):
         self.pattern = re.compile(pattern_str)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        The entry function of task execution. So far, we support two types of execution pipeline:
+        1. training, return the model's forward results.
+        2. inference, return the result of `self.inference(input)`
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the tasks, the actual value depending on the specific tasks.
+        Returns:
+            `Dict[Str, Any]`
+
+        """
         input = move_to_device(input, self.model.device)
         if self.model.training:
             return self.model(**input['net_input'])
@@ -147,12 +206,39 @@ class OfaForAllTasks(TorchModel):
         if self.ans2label_dict and self.gen_type == 'generation':
             assert self.generator.beam_size <= len(self.ans2label_dict), \
                 'beam search will not work properly.'
+        r"""
+        Task inference function
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the tasks, the actual value depending on the specific tasks.
+        Returns:
+            `Dict[Str, Any]`
+
+        """
         ret = self.task_inference_mapping[self.cfg.task](input)
         if 'samples' in input:
             ret['samples'] = input['samples']
         return ret
 
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        r"""
+        Do post processing after task's forward function is executed. So far, we have three strategies while do post
+        processing.
+        1. If the task is image captioning and using English language, some special words will be removed, such as
+           `!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~`
+        2. If the task is not visual grounding, but a generation task using Chinese language, we will remove the blank
+            after/before the words except ` a-zA-Z0-9.,:!?`
+        3. Other cases will return the input as result.
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The result of task's forward function. The key is one of the keys of OFA_TASK_KEY_MAPPING for
+                distinguishing different ofa tasks, while the value is the result of different tasks.
+
+        Returns:
+            `Dict[Str, Any]`
+        """
         if not self.model.training and self.cfg.task == Tasks.image_captioning:
             caption = input[OutputKeys.CAPTION]
             result_l = list()
@@ -183,6 +269,18 @@ class OfaForAllTasks(TorchModel):
         return input
 
     def _text_gen_inference(self, input):
+        r"""
+        The inference function fo text generation tasks.
+        1. Using OFA sequence generator which match the api of other fairseq generators to generate the token indices.
+        2. Decode the token indices to actual language tokens and skip the special tokens.
+        3. For the usage of classification scenario, add default score with `len(result)`.
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the tasks, the actual value depending on the specific tasks.
+        Returns:
+            `Dict[Str, Any]`
+        """
         gen_outputs = self.generator.generate([self.model],
                                               input,
                                               prefix_tokens=input.get(
@@ -209,6 +307,18 @@ class OfaForAllTasks(TorchModel):
         return ret
 
     def _visual_grounding_inference(self, input):
+        r"""
+        The inference function for visual grounding tasks.
+        1. Using OFA sequence generator which match the api of other fairseq generators to generate the token indices.
+        2. Decode the token indices into region boxes.
+        3. Add default score with `batch_size`
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the tasks, the actual value depending on the specific tasks.
+        Returns:
+            `Dict[Str, Any]`
+        """
         gen_output = self.generator.generate([self.model], input)
         tokens = [gen_output[i][0]['tokens'] for i in range(len(gen_output))]
         region_coord_l = list()
@@ -228,6 +338,15 @@ class OfaForAllTasks(TorchModel):
         }
 
     def _traverse_inference(self, input):
+        r"""
+        The inference function fo classification tasks.
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the tasks, the actual value depending on the specific tasks.
+        Returns:
+            `Dict[Str, Any]`
+        """
         encoder_input = dict()
         for key in input['net_input'].keys():
             encoder_input[key] = input['net_input'][key]
@@ -309,6 +428,9 @@ class OfaForAllTasks(TorchModel):
         return {OutputKeys.LABELS: hyps, OutputKeys.SCORES: scores}
 
     def build_trie(self):
+        r"""
+        Building a trie tree for classification label and mask.
+        """
         answer_item_list = []
 
         for i, answer in enumerate(self.ans2label_dict.keys()):
@@ -341,6 +463,9 @@ class OfaForAllTasks(TorchModel):
             ]
 
     def load_ans2label(self):
+        r"""
+        Load answer to label dict from file, using in building trie function.
+        """
         if self.cfg.model.get('answer2label', None):
             ans2label_file = osp.join(self.model_dir,
                                       self.cfg.model.answer2label)
@@ -353,6 +478,23 @@ class OfaForAllTasks(TorchModel):
                         save_function: Callable = None,
                         config: Optional[dict] = None,
                         **kwargs):
+        r"""
+        Save the task model, its configuration and other related files to a directory, so that it can be re-loaded
+
+        Args:
+            target_folder (Union[str, os.PathLike]):
+            Directory to which to save. Will be created if it doesn't exist.
+
+            save_checkpoint_names (Union[str, List[str]]):
+            The checkpoint names to be saved in the target_folder
+
+            save_function (Callable, optional):
+            The function to use to save the state dictionary.
+
+            config (Optional[dict], optional):
+            The config for the configuration.json, might not be identical with model.config
+
+        """
         super(OfaForAllTasks, self). \
             save_pretrained(target_folder=target_folder,
                             save_checkpoint_names=save_checkpoint_names,
@@ -361,4 +503,7 @@ class OfaForAllTasks(TorchModel):
                             **kwargs)
 
     def detokenizer(self, text):
+        r"""
+        Remove the blank after/before the words except ` a-zA-Z0-9.,:!?`
+        """
         return self.pattern.sub('', text)

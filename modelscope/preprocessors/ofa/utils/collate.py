@@ -7,6 +7,9 @@ import torch
 
 
 def collate_fn(samples, pad_idx, eos_idx):
+    r"""
+    convert the sample to batch tensor.
+    """
     if len(samples) == 0:
         return {}
 

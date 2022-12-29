@@ -262,6 +262,9 @@ class OFAAttention(nn.Module):
         is_decoder (`bool`): whether or not decoder attention.
         bias (`bool`): whether to add bias.
         scale_heads (`bool`): whether to learn scaling heads, only for Normformer.
+        scale_factor (`float32`, *optional*, defaults to `2.0`):
+            The position embedding scaling factor. If it works,
+            self.scaling = float(self.head_dim * scale_factor)**-0.5
     """
 
     def __init__(
@@ -272,6 +275,7 @@ class OFAAttention(nn.Module):
         is_decoder: bool = False,
         bias: bool = True,
         scale_heads: bool = True,
+        scale_factor: float = 2.0,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -283,7 +287,6 @@ class OFAAttention(nn.Module):
         ), f'embed_dim must be divisible by num_heads ' \
            f'(got `embed_dim`: {self.embed_dim} and `num_heads`: {num_heads}).'
         # 1. difference
-        scale_factor = 2
         self.scaling = float(self.head_dim * scale_factor)**-0.5
         self.is_decoder = is_decoder
 
@@ -441,6 +444,7 @@ class OFAEncoderLayer(nn.Module):
             embed_dim=self.embed_dim,
             num_heads=config.encoder_attention_heads,
             dropout=config.attention_dropout,
+            scale_factor=config.attn_scale_factor,
         )
         self.self_attn_layer_norm = LayerNorm(self.embed_dim)
         self.self_attn_mid_layer_norm = LayerNorm(
@@ -546,6 +550,7 @@ class OFADecoderLayer(nn.Module):
             num_heads=config.decoder_attention_heads,
             dropout=config.attention_dropout,
             is_decoder=True,
+            scale_factor=config.attn_scale_factor,
         )
         self.dropout = nn.Dropout(p=config.dropout)
         self.activation_fn = ACT2FN[config.activation_function]
@@ -559,6 +564,7 @@ class OFADecoderLayer(nn.Module):
             config.decoder_attention_heads,
             dropout=config.attention_dropout,
             is_decoder=True,
+            scale_factor=config.attn_scale_factor,
         )
         self.cross_attn_layer_norm = LayerNorm(self.embed_dim)
         self.cross_attn_mid_layer_norm = LayerNorm(

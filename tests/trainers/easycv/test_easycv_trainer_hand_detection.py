@@ -43,7 +43,7 @@ class EasyCVTrainerTestHandDetection(unittest.TestCase):
         trainer = build_trainer(trainer_name, kwargs)
         trainer.train()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_single_gpu(self):
         temp_file_dir = tempfile.TemporaryDirectory()
         tmp_dir = temp_file_dir.name

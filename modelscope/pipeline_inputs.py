@@ -78,6 +78,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_object_detection:
     InputType.IMAGE,
+    Tasks.domain_specific_object_detection:
+    InputType.IMAGE,
     Tasks.image_segmentation:
     InputType.IMAGE,
     Tasks.portrait_matting:

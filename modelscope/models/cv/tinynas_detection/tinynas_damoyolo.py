@@ -7,7 +7,8 @@ from .detector import SingleStageDetector
 
 
 @MODELS.register_module(
-    Tasks.human_detection, module_name=Models.tinynas_damoyolo)
+    Tasks.domain_specific_object_detection,
+    module_name=Models.tinynas_damoyolo)
 @MODELS.register_module(
     Tasks.image_object_detection, module_name=Models.tinynas_damoyolo)
 class DamoYolo(SingleStageDetector):

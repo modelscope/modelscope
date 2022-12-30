@@ -108,6 +108,9 @@ class CVTasks(object):
     # pointcloud task
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
 
+    # domain specific object detection
+    domain_specific_object_detection = 'domain-specific-object-detection'
+
 
 class NLPTasks(object):
     # nlp tasks

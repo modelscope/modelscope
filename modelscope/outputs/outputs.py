@@ -219,6 +219,8 @@ TASK_OUTPUTS = {
     #   }
     Tasks.image_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    Tasks.domain_specific_object_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
     # video object detection result for single sample
     #   {
@@ -370,8 +372,9 @@ TASK_OUTPUTS = {
     #             ],
     #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     # }
-    Tasks.video_single_object_tracking:
-    [OutputKeys.BOXES, OutputKeys.TIMESTAMPS],
+    Tasks.video_single_object_tracking: [
+        OutputKeys.BOXES, OutputKeys.TIMESTAMPS
+    ],
 
     # live category recognition result for single video
     # {

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
+    from .image_semantic_segmentation_pipeline import ImagePanopticSegmentationEasyCVPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_reid_person_pipeline import ImageReidPersonPipeline
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
@@ -101,8 +102,10 @@ else:
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'image_matting_pipeline': ['ImageMattingPipeline'],
-        'image_panoptic_segmentation_pipeline':
-        ['ImagePanopticSegmentationPipeline'],
+        'image_panoptic_segmentation_pipeline': [
+            'ImagePanopticSegmentationPipeline',
+            'ImagePanopticSegmentationEasyCVPipeline'
+        ],
         'image_portrait_enhancement_pipeline':
         ['ImagePortraitEnhancementPipeline'],
         'image_reid_person_pipeline': ['ImageReidPersonPipeline'],
@@ -144,9 +147,8 @@ else:
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
         'facial_expression_recognition_pipeline':
         ['FacialExpressionRecognitionPipeline'],
-        'facial_landmark_confidence_pipeline': [
-            'FacialLandmarkConfidencePipeline'
-        ],
+        'facial_landmark_confidence_pipeline':
+        ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
         'face_attribute_recognition_pipeline': [
             'FaceAttributeRecognitionPipeline'

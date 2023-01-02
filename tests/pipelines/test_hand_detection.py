@@ -10,7 +10,7 @@ from modelscope.utils.test_utils import test_level
 class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.task = Tasks.image_object_detection
+        self.task = Tasks.domain_specific_object_detection
         self.model_id = 'damo/cv_yolox-pai_hand-detection'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

@@ -251,6 +251,10 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
             'damo/nlp_structbert_keyphrase-extraction_base-icassp2023-mug-track4-baseline',
             'language': 'zh'
         },
+        {
+            'model_id': 'damo/nlp_raner_chunking_english-large',
+            'language': 'en'
+        },
     ]
 
     def setUp(self) -> None:

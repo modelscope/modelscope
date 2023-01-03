@@ -66,6 +66,7 @@ class Models(object):
     video_object_segmentation = 'video-object-segmentation'
     real_basicvsr = 'real-basicvsr'
     rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
+    image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -262,6 +263,7 @@ class Pipelines(object):
     video_object_segmentation = 'video-object-segmentation'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
+    image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

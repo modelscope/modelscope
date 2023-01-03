@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
     from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
+    from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
 
 else:
     _import_structure = {
@@ -171,7 +172,10 @@ else:
         ],
         'maskdino_instance_segmentation_pipeline': [
             'MaskDINOInstanceSegmentationPipeline'
-        ]
+        ],
+        'image_mvs_depth_estimation_pipeline': [
+            'ImageMultiViewDepthEstimationPipeline'
+        ],
     }
 
     import sys

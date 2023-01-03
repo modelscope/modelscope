@@ -107,6 +107,8 @@ class CVTasks(object):
 
     # pointcloud task
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
+    # image multi-view depth estimation
+    image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
 
     # domain specific object detection
     domain_specific_object_detection = 'domain-specific-object-detection'

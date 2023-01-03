@@ -214,6 +214,8 @@ TASK_INPUTS = {
         'nearend_mic': InputType.AUDIO,
         'farend_speech': InputType.AUDIO
     },
+    Tasks.speech_separation:
+    InputType.AUDIO,
     Tasks.acoustic_noise_suppression:
     InputType.AUDIO,
     Tasks.text_to_speech:

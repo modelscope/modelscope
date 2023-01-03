@@ -27,6 +27,7 @@ class OutputKeys(object):
     OUTPUT_IMG = 'output_img'
     OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
+    OUTPUT_PCM_LIST = 'output_pcm_list'
     OUTPUT_WAV = 'output_wav'
     IMG_EMBEDDING = 'img_embedding'
     SPO_LIST = 'spo_list'
@@ -696,6 +697,7 @@ TASK_OUTPUTS = {
     Tasks.speech_signal_process: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_echo_cancellation: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_noise_suppression: [OutputKeys.OUTPUT_PCM],
+    Tasks.speech_separation: [OutputKeys.OUTPUT_PCM_LIST],
 
     # text_to_speech result for a single sample
     # {

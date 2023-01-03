@@ -29,9 +29,11 @@ pygments>=2.12.0
 pysptk>=0.1.15,<0.2.0
 pytorch_wavelets
 PyWavelets>=1.0.0
+rotary_embedding_torch>=0.1.5
 scikit-learn
 SoundFile>0.10
 sox
+speechbrain>=0.5
 torchaudio
 tqdm
 traitlets>=5.3.0

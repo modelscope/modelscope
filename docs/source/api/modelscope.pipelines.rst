@@ -1,53 +1,14 @@
-modelscope.pipelines package
-============================
+modelscope.pipelines
+====================
 
 .. automodule:: modelscope.pipelines
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+.. currentmodule:: modelscope.pipelines
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+   :caption: Pipeline Api
 
-   modelscope.pipelines.cv
-   modelscope.pipelines.nlp
-   modelscope.pipelines.multi_modal
-   modelscope.pipelines.audio
-
-Submodules
-----------
-
-modelscope.pipelines.builder module
------------------------------------
-
-.. automodule:: modelscope.pipelines.builder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.pipelines.base module
------------------------------------
-
-.. automodule:: modelscope.pipelines.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.outputs module
------------------------------------
-
-.. automodule:: modelscope.outputs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.pipelines.util module
---------------------------------
-
-.. automodule:: modelscope.pipelines.util
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   base     <modelscope.pipelines.base>
+   builder <modelscope.pipelines.builder>
+   cv    <modelscope.pipelines.cv>

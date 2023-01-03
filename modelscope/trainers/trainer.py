@@ -990,25 +990,20 @@ class EpochBasedTrainer(BaseTrainer):
     def visualization(self, results, dataset, **kwargs):
         """ visualization function for evaluation results.
 
+        Examples:
+            # draw list of images as numpy array
+            images = draw_images(num_of_visualization)
+
+            # set displayed name for each image
+            filenames = get_image_display_names()
+            vis_results = {'images': images, 'filenames' : filenames}
+
+            # visualization results will be displayed in group named eva_vis
+            self.visualization_buffer.output['eval_vis'] = vis_results
+
         Args:
             results (list(dict)):  a list of result dict.
-            dataset (:obj:`Dataset`): torch dataset object to access original data.
-
-        Implementation Examples:
-        ```python
-        # draw list of images as numpy array
-        images = draw_images(num_of_visualization)
-
-        # set displayed name for each image
-        filenames = get_image_display_names()
-        vis_results = {
-            'images': images,
-            'filenames' : filenames
-        }
-
-        # visualization results will be displayed in group named eva_vis
-        self.visualization_buffer.output['eval_vis'] = vis_results
-        ```
+            dataset (Dataset): torch dataset object to access original data.
         """
         # TODO @wenmeng.zwm add visualization support for cv evaluation
         raise NotImplementedError(

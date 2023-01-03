@@ -9,6 +9,8 @@ from shutil import move, rmtree
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+"""Implements caching functionality, used internally only
+"""
 
 
 class FileSystemCache(object):
@@ -21,11 +23,11 @@ class FileSystemCache(object):
         cache_root_location: str,
         **kwargs,
     ):
-        """
-        Parameters
-        ----------
-        cache_location: str
-            The root location to store files.
+        """Base file system cache interface.
+
+        Args:
+            cache_root_location (str): The root location to store files.
+            kwargs(dict): The keyword arguments.
         """
         os.makedirs(cache_root_location, exist_ok=True)
         self.cache_root_location = cache_root_location
@@ -35,19 +37,6 @@ class FileSystemCache(object):
         return self.cache_root_location
 
     def load_cache(self):
-        """Read set of stored blocks from file
-        Args:
-            owner(`str`): individual or group username at modelscope, can be empty for official models
-            name(`str`): name of the model
-        Returns:
-            The model details information.
-        Raises:
-            NotExistError: If the model is not exist, will throw NotExistError
-            TODO: Error based error code.
-        <Tip>
-            model_id = {owner}/{name}
-        </Tip>
-        """
         self.cached_files = []
         cache_keys_file_path = os.path.join(self.cache_root_location,
                                             FileSystemCache.KEY_FILE_NAME)
@@ -68,30 +57,24 @@ class FileSystemCache(object):
 
     def get_file(self, key):
         """Check the key is in the cache, if exist, return the file, otherwise return None.
+
         Args:
-            key(`str`): The cache key.
-        Returns:
-            If file exist, return the cached file location, otherwise None.
+            key(str): The cache key.
+
         Raises:
             None
-        <Tip>
-            model_id = {owner}/{name}
-        </Tip>
         """
         pass
 
     def put_file(self, key, location):
-        """Put file to the cache,
+        """Put file to the cache.
+
         Args:
-            key(`str`): The cache key
-            location(`str`): Location of the file, we will move the file to cache.
-        Returns:
-            The cached file path of the file.
+            key (str): The cache key
+            location (str): Location of the file, we will move the file to cache.
+
         Raises:
             None
-        <Tip>
-            model_id = {owner}/{name}
-        </Tip>
         """
         pass
 
@@ -113,8 +96,7 @@ class FileSystemCache(object):
         return False
 
     def clear_cache(self):
-        """Remove all files and metadat from the cache
-
+        """Remove all files and metadata from the cache
         In the case of multiple cache locations, this clears only the last one,
         which is assumed to be the read/write one.
         """
@@ -127,32 +109,26 @@ class FileSystemCache(object):
 
 class ModelFileSystemCache(FileSystemCache):
     """Local cache file layout
-       cache_root/owner/model_name/|individual cached files
-                                   |.mk: file, The cache index file
+       cache_root/owner/model_name/individual cached files and cache index file '.mcs'
        Save only one version for each file.
     """
 
     def __init__(self, cache_root, owner, name):
         """Put file to the cache
+
         Args:
-            cache_root(`str`): The modelscope local cache root(default: ~/.modelscope/cache/models/)
-            owner(`str`): The model owner.
-            name('str'): The name of the model
-            branch('str'): The branch of model
-            tag('str'): The tag of model
-        Returns:
-        Raises:
-            None
-        <Tip>
-            model_id = {owner}/{name}
-        </Tip>
+            cache_root(str): The modelscope local cache root(default: ~/.modelscope/cache/models/)
+            owner(str): The model owner.
+            name(str): The name of the model
         """
         super().__init__(os.path.join(cache_root, owner, name))
 
     def get_file_by_path(self, file_path):
         """Retrieve the cache if there is file match the path.
+
         Args:
             file_path (str): The file path in the model.
+
         Returns:
             path: the full path of the file.
         """
@@ -169,9 +145,11 @@ class ModelFileSystemCache(FileSystemCache):
 
     def get_file_by_path_and_commit_id(self, file_path, commit_id):
         """Retrieve the cache if there is file match the path.
+
         Args:
             file_path (str): The file path in the model.
             commit_id (str): The commit id of the file
+
         Returns:
             path: the full path of the file.
         """
@@ -194,7 +172,7 @@ class ModelFileSystemCache(FileSystemCache):
             model_file_info (ModelFileInfo): The file information of the file.
 
         Returns:
-            _type_: _description_
+            str: The file path.
         """
         cache_key = self.__get_cache_key(model_file_info)
         for cached_file in self.cached_files:
@@ -262,23 +240,8 @@ class ModelFileSystemCache(FileSystemCache):
         """Put model on model_file_location to cache, the model first download to /tmp, and move to cache.
 
         Args:
-            model_file_info (str): The file description returned by get_model_files
-                                      sample:
-                                    {
-                                        "CommitMessage": "add model\n",
-                                        "CommittedDate": 1654857567,
-                                        "CommitterName": "mulin.lyh",
-                                        "IsLFS": false,
-                                        "Mode": "100644",
-                                        "Name": "resnet18.pth",
-                                        "Path": "resnet18.pth",
-                                        "Revision": "09b68012b27de0048ba74003690a890af7aff192",
-                                        "Size": 46827520,
-                                        "Type": "blob"
-                                    }
+            model_file_info (str): The file description returned by get_model_files.
             model_file_location (str): The location of the temporary file.
-        Raises:
-            NotImplementedError: _description_
 
         Returns:
             str: The location of the cached file.

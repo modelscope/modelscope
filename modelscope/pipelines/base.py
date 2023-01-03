@@ -39,6 +39,8 @@ logger = get_logger()
 
 
 class Pipeline(ABC):
+    """Pipeline base.
+    """
 
     def initiate_single_model(self, model):
         if isinstance(model, str):
@@ -386,11 +388,10 @@ class DistributedPipeline(Pipeline):
     2. Set the multiprocessing method to spawn
     3. Open a multiprocessing pool of the world_size to instantiate model pieces.
     4. Set the master port and ip
-    5. Call _instantiate_one to instantiate one model piece
-        This method should be implemented by the derived class.
-    6. After the forward method is called, do preprocess in main process
-        and call _forward_one to collect results, and do
-        post process in main process.
+    5. Call _instantiate_one to instantiate one model piece,
+    This method should be implemented by the derived class.
+    6. After the forward method is called, do preprocess in main process and
+    call _forward_one to collect results, and do post process in main process.
 
     NOTE: _instantiate_one and _forward_one are class methods, any derived class should implement them and
     store the model handler in the class field.

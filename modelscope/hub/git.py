@@ -2,7 +2,7 @@
 
 import os
 import subprocess
-from typing import List
+from typing import List, Optional
 
 from modelscope.utils.logger import get_logger
 from ..utils.constant import MASTER_MODEL_BRANCH
@@ -32,6 +32,9 @@ class GitCommandWrapper(metaclass=Singleton):
     def _run_git_command(self, *args) -> subprocess.CompletedProcess:
         """Run git command, if command return 0, return subprocess.response
              otherwise raise GitError, message is stdout and stderr.
+
+        Args:
+            args: List of command args.
 
         Raises:
             GitError: Exception with stdout and stderr.
@@ -106,7 +109,7 @@ class GitCommandWrapper(metaclass=Singleton):
               token: str,
               url: str,
               repo_name: str,
-              branch: str = None):
+              branch: Optional[str] = None):
         """ git clone command wrapper.
         For public project, token can None, private repo, there must token.
 
@@ -116,6 +119,9 @@ class GitCommandWrapper(metaclass=Singleton):
             url (str): The remote url
             repo_name (str): The local repository path name.
             branch (str, optional): _description_. Defaults to None.
+
+        Returns:
+            The popen response.
         """
         url = self._add_token(token, url)
         if branch:
@@ -162,7 +168,11 @@ class GitCommandWrapper(metaclass=Singleton):
         """Run git commit command
 
         Args:
+            repo_dir (str): the repository directory.
             message (str): commit message.
+
+        Returns:
+            The command popen response.
         """
         commit_args = ['-C', '%s' % repo_dir, 'commit', '-m', "'%s'" % message]
         rsp = self._run_git_command(*commit_args)

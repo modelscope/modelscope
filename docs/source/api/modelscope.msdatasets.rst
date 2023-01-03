@@ -1,18 +1,13 @@
-modelscope.msdatasets package
-=============================
+modelscope.msdatasets
+=====================
 
 .. automodule:: modelscope.msdatasets
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.msdatasets
 
-modelscope.msdatasets.ms\_dataset module
-----------------------------------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Dataset Api
 
-.. automodule:: modelscope.msdatasets.ms_dataset
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   dataset     <modelscope.msdatasets.ms_dataset>
+   cv    <modelscope.msdatasets.cv>

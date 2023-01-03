@@ -1,26 +1,14 @@
-modelscope.pipelines.cv package
-===============================
+modelscope.pipelines.cv
+=======================
 
 .. automodule:: modelscope.pipelines.cv
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.pipelines.cv
 
-modelscope.pipelines.cv.image\_cartoon\_pipeline module
--------------------------------------------------------
 
-.. automodule:: modelscope.pipelines.cv.image_cartoon_pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
 
-modelscope.pipelines.cv.image\_matting\_pipeline module
--------------------------------------------------------
-
-.. automodule:: modelscope.pipelines.cv.image_matting_pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    ActionRecognitionPipeline

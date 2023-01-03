@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 # yapf: disable
+
 import datetime
 import functools
 import os
@@ -54,38 +54,51 @@ logger = get_logger()
 
 
 class HubApi:
+    """Model hub api interface.
+    """
+    def __init__(self, endpoint: Optional[str] = None):
+        """The ModelScope HubApi。
 
-    def __init__(self, endpoint=None):
+        Args:
+            endpoint (str, optional): The modelscope server http|https address. Defaults to None.
+        """
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
-        retry = Retry(total=2, read=2, connect=2, backoff_factor=1,
-                      status_forcelist=(500, 502, 503, 504),)
+        retry = Retry(
+            total=2,
+            read=2,
+            connect=2,
+            backoff_factor=1,
+            status_forcelist=(500, 502, 503, 504),
+        )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
         # set http timeout
         for method in REQUESTS_API_HTTP_METHOD:
-            setattr(self.session,
-                    method,
-                    functools.partial(getattr(self.session, method), timeout=API_HTTP_CLIENT_TIMEOUT))
+            setattr(
+                self.session, method,
+                functools.partial(
+                    getattr(self.session, method),
+                    timeout=API_HTTP_CLIENT_TIMEOUT))
 
     def login(
         self,
         access_token: str,
     ) -> tuple():
-        """
-        Login with username and password
+        """Login with your SDK access token, which can be obtained from
+           https://www.modelscope.cn user center.
 
         Args:
-            access_token(`str`): user access token on modelscope.
+            access_token (str): user access token on modelscope.
+
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
-            gitlab token: to access private repos
+            git_token: token to access your git repository.
 
-        <Tip>
+        Note:
             You only have to login once within 30 days.
-        </Tip>
         """
         path = f'{self.endpoint}/api/v1/login'
         r = self.session.post(
@@ -107,27 +120,28 @@ class HubApi:
         return d[API_RESPONSE_FIELD_DATA][
             API_RESPONSE_FIELD_GIT_ACCESS_TOKEN], cookies
 
-    def create_model(
-        self,
-        model_id: str,
-        visibility: str,
-        license: str,
-        chinese_name: Optional[str] = None,
-    ) -> str:
-        """
-        Create model repo at ModelScopeHub
+    def create_model(self,
+                     model_id: str,
+                     visibility: Optional[int] = ModelVisibility.PUBLIC,
+                     license: Optional[str] = Licenses.APACHE_V2,
+                     chinese_name: Optional[str] = None) -> str:
+        """Create model repo at ModelScopeHub.
 
         Args:
-            model_id:(`str`): The model id
-            visibility(`int`): visibility of the model(1-private, 5-public), default public.
-            license(`str`): license of the model, default none.
-            chinese_name(`str`, *optional*): chinese name of the model
-        Returns:
-            name of the model created
+            model_id (str): The model id
+            visibility (int, optional): visibility of the model(1-private, 5-public), default 5.
+            license (str, optional): license of the model, default none.
+            chinese_name (str, optional): chinese name of the model.
 
-        <Tip>
+        Returns:
+            Name of the model created
+
+        Raises:
+            InvalidParameter: If model_id is invalid.
+            ValueError: If not login.
+
+        Note:
             model_id = {owner}/{name}
-        </Tip>
         """
         if model_id is None:
             raise InvalidParameter('model_id is required!')
@@ -151,14 +165,17 @@ class HubApi:
         model_repo_url = f'{get_endpoint()}/{model_id}'
         return model_repo_url
 
-    def delete_model(self, model_id):
-        """_summary_
+    def delete_model(self, model_id: str):
+        """Delete model_id from ModelScope.
 
         Args:
             model_id (str): The model id.
-        <Tip>
+
+        Raises:
+            ValueError: If not login.
+
+        Note:
             model_id = {owner}/{name}
-        </Tip>
         """
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
@@ -169,27 +186,28 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
-    def get_model_url(self, model_id):
+    def get_model_url(self, model_id: str):
         return f'{self.endpoint}/api/v1/models/{model_id}.git'
 
     def get_model(
         self,
         model_id: str,
-        revision: str = DEFAULT_MODEL_REVISION,
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
     ) -> str:
-        """
-        Get model information at modelscope_hub
+        """Get model information at ModelScope
 
         Args:
-            model_id(`str`): The model id.
-            revision(`str`): revision of model
+            model_id (str): The model id.
+            revision (str optional): revision of model.
+
         Returns:
             The model detail information.
+
         Raises:
             NotExistError: If the model is not exist, will throw NotExistError
-        <Tip>
+
+        Note:
             model_id = {owner}/{name}
-        </Tip>
         """
         cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(model_id)
@@ -211,13 +229,12 @@ class HubApi:
     def push_model(self,
                    model_id: str,
                    model_dir: str,
-                   visibility: int = ModelVisibility.PUBLIC,
-                   license: str = Licenses.APACHE_V2,
+                   visibility: Optional[int] = ModelVisibility.PUBLIC,
+                   license: Optional[str] = Licenses.APACHE_V2,
                    chinese_name: Optional[str] = None,
                    commit_message: Optional[str] = 'upload model',
                    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION):
-        """
-        Upload model from a given directory to given repository. A valid model directory
+        """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 
         This function upload the files in given directory to given repository. If the
@@ -229,11 +246,11 @@ class HubApi:
         which can be obtained from ModelScope's website.
 
         Args:
-            model_id (`str`):
+            model_id (str):
                 The model id to be uploaded, caller must have write permission for it.
-            model_dir(`str`):
+            model_dir(str):
                 The Absolute Path of the finetune result.
-            visibility(`int`, defaults to `0`):
+            visibility(int, optional):
                 Visibility of the new created model(1-private, 5-public). If the model is
                 not exists in ModelScope, this function will create a new model with this
                 visibility and this parameter is required. You can ignore this parameter
@@ -250,6 +267,12 @@ class HubApi:
             revision (`str`, *optional*, default to DEFAULT_MODEL_REVISION):
                 which branch to push. If the branch is not exists, It will create a new
                 branch and push to it.
+
+        Raises:
+            InvalidParameter: Parameter invalid.
+            NotLoginException: Not login
+            ValueError: No configuration.json
+            Exception: Create failed.
         """
         if model_id is None:
             raise InvalidParameter('model_id cannot be empty!')
@@ -305,7 +328,10 @@ class HubApi:
                 date = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
                 commit_message = '[automsg] push model %s to hub at %s' % (
                     model_id, date)
-            repo.push(commit_message=commit_message, local_branch=revision, remote_branch=revision)
+            repo.push(
+                commit_message=commit_message,
+                local_branch=revision,
+                remote_branch=revision)
         except Exception:
             raise
         finally:
@@ -313,14 +339,18 @@ class HubApi:
 
     def list_models(self,
                     owner_or_group: str,
-                    page_number=1,
-                    page_size=10) -> dict:
+                    page_number: Optional[int] = 1,
+                    page_size: Optional[int] = 10) -> dict:
         """List models in owner or group.
 
         Args:
-            owner_or_group(`str`): owner or group.
-            page_number(`int`): The page number, default: 1
-            page_size(`int`): The page size, default: 10
+            owner_or_group(str): owner or group.
+            page_number(int, optional): The page number, default: 1
+            page_size(int, optional): The page size, default: 10
+
+        Raises:
+            RequestError: The request error.
+
         Returns:
             dict: {"models": "list of models", "TotalCount": total_number_of_models_in_owner_or_group}
         """
@@ -358,7 +388,7 @@ class HubApi:
     def list_model_revisions(
             self,
             model_id: str,
-            cutoff_timestamp: int = None,
+            cutoff_timestamp: Optional[int] = None,
             use_cookies: Union[bool, CookieJar] = False) -> List[str]:
         """Get model branch and tags.
 
@@ -368,6 +398,7 @@ class HubApi:
                                     The timestamp is represented by the seconds elasped from the epoch time.
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
                         will load cookie from local. Defaults to False.
+
         Returns:
             Tuple[List[str], List[str]]: Return list of branch name and tags
         """
@@ -385,7 +416,10 @@ class HubApi:
                 ] if info['RevisionMap']['Tags'] else []
         return tags
 
-    def get_valid_revision(self, model_id: str, revision=None, cookies: Optional[CookieJar] = None):
+    def get_valid_revision(self,
+                           model_id: str,
+                           revision=None,
+                           cookies: Optional[CookieJar] = None):
         release_timestamp = get_release_datetime()
         current_timestamp = int(round(datetime.datetime.now().timestamp()))
         # for active development in library codes (non-release-branches), release_timestamp
@@ -396,27 +430,37 @@ class HubApi:
                 model_id, use_cookies=False if cookies is None else cookies)
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
-                logger.info('Model revision not specified, use default: %s in development mode' % revision)
+                logger.info(
+                    'Model revision not specified, use default: %s in development mode'
+                    % revision)
             if revision not in branches and revision not in tags:
-                raise NotExistError('The model: %s has no branch or tag : %s .' % revision)
+                raise NotExistError('The model: %s has no branch or tag : %s .'
+                                    % revision)
             logger.info('Development mode use revision: %s' % revision)
         else:
             if revision is None:  # user not specified revision, use latest revision before release time
                 revisions = self.list_model_revisions(
-                    model_id, cutoff_timestamp=release_timestamp, use_cookies=False if cookies is None else cookies)
+                    model_id,
+                    cutoff_timestamp=release_timestamp,
+                    use_cookies=False if cookies is None else cookies)
                 if len(revisions) == 0:
-                    raise NoValidRevisionError('The model: %s has no valid revision!' % model_id)
+                    raise NoValidRevisionError(
+                        'The model: %s has no valid revision!' % model_id)
                 # tags (revisions) returned from backend are guaranteed to be ordered by create-time
                 # we shall obtain the latest revision created earlier than release version of this branch
                 revision = revisions[0]
-                logger.info('Model revision not specified, use the latest revision: %s' % revision)
+                logger.info(
+                    'Model revision not specified, use the latest revision: %s'
+                    % revision)
             else:
                 # use user-specified revision
                 revisions = self.list_model_revisions(
-                    model_id, cutoff_timestamp=current_timestamp, use_cookies=False if cookies is None else cookies)
+                    model_id,
+                    cutoff_timestamp=current_timestamp,
+                    use_cookies=False if cookies is None else cookies)
                 if revision not in revisions:
-                    raise NotExistError(
-                        'The model: %s has no revision: %s !' % (model_id, revision))
+                    raise NotExistError('The model: %s has no revision: %s !' %
+                                        (model_id, revision))
                 logger.info('Use user-specified model revision: %s' % revision)
         return revision
 
@@ -431,6 +475,7 @@ class HubApi:
             model_id (str): The model id
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
                         will load cookie from local. Defaults to False.
+
         Returns:
             Tuple[List[str], List[str]]: Return list of branch name and tags
         """
@@ -465,9 +510,6 @@ class HubApi:
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
             headers: request headers
-
-        Raises:
-            ValueError: If user_cookies is True, but no local cookie.
 
         Returns:
             List[dict]: Model file list.
@@ -532,7 +574,8 @@ class HubApi:
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        r = self.session.get(datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(
+            datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']
@@ -607,7 +650,8 @@ class HubApi:
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
 
-        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(
+            url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
@@ -661,7 +705,10 @@ class HubApi:
 
     def datahub_remote_call(self, url):
         cookies = ModelScopeConfig.get_cookies()
-        r = self.session.get(url, cookies=cookies, headers={'user-agent': ModelScopeConfig.get_user_agent()})
+        r = self.session.get(
+            url,
+            cookies=cookies,
+            headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
         datahub_raise_on_error(url, resp)
         return resp['Data']
@@ -763,7 +810,8 @@ class ModelScopeConfig:
             with open(
                     os.path.join(ModelScopeConfig.path_credential,
                                  ModelScopeConfig.USER_INFO_FILE_NAME),
-                    'r', encoding='utf-8') as f:
+                    'r',
+                    encoding='utf-8') as f:
                 info = f.read()
                 return info.split(':')[0], info.split(':')[1]
         except FileNotFoundError:
@@ -784,7 +832,8 @@ class ModelScopeConfig:
             with open(
                     os.path.join(ModelScopeConfig.path_credential,
                                  ModelScopeConfig.GIT_TOKEN_FILE_NAME),
-                    'r', encoding='utf-8') as f:
+                    'r',
+                    encoding='utf-8') as f:
                 token = f.read()
         except FileNotFoundError:
             pass

@@ -1,50 +1,17 @@
-modelscope.hub package
-=========================
+modelscope.hub
+==============
 
 .. automodule:: modelscope.hub
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+.. currentmodule:: modelscope.hub
 
-.. toctree::
-   :maxdepth: 4
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
 
-   modelscope.hub.utils
-
-Submodules
-----------
-
-modelscope.hub.api module
------------------------------
-
-.. automodule:: modelscope.hub.api
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.hub.git module
----------------------------
-
-.. automodule:: modelscope.hub.git
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.hub.file_download module
----------------------------
-
-.. automodule:: modelscope.hub.file_download
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.hub.snapshot_download module
----------------------------
-
-.. automodule:: modelscope.hub.snapshot_download
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    api.HubApi
+    repository.Repository
+    deploy.ServiceDeployer
+    snapshot_download.snapshot_download
+    file_download.model_file_download

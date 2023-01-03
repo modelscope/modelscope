@@ -137,6 +137,8 @@ PREPROCESSOR_MAP = {
 
 
 class Preprocessor(ABC):
+    """Base of preprocessors.
+    """
 
     def __init__(self, mode=ModeKeys.INFERENCE, *args, **kwargs):
         self._mode = mode

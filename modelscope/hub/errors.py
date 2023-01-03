@@ -49,10 +49,10 @@ def is_ok(rsp):
     """ Check the request is ok
 
     Args:
-        rsp (_type_): The request response body
-        Failed: {'Code': 10010101004, 'Message': 'get model info failed, err: unauthorized permission',
-                 'RequestId': '', 'Success': False}
-        Success: {'Code': 200, 'Data': {}, 'Message': 'success', 'RequestId': '', 'Success': True}
+        rsp (Response): The request response body
+
+    Returns:
+       bool: `True` if success otherwise `False`.
     """
     return rsp['Code'] == HTTPStatus.OK and rsp['Success']
 
@@ -84,6 +84,12 @@ def raise_on_error(rsp):
 
     Args:
         rsp (_type_): The server response
+
+    Raises:
+        RequestError: the response error message.
+
+    Returns:
+        bool: True if request is OK, otherwise raise `RequestError` exception.
     """
     if rsp['Code'] == HTTPStatus.OK:
         return True
@@ -96,7 +102,14 @@ def datahub_raise_on_error(url, rsp):
     """If response error, raise exception
 
     Args:
-        rsp (_type_): The server response
+        url (str): The request url
+        rsp (HTTPResponse): The server response.
+
+    Raises:
+        RequestError: the http request error.
+
+    Returns:
+        bool: `True` if request is OK, otherwise raise `RequestError` exception.
     """
     if rsp.get('Code') == HTTPStatus.OK:
         return True
@@ -107,10 +120,15 @@ def datahub_raise_on_error(url, rsp):
 
 
 def raise_for_http_status(rsp):
-    """
-    Attempt to decode utf-8 first since some servers
+    """Attempt to decode utf-8 first since some servers
     localize reason strings, for invalid utf-8, fall back
     to decoding with iso-8859-1.
+
+    Args:
+        rsp: The http response.
+
+    Raises:
+        HTTPError: The http error info.
     """
     http_error_msg = ''
     if isinstance(rsp.reason, bytes):

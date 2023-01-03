@@ -92,18 +92,21 @@ def _interval_based_sampling(vid_length, vid_fps, target_fps, clip_idx,
                              num_clips, num_frames, interval, minus_interval):
     """
         Generates the frame index list using interval based sampling.
+
         Args:
-            vid_length  (int): the length of the whole video (valid selection range).
-            vid_fps     (int): the original video fps
-            target_fps  (int): the normalized video fps
-            clip_idx    (int): -1 for random temporal sampling, and positive values for sampling specific
-                                clip from the video
-            num_clips   (int): the total clips to be sampled from each video.
-                                combined with clip_idx, the sampled video is the "clip_idx-th" video from
-                                "num_clips" videos.
-            num_frames  (int): number of frames in each sampled clips.
-            interval    (int): the interval to sample each frame.
+            vid_length (int): the length of the whole video (valid selection range).
+            vid_fps (int): the original video fps
+            target_fps (int): the normalized video fps
+            clip_idx (int):
+                -1 for random temporal sampling, and positive values for sampling specific
+                clip from the video
+            num_clips (int):
+                the total clips to be sampled from each video. combined with clip_idx,
+                the sampled video is the "clip_idx-th" video from "num_clips" videos.
+            num_frames (int): number of frames in each sampled clips.
+            interval (int): the interval to sample each frame.
             minus_interval (bool): control the end index
+
         Returns:
             index (tensor): the sampled frame indexes
     """

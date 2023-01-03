@@ -32,31 +32,31 @@ def snapshot_download(model_id: str,
 
     An alternative would be to just clone a repo but this would require that the
     user always has git and git-lfs installed, and properly configured.
-    Args:
-        model_id (`str`):
-            A user or an organization name and a repo name separated by a `/`.
-        revision (`str`, *optional*):
-            An optional Git revision id which can be a branch name, a tag, or a
-            commit hash. NOTE: currently only branch and tag name is supported
-        cache_dir (`str`, `Path`, *optional*):
-            Path to the folder where cached files are stored.
-        user_agent (`str`, `dict`, *optional*):
-            The user-agent info in the form of a dictionary or a string.
-        local_files_only (`bool`, *optional*, defaults to `False`):
-            If `True`, avoid downloading the file and return the path to the
-            local cached file if it exists.
-    Returns:
-        Local folder path (string) of repo snapshot
 
-    <Tip>
-    Raises the following errors:
-    - [`EnvironmentError`](https://docs.python.org/3/library/exceptions.html#EnvironmentError)
-      if `use_auth_token=True` and the token cannot be found.
-    - [`OSError`](https://docs.python.org/3/library/exceptions.html#OSError) if
-      ETag cannot be determined.
-    - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
-      if some parameter value is invalid
-    </Tip>
+    Args:
+        model_id (str): A user or an organization name and a repo name separated by a `/`.
+        revision (str, optional): An optional Git revision id which can be a branch name, a tag, or a
+            commit hash. NOTE: currently only branch and tag name is supported
+        cache_dir (str, Path, optional): Path to the folder where cached files are stored.
+        user_agent (str, dict, optional): The user-agent info in the form of a dictionary or a string.
+        local_files_only (bool, optional): If `True`, avoid downloading the file and return the path to the
+            local cached file if it exists.
+        cookies (CookieJar, optional): The cookie of the request, default None.
+
+    Raises:
+        ValueError: the value details.
+
+    Returns:
+        str: Local folder path (string) of repo snapshot
+
+    Note:
+        Raises the following errors:
+        - [`EnvironmentError`](https://docs.python.org/3/library/exceptions.html#EnvironmentError)
+        if `use_auth_token=True` and the token cannot be found.
+        - [`OSError`](https://docs.python.org/3/library/exceptions.html#OSError) if
+        ETag cannot be determined.
+        - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
+        if some parameter value is invalid
     """
 
     if cache_dir is None:

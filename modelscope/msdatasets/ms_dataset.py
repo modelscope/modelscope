@@ -155,11 +155,12 @@ class MsDataset:
         **config_kwargs,
     ) -> Union[dict, 'MsDataset']:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
-            Args:
 
+            Args:
                 dataset_name (str): Path or name of the dataset.
-                namespace(str, optional): Namespace of the dataset. It should not be None if you load a remote dataset
-                from Hubs.modelscope,
+                namespace (str, optional):
+                    Namespace of the dataset. It should not be None if you load a remote dataset
+                    from Hubs.modelscope,
                 target (str, optional): Name of the column to output.
                 version (str, optional): Version of the dataset script to load:
                 subset_name (str, optional): Defining the subset_name of the dataset.
@@ -167,12 +168,12 @@ class MsDataset:
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
                 hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
-                download_mode (DownloadMode or str, optional): How to treat existing datasets. default
-                                                               DownloadMode.REUSE_DATASET_IF_EXISTS
-                **config_kwargs (additional keyword arguments): Keyword arguments to be passed
+                download_mode (DownloadMode or str, optional):
+                    How to treat existing datasets. default DownloadMode.REUSE_DATASET_IF_EXISTS
+                config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
-                MsDataset (obj:`MsDataset`): MsDataset object for a certain dataset.
+                MsDataset (MsDataset): MsDataset object for a certain dataset.
             """
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
@@ -645,15 +646,16 @@ class MsDataset:
                    auth_token: Optional[str] = None,
                    git_path: Optional[str] = None) -> None:
         """Clone meta-file of dataset from the ModelScope Hub.
+
         Args:
             dataset_work_dir (str): Current git working directory.
             dataset_id (str): Dataset id, in the form of your-namespace/your-dataset-name .
-            revision(`Optional[str]`):
+            revision (str, optional):
                 revision of the model you want to clone from. Can be any of a branch, tag or commit hash
-            auth_token(`Optional[str]`):
+            auth_token (str, optional):
                 token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
                 as the token is already saved when you login the first time, if None, we will use saved token.
-            git_path:(`Optional[str]`):
+            git_path (str, optional):
                 The git command line path, if None, we use 'git'
         Returns:
             None

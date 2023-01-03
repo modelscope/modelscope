@@ -185,6 +185,8 @@ class DeleteServiceParameters(AttrsToQueryString):
 
 
 class ServiceDeployer(object):
+    """Faciliate model deployment on to supported service provider(s).
+    """
 
     def __init__(self, endpoint=None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
@@ -210,7 +212,6 @@ class ServiceDeployer(object):
             provider (ServiceProviderParameters): The service provider parameter
 
         Raises:
-            NotLoginException: To use this api, you need login first.
             NotSupportError: Not supported platform.
             RequestError: The server return error.
 
@@ -248,10 +249,9 @@ class ServiceDeployer(object):
         Args:
             instance_name (str): The deployed instance name.
             provider (ServiceProviderParameters): The cloud provider information, for eas
-            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+                need region(eg: ch-hangzhou), access_key_id and access_key_secret.
 
         Raises:
-            NotLoginException: To use this api, you need login first.
             RequestError: The request is failed from server.
 
         Returns:
@@ -279,10 +279,9 @@ class ServiceDeployer(object):
         Args:
             instance_name (str): The instance name you want to delete.
             provider (ServiceProviderParameters): The cloud provider information, for eas
-            need region(eg: ch-hangzhou), access_key_id and access_key_secret.
+                need region(eg: ch-hangzhou), access_key_id and access_key_secret.
 
         Raises:
-            NotLoginException: To call this api, you need login first.
             RequestError: The request is failed.
 
         Returns:
@@ -305,17 +304,17 @@ class ServiceDeployer(object):
 
     def list(self,
              provider: ServiceProviderParameters,
-             skip: int = 0,
-             limit: int = 100):
+             skip: Optional[int] = 0,
+             limit: Optional[int] = 100):
         """List deployed model instances.
 
         Args:
             provider (ServiceProviderParameters): The cloud service provider parameter,
-            for eas, need access_key_id and access_key_secret.
-            skip: start of the list, current not support.
-            limit: maximum number of instances return, current not support
+                for eas, need access_key_id and access_key_secret.
+            skip (int, optional): start of the list, current not support.
+            limit (int, optional): maximum number of instances return, current not support
+
         Raises:
-            NotLoginException: To use this api, you need login first.
             RequestError: The request is failed from server.
 
         Returns:

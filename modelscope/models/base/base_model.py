@@ -19,6 +19,8 @@ Tensor = Union['torch.Tensor', 'tf.Tensor']
 
 
 class Model(ABC):
+    """Base model interface.
+    """
 
     def __init__(self, model_dir, *args, **kwargs):
         self.model_dir = model_dir

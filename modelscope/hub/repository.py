@@ -24,20 +24,20 @@ class Repository:
                  revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                  auth_token: Optional[str] = None,
                  git_path: Optional[str] = None):
-        """
-        Instantiate a Repository object by cloning the remote ModelScopeHub repo
+        """Instantiate a Repository object by cloning the remote ModelScopeHub repo
+
         Args:
-            model_dir(`str`):
-                The model root directory.
-            clone_from:
-                model id in ModelScope-hub from which git clone
-            revision(`Optional[str]`):
-                revision of the model you want to clone from. Can be any of a branch, tag or commit hash
-            auth_token(`Optional[str]`):
-                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
-                as the token is already saved when you login the first time, if None, we will use saved token.
-            git_path:(`Optional[str]`):
-                The git command line path, if None, we use 'git'
+            model_dir (str): The model root directory.
+            clone_from (str): model id in ModelScope-hub from which git clone
+            revision (str, optional): revision of the model you want to clone from.
+                     Can be any of a branch, tag or commit hash
+            auth_token (str, optional): token obtained when calling `HubApi.login()`.
+                        Usually you can safely ignore the parameter as the token is already
+                        saved when you login the first time, if None, we will use saved token.
+            git_path (str, optional): The git command line path, if None, we use 'git'
+
+        Raises:
+            InvalidParameter: revision is None.
         """
         self.model_dir = model_dir
         self.model_base_dir = os.path.dirname(model_dir)
@@ -92,16 +92,19 @@ class Repository:
              commit_message: str,
              local_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
              remote_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-             force: bool = False):
+             force: Optional[bool] = False):
         """Push local files to remote, this method will do.
-           git pull
-           git add
-           git commit
-           git push
+        Execute git pull, git add, git commit, git push in order.
+
         Args:
             commit_message (str): commit message
-            branch (Optional[str], optional): which branch to push.
-            force (Optional[bool]): whether to use forced-push.
+            local_branch(str, optional): The local branch, default master.
+            remote_branch (str, optional): The remote branch to push, default master.
+            force (bool, optional): whether to use forced-push.
+
+        Raises:
+            InvalidParameter: no commit message.
+            NotLoginException: no auth token.
         """
         if commit_message is None or not isinstance(commit_message, str):
             msg = 'commit_message must be provided!'
@@ -128,12 +131,19 @@ class Repository:
             local_branch=local_branch,
             remote_branch=remote_branch)
 
-    def tag(self, tag_name: str, message: str, ref: str = MASTER_MODEL_BRANCH):
+    def tag(self,
+            tag_name: str,
+            message: str,
+            ref: Optional[str] = MASTER_MODEL_BRANCH):
         """Create a new tag.
+
         Args:
             tag_name (str): The name of the tag
             message (str): The tag message.
-            ref (str): The tag reference, can be commit id or branch.
+            ref (str, optional): The tag reference, can be commit id or branch.
+
+        Raises:
+            InvalidParameter: no commit message.
         """
         if tag_name is None or tag_name == '':
             msg = 'We use tag-based revision, therefore tag_name cannot be None or empty.'
@@ -149,7 +159,7 @@ class Repository:
     def tag_and_push(self,
                      tag_name: str,
                      message: str,
-                     ref: str = MASTER_MODEL_BRANCH):
+                     ref: Optional[str] = MASTER_MODEL_BRANCH):
         """Create tag and push to remote
 
         Args:
@@ -174,18 +184,19 @@ class DatasetRepository:
                  git_path: Optional[str] = None):
         """
         Instantiate a Dataset Repository object by cloning the remote ModelScope dataset repo
+
         Args:
-            repo_work_dir(`str`):
-                The dataset repo root directory.
-            dataset_id:
-                dataset id in ModelScope from which git clone
-            revision(`Optional[str]`):
-                revision of the dataset you want to clone from. Can be any of a branch, tag or commit hash
-            auth_token(`Optional[str]`):
-                token obtained when calling `HubApi.login()`. Usually you can safely ignore the parameter
-                as the token is already saved when you login the first time, if None, we will use saved token.
-            git_path:(`Optional[str]`):
-                The git command line path, if None, we use 'git'
+            repo_work_dir (str): The dataset repo root directory.
+            dataset_id (str): dataset id in ModelScope from which git clone
+            revision (str, optional): revision of the dataset you want to clone from.
+                                      Can be any of a branch, tag or commit hash
+            auth_token (str, optional): token obtained when calling `HubApi.login()`.
+                                        Usually you can safely ignore the parameter as the token is
+                                        already saved when you login the first time, if None, we will use saved token.
+            git_path (str, optional): The git command line path, if None, we use 'git'
+
+        Raises:
+            InvalidParameter: parameter invalid.
         """
         self.dataset_id = dataset_id
         if not repo_work_dir or not isinstance(repo_work_dir, str):
@@ -229,16 +240,21 @@ class DatasetRepository:
     def push(self,
              commit_message: str,
              branch: Optional[str] = DEFAULT_DATASET_REVISION,
-             force: bool = False):
+             force: Optional[bool] = False):
         """Push local files to remote, this method will do.
            git pull
            git add
            git commit
            git push
+
         Args:
             commit_message (str): commit message
-            branch (Optional[str], optional): which branch to push.
-            force (Optional[bool]): whether to use forced-push.
+            branch (str, optional): which branch to push.
+            force (bool, optional): whether to use forced-push.
+
+        Raises:
+            InvalidParameter: no commit message.
+            NotLoginException: no access token.
         """
         if commit_message is None or not isinstance(commit_message, str):
             msg = 'commit_message must be provided!'

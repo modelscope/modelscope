@@ -384,6 +384,7 @@ class Trainers(object):
     nlp_plug_trainer = 'nlp-plug-trainer'
     gpt3_trainer = 'nlp-gpt3-trainer'
     gpt_moe_trainer = 'nlp-gpt-moe-trainer'
+    table_question_answering_trainer = 'table-question-answering-trainer'
 
     # audio trainers
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'

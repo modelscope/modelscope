@@ -52,21 +52,22 @@ class TableQuestionAnswering(Model):
         self.max_where_num = constant.max_where_num
         self.col_type_dict = constant.col_type_dict
         self.schema_link_dict = constant.schema_link_dict
-        n_cond_ops = len(self.cond_ops)
-        n_agg_ops = len(self.agg_ops)
-        n_action_ops = len(self.action_ops)
+        self.n_cond_ops = len(self.cond_ops)
+        self.n_agg_ops = len(self.agg_ops)
+        self.n_action_ops = len(self.action_ops)
         iS = self.backbone_config.hidden_size
         self.head_model = Seq2SQL(
             iS,
             100,
             2,
             0.0,
-            n_cond_ops,
-            n_agg_ops,
-            n_action_ops,
+            self.n_cond_ops,
+            self.n_agg_ops,
+            self.n_action_ops,
             self.max_select_num,
             self.max_where_num,
             device=self._device_name)
+        self.device = self._device_name
         self.head_model.load_state_dict(state_dict['head_model'], strict=False)
 
     def to(self, device):

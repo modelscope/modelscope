@@ -91,6 +91,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_recognition:
     (Pipelines.table_recognition,
      'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.document_vl_embedding:
+    (Pipelines.document_vl_embedding,
+     'damo/multi-modal_convnext-roberta-base_vldoc-embedding'),
     Tasks.license_plate_detection:
     (Pipelines.license_plate_detection,
      'damo/cv_resnet18_license-plate-detection_damo'),
@@ -245,9 +248,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_object_segmentation:
     (Pipelines.video_object_segmentation,
      'damo/cv_rdevos_video-object-segmentation'),
-    Tasks.image_multi_view_depth_estimation:
-    (Pipelines.image_multi_view_depth_estimation,
-     'damo/cv_casmvs_multi-view-depth-estimation_general'),
+    Tasks.image_multi_view_depth_estimation: (
+        Pipelines.image_multi_view_depth_estimation,
+        'damo/cv_casmvs_multi-view-depth-estimation_general'),
 }
 
 

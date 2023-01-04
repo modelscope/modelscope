@@ -74,6 +74,14 @@ TASK_OUTPUTS = {
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
+    # document vl embedding for single sample
+    # {
+    #    "img_embedding": np.array with shape [M, D],
+    #    "text_embedding": np.array with shape [N, D]
+    # }
+    Tasks.document_vl_embedding:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
+
     # face 2d keypoint result for single sample
     #   {
     #       "keypoints": [
@@ -346,8 +354,9 @@ TASK_OUTPUTS = {
     #   "output_video": "path_to_rendered_video" , this is optional
     # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints:
-    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+    Tasks.body_3d_keypoints: [
+        OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
+    ],
 
     # 2D hand keypoints result for single sample
     # {

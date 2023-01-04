@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         OfaForTextToImageSynthesis
     from .multi_stage_diffusion import \
         MultiStageDiffusionForTextToImageSynthesis
+    from .vldoc import VLDocForDocVLEmbedding
 
 else:
     _import_structure = {
@@ -29,7 +30,8 @@ else:
         'ofa_for_text_to_image_synthesis_model':
         ['OfaForTextToImageSynthesis'],
         'multi_stage_diffusion':
-        ['MultiStageDiffusionForTextToImageSynthesis']
+        ['MultiStageDiffusionForTextToImageSynthesis'],
+        'vldoc': ['VLDocForDocVLEmbedding'],
     }
 
     import sys

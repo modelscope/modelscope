@@ -391,6 +391,78 @@ class MPlugPreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
+    Fields.multi_modal, module_name=Preprocessors.vldoc_preprocessor)
+class VLDocPreprocessor(Preprocessor):
+
+    def __init__(self,
+                 model_dir: str,
+                 mode: str = ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
+        """Preprocess data for the model `VLDocForDocVLEmbedding`.
+
+        Args:
+            model_dir (str): model path in model hub.
+            mode (str): model mode, in ('train', 'eval', 'inference').
+        """
+        super().__init__(*args, **kwargs)
+
+        self.model_dir = model_dir
+        self.mode = mode
+
+        model_cfg_path = osp.join(model_dir, 'config.json')
+        with open(model_cfg_path, 'r', encoding='utf-8') as f:
+            model_cfg = json.load(f)
+
+        from modelscope.models.multi_modal.vldoc.tokenization import VLDocXLMTokenizer
+        tokenizer_path = osp.join(model_dir, ModelFile.TOKENIZER_FOLDER)
+        self.tokenizer = VLDocXLMTokenizer.from_pretrained(tokenizer_path)
+
+        from modelscope.models.multi_modal.vldoc.processing import Processor, ImageProcessor
+        self.img_proc = ImageProcessor(
+            do_preprocess=True,
+            do_resize=True,
+            image_size={
+                'height': model_cfg['image_size'][0],
+                'width': model_cfg['image_size'][1],
+            },
+            do_normalize=True,
+            apply_ocr=False)
+        self.proc = Processor(
+            max_seq_length=model_cfg['max_seq_length'],
+            max_block_num=model_cfg['max_block_num'],
+            img_processor=self.img_proc,
+            tokenizer=self.tokenizer,
+            width=model_cfg['image_size'][1],
+            height=model_cfg['image_size'][0],
+        )
+
+    def __call__(self, input: Dict[str, Any], *args,
+                 **kwargs) -> Dict[str, Any]:
+        """
+        Args:
+            input: {
+                'images': ['img_path1', 'img_path2', ...],
+                'ocr_info_paths': ['json_path1', 'json_path2', ...]
+            }
+        Return:
+            encodings: Dict[str, Tensor]
+        """
+
+        ocr_infos = []
+        for one_ocr_info_path in input['ocr_info_paths']:
+            with open(one_ocr_info_path, 'r') as f:
+                ocr_info = json.load(f)
+                ocr_info = ocr_info['form']
+                ocr_infos.append(ocr_info)
+
+        proc_input = {'images': input['images'], 'ocr_infos': ocr_infos}
+        encodings = self.proc(**proc_input)
+
+        return encodings
+
+
+@PREPROCESSORS.register_module(
     Fields.multi_modal, module_name=Preprocessors.hitea_tasks_preprocessor)
 class HiTeAPreprocessor(Preprocessor):
 

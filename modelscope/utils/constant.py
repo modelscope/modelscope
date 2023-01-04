@@ -176,6 +176,7 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    document_vl_embedding = 'document-vl-embedding'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
 
@@ -314,6 +315,7 @@ class ModelFile(object):
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
     TS_MODEL_FILE = 'model.ts'
+    TOKENIZER_FOLDER = 'tokenizer'
 
 
 class Invoke(object):

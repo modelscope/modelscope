@@ -127,6 +127,7 @@ class Models(object):
     multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
+    vldoc = 'vldoc'
     hitea = 'hitea'
 
     # science models
@@ -336,6 +337,7 @@ class Pipelines(object):
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
+    document_vl_embedding = 'document-vl-embedding'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
 
@@ -464,6 +466,7 @@ class Preprocessors(object):
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
     clip_preprocessor = 'clip-preprocessor'
     mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
+    vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
 
     # science preprocessor

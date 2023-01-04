@@ -13,7 +13,7 @@ import numpy as np
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
-from modelscope.utils.audio.audio_utils import TtsTrainType, ndarray_pcm_to_wav
+from modelscope.utils.audio.audio_utils import ndarray_pcm_to_wav
 from modelscope.utils.audio.tts_exceptions import (
     TtsFrontendInitializeFailedException,
     TtsFrontendLanguageTypeInvalidException, TtsModelConfigurationException,

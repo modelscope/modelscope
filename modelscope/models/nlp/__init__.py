@@ -55,6 +55,7 @@ if TYPE_CHECKING:
                        VecoForTokenClassification, VecoModel)
     from .bloom import BloomModel
     from .unite import UniTEModel
+    from .use import UserSatisfactionEstimation
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -115,7 +116,8 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
-        'unite': ['UniTEModel']
+        'unite': ['UniTEModel'],
+        'use': ['UserSatisfactionEstimation']
     }
 
     import sys

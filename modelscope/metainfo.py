@@ -107,6 +107,7 @@ class Models(object):
     codegeex = 'codegeex'
     bloom = 'bloom'
     unite = 'unite'
+    use = 'user-satisfaction-estimation'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -313,6 +314,7 @@ class Pipelines(object):
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore
     token_classification = 'token-classification'
     translation_evaluation = 'translation-evaluation'
+    user_satisfaction_estimation = 'user-satisfaction-estimation'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -454,6 +456,7 @@ class Preprocessors(object):
     mglm_summarization = 'mglm-summarization'
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
+    dialog_use_preprocessor = 'dialog-use-preprocessor'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

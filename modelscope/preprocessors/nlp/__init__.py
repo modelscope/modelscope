@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
     from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
+    from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
 else:
     _import_structure = {
         'sentence_piece_preprocessor': ['SentencePiecePreprocessor'],
@@ -79,6 +80,8 @@ else:
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
         'translation_evaluation_preprocessor':
         ['TranslationEvaluationPreprocessor'],
+        'dialog_classification_use_preprocessor':
+        ['DialogueClassificationUsePreprocessor']
     }
 
     import sys

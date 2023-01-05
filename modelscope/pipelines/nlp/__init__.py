@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from .codegeex_code_translation_pipeline import CodeGeeXCodeTranslationPipeline
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
     from .translation_evaluation_pipeline import TranslationEvaluationPipeline
+    from .user_satisfaction_estimation_pipeline import UserSatisfactionEstimationPipeline
 
 else:
     _import_structure = {
@@ -79,6 +80,8 @@ else:
         'codegeex_code_generation_pipeline':
         ['CodeGeeXCodeGenerationPipeline'],
         'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
+        'user_satisfaction_estimation_pipeline':
+        ['UserSatisfactionEstimationPipeline']
     }
 
     import sys

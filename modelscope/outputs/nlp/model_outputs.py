@@ -402,3 +402,13 @@ class AttentionTokenClassificationModelOutput(TokenClassificationModelOutput):
     """
     attentions: Tensor = None
     hidden_states: Tensor = None
+
+
+@dataclass
+class DialogueUserSatisfactionEstimationModelOutput(ModelOutputBase):
+    """The output class for user satisfaction estimation.
+
+    Args:
+        logits (`Tensor`): The logits output of the model.
+    """
+    logits: Tensor = None

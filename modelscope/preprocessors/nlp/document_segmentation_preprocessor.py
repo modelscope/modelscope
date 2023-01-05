@@ -232,7 +232,6 @@ class DocumentSegmentationTransformersPreprocessor(Preprocessor):
                     continue
 
         output_samples = {}
-
         output_samples['input_ids'] = new_input_ids
         output_samples['token_type_ids'] = new_token_type_ids
         output_samples['attention_mask'] = new_attention_mask

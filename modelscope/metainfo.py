@@ -119,6 +119,7 @@ class Models(object):
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'
+    generic_itn = 'generic-itn'
 
     # multi-modal models
     ofa = 'ofa'
@@ -327,6 +328,7 @@ class Pipelines(object):
     kws_kwsbp = 'kws-kwsbp'
     asr_inference = 'asr-inference'
     asr_wenet_inference = 'asr-wenet-inference'
+    itn_inference = 'itn-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .kws_kwsbp_pipeline import KeyWordSpottingKwsbpPipeline
     from .linear_aec_pipeline import LinearAECPipeline
     from .text_to_speech_pipeline import TextToSpeechSambertHifiganPipeline
-
+    from .inverse_text_processing_pipeline import InverseTextProcessingPipeline
 else:
     _import_structure = {
         'ans_pipeline': ['ANSPipeline'],
@@ -19,6 +19,7 @@ else:
         'kws_kwsbp_pipeline': ['KeyWordSpottingKwsbpPipeline'],
         'linear_aec_pipeline': ['LinearAECPipeline'],
         'text_to_speech_pipeline': ['TextToSpeechSambertHifiganPipeline'],
+        'itn_inference_pipeline': ['InverseTextProcessingPipeline']
     }
 
     import sys

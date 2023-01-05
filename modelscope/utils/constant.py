@@ -162,6 +162,7 @@ class AudioTasks(object):
     acoustic_echo_cancellation = 'acoustic-echo-cancellation'
     acoustic_noise_suppression = 'acoustic-noise-suppression'
     keyword_spotting = 'keyword-spotting'
+    inverse_text_processing = 'inverse-text-processing'
 
 
 class MultiModalTasks(object):

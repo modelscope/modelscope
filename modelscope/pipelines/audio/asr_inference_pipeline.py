@@ -167,7 +167,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             if 'sampled_lengths' in inputs['model_config']:
                 cmd['sampled_lengths'] = inputs['model_config'][
                     'sampled_lengths']
-
         else:
             raise ValueError('model type is mismatching')
 
@@ -275,6 +274,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 token_num_relax=cmd['token_num_relax'],
                 decoding_ind=cmd['decoding_ind'],
                 decoding_mode=cmd['decoding_mode'])
+
         elif self.framework == Frameworks.torch:
             from easyasr import asr_inference_paraformer_espnet
 

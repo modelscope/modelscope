@@ -1,6 +1,7 @@
 easyasr>=0.0.2
 espnet==202204
 funasr>=0.1.4
+funtextprocessing>=0.1.1
 greenlet>=1.1.2
 h5py
 inflect

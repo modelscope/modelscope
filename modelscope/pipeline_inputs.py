@@ -222,6 +222,8 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.keyword_spotting:
     InputType.AUDIO,
+    Tasks.inverse_text_processing:
+    InputType.TEXT,
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {

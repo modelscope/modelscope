@@ -67,6 +67,7 @@ class Models(object):
     real_basicvsr = 'real-basicvsr'
     rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
+    ddcolor = 'ddcolor'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -267,6 +268,7 @@ class Pipelines(object):
     video_super_resolution = 'realbasicvsr-video-super-resolution'
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
     image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
+    ddcolor_image_colorization = 'ddcolor-image-colorization'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

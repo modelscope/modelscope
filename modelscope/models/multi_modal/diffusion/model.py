@@ -23,6 +23,7 @@ from modelscope.models.multi_modal.diffusion.unet_upsampler_256 import \
 from modelscope.models.multi_modal.diffusion.unet_upsampler_1024 import \
     SuperResUNet1024
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -113,22 +114,17 @@ class DiffusionModel(nn.Module):
     Tasks.text_to_image_synthesis, module_name=Models.diffusion)
 class DiffusionForTextToImageSynthesis(Model):
 
-    def __init__(self, model_dir, device_id=-1):
-        super().__init__(model_dir=model_dir, device_id=device_id)
+    def __init__(self, model_dir, device='gpu'):
+        device = 'gpu' if torch.cuda.is_available() else 'cpu'
+        super().__init__(model_dir=model_dir, device=device)
         diffusion_model = DiffusionModel(model_dir=model_dir)
         pretrained_params = torch.load(
             osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE), 'cpu')
         diffusion_model.load_state_dict(pretrained_params)
-        diffusion_model.eval()
+        diffusion_model.eval().to()
 
-        self.device_id = device_id
-        if self.device_id >= 0:
-            self.device = torch.device(f'cuda:{self.device_id}')
-            diffusion_model.to('cuda:{}'.format(self.device_id))
-            logger.info('Use GPU: {}'.format(self.device_id))
-        else:
-            self.device = torch.device('cpu')
-            logger.info('Use CPU for inference')
+        self.device = create_device(device)
+        diffusion_model.to(self.device)
 
         # modules
         self.text_encoder = diffusion_model.text_encoder

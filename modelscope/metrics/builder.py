@@ -27,6 +27,7 @@ class MetricKeys(object):
     NED = 'ned'  # ocr metric
     mAP = 'mAP'
     BatchAcc = 'inbatch_t2i_recall_at_1'
+    PPL = 'ppl'
 
 
 task_default_metrics = {

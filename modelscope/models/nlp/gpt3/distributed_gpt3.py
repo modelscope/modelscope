@@ -793,22 +793,22 @@ class GPT3Model(PreTrainedModel):
         logits_parallel = mpu.LinearWithGradAccumulationAndAsyncCommunication.apply(
             lm_output, self.word_embeddings_weight(), None, False, True,
             self.config.sequence_parallel)
-        # Gather if needed.
 
-        output = logits_parallel
-
-        if labels is None:
-            output = mpu.gather_from_tensor_model_parallel_region(
-                logits_parallel)
-            # [s b h] => [b s h]
-            return output.transpose(0, 1).contiguous()
-        else:
+        losses = None
+        if labels is not None:
             # [b s] => [s b]
             labels = labels.transpose(0, 1).contiguous()
-            loss = mpu.vocab_parallel_cross_entropy(output.float(), labels)
+            losses = mpu.vocab_parallel_cross_entropy(logits_parallel.float(),
+                                                      labels)
             # [s b] => [b s]
-            loss = loss.transpose(0, 1).contiguous()
-            return loss
+            losses = losses.transpose(0, 1).contiguous()
+
+        # Gather if needed.
+        logits = mpu.gather_from_tensor_model_parallel_region(logits_parallel)
+        # [s b h] => [b s h]
+        logits = logits.transpose(0, 1).contiguous()
+
+        return logits, losses
 
 
 def modify_logits_for_top_k_filtering(logits, top_k):
@@ -1014,24 +1014,26 @@ class DistributedGPT3(TorchModel):
                 position_ids=None,
                 labels=None,
                 prompt_length=None):
-        outputs = self.dist_model(
+
+        logits, losses = self.dist_model(
             tokens,
             attention_mask,
             position_ids,
             inference_params=self.inference_params,
             labels=labels)
+
+        loss = None
         if labels is None:
             self.inference_params.sequence_len_offset += tokens.size(1)
-            return TextGenerationModelOutput(logits=outputs)
         else:
             loss_mask = torch.ones(
                 tokens.size(), dtype=torch.float, device=tokens.device)
 
-            losses = outputs.float()
+            losses = losses.float()
             loss_mask = loss_mask.view(-1).float()
             loss = torch.sum(losses.view(-1) * loss_mask) / loss_mask.sum()
 
-            return TextGenerationModelOutput(loss=loss)
+        return TextGenerationModelOutput(logits=logits, loss=loss)
 
     def generate(self,
                  tokens,

@@ -435,10 +435,18 @@ class ImageClassifitionTrainer(BaseTrainer):
             classes = classname_path if osp.exists(classname_path) else None
         else:
             classes = self.cfg.dataset.classes
+
+        # set img_prefix for image data path in csv files.
+        if self.cfg.dataset.get('data_prefix', None) is None:
+            data_prefix = ''
+        else:
+            data_prefix = self.cfg.dataset.data_prefix
+
         dataset = MmDataset(
             self.eval_dataset,
             pipeline=preprocess_transform(self.cfg.preprocessor.val),
-            classes=classes)
+            classes=classes,
+            data_prefix=data_prefix)
         # the extra round_up data will be removed during gpu/cpu collect
         data_loader = build_dataloader(
             dataset,

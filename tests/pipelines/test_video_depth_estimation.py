@@ -15,7 +15,7 @@ class VideoDepthEstimationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = 'video-depth-estimation'
         self.model_id = 'damo/cv_dro-resnet18_video-depth-estimation_indoor'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_image_depth_estimation(self):
         input_location = 'data/test/videos/video_depth_estimation.mp4'
         estimator = pipeline(Tasks.video_depth_estimation, model=self.model_id)

@@ -19,8 +19,7 @@ class UnifoldProteinStructureTest(unittest.TestCase, DemoCompatibilityCheck):
         self.protein_multimer = 'GAMGLPEEPSSPQESTLKALSLYEAHLSSYIMYLQTFLVKTKQKVNNKNYPEFTLFDTSKLKKDQTLKSIKT' + \
             'NIAALKNHIDKIKPIAMQIYKKYSKNIP NIAALKNHIDKIKPIAMQIYKKYSKNIP'
 
-    @unittest.skipUnless(test_level() >= 5,
-                         'skip test due to MMseqs2 api error')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         model_dir1 = snapshot_download(self.model_id_multimer)
         multi_pipeline_ins = pipeline(task=self.task, model=model_dir1)

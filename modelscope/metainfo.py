@@ -214,6 +214,8 @@ class Pipelines(object):
     general_image_classification = 'vit-base_image-classification_ImageNet-labels'
     daily_image_classification = 'vit-base_image-classification_Dailylife-labels'
     nextvit_small_daily_image_classification = 'nextvit-small_image-classification_Dailylife-labels'
+    convnext_base_image_classification_garbage = 'convnext-base_image-classification_garbage'
+    common_image_classification = 'common-image-classification'
     image_color_enhance = 'csrnet-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'

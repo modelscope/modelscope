@@ -40,6 +40,24 @@ class GeneralImageClassificationTest(unittest.TestCase,
         result = nexit_image_classification('data/test/images/bird.JPEG')
         print(result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_convnext(self):
+        convnext_image_classification = pipeline(
+            Tasks.image_classification,
+            model='damo/cv_convnext-base_image-classification_garbage')
+        result = convnext_image_classification('data/test/images/banana.jpg')
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_beitv2(self):
+        beitv2_image_classification = pipeline(
+            Tasks.image_classification,
+            model=
+            'damo/cv_beitv2-base_image-classification_patch16_224_pt1k_ft22k_in1k'
+        )
+        result = beitv2_image_classification('data/test/images/bird.JPEG')
+        print(result)
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_Dailylife_default(self):
         general_image_classification = pipeline(Tasks.image_classification)

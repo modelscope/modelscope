@@ -13,6 +13,7 @@ from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import OfaPreprocessor, Preprocessor, load_image
+from modelscope.preprocessors.image import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.device import get_device
 from modelscope.utils.logger import get_logger
@@ -60,6 +61,12 @@ class ImageClassificationPipeline(Pipeline):
 @PIPELINES.register_module(
     Tasks.image_classification,
     module_name=Pipelines.nextvit_small_daily_image_classification)
+@PIPELINES.register_module(
+    Tasks.image_classification,
+    module_name=Pipelines.convnext_base_image_classification_garbage)
+@PIPELINES.register_module(
+    Tasks.image_classification,
+    module_name=Pipelines.common_image_classification)
 class GeneralImageClassificationPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -76,17 +83,9 @@ class GeneralImageClassificationPipeline(Pipeline):
         from mmcls.datasets.pipelines import Compose
         from mmcv.parallel import collate, scatter
         from modelscope.models.cv.image_classification.utils import preprocess_transform
-        if isinstance(input, str):
-            img = np.array(load_image(input))
-        elif isinstance(input, PIL.Image.Image):
-            img = np.array(input.convert('RGB'))
-        elif isinstance(input, np.ndarray):
-            if len(input.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-            img = input[:, :, ::-1]  # in rgb order
-        else:
-            raise TypeError(f'input should be either str, PIL.Image,'
-                            f' np.array, but got {type(input)}')
+
+        img = LoadImage.convert_to_ndarray(input)  # Default in RGB order
+        img = img[:, :, ::-1]  # Convert to BGR
 
         cfg = self.model.cfg
 

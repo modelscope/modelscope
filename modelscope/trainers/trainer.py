@@ -129,7 +129,6 @@ class EpochBasedTrainer(BaseTrainer):
         # add default config
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
-        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -147,7 +146,16 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor)
 
         self._dist = self.init_dist(kwargs.get('launcher'))
+
+        if is_master() and not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+
         self.device = self.get_device(kwargs.get('device'))
+
+        # init logger after distribution init
+        log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
+        self.logger = get_logger(
+            log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,
@@ -949,8 +957,8 @@ class EpochBasedTrainer(BaseTrainer):
                 self,
                 data_loader,
                 device=self.device,
-                tmpdir=None,
-                gpu_collect=False,
+                tmpdir=self.cfg.evaluation.get('cache_dir', None),
+                gpu_collect=self.cfg.evaluation.get('gpu_collect', False),
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test

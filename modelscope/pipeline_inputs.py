@@ -131,6 +131,8 @@ TASK_INPUTS = {
     Tasks.hand_2d_keypoints:
     InputType.IMAGE,
     Tasks.video_single_object_tracking: (InputType.VIDEO, InputType.BOX),
+    Tasks.video_multi_object_tracking:
+    InputType.VIDEO,
     Tasks.video_category:
     InputType.VIDEO,
     Tasks.product_retrieval_embedding:

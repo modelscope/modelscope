@@ -248,6 +248,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_object_segmentation:
     (Pipelines.video_object_segmentation,
      'damo/cv_rdevos_video-object-segmentation'),
+    Tasks.video_multi_object_tracking: (
+        Pipelines.video_multi_object_tracking,
+        'damo/cv_yolov5_video-multi-object-tracking_fairmot'),
     Tasks.image_multi_view_depth_estimation: (
         Pipelines.image_multi_view_depth_estimation,
         'damo/cv_casmvs_multi-view-depth-estimation_general'),

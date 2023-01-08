@@ -386,6 +386,19 @@ TASK_OUTPUTS = {
         OutputKeys.BOXES, OutputKeys.TIMESTAMPS
     ],
 
+    # video multi object tracking result for single video
+    # {
+    #   "boxes": [
+    #               [frame_num, obj_id, x1, y1, x2, y2],
+    #               [frame_num, obj_id, x1, y1, x2, y2],
+    #               [frame_num, obj_id, x1, y1, x2, y2],
+    #             ],
+    #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    # }
+    Tasks.video_multi_object_tracking: [
+        OutputKeys.BOXES, OutputKeys.TIMESTAMPS
+    ],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001],

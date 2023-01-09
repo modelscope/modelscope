@@ -40,7 +40,8 @@ class FaceProcessingBasePipeline(Pipeline):
                      det_result,
                      min_face=10,
                      top_face=1,
-                     center_face=False):
+                     center_face=False,
+                     img_shape=None):
         '''
         choose face with maximum area
         Args:
@@ -74,8 +75,8 @@ class FaceProcessingBasePipeline(Pipeline):
         area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
         sort_idx = np.argsort(area)[-top_face:]
         # find center face
-        if top_face > 1 and center_face and bboxes.shape[0] > 1:
-            img_center = [img.shape[1] // 2, img.shape[0] // 2]
+        if top_face > 1 and center_face and bboxes.shape[0] > 1 and img_shape:
+            img_center = [img_shape[1] // 2, img_shape[0] // 2]
             min_dist = float('inf')
             sel_idx = -1
             for _idx in sort_idx:
@@ -94,7 +95,7 @@ class FaceProcessingBasePipeline(Pipeline):
         img = LoadImage.convert_to_ndarray(input)
         img = img[:, :, ::-1]
         det_result = self.face_detection(img.copy())
-        rtn = self._choose_face(det_result)
+        rtn = self._choose_face(det_result, img_shape=img.shape)
         if rtn is not None:
             scores, bboxes, face_lmks = rtn
             face_lmks = face_lmks.reshape(5, 2)

@@ -56,7 +56,7 @@ class FaceLivenessIrPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
-        result = super(FaceLivenessIrPipeline, self).preprocess(input)
+        result = super().preprocess(input)
         orig_img = LoadImage.convert_to_ndarray(input)
         orig_img = orig_img[:, :, ::-1]
         img = super(FaceLivenessIrPipeline,

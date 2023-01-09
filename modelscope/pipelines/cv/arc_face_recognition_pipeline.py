@@ -47,7 +47,7 @@ class ArcFaceRecognitionPipeline(FaceProcessingBasePipeline):
         logger.info('face recognition model loaded!')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        result = super(ArcFaceRecognitionPipeline, self).preprocess(input)
+        result = super().preprocess(input)
         align_img = result['img']
         face_img = align_img[:, :, ::-1]  # to rgb
         face_img = np.transpose(face_img, axes=(2, 0, 1))

@@ -36,7 +36,7 @@ class TokenClassificationPipeline(Pipeline):
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate=True,
-                 sequence_length=128,
+                 sequence_length=512,
                  **kwargs):
         """use `model` and `preprocessor` to create a token classification pipeline for prediction
 

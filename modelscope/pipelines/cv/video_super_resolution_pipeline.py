@@ -2,6 +2,8 @@
 # originally Apache 2.0 License and publicly avaialbe at
 # https://github.com/ckkelvinchan/RealBasicVSR/blob/master/inference_realbasicvsr.py
 import math
+import os
+import subprocess
 import tempfile
 from typing import Any, Dict, Optional, Union
 
@@ -140,6 +142,7 @@ class VideoSuperResolutionPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         output_video_path = kwargs.get('output_video', None)
+        demo_service = kwargs.get('demo_service', True)
         if output_video_path is None:
             output_video_path = tempfile.NamedTemporaryFile(suffix='.mp4').name
 
@@ -152,4 +155,13 @@ class VideoSuperResolutionPipeline(Pipeline):
             video_writer.write(img.astype(np.uint8))
         video_writer.release()
 
-        return {OutputKeys.OUTPUT_VIDEO: output_video_path}
+        if demo_service:
+            assert os.system(
+                'ffmpeg -version'
+            ) == 0, 'ffmpeg is not installed correctly, please refer to https://trac.ffmpeg.org/wiki/CompilationGuide.'
+            output_video_path_for_web = output_video_path[:-4] + '_web.mp4'
+            convert_cmd = f'ffmpeg -i {output_video_path} -vcodec h264 -crf 5 {output_video_path_for_web}'
+            subprocess.call(convert_cmd, shell=True)
+            return {OutputKeys.OUTPUT_VIDEO: output_video_path_for_web}
+        else:
+            return {OutputKeys.OUTPUT_VIDEO: output_video_path}

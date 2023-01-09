@@ -16,7 +16,7 @@ class VideoSuperResolutionTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.task = Tasks.video_super_resolution
         self.model_id = 'damo/cv_realbasicvsr_video-super-resolution_videolq'
-        self.test_video = 'data/test/videos/000.mp4'
+        self.test_video = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/000.mp4'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):

@@ -420,6 +420,57 @@ def compute_std(data_list, mean_vector, dims=80):
     return std_vector
 
 
+F0_MIN = 0.0
+F0_MAX = 800.0
+
+ENERGY_MIN = 0.0
+ENERGY_MAX = 200.0
+
+CLIP_FLOOR = 1e-3
+
+
+def f0_norm_min_max(f0):
+    zero_idxs = np.where(f0 <= CLIP_FLOOR)[0]
+    res = (2 * f0 - F0_MIN - F0_MAX) / (F0_MAX - F0_MIN)
+    res[zero_idxs] = 0.0
+    return res
+
+
+def f0_denorm_min_max(f0):
+    zero_idxs = np.where(f0 == 0.0)[0]
+    res = (f0 * (F0_MAX - F0_MIN) + F0_MIN + F0_MAX) / 2
+    res[zero_idxs] = 0.0
+    return res
+
+
+def energy_norm_min_max(energy):
+    zero_idxs = np.where(energy == 0.0)[0]
+    res = (2 * energy - ENERGY_MIN - ENERGY_MAX) / (ENERGY_MAX - ENERGY_MIN)
+    res[zero_idxs] = 0.0
+    return res
+
+
+def energy_denorm_min_max(energy):
+    zero_idxs = np.where(energy == 0.0)[0]
+    res = (energy * (ENERGY_MAX - ENERGY_MIN) + ENERGY_MIN + ENERGY_MAX) / 2
+    res[zero_idxs] = 0.0
+    return res
+
+
+def norm_log(x):
+    zero_idxs = np.where(x <= CLIP_FLOOR)[0]
+    x[zero_idxs] = 1.0
+    res = np.log(x)
+    return res
+
+
+def denorm_log(x):
+    zero_idxs = np.where(x == 0.0)[0]
+    res = np.exp(x)
+    res[zero_idxs] = 0.0
+    return res
+
+
 def f0_norm_mean_std(x, mean, std):
     zero_idxs = np.where(x == 0.0)[0]
     x = (x - mean) / std

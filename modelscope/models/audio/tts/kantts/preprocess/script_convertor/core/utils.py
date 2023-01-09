@@ -99,14 +99,18 @@ def format_prosody(src_prosody):
     formatted_lines = []
     with codecs.open(src_prosody, 'r', 'utf-8') as f:
         lines = f.readlines()
-        fp_enable = is_fp_line(lines[1])
 
-        for i in range(0, len(lines)):
-            line = do_character_normalization(lines[i])
-            if fp_enable:
-                if i % 5 == 1 or i % 5 == 2 or i % 5 == 3:
-                    continue
+        idx = 0
+        while idx < len(lines):
+            line = do_character_normalization(lines[idx])
+
             if len(line.strip().split('\t')) == 2:
                 line = do_prosody_text_normalization(line)
+            else:
+                fp_enable = is_fp_line(line)
+                if fp_enable:
+                    idx += 3
+                    continue
             formatted_lines.append(line)
+            idx += 1
     return formatted_lines

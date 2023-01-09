@@ -163,7 +163,7 @@ class Generator(torch.nn.Module):
             else:
                 # transconv
                 up = self.transpose_upsamples[i](x)
-                x = rep + up
+                x = rep + up[:, :, :rep.shape[-1]]
 
             xs = None
             for j in range(self.num_kernels):

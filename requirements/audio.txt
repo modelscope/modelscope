@@ -1,3 +1,4 @@
+bitstring
 easyasr>=0.0.2
 espnet==202204
 funasr>=0.1.4
@@ -38,6 +39,6 @@ speechbrain>=0.5
 torchaudio
 tqdm
 traitlets>=5.3.0
-ttsfrd>=0.0.3
+ttsfrd>=0.1.1
 unidecode
 wcwidth>=0.2.5

@@ -22,8 +22,20 @@ def is_fp_line(line):
 class FpProcessor:
 
     def __init__(self):
+        #  TODO: Add more audio processing methods.
         self.res = []
 
+    def is_fp_line(line):
+        fp_category_list = ['FP', 'I', 'N', 'Q']
+        elements = line.strip().split(' ')
+        res = True
+        for ele in elements:
+            if ele not in fp_category_list:
+                res = False
+                break
+        return res
+
+    # TODO: adjust idx judgment rule
     def addfp(self, voice_output_dir, prosody, raw_metafile_lines):
 
         fp_category_list = ['FP', 'I', 'N']
@@ -35,15 +47,28 @@ class FpProcessor:
         idx = ''
         fp = ''
         fp_label_dict = {}
-        for i in range(len(prosody_lines)):
-            if i % 5 == 0:
+        i = 0
+        while i < len(prosody_lines):
+            if len(prosody_lines[i].strip().split('\t')) == 2:
                 idx = prosody_lines[i].strip().split('\t')[0]
-            elif i % 5 == 1:  # according to prosody.txt
-                fp = prosody_lines[i].strip().split('\t')[0].split(' ')
-                for label in fp:
-                    if label not in fp_category_list:
-                        logging.warning('fp label not in fp_category_list')
-                        break
+                i += 1
+            else:
+                fp_enable = is_fp_line(prosody_lines[i])
+                if fp_enable:
+                    fp = prosody_lines[i].strip().split('\t')[0].split(' ')
+                    for label in fp:
+                        if label not in fp_category_list:
+                            logging.warning('fp label not in fp_category_list')
+                            break
+                    i += 4
+                else:
+                    fp = [
+                        'N' for _ in range(
+                            len(prosody_lines[i].strip().split('\t')
+                                [0].replace('/ ', '').replace('. ', '').split(
+                                    ' ')))
+                    ]
+                    i += 1
                 fp_label_dict[idx] = fp
 
         fpadd_metafile = os.path.join(voice_output_dir, 'fpadd_metafile.txt')
@@ -76,9 +101,12 @@ class FpProcessor:
                         error_flag = True
                     out_str = out_str + this_symbol_sequence + ' '
 
-                if idx != len(fp_label_dict[uttname]):
-                    logging.warning('{} length mismatch, length: {} '.format(
-                        idx, len(fp_label_dict[uttname])))
+                # if idx != len(fp_label_dict[uttname]):
+                #     logging.warning(
+                #         "{} length mismatch, length: {} ".format(
+                #             idx, len(fp_label_dict[uttname])
+                #         )
+                #     )
 
                 if not error_flag:
                     f_out.write(out_str.strip() + '\n')

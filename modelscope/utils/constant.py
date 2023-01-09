@@ -78,7 +78,7 @@ class CVTasks(object):
     image_portrait_stylization = 'image-portrait-stylization'
     image_body_reshaping = 'image-body-reshaping'
     image_embedding = 'image-embedding'
-
+    image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
 
     # video recognition

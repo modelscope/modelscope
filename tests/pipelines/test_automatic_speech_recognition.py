@@ -199,6 +199,16 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
         },
         {
             'model_id':
+            'damo/speech_UniASR_asr_2pass-pt-16k-common-vocab1617-tensorflow1-offline',
+            'wav_path': 'data/test/audios/asr_example_pt.wav'
+        },
+        {
+            'model_id':
+            'damo/speech_UniASR_asr_2pass-pt-16k-common-vocab1617-tensorflow1-online',
+            'wav_path': 'data/test/audios/asr_example_pt.wav'
+        },
+        {
+            'model_id':
             'damo/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-online',
             'wav_path': 'data/test/audios/asr_example_ja.wav'
         },

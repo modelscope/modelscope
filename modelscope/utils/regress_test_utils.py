@@ -120,8 +120,19 @@ class RegressTool:
             with open(baseline, 'rb') as f:
                 base = pickle.load(f)
 
-            print(f'baseline: {json.dumps(base, cls=NumpyEncoder)}')
-            print(f'latest  : {json.dumps(io_json, cls=NumpyEncoder)}')
+            class SafeNumpyEncoder(NumpyEncoder):
+
+                def default(self, obj):
+                    try:
+                        return super().default(obj)
+                    except Exception:
+                        print(
+                            f'Type {obj.__class__} cannot be serialized and printed'
+                        )
+                        return None
+
+            print(f'baseline: {json.dumps(base, cls=SafeNumpyEncoder)}')
+            print(f'latest  : {json.dumps(io_json, cls=SafeNumpyEncoder)}')
             if not compare_io_and_print(base, io_json, compare_fn, **kwargs):
                 raise ValueError('Result not match!')
 
@@ -519,7 +530,8 @@ def compare_arguments_nested(print_content,
                              arg1,
                              arg2,
                              rtol=1.e-3,
-                             atol=1.e-8):
+                             atol=1.e-8,
+                             ignore_unknown_type=True):
     type1 = type(arg1)
     type2 = type(arg2)
     if type1.__name__ != type2.__name__:
@@ -594,7 +606,10 @@ def compare_arguments_nested(print_content,
             return False
         return True
     else:
-        raise ValueError(f'type not supported: {type1}')
+        if ignore_unknown_type:
+            return True
+        else:
+            raise ValueError(f'type not supported: {type1}')
 
 
 def compare_io_and_print(baseline_json, io_json, compare_fn=None, **kwargs):

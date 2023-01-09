@@ -133,6 +133,14 @@ PREPROCESSOR_MAP = {
     Preprocessors.sequence_labeling_tokenizer,
     (Models.tcrf, Tasks.named_entity_recognition):
     Preprocessors.sequence_labeling_tokenizer,
+
+    # cv
+    (Models.tinynas_detection, Tasks.image_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
+    (Models.tinynas_damoyolo, Tasks.image_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
+    (Models.tinynas_damoyolo, Tasks.domain_specific_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
 }
 
 

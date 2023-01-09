@@ -96,6 +96,7 @@ class Pipeline(ABC):
 
         if config_file is not None:
             self.cfg = Config.from_file(config_file)
+            model_dir = os.path.dirname(config_file)
         elif not self.has_multiple_models:
             if isinstance(self.model, str):
                 model_dir = self.model
@@ -103,8 +104,7 @@ class Pipeline(ABC):
                 model_dir = self.model.model_dir
             self.cfg = read_config(model_dir)
 
-        if preprocessor is None and not self.has_multiple_models \
-           and hasattr(self.cfg, 'preprocessor'):
+        if preprocessor is None and not self.has_multiple_models:
             self.preprocessor = Preprocessor.from_pretrained(model_dir)
         else:
             self.preprocessor = preprocessor

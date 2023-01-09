@@ -421,6 +421,8 @@ class Preprocessors(object):
 
     # cv preprocessor
     load_image = 'load-image'
+    object_detection_tinynas_preprocessor = 'object-detection-tinynas-preprocessor'
+    image_classification_mmcv_preprocessor = 'image-classification-mmcv-preprocessor'
     image_denoie_preprocessor = 'image-denoise-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'

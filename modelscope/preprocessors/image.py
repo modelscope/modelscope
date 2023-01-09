@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
+import os
 from typing import Any, Dict, Union
 
 import cv2
@@ -11,6 +12,7 @@ from PIL import Image, ImageOps
 from modelscope.fileio import File
 from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields
+from modelscope.utils.hub import read_config
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS
@@ -103,6 +105,110 @@ def load_image(image_path_or_url: str) -> Image.Image:
     """
     loader = LoadImage()
     return loader(image_path_or_url)['img']
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.object_detection_tinynas_preprocessor)
+class ObjectDetectionTinynasPreprocessor(Preprocessor):
+
+    def __init__(self, size_divisible=32, **kwargs):
+        """Preprocess the image.
+
+        What this preprocessor will do:
+        1. Transpose the image matrix to make the channel the first dim.
+        2. If the size_divisible is gt than 0, it will be used to pad the image.
+        3. Expand an extra image dim as dim 0.
+
+        Args:
+            size_divisible (int): The number will be used as a length unit to pad the image.
+                Formula: int(math.ceil(shape / size_divisible) * size_divisible)
+                Default 32.
+        """
+
+        super().__init__(**kwargs)
+        self.size_divisible = size_divisible
+
+    @type_assert(object, object)
+    def __call__(self, data: np.ndarray) -> Dict[str, ndarray]:
+        """Preprocess the image.
+
+        Args:
+            data: The input image with 3 dimensions.
+
+        Returns:
+            The processed data in dict.
+            {'img': np.ndarray}
+
+        """
+        image = data.astype(np.float32)
+        image = image.transpose((2, 0, 1))
+        shape = image.shape  # c, h, w
+        if self.size_divisible > 0:
+            import math
+            stride = self.size_divisible
+            shape = list(shape)
+            shape[1] = int(math.ceil(shape[1] / stride) * stride)
+            shape[2] = int(math.ceil(shape[2] / stride) * stride)
+            shape = tuple(shape)
+        pad_img = np.zeros(shape).astype(np.float32)
+        pad_img[:, :image.shape[1], :image.shape[2]] = image
+        pad_img = np.expand_dims(pad_img, 0)
+        return {'img': pad_img}
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv,
+    module_name=Preprocessors.image_classification_mmcv_preprocessor)
+class ImageClassificationMmcvPreprocessor(Preprocessor):
+
+    def __init__(self, model_dir, **kwargs):
+        """Preprocess the image.
+
+        What this preprocessor will do:
+        1. Remove the `LoadImageFromFile` preprocessor(which will be called in the pipeline).
+        2. Compose and instantiate other preprocessors configured in the file.
+        3. Call the sub preprocessors one by one.
+
+        This preprocessor supports two types of configuration:
+        1. The mmcv config file, configured in a `config.py`
+        2. The maas config file, configured in a `configuration.json`
+        By default, if the `config.py` exists, the preprocessor will use the mmcv config file.
+
+        Args:
+            model_dir (str): The model dir to build the preprocessor from.
+        """
+
+        import mmcv
+        from mmcls.datasets.pipelines import Compose
+        from modelscope.models.cv.image_classification.utils import preprocess_transform
+        super().__init__(**kwargs)
+
+        self.config_type = 'ms_config'
+        mm_config = os.path.join(model_dir, 'config.py')
+        if os.path.exists(mm_config):
+            cfg = mmcv.Config.fromfile(mm_config)
+            cfg.model.pretrained = None
+            config_type = 'mmcv_config'
+        else:
+            cfg = read_config(model_dir)
+            cfg.model.mm_model.pretrained = None
+            config_type = 'ms_config'
+
+        if config_type == 'mmcv_config':
+            if cfg.data.test.pipeline[0]['type'] == 'LoadImageFromFile':
+                cfg.data.test.pipeline.pop(0)
+            self.preprocessors = Compose(cfg.data.test.pipeline)
+        else:
+            if cfg.preprocessor.val[0]['type'] == 'LoadImageFromFile':
+                cfg.preprocessor.val.pop(0)
+            data_pipeline = preprocess_transform(cfg.preprocessor.val)
+            self.preprocessors = Compose(data_pipeline)
+
+    @type_assert(object, object)
+    def __call__(self, data: np.ndarray) -> Dict[str, ndarray]:
+        data = dict(img=data)
+        data = self.preprocessors(data)
+        return data
 
 
 @PREPROCESSORS.register_module(

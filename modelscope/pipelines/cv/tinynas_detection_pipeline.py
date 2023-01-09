@@ -1,16 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
-
-import cv2
-import numpy as np
-import torch
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
+from modelscope.outputs.cv_outputs import DetectionOutput
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage
+from modelscope.preprocessors import LoadImage, Preprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import \
     show_image_object_detection_auto_result
@@ -26,36 +23,47 @@ logger = get_logger()
     Tasks.image_object_detection, module_name=Pipelines.tinynas_detection)
 class TinynasDetectionPipeline(Pipeline):
 
-    def __init__(self, model: str, **kwargs):
+    def __init__(self,
+                 model: str,
+                 preprocessor: Optional[Preprocessor] = None,
+                 **kwargs):
+        """Object detection pipeline, currently only for the tinynas-detection model.
+
+        Args:
+            model: A str format model id or model local dir to build the model instance from.
+            preprocessor: A preprocessor instance to preprocess the data, if None,
+            the pipeline will try to build the preprocessor according to the configuration.json file.
+            kwargs: The args needed by the `Pipeline` class.
         """
-            model: model id on modelscope hub.
-        """
-        super().__init__(model=model, auto_collate=False, **kwargs)
-        if torch.cuda.is_available():
-            self.device = 'cuda'
-        else:
-            self.device = 'cpu'
-        self.model.to(self.device)
-        self.model.eval()
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-
         img = LoadImage.convert_to_ndarray(input)
-        self.img = img
-        img = img.astype(np.float)
-        img = self.model.preprocess(img)
-        result = {'img': img.to(self.device)}
-        return result
+        return super().preprocess(img)
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(
+            self, input: Dict[str,
+                              Any]) -> Union[Dict[str, Any], DetectionOutput]:
+        """The forward method of this pipeline.
 
-        outputs = self.model.inference(input['img'])
-        result = {'data': outputs}
-        return result
+        Args:
+            input: The input data output from the `preprocess` procedure.
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        Returns:
+            A model output, either in a dict format, or in a standard `DetectionOutput` dataclass.
+            If outputs a dict, these keys are needed:
+                class_ids (`Tensor`, *optional*): class id for each object.
+                boxes (`Tensor`, *optional*): Bounding box for each detected object
+                    in [left, top, right, bottom] format.
+                scores (`Tensor`, *optional*): Detection score for each object.
+        """
+        return self.model(input['img'])
 
-        bboxes, scores, labels = self.model.postprocess(inputs['data'])
+    def postprocess(
+            self, inputs: Union[Dict[str, Any],
+                                DetectionOutput]) -> Dict[str, Any]:
+        bboxes, scores, labels = inputs['boxes'], inputs['scores'], inputs[
+            'class_ids']
         if bboxes is None:
             outputs = {
                 OutputKeys.SCORES: [],

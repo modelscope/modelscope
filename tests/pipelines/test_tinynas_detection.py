@@ -8,6 +8,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
+from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
@@ -16,13 +17,17 @@ class TinynasObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.task = Tasks.image_object_detection
         self.model_id = 'damo/cv_tinynas_object-detection_damoyolo'
+        self.regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_airdet(self):
         tinynas_object_detection = pipeline(
             Tasks.image_object_detection, model='damo/cv_tinynas_detection')
-        result = tinynas_object_detection(
-            'data/test/images/image_detection.jpg')
+        with self.regress_tool.monitor_module_single_forward(
+                tinynas_object_detection.model, 'tinynas_obj_detection',
+                atol=1e-4):
+            result = tinynas_object_detection(
+                'data/test/images/image_detection.jpg')
         print('airdet', result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

@@ -4,16 +4,12 @@
 import os.path as osp
 import pickle
 
-import cv2
 import torch
 import torch.nn as nn
 import torchvision
 
-from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
-from modelscope.models.builder import MODELS
-from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.outputs.cv_outputs import DetectionOutput
 from .backbone import build_backbone
 from .head import build_head
 from .neck import build_neck
@@ -67,41 +63,14 @@ class SingleStageDetector(TorchModel):
                 m.eps = 1e-3
                 m.momentum = 0.03
 
-    def inference(self, x):
-
+    def forward(self, x):
         if self.training:
-            return self.forward_train(x)
+            pass
         else:
-            return self.forward_eval(x)
-
-    def forward_train(self, x):
-
-        pass
-
-    def forward_eval(self, x):
-
-        x = self.backbone(x)
-        x = self.neck(x)
-        prediction = self.head(x)
-
-        return prediction
-
-    def preprocess(self, image):
-        image = torch.from_numpy(image).type(torch.float32)
-        image = image.permute(2, 0, 1)
-        shape = image.shape  # c, h, w
-        if self.size_divisible > 0:
-            import math
-            stride = self.size_divisible
-            shape = list(shape)
-            shape[1] = int(math.ceil(shape[1] / stride) * stride)
-            shape[2] = int(math.ceil(shape[2] / stride) * stride)
-            shape = tuple(shape)
-        pad_img = image.new(*shape).zero_()
-        pad_img[:, :image.shape[1], :image.shape[2]].copy_(image)
-        pad_img = pad_img.unsqueeze(0)
-
-        return pad_img
+            x = self.backbone(x)
+            x = self.neck(x)
+            prediction = self.head(x)
+            return prediction
 
     def postprocess(self, preds):
         bboxes, scores, labels_idx = postprocess_gfocal(
@@ -111,7 +80,11 @@ class SingleStageDetector(TorchModel):
         labels_idx = labels_idx.cpu().numpy()
         labels = [self.label_map[idx + 1][0]['name'] for idx in labels_idx]
 
-        return (bboxes, scores, labels)
+        return DetectionOutput(
+            boxes=bboxes,
+            scores=scores,
+            class_ids=labels,
+        )
 
 
 def multiclass_nms(multi_bboxes,

@@ -216,7 +216,17 @@ class Preprocessor(ABC):
             model_dir = snapshot_download(
                 model_name_or_path,
                 revision=revision,
-                user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
+                user_agent={Invoke.KEY: Invoke.PREPROCESSOR},
+                ignore_file_pattern=[
+                    '.*.bin',
+                    '.*.ts',
+                    '.*.pt',
+                    '.*.data-00000-of-00001',
+                    '.*.onnx',
+                    '.*.meta',
+                    '.*.pb',
+                    '.*.index',
+                ])
         else:
             model_dir = model_name_or_path
         if cfg_dict is None:

@@ -470,11 +470,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.id2label = {idx: label for idx, label in enumerate(labels)}
             self.num_labels = len(labels)
         except AttributeError:
-            label2id = parse_label_mapping(self.model_dir)
-            if label2id is not None:
-                self.label2id = label2id
-                self.id2label = {id: label for label, id in label2id.items()}
-                self.num_labels = len(label2id)
+            pass
 
         def build_dataset_keys(cfg):
             if cfg is not None:
@@ -532,7 +528,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         """
 
         # Compatible with old logic
-        model_args = {} if self.label2id is None else {
+        extra_args = {} if self.label2id is None else {
             'label2id': self.label2id
         }
 
@@ -540,7 +536,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.model_dir,
             cfg_dict=self.cfg,
             preprocessor_mode=ModeKeys.TRAIN,
-            **model_args,
+            **extra_args,
             **self.train_keys,
             mode=ModeKeys.TRAIN,
             use_fast=True)
@@ -548,7 +544,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.model_dir,
             cfg_dict=self.cfg,
             preprocessor_mode=ModeKeys.EVAL,
-            **model_args,
+            **extra_args,
             **self.eval_keys,
             mode=ModeKeys.EVAL,
             use_fast=True)

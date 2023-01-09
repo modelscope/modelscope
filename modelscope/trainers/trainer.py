@@ -288,7 +288,7 @@ class EpochBasedTrainer(BaseTrainer):
         Returns: The rebuilt config
 
         """
-        if self.cfg_modify_fn is not None:
+        if hasattr(self, 'cfg_modify_fn') and self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
 
@@ -485,18 +485,8 @@ class EpochBasedTrainer(BaseTrainer):
 
     def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN
-
-        if self.train_dataset is None:
-            self.train_dataloader = self.get_train_dataloader()
-        else:
-            self.train_dataloader = self._build_dataloader_with_dataset(
-                self.train_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.train_data_collator,
-                **self.cfg.train.get('dataloader', {}))
+        self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
-
         self.register_optimizers_hook()
         self.register_hook_from_cfg(self.cfg.train.hooks)
         self.set_checkpoint_file_to_hook(checkpoint_path)
@@ -510,15 +500,7 @@ class EpochBasedTrainer(BaseTrainer):
             CheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-        if self.eval_dataset is None:
-            self.eval_dataloader = self.get_eval_data_loader()
-        else:
-            self.eval_dataloader = self._build_dataloader_with_dataset(
-                self.eval_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.eval_data_collator,
-                **self.cfg.evaluation.get('dataloader', {}))
+        self.eval_dataloader = self.get_eval_data_loader()
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
         for m in metric_classes:
@@ -680,19 +662,14 @@ class EpochBasedTrainer(BaseTrainer):
                 mode=ModeKeys.EVAL,
                 preprocessor=self.eval_preprocessor)
 
-        batch_size = self.cfg.evaluation.dataloader.batch_size_per_gpu
-        workers = self.cfg.evaluation.dataloader.workers_per_gpu
-        shuffle = self.cfg.evaluation.dataloader.get('shuffle', False)
+        default_config = {'shuffle': False}
+        default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
             self.eval_dataset,
-            batch_size_per_gpu=batch_size,
-            workers_per_gpu=workers,
-            shuffle=shuffle,
             dist=self._dist,
             seed=self._seed,
-            persistent_workers=True,
             collate_fn=self.eval_data_collator,
-        )
+            **default_config)
         return data_loader
 
     def build_dataset(self, data_cfg, mode, preprocessor=None):

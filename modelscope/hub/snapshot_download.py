@@ -1,10 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import re
 import tempfile
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
@@ -23,7 +24,8 @@ def snapshot_download(model_id: str,
                       cache_dir: Union[str, Path, None] = None,
                       user_agent: Optional[Union[Dict, str]] = None,
                       local_files_only: Optional[bool] = False,
-                      cookies: Optional[CookieJar] = None) -> str:
+                      cookies: Optional[CookieJar] = None,
+                      ignore_file_pattern: List = None) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
     is useful when you want all files from a repo, because you don't know which
@@ -42,7 +44,8 @@ def snapshot_download(model_id: str,
         local_files_only (bool, optional): If `True`, avoid downloading the file and return the path to the
             local cached file if it exists.
         cookies (CookieJar, optional): The cookie of the request, default None.
-
+        ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
+            Any file pattern to be ignored in downloading, like exact file names or file extensions.
     Raises:
         ValueError: the value details.
 
@@ -105,10 +108,16 @@ def snapshot_download(model_id: str,
             headers=snapshot_header,
         )
 
+        if ignore_file_pattern is None:
+            ignore_file_pattern = []
+        if isinstance(ignore_file_pattern, str):
+            ignore_file_pattern = [ignore_file_pattern]
+
         with tempfile.TemporaryDirectory(
                 dir=temporary_cache_dir) as temp_cache_dir:
             for model_file in model_files:
-                if model_file['Type'] == 'tree':
+                if model_file['Type'] == 'tree' or \
+                        any([re.search(pattern, model_file['Name']) is not None for pattern in ignore_file_pattern]):
                     continue
                 # check model_file is exist in cache, if existed, skip download, otherwise download
                 if cache.exists(model_file):

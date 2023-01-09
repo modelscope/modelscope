@@ -1,34 +1,33 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import warnings
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
-import json
 import numpy as np
 import torch
-from datasets import Dataset, DatasetDict
-from datasets import load_dataset as hf_load_dataset
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
-from datasets.utils.download_manager import DownloadConfig
-from datasets.utils.file_utils import (is_relative_path,
-                                       relative_to_absolute_path)
+from datasets.utils.file_utils import is_relative_path
 
 from modelscope.hub.repository import DatasetRepository
+from modelscope.msdatasets.context.dataset_context_config import \
+    DatasetContextConfig
+from modelscope.msdatasets.data_loader.data_loader_manager import (
+    LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
+    RemoteDataLoaderType)
+from modelscope.msdatasets.dataset_cls.dataset import (ExternalDataset,
+                                                       NativeIterableDataset)
 from modelscope.msdatasets.task_datasets.builder import build_task_dataset
-from modelscope.msdatasets.utils.dataset_builder import ExternalDataset
-from modelscope.msdatasets.utils.dataset_utils import (
-    get_dataset_files, get_target_dataset_structure, load_dataset_builder)
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
-from modelscope.msdatasets.utils.download_utils import DatasetDownloadManager
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
-                                       DEFAULT_DATASET_REVISION,
-                                       DatasetFormations, DownloadMode, Hubs,
-                                       UploadMode)
+                                       DEFAULT_DATASET_REVISION, DownloadMode,
+                                       Hubs, UploadMode)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -92,8 +91,10 @@ class MsDataset:
     # the underlying huggingface Dataset
     _hf_ds = None
 
-    def __init__(self, hf_ds: Dataset, target: Optional[str] = None):
-        self._hf_ds = hf_ds
+    def __init__(self,
+                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset],
+                 target: Optional[str] = None):
+        self._hf_ds = ds_instance
         if target is not None and target not in self._hf_ds.features:
             raise TypeError(
                 f'"target" must be a column of the dataset({list(self._hf_ds.features.keys())}, but got {target}'
@@ -114,6 +115,10 @@ class MsDataset:
         return len(self._hf_ds)
 
     @property
+    def ds_instance(self):
+        return self._hf_ds
+
+    @property
     def config_kwargs(self):
         if isinstance(self._hf_ds, ExternalDataset):
             return self._hf_ds.config_kwargs
@@ -124,6 +129,13 @@ class MsDataset:
     def from_hf_dataset(cls,
                         hf_ds: Union[Dataset, DatasetDict, ExternalDataset],
                         target: str = None) -> Union[dict, 'MsDataset']:
+        r"""
+        @deprecated
+        This method is deprecated and may be removed in future releases, please use `to_ms_dataset()` instead.
+        """
+        warnings.warn(
+            'from_hf_dataset is deprecated, please use to_ms_dataset instead.',
+            DeprecationWarning)
         if isinstance(hf_ds, Dataset):
             return cls(hf_ds, target)
         elif isinstance(hf_ds, DatasetDict):
@@ -135,6 +147,31 @@ class MsDataset:
         else:
             raise TypeError(
                 f'"hf_ds" must be a Dataset or DatasetDict, but got {type(hf_ds)}'
+            )
+
+    @classmethod
+    def to_ms_dataset(cls,
+                      ds_instance: Union[Dataset, DatasetDict, ExternalDataset,
+                                         NativeIterableDataset],
+                      target: str = None) -> Union[dict, 'MsDataset']:
+        """Convert input to `MsDataset` instance."""
+        if isinstance(ds_instance, Dataset):
+            return cls(ds_instance, target)
+        elif isinstance(ds_instance, DatasetDict):
+            if len(ds_instance.keys()) == 1:
+                return cls(next(iter(ds_instance.values())), target)
+            return {k: cls(v, target) for k, v in ds_instance.items()}
+        elif isinstance(ds_instance, ExternalDataset):
+            return cls(ds_instance)
+        elif isinstance(ds_instance, NativeIterableDataset):
+            return cls(ds_instance)
+        elif isinstance(ds_instance, IterableDatasetDict):
+            if len(ds_instance.keys()) == 1:
+                return cls(next(iter(ds_instance.values())), target)
+            return {k: cls(v, target) for k, v in ds_instance.items()}
+        else:
+            raise TypeError(
+                f'"ds_instance" must be a Dataset or DatasetDict, but got {type(ds_instance)}'
             )
 
     @staticmethod
@@ -152,12 +189,17 @@ class MsDataset:
                                                       Sequence[str]]]]] = None,
         download_mode: Optional[DownloadMode] = DownloadMode.
         REUSE_DATASET_IF_EXISTS,
+        cache_dir: Optional[str] = MS_DATASETS_CACHE,
+        use_streaming: Optional[bool] = False,
         **config_kwargs,
-    ) -> Union[dict, 'MsDataset']:
+    ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
 
             Args:
                 dataset_name (str): Path or name of the dataset.
+                                    The form of `namespace/dataset_name` is also supported.
+                namespace(str, optional): Namespace of the dataset. It should not be None if you load a remote dataset
+                from Hubs.modelscope,
                 namespace (str, optional):
                     Namespace of the dataset. It should not be None if you load a remote dataset
                     from Hubs.modelscope,
@@ -171,170 +213,68 @@ class MsDataset:
                 download_mode (DownloadMode or str, optional):
                     How to treat existing datasets. default DownloadMode.REUSE_DATASET_IF_EXISTS
                 config_kwargs (additional keyword arguments): Keyword arguments to be passed
+                download_mode (DownloadMode or str, optional): How to treat existing datasets. default
+                                                               DownloadMode.REUSE_DATASET_IF_EXISTS
+                cache_dir (str, Optional): User-define local cache directory.
+                use_streaming (bool, Optional): If set to True, no need to download all data files.
+                                                Instead, it streams the data progressively, and returns
+                                                MsIterableDataset or a dict of MsIterableDataset.
+                **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
                 MsDataset (MsDataset): MsDataset object for a certain dataset.
             """
+
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         hub = Hubs(hub or Hubs.modelscope)
-        if hub == Hubs.huggingface:
-            dataset = hf_load_dataset(
-                dataset_name,
-                name=subset_name,
-                revision=version,
-                split=split,
-                data_dir=data_dir,
-                data_files=data_files,
-                download_mode=download_mode.value,
-                **config_kwargs)
-            return MsDataset.from_hf_dataset(dataset, target=target)
-        elif hub == Hubs.modelscope:
-            return MsDataset._load_ms_dataset(
-                dataset_name,
-                namespace=namespace,
-                target=target,
-                subset_name=subset_name,
-                version=version,
-                split=split,
-                data_dir=data_dir,
-                data_files=data_files,
-                download_mode=download_mode,
-                **config_kwargs)
 
-    @staticmethod
-    def _load_ms_dataset(dataset_name: Union[str, list],
-                         namespace: Optional[str] = None,
-                         target: Optional[str] = None,
-                         version: Optional[str] = DEFAULT_DATASET_REVISION,
-                         subset_name: Optional[str] = None,
-                         split: Optional[str] = None,
-                         data_dir: Optional[str] = None,
-                         data_files: Optional[Union[
-                             str, Sequence[str],
-                             Mapping[str, Union[str, Sequence[str]]]]] = None,
-                         download_mode: Optional[DownloadMode] = None,
-                         **config_kwargs) -> Union[dict, 'MsDataset']:
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        download_dataset = ''
-        if isinstance(dataset_name, str):
-            dataset_formation = DatasetFormations.native
-            if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
-                    dataset_name):
-                dataset_formation = DatasetFormations.hf_compatible
-            elif os.path.isfile(dataset_name) and dataset_name.endswith('.py'):
-                dataset_formation = DatasetFormations.hf_compatible
-                file_name = os.path.basename(dataset_name)
-                download_dataset = os.path.splitext(file_name)[0]
-            elif is_relative_path(dataset_name) and dataset_name.count(
-                    '/') == 0:
-                download_dataset = dataset_name
-                dataset_scripts, dataset_formation, download_dir = api.fetch_dataset_scripts(
-                    dataset_name, namespace, download_mode, version)
-                # dataset organized to be compatible with hf format
-                if dataset_formation == DatasetFormations.hf_compatible:
-                    dataset_name = dataset_scripts['.py'][0]
-            else:
-                raise FileNotFoundError(
-                    f"Couldn't find a dataset script at {relative_to_absolute_path(dataset_name)} "
-                    f'or any data file in the same directory.')
+        if isinstance(dataset_name, str) and is_relative_path(
+                dataset_name) and dataset_name.count('/') == 1:
+            dataset_name_split = dataset_name.split('/')
+            namespace = dataset_name_split[0].strip()
+            dataset_name = dataset_name_split[1].strip()
+            if not namespace or not dataset_name:
+                raise 'The dataset_name should be in the form of `namespace/dataset_name` or `dataset_name`.'
 
-            if dataset_formation == DatasetFormations.hf_compatible:
-                dataset = hf_load_dataset(
-                    dataset_name,
-                    name=subset_name,
-                    revision=version,
-                    split=split,
-                    data_dir=data_dir,
-                    data_files=data_files,
-                    cache_dir=MS_DATASETS_CACHE,
-                    download_mode=download_mode.value,
-                    **config_kwargs)
-            else:
-                dataset = MsDataset._load_from_ms(
-                    dataset_name,
-                    dataset_scripts,
-                    download_dir,
-                    namespace=namespace,
-                    version=version,
-                    subset_name=subset_name,
-                    split=split,
-                    download_mode=download_mode,
-                    **config_kwargs)
-        elif isinstance(dataset_name, list):
-            if target is None:
-                target = 'target'
-            dataset = Dataset.from_dict({target: dataset_name})
-        else:
-            raise TypeError('path must be a str or a list, but got'
-                            f' {type(dataset_name)}')
-
-        is_ci_test = os.getenv('CI_TEST') == 'True'
-        if download_dataset and not is_ci_test:
-            try:
-                api.on_dataset_download(
-                    dataset_name=download_dataset, namespace=namespace)
-                api.dataset_download_uv(
-                    dataset_name=download_dataset, namespace=namespace)
-            except Exception as e:
-                logger.error(e)
-
-        return MsDataset.from_hf_dataset(dataset, target=target)
-
-    @staticmethod
-    def _load_from_ms(dataset_name: str,
-                      dataset_files: dict,
-                      download_dir: str,
-                      namespace: Optional[str] = None,
-                      version: Optional[str] = DEFAULT_DATASET_REVISION,
-                      subset_name: Optional[str] = None,
-                      split: Optional[str] = None,
-                      download_mode: Optional[DownloadMode] = None,
-                      **config_kwargs) -> Union[Dataset, DatasetDict]:
-        for json_path in dataset_files['.json']:
-            if json_path.endswith(f'{dataset_name}.json'):
-                with open(json_path, encoding='utf-8') as dataset_json_file:
-                    dataset_json = json.load(dataset_json_file)
-                break
-        target_subset_name, target_dataset_structure = get_target_dataset_structure(
-            dataset_json, subset_name, split)
-        meta_map, file_map, args_map = get_dataset_files(
-            target_dataset_structure, dataset_name, namespace, version)
-        builder = load_dataset_builder(
-            dataset_name,
-            subset_name,
-            namespace,
-            meta_data_files=meta_map,
-            zip_data_files=file_map,
-            args_map=args_map,
-            cache_dir=MS_DATASETS_CACHE,
-            version=version,
-            split=list(target_dataset_structure.keys()),
-            **config_kwargs)
-
-        download_config = DownloadConfig(
-            cache_dir=download_dir,
-            force_download=bool(
-                download_mode == DownloadMode.FORCE_REDOWNLOAD),
-            force_extract=bool(download_mode == DownloadMode.FORCE_REDOWNLOAD),
-            use_etag=False,
-        )
-
-        dl_manager = DatasetDownloadManager(
+        # Init context config
+        dataset_context_config = DatasetContextConfig(
             dataset_name=dataset_name,
             namespace=namespace,
             version=version,
-            download_config=download_config,
-            data_dir=download_dir,
-        )
-        builder.download_and_prepare(
-            dl_manager=dl_manager,
-            download_mode=download_mode.value,
-            try_from_hf_gcs=False)
+            subset_name=subset_name,
+            split=split,
+            target=target,
+            hub=hub,
+            data_dir=data_dir,
+            data_files=data_files,
+            download_mode=download_mode,
+            cache_root_dir=cache_dir,
+            use_streaming=use_streaming,
+            **config_kwargs)
 
-        ds = builder.as_dataset()
-        return ds
+        # Load from local disk
+        if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
+                dataset_name):
+            dataset_inst = LocalDataLoaderManager(
+                dataset_context_config).load_dataset(
+                    LocalDataLoaderType.HF_DATA_LOADER)
+            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+        # Load from the huggingface hub
+        elif hub == Hubs.huggingface:
+            dataset_inst = RemoteDataLoaderManager(
+                dataset_context_config).load_dataset(
+                    RemoteDataLoaderType.HF_DATA_LOADER)
+            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+        # Load from the modelscope hub
+        elif hub == Hubs.modelscope:
+            dataset_inst = RemoteDataLoaderManager(
+                dataset_context_config).load_dataset(
+                    RemoteDataLoaderType.MS_DATA_LOADER)
+            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+        else:
+            raise 'Please adjust input args to specify a loading mode, we support following scenes: ' \
+                  'loading from local disk, huggingface hub and modelscope hub.'
 
     def to_torch_dataset_with_processors(
         self,

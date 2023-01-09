@@ -39,13 +39,13 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
-from modelscope.utils.config_ds import DOWNLOADED_DATASETS_PATH
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, DatasetFormations,
-                                       DatasetMetaFormats, DownloadChannel,
-                                       DownloadMode, ModelFile)
+                                       DatasetMetaFormats,
+                                       DatasetVisibilityMap, DownloadChannel,
+                                       ModelFile)
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_release_datetime,
                           model_id_to_group_owner_name)
@@ -547,25 +547,8 @@ class HubApi:
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
 
-    def fetch_dataset_scripts(
-            self,
-            dataset_name: str,
-            namespace: str,
-            download_mode: Optional[DownloadMode],
-            revision: Optional[str] = DEFAULT_DATASET_REVISION):
-        if namespace is None:
-            raise ValueError(
-                f'Dataset from Hubs.modelscope should have a valid "namespace", but get {namespace}'
-            )
-        revision = revision or DEFAULT_DATASET_REVISION
-        cache_dir = os.path.join(DOWNLOADED_DATASETS_PATH, namespace,
-                                 dataset_name, revision)
-        download_mode = DownloadMode(download_mode
-                                     or DownloadMode.REUSE_DATASET_IF_EXISTS)
-        if download_mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(
-                cache_dir):
-            shutil.rmtree(cache_dir)
-        os.makedirs(cache_dir, exist_ok=True)
+    def get_dataset_id_and_type(self, dataset_name: str, namespace: str):
+        """ Get the dataset id and type. """
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         cookies = ModelScopeConfig.get_cookies()
         r = self.session.get(datahub_url, cookies=cookies)
@@ -573,7 +556,13 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
+        return dataset_id, dataset_type
+
+    def get_dataset_meta_file_list(self, dataset_name: str, namespace: str, dataset_id: str, revision: str):
+        """ Get the meta file-list of the dataset. """
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
+        cookies = ModelScopeConfig.get_cookies()
+        r = self.session.get(datahub_url, cookies=cookies, headers=self.headers)
         r = self.session.get(
             datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
@@ -585,9 +574,23 @@ class HubApi:
                 f'version = {revision}] dose not exist')
 
         file_list = file_list['Files']
+        return file_list
+
+    def get_dataset_meta_files_local_paths(self, dataset_name: str,
+                                           namespace: str,
+                                           revision: str,
+                                           meta_cache_dir: str, dataset_type: int, file_list: list):
         local_paths = defaultdict(list)
         dataset_formation = DatasetFormations(dataset_type)
         dataset_meta_format = DatasetMetaFormats[dataset_formation]
+        cookies = ModelScopeConfig.get_cookies()
+
+        # Dump the data_type as a local file
+        dataset_type_file_path = os.path.join(meta_cache_dir,
+                                              f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
+        with open(dataset_type_file_path, 'w') as fp:
+            fp.write('*** Automatically-generated file, do not modify ***')
+
         for file_info in file_list:
             file_path = file_info['Path']
             extension = os.path.splitext(file_path)[-1]
@@ -596,7 +599,7 @@ class HubApi:
                               f'Revision={revision}&FilePath={file_path}'
                 r = self.session.get(datahub_url, cookies=cookies)
                 raise_for_http_status(r)
-                local_path = os.path.join(cache_dir, file_path)
+                local_path = os.path.join(meta_cache_dir, file_path)
                 if os.path.exists(local_path):
                     logger.warning(
                         f"Reusing dataset {dataset_name}'s python file ({local_path})"
@@ -607,14 +610,14 @@ class HubApi:
                     f.write(r.content)
                 local_paths[extension].append(local_path)
 
-        return local_paths, dataset_formation, cache_dir
+        return local_paths, dataset_formation
 
     def fetch_single_csv_script(self, script_url: str):
         cookies = ModelScopeConfig.get_cookies()
         resp = self.session.get(script_url, cookies=cookies, headers=self.headers)
         if not resp or not resp.text:
             raise 'The meta-csv file cannot be empty when the meta-args `big_data` is true.'
-        text_list = resp.text.split('\n')
+        text_list = resp.text.strip().split('\n')
         text_headers = text_list[0]
         text_content = text_list[1:]
 
@@ -642,19 +645,47 @@ class HubApi:
 
     def get_dataset_access_config_session(
             self,
-            cookies: CookieJar,
             dataset_name: str,
             namespace: str,
+            check_cookie: bool,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
 
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
+        if check_cookie:
+            cookies = self._check_cookie(use_cookies=True)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
 
         r = self.session.get(
             url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
+
+    def get_dataset_access_config_for_unzipped(self,
+                                               dataset_name: str,
+                                               namespace: str,
+                                               revision: str,
+                                               zip_file_name: str):
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
+        cookies = ModelScopeConfig.get_cookies()
+        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
+        resp = r.json()
+        # get visibility of the dataset
+        raise_on_error(resp)
+        data = resp['Data']
+        visibility = DatasetVisibilityMap.get(data['Visibility'])
+
+        datahub_sts_url = f'{datahub_url}/ststoken?Revision={revision}'
+        r_sts = self.session.get(url=datahub_sts_url, cookies=cookies, headers=self.headers)
+        resp_sts = r_sts.json()
+        raise_on_error(resp_sts)
+        data_sts = resp_sts['Data']
+        file_dir = visibility + '-unzipped' + '/' + namespace + '_' + dataset_name + '_' + zip_file_name
+        data_sts['Dir'] = file_dir
+        return data_sts
 
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
                                  is_recursive, is_filter_dir, revision):
@@ -668,12 +699,6 @@ class HubApi:
         resp = resp['Data']
         return resp
 
-    def on_dataset_download(self, dataset_name: str, namespace: str) -> None:
-        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
-        cookies = ModelScopeConfig.get_cookies()
-        r = self.session.post(url, cookies=cookies, headers=self.headers)
-        raise_for_http_status(r)
-
     def delete_oss_dataset_object(self, object_name: str, dataset_name: str,
                                   namespace: str, revision: str) -> str:
         if not object_name or not dataset_name or not namespace or not revision:
@@ -681,7 +706,7 @@ class HubApi:
 
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss?Path={object_name}&Revision={revision}'
 
-        cookies = self.check_local_cookies(use_cookies=True)
+        cookies = ModelScopeConfig.get_cookies()
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
@@ -696,7 +721,7 @@ class HubApi:
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
             f'&Revision={revision}'
 
-        cookies = self.check_local_cookies(use_cookies=True)
+        cookies = ModelScopeConfig.get_cookies()
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
@@ -713,27 +738,32 @@ class HubApi:
         datahub_raise_on_error(url, resp)
         return resp['Data']
 
-    def check_local_cookies(self, use_cookies) -> CookieJar:
-        return self._check_cookie(use_cookies=use_cookies)
+    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool) -> None:
+        is_ci_test = os.getenv('CI_TEST') == 'True'
+        if dataset_name and namespace and not is_ci_test and not use_streaming:
+            try:
+                cookies = ModelScopeConfig.get_cookies()
 
-    def dataset_download_uv(self, dataset_name: str, namespace: str):
-        if not dataset_name or not namespace:
-            raise ValueError('dataset_name or namespace cannot be empty!')
+                # Download count
+                download_count_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
+                download_count_resp = self.session.post(download_count_url, cookies=cookies, headers=self.headers)
+                raise_for_http_status(download_count_resp)
 
-        # get channel and user_name
-        channel = DownloadChannel.LOCAL.value
-        user_name = ''
-        if MODELSCOPE_CLOUD_ENVIRONMENT in os.environ:
-            channel = os.environ[MODELSCOPE_CLOUD_ENVIRONMENT]
-        if MODELSCOPE_CLOUD_USERNAME in os.environ:
-            user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
+                # Download uv
+                channel = DownloadChannel.LOCAL.value
+                user_name = ''
+                if MODELSCOPE_CLOUD_ENVIRONMENT in os.environ:
+                    channel = os.environ[MODELSCOPE_CLOUD_ENVIRONMENT]
+                if MODELSCOPE_CLOUD_USERNAME in os.environ:
+                    user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
+                download_uv_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/' \
+                                  f'{channel}?user={user_name}'
+                download_uv_resp = self.session.post(download_uv_url, cookies=cookies, headers=self.headers)
+                download_uv_resp = download_uv_resp.json()
+                raise_on_error(download_uv_resp)
 
-        url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/{channel}?user={user_name}'
-        cookies = ModelScopeConfig.get_cookies()
-        r = self.session.post(url, cookies=cookies, headers=self.headers)
-        resp = r.json()
-        raise_on_error(resp)
-        return resp['Message']
+            except Exception as e:
+                logger.error(e)
 
 
 class ModelScopeConfig:

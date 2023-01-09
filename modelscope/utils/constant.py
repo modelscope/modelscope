@@ -299,6 +299,8 @@ class DatasetFormations(enum.Enum):
     # native modelscope formation that supports, among other things,
     # multiple files in a dataset
     native = 2
+    # for local meta cache mark
+    formation_mark_ext = '.formation_mark'
 
 
 DatasetMetaFormats = {
@@ -377,6 +379,7 @@ MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
 DEFAULT_DATASET_NAMESPACE = 'modelscope'
+DEFAULT_DATA_ACCELERATION_ENDPOINT = 'https://oss-accelerate.aliyuncs.com'
 
 
 class ModeKeys:
@@ -435,5 +438,15 @@ EXTENSIONS_TO_LOAD = {
 }
 
 
+class DatasetPathName:
+    META_NAME = 'meta'
+    DATA_FILES_NAME = 'data_files'
+    LOCK_FILE_NAME_ANY = 'any'
+    LOCK_FILE_NAME_DELIMITER = '-'
+
+
 class MetaDataFields:
     ARGS_BIG_DATA = 'big_data'
+
+
+DatasetVisibilityMap = {1: 'private', 3: 'internal', 5: 'public'}

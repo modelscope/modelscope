@@ -99,7 +99,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
      echo 'cpu unsupport uniford'; \
     fi
 
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets==2.1.0 numpy==1.18.5 ipykernel fairseq fasttext deepspeed
+RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets numpy==1.18.5 ipykernel fairseq fasttext deepspeed
 COPY docker/scripts/install_apex.sh /tmp/install_apex.sh
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_apex.sh; \

@@ -1,13 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from __future__ import print_function
+import multiprocessing
 import os
 
 import oss2
 from datasets.utils.file_utils import hash_url_to_filename
 
 from modelscope.hub.api import HubApi
-from modelscope.utils.constant import UploadMode
+from modelscope.msdatasets.download.download_config import DataDownloadConfig
+from modelscope.utils.constant import (DEFAULT_DATA_ACCELERATION_ENDPOINT,
+                                       MetaDataFields, UploadMode)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,7 +34,7 @@ class OssUtilities:
 
         self.upload_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/upload'
         self.download_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/download'
-        self.num_threads = 4
+        self.num_threads = multiprocessing.cpu_count()
         self.part_size = 1 * 1024 * 1024
         self.multipart_threshold = 50 * 1024 * 1024
         self.max_retries = 3
@@ -46,7 +49,10 @@ class OssUtilities:
         self.key = oss_config[ACCESS_ID]
         self.secret = oss_config[ACCESS_SECRET]
         self.token = oss_config[SECURITY_TOKEN]
-        self.endpoint = f"https://{oss_config['Region']}.aliyuncs.com"
+        if os.getenv('ENABLE_DATASET_ACCELERATION') == 'True':
+            self.endpoint = DEFAULT_DATA_ACCELERATION_ENDPOINT
+        else:
+            self.endpoint = f"https://{oss_config['Region']}.aliyuncs.com"
         self.bucket_name = oss_config[BUCKET]
         auth = oss2.StsAuth(self.key, self.secret, self.token)
         self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
@@ -55,11 +61,10 @@ class OssUtilities:
 
     def _reload_sts(self):
         logger.info('Reloading sts token automatically.')
-        cookies = self.api.check_local_cookies(use_cookies=True)
         oss_config_refresh = self.api.get_dataset_access_config_session(
-            cookies=cookies,
             dataset_name=self.dataset_name,
             namespace=self.namespace,
+            check_cookie=True,
             revision=self.revision)
         self._do_init(oss_config_refresh)
 
@@ -69,16 +74,29 @@ class OssUtilities:
             rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
             print('\r{0}% '.format(rate), end='', flush=True)
 
-    def download(self, oss_file_name, download_config):
+    def download(self, oss_file_name: str,
+                 download_config: DataDownloadConfig):
         cache_dir = download_config.cache_dir
         candidate_key = os.path.join(self.oss_dir, oss_file_name)
         candidate_key_backup = os.path.join(self.oss_backup_dir, oss_file_name)
+        split = download_config.split
+
+        big_data = False
+        if split:
+            args_dict = download_config.meta_args_map.get(split)
+            if args_dict:
+                big_data = args_dict.get(MetaDataFields.ARGS_BIG_DATA)
+
         retry_count = 0
         while True:
             try:
                 retry_count += 1
-                file_oss_key = candidate_key if self.bucket.object_exists(
-                    candidate_key) else candidate_key_backup
+                # big_data is True when the dataset contains large number of objects
+                if big_data:
+                    file_oss_key = candidate_key
+                else:
+                    file_oss_key = candidate_key if self.bucket.object_exists(
+                        candidate_key) else candidate_key_backup
                 filename = hash_url_to_filename(file_oss_key, etag=None)
                 local_path = os.path.join(cache_dir, filename)
 
@@ -95,7 +113,7 @@ class OssUtilities:
                         num_threads=self.num_threads)
                 break
             except Exception as e:
-                if e.__getattribute__('status') == 403:
+                if e.__dict__.get('status') == 403:
                     self._reload_sts()
                 if retry_count >= self.max_retries:
                     raise
@@ -134,7 +152,7 @@ class OssUtilities:
                     num_threads=self.num_threads)
                 break
             except Exception as e:
-                if e.__getattribute__('status') == 403:
+                if e.__dict__.get('status') == 403:
                     self._reload_sts()
                 if retry_count >= self.max_retries:
                     raise

@@ -5,8 +5,8 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 from tqdm import tqdm
 
+from modelscope.msdatasets.utils.oss_utils import OssUtilities
 from modelscope.utils.constant import UploadMode
-from .oss_utils import OssUtilities
 
 
 class DatasetUploadManager(object):
@@ -14,11 +14,10 @@ class DatasetUploadManager(object):
     def __init__(self, dataset_name: str, namespace: str, version: str):
         from modelscope.hub.api import HubApi
         _hub_api = HubApi()
-        _cookies = _hub_api.check_local_cookies(use_cookies=True)
         _oss_config = _hub_api.get_dataset_access_config_session(
-            cookies=_cookies,
             dataset_name=dataset_name,
             namespace=namespace,
+            check_cookie=False,
             revision=version)
 
         self.oss_utilities = OssUtilities(

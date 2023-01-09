@@ -97,7 +97,6 @@ def raise_on_error(rsp):
         raise RequestError(rsp['Message'])
 
 
-# TODO use raise_on_error instead if modelhub and datahub response have uniform structures,
 def datahub_raise_on_error(url, rsp):
     """If response error, raise exception
 
@@ -115,7 +114,7 @@ def datahub_raise_on_error(url, rsp):
         return True
     else:
         raise RequestError(
-            f"Url = {url}, Status = {rsp.get('status')}, error = {rsp.get('error')}, message = {rsp.get('message')}"
+            f"Url = {url}, Message = {rsp.get('Message')}, Please specify correct dataset_name and namespace."
         )
 
 

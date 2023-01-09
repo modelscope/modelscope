@@ -161,12 +161,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         output = self.nlp_tokenizer(sequence1, **kwargs)
         if self.mode != ModeKeys.INFERENCE:
             if sequence2 is not None:
-                self.nlp_tokenizer.tokenize_kwargs[
-                    'max_length'] = self.tgt_length
-                labels = self.nlp_tokenizer(sequence2)['input_ids']
-                self.nlp_tokenizer.tokenize_kwargs[
-                    'max_length'] = self.src_length
-
+                labels = self._get_labels_from_tgt(sequence2)
                 src_input_ids = output['input_ids']
                 src_attention_mask = output['attention_mask']
             else:
@@ -180,6 +175,12 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
                 'labels': labels,
             }
         return output
+
+    def _get_labels_from_tgt(self, sequence: str) -> torch.Tensor:
+        self.nlp_tokenizer.tokenize_kwargs['max_length'] = self.tgt_length
+        labels = self.nlp_tokenizer(sequence)['input_ids']
+        self.nlp_tokenizer.tokenize_kwargs['max_length'] = self.src_length
+        return labels
 
 
 @PREPROCESSORS.register_module(

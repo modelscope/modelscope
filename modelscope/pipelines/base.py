@@ -275,17 +275,15 @@ class Pipeline(ABC):
                                                    **forward_params)
                 else:
                     batched_out = self.forward(batched_input, **forward_params)
-            if real_batch_size == 1:
-                output_list.append(batched_out)
-            else:
-                for batch_idx in range(real_batch_size):
-                    out = {}
-                    for k, element in batched_out.items():
-                        if element is not None:
-                            out[k] = element[batch_idx]
-                    out = self.postprocess(out, **postprocess_params)
-                    self._check_output(out)
-                    output_list.append(out)
+
+            for batch_idx in range(real_batch_size):
+                out = {}
+                for k, element in batched_out.items():
+                    if element is not None:
+                        out[k] = element[batch_idx]
+                out = self.postprocess(out, **postprocess_params)
+                self._check_output(out)
+                output_list.append(out)
 
         return output_list
 

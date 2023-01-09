@@ -851,8 +851,6 @@ def sample(logits, top_k=0, top_p=0.0, temperature=1.0, vocab_size=None):
 
     # Check logits for consistency.
     assert logits.ndim == 2, 'expected the logits to be of [b, v] shape.'
-    assert logits.type() == 'torch.cuda.FloatTensor', \
-        'input logits should be floats.'
 
     # Greedy is just simple argmax.
     if top_k == 1:

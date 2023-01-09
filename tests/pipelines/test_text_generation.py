@@ -96,6 +96,19 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
                                         self.gpt3_input)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_gpt_base_with_model_name_batch(self):
+        self.run_pipeline_with_model_id(
+            self.gpt3_base_model_id,
+            [self.gpt3_input, self.gpt3_input[:10], self.gpt3_input[10:]],
+            run_kwargs={'batch_size': 2})
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_gpt_base_with_model_name_batch_iter(self):
+        self.run_pipeline_with_model_id(
+            self.gpt3_base_model_id,
+            [self.gpt3_input, self.gpt3_input[:10], self.gpt3_input[10:]])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_gpt_large_with_model_name(self):
         self.run_pipeline_with_model_id(self.gpt3_large_model_id,
                                         self.gpt3_input)

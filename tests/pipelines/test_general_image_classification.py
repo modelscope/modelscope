@@ -63,6 +63,14 @@ class GeneralImageClassificationTest(unittest.TestCase,
         result = beitv2_image_classification('data/test/images/bird.JPEG')
         print(result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_bnext(self):
+        nexit_image_classification = pipeline(
+            Tasks.image_classification,
+            model='damo/cv_bnext-small_image-classification_ImageNet-labels')
+        result = nexit_image_classification('data/test/images/bird.JPEG')
+        print(result)
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_Dailylife_default(self):
         general_image_classification = pipeline(Tasks.image_classification)

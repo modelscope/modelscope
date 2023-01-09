@@ -34,6 +34,9 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_classification,
     module_name=Pipelines.common_image_classification)
+@PIPELINES.register_module(
+    Tasks.image_classification,
+    module_name=Pipelines.bnext_small_image_classification)
 class GeneralImageClassificationPipeline(Pipeline):
 
     def __init__(self,

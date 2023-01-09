@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import math
 import os
 import sys
@@ -141,15 +142,21 @@ def executor_cv(model, data_loader, device, args):
     return counter[0].item() / counter[1].item()
 
 
-def executor_test(model, data_loader, device, keywords_token, tokens_set,
-                  args):
+def executor_test(model, data_loader, device, keywords_token,
+                  keywords_tokenset, args):
     ''' Test model with decoder
     '''
     assert args.get('test_dir', None) is not None, \
         'Please config param: test_dir, to store score file'
     score_abs_path = os.path.join(args['test_dir'], 'score.txt')
+    log_interval = args.get('log_interval', 10)
+
+    infer_seconds = 0.0
+    decode_seconds = 0.0
     with torch.no_grad(), open(score_abs_path, 'w', encoding='utf8') as fout:
         for batch_idx, batch in enumerate(data_loader):
+            batch_start_time = datetime.datetime.now()
+
             keys, feats, target, feats_lengths, target_lengths = batch
             feats = feats.to(device)
             feats_lengths = feats_lengths.to(device)
@@ -163,11 +170,12 @@ def executor_test(model, data_loader, device, keywords_token, tokens_set,
             logits = logits.softmax(2)  # (1, maxlen, vocab_size)
             logits = logits.cpu()
 
+            infer_end_time = datetime.datetime.now()
             for i in range(len(keys)):
                 key = keys[i]
                 score = logits[i][:feats_lengths[i]]
-                score = token_score_filter(score, tokens_set)
-                hyps = ctc_prefix_beam_search(score, feats_lengths[i])
+                hyps = ctc_prefix_beam_search(score, feats_lengths[i],
+                                              keywords_tokenset)
 
                 hit_keyword = None
                 hit_score = 1.0
@@ -199,18 +207,22 @@ def executor_test(model, data_loader, device, keywords_token, tokens_set,
                 else:
                     fout.write('{} rejected\n'.format(key))
 
-            if batch_idx % 10 == 0:
+            decode_end_time = datetime.datetime.now()
+            infer_seconds += (infer_end_time
+                              - batch_start_time).total_seconds()
+            decode_seconds += (decode_end_time
+                               - infer_end_time).total_seconds()
+
+            if batch_idx % log_interval == 0:
                 logger.info('Progress batch {}'.format(batch_idx))
                 sys.stdout.flush()
+        logger.info(
+            'Total infer cost {:.2f} mins, decode cost {:.2f} mins'.format(
+                infer_seconds / 60.0,
+                decode_seconds / 60.0,
+            ))
 
     return score_abs_path
-
-
-def token_score_filter(score, token_set):
-    for sid in range(score.shape[1]):
-        if sid not in token_set:
-            score[:, sid] = 0
-    return score
 
 
 def is_sublist(main_list, check_list):
@@ -256,6 +268,7 @@ def ctc_loss(logits: torch.Tensor, target: torch.Tensor,
 def ctc_prefix_beam_search(
     logits: torch.Tensor,
     logits_lengths: torch.Tensor,
+    keywords_tokenset: set = None,
     score_beam_size: int = 3,
     path_beam_size: int = 20,
 ) -> Tuple[List[List[int]], torch.Tensor]:
@@ -264,8 +277,9 @@ def ctc_prefix_beam_search(
     Args:
         logits (torch.Tensor): (1, max_len, vocab_size)
         logits_lengths (torch.Tensor): (1, )
-        score_beam_size (int): score beam size for beam search
-        path_beam_size (int): path beam size for beam search
+        keywords_tokenset (set): token set for filtering score
+        score_beam_size (int): beam size for score
+        path_beam_size (int): beam size for path
 
     Returns:
         List[List[int]]: nbest results
@@ -290,13 +304,16 @@ def ctc_prefix_beam_search(
         filter_probs = []
         filter_index = []
         for prob, idx in zip(top_k_probs.tolist(), top_k_index.tolist()):
-            if prob > 0.05:
+            if prob > 0.05 and idx in keywords_tokenset:
                 filter_probs.append(prob)
                 filter_index.append(idx)
 
+        if len(filter_index) == 0:
+            continue
+
         for s in filter_index:
-            # s = s.item()
             ps = probs[s].item()
+
             for prefix, (pb, pnb, cur_nodes) in cur_hyps:
                 last = prefix[-1] if len(prefix) > 0 else None
                 if s == 0:  # blank

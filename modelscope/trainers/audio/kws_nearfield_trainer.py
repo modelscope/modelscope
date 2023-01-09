@@ -281,9 +281,8 @@ class KWSNearfieldTrainer(BaseTrainer):
         if final_epoch is not None and self.rank == 0:
             writer.close()
 
-        # total time spent
         totaltime = datetime.datetime.now() - totaltime
-        logger.info('Total time spent: {:.2f} hours\n'.format(
+        logger.info('Total time spent: {:.2f} hours'.format(
             totaltime.total_seconds() / 3600.0))
 
     def evaluate(self, checkpoint_path: str, *args,
@@ -376,7 +375,7 @@ class KWSNearfieldTrainer(BaseTrainer):
         keywords_str = kwargs['keywords']
         keywords_list = keywords_str.strip().replace(' ', '').split(',')
         keywords_token = {}
-        tokens_set = {0}
+        keywords_tokenset = {0}
         for keyword in keywords_list:
             ids = query_tokens_id(keyword, self.token_table,
                                   self.lexicon_table)
@@ -384,10 +383,8 @@ class KWSNearfieldTrainer(BaseTrainer):
             keywords_token[keyword]['token_id'] = ids
             keywords_token[keyword]['token_str'] = ''.join('%s ' % str(i)
                                                            for i in ids)
-            # for i in ids:
-            #     tokens_set.add(i)
-            [tokens_set.add(i) for i in ids]
-        logger.warning(f'Token set is: {tokens_set}')
+            [keywords_tokenset.add(i) for i in ids]
+        logger.warning(f'Token set is: {keywords_tokenset}')
 
         # 5. build model and load checkpoint
         # support assign specific gpu device
@@ -419,8 +416,13 @@ class KWSNearfieldTrainer(BaseTrainer):
 
         # 6. executing evaluation and get score file
         logger.info('Start evaluating...')
+        totaltime = datetime.datetime.now()
         score_file = executor_test(model, test_dataloader, device,
-                                   keywords_token, tokens_set, testing_config)
+                                   keywords_token, keywords_tokenset,
+                                   testing_config)
+        totaltime = datetime.datetime.now() - totaltime
+        logger.info('Total time spent: {:.2f} hours'.format(
+            totaltime.total_seconds() / 3600.0))
 
         # 7. compute det statistic file with score file
         det_kwargs = dict(

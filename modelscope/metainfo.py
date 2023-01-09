@@ -64,6 +64,7 @@ class Models(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
+    video_stabilization = 'video-stabilization'
     real_basicvsr = 'real-basicvsr'
     rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
@@ -269,6 +270,7 @@ class Pipelines(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     video_object_segmentation = 'video-object-segmentation'
+    video_stabilization = 'video-stabilization'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
     image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
@@ -527,6 +529,8 @@ class Metrics(object):
     inbatch_recall = 'inbatch_recall'
     # metric for referring-video-object-segmentation task
     referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
+    # metric for video stabilization task
+    video_stabilization_metric = 'video-stabilization-metric'
 
 
 class Optimizers(object):

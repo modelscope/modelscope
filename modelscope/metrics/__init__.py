@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .bleu_metric import BleuMetric
     from .image_inpainting_metric import ImageInpaintingMetric
     from .referring_video_object_segmentation_metric import ReferringVideoObjectSegmentationMetric
+    from .video_stabilization_metric import VideoStabilizationMetric
     from .video_super_resolution_metric.video_super_resolution_metric import VideoSuperResolutionMetric
     from .ppl_metric import PplMetric
 
@@ -45,6 +46,7 @@ else:
         'bleu_metric': ['BleuMetric'],
         'referring_video_object_segmentation_metric':
         ['ReferringVideoObjectSegmentationMetric'],
+        'video_stabilization_metric': ['VideoStabilizationMetric'],
         'ppl_metric': ['PplMetric'],
     }
 

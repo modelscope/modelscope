@@ -27,6 +27,9 @@ class MetricKeys(object):
     NED = 'ned'  # ocr metric
     mAP = 'mAP'
     BatchAcc = 'inbatch_t2i_recall_at_1'
+    CROPPING_RATIO = 'cropping_ratio'
+    DISTORTION_VALUE = 'distortion_value'
+    STABILITY_SCORE = 'stability_score'
     PPL = 'ppl'
 
 
@@ -50,6 +53,7 @@ task_default_metrics = {
     Tasks.image_inpainting: [Metrics.image_inpainting_metric],
     Tasks.referring_video_object_segmentation:
     [Metrics.referring_video_object_segmentation_metric],
+    Tasks.video_stabilization: [Metrics.video_stabilization_metric],
 }
 
 

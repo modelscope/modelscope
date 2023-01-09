@@ -427,6 +427,10 @@ TASK_OUTPUTS = {
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
 
+    # video stabilization task result for a single video
+    # {"output_video": "path_to_rendered_video"}
+    Tasks.video_stabilization: [OutputKeys.OUTPUT_VIDEO],
+
     # virtual_try_on result for a single sample
     # {
     #    "output_img": np.ndarray with shape [height, width, 3]

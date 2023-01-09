@@ -4,14 +4,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .video_super_resolution import (VideoReader)
-    from .video_stabilization import (stabilization_preprocessor)
+    from .DUTRAFTStabilizer import DUTRAFTStabilizer
 
 else:
-    _import_structure = {
-        'video_super_resolution': ['VideoReader'],
-        'video_stabilization': ['stabilization_preprocessor']
-    }
+    _import_structure = {'DUTRAFTStabilizer': ['DUTRAFTStabilizer']}
 
     import sys
 

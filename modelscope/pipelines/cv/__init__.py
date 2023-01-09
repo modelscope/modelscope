@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
     from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
@@ -167,6 +168,7 @@ else:
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
+        'video_stabilization_pipeline': ['VideoStabilizationPipeline'],
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
         'pointcloud_sceneflow_estimation_pipeline': [
             'PointCloudSceneFlowEstimationPipeline'

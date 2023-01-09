@@ -216,6 +216,12 @@ class OFAConfig(PretrainedConfig):
                  use_ofasys=False,
                  vit_type='vit_base',
                  vit_drop_path_rate=0.0,
+                 use_gamma_feature=False,
+                 gamma=1.0,
+                 exclude_mlp=True,
+                 temperature_init_value=None,
+                 remove_decoder_type_embedding=False,
+                 mlp_dim=512,
                  **kwargs):
         self.vocab_size = vocab_size
         self.max_position_embeddings = max_position_embeddings
@@ -264,6 +270,14 @@ class OFAConfig(PretrainedConfig):
         self.use_ofasys = use_ofasys
         self.vit_type = vit_type
         self.vit_drop_path_rate = vit_drop_path_rate
+
+        # add some new features from ofa
+        self.use_gamma_feature = use_gamma_feature
+        self.gamma = gamma
+        self.exclude_mlp = exclude_mlp
+        self.temperature_init_value = temperature_init_value
+        self.remove_decoder_type_embedding = remove_decoder_type_embedding
+        self.mlp_dim = mlp_dim
 
         super().__init__(
             pad_token_id=pad_token_id,

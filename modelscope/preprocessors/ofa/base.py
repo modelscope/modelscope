@@ -48,6 +48,8 @@ class OfaBasePreprocessor:
         # there will be no need to use param: use_bpe
         tokenizer.add_tokens(['<code_{}>'.format(i) for i in range(8192)])
         tokenizer.add_tokens(['<bin_{}>'.format(i) for i in range(1000)])
+        if self.cfg.model.get('multimodal_type', 'default') == 'text2sql':
+            tokenizer.add_tokens(['>=', '<='])
         self.tokenizer = tokenizer
         self.bos_item = torch.LongTensor([tokenizer.bos_token_id])
         self.pad_item = torch.LongTensor([tokenizer.pad_token_id])

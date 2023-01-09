@@ -38,6 +38,8 @@ __all__ = ['OfaForAllTasks']
 @MODELS.register_module(Tasks.text_summarization, module_name=Models.ofa)
 @MODELS.register_module(Tasks.text_classification, module_name=Models.ofa)
 @MODELS.register_module(Tasks.auto_speech_recognition, module_name=Models.ofa)
+@MODELS.register_module(Tasks.sudoku, module_name=Models.ofa)
+@MODELS.register_module(Tasks.text2sql, module_name=Models.ofa)
 class OfaForAllTasks(TorchModel):
     r"""
     All ofa tasks using uniform ofa model structure. So far, we support three types of tasks:
@@ -94,7 +96,7 @@ class OfaForAllTasks(TorchModel):
         self.cfg = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
         multimodal_type = self.cfg.model.get('multimodal_type', 'default')
-        if multimodal_type == 'default':
+        if multimodal_type in ['default', 'text2sql']:
             model = OFAModel.from_pretrained(model_dir)
         elif multimodal_type == 'mmspeech':
             model = MMSpeechModel.from_pretrained(model_dir)
@@ -123,6 +125,13 @@ class OfaForAllTasks(TorchModel):
                 self.tokenizer.add_tokens(
                     ['<audio_{}>'.format(i) for i in range(30000)])
                 self.cfg.update({'num_bins': 0, 'num_codes': 30000})
+            elif multimodal_type == 'text2sql':
+                self.tokenizer.add_tokens(
+                    ['<code_{}>'.format(i) for i in range(8192)])
+                self.tokenizer.add_tokens(
+                    ['<bin_{}>'.format(i) for i in range(1000)])
+                self.cfg.update({'num_bins': 1000, 'num_codes': 8192})
+                self.tokenizer.add_tokens(['>=', '<='])
 
         self.batch_size = self.cfg.model.get('batch_size', 1)
         self.patch_image_size = self.cfg.model.get('patch_image_size', 480)
@@ -177,6 +186,8 @@ class OfaForAllTasks(TorchModel):
             Tasks.text_classification: inference_d[self.gen_type],
             Tasks.image_classification: inference_d[self.gen_type],
             Tasks.auto_speech_recognition: self._text_gen_inference,
+            Tasks.sudoku: self._text_gen_inference,
+            Tasks.text2sql: self._text_gen_inference,
         }
         pattern_str = '((?<=[^ a-zA-Z0-9.,:!?]) +| +(?=[^ a-zA-Z0-9.,:!?]))'
         self.pattern = re.compile(pattern_str)

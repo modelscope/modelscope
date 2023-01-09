@@ -73,6 +73,8 @@ TASK_OUTPUTS = {
     #    "text": "电子元器件提供BOM配单"
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
+    Tasks.sudoku: [OutputKeys.TEXT],
+    Tasks.text2sql: [OutputKeys.TEXT],
 
     # document vl embedding for single sample
     # {

@@ -56,7 +56,9 @@ class OfaPreprocessor(Preprocessor):
             Tasks.text_classification: OfaTextClassificationPreprocessor,
             Tasks.text_summarization: OfaSummarizationPreprocessor,
             Tasks.text_to_image_synthesis: OfaTextToImageSynthesisPreprocessor,
-            Tasks.auto_speech_recognition: OfaASRPreprocessor
+            Tasks.auto_speech_recognition: OfaASRPreprocessor,
+            Tasks.sudoku: OfaSudokuPreprocessor,
+            Tasks.text2sql: OfaTextToSqlPreprocessor
         }
         model_dir = model_dir if osp.exists(model_dir) else snapshot_download(
             model_dir, user_agent={Invoke.KEY: Invoke.PREPROCESSOR})

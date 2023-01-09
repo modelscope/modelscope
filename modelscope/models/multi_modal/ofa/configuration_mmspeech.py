@@ -209,6 +209,12 @@ class MMSpeechConfig(PretrainedConfig):
                  use_ofasys=False,
                  vit_type='vit_base',
                  vit_drop_path_rate=0.0,
+                 use_gamma_feature=False,
+                 gamma=1.0,
+                 exclude_mlp=True,
+                 temperature_init_value=None,
+                 remove_decoder_type_embedding=False,
+                 mlp_dim=512,
                  required_seq_len_multiple=2,
                  encoder_pos_conv_depth=5,
                  encoder_conv_pos=95,
@@ -279,6 +285,15 @@ class MMSpeechConfig(PretrainedConfig):
         self.use_ofasys = use_ofasys
         self.vit_type = vit_type
         self.vit_drop_path_rate = vit_drop_path_rate
+        self.use_gamma_feature = use_gamma_feature
+
+        # add some new features from ofa
+        self.use_gamma_feature = use_gamma_feature
+        self.gamma = gamma
+        self.exclude_mlp = exclude_mlp
+        self.temperature_init_value = temperature_init_value
+        self.remove_decoder_type_embedding = remove_decoder_type_embedding
+        self.mlp_dim = mlp_dim
 
         # FP16 optimization
         self.required_seq_len_multiple = required_seq_len_multiple

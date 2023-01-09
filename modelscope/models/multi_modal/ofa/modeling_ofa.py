@@ -461,6 +461,18 @@ class OFAEncoderLayer(nn.Module):
         self.drop_path = DropPath(
             drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
 
+        self.use_gamma_feature = config.use_gamma_feature
+        if self.use_gamma_feature:
+            gamma = getattr(config, 'gamma', 1.)
+
+            # `OFA.from_pretrain()` method will replace the `gamma` to `weight`
+            # in the model key. Here, change the parameters like `xxx_gamma_xxx`
+            # to `xxx_weight_xxx` to adapt this transformation.
+            self.weight_self_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_ffn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+
     def residual_connection(self, x, residual):
         r"""
         Residual connection with drop path.
@@ -499,6 +511,8 @@ class OFAEncoderLayer(nn.Module):
         if self.self_attn_mid_layer_norm:
             hidden_states = self.self_attn_mid_layer_norm(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_self_attn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.self_attn_layer_norm(hidden_states)
@@ -513,6 +527,8 @@ class OFAEncoderLayer(nn.Module):
             hidden_states = self.ffn_layer_norm(hidden_states)
         hidden_states = self.fc2(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_ffn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.final_layer_norm(hidden_states)
@@ -578,6 +594,20 @@ class OFADecoderLayer(nn.Module):
         self.drop_path = DropPath(
             drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
 
+        self.use_gamma_feature = config.use_gamma_feature
+        if self.use_gamma_feature:
+            gamma = getattr(config, 'gamma', 1.)
+
+            # `OFA.from_pretrain()` method will replace the `gamma` to `weight`
+            # in the model key. Here, change the parameters like `xxx_gamma_xxx`
+            # to `xxx_weight_xxx` to adapt this transformation.
+            self.weight_self_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_cross_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_ffn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+
     def residual_connection(self, x, residual):
         r"""
         Residual connection with drop path.
@@ -629,6 +659,8 @@ class OFADecoderLayer(nn.Module):
         if self.self_attn_mid_layer_norm:
             hidden_states = self.self_attn_mid_layer_norm(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_self_attn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.self_attn_layer_norm(hidden_states)
@@ -654,6 +686,8 @@ class OFADecoderLayer(nn.Module):
             if self.cross_attn_mid_layer_norm:
                 hidden_states = self.cross_attn_mid_layer_norm(hidden_states)
             hidden_states = self.dropout(hidden_states)
+            if self.use_gamma_feature:
+                hidden_states = self.weight_cross_attn * hidden_states
             hidden_states = self.residual_connection(hidden_states, residual)
             if not self.normalize_before:
                 hidden_states = self.cross_attn_layer_norm(hidden_states)
@@ -671,6 +705,8 @@ class OFADecoderLayer(nn.Module):
             hidden_states = self.ffn_layer_norm(hidden_states)
         hidden_states = self.fc2(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_ffn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.final_layer_norm(hidden_states)
@@ -1960,6 +1996,14 @@ class OFAModel(OFAPreTrainedModel):
         self.encoder = OFAEncoder(config, shared)
         self.decoder = OFADecoder(config, shared)
         self.use_ofasys = config.use_ofasys
+
+        # exclude mlp head as default
+        if not getattr(config, 'exclude_mlp', True):
+            self.mlp_head = Linear(config.d_model, config.mlp_dim)
+        # None temperature_init_value as default
+        if config.temperature_init_value:
+            self.temp = nn.Parameter(config.temperature_init_value
+                                     * torch.ones([]))
 
         # Initialize weights and apply final processing
         self.post_init()

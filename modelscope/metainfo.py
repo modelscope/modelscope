@@ -346,9 +346,11 @@ class Pipelines(object):
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
-    document_vl_embedding = 'document-vl-embedding'
+    ofa_sudoku = 'ofa-sudoku'
+    ofa_text2sql = 'ofa-text2sql'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
+    document_vl_embedding = 'document-vl-embedding'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

@@ -201,6 +201,12 @@ TASK_INPUTS = {
         'src': InputType.LIST,
         'ref': InputType.LIST,
     },
+    Tasks.sudoku:
+    InputType.TEXT,
+    Tasks.text2sql: {
+        'text': InputType.TEXT,
+        'database': InputType.TEXT
+    },
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:

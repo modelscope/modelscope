@@ -152,6 +152,8 @@ class NLPTasks(object):
     extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
     translation_evaluation = 'translation-evaluation'
+    sudoku = 'sudoku'
+    text2sql = 'text2sql'
 
 
 class AudioTasks(object):

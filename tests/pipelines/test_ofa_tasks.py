@@ -329,6 +329,43 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         for r in result:
             print(r[OutputKeys.TEXT])
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_sudoku_with_name(self):
+        model = 'damo/ofa_sudoku_kaggle_large'
+        ofa_pipe = pipeline(Tasks.sudoku, model=model)
+        # the valid num is 1-9，and use 0 represents the empty block
+        # the separator of column is ` : `, and the separator of row is ` | `
+        example = '5 : 3 : 0 : 0 : 7 : 0 : 0 : 0 : 0 | \
+                6 : 0 : 0 : 1 : 9 : 5 : 0 : 0 : 0 | \
+                0 : 9 : 8 : 0 : 0 : 0 : 0 : 6 : 0 | \
+                8 : 0 : 0 : 0 : 6 : 0 : 0 : 0 : 3 | \
+                4 : 0 : 0 : 8 : 0 : 3 : 0 : 0 : 1 | \
+                7 : 0 : 0 : 0 : 2 : 0 : 0 : 0 : 6 | \
+                0 : 6 : 0 : 0 : 0 : 0 : 2 : 8 : 0 | \
+                0 : 0 : 0 : 4 : 1 : 9 : 0 : 0 : 5 | \
+                0 : 0 : 0 : 0 : 8 : 0 : 0 : 7 : 9'
+
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
+        # test batch infer
+        result = ofa_pipe([example for _ in range(3)], batch_size=2)
+        for r in result:
+            print(r[OutputKeys.TEXT])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_text2sql_with_name(self):
+        model = 'damo/ofa_text2sql_spider_large_en'
+        ofa_pipe = pipeline(Tasks.text2sql, model=model)
+        text = 'Show all book categories and the number of books in each category.'
+        database = 'culture_company'  # optional, default `culture_company`
+        example = {'text': text, 'database': database}
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
+        # test batch infer
+        result = ofa_pipe([example for _ in range(3)], batch_size=2)
+        for r in result:
+            print(r[OutputKeys.TEXT])
+
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()

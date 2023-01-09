@@ -226,6 +226,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
                                 'damo/cv_effnetv2_video-human-matting'),
+    Tasks.video_frame_interpolation:
+    (Pipelines.video_frame_interpolation,
+     'damo/cv_raft_video-frame-interpolation'),
     Tasks.human_wholebody_keypoint:
     (Pipelines.human_wholebody_keypoint,
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
@@ -247,9 +250,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.translation_evaluation:
     (Pipelines.translation_evaluation,
      'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
-    Tasks.video_object_segmentation:
-    (Pipelines.video_object_segmentation,
-     'damo/cv_rdevos_video-object-segmentation'),
+    Tasks.video_object_segmentation: (
+        Pipelines.video_object_segmentation,
+        'damo/cv_rdevos_video-object-segmentation'),
     Tasks.video_multi_object_tracking: (
         Pipelines.video_multi_object_tracking,
         'damo/cv_yolov5_video-multi-object-tracking_fairmot'),

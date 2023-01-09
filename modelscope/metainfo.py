@@ -63,6 +63,7 @@ class Models(object):
     image_body_reshaping = 'image-body-reshaping'
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_stabilization = 'video-stabilization'
     real_basicvsr = 'real-basicvsr'
@@ -270,6 +271,7 @@ class Pipelines(object):
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
@@ -507,6 +509,8 @@ class Metrics(object):
 
     # metrics for image denoise task
     image_denoise_metric = 'image-denoise-metric'
+    # metrics for video frame-interpolation task
+    video_frame_interpolation_metric = 'video-frame-interpolation-metric'
     # metrics for real-world video super-resolution task
     video_super_resolution_metric = 'video-super-resolution-metric'
 

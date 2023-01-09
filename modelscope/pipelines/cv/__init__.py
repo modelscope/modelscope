@@ -68,6 +68,7 @@ if TYPE_CHECKING:
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
+    from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
@@ -163,6 +164,9 @@ else:
         ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
+        ],
+        'video_frame_interpolation_pipeline': [
+            'VideoFrameInterpolationPipeline'
         ],
         'image_skychange_pipeline': ['ImageSkychangePipeline'],
         'video_object_segmentation_pipeline': [

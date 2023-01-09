@@ -98,6 +98,7 @@ class CVTasks(object):
 
     # video editing
     video_inpainting = 'video-inpainting'
+    video_frame_interpolation = 'video-frame-interpolation'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'video-super-resolution'
 

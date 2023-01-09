@@ -305,6 +305,7 @@ TASK_OUTPUTS = {
 
     # video editing task result for a single video
     # {"output_video": "path_to_rendered_video"}
+    Tasks.video_frame_interpolation: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
 
     # live category recognition result for single video

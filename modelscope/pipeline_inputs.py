@@ -1,10 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import cv2
 import numpy as np
 from PIL import Image
 
-from modelscope.models.base.base_head import Input
 from modelscope.utils.constant import Tasks
 
 
@@ -54,7 +52,7 @@ TASK_INPUTS = {
     # if task input is a dict, value is a dict of InputType, where key
     # equals the one needed in pipeline input dict
     # if task input is a list, value is a set of input format, in which
-    # each elements corresponds to one input format as described above.
+    # each element corresponds to one input format as described above.
     # ============ vision tasks ===================
     Tasks.ocr_detection:
     InputType.IMAGE,

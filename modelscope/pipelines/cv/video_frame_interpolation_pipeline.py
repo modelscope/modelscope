@@ -525,23 +525,12 @@ class VideoFrameInterpolationPipeline(Pipeline):
         logger.info('load video frame-interpolation done')
 
     def preprocess(self, input: Input, out_fps: float = 0) -> Dict[str, Any]:
-        # read images
-        file_extension = os.path.splitext(input)[1]
-        if file_extension in VIDEO_EXTENSIONS:  # input is a video file
-            video_reader = VideoReader(input)
-            inputs = []
-            for frame in video_reader:
-                inputs.append(frame)
-            fps = video_reader.fps
-        elif file_extension == '':  # input is a directory
-            inputs = []
-            input_paths = sorted(glob.glob(f'{input}/*'))
-            for input_path in input_paths:
-                img = LoadImage(input_path, mode='rgb')
-                inputs.append(img)
-            fps = 25  # default fps
-        else:
-            raise ValueError('"input" can only be a video or a directory.')
+        # input is a video file
+        video_reader = VideoReader(input)
+        inputs = []
+        for frame in video_reader:
+            inputs.append(frame)
+        fps = video_reader.fps
 
         for i, img in enumerate(inputs):
             img = torch.from_numpy(img.copy()).permute(2, 0, 1).float()

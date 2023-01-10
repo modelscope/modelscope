@@ -144,7 +144,7 @@ git pull origin branch_name
 1. Get the latest master code and checkout a new branch for local development.
     ```shell
     git pull origin master --rebase
-    git checout -b dev/my-dev-branch
+    git checkout -b dev/my-dev-branch
     ```
    note: replace "dev/my-dev-branch" with a meaningful branch name. We recommend using a new dev branch for every change.
 2. Make your local changes.

@@ -138,7 +138,7 @@ class HTTPStorage(Storage):
             self, filepath: str) -> Generator[Union[str, Path], None, None]:
         """Download a file from ``filepath``.
 
-        ``as_local_path`` is decorated by :meth:`contxtlib.contextmanager`. It
+        ``as_local_path`` is decorated by :meth:`contextlib.contextmanager`. It
         can be called with ``with`` statement, and when exists from the
         ``with`` statement, the temporary path will be released.
 
@@ -192,7 +192,7 @@ class OSSStorage(Storage):
             self, filepath: str) -> Generator[Union[str, Path], None, None]:
         """Download a file from ``filepath``.
 
-        ``as_local_path`` is decorated by :meth:`contxtlib.contextmanager`. It
+        ``as_local_path`` is decorated by :meth:`contextlib.contextmanager`. It
         can be called with ``with`` statement, and when exists from the
         ``with`` statement, the temporary path will be released.
 

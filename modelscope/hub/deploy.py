@@ -36,7 +36,7 @@ class EASRegion(object):
 
 
 class EASCpuInstanceType(object):
-    """EAS Cpu Instance TYpe, ref(https://help.aliyun.com/document_detail/144261.html)
+    """EAS Cpu Instance Type, ref(https://help.aliyun.com/document_detail/144261.html)
     """
     tiny = 'ecs.c6.2xlarge'
     small = 'ecs.c6.4xlarge'
@@ -45,7 +45,7 @@ class EASCpuInstanceType(object):
 
 
 class EASGpuInstanceType(object):
-    """EAS Cpu Instance TYpe, ref(https://help.aliyun.com/document_detail/144261.html)
+    """EAS Gpu Instance Type, ref(https://help.aliyun.com/document_detail/144261.html)
     """
     tiny = 'ecs.gn5-c28g1.7xlarge'
     small = 'ecs.gn5-c8g1.4xlarge'

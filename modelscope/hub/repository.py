@@ -150,6 +150,7 @@ class Repository:
             raise InvalidParameter(msg)
         if message is None or message == '':
             msg = 'We use annotated tag, therefore message cannot None or empty.'
+            raise InvalidParameter(msg)
         self.git_wrapper.tag(
             repo_dir=self.model_dir,
             tag_name=tag_name,

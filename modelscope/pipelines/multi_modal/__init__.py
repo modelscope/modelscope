@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .document_vl_embedding_pipeline import DocumentVLEmbeddingPipeline
     from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
+    from .diffusers_wrapped import StableDiffusionWrapperPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -34,7 +35,8 @@ else:
         'document_vl_embedding_pipeline': ['DocumentVLEmbeddingPipeline'],
         'video_captioning_pipeline': ['VideoCaptioningPipeline'],
         'video_question_answering_pipeline':
-        ['VideoQuestionAnsweringPipeline']
+        ['VideoQuestionAnsweringPipeline'],
+        'diffusers_wrapped': ['StableDiffusionWrapperPipeline']
     }
 
     import sys

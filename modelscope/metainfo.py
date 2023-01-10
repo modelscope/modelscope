@@ -358,6 +358,7 @@ class Pipelines(object):
     ofa_text2sql = 'ofa-text2sql'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
+    diffusers_stable_diffusion = 'diffusers-stable-diffusion'
     document_vl_embedding = 'document-vl-embedding'
 
     # science tasks

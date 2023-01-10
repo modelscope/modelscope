@@ -116,9 +116,10 @@ class TokenClassificationPipeline(Pipeline):
             offset_mapping = torch.narrow(
                 offset_mapping, 0, 0,
                 masked_lengths)  # index_select only move loc, not resize
-            predictions = torch.narrow(
-                predictions, 0, 0,
-                masked_lengths)  # index_select only move loc, not resize
+
+            if len(label_mask.shape) == 2:
+                label_mask = label_mask[0]
+            predictions = predictions.masked_select(label_mask)
 
         offset_mapping = torch_nested_numpify(
             torch_nested_detach(offset_mapping))

@@ -157,6 +157,9 @@ class FaqQuestionAnsweringOutput(ModelOutputBase):
     """
 
     scores: Tensor = None
+    labels: Tensor = None
+    loss: Tensor = None
+    logits: Tensor = None
 
 
 @dataclass

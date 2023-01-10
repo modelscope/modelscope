@@ -192,7 +192,7 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
         self.metrics_layer = MetricsLayer(args)
         self.pooling = PoolingLayer(args)
 
-    def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:
+    def forward(self, input: Dict[str, Tensor]) -> FaqQuestionAnsweringOutput:
         """
         Args:
             input (Dict[str, Tensor]): the preprocessed data, it contains the following keys:
@@ -238,17 +238,13 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
             >>>           }
             >>> result = model(preprocessor(param))
         """
-        assert not self.training
         query = input['query']
         support = input['support']
-        if isinstance(query, list):
-            query = torch.stack(query)
-        if isinstance(support, list):
-            support = torch.stack(support)
+        query_mask = input['query_attention_mask']
+        support_mask = input['support_attention_mask']
+
         n_query = query.shape[0]
         n_support = support.shape[0]
-        query_mask = torch.ne(query, 0).view([n_query, -1])
-        support_mask = torch.ne(support, 0).view([n_support, -1])
 
         support_labels = input['support_labels']
         num_cls = torch.max(support_labels) + 1
@@ -268,10 +264,26 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
         cls_n_support = torch.sum(onehot_labels, dim=-2) + 1e-5
         protos = torch.matmul(onehot_labels.transpose(0, 1),
                               z_support) / cls_n_support.unsqueeze(-1)
-        scores = self.metrics_layer(z_query, protos).view([n_query, num_cls])
+        logits = self.metrics_layer(z_query, protos).view([n_query, num_cls])
         if self.metrics_layer.name == 'relation':
-            scores = torch.sigmoid(scores)
-        return FaqQuestionAnsweringOutput(scores=scores)
+            scores = torch.sigmoid(logits)
+        else:
+            scores = logits
+        if 'labels' in input:
+            query_labels = input['labels']
+            loss = self._compute_loss(logits, query_labels, num_cls)
+            _, pred_labels = torch.max(scores, dim=1)
+            return FaqQuestionAnsweringOutput(
+                loss=loss, logits=scores).to_dict()
+        else:
+            return FaqQuestionAnsweringOutput(scores=scores)
+
+    def _compute_loss(self, logits, target, num_cls):
+        from torch.nn import CrossEntropyLoss
+        logits = logits.view([-1, num_cls])
+        target = target.reshape(-1)
+        loss = CrossEntropyLoss(reduction='mean')(logits, target)
+        return loss
 
     def _get_onehot_labels(self, labels, support_size, num_cls):
         labels_ = labels.view(support_size, 1)

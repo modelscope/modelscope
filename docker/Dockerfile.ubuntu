@@ -9,9 +9,10 @@ SHELL ["/bin/bash", "-c"]
 COPY docker/rcfiles /tmp/resources
 COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
 RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
+    apt-get clean && \
     cp /tmp/resources/ubuntu20.04_sources.tuna /etc/apt/sources.list && \
     apt-get update && \
-    apt-get install -y locales wget git  vim ffmpeg libsm6 tzdata language-pack-zh-hans ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
+    apt-get install -y locales wget git strace gdb  vim ffmpeg libsm6 tzdata language-pack-zh-hans ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
     wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
     dpkg -i ./git-lfs_3.2.0_amd64.deb && \
     rm -f ./git-lfs_3.2.0_amd64.deb && \
@@ -72,6 +73,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/tests.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip cache purge
 
 # default shell bash
@@ -99,10 +101,17 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
      echo 'cpu unsupport uniford'; \
     fi
 
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 datasets numpy==1.18.5 ipykernel fairseq fasttext deepspeed
+RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 https://pypi.tuna.tsinghua.edu.cn/packages/70/ad/06f8a06cef819606cb1a521bcc144288daee5c7e73c5d722492866cb1b92/wenetruntime-1.11.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ipykernel fairseq fasttext deepspeed
 COPY docker/scripts/install_apex.sh /tmp/install_apex.sh
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_apex.sh; \
     else \
-     echo 'cpu unsupport uniford'; \
+     echo 'cpu unsupport apex'; \
+    fi
+RUN  apt-get update && apt-get install -y sox && \
+    apt-get clean
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
+    else \
+     echo 'cpu unsupport Pointnet2'; \
     fi

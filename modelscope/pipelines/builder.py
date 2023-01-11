@@ -57,6 +57,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                    'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoising: (Pipelines.image_denoise,
                             'damo/cv_nafnet_image-denoise_sidd'),
+    Tasks.image_deblurring: (Pipelines.image_deblur,
+                             'damo/cv_nafnet_image-deblur_gopro'),
     Tasks.video_stabilization: (Pipelines.video_stabilization,
                                 'damo/cv_dut-raft_video-stabilization_base'),
     Tasks.video_super_resolution:

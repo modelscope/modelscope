@@ -51,7 +51,6 @@ def single_gpu_test(trainer, data_loader, device, data_loader_iters=None):
             result = trainer.evaluation_step(data)
             results.append(result)
             data_lists.append(data)
-
             if progress_with_iters:
                 batch_size = 1  # iteration count
             else:

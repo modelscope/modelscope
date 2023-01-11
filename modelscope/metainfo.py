@@ -186,6 +186,7 @@ class Pipelines(object):
     # vision tasks
     portrait_matting = 'unet-image-matting'
     image_denoise = 'nafnet-image-denoise'
+    image_deblur = 'nafnet-image-deblur'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
@@ -437,9 +438,10 @@ class Preprocessors(object):
 
     # cv preprocessor
     load_image = 'load-image'
+    image_denoise_preprocessor = 'image-denoise-preprocessor'
+    image_deblur_preprocessor = 'image-deblur-preprocessor'
     object_detection_tinynas_preprocessor = 'object-detection-tinynas-preprocessor'
     image_classification_mmcv_preprocessor = 'image-classification-mmcv-preprocessor'
-    image_denoie_preprocessor = 'image-denoise-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'

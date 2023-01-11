@@ -245,8 +245,41 @@ class ImageColorEnhanceFinetunePreprocessor(Preprocessor):
 
 
 @PREPROCESSORS.register_module(
-    Fields.cv, module_name=Preprocessors.image_denoie_preprocessor)
+    Fields.cv, module_name=Preprocessors.image_denoise_preprocessor)
 class ImageDenoisePreprocessor(Preprocessor):
+
+    def __init__(self, model_dir: str, *args, **kwargs):
+        """
+
+        Args:
+            model_dir (str): model path
+        """
+        super().__init__(*args, **kwargs)
+        self.model_dir: str = model_dir
+
+        from .common import Filter
+
+        # TODO: `Filter` should be moved to configurarion file of each model
+        self._transforms = [Filter(reserved_keys=['input', 'target'])]
+
+    def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """process the raw input data
+
+        Args:
+            data Dict[str, Any]
+
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        for t in self._transforms:
+            data = t(data)
+
+        return data
+
+
+@PREPROCESSORS.register_module(
+    Fields.cv, module_name=Preprocessors.image_deblur_preprocessor)
+class ImageDeblurPreprocessor(Preprocessor):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """

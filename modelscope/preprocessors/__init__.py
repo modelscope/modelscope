@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .image import (LoadImage, load_image,
                         ImageColorEnhanceFinetunePreprocessor,
                         ImageInstanceSegmentationPreprocessor,
-                        ImageDenoisePreprocessor)
+                        ImageDenoisePreprocessor, ImageDeblurPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
@@ -51,7 +51,8 @@ else:
         'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [
             'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
-            'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
+            'ImageInstanceSegmentationPreprocessor',
+            'ImageDenoisePreprocessor', 'ImageDeblurPreprocessor'
         ],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],

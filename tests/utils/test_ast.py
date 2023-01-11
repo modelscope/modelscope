@@ -10,7 +10,8 @@ from pathlib import Path
 from modelscope.utils.ast_utils import (FILES_MTIME_KEY, INDEX_KEY, MD5_KEY,
                                         MODELSCOPE_PATH_KEY, REQUIREMENT_KEY,
                                         VERSION_KEY, AstScaning,
-                                        FilesAstScaning, load_index)
+                                        FilesAstScaning, generate_ast_template,
+                                        load_from_prebuilt, load_index)
 
 p = Path(__file__)
 
@@ -133,6 +134,14 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(output[MODELSCOPE_PATH_KEY], str)
         self.assertIsInstance(output[VERSION_KEY], str)
         self.assertIsInstance(output[FILES_MTIME_KEY], dict)
+
+        # generate ast_template
+        file_path = os.path.join(self.tmp_dir, 'index_file.py')
+        index = generate_ast_template(file_path=file_path, force_rebuild=False)
+        self.assertTrue(os.path.exists(file_path))
+        self.assertEqual(output, index)
+        index_from_prebuilt = load_from_prebuilt(file_path)
+        self.assertEqual(index, index_from_prebuilt)
 
     def test_update_load_index_method(self):
         file_number = 20

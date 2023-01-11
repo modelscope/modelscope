@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from setuptools import find_packages, setup
 
+from modelscope.utils.ast_utils import generate_ast_template
 from modelscope.utils.constant import Fields
 
 
@@ -168,6 +169,7 @@ def pack_resource():
 
 if __name__ == '__main__':
     # write_version_py()
+    generate_ast_template()
     pack_resource()
     os.chdir('package')
     install_requires, deps_link = parse_requirements('requirements.txt')

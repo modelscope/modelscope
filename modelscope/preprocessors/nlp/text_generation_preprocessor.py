@@ -194,16 +194,11 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                  model_dir: str,
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
-                 tgt_txt=None,
+                 tgt_txt='tgt_txt',
                  sequence_length: int = 128,
                  use_fast=None):
         from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
         super().__init__(mode, src_txt, tgt_txt)
-        if self.tgt_txt is not None:
-            logger.warning(
-                f'TextGenerationJiebaPreprocessor currently does not support training, '
-                f'the {self.tgt_txt} of the tgt_txt field will be ignored.')
-        self.src_txt = src_txt
         self.tokenizer = JiebaBPETokenizer(
             osp.join(model_dir, 'tokenizer.json'))
         self.max_length = sequence_length
@@ -252,6 +247,7 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                 'tokens': tokens[:-1],
                 'labels': tokens[1:],
                 'prompt_length': prompt_length,
+                'is_pair': int(sequence2 is not None),
             }
 
 

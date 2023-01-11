@@ -27,7 +27,7 @@ class GPT3ForTextGeneration(TorchModel):
         # Temporarily compatible with DistributedGPT3 and GPT3Model,
         # the base/large model based on GPT3Model will be replaced in the future,
         # and GPT3Model will be deprecated
-        if 'model_parallel_size' in kwargs:
+        if 'world_size' in kwargs:
             from modelscope.models.nlp import DistributedGPT3
             self.model = DistributedGPT3(model_dir, **kwargs)
         else:

@@ -52,6 +52,16 @@ class TestFinetuneTextGeneration(unittest.TestCase):
                 'batch_size_per_gpu': 16,
                 'workers_per_gpu': 1
             }
+            cfg.train.hooks.append({
+                'type': 'EvaluationHook',
+                'by_epoch': True,
+                'interval': 1
+            })
+            cfg.evaluation.dataloader = {
+                'batch_size_per_gpu': 8,
+                'workers_per_gpu': 1
+            }
+            cfg.evaluation.metrics = 'ppl'
             return cfg
 
         kwargs = dict(
@@ -73,6 +83,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
     def test_finetune_dureader(self):
         # DuReader_robust-QG is an example data set,
         # users can also use their own data set for training
+
         dataset_dict = MsDataset.load('DuReader_robust-QG')
 
         train_dataset = dataset_dict['train'].remap_columns({'text1': 'src_txt', 'text2': 'tgt_txt'}) \
@@ -81,6 +92,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             .map(lambda example: {'src_txt': example['src_txt'].replace('[SEP]', '<sep>') + '\n'})
 
         max_epochs = 10
+
         tmp_dir = './gpt3_dureader'
 
         num_warmup_steps = 200
@@ -98,7 +110,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
                     'by_epoch': False
                 }
             }
-            cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
+            cfg.train.optimizer = {'type': 'AdamW', 'lr': 1e-4}
             cfg.train.dataloader = {
                 'batch_size_per_gpu': 16,
                 'workers_per_gpu': 1

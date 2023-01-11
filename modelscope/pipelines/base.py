@@ -501,7 +501,10 @@ def collate_fn(data, device):
 
     """
     from torch.utils.data.dataloader import default_collate
-    from modelscope.preprocessors.nlp import InputFeatures
+
+    def get_class_name(obj):
+        return obj.__class__.__name__
+
     if isinstance(data, dict) or isinstance(data, Mapping):
         # add compatibility for img_metas for mmlab models
         return type(data)({
@@ -524,11 +527,11 @@ def collate_fn(data, device):
         return data.to(device)
     elif isinstance(data, (bytes, str, int, float, bool, type(None))):
         return data
-    elif isinstance(data, InputFeatures):
+    elif get_class_name(data) == 'InputFeatures':
+        # modelscope.preprocessors.nlp.InputFeatures
+        return data
+    elif get_class_name(data) == 'DataContainer':
+        # mmcv.parallel.DataContainer
         return data
     else:
-        from mmcv.parallel import DataContainer
-        if isinstance(data, DataContainer):
-            return data
-        else:
-            raise ValueError(f'Unsupported data type {type(data)}')
+        raise ValueError(f'Unsupported data type {type(data)}')

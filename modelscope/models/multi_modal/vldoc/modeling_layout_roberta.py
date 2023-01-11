@@ -26,7 +26,7 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          prune_linear_layer)
 from transformers.utils import logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class LayoutRobertaConfig(PretrainedConfig):

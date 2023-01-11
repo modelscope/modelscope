@@ -11,7 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
 from modelscope.utils import logger as logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 def numpy_to_cv2img(img_array):

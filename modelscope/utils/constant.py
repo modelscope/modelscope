@@ -93,6 +93,7 @@ class CVTasks(object):
     virtual_try_on = 'virtual-try-on'
     movie_scene_segmentation = 'movie-scene-segmentation'
     language_guided_video_summarization = 'language-guided-video-summarization'
+    vop_retrieval = 'video-text-retrieval'
 
     # video segmentation
     video_object_segmentation = 'video-object-segmentation'

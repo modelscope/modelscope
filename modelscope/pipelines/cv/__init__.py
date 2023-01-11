@@ -72,6 +72,7 @@ if TYPE_CHECKING:
     from .vision_middleware_pipeline import VisionMiddlewarePipeline
     from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
+    from .vop_retrieval_pipeline import VopRetrievalPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
@@ -174,6 +175,7 @@ else:
             'VideoFrameInterpolationPipeline'
         ],
         'image_skychange_pipeline': ['ImageSkychangePipeline'],
+        'vop_retrieval_pipeline': ['VopRetrievalPipeline'],
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],

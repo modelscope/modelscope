@@ -38,4 +38,6 @@ tf_slim
 timm>=0.4.9
 torchmetrics>=0.6.2
 torchvision
+ujson
+utils
 videofeatures_clipit>=1.0

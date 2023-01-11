@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
     from .heads import SequenceClassificationHead
+    from .megatron_bert import (
+        MegatronBertConfig,
+        MegatronBertForMaskedLM,
+        MegatronBertModel,
+    )
     from .palm_v2 import PalmForTextGeneration
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
     from .space import SpaceForDialogIntent, SpaceForDialogModeling, SpaceForDST
@@ -88,6 +93,11 @@ else:
             'BertForDocumentSegmentation',
             'BertModel',
             'BertConfig',
+        ],
+        'megatron_bert': [
+            'MegatronBertConfig',
+            'MegatronBertForMaskedLM',
+            'MegatronBertModel',
         ],
         'ponet': ['PoNetForMaskedLM', 'PoNetModel', 'PoNetConfig'],
         'palm_v2': ['PalmForTextGeneration'],

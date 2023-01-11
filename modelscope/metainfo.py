@@ -115,6 +115,7 @@ class Models(object):
     codegeex = 'codegeex'
     bloom = 'bloom'
     unite = 'unite'
+    megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
 
     # audio models

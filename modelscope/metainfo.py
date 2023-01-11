@@ -129,6 +129,8 @@ class Models(object):
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'
     generic_itn = 'generic-itn'
+    generic_punc = 'generic-punc'
+    generic_sv = 'generic-sv'
 
     # multi-modal models
     ofa = 'ofa'
@@ -350,6 +352,8 @@ class Pipelines(object):
     asr_inference = 'asr-inference'
     asr_wenet_inference = 'asr-wenet-inference'
     itn_inference = 'itn-inference'
+    punc_inference = 'punc-inference'
+    sv_inference = 'sv-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

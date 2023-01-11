@@ -722,6 +722,14 @@ TASK_OUTPUTS = {
     # { "text": "每一天都要快乐喔"}
     Tasks.auto_speech_recognition: [OutputKeys.TEXT],
 
+    # speaker verification for single compare task
+    # {'score': 84.2332}
+    Tasks.speaker_verification: [OutputKeys.SCORES],
+
+    # punctuation result for single sample
+    # { "text": "你好，明天！"}
+    Tasks.punctuation: [OutputKeys.TEXT],
+
     # audio processed for single file in PCM format
     # {
     #   "output_pcm": pcm encoded audio bytes

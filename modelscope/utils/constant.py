@@ -172,6 +172,8 @@ class AudioTasks(object):
     acoustic_noise_suppression = 'acoustic-noise-suppression'
     keyword_spotting = 'keyword-spotting'
     inverse_text_processing = 'inverse-text-processing'
+    punctuation = 'punctuation'
+    speaker_verification = 'speaker-verification'
 
 
 class MultiModalTasks(object):

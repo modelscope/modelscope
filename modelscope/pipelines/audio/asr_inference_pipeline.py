@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import yaml
@@ -10,6 +11,7 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
 from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
+                                                generate_scp_from_url,
                                                 load_bytes_from_url)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
@@ -41,11 +43,20 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_format: str = None) -> Dict[str, Any]:
         from funasr.utils import asr_utils
 
+        # code base
+        if 'code_base' in self.model_cfg['model_config']:
+            code_base = self.model_cfg['model_config']['code_base']
+        else:
+            code_base = None
+
         self.recog_type = recog_type
         self.audio_format = audio_format
         self.audio_fs = audio_fs
-
-        if isinstance(audio_in, str):
+        checking_audio_fs = None
+        if code_base == 'funasr' and isinstance(audio_in, str):
+            # for funasr code, generate wav.scp from url or local path
+            self.audio_in = generate_scp_from_url(audio_in)
+        elif isinstance(audio_in, str):
             # load pcm data from url if audio_in is url str
             self.audio_in, checking_audio_fs = load_bytes_from_url(audio_in)
         elif isinstance(audio_in, bytes):
@@ -93,8 +104,10 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             data_cmd = ['speech', 'kaldi_ark']
         elif inputs['audio_format'] == 'tfrecord':
             data_cmd = ['speech', 'tfrecord']
+        elif inputs['audio_format'] == 'scp':
+            data_cmd = [[inputs['audio_lists'], 'speech', 'sound']]
 
-        if inputs.__contains__('mvn_file'):
+        if inputs.__contains__('mvn_file') and inputs['audio_format'] != 'scp':
             data_cmd.append(inputs['mvn_file'])
 
         # generate asr inference command
@@ -118,28 +131,38 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         }
 
         if self.framework == Frameworks.torch:
-            config_file = open(inputs['asr_model_config'], encoding='utf-8')
-            root = yaml.full_load(config_file)
-            config_file.close()
             frontend_conf = None
-            if 'frontend_conf' in root:
-                frontend_conf = root['frontend_conf']
             token_num_relax = None
-            if 'token_num_relax' in root:
-                token_num_relax = root['token_num_relax']
             decoding_ind = None
-            if 'decoding_ind' in root:
-                decoding_ind = root['decoding_ind']
             decoding_mode = None
-            if 'decoding_mode' in root:
-                decoding_mode = root['decoding_mode']
+            if os.path.exists(inputs['asr_model_config']):
+                config_file = open(
+                    inputs['asr_model_config'], encoding='utf-8')
+                root = yaml.full_load(config_file)
+                config_file.close()
+                if 'frontend_conf' in root:
+                    frontend_conf = root['frontend_conf']
+                if 'token_num_relax' in root:
+                    token_num_relax = root['token_num_relax']
+                if 'decoding_ind' in root:
+                    decoding_ind = root['decoding_ind']
+                if 'decoding_mode' in root:
+                    decoding_mode = root['decoding_mode']
 
-            cmd['beam_size'] = root['beam_size']
-            cmd['penalty'] = root['penalty']
-            cmd['maxlenratio'] = root['maxlenratio']
-            cmd['minlenratio'] = root['minlenratio']
-            cmd['ctc_weight'] = root['ctc_weight']
-            cmd['lm_weight'] = root['lm_weight']
+                cmd['beam_size'] = root['beam_size']
+                cmd['penalty'] = root['penalty']
+                cmd['maxlenratio'] = root['maxlenratio']
+                cmd['minlenratio'] = root['minlenratio']
+                cmd['ctc_weight'] = root['ctc_weight']
+                cmd['lm_weight'] = root['lm_weight']
+            else:
+                # for vad task, no asr_model_config
+                cmd['beam_size'] = None
+                cmd['penalty'] = None
+                cmd['maxlenratio'] = None
+                cmd['minlenratio'] = None
+                cmd['ctc_weight'] = None
+                cmd['lm_weight'] = None
             cmd['asr_train_config'] = inputs['am_model_config']
             cmd['lm_file'] = inputs['lm_model_path']
             cmd['lm_train_config'] = inputs['lm_model_config']
@@ -151,6 +174,30 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             cmd['decoding_ind'] = decoding_ind
             cmd['decoding_mode'] = decoding_mode
             cmd['num_workers'] = 0
+            if inputs.__contains__('mvn_file'):
+                cmd['cmvn_file'] = inputs['mvn_file']
+            else:
+                cmd['cmvn_file'] = None
+            if inputs.__contains__('vad_model_name'):
+                cmd['vad_model_name'] = inputs['vad_model_name']
+            else:
+                cmd['vad_model_name'] = None
+            if inputs.__contains__('vad_model_config'):
+                cmd['vad_model_config'] = inputs['vad_model_config']
+            else:
+                cmd['vad_model_config'] = None
+            if inputs.__contains__('vad_mvn_file'):
+                cmd['vad_mvn_file'] = inputs['vad_mvn_file']
+            else:
+                cmd['vad_mvn_file'] = None
+            if inputs.__contains__('punc_model_name'):
+                cmd['punc_model_name'] = inputs['punc_model_name']
+            else:
+                cmd['punc_model_name'] = None
+            if inputs.__contains__('punc_model_config'):
+                cmd['punc_model_config'] = inputs['punc_model_config']
+            else:
+                cmd['punc_model_config'] = None
 
         elif self.framework == Frameworks.tf:
             cmd['fs']['model_fs'] = inputs['model_config']['fs']
@@ -184,11 +231,23 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         rst = {}
 
         # single wav or pcm task
-        if inputs['recog_type'] == 'wav':
+        if inputs['recog_type'] == 'wav' and inputs['audio_format'] == 'wav':
             if 'asr_result' in inputs and len(inputs['asr_result']) > 0:
                 text = inputs['asr_result'][0]['value']
                 if len(text) > 0:
                     rst[OutputKeys.TEXT] = text
+
+        # wav.scp task
+        elif inputs['recog_type'] == 'wav' and inputs['audio_format'] == 'scp':
+            if 'asr_result' in inputs and len(inputs['asr_result']) > 0:
+                for i in range(len(inputs['asr_result'])):
+                    if i == 0:
+                        text = inputs['asr_result'][0]['value']
+                        if len(text) > 0:
+                            rst[OutputKeys.TEXT] = text
+                    else:
+                        rst[inputs['asr_result'][i]
+                            ['key']] = inputs['asr_result'][i]['value']
 
         # run with datasets, and audio format is waveform or kaldi_ark or tfrecord
         elif inputs['recog_type'] != 'wav':
@@ -251,7 +310,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             if hasattr(asr_inference_launch, 'set_parameters'):
                 asr_inference_launch.set_parameters(sample_rate=cmd['fs'])
                 asr_inference_launch.set_parameters(language=cmd['lang'])
-
             asr_result = asr_inference_launch.inference_launch(
                 mode=cmd['mode'],
                 batch_size=cmd['batch_size'],
@@ -265,6 +323,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 penalty=cmd['penalty'],
                 log_level=cmd['log_level'],
                 data_path_and_name_and_type=cmd['name_and_type'],
+                cmvn_file=cmd['cmvn_file'],
                 audio_lists=cmd['audio_in'],
                 asr_train_config=cmd['asr_train_config'],
                 asr_model_file=cmd['asr_model_file'],
@@ -273,8 +332,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 frontend_conf=cmd['frontend_conf'],
                 token_num_relax=cmd['token_num_relax'],
                 decoding_ind=cmd['decoding_ind'],
-                decoding_mode=cmd['decoding_mode'])
-
+                decoding_mode=cmd['decoding_mode'],
+                vad_model_file=cmd['vad_model_name'],
+                vad_infer_config=cmd['vad_model_config'],
+                vad_cmvn_file=cmd['vad_mvn_file'],
+                punc_model_file=cmd['punc_model_name'],
+                punc_infer_config=cmd['punc_model_config'])
         elif self.framework == Frameworks.torch:
             from easyasr import asr_inference_paraformer_espnet
 

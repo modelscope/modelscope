@@ -95,7 +95,7 @@ class VideoStabilizationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         output_video_path = kwargs.get('output_video', None)
-        demo_service = kwargs.get('demo_service', False)
+        is_cvt_h264 = kwargs.get('is_cvt_h264', False)
 
         if output_video_path is None:
             output_video_path = tempfile.NamedTemporaryFile(suffix='.mp4').name
@@ -112,7 +112,7 @@ class VideoStabilizationPipeline(Pipeline):
             video_writer.write(new_frame)
         video_writer.release()
 
-        if demo_service:
+        if is_cvt_h264:
             assert os.system(
                 'ffmpeg -version'
             ) == 0, 'ffmpeg is not installed correctly, please refer to https://trac.ffmpeg.org/wiki/CompilationGuide.'

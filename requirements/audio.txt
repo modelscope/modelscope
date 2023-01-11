@@ -13,6 +13,7 @@ librosa
 lxml
 matplotlib
 MinDAEC
+mir_eval>=0.7
 msgpack>=1.0.4
 nara_wpe
 nltk

@@ -93,6 +93,10 @@ class MossFormer(TorchModel):
                 os.path.join(load_path, 'masknet.bin'), map_location=device),
             strict=True)
 
+    def as_dict(self):
+        return dict(
+            encoder=self.encoder, decoder=self.decoder, masknet=self.mask_net)
+
 
 def select_norm(norm, dim, shape):
     """Just a wrapper to select the normalization type.

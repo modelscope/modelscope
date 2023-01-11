@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from .builder import PREPROCESSORS, build_preprocessor
     from .common import Compose, ToTensor, Filter
     from .asr import WavToScp
-    from .audio import LinearAECAndFbank
+    from .audio import LinearAECAndFbank, AudioBrainPreprocessor
     from .image import (LoadImage, load_image,
                         ImageColorEnhanceFinetunePreprocessor,
                         ImageInstanceSegmentationPreprocessor,
@@ -46,7 +46,7 @@ else:
         'base': ['Preprocessor'],
         'builder': ['PREPROCESSORS', 'build_preprocessor'],
         'common': ['Compose', 'ToTensor', 'Filter'],
-        'audio': ['LinearAECAndFbank'],
+        'audio': ['LinearAECAndFbank', 'AudioBrainPreprocessor'],
         'asr': ['WavToScp'],
         'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [

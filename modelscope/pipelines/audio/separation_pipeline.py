@@ -63,6 +63,9 @@ class SeparationPipeline(Pipeline):
         for ns in range(self.model.num_spks):
             signal = est_source[0, :, ns]
             signal = signal / signal.abs().max() * 0.5
-            result.append(signal.unsqueeze(0).cpu())
+            signal = signal.unsqueeze(0).cpu()
+            # convert tensor to pcm
+            output = (signal.numpy() * 32768).astype(numpy.int16).tobytes()
+            result.append(output)
         logger.info('Finish forward.')
         return {OutputKeys.OUTPUT_PCM_LIST: result}

@@ -76,6 +76,7 @@ if TYPE_CHECKING:
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
     from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
     from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
+    from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
     from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
 
 else:

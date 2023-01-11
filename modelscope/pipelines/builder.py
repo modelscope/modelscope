@@ -176,6 +176,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_depth_estimation:
     (Pipelines.video_depth_estimation,
      'damo/cv_dro-resnet18_video-depth-estimation_indoor'),
+    Tasks.panorama_depth_estimation:
+    (Pipelines.panorama_depth_estimation,
+     'damo/cv_unifuse_panorama-depth-estimation'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
@@ -247,9 +250,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_googlenet_pgl-video-summarization'),
     Tasks.image_skychange: (Pipelines.image_skychange,
                             'damo/cv_hrnetocr_skychange'),
-    Tasks.translation_evaluation:
-    (Pipelines.translation_evaluation,
-     'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
+    Tasks.translation_evaluation: (
+        Pipelines.translation_evaluation,
+        'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
     Tasks.video_object_segmentation: (
         Pipelines.video_object_segmentation,
         'damo/cv_rdevos_video-object-segmentation'),

@@ -513,9 +513,11 @@ TASK_OUTPUTS = {
     #   {
     #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
     #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    #       "output_video": "path_to_rendered_video" , this is optional
+    # and is only avaialbe when the "render" option is enabled.
     #   }
     Tasks.referring_video_object_segmentation: [
-        OutputKeys.MASKS, OutputKeys.TIMESTAMPS
+        OutputKeys.MASKS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
     ],
 
     # video human matting result for a single video

@@ -50,6 +50,7 @@ class CVTasks(object):
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
     image_depth_estimation = 'image-depth-estimation'
+    indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
     portrait_matting = 'portrait-matting'
@@ -325,6 +326,7 @@ class ModelFile(object):
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
     TS_MODEL_FILE = 'model.ts'
+    YAML_FILE = 'model.yaml'
     TOKENIZER_FOLDER = 'tokenizer'
 
 

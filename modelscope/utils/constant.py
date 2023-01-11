@@ -187,7 +187,6 @@ class MultiModalTasks(object):
     document_vl_embedding = 'document-vl-embedding'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
-    diffusers_stable_diffusion = 'diffusers-stable-diffusion'
 
 
 class ScienceTasks(object):

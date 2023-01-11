@@ -5,9 +5,12 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .stable_diffusion_pipeline import StableDiffusionWrapperPipeline
+    from .chinese_stable_diffusion_pipeline import ChineseStableDiffusionPipeline
 else:
     _import_structure = {
-        'stable_diffusion_pipeline': ['StableDiffusionWrapperPipeline']
+        'stable_diffusion_pipeline': ['StableDiffusionWrapperPipeline'],
+        'chinese_stable_diffusion_pipeline':
+        ['ChineseStableDiffusionPipeline']
     }
 
     import sys

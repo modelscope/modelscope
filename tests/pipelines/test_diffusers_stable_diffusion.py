@@ -11,7 +11,7 @@ from modelscope.utils.test_utils import test_level
 class DiffusersStableDiffusionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.task = Tasks.diffusers_stable_diffusion
+        self.task = Tasks.text_to_image_synthesis
         self.model_id = 'shadescript/stable-diffusion-2-1-dev'
 
     test_input = 'a photo of an astronaut riding a horse on mars'
@@ -20,8 +20,8 @@ class DiffusersStableDiffusionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run(self):
         diffusers_pipeline = pipeline(task=self.task, model=self.model_id)
         output = diffusers_pipeline(self.test_input, height=512, width=512)
-        output.images[0].save('/tmp/output.png')
-        print('Image saved to /tmp/output.png')
+        output['output_img'][0].save('output.png')
+        print('Image saved to output.png')
 
 
 if __name__ == '__main__':

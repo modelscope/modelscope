@@ -367,6 +367,7 @@ class Pipelines(object):
     video_question_answering = 'video-question-answering'
     diffusers_stable_diffusion = 'diffusers-stable-diffusion'
     document_vl_embedding = 'document-vl-embedding'
+    chinese_stable_diffusion = 'chinese-stable-diffusion'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

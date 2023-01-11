@@ -18,6 +18,6 @@ from . import (action_recognition, animal_recognition, body_2d_keypoints,
                shop_segmentation, super_resolution, video_frame_interpolation,
                video_object_segmentation, video_single_object_tracking,
                video_stabilization, video_summarization,
-               video_super_resolution, virual_tryon)
+               video_super_resolution, virual_tryon, vision_middleware)
 
 # yapf: enable

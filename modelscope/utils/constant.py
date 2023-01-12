@@ -338,6 +338,7 @@ class Invoke(object):
     PRETRAINED = 'from_pretrained'
     PIPELINE = 'pipeline'
     TRAINER = 'trainer'
+    LOCAL_TRAINER = 'local_trainer'
     PREPROCESSOR = 'preprocessor'
 
 

@@ -106,11 +106,8 @@ class KanttsTrainer(BaseTrainer):
                     version=train_dataset_revision)
                 logger.info(f'train dataset:{train_dataset.config_kwargs}')
             self.raw_dataset_path = self.load_dataset_raw_path(train_dataset)
-        model_dir = None
-        if os.path.exists(model):
-            model_dir = model
-        else:
-            model_dir = self.get_or_download_model_dir(model, model_revision)
+
+        model_dir = self.get_or_download_model_dir(model, model_revision)
         shutil.copytree(model_dir, self.orig_model_dir)
         self.model_dir = self.orig_model_dir
 

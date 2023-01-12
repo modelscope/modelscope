@@ -198,14 +198,8 @@ class ImageClassifitionTrainer(BaseTrainer):
         self._seed = seed
         set_random_seed(self._seed)
         if isinstance(model, str):
-            if os.path.exists(model):
-                self.model_dir = model if os.path.isdir(
-                    model) else os.path.dirname(model)
-            else:
-                self.model_dir = snapshot_download(
-                    model,
-                    revision=model_revision,
-                    user_agent={Invoke.KEY: Invoke.TRAINER})
+            self.model_dir = self.get_or_download_model_dir(
+                model, model_revision=model_revision)
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)

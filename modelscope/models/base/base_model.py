@@ -4,6 +4,7 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
 from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
@@ -100,19 +101,21 @@ class Model(ABC):
         invoked_by = kwargs.get(Invoke.KEY)
         if invoked_by is not None:
             kwargs.pop(Invoke.KEY)
+        else:
+            invoked_by = Invoke.PRETRAINED
 
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
+            check_local_model_is_latest(
+                local_model_dir,
+                user_agent={Invoke.KEY: 'local_%s' % invoked_by})
         else:
             if prefetched is True:
                 raise RuntimeError(
                     'Expecting model is pre-fetched locally, but is not found.'
                 )
 
-            if invoked_by is not None:
-                invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            else:
-                invoked_by = '%s/%s' % (Invoke.KEY, Invoke.PRETRAINED)
+            invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
             local_model_dir = snapshot_download(
                 model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')

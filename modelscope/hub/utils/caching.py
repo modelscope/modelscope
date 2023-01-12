@@ -6,6 +6,7 @@ import pickle
 import tempfile
 from shutil import move, rmtree
 
+from modelscope.hub.constants import MODEL_META_FILE_NAME, MODEL_META_MODEL_ID
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -113,15 +114,45 @@ class ModelFileSystemCache(FileSystemCache):
        Save only one version for each file.
     """
 
-    def __init__(self, cache_root, owner, name):
+    def __init__(self, cache_root, owner=None, name=None):
         """Put file to the cache
-
         Args:
-            cache_root(str): The modelscope local cache root(default: ~/.modelscope/cache/models/)
-            owner(str): The model owner.
-            name(str): The name of the model
+            cache_root(`str`): The modelscope local cache root(default: ~/.cache/modelscope/)
+            owner(`str`): The model owner.
+            name('str'): The name of the model
+        Returns:
+        Raises:
+            None
+        <Tip>
+            model_id = {owner}/{name}
+        </Tip>
         """
-        super().__init__(os.path.join(cache_root, owner, name))
+        if owner is None or name is None:
+            # get model meta from
+            super().__init__(os.path.join(cache_root))
+            self.load_model_meta()
+        else:
+            super().__init__(os.path.join(cache_root, owner, name))
+            self.model_meta = {MODEL_META_MODEL_ID: '%s/%s' % (owner, name)}
+            self.save_model_meta()
+
+    def load_model_meta(self):
+        meta_file_path = os.path.join(self.cache_root_location,
+                                      MODEL_META_FILE_NAME)
+        if os.path.exists(meta_file_path):
+            with open(meta_file_path, 'rb') as f:
+                self.model_meta = pickle.load(f)
+        else:
+            self.model_meta = {MODEL_META_MODEL_ID: 'unknown'}
+
+    def get_model_id(self):
+        return self.model_meta[MODEL_META_MODEL_ID]
+
+    def save_model_meta(self):
+        meta_file_path = os.path.join(self.cache_root_location,
+                                      MODEL_META_FILE_NAME)
+        with open(meta_file_path, 'wb') as f:
+            pickle.dump(self.model_meta, f)
 
     def get_file_by_path(self, file_path):
         """Retrieve the cache if there is file match the path.
@@ -218,7 +249,7 @@ class ModelFileSystemCache(FileSystemCache):
                 return True
             else:
                 self.remove_key(
-                    model_file_info)  # sameone may manual delete the file
+                    model_file_info)  # someone may manual delete the file
         return False
 
     def remove_if_exists(self, model_file_info):

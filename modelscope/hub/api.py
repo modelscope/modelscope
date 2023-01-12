@@ -434,8 +434,7 @@ class HubApi:
                     'Model revision not specified, use default: %s in development mode'
                     % revision)
             if revision not in branches and revision not in tags:
-                raise NotExistError('The model: %s has no branch or tag : %s .'
-                                    % revision)
+                raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
             logger.info('Development mode use revision: %s' % revision)
         else:
             if revision is None:  # user not specified revision, use latest revision before release time

@@ -22,6 +22,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_corom_sentence-embedding_english-base'),
     Tasks.text_ranking: (Pipelines.text_ranking,
                          'damo/nlp_corom_passage-ranking_english-base'),
+    Tasks.text_ranking: (Pipelines.mgeo_ranking,
+                         'damo/mgeo_address_ranking_chinese_base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),

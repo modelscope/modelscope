@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         VideoMultiModalEmbeddingPipeline
     from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
     from .asr_pipeline import AutomaticSpeechRecognitionPipeline
+    from .mgeo_ranking_pipeline import MGeoRankingPipeline
     from .document_vl_embedding_pipeline import DocumentVLEmbeddingPipeline
     from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
@@ -32,6 +33,7 @@ else:
         'generative_multi_modal_embedding_pipeline':
         ['GEMMMultiModalEmbeddingPipeline'],
         'asr_pipeline': ['AutomaticSpeechRecognitionPipeline'],
+        'mgeo_ranking_pipeline': ['MGeoRankingPipeline'],
         'document_vl_embedding_pipeline': ['DocumentVLEmbeddingPipeline'],
         'video_captioning_pipeline': ['VideoCaptioningPipeline'],
         'video_question_answering_pipeline':

@@ -128,6 +128,7 @@ def multi_gpu_test(trainer,
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
+
             evaluate_batch(trainer, data, metric_classes, vis_closure)
 
             if isinstance(data, Mapping):

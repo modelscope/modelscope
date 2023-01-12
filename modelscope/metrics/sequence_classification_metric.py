@@ -58,6 +58,8 @@ class SequenceClassificationMetric(Metric):
                 preds,
                 average='micro' if any([label > 1
                                         for label in labels]) else None),
+            MetricKeys.Macro_F1:
+            f1_score(labels, preds, average='macro'),
         }
 
     def merge(self, other: 'SequenceClassificationMetric'):

@@ -82,6 +82,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.portrait_matting:
     InputType.IMAGE,
+    Tasks.image_fewshot_detection:
+    InputType.IMAGE,
 
     # image editing task result for a single image
     Tasks.skin_retouching:

@@ -76,6 +76,7 @@ class Models(object):
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
     vop_retrieval_model = 'vop-retrieval-model'
     ddcolor = 'ddcolor'
+    defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
 
     # EasyCV models
@@ -142,6 +143,7 @@ class Models(object):
     multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
+    mgeo = 'mgeo'
     vldoc = 'vldoc'
     hitea = 'hitea'
 
@@ -295,6 +297,7 @@ class Pipelines(object):
     image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
     vop_retrieval = 'vop-video-text-retrieval'
     ddcolor_image_colorization = 'ddcolor-image-colorization'
+    image_fewshot_detection = 'image-fewshot-detection'
     image_face_fusion = 'image-face-fusion'
 
     # nlp tasks
@@ -331,6 +334,7 @@ class Pipelines(object):
     table_question_answering_pipeline = 'table-question-answering-pipeline'
     sentence_embedding = 'sentence-embedding'
     text_ranking = 'text-ranking'
+    mgeo_ranking = 'mgeo-ranking'
     relation_extraction = 'relation-extraction'
     document_segmentation = 'document-segmentation'
     extractive_summarization = 'extractive-summarization'
@@ -401,6 +405,7 @@ class Trainers(object):
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'
     ofa = 'ofa'
     mplug = 'mplug'
+    mgeo_ranking_trainer = 'mgeo-ranking-trainer'
 
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
@@ -413,6 +418,7 @@ class Trainers(object):
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_classification_team = 'image-classification-team'
     image_classification = 'image-classification'
+    image_fewshot_detection = 'image-fewshot-detection'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
@@ -512,6 +518,7 @@ class Preprocessors(object):
     ofa_tasks_preprocessor = 'ofa-tasks-preprocessor'
     clip_preprocessor = 'clip-preprocessor'
     mplug_tasks_preprocessor = 'mplug-tasks-preprocessor'
+    mgeo_ranking = 'mgeo-ranking'
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
 

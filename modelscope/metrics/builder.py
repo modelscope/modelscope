@@ -12,6 +12,7 @@ METRICS = Registry('metrics')
 class MetricKeys(object):
     ACCURACY = 'accuracy'
     F1 = 'f1'
+    Macro_F1 = 'macro-f1'
     PRECISION = 'precision'
     RECALL = 'recall'
     PSNR = 'psnr'

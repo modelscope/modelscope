@@ -43,6 +43,22 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
+        self.cmd = self.get_cmd()
+
+        from funasr.bin import sv_inference_launch
+        self.funasr_infer_modelscope = sv_inference_launch.inference_launch(
+            mode=self.cmd['mode'],
+            ngpu=self.cmd['ngpu'],
+            log_level=self.cmd['log_level'],
+            dtype=self.cmd['dtype'],
+            seed=self.cmd['seed'],
+            sv_train_config=self.cmd['sv_train_config'],
+            sv_model_file=self.cmd['sv_model_file'],
+            output_dir=self.cmd['output_dir'],
+            batch_size=self.cmd['batch_size'],
+            num_workers=self.cmd['num_workers'],
+            key_file=self.cmd['key_file'],
+            model_tag=self.cmd['model_tag'])
 
     def __call__(self, audio_in: tuple = None) -> Dict[str, Any]:
         if len(audio_in) == 0:
@@ -66,22 +82,13 @@ class SpeakerVerificationPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def forward(self, audio_in: tuple = None) -> list:
-        """Decoding
-        """
-        logger.info(
-            'Speaker Verification Processing: {0} ...'.format(audio_in))
+    def get_cmd(self) -> Dict[str, Any]:
+        # generate asr inference command
+        mode = self.model_cfg['model_config']['mode']
         sv_model_path = self.model_cfg['sv_model_path']
         sv_model_config = os.path.join(
             self.model_cfg['model_workspace'],
             self.model_cfg['model_config']['sv_model_config'])
-        mode = self.model_cfg['model_config']['mode']
-        # generate audio_scp
-        audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(audio_in)
-        data_cmd = [(audio_scp_1, 'speech', 'sound'),
-                    (audio_scp_2, 'ref_speech', 'sound')]
-
-        # generate asr inference command
         cmd = {
             'mode': mode,
             'output_dir': None,
@@ -92,34 +99,34 @@ class SpeakerVerificationPipeline(Pipeline):
             'dtype': 'float32',
             'seed': 0,
             'key_file': None,
-            'name_and_type': data_cmd,
             'sv_model_file': sv_model_path,
             'sv_train_config': sv_model_config,
             'model_tag': None
         }
+        return cmd
 
-        punc_result = self.run_inference(cmd)
+    def forward(self, audio_in: tuple = None) -> list:
+        """Decoding
+        """
+        logger.info(
+            'Speaker Verification Processing: {0} ...'.format(audio_in))
+
+        # generate audio_scp
+        audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(audio_in)
+        data_cmd = [(audio_scp_1, 'speech', 'sound'),
+                    (audio_scp_2, 'ref_speech', 'sound')]
+
+        self.cmd['name_and_type'] = data_cmd
+        self.cmd['raw_inputs'] = None
+        punc_result = self.run_inference(self.cmd)
 
         return punc_result
 
     def run_inference(self, cmd):
-        sv_result = ''
         if self.framework == Frameworks.torch:
-            from funasr.bin import sv_inference_launch
-            sv_result = sv_inference_launch.inference_launch(
-                mode=cmd['mode'],
+            sv_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                ngpu=cmd['ngpu'],
-                log_level=cmd['log_level'],
-                dtype=cmd['dtype'],
-                seed=cmd['seed'],
-                sv_train_config=cmd['sv_train_config'],
-                sv_model_file=cmd['sv_model_file'],
-                output_dir=cmd['output_dir'],
-                batch_size=cmd['batch_size'],
-                num_workers=cmd['num_workers'],
-                key_file=cmd['key_file'],
-                model_tag=cmd['model_tag'])
+                raw_inputs=cmd['raw_inputs'])
         else:
             raise ValueError('model type is mismatching')
 

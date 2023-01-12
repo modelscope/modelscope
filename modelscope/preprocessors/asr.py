@@ -38,9 +38,9 @@ class WavToScp(Preprocessor):
                            audio_in, audio_fs)
         return out
 
-    def forward(self, model: Dict[str,
-                                  Any], recog_type: str, audio_format: str,
-                audio_in: Union[str, bytes], audio_fs: int) -> Dict[str, Any]:
+    def forward(self, model: Dict[str, Any], recog_type: str,
+                audio_format: str, audio_in: Union[str, bytes], audio_fs: int,
+                cmd: Dict[str, Any]) -> Dict[str, Any]:
         assert len(recog_type) > 0, 'preprocess recog_type is empty'
         assert len(audio_format) > 0, 'preprocess audio_format is empty'
         assert len(
@@ -56,39 +56,29 @@ class WavToScp(Preprocessor):
         assert len(model['model_config']
                    ) > 0, 'preprocess model[model_config] is empty'
 
-        rst = {
-            # the recognition model dir path
-            'model_workspace': model['model_workspace'],
-            # the am model name
-            'am_model': model['am_model'],
-            # the am model file path
-            'am_model_path': model['am_model_path'],
-            # the asr type setting, eg: test dev train wav
-            'recog_type': recog_type,
-            # the asr audio format setting, eg: wav, pcm, kaldi_ark, tfrecord
-            'audio_format': audio_format,
-            # the recognition model config dict
-            'model_config': model['model_config'],
-            # the sample rate of audio_in
-            'audio_fs': audio_fs
-        }
+        cmd['model_workspace'] = model['model_workspace']
+        cmd['am_model'] = model['am_model']
+        cmd['am_model_path'] = model['am_model_path']
+        cmd['recog_type'] = recog_type
+        cmd['audio_format'] = audio_format
+        cmd['model_config'] = model['model_config']
+        cmd['audio_fs'] = audio_fs
 
         if isinstance(audio_in, str):
             # wav file path or the dataset path
-            rst['wav_path'] = audio_in
+            cmd['wav_path'] = audio_in
 
-        out = self.config_checking(rst)
-        out = self.env_setting(out)
+        cmd = self.env_setting(cmd)
         if audio_format == 'wav':
-            out['audio_lists'] = self.scp_generation_from_wav(out)
+            cmd['audio_lists'] = self.scp_generation_from_wav(cmd)
         elif audio_format == 'kaldi_ark':
-            out['audio_lists'] = self.scp_generation_from_ark(out)
+            cmd['audio_lists'] = self.scp_generation_from_ark(cmd)
         elif audio_format == 'tfrecord':
-            out['audio_lists'] = os.path.join(out['wav_path'], 'data.records')
+            cmd['audio_lists'] = os.path.join(out['wav_path'], 'data.records')
         elif audio_format == 'pcm' or audio_format == 'scp':
-            out['audio_lists'] = audio_in
+            cmd['audio_lists'] = audio_in
 
-        return out
+        return cmd
 
     def config_checking(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """config checking
@@ -164,11 +154,12 @@ class WavToScp(Preprocessor):
             else:
                 inputs['lm_model_path'] = None
                 inputs['lm_model_config'] = None
-            if inputs['audio_format'] == 'wav' or inputs[
-                    'audio_format'] == 'pcm':
-                inputs['asr_model_config'] = asr_model_wav_config
-            else:
-                inputs['asr_model_config'] = asr_model_config
+            if 'audio_format' in inputs:
+                if inputs['audio_format'] == 'wav' or inputs[
+                        'audio_format'] == 'pcm':
+                    inputs['asr_model_config'] = asr_model_wav_config
+                else:
+                    inputs['asr_model_config'] = asr_model_config
 
             if inputs['model_config'].__contains__('mvn_file'):
                 mvn_file = os.path.join(inputs['model_workspace'],

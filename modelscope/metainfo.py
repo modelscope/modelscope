@@ -433,6 +433,7 @@ class Trainers(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_kantts_trainer = 'speech-kantts-trainer'
+    speech_asr_trainer = 'speech-asr-trainer'
     speech_separation = 'speech-separation'
 
 

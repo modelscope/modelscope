@@ -43,6 +43,21 @@ class PunctuationProcessingPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
+        self.cmd = self.get_cmd()
+
+        from funasr.bin import punc_inference_launch
+        self.funasr_infer_modelscope = punc_inference_launch.inference_launch(
+            mode=self.cmd['mode'],
+            ngpu=self.cmd['ngpu'],
+            log_level=self.cmd['log_level'],
+            dtype=self.cmd['dtype'],
+            seed=self.cmd['seed'],
+            output_dir=self.cmd['output_dir'],
+            batch_size=self.cmd['batch_size'],
+            num_workers=self.cmd['num_workers'],
+            key_file=self.cmd['key_file'],
+            train_config=self.cmd['train_config'],
+            model_file=self.cmd['model_file'])
 
     def __call__(self, text_in: str = None) -> Dict[str, Any]:
         if len(text_in) == 0:
@@ -67,50 +82,54 @@ class PunctuationProcessingPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def forward(self, text_in: str = None) -> list:
-        """Decoding
-        """
-        logger.info('Punctuation Processing: {0} ...'.format(text_in))
+    def get_cmd(self) -> Dict[str, Any]:
+        # generate inference command
         lang = self.model_cfg['model_config']['lang']
         punc_model_path = self.model_cfg['punc_model_path']
         punc_model_config = os.path.join(
             self.model_cfg['model_workspace'],
             self.model_cfg['model_config']['punc_config'])
         mode = self.model_cfg['model_config']['mode']
-        # generate text_in
-        text_file = generate_text_from_url(text_in)
-        data_cmd = [(text_file, 'text', 'text')]
-
-        # generate asr inference command
         cmd = {
             'mode': mode,
+            'output_dir': None,
+            'batch_size': 1,
+            'num_workers': 1,
             'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'log_level': 'ERROR',
             'dtype': 'float32',
             'seed': 0,
-            'name_and_type': data_cmd,
+            'key_file': None,
             'model_file': punc_model_path,
             'train_config': punc_model_config,
             'lang': lang
         }
 
-        punc_result = self.run_inference(cmd)
+        return cmd
+
+    def forward(self, text_in: str = None) -> list:
+        """Decoding
+        """
+        logger.info('Punctuation Processing: {0} ...'.format(text_in))
+        # generate text_in
+        text_file, raw_inputs = generate_text_from_url(text_in)
+        if raw_inputs is None:
+            data_cmd = [(text_file, 'text', 'text')]
+        elif text_file is None and raw_inputs is not None:
+            data_cmd = None
+
+        self.cmd['name_and_type'] = data_cmd
+        self.cmd['raw_inputs'] = raw_inputs
+        punc_result = self.run_inference(self.cmd)
 
         return punc_result
 
     def run_inference(self, cmd):
         punc_result = ''
         if self.framework == Frameworks.torch:
-            from funasr.bin import punc_inference_launch
-            punc_result = punc_inference_launch.inference_launch(
-                mode=cmd['mode'],
+            punc_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                ngpu=cmd['ngpu'],
-                log_level=cmd['log_level'],
-                dtype=cmd['dtype'],
-                seed=cmd['seed'],
-                train_config=cmd['train_config'],
-                model_file=cmd['model_file'])
+                raw_inputs=cmd['raw_inputs'])
         else:
             raise ValueError('model type is mismatching')
 

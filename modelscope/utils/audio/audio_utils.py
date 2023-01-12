@@ -170,6 +170,58 @@ def load_bytes_from_url(url: str) -> Union[bytes, str]:
 
 def generate_scp_from_url(url: str, key: str = None):
     wav_scp_path = None
+    raw_inputs = None
+    # for local wav.scp inputs
+    if os.path.exists(url) and url.lower().endswith('.scp'):
+        wav_scp_path = url
+        return wav_scp_path, raw_inputs
+    # for local wav file inputs
+    if os.path.exists(url) and (url.lower().endswith('.wav')):
+        wav_scp_path = url
+        return wav_scp_path, raw_inputs
+    # for wav url, download and generate wav.scp
+    result = urlparse(url)
+    if result.scheme is not None and len(result.scheme) > 0:
+        storage = HTTPStorage()
+        # bytes
+        wav_scp_path = storage.read(url)
+
+        return wav_scp_path, raw_inputs
+
+    return wav_scp_path, raw_inputs
+
+
+def generate_text_from_url(url: str):
+    text_file_path = None
+    raw_inputs = None
+    # for text str input
+    if not os.path.exists(url) and not url.startswith('http'):
+        raw_inputs = url
+        return text_file_path, raw_inputs
+
+    # for local txt inputs
+    if os.path.exists(url) and (url.lower().endswith('.txt')
+                                or url.lower().endswith('.scp')):
+        text_file_path = url
+        return text_file_path, raw_inputs
+    # for url, download and generate txt
+    result = urlparse(url)
+    if result.scheme is not None and len(result.scheme) > 0:
+        storage = HTTPStorage()
+        data = storage.read(url)
+        work_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(work_dir):
+            os.makedirs(work_dir)
+        text_file_path = os.path.join(work_dir, os.path.basename(url))
+        with open(text_file_path, 'wb') as fp:
+            fp.write(data)
+        return text_file_path, raw_inputs
+
+    return text_file_path, raw_inputs
+
+
+def generate_scp_for_sv(url: str, key: str = None):
+    wav_scp_path = None
     wav_name = key if key is not None else os.path.basename(url)
     # for local wav.scp inputs
     if os.path.exists(url) and url.lower().endswith('.scp'):
@@ -206,38 +258,9 @@ def generate_scp_from_url(url: str, key: str = None):
     return wav_scp_path
 
 
-def generate_text_from_url(url: str):
-    text_file_path = None
-    # for text str input
-    if not os.path.exists(url) and not url.startswith('http'):
-        work_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(work_dir):
-            os.makedirs(work_dir)
-        text_file_path = os.path.join(work_dir, 'punc_test.txt')
-        with open(text_file_path, 'w') as fp:
-            fp.write('\t'.join(['sentence1', url]))
-    # for local txt inputs
-    if os.path.exists(url) and url.lower().endswith('.txt'):
-        text_file_path = url
-        return text_file_path
-    # for url, download and generate txt
-    result = urlparse(url)
-    if result.scheme is not None and len(result.scheme) > 0:
-        storage = HTTPStorage()
-        data = storage.read(url)
-        work_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(work_dir):
-            os.makedirs(work_dir)
-        text_file_path = os.path.join(work_dir, os.path.basename(url))
-        with open(text_file_path, 'wb') as fp:
-            fp.write(data)
-
-    return text_file_path
-
-
 def generate_sv_scp_from_url(url: tuple):
     if len(url) != 2:
         raise Exception('Speaker Verification needs 2 input wav file!')
-    audio_scp1 = generate_scp_from_url(url[0], key='test1')
-    audio_scp2 = generate_scp_from_url(url[1], key='test1')
+    audio_scp1 = generate_scp_for_sv(url[0], key='test1')
+    audio_scp2 = generate_scp_for_sv(url[1], key='test1')
     return audio_scp1, audio_scp2

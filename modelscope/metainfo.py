@@ -393,6 +393,7 @@ class Trainers(object):
 
     default = 'trainer'
     easycv = 'easycv'
+    tinynas_damoyolo = 'tinynas-damoyolo'
 
     # multi-modal trainers
     clip_multi_modal_embedding = 'clip-multi-modal-embedding'

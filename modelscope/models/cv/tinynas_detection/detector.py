@@ -9,10 +9,13 @@ import torch.nn as nn
 import torchvision
 
 from modelscope.models.base.base_torch_model import TorchModel
+from modelscope.models.cv.tinynas_detection.damo.base_models.backbones import \
+    build_backbone
+from modelscope.models.cv.tinynas_detection.damo.base_models.heads import \
+    build_head
+from modelscope.models.cv.tinynas_detection.damo.base_models.necks import \
+    build_neck
 from modelscope.outputs.cv_outputs import DetectionOutput
-from .backbone import build_backbone
-from .head import build_head
-from .neck import build_neck
 from .utils import parse_config
 
 
@@ -44,13 +47,17 @@ class SingleStageDetector(TorchModel):
         self.backbone = build_backbone(self.cfg.model.backbone)
         self.neck = build_neck(self.cfg.model.neck)
         self.head = build_head(self.cfg.model.head)
+        self.head.nms = False
         self.apply(self.init_bn)
 
         self.load_pretrain_model(model_path)
 
     def load_pretrain_model(self, pretrain_model):
-
-        state_dict = torch.load(pretrain_model, map_location='cpu')['model']
+        ckpt = torch.load(pretrain_model, map_location='cpu')
+        if 'model' in ckpt:
+            state_dict = ckpt['model']
+        elif 'state_dict' in ckpt:
+            state_dict = ckpt['state_dict']
         new_state_dict = {}
         for k, v in state_dict.items():
             k = k.replace('module.', '')
@@ -69,7 +76,9 @@ class SingleStageDetector(TorchModel):
         else:
             x = self.backbone(x)
             x = self.neck(x)
-            prediction = self.head(x)
+            cls_scores, bbox_preds = self.head(x)
+            prediction = torch.cat(
+                [bbox_preds, cls_scores[..., 0:self.num_classes]], dim=-1)
             return prediction
 
     def postprocess(self, preds):

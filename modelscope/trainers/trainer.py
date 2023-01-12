@@ -927,52 +927,39 @@ class EpochBasedTrainer(BaseTrainer):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
+        vis_closure = None
+        if hasattr(self.cfg.evaluation, 'visualization'):
+            vis_cfg = self.cfg.evaluation.visualization
+            vis_closure = partial(
+                self.visualization, dataset=self.eval_dataset, **vis_cfg)
+
         if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
-            results, data_list = multi_gpu_test(
+            metric_values = multi_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
                 tmpdir=self.cfg.evaluation.get('cache_dir', None),
                 gpu_collect=self.cfg.evaluation.get('gpu_collect', False),
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            results, data_list = single_gpu_test(
+            metric_values = single_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
-        # evaluation result processing
-        if hasattr(self.cfg.evaluation, 'visualization'):
-            flatten_results = []
-            for r in results:
-                flatten_results.extend(r)
-            vis_cfg = self.cfg.evaluation.visualization
-            self.visualization(results, self.eval_dataset, **vis_cfg)
-
-        # do evaluation on rank0
-        metric_values = {}
-        if not self._dist or is_master():
-            assert len(data_list) == len(
-                results), f'size mismatch {len(data_list)} and {len(results)}'
-            for metric_cls in metric_classes:
-                for idx in range(len(data_list)):
-                    metric_cls.add(results[idx], data_list[idx])
-
-            for metric_cls in metric_classes:
-                metric_values.update(metric_cls.evaluate())
-
-        _, world_size = get_dist_info()
-        if world_size > 1:
-            metric_values = broadcast(metric_values, 0)
         return metric_values
 
-    def visualization(self, results, dataset, **kwargs):
+    def visualization(self, batch_result, dataset, **kwargs):
         """ visualization function for evaluation results.
 
         Examples:

@@ -57,6 +57,17 @@ class VideoFrameInterpolationMetric(Metric):
             MetricKeys.LPIPS: np.mean(lpips_list)
         }
 
+    def merge(self, other: 'VideoFrameInterpolationMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels = state
+
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([

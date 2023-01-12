@@ -52,3 +52,14 @@ class MovieSceneSegmentationMetric(Metric):
             MetricKeys.RECALL: recall,
             MetricKeys.PRECISION: precision
         }
+
+    def merge(self, other: 'MovieSceneSegmentationMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels = state

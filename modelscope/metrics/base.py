@@ -38,3 +38,19 @@ class Metric(ABC):
 
         """
         pass
+
+    @abstractmethod
+    def merge(self, other: 'Metric'):
+        """ When using data parallel, the data required for different metric calculations
+
+        are stored in their respective Metric classes,
+
+        and we need to merge these data to uniformly calculate metric.
+
+        Args:
+            other: Another Metric instance.
+
+        Returns: None
+
+        """
+        pass

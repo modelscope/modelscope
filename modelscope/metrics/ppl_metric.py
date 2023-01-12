@@ -52,3 +52,14 @@ class PplMetric(Metric):
 
     def evaluate(self) -> Dict[str, float]:
         return {MetricKeys.PPL: math.exp(self.avg_loss)}
+
+    def merge(self, other: 'PplMetric'):
+        self.avg_loss = self._average_loss(other.avg_loss, other.batch_num)
+        self.batch_num += other.batch_num
+
+    def __getstate__(self):
+        return self.avg_loss, self.batch_num
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.avg_loss, self.batch_num = state

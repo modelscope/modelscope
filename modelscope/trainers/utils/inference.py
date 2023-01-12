@@ -15,13 +15,20 @@ from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
 
 
-def single_gpu_test(trainer, data_loader, device, data_loader_iters=None):
+def single_gpu_test(trainer,
+                    data_loader,
+                    device,
+                    metric_classes=None,
+                    vis_closure=None,
+                    data_loader_iters=None):
     """Test model in EpochBasedTrainer with a single gpu.
 
     Args:
         trainer (modelscope.trainers.EpochBasedTrainer): Trainer to be tested.
         data_loader (nn.Dataloader): Pytorch data loader.
         device (str | torch.device): The target device for the data.
+        metric_classes (List): List of Metric class that uses to collect metrics.
+        vis_closure (Callable): Collect data for TensorboardHook.
         data_loader_iters (int): Used when dataset has no attribute __len__ or only load part of dataset.
 
     Returns:
@@ -43,14 +50,11 @@ def single_gpu_test(trainer, data_loader, device, data_loader_iters=None):
         data_len = data_loader_iters
         desc = 'Test iterations'
 
-    results = []
-    data_lists = []
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
-            result = trainer.evaluation_step(data)
-            results.append(result)
-            data_lists.append(data)
+            evaluate_batch(trainer, data, metric_classes, vis_closure)
+
             if progress_with_iters:
                 batch_size = 1  # iteration count
             else:
@@ -70,12 +74,14 @@ def single_gpu_test(trainer, data_loader, device, data_loader_iters=None):
             if progress_with_iters and (i + 1) >= data_len:
                 break
 
-    return results, data_lists
+    return get_metric_values(metric_classes)
 
 
 def multi_gpu_test(trainer,
                    data_loader,
                    device,
+                   metric_classes=None,
+                   vis_closure=None,
                    tmpdir=None,
                    gpu_collect=False,
                    data_loader_iters_per_gpu=None):
@@ -98,8 +104,6 @@ def multi_gpu_test(trainer,
     Returns:
         list: The prediction results.
     """
-    results = []
-    data_list = []
     dataset = data_loader.dataset
     rank, world_size = get_dist_info()
 
@@ -124,9 +128,7 @@ def multi_gpu_test(trainer,
     with tqdm(total=data_len, desc=desc) as pbar:
         for i, data in enumerate(data_loader):
             data = to_device(data, device)
-            data_list.append(data)
-            result = trainer.evaluation_step(data)
-            results.append(result)
+            evaluate_batch(trainer, data, metric_classes, vis_closure)
 
             if isinstance(data, Mapping):
                 if 'nsentences' in data:
@@ -157,23 +159,44 @@ def multi_gpu_test(trainer,
             if progress_with_iters and (i + 1) >= data_len:
                 break
 
-    # TODO: allgather data list may cost a lot of memory and needs to be redesigned
     # collect results and data from all ranks
     if gpu_collect:
-        results = collect_results_gpu(results, total_samples)
-        data_list = collect_results_gpu(data_list, total_samples)
+        metric_classes_list = collect_results_gpu(metric_classes)
     else:
         if tmpdir is None:
             tmpdir = make_tmp_dir()
-        results = collect_results_cpu(results, total_samples,
-                                      os.path.join(tmpdir, 'predict'))
-        data_list = collect_results_cpu(data_list, total_samples,
-                                        os.path.join(tmpdir, 'groundtruth'))
+        metric_classes_list = collect_results_cpu(
+            metric_classes, os.path.join(tmpdir, 'metrics'))
 
-    return results, data_list
+    metric_classes = merge_metrics(metric_classes_list)
+
+    return get_metric_values(metric_classes)
 
 
-def collect_results_cpu(result_part, size, tmpdir=None):
+def evaluate_batch(trainer, data, metric_classes, vis_closure):
+    batch_result = trainer.evaluation_step(data)
+
+    if metric_classes is not None:
+        for metric_cls in metric_classes:
+            metric_cls.add(batch_result, data)
+
+    if vis_closure is not None:
+        # trainer.visualization
+        vis_closure(batch_result)
+
+
+def get_metric_values(metric_classes):
+    rank, world_size = get_dist_info()
+    metric_values = {}
+    if rank == 0:
+        for metric_cls in metric_classes:
+            metric_values.update(metric_cls.evaluate())
+    if world_size > 1:
+        metric_values = broadcast(metric_values, 0)
+    return metric_values
+
+
+def collect_results_cpu(result_part, tmpdir=None):
     """Collect results under cpu mode.
 
     On cpu mode, this function will save the results on different gpus to
@@ -216,18 +239,13 @@ def collect_results_cpu(result_part, size, tmpdir=None):
             # on a certain gpu could makes the overall outputs empty.
             if part_result:
                 part_list.append(part_result)
-        # sort the results
-        ordered_results = []
-        for res in zip(*part_list):
-            ordered_results.extend(list(res))
-        # the dataloader may pad some samples
-        ordered_results = ordered_results[:size]
+
         # remove tmp dir
         shutil.rmtree(tmpdir)
-        return ordered_results
+        return part_list
 
 
-def collect_results_gpu(result_part, size):
+def collect_results_gpu(result_part):
     """Collect results under gpu mode.
 
     On gpu mode, this function will encode results to gpu tensors and use gpu
@@ -268,10 +286,16 @@ def collect_results_gpu(result_part, size):
             # on a certain gpu could makes the overall outputs empty.
             if part_result:
                 part_list.append(part_result)
-        # sort the results
-        ordered_results = []
-        for res in zip(*part_list):
-            ordered_results.extend(list(res))
-        # the dataloader may pad some samples
-        ordered_results = ordered_results[:size]
-        return ordered_results
+
+        return part_list
+
+
+def merge_metrics(metric_classes_list):
+    if metric_classes_list is None:
+        return None
+
+    metric_classes_0 = metric_classes_list[0]
+    for metric_classes_i in metric_classes_list[1:]:
+        for cls_0, cls_i in zip(metric_classes_0, metric_classes_i):
+            cls_0.merge(cls_i)
+    return metric_classes_0

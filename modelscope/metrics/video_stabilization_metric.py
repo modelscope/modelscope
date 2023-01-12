@@ -53,6 +53,16 @@ class VideoStabilizationMetric(Metric):
             MetricKeys.STABILITY_SCORE: sum(SS) / len(SS),
         }
 
+    def merge(self, other: 'VideoStabilizationMetric'):
+        self.inputs.extend(other.inputs)
+        self.outputs.extend(other.outputs)
+
+    def __getstate__(self):
+        return self.inputs, self.outputs
+
+    def __setstate__(self, state):
+        self.inputs, self.outputs = state
+
 
 def warpprocess(inputs):
     """ video stabilization postprocess

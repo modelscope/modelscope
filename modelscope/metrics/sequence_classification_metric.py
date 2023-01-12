@@ -59,3 +59,14 @@ class SequenceClassificationMetric(Metric):
                 average='micro' if any([label > 1
                                         for label in labels]) else None),
         }
+
+    def merge(self, other: 'SequenceClassificationMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels, self.label_name, self.logit_name
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels, self.label_name, self.logit_name = state

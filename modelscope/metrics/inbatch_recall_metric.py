@@ -53,3 +53,14 @@ class InbatchRecallMetric(Metric):
             MetricKeys.BatchAcc:
             sum(self.inbatch_t2i_hitcnts) / sum(self.batch_sizes)
         }
+
+    def merge(self, other: 'InbatchRecallMetric'):
+        self.inbatch_t2i_hitcnts.extend(other.inbatch_t2i_hitcnts)
+        self.batch_sizes.extend(other.batch_sizes)
+
+    def __getstate__(self):
+        return self.inbatch_t2i_hitcnts, self.batch_sizes
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.inbatch_t2i_hitcnts, self.batch_sizes = state

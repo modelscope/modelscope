@@ -40,3 +40,13 @@ class VideoSuperResolutionMetric(Metric):
                     calculate_niqe(
                         pred[0].permute(1, 2, 0).numpy() * 255, crop_border=0))
         return {MetricKeys.NIQE: np.mean(niqe_list)}
+
+    def merge(self, other: 'VideoSuperResolutionMetric'):
+        self.preds.extend(other.preds)
+
+    def __getstate__(self):
+        return self.preds
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds = state

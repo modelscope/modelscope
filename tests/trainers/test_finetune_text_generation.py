@@ -142,7 +142,6 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             'tgt_txt'
         })
         num_warmup_steps = 200
-        os.environ['LOCAL_RANK'] = '0'
 
         def noam_lambda(current_step: int):
             current_step += 1
@@ -166,7 +165,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
             work_dir=self.tmp_dir,
             cfg_modify_fn=cfg_modify_fn)
         trainer = build_trainer(
-            name=Trainers.nlp_base_trainer, default_args=kwargs)
+            name=Trainers.text_generation_trainer, default_args=kwargs)
         trainer.train()
 
 

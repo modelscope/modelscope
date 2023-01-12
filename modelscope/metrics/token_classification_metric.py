@@ -90,6 +90,19 @@ class TokenClassificationMetric(Metric):
                 MetricKeys.ACCURACY: results[MetricKeys.ACCURACY],
             }
 
+    def merge(self, other: 'TokenClassificationMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return (self.return_entity_level_metrics, self.preds, self.labels,
+                self.label2id, self.label_name, self.logit_name)
+
+    def __setstate__(self, state):
+        self.__init__()
+        (self.return_entity_level_metrics, self.preds, self.labels,
+         self.label2id, self.label_name, self.logit_name) = state
+
     @staticmethod
     def _compute(
         predictions,

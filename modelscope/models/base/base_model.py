@@ -97,11 +97,9 @@ class Model(ABC):
         prefetched = kwargs.get('model_prefetched')
         if prefetched is not None:
             kwargs.pop('model_prefetched')
-
         invoked_by = kwargs.get(Invoke.KEY)
         if invoked_by is not None:
             kwargs.pop(Invoke.KEY)
-        else:
             invoked_by = Invoke.PRETRAINED
 
         if osp.exists(model_name_or_path):

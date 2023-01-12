@@ -60,6 +60,7 @@ class CVTasks(object):
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
+    image_matching = 'image-matching'
 
     crowd_counting = 'crowd-counting'
 

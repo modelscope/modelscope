@@ -201,6 +201,9 @@ if __name__ == '__main__':
         url='https://github.com/modelscope/modelscope',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
+        package_data={
+            '': ['*.h', '*.cpp', '*.cu'],
+        },
         classifiers=[
             'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',

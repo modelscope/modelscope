@@ -271,6 +271,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                  'damo/cv_flow-based-body-reshaping_damo'),
     Tasks.image_face_fusion: (Pipelines.image_face_fusion,
                               'damo/cv_unet-image-face-fusion_damo'),
+    Tasks.image_matching: (
+        Pipelines.image_matching,
+        'damo/cv_quadtree_attention_image-matching_outdoor'),
 }
 
 

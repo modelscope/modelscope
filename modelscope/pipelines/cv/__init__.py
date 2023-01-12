@@ -74,6 +74,7 @@ if TYPE_CHECKING:
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .vop_retrieval_pipeline import VopRetrievalPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .image_matching_pipeline import ImageMatchingPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
@@ -180,6 +181,7 @@ else:
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
+        'image_matching_pipeline': ['ImageMatchingPipeline'],
         'video_stabilization_pipeline': ['VideoStabilizationPipeline'],
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
         'pointcloud_sceneflow_estimation_pipeline': [

@@ -52,6 +52,7 @@ class OutputKeys(object):
     SCENE_NUM = 'scene_num'
     SCENE_META_LIST = 'scene_meta_list'
     SHOT_META_LIST = 'shot_meta_list'
+    MATCHES = 'matches'
     PCD12 = 'pcd12'
     PCD12_ALIGN = 'pcd12_align'
 

@@ -5,7 +5,8 @@ import unittest
 
 from requests import HTTPError
 
-from modelscope.fileio.file import File, HTTPStorage, LocalStorage
+from modelscope.fileio.file import (File, HTTPStorage, LocalStorage,
+                                    LocalStorageWithLock)
 
 
 class FileTest(unittest.TestCase):
@@ -23,6 +24,41 @@ class FileTest(unittest.TestCase):
         self.assertEqual(content, storage.read_text(temp_name))
 
         os.remove(temp_name)
+
+    def test_local_storage_with_lock_in_single_case(self):
+        storage = LocalStorageWithLock()
+        temp_name = tempfile.gettempdir() + '/' + next(
+            tempfile._get_candidate_names())
+        binary_content = b'12345'
+        storage.write(binary_content, temp_name)
+        self.assertEqual(binary_content, storage.read(temp_name))
+
+        content = '12345'
+        storage.write_text(content, temp_name)
+        self.assertEqual(content, storage.read_text(temp_name))
+
+        os.remove(temp_name)
+
+    def test_local_storage_with_lock_in_multi_case(self):
+        import threading
+
+        def local_test():
+            storage = LocalStorageWithLock()
+            temp_name = tempfile.gettempdir() + '/' + next(
+                tempfile._get_candidate_names()) + '/test'
+
+            binary_content = b'12345'
+            storage.write(binary_content, temp_name)
+            self.assertEqual(binary_content, storage.read(temp_name))
+
+            content = '12345'
+            storage.write_text(content, temp_name)
+            self.assertEqual(content, storage.read_text(temp_name))
+            os.remove(temp_name)
+
+        for i in range(5):
+            local_thread = threading.Thread(target=local_test)
+            local_thread.start()
 
     def test_http_storage(self):
         storage = HTTPStorage()

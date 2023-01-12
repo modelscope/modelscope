@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import contextlib
+import fcntl
 import os
 import tempfile
 from abc import ABCMeta, abstractmethod
@@ -8,6 +9,10 @@ from pathlib import Path
 from typing import Generator, Union
 
 import requests
+
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 class Storage(metaclass=ABCMeta):
@@ -109,6 +114,153 @@ class LocalStorage(Storage):
             os.makedirs(dirname)
         with open(filepath, 'w', encoding=encoding) as f:
             f.write(obj)
+
+    @contextlib.contextmanager
+    def as_local_path(
+            self,
+            filepath: Union[str,
+                            Path]) -> Generator[Union[str, Path], None, None]:
+        """Only for unified API and do nothing."""
+        yield filepath
+
+
+class LocalStorageWithLock(Storage):
+    """Local hard disk storage with file lock"""
+    handle = None
+
+    def acquire(self):
+        fcntl.flock(self.handle, fcntl.LOCK_EX)
+
+    def release(self):
+        fcntl.flock(self.handle, fcntl.LOCK_UN)
+        self.handle.close()
+
+    def __del__(self):
+        self.handle.close()
+
+    def read(self, filepath: Union[str, Path]) -> bytes:
+        """Read data from a given ``filepath`` with 'rb' mode.
+
+        Args:
+            filepath (str or Path): Path to read data.
+
+        Returns:
+            bytes: Expected bytes object.
+        """
+        self.handle = open(filepath, 'rb')
+        try:
+            self.acquire()
+            logger.debug(f'acquire the lock for read function on {filepath}')
+            content = self.handle.read()
+        except Exception as err:
+            raise err
+        finally:
+            self.release()
+            logger.debug(f'release the lock for read function on {filepath}')
+
+        return content
+
+    def read_text(self,
+                  filepath: Union[str, Path],
+                  encoding: str = 'utf-8') -> str:
+        """Read data from a given ``filepath`` with 'r' mode.
+
+        Args:
+            filepath (str or Path): Path to read data.
+            encoding (str): The encoding format used to open the ``filepath``.
+                Default: 'utf-8'.
+
+        Returns:
+            str: Expected text reading from ``filepath``.
+        """
+        self.handle = open(filepath, 'r', encoding=encoding)
+
+        try:
+            self.acquire()
+            logger.debug(
+                f'acquire the lock for read_text function on {filepath}')
+            content = self.handle.read()
+        except Exception as err:
+            raise err
+        finally:
+            self.release()
+            logger.debug(
+                f'release the lock for read_text function on {filepath}')
+
+        return content
+
+    def write(self, obj: bytes, filepath: Union[str, Path]) -> None:
+        """Write data to a given ``filepath`` with 'wb' mode.
+
+        Note:
+            ``write`` will create a directory if the directory of ``filepath``
+            does not exist.
+
+        Args:
+            obj (bytes): Data to be written.
+            filepath (str or Path): Path to write data.
+        """
+
+        dirname = os.path.dirname(filepath)
+        if dirname and not os.path.exists(dirname):
+            try:
+                os.makedirs(dirname)
+            except FileExistsError as err:
+                logger.warning(
+                    f'File created by other thread during creation with err: {err}'
+                )
+
+        self.handle = open(filepath, 'wb')
+
+        try:
+            self.acquire()
+            logger.debug(f'acquire the lock for write function on {filepath}')
+            self.handle.write(obj)
+        except Exception as err:
+            raise err
+        finally:
+            self.release()
+            logger.debug(f'release the lock for write function on {filepath}')
+
+    def write_text(self,
+                   obj: str,
+                   filepath: Union[str, Path],
+                   encoding: str = 'utf-8') -> None:
+        """Write data to a given ``filepath`` with 'w' mode.
+
+        Note:
+            ``write_text`` will create a directory if the directory of
+            ``filepath`` does not exist.
+
+        Args:
+            obj (str): Data to be written.
+            filepath (str or Path): Path to write data.
+            encoding (str): The encoding format used to open the ``filepath``.
+                Default: 'utf-8'.
+        """
+
+        dirname = os.path.dirname(filepath)
+        if dirname and not os.path.exists(dirname):
+            try:
+                os.makedirs(dirname)
+            except FileExistsError as err:
+                logger.warning(
+                    f'File created by other thread during creation with err: {err}'
+                )
+
+        self.handle = open(filepath, 'w', encoding=encoding)
+
+        try:
+            self.acquire()
+            logger.debug(
+                f'acquire the lock for write_text function on {filepath}')
+            self.handle.write(obj)
+        except Exception as err:
+            raise err
+        finally:
+            self.release()
+            logger.debug(
+                f'release the lock for write_text function on {filepath}')
 
     @contextlib.contextmanager
     def as_local_path(

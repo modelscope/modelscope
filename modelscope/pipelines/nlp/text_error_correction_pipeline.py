@@ -78,9 +78,14 @@ class TextErrorCorrectionPipeline(Pipeline):
 
         """
 
-        pred_str = self.vocab.string(
-            inputs['predictions'],
-            '@@',
-            extra_symbols_to_ignore={self.vocab.pad()})
+        sc_sent = []
+        for sent in inputs['predictions']:
+            pred_str = self.vocab.string(
+                sent, '@@', extra_symbols_to_ignore={self.vocab.pad()})
+            sc_sent.append(''.join(pred_str.split()))
 
-        return {OutputKeys.OUTPUT: ''.join(pred_str.split())}
+        # for  consistent with old version
+        if len(sc_sent) == 1:
+            sc_sent = sc_sent[0]
+
+        return {OutputKeys.OUTPUT: sc_sent}

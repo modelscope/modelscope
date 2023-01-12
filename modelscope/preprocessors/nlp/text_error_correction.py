@@ -3,6 +3,8 @@
 import os.path as osp
 from typing import Any, Dict
 
+import torch
+
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
@@ -24,6 +26,8 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
         """
         super().__init__(*args, **kwargs)
         self.vocab = Dictionary.load(osp.join(model_dir, 'dict.src.txt'))
+        self.max_length = 100 + 1  # 1 is eos token
+        self.padding_value = 2
 
     def __call__(self, data: str) -> Dict[str, Any]:
         """process the raw input data
@@ -44,7 +48,12 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
         text = ' '.join([x for x in data])
         inputs = self.vocab.encode_line(
             text, append_eos=True, add_if_not_exist=False)
-        lengths = inputs.size()
-        sample = dict()
-        sample['net_input'] = {'src_tokens': inputs, 'src_lengths': lengths}
-        return sample
+        lengths = inputs.size()[0]
+
+        padding = torch.tensor([self.padding_value] *  # noqa: W504
+                               (self.max_length - lengths))
+        inputs = torch.unsqueeze(torch.cat([padding, inputs]), dim=0)
+        lengths = torch.tensor([lengths])
+        out = {'src_tokens': inputs, 'src_lengths': lengths}
+
+        return out

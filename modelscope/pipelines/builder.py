@@ -269,6 +269,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_multi_view_depth_estimation: (
         Pipelines.image_multi_view_depth_estimation,
         'damo/cv_casmvs_multi-view-depth-estimation_general'),
+    Tasks.image_fewshot_detection: (
+        Pipelines.image_fewshot_detection,
+        'damo/cv_resnet101_detection_fewshot-defrcn'),
     Tasks.image_body_reshaping: (Pipelines.image_body_reshaping,
                                  'damo/cv_flow-based-body-reshaping_damo'),
     Tasks.image_face_fusion: (Pipelines.image_face_fusion,

@@ -49,6 +49,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_kws_nearfield_trainer.py
   - test_gpt3_text_generation.py
   - test_ddcolor_image_colorization.py
+  - test_image_defrcn_fewshot_trainer.py
   - test_image_deblur_trainer.py
 
 envs:

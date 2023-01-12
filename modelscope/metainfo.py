@@ -76,6 +76,7 @@ class Models(object):
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
     vop_retrieval_model = 'vop-retrieval-model'
     ddcolor = 'ddcolor'
+    defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
 
     # EasyCV models
@@ -296,6 +297,7 @@ class Pipelines(object):
     image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
     vop_retrieval = 'vop-video-text-retrieval'
     ddcolor_image_colorization = 'ddcolor-image-colorization'
+    image_fewshot_detection = 'image-fewshot-detection'
     image_face_fusion = 'image-face-fusion'
 
     # nlp tasks
@@ -416,6 +418,7 @@ class Trainers(object):
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_classification_team = 'image-classification-team'
     image_classification = 'image-classification'
+    image_fewshot_detection = 'image-fewshot-detection'
 
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'

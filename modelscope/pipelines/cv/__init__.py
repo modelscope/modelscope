@@ -83,6 +83,7 @@ if TYPE_CHECKING:
     from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
     from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
     from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
+    from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
 
 else:
     _import_structure = {
@@ -197,6 +198,7 @@ else:
         'ddcolor_image_colorization_pipeline': [
             'DDColorImageColorizationPipeline'
         ],
+        'image_defrcn_fewshot_pipeline': ['ImageDefrcnDetectionPipeline'],
     }
 
     import sys

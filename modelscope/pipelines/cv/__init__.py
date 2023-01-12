@@ -77,6 +77,7 @@ if TYPE_CHECKING:
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
+    from .face_liveness_ir_pipeline import FaceLivenessIrPipeline
     from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
     from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
     from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
@@ -184,6 +185,7 @@ else:
         'pointcloud_sceneflow_estimation_pipeline': [
             'PointCloudSceneFlowEstimationPipeline'
         ],
+        'face_liveness_ir_pipeline': ['FaceLivenessIrPipeline'],
         'maskdino_instance_segmentation_pipeline': [
             'MaskDINOInstanceSegmentationPipeline'
         ],

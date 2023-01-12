@@ -213,6 +213,7 @@ class Pipelines(object):
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     face_liveness_ir = 'manual-face-liveness-flir'
+    face_liveness_rgb = 'manual-face-liveness-flir'
     card_detection = 'resnet-card-detection-scrfd34gkps'
     ulfd_face_detection = 'manual-face-detection-ulfd'
     tinymog_face_detection = 'manual-face-detection-tinymog'

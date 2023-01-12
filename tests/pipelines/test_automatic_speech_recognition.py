@@ -385,7 +385,7 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             model_id=self.am_pytorch_model_id, audio_in=URL_FILE)
         self.check_result('test_run_with_url_pytorch', rec_result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_funasr(self):
         """run with single url file using FunASR
         """

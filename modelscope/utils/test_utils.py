@@ -15,10 +15,10 @@ from collections import OrderedDict
 
 import requests
 import torch
-from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
 from torch.utils.data import Dataset
 
-from .torch_utils import _find_free_port
+from modelscope.utils.import_utils import is_tf_available, is_torch_available
+from modelscope.utils.torch_utils import _find_free_port
 
 TEST_LEVEL = 2
 TEST_LEVEL_STR = 'TEST_LEVEL'
@@ -33,13 +33,13 @@ def test_level():
 
 
 def require_tf(test_case):
-    if not TF_AVAILABLE:
+    if not is_tf_available():
         test_case = unittest.skip('test requires TensorFlow')(test_case)
     return test_case
 
 
 def require_torch(test_case):
-    if not TORCH_AVAILABLE:
+    if not is_torch_available():
         test_case = unittest.skip('test requires PyTorch')(test_case)
     return test_case
 

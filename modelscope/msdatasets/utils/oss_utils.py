@@ -9,6 +9,7 @@ from datasets.utils.file_utils import hash_url_to_filename
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
+from modelscope.utils.config_ds import MS_CACHE_HOME
 from modelscope.utils.constant import (DEFAULT_DATA_ACCELERATION_ENDPOINT,
                                        MetaDataFields, UploadMode)
 from modelscope.utils.logger import get_logger
@@ -32,17 +33,17 @@ class OssUtilities:
         self.namespace = namespace
         self.revision = revision
 
-        self.upload_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/upload'
-        self.download_resumable_store_root_path = '/tmp/modelscope/tmp_dataset/download'
+        self.resumable_store_root_path = os.path.join(MS_CACHE_HOME,
+                                                      'tmp/resumable_store')
         self.num_threads = multiprocessing.cpu_count()
         self.part_size = 1 * 1024 * 1024
         self.multipart_threshold = 50 * 1024 * 1024
         self.max_retries = 3
 
-        self.upload_resumable_store = oss2.ResumableStore(
-            root=self.upload_resumable_store_root_path)
-        self.download_resumable_store = oss2.ResumableDownloadStore(
-            root=self.download_resumable_store_root_path)
+        self.resumable_store_download = oss2.ResumableDownloadStore(
+            root=self.resumable_store_root_path)
+        self.resumable_store_upload = oss2.ResumableStore(
+            root=self.resumable_store_root_path)
         self.api = HubApi()
 
     def _do_init(self, oss_config):
@@ -106,7 +107,7 @@ class OssUtilities:
                         self.bucket,
                         file_oss_key,
                         local_path,
-                        store=self.download_resumable_store,
+                        store=self.resumable_store_download,
                         multiget_threshold=self.multipart_threshold,
                         part_size=self.part_size,
                         progress_callback=self._percentage,
@@ -145,7 +146,7 @@ class OssUtilities:
                     self.bucket,
                     object_key,
                     local_file_path,
-                    store=self.upload_resumable_store,
+                    store=self.resumable_store_upload,
                     multipart_threshold=self.multipart_threshold,
                     part_size=self.part_size,
                     progress_callback=progress_callback,

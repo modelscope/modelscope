@@ -8,7 +8,6 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
 import numpy as np
 import torch
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
-from datasets.config import TF_AVAILABLE, TORCH_AVAILABLE
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
 
@@ -28,6 +27,7 @@ from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, DownloadMode,
                                        Hubs, UploadMode)
+from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -112,6 +112,12 @@ class MsDataset:
         return self._hf_ds[key]
 
     def __len__(self):
+        if isinstance(self._hf_ds, IterableDataset) or isinstance(
+                self._hf_ds, NativeIterableDataset):
+            logger.error(
+                f'object of type `{self._hf_ds.__class__.__name__}` has no __len__()'
+            )
+            return None
         return len(self._hf_ds)
 
     @property
@@ -152,7 +158,8 @@ class MsDataset:
     @classmethod
     def to_ms_dataset(cls,
                       ds_instance: Union[Dataset, DatasetDict, ExternalDataset,
-                                         NativeIterableDataset],
+                                         NativeIterableDataset,
+                                         IterableDataset, IterableDatasetDict],
                       target: str = None) -> Union[dict, 'MsDataset']:
         """Convert input to `MsDataset` instance."""
         if isinstance(ds_instance, Dataset):
@@ -164,6 +171,8 @@ class MsDataset:
         elif isinstance(ds_instance, ExternalDataset):
             return cls(ds_instance)
         elif isinstance(ds_instance, NativeIterableDataset):
+            return cls(ds_instance)
+        elif isinstance(ds_instance, IterableDataset):
             return cls(ds_instance)
         elif isinstance(ds_instance, IterableDatasetDict):
             if len(ds_instance.keys()) == 1:
@@ -218,7 +227,7 @@ class MsDataset:
                 cache_dir (str, Optional): User-define local cache directory.
                 use_streaming (bool, Optional): If set to True, no need to download all data files.
                                                 Instead, it streams the data progressively, and returns
-                                                MsIterableDataset or a dict of MsIterableDataset.
+                                                NativeIterableDataset or a dict of NativeIterableDataset.
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -229,8 +238,20 @@ class MsDataset:
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         hub = Hubs(hub or Hubs.modelscope)
 
-        if isinstance(dataset_name, str) and is_relative_path(
-                dataset_name) and dataset_name.count('/') == 1:
+        if not isinstance(dataset_name, str) and not isinstance(
+                dataset_name, list):
+            raise TypeError(
+                f'dataset_name must be `str` or `list`, but got {type(dataset_name)}'
+            )
+
+        if isinstance(dataset_name, list):
+            if target is None:
+                target = 'target'
+            dataset_inst = Dataset.from_dict({target: dataset_name})
+            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+
+        dataset_name = os.path.expanduser(dataset_name)
+        if is_relative_path(dataset_name) and dataset_name.count('/') == 1:
             dataset_name_split = dataset_name.split('/')
             namespace = dataset_name_split[0].strip()
             dataset_name = dataset_name_split[1].strip()
@@ -255,7 +276,7 @@ class MsDataset:
 
         # Load from local disk
         if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
-                dataset_name):
+                dataset_name) or os.path.isfile(dataset_name):
             dataset_inst = LocalDataLoaderManager(
                 dataset_context_config).load_dataset(
                     LocalDataLoaderType.HF_DATA_LOADER)
@@ -342,7 +363,7 @@ class MsDataset:
             :class:`tf.data.Dataset`
 
         """
-        if not TORCH_AVAILABLE:
+        if not is_torch_available():
             raise ImportError(
                 'The function to_torch_dataset requires pytorch to be installed'
             )
@@ -411,8 +432,9 @@ class MsDataset:
             )
             return {key: output[i] for i, key in enumerate(sample_res)}
 
+        from tensorflow.data.experimental import AUTOTUNE
         tf_dataset = tf_dataset.map(
-            fetch_function, num_parallel_calls=tf.data.AUTOTUNE)
+            fetch_function, num_parallel_calls=AUTOTUNE)
         if label_cols:
 
             def split_features_and_labels(input_batch):
@@ -435,7 +457,7 @@ class MsDataset:
                 batch_size, drop_remainder=drop_remainder)
 
         if prefetch:
-            tf_dataset = tf_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+            tf_dataset = tf_dataset.prefetch(AUTOTUNE)
         return tf_dataset
 
     def to_tf_dataset(
@@ -474,7 +496,7 @@ class MsDataset:
             :class:`tf.data.Dataset`
 
         """
-        if not TF_AVAILABLE:
+        if not is_tf_available():
             raise ImportError(
                 'The function to_tf_dataset requires Tensorflow to be installed.'
             )

@@ -102,6 +102,8 @@ def list_dataset_objects(hub_api: HubApi, max_limit: int, is_recursive: bool,
 
     for item in objects:
         object_key = item.get('Key')
+        if not object_key:
+            continue
         res.append(object_key)
 
     return res
@@ -200,7 +202,12 @@ def get_dataset_files(subset_split_into: dict,
                 meta_csv_file_url)
             if not script_content:
                 raise 'Meta-csv file cannot be empty when meta-args `big_data` is true.'
-            objects = [item.split(',')[0] for item in script_content]
+            for item in script_content:
+                if not item:
+                    continue
+                item = item.strip().split(',')[0]
+                if item:
+                    objects.append(item)
             file_map[split] = objects
     # More general but low-efficiency.
     if not objects:

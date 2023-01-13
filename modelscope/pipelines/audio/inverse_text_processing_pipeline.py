@@ -44,14 +44,16 @@ class InverseTextProcessingPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
 
-    def __call__(self, text_in: str = None) -> str:
+    def __call__(self, text_in: str = None) -> Dict[str, Any]:
 
         if len(text_in) == 0:
             raise ValueError('The input of ITN should not be null.')
         else:
             self.text_in = text_in
+        output = {}
+        itn_result = self.forward(self.text_in)
+        output['text'] = itn_result
 
-        output = self.forward(self.text_in)
         return output
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

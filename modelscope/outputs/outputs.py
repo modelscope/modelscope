@@ -193,6 +193,13 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_recognition: [OutputKeys.IMG_EMBEDDING],
 
+    # face recognition ood result for single sample
+    #   {
+    #       "img_embedding": np.array with shape [1, D],
+    #       "ood_score ": [0.95]
+    #   }
+    Tasks.face_recognition_ood: [OutputKeys.IMG_EMBEDDING, OutputKeys.SCORES],
+
     # human detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]
@@ -722,6 +729,10 @@ TASK_OUTPUTS = {
     # asr result for single sample
     # { "text": "每一天都要快乐喔"}
     Tasks.auto_speech_recognition: [OutputKeys.TEXT],
+
+    # itn result for single sample
+    # {"text": "123"}
+    Tasks.inverse_text_processing: [OutputKeys.TEXT],
 
     # speaker verification for single compare task
     # {'score': 84.2332}

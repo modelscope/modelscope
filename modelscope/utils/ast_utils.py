@@ -288,6 +288,8 @@ class AstScaning(object):
             for node in nodes:
                 if type(node).__name__ == 'Str':
                     result.append((node.s, None))
+                elif type(node).__name__ == 'Constant':
+                    result.append((node.value, None))
                 else:
                     result.append(_get_attribute_item(node))
             return result

@@ -12,6 +12,7 @@ protobuf>=3.19.0,<3.21.0
 pythainlp
 pyvi
 regex
+rouge
 sacremoses>=0.0.41
 scikit_learn
 sentencepiece

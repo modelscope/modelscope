@@ -193,6 +193,13 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_recognition: [OutputKeys.IMG_EMBEDDING],
 
+    # face recognition ood result for single sample
+    #   {
+    #       "img_embedding": np.array with shape [1, D],
+    #       "ood_score ": [0.95]
+    #   }
+    Tasks.face_recognition_ood: [OutputKeys.IMG_EMBEDDING, OutputKeys.SCORES],
+
     # human detection result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]

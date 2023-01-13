@@ -6,11 +6,13 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .video_super_resolution import (VideoReader)
     from .video_stabilization import (stabilization_preprocessor)
+    from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
 
 else:
     _import_structure = {
         'video_super_resolution': ['VideoReader'],
-        'video_stabilization': ['stabilization_preprocessor']
+        'video_stabilization': ['stabilization_preprocessor'],
+        'mmcls_preprocessor': ['ImageClassificationMmcvPreprocessor'],
     }
 
     import sys

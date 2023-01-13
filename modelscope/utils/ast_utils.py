@@ -16,7 +16,7 @@ import gast
 import json
 
 from modelscope import __version__
-from modelscope.fileio.file import LocalStorage, LocalStorageWithLock
+from modelscope.fileio.file import LocalStorage
 from modelscope.metainfo import (Datasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
@@ -26,7 +26,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
 logger = get_logger()
-storage = LocalStorageWithLock()
+storage = LocalStorage()
 p = Path(__file__)
 
 # get the path of package 'modelscope'
@@ -626,7 +626,6 @@ def _save_index(index, file_path, file_list=None, with_template=False):
     if with_template:
         json_index = json_index.replace(MODELSCOPE_PATH.as_posix(),
                                         TEMPLATE_PATH)
-
     storage.write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
         ast.literal_eval(k): v

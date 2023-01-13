@@ -100,13 +100,11 @@ class Model(ABC):
         invoked_by = kwargs.get(Invoke.KEY)
         if invoked_by is not None:
             kwargs.pop(Invoke.KEY)
+        else:
             invoked_by = Invoke.PRETRAINED
 
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
-            check_local_model_is_latest(
-                local_model_dir,
-                user_agent={Invoke.KEY: 'local_%s' % invoked_by})
         else:
             if prefetched is True:
                 raise RuntimeError(

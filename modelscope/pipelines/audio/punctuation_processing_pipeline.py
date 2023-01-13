@@ -44,7 +44,9 @@ class PunctuationProcessingPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
         self.cmd = self.get_cmd()
-
+        self.output_dir = None
+        if 'output_dir' in kwargs:
+            self.output_dir = kwargs['output_dir']
         from funasr.bin import punc_inference_launch
         self.funasr_infer_modelscope = punc_inference_launch.inference_launch(
             mode=self.cmd['mode'],
@@ -52,7 +54,7 @@ class PunctuationProcessingPipeline(Pipeline):
             log_level=self.cmd['log_level'],
             dtype=self.cmd['dtype'],
             seed=self.cmd['seed'],
-            output_dir=self.cmd['output_dir'],
+            output_dir=self.output_dir,
             batch_size=self.cmd['batch_size'],
             num_workers=self.cmd['num_workers'],
             key_file=self.cmd['key_file'],

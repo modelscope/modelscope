@@ -31,7 +31,39 @@ class ASRTrainer(BaseTrainer):
                  dataset_type: str = 'small',
                  data_dir: Optional[Union[MsDataset, str]] = None,
                  model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                 batch_bins: Optional[int] = None,
+                 max_epoch: Optional[int] = None,
+                 lr: Optional[float] = None,
+                 mate_params: Optional[dict] = None,
                  **kwargs):
+        """ASR Trainer.
+
+        Args:
+            model (str) : model name
+            work_dir (str): output dir for saving results
+            distributed (bool): whether to enable DDP training
+            dataset_type (str): choose which dataset type to use
+            data_dir (str): the path of data
+            model_revision (str): set model version
+            batch_bins (str): batch size
+            max_epoch (int): the maximum epoch number for training
+            lr (float): learning rate
+            mate_params (dict): for saving other training args
+        Examples:
+        >>> import os
+        >>> from modelscope.metainfo import Trainers
+        >>> from modelscope.msdatasets import MsDataset
+        >>> from modelscope.trainers import build_trainer
+        >>> ds_dict = MsDataset.load('speech_asr_aishell1_trainsets')
+        >>> kwargs = dict(
+        >>>     model='damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
+        >>>     data_dir=ds_dict,
+        >>>     work_dir="./checkpoint")
+        >>> trainer = build_trainer(
+        >>>     Trainers.speech_asr_trainer, default_args=kwargs)
+        >>> trainer.train()
+
+        """
         if not work_dir:
             self.work_dir = tempfile.TemporaryDirectory().name
             if not os.path.exists(self.work_dir):
@@ -71,7 +103,11 @@ class ASRTrainer(BaseTrainer):
             data_dir=self.data_dir,
             output_dir=self.work_dir,
             distributed=self.distributed,
-            dataset_type=self.dataset_type)
+            dataset_type=self.dataset_type,
+            batch_bins=batch_bins,
+            max_epoch=max_epoch,
+            lr=lr,
+            mate_params=mate_params)
 
     def parse_cfg(self, cfg_file):
         cur_dir = os.path.dirname(cfg_file)

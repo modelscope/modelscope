@@ -39,7 +39,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.output_dir = None
         if 'output_dir' in kwargs:
             self.output_dir = kwargs['output_dir']
-        self.cmd = self.get_cmd()
+        self.cmd = self.get_cmd(kwargs)
         if self.cmd['code_base'] == 'funasr':
             from funasr.bin import asr_inference_launch
             self.funasr_infer_modelscope = asr_inference_launch.inference_launch(
@@ -133,7 +133,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         rst = self.postprocess(output)
         return rst
 
-    def get_cmd(self) -> Dict[str, Any]:
+    def get_cmd(self, extra_args) -> Dict[str, Any]:
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
 
@@ -224,6 +224,28 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 cmd['punc_model_config'] = outputs['punc_model_config']
             else:
                 cmd['punc_model_config'] = None
+            if 'batch_size' in extra_args:
+                cmd['batch_size'] = extra_args['batch_size']
+            if 'mode' in extra_args:
+                cmd['mode'] = extra_args['mode']
+            if 'ngpu' in extra_args:
+                cmd['ngpu'] = extra_args['ngpu']
+            if 'beam_size' in extra_args:
+                cmd['beam_size'] = extra_args['beam_size']
+            if 'decoding_ind' in extra_args:
+                cmd['decoding_ind'] = extra_args['decoding_ind']
+            if 'decoding_mode' in extra_args:
+                cmd['decoding_mode'] = extra_args['decoding_mode']
+            if 'vad_model_file' in extra_args:
+                cmd['vad_model_name'] = extra_args['vad_model_file']
+            if 'vad_infer_config' in extra_args:
+                cmd['vad_model_config'] = extra_args['vad_infer_config']
+            if 'vad_cmvn_file' in extra_args:
+                cmd['vad_mvn_file'] = extra_args['vad_cmvn_file']
+            if 'punc_model_file' in extra_args:
+                cmd['punc_model_name'] = extra_args['punc_model_file']
+            if 'punc_infer_config' in extra_args:
+                cmd['punc_model_config'] = extra_args['punc_infer_config']
 
         elif self.framework == Frameworks.tf:
             cmd['fs']['model_fs'] = outputs['model_config']['fs']

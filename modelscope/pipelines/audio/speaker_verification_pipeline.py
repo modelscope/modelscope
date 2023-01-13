@@ -10,7 +10,8 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.audio.audio_utils import generate_sv_scp_from_url
+from modelscope.utils.audio.audio_utils import (generate_scp_for_sv,
+                                                generate_sv_scp_from_url)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -60,7 +61,8 @@ class SpeakerVerificationPipeline(Pipeline):
             key_file=self.cmd['key_file'],
             model_tag=self.cmd['model_tag'])
 
-    def __call__(self, audio_in: tuple = None) -> Dict[str, Any]:
+    def __call__(self,
+                 audio_in: Union[tuple, str, Any] = None) -> Dict[str, Any]:
         if len(audio_in) == 0:
             raise ValueError('The input of ITN should not be null.')
         else:
@@ -76,8 +78,12 @@ class SpeakerVerificationPipeline(Pipeline):
         rst = {}
         for i in range(len(inputs)):
             if i == 0:
-                score = inputs[0]['value']
-                rst[OutputKeys.SCORES] = score
+                if isinstance(self.audio_in, tuple):
+                    score = inputs[0]['value']
+                    rst[OutputKeys.SCORES] = score
+                else:
+                    embedding = inputs[0]['value']
+                    rst[OutputKeys.SPK_EMBEDDING] = embedding
             else:
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
@@ -105,19 +111,42 @@ class SpeakerVerificationPipeline(Pipeline):
         }
         return cmd
 
-    def forward(self, audio_in: tuple = None) -> list:
+    def forward(self, audio_in: Union[tuple, str, Any] = None) -> list:
         """Decoding
         """
         logger.info(
             'Speaker Verification Processing: {0} ...'.format(audio_in))
 
-        # generate audio_scp
-        audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(audio_in)
-        data_cmd = [(audio_scp_1, 'speech', 'sound'),
-                    (audio_scp_2, 'ref_speech', 'sound')]
+        data_cmd, raw_inputs = None, None
+        if isinstance(audio_in, tuple):
+            # generate audio_scp
+            if isinstance(audio_in[0], str):
+                audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(audio_in)
+                data_cmd = [(audio_scp_1, 'speech', 'sound'),
+                            (audio_scp_2, 'ref_speech', 'sound')]
+            elif isinstance(audio_in[0], bytes):
+                data_cmd = [(audio_in[0], 'speech', 'bytes'),
+                            (audio_in[1], 'ref_speech', 'bytes')]
+            else:
+                raise TypeError('Unsupported data type.')
+        else:
+            if isinstance(audio_in, str):
+                audio_scp = generate_scp_for_sv(audio_in)
+                data_cmd = [(audio_scp, 'speech', 'sound')]
+            elif isinstance(audio_in[0], bytes):
+                data_cmd = [(audio_in, 'speech', 'bytes')]
+            else:
+                import torch
+                import numpy as np
+                if isinstance(audio_in, torch.Tensor):
+                    raw_inputs = audio_in
+                elif isinstance(audio_in, np.ndarray):
+                    raw_inputs = audio_in
+                else:
+                    raise TypeError('Unsupported data type.')
 
         self.cmd['name_and_type'] = data_cmd
-        self.cmd['raw_inputs'] = None
+        self.cmd['raw_inputs'] = raw_inputs
         punc_result = self.run_inference(self.cmd)
 
         return punc_result

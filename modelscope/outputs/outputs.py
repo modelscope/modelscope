@@ -31,6 +31,7 @@ class OutputKeys(object):
     OUTPUT_PCM_LIST = 'output_pcm_list'
     OUTPUT_WAV = 'output_wav'
     IMG_EMBEDDING = 'img_embedding'
+    SPK_EMBEDDING = 'spk_embedding'
     SPO_LIST = 'spo_list'
     TEXT_EMBEDDING = 'text_embedding'
     TRANSLATION = 'translation'

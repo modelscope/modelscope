@@ -77,7 +77,7 @@ class GeneralImageClassificationPipeline(Pipeline):
                 self.preprocessor = Preprocessor.from_pretrained(
                     self.model.model_dir, **kwargs)
                 if self.preprocessor.__class__.__name__ == 'ImageClassificationBypassPreprocessor':
-                    from modelscope.preprocessors.image import ImageClassificationMmcvPreprocessor
+                    from modelscope.preprocessors import ImageClassificationMmcvPreprocessor
                     self.preprocessor = ImageClassificationMmcvPreprocessor(
                         self.model.model_dir, **kwargs)
         logger.info('load model done')

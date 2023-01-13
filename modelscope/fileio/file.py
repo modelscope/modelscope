@@ -9,10 +9,6 @@ from typing import Generator, Union
 
 import requests
 
-from modelscope.utils.logger import get_logger
-
-logger = get_logger()
-
 
 class Storage(metaclass=ABCMeta):
     """Abstract class of storage.
@@ -88,12 +84,7 @@ class LocalStorage(Storage):
         """
         dirname = os.path.dirname(filepath)
         if dirname and not os.path.exists(dirname):
-            try:
-                os.makedirs(dirname)
-            except FileExistsError as err:
-                logger.warning(
-                    f'File directory created by other thread during creation with err: {err}'
-                )
+            os.makedirs(dirname, exist_ok=True)
 
         with open(filepath, 'wb') as f:
             f.write(obj)
@@ -116,12 +107,7 @@ class LocalStorage(Storage):
         """
         dirname = os.path.dirname(filepath)
         if dirname and not os.path.exists(dirname):
-            try:
-                os.makedirs(dirname)
-            except FileExistsError as err:
-                logger.warning(
-                    f'File directory created by other thread during creation with err: {err}'
-                )
+            os.makedirs(dirname, exist_ok=True)
 
         with open(filepath, 'w', encoding=encoding) as f:
             f.write(obj)

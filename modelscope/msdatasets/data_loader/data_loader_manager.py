@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import enum
+import os
 from abc import ABC, abstractmethod
 
 from datasets import load_dataset as hf_data_loader
@@ -9,6 +10,7 @@ from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
 from modelscope.msdatasets.data_loader.data_loader import OssDataLoader
+from modelscope.utils.constant import EXTENSIONS_TO_LOAD
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -47,11 +49,23 @@ class LocalDataLoaderManager(DataLoaderManager):
     def load_dataset(self, data_loader_type: enum.Enum):
         # Get args from context
         dataset_name = self.dataset_context_config.dataset_name
+        subset_name = self.dataset_context_config.subset_name
+        version = self.dataset_context_config.version
+        split = self.dataset_context_config.split
         data_dir = self.dataset_context_config.data_dir
         data_files = self.dataset_context_config.data_files
         cache_root_dir = self.dataset_context_config.cache_root_dir
+        download_mode = self.dataset_context_config.download_mode
         use_streaming = self.dataset_context_config.use_streaming
         input_config_kwargs = self.dataset_context_config.config_kwargs
+
+        # load local single file
+        if os.path.isfile(dataset_name):
+            file_ext = os.path.splitext(dataset_name)[1].strip('.')
+            if file_ext in EXTENSIONS_TO_LOAD:
+                split = None
+                data_files = [dataset_name]
+                dataset_name = EXTENSIONS_TO_LOAD.get(file_ext)
 
         # Select local data loader
         # TODO: more loaders to be supported.
@@ -59,9 +73,13 @@ class LocalDataLoaderManager(DataLoaderManager):
             # Build huggingface data loader and return dataset.
             return hf_data_loader(
                 dataset_name,
+                name=subset_name,
+                revision=version,
+                split=split,
                 data_dir=data_dir,
                 data_files=data_files,
                 cache_dir=cache_root_dir,
+                download_mode=download_mode.value,
                 streaming=use_streaming,
                 ignore_verifications=True,
                 **input_config_kwargs)

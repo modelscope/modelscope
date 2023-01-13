@@ -35,12 +35,16 @@ class TestSeparationTrainer(unittest.TestCase):
         self.dataset = MsDataset.load(
             'csv', data_files={
                 'test': [csv_path]
-            }).to_torch_dataset(preprocessors=[
-                AudioBrainPreprocessor(
-                    takes='mix_wav:FILE', provides='mix_sig'),
-                AudioBrainPreprocessor(takes='s1_wav:FILE', provides='s1_sig'),
-                AudioBrainPreprocessor(takes='s2_wav:FILE', provides='s2_sig')
-            ])
+            }).to_torch_dataset(
+                preprocessors=[
+                    AudioBrainPreprocessor(
+                        takes='mix_wav:FILE', provides='mix_sig'),
+                    AudioBrainPreprocessor(
+                        takes='s1_wav:FILE', provides='s1_sig'),
+                    AudioBrainPreprocessor(
+                        takes='s2_wav:FILE', provides='s2_sig')
+                ],
+                to_tensor=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
@@ -68,6 +72,19 @@ class TestSeparationTrainer(unittest.TestCase):
         checkpoint_dirs = os.listdir(save_dir)
         self.assertEqual(
             len(checkpoint_dirs), 2, f'Cannot find checkpoint in {save_dir}!')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_eval(self):
+        kwargs = dict(
+            model=self.model_id,
+            train_dataset=None,
+            eval_dataset=self.dataset,
+            max_epochs=2,
+            work_dir=self.tmp_dir)
+        trainer = build_trainer(
+            Trainers.speech_separation, default_args=kwargs)
+        result = trainer.evaluate(None)
+        self.assertTrue('si-snr' in result)
 
 
 if __name__ == '__main__':

@@ -128,6 +128,7 @@ class SeparationTrainer(BaseTrainer):
         if self.device.type == 'cuda':
             run_opts['device'] = f'{self.device.type}:{self.device.index}'
         self.epoch_counter = sb.utils.epoch_loop.EpochCounter(self._max_epochs)
+        self.hparams['epoch_counter'] = self.epoch_counter
         self.hparams['checkpointer'].add_recoverables(
             {'counter': self.epoch_counter})
         modules = self.model.as_dict()
@@ -162,6 +163,10 @@ class SeparationTrainer(BaseTrainer):
 
     def evaluate(self, checkpoint_path: str, *args,
                  **kwargs) -> Dict[str, float]:
+        if checkpoint_path:
+            self.hparams.checkpointer.checkpoints_dir = checkpoint_path
+        else:
+            self.model.load_check_point(device=self.device)
         value = self.separator.evaluate(
             self.eval_dataset,
             test_loader_kwargs=self.hparams['dataloader_opts'],
@@ -334,7 +339,6 @@ class Separation(sb.Brain):
 
         # Perform end-of-iteration things, like annealing, logging, etc.
         if stage == sb.Stage.VALID:
-
             # Learning rate annealing
             if isinstance(self.hparams.lr_scheduler,
                           schedulers.ReduceLROnPlateau):
@@ -356,13 +360,6 @@ class Separation(sb.Brain):
             self.checkpointer.save_and_keep_only(
                 meta={'si-snr': stage_stats['si-snr']},
                 min_keys=['si-snr'],
-            )
-        elif stage == sb.Stage.TEST:
-            self.hparams.train_logger.log_stats(
-                stats_meta={
-                    'Epoch loaded': self.hparams.epoch_counter.current
-                },
-                test_stats=stage_stats,
             )
 
     def add_speed_perturb(self, targets, targ_lens):

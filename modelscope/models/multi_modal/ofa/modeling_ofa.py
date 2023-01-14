@@ -262,6 +262,9 @@ class OFAAttention(nn.Module):
         is_decoder (`bool`): whether or not decoder attention.
         bias (`bool`): whether to add bias.
         scale_heads (`bool`): whether to learn scaling heads, only for Normformer.
+        scale_factor (`float32`, *optional*, defaults to `2.0`):
+            The position embedding scaling factor. If it works,
+            self.scaling = float(self.head_dim * scale_factor)**-0.5
     """
 
     def __init__(
@@ -272,6 +275,7 @@ class OFAAttention(nn.Module):
         is_decoder: bool = False,
         bias: bool = True,
         scale_heads: bool = True,
+        scale_factor: float = 2.0,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -283,7 +287,6 @@ class OFAAttention(nn.Module):
         ), f'embed_dim must be divisible by num_heads ' \
            f'(got `embed_dim`: {self.embed_dim} and `num_heads`: {num_heads}).'
         # 1. difference
-        scale_factor = 2
         self.scaling = float(self.head_dim * scale_factor)**-0.5
         self.is_decoder = is_decoder
 
@@ -441,6 +444,7 @@ class OFAEncoderLayer(nn.Module):
             embed_dim=self.embed_dim,
             num_heads=config.encoder_attention_heads,
             dropout=config.attention_dropout,
+            scale_factor=config.attn_scale_factor,
         )
         self.self_attn_layer_norm = LayerNorm(self.embed_dim)
         self.self_attn_mid_layer_norm = LayerNorm(
@@ -456,6 +460,18 @@ class OFAEncoderLayer(nn.Module):
         self.normalize_before = config.encoder_normalize_before
         self.drop_path = DropPath(
             drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
+
+        self.use_gamma_feature = config.use_gamma_feature
+        if self.use_gamma_feature:
+            gamma = getattr(config, 'gamma', 1.)
+
+            # `OFA.from_pretrain()` method will replace the `gamma` to `weight`
+            # in the model key. Here, change the parameters like `xxx_gamma_xxx`
+            # to `xxx_weight_xxx` to adapt this transformation.
+            self.weight_self_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_ffn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
 
     def residual_connection(self, x, residual):
         r"""
@@ -495,6 +511,8 @@ class OFAEncoderLayer(nn.Module):
         if self.self_attn_mid_layer_norm:
             hidden_states = self.self_attn_mid_layer_norm(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_self_attn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.self_attn_layer_norm(hidden_states)
@@ -509,6 +527,8 @@ class OFAEncoderLayer(nn.Module):
             hidden_states = self.ffn_layer_norm(hidden_states)
         hidden_states = self.fc2(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_ffn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.final_layer_norm(hidden_states)
@@ -546,6 +566,7 @@ class OFADecoderLayer(nn.Module):
             num_heads=config.decoder_attention_heads,
             dropout=config.attention_dropout,
             is_decoder=True,
+            scale_factor=config.attn_scale_factor,
         )
         self.dropout = nn.Dropout(p=config.dropout)
         self.activation_fn = ACT2FN[config.activation_function]
@@ -559,6 +580,7 @@ class OFADecoderLayer(nn.Module):
             config.decoder_attention_heads,
             dropout=config.attention_dropout,
             is_decoder=True,
+            scale_factor=config.attn_scale_factor,
         )
         self.cross_attn_layer_norm = LayerNorm(self.embed_dim)
         self.cross_attn_mid_layer_norm = LayerNorm(
@@ -571,6 +593,20 @@ class OFADecoderLayer(nn.Module):
         self.normalize_before = config.decoder_normalize_before
         self.drop_path = DropPath(
             drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
+
+        self.use_gamma_feature = config.use_gamma_feature
+        if self.use_gamma_feature:
+            gamma = getattr(config, 'gamma', 1.)
+
+            # `OFA.from_pretrain()` method will replace the `gamma` to `weight`
+            # in the model key. Here, change the parameters like `xxx_gamma_xxx`
+            # to `xxx_weight_xxx` to adapt this transformation.
+            self.weight_self_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_cross_attn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
+            self.weight_ffn = nn.Parameter(
+                torch.ones(self.embed_dim) * gamma, requires_grad=True)
 
     def residual_connection(self, x, residual):
         r"""
@@ -623,6 +659,8 @@ class OFADecoderLayer(nn.Module):
         if self.self_attn_mid_layer_norm:
             hidden_states = self.self_attn_mid_layer_norm(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_self_attn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.self_attn_layer_norm(hidden_states)
@@ -648,6 +686,8 @@ class OFADecoderLayer(nn.Module):
             if self.cross_attn_mid_layer_norm:
                 hidden_states = self.cross_attn_mid_layer_norm(hidden_states)
             hidden_states = self.dropout(hidden_states)
+            if self.use_gamma_feature:
+                hidden_states = self.weight_cross_attn * hidden_states
             hidden_states = self.residual_connection(hidden_states, residual)
             if not self.normalize_before:
                 hidden_states = self.cross_attn_layer_norm(hidden_states)
@@ -665,6 +705,8 @@ class OFADecoderLayer(nn.Module):
             hidden_states = self.ffn_layer_norm(hidden_states)
         hidden_states = self.fc2(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        if self.use_gamma_feature:
+            hidden_states = self.weight_ffn * hidden_states
         hidden_states = self.residual_connection(hidden_states, residual)
         if not self.normalize_before:
             hidden_states = self.final_layer_norm(hidden_states)
@@ -1954,6 +1996,14 @@ class OFAModel(OFAPreTrainedModel):
         self.encoder = OFAEncoder(config, shared)
         self.decoder = OFADecoder(config, shared)
         self.use_ofasys = config.use_ofasys
+
+        # exclude mlp head as default
+        if not getattr(config, 'exclude_mlp', True):
+            self.mlp_head = Linear(config.d_model, config.mlp_dim)
+        # None temperature_init_value as default
+        if config.temperature_init_value:
+            self.temp = nn.Parameter(config.temperature_init_value
+                                     * torch.ones([]))
 
         # Initialize weights and apply final processing
         self.post_init()

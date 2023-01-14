@@ -253,15 +253,25 @@ class TextFftEncoder(nn.Module):
     def __init__(self, config):
         super(TextFftEncoder, self).__init__()
 
-        # linguistic unit lookup table
-        nb_ling_sy = config['sy']
-        nb_ling_tone = config['tone']
-        nb_ling_syllable_flag = config['syllable_flag']
-        nb_ling_ws = config['word_segment']
+        d_emb = config['embedding_dim']
+        self.using_byte = False
+        if config.get('using_byte', False):
+            self.using_byte = True
+            nb_ling_byte_index = config['byte_index']
+            self.byte_index_emb = nn.Embedding(nb_ling_byte_index, d_emb)
+        else:
+            # linguistic unit lookup table
+            nb_ling_sy = config['sy']
+            nb_ling_tone = config['tone']
+            nb_ling_syllable_flag = config['syllable_flag']
+            nb_ling_ws = config['word_segment']
+            self.sy_emb = nn.Embedding(nb_ling_sy, d_emb)
+            self.tone_emb = nn.Embedding(nb_ling_tone, d_emb)
+            self.syllable_flag_emb = nn.Embedding(nb_ling_syllable_flag, d_emb)
+            self.ws_emb = nn.Embedding(nb_ling_ws, d_emb)
 
         max_len = config['max_len']
 
-        d_emb = config['embedding_dim']
         nb_layers = config['encoder_num_layers']
         nb_heads = config['encoder_num_heads']
         d_model = config['encoder_num_units']
@@ -273,11 +283,6 @@ class TextFftEncoder(nn.Module):
         d_proj = config['encoder_projection_units']
 
         self.d_model = d_model
-
-        self.sy_emb = nn.Embedding(nb_ling_sy, d_emb)
-        self.tone_emb = nn.Embedding(nb_ling_tone, d_emb)
-        self.syllable_flag_emb = nn.Embedding(nb_ling_syllable_flag, d_emb)
-        self.ws_emb = nn.Embedding(nb_ling_ws, d_emb)
 
         position_enc = SinusoidalPositionEncoder(max_len, d_emb)
 
@@ -298,20 +303,26 @@ class TextFftEncoder(nn.Module):
 
     def forward(self, inputs_ling, masks=None, return_attns=False):
         # Parse inputs_ling_seq
-        inputs_sy = inputs_ling[:, :, 0]
-        inputs_tone = inputs_ling[:, :, 1]
-        inputs_syllable_flag = inputs_ling[:, :, 2]
-        inputs_ws = inputs_ling[:, :, 3]
+        if self.using_byte:
+            inputs_byte_index = inputs_ling[:, :, 0]
+            byte_index_embedding = self.byte_index_emb(inputs_byte_index)
+            ling_embedding = byte_index_embedding
+        else:
+            inputs_sy = inputs_ling[:, :, 0]
+            inputs_tone = inputs_ling[:, :, 1]
+            inputs_syllable_flag = inputs_ling[:, :, 2]
+            inputs_ws = inputs_ling[:, :, 3]
 
-        # Lookup table
-        sy_embedding = self.sy_emb(inputs_sy)
-        tone_embedding = self.tone_emb(inputs_tone)
-        syllable_flag_embedding = self.syllable_flag_emb(inputs_syllable_flag)
-        ws_embedding = self.ws_emb(inputs_ws)
+            # Lookup table
+            sy_embedding = self.sy_emb(inputs_sy)
+            tone_embedding = self.tone_emb(inputs_tone)
+            syllable_flag_embedding = self.syllable_flag_emb(
+                inputs_syllable_flag)
+            ws_embedding = self.ws_emb(inputs_ws)
 
-        ling_embedding = (
-            sy_embedding + tone_embedding + syllable_flag_embedding
-            + ws_embedding)
+            ling_embedding = (
+                sy_embedding + tone_embedding + syllable_flag_embedding
+                + ws_embedding)
 
         enc_output, enc_slf_attn_list = self.ling_enc(ling_embedding, masks,
                                                       return_attns)

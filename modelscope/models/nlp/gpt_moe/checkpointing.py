@@ -16,27 +16,13 @@
 import os
 
 import torch
-from megatron import mpu
-from megatron.model import Float16Module
+from megatron_util import mpu
+from megatron_util.model import Float16Module
+from megatron_util.utils import unwrap_model
 from torch.nn.parallel import DistributedDataParallel as torchDDP
 
 from .configuration import logger
 from .moe.layer import MoE
-
-
-def unwrap_model(model, module_instances=(torchDDP)):
-    return_list = True
-    if not isinstance(model, list):
-        model = [model]
-        return_list = False
-    unwrapped_model = []
-    for model_module in model:
-        while isinstance(model_module, module_instances):
-            model_module = model_module.module
-        unwrapped_model.append(model_module)
-    if not return_list:
-        return unwrapped_model[0]
-    return unwrapped_model
 
 
 def get_checkpoint_names(checkpoints_path,
@@ -46,7 +32,7 @@ def get_checkpoint_names(checkpoints_path,
                          expp_rank=None):
     """Determine the directory name for this rank's checkpoint."""
     if tensor_rank is None:
-        tensor_rank = mpu.get_model_parallel_rank()
+        tensor_rank = mpu.get_tensor_model_parallel_rank()
 
     common_path = os.path.join(checkpoints_path, path_load_tag,
                                f'mp_rank_{tensor_rank:02d}')
@@ -64,7 +50,7 @@ def get_checkpoint_names(checkpoints_path,
 
 
 def _get_expert_ckpt_name(checkpoints_path, layer_id, expert_id):
-    mp_rank = mpu.get_model_parallel_rank()
+    mp_rank = mpu.get_tensor_model_parallel_rank()
     ckpt_name = os.path.join(
         os.path.join(checkpoints_path, 'model'),
         f'layer_{layer_id}_expert_{expert_id}_mp_rank_{mp_rank:02d}_model_states.pt'

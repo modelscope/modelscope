@@ -129,7 +129,6 @@ class EpochBasedTrainer(BaseTrainer):
         # add default config
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
-        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -147,7 +146,16 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor)
 
         self._dist = self.init_dist(kwargs.get('launcher'))
+
+        if is_master() and not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+
         self.device = self.get_device(kwargs.get('device'))
+
+        # init logger after distribution init
+        log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
+        self.logger = get_logger(
+            log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,
@@ -280,7 +288,7 @@ class EpochBasedTrainer(BaseTrainer):
         Returns: The rebuilt config
 
         """
-        if self.cfg_modify_fn is not None:
+        if hasattr(self, 'cfg_modify_fn') and self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
 
@@ -477,18 +485,8 @@ class EpochBasedTrainer(BaseTrainer):
 
     def train(self, checkpoint_path=None, *args, **kwargs):
         self._mode = ModeKeys.TRAIN
-
-        if self.train_dataset is None:
-            self.train_dataloader = self.get_train_dataloader()
-        else:
-            self.train_dataloader = self._build_dataloader_with_dataset(
-                self.train_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.train_data_collator,
-                **self.cfg.train.get('dataloader', {}))
+        self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
-
         self.register_optimizers_hook()
         self.register_hook_from_cfg(self.cfg.train.hooks)
         self.set_checkpoint_file_to_hook(checkpoint_path)
@@ -502,15 +500,7 @@ class EpochBasedTrainer(BaseTrainer):
             CheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-        if self.eval_dataset is None:
-            self.eval_dataloader = self.get_eval_data_loader()
-        else:
-            self.eval_dataloader = self._build_dataloader_with_dataset(
-                self.eval_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.eval_data_collator,
-                **self.cfg.evaluation.get('dataloader', {}))
+        self.eval_dataloader = self.get_eval_data_loader()
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
         for m in metric_classes:
@@ -672,19 +662,14 @@ class EpochBasedTrainer(BaseTrainer):
                 mode=ModeKeys.EVAL,
                 preprocessor=self.eval_preprocessor)
 
-        batch_size = self.cfg.evaluation.dataloader.batch_size_per_gpu
-        workers = self.cfg.evaluation.dataloader.workers_per_gpu
-        shuffle = self.cfg.evaluation.dataloader.get('shuffle', False)
+        default_config = {'shuffle': False}
+        default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
             self.eval_dataset,
-            batch_size_per_gpu=batch_size,
-            workers_per_gpu=workers,
-            shuffle=shuffle,
             dist=self._dist,
             seed=self._seed,
-            persistent_workers=True,
             collate_fn=self.eval_data_collator,
-        )
+            **default_config)
         return data_loader
 
     def build_dataset(self, data_cfg, mode, preprocessor=None):
@@ -942,73 +927,55 @@ class EpochBasedTrainer(BaseTrainer):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
+        vis_closure = None
+        if hasattr(self.cfg.evaluation, 'visualization'):
+            vis_cfg = self.cfg.evaluation.visualization
+            vis_closure = partial(
+                self.visualization, dataset=self.eval_dataset, **vis_cfg)
+
         if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
-            results, data_list = multi_gpu_test(
+            metric_values = multi_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
-                tmpdir=None,
-                gpu_collect=False,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
+                tmpdir=self.cfg.evaluation.get('cache_dir', None),
+                gpu_collect=self.cfg.evaluation.get('gpu_collect', False),
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            results, data_list = single_gpu_test(
+            metric_values = single_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
 
         self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
-        # evaluation result processing
-        if hasattr(self.cfg.evaluation, 'visualization'):
-            flatten_results = []
-            for r in results:
-                flatten_results.extend(r)
-            vis_cfg = self.cfg.evaluation.visualization
-            self.visualization(results, self.eval_dataset, **vis_cfg)
-
-        # do evaluation on rank0
-        metric_values = {}
-        if not self._dist or is_master():
-            assert len(data_list) == len(
-                results), f'size mismatch {len(data_list)} and {len(results)}'
-            for metric_cls in metric_classes:
-                for idx in range(len(data_list)):
-                    metric_cls.add(results[idx], data_list[idx])
-
-            for metric_cls in metric_classes:
-                metric_values.update(metric_cls.evaluate())
-
-        _, world_size = get_dist_info()
-        if world_size > 1:
-            metric_values = broadcast(metric_values, 0)
         return metric_values
 
-    def visualization(self, results, dataset, **kwargs):
+    def visualization(self, batch_result, dataset, **kwargs):
         """ visualization function for evaluation results.
+
+        Examples:
+            # draw list of images as numpy array
+            images = draw_images(num_of_visualization)
+
+            # set displayed name for each image
+            filenames = get_image_display_names()
+            vis_results = {'images': images, 'filenames' : filenames}
+
+            # visualization results will be displayed in group named eva_vis
+            self.visualization_buffer.output['eval_vis'] = vis_results
 
         Args:
             results (list(dict)):  a list of result dict.
-            dataset (:obj:`Dataset`): torch dataset object to access original data.
-
-        Implementation Examples:
-        ```python
-        # draw list of images as numpy array
-        images = draw_images(num_of_visualization)
-
-        # set displayed name for each image
-        filenames = get_image_display_names()
-        vis_results = {
-            'images': images,
-            'filenames' : filenames
-        }
-
-        # visualization results will be displayed in group named eva_vis
-        self.visualization_buffer.output['eval_vis'] = vis_results
-        ```
+            dataset (Dataset): torch dataset object to access original data.
         """
         # TODO @wenmeng.zwm add visualization support for cv evaluation
         raise NotImplementedError(

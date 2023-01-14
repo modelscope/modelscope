@@ -76,3 +76,14 @@ class TextGenerationMetric(Metric):
             MetricKeys.BLEU_1: bleu_1,
             MetricKeys.BLEU_4: bleu_4
         }
+
+    def merge(self, other: 'TextGenerationMetric'):
+        self.preds.extend(other.preds)
+        self.tgts.extend(other.tgts)
+
+    def __getstate__(self):
+        return self.preds, self.tgts
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.tgts = state

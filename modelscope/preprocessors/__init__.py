@@ -8,14 +8,16 @@ if TYPE_CHECKING:
     from .builder import PREPROCESSORS, build_preprocessor
     from .common import Compose, ToTensor, Filter
     from .asr import WavToScp
-    from .audio import LinearAECAndFbank
+    from .audio import LinearAECAndFbank, AudioBrainPreprocessor
     from .image import (LoadImage, load_image,
                         ImageColorEnhanceFinetunePreprocessor,
                         ImageInstanceSegmentationPreprocessor,
-                        ImageDenoisePreprocessor)
+                        ImageDenoisePreprocessor, ImageDeblurPreprocessor)
+    from .cv import (ImageClassificationMmcvPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
-    from .multi_modal import (OfaPreprocessor, MPlugPreprocessor)
+    from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
+                              HiTeAPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
         FaqQuestionAnsweringTransformersPreprocessor,
@@ -24,6 +26,7 @@ if TYPE_CHECKING:
         RelationExtractionTransformersPreprocessor,
         SentenceEmbeddingTransformersPreprocessor,
         TextClassificationTransformersPreprocessor,
+        TextGenerationSentencePiecePreprocessor,
         TokenClassificationTransformersPreprocessor,
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
         TextGenerationTransformersPreprocessor, Tokenize,
@@ -35,7 +38,8 @@ if TYPE_CHECKING:
         DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
-        TranslationEvaluationPreprocessor)
+        TranslationEvaluationPreprocessor,
+        DialogueClassificationUsePreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -43,16 +47,19 @@ else:
         'base': ['Preprocessor'],
         'builder': ['PREPROCESSORS', 'build_preprocessor'],
         'common': ['Compose', 'ToTensor', 'Filter'],
-        'audio': ['LinearAECAndFbank'],
+        'audio': ['LinearAECAndFbank', 'AudioBrainPreprocessor'],
         'asr': ['WavToScp'],
         'video': ['ReadVideoData', 'MovieSceneSegmentationPreprocessor'],
         'image': [
             'LoadImage', 'load_image', 'ImageColorEnhanceFinetunePreprocessor',
-            'ImageInstanceSegmentationPreprocessor', 'ImageDenoisePreprocessor'
+            'ImageInstanceSegmentationPreprocessor',
+            'ImageDenoisePreprocessor', 'ImageDeblurPreprocessor'
         ],
+        'cv': ['ImageClassificationMmcvPreprocessor'],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],
-        'multi_modal': ['OfaPreprocessor', 'MPlugPreprocessor'],
+        'multi_modal':
+        ['OfaPreprocessor', 'MPlugPreprocessor', 'HiTeAPreprocessor'],
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',
             'FaqQuestionAnsweringTransformersPreprocessor',
@@ -61,6 +68,7 @@ else:
             'TextRankingTransformersPreprocessor',
             'RelationExtractionTransformersPreprocessor',
             'SentenceEmbeddingTransformersPreprocessor',
+            'TextGenerationSentencePiecePreprocessor',
             'TextClassificationTransformersPreprocessor',
             'TokenClassificationTransformersPreprocessor',
             'TextErrorCorrectionPreprocessor',
@@ -76,7 +84,8 @@ else:
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
-            'TranslationEvaluationPreprocessor'
+            'TranslationEvaluationPreprocessor',
+            'DialogueClassificationUsePreprocessor'
         ],
     }
 

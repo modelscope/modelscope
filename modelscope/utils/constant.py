@@ -22,8 +22,10 @@ class CVTasks(object):
     # human face body related
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
+    face_liveness = 'face-liveness'
     card_detection = 'card-detection'
     face_recognition = 'face-recognition'
+    face_recognition_ood = 'face-recognition-ood'
     facial_expression_recognition = 'facial-expression-recognition'
     facial_landmark_confidence = 'facial-landmark-confidence'
     face_processing_base = 'face-processing-base'
@@ -45,10 +47,14 @@ class CVTasks(object):
 
     image_object_detection = 'image-object-detection'
     video_object_detection = 'video-object-detection'
+    image_fewshot_detection = 'image-fewshot-detection'
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
     image_depth_estimation = 'image-depth-estimation'
+    indoor_layout_estimation = 'indoor-layout-estimation'
+    video_depth_estimation = 'video-depth-estimation'
+    panorama_depth_estimation = 'panorama-depth-estimation'
     portrait_matting = 'portrait-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'
@@ -56,6 +62,7 @@ class CVTasks(object):
     face_human_hand_detection = 'face-human-hand-detection'
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
+    image_matching = 'image-matching'
 
     crowd_counting = 'crowd-counting'
 
@@ -65,6 +72,7 @@ class CVTasks(object):
     image_colorization = 'image-colorization'
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'
+    image_deblurring = 'image-deblurring'
     image_portrait_enhancement = 'image-portrait-enhancement'
     image_inpainting = 'image-inpainting'
     image_skychange = 'image-skychange'
@@ -76,7 +84,7 @@ class CVTasks(object):
     image_portrait_stylization = 'image-portrait-stylization'
     image_body_reshaping = 'image-body-reshaping'
     image_embedding = 'image-embedding'
-
+    image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
 
     # video recognition
@@ -88,6 +96,7 @@ class CVTasks(object):
     virtual_try_on = 'virtual-try-on'
     movie_scene_segmentation = 'movie-scene-segmentation'
     language_guided_video_summarization = 'language-guided-video-summarization'
+    vop_retrieval = 'video-text-retrieval'
 
     # video segmentation
     video_object_segmentation = 'video-object-segmentation'
@@ -96,11 +105,23 @@ class CVTasks(object):
 
     # video editing
     video_inpainting = 'video-inpainting'
+    video_frame_interpolation = 'video-frame-interpolation'
+    video_stabilization = 'video-stabilization'
+    video_super_resolution = 'video-super-resolution'
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
+    video_multi_object_tracking = 'video-multi-object-tracking'
     video_summarization = 'video-summarization'
     image_reid_person = 'image-reid-person'
+
+    # pointcloud task
+    pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
+    # image multi-view depth estimation
+    image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
+
+    # domain specific object detection
+    domain_specific_object_detection = 'domain-specific-object-detection'
 
 
 class NLPTasks(object):
@@ -140,6 +161,8 @@ class NLPTasks(object):
     extractive_summarization = 'extractive-summarization'
     feature_extraction = 'feature-extraction'
     translation_evaluation = 'translation-evaluation'
+    sudoku = 'sudoku'
+    text2sql = 'text2sql'
 
 
 class AudioTasks(object):
@@ -147,9 +170,13 @@ class AudioTasks(object):
     auto_speech_recognition = 'auto-speech-recognition'
     text_to_speech = 'text-to-speech'
     speech_signal_process = 'speech-signal-process'
+    speech_separation = 'speech-separation'
     acoustic_echo_cancellation = 'acoustic-echo-cancellation'
     acoustic_noise_suppression = 'acoustic-noise-suppression'
     keyword_spotting = 'keyword-spotting'
+    inverse_text_processing = 'inverse-text-processing'
+    punctuation = 'punctuation'
+    speaker_verification = 'speaker-verification'
 
 
 class MultiModalTasks(object):
@@ -164,6 +191,9 @@ class MultiModalTasks(object):
     visual_entailment = 'visual-entailment'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
     image_text_retrieval = 'image-text-retrieval'
+    document_vl_embedding = 'document-vl-embedding'
+    video_captioning = 'video-captioning'
+    video_question_answering = 'video-question-answering'
 
 
 class ScienceTasks(object):
@@ -278,6 +308,8 @@ class DatasetFormations(enum.Enum):
     # native modelscope formation that supports, among other things,
     # multiple files in a dataset
     native = 2
+    # for local meta cache mark
+    formation_mark_ext = '.formation_mark'
 
 
 DatasetMetaFormats = {
@@ -300,6 +332,8 @@ class ModelFile(object):
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
     TS_MODEL_FILE = 'model.ts'
+    YAML_FILE = 'model.yaml'
+    TOKENIZER_FOLDER = 'tokenizer'
 
 
 class Invoke(object):
@@ -307,6 +341,7 @@ class Invoke(object):
     PRETRAINED = 'from_pretrained'
     PIPELINE = 'pipeline'
     TRAINER = 'trainer'
+    LOCAL_TRAINER = 'local_trainer'
     PREPROCESSOR = 'preprocessor'
 
 
@@ -355,6 +390,7 @@ MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
 DEFAULT_DATASET_NAMESPACE = 'modelscope'
+DEFAULT_DATA_ACCELERATION_ENDPOINT = 'https://oss-accelerate.aliyuncs.com'
 
 
 class ModeKeys:
@@ -413,5 +449,15 @@ EXTENSIONS_TO_LOAD = {
 }
 
 
+class DatasetPathName:
+    META_NAME = 'meta'
+    DATA_FILES_NAME = 'data_files'
+    LOCK_FILE_NAME_ANY = 'any'
+    LOCK_FILE_NAME_DELIMITER = '-'
+
+
 class MetaDataFields:
     ARGS_BIG_DATA = 'big_data'
+
+
+DatasetVisibilityMap = {1: 'private', 3: 'internal', 5: 'public'}

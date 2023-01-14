@@ -21,6 +21,10 @@ if TYPE_CHECKING:
     from .bleu_metric import BleuMetric
     from .image_inpainting_metric import ImageInpaintingMetric
     from .referring_video_object_segmentation_metric import ReferringVideoObjectSegmentationMetric
+    from .video_frame_interpolation_metric import VideoFrameInterpolationMetric
+    from .video_stabilization_metric import VideoStabilizationMetric
+    from .video_super_resolution_metric.video_super_resolution_metric import VideoSuperResolutionMetric
+    from .ppl_metric import PplMetric
 
 else:
     _import_structure = {
@@ -43,6 +47,9 @@ else:
         'bleu_metric': ['BleuMetric'],
         'referring_video_object_segmentation_metric':
         ['ReferringVideoObjectSegmentationMetric'],
+        'video_frame_interpolation_metric': ['VideoFrameInterpolationMetric'],
+        'video_stabilization_metric': ['VideoStabilizationMetric'],
+        'ppl_metric': ['PplMetric'],
     }
 
     import sys

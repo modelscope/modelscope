@@ -1,0 +1,8 @@
+2023-01-11 09:05:29,113 - modelscope - WARNING - Authentication has expired, please re-login if you need to access private models or datasets.
+2023-01-11 09:05:29,285 - modelscope - WARNING - Authentication has expired, please re-login if you need to access private models or datasets.
+2023-01-11 09:05:29,436 - modelscope - INFO - Model revision not specified, use default: master in development mode
+2023-01-11 09:05:29,436 - modelscope - INFO - Development mode use revision: master
+2023-01-11 09:05:29,590 - modelscope - INFO - File configuration.json already in cache, skip downloading!
+2023-01-11 09:05:29,590 - modelscope - INFO - File model.onnx already in cache, skip downloading!
+2023-01-11 09:05:29,590 - modelscope - INFO - File README.md already in cache, skip downloading!
+2023-01-11 09:05:29,590 - modelscope - INFO - File result.png already in cache, skip downloading!

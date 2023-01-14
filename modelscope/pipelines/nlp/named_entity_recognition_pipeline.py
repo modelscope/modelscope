@@ -29,7 +29,7 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate=True,
-                 sequence_length=128,
+                 sequence_length=512,
                  **kwargs):
         """Use `model` and `preprocessor` to create a nlp NER pipeline for prediction
 

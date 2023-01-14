@@ -3,7 +3,6 @@
 import numpy as np
 from PIL import Image
 
-from modelscope.models.base.base_head import Input
 from modelscope.utils.constant import Tasks
 
 
@@ -38,10 +37,10 @@ INPUT_TYPE = {
 
 def check_input_type(input_type, input):
     expected_type = INPUT_TYPE[input_type]
-    if expected_type == 'cv2.VideoCapture':
+    if input_type == InputType.VIDEO:
         # special type checking using class name, to avoid introduction of opencv dependency into fundamental framework.
-        assert type(input).__name__ == 'VideoCapture',\
-            f'invalid input type for {input_type}, expected cv2.VideoCapture but got {type(input)}\n {input}'
+        assert type(input).__name__ == 'VideoCapture' or isinstance(input, expected_type),\
+            f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'
     else:
         assert isinstance(input, expected_type), \
             f'invalid input type for {input_type}, expected {expected_type} but got {type(input)}\n {input}'
@@ -53,7 +52,7 @@ TASK_INPUTS = {
     # if task input is a dict, value is a dict of InputType, where key
     # equals the one needed in pipeline input dict
     # if task input is a list, value is a set of input format, in which
-    # each elements corresponds to one input format as described above.
+    # each element corresponds to one input format as described above.
     # ============ vision tasks ===================
     Tasks.ocr_detection:
     InputType.IMAGE,
@@ -77,9 +76,13 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_object_detection:
     InputType.IMAGE,
+    Tasks.domain_specific_object_detection:
+    InputType.IMAGE,
     Tasks.image_segmentation:
     InputType.IMAGE,
     Tasks.portrait_matting:
+    InputType.IMAGE,
+    Tasks.image_fewshot_detection:
     InputType.IMAGE,
 
     # image editing task result for a single image
@@ -128,6 +131,8 @@ TASK_INPUTS = {
     Tasks.hand_2d_keypoints:
     InputType.IMAGE,
     Tasks.video_single_object_tracking: (InputType.VIDEO, InputType.BOX),
+    Tasks.video_multi_object_tracking:
+    InputType.VIDEO,
     Tasks.video_category:
     InputType.VIDEO,
     Tasks.product_retrieval_embedding:
@@ -198,6 +203,12 @@ TASK_INPUTS = {
         'src': InputType.LIST,
         'ref': InputType.LIST,
     },
+    Tasks.sudoku:
+    InputType.TEXT,
+    Tasks.text2sql: {
+        'text': InputType.TEXT,
+        'database': InputType.TEXT
+    },
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:
@@ -211,16 +222,23 @@ TASK_INPUTS = {
         'nearend_mic': InputType.AUDIO,
         'farend_speech': InputType.AUDIO
     },
+    Tasks.speech_separation:
+    InputType.AUDIO,
     Tasks.acoustic_noise_suppression:
     InputType.AUDIO,
     Tasks.text_to_speech:
     InputType.TEXT,
     Tasks.keyword_spotting:
     InputType.AUDIO,
+    Tasks.inverse_text_processing:
+    InputType.TEXT,
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {
         'image': InputType.IMAGE,
+    }],
+    Tasks.video_captioning: [InputType.VIDEO, {
+        'video': InputType.VIDEO,
     }],
     Tasks.visual_grounding: {
         'image': InputType.IMAGE,
@@ -243,6 +261,10 @@ TASK_INPUTS = {
     },
     Tasks.visual_question_answering: {
         'image': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
+    Tasks.video_question_answering: {
+        'video': InputType.VIDEO,
         'text': InputType.TEXT
     },
     Tasks.visual_entailment: {

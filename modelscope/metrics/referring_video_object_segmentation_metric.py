@@ -63,6 +63,15 @@ class ReferringVideoObjectSegmentationMetric(Metric):
 
         return eval_metrics
 
+    def merge(self, other: 'ReferringVideoObjectSegmentationMetric'):
+        self.preds.extend(other.preds)
+
+    def __getstate__(self):
+        return self.ann_file, self.calculate_precision_and_iou_metrics, self.preds
+
+    def __setstate__(self, state):
+        self.ann_file, self.calculate_precision_and_iou_metrics, self.preds = state
+
 
 def compute_iou(outputs: torch.Tensor, labels: torch.Tensor, EPS=1e-6):
     outputs = outputs.int()

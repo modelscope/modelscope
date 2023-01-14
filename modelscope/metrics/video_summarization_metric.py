@@ -79,3 +79,13 @@ class VideoSummarizationMetric(Metric):
         ]
 
         return {MetricKeys.FScore: sum(f_scores) / len(f_scores)}
+
+    def merge(self, other: 'VideoSummarizationMetric'):
+        self.inputs.extend(other.inputs)
+        self.outputs.extend(other.outputs)
+
+    def __getstate__(self):
+        return self.inputs, self.outputs
+
+    def __setstate__(self, state):
+        self.inputs, self.outputs = state

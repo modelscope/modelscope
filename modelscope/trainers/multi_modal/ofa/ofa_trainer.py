@@ -2,15 +2,19 @@
 
 import math
 import os
+import shutil
+import tempfile
 from functools import partial
 from shutil import ignore_patterns
 from typing import Callable, Dict, Optional, Tuple, Union
 
+import json
 import torch
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import Dataset
 
+from modelscope.hub.file_download import model_file_download
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
@@ -30,6 +34,36 @@ from .ofa_trainer_utils import (AdjustLabelSmoothedCrossEntropyCriterion,
 
 @TRAINERS.register_module(module_name=Trainers.ofa)
 class OFATrainer(EpochBasedTrainer):
+    r"""
+    OFA trainer for MaaS.
+
+    Args:
+        model (`str`): A model dir or a model id to be loaded
+        cfg_file (`str`, **optional**, default to `None`):
+            A config dir
+        cfg_modify_fn (`Callable`, **optional**, default to `None`):
+            A function which can rebuild the config file.
+        arg_parse_fn (`Callable`, **optional**, default to `None`):
+            Same as ``parse_fn`` in :obj:`Config.to_args`.
+        data_collator (`Callable`, **optional**, default to `None`):
+            The function to use to form a batch from a list of elements
+            of `train_dataset` or `eval_dataset`.
+        train_dataset (:obj:`MsDataset` or :obj:`Dataset`, **optional**, default to `None`):
+            Dataset for training.
+        eval_dataset (:obj:`MsDataset` or :obj:`Dataset`, **optional**, default to `None`):
+            Dataset for evaluation.
+        preprocessor (:obj:`Preprocessor`, **optional**, default to `None`):
+            The optional preprocessor.
+            NOTE: If the preprocessor has been called before the dataset fed into this trainer by user's custom code,
+            this parameter should be None, meanwhile remove the 'preprocessor' key from the cfg_file.
+            Else the preprocessor will be instantiated from the cfg_file or assigned from this parameter and
+            this preprocessing action will be executed every time the dataset's __getitem__ is called.
+        model_revision (`str`, **optional**, default to `None`):
+            The revision used when the model_name_or_path is
+                a model id of the remote hub. default `None`.
+        seed (`int`, **optional**, default to `42`):
+            The optional random seed for torch, cuda, numpy and random.
+    """
 
     def __init__(
             self,
@@ -53,18 +87,26 @@ class OFATrainer(EpochBasedTrainer):
             model, revision=model_revision, invoked_by=Invoke.TRAINER)
         model_dir = model.model_dir
         self.cfg_modify_fn = cfg_modify_fn
-        cfg = self.rebuild_config(Config.from_file(cfg_file))
-        if 'work_dir' not in kwargs or len(kwargs['work_dir']) == 0:
-            work_dir = cfg.train.work_dir
-        else:
-            work_dir = kwargs['work_dir']
 
+        work_dir = kwargs.get('work_dir', 'workspace')
         os.makedirs(work_dir, exist_ok=True)
         ignore_file_set = set()
-        ignore_file_set.add(ModelFile.CONFIGURATION)
+        if cfg_file is not None:
+            cfg_file = self.get_config_file(cfg_file)
+            dst = os.path.abspath(
+                os.path.join(work_dir, ModelFile.CONFIGURATION))
+            src = os.path.abspath(cfg_file)
+            if src != dst:
+                shutil.copy(src, work_dir)
+            ignore_file_set.add(ModelFile.CONFIGURATION)
         recursive_overwrite(
             model_dir, work_dir, ignore=ignore_patterns(*ignore_file_set))
-
+        cfg_file = os.path.join(work_dir, ModelFile.CONFIGURATION)
+        cfg = self.rebuild_config(Config.from_file(cfg_file))
+        if cfg_modify_fn is not None:
+            cfg = self.cfg_modify_fn(cfg)
+            with open(cfg_file, 'w') as writer:
+                json.dump(dict(cfg), fp=writer, indent=4)
         if preprocessor is None:
             preprocessor = {
                 ConfigKeys.train:
@@ -113,6 +155,7 @@ class OFATrainer(EpochBasedTrainer):
             model=model,
             cfg_file=cfg_file,
             arg_parse_fn=arg_parse_fn,
+            cfg_modify_fn=cfg_modify_fn,
             data_collator=data_collator,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
@@ -123,11 +166,47 @@ class OFATrainer(EpochBasedTrainer):
         )
 
     def rebuild_config(self, cfg: Config):
+        r"""
+        rebuild config if `cfg_modify_fn` is not `None`.
+        """
         if self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
 
+    def get_config_file(self, config_file: str):
+        r"""
+        support local file/ url or model_id with revision
+        """
+        if os.path.exists(config_file):
+            return config_file
+        else:
+            temp_name = tempfile.TemporaryDirectory().name
+            if len(config_file.split('#')) == 2:
+                model_id = config_file.split('#')[0]
+                revision = config_file.split('#')[-1].split('=')[-1]
+            else:
+                model_id = config_file
+                revision = DEFAULT_MODEL_REVISION
+            file_name = model_file_download(
+                model_id,
+                file_path=ModelFile.CONFIGURATION,
+                revision=revision,
+                cache_dir=temp_name)
+            return file_name
+
     def train_step(self, model, inputs):
+        r"""
+        A single training step.
+
+        step 1. Let the model in a trainable state.
+        step 2. Execute the criterion function.
+        step 3. Update the logging variable's value.
+        step 4. Update the training result.
+
+        Args:
+            model (:obj:`torch.nn.Module` or :obj:`TorchModel`): The model to be run.
+            inputs (`dict`): model inputs.
+        """
         model = model.module if self._dist or is_parallel(model) else model
         model.train()
         loss, sample_size, logging_output = self.criterion(model, inputs)

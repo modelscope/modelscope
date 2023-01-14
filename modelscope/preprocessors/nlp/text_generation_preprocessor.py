@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 import os.path as osp
 from typing import Any, Dict, Optional, Union
 
@@ -161,12 +162,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         output = self.nlp_tokenizer(sequence1, **kwargs)
         if self.mode != ModeKeys.INFERENCE:
             if sequence2 is not None:
-                self.nlp_tokenizer.tokenize_kwargs[
-                    'max_length'] = self.tgt_length
-                labels = self.nlp_tokenizer(sequence2)['input_ids']
-                self.nlp_tokenizer.tokenize_kwargs[
-                    'max_length'] = self.src_length
-
+                labels = self._get_labels_from_tgt(sequence2)
                 src_input_ids = output['input_ids']
                 src_attention_mask = output['attention_mask']
             else:
@@ -181,6 +177,12 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
             }
         return output
 
+    def _get_labels_from_tgt(self, sequence: str) -> torch.Tensor:
+        self.nlp_tokenizer.tokenize_kwargs['max_length'] = self.tgt_length
+        labels = self.nlp_tokenizer(sequence)['input_ids']
+        self.nlp_tokenizer.tokenize_kwargs['max_length'] = self.src_length
+        return labels
+
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.text_gen_jieba_tokenizer)
@@ -192,16 +194,11 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                  model_dir: str,
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
-                 tgt_txt=None,
+                 tgt_txt='tgt_txt',
                  sequence_length: int = 128,
                  use_fast=None):
         from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
         super().__init__(mode, src_txt, tgt_txt)
-        if self.tgt_txt is not None:
-            logger.warning(
-                f'TextGenerationJiebaPreprocessor currently does not support training, '
-                f'the {self.tgt_txt} of the tgt_txt field will be ignored.')
-        self.src_txt = src_txt
         self.tokenizer = JiebaBPETokenizer(
             osp.join(model_dir, 'tokenizer.json'))
         self.max_length = sequence_length
@@ -250,7 +247,68 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                 'tokens': tokens[:-1],
                 'labels': tokens[1:],
                 'prompt_length': prompt_length,
+                'is_pair': int(sequence2 is not None),
             }
+
+
+@PREPROCESSORS.register_module(
+    Fields.nlp, module_name=Preprocessors.sentence_piece)
+class TextGenerationSentencePiecePreprocessor(TextGenerationPreprocessorBase):
+
+    def __init__(self,
+                 model_dir: str,
+                 mode: str = ModeKeys.INFERENCE,
+                 src_txt='src_txt',
+                 tgt_txt=None,
+                 **kwargs):
+        """
+
+        Args:
+            model_dir: The model dir of the sentence piece model.
+            mode: The preprocessor mode, currently either mode will have the same behaviour.
+            src_txt: The key of input text, if input format is dict.
+            tgt_txt: The key of target text, used in training.
+
+        Examples:
+            >>> from modelscope.utils.hub import snapshot_download
+            >>> from modelscope.preprocessors import TextGenerationSentencePiecePreprocessor
+            >>> model_dir = snapshot_download('langboat/mengzi-gpt-neo-base')
+            >>> preprocessor = TextGenerationSentencePiecePreprocessor(model_dir)
+            >>> print(preprocessor('test word'))
+        """
+        if 'first_sequence' in kwargs:
+            src_txt = kwargs.pop('first_sequence')
+
+        import sentencepiece as spm
+        super().__init__(mode, src_txt, tgt_txt)
+        self.tokenizer = None
+        for file_name in os.listdir(model_dir):
+            if file_name.endswith('.model'):
+                m_file = osp.join(model_dir, file_name)
+                self.tokenizer = spm.SentencePieceProcessor(model_file=m_file)
+                break
+        assert self.tokenizer is not None, 'Can not find .model file'
+
+    def __call__(self, data: Union[Dict, str], **kwargs):
+        text_a, text_b = parse_text_and_label(data, self.mode, self.src_txt,
+                                              self.tgt_txt)[0:2]
+
+        return self._tokenize_text(text_a, text_b, **kwargs)
+
+    def _tokenize_text(self, sequence1, sequence2=None, **kwargs):
+        return torch.tensor(
+            self.tokenizer.encode([sequence1]), dtype=torch.long)
+
+    def decode(self, tokens, **kwargs):
+        """Decode the tokens to real text.
+
+        Args:
+            tokens: The output tokens from model's `forward` and `generate`
+
+        Returns:
+            The actual text.
+        """
+        return self.tokenizer.decode(tokens)
 
 
 @PREPROCESSORS.register_module(
@@ -283,3 +341,6 @@ class TextGenerationT5Preprocessor(TextGenerationTransformersPreprocessor):
             padding=kwargs.pop('padding', 'max_length'),
             return_token_type_ids=kwargs.pop('return_token_type_ids', False),
             **kwargs)
+
+
+SentencePiecePreprocessor = TextGenerationSentencePiecePreprocessor

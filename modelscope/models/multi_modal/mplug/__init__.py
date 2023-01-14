@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .configuration_mplug import MPlugConfig
-from .modeling_mplug import CONFIG_NAME, MPlug
+from .configuration_mplug import HiTeAConfig, MPlugConfig
+from .modeling_mplug import CONFIG_NAME, HiTeA, MPlug

@@ -123,21 +123,47 @@ class Voice:
             with torch.no_grad():
                 inputs_feat_lst = self.__ling_unit.encode_symbol_sequence(
                     symbol_seq)
-                inputs_sy = torch.from_numpy(inputs_feat_lst[0]).long().to(
-                    self.__device)
-                inputs_tone = torch.from_numpy(inputs_feat_lst[1]).long().to(
-                    self.__device)
-                inputs_syllable = torch.from_numpy(
-                    inputs_feat_lst[2]).long().to(self.__device)
-                inputs_ws = torch.from_numpy(inputs_feat_lst[3]).long().to(
-                    self.__device)
-                inputs_ling = torch.stack(
-                    [inputs_sy, inputs_tone, inputs_syllable, inputs_ws],
-                    dim=-1).unsqueeze(0)
-                inputs_emo = torch.from_numpy(inputs_feat_lst[4]).long().to(
-                    self.__device).unsqueeze(0)
-                inputs_spk = torch.from_numpy(inputs_feat_lst[5]).long().to(
-                    self.__device).unsqueeze(0)
+                inputs_feat_index = 0
+                if self.__ling_unit.using_byte():
+                    inputs_byte_index = (
+                        torch.from_numpy(
+                            inputs_feat_lst[inputs_feat_index]).long().to(
+                                self.__device))
+                    inputs_ling = torch.stack([inputs_byte_index],
+                                              dim=-1).unsqueeze(0)
+                else:
+                    inputs_sy = (
+                        torch.from_numpy(
+                            inputs_feat_lst[inputs_feat_index]).long().to(
+                                self.__device))
+                    inputs_feat_index = inputs_feat_index + 1
+                    inputs_tone = (
+                        torch.from_numpy(
+                            inputs_feat_lst[inputs_feat_index]).long().to(
+                                self.__device))
+                    inputs_feat_index = inputs_feat_index + 1
+                    inputs_syllable = (
+                        torch.from_numpy(
+                            inputs_feat_lst[inputs_feat_index]).long().to(
+                                self.__device))
+                    inputs_feat_index = inputs_feat_index + 1
+                    inputs_ws = (
+                        torch.from_numpy(
+                            inputs_feat_lst[inputs_feat_index]).long().to(
+                                self.__device))
+                    inputs_ling = torch.stack(
+                        [inputs_sy, inputs_tone, inputs_syllable, inputs_ws],
+                        dim=-1).unsqueeze(0)
+                inputs_feat_index = inputs_feat_index + 1
+                inputs_emo = (
+                    torch.from_numpy(
+                        inputs_feat_lst[inputs_feat_index]).long().to(
+                            self.__device).unsqueeze(0))
+                inputs_feat_index = inputs_feat_index + 1
+                inputs_spk = (
+                    torch.from_numpy(
+                        inputs_feat_lst[inputs_feat_index]).long().to(
+                            self.__device).unsqueeze(0))
                 inputs_len = (torch.zeros(1).to(self.__device).long()
                               + inputs_emo.size(1) - 1)  # minus 1 for "~"
                 res = self.__am(inputs_ling[:, :-1, :], inputs_emo[:, :-1],
@@ -148,9 +174,19 @@ class Voice:
                 postnet_outputs = postnet_outputs[0, :valid_length, :].cpu()
                 return postnet_outputs
 
+    def __binarize(mel, threshold=0.6):
+        # vuv binarize
+        res_mel = mel.clone()
+        index = torch.where(mel[:, -1] < threshold)[0]
+        res_mel[:, -1] = 1.0
+        res_mel[:, -1][index] = 0.0
+        return res_mel
+
     def __vocoder_forward(self, melspec):
         with torch.no_grad():
             x = melspec.to(self.__device)
+            if self.__voc_model.nsf_enable:
+                x = self.__binarize(x)
             x = x.transpose(1, 0).unsqueeze(0)
             y = self.__voc_model(x)
             if hasattr(self.__voc_model, 'pqmf'):

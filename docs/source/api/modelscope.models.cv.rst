@@ -1,15 +1,14 @@
-modelscope.models.cv package
-============================
+modelscope.models.cv
+====================
 
 .. automodule:: modelscope.models.cv
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+.. currentmodule:: modelscope.models.cv
 
-.. toctree::
-   :maxdepth: 4
 
-   modelscope.models.cv.cartoon
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
+
+    easycv_base.EasyCVBaseModel

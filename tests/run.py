@@ -355,10 +355,34 @@ def run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
     run_command_with_popen(cmd)
 
 
+def run_non_parallelizable_test_suites(suites, result_dir):
+    cmd = ['python', 'tests/run.py', '--result_dir', result_dir, '--suites']
+    for suite in suites:
+        cmd.append(suite)
+    run_command_with_popen(cmd)
+
+
 def run_in_subprocess(args):
     # only case args.isolated_cases run in subporcess, all other run in a subprocess
     test_suite_files = gather_test_suites_files(
         os.path.abspath(args.test_dir), args.pattern)
+
+    non_parallelizable_suites = [
+        'test_download_dataset.py',
+        'test_hub_examples.py',
+        'test_hub_operation.py',
+        'test_hub_private_files.py',
+        'test_hub_private_repository.py',
+        'test_hub_repository.py',
+        'test_hub_retry.py',
+        'test_hub_revision.py',
+        'test_hub_revision_release_mode.py',
+        'test_hub_upload.py',
+    ]
+    test_suite_files = [
+        x for x in test_suite_files if x not in non_parallelizable_suites
+    ]
+
     run_config = None
     isolated_cases = []
     test_suite_env_map = {}
@@ -383,6 +407,11 @@ def run_in_subprocess(args):
         isolated_cases = test_suite_files
 
     with tempfile.TemporaryDirectory() as temp_result_dir:
+        # first run cases that nonparallelizable
+        run_non_parallelizable_test_suites(non_parallelizable_suites,
+                                           temp_result_dir)
+
+        # run case parallel in envs
         for env in set(test_suite_env_map.values()):
             parallel_run_case_in_env(env, run_config['envs'][env],
                                      test_suite_env_map, isolated_cases,

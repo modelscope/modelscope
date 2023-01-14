@@ -2,27 +2,25 @@
 
 import os
 from collections.abc import Mapping
-from typing import List
+from typing import Any, Dict, List
 
 import torch
-from megatron import mpu
+from megatron_util import mpu
 
 from modelscope.metainfo import Trainers
 from modelscope.models import TorchModel
+from modelscope.models.nlp import GPT3ForTextGeneration
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
 from modelscope.utils.config import Config
-from modelscope.utils.file_utils import func_receive_dict_inputs
 
 
 @TRAINERS.register_module(module_name=Trainers.gpt3_trainer)
 class GPT3Trainer(NlpEpochBasedTrainer):
 
     def rebuild_config(self, cfg: Config):
-        super().rebuild_config(cfg)
-        cfg.model.rank = int(os.environ.get('LOCAL_RANK', -1))
-        cfg.model.master_ip = os.environ.get('MASTER_ADDR', '127.0.0.1')
-        cfg.model.master_port = os.environ.get('MASTER_PORT', '29500')
+        cfg = super().rebuild_config(cfg)
+        cfg.model.rank = int(os.environ.get('RANK', 0))
         return cfg
 
     def train_step(self, model: TorchModel, inputs: Mapping):
@@ -39,13 +37,19 @@ class GPT3Trainer(NlpEpochBasedTrainer):
         model = self.model.module if self._dist else self.model
         model.eval()
 
-        with torch.no_grad():
-            if isinstance(
-                    data,
-                    Mapping) and not func_receive_dict_inputs(model.generate):
-                result = model.generate(**data)
-            else:
-                result = model.generate(data)
+        if self._is_pair(data):
+            return self._generate_eval(model, data)
+        else:
+            return self._forward_eval(model, data)
+
+    @staticmethod
+    def _is_pair(data: Dict[str, Any]) -> bool:
+        return 'is_pair' in data and bool(data['is_pair'][0])
+
+    def _generate_eval(self, model: GPT3ForTextGeneration,
+                       data: Dict[str, Any]) -> Dict[str, Any]:
+        data['do_sample'] = False
+        result = model.generate(data)
 
         prompt_length: List[int] = data['prompt_length']
         result['preds'] = [
@@ -56,6 +60,8 @@ class GPT3Trainer(NlpEpochBasedTrainer):
             self._decode(seq[skip_len - 1:])
             for seq, skip_len in zip(data['labels'], prompt_length)
         ]
-        assert len(result['preds']) == len(data['tgts'])
-
         return result
+
+    def _forward_eval(self, model: GPT3ForTextGeneration,
+                      data: Dict[str, Any]) -> Dict[str, Any]:
+        return model.forward(data)

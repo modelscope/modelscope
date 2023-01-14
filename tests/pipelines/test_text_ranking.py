@@ -13,11 +13,7 @@ from modelscope.utils.test_utils import test_level
 
 
 class TextRankingTest(unittest.TestCase):
-    models = [
-        'damo/nlp_corom_passage-ranking_english-base',
-        'damo/nlp_rom_passage-ranking_chinese-base'
-    ]
-
+    base_model_id = 'damo/nlp_corom_passage-ranking_english-base'
     inputs = {
         'source_sentence': ["how long it take to get a master's degree"],
         'sentences_to_compare': [
@@ -26,6 +22,29 @@ class TextRankingTest(unittest.TestCase):
             'several years to complete their studies.',
             'It can take anywhere from two semesters'
         ]
+    }
+
+    chinese_base_model_id = 'damo/nlp_rom_passage-ranking_chinese-base'
+    chinese_inputs = {
+        'source_sentence': ['功和功率的区别'],
+        'sentences_to_compare': [
+            '功反映做功多少，功率反映做功快慢。',
+            '什么是有功功率和无功功率?无功功率有什么用什么是有功功率和无功功率?无功功率有什么用电力系统中的电源是由发电机产生的三相正弦交流电,在交>流电路中,由电源供给负载的电功率有两种;一种是有功功率,一种是无功功率。',
+            '优质解答在物理学中,用电功率表示消耗电能的快慢．电功率用P表示,它的单位是瓦特（Watt）,简称瓦（Wa）符号是W.电流在单位时间内做的功叫做电功率 以灯泡为例,电功率越大,灯泡越亮.灯泡的亮暗由电功率（实际功率）\
+        决定,不由通过的电流、电压、电能决定!',
+        ]
+    }
+
+    ecom_base_model_id = 'damo/nlp_corom_passage-ranking_chinese-base-ecom'
+    ecom_inputs = {
+        'source_sentence': ['毛绒玩具'],
+        'sentences_to_compare': ['大熊泰迪熊猫毛绒玩具公仔布娃娃抱抱熊', '背心式狗狗牵引绳']
+    }
+
+    medical_base_model_id = 'damo/nlp_corom_passage-ranking_chinese-base-medical'
+    medical_inputs = {
+        'source_sentence': ['肠道不适可以服用益生菌吗'],
+        'sentences_to_compare': ['肠胃不好能吃益生菌,益生菌有调节肠胃道菌群的作用', '身体发烧应该多喝水']
     }
 
     el_model_id = 'damo/nlp_bert_entity-matching_chinese-base'
@@ -43,37 +62,53 @@ class TextRankingTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
-        for model_id in self.models:
-            cache_path = snapshot_download(model_id)
-            tokenizer = TextRankingTransformersPreprocessor(cache_path)
-            model = BertForTextRanking.from_pretrained(cache_path)
-            pipeline1 = TextRankingPipeline(model, preprocessor=tokenizer)
-            pipeline2 = pipeline(
-                Tasks.text_ranking, model=model, preprocessor=tokenizer)
-            print(f'sentence: {self.inputs}\n'
-                  f'pipeline1:{pipeline1(input=self.inputs)}')
-            print()
-            print(f'pipeline2: {pipeline2(input=self.inputs)}')
+        cache_path = snapshot_download(self.base_model_id)
+        tokenizer = TextRankingTransformersPreprocessor(cache_path)
+        model = BertForTextRanking.from_pretrained(cache_path)
+        pipeline1 = TextRankingPipeline(model, preprocessor=tokenizer)
+        pipeline2 = pipeline(
+            Tasks.text_ranking, model=model, preprocessor=tokenizer)
+        print(f'sentence: {self.inputs}\n'
+              f'pipeline1:{pipeline1(input=self.inputs)}')
+        print()
+        print(f'pipeline2:{pipeline2(input=self.inputs)}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        for model_id in self.models:
-            model = Model.from_pretrained(model_id)
-            tokenizer = TextRankingTransformersPreprocessor(model.model_dir)
-            pipeline_ins = pipeline(
-                task=Tasks.text_ranking, model=model, preprocessor=tokenizer)
-            print(pipeline_ins(input=self.inputs))
+        model = Model.from_pretrained(self.base_model_id)
+        tokenizer = TextRankingTransformersPreprocessor(model.model_dir)
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=model, preprocessor=tokenizer)
+        print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):
-        for model_id in self.models:
-            pipeline_ins = pipeline(task=Tasks.text_ranking, model=model_id)
-            print(pipeline_ins(input=self.inputs))
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.base_model_id)
+        print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_ranking)
         print(pipeline_ins(input=self.inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_chinese_model_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.chinese_base_model_id)
+        print(pipeline_ins(input=self.chinese_inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_ecom_model_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.ecom_base_model_id)
+        print(pipeline_ins(input=self.ecom_inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_medical_model_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.medical_base_model_id)
+        print(pipeline_ins(input=self.medical_inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_el_model(self):

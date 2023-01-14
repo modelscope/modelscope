@@ -37,7 +37,7 @@ class TestOfaTrainer(unittest.TestCase):
              'train': {'work_dir': 'work/ckpts/recognition',
                        # 'launcher': 'pytorch',
                        'max_epochs': 1,
-                       'use_fp16': True,
+                       'use_fp16': False,
                        'dataloader': {'batch_size_per_gpu': 4, 'workers_per_gpu': 0},
                        'lr_scheduler': {'name': 'polynomial_decay',
                                         'warmup_proportion': 0.01,

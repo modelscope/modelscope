@@ -22,6 +22,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_corom_sentence-embedding_english-base'),
     Tasks.text_ranking: (Pipelines.text_ranking,
                          'damo/nlp_corom_passage-ranking_english-base'),
+    Tasks.text_ranking: (Pipelines.mgeo_ranking,
+                         'damo/mgeo_address_ranking_chinese_base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
@@ -57,6 +59,13 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                    'damo/cv_vit_object-detection_coco'),
     Tasks.image_denoising: (Pipelines.image_denoise,
                             'damo/cv_nafnet_image-denoise_sidd'),
+    Tasks.image_deblurring: (Pipelines.image_deblur,
+                             'damo/cv_nafnet_image-deblur_gopro'),
+    Tasks.video_stabilization: (Pipelines.video_stabilization,
+                                'damo/cv_dut-raft_video-stabilization_base'),
+    Tasks.video_super_resolution:
+    (Pipelines.video_super_resolution,
+     'damo/cv_realbasicvsr_video-super-resolution_videolq'),
     Tasks.text_classification:
     (Pipelines.sentiment_classification,
      'damo/nlp_structbert_sentiment-classification_chinese-base'),
@@ -77,6 +86,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_bart_text-error-correction_chinese'),
     Tasks.image_captioning: (Pipelines.image_captioning,
                              'damo/ofa_image-caption_coco_large_en'),
+    Tasks.video_captioning:
+    (Pipelines.video_captioning,
+     'damo/multi-modal_hitea_video-captioning_base_en'),
     Tasks.image_portrait_stylization:
     (Pipelines.person_image_cartoon,
      'damo/cv_unet_person-image-cartoon_compound-models'),
@@ -85,6 +97,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_recognition:
     (Pipelines.table_recognition,
      'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.document_vl_embedding:
+    (Pipelines.document_vl_embedding,
+     'damo/multi-modal_convnext-roberta-base_vldoc-embedding'),
     Tasks.license_plate_detection:
     (Pipelines.license_plate_detection,
      'damo/cv_resnet18_license-plate-detection_damo'),
@@ -111,6 +126,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.visual_question_answering:
     (Pipelines.visual_question_answering,
      'damo/mplug_visual-question-answering_coco_large_en'),
+    Tasks.video_question_answering:
+    (Pipelines.video_question_answering,
+     'damo/multi-modal_hitea_video-question-answering_base_en'),
     Tasks.video_embedding: (Pipelines.cmdssl_video_embedding,
                             'damo/cv_r2p1d_video_embedding'),
     Tasks.text_to_image_synthesis:
@@ -128,6 +146,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_detection:
     (Pipelines.mog_face_detection,
      'damo/cv_resnet101_face-detection_cvpr22papermogface'),
+    Tasks.face_liveness: (Pipelines.face_liveness_ir,
+                          'damo/cv_manual_face-liveness_flir'),
     Tasks.face_recognition: (Pipelines.face_recognition,
                              'damo/cv_ir101_facerecognition_cfglint'),
     Tasks.facial_expression_recognition:
@@ -149,14 +169,23 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_csrnet_image-color-enhance-models'),
     Tasks.virtual_try_on: (Pipelines.virtual_try_on,
                            'damo/cv_daflow_virtual-try-on_base'),
-    Tasks.image_colorization: (Pipelines.image_colorization,
-                               'damo/cv_unet_image-colorization'),
+    Tasks.image_colorization: (Pipelines.ddcolor_image_colorization,
+                               'damo/cv_ddcolor_image-colorization'),
     Tasks.image_segmentation:
     (Pipelines.image_instance_segmentation,
      'damo/cv_swin-b_image-instance-segmentation_coco'),
     Tasks.image_depth_estimation:
     (Pipelines.image_depth_estimation,
      'damo/cv_newcrfs_image-depth-estimation_indoor'),
+    Tasks.indoor_layout_estimation:
+    (Pipelines.indoor_layout_estimation,
+     'damo/cv_panovit_indoor-layout-estimation'),
+    Tasks.video_depth_estimation:
+    (Pipelines.video_depth_estimation,
+     'damo/cv_dro-resnet18_video-depth-estimation_indoor'),
+    Tasks.panorama_depth_estimation:
+    (Pipelines.panorama_depth_estimation,
+     'damo/cv_unifuse_panorama-depth-estimation'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
@@ -207,6 +236,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
                                 'damo/cv_effnetv2_video-human-matting'),
+    Tasks.video_frame_interpolation:
+    (Pipelines.video_frame_interpolation,
+     'damo/cv_raft_video-frame-interpolation'),
     Tasks.human_wholebody_keypoint:
     (Pipelines.human_wholebody_keypoint,
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
@@ -218,19 +250,35 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),
-    Tasks.referring_video_object_segmentation:
-    (Pipelines.referring_video_object_segmentation,
-     'damo/cv_swin-t_referring_video-object-segmentation'),
+    Tasks.referring_video_object_segmentation: (
+        Pipelines.referring_video_object_segmentation,
+        'damo/cv_swin-t_referring_video-object-segmentation'),
     Tasks.video_summarization: (Pipelines.video_summarization,
                                 'damo/cv_googlenet_pgl-video-summarization'),
     Tasks.image_skychange: (Pipelines.image_skychange,
                             'damo/cv_hrnetocr_skychange'),
-    Tasks.translation_evaluation:
-    (Pipelines.translation_evaluation,
-     'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
-    Tasks.video_object_segmentation:
-    (Pipelines.video_object_segmentation,
-     'damo/cv_rdevos_video-object-segmentation'),
+    Tasks.translation_evaluation: (
+        Pipelines.translation_evaluation,
+        'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
+    Tasks.video_object_segmentation: (
+        Pipelines.video_object_segmentation,
+        'damo/cv_rdevos_video-object-segmentation'),
+    Tasks.video_multi_object_tracking: (
+        Pipelines.video_multi_object_tracking,
+        'damo/cv_yolov5_video-multi-object-tracking_fairmot'),
+    Tasks.image_multi_view_depth_estimation: (
+        Pipelines.image_multi_view_depth_estimation,
+        'damo/cv_casmvs_multi-view-depth-estimation_general'),
+    Tasks.image_fewshot_detection: (
+        Pipelines.image_fewshot_detection,
+        'damo/cv_resnet101_detection_fewshot-defrcn'),
+    Tasks.image_body_reshaping: (Pipelines.image_body_reshaping,
+                                 'damo/cv_flow-based-body-reshaping_damo'),
+    Tasks.image_face_fusion: (Pipelines.image_face_fusion,
+                              'damo/cv_unet-image-face-fusion_damo'),
+    Tasks.image_matching: (
+        Pipelines.image_matching,
+        'damo/cv_quadtree_attention_image-matching_outdoor'),
 }
 
 
@@ -281,6 +329,7 @@ def pipeline(task: str = None,
              framework: str = None,
              device: str = 'gpu',
              model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
+             plugins: List[str] = None,
              **kwargs) -> Pipeline:
     """ Factory method to build an obj:`Pipeline`.
 
@@ -314,6 +363,8 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
+    try_import_plugins(plugins)
+
     model = normalize_model_input(model, model_revision)
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
@@ -327,6 +378,7 @@ def pipeline(task: str = None,
                         model, str) else read_config(
                             model[0], revision=model_revision)
                 check_config(cfg)
+                try_import_plugins(cfg.safe_get('plugins'))
                 pipeline_props = cfg.pipeline
         elif model is not None:
             # get pipeline info from Model object
@@ -335,6 +387,7 @@ def pipeline(task: str = None,
                 # model is instantiated by user, we should parse config again
                 cfg = read_config(first_model.model_dir)
                 check_config(cfg)
+                try_import_plugins(cfg.safe_get('plugins'))
                 first_model.pipeline = cfg.pipeline
             pipeline_props = first_model.pipeline
         else:
@@ -392,3 +445,10 @@ def get_default_pipeline_info(task):
     else:
         pipeline_name, default_model = DEFAULT_MODEL_FOR_PIPELINE[task]
     return pipeline_name, default_model
+
+
+def try_import_plugins(plugins: List[str]) -> None:
+    """ Try to import plugins """
+    if plugins is not None:
+        from modelscope.utils.plugins import import_plugins
+        import_plugins(plugins)

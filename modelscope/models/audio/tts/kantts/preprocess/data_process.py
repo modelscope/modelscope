@@ -110,6 +110,8 @@ def process_data(
                                 languages[targetLang]['s2p_map_path'])
 
     logging.info(f'phoneset_path={phoneset_path}')
+    # dir of plain text/sentences for training byte based model
+    plain_text_dir = os.path.join(voice_input_dir, 'text')
 
     if speaker_name is None:
         speaker_name = os.path.basename(voice_input_dir)
@@ -130,28 +132,35 @@ def process_data(
     raw_metafile = None
     #  Script processor
     if not skip_script:
-        tsc = TextScriptConvertor(
-            phoneset_path,
-            posset_path,
-            targetLang,
-            foreignLang,
-            f2t_map_path,
-            s2p_map_path,
-            emo_tag_path,
-            speaker_name,
-        )
-        tsc.process(
-            os.path.join(voice_input_dir, 'prosody', 'prosody.txt'),
-            os.path.join(voice_output_dir, 'Script.xml'),
-            os.path.join(voice_output_dir, 'raw_metafile.txt'),
-        )
+        if os.path.exists(plain_text_dir):
+            TextScriptConvertor.turn_text_into_bytes(
+                os.path.join(plain_text_dir, 'text.txt'),
+                os.path.join(voice_output_dir, 'raw_metafile.txt'),
+                speaker_name,
+            )
+            fp_enable = False
+        else:
+            tsc = TextScriptConvertor(
+                phoneset_path,
+                posset_path,
+                targetLang,
+                foreignLang,
+                f2t_map_path,
+                s2p_map_path,
+                emo_tag_path,
+                speaker_name,
+            )
+            tsc.process(
+                os.path.join(voice_input_dir, 'prosody', 'prosody.txt'),
+                os.path.join(voice_output_dir, 'Script.xml'),
+                os.path.join(voice_output_dir, 'raw_metafile.txt'),
+            )
+            prosody = os.path.join(voice_input_dir, 'prosody', 'prosody.txt')
+            # FP processor
+            with codecs.open(prosody, 'r', 'utf-8') as f:
+                lines = f.readlines()
+                fp_enable = is_fp_line(lines[1])
         raw_metafile = os.path.join(voice_output_dir, 'raw_metafile.txt')
-        prosody = os.path.join(voice_input_dir, 'prosody', 'prosody.txt')
-
-    # FP processor
-    with codecs.open(prosody, 'r', 'utf-8') as f:
-        lines = f.readlines()
-        fp_enable = is_fp_line(lines[1])
 
     if fp_enable:
         FP = FpProcessor()

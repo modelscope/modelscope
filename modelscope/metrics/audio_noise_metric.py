@@ -40,3 +40,15 @@ class AudioNoiseMetric(Metric):
             'avg_sisnr': -avg_sisnr.item(),
             MetricKeys.AVERAGE_LOSS: avg_loss.item()
         }
+
+    def merge(self, other: 'AudioNoiseMetric'):
+        self.loss.extend(other.loss)
+        self.amp_loss.extend(other.amp_loss)
+        self.phase_loss.extend(other.phase_loss)
+        self.sisnr.extend(other.sisnr)
+
+    def __getstate__(self):
+        return self.loss, self.amp_loss, self.phase_loss, self.sisnr
+
+    def __setstate__(self, state):
+        self.loss, self.amp_loss, self.phase_loss, self.sisnr = state

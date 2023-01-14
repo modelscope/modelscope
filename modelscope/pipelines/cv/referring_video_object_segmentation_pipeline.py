@@ -2,6 +2,7 @@
 # originally Apache 2.0 License and publicly avaialbe at https://github.com/mttr2021/MTTR
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import tempfile
 from typing import Any, Dict
 
 import numpy as np
@@ -33,6 +34,7 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
 
         Args:
             model: model id on modelscope hub
+            render: whether to generate output video for demo service, default: False
         """
         _device = kwargs.pop('device', 'gpu')
         if torch.cuda.is_available() and _device == 'gpu':
@@ -123,7 +125,11 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                 pred_masks_per_query.append(pred_masks)
         return pred_masks_per_query
 
-    def postprocess(self, inputs) -> Dict[str, Any]:
+    def postprocess(self, inputs, **kwargs) -> Dict[str, Any]:
+        output_clip_path = None
+        render = kwargs.get('render', False)
+        if render:
+            self.model.cfg.pipeline.save_masked_video = True
         if self.model.cfg.pipeline.save_masked_video:
             # RGB colors for instance masks:
             light_blue = (41, 171, 226)
@@ -182,8 +188,9 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
                 masked_video.append(np.array(vid_frame))
             # generate and save the output clip:
 
-            assert self.model.cfg.pipeline.output_path
-            output_clip_path = self.model.cfg.pipeline.output_path
+            output_clip_path = self.model.cfg.pipeline.get(
+                'output_path',
+                tempfile.NamedTemporaryFile(suffix='.mp4').name)
             clip = ImageSequenceClip(
                 sequence=masked_video, fps=self.meta['video_fps'])
 
@@ -207,8 +214,9 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
         for frame_idx in range(self.video.shape[0]):
             output_timestamps.append(timestamp_format(seconds=frame_idx / fps))
         result = {
-            OutputKeys.MASKS: masks,
-            OutputKeys.TIMESTAMPS: output_timestamps
+            OutputKeys.MASKS: None if render else masks,
+            OutputKeys.TIMESTAMPS: None if render else output_timestamps,
+            OutputKeys.OUTPUT_VIDEO: output_clip_path
         }
 
         return result

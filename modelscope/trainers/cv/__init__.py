@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .movie_scene_segmentation_trainer import MovieSceneSegmentationTrainer
     from .image_inpainting_trainer import ImageInpaintingTrainer
     from .referring_video_object_segmentation_trainer import ReferringVideoObjectSegmentationTrainer
+    from .image_defrcn_fewshot_detection_trainer import ImageDefrcnFewshotTrainer
 
 else:
     _import_structure = {
@@ -20,7 +21,9 @@ else:
         'movie_scene_segmentation_trainer': ['MovieSceneSegmentationTrainer'],
         'image_inpainting_trainer': ['ImageInpaintingTrainer'],
         'referring_video_object_segmentation_trainer':
-        ['ReferringVideoObjectSegmentationTrainer']
+        ['ReferringVideoObjectSegmentationTrainer'],
+        'image_defrcn_fewshot_detection_trainer':
+        ['ImageDefrcnFewshotTrainer']
     }
 
     import sys

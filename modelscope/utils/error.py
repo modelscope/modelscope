@@ -134,3 +134,9 @@ You can install it with pip on linux or mac:
 Or you can checkout the instructions on the
 installation page: https://github.com/alibaba/EasyNLP and follow the ones that match your environment.
 """
+
+# docstyle-ignore
+MEGATRON_UTIL_IMPORT_ERROR = """
+{0} requires the megatron_util library but it was not found in your environment. You can install it with pip:
+`pip install megatron_util -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
+"""

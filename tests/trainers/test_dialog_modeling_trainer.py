@@ -17,7 +17,7 @@ class TestDialogModelingTrainer(unittest.TestCase):
     model_id = 'damo/nlp_space_pretrained-dialog-model'
     output_dir = './dialog_fintune_result'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
         # download data set
         data_multiwoz = MsDataset.load(

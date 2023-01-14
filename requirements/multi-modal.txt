@@ -1,9 +1,13 @@
+accelerate
+diffusers>=0.11.1
 ftfy>=6.0.3
 librosa
+opencv-python
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
 # compatible with taming-transformers-rom1504
 pytorch_lightning<=1.7.7
+rapidfuzz
 # rough-score was just recently updated from 0.0.4 to 0.0.7
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4

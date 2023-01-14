@@ -18,9 +18,15 @@ if TYPE_CHECKING:
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
+    from .gpt2 import GPT2Model
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
     from .heads import SequenceClassificationHead
+    from .megatron_bert import (
+        MegatronBertConfig,
+        MegatronBertForMaskedLM,
+        MegatronBertModel,
+    )
     from .palm_v2 import PalmForTextGeneration
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
     from .space import SpaceForDialogIntent, SpaceForDialogModeling, SpaceForDST
@@ -54,12 +60,14 @@ if TYPE_CHECKING:
                        VecoForTokenClassification, VecoModel)
     from .bloom import BloomModel
     from .unite import UniTEModel
+    from .use import UserSatisfactionEstimation
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
         'bart': ['BartForTextErrorCorrection'],
         'csanmt': ['CsanmtForTranslation'],
         'heads': ['SequenceClassificationHead'],
+        'gpt2': ['GPT2Model'],
         'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
         'gpt_moe': ['GPTMoEForTextGeneration', 'DistributedGPTMoE'],
         'structbert': [
@@ -85,6 +93,11 @@ else:
             'BertForDocumentSegmentation',
             'BertModel',
             'BertConfig',
+        ],
+        'megatron_bert': [
+            'MegatronBertConfig',
+            'MegatronBertForMaskedLM',
+            'MegatronBertModel',
         ],
         'ponet': ['PoNetForMaskedLM', 'PoNetModel', 'PoNetConfig'],
         'palm_v2': ['PalmForTextGeneration'],
@@ -113,7 +126,8 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
-        'unite': ['UniTEModel']
+        'unite': ['UniTEModel'],
+        'use': ['UserSatisfactionEstimation']
     }
 
     import sys

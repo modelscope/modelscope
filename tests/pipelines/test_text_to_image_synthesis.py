@@ -53,7 +53,7 @@ class TextToImageSynthesisTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_model_from_modelhub_dpm_solver(self):
-        test_text.update({'solver': 'dpm-solver'})
+        self.test_text.update({'solver': 'dpm-solver'})
         model = Model.from_pretrained(self.model_id)
         pipe_line_text_to_image_synthesis = pipeline(
             task=Tasks.text_to_image_synthesis, model=model)

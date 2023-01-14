@@ -220,16 +220,6 @@ class SbertForTokenClassification(SbertPreTrainedModel):
                     with_attention_mask=attention_mask is not None,
                     **outputs.kwargs)
 
-        if label_mask is not None:
-            mask = label_mask
-            masked_lengths = mask.sum(-1).long()
-            masked_logits = torch.zeros_like(logits)
-            for i in range(len(mask)):
-                masked_logits[
-                    i, :masked_lengths[i], :] = logits[i].masked_select(
-                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
-            logits = masked_logits
-
         return AttentionTokenClassificationModelOutput(
             loss=loss,
             logits=logits,

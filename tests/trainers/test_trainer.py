@@ -141,7 +141,6 @@ class TrainerTest(unittest.TestCase):
         config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
-
         trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
@@ -157,6 +156,10 @@ class TrainerTest(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
 
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        with open(f'{self.tmp_dir}/{trainer.timestamp}.log', 'r') as infile:
+            lines = infile.readlines()
+            self.assertTrue(len(lines) > 20)
+        self.assertIn(f'{trainer.timestamp}.log', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)

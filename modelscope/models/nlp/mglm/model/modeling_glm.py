@@ -17,10 +17,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from megatron_util import mpu, print_rank_0
 
-from modelscope.models.nlp.mglm import mpu
 from modelscope.models.nlp.mglm.model.prompt import PromptSpell
-from modelscope.models.nlp.mglm.utils import print_rank_0
+from .transformer import GPT2ParallelTransformer
 
 
 def init_method_normal(std=0.02):
@@ -78,7 +78,7 @@ class GLMModel(torch.nn.Module):
             vocab_size, hidden_size, init_method=init_method)
 
         # Transformer
-        self.transformer = mpu.GPT2ParallelTransformer(
+        self.transformer = GPT2ParallelTransformer(
             num_layers,
             hidden_size,
             num_attention_heads,
@@ -181,11 +181,11 @@ class EncoderDecoder(torch.nn.Module):
             vocab_size, hidden_size, init_method=init_method)
 
         # Transformer
-        self.encoder = mpu.GPT2ParallelTransformer(
+        self.encoder = GPT2ParallelTransformer(
             num_layers, hidden_size, num_attention_heads, max_sequence_length,
             max_memory_length, embedding_dropout_prob, attention_dropout_prob,
             output_dropout_prob, checkpoint_activations, checkpoint_num_layers)
-        self.decoder = mpu.GPT2ParallelTransformer(
+        self.decoder = GPT2ParallelTransformer(
             num_layers,
             hidden_size,
             num_attention_heads,

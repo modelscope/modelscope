@@ -44,8 +44,7 @@ class FacialLandmarkConfidencePipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
-        result = super(FacialLandmarkConfidencePipeline,
-                       self).preprocess(input)
+        result = super().preprocess(input)
         img = LoadImage.convert_to_ndarray(input)
         img = img[:, :, ::-1]
         result['orig_img'] = img.astype(np.float32)

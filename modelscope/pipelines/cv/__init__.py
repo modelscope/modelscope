@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
     from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .face_recognition_ood_pipeline import FaceRecognitionOodPipeline
     from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
     from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
     from .general_recognition_pipeline import GeneralRecognitionPipeline
@@ -27,9 +28,11 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_classification_pipeline import ImageClassificationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
+    from .image_deblur_pipeline import ImageDeblurPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
+    from .image_semantic_segmentation_pipeline import ImagePanopticSegmentationEasyCVPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_reid_person_pipeline import ImageReidPersonPipeline
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
@@ -67,8 +70,21 @@ if TYPE_CHECKING:
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
+    from .vision_middleware_pipeline import VisionMiddlewarePipeline
+    from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
+    from .vop_retrieval_pipeline import VopRetrievalPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .image_matching_pipeline import ImageMatchingPipeline
+    from .video_stabilization_pipeline import VideoStabilizationPipeline
+    from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
+    from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
+    from .face_liveness_ir_pipeline import FaceLivenessIrPipeline
+    from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
+    from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
+    from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
+    from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
+    from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
 
 else:
     _import_structure = {
@@ -86,6 +102,7 @@ else:
         'face_detection_pipeline': ['FaceDetectionPipeline'],
         'face_image_generation_pipeline': ['FaceImageGenerationPipeline'],
         'face_recognition_pipeline': ['FaceRecognitionPipeline'],
+        'face_recognition_ood_pipeline': ['FaceRecognitionOodPipeline'],
         'arc_face_recognition_pipeline': ['ArcFaceRecognitionPipeline'],
         'mask_face_recognition_pipeline': ['MaskFaceRecognitionPipeline'],
         'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
@@ -93,13 +110,16 @@ else:
         ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
+        'image_deblur_pipeline': ['ImageDeblurPipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
         'image_colorization_pipeline': ['ImageColorizationPipeline'],
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'image_matting_pipeline': ['ImageMattingPipeline'],
-        'image_panoptic_segmentation_pipeline':
-        ['ImagePanopticSegmentationPipeline'],
+        'image_panoptic_segmentation_pipeline': [
+            'ImagePanopticSegmentationPipeline',
+            'ImagePanopticSegmentationEasyCVPipeline'
+        ],
         'image_portrait_enhancement_pipeline':
         ['ImagePortraitEnhancementPipeline'],
         'image_reid_person_pipeline': ['ImageReidPersonPipeline'],
@@ -141,9 +161,8 @@ else:
         'retina_face_detection_pipeline': ['RetinaFaceDetectionPipeline'],
         'facial_expression_recognition_pipeline':
         ['FacialExpressionRecognitionPipeline'],
-        'facial_landmark_confidence_pipeline': [
-            'FacialLandmarkConfidencePipeline'
-        ],
+        'facial_landmark_confidence_pipeline':
+        ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
         'face_attribute_recognition_pipeline': [
             'FaceAttributeRecognitionPipeline'
@@ -156,10 +175,32 @@ else:
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
         ],
+        'vision_middleware_pipeline': ['VisionMiddlewarePipeline'],
+        'video_frame_interpolation_pipeline': [
+            'VideoFrameInterpolationPipeline'
+        ],
         'image_skychange_pipeline': ['ImageSkychangePipeline'],
+        'vop_retrieval_pipeline': ['VopRetrievalPipeline'],
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
+        'image_matching_pipeline': ['ImageMatchingPipeline'],
+        'video_stabilization_pipeline': ['VideoStabilizationPipeline'],
+        'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
+        'pointcloud_sceneflow_estimation_pipeline': [
+            'PointCloudSceneFlowEstimationPipeline'
+        ],
+        'face_liveness_ir_pipeline': ['FaceLivenessIrPipeline'],
+        'maskdino_instance_segmentation_pipeline': [
+            'MaskDINOInstanceSegmentationPipeline'
+        ],
+        'image_mvs_depth_estimation_pipeline': [
+            'ImageMultiViewDepthEstimationPipeline'
+        ],
+        'ddcolor_image_colorization_pipeline': [
+            'DDColorImageColorizationPipeline'
+        ],
+        'image_defrcn_fewshot_pipeline': ['ImageDefrcnDetectionPipeline'],
     }
 
     import sys

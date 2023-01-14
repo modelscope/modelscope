@@ -82,7 +82,7 @@ class NLPTokenizer:
                 model_dir) if model_dir is not None else tokenizer()
 
         if model_type in (Models.structbert, Models.gpt3, Models.palm,
-                          Models.plug):
+                          Models.plug, Models.megatron_bert):
             from transformers import BertTokenizer, BertTokenizerFast
             tokenizer = BertTokenizerFast if self.use_fast else BertTokenizer
             return tokenizer.from_pretrained(

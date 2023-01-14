@@ -112,6 +112,16 @@ class ImageInstanceSegmentationCOCOMetric(Metric):
             tmp_dir.cleanup()
         return eval_results
 
+    def merge(self, other: 'ImageInstanceSegmentationCOCOMetric'):
+        self.results.extend(other.results)
+
+    def __getstate__(self):
+        return self.results
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.results = state
+
     def format_results(self, results, img_ids, jsonfile_prefix=None, **kwargs):
         """Format the results to json (standard format for COCO evaluation).
 

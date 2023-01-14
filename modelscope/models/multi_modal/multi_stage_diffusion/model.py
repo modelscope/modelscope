@@ -26,6 +26,7 @@ from modelscope.models.multi_modal.multi_stage_diffusion.upsampler import (
     Upsampler256, Upsampler1024)
 from modelscope.models.multi_modal.multi_stage_diffusion.xglm import XGLM
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -309,23 +310,17 @@ class UnCLIP(nn.Module):
     Tasks.text_to_image_synthesis, module_name=Models.multi_stage_diffusion)
 class MultiStageDiffusionForTextToImageSynthesis(TorchModel):
 
-    def __init__(self, model_dir, device_id=-1):
-        super().__init__(model_dir=model_dir, device_id=device_id)
+    def __init__(self, model_dir, device='gpu'):
+        device = 'gpu' if torch.cuda.is_available() else 'cpu'
+        super().__init__(model_dir=model_dir, device=device)
         model = UnCLIP(model_dir=model_dir)
         pretrained_params = torch.load(
             osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE), 'cpu')
         model.load_state_dict(pretrained_params)
         model.eval()
 
-        self.device_id = device_id
-        if self.device_id >= 0:
-            self.device = torch.device(f'cuda:{self.device_id}')
-            model.to('cuda:{}'.format(self.device_id))
-            logger.info('Use GPU: {}'.format(self.device_id))
-        else:
-            self.device = torch.device('cpu')
-            logger.info('Use CPU for inference')
-        self.model = model
+        self.device = create_device(device)
+        self.model = model.to(self.device)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(input, dict):

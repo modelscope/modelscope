@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import yaml
@@ -10,6 +11,7 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
 from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
+                                                generate_scp_from_url,
                                                 load_bytes_from_url)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
@@ -34,6 +36,40 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model_cfg = self.model.forward()
 
+        self.output_dir = None
+        if 'output_dir' in kwargs:
+            self.output_dir = kwargs['output_dir']
+        self.cmd = self.get_cmd(kwargs)
+        if self.cmd['code_base'] == 'funasr':
+            from funasr.bin import asr_inference_launch
+            self.funasr_infer_modelscope = asr_inference_launch.inference_launch(
+                mode=self.cmd['mode'],
+                batch_size=self.cmd['batch_size'],
+                maxlenratio=self.cmd['maxlenratio'],
+                minlenratio=self.cmd['minlenratio'],
+                beam_size=self.cmd['beam_size'],
+                ngpu=self.cmd['ngpu'],
+                num_workers=self.cmd['num_workers'],
+                ctc_weight=self.cmd['ctc_weight'],
+                lm_weight=self.cmd['lm_weight'],
+                penalty=self.cmd['penalty'],
+                log_level=self.cmd['log_level'],
+                cmvn_file=self.cmd['cmvn_file'],
+                asr_train_config=self.cmd['asr_train_config'],
+                asr_model_file=self.cmd['asr_model_file'],
+                lm_file=self.cmd['lm_file'],
+                lm_train_config=self.cmd['lm_train_config'],
+                frontend_conf=self.cmd['frontend_conf'],
+                token_num_relax=self.cmd['token_num_relax'],
+                decoding_ind=self.cmd['decoding_ind'],
+                decoding_mode=self.cmd['decoding_mode'],
+                vad_model_file=self.cmd['vad_model_name'],
+                vad_infer_config=self.cmd['vad_model_config'],
+                vad_cmvn_file=self.cmd['vad_mvn_file'],
+                punc_model_file=self.cmd['punc_model_name'],
+                punc_infer_config=self.cmd['punc_model_config'],
+                output_dir=self.output_dir)
+
     def __call__(self,
                  audio_in: Union[str, bytes],
                  audio_fs: int = None,
@@ -41,11 +77,30 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_format: str = None) -> Dict[str, Any]:
         from funasr.utils import asr_utils
 
+        # code base
+        code_base = self.cmd['code_base']
         self.recog_type = recog_type
         self.audio_format = audio_format
         self.audio_fs = audio_fs
-
-        if isinstance(audio_in, str):
+        checking_audio_fs = None
+        if code_base == 'funasr':
+            if isinstance(audio_in, str):
+                # for funasr code, generate wav.scp from url or local path
+                self.audio_in, self.raw_inputs = generate_scp_from_url(
+                    audio_in)
+            elif isinstance(audio_in, bytes):
+                self.audio_in = audio_in
+                self.raw_inputs = None
+            else:
+                import numpy
+                import torch
+                if isinstance(audio_in, torch.Tensor):
+                    self.audio_in = None
+                    self.raw_inputs = audio_in
+                elif isinstance(audio_in, numpy.ndarray):
+                    self.audio_in = None
+                    self.raw_inputs = audio_in
+        elif isinstance(audio_in, str):
             # load pcm data from url if audio_in is url str
             self.audio_in, checking_audio_fs = load_bytes_from_url(audio_in)
         elif isinstance(audio_in, bytes):
@@ -64,21 +119,153 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 recog_type=recog_type,
                 audio_format=audio_format)
 
-        if hasattr(asr_utils, 'sample_rate_checking'):
+        if hasattr(asr_utils,
+                   'sample_rate_checking') and self.audio_in is not None:
             checking_audio_fs = asr_utils.sample_rate_checking(
                 self.audio_in, self.audio_format)
             if checking_audio_fs is not None:
                 self.audio_fs = checking_audio_fs
 
-        if self.preprocessor is None:
-            self.preprocessor = WavToScp()
-
         output = self.preprocessor.forward(self.model_cfg, self.recog_type,
                                            self.audio_format, self.audio_in,
-                                           self.audio_fs)
+                                           self.audio_fs, self.cmd)
         output = self.forward(output)
         rst = self.postprocess(output)
         return rst
+
+    def get_cmd(self, extra_args) -> Dict[str, Any]:
+        if self.preprocessor is None:
+            self.preprocessor = WavToScp()
+
+        outputs = self.preprocessor.config_checking(self.model_cfg)
+
+        # generate asr inference command
+        cmd = {
+            'model_type': outputs['model_type'],
+            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
+            'log_level': 'ERROR',
+            'asr_model_file': outputs['am_model_path'],
+            'idx_text': '',
+            'sampled_ids': 'seq2seq/sampled_ids',
+            'sampled_lengths': 'seq2seq/sampled_lengths',
+            'lang': 'zh-cn',
+            'code_base': outputs['code_base'],
+            'mode': outputs['mode'],
+            'fs': {
+                'model_fs': 16000
+            }
+        }
+
+        if self.framework == Frameworks.torch:
+            frontend_conf = None
+            token_num_relax = None
+            decoding_ind = None
+            decoding_mode = None
+            if os.path.exists(outputs['asr_model_config']):
+                config_file = open(
+                    outputs['asr_model_config'], encoding='utf-8')
+                root = yaml.full_load(config_file)
+                config_file.close()
+                if 'frontend_conf' in root:
+                    frontend_conf = root['frontend_conf']
+                if 'token_num_relax' in root:
+                    token_num_relax = root['token_num_relax']
+                if 'decoding_ind' in root:
+                    decoding_ind = root['decoding_ind']
+                if 'decoding_mode' in root:
+                    decoding_mode = root['decoding_mode']
+
+                cmd['beam_size'] = root['beam_size']
+                cmd['penalty'] = root['penalty']
+                cmd['maxlenratio'] = root['maxlenratio']
+                cmd['minlenratio'] = root['minlenratio']
+                cmd['ctc_weight'] = root['ctc_weight']
+                cmd['lm_weight'] = root['lm_weight']
+            else:
+                # for vad task, no asr_model_config
+                cmd['beam_size'] = None
+                cmd['penalty'] = None
+                cmd['maxlenratio'] = None
+                cmd['minlenratio'] = None
+                cmd['ctc_weight'] = None
+                cmd['lm_weight'] = None
+            cmd['asr_train_config'] = outputs['am_model_config']
+            cmd['lm_file'] = outputs['lm_model_path']
+            cmd['lm_train_config'] = outputs['lm_model_config']
+            cmd['batch_size'] = outputs['model_config']['batch_size']
+            cmd['frontend_conf'] = frontend_conf
+            if frontend_conf is not None and 'fs' in frontend_conf:
+                cmd['fs']['model_fs'] = frontend_conf['fs']
+            cmd['token_num_relax'] = token_num_relax
+            cmd['decoding_ind'] = decoding_ind
+            cmd['decoding_mode'] = decoding_mode
+            cmd['num_workers'] = 0
+            if outputs.__contains__('mvn_file'):
+                cmd['cmvn_file'] = outputs['mvn_file']
+            else:
+                cmd['cmvn_file'] = None
+            if outputs.__contains__('vad_model_name'):
+                cmd['vad_model_name'] = outputs['vad_model_name']
+            else:
+                cmd['vad_model_name'] = None
+            if outputs.__contains__('vad_model_config'):
+                cmd['vad_model_config'] = outputs['vad_model_config']
+            else:
+                cmd['vad_model_config'] = None
+            if outputs.__contains__('vad_mvn_file'):
+                cmd['vad_mvn_file'] = outputs['vad_mvn_file']
+            else:
+                cmd['vad_mvn_file'] = None
+            if outputs.__contains__('punc_model_name'):
+                cmd['punc_model_name'] = outputs['punc_model_name']
+            else:
+                cmd['punc_model_name'] = None
+            if outputs.__contains__('punc_model_config'):
+                cmd['punc_model_config'] = outputs['punc_model_config']
+            else:
+                cmd['punc_model_config'] = None
+            if 'batch_size' in extra_args:
+                cmd['batch_size'] = extra_args['batch_size']
+            if 'mode' in extra_args:
+                cmd['mode'] = extra_args['mode']
+            if 'ngpu' in extra_args:
+                cmd['ngpu'] = extra_args['ngpu']
+            if 'beam_size' in extra_args:
+                cmd['beam_size'] = extra_args['beam_size']
+            if 'decoding_ind' in extra_args:
+                cmd['decoding_ind'] = extra_args['decoding_ind']
+            if 'decoding_mode' in extra_args:
+                cmd['decoding_mode'] = extra_args['decoding_mode']
+            if 'vad_model_file' in extra_args:
+                cmd['vad_model_name'] = extra_args['vad_model_file']
+            if 'vad_infer_config' in extra_args:
+                cmd['vad_model_config'] = extra_args['vad_infer_config']
+            if 'vad_cmvn_file' in extra_args:
+                cmd['vad_mvn_file'] = extra_args['vad_cmvn_file']
+            if 'punc_model_file' in extra_args:
+                cmd['punc_model_name'] = extra_args['punc_model_file']
+            if 'punc_infer_config' in extra_args:
+                cmd['punc_model_config'] = extra_args['punc_infer_config']
+
+        elif self.framework == Frameworks.tf:
+            cmd['fs']['model_fs'] = outputs['model_config']['fs']
+            cmd['hop_length'] = outputs['model_config']['hop_length']
+            cmd['feature_dims'] = outputs['model_config']['feature_dims']
+            cmd['predictions_file'] = 'text'
+            cmd['mvn_file'] = outputs['am_mvn_file']
+            cmd['vocab_file'] = outputs['vocab_file']
+            cmd['lang'] = outputs['model_lang']
+            if 'idx_text' in outputs:
+                cmd['idx_text'] = outputs['idx_text']
+            if 'sampled_ids' in outputs['model_config']:
+                cmd['sampled_ids'] = outputs['model_config']['sampled_ids']
+            if 'sampled_lengths' in outputs['model_config']:
+                cmd['sampled_lengths'] = outputs['model_config'][
+                    'sampled_lengths']
+        else:
+            raise ValueError('model type is mismatching')
+
+        return cmd
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Decoding
@@ -87,91 +274,22 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         logger.info(f"Decoding with {inputs['audio_format']} files ...")
 
         data_cmd: Sequence[Tuple[str, str, str]]
-        if inputs['audio_format'] == 'wav' or inputs['audio_format'] == 'pcm':
-            data_cmd = ['speech', 'sound']
-        elif inputs['audio_format'] == 'kaldi_ark':
-            data_cmd = ['speech', 'kaldi_ark']
-        elif inputs['audio_format'] == 'tfrecord':
-            data_cmd = ['speech', 'tfrecord']
+        if isinstance(self.audio_in, bytes):
+            data_cmd = [self.audio_in, 'speech', 'bytes']
+        elif isinstance(self.audio_in, str):
+            data_cmd = [self.audio_in, 'speech', 'sound']
+        elif self.raw_inputs is not None:
+            data_cmd = None
 
-        if inputs.__contains__('mvn_file'):
+        if inputs.__contains__('mvn_file') and inputs['audio_format'] != 'scp':
             data_cmd.append(inputs['mvn_file'])
 
         # generate asr inference command
-        cmd = {
-            'model_type': inputs['model_type'],
-            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
-            'log_level': 'ERROR',
-            'audio_in': inputs['audio_lists'],
-            'name_and_type': data_cmd,
-            'asr_model_file': inputs['am_model_path'],
-            'idx_text': '',
-            'sampled_ids': 'seq2seq/sampled_ids',
-            'sampled_lengths': 'seq2seq/sampled_lengths',
-            'lang': 'zh-cn',
-            'code_base': inputs['code_base'],
-            'mode': inputs['mode'],
-            'fs': {
-                'audio_fs': inputs['audio_fs'],
-                'model_fs': 16000
-            }
-        }
+        self.cmd['name_and_type'] = data_cmd
+        self.cmd['fs']['audio_fs'] = inputs['audio_fs']
+        self.cmd['raw_inputs'] = self.raw_inputs
 
-        if self.framework == Frameworks.torch:
-            config_file = open(inputs['asr_model_config'], encoding='utf-8')
-            root = yaml.full_load(config_file)
-            config_file.close()
-            frontend_conf = None
-            if 'frontend_conf' in root:
-                frontend_conf = root['frontend_conf']
-            token_num_relax = None
-            if 'token_num_relax' in root:
-                token_num_relax = root['token_num_relax']
-            decoding_ind = None
-            if 'decoding_ind' in root:
-                decoding_ind = root['decoding_ind']
-            decoding_mode = None
-            if 'decoding_mode' in root:
-                decoding_mode = root['decoding_mode']
-
-            cmd['beam_size'] = root['beam_size']
-            cmd['penalty'] = root['penalty']
-            cmd['maxlenratio'] = root['maxlenratio']
-            cmd['minlenratio'] = root['minlenratio']
-            cmd['ctc_weight'] = root['ctc_weight']
-            cmd['lm_weight'] = root['lm_weight']
-            cmd['asr_train_config'] = inputs['am_model_config']
-            cmd['lm_file'] = inputs['lm_model_path']
-            cmd['lm_train_config'] = inputs['lm_model_config']
-            cmd['batch_size'] = inputs['model_config']['batch_size']
-            cmd['frontend_conf'] = frontend_conf
-            if frontend_conf is not None and 'fs' in frontend_conf:
-                cmd['fs']['model_fs'] = frontend_conf['fs']
-            cmd['token_num_relax'] = token_num_relax
-            cmd['decoding_ind'] = decoding_ind
-            cmd['decoding_mode'] = decoding_mode
-            cmd['num_workers'] = 0
-
-        elif self.framework == Frameworks.tf:
-            cmd['fs']['model_fs'] = inputs['model_config']['fs']
-            cmd['hop_length'] = inputs['model_config']['hop_length']
-            cmd['feature_dims'] = inputs['model_config']['feature_dims']
-            cmd['predictions_file'] = 'text'
-            cmd['mvn_file'] = inputs['am_mvn_file']
-            cmd['vocab_file'] = inputs['vocab_file']
-            cmd['lang'] = inputs['model_lang']
-            if 'idx_text' in inputs:
-                cmd['idx_text'] = inputs['idx_text']
-            if 'sampled_ids' in inputs['model_config']:
-                cmd['sampled_ids'] = inputs['model_config']['sampled_ids']
-            if 'sampled_lengths' in inputs['model_config']:
-                cmd['sampled_lengths'] = inputs['model_config'][
-                    'sampled_lengths']
-
-        else:
-            raise ValueError('model type is mismatching')
-
-        inputs['asr_result'] = self.run_inference(cmd)
+        inputs['asr_result'] = self.run_inference(self.cmd)
 
         return inputs
 
@@ -247,34 +365,10 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
     def run_inference(self, cmd):
         asr_result = []
         if self.framework == Frameworks.torch and cmd['code_base'] == 'funasr':
-            from funasr.bin import asr_inference_launch
-
-            if hasattr(asr_inference_launch, 'set_parameters'):
-                asr_inference_launch.set_parameters(sample_rate=cmd['fs'])
-                asr_inference_launch.set_parameters(language=cmd['lang'])
-
-            asr_result = asr_inference_launch.inference_launch(
-                mode=cmd['mode'],
-                batch_size=cmd['batch_size'],
-                maxlenratio=cmd['maxlenratio'],
-                minlenratio=cmd['minlenratio'],
-                beam_size=cmd['beam_size'],
-                ngpu=cmd['ngpu'],
-                num_workers=cmd['num_workers'],
-                ctc_weight=cmd['ctc_weight'],
-                lm_weight=cmd['lm_weight'],
-                penalty=cmd['penalty'],
-                log_level=cmd['log_level'],
+            asr_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                audio_lists=cmd['audio_in'],
-                asr_train_config=cmd['asr_train_config'],
-                asr_model_file=cmd['asr_model_file'],
-                lm_file=cmd['lm_file'],
-                lm_train_config=cmd['lm_train_config'],
-                frontend_conf=cmd['frontend_conf'],
-                token_num_relax=cmd['token_num_relax'],
-                decoding_ind=cmd['decoding_ind'],
-                decoding_mode=cmd['decoding_mode'])
+                raw_inputs=cmd['raw_inputs'])
+
         elif self.framework == Frameworks.torch:
             from easyasr import asr_inference_paraformer_espnet
 

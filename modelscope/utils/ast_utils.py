@@ -54,6 +54,8 @@ CLASS_NAME = 'class_name'
 GROUP_KEY = 'group_key'
 MODULE_NAME = 'module_name'
 MODULE_CLS = 'module_cls'
+TEMPLATE_PATH = 'TEMPLATE_PATH'
+TEMPLATE_FILE = 'ast_index_file.py'
 
 
 class AstScaning(object):
@@ -286,6 +288,8 @@ class AstScaning(object):
             for node in nodes:
                 if type(node).__name__ == 'Str':
                     result.append((node.s, None))
+                elif type(node).__name__ == 'Constant':
+                    result.append((node.value, None))
                 else:
                     result.append(_get_attribute_item(node))
             return result
@@ -611,7 +615,7 @@ class FilesAstScaning(object):
 file_scanner = FilesAstScaning()
 
 
-def _save_index(index, file_path, file_list=None):
+def _save_index(index, file_path, file_list=None, with_template=False):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
     index[VERSION_KEY] = __version__
@@ -619,6 +623,9 @@ def _save_index(index, file_path, file_list=None):
         file_list=file_list)
     index[MODELSCOPE_PATH_KEY] = MODELSCOPE_PATH.as_posix()
     json_index = json.dumps(index)
+    if with_template:
+        json_index = json_index.replace(MODELSCOPE_PATH.as_posix(),
+                                        TEMPLATE_PATH)
     storage.write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
         ast.literal_eval(k): v
@@ -626,8 +633,11 @@ def _save_index(index, file_path, file_list=None):
     }
 
 
-def _load_index(file_path):
+def _load_index(file_path, with_template=False):
     bytes_index = storage.read(file_path)
+    if with_template:
+        bytes_index = bytes_index.decode().replace(TEMPLATE_PATH,
+                                                   MODELSCOPE_PATH.as_posix())
     wrapped_index = json.loads(bytes_index)
     # convert str key to tuple key
     wrapped_index[INDEX_KEY] = {
@@ -733,14 +743,21 @@ def load_index(
 
     if full_index_flag:
         if force_rebuild:
-            logger.info('Force rebuilding ast index')
+            logger.info('Force rebuilding ast index from scanning every file!')
+            index = file_scanner.get_files_scan_results(file_list)
         else:
             logger.info(
-                f'No valid ast index found from {file_path}, rebuilding ast index!'
+                f'No valid ast index found from {file_path}, generating ast index from prebuilt!'
             )
-        index = file_scanner.get_files_scan_results(file_list)
+            index = load_from_prebuilt()
+            if index is None:
+                index = file_scanner.get_files_scan_results(file_list)
         _save_index(index, file_path, file_list)
     elif local_changed and not full_index_flag:
+        logger.info(
+            'Updating the files for the changes of local files, '
+            'first time updating will take longer time! Please wait till updating done!'
+        )
         _update_index(index, files_mtime)
         _save_index(index, file_path, file_list)
 
@@ -758,6 +775,29 @@ def check_import_module_avaliable(module_dicts: dict) -> list:
         if loader is None:
             missed_module.append(module)
     return missed_module
+
+
+def load_from_prebuilt(file_path=None):
+    if file_path is None:
+        local_path = p.resolve().parents[0]
+        file_path = os.path.join(local_path, TEMPLATE_FILE)
+    if os.path.exists(file_path):
+        index = _load_index(file_path, with_template=True)
+    else:
+        index = None
+    return index
+
+
+def generate_ast_template(file_path=None, force_rebuild=True):
+    index = load_index(force_rebuild=force_rebuild)
+    if file_path is None:
+        local_path = p.resolve().parents[0]
+        file_path = os.path.join(local_path, TEMPLATE_FILE)
+    _save_index(index, file_path, with_template=True)
+    if not os.path.exists(file_path):
+        raise Exception(
+            'The index file is not create correctly, please double check')
+    return index
 
 
 if __name__ == '__main__':

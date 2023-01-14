@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import inspect
+from typing import Iterable, Union
 
 import torch
 
@@ -9,21 +10,29 @@ from modelscope.utils.registry import Registry, build_from_cfg, default_group
 OPTIMIZERS = Registry('optimizer')
 
 
-def build_optimizer(model: torch.nn.Module,
+def build_optimizer(model: Union[torch.nn.Module,
+                                 Iterable[torch.nn.parameter.Parameter]],
                     cfg: ConfigDict,
                     default_args: dict = None):
     """ build optimizer from optimizer config dict
 
     Args:
+        model: A torch.nn.Module or an iterable of parameters.
         cfg (:obj:`ConfigDict`): config dict for optimizer object.
         default_args (dict, optional): Default initialization arguments.
     """
-    if hasattr(model, 'module'):
-        model = model.module
-
     if default_args is None:
         default_args = {}
-    default_args['params'] = model.parameters()
+
+    if isinstance(model, torch.nn.Module) or (hasattr(
+            model, 'module') and isinstance(model.module, torch.nn.Module)):
+        if hasattr(model, 'module'):
+            model = model.module
+
+        default_args['params'] = model.parameters()
+    else:
+        # Input is a iterable of parameters, this case fits for the scenario of user-defined parameter groups.
+        default_args['params'] = model
 
     return build_from_cfg(
         cfg, OPTIMIZERS, group_key=default_group, default_args=default_args)

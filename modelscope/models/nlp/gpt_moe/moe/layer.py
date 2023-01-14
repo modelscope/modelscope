@@ -5,7 +5,7 @@ Copyright 2020 The Microsoft DeepSpeed Team
 import typing
 
 import torch
-from megatron import mpu
+from megatron_util import mpu
 
 from .experts import Experts
 from .sharded_moe import MOELayer, TopKGate

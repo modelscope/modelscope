@@ -13,8 +13,7 @@ Input = Union[Dict[str, Tensor], Model]
 
 
 class Head(ABC):
-    """
-    The head base class is for the tasks head method definition
+    """The head base class is for the tasks head method definition
 
     """
 

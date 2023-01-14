@@ -44,6 +44,17 @@ class ImageDenoiseMetric(Metric):
             MetricKeys.SSIM: np.mean(ssim_list)
         }
 
+    def merge(self, other: 'ImageDenoiseMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels = state
+
 
 def reorder_image(img, input_order='HWC'):
     """Reorder images to 'HWC' order.

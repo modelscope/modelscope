@@ -1,34 +1,15 @@
-modelscope.trainers package
-===========================
+modelscope.trainers
+===================
 
 .. automodule:: modelscope.trainers
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+.. currentmodule:: modelscope.trainers
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+   :caption: Trainer Api
 
-   modelscope.trainers.nlp
-
-Submodules
-----------
-
-modelscope.trainers.base module
--------------------------------
-
-.. automodule:: modelscope.trainers.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.trainers.builder module
-----------------------------------
-
-.. automodule:: modelscope.trainers.builder
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   base     <modelscope.trainers.base>
+   builder <modelscope.trainers.builder>
+   EpochBasedTrainer <modelscope.trainers.trainer>
+   cv    <modelscope.trainers.cv>

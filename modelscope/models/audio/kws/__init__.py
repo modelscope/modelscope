@@ -6,11 +6,13 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .generic_key_word_spotting import GenericKeyWordSpotting
     from .farfield.model import FSMNSeleNetV2Decorator
+    from .nearfield.model import FSMNDecorator
 
 else:
     _import_structure = {
         'generic_key_word_spotting': ['GenericKeyWordSpotting'],
         'farfield.model': ['FSMNSeleNetV2Decorator'],
+        'nearfield.model': ['FSMNDecorator'],
     }
 
     import sys

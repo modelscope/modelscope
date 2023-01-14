@@ -21,7 +21,7 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
                  first_sequence='source_sentence',
                  second_sequence='sentences_to_compare',
                  mode=ModeKeys.INFERENCE,
-                 use_fast: bool = None,
+                 use_fast: bool = True,
                  max_length: int = None,
                  **kwargs):
         """The preprocessor for sentence embedding task, based on transformers' tokenizer.
@@ -70,12 +70,14 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-        source_sentence = data[self.first_sequence]
-        compare_sentences = data[self.second_sequence]
-        sentences = [source_sentence[0]]
-        for sent in compare_sentences:
-            sentences.append(sent)
-
+        source_sentences = data[self.first_sequence]
+        if self.second_sequence in data:
+            compare_sentences = data[self.second_sequence]
+            sentences = [source_sentences[0]]
+            for sent in compare_sentences:
+                sentences.append(sent)
+        else:
+            sentences = source_sentences
         if 'return_tensors' not in kwargs:
             kwargs[
                 'return_tensors'] = 'pt' if self.mode == ModeKeys.INFERENCE else None

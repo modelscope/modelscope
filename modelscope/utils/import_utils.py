@@ -7,7 +7,6 @@ import os
 import os.path as osp
 import sys
 from collections import OrderedDict
-from functools import wraps
 from importlib import import_module
 from itertools import chain
 from pathlib import Path
@@ -300,6 +299,8 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('deepspeed', (is_package_available('deepspeed'), DEEPSPEED_IMPORT_ERROR)),
     ('fairseq', (is_package_available('fairseq'), FAIRSEQ_IMPORT_ERROR)),
     ('fasttext', (is_package_available('fasttext'), FASTTEXT_IMPORT_ERROR)),
+    ('megatron_util', (is_package_available('megatron_util'),
+                       MEGATRON_UTIL_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

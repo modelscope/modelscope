@@ -21,9 +21,8 @@ import json
 import numpy as np
 import torch
 import torch.utils.data
+from megatron_util import mpu
 from torch.utils.data.dataloader import default_collate
-
-from modelscope.models.nlp.mglm import mpu
 
 
 def clean_text(text):

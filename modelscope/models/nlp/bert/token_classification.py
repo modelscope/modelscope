@@ -212,16 +212,6 @@ class BertForTokenClassification(BertPreTrainedModel):
                 loss = loss_fct(
                     logits.view(-1, self.num_labels), labels.view(-1))
 
-        if label_mask is not None:
-            mask = label_mask
-            masked_lengths = mask.sum(-1).long()
-            masked_logits = torch.zeros_like(logits)
-            for i in range(len(mask)):
-                masked_logits[
-                    i, :masked_lengths[i], :] = logits[i].masked_select(
-                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
-            logits = masked_logits
-
         if not return_dict:
             output = (logits, ) + outputs[2:]
             return ((loss, ) + output) if loss is not None else output

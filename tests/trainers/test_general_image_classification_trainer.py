@@ -91,6 +91,87 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         result = trainer.evaluate()
         print(result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_convnext_garbage_train(self):
+        model_id = 'damo/cv_convnext-base_image-classification_garbage'
+
+        def cfg_modify_fn(cfg):
+            cfg.train.dataloader.batch_size_per_gpu = 16
+            cfg.train.dataloader.workers_per_gpu = 1
+            cfg.train.max_epochs = self.max_epochs
+            cfg.model.mm_model.head.num_classes = 2
+            cfg.train.optimizer.lr = 1e-4
+            cfg.train.lr_config.warmup_iters = 1
+            cfg.train.evaluation.metric_options = {'topk': (1, )}
+            cfg.evaluation.metric_options = {'topk': (1, )}
+            return cfg
+
+        kwargs = dict(
+            model=model_id,
+            work_dir=self.tmp_dir,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
+            cfg_modify_fn=cfg_modify_fn)
+
+        trainer = build_trainer(
+            name=Trainers.image_classification, default_args=kwargs)
+        trainer.train()
+
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(self.max_epochs):
+            self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_convnext_garbage_eval(self):
+        model_id = 'damo/cv_convnext-base_image-classification_garbage'
+
+        kwargs = dict(
+            model=model_id,
+            work_dir=self.tmp_dir,
+            train_dataset=None,
+            eval_dataset=self.eval_dataset)
+
+        trainer = build_trainer(
+            name=Trainers.image_classification, default_args=kwargs)
+        result = trainer.evaluate()
+        print(result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_beitv2_train_eval(self):
+        model_id = 'damo/cv_beitv2-base_image-classification_patch16_224_pt1k_ft22k_in1k'
+
+        def cfg_modify_fn(cfg):
+            cfg.train.dataloader.batch_size_per_gpu = 16
+            cfg.train.dataloader.workers_per_gpu = 1
+            cfg.train.max_epochs = self.max_epochs
+            cfg.model.mm_model.head.num_classes = 2
+            cfg.model.mm_model.head.loss.num_classes = 2
+            cfg.train.optimizer.lr = 1e-4
+            cfg.train.lr_config.warmup_iters = 1
+            cfg.train.evaluation.metric_options = {'topk': (1, )}
+            cfg.evaluation.metric_options = {'topk': (1, )}
+            return cfg
+
+        kwargs = dict(
+            model=model_id,
+            work_dir=self.tmp_dir,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
+            cfg_modify_fn=cfg_modify_fn)
+
+        trainer = build_trainer(
+            name=Trainers.image_classification, default_args=kwargs)
+        trainer.train()
+
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(self.max_epochs):
+            self.assertIn(f'epoch_{i+1}.pth', results_files)
+
+        result = trainer.evaluate()
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

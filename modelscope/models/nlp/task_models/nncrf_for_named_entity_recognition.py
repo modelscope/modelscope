@@ -141,6 +141,18 @@ class SequenceLabelingForNamedEntityRecognition(TorchModel):
         predicts = self.model.decode(input)
         offset_mapping = input.get('offset_mapping')
         mask = input.get('label_mask')
+
+        # revert predicts to original position with respect of label mask
+        masked_predict = torch.zeros_like(predicts)
+        for i in range(len(mask)):
+            masked_lengths = mask[i].sum(-1).long().cpu().item()
+            selected_predicts = torch.narrow(
+                predicts[i], 0, 0,
+                masked_lengths)  # index_select only move loc, not resize
+            mask_position = mask[i].byte()
+            masked_predict[i][mask_position] = selected_predicts
+        predicts = masked_predict
+
         return AttentionTokenClassificationModelOutput(
             loss=None,
             logits=None,

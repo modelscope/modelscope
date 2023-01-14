@@ -256,3 +256,13 @@ class ImageColorEnhanceMetric(Metric):
             MetricKeys.PSNR: sum(psnrs) / len(psnrs),
             MetricKeys.SSIM: sum(ssims) / len(ssims)
         }
+
+    def merge(self, other: 'ImageColorEnhanceMetric'):
+        self.preds.extend(other.preds)
+        self.targets.extend(other.targets)
+
+    def __getstate__(self):
+        return self.preds, self.targets
+
+    def __setstate__(self, state):
+        self.preds, self.targets = state

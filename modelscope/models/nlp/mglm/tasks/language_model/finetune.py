@@ -16,15 +16,14 @@
 import functools
 import math
 
-import mpu
 import torch
 from finetune_glm import finetune
+from megatron_util import mpu, print_rank_0
 from pretrain_glm import get_batch
 from tasks.data_utils import build_data_loader
 from tasks.language_model.dataset import (build_lambada_dataset,
                                           build_lm_dataset,
                                           build_wikitext103_dataset)
-from utils import print_rank_0
 
 global_tokenizer = None
 

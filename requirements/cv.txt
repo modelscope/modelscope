@@ -12,6 +12,7 @@ imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0
 kornia>=0.5.0
+lap
 lmdb
 lpips
 ml_collections
@@ -22,8 +23,10 @@ networkx>=2.5
 numba
 onnxruntime>=1.10
 opencv-python
-pai-easycv>=0.6.3.9
+pai-easycv>=0.8
 pandas
+panopticapi
+plyfile>=0.7.4
 psutil
 regex
 scikit-image>=0.19.3
@@ -35,4 +38,6 @@ tf_slim
 timm>=0.4.9
 torchmetrics>=0.6.2
 torchvision
+ujson
+utils
 videofeatures_clipit>=1.0

@@ -394,7 +394,8 @@ class BestCkptSaverHook(CheckpointHook):
     def remove_obsolete_checkpoints(self):
 
         def extract_metric_from_filename(name1):
-            metric1 = float(name1.split(self.metric_key)[1].split('.')[0])
+            metric1 = float('.'.join(
+                name1.split(self.metric_key)[1].split('.')[:-1]))
             if self.rule == 'max':
                 return -metric1
             else:

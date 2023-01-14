@@ -3,7 +3,7 @@ Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
 import torch
-from megatron import mpu
+from megatron_util import mpu
 
 
 def _gather_tokens(input_, dim=0):
@@ -15,7 +15,7 @@ def _gather_tokens(input_, dim=0):
 
     tensor_list = [
         torch.empty_like(input_)
-        for _ in range(mpu.get_model_parallel_world_size())
+        for _ in range(mpu.get_tensor_model_parallel_world_size())
     ]
     tensor_list[rank] = input_
     torch.distributed.all_gather(
@@ -29,8 +29,8 @@ def _gather_tokens(input_, dim=0):
 
 def _drop_tokens(input_, dim=0):
     """Divide a tensor among the tensor parallel ranks"""
-    total_chunks = mpu.get_model_parallel_world_size()
-    this_chunk = mpu.get_model_parallel_rank()
+    total_chunks = mpu.get_tensor_model_parallel_world_size()
+    this_chunk = mpu.get_tensor_model_parallel_rank()
     assert input_.shape[
         dim] % total_chunks == 0, f'input dimension {dim} ({input_.shape[dim]}) ' \
                                   f'is not divisible by tensor parallel world size ({total_chunks})'
@@ -74,14 +74,14 @@ class _DropTokens(torch.autograd.Function):
 
 
 def gather_tokens(input_, dim=0):
-    if mpu is None or mpu.get_model_parallel_world_size() == 1:
+    if mpu is None or mpu.get_tensor_model_parallel_world_size() == 1:
         # no tensor parallelism for non-experts
         return input_
     return _GatherTokens.apply(input_, dim)
 
 
 def drop_tokens(input_, dim=0):
-    if mpu is None or mpu.get_model_parallel_world_size() == 1:
+    if mpu is None or mpu.get_tensor_model_parallel_world_size() == 1:
         # no tensor parallelism for non-experts
         return input_
     return _DropTokens.apply(input_, dim)

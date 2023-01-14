@@ -1,8 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os.path
 import unittest
 
-from modelscope.preprocessors import build_preprocessor, nlp
+from modelscope.preprocessors import Preprocessor, build_preprocessor, nlp
 from modelscope.utils.constant import Fields, InputFields
 from modelscope.utils.logger import get_logger
 
@@ -31,6 +31,17 @@ class NLPPreprocessorTest(unittest.TestCase):
         self.assertEqual(
             output['attention_mask'],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    def test_preprocessor_download(self):
+        from modelscope.preprocessors.nlp.token_classification_preprocessor import TokenClassificationPreprocessorBase
+        preprocessor: TokenClassificationPreprocessorBase = \
+            Preprocessor.from_pretrained('damo/nlp_raner_named-entity-recognition_chinese-base-news')
+        self.assertTrue(preprocessor is not None)
+        from modelscope.utils.hub import snapshot_download
+        model_dir = snapshot_download(
+            'damo/nlp_raner_named-entity-recognition_chinese-base-news')
+        self.assertTrue(
+            os.path.isfile(os.path.join(model_dir, 'pytorch_model.bin')))
 
     def test_token_classification_tokenize_bert(self):
         cfg = dict(

@@ -22,6 +22,9 @@ from .utils.random_help import set_torch_seed
 
 
 class OfaBasePreprocessor:
+    r"""
+    OFA base preprocessor for
+    """
 
     def __init__(self, cfg, model_dir, mode, *args, **kwargs):
         """preprocess the data via the vocab.txt from the `model_dir` path
@@ -45,6 +48,8 @@ class OfaBasePreprocessor:
         # there will be no need to use param: use_bpe
         tokenizer.add_tokens(['<code_{}>'.format(i) for i in range(8192)])
         tokenizer.add_tokens(['<bin_{}>'.format(i) for i in range(1000)])
+        if self.cfg.model.get('multimodal_type', 'default') == 'text2sql':
+            tokenizer.add_tokens(['>=', '<='])
         self.tokenizer = tokenizer
         self.bos_item = torch.LongTensor([tokenizer.bos_token_id])
         self.pad_item = torch.LongTensor([tokenizer.pad_token_id])
@@ -100,6 +105,20 @@ class OfaBasePreprocessor:
         self.test_audio_feature_transforms = None
 
     def tokenize_text(self, text, add_bos=True, add_eos=True):
+        r"""
+        Using `OFATokenizer` to tokenize text input.
+
+        Args:
+            text (`str`): Input text.
+            add_bos ('bool', **optional**, default to `True`)
+                Whether or not to add beginning of sentence token in
+                the front of sentence.
+            add_eos ('bool', **optional**, default to `True`)
+                Whether or not to add ending of sentence token in
+                the end of sentence.
+        Returns:
+            A list of tokens with the max length of `max_src_length + 2`
+        """
         if text is None:
             return None
         inputs = self.tokenizer(
@@ -116,6 +135,27 @@ class OfaBasePreprocessor:
 
     @staticmethod
     def pre_caption(caption, max_words=None):
+        r"""
+        Preprocessing for text sentence.
+
+        step 1. Get the lower case of input text.
+        step 2. Remove the words within `,.!?*#:;~ ` in the beginning
+            of the sentence.
+        step 3. Replace the words within `-/` or pattern `\s{2,}` with word ` `
+            and replace tag `<person>` with `person`.
+        step 4. Remove the `\n` in the end of the sentence.
+        step 5. Split the sentence with token ` `, If `max_words` is not None,
+            make a length truncation.
+
+        Args:
+            caption (`str`): Input text.
+            max_words (`int`, **optional**, default `None`):
+                The max length of input text. If None, do nothing, else
+                make a truncation.
+
+        Returns:
+            A sequence of `str`.
+        """
         caption = caption.lower().lstrip(',.!?*#:;~').replace('-', ' ') \
             .replace('/', ' ').replace('<person>', 'person')
 
@@ -136,6 +176,27 @@ class OfaBasePreprocessor:
 
     @staticmethod
     def pre_question(question, max_ques_words):
+        r"""
+        Preprocessing for text sentence.
+        Note that this function is very similar to `pre_caption`, should be merged in the future version.
+
+        step 1. Get the lower case of input text.
+        step 2. Remove the words within `,.!?*#:;~ ` in the beginning
+            of the sentence.
+        step 3. Replace the words within `-/` or pattern `\s{2,}` with word ` `.
+        step 4. Remove the `\n` in the end of the sentence.
+        step 5. Split the sentence with token ` `, If `max_words` is not None,
+            make a length truncation.
+
+        Args:
+            question (`str`): Input text.
+            max_ques_words (`int`, **optional**, default `None`):
+                The max length of input text. If None, do nothing, else
+                make a truncation.
+
+        Returns:
+            A sequence of `str`.
+        """
         question = question.lower().lstrip(',.!?*#:;~').replace('-',
                                                                 ' ').replace(
                                                                     '/', ' ')
@@ -156,6 +217,9 @@ class OfaBasePreprocessor:
         return question
 
     def add_constraint_mask(self, sample):
+        r"""
+        Add constraint mask.
+        """
         target_itm = sample['target']
         len_label_itm = target_itm.ne(self.pad_item).sum(dim=0).item()
         if self.constraint_trie:
@@ -171,6 +235,18 @@ class OfaBasePreprocessor:
             sample['constraint_mask'] = constraint_mask
 
     def get_img_pil(self, path_or_url_or_pil):
+        r"""
+        Get the pillow image. If the input is not a pillow image ,it will load
+        image from a local path or an external url.
+
+        Args:
+            path_or_url_or_pil (`Union[str, Image]`):
+                Can be:
+                    - A path or url reference to an image
+                    - A pillow image.
+        Returns:
+            A pillow image.
+        """
         image = path_or_url_or_pil if isinstance(path_or_url_or_pil, Image.Image) \
             else load_image(path_or_url_or_pil)
         return image

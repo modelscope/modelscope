@@ -21,23 +21,14 @@ import time
 import json
 import numpy as np
 import torch
-
-from . import mpu
-from .fp16 import FP16_Optimizer
+from megatron_util import mpu, print_rank_0
+from megatron_util.fp16 import FP16_Optimizer
 
 SUMMARY_WRITER_DIR_NAME = 'runs'
 
 
 def get_log_dir(name, base):
     return os.path.join(base, SUMMARY_WRITER_DIR_NAME, name)
-
-
-def print_rank_0(message):
-    if torch.distributed.is_initialized():
-        if torch.distributed.get_rank() == 0:
-            print(message, flush=True)
-    else:
-        print(message, flush=True)
 
 
 def get_hostname():

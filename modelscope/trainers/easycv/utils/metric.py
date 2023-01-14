@@ -50,3 +50,13 @@ class EasyCVMetric(Metric):
         metric_values = self.trainer.eval_dataset.evaluate(
             results, self.evaluators)
         return metric_values
+
+    def merge(self, other: 'EasyCVMetric'):
+        self.preds.extend(other.preds)
+
+    def __getstate__(self):
+        return self.preds
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds = state

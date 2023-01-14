@@ -133,10 +133,20 @@ PREPROCESSOR_MAP = {
     Preprocessors.sequence_labeling_tokenizer,
     (Models.tcrf, Tasks.named_entity_recognition):
     Preprocessors.sequence_labeling_tokenizer,
+
+    # cv
+    (Models.tinynas_detection, Tasks.image_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
+    (Models.tinynas_damoyolo, Tasks.image_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
+    (Models.tinynas_damoyolo, Tasks.domain_specific_object_detection):
+    Preprocessors.object_detection_tinynas_preprocessor,
 }
 
 
 class Preprocessor(ABC):
+    """Base of preprocessors.
+    """
 
     def __init__(self, mode=ModeKeys.INFERENCE, *args, **kwargs):
         self._mode = mode
@@ -214,7 +224,17 @@ class Preprocessor(ABC):
             model_dir = snapshot_download(
                 model_name_or_path,
                 revision=revision,
-                user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
+                user_agent={Invoke.KEY: Invoke.PREPROCESSOR},
+                ignore_file_pattern=[
+                    '.*.bin',
+                    '.*.ts',
+                    '.*.pt',
+                    '.*.data-00000-of-00001',
+                    '.*.onnx',
+                    '.*.meta',
+                    '.*.pb',
+                    '.*.index',
+                ])
         else:
             model_dir = model_name_or_path
         if cfg_dict is None:

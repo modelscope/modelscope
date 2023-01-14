@@ -45,15 +45,16 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = img_captioning('data/test/images/image_captioning.png')
         print(result[OutputKeys.CAPTION])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_image_captioning_batch(self):
-        img_captioning = pipeline(
-            Tasks.image_captioning,
-            model='damo/ofa_image-caption_coco_large_en')
+        img_captioning.model.num_return_sequences = 2
+        result = img_captioning('data/test/images/image_captioning.png')
+        print(result[OutputKeys.CAPTION])
+
+        # test batch infer
+        img_captioning.model.num_return_sequences = 1
         results = img_captioning(
             [{
                 'image': 'data/test/images/image_captioning.png'
-            } for _ in range(6)],
+            } for _ in range(3)],
             batch_size=2)
         for r in results:
             print(r[OutputKeys.CAPTION])
@@ -65,6 +66,12 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             model='damo/ofa_ocr-recognition_scene_base_zh')
         result = ocr_recognize('data/test/images/image_ocr_recognition.jpg')
         print(result[OutputKeys.TEXT])
+        # test batch infer
+        results = ocr_recognize(
+            ['data/test/images/image_ocr_recognition.jpg' for _ in range(3)],
+            batch_size=2)
+        for r in results:
+            print(r[OutputKeys.TEXT])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_classification_with_model(self):
@@ -83,6 +90,12 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         image = 'data/test/images/image_classification.png'
         result = ofa_pipe(image)
         print(result)
+
+        # test batch infer
+        image = ['data/test/images/image_classification.png' for _ in range(3)]
+        results = ofa_pipe(image, batch_size=2)
+        for r in results:
+            print(r[OutputKeys.LABELS], r[OutputKeys.SCORES])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_summarization_with_model(self):
@@ -104,11 +117,22 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
             model='damo/ofa_summarization_gigaword_large_en')
         text = 'five-time world champion michelle kwan withdrew' + \
                'from the #### us figure skating championships on wednesday ,' + \
-               ' but will petition us skating officials for the chance to ' +\
+               ' but will petition us skating officials for the chance to ' + \
                'compete at the #### turin olympics .'
         input = {'text': text}
         result = ofa_pipe(input)
         print(result)
+
+        # test for return multiple sequences
+        ofa_pipe.model.num_return_sequences = 2
+        result = ofa_pipe(input)
+        print(result)
+        # test batch infer
+        ofa_pipe.model.num_return_sequences = 1
+        input = [{'text': text} for _ in range(3)]
+        results = ofa_pipe(input, batch_size=2)
+        for r in results:
+            print(r[OutputKeys.TEXT])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_text_classification_with_model(self):
@@ -130,6 +154,11 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         text2 = 'A member of my team will execute your orders with immense precision.'
         result = ofa_pipe((text, text2))
         print(result)
+        # test batch infer
+        inputs = [(text, text2) for _ in range(3)]
+        results = ofa_pipe(inputs, batch_size=2)
+        for r in results:
+            print(r[OutputKeys.LABELS], r[OutputKeys.SCORES])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_visual_entailment_with_model(self):
@@ -152,8 +181,13 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         input = {'image': image, 'text': text}
         result = ofa_pipe(input)
         print(result)
+        # test batch infer
+        input = [{'image': image, 'text': text} for _ in range(3)]
+        results = ofa_pipe(input, batch_size=2)
+        for r in results:
+            print(r[OutputKeys.LABELS], r[OutputKeys.SCORES])
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_grounding_with_model(self):
         model = Model.from_pretrained(
             'damo/ofa_visual-grounding_refcoco_large_en')
@@ -182,6 +216,9 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         image_name = image.split('/')[-2]
         self.save_img(image, result[OutputKeys.BOXES][0],
                       osp.join('large_en_name_' + image_name + '.png'))
+        # test batch infer
+        result = ofa_pipe([input for _ in range(3)], batch_size=2)
+        print(result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_grounding_zh_with_name(self):
@@ -217,6 +254,10 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe(input)
         print(result)
 
+        # test batch infer
+        result = ofa_pipe([input for _ in range(3)], batch_size=2)
+        print(result)
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_image_captioning_distilled_with_model(self):
         model = Model.from_pretrained(
@@ -229,6 +270,9 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         image = Image.open(image_path)
         result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
+
+        # test batch infer
+        print(img_captioning([image for _ in range(3)], batch_size=2))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_visual_entailment_distilled_model_with_name(self):
@@ -280,6 +324,47 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         example = {'wav': 'data/test/audios/asr_example_ofa.wav'}
         result = ofa_pipe(example)
         print(result[OutputKeys.TEXT])
+        # test batch infer
+        result = ofa_pipe([example for _ in range(3)], batch_size=2)
+        for r in result:
+            print(r[OutputKeys.TEXT])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_sudoku_with_name(self):
+        model = 'damo/ofa_sudoku_kaggle_large'
+        ofa_pipe = pipeline(Tasks.sudoku, model=model)
+        # the valid num is 1-9，and use 0 represents the empty block
+        # the separator of column is ` : `, and the separator of row is ` | `
+        example = '5 : 3 : 0 : 0 : 7 : 0 : 0 : 0 : 0 | \
+                6 : 0 : 0 : 1 : 9 : 5 : 0 : 0 : 0 | \
+                0 : 9 : 8 : 0 : 0 : 0 : 0 : 6 : 0 | \
+                8 : 0 : 0 : 0 : 6 : 0 : 0 : 0 : 3 | \
+                4 : 0 : 0 : 8 : 0 : 3 : 0 : 0 : 1 | \
+                7 : 0 : 0 : 0 : 2 : 0 : 0 : 0 : 6 | \
+                0 : 6 : 0 : 0 : 0 : 0 : 2 : 8 : 0 | \
+                0 : 0 : 0 : 4 : 1 : 9 : 0 : 0 : 5 | \
+                0 : 0 : 0 : 0 : 8 : 0 : 0 : 7 : 9'
+
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
+        # test batch infer
+        result = ofa_pipe([example for _ in range(3)], batch_size=2)
+        for r in result:
+            print(r[OutputKeys.TEXT])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_text2sql_with_name(self):
+        model = 'damo/ofa_text2sql_spider_large_en'
+        ofa_pipe = pipeline(Tasks.text2sql, model=model)
+        text = 'Show all book categories and the number of books in each category.'
+        database = 'culture_company'  # optional, default `culture_company`
+        example = {'text': text, 'database': database}
+        result = ofa_pipe(example)
+        print(result[OutputKeys.TEXT])
+        # test batch infer
+        result = ofa_pipe([example for _ in range(3)], batch_size=2)
+        for r in result:
+            print(r[OutputKeys.TEXT])
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

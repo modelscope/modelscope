@@ -8,6 +8,7 @@ from typing import Dict
 import numpy as np
 import torch
 import torch.nn.functional as F
+from megatron_util import mpu
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
@@ -15,7 +16,7 @@ from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
-from . import mpu
+from modelscope.utils.megatron_utils import init_megatron_util
 from .arguments import get_args
 from .generation_utils import BeamSearchScorer
 from .train_utils import get_model
@@ -60,16 +61,6 @@ def setup_model(args):
         _ = load_checkpoint(model, None, None, args)
 
     return model
-
-
-def set_random_seed(seed):
-    """Set random seed for reproducability."""
-
-    if seed is not None and seed > 0:
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        mpu.model_parallel_cuda_manual_seed(seed)
 
 
 def get_masks_and_position_ids(data,
@@ -140,36 +131,6 @@ def get_masks_and_position_ids(data,
                     prev_index = i + 1
 
     return attention_mask, loss_mask, position_ids
-
-
-def initialize_distributed(args):
-    """Initialize torch.distributed."""
-
-    # Manually set the device ids.
-    device = args.rank % torch.cuda.device_count()
-    if args.local_rank is not None:
-        device = args.local_rank
-    torch.cuda.set_device(device)
-    # Call the init process
-    init_method = 'tcp://'
-    args.master_ip = os.getenv('MASTER_ADDR', 'localhost')
-    args.master_port = os.getenv('MASTER_PORT', '6000')
-    init_method += args.master_ip + ':' + args.master_port
-    torch.distributed.init_process_group(
-        backend=args.distributed_backend,
-        world_size=args.world_size,
-        rank=args.rank,
-        init_method=init_method)
-
-    # Set the model-parallel / data-parallel communicators.
-    mpu.initialize_model_parallel(args.model_parallel_size)
-
-    # Optional DeepSpeed Activation Checkpointing Features
-    #
-    if hasattr(
-            args, 'deepspeed'
-    ) and args.deepspeed and args.deepspeed_activation_checkpointing:
-        set_deepspeed_activation_checkpointing(args)
 
 
 def get_batch(context_tokens, device, args):
@@ -398,13 +359,12 @@ class MGLMForTextSummarization(TorchModel):
         # Arguments.
         self.args = setup_args(get_args())
         self.args.load_pretrained = model_dir
-        # Pytorch distributed.
+
         try:
-            initialize_distributed(self.args)
-        except (RuntimeError):
-            print('group process initialized twice')
-        # Random seeds for reproducability.
-        set_random_seed(self.args.seed)
+            init_megatron_util(model_dir=model_dir)
+        except AssertionError:
+            print('megatron initialized twice')
+
         # setting default batch size to 1
         self.args.batch_size = 1
         self.args.tokenizer_path = model_dir

@@ -4,6 +4,7 @@ import argparse
 import os
 import re
 
+from bitstring import BitArray
 from tqdm import tqdm
 
 from modelscope.utils.logger import get_logger
@@ -461,3 +462,39 @@ class TextScriptConvertor:
 
         logging.info('TextScriptConvertor.process:\nSave metafile to: %s',
                      outputMetafile)
+
+    @staticmethod
+    def turn_text_into_bytes(plain_text_path, output_meta_file_path, speaker):
+        meta_lines = []
+        with open(plain_text_path, 'r') as in_file:
+            for text_line in in_file:
+                [sentence_id, sentence] = text_line.strip().split('\t')
+                sequence = []
+                for character in sentence:
+                    hex_string = character.encode('utf-8').hex()
+                    i = 0
+                    while i < len(hex_string):
+                        byte_hex = hex_string[i:i + 2]
+                        bit_array = BitArray(hex=byte_hex)
+                        integer = bit_array.uint
+                        if integer > 255:
+                            logging.error(
+                                'TextScriptConverter.turn_text_into_bytes: invalid byte conversion in sentence {} \
+                                        character {}: (uint) {} - (hex) {}'.
+                                format(
+                                    sentence_id,
+                                    character,
+                                    integer,
+                                    character.encode('utf-8').hex(),
+                                ))
+                            continue
+                        sequence.append('{{{}$emotion_neutral${}}}'.format(
+                            integer, speaker))
+                        i += 2
+                if sequence[-1][1:].split('$')[0] not in ['33', '46', '63']:
+                    sequence.append(
+                        '{{46$emotion_neutral${}}}'.format(speaker))
+                meta_lines.append('{}\t{}\n'.format(sentence_id,
+                                                    ' '.join(sequence)))
+        with open(output_meta_file_path, 'w') as out_file:
+            out_file.writelines(meta_lines)

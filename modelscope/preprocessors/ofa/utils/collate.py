@@ -7,6 +7,9 @@ import torch
 
 
 def collate_fn(samples, pad_idx, eos_idx):
+    r"""
+    convert the sample to batch tensor.
+    """
     if len(samples) == 0:
         return {}
 
@@ -22,7 +25,7 @@ def collate_fn(samples, pad_idx, eos_idx):
     if samples[0].get('source', None) is not None:
         batch['net_input']['input_ids'] = merge('source')
     if samples[0].get('id', None) is not None:
-        batch['id'] = np.array([s.get['id'] for s in samples])
+        batch['id'] = np.array([s.get('id') for s in samples])
     if samples[0].get('target', None) is not None:
         batch['target'] = merge('target')
         tgt_lengths = torch.LongTensor(
@@ -87,6 +90,20 @@ def collate_fn(samples, pad_idx, eos_idx):
         batch['phone_target'] = merge('phone_target')
         batch['phone_length'] = torch.tensor(
             [s['phone_target'].size(0) for s in samples], dtype=torch.long)
+
+    # for sudoku
+    if samples[0].get('db_struct', None) is not None:
+        db_struct = [sample['db_struct'] for sample in samples]
+        batch['db_struct'] = db_struct
+    if samples[0].get('mask_ratio', None) is not None:
+        mask_ratio = [sample['mask_ratio'] for sample in samples]
+        batch['mask_ratio'] = mask_ratio
+    if samples[0].get('seg_col_tokens', None) is not None:
+        seg_col_tokens = merge('seg_col_tokens')
+        batch['net_input']['seg_col_tokens'] = seg_col_tokens
+    if samples[0].get('seg_row_tokens', None) is not None:
+        seg_row_tokens = merge('seg_row_tokens')
+        batch['net_input']['seg_row_tokens'] = seg_row_tokens
 
     return batch
 

@@ -3,7 +3,9 @@ from .asr import OfaASRPreprocessor
 from .image_captioning import OfaImageCaptioningPreprocessor
 from .image_classification import OfaImageClassificationPreprocessor
 from .ocr_recognition import OfaOcrRecognitionPreprocessor
+from .sudoku import OfaSudokuPreprocessor
 from .summarization import OfaSummarizationPreprocessor
+from .text2sql import OfaTextToSqlPreprocessor
 from .text_classification import OfaTextClassificationPreprocessor
 from .text_to_image_synthesis import OfaTextToImageSynthesisPreprocessor
 from .visual_entailment import OfaVisualEntailmentPreprocessor

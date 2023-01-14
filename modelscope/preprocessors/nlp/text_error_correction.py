@@ -17,7 +17,11 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
     """The preprocessor used in text correction task.
     """
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self,
+                 model_dir: str,
+                 max_length: int = None,
+                 *args,
+                 **kwargs):
         from fairseq.data import Dictionary
         """preprocess the data via the vocab file from the `model_dir` path
 
@@ -26,8 +30,8 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
         """
         super().__init__(*args, **kwargs)
         self.vocab = Dictionary.load(osp.join(model_dir, 'dict.src.txt'))
-        self.max_length = 100 + 1  # 1 is eos token
-        self.padding_value = 2
+        self.max_length = max_length + 1 if max_length is not None else 129  # 1 is eos token
+        self.padding_value = self.vocab.pad()
 
     def __call__(self, data: str) -> Dict[str, Any]:
         """process the raw input data

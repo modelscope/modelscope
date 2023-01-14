@@ -75,17 +75,14 @@ class TextErrorCorrectionPipeline(Pipeline):
                 'output': '随着中国经济突飞猛进，建造工业与日俱增'
             }
 
-
         """
 
-        sc_sent = []
-        for sent in inputs['predictions']:
-            pred_str = self.vocab.string(
-                sent, '@@', extra_symbols_to_ignore={self.vocab.pad()})
-            sc_sent.append(''.join(pred_str.split()))
+        sc_tensor = inputs['predictions']
+        if isinstance(sc_tensor, list):
+            sc_tensor = sc_tensor[0]
+        sc_sent = self.vocab.string(
+            sc_tensor, '@@', extra_symbols_to_ignore={self.vocab.pad()})
 
-        # for  consistent with old version
-        if len(sc_sent) == 1:
-            sc_sent = sc_sent[0]
+        sc_sent = ''.join(sc_sent.split())
 
         return {OutputKeys.OUTPUT: sc_sent}

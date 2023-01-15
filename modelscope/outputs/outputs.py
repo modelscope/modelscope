@@ -26,6 +26,7 @@ class OutputKeys(object):
     POLYGONS = 'polygons'
     OUTPUT = 'output'
     OUTPUT_IMG = 'output_img'
+    OUTPUT_IMGS = 'output_imgs'
     OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
     OUTPUT_PCM_LIST = 'output_pcm_list'
@@ -797,11 +798,11 @@ TASK_OUTPUTS = {
     # }
     Tasks.visual_grounding: [OutputKeys.BOXES, OutputKeys.SCORES],
 
-    # text_to_image result for a single sample
+    # text_to_image result for samples
     # {
-    #    "output_img": np.ndarray with shape [height, width, 3]
+    #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
     # }
-    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMG],
+    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMGS],
 
     # text_to_speech result for a single sample
     # {

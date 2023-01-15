@@ -2,8 +2,11 @@
 
 from typing import Any, Dict
 
+import cv2
+import numpy as np
 import torch
 from diffusers import StableDiffusionPipeline
+from PIL import Image
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
@@ -30,15 +33,42 @@ class StableDiffusionWrapperPipeline(DiffusersPipeline):
         """
         super().__init__(model, device, **kwargs)
 
-        torch_dtype = kwargs.get('torch_dtype', torch.float16)
+        torch_dtype = kwargs.get('torch_dtype', torch.float32)
 
         # build upon the diffuser stable diffusion pipeline
         self.pipeline = StableDiffusionPipeline.from_pretrained(
             model, torch_dtype=torch_dtype)
         self.pipeline.to(self.device)
 
-    def forward(self, prompt, **kwargs):
-        return self.pipeline(prompt, **kwargs)
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        if not isinstance(inputs, dict):
+            raise ValueError(
+                f'Expected the input to be a dictionary, but got {type(input)}'
+            )
+        if 'text' not in inputs:
+            raise ValueError('input should contain "text", but not found')
+
+        return self.pipeline(
+            prompt=inputs.get('text'),
+            height=inputs.get('height'),
+            width=inputs.get('width'),
+            num_inference_steps=inputs.get('num_inference_steps', 50),
+            guidance_scale=inputs.get('guidance_scale', 7.5),
+            negative_prompt=inputs.get('negative_prompt'),
+            num_images_per_prompt=inputs.get('num_images_per_prompt', 1),
+            eta=inputs.get('eta', 0.0),
+            generator=inputs.get('generator'),
+            latents=inputs.get('latents'),
+            output_type=inputs.get('output_type', 'pil'),
+            return_dict=inputs.get('return_dict', True),
+            callback=inputs.get('callback'),
+            callback_steps=inputs.get('callback_steps', 1))
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return {OutputKeys.OUTPUT_IMG: inputs.images}
+        images = []
+        for img in inputs.images:
+            if isinstance(img, Image.Image):
+                img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                images.append(img)
+        return {OutputKeys.OUTPUT_IMGS: images}

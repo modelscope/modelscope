@@ -2,6 +2,8 @@
 
 import unittest
 
+import cv2
+
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -19,8 +21,12 @@ class DiffusersStableDiffusionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
         diffusers_pipeline = pipeline(task=self.task, model=self.model_id)
-        output = diffusers_pipeline(self.test_input, height=512, width=512)
-        output['output_img'][0].save('output.png')
+        output = diffusers_pipeline({
+            'text': self.test_input,
+            'height': 512,
+            'width': 512
+        })
+        cv2.imwrite('output.png', output['output_imgs'][0])
         print('Image saved to output.png')
 
 

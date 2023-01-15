@@ -23,7 +23,7 @@ class MultiStageDiffusionTest(unittest.TestCase):
         pipe_line_text_to_image_synthesis = pipeline(
             task=Tasks.text_to_image_synthesis, model=model)
         img = pipe_line_text_to_image_synthesis(
-            self.test_text)[OutputKeys.OUTPUT_IMG]
+            self.test_text)[OutputKeys.OUTPUT_IMGS][0]
         print(np.sum(np.abs(img)))
 
     @unittest.skip(
@@ -32,7 +32,7 @@ class MultiStageDiffusionTest(unittest.TestCase):
         pipe_line_text_to_image_synthesis = pipeline(
             task=Tasks.text_to_image_synthesis, model=self.model_id)
         img = pipe_line_text_to_image_synthesis(
-            self.test_text)[OutputKeys.OUTPUT_IMG]
+            self.test_text)[OutputKeys.OUTPUT_IMGS][0]
         print(np.sum(np.abs(img)))
 
 

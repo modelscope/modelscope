@@ -63,18 +63,23 @@ class WavToScp(Preprocessor):
         cmd['audio_format'] = audio_format
         cmd['model_config'] = model['model_config']
         cmd['audio_fs'] = audio_fs
+        if 'code_base' in cmd['model_config']:
+            code_base = cmd['model_config']['code_base']
+        else:
+            code_base = None
 
         if isinstance(audio_in, str):
             # wav file path or the dataset path
             cmd['wav_path'] = audio_in
-
+        if code_base != 'funasr':
+            cmd = self.config_checking(cmd)
         cmd = self.env_setting(cmd)
         if audio_format == 'wav':
             cmd['audio_lists'] = self.scp_generation_from_wav(cmd)
         elif audio_format == 'kaldi_ark':
             cmd['audio_lists'] = self.scp_generation_from_ark(cmd)
         elif audio_format == 'tfrecord':
-            cmd['audio_lists'] = os.path.join(out['wav_path'], 'data.records')
+            cmd['audio_lists'] = os.path.join(cmd['wav_path'], 'data.records')
         elif audio_format == 'pcm' or audio_format == 'scp':
             cmd['audio_lists'] = audio_in
 

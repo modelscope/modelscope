@@ -83,6 +83,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.audio_format = audio_format
         self.audio_fs = audio_fs
         checking_audio_fs = None
+        self.raw_inputs = None
         if code_base == 'funasr':
             if isinstance(audio_in, str):
                 # for funasr code, generate wav.scp from url or local path
@@ -254,7 +255,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             cmd['predictions_file'] = 'text'
             cmd['mvn_file'] = outputs['am_mvn_file']
             cmd['vocab_file'] = outputs['vocab_file']
-            cmd['lang'] = outputs['model_lang']
             if 'idx_text' in outputs:
                 cmd['idx_text'] = outputs['idx_text']
             if 'sampled_ids' in outputs['model_config']:
@@ -274,20 +274,29 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         logger.info(f"Decoding with {inputs['audio_format']} files ...")
 
         data_cmd: Sequence[Tuple[str, str, str]]
-        if isinstance(self.audio_in, bytes):
-            data_cmd = [self.audio_in, 'speech', 'bytes']
-        elif isinstance(self.audio_in, str):
-            data_cmd = [self.audio_in, 'speech', 'sound']
-        elif self.raw_inputs is not None:
-            data_cmd = None
-
-        if inputs.__contains__('mvn_file') and inputs['audio_format'] != 'scp':
-            data_cmd.append(inputs['mvn_file'])
+        if self.cmd['code_base'] == 'funasr':
+            if isinstance(self.audio_in, bytes):
+                data_cmd = [self.audio_in, 'speech', 'bytes']
+            elif isinstance(self.audio_in, str):
+                data_cmd = [self.audio_in, 'speech', 'sound']
+            elif self.raw_inputs is not None:
+                data_cmd = None
+        else:
+            if inputs['audio_format'] == 'wav' or inputs[
+                    'audio_format'] == 'pcm':
+                data_cmd = ['speech', 'sound']
+            elif inputs['audio_format'] == 'kaldi_ark':
+                data_cmd = ['speech', 'kaldi_ark']
+            elif inputs['audio_format'] == 'tfrecord':
+                data_cmd = ['speech', 'tfrecord']
+            if inputs.__contains__('mvn_file'):
+                data_cmd.append(inputs['mvn_file'])
 
         # generate asr inference command
         self.cmd['name_and_type'] = data_cmd
         self.cmd['fs']['audio_fs'] = inputs['audio_fs']
         self.cmd['raw_inputs'] = self.raw_inputs
+        self.cmd['audio_in'] = self.audio_in
 
         inputs['asr_result'] = self.run_inference(self.cmd)
 
@@ -313,8 +322,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         elif inputs['recog_type'] != 'wav':
             inputs['reference_list'] = self.ref_list_tidy(inputs)
 
-            if hasattr(asr_utils, 'set_parameters'):
-                asr_utils.set_parameters(language=inputs['model_lang'])
             inputs['datasets_result'] = asr_utils.compute_wer(
                 hyp_list=inputs['asr_result'],
                 ref_list=inputs['reference_list'])

@@ -303,7 +303,7 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         ofa_pipe.model.generator.beam_size = 2
         example = {'text': 'a bear in the water.'}
         result = ofa_pipe(example)
-        result[OutputKeys.OUTPUT_IMG].save('result.png')
+        result[OutputKeys.OUTPUT_IMGS][0].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

@@ -39,7 +39,7 @@ from modelscope.utils.nlp.utils import parse_labels_in_order
 
 transformers.logging.set_verbosity_error()
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 _CONFIG_FOR_DOC = 'BertConfig'
 _TOKENIZER_FOR_DOC = 'BertTokenizer'

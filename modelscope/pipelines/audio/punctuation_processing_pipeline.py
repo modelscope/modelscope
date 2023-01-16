@@ -61,11 +61,15 @@ class PunctuationProcessingPipeline(Pipeline):
             train_config=self.cmd['train_config'],
             model_file=self.cmd['model_file'])
 
-    def __call__(self, text_in: str = None) -> Dict[str, Any]:
+    def __call__(self,
+                 text_in: str = None,
+                 output_dir: str = None) -> Dict[str, Any]:
         if len(text_in) == 0:
             raise ValueError('The input of punctuation should not be null.')
         else:
             self.text_in = text_in
+        if output_dir is not None:
+            self.cmd['output_dir'] = output_dir
 
         output = self.forward(self.text_in)
         result = self.postprocess(output)
@@ -131,7 +135,8 @@ class PunctuationProcessingPipeline(Pipeline):
         if self.framework == Frameworks.torch:
             punc_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                raw_inputs=cmd['raw_inputs'])
+                raw_inputs=cmd['raw_inputs'],
+                output_dir_v2=cmd['output_dir'])
         else:
             raise ValueError('model type is mismatching')
 

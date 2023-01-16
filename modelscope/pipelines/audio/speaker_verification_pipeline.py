@@ -62,11 +62,14 @@ class SpeakerVerificationPipeline(Pipeline):
             model_tag=self.cmd['model_tag'])
 
     def __call__(self,
-                 audio_in: Union[tuple, str, Any] = None) -> Dict[str, Any]:
+                 audio_in: Union[tuple, str, Any] = None,
+                 output_dir: str = None) -> Dict[str, Any]:
         if len(audio_in) == 0:
             raise ValueError('The input of ITN should not be null.')
         else:
             self.audio_in = audio_in
+        if output_dir is not None:
+            self.cmd['output_dir'] = output_dir
 
         output = self.forward(self.audio_in)
         result = self.postprocess(output)
@@ -155,7 +158,8 @@ class SpeakerVerificationPipeline(Pipeline):
         if self.framework == Frameworks.torch:
             sv_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                raw_inputs=cmd['raw_inputs'])
+                raw_inputs=cmd['raw_inputs'],
+                output_dir_v2=cmd['output_dir'])
         else:
             raise ValueError('model type is mismatching')
 

@@ -74,7 +74,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_in: Union[str, bytes],
                  audio_fs: int = None,
                  recog_type: str = None,
-                 audio_format: str = None) -> Dict[str, Any]:
+                 audio_format: str = None,
+                 output_dir: str = None) -> Dict[str, Any]:
         from funasr.utils import asr_utils
 
         # code base
@@ -84,6 +85,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.audio_fs = audio_fs
         checking_audio_fs = None
         self.raw_inputs = None
+        if output_dir is not None:
+            self.cmd['output_dir'] = output_dir
         if code_base == 'funasr':
             if isinstance(audio_in, str):
                 # for funasr code, generate wav.scp from url or local path
@@ -142,6 +145,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
 
         # generate asr inference command
         cmd = {
+            'output_dir': None,
             'model_type': outputs['model_type'],
             'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'log_level': 'ERROR',
@@ -374,7 +378,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if self.framework == Frameworks.torch and cmd['code_base'] == 'funasr':
             asr_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
-                raw_inputs=cmd['raw_inputs'])
+                raw_inputs=cmd['raw_inputs'],
+                output_dir_v2=cmd['output_dir'])
 
         elif self.framework == Frameworks.torch:
             from easyasr import asr_inference_paraformer_espnet

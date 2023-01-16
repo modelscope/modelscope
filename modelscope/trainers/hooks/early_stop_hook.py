@@ -50,7 +50,7 @@ class EarlyStopHook(Hook):
 
     def before_run(self, trainer):
         if not hasattr(trainer, 'logger'):
-            self.logger = get_logger(__name__)
+            self.logger = get_logger()
         else:
             self.logger = trainer.logger
 

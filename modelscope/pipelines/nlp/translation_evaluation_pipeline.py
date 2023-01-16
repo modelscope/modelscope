@@ -19,7 +19,7 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 __all__ = ['TranslationEvaluationPipeline']
 

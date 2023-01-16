@@ -6,7 +6,8 @@ from modelscope.models import Model
 from modelscope.models.nlp import BartForTextErrorCorrection
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextErrorCorrectionPipeline
-from modelscope.preprocessors import TextErrorCorrectionPreprocessor
+from modelscope.preprocessors import (Preprocessor,
+                                      TextErrorCorrectionPreprocessor)
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
@@ -26,7 +27,7 @@ class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_direct_download(self):
         cache_path = snapshot_download(self.model_id)
         model = BartForTextErrorCorrection(cache_path)
-        preprocessor = TextErrorCorrectionPreprocessor(cache_path)
+        preprocessor = Preprocessor.from_pretrained(cache_path)
         pipeline1 = TextErrorCorrectionPipeline(model, preprocessor)
         pipeline2 = pipeline(
             Tasks.text_error_correction,
@@ -48,7 +49,7 @@ class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
-        preprocessor = TextErrorCorrectionPreprocessor(model.model_dir)
+        preprocessor = Preprocessor.from_pretrained(model.model_dir)
         pipeline_ins = pipeline(
             task=Tasks.text_error_correction,
             model=model,

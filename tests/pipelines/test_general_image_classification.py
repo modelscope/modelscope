@@ -64,6 +64,12 @@ class GeneralImageClassificationTest(unittest.TestCase,
         print(result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_easyrobust(self):
+        robust_image_classification = pipeline(
+            Tasks.image_classification, model='aaig/easyrobust-models')
+        result = robust_image_classification('data/test/images/bird.JPEG')
+        print(result)
+
     def test_run_bnext(self):
         nexit_image_classification = pipeline(
             Tasks.image_classification,

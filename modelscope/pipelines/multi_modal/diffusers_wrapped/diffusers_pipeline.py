@@ -47,6 +47,11 @@ class DiffusersPipeline(Pipeline):
 
     def __call__(self, input: Union[Input, List[Input]], *args,
                  **kwargs) -> Union[Dict[str, Any], Generator]:
-
-        return self.postprocess(
-            self.forward(self.preprocess(input), *args, **kwargs))
+        preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
+            **kwargs)
+        self._check_input(input)
+        out = self.preprocess(input, **preprocess_params)
+        out = self.forward(out, **forward_params)
+        out = self.postprocess(out, **postprocess_params)
+        self._check_output(out)
+        return out

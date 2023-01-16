@@ -23,7 +23,7 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 __all__ = ['UniTEForTranslationEvaluation']
 

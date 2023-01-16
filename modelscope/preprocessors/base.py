@@ -306,7 +306,7 @@ class Preprocessor(ABC):
         preprocessor.mode = preprocessor_mode
         sub_cfg.pop('model_dir', None)
         if not hasattr(preprocessor, 'cfg'):
-            preprocessor.cfg = cfg
+            preprocessor.cfg = sub_cfg
         return preprocessor
 
     def save_pretrained(self,

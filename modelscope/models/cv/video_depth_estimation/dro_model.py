@@ -52,7 +52,8 @@ class DROEstimation(TorchModel):
         if torch.cuda.is_available():
             model_wrapper = self.model_wrapper.to('cuda')
         else:
-            raise RuntimeError('cuda is not available')
+            model_wrapper = self.model_wrapper
+            print('cuda is not available, use cpu')
 
         # Set to eval mode
         model_wrapper.eval()

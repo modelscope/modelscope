@@ -50,6 +50,9 @@ class DetDataset(EasyCVBaseDataset, _DetDataset):
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_object_detection,
     module_name=Datasets.DetImagesMixDataset)
+@TASK_DATASETS.register_module(
+    group_key=Tasks.domain_specific_object_detection,
+    module_name=Datasets.DetImagesMixDataset)
 class DetImagesMixDataset(EasyCVBaseDataset, _DetImagesMixDataset):
     """EasyCV dataset for object detection, a wrapper of multiple images mixed dataset.
     Suitable for training on multiple images mixed data augmentation like

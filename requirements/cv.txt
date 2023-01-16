@@ -3,6 +3,7 @@ av>=9.2.0
 bmt_clipit>=1.0
 clip>=1.0
 easydict
+easyrobust
 fairscale>=0.4.1
 fastai>=1.0.51
 ffmpeg>=1.4

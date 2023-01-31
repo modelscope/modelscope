@@ -246,6 +246,7 @@ class Pipelines(object):
     realtime_video_object_detection = 'cspnet_realtime-video-object-detection_streamyolo'
     face_recognition = 'ir101-face-recognition-cfglint'
     face_recognition_ood = 'ir-face-recognition-ood-rts'
+    face_recognition_onnx_fm = 'manual-face-recognition-frfm'
     arc_face_recognition = 'ir50-face-recognition-arcface'
     mask_face_recognition = 'resnet-face-recognition-facemask'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'

@@ -1,5 +1,5 @@
 # The implementation here is modified based on RealBasicVSR,
-# originally Apache 2.0 License and publicly avaialbe at
+# originally Apache 2.0 License and publicly available at
 # https://github.com/ckkelvinchan/RealBasicVSR/blob/master/inference_realbasicvsr.py
 import math
 import os

@@ -1,4 +1,4 @@
-# The implementation is adopted from InsightFace, made pubicly available under the Apache-2.0 license at
+# The implementation is adopted from InsightFace, made publicly available under the Apache-2.0 license at
 # https://github.com/TreB1eN/InsightFace_Pytorch/blob/master/model.py
 
 from collections import namedtuple

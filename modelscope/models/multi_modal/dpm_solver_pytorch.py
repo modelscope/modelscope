@@ -1,5 +1,5 @@
 # The implementation is borrowed and modified from dpm-solver,
-# publicly avaialbe at https://github.com/LuChengTHU/dpm-solver.
+# publicly available at https://github.com/LuChengTHU/dpm-solver.
 # Copyright LuChengTHU Authors.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors.
 # All rights reserved.

@@ -77,7 +77,7 @@ def check_local_model_is_latest(
                     continue
                 else:
                     logger.info(
-                        'Model is updated from modelscope hub, you can verify from http://www.modelscope.cn.'
+                        'Model is updated from modelscope hub, you can verify from https://www.modelscope.cn.'
                     )
                     break
             else:
@@ -88,7 +88,7 @@ def check_local_model_is_latest(
                         continue
                     else:
                         logger.info(
-                            'Model is updated from modelscope hub, you can verify from http://www.modelscope.cn.'
+                            'Model is updated from modelscope hub, you can verify from https://www.modelscope.cn.'
                         )
                         break
     except:  # noqa: E722

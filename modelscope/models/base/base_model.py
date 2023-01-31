@@ -170,7 +170,7 @@ class Model(ABC):
             config (Optional[dict], optional):
             The config for the configuration.json, might not be identical with model.config
 
-            save_config_function (Callble, optional):
+            save_config_function (Callable, optional):
             The function to use to save the configuration.
 
         """

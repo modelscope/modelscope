@@ -33,7 +33,7 @@ def save_wav(wav, path, sr):
         quant_wav = 32767 * wav
     else:
         quant_wav = wav
-        # maxmize the volume to avoid clipping
+        # maximize the volume to avoid clipping
         # wav *= 32767 / max(0.01, np.max(np.abs(wav)))
     wavfile.write(path, sr, quant_wav.astype(np.int16))
 

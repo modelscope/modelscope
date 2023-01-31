@@ -1,5 +1,5 @@
 # The implementation here is modified based on HuggingFace, originally Apache 2.0 License
-# and publicly avaialbe at https://github.com/huggingface/transformers
+# and publicly available at https://github.com/huggingface/transformers
 # Copyright 2018 The HuggingFace Inc. team.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 

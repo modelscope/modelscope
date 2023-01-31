@@ -18,6 +18,7 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.task = Tasks.sentence_similarity
         self.model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
+        self.model_id_retail = 'damo/nlp_structbert_sentence-similarity_chinese-retail-base'
 
     sentence1 = '今天气温比昨天高么？'
     sentence2 = '今天湿度比昨天高么？'
@@ -80,6 +81,14 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
                 'sbert_sen_sim',
                 compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
             print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_retail_similarity_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_similarity,
+            model=self.model_id_retail,
+            model_revision='v1.0.0')
+        print(pipeline_ins(input=(self.sentence1, self.sentence2)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

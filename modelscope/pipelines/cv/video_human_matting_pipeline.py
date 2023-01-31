@@ -37,9 +37,11 @@ class VideoHumanMattingPipeline(Pipeline):
     def preprocess(self, input) -> Input:
         return input
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, input: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
         video_path = input['video_input_path']
         out_path = input['output_path']
+        render = forward_params.get('render', False)
         video_input = cv2.VideoCapture(video_path)
         fps = video_input.get(cv2.CAP_PROP_FPS)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -58,19 +60,19 @@ class VideoHumanMattingPipeline(Pipeline):
                 frame_tensor = preprocess(frame)
                 pha, *rec = self.model.model(
                     frame_tensor.to(self.device), *rec, downsample_ratio=scale)
-                com = pha * 255
-                com = com.repeat(1, 3, 1, 1)
-                com = com[0].data.cpu().numpy().transpose(1, 2,
-                                                          0).astype(np.uint8)
+                mask = pha * 255
+                mask = mask[0].data.cpu().numpy().transpose(1, 2, 0)
+                com = mask.repeat(3, 2).astype(np.uint8)
                 video_save.write(com)
-                masks.append(com / 255)
+                masks.append((mask / 255).astype(np.uint8))
                 success, frame = video_input.read()
         logger.info('matting process done')
         video_input.release()
         video_save.release()
 
         return {
-            OutputKeys.MASKS: masks,
+            OutputKeys.MASKS: None if render else masks,
+            OutputKeys.OUTPUT_VIDEO: out_path
         }
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

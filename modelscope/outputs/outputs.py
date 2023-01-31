@@ -534,8 +534,9 @@ TASK_OUTPUTS = {
     # video human matting result for a single video
     #   {
     #       "masks": [np.array # 2D array with shape [height, width]]
+    #       "output_video": "path_to_matting_video"
     #   }
-    Tasks.video_human_matting: [OutputKeys.MASKS],
+    Tasks.video_human_matting: [OutputKeys.MASKS, OutputKeys.OUTPUT_VIDEO],
 
     # ============ nlp tasks ===================
 

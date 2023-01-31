@@ -11,7 +11,6 @@ import shutil
 import sys
 import tempfile
 import types
-from dataclasses import fields
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Union

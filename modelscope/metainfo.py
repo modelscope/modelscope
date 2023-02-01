@@ -304,6 +304,7 @@ class Pipelines(object):
     ddcolor_image_colorization = 'ddcolor-image-colorization'
     image_fewshot_detection = 'image-fewshot-detection'
     image_face_fusion = 'image-face-fusion'
+    motion_generattion = 'mdm-motion-generation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

@@ -123,6 +123,9 @@ class CVTasks(object):
     # domain specific object detection
     domain_specific_object_detection = 'domain-specific-object-detection'
 
+    # motion generation
+    motion_generation = 'motion-generation'
+
 
 class NLPTasks(object):
     # nlp tasks

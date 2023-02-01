@@ -935,6 +935,13 @@ TASK_OUTPUTS = {
     #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
     #   }
     Tasks.video_object_segmentation: [OutputKeys.MASKS],
+
+    # motion generation result for a single input
+    #   {
+    #       "keypoints": [np.array # 3D array with shape [frame_num, joint_num, 3]]
+    #       "output_video": "path_to_rendered_video"
+    #   }
+    Tasks.motion_generation: [OutputKeys.KEYPOINTS, OutputKeys.OUTPUT_VIDEO],
 }
 
 

@@ -55,6 +55,8 @@ class FeatureExtractionPipeline(Pipeline):
             device=device,
             auto_collate=auto_collate)
 
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,

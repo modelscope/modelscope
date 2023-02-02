@@ -14,6 +14,7 @@ import torch
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.base.base_model import Model
 from modelscope.models.cv.language_guided_video_summarization import \
     ClipItVideoSummarization
 from modelscope.models.cv.language_guided_video_summarization.summarizer import (
@@ -44,8 +45,9 @@ class LanguageGuidedVideoSummarizationPipeline(Pipeline):
         """
         super().__init__(model=model, auto_collate=False, **kwargs)
         logger.info(f'loading model from {model}')
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         self.model_dir = self.model.model_dir
-
         self.tmp_dir = kwargs.get('tmp_dir', None)
         if self.tmp_dir is None:
             self.tmp_dir = tempfile.TemporaryDirectory().name

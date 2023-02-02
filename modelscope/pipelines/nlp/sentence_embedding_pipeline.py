@@ -10,7 +10,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['SentenceEmbeddingPipeline']
 
@@ -42,6 +42,10 @@ class SentenceEmbeddingPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,

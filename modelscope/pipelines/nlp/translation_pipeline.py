@@ -38,6 +38,9 @@ class TranslationPipeline(Pipeline):
             model: A Model instance.
         """
         super().__init__(model=model, **kwargs)
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         model = self.model.model_dir
         tf.reset_default_graph()
 

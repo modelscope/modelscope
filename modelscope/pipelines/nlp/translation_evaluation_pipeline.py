@@ -46,6 +46,8 @@ class TranslationEvaluationPipeline(Pipeline):
 
         self.eval_mode = eval_mode
         self.checking_eval_mode()
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         self.preprocessor = TranslationEvaluationPreprocessor(
             self.model.model_dir,

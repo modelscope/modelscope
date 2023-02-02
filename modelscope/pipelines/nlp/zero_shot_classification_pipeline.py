@@ -11,7 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['ZeroShotClassificationPipeline']
 
@@ -69,6 +69,10 @@ class ZeroShotClassificationPipeline(Pipeline):
             auto_collate=auto_collate)
         self.entailment_id = 0
         self.contradiction_id = 2
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         if preprocessor is None:
             sequence_length = kwargs.pop('sequence_length', 512)
             self.preprocessor = Preprocessor.from_pretrained(

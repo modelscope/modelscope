@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.base.base_model import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -43,6 +44,10 @@ class ImageDefrcnDetectionPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, auto_collate=False, **kwargs)
+
+        assert isinstance(
+            self.model, Model
+        ), f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         model_path = os.path.join(self.model.model_dir,
                                   ModelFile.TORCH_MODEL_FILE)

@@ -11,7 +11,7 @@ from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Fields, Tasks
+from modelscope.utils.constant import Fields, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -62,6 +62,9 @@ class TextClassificationPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         if preprocessor is None:
             if self.model.__class__.__name__ == 'OfaForAllTasks':

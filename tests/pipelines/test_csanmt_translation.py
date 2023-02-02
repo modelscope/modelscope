@@ -27,6 +27,15 @@ class TranslationTest(unittest.TestCase, DemoCompatibilityCheck):
         print(pipeline_ins(input=inputs))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_name_for_en2zh_batch(self):
+        model_id = 'damo/nlp_csanmt_translation_en2zh'
+        inputs = 'Elon Musk, co-founder and chief executive officer of Tesla Motors.' + \
+            '<SENT_SPLIT>' + "Alibaba Group's mission is to let the world have no difficult business" + \
+            '<SENT_SPLIT>' + 'Beijing is the capital of China.'
+        pipeline_ins = pipeline(self.task, model=model_id)
+        print(pipeline_ins(input=inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name_for_en2zh_base(self):
         model_id = 'damo/nlp_csanmt_translation_en2zh_base'
         inputs = 'Elon Musk, co-founder and chief executive officer of Tesla Motors.'

@@ -91,20 +91,27 @@ class TranslationPipeline(Pipeline):
             model_loader.restore(sess, model_path)
 
     def preprocess(self, input: str) -> Dict[str, Any]:
-        if self._src_lang == 'zh':
-            input_tok = self._tok.cut(input)
-            input_tok = ' '.join(list(input_tok))
-        else:
-            input = self._punct_normalizer.normalize(input)
-            input_tok = self._tok.tokenize(
-                input, return_str=True, aggressive_dash_splits=True)
+        input = input.split('<SENT_SPLIT>')
 
-        input_bpe = self._bpe.process_line(input_tok)
+        if self._src_lang == 'zh':
+            input_tok = [self._tok.cut(item) for item in input]
+            input_tok = [' '.join(list(item)) for item in input_tok]
+        else:
+            input = [self._punct_normalizer.normalize(item) for item in input]
+            input_tok = [
+                self._tok.tokenize(
+                    item, return_str=True, aggressive_dash_splits=True)
+                for item in input
+            ]
+
+        input_bpe = [
+            self._bpe.process_line(item).strip().split() for item in input_tok
+        ]
+        MAX_LENGTH = max([len(item) for item in input_bpe])
         input_ids = np.array([[
-            self._src_vocab[w]
-            if w in self._src_vocab else self.cfg['model']['src_vocab_size']
-            for w in input_bpe.strip().split()
-        ]])
+            self._src_vocab[w] if w in self._src_vocab else
+            self.cfg['model']['src_vocab_size'] - 1 for w in item
+        ] + [0] * (MAX_LENGTH - len(item)) for item in input_bpe])
         result = {'input_ids': input_ids}
         return result
 
@@ -115,13 +122,18 @@ class TranslationPipeline(Pipeline):
             return sess_outputs
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        output_seqs = inputs['output_seqs'][0]
-        wids = list(output_seqs[0]) + [0]
-        wids = wids[:wids.index(0)]
-        translation_out = ' '.join([
-            self._trg_rvocab[wid] if wid in self._trg_rvocab else '<unk>'
-            for wid in wids
-        ]).replace('@@ ', '').replace('@@', '')
-        translation_out = self._detok.detokenize(translation_out.split())
+        x, y, z = inputs['output_seqs'].shape
+
+        translation_out = []
+        for i in range(x):
+            output_seqs = inputs['output_seqs'][i]
+            wids = list(output_seqs[0]) + [0]
+            wids = wids[:wids.index(0)]
+            translation = ' '.join([
+                self._trg_rvocab[wid] if wid in self._trg_rvocab else '<unk>'
+                for wid in wids
+            ]).replace('@@ ', '').replace('@@', '')
+            translation_out.append(self._detok.detokenize(translation.split()))
+        translation_out = '<SENT_SPLIT>'.join(translation_out)
         result = {OutputKeys.TRANSLATION: translation_out}
         return result

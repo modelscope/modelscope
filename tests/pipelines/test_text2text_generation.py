@@ -55,7 +55,7 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation,
             model=self.model_id_rewriting,
-            model_revision='v1.0.0')
+            model_revision='v1.0.1')
         print(pipeline_ins(self.input_rewriting))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

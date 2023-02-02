@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .face_recognition_ood_pipeline import FaceRecognitionOodPipeline
     from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
     from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
+    from .face_recognition_onnx_ir_pipeline import FaceRecognitionOnnxIrPipeline
     from .face_recognition_onnx_fm_pipeline import FaceRecognitionOnnxFmPipeline
     from .general_recognition_pipeline import GeneralRecognitionPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
@@ -106,6 +107,7 @@ else:
         'face_recognition_ood_pipeline': ['FaceRecognitionOodPipeline'],
         'arc_face_recognition_pipeline': ['ArcFaceRecognitionPipeline'],
         'mask_face_recognition_pipeline': ['MaskFaceRecognitionPipeline'],
+        'face_recognition_onnx_ir_pipeline': ['FaceRecognitionOnnxIrPipeline'],
         'face_recognition_onnx_fm_pipeline': ['FaceRecognitionOnnxFmPipeline'],
         'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
         'image_classification_pipeline':

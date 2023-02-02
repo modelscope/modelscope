@@ -25,7 +25,7 @@ class FacialLandmarkConfidenceTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
-        flcm = pipeline(Tasks.facial_landmark_confidence, model=self.model_id)
+        flcm = pipeline(Tasks.face_2d_keypoints, model=self.model_id)
         img_path = 'data/test/images/face_recognition_1.png'
         result = flcm(img_path)
         self.show_result(img_path, result)

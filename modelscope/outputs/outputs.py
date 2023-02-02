@@ -173,15 +173,6 @@ TASK_OUTPUTS = {
         OutputKeys.KEYPOINTS
     ],
 
-    # facial landmark confidence result for single sample
-    #   {
-    #       "output_img": np.array with shape(h, w, 3) (output_img = aligned_img)
-    #       "scores": [0.85]
-    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
-    #       "boxes": [x1, y1, x2, y2]
-    #   }
-    Tasks.facial_landmark_confidence:
-    [OutputKeys.SCORES, OutputKeys.KEYPOINTS, OutputKeys.BOXES],
     # face attribute recognition result for single sample
     #   {
     #       "scores": [[0.9, 0.1], [0.92, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
@@ -194,13 +185,6 @@ TASK_OUTPUTS = {
     #       "img_embedding": np.array with shape [1, D],
     #   }
     Tasks.face_recognition: [OutputKeys.IMG_EMBEDDING],
-
-    # face recognition ood result for single sample
-    #   {
-    #       "img_embedding": np.array with shape [1, D],
-    #       "ood_score ": [0.95]
-    #   }
-    Tasks.face_recognition_ood: [OutputKeys.IMG_EMBEDDING, OutputKeys.SCORES],
 
     # human detection result for single sample
     #   {
@@ -368,9 +352,8 @@ TASK_OUTPUTS = {
     #   "output_video": "path_to_rendered_video" , this is optional
     # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints: [
-        OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
-    ],
+    Tasks.body_3d_keypoints:
+    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
     # 2D hand keypoints result for single sample
     # {

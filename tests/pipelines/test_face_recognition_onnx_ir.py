@@ -10,29 +10,23 @@ from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FaceRecognitionOodTest(unittest.TestCase, DemoCompatibilityCheck):
+class IrFaceRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.task = Tasks.face_recognition
-        self.model_id = 'damo/cv_ir_face-recognition-ood_rts'
+        self.model_id = 'damo/cv_manual_face-recognition_frir'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_face_compare(self):
-        img1 = 'data/test/images/face_recognition_1.png'
-        img2 = 'data/test/images/face_recognition_2.png'
+        img1 = 'data/test/images/ir_face_recognition_1.png'
+        img2 = 'data/test/images/ir_face_recognition_2.png'
 
-        face_recognition = pipeline(self.task, model=self.model_id)
-        result1 = face_recognition(img1)
-        emb1 = result1[OutputKeys.IMG_EMBEDDING]
-        score1 = result1[OutputKeys.SCORES][0][0]
-
-        result2 = face_recognition(img2)
-        emb2 = result2[OutputKeys.IMG_EMBEDDING]
-        score2 = result2[OutputKeys.SCORES][0][0]
-
+        face_recognition = pipeline(
+            Tasks.face_recognition, model=self.model_id)
+        emb1 = face_recognition(img1)[OutputKeys.IMG_EMBEDDING]
+        emb2 = face_recognition(img2)[OutputKeys.IMG_EMBEDDING]
         sim = np.dot(emb1[0], emb2[0])
         print(f'Cos similarity={sim:.3f}, img1:{img1}  img2:{img2}')
-        print(f'OOD score: img1:{score1:.3f}  img2:{score2:.3f}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_demo_compatibility(self):

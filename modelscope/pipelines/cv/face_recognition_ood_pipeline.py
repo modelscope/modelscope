@@ -23,7 +23,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.face_recognition_ood, module_name=Pipelines.face_recognition_ood)
+    Tasks.face_recognition, module_name=Pipelines.face_recognition_ood)
 class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
 
     def __init__(self, model: str, **kwargs):

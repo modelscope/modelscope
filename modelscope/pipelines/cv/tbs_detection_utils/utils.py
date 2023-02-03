@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 from __future__ import division
 import torch
+import os
 import torch.nn as nn
 import numpy as np
 from PIL import Image

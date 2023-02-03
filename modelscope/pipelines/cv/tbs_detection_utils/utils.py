@@ -296,74 +296,78 @@ def merge_bboxes(bboxes, cutx, cuty):
     return merge_bbox
 
 
+# ---------------------------------------------------#
+#   获得所有的先验框
+# ---------------------------------------------------#
+def _get_anchors(self):
+    anchors_path = os.path.join(self.model, 'model_data/yolo_anchors.txt')
+    anchors_path = os.path.expanduser(anchors_path)
+    with open(anchors_path) as f:
+        lines = f.readlines()
+    anchors = [line.strip().split(',') for line in lines]
+
+    return np.array(anchors, dtype="float").reshape([-1, 3, 2])[::-1, :, :]
+
+def generate(self):
+
+    self.yolo_decodes = []
+    for i in range(len(self.anchors)):
+        self.yolo_decodes.append(
+            DecodeBox(self.anchors[i], len(self.class_names), self.model_image_size[:2][::-1]))
+
+    # 画框设置不同的颜色
+    hsv_tuples = [(x / len(self.class_names), 1., 1.) for x in range(len(self.class_names))]
+    self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+    self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
+
 # --------------------------------------------------- #
-#   获得学习率
+#   后处理
 # --------------------------------------------------- #
-def get_lr(optimizer):
-    """
-    :param optimizer: 优化器
-    :return: 学习率
-    """
-    # optimizer.param_groups： 是长度为2的list，其中的元素是2个字典；
-    # optimizer.param_groups[0]： 长度为6的字典，包括[‘amsgrad", ‘params", ‘lr", ‘betas", ‘weight_decay", ‘eps"]这6个参数；
-    # optimizer.param_groups[1]： 表示优化器的状态的一个字典；
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
+def post_process(self, outputs, img_path):
+    new_boxes = []
+    output_list = []
+    top_confs = 0
+    for i in range(3):
+        output_list.append(self.yolo_decodes[i](outputs[i]))
+    output = torch.cat(output_list, 1)
+    batch_detections = non_max_suppression(output, len(self.class_names),
+                                           conf_thres=self.confidence,
+                                           nms_thres=self.iou)
 
+    for j, batch_detection in enumerate(batch_detections):
+        if batch_detection is None:
+            continue
+        try:
+            batch_detection = batch_detection.cpu().numpy()
+        except:
+            return
 
-def get_train_history(csv_path, save_path):
-    """
-    :param csv_path: CSV文件储存的路径
-    :param save_path: 训练结果图保存的路径
-    :return: Ｎone
-    """
-    try:
-        data = pd.read_csv(csv_path)
-    except:
-        return
+        image = Image.open(img_path)
+        image_shape = np.array(np.shape(image)[0:2])
+        top_index = batch_detection[:, 4] * batch_detection[:, 5] > self.confidence
+        top_conf = batch_detection[top_index, 4]
+        top_class = batch_detection[top_index, 5]
+        top_confs = top_conf * top_class
+        top_label = np.array(batch_detection[top_index, -1], np.int32)
+        top_bboxes = np.array(batch_detection[top_index, :4])
+        top_xmin = np.expand_dims(top_bboxes[:, 0], -1)
+        top_ymin = np.expand_dims(top_bboxes[:, 1], -1)
+        top_xmax = np.expand_dims(top_bboxes[:, 2], -1)
+        top_ymax = np.expand_dims(top_bboxes[:, 3], -1)
 
-    header = data.columns.tolist()
-    acc = []
-    loss = []
-    for params in header:
-        params_lower = params.lower()
-        if "acc" in params_lower:
-            acc.append(params)
-        elif "loss" in params_lower:
-            loss.append(params)
+        # 去掉灰条
+        boxes = yolo_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax,
+                                   np.array(self.model_image_size[:2]), image_shape)
 
-    if acc and loss:
-        plt.subplot(1, 2, 1)
-        plt.title('Accuracy Compare')
-        plt.xlabel("step")
-        plt.ylabel("accuracy")
-        for acc_param in acc:
-            plt.plot(data['step'], data[acc_param], label=acc_param)
-        plt.legend()
-        plt.subplot(1, 2, 2)
-        plt.title('Loss Compare')
-        plt.xlabel("step")
-        plt.ylabel("loss")
-        for loss_param in loss:
-            plt.plot(data['step'], data[loss_param], label=loss_param)
-    elif acc:
-        plt.subplot(1, 1, 1)
-        plt.title('Accuracy Compare')
-        plt.xlabel("step")
-        plt.ylabel("accuracy")
-        for acc_param in acc:
-            plt.plot(data['step'], data[acc_param], label=acc_param)
-    elif loss:
-        plt.subplot(1, 1, 1)
-        plt.title('Loss Compare')
-        plt.xlabel("step")
-        plt.ylabel("loss")
-        for loss_param in loss:
-            plt.plot(data['step'], data[loss_param], label=loss_param)
-    else:
-        print("{} 对应代码的第一行标题名字设置不对！".format(csv_path))
-        return
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close()
+        for i, c in enumerate(top_label):
+            top, left, bottom, right = boxes[i]
+            top = max(0, round(top, 2))
+
+            left = max(0, round(left, 2))
+            bottom = min(image.size[1], round(bottom, 2))
+            right = min(image.size[0], round(right, 2))
+            new_boxes.append([top, left, bottom, right])
+
+ 
+    return new_boxes, top_confs
+

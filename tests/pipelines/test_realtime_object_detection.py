@@ -19,7 +19,7 @@ class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         self.test_image = 'data/test/images/keypoints_detect/000000438862.jpg'
         self.task = Tasks.image_object_detection
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub(self):
         realtime_object_detection = pipeline(
             Tasks.image_object_detection, model=self.model_id)
@@ -33,7 +33,7 @@ class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         else:
             raise ValueError('process error')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_nano(self):
         realtime_object_detection = pipeline(
             Tasks.image_object_detection, model=self.model_nano_id)

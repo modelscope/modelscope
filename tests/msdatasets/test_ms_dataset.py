@@ -197,7 +197,7 @@ class MsDatasetTest(unittest.TestCase):
         assert isinstance(data_example['Noisy Image:FILE:Object'],
                           PngImageFile)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_to_ms_dataset(self):
         """Test case for converting huggingface dataset to `MsDataset` instance."""
         from datasets.load import load_dataset

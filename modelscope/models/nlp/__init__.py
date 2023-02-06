@@ -61,6 +61,8 @@ if TYPE_CHECKING:
     from .bloom import BloomModel
     from .unite import UniTEModel
     from .use import UserSatisfactionEstimation
+    from .plug_mental import (PlugMentalConfig, PlugMentalModel,
+                              PlugMentalForSequenceClassification)
 else:
     _import_structure = {
         'backbones': ['SbertModel'],
@@ -127,7 +129,12 @@ else:
         'gpt_neo': ['GPTNeoModel'],
         'bloom': ['BloomModel'],
         'unite': ['UniTEModel'],
-        'use': ['UserSatisfactionEstimation']
+        'use': ['UserSatisfactionEstimation'],
+        'plug_mental': [
+            'PlugMentalConfig',
+            'PlugMentalModel',
+            'PlugMentalForSequenceClassification',
+        ]
     }
 
     import sys

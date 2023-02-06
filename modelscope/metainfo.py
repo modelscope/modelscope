@@ -123,6 +123,7 @@ class Models(object):
     unite = 'unite'
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
+    plug_mental = 'plug-mental'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

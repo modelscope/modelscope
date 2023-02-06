@@ -2,7 +2,7 @@
 
 # docstyle-ignore
 AUDIO_IMPORT_ERROR = """
-Audio model import failed: {0}, if you want to use audio releated function, please execute
+Audio model import failed: {0}, if you want to use audio related function, please execute
 `pip install modelscope[audio] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
 """
 

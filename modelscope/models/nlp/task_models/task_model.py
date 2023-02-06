@@ -199,7 +199,7 @@ class BaseTaskModel(TorchModel, ABC):
                 ]
 
         if _fast_init:
-            # retrieve unintialized modules and initialize
+            # retrieve uninitialized modules and initialize
             uninitialized_modules = self.retrieve_modules_from_names(
                 missing_keys,
                 prefix=prefix,

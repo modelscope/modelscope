@@ -28,7 +28,7 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     awk -F: '/^[^#]/ { print $1 }' requirements/science.txt | xargs -n 1 pip install -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
     # test with install
-    python setup.py install
+    pip install .
 else
     echo "Running case in release image, run case directly!"
 fi

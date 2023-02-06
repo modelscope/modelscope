@@ -49,7 +49,7 @@ class HubOperationTest(unittest.TestCase):
         repo.tag_and_push(self.revision, 'Test revision')
 
     def test_model_repo_creation(self):
-        # change to proper model names before use
+        # change to proper model names before use.
         try:
             info = self.api.get_model(model_id=self.model_id)
             assert info['Name'] == self.model_name

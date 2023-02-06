@@ -55,7 +55,7 @@ class BaseTrainer(ABC):
         """ Train (and evaluate) process
 
         Train process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         pass
@@ -66,7 +66,7 @@ class BaseTrainer(ABC):
         """ Evaluation process
 
         Evaluation process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         pass
@@ -87,7 +87,7 @@ class DummyTrainer(BaseTrainer):
         """ Train (and evaluate) process
 
         Train process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         cfg = self.cfg.train
@@ -100,7 +100,7 @@ class DummyTrainer(BaseTrainer):
         """ Evaluation process
 
         Evaluation process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         cfg = self.cfg.evaluation

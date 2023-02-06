@@ -107,7 +107,7 @@ class CliArgumentParser(ArgumentParser):
 
     Args:
         arg_dict (dict of `ArgAttr` or list of them): dict or list of dict which defines different
-            paramters for training.
+            parameters for training.
     """
 
     def __init__(self, arg_dict: Union[Dict[str, ArgAttr],

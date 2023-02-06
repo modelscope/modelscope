@@ -3,6 +3,7 @@
 
 import argparse
 import datetime
+import importlib
 import math
 import multiprocessing
 import os
@@ -362,10 +363,43 @@ def run_non_parallelizable_test_suites(suites, result_dir):
     run_command_with_popen(cmd)
 
 
+# Selected cases:
+def get_selected_cases():
+    cmd = ['python', '-u', 'tests/run_analysis.py']
+    selected_cases = []
+    with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            encoding='utf8') as sub_process:
+        for line in iter(sub_process.stdout.readline, ''):
+            sys.stdout.write(line)
+            if line.startswith('Selected cases:'):
+                line = line.replace('Selected cases:', '').strip()
+                selected_cases = line.split(',')
+    return selected_cases
+
+
 def run_in_subprocess(args):
     # only case args.isolated_cases run in subporcess, all other run in a subprocess
-    test_suite_files = gather_test_suites_files(
-        os.path.abspath(args.test_dir), args.pattern)
+    if not args.no_diff:  # run based on git diff
+        try:
+            test_suite_files = get_selected_cases()
+            logger.info('Tests suite to run: ')
+            for f in test_suite_files:
+                logger.info(f)
+        except Exception:
+            logger.error('Get test suite based diff exception!')
+            test_suite_files = gather_test_suites_files(
+                os.path.abspath(args.test_dir), args.pattern)
+        if len(test_suite_files) == 0:
+            logger.error('Get no test suite based on diff, run all the cases.')
+            test_suite_files = gather_test_suites_files(
+                os.path.abspath(args.test_dir), args.pattern)
+    else:
+        test_suite_files = gather_test_suites_files(
+            os.path.abspath(args.test_dir), args.pattern)
 
     non_parallelizable_suites = [
         'test_download_dataset.py',
@@ -580,10 +614,17 @@ if __name__ == '__main__':
         help='Set case parallels, default single process, set with gpu number.'
     )
     parser.add_argument(
+        '--no-diff',
+        action='store_true',
+        help=
+        'Default running case based on git diff(with master), disable with --no-diff)'
+    )
+    parser.add_argument(
         '--suites',
         nargs='*',
         help='Run specified test suites(test suite files list split by space)')
     args = parser.parse_args()
+    print(args)
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'
     logger.info(f'TEST LEVEL: {test_level()}')

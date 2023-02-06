@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.utils.constant import Fields
 
 
 class Models(object):
@@ -12,7 +13,6 @@ class Models(object):
     # tinynas models
     tinynas_detection = 'tinynas-detection'
     tinynas_damoyolo = 'tinynas-damoyolo'
-
     # vision models
     detection = 'detection'
     image_restoration = 'image-restoration'
@@ -397,26 +397,7 @@ class Pipelines(object):
     protein_structure = 'unifold-protein-structure'
 
 
-class Trainers(object):
-    """ Names for different trainer.
-
-        Holds the standard trainer name to use for identifying different trainer.
-    This should be used to register trainers.
-
-        For a general Trainer, you can use EpochBasedTrainer.
-        For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
-    """
-
-    default = 'trainer'
-    easycv = 'easycv'
-    tinynas_damoyolo = 'tinynas-damoyolo'
-
-    # multi-modal trainers
-    clip_multi_modal_embedding = 'clip-multi-modal-embedding'
-    ofa = 'ofa'
-    mplug = 'mplug'
-    mgeo_ranking_trainer = 'mgeo-ranking-trainer'
-
+class CVTrainers(object):
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
     image_portrait_enhancement = 'image-portrait-enhancement'
@@ -430,6 +411,8 @@ class Trainers(object):
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
 
+
+class NLPTrainers(object):
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
     dialog_modeling_trainer = 'dialog-modeling-trainer'
@@ -444,13 +427,60 @@ class Trainers(object):
     gpt_moe_trainer = 'nlp-gpt-moe-trainer'
     table_question_answering_trainer = 'table-question-answering-trainer'
 
-    # audio trainers
+
+class MultiModalTrainers(object):
+    clip_multi_modal_embedding = 'clip-multi-modal-embedding'
+    ofa = 'ofa'
+    mplug = 'mplug'
+    mgeo_ranking_trainer = 'mgeo-ranking-trainer'
+
+
+class AudioTrainers(object):
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_kantts_trainer = 'speech-kantts-trainer'
     speech_asr_trainer = 'speech-asr-trainer'
     speech_separation = 'speech-separation'
+
+
+class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
+    """ Names for different trainer.
+
+        Holds the standard trainer name to use for identifying different trainer.
+    This should be used to register trainers.
+
+        For a general Trainer, you can use EpochBasedTrainer.
+        For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
+    """
+
+    default = 'trainer'
+    easycv = 'easycv'
+    tinynas_damoyolo = 'tinynas-damoyolo'
+
+    @staticmethod
+    def get_trainer_domain(attribute_or_value):
+        if attribute_or_value in vars(
+                CVTrainers) or attribute_or_value in vars(CVTrainers).values():
+            return Fields.cv
+        elif attribute_or_value in vars(
+                NLPTrainers) or attribute_or_value in vars(
+                    NLPTrainers).values():
+            return Fields.nlp
+        elif attribute_or_value in vars(
+                AudioTrainers) or attribute_or_value in vars(
+                    AudioTrainers).values():
+            return Fields.audio
+        elif attribute_or_value in vars(
+                MultiModalTrainers) or attribute_or_value in vars(
+                    MultiModalTrainers).values():
+            return Fields.multi_modal
+        elif attribute_or_value == Trainers.default:
+            return Trainers.default
+        elif attribute_or_value == Trainers.easycv:
+            return Trainers.easycv
+        else:
+            return 'unknown'
 
 
 class Preprocessors(object):

@@ -8,7 +8,7 @@ class Models(object):
         Holds the standard model name to use for identifying different model.
     This should be used to register models.
 
-        Model name should only contain model info but not task info.
+        Model name should only contain model information but not task information.
     """
     # tinynas models
     tinynas_detection = 'tinynas-detection'

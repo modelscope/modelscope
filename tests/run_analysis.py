@@ -119,6 +119,9 @@ def get_modified_files():
 def analysis_diff():
     """Get modified files and their imported files modified modules
     """
+    # ignore diff for constant define files, these files import by all pipeline, trainer
+    ignore_files = ['modelscope/utils/constant.py', 'modelscope/metainfo.py']
+
     modified_register_modules = []
     modified_cases = []
     modified_files_imported_by = []
@@ -129,8 +132,9 @@ def analysis_diff():
     import_map = get_import_map()
     logger.info('Finished get import map')
     for modified_file in modified_files:
-        if modified_file.startswith('./modelscope') or \
-           modified_file.startswith('modelscope'):  # is source file
+        if ((modified_file.startswith('./modelscope')
+             or modified_file.startswith('modelscope'))
+                and modified_file not in ignore_files):  # is source file
             for k, v in import_map.items():
                 if modified_file in v and modified_file != k:
                     modified_files_imported_by.append(k)

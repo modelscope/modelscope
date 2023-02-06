@@ -32,10 +32,10 @@ class SpeakerVerificationPipeline(Pipeline):
             Extra kwargs passed into the preprocessor's constructor.
     Example:
     >>> from modelscope.pipelines import pipeline
-    >>> pipeline_punc = pipeline(
+    >>> pipeline_sv = pipeline(
     >>>    task=Tasks.speaker_verification, model='damo/speech_xvector_sv-zh-cn-cnceleb-16k-spk3465-pytorch')
     >>> audio_in=('','')
-    >>> print(pipeline_punc(audio_in))
+    >>> print(pipeline_sv(audio_in))
 
     """
 
@@ -44,32 +44,40 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
-        self.cmd = self.get_cmd()
+        self.cmd = self.get_cmd(kwargs)
 
         from funasr.bin import sv_inference_launch
         self.funasr_infer_modelscope = sv_inference_launch.inference_launch(
             mode=self.cmd['mode'],
-            ngpu=self.cmd['ngpu'],
-            log_level=self.cmd['log_level'],
-            dtype=self.cmd['dtype'],
-            seed=self.cmd['seed'],
-            sv_train_config=self.cmd['sv_train_config'],
-            sv_model_file=self.cmd['sv_model_file'],
             output_dir=self.cmd['output_dir'],
             batch_size=self.cmd['batch_size'],
+            dtype=self.cmd['dtype'],
+            ngpu=self.cmd['ngpu'],
+            seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
+            log_level=self.cmd['log_level'],
             key_file=self.cmd['key_file'],
-            model_tag=self.cmd['model_tag'])
+            sv_train_config=self.cmd['sv_train_config'],
+            sv_model_file=self.cmd['sv_model_file'],
+            model_tag=self.cmd['model_tag'],
+            allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
+            streaming=self.cmd['streaming'],
+            embedding_node=self.cmd['embedding_node'],
+            sv_threshold=self.cmd['sv_threshold'],
+            param_dict=self.cmd['param_dict'],
+        )
 
     def __call__(self,
                  audio_in: Union[tuple, str, Any] = None,
-                 output_dir: str = None) -> Dict[str, Any]:
+                 output_dir: str = None,
+                 param_dict: dict = None) -> Dict[str, Any]:
         if len(audio_in) == 0:
-            raise ValueError('The input of ITN should not be null.')
+            raise ValueError('The input of sv should not be null.')
         else:
             self.audio_in = audio_in
         if output_dir is not None:
             self.cmd['output_dir'] = output_dir
+        self.cmd['param_dict'] = param_dict
 
         output = self.forward(self.audio_in)
         result = self.postprocess(output)
@@ -81,17 +89,17 @@ class SpeakerVerificationPipeline(Pipeline):
         rst = {}
         for i in range(len(inputs)):
             if i == 0:
-                if isinstance(self.audio_in, tuple):
+                if isinstance(self.audio_in, tuple) or isinstance(
+                        self.audio_in, list):
                     score = inputs[0]['value']
                     rst[OutputKeys.SCORES] = score
                 else:
                     embedding = inputs[0]['value']
                     rst[OutputKeys.SPK_EMBEDDING] = embedding
-            else:
-                rst[inputs[i]['key']] = inputs[i]['value']
+            rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self) -> Dict[str, Any]:
+    def get_cmd(self, extra_args) -> Dict[str, Any]:
         # generate asr inference command
         mode = self.model_cfg['model_config']['mode']
         sv_model_path = self.model_cfg['sv_model_path']
@@ -101,17 +109,38 @@ class SpeakerVerificationPipeline(Pipeline):
         cmd = {
             'mode': mode,
             'output_dir': None,
-            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'batch_size': 1,
+            'dtype': 'float32',
+            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
+            'seed': 0,
             'num_workers': 1,
             'log_level': 'ERROR',
-            'dtype': 'float32',
-            'seed': 0,
             'key_file': None,
             'sv_model_file': sv_model_path,
             'sv_train_config': sv_model_config,
-            'model_tag': None
+            'model_tag': None,
+            'allow_variable_data_keys': True,
+            'streaming': False,
+            'embedding_node': 'resnet1_dense',
+            'sv_threshold': 0.9465,
+            'param_dict': None,
         }
+        user_args_dict = [
+            'output_dir',
+            'batch_size',
+            'ngpu',
+            'embedding_node',
+            'sv_threshold',
+            'log_level',
+            'allow_variable_data_keys',
+            'streaming',
+            'param_dict',
+        ]
+
+        for user_args in user_args_dict:
+            if user_args in extra_args and extra_args[user_args] is not None:
+                cmd[user_args] = extra_args[user_args]
+
         return cmd
 
     def forward(self, audio_in: Union[tuple, str, Any] = None) -> list:
@@ -121,12 +150,26 @@ class SpeakerVerificationPipeline(Pipeline):
             'Speaker Verification Processing: {0} ...'.format(audio_in))
 
         data_cmd, raw_inputs = None, None
-        if isinstance(audio_in, tuple):
+        if isinstance(audio_in, tuple) or isinstance(audio_in, list):
             # generate audio_scp
+            assert len(audio_in) == 2
             if isinstance(audio_in[0], str):
-                audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(audio_in)
-                data_cmd = [(audio_scp_1, 'speech', 'sound'),
-                            (audio_scp_2, 'ref_speech', 'sound')]
+                # for scp inputs
+                if len(audio_in[0].split(',')) == 3 and audio_in[0].split(
+                        ',')[0].endswith('.scp'):
+                    if len(audio_in[1].split(',')) == 3 and audio_in[1].split(
+                            ',')[0].endswith('.scp'):
+                        data_cmd = [
+                            tuple(audio_in[0].split(',')),
+                            tuple(audio_in[1].split(','))
+                        ]
+                # for single-file inputs
+                else:
+                    audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(
+                        audio_in)
+                    data_cmd = [(audio_scp_1, 'speech', 'sound'),
+                                (audio_scp_2, 'ref_speech', 'sound')]
+            # for raw bytes inputs
             elif isinstance(audio_in[0], bytes):
                 data_cmd = [(audio_in[0], 'speech', 'bytes'),
                             (audio_in[1], 'ref_speech', 'bytes')]
@@ -134,10 +177,17 @@ class SpeakerVerificationPipeline(Pipeline):
                 raise TypeError('Unsupported data type.')
         else:
             if isinstance(audio_in, str):
-                audio_scp = generate_scp_for_sv(audio_in)
-                data_cmd = [(audio_scp, 'speech', 'sound')]
+                # for scp inputs
+                if len(audio_in.split(',')) == 3:
+                    data_cmd = [audio_in.split(',')]
+                # for single-file inputs
+                else:
+                    audio_scp = generate_scp_for_sv(audio_in)
+                    data_cmd = [(audio_scp, 'speech', 'sound')]
+            # for raw bytes
             elif isinstance(audio_in[0], bytes):
                 data_cmd = [(audio_in, 'speech', 'bytes')]
+            # for ndarray and tensor inputs
             else:
                 import torch
                 import numpy as np
@@ -150,16 +200,17 @@ class SpeakerVerificationPipeline(Pipeline):
 
         self.cmd['name_and_type'] = data_cmd
         self.cmd['raw_inputs'] = raw_inputs
-        punc_result = self.run_inference(self.cmd)
+        result = self.run_inference(self.cmd)
 
-        return punc_result
+        return result
 
     def run_inference(self, cmd):
         if self.framework == Frameworks.torch:
             sv_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
                 raw_inputs=cmd['raw_inputs'],
-                output_dir_v2=cmd['output_dir'])
+                output_dir_v2=cmd['output_dir'],
+                param_dict=cmd['param_dict'])
         else:
             raise ValueError('model type is mismatching')
 

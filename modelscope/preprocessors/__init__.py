@@ -13,7 +13,8 @@ if TYPE_CHECKING:
                         ImageColorEnhanceFinetunePreprocessor,
                         ImageInstanceSegmentationPreprocessor,
                         ImageDenoisePreprocessor, ImageDeblurPreprocessor)
-    from .cv import (ImageClassificationMmcvPreprocessor)
+    from .cv import (ImageClassificationMmcvPreprocessor,
+                     ImageRestorationPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
@@ -55,7 +56,10 @@ else:
             'ImageInstanceSegmentationPreprocessor',
             'ImageDenoisePreprocessor', 'ImageDeblurPreprocessor'
         ],
-        'cv': ['ImageClassificationMmcvPreprocessor'],
+        'cv': [
+            'ImageClassificationMmcvPreprocessor',
+            'ImageRestorationPreprocessor'
+        ],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],
         'multi_modal':

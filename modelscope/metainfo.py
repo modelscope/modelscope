@@ -15,6 +15,7 @@ class Models(object):
 
     # vision models
     detection = 'detection'
+    image_restoration = 'image-restoration'
     realtime_object_detection = 'realtime-object-detection'
     realtime_video_object_detection = 'realtime-video-object-detection'
     scrfd = 'scrfd'
@@ -215,6 +216,7 @@ class Pipelines(object):
     salient_detection = 'u2net-salient-detection'
     salient_boudary_detection = 'res2net-salient-detection'
     camouflaged_detection = 'res2net-camouflaged-detection'
+    image_demoire = 'uhdm-image-demoireing'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     face_liveness_ir = 'manual-face-liveness-flir'
@@ -475,6 +477,7 @@ class Preprocessors(object):
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
     object_detection_scrfd = 'object-detection-scrfd'
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
+    image_demoire_preprocessor = 'image-demoire-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

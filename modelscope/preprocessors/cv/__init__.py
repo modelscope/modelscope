@@ -7,12 +7,14 @@ if TYPE_CHECKING:
     from .video_super_resolution import (VideoReader)
     from .video_stabilization import (stabilization_preprocessor)
     from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
+    from .image_restoration_preprocessor import ImageRestorationPreprocessor
 
 else:
     _import_structure = {
         'video_super_resolution': ['VideoReader'],
         'video_stabilization': ['stabilization_preprocessor'],
         'mmcls_preprocessor': ['ImageClassificationMmcvPreprocessor'],
+        'image_restoration_preprocessor': ['ImageRestorationPreprocessor'],
     }
 
     import sys

@@ -74,6 +74,7 @@ class CVTasks(object):
     image_portrait_enhancement = 'image-portrait-enhancement'
     image_inpainting = 'image-inpainting'
     image_skychange = 'image-skychange'
+    image_demoireing = 'image-demoireing'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'

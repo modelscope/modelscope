@@ -108,6 +108,8 @@ TASK_INPUTS = {
         'sky_image': InputType.IMAGE,
         'scene_image': InputType.IMAGE,
     },
+    Tasks.video_colorization:
+    InputType.VIDEO,
 
     # image generation task result for a single image
     Tasks.image_to_image_generation:

@@ -86,6 +86,7 @@ if TYPE_CHECKING:
     from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
     from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
     from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
+    from .video_colorization_pipeline import VideoColorizationPipeline
     from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
 
 else:
@@ -204,6 +205,7 @@ else:
         'ddcolor_image_colorization_pipeline': [
             'DDColorImageColorizationPipeline'
         ],
+        'video_colorization_pipeline': ['VideoColorizationPipeline'],
         'image_defrcn_fewshot_pipeline': ['ImageDefrcnDetectionPipeline'],
     }
 

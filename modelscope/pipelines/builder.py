@@ -168,6 +168,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                            'damo/cv_daflow_virtual-try-on_base'),
     Tasks.image_colorization: (Pipelines.ddcolor_image_colorization,
                                'damo/cv_ddcolor_image-colorization'),
+    Tasks.video_colorization: (Pipelines.video_colorization,
+                               'damo/cv_unet_video-colorization'),
     Tasks.image_segmentation:
     (Pipelines.image_instance_segmentation,
      'damo/cv_swin-b_image-instance-segmentation_coco'),

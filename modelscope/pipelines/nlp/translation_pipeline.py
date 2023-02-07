@@ -101,9 +101,15 @@ class TranslationPipeline(Pipeline):
             input_tok = [' '.join(list(item)) for item in input_tok]
         else:
             input = [self._punct_normalizer.normalize(item) for item in input]
+            aggressive_dash_splits = True
+            if (self._src_lang in ['es', 'fr'] and self._tgt_lang == 'en') or (
+                    self._src_lang == 'en' and self._tgt_lang in ['es', 'fr']):
+                aggressive_dash_splits = False
             input_tok = [
                 self._tok.tokenize(
-                    item, return_str=True, aggressive_dash_splits=True)
+                    item,
+                    return_str=True,
+                    aggressive_dash_splits=aggressive_dash_splits)
                 for item in input
             ]
 

@@ -1,0 +1,11 @@
+hyperpyyaml
+librosa
+MinDAEC
+mir_eval>=0.7
+numpy
+rotary_embedding_torch>=0.1.5
+scipy
+SoundFile>0.10
+speechbrain>=0.5.7
+torchaudio
+tqdm

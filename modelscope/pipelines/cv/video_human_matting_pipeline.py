@@ -5,6 +5,7 @@ from typing import Any, Dict
 import cv2
 import numpy as np
 import torch
+from moviepy.editor import ImageSequenceClip, VideoFileClip
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_human_matting import preprocess
@@ -83,14 +84,15 @@ class VideoHumanMattingPipeline(Pipeline):
     def postprocess(self, inputs, **kwargs) -> Dict[str, Any]:
         render = kwargs.get('render', False)
         masks = inputs[OutputKeys.MASKS]
-        h, w = masks[0].shape[:2]
         output_path = inputs[OutputKeys.OUTPUT_VIDEO]
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        video_save = cv2.VideoWriter(output_path, fourcc, self.fps, (w, h))
+        frame_lst = []
         for mask in masks:
             com = (mask * 255).repeat(3, 2).astype(np.uint8)
-            video_save.write(com)
-        video_save.release()
+            frame_lst.append(com)
+        video = ImageSequenceClip(sequence=frame_lst, fps=self.fps)
+        video.write_videofile(output_path, fps=self.fps, audio=False)
+        del frame_lst
+
         result = {
             OutputKeys.MASKS: None if render else masks,
             OutputKeys.OUTPUT_VIDEO: output_path

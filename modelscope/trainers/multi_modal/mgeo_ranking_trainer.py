@@ -290,6 +290,8 @@ class MGeoRankingTrainer(NlpEpochBasedTrainer):
             label_list.extend(label_ids)
             logits_list.extend(logits)
             qid_list.extend(qids)
+            if _step + 1 > self._eval_iters_per_epoch:
+                break
 
         logger.info('Inference time = {:.2f}s, [{:.4f} ms / sample] '.format(
             total_spent_time, total_spent_time * 1000 / total_samples))

@@ -88,6 +88,7 @@ if TYPE_CHECKING:
     from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
     from .video_colorization_pipeline import VideoColorizationPipeline
     from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
+    from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
 
 else:
     _import_structure = {

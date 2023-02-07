@@ -81,6 +81,7 @@ class Models(object):
     ddcolor = 'ddcolor'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    ddpm = 'ddpm'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -308,6 +309,7 @@ class Pipelines(object):
     ddcolor_image_colorization = 'ddcolor-image-colorization'
     image_fewshot_detection = 'image-fewshot-detection'
     image_face_fusion = 'image-face-fusion'
+    ddpm_image_semantic_segmentation = 'ddpm-image-semantic-segmentation'
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
 

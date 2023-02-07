@@ -82,6 +82,7 @@ class Models(object):
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
     ddpm = 'ddpm'
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -313,6 +314,7 @@ class Pipelines(object):
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
 
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
     translation_quality_estimation = 'translation-quality-estimation'
@@ -663,6 +665,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_matching: (
         Pipelines.image_matching,
         'damo/cv_quadtree_attention_image-matching_outdoor'),
+    Tasks.image_quality_assessment_mos: (
+        Pipelines.image_quality_assessment_mos,
+        'damo/cv_resnet_image-quality-assessment-mos_youtubeUGC'),
 }
 
 
@@ -772,6 +777,7 @@ class Preprocessors(object):
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
+    image_quality_assessment_mos_preprocessor = 'image-quality_assessment-mos-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
@@ -882,6 +888,8 @@ class Metrics(object):
     referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
     # metric for video stabilization task
     video_stabilization_metric = 'video-stabilization-metric'
+    # metirc for image-quality-assessment-mos task
+    image_quality_assessment_mos_metric = 'image-quality-assessment-mos-metric'
 
 
 class Optimizers(object):

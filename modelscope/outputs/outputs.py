@@ -279,6 +279,10 @@ TASK_OUTPUTS = {
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
 
+    # image_quality_assessment_mos result for a single image is a score in range [0, 1]
+    # {0.5}
+    Tasks.image_quality_assessment_mos: [OutputKeys.SCORE],
+
     # image editing task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}
     Tasks.skin_retouching: [OutputKeys.OUTPUT_IMG],

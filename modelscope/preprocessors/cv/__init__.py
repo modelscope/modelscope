@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     from .video_super_resolution import (VideoReader)
     from .video_stabilization import (stabilization_preprocessor)
     from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
+
+    from .image_quality_assessment_mos import ImageQualityAssessmentMosPreprocessor
     from .image_restoration_preprocessor import ImageRestorationPreprocessor
 
 else:
@@ -14,6 +16,8 @@ else:
         'video_super_resolution': ['VideoReader'],
         'video_stabilization': ['stabilization_preprocessor'],
         'mmcls_preprocessor': ['ImageClassificationMmcvPreprocessor'],
+        'image_quality_assessment_mos':
+        ['ImageQualityAssessmentMosPreprocessor'],
         'image_restoration_preprocessor': ['ImageRestorationPreprocessor'],
     }
 

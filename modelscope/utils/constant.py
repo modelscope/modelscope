@@ -123,6 +123,8 @@ class CVTasks(object):
     # domain specific object detection
     domain_specific_object_detection = 'domain-specific-object-detection'
 
+    # image quality assessment mos
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
     # motion generation
     motion_generation = 'motion-generation'
 

@@ -33,6 +33,9 @@ class MetricKeys(object):
     DISTORTION_VALUE = 'distortion_value'
     STABILITY_SCORE = 'stability_score'
     PPL = 'ppl'
+    PLCC = 'plcc'
+    SRCC = 'srcc'
+    RMSE = 'rmse'
 
 
 task_default_metrics = {
@@ -59,6 +62,8 @@ task_default_metrics = {
     Tasks.video_frame_interpolation:
     [Metrics.video_frame_interpolation_metric],
     Tasks.video_stabilization: [Metrics.video_stabilization_metric],
+    Tasks.image_quality_assessment_mos:
+    [Metrics.image_quality_assessment_mos_metric],
 }
 
 

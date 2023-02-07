@@ -378,6 +378,11 @@ def get_selected_cases():
             if line.startswith('Selected cases:'):
                 line = line.replace('Selected cases:', '').strip()
                 selected_cases = line.split(',')
+        sub_process.wait()
+        if sub_process.returncode != 0:
+            msg = 'Run analysis exception, returncode: %s!' % sub_process.returncode
+            logger.error(msg)
+            raise Exception(msg)
     return selected_cases
 
 
@@ -390,7 +395,8 @@ def run_in_subprocess(args):
             for f in test_suite_files:
                 logger.info(f)
         except Exception:
-            logger.error('Get test suite based diff exception!')
+            logger.error(
+                'Get test suite based diff exception!, will run all cases.')
             test_suite_files = gather_test_suites_files(
                 os.path.abspath(args.test_dir), args.pattern)
         if len(test_suite_files) == 0:

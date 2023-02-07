@@ -40,21 +40,27 @@ def get_models_info(groups: list) -> dict:
         configuration_file = os.path.join(cache_root, model_id,
                                           ModelFile.CONFIGURATION)
         if not os.path.exists(configuration_file):
-            model_revisions = api.list_model_revisions(model_id=model_id)
-            if len(model_revisions) == 0:
-                logger.warn('Model: %s has no revision' % model_id)
-                continue
-            # get latest revision
             try:
+                model_revisions = api.list_model_revisions(model_id=model_id)
+                if len(model_revisions) == 0:
+                    print('Model: %s has no revision' % model_id)
+                    continue
+                # get latest revision
                 configuration_file = model_file_download(
                     model_id=model_id,
                     file_path=ModelFile.CONFIGURATION,
                     revision=model_revisions[0])
-            except NotExistError:
-                logger.warn('Model: %s has no configuration file %s' %
-                            (model_id, ModelFile.CONFIGURATION))
+            except Exception as e:
+                print('Download model: %s configuration file exception'
+                      % model_id)
+                print('Exception: %s' % e)
                 continue
-        cfg = Config.from_file(configuration_file)
+        try:
+            cfg = Config.from_file(configuration_file)
+        except Exception as e:
+            print('Resolve model: %s configuration file failed!' % model_id)
+            print(('Exception: %s' % e))
+
         model_info = {}
         model_info['framework'] = cfg.safe_get('framework')
         model_info['task'] = cfg.safe_get('task')
@@ -83,13 +89,17 @@ def get_models_info(groups: list) -> dict:
     return models_info
 
 
-def gather_test_suites_files_full_path(test_dir='./tests',
-                                       pattern='test_*.py'):
+def gather_test_suites_files(test_dir='./tests',
+                             pattern='test_*.py',
+                             is_full_path=True):
     case_file_list = []
     for dirpath, dirnames, filenames in os.walk(test_dir):
         for file in filenames:
             if fnmatch(file, pattern):
-                case_file_list.append(os.path.join(dirpath, file))
+                if is_full_path:
+                    case_file_list.append(os.path.join(dirpath, file))
+                else:
+                    case_file_list.append(file)
 
     return case_file_list
 
@@ -102,10 +112,16 @@ def run_command_get_output(cmd):
         output = response.stdout.decode('utf8')
         return output
     except subprocess.CalledProcessError as error:
-        logger.error(
-            'stdout: %s, stderr: %s' %
-            (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
+        print('stdout: %s, stderr: %s' %
+              (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
         return None
+
+
+def get_current_branch():
+    cmd = ['git', 'rev-parse', '--abbrev-ref', 'HEAD']
+    branch = run_command_get_output(cmd).strip()
+    logger.info('Testing branch: %s' % branch)
+    return branch
 
 
 def get_modified_files():
@@ -120,7 +136,10 @@ def analysis_diff():
     """Get modified files and their imported files modified modules
     """
     # ignore diff for constant define files, these files import by all pipeline, trainer
-    ignore_files = ['modelscope/utils/constant.py', 'modelscope/metainfo.py']
+    ignore_files = [
+        'modelscope/utils/constant.py', 'modelscope/metainfo.py',
+        'modelscope/pipeline_inputs.py', 'modelscope/outputs/outputs.py'
+    ]
 
     modified_register_modules = []
     modified_cases = []
@@ -157,7 +176,7 @@ def analysis_diff():
 
 
 def split_test_suites():
-    test_suite_full_paths = gather_test_suites_files_full_path()
+    test_suite_full_paths = gather_test_suites_files()
     pipeline_test_suites = []
     trainer_test_suites = []
     other_test_suites = []
@@ -173,6 +192,10 @@ def split_test_suites():
 
 
 def get_test_suites_to_run():
+    branch = get_current_branch()
+    if branch == 'master':
+        # when run with master, run all the cases
+        return gather_test_suites_files(is_full_path=False)
     affected_register_modules, modified_cases = analysis_diff()
     # affected_register_modules list of modified file and dependent file's register_module.
     # ("MODULES|PIPELINES|TRAINERS|...", '', '', model_class_name)
@@ -219,10 +242,10 @@ def get_test_suites_to_run():
         elif affected_register_module[0] == 'PREPROCESSORS':
             # ["PREPROCESSORS", "cv", "object_detection_scrfd", "SCRFDPreprocessor"]
             # ["PREPROCESSORS", domain, preprocessor_name, class_name]
-            task = model_info['task']
             for model_id, model_info in models_info.items():
                 if model_info['preprocessor_type'] is not None and model_info[
                         'preprocessor_type'] == affected_register_module[2]:
+                    task = model_info['task']
                     if task in task_pipeline_test_suite_map:
                         affected_pipeline_cases.extend(
                             task_pipeline_test_suite_map[task])

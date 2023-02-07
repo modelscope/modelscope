@@ -219,7 +219,6 @@ class AnalysisSourceFileRegisterModules(ast.NodeVisitor):
 def get_imported_files(file_path):
     """Get file dependencies.
     """
-    print('Getting %s imports' % file_path)
     if os.path.isabs(file_path):
         file_path = os.path.relpath(file_path, os.getcwd())
     with open(file_path, 'rb') as f:

@@ -265,6 +265,36 @@ TASK_OUTPUTS = {
     Tasks.image_segmentation:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
 
+    # video panoptic segmentation result for single sample
+    #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]
+    #         "labels": [["person", "traffic light", "car", "bus"],
+    #                     ["person", "traffic light", "car", "bus"]]
+    #       "masks": [ #array containing only 0, 1
+    #           [np.array, np.array, np.array, np.array],
+    #           [np.array, np.array, np.array, np.array],
+    #       ]
+    #       "boxes":
+    #          [
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #              ],
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #               ]
+    #           ],
+    #       "uuid": [[0, 1, 2, 3],[0, 1, 2, 3]]
+    #   }
+    Tasks.video_panoptic_segmentation: [
+        OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS,
+        OutputKeys.BOXES, OutputKeys.UUID
+    ],
+
     # semantic segmentation result for single sample
     #   {
     #       "masks": [np.array # 2D array with shape [height, width]]

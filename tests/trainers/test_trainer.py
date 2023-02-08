@@ -268,6 +268,9 @@ class TrainerTest(unittest.TestCase):
                 }, {
                     'type': 'EvaluationHook',
                     'interval': 1
+                }, {
+                    'type': 'TensorboardHook',
+                    'interval': 1
                 }]
             },
             'evaluation': {

@@ -9,7 +9,6 @@ import torch
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
@@ -51,8 +50,8 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
         trainer.train()
         trainer.evaluate(
-            checkpoint_path=os.path.join(self.cache_path,
-                                         'damoyolo_tinynasL25_S.pt'))
+            checkpoint_path=os.path.join('./workdirs/damoyolo_s',
+                                         'epoch_3_ckpt.pth'))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_from_scratch_singleGPU_model_id(self):

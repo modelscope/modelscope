@@ -6,6 +6,7 @@ clip>=1.0
 ddpm_guided_diffusion
 easydict
 easyrobust
+face_alignment>=1.3.5
 fairscale>=0.4.1
 fastai>=1.0.51
 ffmpeg>=1.4
@@ -41,6 +42,7 @@ tensorflow-estimator>=1.15.1
 tf_slim
 timm>=0.4.9
 torchmetrics>=0.6.2
+torchsummary>=1.5.1
 torchvision
 ujson
 utils

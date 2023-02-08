@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
+    from .face_reconstruction_pipeline import FaceReconstructionPipeline
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
@@ -150,6 +151,7 @@ else:
         'license_plate_detection_pipeline': ['LicensePlateDetectionPipeline'],
         'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
+        'face_reconstruction_pipeline': ['FaceReconstructionPipeline'],
         'tinynas_classification_pipeline': ['TinynasClassificationPipeline'],
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],

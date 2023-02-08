@@ -390,6 +390,21 @@ TASK_OUTPUTS = {
     Tasks.body_3d_keypoints:
     [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
 
+    # 3D face reconstruction result for single sample
+    # {
+    #     "output": {
+    #         "vertices": np.array with shape(n, 3),
+    #         "faces": np.array with shape(n, 3),
+    #         "faces_uv": np.array with shape(n, 3),
+    #         "faces_normal": np.array with shape(n, 3),
+    #         "colors": np.array with shape(n, 3),
+    #         "UVs": np.array with shape(n, 2),
+    #         "normals": np.array with shape(n, 3),
+    #         "texture_map": np.array with shape(h, w, 3),
+    #     }
+    # }
+    Tasks.face_reconstruction: [OutputKeys.OUTPUT],
+
     # 2D hand keypoints result for single sample
     # {
     #     "keypoints": [

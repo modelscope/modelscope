@@ -68,6 +68,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_recognition:
     InputType.IMAGE,
+    Tasks.face_reconstruction:
+    InputType.IMAGE,
     Tasks.human_detection:
     InputType.IMAGE,
     Tasks.face_image_generation:

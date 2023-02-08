@@ -301,6 +301,8 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('fasttext', (is_package_available('fasttext'), FASTTEXT_IMPORT_ERROR)),
     ('megatron_util', (is_package_available('megatron_util'),
                        MEGATRON_UTIL_IMPORT_ERROR)),
+    ('text2sql_lgesql', (is_package_available('text2sql_lgesql'),
+                         TEXT2SQL_LGESQL_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

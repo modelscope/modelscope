@@ -140,3 +140,9 @@ MEGATRON_UTIL_IMPORT_ERROR = """
 {0} requires the megatron_util library but it was not found in your environment. You can install it with pip:
 `pip install megatron_util -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
 """
+
+# docstyle-ignore
+TEXT2SQL_LGESQL_IMPORT_ERROR = """
+{0} requires the text2sql_lgesql library but it was not found in your environment. You can install it with pip:
+`pip install text2sql_lgesql -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
+"""

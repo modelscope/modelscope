@@ -153,6 +153,7 @@ class CheckpointHook(Hook):
         else:
             cur_save_name = os.path.join(
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
+        cur_save_name = extend_save_name_for_parallel(cur_save_name)
 
         self.rng_state = {
             'random': random.getstate(),
@@ -372,6 +373,7 @@ class BestCkptSaverHook(CheckpointHook):
             if '.' not in cur_save_name:
                 cur_save_name = f'{cur_save_name}.pth'
             cur_save_name = os.path.join(self.save_dir, cur_save_name)
+        cur_save_name = extend_save_name_for_parallel(cur_save_name)
 
         meta = {
             'epoch': trainer.epoch,
@@ -429,3 +431,26 @@ class BestCkptSaverHook(CheckpointHook):
         if self.restore_best:
             if is_master():
                 self.load_checkpoint(self._best_ckpt_file, trainer)
+
+
+def extend_save_name_for_parallel(cur_save_name: str) -> str:
+    """Saving model parameters during tensor parallel training
+    requires each process to save its own parameters,
+    This function will try to get the local rank of the process
+    and extend save name for multi-slice model.
+
+    Args:
+        cur_save_name (str): Original save name.
+
+    Returns:
+        str: Extended save name.
+    """
+    try:
+        from megatron_util import mpu
+        tp_world_size = mpu.get_tensor_model_parallel_world_size()
+        if tp_world_size == 1:
+            return cur_save_name
+        mp_rank = mpu.get_tensor_model_parallel_rank()
+        return cur_save_name.replace('.', '_mp_rank_{:02d}.'.format(mp_rank))
+    except (ImportError, AssertionError):
+        return cur_save_name

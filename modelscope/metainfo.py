@@ -87,6 +87,7 @@ class Models(object):
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
     # EasyCV models

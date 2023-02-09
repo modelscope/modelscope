@@ -83,7 +83,7 @@ class NLPTokenizer:
 
         if model_type in (Models.structbert, Models.gpt3, Models.palm,
                           Models.plug, Models.megatron_bert,
-                          Models.plug_mental):
+                          Models.plug_mental, Models.fid_plug):
             from transformers import BertTokenizer, BertTokenizerFast
             tokenizer = BertTokenizerFast if self.use_fast else BertTokenizer
             return tokenizer.from_pretrained(

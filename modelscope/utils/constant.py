@@ -155,6 +155,7 @@ class NLPTasks(object):
     token_classification = 'token-classification'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    fid_dialogue = 'fid-dialogue'
     text2text_generation = 'text2text-generation'
     task_oriented_conversation = 'task-oriented-conversation'
     dialog_intent_prediction = 'dialog-intent-prediction'

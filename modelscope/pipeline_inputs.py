@@ -190,6 +190,12 @@ TASK_INPUTS = {
     Tasks.text_ranking: (InputType.TEXT, InputType.TEXT),
     Tasks.text_generation:
     InputType.TEXT,
+    Tasks.fid_dialogue: {
+        'history': InputType.TEXT,
+        'knowledge': InputType.TEXT,
+        'bot_profile': InputType.TEXT,
+        'user_profile': InputType.TEXT,
+    },
     Tasks.fill_mask:
     InputType.TEXT,
     Tasks.task_oriented_conversation: {

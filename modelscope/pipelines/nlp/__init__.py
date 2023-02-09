@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
+    from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline, WordSegmentationThaiPipeline
@@ -65,6 +66,7 @@ else:
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'text_generation_pipeline':
         ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
+        'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],

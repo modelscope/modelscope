@@ -130,6 +130,7 @@ class Models(object):
     unite = 'unite'
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
+    fid_plug = 'fid-plug'
     plug_mental = 'plug-mental'
 
     # audio models
@@ -339,6 +340,7 @@ class Pipelines(object):
     named_entity_recognition_thai = 'named-entity-recognition-thai'
     named_entity_recognition_viet = 'named-entity-recognition-viet'
     text_generation = 'text-generation'
+    fid_dialogue = 'fid-dialogue'
     text2text_generation = 'text2text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'

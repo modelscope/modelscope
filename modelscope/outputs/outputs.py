@@ -442,14 +442,26 @@ TASK_OUTPUTS = {
     # video multi object tracking result for single video
     # {
     #   "boxes": [
-    #               [frame_num, obj_id, x1, y1, x2, y2],
-    #               [frame_num, obj_id, x1, y1, x2, y2],
-    #               [frame_num, obj_id, x1, y1, x2, y2],
+    #               [
+    #                   [x1, y1, x2, y2],
+    #                   [x1, y1, x2, y2],
+    #                   ...
+    #               ],
+    #               [
+    #                   [x1, y1, x2, y2],
+    #                   [x1, y1, x2, y2],
+    #                   ...
+    #               ],
+    #               [
+    #                   [x1, y1, x2, y2]
+    #                   ...
+    #               ]
     #             ],
+    #   "labels": [[obj_id0, obj_id1, ...], [obj_id1, obj_id2, ...], [obj_id3, ...]],
     #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     # }
     Tasks.video_multi_object_tracking: [
-        OutputKeys.BOXES, OutputKeys.TIMESTAMPS
+        OutputKeys.BOXES, OutputKeys.LABELS, OutputKeys.TIMESTAMPS
     ],
 
     # live category recognition result for single video

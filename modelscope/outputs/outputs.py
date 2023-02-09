@@ -147,6 +147,21 @@ TASK_OUTPUTS = {
     Tasks.card_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
+    # image driving perception result for single sample
+    #   {
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #       "masks": [
+    #            [np.array], # with fixed shape(h=720, w=1280, 3) containing only 0, 1
+    #            [np.array], # with fixed shape(h=720, w=1280, 3) containing only 0, 1
+    #       ]
+    #   }
+    Tasks.image_driving_perception: [OutputKeys.BOXES, OutputKeys.MASKS],
+
     # facial expression recognition result for single sample
     #   {
     #       "scores": [0.9]

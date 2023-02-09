@@ -23,6 +23,7 @@ class Models(object):
     classification_model = 'ClassificationModel'
     easyrobust_model = 'EasyRobustModel'
     bnext = 'bnext'
+    yolopv2 = 'yolopv2'
     nafnet = 'nafnet'
     csrnet = 'csrnet'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
@@ -252,6 +253,7 @@ class Pipelines(object):
     nextvit_small_daily_image_classification = 'nextvit-small_image-classification_Dailylife-labels'
     convnext_base_image_classification_garbage = 'convnext-base_image-classification_garbage'
     bnext_small_image_classification = 'bnext-small_image-classification_ImageNet-labels'
+    yolopv2_image_driving_percetion_bdd100k = 'yolopv2_image-driving-percetion_bdd100k'
     common_image_classification = 'common-image-classification'
     image_color_enhance = 'csrnet-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
@@ -587,6 +589,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_segmentation:
     (Pipelines.image_instance_segmentation,
      'damo/cv_swin-b_image-instance-segmentation_coco'),
+    Tasks.image_driving_perception:
+    (Pipelines.yolopv2_image_driving_percetion_bdd100k,
+     'damo/cv_yolopv2_image-driving-perception_bdd100k'),
     Tasks.image_depth_estimation:
     (Pipelines.image_depth_estimation,
      'damo/cv_newcrfs_image-depth-estimation_indoor'),
@@ -665,9 +670,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),
-    Tasks.referring_video_object_segmentation:
-    (Pipelines.referring_video_object_segmentation,
-     'damo/cv_swin-t_referring_video-object-segmentation'),
+    Tasks.referring_video_object_segmentation: (
+        Pipelines.referring_video_object_segmentation,
+        'damo/cv_swin-t_referring_video-object-segmentation'),
     Tasks.video_summarization: (Pipelines.video_summarization,
                                 'damo/cv_googlenet_pgl-video-summarization'),
     Tasks.image_skychange: (Pipelines.image_skychange,
@@ -812,6 +817,7 @@ class Preprocessors(object):
     image_classification_mmcv_preprocessor = 'image-classification-mmcv-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
+    image_driving_perception_preprocessor = 'image-driving-perception-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
     image_quality_assessment_mos_preprocessor = 'image-quality_assessment-mos-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'

@@ -86,6 +86,7 @@ class Models(object):
     image_probing_model = 'image-probing-model'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    ecbsr = 'ecbsr'
     msrresnet_lite = 'msrresnet-lite'
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
@@ -333,6 +334,7 @@ class Pipelines(object):
     ddpm_image_semantic_segmentation = 'ddpm-image-semantic-segmentation'
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
+    mobile_image_super_resolution = 'mobile-image-super-resolution'
     object_detection_3d_depe = 'object-detection-3d-depe'
     nerf_recon_acc = 'nerf-recon-acc'
 

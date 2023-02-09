@@ -64,6 +64,9 @@ class EpisodeSampler(torch.utils.data.BatchSampler):
         self.episode = n_iter
         domain_label_sampleid = {}
         bad_sample_ids = self.get_bad_sampleids(dataset)
+        if dataset.mode == 'train':
+            logger.info(
+                f'num. of bad sample ids:{len(bad_sample_ids)}/{len(dataset)}')
         for sample_index, sample in enumerate(dataset):
             if sample_index in bad_sample_ids:
                 continue
@@ -95,7 +98,9 @@ class EpisodeSampler(torch.utils.data.BatchSampler):
                 data_size += len(tokens)
         if dataset.mode == 'train':
             logger.info(
-                f'{dataset.mode}: label size:{total}, data size:{data_size}')
+                f'{dataset.mode}: label size:{total}, data size:{data_size}, \
+                domain_size:{len(self.domain_label_tokens)}')
+        self.mode = dataset.mode
 
     def __iter__(self):
         for i in range(self.episode):
@@ -109,18 +114,21 @@ class EpisodeSampler(torch.utils.data.BatchSampler):
                     list(self.domain_label_tokens[domain].keys()))
                 N = min(self.n_way, len(all_labels))
                 labels = np.random.choice(
-                    all_labels, size=min(N, len(all_labels)), replace=False)
+                    all_labels, size=min(N, len(all_labels)),
+                    replace=False).tolist()
                 batch = []
                 for label in labels[:N]:
                     candidates = self.domain_label_tokens[domain][label]
-                    K = min(len(candidates), int((self.k_shot + self.r_query)))
-                    tmp = np.random.choice(candidates, size=K, replace=False)
+                    num_samples = self.k_shot + self.r_query
+                    K = min(len(candidates), int(num_samples))
+                    tmp = np.random.choice(
+                        candidates, size=K, replace=False).tolist()
                     batch.extend(tmp)
                 batch = [int(n) for n in batch]
                 yield batch
 
     def _get_field(self, obj, key, default=None):
-        value = getattr(obj, key, default) or obj.get(key, default)
+        value = obj.get(key, default)
         if value is not None:
             return str(value)
         return None

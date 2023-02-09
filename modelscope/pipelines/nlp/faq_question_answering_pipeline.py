@@ -43,6 +43,8 @@ class FaqQuestionAnsweringPipeline(Pipeline):
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir, **kwargs)
+        if hasattr(self.model, 'eval'):
+            self.model.eval()
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return pipeline_parameters, pipeline_parameters, pipeline_parameters

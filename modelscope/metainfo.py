@@ -287,6 +287,7 @@ class Pipelines(object):
     panorama_depth_estimation = 'panorama-depth-estimation'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
+    image_inpainting_sdv2 = 'image-inpainting-sdv2'
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'

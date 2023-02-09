@@ -91,6 +91,7 @@ if TYPE_CHECKING:
     from .video_colorization_pipeline import VideoColorizationPipeline
     from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
     from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
+    from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
     from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
 
 else:
@@ -215,6 +216,7 @@ else:
         ],
         'video_colorization_pipeline': ['VideoColorizationPipeline'],
         'image_defrcn_fewshot_pipeline': ['ImageDefrcnDetectionPipeline'],
+        'image_inpainting_sdv2_pipeline': ['ImageInpaintingSDV2Pipeline'],
         'image_quality_assessment_mos_pipeline': [
             'ImageQualityAssessmentMosPipeline'
         ],

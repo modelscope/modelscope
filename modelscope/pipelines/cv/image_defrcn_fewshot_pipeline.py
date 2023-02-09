@@ -70,12 +70,11 @@ class ImageDefrcnDetectionPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
         img = LoadImage.convert_to_ndarray(input)
-        img = img.astype(np.float)
 
         image = img[..., ::-1].copy()  # rgb to bgr
-        tim = torch.Tensor(image).permute(2, 0, 1)
+        tim = torch.Tensor(image).permute(2, 0, 1)  # hwc to chw
 
-        result = {'image': tim}
+        result = {'image': tim, 'image_numpy': image}
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:

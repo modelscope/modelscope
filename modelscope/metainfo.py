@@ -207,6 +207,7 @@ class Pipelines(object):
     """
     # vision tasks
     portrait_matting = 'unet-image-matting'
+    universal_matting = 'unet-universal-matting'
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
     person_image_cartoon = 'unet-person-image-cartoon'
@@ -461,6 +462,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      ),  # TODO: revise back after passing the pr
     Tasks.portrait_matting: (Pipelines.portrait_matting,
                              'damo/cv_unet_image-matting'),
+    Tasks.universal_matting: (Pipelines.universal_matting,
+                              'damo/cv_unet_universal-matting'),
     Tasks.human_detection: (Pipelines.human_detection,
                             'damo/cv_resnet18_human-detection'),
     Tasks.image_object_detection: (Pipelines.object_detection,

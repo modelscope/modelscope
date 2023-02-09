@@ -314,6 +314,7 @@ TASK_OUTPUTS = {
     #                 , shape(h, w) for crowd counting
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
 
     # image_quality_assessment_mos result for a single image is a score in range [0, 1]
     # {0.5}

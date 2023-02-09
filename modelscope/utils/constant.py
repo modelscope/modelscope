@@ -195,6 +195,7 @@ class AudioTasks(object):
     inverse_text_processing = 'inverse-text-processing'
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
+    language_model = 'language-model'
 
 
 class MultiModalTasks(object):

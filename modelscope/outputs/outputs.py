@@ -819,6 +819,18 @@ TASK_OUTPUTS = {
     # punctuation result for single sample
     # { "text": "你好，明天！"}
     Tasks.punctuation: [OutputKeys.TEXT],
+    # language model result for single sample
+    # { "text": " hel@@ lo 大 家 好 呀 </s>
+    #               p( hel@@ | <s> ) = 0.00057767 [ -7.45650959 ]
+    #               p( lo | hel@@ ) = 0.99832278 [ -0.00167861 ]
+    #               p( 大 | lo ) = 0.49116334 [ -0.71097857 ]
+    #               p( 家 | 大 ) = 0.99691027 [ -0.00309453 ]
+    #               p( 好 | 家 ) = 0.97999156 [ -0.02021134 ]
+    #               p( 呀 | 好 ) = 0.00461205 [ -5.37908363 ]
+    #               p( </s> | 呀 ) = 0.01524554 [ -4.18346834 ]
+    #           logprob= -17.755 ppl= 12.6345
+    # "}
+    Tasks.language_model: [OutputKeys.TEXT],
 
     # audio processed for single file in PCM format
     # {

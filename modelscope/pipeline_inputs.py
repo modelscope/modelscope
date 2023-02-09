@@ -86,6 +86,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
     InputType.IMAGE,
+    Tasks.vision_efficient_tuning:
+    InputType.IMAGE,
 
     # image editing task result for a single image
     Tasks.skin_retouching:

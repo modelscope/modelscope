@@ -993,6 +993,13 @@ TASK_OUTPUTS = {
     #       "output_video": "path_to_rendered_video"
     #   }
     Tasks.motion_generation: [OutputKeys.KEYPOINTS, OutputKeys.OUTPUT_VIDEO],
+
+    # vision efficient tuning result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "labels": ["dog", "horse", "cow", "cat"],
+    #   }
+    Tasks.vision_efficient_tuning: [OutputKeys.SCORES, OutputKeys.LABELS],
 }
 
 

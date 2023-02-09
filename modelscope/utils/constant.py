@@ -133,6 +133,9 @@ class CVTasks(object):
     # motion generation
     motion_generation = 'motion-generation'
 
+    # vision efficient tuning
+    vision_efficient_tuning = 'vision-efficient-tuning'
+
 
 class NLPTasks(object):
     # nlp tasks

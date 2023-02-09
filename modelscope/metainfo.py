@@ -87,6 +87,7 @@ class Models(object):
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    vision_efficient_tuning = 'vision-efficient-tuning'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -322,8 +323,9 @@ class Pipelines(object):
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
     object_detection_3d_depe = 'object-detection-3d-depe'
-
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    vision_efficient_tuning = 'vision-efficient-tuning'
+
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
     translation_quality_estimation = 'translation-quality-estimation'
@@ -677,6 +679,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_quality_assessment_mos: (
         Pipelines.image_quality_assessment_mos,
         'damo/cv_resnet_image-quality-assessment-mos_youtubeUGC'),
+    Tasks.vision_efficient_tuning: (
+        Pipelines.vision_efficient_tuning,
+        'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'),
     Tasks.object_detection_3d: (Pipelines.object_detection_3d_depe,
                                 'damo/cv_object-detection-3d_depe'),
 }

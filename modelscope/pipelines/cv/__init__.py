@@ -73,6 +73,10 @@ if TYPE_CHECKING:
     from .hand_static_pipeline import HandStaticPipeline
     from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
     from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
+    from .vision_efficient_tuning_adapter_pipeline import VisionEfficientTuningAdapterPipeline
+    from .vision_efficient_tuning_prompt_pipeline import VisionEfficientTuningPromptPipeline
+    from .vision_efficient_tuning_prefix_pipeline import VisionEfficientTuningPrefixPipeline
+    from .vision_efficient_tuning_lora_pipeline import VisionEfficientTuningLoRAPipeline
     from .vision_middleware_pipeline import VisionMiddlewarePipeline
     from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
@@ -186,6 +190,18 @@ else:
         ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
+        ],
+        'vision_efficient_tuning_adapter_pipeline': [
+            'VisionEfficientTuningAdapterPipeline'
+        ],
+        'vision_efficient_tuning_prompt_pipeline': [
+            'VisionEfficientTuningPromptPipeline'
+        ],
+        'vision_efficient_tuning_prefix_pipeline': [
+            'VisionEfficientTuningPrefixPipeline'
+        ],
+        'vision_efficient_tuning_lora_pipeline': [
+            'VisionEfficientTuningLoRAPipeline'
         ],
         'vision_middleware_pipeline': ['VisionMiddlewarePipeline'],
         'video_frame_interpolation_pipeline': [

@@ -326,11 +326,8 @@ class Pipelines(object):
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
     object_detection_3d_depe = 'object-detection-3d-depe'
-<<<<<<< HEAD
     nerf_recon_acc = 'nerf-recon-acc'
 
-=======
->>>>>>> master
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     vision_efficient_tuning = 'vision-efficient-tuning'
 

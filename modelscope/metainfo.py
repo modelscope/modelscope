@@ -37,6 +37,7 @@ class Models(object):
     r50_panoptic_segmentation = 'r50-panoptic-segmentation'
     image_reid_person = 'passvitb'
     image_inpainting = 'FFTInpainting'
+    image_paintbyexample = 'Stablediffusion-Paintbyexample'
     video_summarization = 'pgl-video-summarization'
     video_panoptic_segmentation = 'swinb-video-panoptic-segmentation'
     language_guided_video_summarization = 'clip-it-language-guided-video-summarization'
@@ -295,6 +296,7 @@ class Pipelines(object):
     panorama_depth_estimation = 'panorama-depth-estimation'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
+    image_paintbyexample = 'stablediffusion-paintbyexample'
     image_inpainting_sdv2 = 'image-inpainting-sdv2'
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
@@ -642,6 +644,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                               'damo/cv_vitb16_segmentation_shop-seg'),
     Tasks.image_inpainting: (Pipelines.image_inpainting,
                              'damo/cv_fft_inpainting_lama'),
+    Tasks.image_paintbyexample: (Pipelines.image_paintbyexample,
+                                 'damo/cv_stable-diffusion_paint-by-example'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,

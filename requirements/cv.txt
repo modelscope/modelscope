@@ -35,6 +35,7 @@ onnxruntime>=1.10
 open-clip-torch>=2.7.0
 opencv-python
 pai-easycv>=0.8
+paint_ldm
 pandas
 panopticapi
 plyfile>=0.7.4

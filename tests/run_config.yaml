@@ -12,6 +12,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_segmentation_pipeline.py
   - test_movie_scene_segmentation.py
   - test_image_inpainting.py
+  - test_image_paint_by_example.py
   - test_mglm_text_summarization.py
   - test_team_transfer_trainer.py
   - test_image_denoise_trainer.py

@@ -108,6 +108,11 @@ TASK_INPUTS = {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,
     },
+    Tasks.image_paintbyexample: {
+        'img': InputType.IMAGE,
+        'mask': InputType.IMAGE,
+        'reference': InputType.IMAGE,
+    },
     Tasks.image_skychange: {
         'sky_image': InputType.IMAGE,
         'scene_image': InputType.IMAGE,

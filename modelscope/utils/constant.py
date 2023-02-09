@@ -70,6 +70,7 @@ class CVTasks(object):
     # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
+    image_debanding = 'image-debanding'
     image_colorization = 'image-colorization'
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'

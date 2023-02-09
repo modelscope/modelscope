@@ -26,6 +26,8 @@ class Models(object):
     yolopv2 = 'yolopv2'
     nafnet = 'nafnet'
     csrnet = 'csrnet'
+    deeplpfnet = 'deeplpfnet'
+    rrdb = 'rrdb'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
     maskdino_swin = 'maskdino_swin'
     gpen = 'gpen'
@@ -258,10 +260,12 @@ class Pipelines(object):
     yolopv2_image_driving_percetion_bdd100k = 'yolopv2_image-driving-percetion_bdd100k'
     common_image_classification = 'common-image-classification'
     image_color_enhance = 'csrnet-image-color-enhance'
+    deeplpf_image_color_enhance = 'deeplpf-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'
+    image_debanding = 'rrdb-image-debanding'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
     realtime_video_object_detection = 'cspnet_realtime-video-object-detection_streamyolo'
@@ -613,6 +617,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                   'damo/cv_gan_face-image-generation'),
     Tasks.image_super_resolution: (Pipelines.image_super_resolution,
                                    'damo/cv_rrdb_image-super-resolution'),
+    Tasks.image_debanding: (Pipelines.image_debanding,
+                            'damo/cv_rrdb_image-debanding'),
     Tasks.image_portrait_enhancement:
     (Pipelines.image_portrait_enhancement,
      'damo/cv_gpen_image-portrait-enhancement'),

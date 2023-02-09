@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .image_color_enhance import ImageColorEnhance
-    from .deeplpf import DeepLPFImageColorEnhance
+    from .rrdb import RRDBImageDebanding
 
 else:
     _import_structure = {
-        'image_color_enhance': ['ImageColorEnhance'],
-        'deeplpf': ['DeepLPFImageColorEnhance'],
+        'rrdb': ['RRDBImageDebanding'],
     }
 
     import sys

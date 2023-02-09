@@ -6,13 +6,11 @@ from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.cv.image_color_enhance import (DeepLPFImageColorEnhance,
-                                                      ImageColorEnhance)
+from modelscope.models.cv.image_debanding import RRDBImageDebanding
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (ImageColorEnhanceFinetunePreprocessor,
-                                      LoadImage)
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -20,19 +18,11 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_color_enhancement,
-    module_name=Pipelines.deeplpf_image_color_enhance)
-@PIPELINES.register_module(
-    Tasks.image_color_enhancement, module_name=Pipelines.image_color_enhance)
-class ImageColorEnhancePipeline(Pipeline):
+    Tasks.image_debanding, module_name=Pipelines.image_debanding)
+class ImageDebandingPipeline(Pipeline):
 
-    def __init__(self,
-                 model: Union[ImageColorEnhance, DeepLPFImageColorEnhance,
-                              str],
-                 preprocessor: Optional[
-                     ImageColorEnhanceFinetunePreprocessor] = None,
-                 **kwargs):
-        """The inference pipeline for image color enhance.
+    def __init__(self, model: Union[RRDBImageDebanding, str], **kwargs):
+        """The inference pipeline for image debanding.
 
         Args:
             model (`str` or `Model` or module instance): A model instance or a model local dir
@@ -46,14 +36,12 @@ class ImageColorEnhancePipeline(Pipeline):
             >>> from modelscope.outputs import OutputKeys
             >>> from modelscope.pipelines import pipeline
             >>> from modelscope.utils.constant import Tasks
-
-            >>> img = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_color_enhance.png'
-                image_color_enhance = pipeline(Tasks.image_color_enhancement,
-                    model='damo/cv_deeplpfnet_image-color-enhance-models')
-                result = image_color_enhance(img)
-            >>> cv2.imwrite('enhanced_result.png', result[OutputKeys.OUTPUT_IMG])
+            >>> debanding = pipeline(Tasks.image_debanding, model='damo/cv_rrdb_image-debanding')
+                result = debanding(
+                    'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/debanding.png')
+            >>> cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
         """
-        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        super().__init__(model=model, **kwargs)
         self.model.eval()
 
         if torch.cuda.is_available():

@@ -86,6 +86,7 @@ class Models(object):
     image_probing_model = 'image-probing-model'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    msrresnet_lite = 'msrresnet-lite'
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     image_quality_assessment_mos = 'image-quality-assessment-mos'

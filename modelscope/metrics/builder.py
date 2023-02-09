@@ -36,6 +36,8 @@ class MetricKeys(object):
     PLCC = 'plcc'
     SRCC = 'srcc'
     RMSE = 'rmse'
+    MRR = 'mrr'
+    NDCG = 'ndcg'
 
 
 task_default_metrics = {

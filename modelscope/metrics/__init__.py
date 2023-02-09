@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .video_super_resolution_metric.video_super_resolution_metric import VideoSuperResolutionMetric
     from .ppl_metric import PplMetric
     from .image_quality_assessment_mos_metric import ImageQualityAssessmentMosMetric
+    from .text_ranking_metric import TextRankingMetric
 
 else:
     _import_structure = {
@@ -53,6 +54,7 @@ else:
         'ppl_metric': ['PplMetric'],
         'image_quality_assessment_mos_metric':
         ['ImageQualityAssessmentMosMetric'],
+        'text_ranking_metric': ['TextRankingMetric'],
     }
 
     import sys

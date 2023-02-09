@@ -84,7 +84,7 @@ class TestFinetuneMGeo(unittest.TestCase):
             cfg.evaluation.dataloader.workers_per_gpu = 16
             cfg.train.train_iters_per_epoch = 10
             cfg.evaluation.val_iters_per_epoch = 10
-            cfg['evaluation']['metrics'] = 'mrr@1'
+            cfg['evaluation']['metrics'] = 'text-ranking-metric'
             cfg.train.max_epochs = 1
             cfg.model['neg_sample'] = neg_sample
             cfg.model['gis_num'] = 2

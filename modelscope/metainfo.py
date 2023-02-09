@@ -908,6 +908,8 @@ class Metrics(object):
     video_stabilization_metric = 'video-stabilization-metric'
     # metirc for image-quality-assessment-mos task
     image_quality_assessment_mos_metric = 'image-quality-assessment-mos-metric'
+    # metric for text-ranking task
+    text_ranking_metric = 'text-ranking-metric'
 
 
 class Optimizers(object):

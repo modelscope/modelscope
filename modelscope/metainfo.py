@@ -96,6 +96,7 @@ class Models(object):
     segformer = 'Segformer'
     hand_2d_keypoints = 'HRNet-Hand2D-Keypoints'
     image_object_detection_auto = 'image-object-detection-auto'
+    dino = 'DINO'
 
     # nlp models
     bert = 'bert'

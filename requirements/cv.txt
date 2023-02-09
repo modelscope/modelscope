@@ -24,6 +24,8 @@ lpips
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0
+mmdet3d==1.0.0rc6  # update == to >= if stable version released
+mmsegmentation
 moviepy>=1.0.3
 networkx>=2.5
 numba

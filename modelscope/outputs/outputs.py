@@ -254,6 +254,12 @@ TASK_OUTPUTS = {
     Tasks.video_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
+    # 3d object detection result for single sample
+    # {
+    #   "output_img": np.array with shape(h, w, 3)
+    # }
+    Tasks.object_detection_3d: [OutputKeys.OUTPUT_IMG],
+
     # instance segmentation result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05],

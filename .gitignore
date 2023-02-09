@@ -122,6 +122,7 @@ tensorboard.sh
 .DS_Store
 replace.sh
 result.png
+result.jpg
 
 # Pytorch
 *.pth

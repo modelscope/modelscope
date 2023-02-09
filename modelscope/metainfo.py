@@ -19,6 +19,7 @@ class Models(object):
     realtime_object_detection = 'realtime-object-detection'
     realtime_video_object_detection = 'realtime-video-object-detection'
     scrfd = 'scrfd'
+    depe = 'depe'
     classification_model = 'ClassificationModel'
     easyrobust_model = 'EasyRobustModel'
     bnext = 'bnext'
@@ -83,6 +84,7 @@ class Models(object):
     image_probing_model = 'image-probing-model'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
 
@@ -319,6 +321,7 @@ class Pipelines(object):
     ddpm_image_semantic_segmentation = 'ddpm-image-semantic-segmentation'
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
+    object_detection_3d_depe = 'object-detection-3d-depe'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     # nlp tasks
@@ -674,6 +677,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_quality_assessment_mos: (
         Pipelines.image_quality_assessment_mos,
         'damo/cv_resnet_image-quality-assessment-mos_youtubeUGC'),
+    Tasks.object_detection_3d: (Pipelines.object_detection_3d_depe,
+                                'damo/cv_object-detection-3d_depe'),
 }
 
 

@@ -147,6 +147,7 @@ class Models(object):
     generic_itn = 'generic-itn'
     generic_punc = 'generic-punc'
     generic_sv = 'generic-sv'
+    ecapa_tdnn_sv = 'ecapa-tdnn-sv'
 
     # multi-modal models
     ofa = 'ofa'
@@ -395,6 +396,7 @@ class Pipelines(object):
     itn_inference = 'itn-inference'
     punc_inference = 'punc-inference'
     sv_inference = 'sv-inference'
+    speaker_verification = 'speaker-verification'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

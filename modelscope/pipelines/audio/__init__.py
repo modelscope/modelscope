@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .linear_aec_pipeline import LinearAECPipeline
     from .text_to_speech_pipeline import TextToSpeechSambertHifiganPipeline
     from .inverse_text_processing_pipeline import InverseTextProcessingPipeline
+    from .speaker_verification_pipeline import SpeakerVerificationPipeline
 else:
     _import_structure = {
         'ans_pipeline': ['ANSPipeline'],
@@ -19,7 +20,8 @@ else:
         'kws_kwsbp_pipeline': ['KeyWordSpottingKwsbpPipeline'],
         'linear_aec_pipeline': ['LinearAECPipeline'],
         'text_to_speech_pipeline': ['TextToSpeechSambertHifiganPipeline'],
-        'itn_inference_pipeline': ['InverseTextProcessingPipeline']
+        'itn_inference_pipeline': ['InverseTextProcessingPipeline'],
+        'speaker_verification_pipeline': ['SpeakerVerificationPipeline']
     }
 
     import sys

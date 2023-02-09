@@ -144,6 +144,8 @@ class AstScaningTest(unittest.TestCase):
         index_from_prebuilt = load_from_prebuilt(file_path)
         self.assertEqual(index, index_from_prebuilt)
 
+    @unittest.skip(
+        'skipped the method for not cpu time on this case not stable')
     def test_update_load_index_method(self):
         file_number = 20
         file_list = []

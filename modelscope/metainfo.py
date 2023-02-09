@@ -87,6 +87,7 @@ class Models(object):
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
@@ -324,6 +325,11 @@ class Pipelines(object):
     video_colorization = 'video-colorization'
     motion_generattion = 'mdm-motion-generation'
     object_detection_3d_depe = 'object-detection-3d-depe'
+<<<<<<< HEAD
+    nerf_recon_acc = 'nerf-recon-acc'
+
+=======
+>>>>>>> master
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
@@ -686,6 +692,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
         'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'),
     Tasks.object_detection_3d: (Pipelines.object_detection_3d_depe,
                                 'damo/cv_object-detection-3d_depe'),
+    Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
+                           'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
 }
 
 
@@ -802,6 +810,7 @@ class Preprocessors(object):
     object_detection_scrfd = 'object-detection-scrfd'
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
+    nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

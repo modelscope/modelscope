@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
     from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
     from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
+    from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
 
 else:
     _import_structure = {
@@ -238,6 +239,7 @@ else:
         'image_quality_assessment_mos_pipeline': [
             'ImageQualityAssessmentMosPipeline'
         ],
+        'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
     }
 
     import sys

@@ -342,6 +342,7 @@ TASK_OUTPUTS = {
     # {"output_video": "path_to_rendered_video"}
     Tasks.video_frame_interpolation: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.nerf_recon_acc: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
     # live category recognition result for single video

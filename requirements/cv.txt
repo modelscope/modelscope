@@ -27,6 +27,7 @@ mmdet>=2.25.0
 mmdet3d==1.0.0rc6  # update == to >= if stable version released
 mmsegmentation
 moviepy>=1.0.3
+nerfacc==0.2.2
 networkx>=2.5
 numba
 omegaconf
@@ -38,6 +39,7 @@ pandas
 panopticapi
 plyfile>=0.7.4
 psutil
+PyMCubes
 pytorch-lightning>=1.9.0
 regex
 scikit-image>=0.19.3

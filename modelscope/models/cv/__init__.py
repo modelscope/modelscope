@@ -16,12 +16,13 @@ from . import (action_recognition, animal_recognition, body_2d_keypoints,
                language_guided_video_summarization, movie_scene_segmentation,
                object_detection, panorama_depth_estimation,
                pointcloud_sceneflow_estimation, product_retrieval_embedding,
-               realtime_object_detection, referring_video_object_segmentation,
+               referring_video_object_segmentation,
                robust_image_classification, salient_detection,
-               shop_segmentation, super_resolution, video_frame_interpolation,
-               video_object_segmentation, video_panoptic_segmentation,
-               video_single_object_tracking, video_stabilization,
-               video_summarization, video_super_resolution, virual_tryon,
-               vision_middleware, vop_retrieval)
+               shop_segmentation, stream_yolo, super_resolution,
+               video_frame_interpolation, video_object_segmentation,
+               video_panoptic_segmentation, video_single_object_tracking,
+               video_stabilization, video_summarization,
+               video_super_resolution, virual_tryon, vision_middleware,
+               vop_retrieval)
 
 # yapf: enable

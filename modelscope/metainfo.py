@@ -254,7 +254,6 @@ class Pipelines(object):
     image_super_resolution = 'rrdb-image-super-resolution'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
-    realtime_object_detection = 'cspnet_realtime-object-detection_yolox'
     realtime_video_object_detection = 'cspnet_realtime-video-object-detection_streamyolo'
     face_recognition = 'ir101-face-recognition-cfglint'
     face_recognition_ood = 'ir-face-recognition-rts'

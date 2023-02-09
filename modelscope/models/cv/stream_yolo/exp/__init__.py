@@ -2,4 +2,3 @@
 
 from .base_exp import BaseExp
 from .build import get_exp_by_name
-from .yolox_base import Exp

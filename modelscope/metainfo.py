@@ -416,6 +416,8 @@ class Pipelines(object):
     diffusers_stable_diffusion = 'diffusers-stable-diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
+    gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
+    gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

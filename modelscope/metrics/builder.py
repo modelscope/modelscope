@@ -66,6 +66,8 @@ task_default_metrics = {
     Tasks.video_frame_interpolation:
     [Metrics.video_frame_interpolation_metric],
     Tasks.video_stabilization: [Metrics.video_stabilization_metric],
+    Tasks.image_quality_assessment_degradation:
+    [Metrics.image_quality_assessment_degradation_metric],
     Tasks.image_quality_assessment_mos:
     [Metrics.image_quality_assessment_mos_metric],
 }

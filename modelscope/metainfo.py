@@ -100,6 +100,7 @@ class Models(object):
     ddpm = 'ddpm'
     ocr_recognition = 'OCRRecognition'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
     nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
@@ -372,6 +373,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
     # nlp tasks
@@ -750,6 +752,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_quality_assessment_mos: (
         Pipelines.image_quality_assessment_mos,
         'damo/cv_resnet_image-quality-assessment-mos_youtubeUGC'),
+    Tasks.image_quality_assessment_degradation: (
+        Pipelines.image_quality_assessment_degradation,
+        'damo/cv_resnet50_image-quality-assessment_degradation'),
     Tasks.vision_efficient_tuning: (
         Pipelines.vision_efficient_tuning,
         'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'),
@@ -990,6 +995,8 @@ class Metrics(object):
     video_stabilization_metric = 'video-stabilization-metric'
     # metirc for image-quality-assessment-mos task
     image_quality_assessment_mos_metric = 'image-quality-assessment-mos-metric'
+    # metirc for image-quality-assessment-degradation task
+    image_quality_assessment_degradation_metric = 'image-quality-assessment-degradation-metric'
     # metric for text-ranking task
     text_ranking_metric = 'text-ranking-metric'
 

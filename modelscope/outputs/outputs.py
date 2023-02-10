@@ -378,6 +378,14 @@ TASK_OUTPUTS = {
     Tasks.nerf_recon_acc: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
+    # image quality assessment degradation result for single image
+    # {
+    #       "scores": [0.885272, 0.014790631, 0.014558001]
+    #       "labels": ['噪声强度', '模糊程度', '压缩强度'],
+    # }
+    Tasks.image_quality_assessment_degradation:
+    [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # live category recognition result for single video
     # {
     #       "scores": [0.885272, 0.014790631, 0.014558001]
@@ -409,8 +417,9 @@ TASK_OUTPUTS = {
     #               [x1, y1, x2, y2],
     #             ]
     # }
-    Tasks.body_2d_keypoints:
-    [OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES],
+    Tasks.body_2d_keypoints: [
+        OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES
+    ],
 
     # 3D human body keypoints detection result for single sample
     # {

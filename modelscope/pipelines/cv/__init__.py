@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from .image_structured_model_probing_pipeline import ImageStructuredModelProbingPipeline
     from .video_colorization_pipeline import VideoColorizationPipeline
     from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
+    from .image_quality_assessment_degradation_pipeline import ImageQualityAssessmentDegradationPipeline
     from .image_open_vocabulary_detection_pipeline import ImageOpenVocabularyDetectionPipeline
     from .object_detection_3d_pipeline import ObjectDetection3DPipeline
     from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
@@ -246,6 +247,9 @@ else:
         ],
         'video_colorization_pipeline': ['VideoColorizationPipeline'],
         'image_defrcn_fewshot_pipeline': ['ImageDefrcnDetectionPipeline'],
+        'image_quality_assessment_degradation_pipeline': [
+            'ImageQualityAssessmentDegradationPipeline'
+        ],
         'image_open_vocabulary_detection_pipeline': [
             'ImageOpenVocabularyDetectionPipeline'
         ],

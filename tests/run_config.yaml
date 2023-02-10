@@ -53,6 +53,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_video_colorization.py
   - test_image_defrcn_fewshot_trainer.py
   - test_image_deblur_trainer.py
+  - test_image_quality_assessment_degradation.py
   - test_image_quality_assessment_mos.py
   - test_image_restoration.py
   - test_video_deinterlace.py

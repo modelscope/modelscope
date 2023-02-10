@@ -455,10 +455,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_embedding:
     (Pipelines.sentence_embedding,
      'damo/nlp_corom_sentence-embedding_english-base'),
-    Tasks.text_ranking: (Pipelines.text_ranking,
-                         'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.text_ranking: (Pipelines.mgeo_ranking,
                          'damo/mgeo_address_ranking_chinese_base'),
+    Tasks.text_ranking: (Pipelines.text_ranking,
+                         'damo/nlp_corom_passage-ranking_english-base'),
     Tasks.word_segmentation:
     (Pipelines.word_segmentation,
      'damo/nlp_structbert_word-segmentation_chinese-base'),
@@ -765,6 +765,7 @@ class NLPTrainers(object):
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
     nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
+    nlp_sentence_embedding_trainer = 'nlp-sentence-embedding-trainer'
     text_generation_trainer = 'text-generation-trainer'
     nlp_plug_trainer = 'nlp-plug-trainer'
     gpt3_trainer = 'nlp-gpt3-trainer'

@@ -415,3 +415,18 @@ class DialogueUserSatisfactionEstimationModelOutput(ModelOutputBase):
         logits (`Tensor`): The logits output of the model.
     """
     logits: Tensor = None
+
+
+@dataclass
+class SentencEmbeddingModelOutput(ModelOutputBase):
+    """The output class for text classification models.
+
+    Args:
+        query_embs (`Tensor`, *optional*): The tensor of the query embeddings.
+        doc_embs (`Tensor`, *optional*) Then tensor of the doc embeddings.
+        loss (`torch.FloatTensor` of shape `(1,)`, *optional*): Sentence Embedding modeling loss.
+    """
+
+    query_embeddings: Tensor = None
+    doc_embeddings: Tensor = None
+    loss: Tensor = None

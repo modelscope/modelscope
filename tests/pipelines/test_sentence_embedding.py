@@ -14,9 +14,13 @@ from modelscope.utils.test_utils import test_level
 
 class SentenceEmbeddingTest(unittest.TestCase):
     model_id = 'damo/nlp_corom_sentence-embedding_english-base'
+    tiny_model_id = 'damo/nlp_corom_sentence-embedding_english-tiny'
     ecom_base_model_id = 'damo/nlp_corom_sentence-embedding_chinese-base-ecom'
+    ecom_tiny_model_id = 'damo/nlp_corom_sentence-embedding_chinese-tiny-ecom'
     medical_base_model_id = 'damo/nlp_corom_sentence-embedding_chinese-base-medical'
+    medical_tiny_model_id = 'damo/nlp_corom_sentence-embedding_chinese-tiny-medical'
     general_base_model_id = 'damo/nlp_corom_sentence-embedding_chinese-base'
+    general_tiny_model_id = 'damo/nlp_corom_sentence-embedding_chinese-tiny'
 
     inputs = {
         'source_sentence': ["how long it take to get a master's degree"],
@@ -48,6 +52,25 @@ class SentenceEmbeddingTest(unittest.TestCase):
         'source_sentence': [
             'how long it take to get a master degree',
             'students take about 18 to 24 months to complete a degree'
+        ]
+    }
+
+    general_inputs1 = {
+        'source_sentence': ['功和功率的区别'],
+        'sentences_to_compare': [
+            '功反映做功多少，功率反映做功快慢。',
+            '什么是有功功率和无功功率?无功功率有什么用什么是有功功率和无功功率?无功功率有什么用电力系统中的电源是由发电机产生的三相正弦交流电,在交>流电路中,由电源供给负载的电功率有两种;一种是有功功率,一种是无功功率。',
+            '优质解答在物理学中,用电功率表示消耗电能的快慢．电功率用P表示,它的单位是瓦特（Watt）,简称瓦（Wa）符号是W.电流在单位时间内做的功叫做电功率 以灯泡为例,电功率越大\
+             ,灯泡越亮.灯泡的亮暗由电功率（实际功率）决定,不由通过的电流、电压、电能决定!',
+        ]
+    }
+
+    general_inputs2 = {
+        'source_sentence': [
+            '功反映做功多少，功率反映做功快慢。',
+            '什么是有功功率和无功功率?无功功率有什么用什么是有功功率和无功功率?无功功率有什么用电力系统中的电源是由发电机产生的三相正弦交流电,在交>流电路中,由电源供给负载的电功率有两种;一种是有功功率,一种是无功功率。',
+            '优质解答在物理学中,用电功率表示消耗电能的快慢．电功率用P表示,它的单位是瓦特（Watt）,简称瓦（Wa）符号是W.电流在单位时间内做的功叫做电功率 以灯泡为例,电功率越大\
+             ,灯泡越亮.灯泡的亮暗由电功率（实际功率）决定,不由通过的电流、电压、电能决定!',
         ]
     }
 
@@ -144,6 +167,9 @@ class SentenceEmbeddingTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.sentence_embedding, model=self.model_id)
         print(pipeline_ins(input=self.inputs))
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.tiny_model_id)
+        print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
@@ -155,11 +181,17 @@ class SentenceEmbeddingTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.sentence_embedding, model=self.ecom_base_model_id)
         print(pipeline_ins(input=self.ecom_inputs2))
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.ecom_tiny_model_id)
+        print(pipeline_ins(input=self.ecom_inputs2))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_medical_model_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.sentence_embedding, model=self.medical_base_model_id)
+        print(pipeline_ins(input=self.medical_inputs1))
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.medical_tiny_model_id)
         print(pipeline_ins(input=self.medical_inputs1))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -167,6 +199,17 @@ class SentenceEmbeddingTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.sentence_embedding, model=self.el_model_id)
         print(pipeline_ins(input=self.el_inputs))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_general_model_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.general_base_model_id)
+        print(pipeline_ins(input=self.general_inputs1))
+        print(pipeline_ins(input=self.general_inputs2))
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=self.general_tiny_model_id)
+        print(pipeline_ins(input=self.general_inputs1))
+        print(pipeline_ins(input=self.general_inputs2))
 
 
 if __name__ == '__main__':

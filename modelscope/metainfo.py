@@ -92,6 +92,7 @@ class Models(object):
     msrresnet_lite = 'msrresnet-lite'
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
+    ocr_recognition = 'OCRRecognition'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
@@ -837,6 +838,7 @@ class Preprocessors(object):
     object_detection_scrfd = 'object-detection-scrfd'
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
+    ocr_recognition = 'ocr-recognition'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 
     # nlp preprocessor

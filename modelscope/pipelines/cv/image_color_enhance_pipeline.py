@@ -6,7 +6,8 @@ from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.cv.image_color_enhance import (DeepLPFImageColorEnhance,
+from modelscope.models.cv.image_color_enhance import (AdaIntImageColorEnhance,
+                                                      DeepLPFImageColorEnhance,
                                                       ImageColorEnhance)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
@@ -21,14 +22,17 @@ logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.image_color_enhancement,
+    module_name=Pipelines.adaint_image_color_enhance)
+@PIPELINES.register_module(
+    Tasks.image_color_enhancement,
     module_name=Pipelines.deeplpf_image_color_enhance)
 @PIPELINES.register_module(
     Tasks.image_color_enhancement, module_name=Pipelines.image_color_enhance)
 class ImageColorEnhancePipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[ImageColorEnhance, DeepLPFImageColorEnhance,
-                              str],
+                 model: Union[ImageColorEnhance, AdaIntImageColorEnhance,
+                              DeepLPFImageColorEnhance, str],
                  preprocessor: Optional[
                      ImageColorEnhanceFinetunePreprocessor] = None,
                  **kwargs):

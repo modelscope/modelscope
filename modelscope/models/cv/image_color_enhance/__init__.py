@@ -5,12 +5,14 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .image_color_enhance import ImageColorEnhance
+    from .adaint import AdaIntImageColorEnhance
     from .deeplpf import DeepLPFImageColorEnhance
 
 else:
     _import_structure = {
         'image_color_enhance': ['ImageColorEnhance'],
-        'deeplpf': ['DeepLPFImageColorEnhance'],
+        'adaint': ['AdaIntImageColorEnhance'],
+        'deeplpf': ['DeepLPFImageColorEnhance']
     }
 
     import sys

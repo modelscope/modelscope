@@ -1,0 +1,46 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+import os.path as osp
+import unittest
+
+import cv2
+
+from modelscope.outputs import OutputKeys
+from modelscope.pipelines import pipeline
+from modelscope.pipelines.base import Pipeline
+from modelscope.utils.constant import Tasks
+from modelscope.utils.demo_utils import DemoCompatibilityCheck
+from modelscope.utils.test_utils import test_level
+
+
+class AdaIntImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
+
+    def setUp(self) -> None:
+        self.model_id = 'damo/cv_adaint_image-color-enhance-models'
+        self.task = Tasks.image_color_enhancement
+
+    def pipeline_inference(self, pipeline: Pipeline, input_location: str):
+        result = pipeline(input_location)
+        if result is not None:
+            cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
+            print(f'Output written to {osp.abspath("result.png")}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_modelhub(self):
+        img_color_enhance = pipeline(
+            Tasks.image_color_enhancement, model=self.model_id)
+        self.pipeline_inference(img_color_enhance,
+                                'data/test/images/image_color_enhance.png')
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_modelhub_default_model(self):
+        img_color_enhance = pipeline(Tasks.image_color_enhancement)
+        self.pipeline_inference(img_color_enhance,
+                                'data/test/images/image_color_enhance.png')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_demo_compatibility(self):
+        self.compatibility_check()
+
+
+if __name__ == '__main__':
+    unittest.main()

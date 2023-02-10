@@ -60,8 +60,10 @@ def merge_cfg(cfg: Config):
     """
     cfg.merge_from_dict(DEFAULT_HOOKS_CONFIG, force=False)
     # pop duplicate hook
-
-    if any(['BestCkptSaverHook' == hook['type'] for hook in cfg.train.hooks]):
+    check_list = [
+        'BestCkptSaverHook' == hook['type'] for hook in cfg.train['hooks']
+    ]
+    if any(check_list):
         cfg.train.hooks = list(
             filter(lambda hook: hook['type'] != 'CheckpointHook',
                    cfg.train.hooks))

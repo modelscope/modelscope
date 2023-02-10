@@ -17,7 +17,7 @@
 
 from modelscope.metainfo import Heads, Models
 from modelscope.models.builder import MODELS
-from modelscope.models.nlp.task_models.token_classification import (
+from modelscope.models.nlp.task_models import (
     ModelForTokenClassification, ModelForTokenClassificationWithCRF)
 from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
@@ -25,21 +25,25 @@ from modelscope.utils.constant import Tasks
 logger = logging.get_logger()
 
 
-@MODELS.register_module(Tasks.token_classification, module_name=Models.bert)
-@MODELS.register_module(Tasks.part_of_speech, module_name=Models.bert)
-@MODELS.register_module(Tasks.word_segmentation, module_name=Models.bert)
-class BertForTokenClassification(ModelForTokenClassification):
-    r"""Bert Model with a token classification head on top (a linear layer on top of
+@MODELS.register_module(Tasks.token_classification, module_name=Models.lcrf)
+@MODELS.register_module(
+    Tasks.named_entity_recognition, module_name=Models.lcrf)
+@MODELS.register_module(Tasks.part_of_speech, module_name=Models.lcrf)
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf)
+@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf_wseg)
+class LSTMForTokenClassificationWithCRF(ModelForTokenClassificationWithCRF):
+    r"""Model with a token classification head on top (a linear layer on top of
     the hidden-states output) e.g. for Named-Entity-Recognition (NER) tasks, word-segmentation.
 
-    This model inherits from :class:`TokenClassificationModel`. Check the superclass documentation for the generic
-    methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
-    pruning heads etc.)
-
-    This model is also a PyTorch `torch.nn.Module <https://pytorch.org/docs/stable/nn.html#torch.nn.Module>`__
-    subclass. Use it as a regular PyTorch Module and refer to the PyTorch documentation for all matter related to
-    general usage and behavior.
-
     """
+    override_base_model_type = True
+    base_model_type = Models.lstm
+    head_type = Heads.lstm_crf
 
-    base_model_type = 'bert'
+    def parse_head_cfg(self):
+        head_cfg = super(ModelForTokenClassification, self).parse_head_cfg()
+        head_cfg['hidden_size'] = (
+            head_cfg.hidden_size
+            if hasattr(head_cfg, 'hidden_size') else head_cfg.lstm_hidden_size)
+        head_cfg['num_labels'] = self.config.num_labels
+        return head_cfg

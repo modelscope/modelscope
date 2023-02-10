@@ -1,290 +1,100 @@
-# Copyright 2021-2022 The Alibaba DAMO NLP Team Authors. All rights reserved.
-# The CRF implementation borrows mostly from AllenNLP CRF module (https://github.com/allenai/allennlp)
-# and pytorch-crf (https://github.com/kmkurn/pytorch-crf) with some modifications.
+# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
+#
+# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 
-import os
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import Any, Dict, List, Optional
 
 import torch
-import torch.nn as nn
-from transformers import AutoConfig, AutoModel
+import torch.nn.functional as F
+from torch import nn
+from torch.nn import CrossEntropyLoss
+from transformers.activations import ACT2FN
 
-from modelscope.metainfo import Models
-from modelscope.models import TorchModel
-from modelscope.models.builder import MODELS
-from modelscope.outputs import AttentionTokenClassificationModelOutput
-from modelscope.utils.constant import ModelFile, Tasks
-
-__all__ = [
-    'TransformerCRFForNamedEntityRecognition',
-    'LSTMCRFForNamedEntityRecognition', 'LSTMCRFForWordSegmentation',
-    'LSTMCRFForPartOfSpeech'
-]
+from modelscope.metainfo import Heads
+from modelscope.models.base import TorchHead
+from modelscope.models.builder import HEADS
+from modelscope.outputs import (AttentionTokenClassificationModelOutput,
+                                ModelOutputBase, OutputKeys,
+                                TokenClassificationModelOutput)
+from modelscope.utils.constant import Tasks
 
 
-class SequenceLabelingForNamedEntityRecognition(TorchModel):
+@HEADS.register_module(Tasks.token_classification, module_name=Heads.lstm_crf)
+@HEADS.register_module(
+    Tasks.named_entity_recognition, module_name=Heads.lstm_crf)
+@HEADS.register_module(Tasks.word_segmentation, module_name=Heads.lstm_crf)
+@HEADS.register_module(Tasks.part_of_speech, module_name=Heads.lstm_crf)
+class LSTMCRFHead(TorchHead):
 
-    def __init__(self, model_dir, *args, **kwargs):
-        super().__init__(model_dir, *args, **kwargs)
-        self.model = self.init_model(model_dir, *args, **kwargs)
-
-        model_ckpt = os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-        self.model.load_state_dict(
-            torch.load(model_ckpt, map_location=torch.device('cpu')))
-
-    def init_model(self, model_dir, *args, **kwargs):
-        raise NotImplementedError
-
-    def train(self):
-        return self.model.train()
-
-    def eval(self):
-        return self.model.eval()
-
-    def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
-        offset_mapping=None,
-        label_mask=None,
-    ) -> Dict[str, Any]:
-        r"""
-        Args:
-        input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
-            Indices of input sequence tokens in the vocabulary.
-
-            Indices can be obtained using :class:`~modelscope.models.nlp.structbert.SbertTokenizer`. See
-            :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__` for
-            details.
-
-        attention_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Mask to avoid performing attention on padding token indices. Mask values selected in ``[0, 1]``:
-
-            - 1 for tokens that are **not masked**,
-            - 0 for tokens that are **masked**.
-
-        token_type_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Segment token indices to indicate first and second portions of the inputs. Indices are selected in ``[0,
-            1]``:
-
-            - 0 corresponds to a `sentence A` token,
-            - 1 corresponds to a `sentence B` token.
-
-        position_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the position embeddings. Selected in the range ``[0,
-            config.max_position_embeddings - 1]``.
-
-        head_mask (:obj:`torch.FloatTensor` of shape :obj:`(num_heads,)` or :obj:`(num_layers, num_heads)`, `optional`):
-            Mask to nullify selected heads of the self-attention modules. Mask values selected in ``[0, 1]``:
-
-            - 1 indicates the head is **not masked**,
-            - 0 indicates the head is **masked**.
-
-        inputs_embeds (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`):
-            Optionally, instead of passing :obj:`input_ids` you can choose to directly pass an embedded representation.
-            This is useful if you want more control over how to convert :obj:`input_ids` indices into associated
-            vectors than the model's internal embedding lookup matrix.
-        output_attentions (:obj:`bool`, `optional`):
-            Whether or not to return the attentions tensors of all attention layers. See ``attentions`` under returned
-            tensors for more detail.
-        output_hidden_states (:obj:`bool`, `optional`):
-            Whether or not to return the hidden states of all layers. See ``hidden_states`` under returned tensors for
-            more detail.
-        return_dict (:obj:`bool`, `optional`):
-            Whether or not to return a :class:`~transformers.ModelOutput` instead of a plain tuple.
-        labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
-            1]``.
-        offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the sentence.
-            Selected in the range ``[0, sequence_length - 1]``.
-        label_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Mask to avoid performing attention on padding token indices. Mask
-            values selected in ``[0, 1]``:
-
-            - 1 for tokens that are **not masked**,
-            - 0 for tokens that are **masked**.
-
-        Returns:
-            Returns `modelscope.outputs.AttentionTokenClassificationModelOutput`
-
-        Examples:
-            >>> from modelscope.models import Model
-            >>> from modelscope.preprocessors import Preprocessor
-            >>> model = Model.from_pretrained('damo/nlp_structbert_word-segmentation_chinese-base')
-            >>> preprocessor = Preprocessor.from_pretrained('damo/nlp_structbert_word-segmentation_chinese-base')
-            >>> print(model(**preprocessor(('This is a test', 'This is also a test'))))
-        """
-        input_tensor = {
-            'input_ids': input_ids,
-            'attention_mask': attention_mask,
-            'label_mask': label_mask,
-        }
-        output = {
-            'offset_mapping': offset_mapping,
-            **input_tensor,
-            **self.model(input_tensor)
-        }
-        return output
-
-    def postprocess(self, input: Dict[str, Any], **kwargs):
-        predicts = self.model.decode(input)
-        offset_mapping = input.get('offset_mapping')
-        mask = input.get('label_mask')
-
-        # revert predicts to original position with respect of label mask
-        masked_predict = torch.zeros_like(predicts)
-        for i in range(len(mask)):
-            masked_lengths = mask[i].sum(-1).long().cpu().item()
-            selected_predicts = torch.narrow(
-                predicts[i], 0, 0,
-                masked_lengths)  # index_select only move loc, not resize
-            mask_position = mask[i].byte()
-            masked_predict[i][mask_position] = selected_predicts
-        predicts = masked_predict
-
-        return AttentionTokenClassificationModelOutput(
-            loss=None,
-            logits=None,
-            hidden_states=None,
-            attentions=None,
-            label_mask=mask,
-            offset_mapping=offset_mapping,
-            predictions=predicts,
-        )
-
-
-@MODELS.register_module(
-    Tasks.named_entity_recognition, module_name=Models.tcrf)
-class TransformerCRFForNamedEntityRecognition(
-        SequenceLabelingForNamedEntityRecognition):
-    """This model wraps the TransformerCRF model to register into model sets.
-    """
-
-    def init_model(self, model_dir, *args, **kwargs):
-        self.config = AutoConfig.from_pretrained(model_dir)
-        num_labels = self.config.num_labels
-
-        model = TransformerCRF(model_dir, num_labels)
-        return model
-
-
-@MODELS.register_module(Tasks.word_segmentation, module_name=Models.tcrf_wseg)
-class TransformerCRFForWordSegmentation(TransformerCRFForNamedEntityRecognition
-                                        ):
-    """This model wraps the TransformerCRF model to register into model sets.
-    """
-    pass
-
-
-@MODELS.register_module(
-    Tasks.named_entity_recognition, module_name=Models.lcrf)
-class LSTMCRFForNamedEntityRecognition(
-        SequenceLabelingForNamedEntityRecognition):
-    """This model wraps the LSTMCRF model to register into model sets.
-    """
-
-    def init_model(self, model_dir, *args, **kwargs):
-        self.config = AutoConfig.from_pretrained(model_dir)
-        vocab_size = self.config.vocab_size
-        embed_width = self.config.embed_width
-        num_labels = self.config.num_labels
-        lstm_hidden_size = self.config.lstm_hidden_size
-
-        model = LSTMCRF(vocab_size, embed_width, num_labels, lstm_hidden_size)
-        return model
-
-
-@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf_wseg)
-@MODELS.register_module(Tasks.word_segmentation, module_name=Models.lcrf)
-class LSTMCRFForWordSegmentation(LSTMCRFForNamedEntityRecognition):
-    pass
-
-
-@MODELS.register_module(Tasks.part_of_speech, module_name=Models.lcrf)
-class LSTMCRFForPartOfSpeech(LSTMCRFForNamedEntityRecognition):
-    pass
-
-
-class TransformerCRF(nn.Module):
-    """A transformer based model to NER tasks.
-
-    This model will use transformers' backbones as its backbone.
-    """
-
-    def __init__(self, model_dir, num_labels, **kwargs):
-        super(TransformerCRF, self).__init__()
-
-        self.encoder = AutoModel.from_pretrained(model_dir)
-        self.linear = nn.Linear(self.encoder.config.hidden_size, num_labels)
+    def __init__(self, hidden_size=100, num_labels=None, **kwargs):
+        super().__init__(hidden_size=hidden_size, num_labels=num_labels)
+        assert num_labels is not None
+        self.ffn = nn.Linear(hidden_size * 2, num_labels)
         self.crf = CRF(num_labels, batch_first=True)
 
-    def forward(self, inputs):
-        embed = self.encoder(
-            inputs['input_ids'], attention_mask=inputs['attention_mask'])[0]
-        logits = self.linear(embed)
+    def forward(self,
+                inputs: ModelOutputBase,
+                attention_mask=None,
+                label=None,
+                label_mask=None,
+                offset_mapping=None,
+                **kwargs):
+        logits = self.ffn(inputs.last_hidden_state)
 
-        if 'label_mask' in inputs:
-            mask = inputs['label_mask']
-            masked_lengths = mask.sum(-1).long()
-            masked_logits = torch.zeros_like(logits)
-            for i in range(len(mask)):
-                masked_logits[
-                    i, :masked_lengths[i], :] = logits[i].masked_select(
-                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
-            logits = masked_logits
+        return TokenClassificationModelOutput(
+            loss=None,
+            logits=logits,
+        )
 
-        outputs = {'logits': logits}
-        return outputs
-
-    def decode(self, inputs):
-        seq_lens = inputs['label_mask'].sum(-1).long()
+    def decode(self, logits, label_mask):
+        seq_lens = label_mask.sum(-1).long()
         mask = torch.arange(
-            inputs['label_mask'].shape[1],
+            label_mask.shape[1],
             device=seq_lens.device)[None, :] < seq_lens[:, None]
-        predicts = self.crf.decode(inputs['logits'], mask=mask).squeeze(0)
+        predicts = self.crf.decode(logits, mask).squeeze(0)
         return predicts
 
 
-class LSTMCRF(nn.Module):
-    """
-    A standard bilstm-crf model for fast prediction.
-    """
+@HEADS.register_module(
+    Tasks.transformer_crf, module_name=Heads.transformer_crf)
+@HEADS.register_module(
+    Tasks.token_classification, module_name=Heads.transformer_crf)
+@HEADS.register_module(
+    Tasks.named_entity_recognition, module_name=Heads.transformer_crf)
+@HEADS.register_module(
+    Tasks.word_segmentation, module_name=Heads.transformer_crf)
+@HEADS.register_module(Tasks.part_of_speech, module_name=Heads.transformer_crf)
+class TransformersCRFHead(TorchHead):
 
-    def __init__(self,
-                 vocab_size,
-                 embed_width,
-                 num_labels,
-                 lstm_hidden_size=100,
-                 **kwargs):
-        super(LSTMCRF, self).__init__()
-        self.embedding = Embedding(vocab_size, embed_width)
-        self.lstm = nn.LSTM(
-            embed_width,
-            lstm_hidden_size,
-            num_layers=1,
-            bidirectional=True,
-            batch_first=True)
-        self.ffn = nn.Linear(lstm_hidden_size * 2, num_labels)
+    def __init__(self, hidden_size, num_labels, **kwargs):
+        super().__init__(
+            hidden_size=hidden_size, num_labels=num_labels, **kwargs)
+        self.linear = nn.Linear(hidden_size, num_labels)
         self.crf = CRF(num_labels, batch_first=True)
 
-    def forward(self, inputs):
-        embedding = self.embedding(inputs['input_ids'])
-        lstm_output, _ = self.lstm(embedding)
-        logits = self.ffn(lstm_output)
-
-        if 'label_mask' in inputs:
-            mask = inputs['label_mask']
+    def forward(self,
+                inputs: ModelOutputBase,
+                attention_mask=None,
+                label=None,
+                label_mask=None,
+                offset_mapping=None,
+                **kwargs):
+        logits = self.linear(inputs.last_hidden_state)
+        if label_mask is not None:
+            mask = label_mask
             masked_lengths = mask.sum(-1).long()
             masked_logits = torch.zeros_like(logits)
             for i in range(len(mask)):
@@ -293,15 +103,19 @@ class LSTMCRF(nn.Module):
                         mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
             logits = masked_logits
 
-        outputs = {'logits': logits}
-        return outputs
+        return AttentionTokenClassificationModelOutput(
+            loss=None,
+            logits=logits,
+            hidden_states=inputs.hidden_states,
+            attentions=inputs.attentions,
+        )
 
-    def decode(self, inputs):
-        seq_lens = inputs['label_mask'].sum(-1).long()
+    def decode(self, logits, label_mask):
+        seq_lens = label_mask.sum(-1).long()
         mask = torch.arange(
-            inputs['label_mask'].shape[1],
+            label_mask.shape[1],
             device=seq_lens.device)[None, :] < seq_lens[:, None]
-        predicts = self.crf.decode(inputs['logits'], mask=mask).squeeze(0)
+        predicts = self.crf.decode(logits, mask).squeeze(0)
         return predicts
 
 
@@ -610,8 +424,10 @@ class CRF(nn.Module):
             # Set score to the next score if this timestep is valid (mask == 1)
             # and save the index that produces the next score
             # shape: (batch_size, num_tags)
-            score = torch.where(mask[i].unsqueeze(-1), next_score, score)
-            indices = torch.where(mask[i].unsqueeze(-1), indices, oor_idx)
+            score = torch.where(mask[i].unsqueeze(-1).bool(), next_score,
+                                score)
+            indices = torch.where(mask[i].unsqueeze(-1).bool(), indices,
+                                  oor_idx)
             history_idx[i - 1] = indices
 
         # End transition score
@@ -639,7 +455,7 @@ class CRF(nn.Module):
             best_tags = torch.gather(history_idx[idx], 1, best_tags)
             best_tags_arr[idx] = best_tags.data.view(batch_size)
 
-        return torch.where(mask, best_tags_arr, oor_tag).transpose(0, 1)
+        return torch.where(mask.bool(), best_tags_arr, oor_tag).transpose(0, 1)
 
     def _viterbi_decode_nbest(
             self,
@@ -711,10 +527,10 @@ class CRF(nn.Module):
             # Set score to the next score if this timestep is valid (mask == 1)
             # and save the index that produces the next score
             # shape: (batch_size, num_tags, nbest)
-            score = torch.where(mask[i].unsqueeze(-1).unsqueeze(-1),
+            score = torch.where(mask[i].unsqueeze(-1).bool().unsqueeze(-1),
                                 next_score, score)
-            indices = torch.where(mask[i].unsqueeze(-1).unsqueeze(-1), indices,
-                                  oor_idx)
+            indices = torch.where(mask[i].unsqueeze(-1).unsqueeze(-1).bool(),
+                                  indices, oor_idx)
             history_idx[i - 1] = indices
 
         # End transition score shape: (batch_size, num_tags, nbest)
@@ -745,14 +561,3 @@ class CRF(nn.Module):
 
         return torch.where(mask.unsqueeze(-1), best_tags_arr,
                            oor_tag).permute(2, 1, 0)
-
-
-class Embedding(nn.Module):
-
-    def __init__(self, vocab_size, embed_width):
-        super(Embedding, self).__init__()
-
-        self.embedding = nn.Embedding(vocab_size, embed_width)
-
-    def forward(self, input_ids):
-        return self.embedding(input_ids)

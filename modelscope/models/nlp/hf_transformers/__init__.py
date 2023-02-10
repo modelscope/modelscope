@@ -4,12 +4,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .text_classification_head import TextClassificationHead
-    from .torch_pretrain_head import BertMLMHead, RobertaMLMHead
+    from .backbone import TransformersModel
 else:
     _import_structure = {
-        'text_classification_head': ['TextClassificationHead'],
-        'torch_pretrain_head': ['BertMLMHead', 'RobertaMLMHead'],
+        'backbone': ['TransformersModel'],
     }
 
     import sys

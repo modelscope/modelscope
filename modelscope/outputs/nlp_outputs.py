@@ -172,7 +172,7 @@ class FeatureExtractionOutput(ModelOutputBase):
 
 @dataclass
 class FillMaskModelOutput(ModelOutputBase):
-    """The output class for text classification models.
+    """The output class for fill mask models.
 
     Args:
         logits (`Tensor`): The logits output of the model.

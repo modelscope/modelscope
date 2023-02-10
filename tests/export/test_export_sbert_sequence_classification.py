@@ -38,7 +38,7 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_export_bert_sequence_classification(self):
         model = Model.from_pretrained(
-            self.model_id_bert, task=Tasks.text_classification)
+            self.model_id_bert, task=Tasks.text_classification, num_labels=2)
         print(
             Exporter.from_model(model).export_onnx(
                 shape=(2, 256), output_dir=self.tmp_dir))

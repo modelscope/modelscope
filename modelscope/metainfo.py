@@ -147,6 +147,9 @@ class Models(object):
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
     fid_plug = 'fid-plug'
+    lstm = 'lstm'
+    xlm_roberta = 'xlm-roberta'
+    transformers = 'transformers'
     plug_mental = 'plug-mental'
 
     # audio models
@@ -190,6 +193,7 @@ class TaskModels(object):
     fill_mask = 'fill-mask'
     feature_extraction = 'feature-extraction'
     text_generation = 'text-generation'
+    text_ranking = 'text-ranking'
 
 
 class Heads(object):
@@ -207,6 +211,11 @@ class Heads(object):
     information_extraction = 'information-extraction'
     # text gen
     text_generation = 'text-generation'
+    # text ranking
+    text_ranking = 'text-ranking'
+    # crf
+    lstm_crf = 'lstm-crf'
+    transformer_crf = 'transformer-crf'
 
 
 class Pipelines(object):

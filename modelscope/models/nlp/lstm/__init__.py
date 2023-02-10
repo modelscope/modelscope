@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .text_classification_head import TextClassificationHead
-    from .torch_pretrain_head import BertMLMHead, RobertaMLMHead
+    from .backbone import LSTMModel
+    from .token_classification import LSTMForTokenClassificationWithCRF
 else:
     _import_structure = {
-        'text_classification_head': ['TextClassificationHead'],
-        'torch_pretrain_head': ['BertMLMHead', 'RobertaMLMHead'],
+        'backbone': ['LSTM'],
+        'token_classification': ['LSTMForTokenClassificationWithCRF'],
     }
 
     import sys

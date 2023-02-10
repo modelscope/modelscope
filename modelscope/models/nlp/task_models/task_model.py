@@ -3,21 +3,23 @@ import os.path
 import re
 from abc import ABC
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import torch
 from torch import nn
 
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import build_backbone, build_head
-from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import Fields, Tasks
+from modelscope.outputs import OutputKeys
+from modelscope.utils.checkpoint import load_task_model_checkpoint
+from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-__all__ = ['EncoderDecoderTaskModelBase', 'SingleBackboneTaskModelBase']
+__all__ = ['EncoderModel', 'SingleBackboneTaskModelBase']
 
 
 def _repr(modules, depth=1):
@@ -107,7 +109,8 @@ class BaseTaskModel(TorchModel, ABC):
 
         """
         # TODO Sharded ckpt
-        ckpt_file = os.path.join(model_local_dir, 'pytorch_model.bin')
+        ckpt_file = os.path.join(model_local_dir,
+                                 ModelFile.TORCH_MODEL_BIN_FILE)
         state_dict = torch.load(ckpt_file, map_location='cpu')
         if default_dtype is not None:
             torch.set_default_dtype(default_dtype)
@@ -321,10 +324,10 @@ class BaseTaskModel(TorchModel, ABC):
                 f'Some weights of the model checkpoint were not used when'
                 f' initializing {self.__class__.__name__}: {unexpected_keys}\n- This IS expected if you are'
                 f' initializing {self.__class__.__name__} from the checkpoint of a model trained on another task or'
-                ' with another architecture (e.g. initializing a BertForSequenceClassification model from a'
+                ' with another architecture (e.g. initializing a BertForTokenClassification model from a'
                 ' BertForPreTraining model).\n- This IS NOT expected if you are initializing'
                 f' {self.__class__.__name__} from the checkpoint of a model that you expect to be exactly identical'
-                ' (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).'
+                ' (initializing a BertForTokenClassification model from a BertForTokenClassification model).'
             )
         else:
             logger.info(
@@ -452,59 +455,241 @@ class SingleBackboneTaskModelBase(BaseTaskModel):
         return sequence_output, pooled_output
 
 
-class EncoderDecoderTaskModelBase(BaseTaskModel):
+class EncoderModel(TorchModel):
     """
-    This is the base class of encoder-decoder nlp task classes.
+    This is the base class of any encoder nlp task classes.
     """
-    # The encoder backbone prefix, default to "encoder"
-    _encoder_prefix = 'encoder'
-    # The decoder backbone prefix, default to "decoder"
-    _decoder_prefix = 'decoder'
-    # The key in cfg specifing the encoder type
-    _encoder_key_in_cfg = 'encoder_type'
-    # The key in cfg specifing the decoder type
-    _decoder_key_in_cfg = 'decoder_type'
+    # keys to ignore when load missing
+    _keys_to_ignore_on_load_missing = None
+    # keys to ignore when load unexpected
+    _keys_to_ignore_on_load_unexpected = None
+    # The encoder prefix defaults to "encoder"
+    base_model_prefix = 'encoder'
+    # The default backbone model type is None, should be bert/T5
+    base_model_type = None
+    # The head prefix defaults to "head"
+    head_prefix = 'head'
+    # The head type defaults as None
+    head_type = None
+    # override base model prefix by task model prefix
+    override_base_model_prefix = False
+    # override base model type by task model type
+    override_base_model_type = False
 
     def __init__(self, model_dir: str, *args, **kwargs):
         super().__init__(model_dir, *args, **kwargs)
+        self.config = ConfigDict(kwargs)
+        backbone_cfg = self.parse_encoder_cfg()
+        head_cfg = self.parse_head_cfg()
+        self.build_encoder(backbone_cfg)
+        if head_cfg.type is not None:
+            self.build_head(head_cfg)
 
-    def build_encoder(self):
-        encoder = build_backbone(
-            self.config,
-            type_name=self._encoder_key_in_cfg,
-            task_name=Tasks.backbone)
-        setattr(self, self._encoder_prefix, encoder)
-        return encoder
+    def __repr__(self):
+        # only log backbone and head name
+        depth = 1
+        return _repr(self, depth)
 
-    def build_decoder(self):
-        decoder = build_backbone(
-            self.config,
-            type_name=self._decoder_key_in_cfg,
-            task_name=Tasks.backbone)
-        setattr(self, self._decoder_prefix, decoder)
-        return decoder
+    def _get_transformer_config(self):
+        transformer_config_file = os.path.join(self.model_dir,
+                                               ModelFile.CONFIG)
+        transformer_config = None
+        if os.path.exists(transformer_config_file):
+            transformer_config = Config.from_file(transformer_config_file)
+        return transformer_config.copy()
+
+    def _use_transformer_config(self, cfg):
+        if 'model_type' not in cfg and 'type' not in cfg:
+            return True
+        else:
+            return False
+
+    def parse_encoder_cfg(self):
+        # get encoder from backbone-head configuration format
+        encoder_cfg = self.config.get('backbone', None)
+        if encoder_cfg is None:
+            encoder_cfg = self.config.copy()
+            if 'model_type' in encoder_cfg and 'type' not in encoder_cfg:
+                encoder_cfg.type = encoder_cfg.model_type
+            elif self._use_transformer_config(encoder_cfg):
+                encoder_cfg = self._get_transformer_config()
+                encoder_cfg.type = encoder_cfg.model_type
+
+        if 'type' not in encoder_cfg or self.override_base_model_type:
+            encoder_cfg.type = self.base_model_type
+        if encoder_cfg.type is None:
+            raise KeyError(
+                'Missing encoder type, please explicit define encoder type in configuration.json'
+            )
+        encoder_cfg.model_dir = self.model_dir
+        return encoder_cfg
+
+    def parse_head_cfg(self):
+        head_cfg = self.config.get('head', None)
+        if head_cfg is None:
+            head_cfg = self.config.copy()
+            if 'head_type' in head_cfg and 'type' not in head_cfg:
+                head_cfg.type = head_cfg.head_type
+            elif self._use_transformer_config(head_cfg):
+                head_cfg = self._get_transformer_config()
+                head_cfg.type = self.head_type
+        if 'type' not in head_cfg:
+            head_cfg.type = self.head_type
+        return head_cfg
+
+    def build_encoder(self, cfg):
+        backbone = build_backbone(cfg)
+        if 'prefix' in cfg:
+            self.base_model_prefix = cfg['prefix']
+        elif 'base_model_prefix' in cfg:
+            self.base_model_prefix = cfg['base_model_prefix']
+        elif hasattr(backbone, 'base_model_prefix') \
+                and not self.override_base_model_prefix:
+            self.base_model_prefix = backbone.base_model_prefix
+        setattr(self, self.base_model_prefix, backbone)
+
+    def build_head(self, cfg):
+        if cfg is None:
+            raise ValueError(
+                'Head config is missing, check if this was a backbone-only model'
+            )
+        head = build_head(cfg, task_name=self.group_key)
+        setattr(self, self.head_prefix, head)
 
     @property
-    def encoder_(self):
-        return getattr(self, self._encoder_prefix)
+    def encoder(self):
+        if 'encoder' != self.base_model_prefix:
+            return getattr(self, self.base_model_prefix)
+        return super().__getattr__('encoder')
 
     @property
-    def decoder_(self):
-        return getattr(self, self._decoder_prefix)
+    def head(self):
+        if 'head' != self.head_prefix:
+            return getattr(self, self.head_prefix)
+        return super().__getattr__('head')
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        if func_receive_dict_inputs(self.encoder_.forward):
-            encoder_outputs = self.encoder_.forward(input)
+    def extract_feature(self, **input: Dict[str, Any]) -> Dict[str, Any]:
+        """default forward method is the backbone-only forward"""
+        if func_receive_dict_inputs(self.encoder.forward):
+            outputs = self.encoder.forward(input)
         else:
-            encoder_outputs = self.encoder_.forward(**input)
-        decoder_inputs = self.project_decoder_inputs_and_mediate(
-            input, encoder_outputs)
-        if func_receive_dict_inputs(self.decoder_.forward):
-            outputs = self.decoder_.forward(decoder_inputs)
-        else:
-            outputs = self.decoder_.forward(**decoder_inputs)
-
+            outputs = self.encoder.forward(**input)
         return outputs
 
-    def project_decoder_inputs_and_mediate(self, input, encoder_outputs):
-        return {**input, **encoder_outputs}
+    def forward(self,
+                input_ids=None,
+                attention_mask=None,
+                token_type_ids=None,
+                position_ids=None,
+                head_mask=None,
+                inputs_embeds=None,
+                labels=None,
+                output_attentions=None,
+                output_hidden_states=None,
+                return_dict=None,
+                *args,
+                **kwargs):
+        r"""
+        Args:
+        input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
+            Indices of input sequence tokens in the vocabulary.
+
+            Indices can be obtained using :class:`~modelscope.models.nlp.structbert.SbertTokenizer`. See
+            :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__` for
+            details.
+
+        attention_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+            Mask to avoid performing attention on padding token indices. Mask values selected in ``[0, 1]``:
+
+            - 1 for tokens that are **not masked**,
+            - 0 for tokens that are **masked**.
+
+        token_type_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+            Segment token indices to indicate first and second portions of the inputs. Indices are selected in ``[0,
+            1]``:
+
+            - 0 corresponds to a `sentence A` token,
+            - 1 corresponds to a `sentence B` token.
+
+        position_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+            Indices of positions of each input sequence tokens in the position embeddings. Selected in the range ``[0,
+            config.max_position_embeddings - 1]``.
+
+        head_mask (:obj:`torch.FloatTensor` of shape :obj:`(num_heads,)` or :obj:`(num_layers, num_heads)`, `optional`):
+            Mask to nullify selected heads of the self-attention modules. Mask values selected in ``[0, 1]``:
+
+            - 1 indicates the head is **not masked**,
+            - 0 indicates the head is **masked**.
+
+        inputs_embeds (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`):
+            Optionally, instead of passing :obj:`input_ids` you can choose to directly pass an embedded representation.
+            This is useful if you want more control over how to convert :obj:`input_ids` indices into associated
+            vectors than the model's internal embedding lookup matrix.
+        labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
+            Labels for computing the sequence classification/regression loss. Indices should be in :obj:`[0, ...,
+            config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
+            If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+         output_attentions (:obj:`bool`, `optional`):
+            Whether or not to return the attentions tensors of all attention layers. See ``attentions`` under returned
+            tensors for more detail.
+        output_hidden_states (:obj:`bool`, `optional`):
+            Whether or not to return the hidden states of all layers. See ``hidden_states`` under returned tensors for
+            more detail.
+        return_dict (:obj:`bool`, `optional`):
+            Whether or not to return a :class:`~transformers.ModelOutput` instead of a plain tuple.
+        *args:
+            In Torch 1.11 onnx has a bug in the _slow_forward method, could only keep *args solving the problem
+        **kwargs:
+            Accept additional kwargs in the children class
+
+        Returns:
+            Returns `modelscope.outputs.ModelOutput`
+
+        Examples:
+            >>> from modelscope.models import Model
+            >>> from modelscope.preprocessors import Preprocessor
+            >>> model = Model.from_pretrained('damo/nlp_structbert_sentence-similarity_chinese-base')
+            >>> preprocessor = Preprocessor.from_pretrained('damo/nlp_structbert_sentence-similarity_chinese-base')
+            >>> print(model(**preprocessor(('This is a test', 'This is also a test'))))
+        """
+
+        if OutputKeys.LABEL in kwargs and labels is None:
+            labels = kwargs.pop(OutputKeys.LABEL, None)
+        feature = self.extract_feature(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        outputs = self.head.forward(feature, attention_mask, labels, **kwargs)
+        return outputs
+
+    @classmethod
+    def _instantiate(cls, **kwargs):
+        model_dir = kwargs.get('model_dir')
+        model = cls(**kwargs)
+        model_load_handler = load_task_model_checkpoint(
+            model_to_load=model, model_local_dir=model_dir, **kwargs)
+        return model_load_handler['model']
+
+    @classmethod
+    def from_pretrained(cls,
+                        model_name_or_path: str,
+                        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                        cfg_dict: Config = None,
+                        device: str = None,
+                        **kwargs):
+        task = kwargs.pop('task', None)
+        return super(TorchModel, cls).from_pretrained(
+            model_name_or_path=model_name_or_path,
+            revision=revision,
+            cfg_dict=cfg_dict,
+            devic=device,
+            task=task if task is not None else cls.task,
+            **kwargs)

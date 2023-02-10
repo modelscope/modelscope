@@ -12,12 +12,12 @@ from modelscope.outputs import (OutputKeys, TextGenerationModelOutput,
                                 TokenGeneratorOutput)
 from modelscope.utils.constant import Tasks
 
-__all__ = ['TaskModelForTextGeneration']
+__all__ = ['ModelForTextGeneration']
 
 
 @MODELS.register_module(
     Tasks.text_generation, module_name=TaskModels.text_generation)
-class TaskModelForTextGeneration(SingleBackboneTaskModelBase, PreTrainedModel):
+class ModelForTextGeneration(SingleBackboneTaskModelBase, PreTrainedModel):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the text generation model from the `model_dir` path.

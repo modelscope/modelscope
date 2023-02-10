@@ -163,6 +163,7 @@ class NLPTasks(object):
     zero_shot = 'zero-shot'
     translation = 'translation'
     token_classification = 'token-classification'
+    transformer_crf = 'transformer-crf'
     conversational = 'conversational'
     text_generation = 'text-generation'
     fid_dialogue = 'fid-dialogue'
@@ -360,6 +361,7 @@ class ModelFile(object):
     TS_MODEL_FILE = 'model.ts'
     YAML_FILE = 'model.yaml'
     TOKENIZER_FOLDER = 'tokenizer'
+    CONFIG = 'config.json'
 
 
 class Invoke(object):

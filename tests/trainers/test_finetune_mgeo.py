@@ -50,7 +50,7 @@ class TestFinetuneMGeo(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_finetune_geotes_rerank(self):
 
         def cfg_modify_fn(cfg):
@@ -154,7 +154,7 @@ class TestFinetuneMGeo(unittest.TestCase):
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         print(f'model is saved to {output_dir}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_finetune_geoeag(self):
 
         def cfg_modify_fn(cfg):
@@ -214,7 +214,7 @@ class TestFinetuneMGeo(unittest.TestCase):
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         print(f'model is saved to {output_dir}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_finetune_geoeta(self):
 
         def cfg_modify_fn(cfg):

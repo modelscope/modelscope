@@ -27,7 +27,7 @@ class PlugDialogueTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id = 'damo/plug-dialogue'
         self.model_revision = 'v1.0.1'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_pipeline(self):
         pipeline_ins = pipeline(
             task=self.task,

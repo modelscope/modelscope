@@ -21,10 +21,8 @@ class DecodeBox(nn.Module):
         self.num_anchors = len(anchors)
         self.bbox_attrs = 5 + num_classes
 
-
     def forward(self, input):
         # input为bs,3*(1+4+num_classes),13,13
-
         # 一共多少张图片
         batch_size = input.size(0)
         # 13，13
@@ -40,14 +38,15 @@ class DecodeBox(nn.Module):
 
         # 把先验框的尺寸调整成特征层大小的形式
         # 计算出先验框在特征层上对应的宽高
-        scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h) for anchor_width, anchor_height in self.anchors]
+        scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h) for anchor_width,
+        anchor_height in self.anchors]
 
         # bs,3*(5+num_classes),13,13 -> bs,3,13,13,(5+num_classes)
         prediction = input.view(batch_size, self.num_anchors,
                                 self.bbox_attrs, input_height, input_width).permute(0, 1, 3, 4, 2).contiguous()
 
         # 先验框的中心位置的调整参数
-        x = torch.sigmoid(prediction[..., 0])  
+        x = torch.sigmoid(prediction[..., 0])   
         y = torch.sigmoid(prediction[..., 1])
         # 先验框的宽高调整参数
         w = prediction[..., 2]  # Width
@@ -57,7 +56,6 @@ class DecodeBox(nn.Module):
         conf = torch.sigmoid(prediction[..., 4])
         # 种类置信度
         pred_cls = torch.sigmoid(prediction[..., 5:])  # Cls pred.
-
         FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
         LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
 
@@ -120,16 +118,12 @@ def yolo_correct_boxes(top, left, bottom, right, input_shape, image_shape):
     :return: 基于原图坐标系的box信息(实际坐标值,非比值)
     """
     new_shape = image_shape*np.min(input_shape/image_shape)
-
     offset = (input_shape-new_shape)/2./input_shape
     scale = input_shape/new_shape
-
     box_yx = np.concatenate(((top+bottom)/2, (left+right)/2), axis=-1)/input_shape
     box_hw = np.concatenate((bottom-top, right-left), axis=-1)/input_shape
-
     box_yx = (box_yx - offset) * scale
     box_hw *= scale
-
     box_mins = box_yx - (box_hw / 2.)
     box_maxes = box_yx + (box_hw / 2.)
     boxes = np.concatenate([
@@ -306,11 +300,10 @@ def _get_anchors(self):
     with open(anchors_path) as f:
         lines = f.readlines()
     anchors = [line.strip().split(',') for line in lines]
-
     return np.array(anchors, dtype="float").reshape([-1, 3, 2])[::-1, :, :]
 
-def generate(self):
 
+def generate(self):
     self.yolo_decodes = []
     for i in range(len(self.anchors)):
         self.yolo_decodes.append(
@@ -320,6 +313,7 @@ def generate(self):
     hsv_tuples = [(x / len(self.class_names), 1., 1.) for x in range(len(self.class_names))]
     self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
+
 
 # --------------------------------------------------- #
 #   后处理
@@ -369,6 +363,6 @@ def post_process(self, outputs, img_path):
             right = min(image.size[0], round(right, 2))
             new_boxes.append([top, left, bottom, right])
 
- 
     return new_boxes, top_confs
+    
 

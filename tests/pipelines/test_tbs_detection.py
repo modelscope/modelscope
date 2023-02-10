@@ -12,5 +12,8 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         tbs_detect = pipeline(Tasks.image_object_detection, model='landingAI/LD_CytoBrainCerv')
         outputs = tbs_detect(input='data/test/images/tbs_detection.jpg')
         print(outputs)
+        
+        
 if __name__ == '__main__':
     unittest.main()
+    

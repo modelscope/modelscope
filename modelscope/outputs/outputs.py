@@ -249,6 +249,8 @@ TASK_OUTPUTS = {
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
     Tasks.domain_specific_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    Tasks.open_vocabulary_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
     # video object detection result for single sample
     #   {
@@ -419,8 +421,9 @@ TASK_OUTPUTS = {
     #   "output_video": "path_to_rendered_video" , this is optional
     # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints:
-    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+    Tasks.body_3d_keypoints: [
+        OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
+    ],
 
     # 3D face reconstruction result for single sample
     # {

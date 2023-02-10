@@ -86,6 +86,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
     InputType.IMAGE,
+    Tasks.open_vocabulary_detection: {
+        'img': InputType.IMAGE,
+        'category_names': InputType.TEXT
+    },
     Tasks.image_driving_perception:
     InputType.IMAGE,
     Tasks.vision_efficient_tuning:

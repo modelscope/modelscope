@@ -429,3 +429,15 @@ class VLPTModel(nn.Module):
 
     def forward(self, x):
         return self.decoder(self.backbone(x))
+
+
+class DBModel(nn.Module):
+
+    def __init__(self, *args, **kwargs):
+        super(DBModel, self).__init__()
+        self.backbone = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+        self.decoder = SegDetector(
+            in_channels=[64, 128, 256, 512], adaptive=True, k=50, **kwargs)
+
+    def forward(self, x):
+        return self.decoder(self.backbone(x))

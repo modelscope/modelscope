@@ -42,7 +42,7 @@ panopticapi
 plyfile>=0.7.4
 psutil
 PyMCubes
-pytorch-lightning>=1.9.0
+pytorch-lightning
 regex
 scikit-image>=0.19.3
 scikit-learn>=0.20.1

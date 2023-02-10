@@ -27,7 +27,7 @@ from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, ModeKeys, ModelFile,
                                        TrainerStages)
@@ -41,7 +41,7 @@ from modelscope.utils.torch_utils import (broadcast, get_dist_info,
                                           is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
-from .default_config import merge_cfg
+from .default_config import merge_cfg, merge_hooks
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
@@ -129,6 +129,15 @@ class EpochBasedTrainer(BaseTrainer):
         # add default config
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
+        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
+        self.logger.info(
+            '==========================Training Config Start=========================='
+        )
+        self.logger.info(
+            json.dumps(self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
+        self.logger.info(
+            '===========================Training Config End==========================='
+        )
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -488,7 +497,8 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
         self.register_optimizers_hook()
-        self.register_hook_from_cfg(self.cfg.train.hooks)
+        hooks = merge_hooks(self.cfg)
+        self.register_hook_from_cfg(hooks)
         self.set_checkpoint_file_to_hook(checkpoint_path)
         self.model.train()
 
@@ -1006,7 +1016,7 @@ class EpochBasedTrainer(BaseTrainer):
         if not inserted:
             self._hooks.insert(0, hook)
 
-    def register_hook_from_cfg(self, hook_cfg: Dict) -> None:
+    def register_hook_from_cfg(self, hook_cfg: List) -> None:
         """Register a hook from its cfg.
 
         Args:

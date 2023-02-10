@@ -101,6 +101,7 @@ if TYPE_CHECKING:
     from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
     from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
     from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
+    from .bad_image_detecting_pipeline import BadImageDetecingPipeline
     from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
 
@@ -251,6 +252,7 @@ else:
         'mobile_image_super_resolution_pipeline': [
             'MobileImageSuperResolutionPipeline'
         ],
+        'bad_image_detecting_pipeline': ['BadImageDetecingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
     }
 

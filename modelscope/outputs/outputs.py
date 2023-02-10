@@ -1038,6 +1038,12 @@ TASK_OUTPUTS = {
     #   }
     Tasks.motion_generation: [OutputKeys.KEYPOINTS, OutputKeys.OUTPUT_VIDEO],
 
+    # bad image detecting for a single input
+    #   {
+    #       "scores": [0.8, 0.1, 0.1]
+    #       "labels": ["正常", "花屏", "绿屏"],
+    Tasks.bad_image_detecting: [OutputKeys.SCORES, OutputKeys.LABELS],
+
     # vision efficient tuning result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05]

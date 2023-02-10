@@ -161,6 +161,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.movie_scene_segmentation:
     InputType.VIDEO,
+    Tasks.bad_image_detecting:
+    InputType.IMAGE,
 
     # ============ nlp tasks ===================
     Tasks.text_classification: [

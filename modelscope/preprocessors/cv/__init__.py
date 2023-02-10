@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
     from .image_quality_assessment_mos import ImageQualityAssessmentMosPreprocessor
     from .image_restoration_preprocessor import ImageRestorationPreprocessor
+    from .bad_image_detecting_preprocessor import BadImageDetectingPreprocessor
 
 else:
     _import_structure = {
@@ -19,6 +20,7 @@ else:
         'image_quality_assessment_mos':
         ['ImageQualityAssessmentMosPreprocessor'],
         'image_restoration_preprocessor': ['ImageRestorationPreprocessor'],
+        'bad_image_detecting_preprocessor': ['BadImageDetectingPreprocessor'],
     }
 
     import sys

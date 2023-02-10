@@ -101,6 +101,8 @@ class Models(object):
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
+    bad_image_detecting = 'bad-image-detecting'
+
     # EasyCV models
     yolox = 'YOLOX'
     segformer = 'Segformer'
@@ -349,6 +351,7 @@ class Pipelines(object):
     motion_generattion = 'mdm-motion-generation'
     mobile_image_super_resolution = 'mobile-image-super-resolution'
     object_detection_3d_depe = 'object-detection-3d-depe'
+    bad_image_detecting = 'bad-image-detecting'
     nerf_recon_acc = 'nerf-recon-acc'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
@@ -732,6 +735,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
         'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'),
     Tasks.object_detection_3d: (Pipelines.object_detection_3d_depe,
                                 'damo/cv_object-detection-3d_depe'),
+    Tasks.bad_image_detecting: (Pipelines.bad_image_detecting,
+                                'damo/cv_mobilenet-v2_bad-image-detecting'),
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
 }
@@ -852,6 +857,7 @@ class Preprocessors(object):
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
     ocr_recognition = 'ocr-recognition'
+    bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 
     # nlp preprocessor

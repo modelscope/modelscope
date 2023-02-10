@@ -142,6 +142,9 @@ class CVTasks(object):
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
 
+    # bad image detecting
+    bad_image_detecting = 'bad-image-detecting'
+
 
 class NLPTasks(object):
     # nlp tasks

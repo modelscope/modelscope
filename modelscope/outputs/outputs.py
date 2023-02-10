@@ -147,6 +147,12 @@ TASK_OUTPUTS = {
     Tasks.card_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
+    # content check result for single sample
+    #   {
+    #       "scores": [0.9] # non sexy probability
+    #   }
+    Tasks.content_check: [OutputKeys.SCORES],
+
     # image driving perception result for single sample
     #   {
     #       "boxes": [

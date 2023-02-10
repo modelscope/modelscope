@@ -92,6 +92,7 @@ class Models(object):
     image_probing_model = 'image-probing-model'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    content_check = 'content-check'
     open_vocabulary_detection_vild = 'open-vocabulary-detection-vild'
     ecbsr = 'ecbsr'
     msrresnet_lite = 'msrresnet-lite'
@@ -298,6 +299,7 @@ class Pipelines(object):
     face_recognition_onnx_fm = 'manual-face-recognition-frfm'
     arc_face_recognition = 'ir50-face-recognition-arcface'
     mask_face_recognition = 'resnet-face-recognition-facemask'
+    content_check = 'resnet50-image-classification-cc'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     maskdino_instance_segmentation = 'maskdino-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'
@@ -596,6 +598,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
     Tasks.card_detection: (Pipelines.card_detection,
                            'damo/cv_resnet_carddetection_scrfd34gkps'),
+    Tasks.content_check: (Pipelines.content_check,
+                          'damo/cv_resnet50_content-check_cc'),
     Tasks.face_detection:
     (Pipelines.mog_face_detection,
      'damo/cv_resnet101_face-detection_cvpr22papermogface'),

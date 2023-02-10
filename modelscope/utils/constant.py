@@ -131,8 +131,13 @@ class CVTasks(object):
 
     # domain specific object detection
     domain_specific_object_detection = 'domain-specific-object-detection'
-    # 3d reconstruction
+
+    # content check
+    content_check = 'content-check'
+
+    # 3d face reconstruction
     face_reconstruction = 'face-reconstruction'
+
     # image quality assessment mos
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     # motion generation

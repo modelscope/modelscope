@@ -83,16 +83,15 @@ def pipeline(task: str = None,
         pipeline (obj:`Pipeline`): pipeline object for certain task.
 
     Examples:
-    ```python
-    >>> # Using default model for a task
-    >>> p = pipeline('image-classification')
-    >>> # Using pipeline with a model name
-    >>> p = pipeline('text-classification', model='damo/distilbert-base-uncased')
-    >>> # Using pipeline with a model object
-    >>> resnet = Model.from_pretrained('Resnet')
-    >>> p = pipeline('image-classification', model=resnet)
-    >>> # Using pipeline with a list of model names
-    >>> p = pipeline('audio-kws', model=['damo/audio-tts', 'damo/auto-tts2'])
+        >>> # Using default model for a task
+        >>> p = pipeline('image-classification')
+        >>> # Using pipeline with a model name
+        >>> p = pipeline('text-classification', model='damo/distilbert-base-uncased')
+        >>> # Using pipeline with a model object
+        >>> resnet = Model.from_pretrained('Resnet')
+        >>> p = pipeline('image-classification', model=resnet)
+        >>> # Using pipeline with a list of model names
+        >>> p = pipeline('audio-kws', model=['damo/audio-tts', 'damo/auto-tts2'])
     """
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')

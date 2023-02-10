@@ -30,8 +30,8 @@ class DocumentVLEmbeddingPipeline(Pipeline):
             model: model id on modelscope hub.
             preprocessor: type `Preprocessor`. If None, `VLDocPreprocessor` is used.
 
-        Example:
-        ```python
+        Examples:
+
         >>> from modelscope.models import Model
         >>> from modelscope.pipelines import pipeline
         >>> model = Model.from_pretrained(
@@ -42,7 +42,6 @@ class DocumentVLEmbeddingPipeline(Pipeline):
                 'ocr_info_paths': ['data/demo.json']
             }
         >>> result = doc_VL_emb_pipeline(inp)
-        ```
         """
 
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)

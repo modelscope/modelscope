@@ -28,12 +28,12 @@ class WordSegmentationPipeline(TokenClassificationPipeline):
     NOTE: The preprocessor will first split the sentence into single characters,
     then feed them into the tokenizer with the parameter is_split_into_words=True.
 
-    Example:
-    >>> from modelscope.pipelines import pipeline
-    >>> pipeline_ins = pipeline(task='word-segmentation',
-    >>>    model='damo/nlp_structbert_word-segmentation_chinese-base')
-    >>> sentence1 = '今天天气不错，适合出去游玩'
-    >>> print(pipeline_ins(sentence1))
+    Examples:
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_ins = pipeline(task='word-segmentation',
+        >>>    model='damo/nlp_structbert_word-segmentation_chinese-base')
+        >>> sentence1 = '今天天气不错，适合出去游玩'
+        >>> print(pipeline_ins(sentence1))
 
     To view other examples plese check tests/pipelines/test_word_segmentation.py.
     """

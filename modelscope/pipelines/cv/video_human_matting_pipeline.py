@@ -28,7 +28,6 @@ class VideoHumanMattingPipeline(Pipeline):
 
         Example:
 
-        ```python
         >>> from modelscope.pipelines import pipeline
         >>> from modelscope.outputs import OutputKeys
         >>> from modelscope.utils.constant import Tasks
@@ -37,7 +36,6 @@ class VideoHumanMattingPipeline(Pipeline):
         'video_input_path':'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/video_matting_test.mp4',
         'output_path':'matting_out.mp4'})
         >>> masks = result_status[OutputKeys.MASKS]
-        ```
         """
         super().__init__(model=model, **kwargs)
         if torch.cuda.is_available():

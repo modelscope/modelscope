@@ -30,7 +30,7 @@ class CheckpointHook(Hook):
         save_dir (str): The directory to save checkpoints. If is None, use `trainer.work_dir`
         save_last (bool): Whether to save the last checkpoint. Default: True.
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
-        If the number exceeding the limit, earlier checkpoints will be deleted first.
+            If the number exceeding the limit, earlier checkpoints will be deleted first.
     """
 
     PRIORITY = Priority.LOW
@@ -227,12 +227,14 @@ class CheckpointHook(Hook):
 
 @HOOKS.register_module(module_name=Hooks.BestCkptSaverHook)
 class BestCkptSaverHook(CheckpointHook):
-    """Save best checkpoints hook.
+    """
+    Save best checkpoints hook.
+
     Args:
         metric_key (str): Metric key to compare rule for best score.
-        rule (str): Comparison rule for best score.
-            Support "max" and "min". If rule is "max", the checkpoint at the maximum `metric_key`
-            will be saved, If rule is "min", the checkpoint at the minimum `metric_key` will be saved.
+        rule (str): Comparison rule for best score. Support "max" and "min". If rule is "max", the checkpoint
+            at the maximum `metric_key` will be saved, If rule is "min", the checkpoint at the minimum `metric_key`
+            will be saved.
         by_epoch (bool): Save best checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): Output directory to save best checkpoint.

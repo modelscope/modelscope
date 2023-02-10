@@ -29,7 +29,7 @@ class PunctuationProcessingPipeline(Pipeline):
         model (PunctuationProcessingPipeline): A model instance, or a model local dir, or a model id in the model hub.
         kwargs (dict, `optional`):
             Extra kwargs passed into the preprocessor's constructor.
-    Example:
+    Examples
     >>> from modelscope.pipelines import pipeline
     >>> pipeline_punc = pipeline(
     >>>    task=Tasks.punctuation, model='damo/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')

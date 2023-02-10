@@ -169,9 +169,9 @@ class MsDataset:
 
             Args:
                 dataset_name (str): Path or name of the dataset.
-                                    The form of `namespace/dataset_name` is also supported.
+                    The form of `namespace/dataset_name` is also supported.
                 namespace(str, optional): Namespace of the dataset. It should not be None if you load a remote dataset
-                from Hubs.modelscope,
+                    from Hubs.modelscope,
                 namespace (str, optional):
                     Namespace of the dataset. It should not be None if you load a remote dataset
                     from Hubs.modelscope,

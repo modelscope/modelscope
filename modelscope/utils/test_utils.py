@@ -242,31 +242,31 @@ if __name__ == '__main__':
 class DistributedTestCase(unittest.TestCase):
     """Distributed TestCase for test function with distributed mode.
     Examples:
-        import torch
-        from torch import distributed as dist
-        from modelscope.utils.torch_utils import init_dist
+        >>> import torch
+        >>> from torch import distributed as dist
+        >>> from modelscope.utils.torch_utils import init_dist
 
-        def _test_func(*args, **kwargs):
-            init_dist(launcher='pytorch')
-            rank = dist.get_rank()
-            if rank == 0:
-                value = torch.tensor(1.0).cuda()
-            else:
-                value = torch.tensor(2.0).cuda()
-            dist.all_reduce(value)
-            return value.cpu().numpy()
+        >>> def _test_func(*args, **kwargs):
+        >>>     init_dist(launcher='pytorch')
+        >>>     rank = dist.get_rank()
+        >>>     if rank == 0:
+        >>>         value = torch.tensor(1.0).cuda()
+        >>>     else:
+        >>>         value = torch.tensor(2.0).cuda()
+        >>>     dist.all_reduce(value)
+        >>>     return value.cpu().numpy()
 
-        class DistTest(DistributedTestCase):
-            def test_function_dist(self):
-                args = ()  # args should be python builtin type
-                kwargs = {}  # kwargs should be python builtin type
-                self.start(
-                    _test_func,
-                    num_gpus=2,
-                    assert_callback=lambda x: self.assertEqual(x, 3.0),
-                    *args,
-                    **kwargs,
-                )
+        >>> class DistTest(DistributedTestCase):
+        >>>     def test_function_dist(self):
+        >>>         args = ()  # args should be python builtin type
+        >>>         kwargs = {}  # kwargs should be python builtin type
+        >>>         self.start(
+        >>>             _test_func,
+        >>>             num_gpus=2,
+        >>>             assert_callback=lambda x: self.assertEqual(x, 3.0),
+        >>>             *args,
+        >>>             **kwargs,
+        >>>         )
     """
 
     def _start(self,

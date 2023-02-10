@@ -40,7 +40,7 @@ class FeatureExtractionPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipe_ins = pipeline('feature_extraction', model='damo/nlp_structbert_feature-extraction_english-large')
             >>> input = 'Everything you love is treasure'

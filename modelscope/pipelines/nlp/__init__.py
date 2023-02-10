@@ -45,7 +45,7 @@ else:
         ['DialogIntentPredictionPipeline'],
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
-        'domain_classification_pipeline':
+        'fasttext_text_classification_pipeline':
         ['FasttextSequenceClassificationPipeline'],
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'extractive_summarization_pipeline':
@@ -67,7 +67,6 @@ else:
         'text_generation_pipeline':
         ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
-        'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
         'translation_quality_estimation_pipeline':

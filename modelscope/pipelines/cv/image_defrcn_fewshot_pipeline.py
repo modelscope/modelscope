@@ -19,24 +19,18 @@ from modelscope.utils.constant import ModelFile, Tasks
     Tasks.image_fewshot_detection,
     module_name=Pipelines.image_fewshot_detection)
 class ImageDefrcnDetectionPipeline(Pipeline):
-    """ Image DeFRCN few-shot detection Pipeline. Given a image,
-        pipeline will return the detection results on the image.
-        Example:
+    r"""
+    Image DeFRCN few-shot detection Pipeline. Given a image, pipeline will return the detection results on the image.
 
-        ```python
+    Examples:
+
         >>> from modelscope.pipelines import pipeline
         >>> detector = pipeline('image-fewshot-detection', 'damo/cv_resnet101_detection_fewshot-defrcn')
         >>> detector('/Path/Image')
-           {
-            'scores': [0.8307567834854126, 0.1606406420469284],
-            'labels': ['person', 'dog'],
-            'boxes': [
-                [27.391937255859375, 0.0, 353.0, 500.0],
-                [64.22428131103516, 229.2884521484375, 213.90573120117188, 370.0657958984375]
-            ]
-            }
-        >>> #
-        ```
+        >>> {'scores': [0.8307567834854126, 0.1606406420469284],
+        >>>  'labels': ['person', 'dog'],
+        >>>  'boxes': [[27.391937255859375, 0.0, 353.0, 500.0],
+        >>>            [64.22428131103516, 229.2884521484375, 213.90573120117188, 370.0657958984375]]}
     """
 
     def __init__(self, model: str, **kwargs):

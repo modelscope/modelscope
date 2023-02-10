@@ -30,12 +30,12 @@ class SpeakerVerificationPipeline(Pipeline):
         model (SpeakerVerificationPipeline): A model instance, or a model local dir, or a model id in the model hub.
         kwargs (dict, `optional`):
             Extra kwargs passed into the preprocessor's constructor.
-    Example:
-    >>> from modelscope.pipelines import pipeline
-    >>> pipeline_sv = pipeline(
-    >>>    task=Tasks.speaker_verification, model='damo/speech_xvector_sv-zh-cn-cnceleb-16k-spk3465-pytorch')
-    >>> audio_in=('','')
-    >>> print(pipeline_sv(audio_in))
+    Examples:
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_sv = pipeline(
+        >>>    task=Tasks.speaker_verification, model='damo/speech_xvector_sv-zh-cn-cnceleb-16k-spk3465-pytorch')
+        >>> audio_in=('','')
+        >>> print(pipeline_sv(audio_in))
 
     """
 

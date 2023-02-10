@@ -31,15 +31,14 @@ class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
         use `model` to create a face recognition ood pipeline for prediction
         Args:
             model: model id on modelscope hub.
-        Example:
 
-        ```python
+        Examples:
+
         >>> from modelscope.pipelines import pipeline
         >>> fr_ood= pipeline('face-recognition-ood', 'damo/cv_ir_face-recognition-ood_rts')
         >>> fr_ood("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png")
         {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]],
             dtype=float32, 'scores': [[0.7656678557395935]]}
-        ```
         """
 
         # face recong model

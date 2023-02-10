@@ -38,21 +38,24 @@ class FillMaskPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-            Example1:
-            >>> from modelscope.pipelines import pipeline
-            >>> pipeline_ins = pipeline('fill-mask', model='damo/nlp_structbert_fill-mask_english-large')
-            >>> input = 'Everything in [MASK] you call reality is really [MASK] a reflection of your [MASK].'
-            >>> print(pipeline_ins(input))
-            Example2:
-            >>> from modelscope.pipelines import pipeline
-            >>> pipeline_ins = pipeline('fill-mask', model='damo/nlp_ponet_fill-mask_english-base')
-            >>> input = 'Everything in [MASK] you call reality is really [MASK] a reflection of your [MASK].'
-            >>> print(pipeline_ins(input))
+        Examples:
 
-            NOTE2: Please pay attention to the model's special tokens.
-            If bert based model(bert, structbert, etc.) is used, the mask token is '[MASK]'.
-            If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
-            To view other examples plese check tests/pipelines/test_fill_mask.py.
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_ins = pipeline('fill-mask', model='damo/nlp_structbert_fill-mask_english-large')
+        >>> input = 'Everything in [MASK] you call reality is really [MASK] a reflection of your [MASK].'
+        >>> print(pipeline_ins(input))
+
+        Examples:
+
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_ins = pipeline('fill-mask', model='damo/nlp_ponet_fill-mask_english-base')
+        >>> input = 'Everything in [MASK] you call reality is really [MASK] a reflection of your [MASK].'
+        >>> print(pipeline_ins(input))
+
+        NOTE2: Please pay attention to the model's special tokens.
+        If bert based model(bert, structbert, etc.) is used, the mask token is '[MASK]'.
+        If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
+        To view other examples plese check tests/pipelines/test_fill_mask.py.
         """
         super().__init__(
             model=model,

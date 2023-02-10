@@ -50,7 +50,7 @@ class ZeroShotClassificationPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline(task='zero-shot-classification',
             >>>    model='damo/nlp_structbert_zero-shot-classification_chinese-base')

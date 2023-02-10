@@ -34,9 +34,9 @@ class ConfigDict(addict.Dict):
     """ Dict which support get value through getattr
 
     Examples:
-    >>> cdict = ConfigDict({'a':1232})
-    >>> print(cdict.a)
-    1232
+        >>> cdict = ConfigDict({'a':1232})
+        >>> print(cdict.a)
+        >>> # 1232
     """
 
     def __missing__(self, name):

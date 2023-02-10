@@ -49,11 +49,9 @@ def device_placement(framework, device_name='gpu:0'):
 
     Examples:
 
-    ```python
-    # Requests for using model on cuda:0 for gpu
-    with device_placement('pytorch', device='gpu:0'):
-        model = Model.from_pretrained(...)
-    ```
+        >>> # Requests for using model on cuda:0 for gpu
+        >>> with device_placement('pytorch', device='gpu:0'):
+        >>>     model = Model.from_pretrained(...)
     """
     device_type, device_id = verify_device(device_name)
 

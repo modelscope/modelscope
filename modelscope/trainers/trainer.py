@@ -84,10 +84,10 @@ class EpochBasedTrainer(BaseTrainer):
             moved to the mini-batch's attributes.
 
         Examples of cfg_modify_fn:
-        >>> def cfg_modify_fn(cfg):
-        >>>     cfg.preprocessor.first_sequence= 'text1'
-        >>>     cfg.preprocessor.second_sequence='text2'
-        >>>     return cfg
+            >>> def cfg_modify_fn(cfg):
+            >>>     cfg.preprocessor.first_sequence= 'text1'
+            >>>     cfg.preprocessor.second_sequence='text2'
+            >>>     return cfg
     """
 
     def __init__(
@@ -1096,15 +1096,15 @@ class EpochBasedTrainer(BaseTrainer):
         """ visualization function for evaluation results.
 
         Examples:
-            # draw list of images as numpy array
-            images = draw_images(num_of_visualization)
+            >>> # draw list of images as numpy array
+            >>> images = draw_images(num_of_visualization)
 
-            # set displayed name for each image
-            filenames = get_image_display_names()
-            vis_results = {'images': images, 'filenames' : filenames}
+            >>> # set displayed name for each image
+            >>> filenames = get_image_display_names()
+            >>> vis_results = {'images': images, 'filenames' : filenames}
 
-            # visualization results will be displayed in group named eva_vis
-            self.visualization_buffer.output['eval_vis'] = vis_results
+            >>> # visualization results will be displayed in group named eva_vis
+            >>> self.visualization_buffer.output['eval_vis'] = vis_results
 
         Args:
             results (list(dict)):  a list of result dict.

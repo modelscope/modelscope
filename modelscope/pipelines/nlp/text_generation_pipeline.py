@@ -41,7 +41,7 @@ class TextGenerationPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline(task='text-generation',
             >>>    model='damo/nlp_palm2.0_text-generation_chinese-base')

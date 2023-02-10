@@ -20,7 +20,7 @@ else:
         'kws_kwsbp_pipeline': ['KeyWordSpottingKwsbpPipeline'],
         'linear_aec_pipeline': ['LinearAECPipeline'],
         'text_to_speech_pipeline': ['TextToSpeechSambertHifiganPipeline'],
-        'itn_inference_pipeline': ['InverseTextProcessingPipeline'],
+        'inverse_text_processing_pipeline': ['InverseTextProcessingPipeline'],
         'speaker_verification_pipeline': ['SpeakerVerificationPipeline']
     }
 

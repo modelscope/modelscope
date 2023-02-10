@@ -50,6 +50,7 @@ class ASRTrainer(BaseTrainer):
             lr (float): learning rate
             mate_params (dict): for saving other training args
         Examples:
+
         >>> import os
         >>> from modelscope.metainfo import Trainers
         >>> from modelscope.msdatasets import MsDataset

@@ -221,17 +221,20 @@ class SbertForFaqQuestionAnswering(BaseTaskModel):
         """
         Args:
             input (Dict[str, Tensor]): the preprocessed data, it contains the following keys:
-                query(:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
+
+                - query(:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
                     The query to be predicted.
-                support(:obj:`torch.LongTensor` of shape :obj:`(support_size, sequence_length)`):
+                - support(:obj:`torch.LongTensor` of shape :obj:`(support_size, sequence_length)`):
                     The support set.
-                support_label(:obj:`torch.LongTensor` of shape :obj:`(support_size, )`):
+                - support_label(:obj:`torch.LongTensor` of shape :obj:`(support_size, )`):
                     The labels of support set.
 
         Returns:
             Dict[str, Tensor]: result, it contains the following key:
-                scores(:obj:`torch.FloatTensor` of shape :obj:`(batch_size, num_cls)`):
+
+                - scores(:obj:`torch.FloatTensor` of shape :obj:`(batch_size, num_cls)`):
                     Predicted scores of all classes for each query.
+
         Examples:
             >>> from modelscope.hub.snapshot_download import snapshot_download
             >>> from modelscope.preprocessors import FaqQuestionAnsweringTransformersPreprocessor

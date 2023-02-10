@@ -49,7 +49,7 @@ class TextClassificationPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-        Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline('text-classification',
                 model='damo/nlp_structbert_sentence-similarity_chinese-base')

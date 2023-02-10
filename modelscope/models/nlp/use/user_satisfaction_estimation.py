@@ -66,7 +66,9 @@ class UserSatisfactionEstimation(TorchModel):
            input_ids (Tensor): the preprocessed dialogue input
         Returns:
            output (Dict[str, Any] or DialogueUserSatisfactionEstimationModelOutput): The results of user satisfaction.
-           Example: {'logits': tensor([[-2.1795,  1.1323,  1.8605]])}
+
+        Example:
+            >>> {'logits': tensor([[-2.1795,  1.1323,  1.8605]])}
         """
         logits = self.model(input_ids)
         return DialogueUserSatisfactionEstimationModelOutput(logits=logits)

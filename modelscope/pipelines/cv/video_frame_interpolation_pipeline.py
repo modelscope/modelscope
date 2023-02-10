@@ -496,8 +496,9 @@ __all__ = ['VideoFrameInterpolationPipeline']
     module_name=Pipelines.video_frame_interpolation)
 class VideoFrameInterpolationPipeline(Pipeline):
     """ Video Frame Interpolation Pipeline.
-    Example:
-    ```python
+
+    Examples:
+
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
     >>> from modelscope.outputs import OutputKeys
@@ -507,7 +508,6 @@ class VideoFrameInterpolationPipeline(Pipeline):
     'damo/cv_raft_video-frame-interpolation')
     >>> result = video_frame_interpolation_pipeline(video)[OutputKeys.OUTPUT_VIDEO]
     >>> print('pipeline: the output video path is {}'.format(result))
-    ```
     """
 
     def __init__(self,

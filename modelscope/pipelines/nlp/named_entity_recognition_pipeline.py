@@ -37,10 +37,11 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
             model (str or Model): Supply either a local model dir which supported NER task, or a
             model id from the model hub, or a torch model instance.
             preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
-            the model if supplied.
+                the model if supplied.
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
-            Example:
+
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline(task='named-entity-recognition',
             >>>        model='damo/nlp_raner_named-entity-recognition_chinese-base-news')

@@ -39,7 +39,7 @@ def weighted_loss(loss_func):
     the signature like `loss_func(pred, target, weight=None, reduction='mean',
     avg_factor=None, **kwargs)`.
 
-    :Example:
+    Example:
 
     >>> import torch
     >>> @weighted_loss

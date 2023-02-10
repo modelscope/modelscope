@@ -39,10 +39,10 @@ def should_split(split):
     """
     given split proportions checks if should split
     Examples:
-    >>> should_split([10,0,0])
-    False
-    >>> should_split([1,.1,.2])
-    True
+        >>> should_split([10,0,0])
+        >>> False
+        >>> should_split([1,.1,.2])
+        >>> True
     """
     return max(split) / sum(split) != 1.
 

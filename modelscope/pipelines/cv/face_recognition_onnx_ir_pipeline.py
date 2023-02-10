@@ -37,13 +37,10 @@ class FaceRecognitionOnnxIrPipeline(FaceProcessingBasePipeline):
             model: model id on modelscope hub.
         Example:
 
-        ```python
         >>> from modelscope.pipelines import pipeline
         >>> frir = pipeline('face-recognition-ood', 'damo/cv_manual_face-recognition_frir')
         >>> frir("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/ir_face_recognition_1.png")
-        {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]],
-            dtype=float32)} }
-        ```
+        >>> # {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]], dtype=float32)} }
         """
         super().__init__(model=model, **kwargs)
         onnx_path = osp.join(model, ModelFile.ONNX_MODEL_FILE)

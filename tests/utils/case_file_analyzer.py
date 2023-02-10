@@ -21,10 +21,10 @@ class AnalysisTestFile(ast.NodeVisitor):
     Args:
         ast (NodeVisitor): The ast node.
     Examples:
-        with open(test_suite_file, "rb") as f:
-            src = f.read()
-        analyzer = AnalysisTestFile(test_suite_file)
-        analyzer.visit(ast.parse(src, filename=test_suite_file))
+        >>> with open(test_suite_file, "rb") as f:
+        >>>     src = f.read()
+        >>> analyzer = AnalysisTestFile(test_suite_file)
+        >>> analyzer.visit(ast.parse(src, filename=test_suite_file))
     """
 
     def __init__(self, test_suite_file, builder_function_name) -> None:

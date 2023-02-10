@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
     from .hand_2d_keypoints_pipeline import Hand2DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
+    from .card_detection_pipeline import CardDetectionPipeline
     from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
     from .crowd_counting_pipeline import CrowdCountingPipeline
     from .image_detection_pipeline import ImageDetectionPipeline
@@ -114,6 +115,7 @@ else:
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
         'hand_2d_keypoints_pipeline': ['Hand2DKeypointsPipeline'],
+        'card_detection_pipeline': ['CardDetectionPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
         'hicossl_video_embedding_pipeline': ['HICOSSLVideoEmbeddingPipeline'],
         'crowd_counting_pipeline': ['CrowdCountingPipeline'],
@@ -156,8 +158,7 @@ else:
         'realtime_object_detection_pipeline':
         ['RealtimeObjectDetectionPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
-        'image_to_image_generation_pipeline':
-        ['Image2ImageGenerationPipeline'],
+        'image_to_image_generate_pipeline': ['Image2ImageGenerationPipeline'],
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'image_paintbyexample_pipeline': ['ImagePaintbyexamplePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
@@ -170,13 +171,13 @@ else:
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
         'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
-        'easycv_pipeline': [
+        'easycv_pipelines': [
             'EasyCVDetectionPipeline',
             'EasyCVSegmentationPipeline',
             'Face2DKeypointsPipeline',
             'HumanWholebodyKeypointsPipeline',
         ],
-        'text_driven_segmentation_pipeline':
+        'text_driven_segmentation_pipleline':
         ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':
         ['MovieSceneSegmentationPipeline'],
@@ -188,9 +189,8 @@ else:
         'facial_landmark_confidence_pipeline':
         ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
-        'face_attribute_recognition_pipeline': [
-            'FaceAttributeRecognitionPipeline'
-        ],
+        'face_attribute_recognition_pipeline':
+        ['FaceAttributeRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
         'referring_video_object_segmentation_pipeline': [

@@ -69,12 +69,12 @@ class BertForSentenceEmbedding(BertPreTrainedModel):
     def forward(self, query=None, docs=None, labels=None):
         r"""
         Args:
-        query (:obj: `dict`): Dict of pretrained models's input for the query sequence. See
-            :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__` for
-            details.
-        docs (:obj: `dict`): Dict of pretrained models's input for the query sequence. See
-            :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__` for
-            details.
+            query (:obj: `dict`): Dict of pretrained models's input for the query sequence. See
+                :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__`
+                for details.
+            docs (:obj: `dict`): Dict of pretrained models's input for the query sequence. See
+                :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__`
+                for details.
         Returns:
             Returns `modelscope.outputs.SentencEmbeddingModelOutput
         Examples:

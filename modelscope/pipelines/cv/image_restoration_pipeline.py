@@ -15,13 +15,11 @@ from modelscope.utils.constant import Tasks
 class ImageRestorationPipeline(Pipeline):
     """ Image Restoration Pipeline .
 
-    Take image_demoireing as an example
-    ```python
-    >>> from modelscope.pipelines import pipeline
-    >>> image_demoire = pipeline(Tasks.image_demoireing, model=model_id)
-    >>> image_demoire("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_moire.jpg")
+    Take image_demoireing as an example:
+        >>> from modelscope.pipelines import pipeline
+        >>> image_demoire = pipeline(Tasks.image_demoireing, model=model_id)
+        >>> image_demoire("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_moire.jpg")
 
-    ```
     """
 
     def __init__(self, model: str, **kwargs):

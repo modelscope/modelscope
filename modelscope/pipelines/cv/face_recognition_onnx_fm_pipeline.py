@@ -31,19 +31,19 @@ class FaceRecognitionOnnxFmPipeline(FaceProcessingBasePipeline):
 
     def __init__(self, model: str, **kwargs):
         """
-        use `model` to create a face recognition face mask onnx pipeline for prediction
+        FaceRecognitionOnnxFmPipeline can extract 512-dim feature of mask or non-masked face image. use `model`
+        to create a face recognition face mask onnx pipeline for prediction.
+
         Args:
             model: model id on modelscope hub.
-        Example:
-        FaceRecognitionOnnxFmPipeline can extract 512-dim feature of mask or non-masked face image.
 
-        ```python
+        Examples:
+
         >>> from modelscope.pipelines import pipeline
         >>> frfm = pipeline('face-recognition-ood', 'damo/cv_manual_face-recognition_frfm')
         >>> frfm("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png")
-        {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]],
-            dtype=float32)} }
-        ```
+        >>> {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]],
+        >>>    dtype=float32)} }
         """
         super().__init__(model=model, **kwargs)
         onnx_path = osp.join(model, ModelFile.ONNX_MODEL_FILE)

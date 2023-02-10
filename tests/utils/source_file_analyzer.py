@@ -162,10 +162,10 @@ class AnalysisSourceFileRegisterModules(ast.NodeVisitor):
         ast (NodeVisitor): The ast node.
 
     Examples:
-        with open(source_file_path, "rb") as f:
-            src = f.read()
-        analyzer = AnalysisSourceFileRegisterModules(source_file_path)
-        analyzer.visit(ast.parse(src, filename=source_file_path))
+        >>> with open(source_file_path, "rb") as f:
+        >>>     src = f.read()
+        >>> analyzer = AnalysisSourceFileRegisterModules(source_file_path)
+        >>> analyzer.visit(ast.parse(src, filename=source_file_path))
     """
 
     def __init__(self, source_file_path) -> None:

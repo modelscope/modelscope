@@ -54,7 +54,7 @@ timm>=0.4.9
 torchmetrics>=0.6.2
 torchsummary>=1.5.1
 torchvision
-transformers>=4.19.2
+transformers>=4.26.0
 ujson
 utils
 videofeatures_clipit>=1.0

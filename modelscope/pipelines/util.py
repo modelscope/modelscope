@@ -2,8 +2,6 @@
 import os.path as osp
 from typing import List, Optional, Union
 
-import torch
-
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
 from modelscope.utils.config import Config
@@ -86,6 +84,7 @@ def is_model(path: Union[str, List]):
 
 
 def batch_process(model, data):
+    import torch
     if model.__class__.__name__ == 'OfaForAllTasks':
         # collate batch data due to the nested data structure
         assert isinstance(data, list)

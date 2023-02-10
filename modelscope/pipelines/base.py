@@ -22,7 +22,6 @@ from modelscope.utils.device import (create_device, device_placement,
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import _find_free_port, _is_free_port
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -426,6 +425,7 @@ class DistributedPipeline(Pipeline):
             'master_ip']
         master_port = '29500' if 'master_port' not in kwargs else kwargs[
             'master_port']
+        from modelscope.utils.torch_utils import _find_free_port, _is_free_port
         if not _is_free_port(int(master_port)):
             master_port = str(_find_free_port())
         self.model_pool.map(

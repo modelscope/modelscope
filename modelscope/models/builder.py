@@ -3,7 +3,7 @@
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.constant import Tasks
 from modelscope.utils.import_utils import INDEX_KEY, LazyImportModule
-from modelscope.utils.registry import TYPE_NAME, Registry, build_from_cfg
+from modelscope.utils.registry import Registry, build_from_cfg
 
 MODELS = Registry('models')
 BACKBONES = MODELS

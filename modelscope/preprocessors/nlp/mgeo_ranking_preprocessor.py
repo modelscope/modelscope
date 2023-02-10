@@ -10,6 +10,7 @@ from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.type_assert import type_assert
+from .text_ranking_preprocessor import TextRankingPreprocessorBase
 
 
 class GisUtt:
@@ -113,7 +114,7 @@ class GisUtt:
 
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.mgeo_ranking)
-class MGeoRankingTransformersPreprocessor(Preprocessor):
+class MGeoRankingTransformersPreprocessor(TextRankingPreprocessorBase):
 
     def __init__(self,
                  model_dir: str,
@@ -125,39 +126,39 @@ class MGeoRankingTransformersPreprocessor(Preprocessor):
                  label='labels',
                  qid='qid',
                  max_length=None,
+                 padding='longest',
+                 truncation=True,
+                 use_fast=True,
                  **kwargs):
         """The tokenizer preprocessor class for the text ranking preprocessor.
 
         Args:
             model_dir(str, `optional`): The model dir used to parse the label mapping, can be None.
-            first_sequence(str, `optional`): The key of the first sequence.
-            second_sequence(str, `optional`): The key of the second sequence.
-            label(str, `optional`): The keys of the label columns, default `labels`.
-            qid(str, `optional`): The qid info.
-            mode: The mode for the preprocessor.
             max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
+            padding: The padding method
+            truncation: The truncation method
         """
-        super().__init__(mode)
+        super().__init__(
+            mode=mode,
+            first_sequence=first_sequence,
+            second_sequence=second_sequence,
+            label=label,
+            qid=qid)
         self.model_dir = model_dir
-        self.first_sequence = first_sequence
-        self.second_sequence = second_sequence
         self.first_sequence_gis = first_sequence_gis
         self.second_sequence_gis = second_sequence_gis
-
-        self.label = label
-        self.qid = qid
         self.sequence_length = max_length if max_length is not None else kwargs.get(
             'sequence_length', 128)
         kwargs.pop('sequence_length', None)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
+        self.tokenize_kwargs = kwargs
+        self.tokenize_kwargs['padding'] = padding
+        self.tokenize_kwargs['truncation'] = truncation
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_dir, use_fast=use_fast)
 
     @type_assert(object, dict)
-    def __call__(self,
-                 data: Dict,
-                 padding='longest',
-                 truncation=True,
-                 **kwargs) -> Dict[str, Any]:
+    def __call__(self, data: Dict, **kwargs) -> Dict[str, Any]:
         sentence1 = data.get(self.first_sequence)
         sentence2 = data.get(self.second_sequence)
         labels = data.get(self.label)
@@ -176,12 +177,9 @@ class MGeoRankingTransformersPreprocessor(Preprocessor):
             'max_length', kwargs.pop('sequence_length', self.sequence_length))
         if 'return_tensors' not in kwargs:
             kwargs['return_tensors'] = 'pt'
-        feature = self.tokenizer(
-            sentence1,
-            sentence2,
-            padding=padding,
-            truncation=truncation,
-            **kwargs)
+
+        self.tokenize_kwargs.update(kwargs)
+        feature = self.tokenizer(sentence1, sentence2, **self.tokenize_kwargs)
         if labels is not None:
             feature['labels'] = labels
         if qid is not None:

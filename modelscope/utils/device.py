@@ -3,7 +3,6 @@ import os
 from contextlib import contextmanager
 
 from modelscope.utils.constant import Devices, Frameworks
-from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()

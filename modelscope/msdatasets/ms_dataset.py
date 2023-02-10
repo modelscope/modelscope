@@ -6,7 +6,6 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import numpy as np
-import torch
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
@@ -41,42 +40,6 @@ def format_list(para) -> List:
     elif len(set(para)) < len(para):
         raise ValueError(f'List columns contains duplicates: {para}')
     return para
-
-
-class MsMapDataset(torch.utils.data.Dataset):
-
-    def __init__(self, dataset: Iterable, preprocessor_list, retained_columns,
-                 columns, to_tensor):
-        super(MsDataset).__init__()
-        self.dataset = dataset
-        self.preprocessor_list = preprocessor_list
-        self.to_tensor = to_tensor
-        self.retained_columns = retained_columns
-        self.columns = columns
-
-    def __len__(self):
-        return len(self.dataset)
-
-    def type_converter(self, x):
-        if self.to_tensor:
-            return torch.tensor(x)
-        else:
-            return x
-
-    def __getitem__(self, index):
-        item_dict = self.dataset[index]
-        res = {
-            k: self.type_converter(item_dict[k])
-            for k in self.columns
-            if (not self.to_tensor) or k in self.retained_columns
-        }
-        for preprocessor in self.preprocessor_list:
-            res.update({
-                k: self.type_converter(v)
-                for k, v in preprocessor(item_dict).items()
-                if (not self.to_tensor) or k in self.retained_columns
-            })
-        return res
 
 
 class MsDataset:
@@ -303,6 +266,7 @@ class MsDataset:
         columns: Union[str, List[str]] = None,
         to_tensor: bool = True,
     ):
+        import torch
         preprocessor_list = preprocessors if isinstance(
             preprocessors, list) else [preprocessors]
 
@@ -331,6 +295,42 @@ class MsDataset:
                         f'Data of column {k} is non-numeric, will be removed')
                     continue
                 retained_columns.append(k)
+
+        class MsMapDataset(torch.utils.data.Dataset):
+
+            def __init__(self, dataset: Iterable, preprocessor_list,
+                         retained_columns, columns, to_tensor):
+                super(MsDataset).__init__()
+                self.dataset = dataset
+                self.preprocessor_list = preprocessor_list
+                self.to_tensor = to_tensor
+                self.retained_columns = retained_columns
+                self.columns = columns
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def type_converter(self, x):
+                import torch
+                if self.to_tensor:
+                    return torch.tensor(x)
+                else:
+                    return x
+
+            def __getitem__(self, index):
+                item_dict = self.dataset[index]
+                res = {
+                    k: self.type_converter(item_dict[k])
+                    for k in self.columns
+                    if (not self.to_tensor) or k in self.retained_columns
+                }
+                for preprocessor in self.preprocessor_list:
+                    res.update({
+                        k: self.type_converter(v)
+                        for k, v in preprocessor(item_dict).items()
+                        if (not self.to_tensor) or k in self.retained_columns
+                    })
+                return res
 
         return MsMapDataset(self._hf_ds, preprocessor_list, retained_columns,
                             columns, to_tensor)

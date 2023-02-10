@@ -5,7 +5,6 @@ from copy import deepcopy
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from modelscope.metainfo import Models, Preprocessors
-from modelscope.utils.checkpoint import save_configuration
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
                                        ModeKeys, Tasks)
@@ -312,7 +311,7 @@ class Preprocessor(ABC):
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         config: Optional[dict] = None,
-                        save_config_function: Callable = save_configuration):
+                        save_config_function: Callable = None):
         """Save the preprocessor, its configuration and other related files to a directory,
             so that it can be re-loaded
 
@@ -341,4 +340,7 @@ class Preprocessor(ABC):
                         'preprocessor']['val']:
                     config['preprocessor']['val']['mode'] = 'inference'
 
+            if save_config_function is None:
+                from modelscope.utils.checkpoint import save_configuration
+                save_config_function = save_configuration
             save_config_function(target_folder, config)

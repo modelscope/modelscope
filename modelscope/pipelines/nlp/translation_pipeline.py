@@ -44,7 +44,7 @@ class TranslationPipeline(Pipeline):
         model = self.model.model_dir
         tf.reset_default_graph()
 
-        model_path = osp.join(
+        self.model_path = osp.join(
             osp.join(model, ModelFile.TF_CHECKPOINT_FOLDER), 'ckpt-0')
 
         self.cfg = Config.from_file(osp.join(model, ModelFile.CONFIGURATION))
@@ -88,10 +88,10 @@ class TranslationPipeline(Pipeline):
         self.output.update(output)
 
         with self._session.as_default() as sess:
-            logger.info(f'loading model from {model_path}')
+            logger.info(f'loading model from {self.model_path}')
             # load model
-            model_loader = tf.train.Saver(tf.global_variables())
-            model_loader.restore(sess, model_path)
+            self.model_loader = tf.train.Saver(tf.global_variables())
+            self.model_loader.restore(sess, self.model_path)
 
     def preprocess(self, input: str) -> Dict[str, Any]:
         input = input.split('<SENT_SPLIT>')

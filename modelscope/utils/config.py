@@ -3,7 +3,6 @@
 # https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
 import copy
-import dataclasses
 import os
 import os.path as osp
 import platform

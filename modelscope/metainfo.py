@@ -34,6 +34,7 @@ class Models(object):
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
+    body_3d_keypoints_hdformer = 'hdformer'
     crowd_counting = 'HRNetCrowdCounting'
     face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'

@@ -16,8 +16,8 @@ from matplotlib.animation import writers
 from matplotlib.ticker import MultipleLocator
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.body_3d_keypoints.body_3d_pose import (
-    BodyKeypointsDetection3D, KeypointsTypes)
+from modelscope.models.cv.body_3d_keypoints.cannonical_pose.body_3d_pose import \
+    KeypointsTypes
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Input, Model, Pipeline, Tensor
@@ -112,11 +112,19 @@ def convert_2_h36m_data(lst_kps, lst_bboxes, joints_nbr=15):
     Tasks.body_3d_keypoints, module_name=Pipelines.body_3d_keypoints)
 class Body3DKeypointsPipeline(Pipeline):
 
-    def __init__(self, model: Union[str, BodyKeypointsDetection3D], **kwargs):
+    def __init__(self, model: str, **kwargs):
         """Human body 3D pose estimation.
 
         Args:
-            model (Union[str, BodyKeypointsDetection3D]): model id on modelscope hub.
+            model (str): model id on modelscope hub.
+            kwargs (dict, `optional`): Extra kwargs passed into the preprocessor's constructor.
+        Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> body_3d_keypoints = pipeline(Tasks.body_3d_keypoints,
+                model='damo/cv_hdformer_body-3d-keypoints_video')
+            >>> test_video_url = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/Walking.54138969.mp4'
+            >>> output = body_3d_keypoints(test_video_url)
+            >>> print(output)
         """
         super().__init__(model=model, **kwargs)
 
@@ -130,6 +138,10 @@ class Body3DKeypointsPipeline(Pipeline):
             model=self.human_body_2d_kps_det_pipeline,
             device='gpu' if torch.cuda.is_available() else 'cpu')
 
+        self.max_frame = self.keypoint_model_3d.cfg.model.INPUT.MAX_FRAME \
+            if hasattr(self.keypoint_model_3d.cfg.model.INPUT, 'MAX_FRAME') \
+            else self.keypoint_model_3d.cfg.model.INPUT.max_frame  # max video frame number to be predicted 3D joints
+
     def preprocess(self, input: Input) -> Dict[str, Any]:
         self.video_url = input
         video_frames = self.read_video_frames(self.video_url)
@@ -139,7 +151,6 @@ class Body3DKeypointsPipeline(Pipeline):
 
         all_2d_poses = []
         all_boxes_with_socre = []
-        max_frame = self.keypoint_model_3d.cfg.model.INPUT.MAX_FRAME  # max video frame number to be predicted 3D joints
         for i, frame in enumerate(video_frames):
             kps_2d = self.human_body_2d_kps_detector(frame)
             if [] == kps_2d.get('boxes'):
@@ -157,7 +168,7 @@ class Body3DKeypointsPipeline(Pipeline):
             all_boxes_with_socre.append(
                 list(np.array(box).reshape(
                     (-1))) + [score])  # construct to list with shape [5]
-            if (i + 1) >= max_frame:
+            if (i + 1) >= self.max_frame:
                 break
 
         all_2d_poses_np = np.array(all_2d_poses).reshape(
@@ -166,10 +177,11 @@ class Body3DKeypointsPipeline(Pipeline):
         all_boxes_np = np.array(all_boxes_with_socre).reshape(
             (len(all_boxes_with_socre), 5))  # [x1, y1, x2, y2, score]
 
+        joint_num = self.keypoint_model_3d.cfg.model.MODEL.IN_NUM_JOINTS \
+            if hasattr(self.keypoint_model_3d.cfg.model.MODEL, 'IN_NUM_JOINTS') \
+            else self.keypoint_model_3d.cfg.model.MODEL.n_joints
         kps_2d_h36m_17 = convert_2_h36m_data(
-            all_2d_poses_np,
-            all_boxes_np,
-            joints_nbr=self.keypoint_model_3d.cfg.model.MODEL.IN_NUM_JOINTS)
+            all_2d_poses_np, all_boxes_np, joints_nbr=joint_num)
         kps_2d_h36m_17 = np.array(kps_2d_h36m_17)
         res = {'success': True, 'input_2d_pts': kps_2d_h36m_17}
         return res
@@ -246,7 +258,6 @@ class Body3DKeypointsPipeline(Pipeline):
             raise Exception('modelscope error: %s cannot get video fps info.' %
                             (video_url))
 
-        max_frame_num = self.keypoint_model_3d.cfg.model.INPUT.MAX_FRAME
         frame_idx = 0
         while True:
             ret, frame = cap.read()
@@ -256,7 +267,7 @@ class Body3DKeypointsPipeline(Pipeline):
                 timestamp_format(seconds=frame_idx / self.fps))
             frame_idx += 1
             frames.append(frame)
-            if frame_idx >= max_frame_num:
+            if frame_idx >= self.max_frame:
                 break
         cap.release()
         return frames
@@ -278,7 +289,8 @@ class Body3DKeypointsPipeline(Pipeline):
                  [12, 13], [9, 10]]  # connection between joints
 
         fig = plt.figure()
-        ax = p3.Axes3D(fig)
+        ax = p3.Axes3D(fig, auto_add_to_figure=False)
+        fig.add_axes(ax)
         x_major_locator = MultipleLocator(0.5)
 
         ax.xaxis.set_major_locator(x_major_locator)

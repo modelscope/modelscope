@@ -15,6 +15,7 @@ class Models(object):
     tinynas_damoyolo = 'tinynas-damoyolo'
     # vision models
     detection = 'detection'
+    mask_scoring = 'MaskScoring'
     image_restoration = 'image-restoration'
     realtime_object_detection = 'realtime-object-detection'
     realtime_video_object_detection = 'realtime-video-object-detection'
@@ -34,6 +35,7 @@ class Models(object):
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
+    body_3d_keypoints_hdformer = 'hdformer'
     crowd_counting = 'HRNetCrowdCounting'
     face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
@@ -92,6 +94,7 @@ class Models(object):
     msrresnet_lite = 'msrresnet-lite'
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
+    ocr_recognition = 'OCRRecognition'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
@@ -231,6 +234,7 @@ class Pipelines(object):
     hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    abnormal_object_detection = 'abnormal-object-detection'
     easycv_detection = 'easycv-detection'
     easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
@@ -837,6 +841,7 @@ class Preprocessors(object):
     object_detection_scrfd = 'object-detection-scrfd'
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
+    ocr_recognition = 'ocr-recognition'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 
     # nlp preprocessor

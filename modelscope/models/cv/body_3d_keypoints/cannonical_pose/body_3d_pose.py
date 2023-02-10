@@ -10,7 +10,7 @@ import torch
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.models.cv.body_3d_keypoints.canonical_pose_modules import (
+from modelscope.models.cv.body_3d_keypoints.cannonical_pose.canonical_pose_modules import (
     TemporalModel, TransCan3Dkeys)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks

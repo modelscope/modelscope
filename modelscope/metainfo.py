@@ -393,6 +393,7 @@ class Pipelines(object):
     fill_mask = 'fill-mask'
     fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
+    interactive_translation = 'interactive-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'

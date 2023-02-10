@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
+    from .interactive_translation_pipeline import InteractiveTranslationPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
@@ -54,6 +55,7 @@ else:
         'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
+        'interactive_translation_pipeline': ['InteractiveTranslationPipeline'],
         'named_entity_recognition_pipeline': [
             'NamedEntityRecognitionPipeline',
         ],

@@ -29,7 +29,7 @@ mmdet3d==1.0.0a0
 mmsegmentation
 moviepy>=1.0.3
 nerfacc==0.2.2
-networkx>=2.5
+networkx
 numba
 omegaconf
 onnxruntime>=1.10

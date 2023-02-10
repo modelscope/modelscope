@@ -105,6 +105,7 @@ if TYPE_CHECKING:
     from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
     from .bad_image_detecting_pipeline import BadImageDetecingPipeline
     from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
+    from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
 
 else:
@@ -257,6 +258,7 @@ else:
             'MobileImageSuperResolutionPipeline'
         ],
         'bad_image_detecting_pipeline': ['BadImageDetecingPipeline'],
+        'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
     }
 

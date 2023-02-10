@@ -89,7 +89,7 @@ class TBSDetectionPipeline(Pipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
     
-         """
+        """
         Detect objects (bounding boxes) in the image(s) passed as inputs.
 
         Args:

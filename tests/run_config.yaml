@@ -55,6 +55,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_image_deblur_trainer.py
   - test_image_quality_assessment_mos.py
   - test_image_restoration.py
+  - test_video_deinterlace.py
   - test_image_inpainting_sdv2.py
 
 envs:

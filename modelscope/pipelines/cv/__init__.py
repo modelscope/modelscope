@@ -84,6 +84,7 @@ if TYPE_CHECKING:
     from .image_driving_perception_pipeline import ImageDrivingPerceptionPipeline
     from .vop_retrieval_pipeline import VopRetrievalPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .video_deinterlace_pipeline import VideoDeinterlacePipeline
     from .image_matching_pipeline import ImageMatchingPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
@@ -220,6 +221,7 @@ else:
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
+        'video_deinterlace_pipeline': ['VideoDeinterlacePipeline'],
         'image_matching_pipeline': ['ImageMatchingPipeline'],
         'video_stabilization_pipeline': ['VideoStabilizationPipeline'],
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],

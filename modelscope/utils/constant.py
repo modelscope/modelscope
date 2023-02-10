@@ -113,6 +113,7 @@ class CVTasks(object):
     video_frame_interpolation = 'video-frame-interpolation'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'video-super-resolution'
+    video_deinterlace = 'video-deinterlace'
     video_colorization = 'video-colorization'
 
     # reid and tracking

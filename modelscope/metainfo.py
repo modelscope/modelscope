@@ -79,6 +79,7 @@ class Models(object):
     video_human_matting = 'video-human-matting'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
+    video_deinterlace = 'video-deinterlace'
     quadtree_attention_image_matching = 'quadtree-attention-image-matching'
     vision_middleware = 'vision-middleware'
     video_stabilization = 'video-stabilization'
@@ -329,6 +330,7 @@ class Pipelines(object):
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
+    video_deinterlace = 'video-deinterlace'
     image_matching = 'image-matching'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
@@ -674,6 +676,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_frame_interpolation:
     (Pipelines.video_frame_interpolation,
      'damo/cv_raft_video-frame-interpolation'),
+    Tasks.video_deinterlace: (Pipelines.video_deinterlace,
+                              'damo/cv_unet_video-deinterlace'),
     Tasks.human_wholebody_keypoint:
     (Pipelines.human_wholebody_keypoint,
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),

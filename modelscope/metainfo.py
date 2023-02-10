@@ -15,6 +15,7 @@ class Models(object):
     tinynas_damoyolo = 'tinynas-damoyolo'
     # vision models
     detection = 'detection'
+    mask_scoring = 'MaskScoring'
     image_restoration = 'image-restoration'
     realtime_object_detection = 'realtime-object-detection'
     realtime_video_object_detection = 'realtime-video-object-detection'
@@ -233,6 +234,7 @@ class Pipelines(object):
     hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    abnormal_object_detection = 'abnormal-object-detection'
     easycv_detection = 'easycv-detection'
     easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'

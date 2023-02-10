@@ -43,8 +43,9 @@ class ImageInpaintingSDV2Pipeline(DiffusersPipeline):
     >>>     'prompt': prompt
     >>> }
     >>> image_inpainting = pipeline(Tasks.image_inpainting, model='damo/cv_stable-diffusion-v2_image-inpainting_base')
-    >>> out_image_path = image_inpainting(input)[OutputKeys.OUTPUT_IMG]
-    >>> print('Pipeline: the output image path is {}'.format(out_image_path))
+    >>> output = image_inpainting(input)[OutputKeys.OUTPUT_IMG]
+    >>> cv2.imwrite('result.png', output)
+
     """
 
     def __init__(self, model: str, device: str = 'gpu', **kwargs):
@@ -123,9 +124,5 @@ class ImageInpaintingSDV2Pipeline(DiffusersPipeline):
         return {'result': out_image}
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        output_image_path = kwargs.get('output_image', None)
-        if output_image_path is None:
-            output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
-        result = inputs['result']
-        result.save(output_image_path)
-        return {OutputKeys.OUTPUT_IMG: output_image_path}
+        result = np.array(inputs['result'])
+        return {OutputKeys.OUTPUT_IMG: result[:, :, ::-1]}

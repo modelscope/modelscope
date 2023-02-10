@@ -1,5 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import tempfile
 import unittest
+
+import cv2
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
@@ -28,18 +31,24 @@ class ImageInpaintingSDV2Test(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
+        output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         cache_path = snapshot_download(self.model_id)
         pipeline = ImageInpaintingSDV2Pipeline(cache_path)
         pipeline.group_key = self.task
-        out_video_path = pipeline(input=self.input)[OutputKeys.OUTPUT_IMG]
-        print('pipeline: the output image path is {}'.format(out_video_path))
+        output = pipeline(input=self.input)[OutputKeys.OUTPUT_IMG]
+        cv2.imwrite(output_image_path, output)
+        print(
+            'pipeline: the output image path is {}'.format(output_image_path))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
+        output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         pipeline_ins = pipeline(
             task=Tasks.image_inpainting, model=self.model_id)
-        out_video_path = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-        print('pipeline: the output image path is {}'.format(out_video_path))
+        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
+        cv2.imwrite(output_image_path, output)
+        print(
+            'pipeline: the output image path is {}'.format(output_image_path))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

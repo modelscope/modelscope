@@ -4,6 +4,7 @@ import unittest
 
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
+from modelscope.msdatasets.audio.asr_dataset import ASRDataset
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
@@ -110,6 +111,12 @@ class MsDatasetTest(unittest.TestCase):
             preprocessors=preprocessor,
             drop_remainder=True)
         print(next(iter(tf_dataset)))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_to_dataset_asr(self):
+        ms_ds_asr = ASRDataset.load(
+            'speech_asr_aishell1_trainsets', namespace='speech_asr')
+        print(next(iter(ms_ds_asr['train'])))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch

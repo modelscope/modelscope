@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+import json
 import yaml
 
 from modelscope.metainfo import Pipelines
@@ -13,7 +14,8 @@ from modelscope.preprocessors import WavToScp
 from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
                                                 generate_scp_from_url,
                                                 load_bytes_from_url)
-from modelscope.utils.constant import Frameworks, Tasks
+from modelscope.utils.constant import Frameworks, ModelFile, Tasks
+from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -43,6 +45,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
     def __init__(self,
                  model: Union[Model, str] = None,
                  preprocessor: WavToScp = None,
+                 vad_model: Optional[Union[Model, str]] = None,
+                 vad_model_revision: Optional[str] = None,
+                 punc_model: Optional[Union[Model, str]] = None,
+                 punc_model_revision: Optional[str] = None,
+                 lm_model: Optional[Union[Model, str]] = None,
+                 lm_model_revision: Optional[str] = None,
                  **kwargs):
         """
         Use `model` and `preprocessor` to create an asr pipeline for prediction
@@ -55,6 +63,15 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 - A model id in the model hub
             preprocessor:
                 (list of) Preprocessor object
+            vad_model (Optional: 'Model' or 'str'):
+                voice activity detection model from model hub or local
+                example: 'damo/speech_fsmn_vad_zh-cn-16k-common-pytorch'
+            punc_model (Optional: 'Model' or 'str'):
+                punctuation model from model hub or local
+                example: 'damo/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+            lm_model (Optional: 'Model' or 'str'):
+                language model from model hub or local
+                example: 'damo/speech_transformer_lm_zh-cn-common-vocab8404-pytorch'
             output_dir('str'):
                 output dir path
             batch_size('int'):
@@ -85,6 +102,27 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 extra kwargs
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
+        self.vad_model = None
+        self.punc_model = None
+        self.lm_model = None
+        if vad_model is not None:
+            if os.path.exists(vad_model):
+                self.vad_model = vad_model
+            else:
+                self.vad_model = snapshot_download(
+                    vad_model, revision=vad_model_revision)
+        if punc_model is not None:
+            if os.path.exists(punc_model):
+                self.punc_model = punc_model
+            else:
+                self.punc_model = snapshot_download(
+                    punc_model, revision=punc_model_revision)
+        if lm_model is not None:
+            if os.path.exists(lm_model):
+                self.lm_model = lm_model
+            else:
+                self.lm_model = snapshot_download(
+                    lm_model, revision=lm_model_revision)
         self.model_cfg = self.model.forward()
 
         self.cmd = self.get_cmd(kwargs)
@@ -337,6 +375,9 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 cmd['punc_model_file'] = outputs['punc_model_name']
             if outputs.__contains__('punc_model_config'):
                 cmd['punc_infer_config'] = outputs['punc_model_config']
+            self.load_vad_model(cmd)
+            self.load_punc_model(cmd)
+            self.load_lm_model(cmd)
 
             user_args_dict = [
                 'output_dir',
@@ -379,6 +420,53 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             raise ValueError('model type is mismatching')
 
         return cmd
+
+    def load_vad_model(self, cmd):
+        if self.vad_model is not None:
+            logger.info('loading vad model from {0} ...'.format(
+                self.vad_model))
+            config_path = os.path.join(self.vad_model, ModelFile.CONFIGURATION)
+            model_cfg = json.loads(open(config_path).read())
+            model_dir = os.path.dirname(config_path)
+            cmd['vad_model_file'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['vad_model_name'])
+            cmd['vad_infer_config'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['vad_model_config'])
+            cmd['vad_cmvn_file'] = os.path.join(
+                model_dir, model_cfg['model']['model_config']['vad_mvn_file'])
+            if 'vad' not in cmd['mode']:
+                cmd['mode'] = cmd['mode'] + '_vad'
+
+    def load_punc_model(self, cmd):
+        if self.punc_model is not None:
+            logger.info('loading punctuation model from {0} ...'.format(
+                self.punc_model))
+            config_path = os.path.join(self.punc_model,
+                                       ModelFile.CONFIGURATION)
+            model_cfg = json.loads(open(config_path).read())
+            model_dir = os.path.dirname(config_path)
+            cmd['punc_model_file'] = os.path.join(
+                model_dir, model_cfg['model']['punc_model_name'])
+            cmd['punc_infer_config'] = os.path.join(
+                model_dir,
+                model_cfg['model']['punc_model_config']['punc_config'])
+            if 'punc' not in cmd['mode']:
+                cmd['mode'] = cmd['mode'] + '_punc'
+
+    def load_lm_model(self, cmd):
+        if self.lm_model is not None:
+            logger.info('loading language model from {0} ...'.format(
+                self.lm_model))
+            config_path = os.path.join(self.lm_model, ModelFile.CONFIGURATION)
+            model_cfg = json.loads(open(config_path).read())
+            model_dir = os.path.dirname(config_path)
+            cmd['lm_file'] = os.path.join(
+                model_dir, model_cfg['model']['model_config']['lm_model_name'])
+            cmd['lm_train_config'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['lm_model_config'])
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Decoding

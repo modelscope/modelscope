@@ -416,6 +416,7 @@ class Pipelines(object):
     itn_inference = 'itn-inference'
     punc_inference = 'punc-inference'
     sv_inference = 'sv-inference'
+    vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     lm_inference = 'language-model'
 

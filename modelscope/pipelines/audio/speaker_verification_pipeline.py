@@ -113,7 +113,7 @@ class SpeakerVerificationPipeline(Pipeline):
             'dtype': 'float32',
             'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'seed': 0,
-            'num_workers': 1,
+            'num_workers': 0,
             'log_level': 'ERROR',
             'key_file': None,
             'sv_model_file': sv_model_path,
@@ -134,6 +134,7 @@ class SpeakerVerificationPipeline(Pipeline):
             'log_level',
             'allow_variable_data_keys',
             'streaming',
+            'num_workers',
             'param_dict',
         ]
 

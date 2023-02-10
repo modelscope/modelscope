@@ -66,18 +66,15 @@ class TestImageDefrcnFewShotTrainer(unittest.TestCase):
             ]
             cfg.datasets.test = ['voc_2007_test_base{}'.format(split)]
             cfg.input.min_size_test = 50
-            cfg.train.dataloader.ims_per_batch = 2
-            cfg.train.max_iter = 500
-            cfg.train.optimizer.lr = 0.01
+            cfg.train.dataloader.ims_per_batch = 4
+            cfg.train.max_iter = 300
+            cfg.train.optimizer.lr = 0.001
             cfg.train.lr_scheduler.warmup_iters = 100
 
             cfg.test.pcb_enable = False
             return cfg
 
-        kwargs = dict(
-            model=self.model_id,
-            model_revision='v1.3.0',
-            cfg_modify_fn=base_cfg_modify_fn)
+        kwargs = dict(model=self.model_id, cfg_modify_fn=base_cfg_modify_fn)
         trainer = build_trainer(
             name=Trainers.image_fewshot_detection, default_args=kwargs)
         trainer.train()

@@ -20,7 +20,15 @@ def to_device(batch, device, non_blocking=False):
             batch[idx] = to_device(batch[idx], device)
         return batch
     elif isinstance(batch, dict) or isinstance(batch, Mapping):
-        return type(batch)({k: to_device(v, device) for k, v in batch.items()})
+        if hasattr(batch, '__setitem__'):
+            # Reuse mini-batch to keep attributes for prediction.
+            for k, v in batch.items():
+                batch[k] = to_device(v, device)
+            return batch
+        else:
+            return type(batch)(
+                {k: to_device(v, device)
+                 for k, v in batch.items()})
     elif isinstance(batch, (tuple, list)):
         return type(batch)(to_device(v, device) for v in batch)
     elif isinstance(batch, torch.Tensor):

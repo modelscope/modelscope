@@ -5,7 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .builder import HOOKS, build_hook
-    from .checkpoint_hook import BestCkptSaverHook, CheckpointHook
+    from .checkpoint_hook import BestCkptSaverHook, CheckpointHook, LoadCheckpointHook
     from .early_stop_hook import EarlyStopHook
     from .compression import SparsityHook
     from .evaluation_hook import EvaluationHook
@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 else:
     _import_structure = {
         'builder': ['HOOKS', 'build_hook'],
-        'checkpoint_hook': ['BestCkptSaverHook', 'CheckpointHook'],
+        'checkpoint_hook':
+        ['BestCkptSaverHook', 'CheckpointHook', 'LoadCheckpointHook'],
         'compression': ['SparsityHook'],
         'evaluation_hook': ['EvaluationHook'],
         'hook': ['Hook'],

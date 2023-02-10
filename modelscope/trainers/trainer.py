@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import inspect
 import os
 import time
 from collections.abc import Mapping
@@ -16,6 +17,8 @@ from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
+from modelscope.metrics.prediction_saving_wrapper import \
+    PredictionSavingWrapper
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.msdatasets.task_datasets.builder import build_task_dataset
@@ -76,6 +79,9 @@ class EpochBasedTrainer(BaseTrainer):
         seed (int): The optional random seed for torch, cuda, numpy and random.
         max_epochs: (int, optional): Total training epochs.
         cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
+        remove_unused_data: Automatically remove unused data keys in mini-batches.
+            The remove action based on the `inspect` on the model's forward method, the removed columns will be
+            moved to the mini-batch's attributes.
 
         Examples of cfg_modify_fn:
         >>> def cfg_modify_fn(cfg):
@@ -180,7 +186,8 @@ class EpochBasedTrainer(BaseTrainer):
             **kwargs)
 
         self.train_data_collator, self.eval_data_collator = self.get_data_collator(
-            data_collator)
+            data_collator,
+            remove_unused_data=kwargs.get('remove_unused_data', False))
         self.metrics = self.get_metrics()
         self._max_epochs = kwargs.get('max_epochs',
                                       self.cfg.safe_get('train.max_epochs'))
@@ -204,12 +211,12 @@ class EpochBasedTrainer(BaseTrainer):
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
 
-    def get_data_collator(self, data_collator):
+    def get_data_collator(self, data_collator, remove_unused_data=False):
         """Get the data collator for both training and evaluating.
 
         Args:
             data_collator: The input data_collator param.
-
+            remove_unused_data: Remove the unused data with 'RemoveColumnsCollator'.
         Returns:
             The train_data_collator and eval_data_collator, can be None.
         """
@@ -226,6 +233,19 @@ class EpochBasedTrainer(BaseTrainer):
             collate_fn = default_collate if data_collator is None else data_collator
             train_data_collator = collate_fn
             eval_data_collator = collate_fn
+
+        if remove_unused_data:
+            from modelscope.utils.data_collators import RemoveColumnsCollator
+
+            def _set_signature_columns_if_needed():
+                signature = inspect.signature(self.model.forward)
+                return list(signature.parameters.keys())
+
+            model_inputs = _set_signature_columns_if_needed()
+            train_data_collator = RemoveColumnsCollator(
+                train_data_collator, model_inputs)
+            eval_data_collator = RemoveColumnsCollator(eval_data_collator,
+                                                       model_inputs)
         return train_data_collator, eval_data_collator
 
     def init_dist(self, launcher=None):
@@ -479,40 +499,123 @@ class EpochBasedTrainer(BaseTrainer):
             metrics = [metrics]
         return metrics
 
-    def set_checkpoint_file_to_hook(self, checkpoint_path):
+    def set_checkpoint_file_to_hook(self, checkpoint_path, load_all_state):
         if checkpoint_path is not None:
             if os.path.isfile(checkpoint_path):
-                from modelscope.trainers.hooks import CheckpointHook
-                checkpoint_hooks = list(
-                    filter(lambda hook: isinstance(hook, CheckpointHook),
+                from modelscope.trainers.hooks import LoadCheckpointHook
+                load_ckpt_hooks = list(
+                    filter(lambda hook: isinstance(hook, LoadCheckpointHook),
                            self.hooks))
-                for hook in checkpoint_hooks:
-                    hook.checkpoint_file = checkpoint_path
+                if len(load_ckpt_hooks) == 0:
+                    load_ckpt_hook = LoadCheckpointHook()
+                    self.hooks.append(load_ckpt_hook)
+                    load_ckpt_hooks.append(load_ckpt_hook)
+                load_ckpt_hooks[0].checkpoint_file = checkpoint_path
+                load_ckpt_hooks[0].load_all_state = load_all_state
             else:
                 self.logger.error(
                     f'No {checkpoint_path} found in local file system.')
 
-    def train(self, checkpoint_path=None, *args, **kwargs):
+    def train(self,
+              checkpoint_path=None,
+              load_all_state=True,
+              *args,
+              **kwargs):
+        """Start training.
+
+        Args:
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file generated by this trainer.
+            load_all_state(`bool`: `optional`): Load all state out of the `checkpoint_path` file, including the
+                state dict of model, optimizer, lr_scheduler, the random state and epoch/iter number. If False, only
+                the model's state dict will be read, and model will be trained again.
+        """
+
         self._mode = ModeKeys.TRAIN
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
         self.register_optimizers_hook()
         hooks = merge_hooks(self.cfg)
         self.register_hook_from_cfg(hooks)
-        self.set_checkpoint_file_to_hook(checkpoint_path)
+        self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state)
         self.model.train()
 
         self.train_loop(self.train_dataloader)
 
-    def evaluate(self, checkpoint_path=None):
+    def predict(self,
+                predict_datasets: Union[Dataset, List[Dataset]],
+                saving_fn,
+                checkpoint_path=None):
+        """Start prediction.
+
+        Args:
+            predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
+
+            saving_fn(`Callable`): The callable used to save the prediction values to files. Like:
+                >>> class SavingFn:
+                >>>     def __init__(self):
+                >>>         self.filename = '/tmp/results.txt'
+                >>>
+                >>>     def __call__(self, inputs, outputs):
+                >>>         import numpy as np
+                >>>         ids = inputs.ids
+                >>>         predictions = np.argmax(outputs['logits'].cpu().numpy(), axis=1)
+                >>>         with open(self.filename, 'a') as f:
+                >>>             for id, pred in zip(ids, predictions):
+                >>>                 f.writelines(f'{id}, {pred}')
+
+                This saving_fn's result will not be collected to one file, Training with multiprocessing please
+                consider combining these files manually.
+
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file or a pure PyTorch `some-file.bin` file
+                generated by this trainer.
+        """
+
         if checkpoint_path is not None and os.path.isfile(checkpoint_path):
-            from modelscope.trainers.hooks import CheckpointHook
-            CheckpointHook.load_checkpoint(checkpoint_path, self)
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
+        self.model.eval()
+        self._mode = ModeKeys.EVAL
+        predict_dataloader = self.get_predict_data_loader(predict_datasets)
+        metric_classes = [PredictionSavingWrapper(saving_fn=saving_fn)]
+
+        for m in metric_classes:
+            m.trainer = self
+
+        self.evaluation_loop(predict_dataloader, metric_classes)
+
+    def evaluate(self, checkpoint_path=None, saving_fn=None, **kwargs):
+        """Start evaluation.
+
+        Args:
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file or a pure PyTorch `some-file.bin` file
+                generated by this trainer.
+
+            saving_fn(`Callable`): The callable used to save the prediction values to files. Like:
+                >>> class SavingFn:
+                >>>     def __init__(self):
+                >>>         self.filename = '/tmp/results.txt'
+                >>>
+                >>>     def __call__(self, inputs, outputs):
+                >>>         import numpy as np
+                >>>         ids = inputs.ids
+                >>>         predictions = np.argmax(outputs['logits'].cpu().numpy(), axis=1)
+                >>>         with open(self.filename, 'a') as f:
+                >>>             for id, pred in zip(ids, predictions):
+                >>>                 f.writelines(f'{id}, {pred}')
+        """
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
         self.eval_dataloader = self.get_eval_data_loader()
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
+        if saving_fn is not None:
+            metric_classes.append(PredictionSavingWrapper(saving_fn=saving_fn))
         for m in metric_classes:
             m.trainer = self
 
@@ -676,6 +779,28 @@ class EpochBasedTrainer(BaseTrainer):
         default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
             self.eval_dataset,
+            dist=self._dist,
+            seed=self._seed,
+            collate_fn=self.eval_data_collator,
+            **default_config)
+        return data_loader
+
+    def get_predict_data_loader(self, predict_datasets: Union[Dataset,
+                                                              List[Dataset]]):
+        """ Builder torch dataloader for prediction with the config of evaluation.
+
+        Args:
+            predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
+        """
+        dataset = self.to_task_dataset(
+            predict_datasets,
+            mode=ModeKeys.EVAL,
+            preprocessor=self.eval_preprocessor)
+
+        default_config = {'shuffle': False}
+        default_config.update(self.cfg.evaluation.get('dataloader', {}))
+        data_loader = self._build_dataloader_with_dataset(
+            dataset,
             dist=self._dist,
             seed=self._seed,
             collate_fn=self.eval_data_collator,
@@ -964,8 +1089,6 @@ class EpochBasedTrainer(BaseTrainer):
                 metric_classes=metric_classes,
                 vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
-
-        self._inner_iter = self.iters_per_epoch - 1  # start from index 0
 
         return metric_values
 

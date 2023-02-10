@@ -943,10 +943,14 @@ class Metrics(object):
     image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'
     # metrics for sequence classification task
     seq_cls_metric = 'seq-cls-metric'
+    # loss metric
+    loss_metric = 'loss-metric'
     # metrics for token-classification task
     token_cls_metric = 'token-cls-metric'
     # metrics for text-generation task
     text_gen_metric = 'text-gen-metric'
+    # file saving wrapper
+    prediction_saving_wrapper = 'prediction-saving-wrapper'
     # metrics for image-color-enhance task
     image_color_enhance_metric = 'image-color-enhance-metric'
     # metrics for image-portrait-enhancement task
@@ -1001,6 +1005,7 @@ class Hooks(object):
     # checkpoint
     CheckpointHook = 'CheckpointHook'
     BestCkptSaverHook = 'BestCkptSaverHook'
+    LoadCheckpointHook = 'LoadCheckpointHook'
 
     # logger
     TextLoggerHook = 'TextLoggerHook'

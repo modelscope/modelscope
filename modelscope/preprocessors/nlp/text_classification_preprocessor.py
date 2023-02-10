@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from abc import abstractmethod
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
@@ -27,6 +26,7 @@ class TextClassificationPreprocessorBase(Preprocessor):
         label: str = 'label',
         label2id: Dict = None,
         mode: str = ModeKeys.INFERENCE,
+        keep_original_columns: List[str] = None,
     ):
         """The base class for the text classification preprocessor.
 
@@ -36,7 +36,9 @@ class TextClassificationPreprocessorBase(Preprocessor):
             second_sequence(str, `optional`): The key of the second sequence.
             label(str, `optional`): The keys of the label columns, default is `label`
             label2id: (dict, `optional`): The optional label2id mapping
-            mode: The mode for the preprocessor
+            mode(str, `optional`): The mode for the preprocessor
+            keep_original_columns(List[str], `optional`): The original columns to keep,
+                only available when the input is a `dict`, default None
         """
         super().__init__(mode)
         self.model_dir = model_dir
@@ -44,6 +46,7 @@ class TextClassificationPreprocessorBase(Preprocessor):
         self.second_sequence = second_sequence
         self.label = label
         self.label2id = label2id
+        self.keep_original_columns = keep_original_columns
         if self.label2id is None and self.model_dir is not None:
             self.label2id = parse_label_mapping(self.model_dir)
 
@@ -90,6 +93,9 @@ class TextClassificationPreprocessorBase(Preprocessor):
             for k, v in output.items()
         }
         labels_to_id(labels, output, self.label2id)
+        if self.keep_original_columns and isinstance(data, dict):
+            for column in self.keep_original_columns:
+                output[column] = data[column]
         return output
 
     def _tokenize_text(self, sequence1, sequence2=None, **kwargs):
@@ -131,6 +137,7 @@ class TextClassificationTransformersPreprocessor(
                  mode: str = ModeKeys.INFERENCE,
                  max_length: int = None,
                  use_fast: bool = None,
+                 keep_original_columns=None,
                  **kwargs):
         """The tokenizer preprocessor used in sequence classification.
 
@@ -152,4 +159,4 @@ class TextClassificationTransformersPreprocessor(
         self.nlp_tokenizer = NLPTokenizer(
             model_dir, model_type, use_fast=use_fast, tokenize_kwargs=kwargs)
         super().__init__(model_dir, first_sequence, second_sequence, label,
-                         label2id, mode)
+                         label2id, mode, keep_original_columns)

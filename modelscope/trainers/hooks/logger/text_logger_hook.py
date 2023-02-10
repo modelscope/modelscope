@@ -131,6 +131,7 @@ class TextLoggerHook(LoggerHook):
             if self.by_epoch:
                 log_str = f'{epoch_key}({log_dict[mode_key]}) [{log_dict[epoch_key]}][{log_dict[iter_key]}]\t'
             else:
+                # TODO log_dict[iter_key] is not correct because of it's train_loop's inner_iter
                 log_str = f'{iter_key}({log_dict[mode_key]}) [{log_dict[iter_key]}]\t'
             self._logged_keys.extend([mode_key, iter_key, epoch_key])
 
@@ -138,7 +139,8 @@ class TextLoggerHook(LoggerHook):
         for name, val in log_dict.items():
             if name in self._logged_keys:
                 continue
-            if isinstance(val, float):
+            if isinstance(val,
+                          float) and name not in self.ignore_rounding_keys:
                 val = f'{val:.4f}'
             log_items.append(f'{name}: {val}')
         log_str += ', '.join(log_items)
@@ -168,7 +170,9 @@ class TextLoggerHook(LoggerHook):
             return items
 
     def log(self, trainer):
-        cur_iter = self.get_iter(trainer, inner_iter=True)
+        cur_iter = self.get_iter(
+            trainer, inner_iter=True
+        ) if trainer.mode == ModeKeys.TRAIN else trainer.iters_per_epoch
 
         log_dict = OrderedDict(
             mode=trainer.mode, epoch=self.get_epoch(trainer), iter=cur_iter)

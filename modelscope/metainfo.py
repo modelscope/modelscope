@@ -276,6 +276,8 @@ class Pipelines(object):
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
     realtime_video_object_detection = 'cspnet_realtime-video-object-detection_streamyolo'
     face_recognition = 'ir101-face-recognition-cfglint'
+    face_recognition_ood = 'ir-face-recognition-ood-rts'
+    face_quality_assessment = 'manual-face-quality-assessment-fqa'
     face_recognition_ood = 'ir-face-recognition-rts'
     face_recognition_onnx_ir = 'manual-face-recognition-frir'
     face_recognition_onnx_fm = 'manual-face-recognition-frfm'
@@ -589,6 +591,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_resnet34_face-attribute-recognition_fairface'),
     Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
                               'damo/cv_mobilenet_face-2d-keypoints_alignment'),
+    Tasks.face_quality_assessment:
+    (Pipelines.face_quality_assessment,
+     'damo/cv_manual_face-quality-assessment_fqa'),
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
@@ -683,9 +688,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
-    Tasks.face_human_hand_detection:
-    (Pipelines.face_human_hand_detection,
-     'damo/cv_nanodet_face-human-hand-detection'),
+    Tasks.face_human_hand_detection: (
+        Pipelines.face_human_hand_detection,
+        'damo/cv_nanodet_face-human-hand-detection'),
     Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
     Tasks.product_segmentation: (Pipelines.product_segmentation,
                                  'damo/cv_F3Net_product-segmentation'),

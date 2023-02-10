@@ -169,6 +169,13 @@ TASK_OUTPUTS = {
     #   }
     Tasks.face_liveness: [OutputKeys.SCORES, OutputKeys.BOXES],
 
+    # face quality assessment for single sample
+    #   {
+    #       "scores": [0.9]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.face_quality_assessment: [OutputKeys.SCORES, OutputKeys.BOXES],
+
     # facial expression recognition result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],

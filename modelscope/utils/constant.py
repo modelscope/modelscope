@@ -23,6 +23,7 @@ class CVTasks(object):
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
     face_liveness = 'face-liveness'
+    face_quality_assessment = 'face-quality-assessment'
     card_detection = 'card-detection'
     face_recognition = 'face-recognition'
     facial_expression_recognition = 'facial-expression-recognition'

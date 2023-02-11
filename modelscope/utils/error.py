@@ -146,3 +146,10 @@ TEXT2SQL_LGESQL_IMPORT_ERROR = """
 {0} requires the text2sql_lgesql library but it was not found in your environment. You can install it with pip:
 `pip install text2sql_lgesql -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
 """
+
+# docstyle-ignore
+MPI4PY_IMPORT_ERROR = """
+{0} requires the mpi4py library but it was not found in your environment. You can install it with pip:
+`pip install mpi4py' and with following the instruction to install openmpi,
+https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html`
+"""

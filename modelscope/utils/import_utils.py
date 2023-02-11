@@ -303,6 +303,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
                        MEGATRON_UTIL_IMPORT_ERROR)),
     ('text2sql_lgesql', (is_package_available('text2sql_lgesql'),
                          TEXT2SQL_LGESQL_IMPORT_ERROR)),
+    ('mpi4py', (is_package_available('mpi4py'), MPI4PY_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

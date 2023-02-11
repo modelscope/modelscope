@@ -35,7 +35,9 @@ class ModelForTextRanking(EncoderModel):
             label2id = parse_label_mapping(model_dir)
             if label2id is not None and len(label2id) > 0:
                 num_labels = len(label2id)
-            self.id2label = {id: label for label, id in label2id.items()}
+                self.id2label = {id: label for label, id in label2id.items()}
+            elif label2id is None:
+                num_labels = 1
         kwargs['num_labels'] = num_labels
         super().__init__(model_dir, *args, **kwargs)
 

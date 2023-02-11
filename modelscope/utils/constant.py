@@ -155,6 +155,7 @@ class NLPTasks(object):
     zero_shot_classification = 'zero-shot-classification'
     backbone = 'backbone'
     text_error_correction = 'text-error-correction'
+    word_alignment = 'word-alignment'
     faq_question_answering = 'faq-question-answering'
     information_extraction = 'information-extraction'
     document_segmentation = 'document-segmentation'

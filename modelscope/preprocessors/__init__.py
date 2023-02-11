@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         TextGenerationSentencePiecePreprocessor,
         TokenClassificationTransformersPreprocessor,
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
+        WordAlignmentPreprocessor,
         TextGenerationTransformersPreprocessor, Tokenize,
         WordSegmentationBlankSetToLabelPreprocessor, CodeGeeXPreprocessor,
         MGLMSummarizationPreprocessor,

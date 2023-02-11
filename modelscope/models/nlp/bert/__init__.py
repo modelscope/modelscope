@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .text_classification import BertForSequenceClassification
     from .token_classification import BertForTokenClassification
     from .document_segmentation import BertForDocumentSegmentation
+    from .word_alignment import MBertForWordAlignment
 else:
     _import_structure = {
         'backbone': [

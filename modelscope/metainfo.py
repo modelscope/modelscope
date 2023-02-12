@@ -155,6 +155,7 @@ class Models(object):
     xlm_roberta = 'xlm-roberta'
     transformers = 'transformers'
     plug_mental = 'plug-mental'
+    doc2bot = 'doc2bot'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -426,6 +427,9 @@ class Pipelines(object):
     token_classification = 'token-classification'
     translation_evaluation = 'translation-evaluation'
     user_satisfaction_estimation = 'user-satisfaction-estimation'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -538,6 +542,15 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_question_answering:
     (Pipelines.table_question_answering_pipeline,
      'damo/nlp-convai-text2sql-pretrain-cn'),
+    Tasks.document_grounded_dialog_generate:
+    (Pipelines.document_grounded_dialog_generate,
+     'DAMO_ConvAI/nlp_convai_generation_pretrain'),
+    Tasks.document_grounded_dialog_rerank:
+    (Pipelines.document_grounded_dialog_rerank,
+     'damo/nlp_convai_rerank_pretrain'),
+    Tasks.document_grounded_dialog_retrieval:
+    (Pipelines.document_grounded_dialog_retrieval,
+     'DAMO_ConvAI/nlp_convai_retrieval_pretrain'),
     Tasks.text_error_correction:
     (Pipelines.text_error_correction,
      'damo/nlp_bart_text-error-correction_chinese'),
@@ -691,9 +704,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_driven_segmentation:
     (Pipelines.text_driven_segmentation,
      'damo/cv_vitl16_segmentation_text-driven-seg'),
-    Tasks.movie_scene_segmentation:
-    (Pipelines.movie_scene_segmentation,
-     'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
+    Tasks.movie_scene_segmentation: (
+        Pipelines.movie_scene_segmentation,
+        'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
     Tasks.shop_segmentation: (Pipelines.shop_segmentation,
                               'damo/cv_vitb16_segmentation_shop-seg'),
     Tasks.image_inpainting: (Pipelines.image_inpainting,
@@ -704,14 +717,14 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
                                 'damo/cv_effnetv2_video-human-matting'),
-    Tasks.video_frame_interpolation:
-    (Pipelines.video_frame_interpolation,
-     'damo/cv_raft_video-frame-interpolation'),
+    Tasks.video_frame_interpolation: (
+        Pipelines.video_frame_interpolation,
+        'damo/cv_raft_video-frame-interpolation'),
     Tasks.video_deinterlace: (Pipelines.video_deinterlace,
                               'damo/cv_unet_video-deinterlace'),
-    Tasks.human_wholebody_keypoint:
-    (Pipelines.human_wholebody_keypoint,
-     'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
+    Tasks.human_wholebody_keypoint: (
+        Pipelines.human_wholebody_keypoint,
+        'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
     Tasks.hand_static: (Pipelines.hand_static,
                         'damo/cv_mobileface_hand-static'),
     Tasks.face_human_hand_detection: (
@@ -797,6 +810,9 @@ class NLPTrainers(object):
     faq_question_answering_trainer = 'faq-question-answering-trainer'
     gpt_moe_trainer = 'nlp-gpt-moe-trainer'
     table_question_answering_trainer = 'table-question-answering-trainer'
+    document_grounded_dialog_generate_trainer = 'document-grounded-dialog-generate-trainer'
+    document_grounded_dialog_rerank_trainer = 'document-grounded-dialog-rerank-trainer'
+    document_grounded_dialog_retrieval_trainer = 'document-grounded-dialog-retrieval-trainer'
 
 
 class MultiModalTrainers(object):
@@ -923,6 +939,9 @@ class Preprocessors(object):
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
     dialog_use_preprocessor = 'dialog-use-preprocessor'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

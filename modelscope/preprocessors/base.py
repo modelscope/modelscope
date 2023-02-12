@@ -105,6 +105,14 @@ PREPROCESSOR_MAP = {
     (Models.structbert, Tasks.word_segmentation):
     Preprocessors.token_cls_tokenizer,
 
+    # doc2bot
+    (Models.doc2bot, Tasks.document_grounded_dialog_generate):
+    Preprocessors.document_grounded_dialog_generate,
+    (Models.doc2bot, Tasks.document_grounded_dialog_rerank):
+    Preprocessors.document_grounded_dialog_rerank,
+    (Models.doc2bot, Tasks.document_grounded_dialog_retrieval):
+    Preprocessors.document_grounded_dialog_retrieval,
+
     # veco
     (Models.veco, Tasks.backbone):
     Preprocessors.sen_cls_tokenizer,

@@ -234,6 +234,19 @@ TASK_INPUTS = {
         'text': InputType.TEXT,
         'database': InputType.TEXT
     },
+    Tasks.document_grounded_dialog_generate: {
+        'query': InputType.LIST,
+        'context': InputType.LIST,
+        'label': InputType.LIST,
+    },
+    Tasks.document_grounded_dialog_rerank: {
+        'dataset': InputType.LIST
+    },
+    Tasks.document_grounded_dialog_retrieval: {
+        'query': InputType.LIST,
+        'positive': InputType.LIST,
+        'negative': InputType.LIST
+    },
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:

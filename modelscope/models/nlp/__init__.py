@@ -65,6 +65,9 @@ if TYPE_CHECKING:
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,
                        VecoForTokenClassification, VecoModel)
+    from .dgds import (DocumentGroundedDialogGenerateModel,
+                       DocumentGroundedDialogRetrievalModel,
+                       DocumentGroundedDialogRerankModel)
     from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
 
 else:
@@ -133,6 +136,11 @@ else:
         'T5': ['T5ForConditionalGeneration'],
         'unite': ['UniTEForTranslationEvaluation'],
         'use': ['UserSatisfactionEstimation'],
+        'dgds': [
+            'DocumentGroundedDialogGenerateModel',
+            'DocumentGroundedDialogRetrievalModel',
+            'DocumentGroundedDialogRerankModel'
+        ],
         'veco': [
             'VecoConfig',
             'VecoForMaskedLM',

@@ -1068,6 +1068,9 @@ TASK_OUTPUTS = {
     #       "labels": ["dog", "horse", "cow", "cat"],
     #   }
     Tasks.vision_efficient_tuning: [OutputKeys.SCORES, OutputKeys.LABELS],
+    Tasks.document_grounded_dialog_generate: [OutputKeys.TEXT],
+    Tasks.document_grounded_dialog_rerank: [OutputKeys.OUTPUT],
+    Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
 }
 
 

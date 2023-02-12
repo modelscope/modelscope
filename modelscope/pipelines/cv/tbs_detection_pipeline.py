@@ -36,7 +36,6 @@ class TBSDetectionPipeline(Pipeline):
     >>> from modelscope.pipelines import pipeline
 
     >>> tbs_detect = pipeline(Tasks.image_object_detection, model='landingAI/LD_CytoBrainCerv')
-        
     >>> tbs_detect(input='data/test/images/tbs_detection.jpg')
        {
         "boxes": [
@@ -88,8 +87,12 @@ class TBSDetectionPipeline(Pipeline):
         generate(self)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
+<<<<<<< HEAD
     
         """
+=======
+         """
+>>>>>>> 2685fe44 (commit message)
         Detect objects (bounding boxes) in the image(s) passed as inputs.
 
         Args:
@@ -150,4 +153,3 @@ class TBSDetectionPipeline(Pipeline):
         }
         return outputs
         
-

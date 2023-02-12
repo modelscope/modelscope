@@ -14,12 +14,12 @@ from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.hub import get_model_type
 from modelscope.utils.logger import get_logger
 from .transformers_tokenizer import NLPTokenizer
-from transformers import AutoTokenizer
+
     
 @PREPROCESSORS.register_module(
     Fields.nlp, module_name=Preprocessors.word_alignment)
 class WordAlignmentPreprocessor(Preprocessor):
-    """The tokenizer preprocessor used in sentence embedding.
+    """The tokenizer preprocessor used in word alignment .
     """
 
     def __init__(self,
@@ -29,17 +29,17 @@ class WordAlignmentPreprocessor(Preprocessor):
                  use_fast: bool = False,
                  max_length: int = None,
                  **kwargs):
-        """The preprocessor for sentence embedding task, based on transformers' tokenizer.
+        """The preprocessor for word alignment task.
 
         Args:
             model_dir: The model dir used to initialize the tokenizer.
-            first_sequence: The key of the first sequence.
-            second_sequence: The key of the second sequence.
+            sequence_pair: The key of the sequence pair.
             mode: The mode for the preprocessor.
             use_fast: Use the fast tokenizer or not.
             max_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
-            **kwargs: Extra args input into the tokenizer's __call__ method.
+            **kwargs: Extra args input. 
+                {sequence_length: The sequence length which the model supported.}
         """
         self.sequence_pair = sequence_pair
 
@@ -58,22 +58,13 @@ class WordAlignmentPreprocessor(Preprocessor):
 
     def __call__(self,
                  data: Dict,
-                 padding=True,
-                 truncation=True,
                  **kwargs) -> Dict[str, Any]:
         """process the raw input data
 
         Args:
             data Dict:
-                keys: the source sentence and the sentences to compare
-                values: list of sentences
                 Example:
-                    {"source_sentence": ["how long it take to get a master's degree"],
-                     "sentences_to_compare": ["On average, students take about 18 to 24 months
-                     to complete a master's degree.",
-                     "On the other hand, some students prefer to go at a slower pace
-                     and choose to take several years to complete their studies.",
-                     "It can take anywhere from two semesters"]}
+                    {"sentence_pair": "贝利 在 墨西哥 推出 自传 。||| pele promotes autobiography in mexico ."}
         Returns:
             Dict[str, Any]: the preprocessed data
         """

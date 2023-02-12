@@ -613,6 +613,10 @@ TASK_OUTPUTS = {
     #    "output": "我想吃苹果"
     # }
     Tasks.text_error_correction: [OutputKeys.OUTPUT],
+    # word_alignment result for a single sample
+    # {
+    #    "output": "0-0 1-3 2-4 3-1 4-2 5-5"
+    # }
     Tasks.word_alignment: [OutputKeys.OUTPUT],
     Tasks.sentence_embedding: [OutputKeys.TEXT_EMBEDDING, OutputKeys.SCORES],
     Tasks.text_ranking: [OutputKeys.SCORES],

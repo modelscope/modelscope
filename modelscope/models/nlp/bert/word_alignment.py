@@ -18,12 +18,10 @@
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
-from torch.nn import CrossEntropyLoss
 
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS
 from modelscope.outputs import WordAlignmentOutput 
-
 from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .backbone import BertModel, BertPreTrainedModel
@@ -33,7 +31,18 @@ logger = logging.get_logger()
 # mbert model
 @MODELS.register_module(Tasks.word_alignment, module_name=Models.bert) 
 class MBertForWordAlignment(BertPreTrainedModel):
+    r"""MBert Model for the Word Alignment task.
 
+    Code for EMNLP Findings 2022 paper, "Third-Party Aligner for Neural Word Alignments".
+    https://arxiv.org/abs/2211.04198
+    
+    Parameters:
+        config (:class:`~modelscope.models.nlp.structbert.SbertConfig`): Model configuration class with
+            all the parameters of the model.
+            Initializing with a config file does not load the weights associated with the model, only the
+            configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
+            weights.
+    """
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids", r"predictions.decoder.bias"]
 
@@ -63,6 +72,36 @@ class MBertForWordAlignment(BertPreTrainedModel):
         threshold=0.001, 
         bpe_level=False,
     ):
+        """
+        Args: src_input_ids: 
+            Indices of source input sequence tokens in the vocabulary. 
+        src_attention_mask: 
+            Source mask to avoid performing attention on padding token indices.
+        src_b2w_map: 
+            Word order numner of subword in source sequence.
+        tgt_input_ids: 
+            Indices of target input sequence tokens in the vocabulary.
+        tgt_attention_mask: 
+            Target mask to avoid performing attention on padding token indices.
+        tgt_b2w_map: 
+            Word order numner of subword in target sequence.
+        threshold: 
+            The threshold used to extract alignment.
+        bpe_level: 
+            Return subword-level alignment or not.
+        Example:              
+            {
+            'src_input_ids': LongTensor([[2478,242,24,4]]),
+            'src_attention_mask': BoolTensor([[1,1,1,1]]),
+            'src_b2w_map': LongTensor([[0,1,2,3]]),
+            'tgt_input_ids': LongTensor([[1056,356,934,263,7]]),
+            'tgt_attention_mask': BoolTensor([[1,1,1,1,1]]),
+            'tgt_b2w_map': longtensor([[0,1,1,2,3]]),
+            'threshold': 0.001, 
+            'bpe_level': False,
+            }     
+        Returns `modelscope.outputs.WordAlignmentOutput`
+        """
         with torch.no_grad():
             src_encoder_out = self.bert(
                 input_ids=src_input_ids,

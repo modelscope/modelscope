@@ -9,7 +9,7 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import Preprocessor
+from modelscope.preprocessors import WordAlignmentPreprocessor, Preprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['WordAlignmentPipeline']
@@ -21,7 +21,7 @@ class WordAlignmentPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 preprocessor: Optional[Preprocessor] = None,
+                 preprocessor: WordAlignmentPreprocessor = None,
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate=True,
@@ -31,10 +31,16 @@ class WordAlignmentPipeline(Pipeline):
         Args:
             model (str or Model): Supply either a local model dir which supported the WS task,
             or a model id from the model hub, or a torch model instance.
-            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
-            the model if supplied.
+            preprocessor (Preprocessor): A WordAlignmentPreprocessor.
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
+         Example:
+            >>> from modelscope.pipelines import pipeline
+            >>> from modelscope.utils.constant import Tasks
+            >>> model_id = 'damo/Third-Party-Supervised-Word-Aligner-mBERT-base-zhen'
+            >>> input = {"sentence_pair": '贝利 在 墨西哥 推出 自传 。||| pele promotes autobiography in mexico .'}
+            >>> pipeline_ins = pipeline(Tasks.word_alignment, model=model_id)
+            >>> print(pipeline_ins(input)['output'])
         """
         super().__init__(
             model=model,

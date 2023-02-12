@@ -40,7 +40,10 @@ if TYPE_CHECKING:
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
         TranslationEvaluationPreprocessor,
-        DialogueClassificationUsePreprocessor)
+        DialogueClassificationUsePreprocessor,
+        DocumentGroundedDialogGeneratePreprocessor,
+        DocumentGroundedDialogRetrievalPreprocessor,
+        DocumentGroundedDialogRerankPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -89,7 +92,10 @@ else:
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
             'TranslationEvaluationPreprocessor',
-            'DialogueClassificationUsePreprocessor'
+            'DialogueClassificationUsePreprocessor',
+            'DocumentGroundedDialogGeneratePreprocessor',
+            'DocumentGroundedDialogRetrievalPreprocessor',
+            'DocumentGroundedDialogRerankPreprocessor'
         ],
     }
 

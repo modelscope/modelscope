@@ -194,6 +194,9 @@ class NLPTasks(object):
     translation_evaluation = 'translation-evaluation'
     sudoku = 'sudoku'
     text2sql = 'text2sql'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
 
 class AudioTasks(object):

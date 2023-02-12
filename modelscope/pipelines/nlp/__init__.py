@@ -36,6 +36,9 @@ if TYPE_CHECKING:
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
     from .translation_evaluation_pipeline import TranslationEvaluationPipeline
     from .user_satisfaction_estimation_pipeline import UserSatisfactionEstimationPipeline
+    from .document_grounded_dialog_generate_pipeline import DocumentGroundedDialogGeneratePipeline
+    from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
+    from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
 
 else:
     _import_structure = {
@@ -84,7 +87,16 @@ else:
         ['CodeGeeXCodeGenerationPipeline'],
         'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
         'user_satisfaction_estimation_pipeline':
-        ['UserSatisfactionEstimationPipeline']
+        ['UserSatisfactionEstimationPipeline'],
+        'document_grounded_dialog_generate_pipeline': [
+            'DocumentGroundedDialogGeneratePipeline'
+        ],
+        'document_grounded_dialog_rerank_pipeline': [
+            'DocumentGroundedDialogRerankPipeline'
+        ],
+        'document_grounded_dialog_retrieval_pipeline': [
+            'DocumentGroundedDialogRetrievalPipeline'
+        ]
     }
 
     import sys

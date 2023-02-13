@@ -255,7 +255,6 @@ class Pipeline(ABC):
         postprocess_params = kwargs.get('postprocess_params')
 
         # batch data
-        batched_input = {}
         output_list = []
         for i in range(0, len(input), batch_size):
             end = min(i + batch_size, len(input))
@@ -267,13 +266,14 @@ class Pipeline(ABC):
             with device_placement(self.framework, self.device_name):
                 if self.framework == Frameworks.torch:
                     with torch.no_grad():
+                        batched_out = self._batch(preprocessed_list)
                         if self._auto_collate:
-                            out = self._batch(preprocessed_list)
-                            batched_out = self._collate_fn(out)
+                            batched_out = self._collate_fn(batched_out)
                         batched_out = self.forward(batched_out,
                                                    **forward_params)
                 else:
-                    batched_out = self.forward(batched_input, **forward_params)
+                    batched_out = self._batch(preprocessed_list)
+                    batched_out = self.forward(batched_out, **forward_params)
 
             for batch_idx in range(real_batch_size):
                 out = {}

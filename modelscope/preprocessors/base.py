@@ -282,7 +282,6 @@ class Preprocessor(ABC):
                 # TODO: for Sequence, need adapt to `mode` and `mode_dir` args,
                 # and add mode for Compose or other plans
                 raise NotImplementedError('Not supported yet!')
-            sub_cfg = deepcopy(sub_cfg)
 
             preprocessor = build_preprocessor(sub_cfg, field_name)
         else:
@@ -313,7 +312,7 @@ class Preprocessor(ABC):
         preprocessor.mode = preprocessor_mode
         sub_cfg.pop('model_dir', None)
         if not hasattr(preprocessor, 'cfg'):
-            preprocessor.cfg = sub_cfg
+            preprocessor.cfg = cfg
         return preprocessor
 
     def save_pretrained(self,

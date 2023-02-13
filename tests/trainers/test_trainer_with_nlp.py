@@ -34,7 +34,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             split='train').to_hf_dataset().select(range(2))
 
     def tearDown(self):
-        # shutil.rmtree(self.tmp_dir)
+        shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -145,6 +145,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             'by_epoch': False,
             'metric_key': 'accuracy',
             'max_checkpoint_num': 4,
+            'restore_best': True,
         }, {
             'type': 'TextLoggerHook',
             'interval': 1
@@ -192,6 +193,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             trainer.train()
 
         results_files = os.listdir(self.tmp_dir)
+        print(results_files)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in [22, 24, 26, 28]:
             self.assertTrue(
@@ -199,6 +201,13 @@ class TestTrainerWithNlp(unittest.TestCase):
                     f'accuracy{i}.pth' in filename
                     for filename in results_files
                 ]))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(self.tmp_dir, 'output', 'pytorch_model.bin')))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(self.tmp_dir, 'output_best',
+                             'pytorch_model.bin')))
 
     @unittest.skip('skip for now before test is re-configured')
     def test_trainer_with_configured_datasets(self):
@@ -305,6 +314,38 @@ class TestTrainerWithNlp(unittest.TestCase):
         with regress_tool.monitor_ms_train(
                 trainer, 'trainer_continue_train', level='strict'):
             trainer.train(os.path.join(self.tmp_dir, 'iter_3.pth'))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_new_style_configuration(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        def cfg_modify_fn(cfg):
+            cfg.train['checkpoint'] = {
+                # 保存最优metric对应的checkpoint
+                'best': {
+                    # 是否按照epoch进行保存，false为按照iter
+                    'by_epoch': True,
+                    # 保存的间隔
+                    'interval': 2,
+                    # 保存checkpoint数量的最大值
+                    'max_checkpoint_num': 2,
+                    # 根据指定的指标判断当前checkpoint是否为历史最优
+                    'metric_key': 'f1',
+                }
+            }
+            return cfg
+
+        kwargs = dict(
+            model='damo/nlp_structbert_sentence-similarity_chinese-tiny',
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            cfg_modify_fn=cfg_modify_fn,
+            work_dir=self.tmp_dir)
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_evaluation(self):

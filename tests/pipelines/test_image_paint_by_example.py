@@ -32,6 +32,7 @@ class ImagePaintbyexampleTest(unittest.TestCase):
         vis_img.save('result.png')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest')
     def test_paintbyexample(self):
         paintbyexample = pipeline(
             Tasks.image_paintbyexample, model=self.model_id)
@@ -42,6 +43,7 @@ class ImagePaintbyexampleTest(unittest.TestCase):
             raise ValueError('process error')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest')
     def test_paintbyexample_with_image(self):
         paintbyexample = pipeline(
             Tasks.image_paintbyexample, model=self.model_id)

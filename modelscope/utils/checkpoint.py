@@ -520,6 +520,9 @@ def load_task_model_checkpoint(model_to_load,
 
 
 def save_configuration(target_folder, config: Dict):
+    from modelscope.utils.config import Config
+    if isinstance(config, Config):
+        config = config.to_dict()
     if ConfigFields.pipeline not in config:
         config[ConfigFields.pipeline] = {'type': config[ConfigFields.task]}
     cfg_str = json.dumps(config, indent=4, cls=JSONIteratorEncoder)

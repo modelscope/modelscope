@@ -28,6 +28,8 @@ class CheckpointHook(Hook):
         by_epoch (bool): Saving checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): The directory to save checkpoints. If is None, use `trainer.work_dir`
+        output_sub_dir (str): The sub folder under the `save_dir` to save the output checkpoint for inference.
+            Default 'output'.
         save_last (bool): Whether to save the last checkpoint. Default: True.
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
             If the number exceeding the limit, earlier checkpoints will be deleted first.
@@ -40,6 +42,7 @@ class CheckpointHook(Hook):
                  by_epoch=True,
                  save_optimizer=True,
                  save_dir=None,
+                 output_sub_dir=ModelFile.TRAIN_OUTPUT_DIR,
                  save_last=True,
                  max_checkpoint_num=None,
                  **kwargs):
@@ -47,6 +50,7 @@ class CheckpointHook(Hook):
         self.by_epoch = by_epoch
         self.save_optimizer = save_optimizer
         self.save_dir = save_dir
+        self.output_sub_dir = output_sub_dir
         self.save_last = save_last
         self.rng_state = None
         self.max_checkpoint_num = None
@@ -136,7 +140,7 @@ class CheckpointHook(Hook):
                     self.history_checkpoints.append(ckpt_file)
 
     def _save_pretrained(self, trainer):
-        output_dir = os.path.join(self.save_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        output_dir = os.path.join(self.save_dir, self.output_sub_dir)
         from modelscope.trainers.parallel.utils import is_parallel
 
         if is_parallel(trainer.model):
@@ -238,6 +242,8 @@ class BestCkptSaverHook(CheckpointHook):
         by_epoch (bool): Save best checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): Output directory to save best checkpoint.
+        output_sub_dir (str): The sub folder under the `save_dir` to save the output checkpoint for inference.
+            Default 'output_best'.
         restore_best (bool): Whether to restore the best checkpoint after training.
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
             If the number exceeding the limit, checkpoints with worse metric will be deleted, which is judged by the
@@ -253,6 +259,7 @@ class BestCkptSaverHook(CheckpointHook):
                  by_epoch=True,
                  save_optimizer=True,
                  save_dir=None,
+                 output_sub_dir=ModelFile.TRAIN_BEST_OUTPUT_DIR,
                  save_file_name=None,
                  restore_best=False,
                  max_checkpoint_num=1,
@@ -264,6 +271,7 @@ class BestCkptSaverHook(CheckpointHook):
             by_epoch=by_epoch,
             save_optimizer=save_optimizer,
             save_dir=save_dir,
+            output_sub_dir=output_sub_dir,
             max_checkpoint_num=max_checkpoint_num,
             **kwargs,
         )
@@ -375,7 +383,8 @@ class BestCkptSaverHook(CheckpointHook):
     def after_run(self, trainer):
         if self.restore_best:
             if is_master():
-                self.load_checkpoint(self._best_ckpt_file, trainer)
+                LoadCheckpointHook.load_checkpoint(self._best_ckpt_file,
+                                                   trainer)
 
 
 @HOOKS.register_module(module_name=Hooks.LoadCheckpointHook)

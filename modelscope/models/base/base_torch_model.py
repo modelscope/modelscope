@@ -121,8 +121,8 @@ class TorchModel(Model, torch.nn.Module):
         if config is None and hasattr(self, 'cfg'):
             config = self.cfg
 
-        if config is not None:
-            save_config_function(target_folder, config)
-
         save_pretrained(self, target_folder, save_checkpoint_names,
                         save_function, **kwargs)
+
+        if config is not None:
+            save_config_function(target_folder, config)

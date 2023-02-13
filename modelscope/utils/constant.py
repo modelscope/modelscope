@@ -367,6 +367,7 @@ class ModelFile(object):
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
+    TRAIN_BEST_OUTPUT_DIR = 'output_best'
     TS_MODEL_FILE = 'model.ts'
     YAML_FILE = 'model.yaml'
     TOKENIZER_FOLDER = 'tokenizer'

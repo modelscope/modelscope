@@ -364,11 +364,10 @@ class Config:
                     assert type_field is not None, 'Getting object without an index from a list or tuple ' \
                                                    'needs an valid `type_field` param.'
                     _sub_cfg_dict = list(
-                        filter(lambda sub: getattr(sub, type_field) == key,
-                               _cfg_dict))
+                        filter(lambda sub: sub[type_field] == key, _cfg_dict))
                     _cfg_dict = _sub_cfg_dict[0]
                 else:
-                    _cfg_dict = getattr(_cfg_dict, key)
+                    _cfg_dict = _cfg_dict[key]
                 if val is not None:
                     _cfg_dict = _cfg_dict[int(val)]
             return _cfg_dict

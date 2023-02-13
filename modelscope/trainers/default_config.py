@@ -59,14 +59,6 @@ def merge_cfg(cfg: Config):
         cfg: The input cfg to be merged into.
     """
     cfg.merge_from_dict(DEFAULT_HOOKS_CONFIG, force=False)
-    # pop duplicate hook
-    check_list = [
-        'BestCkptSaverHook' == hook['type'] for hook in cfg.train['hooks']
-    ]
-    if any(check_list):
-        cfg.train.hooks = list(
-            filter(lambda hook: hook['type'] != 'CheckpointHook',
-                   cfg.train.hooks))
 
 
 def merge_hooks(cfg: Config) -> List[Dict]:

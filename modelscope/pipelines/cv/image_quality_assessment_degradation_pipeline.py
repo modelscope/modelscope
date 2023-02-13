@@ -84,7 +84,10 @@ class ImageQualityAssessmentDegradationPipeline(Pipeline):
         noise_degree, blur_degree, comp_degree = outputs['noise_degree'].cpu(
         ), outputs['blur_degree'].cpu(), outputs['comp_degree'].cpu()
         return {
-            OutputKeys.SCORES: [noise_degree, blur_degree, comp_degree],
+            OutputKeys.SCORES:
+            [noise_degree.item(),
+             blur_degree.item(),
+             comp_degree.item()],
             OutputKeys.LABELS: ['噪声强度', '模糊程度', '压缩强度']
         }
 

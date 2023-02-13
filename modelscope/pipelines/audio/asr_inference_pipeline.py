@@ -203,13 +203,11 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         code_base = self.cmd['code_base']
         self.recog_type = recog_type
         self.audio_format = audio_format
-        self.audio_fs = audio_fs
+        self.audio_fs = None
         checking_audio_fs = None
         self.raw_inputs = None
         if output_dir is not None:
             self.cmd['output_dir'] = output_dir
-        if audio_fs is not None:
-            self.cmd['fs']['audio_fs'] = audio_fs
         self.cmd['param_dict'] = param_dict
 
         if code_base == 'funasr':
@@ -254,6 +252,10 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 self.audio_in, self.audio_format)
             if checking_audio_fs is not None:
                 self.audio_fs = checking_audio_fs
+        if audio_fs is not None:
+            self.cmd['fs']['audio_fs'] = audio_fs
+        else:
+            self.cmd['fs']['audio_fs'] = self.audio_fs
 
         output = self.preprocessor.forward(self.model_cfg, self.recog_type,
                                            self.audio_format, self.audio_in,
@@ -293,7 +295,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'seed': 0,
             'ngram_weight': 0.9,
             'nbest': 1,
-            'num_workers': 1,
+            'num_workers': 0,
             'vad_infer_config': None,
             'vad_model_file': None,
             'vad_cmvn_file': None,

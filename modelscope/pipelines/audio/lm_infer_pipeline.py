@@ -156,7 +156,7 @@ class LanguageModelPipeline(Pipeline):
             'dtype': 'float32',
             'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'seed': 0,
-            'num_workers': 1,
+            'num_workers': 0,
             'log_level': 'ERROR',
             'key_file': None,
             'train_config': lm_model_config,

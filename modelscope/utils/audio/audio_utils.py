@@ -179,7 +179,7 @@ def generate_scp_from_url(url: str, key: str = None):
     if os.path.exists(url) and (url.lower().endswith('.wav')):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
-    # for wav url, download and generate wav.scp
+    # for wav url, download bytes data
     result = urlparse(url)
     if result.scheme is not None and len(result.scheme) > 0:
         storage = HTTPStorage()
@@ -243,17 +243,8 @@ def generate_scp_for_sv(url: str, key: str = None):
     result = urlparse(url)
     if result.scheme is not None and len(result.scheme) > 0:
         storage = HTTPStorage()
-        data = storage.read(url)
-        work_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(work_dir):
-            os.makedirs(work_dir)
-        wav_path = os.path.join(work_dir, os.path.basename(url))
-        with open(wav_path, 'wb') as fb:
-            fb.write(data)
-        wav_scp_path = os.path.join(work_dir, 'wav.scp')
-        with open(wav_scp_path, 'w') as ft:
-            scp_content = '\t'.join([wav_name, wav_path]) + '\n'
-            ft.writelines(scp_content)
+        wav_scp_path = storage.read(url)
+        return wav_scp_path
 
     return wav_scp_path
 

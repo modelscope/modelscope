@@ -168,8 +168,13 @@ class SpeakerVerificationPipeline(Pipeline):
                 else:
                     audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(
                         audio_in)
-                    data_cmd = [(audio_scp_1, 'speech', 'sound'),
-                                (audio_scp_2, 'ref_speech', 'sound')]
+                    if isinstance(audio_scp_1, bytes) and isinstance(
+                            audio_scp_2, bytes):
+                        data_cmd = [(audio_scp_1, 'speech', 'bytes'),
+                                    (audio_scp_2, 'ref_speech', 'bytes')]
+                    else:
+                        data_cmd = [(audio_scp_1, 'speech', 'sound'),
+                                    (audio_scp_2, 'ref_speech', 'sound')]
             # for raw bytes inputs
             elif isinstance(audio_in[0], bytes):
                 data_cmd = [(audio_in[0], 'speech', 'bytes'),

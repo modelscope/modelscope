@@ -154,8 +154,8 @@ def bbox_iou(box1, box2, x1y1x2y2=True):
     inter_rect_x2 = torch.min(b1_x2, b2_x2)
     inter_rect_y2 = torch.min(b1_y2, b2_y2)
 
-    inter_area = torch.clamp(inter_rect_x2 - inter_rect_x1 + 1, min=0) * \ torch.clamp(
-                             inter_rect_y2 - inter_rect_y1 + 1, min=0)   
+    inter_area = torch.clamp(inter_rect_x2 - inter_rect_x1 + 1, min=0) * \ 
+                 torch.clamp(inter_rect_y2 - inter_rect_y1 + 1, min=0)   
     b1_area = (b1_x2 - b1_x1 + 1) * (b1_y2 - b1_y1 + 1)
     b2_area = (b2_x2 - b2_x1 + 1) * (b2_y2 - b2_y1 + 1)
 

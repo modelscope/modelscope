@@ -40,7 +40,7 @@ if TYPE_CHECKING:
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
         TranslationEvaluationPreprocessor,
-        DialogueClassificationUsePreprocessor,
+        DialogueClassificationUsePreprocessor, SiameseUiePreprocessor,
         DocumentGroundedDialogGeneratePreprocessor,
         DocumentGroundedDialogRetrievalPreprocessor,
         DocumentGroundedDialogRerankPreprocessor)
@@ -92,6 +92,7 @@ else:
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
             'TranslationEvaluationPreprocessor',
+            'DialogueClassificationUsePreprocessor', 'SiameseUiePreprocessor',
             'DialogueClassificationUsePreprocessor',
             'DocumentGroundedDialogGeneratePreprocessor',
             'DocumentGroundedDialogRetrievalPreprocessor',

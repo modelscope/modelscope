@@ -194,6 +194,7 @@ class NLPTasks(object):
     translation_evaluation = 'translation-evaluation'
     sudoku = 'sudoku'
     text2sql = 'text2sql'
+    siamese_uie = 'siamese-uie'
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'

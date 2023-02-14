@@ -370,8 +370,8 @@ class Pipelines(object):
     mobile_image_super_resolution = 'mobile-image-super-resolution'
     image_human_parsing = 'm2fp-image-human-parsing'
     object_detection_3d_depe = 'object-detection-3d-depe'
-    bad_image_detecting = 'bad-image-detecting'
     nerf_recon_acc = 'nerf-recon-acc'
+    bad_image_detecting = 'bad-image-detecting'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -427,6 +427,7 @@ class Pipelines(object):
     token_classification = 'token-classification'
     translation_evaluation = 'translation-evaluation'
     user_satisfaction_estimation = 'user-satisfaction-estimation'
+    siamese_uie = 'siamese-uie'
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
@@ -777,6 +778,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_mobilenet-v2_bad-image-detecting'),
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
+    Tasks.siamese_uie: (Pipelines.siamese_uie,
+                        'damo/nlp_structbert_siamese-uie_chinese-base'),
 }
 
 
@@ -939,6 +942,7 @@ class Preprocessors(object):
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
     dialog_use_preprocessor = 'dialog-use-preprocessor'
+    siamese_uie_preprocessor = 'siamese-uie-preprocessor'
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         BertForDocumentSegmentation,
         BertModel,
         BertConfig,
+        SiameseUieModel,
     )
     from .bloom import BloomModel
     from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
@@ -82,6 +83,7 @@ else:
             'BertForDocumentSegmentation',
             'BertModel',
             'BertConfig',
+            'SiameseUieModel',
         ],
         'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
@@ -100,6 +102,13 @@ else:
             'SbertForSequenceClassification',
             'SbertForTokenClassification',
             'SbertModel',
+        ],
+        'veco': [
+            'VecoConfig',
+            'VecoForMaskedLM',
+            'VecoForSequenceClassification',
+            'VecoForTokenClassification',
+            'VecoModel',
         ],
         'lstm': [
             'LSTM',
@@ -140,13 +149,6 @@ else:
             'DocumentGroundedDialogGenerateModel',
             'DocumentGroundedDialogRetrievalModel',
             'DocumentGroundedDialogRerankModel'
-        ],
-        'veco': [
-            'VecoConfig',
-            'VecoForMaskedLM',
-            'VecoForSequenceClassification',
-            'VecoForTokenClassification',
-            'VecoModel',
         ],
         'xlm_roberta': ['XLMRobertaConfig', 'XLMRobertaModel'],
     }

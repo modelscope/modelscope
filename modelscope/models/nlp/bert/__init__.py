@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .text_classification import BertForSequenceClassification
     from .token_classification import BertForTokenClassification
     from .document_segmentation import BertForDocumentSegmentation
+    from .siamese_uie import SiameseUieModel
 else:
     _import_structure = {
         'backbone': [
@@ -29,6 +30,7 @@ else:
         'text_classification': ['BertForSequenceClassification'],
         'token_classification': ['BertForTokenClassification'],
         'document_segmentation': ['BertForDocumentSegmentation'],
+        'siamese_uie': ['SiameseUieModel'],
     }
 
     import sys

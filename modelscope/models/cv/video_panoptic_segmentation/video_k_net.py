@@ -331,6 +331,8 @@ class VideoKNet(TorchModel):
                 thing_masks_for_tracking_final, 0)
             thing_masks_for_tracking = thing_masks_for_tracking_final
             thing_masks_for_tracking_with_semantic_filter = thing_masks_for_tracking_final * semantic_thing
+        else:
+            things_bbox_for_tracking = []
 
         if len(things_labels_for_tracking) == 0:
             track_feats = None
@@ -368,10 +370,12 @@ class VideoKNet(TorchModel):
         semantic_map, binary_masks, labels = self.get_semantic_seg(
             panoptic_seg, segments_info)
 
+        vis_tracker = None
+        vis_sem = None
         from .visualizer import trackmap2rgb, cityscapes_cat2rgb, draw_bbox_on_img
-        vis_tracker = trackmap2rgb(track_maps)
-        vis_sem = cityscapes_cat2rgb(semantic_map)
         if len(things_labels_for_tracking):
+            vis_tracker = trackmap2rgb(track_maps)
+            vis_sem = cityscapes_cat2rgb(semantic_map)
             vis_tracker = draw_bbox_on_img(
                 vis_tracker,
                 things_bbox_for_tracking.cpu().numpy())

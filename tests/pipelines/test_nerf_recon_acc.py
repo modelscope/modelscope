@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+import torch
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -18,6 +20,7 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
         self.data_dir = 'data/test/videos/nerf_dir'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_by_direct_model_download(self):
         snapshot_path = snapshot_download(self.model_id)
         print('snapshot_path: {}'.format(snapshot_path))
@@ -32,6 +35,7 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
         print('facefusion.test_run_direct_model_download done')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub(self):
         nerf_recon_acc = pipeline(Tasks.nerf_recon_acc, model=self.model_id)
 
@@ -41,6 +45,7 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
         print('facefusion.test_run_modelhub done')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub_default_model(self):
         nerf_recon_acc = pipeline(Tasks.nerf_recon_acc)
 
@@ -50,6 +55,7 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
         print('facefusion.test_run_modelhub_default_model done')
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

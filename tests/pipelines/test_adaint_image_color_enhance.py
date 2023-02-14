@@ -3,6 +3,7 @@ import os.path as osp
 import unittest
 
 import cv2
+import torch
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -25,6 +26,7 @@ class AdaIntImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
             print(f'Output written to {osp.abspath("result.png")}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub(self):
         img_color_enhance = pipeline(
             Tasks.image_color_enhancement, model=self.model_id)
@@ -32,12 +34,14 @@ class AdaIntImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
                                 'data/test/images/image_color_enhance.png')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub_default_model(self):
         img_color_enhance = pipeline(Tasks.image_color_enhancement)
         self.pipeline_inference(img_color_enhance,
                                 'data/test/images/image_color_enhance.png')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

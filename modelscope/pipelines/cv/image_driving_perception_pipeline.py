@@ -94,7 +94,7 @@ class ImageDrivingPerceptionPipeline(Pipeline):
                 # Rescale boxes from img_size to (720, 1280)
                 det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4]).round()
 
-        results_dict[OutputKeys.BOXES].append(det[:, :4])
+        results_dict[OutputKeys.BOXES].append(det[:, :4].cpu().numpy())
         results_dict[OutputKeys.MASKS].append(da_seg_mask)
         results_dict[OutputKeys.MASKS].append(ll_seg_mask)
         return results_dict

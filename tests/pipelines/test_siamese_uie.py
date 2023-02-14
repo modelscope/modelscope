@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+import json
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.models.nlp import SiameseUieModel
@@ -38,7 +40,8 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
 
         print(
             f'sentence: {self.sentence}\n'
-            f'pipeline1:{pipeline1(input=self.sentence, schema=self.schema)}')
+            f'pipeline1:{pipeline1(input=self.sentence, schema=json.dumps(self.schema, ensure_ascii=False))}'
+        )
         print(f'sentence: {self.sentence}\n'
               f'pipeline2: {pipeline2(self.sentence, schema=self.schema)}')
 

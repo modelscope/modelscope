@@ -8,6 +8,7 @@ from math import ceil
 from time import time
 from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 
+import json
 import torch
 from scipy.special import softmax
 from torch.cuda.amp import autocast
@@ -89,7 +90,7 @@ class SiameseUiePipeline(Pipeline):
         """
         Args:
             input(str): sentence to extract
-            schema: (dict) schema of uie task
+            schema: (dict or str) schema of uie task
         Default Returns:
             List[List]:  predicted info list i.e.
             [[{'type': '人物', 'span': '谷口清太郎', 'offset': [18, 23]}],
@@ -111,6 +112,8 @@ class SiameseUiePipeline(Pipeline):
         # sanitize the parameters
         text = input
         schema = kwargs.pop('schema')
+        if type(schema) == str:
+            schema = json.loads(schema)
         output_all_prefix = kwargs.pop('output_all_prefix', False)
         tokenized_text = self.preprocessor([text])[0]
         pred_info_list = []

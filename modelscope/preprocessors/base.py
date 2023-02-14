@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
-from modelscope.metainfo import Models, Preprocessors
+from modelscope.metainfo import Models, Preprocessors, TaskModels
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
                                        ModeKeys, Tasks)
@@ -127,7 +127,7 @@ PREPROCESSOR_MAP = {
     (Models.veco, Tasks.sentence_similarity):
     Preprocessors.sen_cls_tokenizer,
 
-    # taskmodels
+    # ner models
     (Models.lcrf, Tasks.named_entity_recognition):
     Preprocessors.sequence_labeling_tokenizer,
     (Models.lcrf, Tasks.word_segmentation):
@@ -140,6 +140,26 @@ PREPROCESSOR_MAP = {
     Preprocessors.sequence_labeling_tokenizer,
     (Models.tcrf, Tasks.named_entity_recognition):
     Preprocessors.sequence_labeling_tokenizer,
+
+    # task models
+    (TaskModels.token_classification, Tasks.token_classification):
+    Preprocessors.sequence_labeling_tokenizer,
+    (TaskModels.token_classification, Tasks.part_of_speech):
+    Preprocessors.sequence_labeling_tokenizer,
+    (TaskModels.token_classification, Tasks.named_entity_recognition):
+    Preprocessors.sequence_labeling_tokenizer,
+    (TaskModels.text_classification, Tasks.text_classification):
+    Preprocessors.sen_cls_tokenizer,
+    (TaskModels.fill_mask, Tasks.fill_mask):
+    Preprocessors.fill_mask,
+    (TaskModels.feature_extraction, Tasks.feature_extraction):
+    Preprocessors.feature_extraction,
+    (TaskModels.information_extraction, Tasks.information_extraction):
+    Preprocessors.re_tokenizer,
+    (TaskModels.text_ranking, Tasks.text_ranking):
+    Preprocessors.text_ranking,
+    (TaskModels.text_generation, Tasks.text_generation):
+    Preprocessors.text_gen_tokenizer,
 
     # cv
     (Models.tinynas_detection, Tasks.image_object_detection):

@@ -9,7 +9,7 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import WordAlignmentPreprocessor, Preprocessor
+from modelscope.preprocessors import WordAlignmentPreprocessor
 from modelscope.utils.constant import Tasks
 
 __all__ = ['WordAlignmentPipeline']
@@ -49,7 +49,7 @@ class WordAlignmentPipeline(Pipeline):
             device=device,
             auto_collate=auto_collate)
         if preprocessor is None:
-            self.preprocessor = Preprocessor.from_pretrained(
+            self.preprocessor = WordAlignmentPreprocessor.from_pretrained(
                 self.model.model_dir,
                 sequence_length=sequence_length,
                 **kwargs)

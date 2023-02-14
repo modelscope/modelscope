@@ -27,7 +27,7 @@ class WordAlignmentPreprocessor(Preprocessor):
                  sequence_pair='sentence_pair',
                  mode=ModeKeys.INFERENCE,
                  use_fast: bool = False,
-                 max_length: int = None,
+                 sequence_length: int = None,
                  **kwargs):
         """The preprocessor for word alignment task.
 
@@ -36,7 +36,7 @@ class WordAlignmentPreprocessor(Preprocessor):
             sequence_pair: The key of the sequence pair.
             mode: The mode for the preprocessor.
             use_fast: Use the fast tokenizer or not.
-            max_length: The max sequence length which the model supported,
+            sequence_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             **kwargs: Extra args input. 
                 {sequence_length: The sequence length which the model supported.}
@@ -44,10 +44,10 @@ class WordAlignmentPreprocessor(Preprocessor):
         self.sequence_pair = sequence_pair
 
         kwargs[
-            'max_length'] = max_length if max_length is not None else kwargs.get(
-                'sequence_length', 128)
-        self.max_length = kwargs['max_length']
-        kwargs.pop('sequence_length', None)
+            'sequence_length'] = sequence_length if sequence_length is not None else kwargs.get(
+                'max_length', 128)
+        self.max_length = kwargs['sequence_length']
+        kwargs.pop('max_length', None)
         model_type = None
         
         if model_dir is not None:

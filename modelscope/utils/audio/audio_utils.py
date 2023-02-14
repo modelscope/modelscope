@@ -12,6 +12,7 @@ import numpy as np
 from modelscope.fileio.file import HTTPStorage
 
 SEGMENT_LENGTH_TRAIN = 16000
+SUPPORT_AUDIO_TYPE_SETS = ('.flac', '.mp3', '.ogg', '.opus', '.wav', '.pcm')
 
 
 class TtsTrainType(object):
@@ -176,7 +177,7 @@ def generate_scp_from_url(url: str, key: str = None):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
     # for local wav file inputs
-    if os.path.exists(url) and (url.lower().endswith('.wav')):
+    if os.path.exists(url) and (url.lower().endswith(SUPPORT_AUDIO_TYPE_SETS)):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
     # for wav url, download bytes data
@@ -228,8 +229,7 @@ def generate_scp_for_sv(url: str, key: str = None):
         wav_scp_path = url
         return wav_scp_path
     # for local wav file inputs
-    if os.path.exists(url) and (url.lower().endswith('.wav')
-                                or url.lower().endswith('.pcm')):
+    if os.path.exists(url) and (url.lower().endswith(SUPPORT_AUDIO_TYPE_SETS)):
         wav_path = url
         work_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(work_dir):

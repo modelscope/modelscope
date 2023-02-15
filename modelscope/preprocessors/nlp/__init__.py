@@ -63,7 +63,9 @@ else:
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',
         ],
-        'word_alignment_preprocessor': ['WordAlignmentPreprocessor',],
+        'word_alignment_preprocessor': [
+            'WordAlignmentPreprocessor',
+        ],
         'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor'],
         'token_classification_thai_preprocessor': [
             'NERPreprocessorThai',

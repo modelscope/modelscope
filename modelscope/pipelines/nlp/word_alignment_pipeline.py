@@ -59,11 +59,10 @@ class WordAlignmentPipeline(Pipeline):
         return self.model(**inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        
 
         align = []
         for k in inputs[0][0].keys():
-            align.append(f"{k[0]}-{k[1]}")
-        align = " ".join(align)
+            align.append(f'{k[0]}-{k[1]}')
+        align = ' '.join(align)
 
         return {OutputKeys.OUTPUT: align}

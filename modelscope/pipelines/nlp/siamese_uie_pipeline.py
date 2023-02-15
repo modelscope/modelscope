@@ -120,7 +120,7 @@ class SiameseUiePipeline(Pipeline):
         prefix_info = []
         self.forward(text, tokenized_text, prefix_info, schema, pred_info_list,
                      output_all_prefix)
-        return pred_info_list
+        return {'output': pred_info_list}
 
     def _pad(self, input_ids, pad_token_id):
         input_ids[-1] += [pad_token_id] * (self.max_len - len(input_ids[-1]))

@@ -189,9 +189,12 @@ class SpeakerVerificationPipeline(Pipeline):
                 # for single-file inputs
                 else:
                     audio_scp = generate_scp_for_sv(audio_in)
-                    data_cmd = [(audio_scp, 'speech', 'sound')]
+                    if isinstance(audio_scp, bytes):
+                        data_cmd = [(audio_scp, 'speech', 'bytes')]
+                    else:
+                        data_cmd = [(audio_scp, 'speech', 'sound')]
             # for raw bytes
-            elif isinstance(audio_in[0], bytes):
+            elif isinstance(audio_in, bytes):
                 data_cmd = [(audio_in, 'speech', 'bytes')]
             # for ndarray and tensor inputs
             else:

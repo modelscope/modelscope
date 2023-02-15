@@ -147,4 +147,3 @@ class TBSDetectionPipeline(Pipeline):
             OutputKeys.BOXES: bboxes
         }
         return outputs
-        

@@ -38,8 +38,8 @@ class DecodeBox(nn.Module):
 
         # 把先验框的尺寸调整成特征层大小的形式
         # 计算出先验框在特征层上对应的宽高
-        scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h) for anchor_width,
-                           anchor_height in self.anchors]
+        scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h) for anchor_width, anchor_height in
+                          self.anchors]
 
         # bs,3*(5+num_classes),13,13 -> bs,3,13,13,(5+num_classes)
         prediction = input.view(batch_size, self.num_anchors,
@@ -155,7 +155,7 @@ def bbox_iou(box1, box2, x1y1x2y2=True):
     inter_rect_y2 = torch.min(b1_y2, b2_y2)
 
     inter_area = torch.clamp(inter_rect_x2 - inter_rect_x1 + 1, min=0) * torch.clamp(
-        inter_rect_y2 - inter_rect_y1 + 1, min=0)   
+        inter_rect_y2 - inter_rect_y1 + 1, min=0)
     b1_area = (b1_x2 - b1_x1 + 1) * (b1_y2 - b1_y1 + 1)
     b2_area = (b2_x2 - b2_x1 + 1) * (b2_y2 - b2_y1 + 1)
 
@@ -361,4 +361,3 @@ def post_process(self, outputs, img_path):
             new_boxes.append([top, left, bottom, right])
 
     return new_boxes, top_confs
-    

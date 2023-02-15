@@ -49,6 +49,7 @@ class TextRankingTransformersPreprocessor(TextRankingPreprocessorBase):
                  max_length=None,
                  padding='max_length',
                  truncation=True,
+                 use_fast=True,
                  **kwargs):
         """The tokenizer preprocessor class for the text ranking preprocessor.
 
@@ -70,7 +71,8 @@ class TextRankingTransformersPreprocessor(TextRankingPreprocessorBase):
         self.tokenize_kwargs = kwargs
         self.tokenize_kwargs['padding'] = padding
         self.tokenize_kwargs['truncation'] = truncation
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_dir, use_fast=use_fast)
 
     @type_assert(object, dict)
     def __call__(self, data: Dict, **kwargs) -> Dict[str, Any]:

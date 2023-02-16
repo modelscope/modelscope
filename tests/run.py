@@ -560,7 +560,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--level', default=0, type=int, help='2 -- all, 1 -- p1, 0 -- p0')
     parser.add_argument(
-        '--disable_profile', action='store_true', help='disable profiling')
+        '--profile', action='store_true', help='enable profiling')
     parser.add_argument(
         '--run_config',
         default=None,
@@ -587,7 +587,7 @@ if __name__ == '__main__':
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'
     logger.info(f'TEST LEVEL: {test_level()}')
-    if not args.disable_profile:
+    if args.profile:
         from utils import profiler
         logger.info('enable profile ...')
         profiler.enable()

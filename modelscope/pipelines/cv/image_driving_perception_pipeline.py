@@ -33,15 +33,13 @@ class ImageDrivingPerceptionPipeline(Pipeline):
                                                         model='damo/cv_yolopv2_image-driving-perception_bdd100k')
     >>> image_driving_perception_pipeline(img_path)
     {
-        'boxes': [
-                    tensor([[1.0000e+00, 2.8600e+02, 4.0700e+02, 6.2600e+02],
-                            [8.8200e+02, 2.9600e+02, 1.0910e+03, 4.4700e+02],
-                            [3.7200e+02, 2.7500e+02, 5.2100e+02, 3.5500e+02],
-                            ...,
-                            [7.8600e+02, 2.8100e+02, 8.0400e+02, 3.0800e+02],
-                            [5.7000e+02, 2.8000e+02, 5.9400e+02, 3.0000e+02],
-                            [7.0500e+02, 2.7800e+02, 7.2100e+02, 2.9000e+02]])
-                ],
+        'boxes': array([[1.0000e+00, 2.8600e+02, 4.0700e+02, 6.2600e+02],
+                        [8.8200e+02, 2.9600e+02, 1.0910e+03, 4.4700e+02],
+                        [3.7200e+02, 2.7500e+02, 5.2100e+02, 3.5500e+02],
+                        ...,
+                        [7.8600e+02, 2.8100e+02, 8.0400e+02, 3.0800e+02],
+                        [5.7000e+02, 2.8000e+02, 5.9400e+02, 3.0000e+02],
+                        [7.0500e+02, 2.7800e+02, 7.2100e+02, 2.9000e+02]], dtype=float32)
         'masks': [
                     array([[0, 0, 0, ..., 0, 0, 0],
                             [0, 0, 0, ..., 0, 0, 0],
@@ -94,7 +92,7 @@ class ImageDrivingPerceptionPipeline(Pipeline):
                 # Rescale boxes from img_size to (720, 1280)
                 det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4]).round()
 
-        results_dict[OutputKeys.BOXES].append(det[:, :4].cpu().numpy())
+        results_dict[OutputKeys.BOXES] = det[:, :4].cpu().numpy()
         results_dict[OutputKeys.MASKS].append(da_seg_mask)
         results_dict[OutputKeys.MASKS].append(ll_seg_mask)
         return results_dict

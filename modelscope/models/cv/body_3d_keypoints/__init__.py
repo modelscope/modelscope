@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-
-    from .body_3d_pose import BodyKeypointsDetection3D
-
+    from .cannonical_pose import BodyKeypointsDetection3D
+    from .hdformer import HDFormerDetector
 else:
     _import_structure = {
-        'body_3d_pose': ['BodyKeypointsDetection3D'],
+        'cannonical_pose': ['BodyKeypointsDetection3D'],
+        'hdformer': ['HDFormerDetector'],
     }
 
     import sys

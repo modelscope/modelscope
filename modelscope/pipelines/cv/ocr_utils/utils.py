@@ -164,13 +164,59 @@ def polygons_from_bitmap(pred, _bitmap, dest_width, dest_height):
     return boxes, scores
 
 
+def boxes_from_bitmap(pred, _bitmap, dest_width, dest_height):
+    """
+    _bitmap: single map with shape (1, H, W),
+        whose values are binarized as {0, 1}
+    """
+
+    assert _bitmap.size(0) == 1
+    bitmap = _bitmap.cpu().numpy()[0]
+    pred = pred.cpu().detach().numpy()[0]
+    height, width = bitmap.shape
+    boxes = []
+    scores = []
+
+    contours, _ = cv2.findContours((bitmap * 255).astype(np.uint8),
+                                   cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours[:100]:
+        points, sside = get_mini_boxes(contour)
+        if sside < 3:
+            continue
+        points = np.array(points)
+
+        score = box_score_fast(pred, points.reshape(-1, 2))
+        if 0.3 > score:
+            continue
+
+        box = unclip(points, unclip_ratio=1.5).reshape(-1, 1, 2)
+        box, sside = get_mini_boxes(box)
+
+        if sside < 3 + 2:
+            continue
+
+        box = np.array(box).astype(np.int32)
+        if not isinstance(dest_width, int):
+            dest_width = dest_width.item()
+            dest_height = dest_height.item()
+
+        box[:, 0] = np.clip(
+            np.round(box[:, 0] / width * dest_width), 0, dest_width)
+        box[:, 1] = np.clip(
+            np.round(box[:, 1] / height * dest_height), 0, dest_height)
+        boxes.append(box.reshape(-1).tolist())
+        scores.append(score)
+    return boxes, scores
+
+
 def box_score_fast(bitmap, _box):
     h, w = bitmap.shape[:2]
     box = _box.copy()
-    xmin = np.clip(np.floor(box[:, 0].min()).astype(np.int), 0, w - 1)
-    xmax = np.clip(np.ceil(box[:, 0].max()).astype(np.int), 0, w - 1)
-    ymin = np.clip(np.floor(box[:, 1].min()).astype(np.int), 0, h - 1)
-    ymax = np.clip(np.ceil(box[:, 1].max()).astype(np.int), 0, h - 1)
+    xmin = np.clip(np.floor(box[:, 0].min()).astype(np.int32), 0, w - 1)
+    xmax = np.clip(np.ceil(box[:, 0].max()).astype(np.int32), 0, w - 1)
+    ymin = np.clip(np.floor(box[:, 1].min()).astype(np.int32), 0, h - 1)
+    ymax = np.clip(np.ceil(box[:, 1].max()).astype(np.int32), 0, h - 1)
 
     mask = np.zeros((ymax - ymin + 1, xmax - xmin + 1), dtype=np.uint8)
     box[:, 0] = box[:, 0] - xmin

@@ -22,26 +22,24 @@ logger = get_logger()
 class ImageMatchingPipeline(Pipeline):
     """ Image Matching Pipeline.
 
-    Example:
+    Examples:
 
-    ```python
-    from modelscope.outputs import OutputKeys
-    from modelscope.pipelines import pipeline
-    from modelscope.utils.constant import Tasks
+    >>> from modelscope.outputs import OutputKeys
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
 
 
-    task = 'image-matching'
-    model_id = 'damo/cv_quadtree_attention_image-matching_outdoor'
+    >>> task = 'image-matching'
+    >>> model_id = 'damo/cv_quadtree_attention_image-matching_outdoor'
 
-    input_location = [
-                        ['data/test/images/image_matching1.jpg',
-                        'data/test/images/image_matching2.jpg']
-                    ]
-    estimator = pipeline(Tasks.image_matching, model=self.model_id)
-    result = estimator(input_location)
-    kpts0, kpts1, conf = result[0][OutputKeys.MATCHES]
-    print(f'Found {len(kpts0)} matches')
-    ```
+    >>> input_location = [
+    >>>                     ['data/test/images/image_matching1.jpg',
+    >>>                     'data/test/images/image_matching2.jpg']
+    >>>                 ]
+    >>> estimator = pipeline(Tasks.image_matching, model=self.model_id)
+    >>> result = estimator(input_location)
+    >>> kpts0, kpts1, conf = result[0][OutputKeys.MATCHES]
+    >>> print(f'Found {len(kpts0)} matches')
     """
 
     def __init__(self, model: str, **kwargs):

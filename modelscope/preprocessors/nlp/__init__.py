@@ -30,6 +30,10 @@ if TYPE_CHECKING:
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
     from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
     from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
+    from .siamese_uie_preprocessor import SiameseUiePreprocessor
+    from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
+    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRetrievalPreprocessor
+    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRerankPreprocessor
 else:
     _import_structure = {
         'bert_seq_cls_tokenizer': ['Tokenize'],
@@ -83,7 +87,14 @@ else:
         'translation_evaluation_preprocessor':
         ['TranslationEvaluationPreprocessor'],
         'dialog_classification_use_preprocessor':
-        ['DialogueClassificationUsePreprocessor']
+        ['DialogueClassificationUsePreprocessor'],
+        'siamese_uie_preprocessor': ['SiameseUiePreprocessor'],
+        'document_grounded_dialog_generate_preprocessor':
+        ['DocumentGroundedDialogGeneratePreprocessor'],
+        'document_grounded_dialog_retrieval_preprocessor':
+        ['DocumentGroundedDialogRetrievalPreprocessor'],
+        'document_grounded_dialog_rerank_preprocessor':
+        ['DocumentGroundedDialogRerankPreprocessor']
     }
 
     import sys

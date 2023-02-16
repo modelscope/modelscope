@@ -19,6 +19,8 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.input_generate = '中国的首都位于<extra_id_0>。'
         self.model_id_translate = 'damo/t5-translate-base-test'
         self.input_translate = 'My name is Wolfgang and I live in Berlin'
+        self.model_id_rewriting = 'damo/nlp_mt5_dialogue-rewriting_chinese-base'
+        self.input_rewriting = '杨阳胖吗[SEP]我一个同学叫杨阳[SEP]他多少斤'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_T5(self):
@@ -47,6 +49,14 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation, model=self.model_id_translate)
         print(pipeline_ins(self.input_translate))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_rewriting_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.text2text_generation,
+            model=self.model_id_rewriting,
+            model_revision='v1.0.1')
+        print(pipeline_ins(self.input_rewriting))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_pipeline_with_model_id_batch(self):

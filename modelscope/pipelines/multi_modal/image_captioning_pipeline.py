@@ -10,7 +10,7 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
                                       Preprocessor)
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,7 +31,10 @@ class ImageCaptioningPipeline(Pipeline):
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model.eval()
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         if preprocessor is None:
+
             if isinstance(self.model, OfaForAllTasks):
                 self.preprocessor = OfaPreprocessor(self.model.model_dir)
             elif isinstance(self.model, MPlugForAllTasks):

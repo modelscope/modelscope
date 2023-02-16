@@ -47,10 +47,13 @@ class VideoMultiObjectTrackingPipeline(Pipeline):
         dataloader = LoadVideo(input, self.opt.img_size)
         self.tracker.set_buffer_len(dataloader.frame_rate)
 
-        results = []
+        output_boxes = []
+        output_labels = []
         output_timestamps = []
         frame_id = 0
         for i, (path, img, img0) in enumerate(dataloader):
+            output_boxex_cur = []
+            output_labels_cur = []
             output_timestamps.append(
                 timestamp_format(seconds=frame_id / dataloader.frame_rate))
             blob = torch.from_numpy(img).unsqueeze(0)
@@ -66,14 +69,20 @@ class VideoMultiObjectTrackingPipeline(Pipeline):
                         tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]
                     ])
                     online_ids.append(tid)
-                results.append([
-                    frame_id + 1, tid, tlwh[0], tlwh[1], tlwh[0] + tlwh[2],
-                    tlwh[1] + tlwh[3]
+                output_boxex_cur.append([
+                    int(max(0, tlwh[0])),
+                    int(max(0, tlwh[1])),
+                    int(tlwh[0] + tlwh[2]),
+                    int(tlwh[1] + tlwh[3])
                 ])
+                output_labels_cur.append(tid)
+            output_boxes.append(output_boxex_cur)
+            output_labels.append(output_labels_cur)
             frame_id += 1
 
         return {
-            OutputKeys.BOXES: results,
+            OutputKeys.BOXES: output_boxes,
+            OutputKeys.LABELS: output_labels,
             OutputKeys.TIMESTAMPS: output_timestamps
         }
 

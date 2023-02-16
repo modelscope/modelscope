@@ -13,7 +13,9 @@ from .base import LoggerHook
 
 @HOOKS.register_module(module_name=Hooks.TensorboardHook)
 class TensorboardHook(LoggerHook):
-    """TensorBoard hook for visualization.
+    """
+    TensorBoard hook for visualization.
+
     Args:
         out_dir: output directory to save tensorboard files
         interval (int): Logging interval (every k iterations).

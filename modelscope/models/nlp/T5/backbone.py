@@ -870,38 +870,40 @@ class T5Stack(T5PreTrainedModel):
 
     def parallelize(self, device_map=None):
         r"""
-            This is an experimental feature and is a subject to change at a
-            moment's notice.
+        This is an experimental feature and is a subject to change at a
+        moment's notice.
 
-            Uses a device map to distribute attention modules of the model
-            across several devices. If no device map is given, it will evenly
-            distribute blocks across all devices.
+        Uses a device map to distribute attention modules of the model
+        across several devices. If no device map is given, it will evenly
+        distribute blocks across all devices.
 
-            Args:
-                device_map (`Dict[int, list]`, optional, defaults to None):
-                    A dictionary that maps attention modules to devices. Note
-                    that the embedding module and LMHead are always
-                    automatically mapped to the first device (for esoteric
-                    reasons). That means that the first device should have fewer
-                    attention modules mapped to it than other devices. For
-                    reference, the t5 models have the following number of
-                    attention modules:
+        Args:
+            device_map (`Dict[int, list]`, optional, defaults to None):
+                A dictionary that maps attention modules to devices. Note
+                that the embedding module and LMHead are always
+                automatically mapped to the first device (for esoteric
+                reasons). That means that the first device should have fewer
+                attention modules mapped to it than other devices. For
+                reference, the t5 models have the following number of
+                attention modules:
 
-                        - t5-small: 6
-                        - t5-base: 12
-                        - t5-large: 24
-                        - t5-3b: 24
-                        - t5-11b: 24
+                    - t5-small: 6
+                    - t5-base: 12
+                    - t5-large: 24
+                    - t5-3b: 24
+                    - t5-11b: 24
 
-            Example:
+        Example:
 
-            ```python # Here is an example of a device map on a machine with 4
-            GPUs # using t5-3b, which has a total of 24 attention modules: model
-            = T5ForConditionalGeneration.from_pretrained("t5-3b") device_map = {
-                0: [0, 1, 2], 1: [3, 4, 5, 6, 7, 8, 9], 2: [10, 11, 12, 13, 14,
-                15, 16], 3: [17, 18, 19, 20, 21, 22, 23],
-            } model.parallelize(device_map) ``` all of the parallelize methods
-            in this file are the same
+        >>> # Here is an example of a device map on a machine with 4 GPUs
+        >>> # using t5-3b, which has a total of 24 attention modules:
+        >>> model = T5ForConditionalGeneration.from_pretrained("t5-3b")
+        >>> device_map = {
+        >>>     0: [0, 1, 2], 1: [3, 4, 5, 6, 7, 8, 9], 2: [10, 11, 12, 13, 14,
+        >>>     15, 16], 3: [17, 18, 19, 20, 21, 22, 23],
+        >>> }
+        >>> model.parallelize(device_map)
+        >>> # all of the parallelize methods in this file are the same
 
         """
         # Check validity of device_map
@@ -926,19 +928,21 @@ class T5Stack(T5PreTrainedModel):
 
     def deparallelize(self):
         r"""
-            Moves the model to cpu from a model parallel state.
+        Moves the model to cpu from a model parallel state.
 
-            Example:
+        Example:
 
-            ```python # On a 4 GPU machine with t5-3b: model =
-            T5ForConditionalGeneration.from_pretrained("t5-3b") device_map = {
-                0: [0, 1, 2], 1: [3, 4, 5, 6, 7, 8, 9], 2: [10, 11, 12, 13, 14,
-                15, 16], 3: [17, 18, 19, 20, 21, 22, 23],
-            } model.parallelize(device_map)  # Splits the model across several
-            devices model.deparallelize()  # Put the model back on cpu and
-            cleans memory by calling torch.cuda.empty_cache() ```
-
-            all of the deparallelize methods in this file are the same
+        >>> # On a 4 GPU machine with t5-3b:
+        >>> model = T5ForConditionalGeneration.from_pretrained("t5-3b")
+        >>> device_map = {
+        >>>     0: [0, 1, 2], 1: [3, 4, 5, 6, 7, 8, 9], 2: [10, 11, 12, 13, 14,
+        >>>     15, 16], 3: [17, 18, 19, 20, 21, 22, 23],
+        >>> }
+        >>> model.parallelize(device_map)
+        >>> # Splits the model across several devices model.deparallelize()
+        >>> # Put the model back on cpu and
+        >>> # cleans memory by calling torch.cuda.empty_cache()
+        >>> # all of the deparallelize methods in this file are the same
         """
         self.model_parallel = False
         self.device_map = None
@@ -1439,7 +1443,7 @@ class T5Model(T5PreTrainedModel):
 
         Example:
 
-        ```python >>> from transformers import T5Tokenizer, T5Model
+        >>> from transformers import T5Tokenizer, T5Model
 
         >>> tokenizer = T5Tokenizer.from_pretrained("t5-small")
         >>> model = T5Model.from_pretrained("t5-small")
@@ -1452,7 +1456,7 @@ class T5Model(T5PreTrainedModel):
         >>> # forward pass
         >>> outputs = model(input_ids=input_ids, decoder_input_ids=decoder_input_ids)
         >>> last_hidden_states = outputs.last_hidden_state
-        ```"""
+        """
         use_cache = use_cache if use_cache is not None else self.config.use_cache
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 

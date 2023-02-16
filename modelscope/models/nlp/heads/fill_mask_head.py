@@ -26,27 +26,49 @@ from transformers.activations import ACT2FN
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead
 from modelscope.models.builder import HEADS
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import (AttentionFillMaskModelOutput, ModelOutputBase,
+                                OutputKeys)
 from modelscope.utils.constant import Tasks
 
 
 @HEADS.register_module(Tasks.fill_mask, module_name=Heads.bert_mlm)
+@HEADS.register_module(Tasks.fill_mask, module_name=Heads.fill_mask)
 class BertFillMaskHead(TorchHead):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,
+                 hidden_size=768,
+                 hidden_act='gelu',
+                 layer_norm_eps=1e-12,
+                 vocab_size=30522,
+                 **kwargs):
+        super().__init__(
+            hidden_size=hidden_size,
+            hidden_act=hidden_act,
+            layer_norm_eps=layer_norm_eps,
+            vocab_size=vocab_size)
         self.cls = BertOnlyMLMHead(self.config)
 
-    def forward(self, sequence_output):
-        prediction_scores = self.cls(sequence_output)
-        return {OutputKeys.LOGITS: prediction_scores}
+    def forward(self,
+                inputs: ModelOutputBase,
+                attention_mask=None,
+                labels=None,
+                **kwargs):
+        logits = self.cls(inputs.last_hidden_state)
+        loss = None
+        if labels is not None:
+            loss = self.compute_loss(logits, labels)
+        return AttentionFillMaskModelOutput(
+            loss=loss,
+            logits=logits,
+            hidden_states=inputs.hidden_states,
+            attentions=inputs.attentions,
+        )
 
-    def compute_loss(self, outputs: Dict[str, torch.Tensor],
-                     labels) -> Dict[str, torch.Tensor]:
+    def compute_loss(self, logits: torch.Tensor, labels) -> torch.Tensor:
         loss_fct = CrossEntropyLoss()  # -100 index = padding token
         masked_lm_loss = loss_fct(
-            outputs.view(-1, self.config.vocab_size), labels.view(-1))
-        return {OutputKeys.LOSS: masked_lm_loss}
+            logits.view(-1, self.config.vocab_size), labels.view(-1))
+        return masked_lm_loss
 
 
 class BertPredictionHeadTransform(nn.Module):

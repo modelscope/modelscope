@@ -12,3 +12,4 @@ modelscope.preprocessors
    base     <modelscope.preprocessors.base>
    builders <modelscope.preprocessors.builder>
    video    <modelscope.preprocessors.video>
+   nlp      <modelscope.preprocessors.nlp>

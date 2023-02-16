@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import inspect
-import os
 from pathlib import Path
 
 

@@ -21,23 +21,26 @@ from .head import FPNSegmentor, LinearClassifier
     Tasks.image_segmentation, module_name=Models.vision_middleware)
 class VisionMiddlewareModel(TorchModel):
     """
-        The implementation of 'ViM: Vision Middleware for Unified Downstream Transferring'.
+    The implementation of 'ViM: Vision Middleware for Unified Downstream Transferring'.
         This model is dynamically initialized with the following parts:
-            - backbone: the upstream pre-trained backbone model (CLIP in this code)
-            - ViM: the zoo of middlestream trained ViM modules
-            - ViM-aggregation: the specific aggregation weights for downstream tasks
+
+        - backbone: the upstream pre-trained backbone model (CLIP in this code)
+        - ViM: the zoo of middlestream trained ViM modules
+        - ViM-aggregation: the specific aggregation weights for downstream tasks
     """
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """
-            Initialize a ViM-based Model
-            Args:
-                model_dir: model id or path,
-                where model_dir/pytorch_model.pt contains:
-                    'meta_info': basic information of ViM, e.g. task_list
-                    'backbone_weights': parameters of backbone [upstream]
-                    'ViM_weights': parameters of ViM [midstream]
-                    'ViM_agg_weights': parameters of ViM-aggregation [downstream]
+        Initialize a ViM-based Model.
+
+        Args:
+            model_dir: model id or path, where model_dir/pytorch_model.pt contains:
+
+                - 'meta_info': basic information of ViM, e.g. task_list
+                - 'backbone_weights': parameters of backbone [upstream]
+                - 'ViM_weights': parameters of ViM [midstream]
+                - 'ViM_agg_weights': parameters of ViM-aggregation [downstream]
+
         """
         super(VisionMiddlewareModel, self).__init__()
 
@@ -106,10 +109,11 @@ class VisionMiddlewareModel(TorchModel):
 
     def forward(self, inputs, task_name):
         """
-            Dynamic Forward Function of ViM
-            Args:
-                x: the input images (B, 3, H, W)
-                task_name: specified task for forwarding
+        Dynamic Forward Function of ViM.
+
+        Args:
+            x: the input images (B, 3, H, W)
+            task_name: specified task for forwarding
         """
         if task_name not in self.task_list:
             raise NotImplementedError(
@@ -122,11 +126,12 @@ class VisionMiddlewareModel(TorchModel):
 
     def postprocess(self, outputs, inputs, task_name):
         """
-            Post-process of ViM, based on task_name
-            Args:
-                inputs: batched input image (B, 3, H, W)
-                outputs: batched output (format based on task_name)
-                task_name: str, task name
+        Post-process of ViM, based on task_name.
+
+        Args:
+            inputs: batched input image (B, 3, H, W)
+            outputs: batched output (format based on task_name)
+            task_name (str): task name
         """
 
         _, in_channels, img_height, img_width = inputs.size()
@@ -163,6 +168,6 @@ class VisionMiddlewareModel(TorchModel):
 
     def get_tasks(self):
         """
-            Get the supported tasks of current ViM model
+        Get the supported tasks of current ViM model.
         """
         return self.task_list

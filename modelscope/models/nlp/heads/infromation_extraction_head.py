@@ -5,6 +5,7 @@ from torch import nn
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead
 from modelscope.models.builder import HEADS
+from modelscope.outputs import InformationExtractionOutput, ModelOutputBase
 from modelscope.utils.constant import Tasks
 
 
@@ -14,19 +15,27 @@ from modelscope.utils.constant import Tasks
     Tasks.relation_extraction, module_name=Heads.information_extraction)
 class InformationExtractionHead(TorchHead):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        config = self.config
-        assert config.get('labels') is not None
-        self.labels = config.labels
-        self.s_layer = nn.Linear(config.hidden_size, 2)  # head, tail, bce
-        self.o_layer = nn.Linear(2 * config.hidden_size, 2)  # head, tail, bce
-        self.p_layer = nn.Linear(config.hidden_size,
-                                 len(self.labels))  # label, ce
-        self.mha = nn.MultiheadAttention(config.hidden_size, 4)
+    def __init__(self, hidden_size=768, labels=None, **kwargs):
+        super().__init__(hidden_size=hidden_size, labels=labels)
+        assert labels is not None
+        self.labels = labels
+        self.s_layer = nn.Linear(hidden_size, 2)  # head, tail, bce
+        self.o_layer = nn.Linear(2 * hidden_size, 2)  # head, tail, bce
+        self.p_layer = nn.Linear(hidden_size, len(self.labels))  # label, ce
+        self.mha = nn.MultiheadAttention(hidden_size, 4)
 
-    def forward(self, sequence_output, text, offsets, threshold=0.5):
-        # assert batch size == 1
+    def forward(self,
+                inputs: ModelOutputBase,
+                attention_mask=None,
+                labels=None,
+                text=None,
+                offsets=None,
+                threshold=0.5,
+                **kwargs) -> InformationExtractionOutput:
+
+        assert text is not None
+        assert offsets is not None
+        sequence_output = inputs.last_hidden_state
         spos = []
         s_head_logits, s_tail_logits = self.s_layer(sequence_output).split(
             1, dim=-1)  # (b, seq_len, 2)
@@ -64,7 +73,8 @@ class InformationExtractionHead(TorchHead):
                     if label[i] > threshold:
                         predicate = self.labels[i]
                         spos.append((subject, predicate, object))
-        return spos
+
+        return InformationExtractionOutput(spo_list=spos)
 
     def _get_masks_and_mentions(self,
                                 text,

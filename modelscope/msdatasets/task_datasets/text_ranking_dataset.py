@@ -17,6 +17,8 @@ from .torch_base_dataset import TorchTaskDataset
 
 @TASK_DATASETS.register_module(
     group_key=Tasks.text_ranking, module_name=Models.bert)
+@TASK_DATASETS.register_module(
+    group_key=Tasks.sentence_embedding, module_name=Models.bert)
 class TextRankingDataset(TorchTaskDataset):
 
     def __init__(self,

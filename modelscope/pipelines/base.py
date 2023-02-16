@@ -22,7 +22,6 @@ from modelscope.utils.device import (create_device, device_placement,
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import _find_free_port, _is_free_port
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -256,7 +255,6 @@ class Pipeline(ABC):
         postprocess_params = kwargs.get('postprocess_params')
 
         # batch data
-        batched_input = {}
         output_list = []
         for i in range(0, len(input), batch_size):
             end = min(i + batch_size, len(input))
@@ -268,13 +266,14 @@ class Pipeline(ABC):
             with device_placement(self.framework, self.device_name):
                 if self.framework == Frameworks.torch:
                     with torch.no_grad():
+                        batched_out = self._batch(preprocessed_list)
                         if self._auto_collate:
-                            out = self._batch(preprocessed_list)
-                            batched_out = self._collate_fn(out)
+                            batched_out = self._collate_fn(batched_out)
                         batched_out = self.forward(batched_out,
                                                    **forward_params)
                 else:
-                    batched_out = self.forward(batched_input, **forward_params)
+                    batched_out = self._batch(preprocessed_list)
+                    batched_out = self.forward(batched_out, **forward_params)
 
             for batch_idx in range(real_batch_size):
                 out = {}
@@ -426,6 +425,7 @@ class DistributedPipeline(Pipeline):
             'master_ip']
         master_port = '29500' if 'master_port' not in kwargs else kwargs[
             'master_port']
+        from modelscope.utils.torch_utils import _find_free_port, _is_free_port
         if not _is_free_port(int(master_port)):
             master_port = str(_find_free_port())
         self.model_pool.map(

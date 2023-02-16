@@ -37,10 +37,11 @@ class SequenceClassificationTrainer(BaseTrainer):
         """get attribute from config, if the attribute does exist, return false
 
         Example:
+
         >>> self.__attr_is_exist("model path")
-        out: (model-path, "/workspace/bert-base-sst2")
+        >>> out: (model-path, "/workspace/bert-base-sst2")
         >>> self.__attr_is_exist("model weights")
-        out: (model-weights, False)
+        >>> out: (model-weights, False)
 
         Args:
             attr (str): attribute str, "model path" -> config["model"][path]

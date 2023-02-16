@@ -1,4 +1,3 @@
-import os
 from collections import OrderedDict
 from typing import Any, Dict, Mapping, Tuple
 
@@ -7,9 +6,7 @@ from torch.utils.data.dataloader import default_collate
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter
 from modelscope.metainfo import Models
-from modelscope.preprocessors import (
-    Preprocessor, TextClassificationTransformersPreprocessor,
-    build_preprocessor)
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import ModeKeys, Tasks
 
 
@@ -18,8 +15,6 @@ from modelscope.utils.constant import ModeKeys, Tasks
     Tasks.text_classification, module_name=Models.structbert)
 @EXPORTERS.register_module(Tasks.sentence_similarity, module_name=Models.bert)
 @EXPORTERS.register_module(
-    Tasks.zero_shot_classification, module_name=Models.bert)
-@EXPORTERS.register_module(
     Tasks.sentiment_classification, module_name=Models.bert)
 @EXPORTERS.register_module(Tasks.nli, module_name=Models.bert)
 @EXPORTERS.register_module(
@@ -27,8 +22,6 @@ from modelscope.utils.constant import ModeKeys, Tasks
 @EXPORTERS.register_module(
     Tasks.sentiment_classification, module_name=Models.structbert)
 @EXPORTERS.register_module(Tasks.nli, module_name=Models.structbert)
-@EXPORTERS.register_module(
-    Tasks.zero_shot_classification, module_name=Models.structbert)
 class SbertForSequenceClassificationExporter(TorchModelExporter):
 
     def generate_dummy_inputs(self,

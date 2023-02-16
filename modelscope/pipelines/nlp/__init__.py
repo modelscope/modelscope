@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .feature_extraction_pipeline import FeatureExtractionPipeline
     from .fill_mask_pipeline import FillMaskPipeline
     from .information_extraction_pipeline import InformationExtractionPipeline
+    from .interactive_translation_pipeline import InteractiveTranslationPipeline
     from .named_entity_recognition_pipeline import NamedEntityRecognitionPipeline
     from .text_ranking_pipeline import TextRankingPipeline
     from .sentence_embedding_pipeline import SentenceEmbeddingPipeline
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
+    from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline, WordSegmentationThaiPipeline
@@ -34,6 +36,10 @@ if TYPE_CHECKING:
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
     from .translation_evaluation_pipeline import TranslationEvaluationPipeline
     from .user_satisfaction_estimation_pipeline import UserSatisfactionEstimationPipeline
+    from .siamese_uie_pipeline import SiameseUiePipeline
+    from .document_grounded_dialog_generate_pipeline import DocumentGroundedDialogGeneratePipeline
+    from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
+    from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
 
 else:
     _import_structure = {
@@ -44,7 +50,7 @@ else:
         ['DialogIntentPredictionPipeline'],
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],
         'dialog_state_tracking_pipeline': ['DialogStateTrackingPipeline'],
-        'domain_classification_pipeline':
+        'fasttext_text_classification_pipeline':
         ['FasttextSequenceClassificationPipeline'],
         'document_segmentation_pipeline': ['DocumentSegmentationPipeline'],
         'extractive_summarization_pipeline':
@@ -53,6 +59,7 @@ else:
         'feature_extraction_pipeline': ['FeatureExtractionPipeline'],
         'fill_mask_pipeline': ['FillMaskPipeline'],
         'information_extraction_pipeline': ['InformationExtractionPipeline'],
+        'interactive_translation_pipeline': ['InteractiveTranslationPipeline'],
         'named_entity_recognition_pipeline': [
             'NamedEntityRecognitionPipeline',
         ],
@@ -65,7 +72,7 @@ else:
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'text_generation_pipeline':
         ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
-        'text2text_generation_pipeline': ['Text2TextGenerationPipeline'],
+        'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
         'translation_quality_estimation_pipeline':
@@ -81,7 +88,17 @@ else:
         ['CodeGeeXCodeGenerationPipeline'],
         'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
         'user_satisfaction_estimation_pipeline':
-        ['UserSatisfactionEstimationPipeline']
+        ['UserSatisfactionEstimationPipeline'],
+        'siamese_uie_pipeline': ['SiameseUiePipeline'],
+        'document_grounded_dialog_generate_pipeline': [
+            'DocumentGroundedDialogGeneratePipeline'
+        ],
+        'document_grounded_dialog_rerank_pipeline': [
+            'DocumentGroundedDialogRerankPipeline'
+        ],
+        'document_grounded_dialog_retrieval_pipeline': [
+            'DocumentGroundedDialogRetrievalPipeline'
+        ]
     }
 
     import sys

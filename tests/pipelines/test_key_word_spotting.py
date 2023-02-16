@@ -153,8 +153,34 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
                     'fa_per_hour': 0.0
                 }]
             }
+        },
+        'test_run_with_all_models': {
+            'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
+            'checking_value': '小云小云',
+            'example': {
+                'kws_type':
+                'wav',
+                'kws_list': [{
+                    'keyword': '小云小云',
+                    'offset': 5.76,
+                    'length': 9.132938,
+                    'confidence': 0.990368
+                }],
+                'wav_count':
+                1
+            }
         }
     }
+
+    all_models_info = [{
+        'model_id': 'damo/speech_charctc_kws_phone-xiaoyun-commands',
+        'wav_path': 'data/test/audios/kws_xiaoyunxiaoyun.wav',
+        'keywords': '小云小云'
+    }, {
+        'model_id': 'damo/speech_charctc_kws_phone-xiaoyun',
+        'wav_path': 'data/test/audios/kws_xiaoyunxiaoyun.wav',
+        'keywords': '小云小云'
+    }]
 
     def setUp(self) -> None:
         self.model_id = 'damo/speech_charctc_kws_phone-xiaoyun'
@@ -295,6 +321,19 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=audio_list)
         self.check_result('test_run_with_roc', kws_result)
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_all_models(self):
+        logger.info('test_run_with_all_models')
+        for item in self.all_models_info:
+            model_id = item['model_id']
+            wav_path = item['wav_path']
+            keywords = item['keywords']
+
+            logger.info('run with model_id:' + model_id)
+            kws_result = self.run_pipeline(
+                model_id=model_id, audio_in=wav_path, keywords=keywords)
+            self.check_result('test_run_with_all_models', kws_result)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

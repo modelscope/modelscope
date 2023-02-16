@@ -96,9 +96,9 @@ else
 fi
 if [[ $python_version == 3.7* ]]; then
     base_tag=$base_tag-py37
-elif [[ $python_version == z* ]]; then
+elif [[ $python_version == 3.8* ]]; then
     base_tag=$base_tag-py38
-elif [[ $python_version == z* ]]; then
+elif [[ $python_version == 3.9* ]]; then
     base_tag=$base_tag-py39
 else
     echo "Unsupport python version: $python_version"
@@ -129,8 +129,15 @@ else
     echo "Building dsw image well need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
 fi
+if [ "$is_ci_test" == "True" ]; then
+    echo "Building CI image, uninstall modelscope"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y"
+fi
 printf "$docker_file_content" > Dockerfile
-docker build -t $IMAGE_TO_BUILD  \
+
+while true
+do
+  docker build -t $IMAGE_TO_BUILD  \
              --build-arg USE_GPU \
              --build-arg BASE_IMAGE \
              --build-arg PYTHON_VERSION \
@@ -138,11 +145,14 @@ docker build -t $IMAGE_TO_BUILD  \
              --build-arg CUDATOOLKIT_VERSION \
              --build-arg TENSORFLOW_VERSION \
              -f Dockerfile .
+  if [ $? -eq 0 ]; then
+    echo "Image build done"
+    break
+  else
+    echo "Running docker build command error, we will retry"
+  fi
+done
 
-if [ $? -ne 0 ]; then
-  echo "Running docker build command error, please check the log!"
-  exit -1
-fi
 if [ "$run_ci_test" == "True" ]; then
     echo "Running ci case."
     export MODELSCOPE_CACHE=/home/mulin.lyh/model_scope_cache

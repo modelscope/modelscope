@@ -185,10 +185,13 @@ class PVP(ABC):
         """
         Encode an input example using this pattern-verbalizer pair.
 
-        :param example: the input example to encode
-        :param priming: whether to use this example for priming
-        :param labeled: if ``priming=True``, whether the label should be appended to this example
-        :return: A tuple, consisting of a list of input ids and a list of token type ids
+        Args:
+            example: the input example to encode
+            priming: whether to use this example for priming
+            labeled: if ``priming=True``, whether the label should be appended to this example
+
+        Returns:
+            A tuple, consisting of a list of input ids and a list of token type ids
         """
 
         if not priming:
@@ -498,8 +501,10 @@ class PVP(ABC):
         mask token (or one consecutive sequence of mask tokens for PET with multiple masks). If a task requires only a
         single sequence of text, the second sequence should be an empty list.
 
-        :param example: the input example to process
-        :return: Two sequences of text. All text segments can optionally be marked as being shortenable.
+        Args:
+            example: the input example to process
+        Returns:
+            Two sequences of text. All text segments can optionally be marked as being shortenable.
         """
         pass
 
@@ -634,10 +639,13 @@ class CopaPVP(PVP):
         """
         Encode an input example using this pattern-verbalizer pair.
 
-        :param example: the input example to encode
-        :param priming: whether to use this example for priming
-        :param labeled: if ``priming=True``, whether the label should be appended to this example
-        :return: A tuple, consisting of a list of input ids and a list of token type ids
+        Args:
+            example: the input example to encode
+            priming: whether to use this example for priming
+            labeled: if ``priming=True``, whether the label should be appended to this example
+
+        Returns:
+             A tuple, consisting of a list of input ids and a list of token type ids
         """
         if self.continuous_prompt or self.pattern_id < 2:
             return super().encode(example, priming=priming, labeled=labeled)
@@ -765,11 +773,12 @@ class WscPVP(PVP):
                labeled: bool = False):
         """
         Encode an input example using this pattern-verbalizer pair.
-
-        :param example: the input example to encode
-        :param priming: whether to use this example for priming
-        :param labeled: if ``priming=True``, whether the label should be appended to this example
-        :return: A tuple, consisting of a list of input ids and a list of token type ids
+        Args:
+            example: the input example to encode
+            priming: whether to use this example for priming
+            labeled: if ``priming=True``, whether the label should be appended to this example
+        Returns:
+             A tuple, consisting of a list of input ids and a list of token type ids
         """
         if self.args.loss_func in ['generative', 'mix']:
             sample = super().encode(example, priming=priming, labeled=labeled)

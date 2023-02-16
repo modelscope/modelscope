@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (LSTMCRFForWordSegmentation,
+from modelscope.models.nlp import (LSTMForTokenClassificationWithCRF,
                                    SbertForTokenClassification)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationPipeline
@@ -57,7 +57,7 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_lstmcrf_news_by_direct_model_download(self):
         cache_path = snapshot_download(self.lstmcrf_news_model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = LSTMCRFForWordSegmentation(cache_path, tokenizer=tokenizer)
+        model = LSTMForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)
@@ -69,7 +69,7 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_lstmcrf_ecom_by_direct_model_download(self):
         cache_path = snapshot_download(self.lstmcrf_ecom_model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = LSTMCRFForWordSegmentation(cache_path, tokenizer=tokenizer)
+        model = LSTMForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = WordSegmentationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)

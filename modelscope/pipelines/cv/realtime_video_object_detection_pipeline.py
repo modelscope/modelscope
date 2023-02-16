@@ -10,8 +10,7 @@ from PIL import Image
 from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.realtime_object_detection import \
-    RealtimeVideoDetector
+from modelscope.models.cv.stream_yolo import RealtimeVideoDetector
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Input, Model, Pipeline, Tensor

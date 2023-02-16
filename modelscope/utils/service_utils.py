@@ -5,12 +5,9 @@ from io import BytesIO
 import json
 import numpy as np
 import requests
-from PIL import Image
 
 from modelscope.outputs import TASK_OUTPUTS, OutputKeys
 from modelscope.pipeline_inputs import TASK_INPUTS, InputType
-from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks, TasksIODescriptions
 
 
 # service data decoder func decodes data from network and convert it to pipeline's input
@@ -91,12 +88,14 @@ def decode_base64_to_binary(encoding):
 
 
 def decode_base64_to_image(encoding):
+    from PIL import Image
     content = encoding.split(';')[1]
     image_encoded = content.split(',')[1]
     return Image.open(BytesIO(base64.b64decode(image_encoded)))
 
 
 def encode_array_to_img_base64(image_array):
+    from PIL import Image
     with BytesIO() as output_bytes:
         pil_image = Image.fromarray(image_array.astype(np.uint8))
         pil_image.save(output_bytes, 'PNG')

@@ -13,7 +13,7 @@ from modelscope.pipelines.nlp import TokenClassificationPipeline
 from modelscope.preprocessors import (
     Preprocessor, TokenClassificationTransformersPreprocessor,
     WordSegmentationPreprocessorThai)
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.tensor_utils import (torch_nested_detach,
                                            torch_nested_numpify)
 
@@ -28,12 +28,12 @@ class WordSegmentationPipeline(TokenClassificationPipeline):
     NOTE: The preprocessor will first split the sentence into single characters,
     then feed them into the tokenizer with the parameter is_split_into_words=True.
 
-    Example:
-    >>> from modelscope.pipelines import pipeline
-    >>> pipeline_ins = pipeline(task='word-segmentation',
-    >>>    model='damo/nlp_structbert_word-segmentation_chinese-base')
-    >>> sentence1 = '今天天气不错，适合出去游玩'
-    >>> print(pipeline_ins(sentence1))
+    Examples:
+        >>> from modelscope.pipelines import pipeline
+        >>> pipeline_ins = pipeline(task='word-segmentation',
+        >>>    model='damo/nlp_structbert_word-segmentation_chinese-base')
+        >>> sentence1 = '今天天气不错，适合出去游玩'
+        >>> print(pipeline_ins(sentence1))
 
     To view other examples plese check tests/pipelines/test_word_segmentation.py.
     """
@@ -100,6 +100,10 @@ class WordSegmentationThaiPipeline(MultilingualWordSegmentationPipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         if preprocessor is None:
             self.preprocessor = WordSegmentationPreprocessorThai(
                 self.model.model_dir,

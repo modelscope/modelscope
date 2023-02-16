@@ -18,7 +18,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
-@MODELS.register_module('face-recognition-ood', 'rts-backbone')
+@MODELS.register_module('face-recognition', 'rts-backbone')
 class RTSBackbone(TorchModel):
 
     def __init__(self, *args, **kwargs):

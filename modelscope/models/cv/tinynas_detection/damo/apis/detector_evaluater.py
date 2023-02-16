@@ -28,7 +28,11 @@ class Evaluater:
         self.ckpt = torch.load(
             self.cfg.test.checkpoint_path, map_location=self.device)
         self.model = build_local_model(self.cfg, self.device)
-        self.model.load_state_dict(self.ckpt['model'])
+        if 'state_dict' in self.ckpt:
+            state_dict = self.ckpt['state_dict']
+        elif 'model' in self.ckpt:
+            state_dict = self.ckpt['model']
+        self.model.load_state_dict(state_dict)
         self.val_loader = self.get_data_loader(self.cfg, False)
 
     def get_data_loader(self, cfg, distributed=False):

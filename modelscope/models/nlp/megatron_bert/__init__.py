@@ -11,7 +11,7 @@ else:
     _import_structure = {
         'configuration': ['MegatronBertConfig'],
         'backbone': ['MegatronBertModel'],
-        'distributed_plug': ['MegatronBertForMaskedLM'],
+        'fill_mask': ['MegatronBertForMaskedLM'],
     }
 
     import sys

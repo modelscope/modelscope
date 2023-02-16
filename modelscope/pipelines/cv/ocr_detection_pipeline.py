@@ -12,14 +12,14 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.pipelines.cv.ocr_utils.model_vlpt import VLPTModel
+from modelscope.pipelines.cv.ocr_utils.model_vlpt import DBModel, VLPTModel
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
-from .ocr_utils import (SegLinkDetector, cal_width, combine_segments_python,
-                        decode_segments_links_python, nms_python,
-                        polygons_from_bitmap, rboxes_to_polygons)
+from .ocr_utils import (SegLinkDetector, boxes_from_bitmap, cal_width,
+                        combine_segments_python, decode_segments_links_python,
+                        nms_python, polygons_from_bitmap, rboxes_to_polygons)
 
 if tf.__version__ >= '2.0':
     import tf_slim as slim
@@ -48,6 +48,33 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
 @PIPELINES.register_module(
     Tasks.ocr_detection, module_name=Pipelines.ocr_detection)
 class OCRDetectionPipeline(Pipeline):
+    """ OCR Recognition Pipeline.
+
+    Example:
+
+    ```python
+    >>> from modelscope.pipelines import pipeline
+
+    >>> ocr_detection = pipeline('ocr_detection', model='damo/cv_resnet18_ocr-detection-line-level_damo')
+    >>> result = ocr_detection('https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/ocr_detection.jpg')
+
+        {'polygons': array([[220,  14, 780,  14, 780,  64, 220,  64],
+       [196, 369, 604, 370, 604, 425, 196, 425],
+       [ 21, 730, 425, 731, 425, 787,  21, 786],
+       [421, 731, 782, 731, 782, 789, 421, 789],
+       [  0, 121, 109,   0, 147,  35,  26, 159],
+       [697, 160, 773, 160, 773, 197, 697, 198],
+       [547, 205, 623, 205, 623, 244, 547, 244],
+       [548, 161, 623, 161, 623, 199, 547, 199],
+       [698, 206, 772, 206, 772, 244, 698, 244]])}
+    ```
+    note:
+    model = damo/cv_resnet18_ocr-detection-line-level_damo, for general text line detection, based on SegLink++.
+    model = damo/cv_resnet18_ocr-detection-word-level_damo, for general text word detection, based on SegLink++.
+    model = damo/cv_resnet50_ocr-detection-vlpt, for toaltext dataset, based on VLPT_pretrained DBNet.
+    model = damo/cv_resnet18_ocr-detection-db-line-level_damo, for general text line detection, based on DBNet.
+
+    """
 
     def __init__(self, model: str, **kwargs):
         """
@@ -57,6 +84,7 @@ class OCRDetectionPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         if 'vlpt' in self.model:
+            # for model cv_resnet50_ocr-detection-vlpt
             model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
             logger.info(f'loading model from {model_path}')
 
@@ -71,7 +99,24 @@ class OCRDetectionPipeline(Pipeline):
                 self.infer_model.load_state_dict(checkpoint['state_dict'])
             else:
                 self.infer_model.load_state_dict(checkpoint)
+        elif 'db' in self.model:
+            # for model cv_resnet18_ocr-detection-db-line-level_damo (original dbnet)
+            model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
+            logger.info(f'loading model from {model_path}')
+
+            self.thresh = 0.2
+            self.image_short_side = 736
+            self.device = torch.device(
+                'cuda' if torch.cuda.is_available() else 'cpu')
+            self.infer_model = DBModel().to(self.device)
+            self.infer_model.eval()
+            checkpoint = torch.load(model_path, map_location=self.device)
+            if 'state_dict' in checkpoint:
+                self.infer_model.load_state_dict(checkpoint['state_dict'])
+            else:
+                self.infer_model.load_state_dict(checkpoint)
         else:
+            # for model seglink++
             tf.reset_default_graph()
             model_path = osp.join(
                 osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
@@ -147,9 +192,8 @@ class OCRDetectionPipeline(Pipeline):
                         model_loader.restore(sess, model_path)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        if 'vlpt' in self.model:
+        if 'vlpt' in self.model or 'db' in self.model:
             img = LoadImage.convert_to_ndarray(input)[:, :, ::-1]
-
             height, width, _ = img.shape
             if height < width:
                 new_height = self.image_short_side
@@ -160,7 +204,6 @@ class OCRDetectionPipeline(Pipeline):
                 new_height = int(
                     math.ceil(new_width / width * height / 32) * 32)
             resized_img = cv2.resize(img, (new_width, new_height))
-
             resized_img = resized_img - np.array([123.68, 116.78, 103.94],
                                                  dtype=np.float32)
             resized_img /= 255.
@@ -192,7 +235,7 @@ class OCRDetectionPipeline(Pipeline):
             return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        if 'vlpt' in self.model:
+        if 'vlpt' in self.model or 'db' in self.model:
             pred = self.infer_model(input['img'])
             return {'results': pred, 'org_shape': input['org_shape']}
         else:
@@ -211,6 +254,15 @@ class OCRDetectionPipeline(Pipeline):
 
             boxes, scores = polygons_from_bitmap(pred, segmentation, width,
                                                  height)
+            result = {OutputKeys.POLYGONS: np.array(boxes)}
+            return result
+        elif 'db' in self.model:
+            pred = inputs['results'][0]
+            height, width = inputs['org_shape']
+            segmentation = pred > self.thresh
+
+            boxes, scores = boxes_from_bitmap(pred, segmentation, width,
+                                              height)
             result = {OutputKeys.POLYGONS: np.array(boxes)}
             return result
         else:

@@ -13,7 +13,7 @@ from modelscope.utils.test_utils import test_level
 class FaceRecognitionOodTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.task = Tasks.face_recognition_ood
+        self.task = Tasks.face_recognition
         self.model_id = 'damo/cv_ir_face-recognition-ood_rts'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -21,8 +21,7 @@ class FaceRecognitionOodTest(unittest.TestCase, DemoCompatibilityCheck):
         img1 = 'data/test/images/face_recognition_1.png'
         img2 = 'data/test/images/face_recognition_2.png'
 
-        face_recognition = pipeline(
-            Tasks.face_recognition_ood, model=self.model_id)
+        face_recognition = pipeline(self.task, model=self.model_id)
         result1 = face_recognition(img1)
         emb1 = result1[OutputKeys.IMG_EMBEDDING]
         score1 = result1[OutputKeys.SCORES][0][0]

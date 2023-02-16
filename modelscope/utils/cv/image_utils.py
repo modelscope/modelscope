@@ -494,6 +494,38 @@ def show_video_depth_estimation_result(depths, video_save_path):
     out.release()
 
 
+def show_image_driving_perception_result(img,
+                                         results,
+                                         out_file='result.jpg',
+                                         if_draw=[1, 1, 1]):
+    assert img.shape == (720, 1280,
+                         3), 'input image shape need fix to (720, 1280, 3)'
+    bboxes = results.get(OutputKeys.BOXES)[0]
+    if if_draw[0]:
+        for x in bboxes:
+            c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+            cv2.rectangle(
+                img, c1, c2, [255, 255, 0], thickness=2, lineType=cv2.LINE_AA)
+
+    result = results.get(OutputKeys.MASKS)
+
+    color_area = np.zeros((result[0].shape[0], result[0].shape[1], 3),
+                          dtype=np.uint8)
+
+    if if_draw[1]:
+        color_area[result[0] == 1] = [0, 255, 0]
+    if if_draw[2]:
+        color_area[result[1] == 1] = [255, 0, 0]
+    color_seg = color_area
+
+    color_mask = np.mean(color_seg, 2)
+    msk_idx = color_mask != 0
+    img[msk_idx] = img[msk_idx] * 0.5 + color_seg[msk_idx] * 0.5
+    if out_file is not None:
+        cv2.imwrite(out_file, img[:, :, ::-1])
+    return img
+
+
 def masks_visualization(masks, palette):
     vis_masks = []
     for f in range(masks.shape[0]):

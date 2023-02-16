@@ -13,6 +13,9 @@ __all__ = ['GenericAutomaticSpeechRecognition']
 
 @MODELS.register_module(
     Tasks.auto_speech_recognition, module_name=Models.generic_asr)
+@MODELS.register_module(
+    Tasks.voice_activity_detection, module_name=Models.generic_asr)
+@MODELS.register_module(Tasks.language_model, module_name=Models.generic_asr)
 class GenericAutomaticSpeechRecognition(Model):
 
     def __init__(self, model_dir: str, am_model_name: str,

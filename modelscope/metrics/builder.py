@@ -12,7 +12,9 @@ METRICS = Registry('metrics')
 class MetricKeys(object):
     ACCURACY = 'accuracy'
     F1 = 'f1'
+    Binary_F1 = 'binary-f1'
     Macro_F1 = 'macro-f1'
+    Micro_F1 = 'micro-f1'
     PRECISION = 'precision'
     RECALL = 'recall'
     PSNR = 'psnr'
@@ -33,6 +35,11 @@ class MetricKeys(object):
     DISTORTION_VALUE = 'distortion_value'
     STABILITY_SCORE = 'stability_score'
     PPL = 'ppl'
+    PLCC = 'plcc'
+    SRCC = 'srcc'
+    RMSE = 'rmse'
+    MRR = 'mrr'
+    NDCG = 'ndcg'
 
 
 task_default_metrics = {
@@ -59,6 +66,10 @@ task_default_metrics = {
     Tasks.video_frame_interpolation:
     [Metrics.video_frame_interpolation_metric],
     Tasks.video_stabilization: [Metrics.video_stabilization_metric],
+    Tasks.image_quality_assessment_degradation:
+    [Metrics.image_quality_assessment_degradation_metric],
+    Tasks.image_quality_assessment_mos:
+    [Metrics.image_quality_assessment_mos_metric],
 }
 
 

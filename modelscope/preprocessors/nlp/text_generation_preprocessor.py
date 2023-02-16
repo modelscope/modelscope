@@ -24,17 +24,21 @@ class TextGenerationPreprocessorBase(Preprocessor):
     def __init__(self,
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
-                 tgt_txt='tgt_txt'):
+                 tgt_txt='tgt_txt',
+                 keep_original_columns=None):
         """The base class for all the text generation task's preprocessors.
 
         Args:
             mode: The preprocessor mode.
             src_txt: The key for the src text.
             tgt_txt: The key for the tgt text.
+            keep_original_columns: Keep original columns and change them to attributes,
+                only available when the input is a `dict`, default True
         """
         super().__init__(mode)
         self.src_txt = src_txt
         self.tgt_txt = tgt_txt
+        self.keep_original_columns = keep_original_columns
 
     def _tokenize_text(self, sequence1, sequence2=None, **kwargs):
         """Tokenize the text.
@@ -57,6 +61,9 @@ class TextGenerationPreprocessorBase(Preprocessor):
             k: np.array(v) if isinstance(v, list) else v
             for k, v in output.items()
         }
+        if self.keep_original_columns and isinstance(data, dict):
+            for column in self.keep_original_columns:
+                output[column] = data[column]
         return output
 
     def decode(self, tokens, **kwargs):
@@ -102,6 +109,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
                  tgt_txt='tgt_txt',
                  max_length: int = None,
                  use_fast: bool = None,
+                 keep_original_columns=None,
                  **kwargs):
         """The tokenizer preprocessor used in text generation.
 
@@ -117,7 +125,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         """
         if 'first_sequence' in kwargs:
             src_txt = kwargs.pop('first_sequence')
-        super().__init__(mode, src_txt, tgt_txt)
+        super().__init__(mode, src_txt, tgt_txt, keep_original_columns)
         kwargs['truncation'] = kwargs.get('truncation', True)
         kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
@@ -196,9 +204,10 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                  src_txt='src_txt',
                  tgt_txt='tgt_txt',
                  sequence_length: int = 128,
-                 use_fast=None):
+                 use_fast=None,
+                 **kwargs):
         from modelscope.models.nlp.gpt3 import JiebaBPETokenizer
-        super().__init__(mode, src_txt, tgt_txt)
+        super().__init__(mode, src_txt, tgt_txt, **kwargs)
         self.tokenizer = JiebaBPETokenizer(
             osp.join(model_dir, 'tokenizer.json'))
         self.max_length = sequence_length
@@ -280,7 +289,7 @@ class TextGenerationSentencePiecePreprocessor(TextGenerationPreprocessorBase):
             src_txt = kwargs.pop('first_sequence')
 
         import sentencepiece as spm
-        super().__init__(mode, src_txt, tgt_txt)
+        super().__init__(mode, src_txt, tgt_txt, **kwargs)
         self.tokenizer = None
         for file_name in os.listdir(model_dir):
             if file_name.endswith('.model'):

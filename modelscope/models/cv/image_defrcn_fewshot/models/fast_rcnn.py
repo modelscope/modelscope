@@ -4,7 +4,7 @@
 
 import numpy as np
 import torch
-from detectron2.layers import batched_nms, cat
+from detectron2.layers import cat
 from detectron2.modeling.roi_heads.fast_rcnn import \
     fast_rcnn_inference_single_image
 from detectron2.utils.events import get_event_storage

@@ -22,11 +22,6 @@ ModelScope DOCUMENTATION
    Trainer <api/modelscope.trainers>
    MsDataset <api/modelscope.msdatasets>
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Changelog
-
-   change_log.md
 
 Indices and tables
 ==================

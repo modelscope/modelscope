@@ -54,7 +54,8 @@ def plot_tracking(image,
     return im
 
 
-def show_multi_object_tracking_result(video_in_path, bboxes, video_save_path):
+def show_multi_object_tracking_result(video_in_path, bboxes, labels,
+                                      video_save_path):
     cap = cv2.VideoCapture(video_in_path)
     frame_idx = 0
     while (cap.isOpened()):
@@ -66,13 +67,13 @@ def show_multi_object_tracking_result(video_in_path, bboxes, video_save_path):
                                 ' can not be correctly decoded by OpenCV.')
             else:
                 break
-        cur_frame_boxes = []
-        cur_obj_ids = []
-        for box in bboxes:
-            if box[0] == frame_idx:
-                cur_frame_boxes.append(
-                    [box[2], box[3], box[4] - box[2], box[5] - box[3]])
-                cur_obj_ids.append(box[1])
+        cur_frame_boxes = bboxes[frame_idx - 1]
+        cur_obj_ids = labels[frame_idx - 1]
+        for i in range(len(cur_frame_boxes)):
+            cur_frame_boxes[i][
+                2] = cur_frame_boxes[i][2] - cur_frame_boxes[i][0]
+            cur_frame_boxes[i][
+                3] = cur_frame_boxes[i][3] - cur_frame_boxes[i][1]
         if frame_idx == 1:
             size = (frame.shape[1], frame.shape[0])
             fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')

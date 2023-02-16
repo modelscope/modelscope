@@ -5,7 +5,7 @@ import numpy as np
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import FeatureExtractionModel
+from modelscope.models.nlp import ModelForFeatureExtraction
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FeatureExtractionPipeline
@@ -28,7 +28,7 @@ class FeatureExtractionTaskModelTest(unittest.TestCase,
     def test_run_with_direct_file_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = FillMaskTransformersPreprocessor(cache_path, padding=False)
-        model = FeatureExtractionModel.from_pretrained(self.model_id)
+        model = ModelForFeatureExtraction.from_pretrained(self.model_id)
         pipeline1 = FeatureExtractionPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.feature_extraction, model=model, preprocessor=tokenizer)

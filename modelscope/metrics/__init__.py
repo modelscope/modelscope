@@ -25,7 +25,10 @@ if TYPE_CHECKING:
     from .video_stabilization_metric import VideoStabilizationMetric
     from .video_super_resolution_metric.video_super_resolution_metric import VideoSuperResolutionMetric
     from .ppl_metric import PplMetric
-
+    from .image_quality_assessment_degradation_metric import ImageQualityAssessmentDegradationMetric
+    from .image_quality_assessment_mos_metric import ImageQualityAssessmentMosMetric
+    from .text_ranking_metric import TextRankingMetric
+    from .loss_metric import LossMetric
 else:
     _import_structure = {
         'audio_noise_metric': ['AudioNoiseMetric'],
@@ -50,6 +53,12 @@ else:
         'video_frame_interpolation_metric': ['VideoFrameInterpolationMetric'],
         'video_stabilization_metric': ['VideoStabilizationMetric'],
         'ppl_metric': ['PplMetric'],
+        'image_quality_assessment_degradation_metric':
+        ['ImageQualityAssessmentDegradationMetric'],
+        'image_quality_assessment_mos_metric':
+        ['ImageQualityAssessmentMosMetric'],
+        'text_ranking_metric': ['TextRankingMetric'],
+        'loss_metric': ['LossMetric']
     }
 
     import sys

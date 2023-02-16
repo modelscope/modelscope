@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
-from modelscope.models.base import Model
+from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.registry import default_group
@@ -41,7 +41,7 @@ def create_dummy_metric():
             return {MetricKeys.ACCURACY: self._fake_acc_by_epoch[_global_iter]}
 
 
-class DummyModel(nn.Module, Model):
+class DummyModel(TorchModel):
 
     def __init__(self):
         super().__init__()

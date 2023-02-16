@@ -4,6 +4,8 @@ import shutil
 import tempfile
 import unittest
 
+import numpy as np
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
 from modelscope.models.base import Model
@@ -49,7 +51,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(10):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
         output_files = os.listdir(
             os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
@@ -86,7 +88,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(10):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
         eval_results = trainer.evaluate(
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
@@ -113,7 +115,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(20):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
         eval_results = trainer.evaluate(
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
@@ -143,6 +145,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             'by_epoch': False,
             'metric_key': 'accuracy',
             'max_checkpoint_num': 4,
+            'restore_best': True,
         }, {
             'type': 'TextLoggerHook',
             'interval': 1
@@ -190,6 +193,7 @@ class TestTrainerWithNlp(unittest.TestCase):
             trainer.train()
 
         results_files = os.listdir(self.tmp_dir)
+        print(results_files)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in [22, 24, 26, 28]:
             self.assertTrue(
@@ -197,6 +201,13 @@ class TestTrainerWithNlp(unittest.TestCase):
                     f'accuracy{i}.pth' in filename
                     for filename in results_files
                 ]))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(self.tmp_dir, 'output', 'pytorch_model.bin')))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(self.tmp_dir, 'output_best',
+                             'pytorch_model.bin')))
 
     @unittest.skip('skip for now before test is re-configured')
     def test_trainer_with_configured_datasets(self):
@@ -227,7 +238,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(cfg.train.max_epochs):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
         eval_results = trainer.evaluate(
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
@@ -278,6 +289,8 @@ class TestTrainerWithNlp(unittest.TestCase):
             class EarlyStopHook(Hook):
                 PRIORITY = Priority.VERY_LOW
 
+                _should_save = False
+
                 def after_iter(self, trainer):
                     if trainer.iter == 3:
                         raise MsRegressTool.EarlyStopError('Test finished.')
@@ -302,6 +315,38 @@ class TestTrainerWithNlp(unittest.TestCase):
                 trainer, 'trainer_continue_train', level='strict'):
             trainer.train(os.path.join(self.tmp_dir, 'iter_3.pth'))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_new_style_configuration(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        def cfg_modify_fn(cfg):
+            cfg.train['checkpoint'] = {
+                # 保存最优metric对应的checkpoint
+                'best': {
+                    # 是否按照epoch进行保存，false为按照iter
+                    'by_epoch': True,
+                    # 保存的间隔
+                    'interval': 2,
+                    # 保存checkpoint数量的最大值
+                    'max_checkpoint_num': 2,
+                    # 根据指定的指标判断当前checkpoint是否为历史最优
+                    'metric_key': 'f1',
+                }
+            }
+            return cfg
+
+        kwargs = dict(
+            model='damo/nlp_structbert_sentence-similarity_chinese-tiny',
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            cfg_modify_fn=cfg_modify_fn,
+            work_dir=self.tmp_dir)
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_evaluation(self):
         tmp_dir = tempfile.TemporaryDirectory().name
@@ -311,6 +356,92 @@ class TestTrainerWithNlp(unittest.TestCase):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         cache_path = snapshot_download(model_id)
         model = SbertForSequenceClassification.from_pretrained(cache_path)
+
+        def cfg_modify_fn(cfg):
+            cfg.preprocessor.val.keep_original_columns = [
+                'sentence1', 'sentence2'
+            ]
+            return cfg
+
+        kwargs = dict(
+            cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
+            model=model,
+            eval_dataset=self.dataset,
+            cfg_modify_fn=cfg_modify_fn,
+            work_dir=self.tmp_dir,
+            remove_unused_data=True)
+
+        trainer = build_trainer(default_args=kwargs)
+
+        def saving_fn(inputs, outputs):
+            with open(f'{tmp_dir}/predicts.txt', 'a') as f:
+                sentence1 = inputs.sentence1
+                sentence2 = inputs.sentence2
+                labels = inputs['labels']
+                predictions = np.argmax(
+                    outputs['logits'].cpu().numpy(), axis=1)
+                labels = labels.cpu().numpy()
+                for sent1, sent2, pred, label in zip(sentence1, sentence2,
+                                                     predictions, labels):
+                    f.writelines(f'{sent1}, {sent2}, {pred}, {label}\n')
+
+        print(
+            trainer.evaluate(
+                cache_path + '/pytorch_model.bin', saving_fn=saving_fn))
+        self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_prediction(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+        cache_path = snapshot_download(model_id)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
+
+        def cfg_modify_fn(cfg):
+            cfg.preprocessor.val.keep_original_columns = [
+                'sentence1', 'sentence2'
+            ]
+            return cfg
+
+        kwargs = dict(
+            cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
+            model=model,
+            eval_dataset=self.dataset,
+            cfg_modify_fn=cfg_modify_fn,
+            work_dir=self.tmp_dir,
+            remove_unused_data=True)
+
+        trainer = build_trainer(default_args=kwargs)
+
+        def saving_fn(inputs, outputs):
+            with open(f'{tmp_dir}/predicts.txt', 'a') as f:
+                sentence1 = inputs.sentence1
+                sentence2 = inputs.sentence2
+                predictions = np.argmax(
+                    outputs['logits'].cpu().numpy(), axis=1)
+                for sent1, sent2, pred in zip(sentence1, sentence2,
+                                              predictions):
+                    f.writelines(f'{sent1}, {sent2}, {pred}\n')
+
+        trainer.predict(
+            predict_datasets=self.dataset,
+            saving_fn=saving_fn,
+            checkpoint_path=cache_path + '/pytorch_model.bin')
+        self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_prediction_msdataset(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+        cache_path = snapshot_download(model_id)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
+
         kwargs = dict(
             cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
             model=model,
@@ -318,7 +449,21 @@ class TestTrainerWithNlp(unittest.TestCase):
             work_dir=self.tmp_dir)
 
         trainer = build_trainer(default_args=kwargs)
-        print(trainer.evaluate(cache_path + '/pytorch_model.bin'))
+
+        def saving_fn(inputs, outputs):
+            with open(f'{tmp_dir}/predicts.txt', 'a') as f:
+                predictions = np.argmax(
+                    outputs['logits'].cpu().numpy(), axis=1)
+                for pred in predictions:
+                    f.writelines(f'{pred}\n')
+
+        dataset = MsDataset.load('afqmc_small', split='train')
+
+        trainer.predict(
+            predict_datasets=dataset,
+            saving_fn=saving_fn,
+            checkpoint_path=cache_path + '/pytorch_model.bin')
+        self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
@@ -342,7 +487,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(2):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
 
 if __name__ == '__main__':

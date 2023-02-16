@@ -24,9 +24,8 @@ logger = get_logger()
 class DDColorImageColorizationPipeline(Pipeline):
     """ DDColor Image Colorization Pipeline.
 
-    Example:
+    Examples:
 
-    ```python
     >>> from modelscope.pipelines import pipeline
 
     >>> colorizer = pipeline('image-colorization', 'damo/cv_ddcolor_image-colorization')
@@ -80,8 +79,6 @@ class DDColorImageColorizationPipeline(Pipeline):
          [233, 232, 231],
          [233, 232, 231],
          [232, 232, 229]]], dtype=uint8)}
-    >>> #
-    ```
     """
 
     def __init__(self, model: Union[DDColorForImageColorization, str],

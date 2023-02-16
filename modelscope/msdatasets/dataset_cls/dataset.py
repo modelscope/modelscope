@@ -4,7 +4,6 @@ import copy
 import os
 
 import datasets
-import torchaudio
 from datasets import IterableDataset
 from PIL import Image
 
@@ -94,6 +93,7 @@ class NativeIterableDataset(IterableDataset):
                         if k.endswith('Image:FILE'):
                             ret[k + ':Object'] = Image.open(fp=ex_cache_path)
                         if k.endswith('Audio:FILE'):
+                            import torchaudio
                             waveform_and_rate = torchaudio.load(ex_cache_path)
                             ret[k + ':Object'] = waveform_and_rate
                 entity = ret

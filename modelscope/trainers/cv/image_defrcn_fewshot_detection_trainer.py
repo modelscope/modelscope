@@ -4,16 +4,26 @@
 # https://github.com/er-muyue/DeFRCN/blob/main/tools/model_surgery.py
 
 import os
+from collections import OrderedDict
 from typing import Callable, Optional, Union
 
-import torch
+from detectron2.checkpoint.detection_checkpoint import DetectionCheckpointer
+from detectron2.data import MetadataCatalog
+from detectron2.data.build import (build_detection_test_loader,
+                                   build_detection_train_loader)
 from detectron2.engine import SimpleTrainer, hooks
-from detectron2.evaluation import DatasetEvaluators, verify_results
+from detectron2.evaluation import (DatasetEvaluator, DatasetEvaluators,
+                                   verify_results)
+from detectron2.evaluation.testing import print_csv_format
+from detectron2.solver.build import build_lr_scheduler, build_optimizer
 from detectron2.utils import comm
 from torch import nn
+from torch.nn.parallel import DistributedDataParallel
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
+from modelscope.models.cv.image_defrcn_fewshot.evaluation.evaluator import \
+    inference_on_dataset
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
@@ -21,16 +31,17 @@ from modelscope.utils.logger import get_logger
 
 
 class DefaultTrainer(SimpleTrainer):
+    """
+    Trainer inherit from detectron2 SimpleTrainer, use detectron2 framework to train.
+    """
 
     def __init__(self, model, cfg):
+        """ initialize model with cfg
 
-        from collections import OrderedDict
-        from fvcore.nn.precise_bn import get_bn_modules
-        from torch.nn.parallel import DistributedDataParallel
-
-        from detectron2.data.build import build_detection_train_loader, build_detection_test_loader
-        from detectron2.solver.build import build_optimizer, build_lr_scheduler
-        from detectron2.checkpoint.detection_checkpoint import DetectionCheckpointer
+        Args:
+            model: torch.nn.Module
+            cfg: model config with detectron2 format
+        """
         from detectron2.utils.logger import setup_logger
 
         setup_logger()
@@ -130,19 +141,18 @@ class DefaultTrainer(SimpleTrainer):
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-        from detectron2.data import MetadataCatalog
 
         if output_folder is None:
             output_folder = os.path.join(cfg.OUTPUT_DIR, 'inference')
         evaluator_list = []
         evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
         if evaluator_type == 'coco':
-            from detectron2.evaluation import COCOEvaluator
+            from modelscope.models.cv.image_defrcn_fewshot.evaluation.coco_evaluation import COCOEvaluator
             evaluator_list.append(
                 COCOEvaluator(dataset_name, True, output_folder))
         if evaluator_type == 'pascal_voc':
-            from detectron2.evaluation import PascalVOCDetectionEvaluator
-            return PascalVOCDetectionEvaluator(dataset_name)
+            from modelscope.models.cv.image_defrcn_fewshot.evaluation.pascal_voc_evaluation import PascalVOCEvaluator
+            return PascalVOCEvaluator(dataset_name)
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 'no Evaluator for the dataset {} with the type {}'.format(
@@ -153,14 +163,54 @@ class DefaultTrainer(SimpleTrainer):
 
     @classmethod
     def test(cls, cfg, model, evaluators=None):
-        from detectron2.engine.defaults import DefaultTrainer as _DefaultTrainer
-        _DefaultTrainer.build_evaluator = cls.build_evaluator
+        logger = get_logger()
 
-        return _DefaultTrainer.test(cfg, model, evaluators)
+        if isinstance(evaluators, DatasetEvaluator):
+            evaluators = [evaluators]
+        if evaluators is not None:
+            assert len(
+                cfg.DATASETS.TEST) == len(evaluators), '{} != {}'.format(
+                    len(cfg.DATASETS.TEST), len(evaluators))
+
+        results = OrderedDict()
+        for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
+            data_loader = build_detection_test_loader(cfg, dataset_name)
+            # When evaluators are passed in as arguments,
+            # implicitly assume that evaluators can be created before data_loader.
+            if evaluators is not None:
+                evaluator = evaluators[idx]
+            else:
+                try:
+                    evaluator = cls.build_evaluator(cfg, dataset_name)
+                except NotImplementedError:
+                    logger.warn(
+                        'No evaluator found. Use `DefaultTrainer.test(evaluators=)`, '
+                        'or implement its `build_evaluator` method.')
+                    results[dataset_name] = {}
+                    continue
+            results_i = inference_on_dataset(model, data_loader, evaluator,
+                                             cfg)
+            results[dataset_name] = results_i
+            if comm.is_main_process():
+                assert isinstance(
+                    results_i, dict
+                ), 'Evaluator must return a dict on the main process. Got {} instead.'.format(
+                    results_i)
+                logger.info('Evaluation results for {} in csv format:'.format(
+                    dataset_name))
+                print_csv_format(results_i)
+
+        if len(results) == 1:
+            results = list(results.values())[0]
+        return results
 
 
 @TRAINERS.register_module(module_name=Trainers.image_fewshot_detection)
 class ImageDefrcnFewshotTrainer(BaseTrainer):
+    """
+    Defrcn model trainer, used to train base model and fsod/gfsod model.
+    And model_surgery function used to modify model outputs arch, to train fsod & gfsod.
+    """
 
     def __init__(self,
                  model: Optional[Union[TorchModel, nn.Module, str]] = None,
@@ -170,6 +220,16 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
                  seed: int = 0,
                  cfg_modify_fn: Optional[Callable] = None,
                  **kwargs):
+        """ init model
+
+        Args:
+            model:  used to init model
+            cfg_file: model config file path, if none, will init from model_dir by ModelFile.CONFIGURATION
+            arg_parse_fn: Same as ``parse_fn`` in :obj:`Config.to_args`.
+            model_revision: model version. Use latest if model_revision is none.
+            seed: random seed
+            cfg_modify_fn: modify model config, should be callable
+        """
 
         if isinstance(model, str):
             self.model_dir = self.get_or_download_model_dir(
@@ -188,6 +248,8 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
 
         self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
 
+        kwargs['_cfg_dict'] = self.cfg
+
         if isinstance(model, (TorchModel, nn.Module)):
             self.model = model
         else:
@@ -195,24 +257,8 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
 
         self.model_cfg = self.model.get_model_cfg()
 
-        if 'datasets_train' in kwargs:
-            self.model_cfg.merge_from_list(
-                ['DATASETS.TRAIN', kwargs['datasets_train']])
-        if 'datasets_test' in kwargs:
-            self.model_cfg.merge_from_list(
-                ['DATASETS.TEST', kwargs['datasets_test']])
-        if 'work_dir' in kwargs:
-            self.model_cfg.merge_from_list(['OUTPUT_DIR', kwargs['work_dir']])
-
         if not os.path.exists(self.model_cfg.OUTPUT_DIR):
             os.makedirs(self.model_cfg.OUTPUT_DIR)
-
-        self.model_cfg.freeze()
-
-        self.data_dir = kwargs.get('data_dir', None)
-        self.data_type = kwargs.get('data_type', 'pascal_voc')
-
-        self.register_data(self.data_type, self.data_dir)
 
         self.trainer = DefaultTrainer(self.model, self.model_cfg)
 
@@ -230,87 +276,23 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
         return metric_values
 
     def build_model(self, *args, **kwargs) -> Union[nn.Module, TorchModel]:
-        model = Model.from_pretrained(self.model_dir, **kwargs)
+        model = Model.from_pretrained(
+            model_name_or_path=self.model_dir, cfg_dict=self.cfg, **kwargs)
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             return model.model
         elif isinstance(model, nn.Module):
             return model
 
     @classmethod
-    def register_data(cls, data_type='pascal_voc', data_dir=None):
-
-        if data_type == 'pascal_voc':
-            from modelscope.models.cv.image_defrcn_fewshot.utils.voc_register import register_all_voc
-            if data_dir:
-                register_all_voc(data_dir)
-            else:
-                register_all_voc()
-        else:
-            raise NotImplementedError(
-                'no {} dataset was registered'.format(data_type))
-
-    @classmethod
     def model_surgery(cls,
                       src_path,
                       save_dir,
                       data_type='pascal_voc',
-                      method='remove'):
+                      method='remove',
+                      params_name=[
+                          'model.roi_heads.box_predictor.cls_score',
+                          'model.roi_heads.box_predictor.bbox_pred'
+                      ]):
 
-        assert method in ['remove',
-                          'randinit'], '{} not implemented'.format(method)
-
-        def _surgery(param_name, is_weight, tar_size, ckpt):
-            weight_name = param_name + ('.weight' if is_weight else '.bias')
-            pretrained_weight = ckpt['model'][weight_name]
-            prev_cls = pretrained_weight.size(0)
-            if 'cls_score' in param_name:
-                prev_cls -= 1
-            if is_weight:
-                feat_size = pretrained_weight.size(1)
-                new_weight = torch.rand((tar_size, feat_size))
-                torch.nn.init.normal_(new_weight, 0, 0.01)
-            else:
-                new_weight = torch.zeros(tar_size)
-
-            new_weight[:prev_cls] = pretrained_weight[:prev_cls]
-            if 'cls_score' in param_name:
-                new_weight[-1] = pretrained_weight[-1]  # bg class
-            ckpt['model'][weight_name] = new_weight
-
-        if data_type == 'pascal_voc':
-            TAR_SIZE = 20
-            params_name = [
-                'model.roi_heads.box_predictor.cls_score',
-                'model.roi_heads.box_predictor.bbox_pred'
-            ]
-
-            save_name = 'model_reset_' + ('remove' if method == 'remove' else
-                                          'surgery') + '.pth'
-            save_path = os.path.join(save_dir, save_name)
-            os.makedirs(save_dir, exist_ok=True)
-
-            ckpt = torch.load(src_path)
-
-            if 'scheduler' in ckpt:
-                del ckpt['scheduler']
-            if 'optimizer' in ckpt:
-                del ckpt['optimizer']
-            if 'iteration' in ckpt:
-                ckpt['iteration'] = 0
-
-            if method == 'remove':
-                for param_name in params_name:
-                    del ckpt['model'][param_name + '.weight']
-                    if param_name + '.bias' in ckpt['model']:
-                        del ckpt['model'][param_name + '.bias']
-            else:
-                tar_sizes = [TAR_SIZE + 1, TAR_SIZE * 4]
-                for idx, (param_name,
-                          tar_size) in enumerate(zip(params_name, tar_sizes)):
-                    _surgery(param_name, True, tar_size, ckpt)
-                    _surgery(param_name, False, tar_size, ckpt)
-
-            torch.save(ckpt, save_path)
-        else:
-            NotImplementedError(
-                '{} dataset does not supported'.format(data_type))
+        from modelscope.models.cv.image_defrcn_fewshot.utils.model_surgery_op import model_surgery as _model_surgery
+        _model_surgery(src_path, save_dir, data_type, method, params_name)

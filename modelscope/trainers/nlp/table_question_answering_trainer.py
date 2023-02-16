@@ -38,7 +38,7 @@ class TableQuestionAnsweringTrainer(BaseTrainer):
                                         num_training_steps,
                                         last_epoch=-1):
         """
-        set scheduler
+        set scheduler.
         """
 
         def lr_lambda(current_step: int):

@@ -22,22 +22,19 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_skychange, module_name=Pipelines.image_skychange)
 class ImageSkychangePipeline(Pipeline):
-    """ Image Sky Change Pipeline. Given two images(sky_image and scene_image),
-    pipeline will replace the sky style of sky_image with the sky style of scene_image.
-    Example:
+    """
+    Image Sky Change Pipeline. Given two images(sky_image and scene_image), pipeline will replace the sky style
+    of sky_image with the sky style of scene_image.
 
-    ```python
+    Examples:
+
     >>> from modelscope.pipelines import pipeline
     >>> detector = pipeline('image-skychange', 'damo/cv_hrnetocr_skychange')
     >>> detector({
             'sky_image': 'sky_image.jpg', # sky_image path (str)
             'scene_image': 'scene_image.jpg', # scene_image path (str)
         })
-       {
-        "output_img": [H * W * 3] 0~255, we can use cv2.imwrite to save output_img as an image.
-        }
-    >>> #
-    ```
+    >>> {"output_img": [H * W * 3] 0~255, we can use cv2.imwrite to save output_img as an image.}
     """
 
     def __init__(self, model: str, **kwargs):

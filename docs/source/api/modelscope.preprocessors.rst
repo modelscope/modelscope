@@ -1,50 +1,15 @@
-modelscope.preprocessors package
-================================
+modelscope.preprocessors
+=================
 
 .. automodule:: modelscope.preprocessors
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.preprocessors
 
-modelscope.preprocessors.base module
-------------------------------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Preprocessor Api
 
-.. automodule:: modelscope.preprocessors.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.preprocessors.builder module
----------------------------------------
-
-.. automodule:: modelscope.preprocessors.builder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.preprocessors.common module
---------------------------------------
-
-.. automodule:: modelscope.preprocessors.common
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.preprocessors.image module
--------------------------------------
-
-.. automodule:: modelscope.preprocessors.image
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.preprocessors.nlp module
------------------------------------
-
-.. automodule:: modelscope.preprocessors.nlp
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   base     <modelscope.preprocessors.base>
+   builders <modelscope.preprocessors.builder>
+   video    <modelscope.preprocessors.video>
+   nlp      <modelscope.preprocessors.nlp>

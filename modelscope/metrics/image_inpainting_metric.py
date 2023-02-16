@@ -208,3 +208,14 @@ class ImageInpaintingMetric(Metric):
         ssim_list = torch_nested_numpify(ssim_list)
         fid = self.FID.get_value()
         return {MetricKeys.SSIM: np.mean(ssim_list), MetricKeys.FID: fid}
+
+    def merge(self, other: 'ImageInpaintingMetric'):
+        self.preds.extend(other.preds)
+        self.targets.extend(other.targets)
+
+    def __getstate__(self):
+        return self.preds, self.targets
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.targets = state

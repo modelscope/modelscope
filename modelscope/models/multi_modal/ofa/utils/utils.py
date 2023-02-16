@@ -43,6 +43,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
 class DropPath(nn.Module):
     r"""
     Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
+    See more details about drop path from https://arxiv.org/pdf/1605.07648v4.pdf.
 
     Args:
         drop_prob: drop path ratio.

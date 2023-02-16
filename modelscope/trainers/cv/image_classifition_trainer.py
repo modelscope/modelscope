@@ -192,19 +192,14 @@ class ImageClassifitionTrainer(BaseTrainer):
         from mmcv.runner import get_dist_info, init_dist
         from mmcls.apis import set_random_seed
         from mmcls.utils import collect_env
+        from mmcv.utils import get_logger as mmcv_get_logger
         import modelscope.models.cv.image_classification.backbones
 
         self._seed = seed
         set_random_seed(self._seed)
         if isinstance(model, str):
-            if os.path.exists(model):
-                self.model_dir = model if os.path.isdir(
-                    model) else os.path.dirname(model)
-            else:
-                self.model_dir = snapshot_download(
-                    model,
-                    revision=model_revision,
-                    user_agent={Invoke.KEY: Invoke.TRAINER})
+            self.model_dir = self.get_or_download_model_dir(
+                model, model_revision=model_revision)
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)
@@ -283,6 +278,7 @@ class ImageClassifitionTrainer(BaseTrainer):
             distributed = False
 
         # init the logger before other steps
+        mmcv_get_logger('modelscope')  # set name of mmcv logger
         timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
         log_file = osp.join(self.work_dir, f'{timestamp}.log')
         logger = get_logger(log_file=log_file)
@@ -315,6 +311,11 @@ class ImageClassifitionTrainer(BaseTrainer):
         # dataset
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
+        # set img_prefix for image data path in csv files.
+        if cfg.dataset.get('data_prefix', None) is None:
+            self.data_prefix = ''
+        else:
+            self.data_prefix = cfg.dataset.data_prefix
 
         # model
         model = build_classifier(self.cfg.model.mm_model)
@@ -356,7 +357,8 @@ class ImageClassifitionTrainer(BaseTrainer):
             MmDataset(
                 self.train_dataset,
                 pipeline=self.cfg.preprocessor.train,
-                classes=classes)
+                classes=classes,
+                data_prefix=self.data_prefix)
         ]
 
         if len(self.cfg.train.workflow) == 2:
@@ -366,7 +368,10 @@ class ImageClassifitionTrainer(BaseTrainer):
                 )
             val_data_pipeline = self.cfg.preprocessor.train
             val_dataset = MmDataset(
-                self.eval_dataset, pipeline=val_data_pipeline, classes=classes)
+                self.eval_dataset,
+                pipeline=val_data_pipeline,
+                classes=classes,
+                data_prefix=self.data_prefix)
             datasets.append(val_dataset)
 
         # save mmcls version, config file content and class names in
@@ -382,7 +387,8 @@ class ImageClassifitionTrainer(BaseTrainer):
             val_dataset = MmDataset(
                 self.eval_dataset,
                 pipeline=preprocess_transform(self.cfg.preprocessor.val),
-                classes=classes)
+                classes=classes,
+                data_prefix=self.data_prefix)
 
         # add an attribute for visualization convenience
         train_model(
@@ -427,7 +433,8 @@ class ImageClassifitionTrainer(BaseTrainer):
         dataset = MmDataset(
             self.eval_dataset,
             pipeline=preprocess_transform(self.cfg.preprocessor.val),
-            classes=classes)
+            classes=classes,
+            data_prefix=self.data_prefix)
         # the extra round_up data will be removed during gpu/cpu collect
         data_loader = build_dataloader(
             dataset,

@@ -3,45 +3,24 @@
    contain the root `toctree` directive.
 
 ModelScope DOCUMENTATION
-=======================================
-
-ModelScope doc
+========================
 
 .. toctree::
    :maxdepth: 2
-   :caption: USER GUIDE
+   :caption: DEVELOPER GUIDE
 
-   quick_start.md
    develop.md
-   faq.md
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
+   :caption: API Doc
 
-   tutorials/index
-
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Changelog
-
-   change_log.md
-
-.. toctree::
-..    :maxdepth: 10
-..    :caption: API Doc
-
-..    api/modelscope.preprocessors
-..    api/modelscope.models
-..    api/modelscope.pipelines
-..    api/modelscope.fileio
-..    api/modelscope.utils
-..    api/modelscope.hub
-..    api/modelscope.msdatasets
-..    api/modelscope.tools
-..    api/modelscope.trainers
+   Hub <api/modelscope.hub>
+   Model <api/modelscope.models>
+   Preprocessor <api/modelscope.preprocessors>
+   Pipeline <api/modelscope.pipelines>
+   Trainer <api/modelscope.trainers>
+   MsDataset <api/modelscope.msdatasets>
 
 
 Indices and tables

@@ -20,7 +20,7 @@ import torch
 import torch.optim
 from torch import nn
 
-from modelscope.utils.service_utils import NumpyEncoder
+from .test_utils import compare_arguments_nested
 
 
 class RegressTool:
@@ -71,6 +71,7 @@ class RegressTool:
                                       module: nn.Module,
                                       file_name: str,
                                       compare_fn=None,
+                                      compare_model_output=True,
                                       **kwargs):
         """Monitor a pytorch module in a single forward.
 
@@ -78,6 +79,7 @@ class RegressTool:
             module: A torch module
             file_name: The file_name to store or load file
             compare_fn: A custom fn used to compare the results manually.
+            compare_model_output: Only compare the input module's output, skip all other tensors
 
         >>> def compare_fn(v1, v2, key, type):
         >>>     return None
@@ -120,8 +122,48 @@ class RegressTool:
             with open(baseline, 'rb') as f:
                 base = pickle.load(f)
 
-            print(f'baseline: {json.dumps(base, cls=NumpyEncoder)}')
-            print(f'latest  : {json.dumps(io_json, cls=NumpyEncoder)}')
+            class SafeNumpyEncoder(json.JSONEncoder):
+
+                def parse_default(self, obj):
+                    if isinstance(obj, np.ndarray):
+                        return obj.tolist()
+
+                    if isinstance(obj, np.floating):
+                        return float(obj)
+
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+
+                    return json.JSONEncoder.default(self, obj)
+
+                def default(self, obj):
+                    try:
+                        return self.default(obj)
+                    except Exception:
+                        print(
+                            f'Type {obj.__class__} cannot be serialized and printed'
+                        )
+                        return None
+
+            if compare_model_output:
+                print(
+                    'Ignore inner modules, only the output of the model will be verified.'
+                )
+                base = {
+                    key: value
+                    for key, value in base.items() if key == file_name
+                }
+                for key, value in base.items():
+                    value['input'] = {'args': None, 'kwargs': None}
+                io_json = {
+                    key: value
+                    for key, value in io_json.items() if key == file_name
+                }
+                for key, value in io_json.items():
+                    value['input'] = {'args': None, 'kwargs': None}
+
+            print(f'baseline: {json.dumps(base, cls=SafeNumpyEncoder)}')
+            print(f'latest  : {json.dumps(io_json, cls=SafeNumpyEncoder)}')
             if not compare_io_and_print(base, io_json, compare_fn, **kwargs):
                 raise ValueError('Result not match!')
 
@@ -315,10 +357,75 @@ class MsRegressTool(RegressTool):
 
             def lazy_stop_callback():
 
-                from modelscope.trainers.hooks.hook import Hook, Priority
+                class EarlyStopHook:
+                    PRIORITY = 90
 
-                class EarlyStopHook(Hook):
-                    PRIORITY = Priority.VERY_LOW
+                    def before_run(self, trainer):
+                        pass
+
+                    def after_run(self, trainer):
+                        pass
+
+                    def before_epoch(self, trainer):
+                        pass
+
+                    def after_epoch(self, trainer):
+                        pass
+
+                    def before_iter(self, trainer):
+                        pass
+
+                    def before_train_epoch(self, trainer):
+                        self.before_epoch(trainer)
+
+                    def before_val_epoch(self, trainer):
+                        self.before_epoch(trainer)
+
+                    def after_train_epoch(self, trainer):
+                        self.after_epoch(trainer)
+
+                    def after_val_epoch(self, trainer):
+                        self.after_epoch(trainer)
+
+                    def before_train_iter(self, trainer):
+                        self.before_iter(trainer)
+
+                    def before_val_iter(self, trainer):
+                        self.before_iter(trainer)
+
+                    def after_train_iter(self, trainer):
+                        self.after_iter(trainer)
+
+                    def after_val_iter(self, trainer):
+                        self.after_iter(trainer)
+
+                    def every_n_epochs(self, trainer, n):
+                        return (trainer.epoch + 1) % n == 0 if n > 0 else False
+
+                    def every_n_inner_iters(self, runner, n):
+                        return (runner.inner_iter
+                                + 1) % n == 0 if n > 0 else False
+
+                    def every_n_iters(self, trainer, n):
+                        return (trainer.iter + 1) % n == 0 if n > 0 else False
+
+                    def end_of_epoch(self, trainer):
+                        return trainer.inner_iter + 1 == trainer.iters_per_epoch
+
+                    def is_last_epoch(self, trainer):
+                        return trainer.epoch + 1 == trainer.max_epochs
+
+                    def is_last_iter(self, trainer):
+                        return trainer.iter + 1 == trainer.max_iters
+
+                    def get_triggered_stages(self):
+                        return []
+
+                    def state_dict(self):
+                        return {}
+
+                    def load_state_dict(self, state_dict):
+                        pass
 
                     def after_iter(self, trainer):
                         raise MsRegressTool.EarlyStopError('Test finished.')
@@ -513,88 +620,6 @@ def intercept_module(module: nn.Module,
         full_name = parent_name + '.' + name if parent_name is not None else name
         hack_forward(module, full_name, io_json, restore)
         intercept_module(module, io_json, full_name, restore)
-
-
-def compare_arguments_nested(print_content,
-                             arg1,
-                             arg2,
-                             rtol=1.e-3,
-                             atol=1.e-8):
-    type1 = type(arg1)
-    type2 = type(arg2)
-    if type1.__name__ != type2.__name__:
-        if print_content is not None:
-            print(
-                f'{print_content}, type not equal:{type1.__name__} and {type2.__name__}'
-            )
-        return False
-
-    if arg1 is None:
-        return True
-    elif isinstance(arg1, (int, str, bool, np.bool, np.integer, np.str)):
-        if arg1 != arg2:
-            if print_content is not None:
-                print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
-            return False
-        return True
-    elif isinstance(arg1, (float, np.floating)):
-        if not np.isclose(arg1, arg2, rtol=rtol, atol=atol, equal_nan=True):
-            if print_content is not None:
-                print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
-            return False
-        return True
-    elif isinstance(arg1, (tuple, list)):
-        if len(arg1) != len(arg2):
-            if print_content is not None:
-                print(
-                    f'{print_content}, length is not equal:{len(arg1)}, {len(arg2)}'
-                )
-            return False
-        if not all([
-                compare_arguments_nested(
-                    None, sub_arg1, sub_arg2, rtol=rtol, atol=atol)
-                for sub_arg1, sub_arg2 in zip(arg1, arg2)
-        ]):
-            if print_content is not None:
-                print(f'{print_content}')
-            return False
-        return True
-    elif isinstance(arg1, Mapping):
-        keys1 = arg1.keys()
-        keys2 = arg2.keys()
-        if len(keys1) != len(keys2):
-            if print_content is not None:
-                print(
-                    f'{print_content}, key length is not equal:{len(keys1)}, {len(keys2)}'
-                )
-            return False
-        if len(set(keys1) - set(keys2)) > 0:
-            if print_content is not None:
-                print(f'{print_content}, key diff:{set(keys1) - set(keys2)}')
-            return False
-        if not all([
-                compare_arguments_nested(
-                    None, arg1[key], arg2[key], rtol=rtol, atol=atol)
-                for key in keys1
-        ]):
-            if print_content is not None:
-                print(f'{print_content}')
-            return False
-        return True
-    elif isinstance(arg1, np.ndarray):
-        arg1 = np.where(np.equal(arg1, None), np.NaN,
-                        arg1).astype(dtype=np.float)
-        arg2 = np.where(np.equal(arg2, None), np.NaN,
-                        arg2).astype(dtype=np.float)
-        if not all(
-                np.isclose(arg1, arg2, rtol=rtol, atol=atol,
-                           equal_nan=True).flatten()):
-            if print_content is not None:
-                print(f'{print_content}')
-            return False
-        return True
-    else:
-        raise ValueError(f'type not supported: {type1}')
 
 
 def compare_io_and_print(baseline_json, io_json, compare_fn=None, **kwargs):

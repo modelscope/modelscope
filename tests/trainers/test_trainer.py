@@ -16,7 +16,7 @@ from torch.utils.data import IterableDataset
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
-from modelscope.models.base import Model
+from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
 from modelscope.trainers.base import DummyTrainer
 from modelscope.trainers.builder import TRAINERS
@@ -41,7 +41,7 @@ dummy_dataset_big = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 40)
 
 
-class DummyModel(nn.Module, Model):
+class DummyModel(TorchModel):
 
     def __init__(self):
         super().__init__()
@@ -141,7 +141,6 @@ class TrainerTest(unittest.TestCase):
         config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
         with open(config_path, 'w') as f:
             json.dump(json_cfg, f)
-
         trainer_name = Trainers.default
         kwargs = dict(
             cfg_file=config_path,
@@ -157,6 +156,10 @@ class TrainerTest(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
 
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        with open(f'{self.tmp_dir}/{trainer.timestamp}.log', 'r') as infile:
+            lines = infile.readlines()
+            self.assertTrue(len(lines) > 20)
+        self.assertIn(f'{trainer.timestamp}.log', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_1.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_2.pth', results_files)
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
@@ -264,6 +267,9 @@ class TrainerTest(unittest.TestCase):
                     'type': 'IterTimerHook'
                 }, {
                     'type': 'EvaluationHook',
+                    'interval': 1
+                }, {
+                    'type': 'TensorboardHook',
                     'interval': 1
                 }]
             },

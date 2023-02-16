@@ -1,10 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-from copy import deepcopy
 from typing import Dict, Union
 
 import torch
-from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
@@ -40,36 +38,12 @@ class ImageColorEnhance(TorchModel):
             self._device = torch.device('cpu')
         self.model = self.model.to(self._device)
 
-        self.model = self.load_pretrained(self.model, model_path)
+        self.model = self._load_pretrained(self.model, model_path)
 
         if self.training:
             self.model.train()
         else:
             self.model.eval()
-
-    def load_pretrained(self, net, load_path, strict=True, param_key='params'):
-        if isinstance(net, (DataParallel, DistributedDataParallel)):
-            net = net.module
-        load_net = torch.load(
-            load_path, map_location=lambda storage, loc: storage)
-        if param_key is not None:
-            if param_key not in load_net and 'params' in load_net:
-                param_key = 'params'
-                logger.info(
-                    f'Loading: {param_key} does not exist, use params.')
-            if param_key in load_net:
-                load_net = load_net[param_key]
-        logger.info(
-            f'Loading {net.__class__.__name__} model from {load_path}, with param key: [{param_key}].'
-        )
-        # remove unnecessary 'module.'
-        for k, v in deepcopy(load_net).items():
-            if k.startswith('module.'):
-                load_net[k[7:]] = v
-                load_net.pop(k)
-        net.load_state_dict(load_net, strict=strict)
-        logger.info('load model done.')
-        return net
 
     def _evaluate_postprocess(self, src: Tensor,
                               target: Tensor) -> Dict[str, list]:

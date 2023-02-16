@@ -8,12 +8,13 @@ from modelscope.metainfo import Preprocessors, Trainers
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.trainers import NlpTrainerArguments, build_trainer
+from modelscope.trainers import build_trainer
 from modelscope.trainers.hooks import Hook
 from modelscope.trainers.nlp_trainer import (EpochBasedTrainer,
                                              NlpEpochBasedTrainer)
 from modelscope.trainers.optimizer.child_tuning_adamw_optimizer import \
     calculate_fisher
+from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.regress_test_utils import (MsRegressTool,
@@ -43,7 +44,7 @@ class TestFinetuneSequenceClassification(unittest.TestCase):
         dataset = MsDataset.load('clue', subset_name='tnews')
         train_dataset = dataset['train']
         validation_dataset = dataset['validation']
-        cfg_modify_fn = NlpTrainerArguments(
+        cfg_modify_fn = TrainingArgs(
             task=Tasks.text_classification,
             preprocessor_type=Preprocessors.sen_cls_tokenizer,
             train_first_sequence='sentence',

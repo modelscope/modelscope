@@ -1,9 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, Optional, Union
 
+import torch
+
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.logger import get_logger
@@ -47,6 +50,17 @@ class SummarizationPipeline(Pipeline):
             else:
                 self.preprocessor = Preprocessor.from_pretrained(
                     self.model.model_dir, **kwargs)
+
+    def _batch(self, data):
+        if self.model.__class__.__name__ == 'OfaForAllTasks':
+            return batch_process(self.model, data)
+        else:
+            return super(SummarizationPipeline, self)._batch(data)
+
+    def forward(self, inputs: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
+        with torch.no_grad():
+            return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs

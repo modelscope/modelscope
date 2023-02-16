@@ -9,7 +9,7 @@ from modelscope.msdatasets import MsDataset
 from modelscope.utils import logger as logging
 from modelscope.utils.test_utils import test_level
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 KEY_EXTRACTED = 'extracted'
 EXPECTED_MSG = 'success'

@@ -692,3 +692,56 @@ class SwinTransformer(nn.Module):
         """Convert the model into training mode while keep layers freezed."""
         super(SwinTransformer, self).train(mode)
         self._freeze_stages()
+
+
+class D2SwinTransformer(SwinTransformer):
+
+    def __init__(self, *args, **kwargs):
+        self._out_features = kwargs.pop('out_features')
+        super().__init__(*args, **kwargs)
+
+        self._out_feature_strides = {
+            'res2': 4,
+            'res3': 8,
+            'res4': 16,
+            'res5': 32,
+        }
+        self._out_feature_channels = {
+            'res2': self.num_features[0],
+            'res3': self.num_features[1],
+            'res4': self.num_features[2],
+            'res5': self.num_features[3],
+        }
+
+    def forward(self, x):
+        """
+        Args:
+            x: Tensor of shape (N,C,H,W). H, W must be a multiple of ``self.size_divisibility``.
+        Returns:
+            dict[str->Tensor]: names and the corresponding features
+        """
+        assert (
+            x.dim() == 4
+        ), f'SwinTransformer takes an input of shape (N, C, H, W). Got {x.shape} instead!'
+        outputs = {}
+        outs = super().forward(x)
+        y = {}
+        for out, i in zip(outs, self.out_indices):
+            y['res{}'.format(i + 2)] = out
+
+        for k in y.keys():
+            if k in self._out_features:
+                outputs[k] = y[k]
+        return outputs
+
+    def output_shape(self):
+        return {
+            name: dict(
+                channels=self._out_feature_channels[name],
+                stride=self._out_feature_strides[name])
+            for name in self._out_features
+        }
+
+    @property
+    def size_divisibility(self):
+        return 32

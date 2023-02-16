@@ -1,1 +1,1 @@
-recursive-include modelscope/configs *.py
+recursive-include modelscope/configs *.py *.cu *.h *.cpp

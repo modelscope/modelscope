@@ -1,13 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
 import os.path as osp
-from copy import deepcopy
 from typing import Any, Dict, List, Union
 
 import torch
 import torch.nn.functional as F
 from torch import autograd, nn
-from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

@@ -62,13 +62,13 @@ class ImageSkyChangePreprocessor(Preprocessor):
         Args:
             data (dict): data dict containing following info:
                 sky_image, scene_image
-                example:
-                    ```python
-                    {
-                        "sky_image": "xxx.jpg" # sky_image path(str)
-                        "scene_image": "xxx.jpg", # scene_image path(str)
-                    }
-                    ```
+
+        Example:
+            >>> {
+            >>>     "sky_image": "xxx.jpg" # sky_image path(str)
+            >>>     "scene_image": "xxx.jpg", # scene_image path(str)
+            >>> }
+
         Returns:
             Dict[str, Any]: the preprocessed data
             {

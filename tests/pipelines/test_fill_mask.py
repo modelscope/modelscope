@@ -27,6 +27,7 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
     }
     model_id_veco = 'damo/nlp_veco_fill-mask-large'
     model_id_bert = 'damo/nlp_bert_fill-mask_chinese-base'
+    model_id_megatron_bert = 'damo/nlp_megatron_bert_fill_mask_1.3B_test'
 
     ori_texts = {
         'zh':
@@ -154,6 +155,14 @@ class FillMaskTest(unittest.TestCase, DemoCompatibilityCheck):
         # Bert
         language = 'zh'
         pipeline_ins = pipeline(task=Tasks.fill_mask, model=self.model_id_bert)
+        print(
+            f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
+            f'{pipeline_ins(self.test_inputs[language])}\n')
+
+        # Megatron-Bert
+        language = 'zh'
+        pipeline_ins = pipeline(
+            task=Tasks.fill_mask, model=self.model_id_megatron_bert)
         print(
             f'\nori_text: {self.ori_texts[language]}\ninput: {self.test_inputs[language]}\npipeline: '
             f'{pipeline_ins(self.test_inputs[language])}\n')

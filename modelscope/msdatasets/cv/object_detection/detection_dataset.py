@@ -13,6 +13,8 @@ from modelscope.utils.constant import Tasks
 
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_object_detection, module_name=Datasets.DetDataset)
+@TASK_DATASETS.register_module(
+    group_key=Tasks.image_segmentation, module_name=Datasets.DetDataset)
 class DetDataset(EasyCVBaseDataset, _DetDataset):
     """EasyCV dataset for object detection.
     For more details, please refer to https://github.com/alibaba/EasyCV/blob/master/easycv/datasets/detection/raw.py .
@@ -47,6 +49,9 @@ class DetDataset(EasyCVBaseDataset, _DetDataset):
 
 @TASK_DATASETS.register_module(
     group_key=Tasks.image_object_detection,
+    module_name=Datasets.DetImagesMixDataset)
+@TASK_DATASETS.register_module(
+    group_key=Tasks.domain_specific_object_detection,
     module_name=Datasets.DetImagesMixDataset)
 class DetImagesMixDataset(EasyCVBaseDataset, _DetImagesMixDataset):
     """EasyCV dataset for object detection, a wrapper of multiple images mixed dataset.

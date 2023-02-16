@@ -5,10 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .swin_transformer import SwinTransformer
+    from .swin_transformer import D2SwinTransformer
 
 else:
     _import_structure = {
-        'swin_transformer': ['SwinTransformer'],
+        'swin_transformer': ['SwinTransformer', 'D2SwinTransformer'],
     }
 
     import sys

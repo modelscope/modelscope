@@ -10,13 +10,15 @@ from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
-from modelscope.utils.logger import get_logger
 
 
 @PIPELINES.register_module(
     Tasks.human_detection, module_name=Pipelines.human_detection)
 @PIPELINES.register_module(
     Tasks.image_object_detection, module_name=Pipelines.object_detection)
+@PIPELINES.register_module(
+    Tasks.image_object_detection,
+    module_name=Pipelines.abnormal_object_detection)
 class ImageDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

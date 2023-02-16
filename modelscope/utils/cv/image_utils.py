@@ -3,6 +3,8 @@
 import os
 
 import cv2
+import matplotlib
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
@@ -11,7 +13,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
 from modelscope.utils import logger as logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 def numpy_to_cv2img(img_array):
@@ -483,6 +485,47 @@ def depth_to_color(depth):
     return depth_color
 
 
+def show_video_depth_estimation_result(depths, video_save_path):
+    height, width, layers = depths[0].shape
+    out = cv2.VideoWriter(video_save_path, cv2.VideoWriter_fourcc(*'MP4V'), 25,
+                          (width, height))
+    for (i, img) in enumerate(depths):
+        out.write(cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_RGB2BGR))
+    out.release()
+
+
+def show_image_driving_perception_result(img,
+                                         results,
+                                         out_file='result.jpg',
+                                         if_draw=[1, 1, 1]):
+    assert img.shape == (720, 1280,
+                         3), 'input image shape need fix to (720, 1280, 3)'
+    bboxes = results.get(OutputKeys.BOXES)[0]
+    if if_draw[0]:
+        for x in bboxes:
+            c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+            cv2.rectangle(
+                img, c1, c2, [255, 255, 0], thickness=2, lineType=cv2.LINE_AA)
+
+    result = results.get(OutputKeys.MASKS)
+
+    color_area = np.zeros((result[0].shape[0], result[0].shape[1], 3),
+                          dtype=np.uint8)
+
+    if if_draw[1]:
+        color_area[result[0] == 1] = [0, 255, 0]
+    if if_draw[2]:
+        color_area[result[1] == 1] = [255, 0, 0]
+    color_seg = color_area
+
+    color_mask = np.mean(color_seg, 2)
+    msk_idx = color_mask != 0
+    img[msk_idx] = img[msk_idx] * 0.5 + color_seg[msk_idx] * 0.5
+    if out_file is not None:
+        cv2.imwrite(out_file, img[:, :, ::-1])
+    return img
+
+
 def masks_visualization(masks, palette):
     vis_masks = []
     for f in range(masks.shape[0]):
@@ -490,3 +533,99 @@ def masks_visualization(masks, palette):
         img_E.putpalette(palette)
         vis_masks.append(img_E)
     return vis_masks
+
+
+# This implementation is adopted from LoFTR,
+# made public available under the Apache License, Version 2.0,
+# at https://github.com/zju3dv/LoFTR
+
+
+def make_matching_figure(img0,
+                         img1,
+                         mkpts0,
+                         mkpts1,
+                         color,
+                         kpts0=None,
+                         kpts1=None,
+                         text=[],
+                         dpi=75,
+                         path=None):
+    # draw image pair
+    assert mkpts0.shape[0] == mkpts1.shape[
+        0], f'mkpts0: {mkpts0.shape[0]} v.s. mkpts1: {mkpts1.shape[0]}'
+    fig, axes = plt.subplots(1, 2, figsize=(10, 6), dpi=dpi)
+    axes[0].imshow(img0, cmap='gray')
+    axes[1].imshow(img1, cmap='gray')
+    for i in range(2):  # clear all frames
+        axes[i].get_yaxis().set_ticks([])
+        axes[i].get_xaxis().set_ticks([])
+        for spine in axes[i].spines.values():
+            spine.set_visible(False)
+    plt.tight_layout(pad=1)
+
+    if kpts0 is not None:
+        assert kpts1 is not None
+        axes[0].scatter(kpts0[:, 0], kpts0[:, 1], c='w', s=2)
+        axes[1].scatter(kpts1[:, 0], kpts1[:, 1], c='w', s=2)
+
+    # draw matches
+    if mkpts0.shape[0] != 0 and mkpts1.shape[0] != 0:
+        fig.canvas.draw()
+        transFigure = fig.transFigure.inverted()
+        fkpts0 = transFigure.transform(axes[0].transData.transform(mkpts0))
+        fkpts1 = transFigure.transform(axes[1].transData.transform(mkpts1))
+        fig.lines = [
+            matplotlib.lines.Line2D((fkpts0[i, 0], fkpts1[i, 0]),
+                                    (fkpts0[i, 1], fkpts1[i, 1]),
+                                    transform=fig.transFigure,
+                                    c=color[i],
+                                    linewidth=1) for i in range(len(mkpts0))
+        ]
+
+        axes[0].scatter(mkpts0[:, 0], mkpts0[:, 1], c=color, s=4)
+        axes[1].scatter(mkpts1[:, 0], mkpts1[:, 1], c=color, s=4)
+
+    # put txts
+    txt_color = 'k' if img0[:100, :200].mean() > 200 else 'w'
+    fig.text(
+        0.01,
+        0.99,
+        '\n'.join(text),
+        transform=fig.axes[0].transAxes,
+        fontsize=15,
+        va='top',
+        ha='left',
+        color=txt_color)
+
+    # save or return figure
+    if path:
+        plt.savefig(str(path), bbox_inches='tight', pad_inches=0)
+        plt.close()
+    else:
+        return fig
+
+
+def match_pair_visualization(img_name0,
+                             img_name1,
+                             kpts0,
+                             kpts1,
+                             conf,
+                             output_filename='quadtree_match.png',
+                             method='QuadTreeAttention'):
+
+    print(f'Found {len(kpts0)} matches')
+
+    # visualize the matches
+    img0 = cv2.imread(str(img_name0))
+    img1 = cv2.imread(str(img_name1))
+
+    # Draw
+    color = cm.jet(conf)
+    text = [
+        method,
+        'Matches: {}'.format(len(kpts0)),
+    ]
+    fig = make_matching_figure(img0, img1, kpts0, kpts1, color, text=text)
+
+    # save the figure
+    fig.savefig(str(output_filename), dpi=300, bbox_inches='tight')

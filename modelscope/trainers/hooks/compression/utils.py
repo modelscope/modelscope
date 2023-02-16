@@ -132,7 +132,7 @@ def convert_sparse_network(
 ):
     compress_module = [nn.Linear]
     try:
-        from megatron import mpu
+        from megatron_util import mpu
         compress_module.extend(
             [mpu.RowParallelLinear, mpu.ColumnParallelLinear])
     except ImportError:

@@ -18,12 +18,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import logging
 import math
-import os
 
 import torch
 import torch.nn.functional as F
-from deepspeed.utils.timer import SynchronizedWallClockTimer
-from megatron import mpu
+from megatron_util import mpu
 from torch import nn
 
 from modelscope.utils.nlp.distributed import (normal_init_method,
@@ -468,7 +466,6 @@ class BertLMPredictionHead(nn.Module):
 
         self.type_converter = convert_to_type
         self.converted = False
-        self.timers = SynchronizedWallClockTimer()
 
     def forward(self, hidden_states):
         if not self.converted:
@@ -478,9 +475,7 @@ class BertLMPredictionHead(nn.Module):
                 if self.fp32_layernorm:
                     self.transform.LayerNorm.float()
         hidden_states = self.transform(self.type_converter(hidden_states))
-        self.timers('final linear gather').start()
         hidden_states = mpu.copy_to_model_parallel_region(hidden_states)
-        self.timers('final linear gather').stop()
         hidden_states = F.linear(
             self.type_converter(hidden_states),
             self.type_converter(self.decoder_weight),
@@ -568,19 +563,17 @@ class BertModel(PreTrainedBertModel):
             classifier pretrained on top of the hidden state associated to the first character of the
             input (`CLF`) to train on the Next-Sentence task (see BERT's paper).
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = modeling.BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = modeling.BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = modeling.BertModel(config=config)
-    all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = modeling.BertModel(config=config)
+        >>> all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):
@@ -914,9 +907,8 @@ class PlugModel(torch.nn.Module):
         config ([`PlugNLGConfig`]): Model configuration class with all the parameters of the model.
             Initializing with a config file does not load the weights associated with the model, only the
             configuration. Check out the [`~DistributedPlug.initialize_model`] method to load the model weights.
-    Example:
+    Examples:
 
-    ```python
     >>> # The PLUG model has 27B parameters and usually need to run on multiple GPUs. The example given
     >>> # here only initializes a slice of the model on a single GPU.
     >>> # Check out the [`~DistributedPipeline.__init__`] method to initialize entire PLUG model.
@@ -1008,118 +1000,6 @@ class PlugModel(torch.nn.Module):
             is_infer=is_infer,
             sequence_output=sequence_output,
             parallel_output=parallel_output)
-
-    @staticmethod
-    def top_k_logits(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
-        # This function has been mostly taken from huggingface conversational ai code at
-        # https://medium.com/huggingface/how-to-build-a-state-of-the-art-
-        # conversational-ai-with-transfer-learning-2d818ac26313
-
-        if top_k > 0:
-            # Remove all tokens with a probability less than the last token of the top-k
-            indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1,
-                                                                      None]
-            logits[indices_to_remove] = filter_value
-
-        if top_p > 0.0:
-            # convert to 1D
-            logits = logits.view(logits.size()[1]).contiguous()
-            sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-            cumulative_probs = torch.cumsum(
-                F.softmax(sorted_logits, dim=-1), dim=-1)
-
-            # Remove tokens with cumulative probability above the threshold
-            sorted_indices_to_remove = cumulative_probs > top_p
-            # Shift the indices to the right to keep also the first token above the threshold
-            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[
-                ..., :-1].clone()
-            sorted_indices_to_remove[..., 0] = 0
-            indices_to_remove = sorted_indices[sorted_indices_to_remove]
-            logits[indices_to_remove] = filter_value
-            # going back to 2D
-            logits = logits.view(1, -1).contiguous()
-        return logits
-
-    def generate(self, input, out_length=128, model_cfg=None, *kwargs):
-        device = torch.cuda.current_device()
-        batch_size = input['input_ids'].shape[0]
-        tokens = input['input_ids'].view(1, -1).contiguous().to(device)
-        dec_input_ids = input['dec_input_ids'].to(device)
-        attention_mask = input['attention_mask'].to(device)
-        self.model.eval()
-        with torch.no_grad():
-            # Only supports batch_size=1
-            all_generate_tokens = []
-            generate_tokens = []
-            counter = 0
-            sequence_output = None
-            vocab_size = self.config.original_vocab_size
-            sep_token_idx = 102  # index of [SEP] token in BertTokenizer
-            while counter < out_length:
-                if counter % 128 == 0 and counter != 0:
-                    # Sliding window
-                    generate_tokens.append(sep_token_idx)
-                    start = (tokens == sep_token_idx).nonzero(
-                        as_tuple=True)[-1]
-                    if start + len(generate_tokens) >= 512:
-                        tokens = torch.cat([
-                            tokens[:start],
-                            torch.cuda.LongTensor(generate_tokens)
-                        ], -1)[-512:]
-                    else:
-                        tokens[0][start:start + len(generate_tokens
-                                                    )] = torch.cuda.LongTensor(
-                                                        generate_tokens)
-
-                    attention_mask = (tokens != 0)
-                    dec_input_ids = input['dec_input_ids'].to(device)
-                    generate_tokens = []
-                    sequence_output = None
-
-                position_ids = torch.full([batch_size, 1],
-                                          len(generate_tokens),
-                                          dtype=torch.long,
-                                          device=device)
-                _, logits, sequence_output = self.model(
-                    tokens,
-                    None,
-                    attention_mask,
-                    dec_input_ids,
-                    attention_mask,
-                    position_ids,
-                    is_infer=True,
-                    sequence_output=sequence_output,
-                    parallel_output=False)
-                logits = logits[:, -1, :]
-                logits = logits / model_cfg['temperature']
-                logits = self.top_k_logits(
-                    logits, top_k=model_cfg['top_k'], top_p=model_cfg['top_p'])
-                log_probs = F.softmax(logits, dim=-1)
-                prev = torch.argmax(log_probs, 1).unsqueeze(1)
-                # prev = torch.multinomial(log_probs, num_samples=1)
-                prev_token = prev[0].item()
-                if prev_token >= vocab_size:
-                    prev_token = 100
-                    prev[0] = 100
-                if prev_token == 102 and len(all_generate_tokens) > int(
-                        max(1, out_length) * 0.8):
-                    break
-                if prev_token == 102:
-                    counter += 1
-                    continue
-                dec_input_ids = torch.cat([dec_input_ids, prev], dim=1)
-                generate_tokens.append(prev_token)
-                all_generate_tokens.append(prev_token)
-                counter += 1
-
-            generate_context = []
-            for token in all_generate_tokens:
-                if generate_context and generate_context[
-                        -1] == 100 and token == 100:
-                    continue
-                else:
-                    generate_context.append(token)
-            return {'generate_context': generate_context}
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         return self.model.state_dict(

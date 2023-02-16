@@ -56,7 +56,8 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
             # load pcm data from wav data if audio_in is wave format
             audio_in, audio_fs = extract_pcm_from_wav(audio_in)
 
-        output = self.preprocessor.forward(self.model.forward(), audio_in)
+        # model.forward return model dir and config file when testing with kwsbp
+        output = self.preprocessor.forward(self.model.forward(None), audio_in)
         output = self.forward(output)
         rst = self.postprocess(output)
         return rst

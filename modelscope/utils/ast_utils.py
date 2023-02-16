@@ -3,7 +3,6 @@
 import ast
 import contextlib
 import hashlib
-import importlib
 import os
 import os.path as osp
 import time
@@ -30,6 +29,7 @@ storage = LocalStorage()
 p = Path(__file__)
 
 # get the path of package 'modelscope'
+SKIP_FUNCTION_SCANNING = True
 MODELSCOPE_PATH = p.resolve().parents[1]
 INDEXER_FILE_DIR = get_default_cache_dir()
 REGISTER_MODULE = 'register_module'
@@ -54,9 +54,11 @@ CLASS_NAME = 'class_name'
 GROUP_KEY = 'group_key'
 MODULE_NAME = 'module_name'
 MODULE_CLS = 'module_cls'
+TEMPLATE_PATH = 'TEMPLATE_PATH'
+TEMPLATE_FILE = 'ast_index_file.py'
 
 
-class AstScaning(object):
+class AstScanning(object):
 
     def __init__(self) -> None:
         self.result_import = dict()
@@ -80,6 +82,12 @@ class AstScaning(object):
         else:
             return True
 
+    def _skip_function(self, node: ast.AST) -> bool:
+        if type(node).__name__ == 'FunctionDef' and SKIP_FUNCTION_SCANNING:
+            return True
+        else:
+            return False
+
     def _fields(self, n: ast.AST, show_offsets: bool = True) -> tuple:
         if show_offsets:
             return n._attributes + n._fields
@@ -88,31 +96,16 @@ class AstScaning(object):
 
     def _leaf(self, node: ast.AST, show_offsets: bool = True) -> str:
         output = dict()
-        local_print = list()
         if isinstance(node, ast.AST):
             local_dict = dict()
             for field in self._fields(node, show_offsets=show_offsets):
-                field_output, field_prints = self._leaf(
+                field_output = self._leaf(
                     getattr(node, field), show_offsets=show_offsets)
                 local_dict[field] = field_output
-                local_print.append('{}={}'.format(field, field_prints))
-
-            prints = '{}({})'.format(
-                type(node).__name__,
-                ', '.join(local_print),
-            )
             output[type(node).__name__] = local_dict
-            return output, prints
-        elif isinstance(node, list):
-            if '_fields' not in node:
-                return node, repr(node)
-            for item in node:
-                item_output, item_prints = self._leaf(
-                    getattr(node, item), show_offsets=show_offsets)
-                local_print.append(item_prints)
-            return node, '[{}]'.format(', '.join(local_print), )
+            return output
         else:
-            return node, repr(node)
+            return node
 
     def _refresh(self):
         self.result_import = dict()
@@ -133,14 +126,10 @@ class AstScaning(object):
         parent_node_name: str = '',
     ) -> tuple:
         if node is None:
-            return node, repr(node)
+            return node
         elif self._is_leaf(node):
             return self._leaf(node, show_offsets=show_offsets)
         else:
-            if isinstance(indent, int):
-                indent_s = indent * ' '
-            else:
-                indent_s = indent
 
             class state:
                 indent = _indent
@@ -150,9 +139,6 @@ class AstScaning(object):
                 state.indent += 1
                 yield
                 state.indent -= 1
-
-            def indentstr() -> str:
-                return state.indent * indent_s
 
             def _scan_import(el: Union[ast.AST, None, str],
                              _indent: int = 0,
@@ -164,7 +150,6 @@ class AstScaning(object):
                     _indent=_indent,
                     parent_node_name=parent_node_name)
 
-            out = type(node).__name__ + '(\n'
             outputs = dict()
             # add relative path expression
             if type(node).__name__ == 'ImportFrom':
@@ -181,27 +166,23 @@ class AstScaning(object):
                 for field in self._fields(node, show_offsets=show_offsets):
                     attr = getattr(node, field)
                     if attr == []:
-                        representation = '[]'
                         outputs[field] = []
                     elif (isinstance(attr, list) and len(attr) == 1
                           and isinstance(attr[0], ast.AST)
+                          and self._skip_function(attr[0])):
+                        continue
+                    elif (isinstance(attr, list) and len(attr) == 1
+                          and isinstance(attr[0], ast.AST)
                           and self._is_leaf(attr[0])):
-                        local_out, local_print = _scan_import(attr[0])
-                        representation = f'[{local_print}]'
+                        local_out = _scan_import(attr[0])
                         outputs[field] = local_out
-
                     elif isinstance(attr, list):
-                        representation = '[\n'
                         el_dict = dict()
                         with indented():
                             for el in attr:
-                                local_out, local_print = _scan_import(
+                                local_out = _scan_import(
                                     el, state.indent,
                                     type(el).__name__)
-                                representation += '{}{},\n'.format(
-                                    indentstr(),
-                                    local_print,
-                                )
                                 name = type(el).__name__
                                 if (name == 'Import' or name == 'ImportFrom'
                                         or parent_node_name == 'ImportFrom'
@@ -209,14 +190,11 @@ class AstScaning(object):
                                     if name not in el_dict:
                                         el_dict[name] = []
                                     el_dict[name].append(local_out)
-                        representation += indentstr() + ']'
                         outputs[field] = el_dict
                     elif isinstance(attr, ast.AST):
-                        output, representation = _scan_import(
-                            attr, state.indent)
+                        output = _scan_import(attr, state.indent)
                         outputs[field] = output
                     else:
-                        representation = repr(attr)
                         outputs[field] = attr
 
                     if (type(node).__name__ == 'Import'
@@ -259,15 +237,12 @@ class AstScaning(object):
                     ).__name__ == 'Call' and parent_node_name == 'Expr':
                         self.result_express.append(attr)
 
-                    out += f'{indentstr()}{field}={representation},\n'
-
-            out += indentstr() + ')'
             return {
                 IMPORT_KEY: self.result_import,
                 FROM_IMPORT_KEY: self.result_from_import,
                 DECORATOR_KEY: self.result_decorator,
                 EXPRESS_KEY: self.result_express
-            }, out
+            }
 
     def _parse_decorator(self, node: ast.AST) -> tuple:
 
@@ -286,6 +261,8 @@ class AstScaning(object):
             for node in nodes:
                 if type(node).__name__ == 'Str':
                     result.append((node.s, None))
+                elif type(node).__name__ == 'Constant':
+                    result.append((node.value, None))
                 else:
                     result.append(_get_attribute_item(node))
             return result
@@ -317,7 +294,7 @@ class AstScaning(object):
         if key_item == 'default_group':
             return default_group
         split_list = key_item.split('.')
-        # in the case, the key_item is raw data, not registred
+        # in the case, the key_item is raw data, not registered
         if len(split_list) == 1:
             return key_item
         else:
@@ -331,7 +308,7 @@ class AstScaning(object):
         """
         functions, args_list, keyword_list = parsed_input
 
-        # ignore decocators other than register_module
+        # ignore decorators other than register_module
         if REGISTER_MODULE != functions[1]:
             return None
         output = [functions[0]]
@@ -407,17 +384,17 @@ class AstScaning(object):
         data = ''.join(data)
 
         node = gast.parse(data)
-        output, _ = self.scan_import(node, indent='  ', show_offsets=False)
+        output = self.scan_import(node, indent='  ', show_offsets=False)
         output[DECORATOR_KEY] = self.parse_decorators(output[DECORATOR_KEY])
         output[EXPRESS_KEY] = self.parse_decorators(output[EXPRESS_KEY])
         output[DECORATOR_KEY].extend(output[EXPRESS_KEY])
         return output
 
 
-class FilesAstScaning(object):
+class FilesAstScanning(object):
 
     def __init__(self) -> None:
-        self.astScaner = AstScaning()
+        self.astScaner = AstScanning()
         self.file_dirs = []
 
     def _parse_import_path(self,
@@ -546,9 +523,9 @@ class FilesAstScaning(object):
 
         Args:
             target_file_list can override the dir and folders combine
-            target_dir (str, optional): the absolute path of the target directory to be scaned. Defaults to None.
+            target_dir (str, optional): the absolute path of the target directory to be scanned. Defaults to None.
             target_folder (list, optional): the list of
-            sub-folders to be scaned in the target folder.
+            sub-folders to be scanned in the target folder.
             Defaults to SCAN_SUB_FOLDERS.
 
         Returns:
@@ -560,7 +537,7 @@ class FilesAstScaning(object):
         else:
             self.traversal_files(target_dir, target_folders)
         logger.info(
-            f'AST-Scaning the path "{target_dir}" with the following sub folders {target_folders}'
+            f'AST-Scanning the path "{target_dir}" with the following sub folders {target_folders}'
         )
 
         result = dict()
@@ -583,7 +560,7 @@ class FilesAstScaning(object):
             REQUIREMENT_KEY: module_import
         }
         logger.info(
-            f'Scaning done! A number of {len(inverted_index_with_results)} '
+            f'Scanning done! A number of {len(inverted_index_with_results)} '
             f'components indexed or updated! Time consumed {time.time()-start}s'
         )
         return index
@@ -608,10 +585,10 @@ class FilesAstScaning(object):
         return md5.hexdigest(), files_mtime_dict
 
 
-file_scanner = FilesAstScaning()
+file_scanner = FilesAstScanning()
 
 
-def _save_index(index, file_path, file_list=None):
+def _save_index(index, file_path, file_list=None, with_template=False):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
     index[VERSION_KEY] = __version__
@@ -619,6 +596,9 @@ def _save_index(index, file_path, file_list=None):
         file_list=file_list)
     index[MODELSCOPE_PATH_KEY] = MODELSCOPE_PATH.as_posix()
     json_index = json.dumps(index)
+    if with_template:
+        json_index = json_index.replace(MODELSCOPE_PATH.as_posix(),
+                                        TEMPLATE_PATH)
     storage.write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
         ast.literal_eval(k): v
@@ -626,8 +606,11 @@ def _save_index(index, file_path, file_list=None):
     }
 
 
-def _load_index(file_path):
+def _load_index(file_path, with_template=False):
     bytes_index = storage.read(file_path)
+    if with_template:
+        bytes_index = bytes_index.decode().replace(TEMPLATE_PATH,
+                                                   MODELSCOPE_PATH.as_posix())
     wrapped_index = json.loads(bytes_index)
     # convert str key to tuple key
     wrapped_index[INDEX_KEY] = {
@@ -684,19 +667,19 @@ def load_index(
         indexer_file_dir: The dir where the indexer file saved, default as INDEXER_FILE_DIR
         indexer_file: The indexer file name, default as INDEXER_FILE
     Returns:
-        dict: the index information for all registred modules, including key:
-        index, requirments, files last modified time, modelscope home path,
+        dict: the index information for all registered modules, including key:
+        index, requirements, files last modified time, modelscope home path,
         version and md5, the detail is shown below example: {
             'index': {
                 ('MODELS', 'nlp', 'bert'):{
                     'filepath' : 'path/to/the/registered/model', 'imports':
-                    ['os', 'torch', 'typeing'] 'module':
+                    ['os', 'torch', 'typing'] 'module':
                     'modelscope.models.nlp.bert'
                 },
                 ...
-            }, 'requirments': {
-                'modelscope.models.nlp.bert': ['os', 'torch', 'typeing'],
-                'modelscope.models.nlp.structbert': ['os', 'torch', 'typeing'],
+            }, 'requirements': {
+                'modelscope.models.nlp.bert': ['os', 'torch', 'typing'],
+                'modelscope.models.nlp.structbert': ['os', 'torch', 'typing'],
                 ...
             }, 'files_mtime' : {
                 '/User/Path/To/Your/Modelscope/modelscope/preprocessors/nlp/text_generation_preprocessor.py':
@@ -733,14 +716,21 @@ def load_index(
 
     if full_index_flag:
         if force_rebuild:
-            logger.info('Force rebuilding ast index')
+            logger.info('Force rebuilding ast index from scanning every file!')
+            index = file_scanner.get_files_scan_results(file_list)
         else:
             logger.info(
-                f'No valid ast index found from {file_path}, rebuilding ast index!'
+                f'No valid ast index found from {file_path}, generating ast index from prebuilt!'
             )
-        index = file_scanner.get_files_scan_results(file_list)
+            index = load_from_prebuilt()
+            if index is None:
+                index = file_scanner.get_files_scan_results(file_list)
         _save_index(index, file_path, file_list)
     elif local_changed and not full_index_flag:
+        logger.info(
+            'Updating the files for the changes of local files, '
+            'first time updating will take longer time! Please wait till updating done!'
+        )
         _update_index(index, files_mtime)
         _save_index(index, file_path, file_list)
 
@@ -751,14 +741,29 @@ def load_index(
     return index
 
 
-def check_import_module_avaliable(module_dicts: dict) -> list:
-    missed_module = []
-    for module in module_dicts.keys():
-        loader = importlib.find_loader(module)
-        if loader is None:
-            missed_module.append(module)
-    return missed_module
+def load_from_prebuilt(file_path=None):
+    if file_path is None:
+        local_path = p.resolve().parents[0]
+        file_path = os.path.join(local_path, TEMPLATE_FILE)
+    if os.path.exists(file_path):
+        index = _load_index(file_path, with_template=True)
+    else:
+        index = None
+    return index
+
+
+def generate_ast_template(file_path=None, force_rebuild=True):
+    index = load_index(force_rebuild=force_rebuild)
+    if file_path is None:
+        local_path = p.resolve().parents[0]
+        file_path = os.path.join(local_path, TEMPLATE_FILE)
+    _save_index(index, file_path, with_template=True)
+    if not os.path.exists(file_path):
+        raise Exception(
+            'The index file is not create correctly, please double check')
+    return index
 
 
 if __name__ == '__main__':
-    index = load_index()
+    index = load_index(force_rebuild=True)
+    print(index)

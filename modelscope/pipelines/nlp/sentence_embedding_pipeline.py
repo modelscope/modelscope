@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional, Union
 
 import numpy as np
+import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -10,7 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['SentenceEmbeddingPipeline']
 
@@ -42,6 +43,10 @@ class SentenceEmbeddingPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,
@@ -61,11 +66,17 @@ class SentenceEmbeddingPipeline(Pipeline):
         Returns:
             Dict[str, Any]: the predicted text representation
         """
-        embs = inputs['last_hidden_state'][:, 0].cpu().numpy()
-        num_sent = embs.shape[0]
-        if num_sent >= 2:
-            scores = np.dot(embs[0:1, ], np.transpose(embs[1:, ],
-                                                      (1, 0))).tolist()[0]
+        embeddings = inputs['query_embeddings']
+        doc_embeddings = inputs['doc_embeddings']
+        if doc_embeddings is not None:
+            embeddings = torch.cat((embeddings, doc_embeddings), dim=0)
+        embeddings = embeddings.detach().cpu().numpy()
+        if doc_embeddings is not None:
+            scores = np.dot(embeddings[0:1, ],
+                            np.transpose(embeddings[1:, ], (1, 0))).tolist()[0]
         else:
             scores = []
-        return {OutputKeys.TEXT_EMBEDDING: embs, OutputKeys.SCORES: scores}
+        return {
+            OutputKeys.TEXT_EMBEDDING: embeddings,
+            OutputKeys.SCORES: scores
+        }

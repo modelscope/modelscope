@@ -1,6 +1,7 @@
 # The implementation here is modified based on BaSSL,
 # originally Apache 2.0 License and publicly avaialbe at https://github.com/kakaobrain/bassl
 
+import math
 import os
 import os.path as osp
 from typing import Any, Dict
@@ -74,7 +75,7 @@ class MovieSceneSegmentationModel(TorchModel):
         self.eps = 1e-5
 
     def forward(self, inputs: Dict[str, Any]) -> Dict[str, torch.Tensor]:
-        data = inputs['video']
+        data = inputs.pop('video')
         labels = inputs['label']
         outputs = self.shared_step(data)
 
@@ -101,7 +102,7 @@ class MovieSceneSegmentationModel(TorchModel):
         inputs = batch['shot_feat']
 
         shot_num = len(sids)
-        cnt = shot_num // bs + 1
+        cnt = math.ceil(shot_num / bs)
 
         infer_sid, infer_pred = [], []
         infer_result = {}

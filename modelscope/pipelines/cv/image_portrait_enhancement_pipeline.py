@@ -47,6 +47,8 @@ class ImagePortraitEnhancementPipeline(Pipeline):
         self.use_sr = True
 
         self.size = 512
+        if 'hires' in model:
+            self.size = 1024
         self.n_mlp = 8
         self.channel_multiplier = 2
         self.narrow = 1

@@ -5,9 +5,9 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal import MPlugForAllTasks, OfaForAllTasks
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
                                       Preprocessor)
 from modelscope.utils.constant import Tasks
@@ -44,6 +44,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             elif isinstance(pipe_model, MPlugForAllTasks):
                 preprocessor = MPlugPreprocessor(pipe_model.model_dir)
         super().__init__(model=pipe_model, preprocessor=preprocessor, **kwargs)
+
+    def _batch(self, data):
+        if isinstance(self.model, OfaForAllTasks):
+            return batch_process(self.model, data)
+        else:
+            return super(AutomaticSpeechRecognitionPipeline, self)._batch(data)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

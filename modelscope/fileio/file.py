@@ -84,7 +84,8 @@ class LocalStorage(Storage):
         """
         dirname = os.path.dirname(filepath)
         if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
+            os.makedirs(dirname, exist_ok=True)
+
         with open(filepath, 'wb') as f:
             f.write(obj)
 
@@ -106,7 +107,8 @@ class LocalStorage(Storage):
         """
         dirname = os.path.dirname(filepath)
         if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
+            os.makedirs(dirname, exist_ok=True)
+
         with open(filepath, 'w', encoding=encoding) as f:
             f.write(obj)
 

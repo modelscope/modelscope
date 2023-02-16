@@ -1,9 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """PyTorch UniTE model."""
 
-import math
 import warnings
 from dataclasses import dataclass
+from math import ceil
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -23,7 +23,7 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 __all__ = ['UniTEForTranslationEvaluation']
 
@@ -279,8 +279,8 @@ class UniTEForTranslationEvaluation(TorchModel):
         pred = self.estimator(mix_states)
         return pred.squeeze(dim=-1)
 
-    def load_checkpoint(self, path: str):
-        state_dict = torch.load(path)
+    def load_checkpoint(self, path: str, device: torch.device):
+        state_dict = torch.load(path, map_location=device)
         self.load_state_dict(state_dict)
         logger.info('Loading checkpoint parameters from %s' % path)
         return

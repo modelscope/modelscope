@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import inspect
 import os
 import time
 from collections.abc import Mapping
@@ -16,6 +17,8 @@ from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
+from modelscope.metrics.prediction_saving_wrapper import \
+    PredictionSavingWrapper
 from modelscope.models.base import Model, TorchModel
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.msdatasets.task_datasets.builder import build_task_dataset
@@ -27,7 +30,7 @@ from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, ModeKeys, ModelFile,
                                        TrainerStages)
@@ -41,7 +44,7 @@ from modelscope.utils.torch_utils import (broadcast, get_dist_info,
                                           is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
-from .default_config import merge_cfg
+from .default_config import merge_cfg, merge_hooks
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
@@ -76,12 +79,15 @@ class EpochBasedTrainer(BaseTrainer):
         seed (int): The optional random seed for torch, cuda, numpy and random.
         max_epochs: (int, optional): Total training epochs.
         cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
+        remove_unused_data: Automatically remove unused data keys in mini-batches.
+            The remove action based on the `inspect` on the model's forward method, the removed columns will be
+            moved to the mini-batch's attributes.
 
         Examples of cfg_modify_fn:
-        >>> def cfg_modify_fn(cfg):
-        >>>     cfg.preprocessor.first_sequence= 'text1'
-        >>>     cfg.preprocessor.second_sequence='text2'
-        >>>     return cfg
+            >>> def cfg_modify_fn(cfg):
+            >>>     cfg.preprocessor.first_sequence= 'text1'
+            >>>     cfg.preprocessor.second_sequence='text2'
+            >>>     return cfg
     """
 
     def __init__(
@@ -130,6 +136,14 @@ class EpochBasedTrainer(BaseTrainer):
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
         self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
+        self.logger.info(
+            '==========================Training Config Start=========================='
+        )
+        self.logger.info(
+            json.dumps(self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
+        self.logger.info(
+            '===========================Training Config End==========================='
+        )
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -147,7 +161,16 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor)
 
         self._dist = self.init_dist(kwargs.get('launcher'))
+
+        if is_master() and not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+
         self.device = self.get_device(kwargs.get('device'))
+
+        # init logger after distribution init
+        log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
+        self.logger = get_logger(
+            log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,
@@ -163,7 +186,8 @@ class EpochBasedTrainer(BaseTrainer):
             **kwargs)
 
         self.train_data_collator, self.eval_data_collator = self.get_data_collator(
-            data_collator)
+            data_collator,
+            remove_unused_data=kwargs.get('remove_unused_data', False))
         self.metrics = self.get_metrics()
         self._max_epochs = kwargs.get('max_epochs',
                                       self.cfg.safe_get('train.max_epochs'))
@@ -187,12 +211,12 @@ class EpochBasedTrainer(BaseTrainer):
             if not is_parallel(self.model) and self._dist:
                 self.model = self.to_parallel(self.model)
 
-    def get_data_collator(self, data_collator):
+    def get_data_collator(self, data_collator, remove_unused_data=False):
         """Get the data collator for both training and evaluating.
 
         Args:
             data_collator: The input data_collator param.
-
+            remove_unused_data: Remove the unused data with 'RemoveColumnsCollator'.
         Returns:
             The train_data_collator and eval_data_collator, can be None.
         """
@@ -209,6 +233,19 @@ class EpochBasedTrainer(BaseTrainer):
             collate_fn = default_collate if data_collator is None else data_collator
             train_data_collator = collate_fn
             eval_data_collator = collate_fn
+
+        if remove_unused_data:
+            from modelscope.utils.data_collators import RemoveColumnsCollator
+
+            def _set_signature_columns_if_needed():
+                signature = inspect.signature(self.model.forward)
+                return list(signature.parameters.keys())
+
+            model_inputs = _set_signature_columns_if_needed()
+            train_data_collator = RemoveColumnsCollator(
+                train_data_collator, model_inputs)
+            eval_data_collator = RemoveColumnsCollator(eval_data_collator,
+                                                       model_inputs)
         return train_data_collator, eval_data_collator
 
     def init_dist(self, launcher=None):
@@ -280,7 +317,7 @@ class EpochBasedTrainer(BaseTrainer):
         Returns: The rebuilt config
 
         """
-        if self.cfg_modify_fn is not None:
+        if hasattr(self, 'cfg_modify_fn') and self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
 
@@ -462,57 +499,123 @@ class EpochBasedTrainer(BaseTrainer):
             metrics = [metrics]
         return metrics
 
-    def set_checkpoint_file_to_hook(self, checkpoint_path):
+    def set_checkpoint_file_to_hook(self, checkpoint_path, load_all_state):
         if checkpoint_path is not None:
             if os.path.isfile(checkpoint_path):
-                from modelscope.trainers.hooks import CheckpointHook
-                checkpoint_hooks = list(
-                    filter(lambda hook: isinstance(hook, CheckpointHook),
+                from modelscope.trainers.hooks import LoadCheckpointHook
+                load_ckpt_hooks = list(
+                    filter(lambda hook: isinstance(hook, LoadCheckpointHook),
                            self.hooks))
-                for hook in checkpoint_hooks:
-                    hook.checkpoint_file = checkpoint_path
+                if len(load_ckpt_hooks) == 0:
+                    load_ckpt_hook = LoadCheckpointHook()
+                    self.hooks.append(load_ckpt_hook)
+                    load_ckpt_hooks.append(load_ckpt_hook)
+                load_ckpt_hooks[0].checkpoint_file = checkpoint_path
+                load_ckpt_hooks[0].load_all_state = load_all_state
             else:
                 self.logger.error(
                     f'No {checkpoint_path} found in local file system.')
 
-    def train(self, checkpoint_path=None, *args, **kwargs):
+    def train(self,
+              checkpoint_path=None,
+              load_all_state=True,
+              *args,
+              **kwargs):
+        """Start training.
+
+        Args:
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file generated by this trainer.
+            load_all_state(`bool`: `optional`): Load all state out of the `checkpoint_path` file, including the
+                state dict of model, optimizer, lr_scheduler, the random state and epoch/iter number. If False, only
+                the model's state dict will be read, and model will be trained again.
+        """
+
         self._mode = ModeKeys.TRAIN
-
-        if self.train_dataset is None:
-            self.train_dataloader = self.get_train_dataloader()
-        else:
-            self.train_dataloader = self._build_dataloader_with_dataset(
-                self.train_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.train_data_collator,
-                **self.cfg.train.get('dataloader', {}))
+        self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
-
         self.register_optimizers_hook()
-        self.register_hook_from_cfg(self.cfg.train.hooks)
-        self.set_checkpoint_file_to_hook(checkpoint_path)
+        hooks = merge_hooks(self.cfg)
+        self.register_hook_from_cfg(hooks)
+        self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state)
         self.model.train()
 
         self.train_loop(self.train_dataloader)
 
-    def evaluate(self, checkpoint_path=None):
+    def predict(self,
+                predict_datasets: Union[Dataset, List[Dataset]],
+                saving_fn,
+                checkpoint_path=None):
+        """Start prediction.
+
+        Args:
+            predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
+
+            saving_fn(`Callable`): The callable used to save the prediction values to files. Like:
+                >>> class SavingFn:
+                >>>     def __init__(self):
+                >>>         self.filename = '/tmp/results.txt'
+                >>>
+                >>>     def __call__(self, inputs, outputs):
+                >>>         import numpy as np
+                >>>         ids = inputs.ids
+                >>>         predictions = np.argmax(outputs['logits'].cpu().numpy(), axis=1)
+                >>>         with open(self.filename, 'a') as f:
+                >>>             for id, pred in zip(ids, predictions):
+                >>>                 f.writelines(f'{id}, {pred}')
+
+                This saving_fn's result will not be collected to one file, Training with multiprocessing please
+                consider combining these files manually.
+
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file or a pure PyTorch `some-file.bin` file
+                generated by this trainer.
+        """
+
         if checkpoint_path is not None and os.path.isfile(checkpoint_path):
-            from modelscope.trainers.hooks import CheckpointHook
-            CheckpointHook.load_checkpoint(checkpoint_path, self)
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-        if self.eval_dataset is None:
-            self.eval_dataloader = self.get_eval_data_loader()
-        else:
-            self.eval_dataloader = self._build_dataloader_with_dataset(
-                self.eval_dataset,
-                dist=self._dist,
-                seed=self._seed,
-                collate_fn=self.eval_data_collator,
-                **self.cfg.evaluation.get('dataloader', {}))
+        predict_dataloader = self.get_predict_data_loader(predict_datasets)
+        metric_classes = [PredictionSavingWrapper(saving_fn=saving_fn)]
+
+        for m in metric_classes:
+            m.trainer = self
+
+        self.evaluation_loop(predict_dataloader, metric_classes)
+
+    def evaluate(self, checkpoint_path=None, saving_fn=None, **kwargs):
+        """Start evaluation.
+
+        Args:
+            checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
+                usually it's a `some-file-name.pth` file or a pure PyTorch `some-file.bin` file
+                generated by this trainer.
+
+            saving_fn(`Callable`): The callable used to save the prediction values to files. Like:
+                >>> class SavingFn:
+                >>>     def __init__(self):
+                >>>         self.filename = '/tmp/results.txt'
+                >>>
+                >>>     def __call__(self, inputs, outputs):
+                >>>         import numpy as np
+                >>>         ids = inputs.ids
+                >>>         predictions = np.argmax(outputs['logits'].cpu().numpy(), axis=1)
+                >>>         with open(self.filename, 'a') as f:
+                >>>             for id, pred in zip(ids, predictions):
+                >>>                 f.writelines(f'{id}, {pred}')
+        """
+        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
+        self.model.eval()
+        self._mode = ModeKeys.EVAL
+        self.eval_dataloader = self.get_eval_data_loader()
         self.data_loader = self.eval_dataloader
         metric_classes = [build_metric(metric) for metric in self.metrics]
+        if saving_fn is not None:
+            metric_classes.append(PredictionSavingWrapper(saving_fn=saving_fn))
         for m in metric_classes:
             m.trainer = self
 
@@ -672,19 +775,36 @@ class EpochBasedTrainer(BaseTrainer):
                 mode=ModeKeys.EVAL,
                 preprocessor=self.eval_preprocessor)
 
-        batch_size = self.cfg.evaluation.dataloader.batch_size_per_gpu
-        workers = self.cfg.evaluation.dataloader.workers_per_gpu
-        shuffle = self.cfg.evaluation.dataloader.get('shuffle', False)
+        default_config = {'shuffle': False}
+        default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
             self.eval_dataset,
-            batch_size_per_gpu=batch_size,
-            workers_per_gpu=workers,
-            shuffle=shuffle,
             dist=self._dist,
             seed=self._seed,
-            persistent_workers=True,
             collate_fn=self.eval_data_collator,
-        )
+            **default_config)
+        return data_loader
+
+    def get_predict_data_loader(self, predict_datasets: Union[Dataset,
+                                                              List[Dataset]]):
+        """ Builder torch dataloader for prediction with the config of evaluation.
+
+        Args:
+            predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
+        """
+        dataset = self.to_task_dataset(
+            predict_datasets,
+            mode=ModeKeys.EVAL,
+            preprocessor=self.eval_preprocessor)
+
+        default_config = {'shuffle': False}
+        default_config.update(self.cfg.evaluation.get('dataloader', {}))
+        data_loader = self._build_dataloader_with_dataset(
+            dataset,
+            dist=self._dist,
+            seed=self._seed,
+            collate_fn=self.eval_data_collator,
+            **default_config)
         return data_loader
 
     def build_dataset(self, data_cfg, mode, preprocessor=None):
@@ -942,73 +1062,53 @@ class EpochBasedTrainer(BaseTrainer):
         """ Evaluation loop used by `EpochBasedTrainer.evaluate()`.
 
         """
+        vis_closure = None
+        if hasattr(self.cfg.evaluation, 'visualization'):
+            vis_cfg = self.cfg.evaluation.visualization
+            vis_closure = partial(
+                self.visualization, dataset=self.eval_dataset, **vis_cfg)
+
         if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
-            results, data_list = multi_gpu_test(
+            metric_values = multi_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
-                tmpdir=None,
-                gpu_collect=False,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
+                tmpdir=self.cfg.evaluation.get('cache_dir', None),
+                gpu_collect=self.cfg.evaluation.get('gpu_collect', False),
                 data_loader_iters_per_gpu=self._eval_iters_per_epoch)
         else:
             from modelscope.trainers.utils.inference import single_gpu_test
-            results, data_list = single_gpu_test(
+            metric_values = single_gpu_test(
                 self,
                 data_loader,
                 device=self.device,
+                metric_classes=metric_classes,
+                vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
 
-        self._inner_iter = self.iters_per_epoch - 1  # start from index 0
-
-        # evaluation result processing
-        if hasattr(self.cfg.evaluation, 'visualization'):
-            flatten_results = []
-            for r in results:
-                flatten_results.extend(r)
-            vis_cfg = self.cfg.evaluation.visualization
-            self.visualization(results, self.eval_dataset, **vis_cfg)
-
-        # do evaluation on rank0
-        metric_values = {}
-        if not self._dist or is_master():
-            assert len(data_list) == len(
-                results), f'size mismatch {len(data_list)} and {len(results)}'
-            for metric_cls in metric_classes:
-                for idx in range(len(data_list)):
-                    metric_cls.add(results[idx], data_list[idx])
-
-            for metric_cls in metric_classes:
-                metric_values.update(metric_cls.evaluate())
-
-        _, world_size = get_dist_info()
-        if world_size > 1:
-            metric_values = broadcast(metric_values, 0)
         return metric_values
 
-    def visualization(self, results, dataset, **kwargs):
+    def visualization(self, batch_result, dataset, **kwargs):
         """ visualization function for evaluation results.
+
+        Examples:
+            >>> # draw list of images as numpy array
+            >>> images = draw_images(num_of_visualization)
+
+            >>> # set displayed name for each image
+            >>> filenames = get_image_display_names()
+            >>> vis_results = {'images': images, 'filenames' : filenames}
+
+            >>> # visualization results will be displayed in group named eva_vis
+            >>> self.visualization_buffer.output['eval_vis'] = vis_results
 
         Args:
             results (list(dict)):  a list of result dict.
-            dataset (:obj:`Dataset`): torch dataset object to access original data.
-
-        Implementation Examples:
-        ```python
-        # draw list of images as numpy array
-        images = draw_images(num_of_visualization)
-
-        # set displayed name for each image
-        filenames = get_image_display_names()
-        vis_results = {
-            'images': images,
-            'filenames' : filenames
-        }
-
-        # visualization results will be displayed in group named eva_vis
-        self.visualization_buffer.output['eval_vis'] = vis_results
-        ```
+            dataset (Dataset): torch dataset object to access original data.
         """
         # TODO @wenmeng.zwm add visualization support for cv evaluation
         raise NotImplementedError(
@@ -1039,7 +1139,7 @@ class EpochBasedTrainer(BaseTrainer):
         if not inserted:
             self._hooks.insert(0, hook)
 
-    def register_hook_from_cfg(self, hook_cfg: Dict) -> None:
+    def register_hook_from_cfg(self, hook_cfg: List) -> None:
         """Register a hook from its cfg.
 
         Args:

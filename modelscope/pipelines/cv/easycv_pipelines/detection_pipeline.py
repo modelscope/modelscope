@@ -16,7 +16,8 @@ from .base import EasyCVPipeline
     Tasks.image_object_detection,
     module_name=Pipelines.image_object_detection_auto)
 @PIPELINES.register_module(
-    Tasks.image_object_detection, module_name=Pipelines.hand_detection)
+    Tasks.domain_specific_object_detection,
+    module_name=Pipelines.hand_detection)
 class EasyCVDetectionPipeline(EasyCVPipeline):
     """Pipeline for easycv detection task."""
 

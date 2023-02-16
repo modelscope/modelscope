@@ -2,6 +2,8 @@
 
 from typing import Any, Dict
 
+import torch
+
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
@@ -19,6 +21,7 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
                  tokenizer='BertTokenizer',
                  query_set='query_set',
                  support_set='support_set',
+                 query_label='query_label',
                  label_in_support_set='label',
                  text_in_support_set='text',
                  sequence_length=None,
@@ -49,10 +52,13 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         else:
             self.max_len = kwargs.get('max_seq_length', 50)
         self.label_dict = None
+        self.query_label = query_label
         self.query_set = query_set
         self.support_set = support_set
         self.label_in_support_set = label_in_support_set
         self.text_in_support_set = text_in_support_set
+        # support non-prototype network
+        self.pad_support = kwargs.get('pad_support', False)
 
     def pad(self, samples, max_len):
         result = []
@@ -75,9 +81,30 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         ] + self.tokenizer.convert_tokens_to_ids(
             self.tokenizer.tokenize(text)) + [self.tokenizer.sep_token_id]
 
+    def preprocess(self, support_set):
+        label_to_samples = {}
+        for item in support_set:
+            label = item[self.label_in_support_set]
+            if label not in label_to_samples:
+                label_to_samples[label] = []
+            label_to_samples[label].append(item)
+        max_cnt = 0
+        for label, samples in label_to_samples.items():
+            if len(samples) > max_cnt:
+                max_cnt = len(samples)
+        new_support_set = []
+        for label, samples in label_to_samples.items():
+            new_support_set.extend(
+                samples + [samples[0] for _ in range(max_cnt - len(samples))])
+        return new_support_set
+
     @type_assert(object, Dict)
     def __call__(self, data: Dict[str, Any],
                  **preprocessor_param) -> Dict[str, Any]:
+        invoke_mode = preprocessor_param.get('mode', None)
+        if self.mode in (ModeKeys.TRAIN,
+                         ModeKeys.EVAL) and invoke_mode != ModeKeys.INFERENCE:
+            return data
         tmp_max_len = preprocessor_param.get(
             'sequence_length',
             preprocessor_param.get('max_seq_length', self.max_len))
@@ -85,6 +112,8 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         if not isinstance(queryset, list):
             queryset = [queryset]
         supportset = data[self.support_set]
+        if self.pad_support:
+            supportset = self.preprocess(supportset)
         supportset = sorted(
             supportset, key=lambda d: d[self.label_in_support_set])
 
@@ -111,11 +140,28 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         supportset_labels_ids = [
             label_dict.index(label) for label in supportset_labels_ori
         ]
-        return {
-            'query': queryset_padded,
-            'support': supportset_padded,
-            'support_labels': supportset_labels_ids
+
+        query_atttention_mask = torch.ne(
+            torch.tensor(queryset_padded, dtype=torch.int32),
+            self.tokenizer.pad_token_id)
+        support_atttention_mask = torch.ne(
+            torch.tensor(supportset_padded, dtype=torch.int32),
+            self.tokenizer.pad_token_id)
+
+        result = {
+            'query': torch.LongTensor(queryset_padded),
+            'support': torch.LongTensor(supportset_padded),
+            'query_attention_mask': query_atttention_mask,
+            'support_attention_mask': support_atttention_mask,
+            'support_labels': torch.LongTensor(supportset_labels_ids)
         }
+        if self.query_label in data:
+            query_label = data[self.query_label]
+            query_label_ids = [
+                label_dict.index(label) for label in query_label
+            ]
+            result['labels'] = torch.LongTensor(query_label_ids)
+        return result
 
     def batch_encode(self, sentence_list: list, max_length=None):
         if not max_length:

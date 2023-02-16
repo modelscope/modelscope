@@ -11,6 +11,9 @@ from .base import OfaBasePreprocessor
 
 
 class OfaVisualQuestionAnsweringPreprocessor(OfaBasePreprocessor):
+    r"""
+    OFA preprocessor for question answer tasks.
+    """
 
     def __init__(self,
                  cfg,
@@ -44,6 +47,31 @@ class OfaVisualQuestionAnsweringPreprocessor(OfaBasePreprocessor):
             return self._build_infer_sample(data)
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building training samples.
+
+        step 1. Preprocess the data using the logic of `_build_infer_sample`
+            and make sure the label data in the result.
+        step 2. Preprocessing the label data to generate `target` and `prev_output_token`.
+            - add blank in the front out label data and tokenize it as `target` item.
+            - if `prompt_type` is `None`, add the bos token as previous output tokens,
+            add eos tokens as target items.
+            - if `prompt_type` is `src`, concatenate source text input with target item as
+            previous output tokens, remove the bos token and add eos token as target items.
+            - if `prompt_type` is `prev_output`, just like the `prompt_type` is src, the
+            difference is that it will remove the eos token in source text input in this
+            setting.
+            - padding the source item as final target item.
+        step 3. Add constraint mask.
+
+        Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `image`
+                `text` and `label`.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])`, decoder prompt, label, target previous output tokens
+            and constraint mask.
+        """
         sample = self._build_infer_sample(data)
         tgt_item = self.tokenize_text(
             ' {}'.format(sample['label']), add_bos=False, add_eos=False)
@@ -81,6 +109,29 @@ class OfaVisualQuestionAnsweringPreprocessor(OfaBasePreprocessor):
         return sample
 
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building inference samples.
+
+        step 1. Preprocessing image input for model's image input.
+            - get pillow image from data.
+            - do some transforms to the pillow image, such as resize, normalize etc.
+        step 2. Preprocessing the text input for model's text input.
+            - add blank in the front of input text.
+            - tokenize the result above as source text input.
+        step 3. Calculating the decoder prompt.
+            - if `prompt_type` is `None`, using bos token.
+            - if `prompt_type` is `src`, using source text input
+            - if `prompt_type` is `prev_output`, using source text input without eos token.
+        step 4. Whether or not to add label data which refer to an answer to the question
+            in this task.
+
+        Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `image`
+                `text`.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])`, decoder prompt and label.
+        """
         image = self.get_img_pil(data[self.column_map['image']])
         patch_image = self.patch_resize_transform(image)
         text = data[self.column_map['text']]

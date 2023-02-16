@@ -26,10 +26,10 @@ import tarfile
 import tempfile
 
 import json
-import mpu
 import torch
 import torch.nn.functional as F
 from data_utils.file_utils import cached_path
+from megatron_util import mpu
 from torch import nn
 from torch.nn import CrossEntropyLoss
 
@@ -926,19 +926,17 @@ class BertModel(PreTrainedBertModel):
             classifier pretrained on top of the hidden state associated to the first character of the
             input (`CLF`) to train on the Next-Sentence task (see BERT's paper).
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = modeling.BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = modeling.BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = modeling.BertModel(config=config)
-    all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = modeling.BertModel(config=config)
+        >>> all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
     """ # noqa
 
     def __init__(self, config):
@@ -1029,19 +1027,17 @@ class BertForPreTraining(PreTrainedBertModel):
             - the masked language modeling logits of shape [batch_size, sequence_length, vocab_size], and
             - the next sentence classification logits of shape [batch_size, 2].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = BertForPreTraining(config)
-    masked_lm_logits_scores, seq_relationship_logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForPreTraining(config)
+        >>> masked_lm_logits_scores, seq_relationship_logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):
@@ -1109,19 +1105,17 @@ class BertForMaskedLM(PreTrainedBertModel):
         if `masked_lm_labels` is `None`:
             Outputs the masked language modeling logits of shape [batch_size, sequence_length, vocab_size].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = BertForMaskedLM(config)
-    masked_lm_logits_scores = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForMaskedLM(config)
+        >>> masked_lm_logits_scores = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):
@@ -1184,19 +1178,17 @@ class BertForNextSentencePrediction(PreTrainedBertModel):
         if `next_sentence_label` is `None`:
             Outputs the next sentence classification logits of shape [batch_size, 2].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = BertForNextSentencePrediction(config)
-    seq_relationship_logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForNextSentencePrediction(config)
+        >>> seq_relationship_logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):
@@ -1258,21 +1250,19 @@ class BertForSequenceClassification(PreTrainedBertModel):
         if `labels` is `None`:
             Outputs the classification logits of shape [batch_size, num_labels].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    num_labels = 2
+        >>> num_labels = 2
 
-    model = BertForSequenceClassification(config, num_labels)
-    logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForSequenceClassification(config, num_labels)
+        >>> logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config, num_labels=2):
@@ -1335,20 +1325,18 @@ class BertForMultipleChoice(PreTrainedBertModel):
         if `labels` is `None`:
             Outputs the classification logits of shape [batch_size, num_labels].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[[31, 51, 99], [15, 5, 0]], [[12, 16, 42], [14, 28, 57]]])
-    input_mask = torch.LongTensor([[[1, 1, 1], [1, 1, 0]],[[1,1,0], [1, 0, 0]]])
-    token_type_ids = torch.LongTensor([[[0, 0, 1], [0, 1, 0]],[[0, 1, 1], [0, 0, 1]]])
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[[31, 51, 99], [15, 5, 0]], [[12, 16, 42], [14, 28, 57]]])
+        >>> input_mask = torch.LongTensor([[[1, 1, 1], [1, 1, 0]],[[1,1,0], [1, 0, 0]]])
+        >>> token_type_ids = torch.LongTensor([[[0, 0, 1], [0, 1, 0]],[[0, 1, 1], [0, 0, 1]]])
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    num_choices = 2
+        >>> num_choices = 2
 
-    model = BertForMultipleChoice(config, num_choices)
-    logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForMultipleChoice(config, num_choices)
+        >>> logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):
@@ -1417,21 +1405,19 @@ class BertForTokenClassification(PreTrainedBertModel):
         if `labels` is `None`:
             Outputs the classification logits of shape [batch_size, sequence_length, num_labels].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    num_labels = 2
+        >>> num_labels = 2
 
-    model = BertForTokenClassification(config, num_labels)
-    logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForTokenClassification(config, num_labels)
+        >>> logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config, num_labels=2):
@@ -1507,19 +1493,17 @@ class BertForQuestionAnswering(PreTrainedBertModel):
             Outputs a tuple of start_logits, end_logits which are the logits respectively for the start and end
             position tokens of shape [batch_size, sequence_length].
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
+    Examples:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 1, 0]])
 
-    config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
-        num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
+        >>> config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
+        >>>     num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-    model = BertForQuestionAnswering(config)
-    start_logits, end_logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForQuestionAnswering(config)
+        >>> start_logits, end_logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config):

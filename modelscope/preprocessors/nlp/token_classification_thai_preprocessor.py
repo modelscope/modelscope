@@ -1,13 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Tuple, Union
-
-import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Preprocessors
-from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.builder import PREPROCESSORS
-from modelscope.utils.constant import Fields, ModeKeys
+from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
 from .token_classification_preprocessor import \
     TokenClassificationTransformersPreprocessor

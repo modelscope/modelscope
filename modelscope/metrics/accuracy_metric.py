@@ -8,6 +8,7 @@ from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys
 from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.registry import default_group
+from modelscope.utils.tensor_utils import torch_nested_numpify
 from .base import Metric
 from .builder import METRICS, MetricKeys
 
@@ -36,10 +37,15 @@ class AccuracyMetric(Metric):
                 eval_results = outputs[key]
                 break
         assert type(ground_truths) == type(eval_results)
+        ground_truths = torch_nested_numpify(ground_truths)
         for truth in ground_truths:
             self.labels.append(truth)
+        eval_results = torch_nested_numpify(eval_results)
         for result in eval_results:
             if isinstance(truth, str):
+                if isinstance(result, list):
+                    result = result[0]
+                assert isinstance(result, str), 'both truth and pred are str'
                 self.preds.append(remove_space_between_chinese_chars(result))
             else:
                 self.preds.append(result)
@@ -51,3 +57,14 @@ class AccuracyMetric(Metric):
                 pred == ref for pred, ref in zip(self.preds, self.labels)
             ])).mean().item()
         }
+
+    def merge(self, other: 'AccuracyMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels = state

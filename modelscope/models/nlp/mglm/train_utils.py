@@ -3,10 +3,10 @@
 import deepspeed
 import torch
 from apex.optimizers import FusedAdam as Adam
+from megatron_util import mpu
+from megatron_util.fp16 import DynamicLossScaler, FP16_Module, FP16_Optimizer
 from torch import distributed as dist
 
-from . import mpu
-from .fp16 import DynamicLossScaler, FP16_Module, FP16_Optimizer
 from .model import DistributedDataParallel as LocalDDP
 from .model import (GLMForMultiTokenCloze, GLMForMultiTokenClozeFast,
                     GLMForSequenceClassification, GLMForSingleTokenCloze,

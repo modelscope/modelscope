@@ -11,7 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.tensor_utils import (torch_nested_detach,
                                            torch_nested_numpify)
 
@@ -36,7 +36,7 @@ class TokenClassificationPipeline(Pipeline):
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate=True,
-                 sequence_length=128,
+                 sequence_length=512,
                  **kwargs):
         """use `model` and `preprocessor` to create a token classification pipeline for prediction
 
@@ -52,6 +52,9 @@ class TokenClassificationPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
@@ -116,9 +119,10 @@ class TokenClassificationPipeline(Pipeline):
             offset_mapping = torch.narrow(
                 offset_mapping, 0, 0,
                 masked_lengths)  # index_select only move loc, not resize
-            predictions = torch.narrow(
-                predictions, 0, 0,
-                masked_lengths)  # index_select only move loc, not resize
+
+            if len(label_mask.shape) == 2:
+                label_mask = label_mask[0]
+            predictions = predictions.masked_select(label_mask)
 
         offset_mapping = torch_nested_numpify(
             torch_nested_detach(offset_mapping))

@@ -3,6 +3,7 @@
 
 import argparse
 import datetime
+import importlib
 import math
 import multiprocessing
 import os
@@ -355,10 +356,73 @@ def run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
     run_command_with_popen(cmd)
 
 
+def run_non_parallelizable_test_suites(suites, result_dir):
+    cmd = ['python', 'tests/run.py', '--result_dir', result_dir, '--suites']
+    for suite in suites:
+        cmd.append(suite)
+    run_command_with_popen(cmd)
+
+
+# Selected cases:
+def get_selected_cases():
+    cmd = ['python', '-u', 'tests/run_analysis.py']
+    selected_cases = []
+    with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            encoding='utf8') as sub_process:
+        for line in iter(sub_process.stdout.readline, ''):
+            sys.stdout.write(line)
+            if line.startswith('Selected cases:'):
+                line = line.replace('Selected cases:', '').strip()
+                selected_cases = line.split(',')
+        sub_process.wait()
+        if sub_process.returncode != 0:
+            msg = 'Run analysis exception, returncode: %s!' % sub_process.returncode
+            logger.error(msg)
+            raise Exception(msg)
+    return selected_cases
+
+
 def run_in_subprocess(args):
     # only case args.isolated_cases run in subporcess, all other run in a subprocess
-    test_suite_files = gather_test_suites_files(
-        os.path.abspath(args.test_dir), args.pattern)
+    if not args.no_diff:  # run based on git diff
+        try:
+            test_suite_files = get_selected_cases()
+            logger.info('Tests suite to run: ')
+            for f in test_suite_files:
+                logger.info(f)
+        except Exception:
+            logger.error(
+                'Get test suite based diff exception!, will run all cases.')
+            test_suite_files = gather_test_suites_files(
+                os.path.abspath(args.test_dir), args.pattern)
+        if len(test_suite_files) == 0:
+            logger.error('Get no test suite based on diff, run all the cases.')
+            test_suite_files = gather_test_suites_files(
+                os.path.abspath(args.test_dir), args.pattern)
+    else:
+        test_suite_files = gather_test_suites_files(
+            os.path.abspath(args.test_dir), args.pattern)
+
+    non_parallelizable_suites = [
+        'test_download_dataset.py',
+        'test_hub_examples.py',
+        'test_hub_operation.py',
+        'test_hub_private_files.py',
+        'test_hub_private_repository.py',
+        'test_hub_repository.py',
+        'test_hub_retry.py',
+        'test_hub_revision.py',
+        'test_hub_revision_release_mode.py',
+        'test_hub_upload.py',
+    ]
+    test_suite_files = [
+        x for x in test_suite_files if x not in non_parallelizable_suites
+    ]
+
     run_config = None
     isolated_cases = []
     test_suite_env_map = {}
@@ -383,6 +447,11 @@ def run_in_subprocess(args):
         isolated_cases = test_suite_files
 
     with tempfile.TemporaryDirectory() as temp_result_dir:
+        # first run cases that nonparallelizable
+        run_non_parallelizable_test_suites(non_parallelizable_suites,
+                                           temp_result_dir)
+
+        # run case parallel in envs
         for env in set(test_suite_env_map.values()):
             parallel_run_case_in_env(env, run_config['envs'][env],
                                      test_suite_env_map, isolated_cases,
@@ -551,10 +620,17 @@ if __name__ == '__main__':
         help='Set case parallels, default single process, set with gpu number.'
     )
     parser.add_argument(
+        '--no-diff',
+        action='store_true',
+        help=
+        'Default running case based on git diff(with master), disable with --no-diff)'
+    )
+    parser.add_argument(
         '--suites',
         nargs='*',
         help='Run specified test suites(test suite files list split by space)')
     args = parser.parse_args()
+    print(args)
     set_test_level(args.level)
     os.environ['REGRESSION_BASELINE'] = '1'
     logger.info(f'TEST LEVEL: {test_level()}')

@@ -53,6 +53,17 @@ class NedMetric(Metric):
             ])).mean().item()
         }
 
+    def merge(self, other: 'NedMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels = state
+
     @staticmethod
     def _distance(pred, ref):
         if pred is None or ref is None:

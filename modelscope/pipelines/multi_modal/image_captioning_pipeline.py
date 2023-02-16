@@ -5,12 +5,12 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal import MPlugForAllTasks, OfaForAllTasks
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import (MPlugPreprocessor, OfaPreprocessor,
                                       Preprocessor)
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,7 +31,10 @@ class ImageCaptioningPipeline(Pipeline):
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model.eval()
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         if preprocessor is None:
+
             if isinstance(self.model, OfaForAllTasks):
                 self.preprocessor = OfaPreprocessor(self.model.model_dir)
             elif isinstance(self.model, MPlugForAllTasks):
@@ -39,17 +42,7 @@ class ImageCaptioningPipeline(Pipeline):
 
     def _batch(self, data):
         if isinstance(self.model, OfaForAllTasks):
-            # collate batch data due to the nested data structure
-            if isinstance(data, list):
-                batch_data = {}
-                batch_data['nsentences'] = len(data)
-                batch_data['samples'] = [d['samples'][0] for d in data]
-                batch_data['net_input'] = {}
-                for k in data[0]['net_input'].keys():
-                    batch_data['net_input'][k] = torch.cat(
-                        [d['net_input'][k] for d in data])
-
-            return batch_data
+            return batch_process(self.model, data)
         elif isinstance(self.model, MPlugForAllTasks):
             from transformers.tokenization_utils_base import BatchEncoding
             batch_data = dict(train=data[0]['train'])
@@ -60,7 +53,7 @@ class ImageCaptioningPipeline(Pipeline):
             batch_data['question'] = BatchEncoding(question)
             return batch_data
         else:
-            return super()._collate_batch(data)
+            return super(ImageCaptioningPipeline, self)._batch(data)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

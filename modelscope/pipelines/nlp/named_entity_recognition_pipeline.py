@@ -7,7 +7,7 @@ from modelscope.models import Model
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.nlp import TokenClassificationPipeline
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 
 __all__ = ['NamedEntityRecognitionPipeline']
 
@@ -29,7 +29,7 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate=True,
-                 sequence_length=128,
+                 sequence_length=512,
                  **kwargs):
         """Use `model` and `preprocessor` to create a nlp NER pipeline for prediction
 
@@ -37,10 +37,11 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
             model (str or Model): Supply either a local model dir which supported NER task, or a
             model id from the model hub, or a torch model instance.
             preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
-            the model if supplied.
+                the model if supplied.
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
-            Example:
+
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline(task='named-entity-recognition',
             >>>        model='damo/nlp_raner_named-entity-recognition_chinese-base-news')
@@ -55,6 +56,10 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate)
+
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,

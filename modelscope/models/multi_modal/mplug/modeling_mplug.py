@@ -40,7 +40,9 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          prune_linear_layer)
 from transformers.utils import logging
 
-from modelscope.models.multi_modal.mplug.configuration_mplug import MPlugConfig
+from modelscope.models.multi_modal.mplug.configuration_mplug import (
+    HiTeAConfig, MPlugConfig)
+from modelscope.models.multi_modal.mplug.mvit import MViTv2, MViTv2_Base_config
 from modelscope.models.multi_modal.mplug.predictor import TextGenerator
 from modelscope.utils.constant import ModelFile
 
@@ -1618,7 +1620,8 @@ class BertLMHeadModel(BertPreTrainedModel):
             If set to :obj:`True`, :obj:`past_key_values` key value states are returned and can be used to speed up
             decoding (see :obj:`past_key_values`).
         Returns:
-        Example::
+
+        Example:
             >>> from transformers import BertTokenizer, BertLMHeadModel, BertConfig
             >>> import torch
             >>> tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -2483,3 +2486,322 @@ class MPlugForImageTextRetrieval(MPlug):
             scores = F.softmax(scores, dim=-1)
 
             return scores
+
+
+class HiTeA(PreTrainedModel):
+    config_class = HiTeAConfig
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.config = config
+        self.tokenizer = BertTokenizer.from_pretrained(
+            os.path.join(config.model_dir, ModelFile.VOCAB_FILE))
+        self.module_setting(config)
+        self.visual_encoder = MViTv2(
+            img_size=config.image_res,
+            config=MViTv2_Base_config,
+            num_frames=config.num_frames)
+        self.text_encoder = BertModel(
+            self.config_encoder, add_pooling_layer=False)
+        self.fusion_encoder = FusionModel(
+            self.config_fusion, add_pooling_layer=False)
+
+    @classmethod
+    def from_pretrained(cls, model_dir, load_checkpoint=True):
+        from modelscope.utils.constant import Tasks
+
+        task_mapping = {
+            Tasks.video_question_answering: HiTeAForVideoQuestionAnswering,
+            Tasks.video_captioning: HiTeAForVideoCaption,
+        }
+        config = cls.config_class.from_yaml_file(
+            os.path.join(model_dir, CONFIG_NAME))
+        config.model_dir = model_dir
+        model = task_mapping[config.task](config)
+        if load_checkpoint:
+            checkpoint_path = os.path.join(model_dir,
+                                           ModelFile.TORCH_MODEL_BIN_FILE)
+            checkpoint = torch.load(checkpoint_path, map_location='cpu')
+            if 'model' in checkpoint:
+                checkpoint = checkpoint['model']
+            if 'module' in checkpoint:
+                checkpoint = checkpoint['module']
+            checkpoint = {
+                k.replace('model.', ''): v
+                for k, v in checkpoint.items()
+            }
+
+            model.load_state_dict(checkpoint, strict=False)
+        return model
+
+    def init_distill(self, config):
+        self.distill = config.distill
+        if self.distill:
+            self.visual_encoder_m = MViTv2(
+                img_size=config.image_res,
+                config=MViTv2_Base_config,
+                num_frames=config.num_frames)
+            self.text_encoder_m = BertModel(
+                self.config_encoder, add_pooling_layer=False)
+            self.fusion_encoder_m = FusionModel(
+                self.config_fusion, add_pooling_layer=False)
+            self.text_decoder_m = BertLMHeadModel(self.config_decoder)
+            self.model_pairs = [
+                [self.visual_encoder, self.visual_encoder_m],
+                [self.text_encoder, self.text_encoder_m],
+                [self.text_decoder, self.text_decoder_m],
+            ]
+            self.copy_params()
+            self.momentum = 0.995
+
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def module_setting(self, config):
+        bert_config_path = os.path.join(config.model_dir, config.bert_config)
+        self.config_encoder = BertConfig.from_json_file(bert_config_path)
+        self.config_encoder.num_hidden_layers = self.config_encoder.text_encoder_layers
+        self.config_fusion = BertConfig.from_json_file(bert_config_path)
+        self.config_decoder = BertConfig.from_json_file(bert_config_path)
+        self.config_decoder.add_cross_attention = True
+        self.config_decoder.num_hidden_layers = self.config_decoder.text_decode_layers
+
+    @torch.no_grad()
+    def copy_params(self):
+        for model_pair in self.model_pairs:
+            for param, param_m in zip(model_pair[0].parameters(),
+                                      model_pair[1].parameters()):
+                param_m.data.copy_(param.data)  # initialize
+                param_m.requires_grad = False  # not update by gradient
+
+    @torch.no_grad()
+    def _momentum_update(self):
+        for model_pair in self.model_pairs:
+            for param, param_m in zip(model_pair[0].parameters(),
+                                      model_pair[1].parameters()):
+                param_m.data = param_m.data * self.momentum + param.data * (
+                    1. - self.momentum)
+
+    def generation(self, question_states, question_atts, out_size=1):
+        encoder_inputs = [question_states, question_atts]
+        topk_ids, topk_scores = self.beam_generator.translate_batch(
+            encoder_inputs, out_size=out_size)
+        return topk_ids, topk_scores
+
+    @staticmethod
+    def _tile(x, dim, n_tile):
+        import numpy as np
+        init_dim = x.size(dim)
+        repeat_idx = [1] * x.dim()
+        repeat_idx[dim] = n_tile
+        x = x.repeat(*(repeat_idx))
+        order_index = torch.LongTensor(
+            np.concatenate(
+                [init_dim * np.arange(n_tile) + i for i in range(init_dim)]))
+        return torch.index_select(x, dim, order_index.to(x.device))
+
+
+class HiTeAForVideoQuestionAnswering(HiTeA):
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.text_decoder = BertLMHeadModel(self.config_decoder)
+        self.beam_generator = TextGenerator(config, self.text_decoder)
+        self.init_distill(config)
+
+    def forward(self,
+                video,
+                question,
+                answer=None,
+                alpha=0,
+                k=None,
+                weights=None,
+                train=True):
+        video = video.to(dtype=next(self.parameters()).dtype)
+        video_embeds = self.visual_encoder(video)
+        video_atts = torch.ones(
+            video_embeds.size()[:-1], dtype=torch.long).to(video.device)
+
+        if train:
+            '''
+            k: number of answers for each question
+            weights: weight for each answer
+            '''
+            answer_targets = answer.input_ids.masked_fill(
+                answer.input_ids == self.tokenizer.pad_token_id, -100)
+            text_output = self.text_encoder(
+                question.input_ids,
+                attention_mask=question.attention_mask,
+                return_dict=True)
+            text_embeds = text_output.last_hidden_state
+            fusion_output = self.fusion_encoder(
+                encoder_embeds=text_embeds,
+                attention_mask=question.attention_mask,
+                encoder_hidden_states=video_embeds,
+                encoder_attention_mask=video_atts,
+                return_dict=False)
+
+            video_output, question_output = fusion_output
+
+            question_output = torch.cat([video_output, question_output], 1)
+            merge_text_attention = torch.cat(
+                [video_atts, question.attention_mask], 1)
+
+            if k is None:
+                k = [1] * question_output.shape[0]
+            question_states = []
+            question_atts = []
+            for b, n in enumerate(k):
+                question_states += [question_output[b]] * n
+                question_atts += [merge_text_attention[b]] * n
+            question_states = torch.stack(question_states, 0)
+            question_atts = torch.stack(question_atts, 0)
+
+            if self.distill:
+                with torch.no_grad():
+                    self._momentum_update()
+                    video_embeds_m = self.visual_encoder_m(video)
+                    text_output_m = self.text_encoder_m(
+                        question.input_ids,
+                        attention_mask=question.attention_mask,
+                        return_dict=True)
+                    text_embeds_m = text_output_m.last_hidden_state
+                    fusion_output_m = self.fusion_encoder_m(
+                        encoder_embeds=text_embeds_m,
+                        attention_mask=question.attention_mask,
+                        encoder_hidden_states=video_embeds_m,
+                        encoder_attention_mask=video_atts,
+                        return_dict=False)
+
+                    image_output_m, question_output_m = fusion_output_m
+                    question_output_m = torch.cat(
+                        [image_output_m, question_output_m], 1)
+
+                    question_states_m = []
+                    for b, n in enumerate(k):
+                        question_states_m += [question_output_m[b]] * n
+                    question_states_m = torch.stack(question_states_m, 0)
+
+                    logits_m = self.text_decoder_m(
+                        answer.input_ids,
+                        attention_mask=answer.attention_mask,
+                        encoder_hidden_states=question_states_m,
+                        encoder_attention_mask=question_atts,
+                        return_logits=True,
+                    )
+
+                answer_output = self.text_decoder(
+                    answer.input_ids,
+                    attention_mask=answer.attention_mask,
+                    encoder_hidden_states=question_states,
+                    encoder_attention_mask=question_atts,
+                    labels=answer_targets,
+                    return_dict=True,
+                    soft_labels=F.softmax(logits_m, dim=-1),
+                    reduction='none',
+                )
+            else:
+                answer_output = self.text_decoder(
+                    answer.input_ids,
+                    attention_mask=answer.attention_mask,
+                    encoder_hidden_states=question_states,
+                    encoder_attention_mask=question_atts,
+                    labels=answer_targets,
+                    return_dict=True,
+                    reduction='none',
+                )
+            if weights is None:
+                weights = 1
+            loss = weights * answer_output.loss
+            loss = loss.sum() / video.size(0)
+
+            return loss
+
+        else:
+            text_output = self.text_encoder(
+                question.input_ids,
+                attention_mask=question.attention_mask,
+                return_dict=True)
+            text_embeds = text_output.last_hidden_state
+            fusion_output = self.fusion_encoder(
+                encoder_embeds=text_embeds,
+                attention_mask=question.attention_mask,
+                encoder_hidden_states=video_embeds,
+                encoder_attention_mask=video_atts,
+                return_dict=False)
+            video_output, question_output = fusion_output
+            question_output = torch.cat([video_output, question_output], 1)
+            merge_text_attention = torch.cat(
+                [video_atts, question.attention_mask], 1)
+            topk_ids, topk_probs = self.generation(question_output,
+                                                   merge_text_attention)
+            return topk_ids, topk_probs
+
+
+class HiTeAForVideoCaption(HiTeA):
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.text_decoder = BertPrefixModel(self.config_decoder)
+        self.beam_generator = TextGenerator(config, self.text_decoder)
+
+    def beam_search(self,
+                    video,
+                    question,
+                    answer=None,
+                    train=True,
+                    out_size=5):
+        video_embeds = self.visual_encoder(video)
+        video_atts = torch.ones(
+            video_embeds.size()[:-1], dtype=torch.long).to(video.device)
+        text_output = self.text_encoder(
+            question.input_ids,
+            attention_mask=question.attention_mask,
+            return_dict=True)
+        text_embeds = text_output.last_hidden_state
+        fusion_output = self.fusion_encoder(
+            encoder_embeds=text_embeds,
+            attention_mask=question.attention_mask,
+            encoder_hidden_states=video_embeds,
+            encoder_attention_mask=video_atts,
+            return_dict=False)
+        video_output, question_output = fusion_output
+        question_output = torch.cat([video_output, question_output], 1)
+        merge_text_attention = torch.cat([video_atts, question.attention_mask],
+                                         1)
+        topk_ids, topk_probs = self.generation(
+            question_output, merge_text_attention, out_size=out_size)
+        return topk_ids, topk_probs
+
+    def forward(self,
+                video,
+                question,
+                answer=None,
+                train=True,
+                out_size=5,
+                scst=False):
+        if (scst):
+            return self.beam_search(
+                video, question, answer, train=True, out_size=out_size)
+        video = video.to(dtype=next(self.parameters()).dtype)
+        video_embeds = self.visual_encoder(video)
+        video_atts = torch.ones(
+            video_embeds.size()[:-1], dtype=torch.long).to(video.device)
+
+        if train:
+            answer_targets = answer.input_ids.masked_fill(
+                answer.input_ids == self.tokenizer.pad_token_id, -100)
+            answer_output = self.text_decoder(
+                answer.input_ids,
+                attention_mask=answer.attention_mask,
+                encoder_hidden_states=video_embeds,
+                encoder_attention_mask=video_atts,
+                labels=answer_targets,
+                return_dict=True,
+                reduction='none')
+            loss = answer_output.loss
+
+            return loss
+        else:
+            topk_ids, topk_probs = self.generation(video_embeds, video_atts)
+            return topk_ids, topk_probs

@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from setuptools import find_packages, setup
 
+from modelscope.utils.ast_utils import generate_ast_template
 from modelscope.utils.constant import Fields
 
 
@@ -82,7 +83,9 @@ def parse_requirements(fname='requirements.txt', with_version=True):
         if line.startswith('-r '):
             # Allow specifying requirements in other files
             target = line.split(' ')[1]
-            for info in parse_require_file(target):
+            relative_base = os.path.dirname(fname)
+            absolute_target = os.path.join(relative_base, target)
+            for info in parse_require_file(absolute_target):
                 yield info
         else:
             info = {'line': line}
@@ -168,6 +171,7 @@ def pack_resource():
 
 if __name__ == '__main__':
     # write_version_py()
+    generate_ast_template()
     pack_resource()
     os.chdir('package')
     install_requires, deps_link = parse_requirements('requirements.txt')
@@ -184,7 +188,10 @@ if __name__ == '__main__':
         # result in mac/windows compatibility problems
         if field != Fields.audio:
             all_requires.append(extra_requires[field])
-
+    for subfiled in ['asr', 'kws', 'signal', 'tts']:
+        filed_name = f'audio_{subfiled}'
+        extra_requires[filed_name], _ = parse_requirements(
+            f'requirements/audio/{filed_name}.txt')
     extra_requires['all'] = all_requires
 
     setup(
@@ -199,6 +206,9 @@ if __name__ == '__main__':
         url='https://github.com/modelscope/modelscope',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
+        package_data={
+            '': ['*.h', '*.cpp', '*.cu'],
+        },
         classifiers=[
             'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',

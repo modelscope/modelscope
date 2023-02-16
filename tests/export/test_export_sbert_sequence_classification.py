@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 from modelscope.exporters import Exporter, TorchModelExporter
 from modelscope.models import Model
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
@@ -18,6 +19,7 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
         self.model_id = 'damo/nlp_structbert_sentence-similarity_chinese-base'
+        self.model_id_bert = 'langboat/mengzi-bert-base'
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -26,6 +28,17 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_export_sbert_sequence_classification(self):
         model = Model.from_pretrained(self.model_id)
+        print(
+            Exporter.from_model(model).export_onnx(
+                shape=(2, 256), output_dir=self.tmp_dir))
+        print(
+            TorchModelExporter.from_model(model).export_torch_script(
+                shape=(2, 256), output_dir=self.tmp_dir))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_export_bert_sequence_classification(self):
+        model = Model.from_pretrained(
+            self.model_id_bert, task=Tasks.text_classification, num_labels=2)
         print(
             Exporter.from_model(model).export_onnx(
                 shape=(2, 256), output_dir=self.tmp_dir))

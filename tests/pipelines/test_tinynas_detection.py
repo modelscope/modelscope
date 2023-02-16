@@ -2,6 +2,9 @@
 
 import unittest
 
+from PIL import Image
+
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
@@ -62,6 +65,136 @@ class TinynasObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         result = tinynas_object_detection(test_image)
         tinynas_object_detection.show_result(test_image, result,
                                              'demo_ret.jpg')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_human_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_human-detection_damoyolo')
+        result = tinynas_object_detection(
+            'data/test/images/image_detection.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_human_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_human-detection_damoyolo')
+        img = Image.open('data/test/images/image_detection.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_facemask_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_facemask')
+        result = tinynas_object_detection(
+            'data/test/images/image_detection.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_facemask_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_facemask')
+        img = Image.open('data/test/images/image_detection.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_safetyhat_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_safety-helmet')
+        result = tinynas_object_detection(
+            'data/test/images/image_safetyhat.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_safetyhat_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_safety-helmet')
+        img = Image.open('data/test/images/image_safetyhat.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_cigarette_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_cigarette')
+        result = tinynas_object_detection('data/test/images/image_smoke.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_cigarette_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_cigarette')
+        img = Image.open('data/test/images/image_smoke.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_phone_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_phone')
+        result = tinynas_object_detection('data/test/images/image_phone.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_phone_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_phone')
+        img = Image.open('data/test/images/image_phone.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_head_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_head-detection_damoyolo')
+        result = tinynas_object_detection(
+            'data/test/images/image_detection.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_head_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_head-detection_damoyolo')
+        img = Image.open('data/test/images/image_detection.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
 
 
 if __name__ == '__main__':

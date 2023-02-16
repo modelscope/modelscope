@@ -4,6 +4,7 @@ import unittest
 
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
+from modelscope.msdatasets.audio.asr_dataset import ASRDataset
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
@@ -112,6 +113,12 @@ class MsDatasetTest(unittest.TestCase):
         print(next(iter(tf_dataset)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_to_dataset_asr(self):
+        ms_ds_asr = ASRDataset.load(
+            'speech_asr_aishell1_trainsets', namespace='speech_asr')
+        print(next(iter(ms_ds_asr['train'])))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_img(self):
         ms_image_train = MsDataset.load(
@@ -136,6 +143,76 @@ class MsDatasetTest(unittest.TestCase):
             drop_remainder=True,
         )
         print(next(iter(tf_dataset)))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_streaming_load_coco(self):
+        small_coco_for_test = MsDataset.load(
+            dataset_name='EasyCV/small_coco_for_test',
+            split='train',
+            use_streaming=True,
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+        dataset_sample_dict = next(iter(small_coco_for_test))
+        print(dataset_sample_dict)
+        assert dataset_sample_dict.values()
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_streaming_load_uni_fold(self):
+        """Test case for loading large scale datasets."""
+        dataset = MsDataset.load(
+            dataset_name='Uni-Fold-Data',
+            split='train',
+            use_streaming=True,
+            namespace='DPTech')
+        data_example = next(iter(dataset))
+        print(data_example)
+        assert data_example.values()
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_streaming_load_afqmc(self):
+        """To streaming-load afqmc dataset, which contains train/dev/validation data in meta-files."""
+        dataset = MsDataset.load('afqmc', split='test', use_streaming=True)
+        data_example = next(iter(dataset))
+        print(data_example)
+        assert data_example.values()
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_streaming_load_from_hf(self):
+        """Use stream mode to load dataset from huggingface hub."""
+        from modelscope.utils.constant import Hubs
+        ds_train = MsDataset.load(
+            'glue',
+            subset_name='sst2',
+            split='train',
+            hub=Hubs.huggingface,
+            use_streaming=True)
+        data_example = next(iter(ds_train))
+        print(data_example)
+        assert data_example.values()
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_streaming_load_img_object(self):
+        """Test case for iterating PIL object."""
+        from PIL.PngImagePlugin import PngImageFile
+        dataset = MsDataset.load(
+            dataset_name='SIDD',
+            subset_name='default',
+            namespace='huizheng',
+            split='train',
+            use_streaming=True)
+        data_example = next(iter(dataset))
+        print(data_example)
+        assert isinstance(data_example['Noisy Image:FILE:Object'],
+                          PngImageFile)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_to_ms_dataset(self):
+        """Test case for converting huggingface dataset to `MsDataset` instance."""
+        from datasets.load import load_dataset
+        hf_dataset = load_dataset('beans', split='train', streaming=True)
+        ms_dataset = MsDataset.to_ms_dataset(hf_dataset)
+        data_example = next(iter(ms_dataset))
+        print(data_example)
+        assert data_example.values()
 
 
 if __name__ == '__main__':

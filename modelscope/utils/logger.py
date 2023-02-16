@@ -6,6 +6,9 @@ from typing import Optional
 
 init_loggers = {}
 
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 def get_logger(log_file: Optional[str] = None,
                log_level: int = logging.INFO,
@@ -19,10 +22,12 @@ def get_logger(log_file: Optional[str] = None,
         file_mode: Specifies the mode to open the file, if filename is
             specified (if filemode is unspecified, it defaults to 'w').
     """
+
     logger_name = __name__.split('.')[0]
     logger = logging.getLogger(logger_name)
 
     if logger_name in init_loggers:
+        add_file_handler_if_needed(logger, log_file, file_mode, log_level)
         return logger
 
     # handle duplicate logs to the console
@@ -49,8 +54,6 @@ def get_logger(log_file: Optional[str] = None,
         file_handler = logging.FileHandler(log_file, file_mode)
         handlers.append(file_handler)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     for handler in handlers:
         handler.setFormatter(formatter)
         handler.setLevel(log_level)
@@ -64,3 +67,21 @@ def get_logger(log_file: Optional[str] = None,
     init_loggers[logger_name] = True
 
     return logger
+
+
+def add_file_handler_if_needed(logger, log_file, file_mode, log_level):
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            return
+
+    if importlib.util.find_spec('torch') is not None:
+        from modelscope.utils.torch_utils import is_master
+        is_worker0 = is_master()
+    else:
+        is_worker0 = True
+
+    if is_worker0 and log_file is not None:
+        file_handler = logging.FileHandler(log_file, file_mode)
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(log_level)
+        logger.addHandler(file_handler)

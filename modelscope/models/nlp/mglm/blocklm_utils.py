@@ -7,10 +7,8 @@ import random
 import numpy as np
 import torch
 import torch.utils.data
+from megatron_util import mpu, print_rank_0
 from scipy.stats import poisson
-
-from . import mpu
-from .utils import print_rank_0
 
 
 def rindex(lst, val, start=None):

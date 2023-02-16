@@ -5,9 +5,9 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal import OfaForAllTasks
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.util import batch_process
 from modelscope.preprocessors import OfaPreprocessor, Preprocessor
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
@@ -33,6 +33,12 @@ class OcrRecognitionPipeline(Pipeline):
         if preprocessor is None:
             if isinstance(self.model, OfaForAllTasks):
                 self.preprocessor = OfaPreprocessor(self.model.model_dir)
+
+    def _batch(self, data):
+        if isinstance(self.model, OfaForAllTasks):
+            return batch_process(self.model, data)
+        else:
+            return super(OcrRecognitionPipeline, self)._batch(data)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

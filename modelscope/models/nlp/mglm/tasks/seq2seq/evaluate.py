@@ -4,14 +4,13 @@ import datetime
 import random
 import string
 
-import mpu
 import torch
 import torch.nn.functional as F
 from generation_utils import (BeamSearchScorer, LogitsProcessorList,
                               MinLengthLogitsProcessor,
                               NoRepeatNGramLogitsProcessor)
+from megatron_util import mpu, print_rank_0
 from rouge_score import rouge_scorer
-from utils import print_rank_0
 
 
 def _is_digit(w):

@@ -14,12 +14,11 @@
 
 import torch
 import torch.distributed as dist
+from megatron_util import mpu
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 from torch.autograd import Variable
 from torch.nn.modules import Module
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
-
-from modelscope.models.nlp.mglm import mpu
 
 
 class PyTorchDistributedDataParallel(DDP):

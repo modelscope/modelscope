@@ -3,8 +3,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (LSTMCRFForNamedEntityRecognition,
-                                   TransformerCRFForNamedEntityRecognition)
+from modelscope.models.nlp import (LSTMForTokenClassificationWithCRF,
+                                   ModelForTokenClassificationWithCRF)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import \
@@ -251,6 +251,10 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
             'damo/nlp_structbert_keyphrase-extraction_base-icassp2023-mug-track4-baseline',
             'language': 'zh'
         },
+        {
+            'model_id': 'damo/nlp_raner_chunking_english-large',
+            'language': 'en'
+        },
     ]
 
     def setUp(self) -> None:
@@ -274,8 +278,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_tcrf_by_direct_model_download(self):
         cache_path = snapshot_download(self.tcrf_model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = TransformerCRFForNamedEntityRecognition(
-            cache_path, tokenizer=tokenizer)
+        model = ModelForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
@@ -291,8 +294,7 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_lcrf_by_direct_model_download(self):
         cache_path = snapshot_download(self.lcrf_model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = LSTMCRFForNamedEntityRecognition(
-            cache_path, tokenizer=tokenizer)
+        model = LSTMForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(

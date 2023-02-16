@@ -5,6 +5,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.config import Config
@@ -40,6 +41,8 @@ class BaseTrainer(ABC):
         if os.path.exists(model):
             model_cache_dir = model if os.path.isdir(
                 model) else os.path.dirname(model)
+            check_local_model_is_latest(
+                model_cache_dir, user_agent={Invoke.KEY: Invoke.LOCAL_TRAINER})
         else:
             model_cache_dir = snapshot_download(
                 model,
@@ -52,7 +55,7 @@ class BaseTrainer(ABC):
         """ Train (and evaluate) process
 
         Train process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         pass
@@ -63,7 +66,7 @@ class BaseTrainer(ABC):
         """ Evaluation process
 
         Evaluation process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         pass
@@ -84,7 +87,7 @@ class DummyTrainer(BaseTrainer):
         """ Train (and evaluate) process
 
         Train process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         cfg = self.cfg.train
@@ -97,7 +100,7 @@ class DummyTrainer(BaseTrainer):
         """ Evaluation process
 
         Evaluation process should be implemented for specific task or
-        model, releated paramters have been intialized in
+        model, related parameters have been initialized in
         ``BaseTrainer.__init__`` and should be used in this function
         """
         cfg = self.cfg.evaluation

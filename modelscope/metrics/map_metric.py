@@ -50,6 +50,17 @@ class AveragePrecisionMetric(Metric):
         scores = self._calculate_ap_score(self.preds, self.labels, self.thresh)
         return {MetricKeys.mAP: scores.mean().item()}
 
+    def merge(self, other: 'AveragePrecisionMetric'):
+        self.preds.extend(other.preds)
+        self.labels.extend(other.labels)
+
+    def __getstate__(self):
+        return self.preds, self.labels, self.thresh
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.preds, self.labels, self.thresh = state
+
     def _calculate_ap_score(self, preds, labels, thresh=0.5):
         hyps = np.array(preds)
         refs = np.array(labels)

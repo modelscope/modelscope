@@ -21,14 +21,18 @@ class OutputKeys(object):
     MASKS = 'masks'
     DEPTHS = 'depths'
     DEPTHS_COLOR = 'depths_color'
+    LAYOUT = 'layout'
     TEXT = 'text'
     POLYGONS = 'polygons'
     OUTPUT = 'output'
     OUTPUT_IMG = 'output_img'
+    OUTPUT_IMGS = 'output_imgs'
     OUTPUT_VIDEO = 'output_video'
     OUTPUT_PCM = 'output_pcm'
+    OUTPUT_PCM_LIST = 'output_pcm_list'
     OUTPUT_WAV = 'output_wav'
     IMG_EMBEDDING = 'img_embedding'
+    SPK_EMBEDDING = 'spk_embedding'
     SPO_LIST = 'spo_list'
     TEXT_EMBEDDING = 'text_embedding'
     TRANSLATION = 'translation'
@@ -50,6 +54,9 @@ class OutputKeys(object):
     SCENE_NUM = 'scene_num'
     SCENE_META_LIST = 'scene_meta_list'
     SHOT_META_LIST = 'shot_meta_list'
+    MATCHES = 'matches'
+    PCD12 = 'pcd12'
+    PCD12_ALIGN = 'pcd12_align'
 
 
 TASK_OUTPUTS = {
@@ -70,6 +77,16 @@ TASK_OUTPUTS = {
     #    "text": "电子元器件提供BOM配单"
     # }
     Tasks.ocr_recognition: [OutputKeys.TEXT],
+    Tasks.sudoku: [OutputKeys.TEXT],
+    Tasks.text2sql: [OutputKeys.TEXT],
+
+    # document vl embedding for single sample
+    # {
+    #    "img_embedding": np.array with shape [M, D],
+    #    "text_embedding": np.array with shape [N, D]
+    # }
+    Tasks.document_vl_embedding:
+    [OutputKeys.IMG_EMBEDDING, OutputKeys.TEXT_EMBEDDING],
 
     # face 2d keypoint result for single sample
     #   {
@@ -130,6 +147,41 @@ TASK_OUTPUTS = {
     Tasks.card_detection:
     [OutputKeys.SCORES, OutputKeys.BOXES, OutputKeys.KEYPOINTS],
 
+    # content check result for single sample
+    #   {
+    #       "scores": [0.9] # non sexy probability
+    #   }
+    Tasks.content_check: [OutputKeys.SCORES],
+
+    # image driving perception result for single sample
+    #   {
+    #       "boxes": [
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #           [x1, y1, x2, y2],
+    #       ],
+    #       "masks": [
+    #            [np.array], # with fixed shape(h=720, w=1280, 3) containing only 0, 1
+    #            [np.array], # with fixed shape(h=720, w=1280, 3) containing only 0, 1
+    #       ]
+    #   }
+    Tasks.image_driving_perception: [OutputKeys.BOXES, OutputKeys.MASKS],
+
+    # facial expression recognition result for single sample
+    #   {
+    #       "scores": [0.9]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.face_liveness: [OutputKeys.SCORES, OutputKeys.BOXES],
+
+    # face quality assessment for single sample
+    #   {
+    #       "scores": [0.9]
+    #       "boxes": [x1, y1, x2, y2]
+    #   }
+    Tasks.face_quality_assessment: [OutputKeys.SCORES, OutputKeys.BOXES],
+
     # facial expression recognition result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.02, 0.02, 0.02, 0.02, 0.02],
@@ -149,15 +201,6 @@ TASK_OUTPUTS = {
         OutputKeys.KEYPOINTS
     ],
 
-    # facial landmark confidence result for single sample
-    #   {
-    #       "output_img": np.array with shape(h, w, 3) (output_img = aligned_img)
-    #       "scores": [0.85]
-    #       "keypoints": [x1, y1, x2, y2, x3, y3, x4, y4]
-    #       "boxes": [x1, y1, x2, y2]
-    #   }
-    Tasks.facial_landmark_confidence:
-    [OutputKeys.SCORES, OutputKeys.KEYPOINTS, OutputKeys.BOXES],
     # face attribute recognition result for single sample
     #   {
     #       "scores": [[0.9, 0.1], [0.92, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
@@ -210,6 +253,10 @@ TASK_OUTPUTS = {
     #   }
     Tasks.image_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    Tasks.domain_specific_object_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
+    Tasks.open_vocabulary_detection:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
     # video object detection result for single sample
     #   {
@@ -237,6 +284,12 @@ TASK_OUTPUTS = {
     Tasks.video_object_detection:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.BOXES],
 
+    # 3d object detection result for single sample
+    # {
+    #   "output_img": np.array with shape(h, w, 3)
+    # }
+    Tasks.object_detection_3d: [OutputKeys.OUTPUT_IMG],
+
     # instance segmentation result for single sample
     #   {
     #       "scores": [0.9, 0.1, 0.05, 0.05],
@@ -247,6 +300,36 @@ TASK_OUTPUTS = {
     #   }
     Tasks.image_segmentation:
     [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
+
+    # video panoptic segmentation result for single sample
+    #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]
+    #         "labels": [["person", "traffic light", "car", "bus"],
+    #                     ["person", "traffic light", "car", "bus"]]
+    #       "masks": [ #array containing only 0, 1
+    #           [np.array, np.array, np.array, np.array],
+    #           [np.array, np.array, np.array, np.array],
+    #       ]
+    #       "boxes":
+    #          [
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #              ],
+    #              [
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #                [x1, y1, x2, y2],
+    #               ]
+    #           ],
+    #       "uuid": [[0, 1, 2, 3],[0, 1, 2, 3]]
+    #   }
+    Tasks.video_panoptic_segmentation: [
+        OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS,
+        OutputKeys.BOXES, OutputKeys.UUID
+    ],
 
     # semantic segmentation result for single sample
     #   {
@@ -261,6 +344,11 @@ TASK_OUTPUTS = {
     #                 , shape(h, w) for crowd counting
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
+
+    # image_quality_assessment_mos result for a single image is a score in range [0, 1]
+    # {0.5}
+    Tasks.image_quality_assessment_mos: [OutputKeys.SCORE],
 
     # image editing task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}
@@ -272,6 +360,7 @@ TASK_OUTPUTS = {
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
     Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_paintbyexample: [OutputKeys.OUTPUT_IMG],
 
     # image generation task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}
@@ -280,6 +369,22 @@ TASK_OUTPUTS = {
     Tasks.image_style_transfer: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_stylization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_body_reshaping: [OutputKeys.OUTPUT_IMG],
+
+    # video editing task result for a single video
+    # {"output_video": "path_to_rendered_video"}
+    Tasks.video_frame_interpolation: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.nerf_recon_acc: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
+
+    # image quality assessment degradation result for single image
+    # {
+    #       "scores": [0.885272, 0.014790631, 0.014558001]
+    #       "labels": ['噪声强度', '模糊程度', '压缩强度'],
+    # }
+    Tasks.image_quality_assessment_degradation:
+    [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # live category recognition result for single video
     # {
@@ -312,8 +417,9 @@ TASK_OUTPUTS = {
     #               [x1, y1, x2, y2],
     #             ]
     # }
-    Tasks.body_2d_keypoints:
-    [OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES],
+    Tasks.body_2d_keypoints: [
+        OutputKeys.KEYPOINTS, OutputKeys.SCORES, OutputKeys.BOXES
+    ],
 
     # 3D human body keypoints detection result for single sample
     # {
@@ -330,8 +436,24 @@ TASK_OUTPUTS = {
     #   "output_video": "path_to_rendered_video" , this is optional
     # and is only avaialbe when the "render" option is enabled.
     # }
-    Tasks.body_3d_keypoints:
-    [OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO],
+    Tasks.body_3d_keypoints: [
+        OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
+    ],
+
+    # 3D face reconstruction result for single sample
+    # {
+    #     "output": {
+    #         "vertices": np.array with shape(n, 3),
+    #         "faces": np.array with shape(n, 3),
+    #         "faces_uv": np.array with shape(n, 3),
+    #         "faces_normal": np.array with shape(n, 3),
+    #         "colors": np.array with shape(n, 3),
+    #         "UVs": np.array with shape(n, 2),
+    #         "normals": np.array with shape(n, 3),
+    #         "texture_map": np.array with shape(h, w, 3),
+    #     }
+    # }
+    Tasks.face_reconstruction: [OutputKeys.OUTPUT],
 
     # 2D hand keypoints result for single sample
     # {
@@ -357,8 +479,34 @@ TASK_OUTPUTS = {
     #             ],
     #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
     # }
-    Tasks.video_single_object_tracking:
-    [OutputKeys.BOXES, OutputKeys.TIMESTAMPS],
+    Tasks.video_single_object_tracking: [
+        OutputKeys.BOXES, OutputKeys.TIMESTAMPS
+    ],
+
+    # video multi object tracking result for single video
+    # {
+    #   "boxes": [
+    #               [
+    #                   [x1, y1, x2, y2],
+    #                   [x1, y1, x2, y2],
+    #                   ...
+    #               ],
+    #               [
+    #                   [x1, y1, x2, y2],
+    #                   [x1, y1, x2, y2],
+    #                   ...
+    #               ],
+    #               [
+    #                   [x1, y1, x2, y2]
+    #                   ...
+    #               ]
+    #             ],
+    #   "labels": [[obj_id0, obj_id1, ...], [obj_id1, obj_id2, ...], [obj_id3, ...]],
+    #   "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    # }
+    Tasks.video_multi_object_tracking: [
+        OutputKeys.BOXES, OutputKeys.LABELS, OutputKeys.TIMESTAMPS
+    ],
 
     # live category recognition result for single video
     # {
@@ -385,6 +533,10 @@ TASK_OUTPUTS = {
     #   "video_embedding": np.array with shape [D],
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
+
+    # video stabilization task result for a single video
+    # {"output_video": "path_to_rendered_video"}
+    Tasks.video_stabilization: [OutputKeys.OUTPUT_VIDEO],
 
     # virtual_try_on result for a single sample
     # {
@@ -467,16 +619,19 @@ TASK_OUTPUTS = {
     #   {
     #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
     #       "timestamps": ["hh:mm:ss", "hh:mm:ss", "hh:mm:ss"]
+    #       "output_video": "path_to_rendered_video" , this is optional
+    # and is only avaialbe when the "render" option is enabled.
     #   }
     Tasks.referring_video_object_segmentation: [
-        OutputKeys.MASKS, OutputKeys.TIMESTAMPS
+        OutputKeys.MASKS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
     ],
 
     # video human matting result for a single video
     #   {
     #       "masks": [np.array # 2D array with shape [height, width]]
+    #       "output_video": "path_to_matting_video"
     #   }
-    Tasks.video_human_matting: [OutputKeys.MASKS],
+    Tasks.video_human_matting: [OutputKeys.MASKS, OutputKeys.OUTPUT_VIDEO],
 
     # ============ nlp tasks ===================
 
@@ -562,6 +717,12 @@ TASK_OUTPUTS = {
     #   "text": "this is the text generated by a model."
     # }
     Tasks.text_generation: [OutputKeys.TEXT],
+
+    # fid dialogue result for single sample
+    # {
+    #   "text": "My name is Mike"
+    # }
+    Tasks.fid_dialogue: [OutputKeys.TEXT],
 
     # summarization result for single sample
     # {
@@ -673,6 +834,30 @@ TASK_OUTPUTS = {
     # { "text": "每一天都要快乐喔"}
     Tasks.auto_speech_recognition: [OutputKeys.TEXT],
 
+    # itn result for single sample
+    # {"text": "123"}
+    Tasks.inverse_text_processing: [OutputKeys.TEXT],
+
+    # speaker verification for single compare task
+    # {'score': 84.2332}
+    Tasks.speaker_verification: [OutputKeys.SCORES],
+
+    # punctuation result for single sample
+    # { "text": "你好，明天！"}
+    Tasks.punctuation: [OutputKeys.TEXT],
+    # language model result for single sample
+    # { "text": " hel@@ lo 大 家 好 呀 </s>
+    #               p( hel@@ | <s> ) = 0.00057767 [ -7.45650959 ]
+    #               p( lo | hel@@ ) = 0.99832278 [ -0.00167861 ]
+    #               p( 大 | lo ) = 0.49116334 [ -0.71097857 ]
+    #               p( 家 | 大 ) = 0.99691027 [ -0.00309453 ]
+    #               p( 好 | 家 ) = 0.97999156 [ -0.02021134 ]
+    #               p( 呀 | 好 ) = 0.00461205 [ -5.37908363 ]
+    #               p( </s> | 呀 ) = 0.01524554 [ -4.18346834 ]
+    #           logprob= -17.755 ppl= 12.6345
+    # "}
+    Tasks.language_model: [OutputKeys.TEXT],
+
     # audio processed for single file in PCM format
     # {
     #   "output_pcm": pcm encoded audio bytes
@@ -680,6 +865,7 @@ TASK_OUTPUTS = {
     Tasks.speech_signal_process: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_echo_cancellation: [OutputKeys.OUTPUT_PCM],
     Tasks.acoustic_noise_suppression: [OutputKeys.OUTPUT_PCM],
+    Tasks.speech_separation: [OutputKeys.OUTPUT_PCM_LIST],
 
     # text_to_speech result for a single sample
     # {
@@ -707,6 +893,12 @@ TASK_OUTPUTS = {
     #   "caption": "this is an image caption text."
     # }
     Tasks.image_captioning: [OutputKeys.CAPTION],
+
+    # video caption result for single sample
+    # {
+    #   "caption": "this is an video caption text."
+    # }
+    Tasks.video_captioning: [OutputKeys.CAPTION],
     Tasks.ocr_recognition: [OutputKeys.TEXT],
 
     # visual grounding result for single sample
@@ -720,11 +912,11 @@ TASK_OUTPUTS = {
     # }
     Tasks.visual_grounding: [OutputKeys.BOXES, OutputKeys.SCORES],
 
-    # text_to_image result for a single sample
+    # text_to_image result for samples
     # {
-    #    "output_img": np.ndarray with shape [height, width, 3]
+    #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
     # }
-    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMG],
+    Tasks.text_to_image_synthesis: [OutputKeys.OUTPUT_IMGS],
 
     # text_to_speech result for a single sample
     # {
@@ -764,6 +956,10 @@ TASK_OUTPUTS = {
     # VQA result for a sample
     # {"text": "this is a text answser. "}
     Tasks.visual_question_answering: [OutputKeys.TEXT],
+
+    # VideoQA result for a sample
+    # {"text": "this is a text answser. "}
+    Tasks.video_question_answering: [OutputKeys.TEXT],
 
     # auto_speech_recognition result for a single sample
     # {
@@ -852,6 +1048,29 @@ TASK_OUTPUTS = {
     #       "masks": [np.array # 3D array with shape [frame_num, height, width]]
     #   }
     Tasks.video_object_segmentation: [OutputKeys.MASKS],
+
+    # motion generation result for a single input
+    #   {
+    #       "keypoints": [np.array # 3D array with shape [frame_num, joint_num, 3]]
+    #       "output_video": "path_to_rendered_video"
+    #   }
+    Tasks.motion_generation: [OutputKeys.KEYPOINTS, OutputKeys.OUTPUT_VIDEO],
+
+    # bad image detecting for a single input
+    #   {
+    #       "scores": [0.8, 0.1, 0.1]
+    #       "labels": ["正常", "花屏", "绿屏"],
+    Tasks.bad_image_detecting: [OutputKeys.SCORES, OutputKeys.LABELS],
+
+    # vision efficient tuning result for single sample
+    #   {
+    #       "scores": [0.9, 0.1, 0.05, 0.05]
+    #       "labels": ["dog", "horse", "cow", "cat"],
+    #   }
+    Tasks.vision_efficient_tuning: [OutputKeys.SCORES, OutputKeys.LABELS],
+    Tasks.document_grounded_dialog_generate: [OutputKeys.TEXT],
+    Tasks.document_grounded_dialog_rerank: [OutputKeys.OUTPUT],
+    Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
 }
 
 

@@ -8,12 +8,14 @@ if TYPE_CHECKING:
     from .csanmt_translation_trainer import CsanmtTranslationTrainer
     from .text_ranking_trainer import TextRankingTrainer
     from .text_generation_trainer import TextGenerationTrainer
+    from .sentence_embedding_trainer import SentenceEmbeddingTrainer
 else:
     _import_structure = {
         'sequence_classification_trainer': ['SequenceClassificationTrainer'],
         'csanmt_translation_trainer': ['CsanmtTranslationTrainer'],
         'text_ranking_trainer': ['TextRankingTrainer'],
         'text_generation_trainer': ['TextGenerationTrainer'],
+        'sentence_emebedding_trainer': ['SentenceEmbeddingTrainer']
     }
 
     import sys

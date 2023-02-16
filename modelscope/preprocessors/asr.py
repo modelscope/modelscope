@@ -38,9 +38,9 @@ class WavToScp(Preprocessor):
                            audio_in, audio_fs)
         return out
 
-    def forward(self, model: Dict[str,
-                                  Any], recog_type: str, audio_format: str,
-                audio_in: Union[str, bytes], audio_fs: int) -> Dict[str, Any]:
+    def forward(self, model: Dict[str, Any], recog_type: str,
+                audio_format: str, audio_in: Union[str, bytes], audio_fs: int,
+                cmd: Dict[str, Any]) -> Dict[str, Any]:
         assert len(recog_type) > 0, 'preprocess recog_type is empty'
         assert len(audio_format) > 0, 'preprocess audio_format is empty'
         assert len(
@@ -56,39 +56,34 @@ class WavToScp(Preprocessor):
         assert len(model['model_config']
                    ) > 0, 'preprocess model[model_config] is empty'
 
-        rst = {
-            # the recognition model dir path
-            'model_workspace': model['model_workspace'],
-            # the am model name
-            'am_model': model['am_model'],
-            # the am model file path
-            'am_model_path': model['am_model_path'],
-            # the asr type setting, eg: test dev train wav
-            'recog_type': recog_type,
-            # the asr audio format setting, eg: wav, pcm, kaldi_ark, tfrecord
-            'audio_format': audio_format,
-            # the recognition model config dict
-            'model_config': model['model_config'],
-            # the sample rate of audio_in
-            'audio_fs': audio_fs
-        }
+        cmd['model_workspace'] = model['model_workspace']
+        cmd['am_model'] = model['am_model']
+        cmd['am_model_path'] = model['am_model_path']
+        cmd['recog_type'] = recog_type
+        cmd['audio_format'] = audio_format
+        cmd['model_config'] = model['model_config']
+        cmd['audio_fs'] = audio_fs
+        if 'code_base' in cmd['model_config']:
+            code_base = cmd['model_config']['code_base']
+        else:
+            code_base = None
 
         if isinstance(audio_in, str):
             # wav file path or the dataset path
-            rst['wav_path'] = audio_in
-
-        out = self.config_checking(rst)
-        out = self.env_setting(out)
+            cmd['wav_path'] = audio_in
+        if code_base != 'funasr':
+            cmd = self.config_checking(cmd)
+        cmd = self.env_setting(cmd)
         if audio_format == 'wav':
-            out['audio_lists'] = self.scp_generation_from_wav(out)
+            cmd['audio_lists'] = self.scp_generation_from_wav(cmd)
         elif audio_format == 'kaldi_ark':
-            out['audio_lists'] = self.scp_generation_from_ark(out)
+            cmd['audio_lists'] = self.scp_generation_from_ark(cmd)
         elif audio_format == 'tfrecord':
-            out['audio_lists'] = os.path.join(out['wav_path'], 'data.records')
-        elif audio_format == 'pcm':
-            out['audio_lists'] = audio_in
+            cmd['audio_lists'] = os.path.join(cmd['wav_path'], 'data.records')
+        elif audio_format == 'pcm' or audio_format == 'scp':
+            cmd['audio_lists'] = audio_in
 
-        return out
+        return cmd
 
     def config_checking(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """config checking
@@ -113,34 +108,35 @@ class WavToScp(Preprocessor):
         if inputs['model_type'] == Frameworks.torch:
             assert inputs['model_config'].__contains__(
                 'batch_size'), 'batch_size does not exist'
-            assert inputs['model_config'].__contains__(
-                'am_model_config'), 'am_model_config does not exist'
-            assert inputs['model_config'].__contains__(
-                'asr_model_config'), 'asr_model_config does not exist'
 
-            am_model_config: str = os.path.join(
-                inputs['model_workspace'],
-                inputs['model_config']['am_model_config'])
-            assert os.path.exists(
-                am_model_config), 'am_model_config does not exist'
-            inputs['am_model_config'] = am_model_config
-
-            asr_model_config: str = os.path.join(
-                inputs['model_workspace'],
-                inputs['model_config']['asr_model_config'])
-            assert os.path.exists(
-                asr_model_config), 'asr_model_config does not exist'
+            if inputs['model_config'].__contains__('am_model_config'):
+                am_model_config = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['am_model_config'])
+                assert os.path.exists(
+                    am_model_config), 'am_model_config does not exist'
+                inputs['am_model_config'] = am_model_config
+            else:
+                inputs['am_model_config'] = ''
+            if inputs['model_config'].__contains__('asr_model_config'):
+                asr_model_config = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['asr_model_config'])
+                assert os.path.exists(
+                    asr_model_config), 'asr_model_config does not exist'
+                inputs['asr_model_config'] = asr_model_config
+            else:
+                asr_model_config = ''
+                inputs['asr_model_config'] = ''
 
             if 'asr_model_wav_config' in inputs['model_config']:
                 asr_model_wav_config: str = os.path.join(
                     inputs['model_workspace'],
                     inputs['model_config']['asr_model_wav_config'])
+                assert os.path.exists(asr_model_wav_config
+                                      ), 'asr_model_wav_config does not exist'
             else:
-                asr_model_wav_config: str = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['asr_model_config'])
-            assert os.path.exists(
-                asr_model_wav_config), 'asr_model_wav_config does not exist'
+                asr_model_wav_config: str = inputs['asr_model_config']
 
             # the lm model file path
             if 'lm_model_name' in inputs['model_config']:
@@ -163,17 +159,53 @@ class WavToScp(Preprocessor):
             else:
                 inputs['lm_model_path'] = None
                 inputs['lm_model_config'] = None
-            if inputs['audio_format'] == 'wav' or inputs[
-                    'audio_format'] == 'pcm':
-                inputs['asr_model_config'] = asr_model_wav_config
-            else:
-                inputs['asr_model_config'] = asr_model_config
+            if 'audio_format' in inputs:
+                if inputs['audio_format'] == 'wav' or inputs[
+                        'audio_format'] == 'pcm':
+                    inputs['asr_model_config'] = asr_model_wav_config
+                else:
+                    inputs['asr_model_config'] = asr_model_config
 
             if inputs['model_config'].__contains__('mvn_file'):
                 mvn_file = os.path.join(inputs['model_workspace'],
                                         inputs['model_config']['mvn_file'])
                 assert os.path.exists(mvn_file), 'mvn_file does not exist'
                 inputs['mvn_file'] = mvn_file
+            if inputs['model_config'].__contains__('vad_model_name'):
+                vad_model_name = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['vad_model_name'])
+                assert os.path.exists(
+                    vad_model_name), 'vad_model_name does not exist'
+                inputs['vad_model_name'] = vad_model_name
+            if inputs['model_config'].__contains__('vad_model_config'):
+                vad_model_config = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['vad_model_config'])
+                assert os.path.exists(
+                    vad_model_config), 'vad_model_config does not exist'
+                inputs['vad_model_config'] = vad_model_config
+            if inputs['model_config'].__contains__('vad_mvn_file'):
+                vad_mvn_file = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['vad_mvn_file'])
+                assert os.path.exists(
+                    vad_mvn_file), 'vad_mvn_file does not exist'
+                inputs['vad_mvn_file'] = vad_mvn_file
+            if inputs['model_config'].__contains__('punc_model_name'):
+                punc_model_name = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['punc_model_name'])
+                assert os.path.exists(
+                    punc_model_name), 'punc_model_name does not exist'
+                inputs['punc_model_name'] = punc_model_name
+            if inputs['model_config'].__contains__('punc_model_config'):
+                punc_model_config = os.path.join(
+                    inputs['model_workspace'],
+                    inputs['model_config']['punc_model_config'])
+                assert os.path.exists(
+                    punc_model_config), 'punc_model_config does not exist'
+                inputs['punc_model_config'] = punc_model_config
 
         elif inputs['model_type'] == Frameworks.tf:
             assert inputs['model_config'].__contains__(

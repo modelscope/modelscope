@@ -13,6 +13,9 @@ from .utils import transforms as T
 
 
 class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
+    r"""
+    OFA preprocessor for visual grounding tasks.
+    """
 
     def __init__(self,
                  cfg,
@@ -60,6 +63,36 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
             return self._build_infer_sample(data)
 
     def _build_train_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building training samples.
+
+        step 1. Preprocessing the image input for model's image input.
+            - get the pillow image.
+            - calculate the target boxes using for getting the exact area
+            in the pillow image for input text by input `region_coord`. in
+            training setting, `region_coord` will be a label data.
+            - getting the target image as patch images and do some transforms
+            such as resize, normalize etc.
+        step 2. Preprocessing the text input for model's source text input.
+            - do the str preprocessing to text input by function `pre_caption`.
+            - build the instruction. the default instruction is
+            ` which region does the text " {} " describe?`, `{}` refer to the
+            text input.
+            - tokenize the instruction as source text input.
+        step 3. Preprocessing the patch image boxes for model's target text input.
+            - quantize the coordinate of selected patch images
+            - concatenate the quantization results by blank
+            - tokenize the result above as target text input.
+        step 4. Get the previous output tokens using target item without eos token.
+
+        Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `image`
+                `text` and `region_coord`.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])` value, target, previous output tokens,
+            width scale ratio, height scale ratio and region coordinate.
+        """
         image = self.get_img_pil(data[self.column_map['image']])
         w, h = image.size
         boxes_target = {
@@ -114,6 +147,29 @@ class OfaVisualGroundingPreprocessor(OfaBasePreprocessor):
         return sample
 
     def _build_infer_sample(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        r"""
+        Building inference samples.
+
+        step 1. Preprocessing image input for model's image input.
+            - get pillow image from data.
+            - do some transforms to the pillow image, such as resize, normalize etc.
+        step 2. Preprocessing the text input for model's text input.
+            - do the str preprocessing to text input by function `pre_caption`.
+            - build the instruction. the default instruction is
+            ` which region does the text " {} " describe?`, `{}` refer to the
+            text input.
+            - tokenize the instruction as source text input.
+        step 3. Whether or not to add label data which refer to a region coordinate
+            in this task.
+
+        Args:
+            data (`Dict[str, Any]`): Input data, should contains the key of `image`
+                `text`.
+        Return:
+            A dict object, contains source text input, patch images, patch masks
+            with `Tensor([True])` value, width scale ratio, height scale ratio
+            and label.
+        """
         image = self.get_img_pil(data[self.column_map['image']])
         w, h = image.size
         patch_image = self.patch_resize_transform(image)

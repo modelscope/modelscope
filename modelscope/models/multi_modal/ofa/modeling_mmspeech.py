@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" PyTorch OFA model."""
+""" PyTorch OFA-MMSpeech model."""
 
 import math
-import random
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -27,22 +26,17 @@ from fairseq.modules import LayerNorm, SamePad, TransposeLast
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 from fairseq.utils import index_put
 from packaging import version
-from torch import Tensor, nn
+from torch import nn
 from torch.nn import functional as F
-from transformers.activations import ACT2FN
 from transformers.file_utils import (ModelOutput, add_code_sample_docstrings,
                                      add_start_docstrings,
                                      add_start_docstrings_to_model_forward)
-from transformers.modeling_outputs import (
-    BaseModelOutputWithPastAndCrossAttentions, Seq2SeqLMOutput,
-    Seq2SeqModelOutput)
-from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
 
 from .configuration_mmspeech import MMSpeechConfig
 from .generate import utils
 from .modeling_ofa import (Embedding, OFADecoder, OFAModel, OFAPreTrainedModel,
-                           _expand_mask, shift_tokens_right)
+                           _expand_mask)
 
 logger = logging.get_logger()
 

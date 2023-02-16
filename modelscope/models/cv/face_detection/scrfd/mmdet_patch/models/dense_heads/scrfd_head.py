@@ -83,6 +83,7 @@ class SCRFDHead(AnchorHead):
         reg_max (int): Max value of integral set :math: `{0, ..., reg_max}`
             in QFL setting. Default: 16.
     Example:
+
         >>> self = GFLHead(11, 7)
         >>> feats = [torch.rand(1, 7, s, s) for s in [4, 8, 16, 32, 64]]
         >>> cls_quality_score, bbox_pred = self.forward(feats)

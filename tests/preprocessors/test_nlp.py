@@ -1,8 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os.path
+import shutil
+import tempfile
 import unittest
 
-from modelscope.preprocessors import build_preprocessor, nlp
+from modelscope.preprocessors import Preprocessor, build_preprocessor, nlp
 from modelscope.utils.constant import Fields, InputFields
 from modelscope.utils.logger import get_logger
 
@@ -10,6 +12,16 @@ logger = get_logger()
 
 
 class NLPPreprocessorTest(unittest.TestCase):
+
+    def setUp(self):
+        print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
+        self.tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(self.tmp_dir):
+            os.makedirs(self.tmp_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+        super().tearDown()
 
     def test_tokenize(self):
         cfg = dict(type='Tokenize', tokenizer_name='bert-base-cased')
@@ -31,6 +43,25 @@ class NLPPreprocessorTest(unittest.TestCase):
         self.assertEqual(
             output['attention_mask'],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    def test_save_pretrained(self):
+        preprocessor = Preprocessor.from_pretrained(
+            'damo/nlp_structbert_sentence-similarity_chinese-tiny')
+        save_path = os.path.join(self.tmp_dir, 'test_save_pretrained')
+        preprocessor.save_pretrained(save_path)
+        self.assertTrue(
+            os.path.isfile(os.path.join(save_path, 'configuration.json')))
+
+    def test_preprocessor_download(self):
+        from modelscope.preprocessors.nlp.token_classification_preprocessor import TokenClassificationPreprocessorBase
+        preprocessor: TokenClassificationPreprocessorBase = \
+            Preprocessor.from_pretrained('damo/nlp_raner_named-entity-recognition_chinese-base-news')
+        self.assertTrue(preprocessor is not None)
+        from modelscope.utils.hub import snapshot_download
+        model_dir = snapshot_download(
+            'damo/nlp_raner_named-entity-recognition_chinese-base-news')
+        self.assertTrue(
+            os.path.isfile(os.path.join(model_dir, 'pytorch_model.bin')))
 
     def test_token_classification_tokenize_bert(self):
         cfg = dict(

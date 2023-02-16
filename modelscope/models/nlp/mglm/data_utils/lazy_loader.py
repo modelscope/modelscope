@@ -138,12 +138,12 @@ class LazyLoader(object):
         map_fn (callable): Fetched strings are passed through map_fn before being returned.
 
     Example of lazy loader directory structure:
-    file.json
-    file.lazy/
-        data_type1
-        data_type1.len.pkl
-        data_type2
-        data_type2.len.pkl
+        file.json
+        file.lazy/
+            data_type1
+            data_type1.len.pkl
+            data_type2
+            data_type2.len.pkl
     """
 
     def __init__(self,

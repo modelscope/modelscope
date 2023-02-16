@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import importlib
 import os
 import random
 
@@ -27,36 +28,31 @@ class CheckpointHook(Hook):
         by_epoch (bool): Saving checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): The directory to save checkpoints. If is None, use `trainer.work_dir`
+        output_sub_dir (str): The sub folder under the `save_dir` to save the output checkpoint for inference.
+            Default 'output'.
         save_last (bool): Whether to save the last checkpoint. Default: True.
-        checkpoint_file (str): The checkpoint file to be loaded.
-        load_all_state (bool): Load all states(optimizer, epoch, lr_scheduler, random_state, etc.) when loading old
-            training state file or not. The model's state dict will only be loaded if False.
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
-        If the number exceeding the limit, earlier checkpoints will be deleted first.
+            If the number exceeding the limit, earlier checkpoints will be deleted first.
     """
 
     PRIORITY = Priority.LOW
 
-    def __init__(
-        self,
-        interval=0,
-        by_epoch=True,
-        save_optimizer=True,
-        save_dir=None,
-        save_last=True,
-        checkpoint_file=None,
-        load_all_state=True,
-        max_checkpoint_num=None,
-    ):
+    def __init__(self,
+                 interval=0,
+                 by_epoch=True,
+                 save_optimizer=True,
+                 save_dir=None,
+                 output_sub_dir=ModelFile.TRAIN_OUTPUT_DIR,
+                 save_last=True,
+                 max_checkpoint_num=None,
+                 **kwargs):
         self.interval = interval
         self.by_epoch = by_epoch
         self.save_optimizer = save_optimizer
         self.save_dir = save_dir
-        self.checkpoint_file = checkpoint_file
+        self.output_sub_dir = output_sub_dir
         self.save_last = save_last
         self.rng_state = None
-        self.need_load_rng_state = False
-        self.load_all_state = load_all_state
         self.max_checkpoint_num = None
         if max_checkpoint_num is not None:
             self.max_checkpoint_num = max(int(max_checkpoint_num), 1)
@@ -77,28 +73,6 @@ class CheckpointHook(Hook):
         if is_master():
             self.logger.info(f'Checkpoints will be saved to {self.save_dir}')
 
-        if self.checkpoint_file is not None and os.path.isfile(
-                self.checkpoint_file):
-            meta = self.load_checkpoint(self.checkpoint_file, trainer,
-                                        self.load_all_state)
-            self.rng_state = meta.get('rng_state')
-            self.need_load_rng_state = self.load_all_state
-
-    def before_train_iter(self, trainer):
-        if self.need_load_rng_state:
-            if self.rng_state is not None:
-                random.setstate(self.rng_state['random'])
-                np.random.set_state(self.rng_state['numpy'])
-                torch.random.set_rng_state(self.rng_state['cpu'])
-                if torch.cuda.is_available():
-                    torch.cuda.random.set_rng_state_all(self.rng_state['cuda'])
-                self.need_load_rng_state = False
-            else:
-                self.logger.warning(
-                    'Random state cannot be found in checkpoint file, '
-                    'this may cause a random data order or model initialization.'
-                )
-
     def after_train_epoch(self, trainer):
         if not self.by_epoch:
             return
@@ -110,42 +84,6 @@ class CheckpointHook(Hook):
                     f'Saving checkpoint at {trainer.epoch + 1} epoch')
                 self._save_checkpoint(trainer)
 
-    @classmethod
-    def load_checkpoint(cls, filename, trainer, load_all_state=True):
-        from modelscope.trainers.parallel.utils import is_parallel
-        if is_parallel(trainer.model):
-            model = trainer.model.module
-        else:
-            model = trainer.model
-        meta = load_checkpoint(
-            filename, model,
-            getattr(trainer, 'optimizer', None) if load_all_state else None,
-            getattr(trainer, 'lr_scheduler', None) if load_all_state else None)
-        if load_all_state:
-            trainer._epoch = meta.get('epoch', trainer._epoch)
-            trainer._iter = meta.get('iter', trainer._iter)
-            trainer._inner_iter = meta.get('inner_iter', trainer._inner_iter)
-
-            for i, hook in enumerate(trainer.hooks):
-                # hook: Hook
-                key = f'{hook.__class__}-{i}'
-                if key in meta and hasattr(hook, 'load_state_dict'):
-                    hook.load_state_dict(meta.get(key, {}))
-                else:
-                    trainer.logger.warning(
-                        f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
-                    )
-
-        version = meta.get('modelscope')
-        if version != __version__:
-            trainer.logger.warning(
-                f'The modelscope version of loaded checkpoint does not match the runtime version. '
-                f'The saved version: {version}, runtime version: {__version__}'
-            )
-        trainer.logger.info(
-            f'Checkpoint {filename} saving time: {meta.get("time")}')
-        return meta
-
     def _save_checkpoint(self, trainer):
         if self.by_epoch:
             cur_save_name = os.path.join(
@@ -153,6 +91,7 @@ class CheckpointHook(Hook):
         else:
             cur_save_name = os.path.join(
                 self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
+        cur_save_name = extend_save_name_for_parallel(cur_save_name)
 
         self.rng_state = {
             'random': random.getstate(),
@@ -166,9 +105,13 @@ class CheckpointHook(Hook):
             'inner_iter': trainer.inner_iter + 1,
             'rng_state': self.rng_state,
         }
-        for i, hook in enumerate(trainer.hooks):
-            if hasattr(hook, 'state_dict'):
+
+        i = 0
+        for hook in trainer.hooks:
+            if hasattr(hook, 'state_dict') and getattr(hook, '_should_save',
+                                                       True):
                 meta[f'{hook.__class__}-{i}'] = hook.state_dict()
+                i += 1
 
         save_checkpoint(
             trainer.model,
@@ -197,7 +140,7 @@ class CheckpointHook(Hook):
                     self.history_checkpoints.append(ckpt_file)
 
     def _save_pretrained(self, trainer):
-        output_dir = os.path.join(self.save_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        output_dir = os.path.join(self.save_dir, self.output_sub_dir)
         from modelscope.trainers.parallel.utils import is_parallel
 
         if is_parallel(trainer.model):
@@ -288,15 +231,19 @@ class CheckpointHook(Hook):
 
 @HOOKS.register_module(module_name=Hooks.BestCkptSaverHook)
 class BestCkptSaverHook(CheckpointHook):
-    """Save best checkpoints hook.
+    """
+    Save best checkpoints hook.
+
     Args:
         metric_key (str): Metric key to compare rule for best score.
-        rule (str): Comparison rule for best score.
-            Support "max" and "min". If rule is "max", the checkpoint at the maximum `metric_key`
-            will be saved, If rule is "min", the checkpoint at the minimum `metric_key` will be saved.
+        rule (str): Comparison rule for best score. Support "max" and "min". If rule is "max", the checkpoint
+            at the maximum `metric_key` will be saved, If rule is "min", the checkpoint at the minimum `metric_key`
+            will be saved.
         by_epoch (bool): Save best checkpoints by epoch or by iteration.
         save_optimizer (bool): Whether to save optimizer state dict.  Default: True.
         save_dir (str): Output directory to save best checkpoint.
+        output_sub_dir (str): The sub folder under the `save_dir` to save the output checkpoint for inference.
+            Default 'output_best'.
         restore_best (bool): Whether to restore the best checkpoint after training.
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
             If the number exceeding the limit, checkpoints with worse metric will be deleted, which is judged by the
@@ -312,6 +259,7 @@ class BestCkptSaverHook(CheckpointHook):
                  by_epoch=True,
                  save_optimizer=True,
                  save_dir=None,
+                 output_sub_dir=ModelFile.TRAIN_BEST_OUTPUT_DIR,
                  save_file_name=None,
                  restore_best=False,
                  max_checkpoint_num=1,
@@ -323,6 +271,7 @@ class BestCkptSaverHook(CheckpointHook):
             by_epoch=by_epoch,
             save_optimizer=save_optimizer,
             save_dir=save_dir,
+            output_sub_dir=output_sub_dir,
             max_checkpoint_num=max_checkpoint_num,
             **kwargs,
         )
@@ -372,6 +321,7 @@ class BestCkptSaverHook(CheckpointHook):
             if '.' not in cur_save_name:
                 cur_save_name = f'{cur_save_name}.pth'
             cur_save_name = os.path.join(self.save_dir, cur_save_name)
+        cur_save_name = extend_save_name_for_parallel(cur_save_name)
 
         meta = {
             'epoch': trainer.epoch,
@@ -379,8 +329,13 @@ class BestCkptSaverHook(CheckpointHook):
             'inner_iter': trainer.inner_iter + 1,
             'rng_state': self.rng_state,
         }
-        for i, hook in enumerate(trainer.hooks):
-            meta[f'{hook.__class__}-{i}'] = hook.state_dict()
+
+        i = 0
+        for hook in trainer.hooks:
+            if hasattr(hook, 'state_dict') and getattr(hook, '_should_save',
+                                                       True):
+                meta[f'{hook.__class__}-{i}'] = hook.state_dict()
+                i += 1
 
         if os.path.isfile(cur_save_name):
             os.remove(cur_save_name)
@@ -394,7 +349,8 @@ class BestCkptSaverHook(CheckpointHook):
     def remove_obsolete_checkpoints(self):
 
         def extract_metric_from_filename(name1):
-            metric1 = float(name1.split(self.metric_key)[1].split('.')[0])
+            metric1 = float('.'.join(
+                name1.split(self.metric_key)[1].split('.')[:-1]))
             if self.rule == 'max':
                 return -metric1
             else:
@@ -427,4 +383,127 @@ class BestCkptSaverHook(CheckpointHook):
     def after_run(self, trainer):
         if self.restore_best:
             if is_master():
-                self.load_checkpoint(self._best_ckpt_file, trainer)
+                LoadCheckpointHook.load_checkpoint(self._best_ckpt_file,
+                                                   trainer)
+
+
+@HOOKS.register_module(module_name=Hooks.LoadCheckpointHook)
+class LoadCheckpointHook(Hook):
+    """Load a checkpoint file at the beginning of training or evaluating.
+
+    This hook does not need to be configured or saved in the config file.
+    User should use it by:
+    >>> trainer.train('some-checkpoint', load_all_state=True)
+    or
+    >>> trainer.evaluate('some-checkpoint')
+    instead.
+
+    Args:
+        checkpoint_file (str): The checkpoint file to be loaded.
+        load_all_state (bool): Load all states(optimizer, epoch, lr_scheduler, random_state, etc.) when loading old
+            training state file or not. The model's state dict will only be loaded if False.
+    """
+
+    PRIORITY = Priority.HIGH
+
+    _should_save = False
+
+    def __init__(
+        self,
+        checkpoint_file=None,
+        load_all_state=True,
+    ):
+        self.checkpoint_file = checkpoint_file
+        self.rng_state = None
+        self.need_load_rng_state = False
+        self.load_all_state = load_all_state
+
+    def before_run(self, trainer):
+        if not hasattr(trainer, 'logger'):
+            self.logger = get_logger()
+        else:
+            self.logger = trainer.logger
+
+        if self.checkpoint_file is not None and os.path.isfile(
+                self.checkpoint_file):
+            meta = self.load_checkpoint(self.checkpoint_file, trainer,
+                                        self.load_all_state)
+            self.rng_state = meta.get('rng_state')
+            self.need_load_rng_state = self.load_all_state
+
+    def before_train_iter(self, trainer):
+        if self.need_load_rng_state:
+            if self.rng_state is not None:
+                random.setstate(self.rng_state['random'])
+                np.random.set_state(self.rng_state['numpy'])
+                torch.random.set_rng_state(self.rng_state['cpu'])
+                if torch.cuda.is_available():
+                    torch.cuda.random.set_rng_state_all(self.rng_state['cuda'])
+                self.need_load_rng_state = False
+            else:
+                self.logger.warning(
+                    'Random state cannot be found in checkpoint file, '
+                    'this may cause a random data order or model initialization.'
+                )
+
+    @classmethod
+    def load_checkpoint(cls, filename, trainer, load_all_state=True):
+        from modelscope.trainers.parallel.utils import is_parallel
+        if is_parallel(trainer.model):
+            model = trainer.model.module
+        else:
+            model = trainer.model
+        meta = load_checkpoint(
+            filename, model,
+            getattr(trainer, 'optimizer', None) if load_all_state else None,
+            getattr(trainer, 'lr_scheduler', None) if load_all_state else None)
+        if load_all_state:
+            trainer._epoch = meta.get('epoch', trainer._epoch)
+            trainer._iter = meta.get('iter', trainer._iter)
+            trainer._inner_iter = meta.get('inner_iter', trainer._inner_iter)
+
+            i = 0
+            for hook in trainer.hooks:
+                if hasattr(hook, 'load_state_dict') and getattr(
+                        hook, '_should_save', True):
+                    key = f'{hook.__class__}-{i}'
+                    if key in meta:
+                        hook.load_state_dict(meta.get(key, {}))
+                    else:
+                        trainer.logger.warning(
+                            f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
+                        )
+                    i += 1
+
+        version = meta.get('modelscope')
+        if version != __version__:
+            trainer.logger.warning(
+                f'The modelscope version of loaded checkpoint does not match the runtime version. '
+                f'The saved version: {version}, runtime version: {__version__}'
+            )
+        trainer.logger.info(
+            f'Checkpoint {filename} saving time: {meta.get("time")}')
+        return meta
+
+
+def extend_save_name_for_parallel(cur_save_name: str) -> str:
+    """Saving model parameters during tensor parallel training
+    requires each process to save its own parameters,
+    This function will try to get the local rank of the process
+    and extend save name for multi-slice model.
+
+    Args:
+        cur_save_name (str): Original save name.
+
+    Returns:
+        str: Extended save name.
+    """
+    try:
+        mpu = importlib.import_module('megatron_util.mpu')
+        tp_world_size = mpu.get_tensor_model_parallel_world_size()
+        if tp_world_size == 1:
+            return cur_save_name
+        mp_rank = mpu.get_tensor_model_parallel_rank()
+        return cur_save_name.replace('.', '_mp_rank_{:02d}.'.format(mp_rank))
+    except (ImportError, AssertionError):
+        return cur_save_name

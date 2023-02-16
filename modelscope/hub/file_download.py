@@ -36,47 +36,40 @@ def model_file_download(
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
 ) -> Optional[str]:  # pragma: no cover
-    """
-    Download from a given URL and cache it if it's not already present in the
-    local cache.
+    """Download from a given URL and cache it if it's not already present in the local cache.
 
     Given a URL, this function looks for the corresponding file in the local
     cache. If it's not there, download it. Then return the path to the cached
     file.
 
     Args:
-        model_id (`str`):
-            The model to whom the file to be downloaded belongs.
-        file_path(`str`):
-            Path of the file to be downloaded, relative to the root of model repo
-        revision(`str`, *optional*):
-            revision of the model file to be downloaded.
-            Can be any of a branch, tag or commit hash
-        cache_dir (`str`, `Path`, *optional*):
-            Path to the folder where cached files are stored.
-        user_agent (`dict`, `str`, *optional*):
-            The user-agent info in the form of a dictionary or a string.
-        local_files_only (`bool`, *optional*, defaults to `False`):
-            If `True`, avoid downloading the file and return the path to the
-            local cached file if it exists.
-            if `False`, download the file anyway even it exists
+        model_id (str): The model to whom the file to be downloaded belongs.
+        file_path(str): Path of the file to be downloaded, relative to the root of model repo.
+        revision(str, optional): revision of the model file to be downloaded.
+            Can be any of a branch, tag or commit hash.
+        cache_dir (str, Path, optional): Path to the folder where cached files are stored.
+        user_agent (dict, str, optional): The user-agent info in the form of a dictionary or a string.
+        local_files_only (bool, optional）:  If `True`, avoid downloading the file and return the path to the
+            local cached file if it exists. if `False`, download the file anyway even it exists.
+        cookies (CookieJar, optional): The cookie of download request.
 
     Returns:
-        Local path (string) of file or if networking is off, last version of
+        string: string of local file or if networking is off, last version of
         file cached on disk.
 
-    <Tip>
+    Raises:
+        NotExistError: The file is not exist.
+        ValueError: The request parameter error.
 
-    Raises the following errors:
+    Note:
+        Raises the following errors:
 
-        - [`EnvironmentError`](https://docs.python.org/3/library/exceptions.html#EnvironmentError)
-          if `use_auth_token=True` and the token cannot be found.
-        - [`OSError`](https://docs.python.org/3/library/exceptions.html#OSError)
-          if ETag cannot be determined.
-        - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
-          if some parameter value is invalid
-
-    </Tip>
+            - [`EnvironmentError`](https://docs.python.org/3/library/exceptions.html#EnvironmentError)
+            if `use_auth_token=True` and the token cannot be found.
+            - [`OSError`](https://docs.python.org/3/library/exceptions.html#OSError)
+            if ETag cannot be determined.
+            - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
+            if some parameter value is invalid
     """
     if cache_dir is None:
         cache_dir = get_cache_dir()
@@ -165,10 +158,17 @@ def model_file_download(
 
 
 def get_file_download_url(model_id: str, file_path: str, revision: str):
-    """
-    Format file download url according to `model_id`, `revision` and `file_path`.
+    """Format file download url according to `model_id`, `revision` and `file_path`.
     e.g., Given `model_id=john/bert`, `revision=master`, `file_path=README.md`,
-    the resulted download url is: https://modelscope.cn/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md
+    the resulted download url is: https://modelscope.co/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md
+
+    Args:
+        model_id (str): The model_id.
+        file_path (str): File path
+        revision (str): File revision.
+
+    Returns:
+        str: The file url.
     """
     download_url_template = '{endpoint}/api/v1/models/{model_id}/repo?Revision={revision}&FilePath={file_path}'
     return download_url_template.format(
@@ -186,19 +186,22 @@ def http_get_file(
     cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
 ):
-    """
-    Download remote file, will retry 5 times before giving up on errors.
+    """Download remote file, will retry 5 times before giving up on errors.
+
     Args:
-        url(`str`):
+        url(str):
             actual download url of the file
-        local_dir(`str`):
+        local_dir(str):
             local directory where the downloaded file stores
-        file_name(`str`):
+        file_name(str):
             name of the file stored in `local_dir`
-        cookies(`CookieJar`):
+        cookies(CookieJar):
             cookies used to authentication the user, which is used for downloading private repos
-        headers(`Optional[Dict[str, str]] = None`):
+        headers(Dict[str, str], optional):
             http headers to carry necessary info when requesting the remote file
+
+    Raises:
+        FileDownloadError: Failed download failed.
 
     """
     total = -1

@@ -1,18 +1,17 @@
-modelscope.trainers.nlp package
-===============================
+modelscope.trainers.nlp
+=======================
 
 .. automodule:: modelscope.trainers.nlp
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.trainers.nlp
 
-modelscope.trainers.nlp.sequence\_classification\_trainer module
-----------------------------------------------------------------
 
-.. automodule:: modelscope.trainers.nlp.sequence_classification_trainer
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
+
+    sequence_classification_trainer.SequenceClassificationTrainer
+    csanmt_translation_trainer.CsanmtTranslationTrainer
+    text_ranking_trainer.TextRankingTrainer
+    text_generation_trainer.TextGenerationTrainer

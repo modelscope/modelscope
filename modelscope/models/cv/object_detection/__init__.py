@@ -6,11 +6,13 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .mmdet_model import DetectionModel
     from .yolox_pai import YOLOX
+    from .dino import DINO
 
 else:
     _import_structure = {
         'mmdet_model': ['DetectionModel'],
         'yolox_pai': ['YOLOX'],
+        'dino': ['DINO']
     }
 
     import sys

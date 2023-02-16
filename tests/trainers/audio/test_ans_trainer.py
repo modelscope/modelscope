@@ -10,6 +10,7 @@ from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.audio.audio_utils import to_segment
+from modelscope.utils.constant import DownloadMode
 from modelscope.utils.hub import read_config
 from modelscope.utils.test_utils import test_level
 
@@ -31,7 +32,9 @@ class TestANSTrainer(unittest.TestCase):
         cfg.dump(self.cfg_file)
 
         hf_ds = MsDataset.load(
-            'ICASSP_2021_DNS_Challenge', split='test').to_hf_dataset()
+            'ICASSP_2021_DNS_Challenge',
+            split='test',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD).to_hf_dataset()
         mapped_ds = hf_ds.map(
             partial(to_segment, segment_length=SEGMENT_LENGTH_TEST),
             remove_columns=['duration'],

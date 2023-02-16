@@ -12,6 +12,8 @@ from modelscope.utils.constant import Tasks
 @MODELS.register_module(
     group_key=Tasks.image_object_detection,
     module_name=Models.image_object_detection_auto)
+@MODELS.register_module(
+    group_key=Tasks.domain_specific_object_detection, module_name=Models.yolox)
 class YOLOX(EasyCVBaseModel, _YOLOX):
 
     def __init__(self, model_dir=None, *args, **kwargs):

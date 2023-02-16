@@ -15,9 +15,9 @@
 import functools
 from collections import OrderedDict
 
-import mpu
 import torch
 from finetune_glm import finetune
+from megatron_util import mpu
 from pretrain_glm import get_batch
 from tasks.eval_utils import accuracy_func_provider
 from tasks.seq2seq.dataset import (BlankLMDataset, ExtractionDataset,

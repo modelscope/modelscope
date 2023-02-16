@@ -23,8 +23,10 @@ from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
+from modelscope.outputs import TokenGeneratorOutput
 from modelscope.utils.constant import ModelFile
 from .configuration import GPT3Config
+from .distributed_gpt3 import sample
 
 
 class GPT3SelfAttention(nn.Module):
@@ -351,5 +353,63 @@ class GPT3Model(PreTrainedModel):
         model.load_state_dict(state_dict)
         return model
 
-    def prepare_inputs_for_generation(self, input_ids, *args, **kwargs):
-        return {'input_ids': input_ids}
+    def generate(self, tokens, temperature=1.0, **kwargs):
+
+        batch_size = tokens.size(0)
+        lengths = kwargs.pop(
+            'prompt_length',
+            torch.tensor([tokens.size(1)], device=tokens.device))
+
+        min_prompt_length = lengths.min().item()
+        max_sequence_length = tokens.size(1)
+        max_sequence_length = min(max_sequence_length,
+                                  self.config.max_position_embeddings)
+
+        # If the context is too big, this happens
+        if min_prompt_length >= max_sequence_length:
+            raise ValueError('context length + tokens_to_generate too large')
+
+        # Added termination_id to support the case that we want to terminate the
+        # generation once that id is generated.
+        termination_id = self.config.eod_id
+
+        # Whether we have reached a termination id.
+        is_generation_done = torch.zeros(
+            batch_size, dtype=torch.uint8, device=tokens.device)
+
+        with torch.no_grad():
+            for context_length in range(min_prompt_length,
+                                        max_sequence_length):
+
+                # Pick the slice that we need to pass through the network.
+                tokens2use = tokens[:, :context_length]
+
+                # logits will be meanigful only in the last pipeline stage.
+                logits = self(tokens2use).logits
+
+                # Sample.
+                last_token_logits = logits[:, -1, :]
+                new_sample = sample(
+                    last_token_logits,
+                    top_k=self.config.top_k,
+                    top_p=self.config.top_p,
+                    temperature=temperature,
+                    vocab_size=self.config.vocab_size)
+
+                # If a prompt length is smaller or equal th current context
+                # length, it means we have started generating tokens
+                started = lengths <= context_length
+                # Update the tokens.
+                tokens[started, context_length] = new_sample[started]
+
+                done_token = (new_sample == termination_id).byte() & \
+                    started.byte()
+
+                is_generation_done = is_generation_done | done_token
+                done = torch.all(is_generation_done)
+
+                if done:
+                    break
+
+        tokens = tokens[:, :(context_length + 1)]
+        return TokenGeneratorOutput(sequences=tokens)

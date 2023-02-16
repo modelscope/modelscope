@@ -22,7 +22,6 @@ from modelscope.utils.device import (create_device, device_placement,
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
-from modelscope.utils.torch_utils import _find_free_port, _is_free_port
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -39,6 +38,8 @@ logger = get_logger()
 
 
 class Pipeline(ABC):
+    """Pipeline base.
+    """
 
     def initiate_single_model(self, model):
         if isinstance(model, str):
@@ -94,6 +95,7 @@ class Pipeline(ABC):
 
         if config_file is not None:
             self.cfg = Config.from_file(config_file)
+            model_dir = os.path.dirname(config_file)
         elif not self.has_multiple_models:
             if isinstance(self.model, str):
                 model_dir = self.model
@@ -101,8 +103,7 @@ class Pipeline(ABC):
                 model_dir = self.model.model_dir
             self.cfg = read_config(model_dir)
 
-        if preprocessor is None and not self.has_multiple_models \
-           and hasattr(self.cfg, 'preprocessor'):
+        if preprocessor is None and not self.has_multiple_models:
             self.preprocessor = Preprocessor.from_pretrained(model_dir)
         else:
             self.preprocessor = preprocessor
@@ -254,7 +255,6 @@ class Pipeline(ABC):
         postprocess_params = kwargs.get('postprocess_params')
 
         # batch data
-        batched_input = {}
         output_list = []
         for i in range(0, len(input), batch_size):
             end = min(i + batch_size, len(input))
@@ -266,13 +266,15 @@ class Pipeline(ABC):
             with device_placement(self.framework, self.device_name):
                 if self.framework == Frameworks.torch:
                     with torch.no_grad():
+                        batched_out = self._batch(preprocessed_list)
                         if self._auto_collate:
-                            out = self._batch(preprocessed_list)
-                            batched_out = self._collate_fn(out)
+                            batched_out = self._collate_fn(batched_out)
                         batched_out = self.forward(batched_out,
                                                    **forward_params)
                 else:
-                    batched_out = self.forward(batched_input, **forward_params)
+                    batched_out = self._batch(preprocessed_list)
+                    batched_out = self.forward(batched_out, **forward_params)
+
             for batch_idx in range(real_batch_size):
                 out = {}
                 for k, element in batched_out.items():
@@ -383,11 +385,10 @@ class DistributedPipeline(Pipeline):
     2. Set the multiprocessing method to spawn
     3. Open a multiprocessing pool of the world_size to instantiate model pieces.
     4. Set the master port and ip
-    5. Call _instantiate_one to instantiate one model piece
-        This method should be implemented by the derived class.
-    6. After the forward method is called, do preprocess in main process
-        and call _forward_one to collect results, and do
-        post process in main process.
+    5. Call _instantiate_one to instantiate one model piece,
+    This method should be implemented by the derived class.
+    6. After the forward method is called, do preprocess in main process and
+    call _forward_one to collect results, and do post process in main process.
 
     NOTE: _instantiate_one and _forward_one are class methods, any derived class should implement them and
     store the model handler in the class field.
@@ -416,8 +417,7 @@ class DistributedPipeline(Pipeline):
         self.device = create_device(self.device_name)
         self.has_multiple_models = False
         self.framework = self.cfg.framework
-        if torch.multiprocessing.get_start_method(allow_none=True) is None:
-            torch.multiprocessing.set_start_method('spawn')
+        torch.multiprocessing.set_start_method('spawn', force=True)
 
         ranks = list(range(self.world_size))
         self.model_pool = Pool(self.world_size)
@@ -425,6 +425,7 @@ class DistributedPipeline(Pipeline):
             'master_ip']
         master_port = '29500' if 'master_port' not in kwargs else kwargs[
             'master_port']
+        from modelscope.utils.torch_utils import _find_free_port, _is_free_port
         if not _is_free_port(int(master_port)):
             master_port = str(_find_free_port())
         self.model_pool.map(
@@ -500,7 +501,10 @@ def collate_fn(data, device):
 
     """
     from torch.utils.data.dataloader import default_collate
-    from modelscope.preprocessors.nlp import InputFeatures
+
+    def get_class_name(obj):
+        return obj.__class__.__name__
+
     if isinstance(data, dict) or isinstance(data, Mapping):
         # add compatibility for img_metas for mmlab models
         return type(data)({
@@ -523,11 +527,11 @@ def collate_fn(data, device):
         return data.to(device)
     elif isinstance(data, (bytes, str, int, float, bool, type(None))):
         return data
-    elif isinstance(data, InputFeatures):
+    elif get_class_name(data) == 'InputFeatures':
+        # modelscope.preprocessors.nlp.InputFeatures
+        return data
+    elif get_class_name(data) == 'DataContainer':
+        # mmcv.parallel.DataContainer
         return data
     else:
-        from mmcv.parallel import DataContainer
-        if isinstance(data, DataContainer):
-            return data
-        else:
-            raise ValueError(f'Unsupported data type {type(data)}')
+        raise ValueError(f'Unsupported data type {type(data)}')

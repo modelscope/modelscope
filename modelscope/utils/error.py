@@ -2,7 +2,7 @@
 
 # docstyle-ignore
 AUDIO_IMPORT_ERROR = """
-Audio model import failed: {0}, if you want to use audio releated function, please execute
+Audio model import failed: {0}, if you want to use audio related function, please execute
 `pip install modelscope[audio] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
 """
 
@@ -133,4 +133,23 @@ You can install it with pip on linux or mac:
 `pip install pai-easynlp -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
 Or you can checkout the instructions on the
 installation page: https://github.com/alibaba/EasyNLP and follow the ones that match your environment.
+"""
+
+# docstyle-ignore
+MEGATRON_UTIL_IMPORT_ERROR = """
+{0} requires the megatron_util library but it was not found in your environment. You can install it with pip:
+`pip install megatron_util -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
+"""
+
+# docstyle-ignore
+TEXT2SQL_LGESQL_IMPORT_ERROR = """
+{0} requires the text2sql_lgesql library but it was not found in your environment. You can install it with pip:
+`pip install text2sql_lgesql -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html`
+"""
+
+# docstyle-ignore
+MPI4PY_IMPORT_ERROR = """
+{0} requires the mpi4py library but it was not found in your environment. You can install it with pip:
+`pip install mpi4py' and with following the instruction to install openmpi,
+https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html`
 """

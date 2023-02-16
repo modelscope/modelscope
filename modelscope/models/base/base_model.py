@@ -2,12 +2,11 @@
 import os
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.builder import build_model
-from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
-                                         save_pretrained)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
@@ -19,6 +18,8 @@ Tensor = Union['torch.Tensor', 'tf.Tensor']
 
 
 class Model(ABC):
+    """Base model interface.
+    """
 
     def __init__(self, model_dir, *args, **kwargs):
         self.model_dir = model_dir
@@ -94,10 +95,11 @@ class Model(ABC):
         prefetched = kwargs.get('model_prefetched')
         if prefetched is not None:
             kwargs.pop('model_prefetched')
-
         invoked_by = kwargs.get(Invoke.KEY)
         if invoked_by is not None:
             kwargs.pop(Invoke.KEY)
+        else:
+            invoked_by = Invoke.PRETRAINED
 
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
@@ -107,10 +109,7 @@ class Model(ABC):
                     'Expecting model is pre-fetched locally, but is not found.'
                 )
 
-            if invoked_by is not None:
-                invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            else:
-                invoked_by = '%s/%s' % (Invoke.KEY, Invoke.PRETRAINED)
+            invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
             local_model_dir = snapshot_download(
                 model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')
@@ -149,9 +148,7 @@ class Model(ABC):
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         save_checkpoint_names: Union[str, List[str]] = None,
-                        save_function: Callable = save_checkpoint,
                         config: Optional[dict] = None,
-                        save_config_function: Callable = save_configuration,
                         **kwargs):
         """save the pretrained model, its configuration and other related files to a directory,
             so that it can be re-loaded
@@ -163,21 +160,8 @@ class Model(ABC):
             save_checkpoint_names (Union[str, List[str]]):
             The checkpoint names to be saved in the target_folder
 
-            save_function (Callable, optional):
-            The function to use to save the state dictionary.
-
             config (Optional[dict], optional):
             The config for the configuration.json, might not be identical with model.config
-
-            save_config_function (Callble, optional):
-            The function to use to save the configuration.
-
         """
-        if config is None and hasattr(self, 'cfg'):
-            config = self.cfg
-
-        if config is not None:
-            save_config_function(target_folder, config)
-
-        save_pretrained(self, target_folder, save_checkpoint_names,
-                        save_function, **kwargs)
+        raise NotImplementedError(
+            'save_pretrained method need to be implemented by the subclass.')

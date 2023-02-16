@@ -1,4 +1,3 @@
-import os
 from collections import OrderedDict
 from typing import Any, Dict, Mapping, Tuple
 
@@ -7,19 +6,22 @@ from torch.utils.data.dataloader import default_collate
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter
 from modelscope.metainfo import Models
-from modelscope.preprocessors import (
-    TextClassificationTransformersPreprocessor, build_preprocessor)
-from modelscope.utils.config import Config
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import ModeKeys, Tasks
 
 
+@EXPORTERS.register_module(Tasks.text_classification, module_name=Models.bert)
+@EXPORTERS.register_module(
+    Tasks.text_classification, module_name=Models.structbert)
+@EXPORTERS.register_module(Tasks.sentence_similarity, module_name=Models.bert)
+@EXPORTERS.register_module(
+    Tasks.sentiment_classification, module_name=Models.bert)
+@EXPORTERS.register_module(Tasks.nli, module_name=Models.bert)
 @EXPORTERS.register_module(
     Tasks.sentence_similarity, module_name=Models.structbert)
 @EXPORTERS.register_module(
     Tasks.sentiment_classification, module_name=Models.structbert)
 @EXPORTERS.register_module(Tasks.nli, module_name=Models.structbert)
-@EXPORTERS.register_module(
-    Tasks.zero_shot_classification, module_name=Models.structbert)
 class SbertForSequenceClassificationExporter(TorchModelExporter):
 
     def generate_dummy_inputs(self,
@@ -38,14 +40,9 @@ class SbertForSequenceClassificationExporter(TorchModelExporter):
             Dummy inputs.
         """
 
-        cfg = Config.from_file(
-            os.path.join(self.model.model_dir, 'configuration.json'))
-        field_name = Tasks.find_field_by_task(cfg.task)
-        if 'type' not in cfg.preprocessor and 'val' in cfg.preprocessor:
-            cfg = cfg.preprocessor.val
-        else:
-            cfg = cfg.preprocessor
-
+        assert hasattr(
+            self.model, 'model_dir'
+        ), 'model_dir attribute is required to build the preprocessor'
         batch_size = 1
         sequence_length = {}
         if shape is not None:
@@ -55,13 +52,11 @@ class SbertForSequenceClassificationExporter(TorchModelExporter):
                 batch_size, max_length = shape
                 sequence_length = {'sequence_length': max_length}
 
-        cfg.update({
-            'model_dir': self.model.model_dir,
-            'mode': ModeKeys.TRAIN,
-            **sequence_length
-        })
-        preprocessor: TextClassificationTransformersPreprocessor = build_preprocessor(
-            cfg, field_name)
+        preprocessor = Preprocessor.from_pretrained(
+            self.model.model_dir,
+            preprocessor_mode=ModeKeys.TRAIN,
+            task=Tasks.text_classification,
+            **sequence_length)
         if pair:
             first_sequence = preprocessor.nlp_tokenizer.tokenizer.unk_token
             second_sequence = preprocessor.nlp_tokenizer.tokenizer.unk_token

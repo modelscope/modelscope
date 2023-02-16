@@ -5,7 +5,6 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.registry import Registry, build_from_cfg
 
 TRAINERS = Registry('trainers')
-HOOKS = Registry('hooks')
 
 
 def build_trainer(name: str = Trainers.default, default_args: dict = None):

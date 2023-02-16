@@ -29,9 +29,14 @@ def model_id_to_group_owner_name(model_id):
 
 
 def get_cache_dir(model_id: Optional[str] = None):
-    """
-    cache dir precedence:
-        function parameter > enviroment > ~/.cache/modelscope/hub
+    """cache dir precedence:
+        function parameter > environment > ~/.cache/modelscope/hub
+
+    Args:
+        model_id (str, optional): The model id.
+
+    Returns:
+        str: the model_id dir if model_id not None, otherwise cache root dir.
     """
     default_cache_dir = get_default_cache_dir()
     base_path = os.getenv('MODELSCOPE_CACHE',

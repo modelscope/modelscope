@@ -6,7 +6,7 @@ from enum import Enum
 from modelscope.utils import logger as logging
 from modelscope.utils.config import Config
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 class EvaluationMode(Enum):

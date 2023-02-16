@@ -1,26 +1,45 @@
-modelscope.pipelines.nlp package
-================================
+modelscope.pipelines.nlp
+=======================
 
 .. automodule:: modelscope.pipelines.nlp
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.pipelines.nlp
 
-modelscope.pipelines.nlp.sequence\_classification\_pipeline module
-------------------------------------------------------------------
 
-.. automodule:: modelscope.pipelines.nlp.sequence_classification_pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
 
-modelscope.pipelines.nlp.text\_generation\_pipeline module
-----------------------------------------------------------
-
-.. automodule:: modelscope.pipelines.nlp.text_generation_pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    AutomaticPostEditingPipeline
+    CodeGeeXCodeGenerationPipeline
+    CodeGeeXCodeTranslationPipeline
+    ConversationalTextToSqlPipeline
+    DialogIntentPredictionPipeline
+    DialogModelingPipeline
+    DialogStateTrackingPipeline
+    DocumentSegmentationPipeline
+    ExtractiveSummarizationPipeline
+    FaqQuestionAnsweringPipeline
+    FasttextSequenceClassificationPipeline
+    FeatureExtractionPipeline
+    FillMaskPipeline
+    InformationExtractionPipeline
+    MGLMTextSummarizationPipeline
+    NamedEntityRecognitionPipeline
+    SentenceEmbeddingPipeline
+    SummarizationPipeline
+    TableQuestionAnsweringPipeline
+    TextClassificationPipeline
+    TextErrorCorrectionPipeline
+    TextGenerationPipeline
+    TextGenerationT5Pipeline
+    TextRankingPipeline
+    TokenClassificationPipeline
+    TranslationEvaluationPipeline
+    TranslationPipeline
+    TranslationQualityEstimationPipeline
+    UserSatisfactionEstimationPipeline
+    WordSegmentationPipeline
+    WordSegmentationThaiPipeline
+    ZeroShotClassificationPipeline

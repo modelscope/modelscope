@@ -49,3 +49,13 @@ class ImagePortraitEnhancementMetric(Metric):
         ]
 
         return {MetricKeys.PSNR: sum(psnrs) / len(psnrs)}
+
+    def merge(self, other: 'ImagePortraitEnhancementMetric'):
+        self.preds.extend(other.preds)
+        self.targets.extend(other.targets)
+
+    def __getstate__(self):
+        return self.preds, self.targets
+
+    def __setstate__(self, state):
+        self.preds, self.targets = state

@@ -8,11 +8,13 @@ from .hook import Hook
 
 @HOOKS.register_module(module_name=Hooks.EvaluationHook)
 class EvaluationHook(Hook):
-    """Evaluation hook.
+    """
+    Evaluation hook.
+
     Args:
         interval (int): Evaluation interval.
         by_epoch (bool): Evaluate by epoch or by iteration.
-        start_idx (int | None, optional): The epoch/iterations validation begins.
+        start_idx (int or None, optional): The epoch or iterations validation begins.
             Default: None, validate every interval epochs/iterations from scratch.
     """
 

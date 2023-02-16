@@ -6,7 +6,6 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .text_error_correction import TextErrorCorrectionPreprocessor
     from .text_generation_preprocessor import TextGenerationJiebaPreprocessor
-    from .sentence_piece_preprocessor import SentencePiecePreprocessor
     from .bert_seq_cls_tokenizer import Tokenize
     from .document_segmentation_preprocessor import DocumentSegmentationTransformersPreprocessor
     from .faq_question_answering_preprocessor import FaqQuestionAnsweringTransformersPreprocessor
@@ -15,7 +14,8 @@ if TYPE_CHECKING:
     from .relation_extraction_preprocessor import RelationExtractionTransformersPreprocessor
     from .text_classification_preprocessor import TextClassificationTransformersPreprocessor
     from .sentence_embedding_preprocessor import SentenceEmbeddingTransformersPreprocessor
-    from .text_generation_preprocessor import TextGenerationTransformersPreprocessor, TextGenerationT5Preprocessor
+    from .text_generation_preprocessor import TextGenerationTransformersPreprocessor, \
+        TextGenerationT5Preprocessor, TextGenerationSentencePiecePreprocessor, SentencePiecePreprocessor
     from .token_classification_preprocessor import TokenClassificationTransformersPreprocessor, \
         WordSegmentationBlankSetToLabelPreprocessor
     from .token_classification_thai_preprocessor import WordSegmentationPreprocessorThai, NERPreprocessorThai
@@ -29,9 +29,13 @@ if TYPE_CHECKING:
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
     from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
+    from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
+    from .siamese_uie_preprocessor import SiameseUiePreprocessor
+    from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
+    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRetrievalPreprocessor
+    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRerankPreprocessor
 else:
     _import_structure = {
-        'sentence_piece_preprocessor': ['SentencePiecePreprocessor'],
         'bert_seq_cls_tokenizer': ['Tokenize'],
         'document_segmentation_preprocessor':
         ['DocumentSegmentationTransformersPreprocessor'],
@@ -48,7 +52,10 @@ else:
         ['SentenceEmbeddingTransformersPreprocessor'],
         'text_generation_preprocessor': [
             'TextGenerationTransformersPreprocessor',
-            'TextGenerationJiebaPreprocessor', 'TextGenerationT5Preprocessor'
+            'TextGenerationJiebaPreprocessor',
+            'TextGenerationT5Preprocessor',
+            'TextGenerationSentencePiecePreprocessor',
+            'SentencePiecePreprocessor',
         ],
         'token_classification_preprocessor': [
             'TokenClassificationTransformersPreprocessor',
@@ -79,6 +86,15 @@ else:
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
         'translation_evaluation_preprocessor':
         ['TranslationEvaluationPreprocessor'],
+        'dialog_classification_use_preprocessor':
+        ['DialogueClassificationUsePreprocessor'],
+        'siamese_uie_preprocessor': ['SiameseUiePreprocessor'],
+        'document_grounded_dialog_generate_preprocessor':
+        ['DocumentGroundedDialogGeneratePreprocessor'],
+        'document_grounded_dialog_retrieval_preprocessor':
+        ['DocumentGroundedDialogRetrievalPreprocessor'],
+        'document_grounded_dialog_rerank_preprocessor':
+        ['DocumentGroundedDialogRerankPreprocessor']
     }
 
     import sys

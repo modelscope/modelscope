@@ -60,36 +60,27 @@ class BartForTextErrorCorrection(TorchModel):
         """return the result by the model
 
         Args:
-            input (Dict[str, Tensor]): the preprocessed data
-            Example:
-                1 sent:
-                {'net_input':
-                    {'src_tokens':tensor([2478,242,24,4]),
-                    'src_lengths': tensor([4])}
-                }
+            input (Dict[str, Tensor]): the preprocessed data which contains following:
+                - src_tokens: tensor with shape (2478,242,24,4),
+                - src_lengths: tensor with shape (4)
 
 
         Returns:
-            Dict[str, Tensor]: results
-                Example:
-                    {
-                        'predictions': Tensor([1377, 4959, 2785, 6392...]), # tokens need to be decode by tokenizer
-                    }
+            Dict[str, Tensor]: results which contains following:
+                - predictions: tokens need to be decode by tokenizer with shape [1377, 4959, 2785, 6392...]
         """
         import fairseq.utils
 
-        if len(input['net_input']['src_tokens'].size()) == 1:
-            input['net_input']['src_tokens'] = input['net_input'][
-                'src_tokens'].view(1, -1)
+        batch_size = input['src_tokens'].size(0)
 
+        input = {'net_input': input}
         if torch.cuda.is_available():
             input = fairseq.utils.move_to_cuda(input, device=self._device)
 
-        sample = input
-
         translations = self.task.inference_step(self.generator, self.models,
-                                                sample)
-
-        # get 1-best List[Tensor]
-        preds = translations[0][0]['tokens']
-        return TextErrorCorrectionOutput(predictions=preds)
+                                                input)
+        batch_preds = []
+        for i in range(batch_size):
+            # get 1-best List[Tensor]
+            batch_preds.append(translations[i][0]['tokens'])
+        return TextErrorCorrectionOutput(predictions=batch_preds)

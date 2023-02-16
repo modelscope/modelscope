@@ -12,10 +12,15 @@ METRICS = Registry('metrics')
 class MetricKeys(object):
     ACCURACY = 'accuracy'
     F1 = 'f1'
+    Binary_F1 = 'binary-f1'
+    Macro_F1 = 'macro-f1'
+    Micro_F1 = 'micro-f1'
     PRECISION = 'precision'
     RECALL = 'recall'
     PSNR = 'psnr'
     SSIM = 'ssim'
+    LPIPS = 'lpips'
+    NIQE = 'niqe'
     AVERAGE_LOSS = 'avg_loss'
     FScore = 'fscore'
     FID = 'fid'
@@ -26,6 +31,15 @@ class MetricKeys(object):
     NED = 'ned'  # ocr metric
     mAP = 'mAP'
     BatchAcc = 'inbatch_t2i_recall_at_1'
+    CROPPING_RATIO = 'cropping_ratio'
+    DISTORTION_VALUE = 'distortion_value'
+    STABILITY_SCORE = 'stability_score'
+    PPL = 'ppl'
+    PLCC = 'plcc'
+    SRCC = 'srcc'
+    RMSE = 'rmse'
+    MRR = 'mrr'
+    NDCG = 'ndcg'
 
 
 task_default_metrics = {
@@ -37,6 +51,8 @@ task_default_metrics = {
     Tasks.text_generation: [Metrics.text_gen_metric],
     Tasks.text_classification: [Metrics.seq_cls_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
+    Tasks.image_deblurring: [Metrics.image_denoise_metric],
+    Tasks.video_super_resolution: [Metrics.video_super_resolution_metric],
     Tasks.image_color_enhancement: [Metrics.image_color_enhance_metric],
     Tasks.image_portrait_enhancement:
     [Metrics.image_portrait_enhancement_metric],
@@ -47,6 +63,13 @@ task_default_metrics = {
     Tasks.image_inpainting: [Metrics.image_inpainting_metric],
     Tasks.referring_video_object_segmentation:
     [Metrics.referring_video_object_segmentation_metric],
+    Tasks.video_frame_interpolation:
+    [Metrics.video_frame_interpolation_metric],
+    Tasks.video_stabilization: [Metrics.video_stabilization_metric],
+    Tasks.image_quality_assessment_degradation:
+    [Metrics.image_quality_assessment_degradation_metric],
+    Tasks.image_quality_assessment_mos:
+    [Metrics.image_quality_assessment_mos_metric],
 }
 
 

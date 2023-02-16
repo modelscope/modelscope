@@ -1,427 +1,19 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from copy import deepcopy
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
-import torch
 from torch import nn
-from torch.utils.data import Dataset
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import build_metric
 from modelscope.models.base import Model, TorchModel
-from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors import Preprocessor
-from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ModeKeys,
-                                       ModelFile)
-from modelscope.utils.hub import parse_label_mapping
+from modelscope.utils.config import Config
+from modelscope.utils.constant import ModeKeys
 from .base import TRAINERS
 from .trainer import EpochBasedTrainer
-
-
-@dataclass
-class NlpTrainerArguments:
-    """The arguments for the nlp trainer.
-
-    All the arguments listed here have None default values, which means follow the default value in the input
-    cfg dict.
-    """
-
-    work_dir: Optional[str] = field(
-        default=None, metadata={'help': 'The work dir(key: train.work_dir)'})
-
-    task: Optional[str] = field(
-        default=None, metadata={'help': 'The task type(key: task)'})
-
-    preprocessor_type: Optional[str] = field(
-        default=None,
-        metadata={'help': 'The preprocessor type(key: preprocessor.type)'})
-
-    train_first_sequence: str = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of first sentence for the training dataset(key:preprocessor.train.'
-            'first_sequence/dataset.train.first_sequence)'
-        })
-
-    train_second_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of second sentence for the training dataset(key:preprocessor.train.'
-            'second_sequence/dataset.train.second_sequence)'
-        })
-
-    train_label: str = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of label for the training dataset(key:preprocessor.train.'
-            'second_sequence/dataset.train.second_sequence)'
-        })
-
-    eval_first_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of first sentence for the eval dataset(key:preprocessor.val.'
-            'first_sequence/dataset.val.first_sequence), '
-            'if not provided, the trainer will use the train_first_sequence for evaluation'
-        })
-
-    eval_second_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of second sentence for the eval dataset(key:preprocessor.val.'
-            'second_sequence/dataset.val.second_sequence),'
-            'if not provided, the trainer will use the train_second_sequence for evaluation'
-        })
-
-    eval_label: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The key of label for the eval dataset(key:preprocessor.val.'
-            'second_sequence/dataset.val.second_sequence),'
-            'if not provided, the trainer will use the train_label for evaluation'
-        })
-
-    labels: Optional[List] = field(
-        default=None,
-        metadata={
-            'help':
-            'The labels list of the dataset(key:dataset.train.labels),'
-            'This parameter has the same effect with "label2id"'
-        })
-
-    max_epochs: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The max_epochs of the training loop(key: train.max_epochs)'
-        })
-
-    train_batch_size_per_gpu: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The train batch size per gpu(key: train.dataloader.batch_size_per_gpu)'
-        })
-
-    train_workers_per_gpu: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The number of workers per gpu(key: train.dataloader.workers_per_gpu)'
-        })
-
-    train_shuffle: Optional[bool] = field(
-        default=None,
-        metadata={
-            'help':
-            'Shuffle the train dataset or not(key: train.dataloader.shuffle)'
-        })
-
-    eval_batch_size_per_gpu: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The eval batch size per gpu(key: evaluation.dataloader.batch_size_per_gpu)'
-        })
-
-    eval_workers_per_gpu: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The number of workers per gpu(key: evaluation.dataloader.workers_per_gpu)'
-        })
-
-    eval_shuffle: Optional[bool] = field(
-        default=None,
-        metadata={
-            'help':
-            'Shuffle the eval dataset or not(key: evaluation.dataloader.shuffle)'
-        })
-
-    optimizer_args: Optional[Dict] = field(
-        default=None,
-        metadata={'help': 'The optimizer config dict(key: train.optimizer)'})
-
-    lr_scheduler_args: Optional[Dict] = field(
-        default=None,
-        metadata={
-            'help': 'The lr_scheduler config dict(key: train.lr_scheduler)'
-        })
-
-    checkpoint_saving_type: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The checkpoint saving type(key: The ckpt hook dict in train.hooks), '
-            'valid options: "BestCkptSaverHook", "CheckpointHook"'
-        })
-
-    checkpoint_by_epoch: Optional[bool] = field(
-        default=None,
-        metadata={
-            'help':
-            'Saving checkpoint by epoch or not(key: The by_epoch key in '
-            'ckpt hook dict in train.hooks)'
-        })
-
-    checkpoint_interval: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The checkpoint saving interval(key: The interval key in '
-            'ckpt hook dict in train.hooks)'
-        })
-
-    metric_key: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The metric key for the BestCkptSaverHook(key: The metric_key key in '
-            'ckpt hook dict in train.hooks), if the checkpoint_saving_type is "CheckpointHook" or '
-            '"None", the metric_key key has no effects'
-        })
-
-    evaluation_type: Optional[str] = field(
-        default=None,
-        metadata={
-            'help':
-            'The evaluation type(key: The evaluation hook dict in train.hooks), '
-            'valid options: "EvaluationHook", "None"'
-        })
-
-    evaluation_by_epoch: Optional[bool] = field(
-        default=None,
-        metadata={
-            'help':
-            'Evaluating by epoch or not(key: The by_epoch key in '
-            'evaluation hook dict in train.hooks)'
-        })
-
-    evaluation_interval: Optional[int] = field(
-        default=None,
-        metadata={
-            'help':
-            'The evaluating interval(key: The interval key in '
-            'evaluation hook dict in train.hooks)'
-        })
-
-    metrics: Optional[List[str]] = field(
-        default=None,
-        metadata={'help': 'The metrics class keys(key: evaluation.metrics)'})
-
-    default_train_config = ConfigDict({
-        'work_dir':
-        '/tmp',
-        'max_epochs':
-        5,
-        'dataloader': {
-            'batch_size_per_gpu': 32,
-            'workers_per_gpu': 0
-        },
-        'optimizer': {
-            'type': 'AdamW',
-            'lr': 2e-5,
-            'options': {}
-        },
-        'lr_scheduler': {
-            'type': 'LinearLR',
-            'start_factor': 1.0,
-            'end_factor': 0.0,
-            'total_iters': 10000,
-            'options': {
-                'by_epoch': False
-            }
-        },
-        'hooks': [{
-            'type': 'CheckpointHook',
-            'by_epoch': False,
-            'interval': 100
-        }, {
-            'type': 'TextLoggerHook',
-            'interval': 1
-        }, {
-            'type': 'IterTimerHook'
-        }, {
-            'type': 'EvaluationHook',
-            'by_epoch': False,
-            'interval': 100
-        }]
-    })
-
-    def __call__(self, cfg):
-        """
-
-        Args:
-            cfg(`Config`): The cfg to be modified.
-
-        Returns:
-            The cfg after modification.
-        """
-
-        if self.task is not None:
-            cfg.task = self.task
-
-        if self.preprocessor_type is not None:
-            if not hasattr(cfg, 'preprocessor'):
-                cfg.preprocessor = ConfigDict()
-            cfg.preprocessor.type = self.preprocessor_type
-
-        if self.train_first_sequence is not None or self.train_second_sequence \
-                is not None or self.train_label is not None or self.labels is not None:
-            if not hasattr(cfg, 'dataset'):
-                cfg.dataset = ConfigDict()
-            if not hasattr(cfg.dataset, 'train'):
-                cfg.dataset.train = ConfigDict()
-            if self.train_first_sequence is not None:
-                cfg.dataset.train.first_sequence = self.train_first_sequence
-            if self.train_second_sequence is not None:
-                cfg.dataset.train.second_sequence = self.train_second_sequence
-            if self.train_label is not None:
-                cfg.dataset.train.label = self.train_label
-            if self.labels is not None:
-                cfg.dataset.train.labels = self.labels
-
-        if self.eval_first_sequence is not None or self.eval_second_sequence \
-                is not None or self.eval_label is not None:
-            if not hasattr(cfg, 'dataset'):
-                cfg.dataset = ConfigDict()
-            if not hasattr(cfg.dataset, 'val'):
-                cfg.dataset.val = ConfigDict()
-            if self.eval_first_sequence is not None:
-                cfg.dataset.val.first_sequence = self.eval_first_sequence
-            if self.eval_second_sequence is not None:
-                cfg.dataset.val.second_sequence = self.eval_second_sequence
-            if self.eval_label is not None:
-                cfg.dataset.val.label = self.eval_label
-
-        if self.max_epochs is not None or self.train_batch_size_per_gpu is not None \
-                or self.train_shuffle is not None or self.optimizer_args is not None \
-                or self.work_dir is not None or self.lr_scheduler_args is not None\
-                or self.train_workers_per_gpu is not None:
-            if not hasattr(cfg, 'train'):
-                cfg.train = deepcopy(self.default_train_config)
-            if not hasattr(cfg.train, 'dataloader'):
-                cfg.train.dataloader = deepcopy(
-                    self.default_train_config.dataloader)
-            if not hasattr(cfg.train, 'optimizer'):
-                cfg.train.optimizer = deepcopy(
-                    self.default_train_config.optimizer)
-            if not hasattr(cfg.train, 'lr_scheduler'):
-                cfg.train.lr_scheduler = deepcopy(
-                    self.default_train_config.lr_scheduler)
-            if self.work_dir is not None:
-                cfg.train.work_dir = self.work_dir
-            if self.max_epochs is not None:
-                cfg.train.max_epochs = self.max_epochs
-            if self.train_batch_size_per_gpu is not None:
-                cfg.train.dataloader.batch_size_per_gpu = self.train_batch_size_per_gpu
-            if self.train_workers_per_gpu is not None:
-                cfg.train.dataloader.workers_per_gpu = self.train_workers_per_gpu
-            if self.train_shuffle is not None:
-                cfg.train.dataloader.shuffle = self.train_shuffle
-            if self.optimizer_args is not None:
-                if cfg.train.optimizer.type != self.optimizer_args.get(
-                        'type', cfg.train.optimizer.type):
-                    cfg.train.optimizer = ConfigDict(
-                        deepcopy(self.optimizer_args))
-                else:
-                    cfg.train.optimizer = Config._merge_a_into_b(
-                        self.optimizer_args, cfg.train.optimizer, force=True)
-            if self.lr_scheduler_args is not None:
-                if cfg.train.lr_scheduler.type != self.lr_scheduler_args.get(
-                        'type', cfg.train.lr_scheduler.type):
-                    cfg.train.lr_scheduler = ConfigDict(
-                        deepcopy(self.lr_scheduler_args))
-                else:
-                    cfg.train.lr_scheduler = Config._merge_a_into_b(
-                        self.lr_scheduler_args,
-                        cfg.train.lr_scheduler,
-                        force=True)
-
-        if self.checkpoint_saving_type is not None or self.checkpoint_by_epoch is not None \
-                or self.checkpoint_interval is not None or self.metric_key is not None:
-            if not any([
-                    self.checkpoint_saving_type == hook['type']
-                    for hook in cfg.train.hooks
-            ]):
-                cfg.train.hooks = list(
-                    filter(
-                        lambda hook: hook['type'] not in
-                        ['CheckpointHook', 'BestCkptSaverHook'],
-                        cfg.train.hooks))
-                cfg.train.hooks.append(
-                    deepcopy(self.default_train_config.hooks[0]))
-                cfg.train.hooks[-1].type = self.checkpoint_saving_type
-            checkpoint_hook = list(
-                filter(
-                    lambda hook: hook[
-                        'type'] in ['CheckpointHook', 'BestCkptSaverHook'],
-                    cfg.train.hooks))[0]
-            if self.checkpoint_by_epoch is not None:
-                checkpoint_hook['by_epoch'] = self.checkpoint_by_epoch
-            if self.checkpoint_interval is not None:
-                checkpoint_hook['interval'] = self.checkpoint_interval
-            if checkpoint_hook['type'] == 'BestCkptSaverHook':
-                assert self.metric_key is not None, 'The metric_key must be provided ' \
-                                                    'if the ckpt saving hook is "BestCkptSaverHook"'
-                checkpoint_hook['metric_key'] = self.metric_key
-
-        if self.evaluation_type is not None or self.evaluation_by_epoch is not None \
-                or self.evaluation_interval is not None or self.eval_batch_size_per_gpu is not None or \
-                self.eval_shuffle is not None or self.metrics is not None:
-            if self.evaluation_type is not None and not any([
-                    self.evaluation_type == hook['type']
-                    for hook in cfg.train.hooks
-            ]):
-                cfg.train.hooks = list(
-                    filter(lambda hook: hook['type'] not in ['EvaluationHook'],
-                           cfg.train.hooks))
-                if self.evaluation_type != 'None':
-                    cfg.train.hooks.append(
-                        deepcopy(self.default_train_config.hooks[3]))
-                    cfg.train.hooks[-1].type = self.evaluation_type
-
-            evaluation_hook = list(
-                filter(lambda hook: hook['type'] in ['EvaluationHook'],
-                       cfg.train.hooks))
-            evaluation_hook = evaluation_hook[0] if len(
-                evaluation_hook) > 0 else None
-
-            if evaluation_hook is not None and self.evaluation_by_epoch is not None:
-                evaluation_hook['by_epoch'] = self.evaluation_by_epoch
-            if evaluation_hook is not None and self.evaluation_interval is not None:
-                evaluation_hook['interval'] = self.evaluation_interval
-
-            if not hasattr(cfg, 'evaluation'):
-                cfg.evaluation = ConfigDict({
-                    'dataloader': {
-                        'batch_size_per_gpu': 32,
-                        'workers_per_gpu': 0,
-                        'shuffle': False
-                    }
-                })
-
-            if self.metrics is not None:
-                cfg.evaluation.metrics = self.metrics
-            if self.eval_batch_size_per_gpu is not None:
-                cfg.evaluation.dataloader.batch_size_per_gpu = self.eval_batch_size_per_gpu
-            if self.eval_workers_per_gpu is not None:
-                cfg.evaluation.dataloader.workers_per_gpu = self.eval_workers_per_gpu
-            if self.eval_shuffle is not None:
-                cfg.evaluation.dataloader.shuffle = self.eval_shuffle
-
-        return cfg
 
 
 @TRAINERS.register_module(module_name=Trainers.nlp_base_trainer)
@@ -470,11 +62,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.id2label = {idx: label for idx, label in enumerate(labels)}
             self.num_labels = len(labels)
         except AttributeError:
-            label2id = parse_label_mapping(self.model_dir)
-            if label2id is not None:
-                self.label2id = label2id
-                self.id2label = {id: label for label, id in label2id.items()}
-                self.num_labels = len(label2id)
+            pass
 
         def build_dataset_keys(cfg):
             if cfg is not None:
@@ -532,7 +120,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
         """
 
         # Compatible with old logic
-        model_args = {} if self.label2id is None else {
+        extra_args = {} if self.label2id is None else {
             'label2id': self.label2id
         }
 
@@ -540,7 +128,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.model_dir,
             cfg_dict=self.cfg,
             preprocessor_mode=ModeKeys.TRAIN,
-            **model_args,
+            **extra_args,
             **self.train_keys,
             mode=ModeKeys.TRAIN,
             use_fast=True)
@@ -548,7 +136,7 @@ class NlpEpochBasedTrainer(EpochBasedTrainer):
             self.model_dir,
             cfg_dict=self.cfg,
             preprocessor_mode=ModeKeys.EVAL,
-            **model_args,
+            **extra_args,
             **self.eval_keys,
             mode=ModeKeys.EVAL,
             use_fast=True)

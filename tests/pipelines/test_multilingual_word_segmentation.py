@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import TransformerCRFForWordSegmentation
+from modelscope.models.nlp import ModelForTokenClassificationWithCRF
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationThaiPipeline
 from modelscope.preprocessors import WordSegmentationPreprocessorThai
@@ -26,7 +26,7 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = WordSegmentationPreprocessorThai(cache_path)
-        model = TransformerCRFForWordSegmentation.from_pretrained(cache_path)
+        model = ModelForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = WordSegmentationThaiPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.word_segmentation, model=model, preprocessor=tokenizer)

@@ -1,37 +1,16 @@
-modelscope.models package
-=========================
+modelscope.models
+=================
 
 .. automodule:: modelscope.models
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Subpackages
------------
+.. currentmodule:: modelscope.models
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+   :caption: Model Api
 
-   modelscope.models.cv
-   modelscope.models.nlp
-   modelscope.models.multi_modal
-   modelscope.models.audio
-
-Submodules
-----------
-
-modelscope.models.base module
------------------------------
-
-.. automodule:: modelscope.models.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.builder module
---------------------------------
-
-.. automodule:: modelscope.models.builder
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   bases <modelscope.models.base>
+   builders <modelscope.models.builder>
+   cv <modelscope.models.cv>
+   nlp <modelscope.models.nlp>
+   multi-modal <modelscope.models.multi_modal>

@@ -40,3 +40,13 @@ class BleuMetric(Metric):
         return {
             MetricKeys.BLEU_4: bleu.score,
         }
+
+    def merge(self, other: 'BleuMetric'):
+        self.refs.extend(other.refs)
+        self.hyps.extend(other.hyps)
+
+    def __getstate__(self):
+        return self.eval_tokenized_bleu, self.hyp_name, self.ref_name, self.refs, self.hyps
+
+    def __setstate__(self, state):
+        self.eval_tokenized_bleu, self.hyp_name, self.ref_name, self.refs, self.hyps = state

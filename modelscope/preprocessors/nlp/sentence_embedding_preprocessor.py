@@ -21,7 +21,7 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
                  first_sequence='source_sentence',
                  second_sequence='sentences_to_compare',
                  mode=ModeKeys.INFERENCE,
-                 use_fast: bool = None,
+                 use_fast: bool = True,
                  max_length: int = None,
                  **kwargs):
         """The preprocessor for sentence embedding task, based on transformers' tokenizer.
@@ -43,6 +43,7 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
                 'sequence_length', 128)
         kwargs.pop('sequence_length', None)
         model_type = None
+        self.max_length = max_length
         if model_dir is not None:
             model_type = get_model_type(model_dir)
         self.nlp_tokenizer = NLPTokenizer(
@@ -70,16 +71,23 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
         Returns:
             Dict[str, Any]: the preprocessed data
         """
-        source_sentence = data[self.first_sequence]
-        compare_sentences = data[self.second_sequence]
-        sentences = [source_sentence[0]]
-        for sent in compare_sentences:
-            sentences.append(sent)
-
+        source_sentences = data[self.first_sequence]
+        if self.second_sequence in data:
+            if isinstance(source_sentences[0], list):
+                source_sentences = [source_sentences[0]]
+            compare_sentences = data[self.second_sequence]
+        else:
+            compare_sentences = None
         if 'return_tensors' not in kwargs:
             kwargs[
                 'return_tensors'] = 'pt' if self.mode == ModeKeys.INFERENCE else None
-
-        tokenized_inputs = self.nlp_tokenizer(
-            sentences, padding=padding, truncation=truncation, **kwargs)
+        query_inputs = self.nlp_tokenizer(
+            source_sentences, padding=padding, truncation=truncation, **kwargs)
+        tokenized_inputs = {'query': query_inputs, 'docs': None}
+        if compare_sentences is not None and len(compare_sentences) > 0:
+            tokenized_inputs['docs'] = self.nlp_tokenizer(
+                compare_sentences,
+                padding=padding,
+                truncation=truncation,
+                **kwargs)
         return tokenized_inputs

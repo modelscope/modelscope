@@ -50,4 +50,6 @@ class TextToImageSynthesisPipeline(Pipeline):
         return self.model.generate(input)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return {OutputKeys.OUTPUT_IMG: inputs}
+        if not isinstance(inputs, list):
+            inputs = [inputs]
+        return {OutputKeys.OUTPUT_IMGS: inputs}

@@ -2,7 +2,6 @@
 
 import io
 
-import cv2
 import json
 
 from modelscope.outputs import OutputKeys
@@ -265,6 +264,7 @@ def postprocess(req, resp):
         new_resp.get(output_key)
         if file_type == 'png' or file_type == 'jpg':
             content = new_resp.get(output_key)
+            import cv2
             _, img_encode = cv2.imencode('.' + file_type, content)
             img_bytes = img_encode.tobytes()
             return type(img_bytes)

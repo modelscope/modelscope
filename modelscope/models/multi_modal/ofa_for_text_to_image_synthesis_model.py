@@ -38,6 +38,15 @@ __all__ = ['OfaForTextToImageSynthesis']
 
 
 def custom_to_pil(x):
+    r"""
+    Change the custom array to PIL image.
+
+    Args:
+        x (`object`)
+            Object with array interface.
+    Returns:
+        A pillow image object.
+    """
     x = x.detach().cpu()
     x = torch.clamp(x, -1., 1.)
     x = (x + 1.) / 2.
@@ -50,6 +59,20 @@ def custom_to_pil(x):
 
 
 def load_vqgan(config, ckpt_path=None, is_gumbel=False):
+    r"""
+    Load checkpoint for vqgan model.
+
+    Args:
+        config (`Dict[Str, Any]`):
+            Model configs for vgqan model initialization.
+        ckpt_path (`str` or `os.PathLike`, **optional**, default to `None`):
+            Checkpoint path. IF not None, it will load model parameters from the checkpoint path.
+        is_gumbel (`bool`, **optional**, default to `False`):
+            Whether or not to use gumbel vqgan.
+
+    Returns:
+        A vqgan model with evaluation state.
+    """
     if is_gumbel:
         model = GumbelVQ(**config['model']['params'])
     else:
@@ -61,6 +84,16 @@ def load_vqgan(config, ckpt_path=None, is_gumbel=False):
 
 
 def build_clip_model(model_path):
+    r"""
+    Build clip model, the model structure can be found in `modelscope.models.multi_modal.mmr.models.module_clip.CLIP`
+
+    Args:
+        model_path (`str` or `os.PathLike`):
+            Model path in which store the clip model's parameters.
+
+    Returns:
+        A clip model with evaluation state.
+    """
     state_dict = torch.load(model_path, map_location='cpu').state_dict()
     vit = 'visual.proj' in state_dict
     if vit:
@@ -114,10 +147,22 @@ def build_clip_model(model_path):
 
 
 def _convert_image_to_rgb(image):
+    r"""
+    Convert the mode of the image to `RGB`.
+    """
     return image.convert('RGB')
 
 
 def build_clip_transform(n_px):
+    r"""
+    Build image transformation. All images sent to clip model will be transformed in this transformation.
+
+    Args:
+        n_px(`int` or `sequence`):
+            Desired output size of resize and crop transformation.
+    Returns:
+        A compose of transformations.
+    """
     return Compose([
         Resize(n_px, interpolation=BICUBIC),
         CenterCrop(n_px),
@@ -130,8 +175,37 @@ def build_clip_transform(n_px):
 
 @MODELS.register_module(Tasks.text_to_image_synthesis, module_name=Models.ofa)
 class OfaForTextToImageSynthesis(Model):
+    r"""
+    OFA task for text to image synthesis.
+
+    Attributes:
+        model: OFA uniform model using in this task.
+        cfg: Task configs exclude model configs, such as generator's config.
+        tokenizer: OFA tokenizer for tokenizing the input for OFA model.
+        vqgan_model: A vqgan model for image decoding.
+        clip_tokenizer: CLIP tokenizer for tokenizing the input for CLIP model.
+        clip_model: A CLIP model for ranking the generating image with original input text to select the best one.
+        generator: A sequence generator with OFA model to generate image code.
+    """
 
     def __init__(self, model_dir, *args, **kwargs):
+        r"""
+        Args:
+            model_dir (`str` or `os.PathLike`)
+                Can be either:
+                    - A string, the *model id* of a pretrained model hosted inside a model repo on huggingface.co
+                      or modelscope.cn. Valid model ids can be located at the root-level, like `bert-base-uncased`,
+                      or namespaced under a user or organization name, like `dbmdz/bert-base-german-cased`.
+                    - A path to a *directory* containing model weights saved using
+                      [`~PreTrainedModel.save_pretrained`], e.g., `./my_model_directory/`.
+                    - A path or url to a *tensorflow index checkpoint file* (e.g, `./tf_model/model.ckpt.index`). In
+                      this case, `from_tf` should be set to `True` and a configuration object should be provided as
+                      `config` argument. This loading path is slower than converting the TensorFlow checkpoint in a
+                      PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
+                    - A path or url to a model folder containing a *flax checkpoint file* in *.msgpack* format (e.g,
+                      `./flax_model/` containing `flax_model.msgpack`). In this case, `from_flax` should be set to
+                      `True`.
+        """
         super().__init__(model_dir=model_dir, *args, **kwargs)
         # Initialize ofa
         model = OFAModel.from_pretrained(model_dir)
@@ -210,6 +284,18 @@ class OfaForTextToImageSynthesis(Model):
         return result
 
     def forward(self, input: Dict[str, Any]):
+        r"""
+        The entry function of text to image synthesis task.
+        1. Using OFA model to generate an image code candidate set.
+        2. Using vqgan model to decode the generated images to a pillow image set.
+        3. Using CLIP model to rank the candidate set, choosing the best generated image.
+
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the task
+        Returns:
+            A generated pillow image.
+        """
 
         text = input['samples'][0]['text']
         input = move_to_device(input, self._device)

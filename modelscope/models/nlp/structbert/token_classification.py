@@ -110,62 +110,62 @@ class SbertForTokenClassification(SbertPreTrainedModel):
     ):
         r"""
         Args:
-        input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
-            Indices of input sequence tokens in the vocabulary.
+            input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
+                Indices of input sequence tokens in the vocabulary.
 
-            Indices can be obtained using :class:`~modelscope.models.nlp.structbert.SbertTokenizer`. See
-            :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__` for
-            details.
+                Indices can be obtained using :class:`~modelscope.models.nlp.structbert.SbertTokenizer`. See
+                :meth:`transformers.PreTrainedTokenizer.encode` and :meth:`transformers.PreTrainedTokenizer.__call__`
+                for details.
 
-        attention_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Mask to avoid performing attention on padding token indices. Mask values selected in ``[0, 1]``:
+            attention_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Mask to avoid performing attention on padding token indices. Mask values selected in ``[0, 1]``:
 
-            - 1 for tokens that are **not masked**,
-            - 0 for tokens that are **masked**.
+                - 1 for tokens that are **not masked**,
+                - 0 for tokens that are **masked**.
 
-        token_type_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Segment token indices to indicate first and second portions of the inputs. Indices are selected in ``[0,
-            1]``:
+            token_type_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Segment token indices to indicate first and second portions of the inputs. Indices are selected in ``[0,
+                1]``:
 
-            - 0 corresponds to a `sentence A` token,
-            - 1 corresponds to a `sentence B` token.
+                - 0 corresponds to a `sentence A` token,
+                - 1 corresponds to a `sentence B` token.
 
-        position_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the position embeddings. Selected in the range ``[0,
-            config.max_position_embeddings - 1]``.
+            position_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Indices of positions of each input sequence tokens in the position embeddings. Selected in the range
+                ``[0, config.max_position_embeddings - 1]``.
 
-        head_mask (:obj:`torch.FloatTensor` of shape :obj:`(num_heads,)` or :obj:`(num_layers, num_heads)`, `optional`):
-            Mask to nullify selected heads of the self-attention modules. Mask values selected in ``[0, 1]``:
+            head_mask (:obj:`torch.FloatTensor` of shape :obj:`(num_heads,)` or :obj:`(num_layers, num_heads)`,
+                `optional`):
+                Mask to nullify selected heads of the self-attention modules. Mask values selected in ``[0, 1]``:
 
-            - 1 indicates the head is **not masked**,
-            - 0 indicates the head is **masked**.
+                - 1 indicates the head is **not masked**,
+                - 0 indicates the head is **masked**.
 
-        inputs_embeds (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`):
-            Optionally, instead of passing :obj:`input_ids` you can choose to directly pass an embedded representation.
-            This is useful if you want more control over how to convert :obj:`input_ids` indices into associated
-            vectors than the model's internal embedding lookup matrix.
-        output_attentions (:obj:`bool`, `optional`):
-            Whether or not to return the attentions tensors of all attention layers. See ``attentions`` under returned
-            tensors for more detail.
-        output_hidden_states (:obj:`bool`, `optional`):
-            Whether or not to return the hidden states of all layers. See ``hidden_states`` under returned tensors for
-            more detail.
-        return_dict (:obj:`bool`, `optional`):
-            Whether or not to return a :class:`~transformers.ModelOutput` instead of a plain tuple.
-        labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
-            Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
-            1]``.
-        offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Indices of positions of each input sequence tokens in the sentence.
-            Selected in the range ``[0, sequence_length - 1]``.
-        label_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size,
-        sequence_length)`, `optional`):
-            Mask to avoid performing attention on padding token indices. Mask
-            values selected in ``[0, 1]``:
+            inputs_embeds (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`,
+                `optional`):
+                Optionally, instead of passing :obj:`input_ids` you can choose to directly pass an embedded
+                representation. This is useful if you want more control over how to convert :obj:`input_ids` indices
+                into associated vectors than the model's internal embedding lookup matrix.
+            output_attentions (:obj:`bool`, `optional`):
+                Whether or not to return the attentions tensors of all attention layers. See ``attentions`` under
+                returned tensors for more detail.
+            output_hidden_states (:obj:`bool`, `optional`):
+                Whether or not to return the hidden states of all layers. See ``hidden_states`` under returned tensors
+                for more detail.
+            return_dict (:obj:`bool`, `optional`):
+                Whether or not to return a :class:`~transformers.ModelOutput` instead of a plain tuple.
+            labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Labels for computing the token classification loss. Indices should be in
+                ``[0, ..., config.num_labels - 1]``.
+            offset_mapping (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Indices of positions of each input sequence tokens in the sentence.
+                Selected in the range ``[0, sequence_length - 1]``.
+            label_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
+                Mask to avoid performing attention on padding token indices. Mask
+                values selected in ``[0, 1]``:
 
-            - 1 for tokens that are **not masked**,
-            - 0 for tokens that are **masked**.
+                - 1 for tokens that are **not masked**,
+                - 0 for tokens that are **masked**.
 
         Returns:
             Returns `modelscope.outputs.AttentionTokenClassificationModelOutput`
@@ -219,16 +219,6 @@ class SbertForTokenClassification(SbertPreTrainedModel):
                     sigma=self.config.sigma,
                     with_attention_mask=attention_mask is not None,
                     **outputs.kwargs)
-
-        if label_mask is not None:
-            mask = label_mask
-            masked_lengths = mask.sum(-1).long()
-            masked_logits = torch.zeros_like(logits)
-            for i in range(len(mask)):
-                masked_logits[
-                    i, :masked_lengths[i], :] = logits[i].masked_select(
-                        mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)
-            logits = masked_logits
 
         return AttentionTokenClassificationModelOutput(
             loss=loss,

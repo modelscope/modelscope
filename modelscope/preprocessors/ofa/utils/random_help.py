@@ -9,6 +9,9 @@ except ImportError:
 
 
 def get_rng_state():
+    r"""
+    Get random number generator state of torch, xla and cuda.
+    """
     state = {'torch_rng_state': torch.get_rng_state()}
     if xm is not None:
         state['xla_rng_state'] = xm.get_rng_state()
@@ -18,6 +21,9 @@ def get_rng_state():
 
 
 def set_rng_state(state):
+    r"""
+    Set random number generator state of torch, xla and cuda.
+    """
     torch.set_rng_state(state['torch_rng_state'])
     if xm is not None:
         xm.set_rng_state(state['xla_rng_state'])
@@ -26,6 +32,9 @@ def set_rng_state(state):
 
 
 class set_torch_seed(object):
+    r"""
+    Set random seed to torch, xla and cuda.
+    """
 
     def __init__(self, seed):
         assert isinstance(seed, int)

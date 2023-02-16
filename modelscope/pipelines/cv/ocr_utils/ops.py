@@ -68,7 +68,7 @@ def _nn_variable(name, shape, init_method, collection=None, **kwargs):
     shape: variable shape
     init_method: 'zero', 'kaiming', 'xavier', or (mean, std)
     collection: if not none, add variable to this collection
-    kwargs: extra paramters passed to tf.get_variable
+    kwargs: extra parameters passed to tf.get_variable
   RETURN
     var: a new or existing variable
   """

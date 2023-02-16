@@ -1,90 +1,60 @@
-modelscope.models.nlp package
-=============================
+modelscope.models.nlp
+====================
 
 .. automodule:: modelscope.models.nlp
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-Submodules
-----------
+.. currentmodule:: modelscope.models.nlp
 
-modelscope.models.nlp.bert\_for\_sequence\_classification module
-------------------------------------------------------------
 
-.. automodule:: modelscope.models.nlp.bert_for_sequence_classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+    :template: classtemplate.rst
 
-modelscope.models.nlp.palm\_for\_text\_generation module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.palm_for_text_generation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.csanmt\_for\_translation module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.palm_for_text_generation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.masked\_language module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.masked_language
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_nil module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_nil
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_sentence\_similarity module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_sentence_similarity
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_sentiment\_classification module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_sentiment_classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_sequence\_classification module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_sequence_classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_token\_classification module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_token_classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-modelscope.models.nlp.sbert\_for\_zero\_shot\_classification module
-----------------------------------------------------
-
-.. automodule:: modelscope.models.nlp.sbert_for_zero_shot_classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    bart.BartForTextErrorCorrection
+    bert.BertConfig
+    bert.BertModel
+    bert.BertForMaskedLM
+    bert.BertForTextRanking
+    bert.BertForSentenceEmbedding
+    bert.BertForSequenceClassification
+    bert.BertForTokenClassification
+    bert.BertForDocumentSegmentation
+    csanmt.CsanmtForTranslation
+    deberta_v2.DebertaV2Model
+    deberta_v2.DebertaV2ForMaskedLM
+    gpt_neo.GPTNeoModel
+    gpt2.GPT2Model
+    gpt3.GPT3ForTextGeneration
+    gpt3.DistributedGPT3
+    gpt_moe.GPTMoEForTextGeneration
+    gpt_moe.DistributedGPTMoE
+    megatron_bert.MegatronBertConfig
+    megatron_bert.MegatronBertModel
+    megatron_bert.MegatronBertForMaskedLM
+    palm_v2.PalmForTextGeneration
+    ponet.PoNetConfig
+    ponet.PoNetModel
+    ponet.PoNetForMaskedLM
+    space.SpaceForDialogIntent
+    space.SpaceForDialogModeling
+    space.SpaceForDST
+    space_T_cn.TableQuestionAnswering
+    space_T_en.StarForTextToSql
+    structbert.SbertModel
+    structbert.SbertForMaskedLM
+    structbert.SbertForSequenceClassification
+    structbert.SbertForTokenClassification
+    structbert.SbertForFaqQuestionAnswering
+    T5.T5ForConditionalGeneration
+    mglm.MGLMForTextSummarization
+    codegeex.CodeGeeXForCodeTranslation
+    codegeex.CodeGeeXForCodeGeneration
+    veco.VecoConfig
+    veco.VecoModel
+    veco.VecoForMaskedLM
+    veco.VecoForSequenceClassification
+    veco.VecoForTokenClassification
+    bloom.BloomModel
+    unite.UniTEModel
+    use.UserSatisfactionEstimation

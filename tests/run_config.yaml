@@ -12,6 +12,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_segmentation_pipeline.py
   - test_movie_scene_segmentation.py
   - test_image_inpainting.py
+  - test_image_paint_by_example.py
   - test_mglm_text_summarization.py
   - test_team_transfer_trainer.py
   - test_image_denoise_trainer.py
@@ -44,6 +45,20 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_conversational_text_to_sql.py
   - test_video_multi_modal_embedding.py
   - test_image_skychange.py
+  - test_video_stabilization.py
+  - test_video_super_resolution.py
+  - test_kws_nearfield_trainer.py
+  - test_gpt3_text_generation.py
+  - test_ddcolor_image_colorization.py
+  - test_video_colorization.py
+  - test_image_defrcn_fewshot_trainer.py
+  - test_image_deblur_trainer.py
+  - test_image_quality_assessment_degradation.py
+  - test_image_quality_assessment_mos.py
+  - test_image_restoration.py
+  - test_video_deinterlace.py
+  - test_image_inpainting_sdv2.py
+  - test_bad_image_detecting.py
 
 envs:
   default: # default env, case not in other env will in default, pytorch.

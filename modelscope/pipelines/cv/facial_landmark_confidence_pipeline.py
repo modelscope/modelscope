@@ -24,8 +24,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.facial_landmark_confidence,
-    module_name=Pipelines.facial_landmark_confidence)
+    Tasks.face_2d_keypoints, module_name=Pipelines.facial_landmark_confidence)
 class FacialLandmarkConfidencePipeline(FaceProcessingBasePipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -44,8 +43,7 @@ class FacialLandmarkConfidencePipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
-        result = super(FacialLandmarkConfidencePipeline,
-                       self).preprocess(input)
+        result = super().preprocess(input)
         img = LoadImage.convert_to_ndarray(input)
         img = img[:, :, ::-1]
         result['orig_img'] = img.astype(np.float32)
@@ -57,8 +55,10 @@ class FacialLandmarkConfidencePipeline(FaceProcessingBasePipeline):
         lms = result[0].reshape(-1, 10).tolist()
         scores = [1 - result[1].tolist()]
         boxes = input['bbox'].cpu().numpy()[np.newaxis, :].tolist()
+        output_poses = []
         return {
             OutputKeys.SCORES: scores,
+            OutputKeys.POSES: output_poses,
             OutputKeys.KEYPOINTS: lms,
             OutputKeys.BOXES: boxes
         }

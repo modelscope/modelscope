@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import json
+import yaml
 from funasr.utils import asr_utils
 
 from modelscope.metainfo import Pipelines
@@ -164,6 +165,13 @@ class VoiceActivityDetectionPipeline(Pipeline):
         vad_cmvn_file = os.path.join(
             model_dir, model_cfg['model']['model_config']['vad_mvn_file'])
         mode = model_cfg['model']['model_config']['mode']
+        frontend_conf = None
+        if os.path.exists(vad_model_config):
+            config_file = open(vad_model_config, encoding='utf-8')
+            root = yaml.full_load(config_file)
+            config_file.close()
+            if 'frontend_conf' in root:
+                frontend_conf = root['frontend_conf']
         cmd = {
             'mode': mode,
             'batch_size': 1,
@@ -178,11 +186,17 @@ class VoiceActivityDetectionPipeline(Pipeline):
             'vad_cmvn_file': vad_cmvn_file,
             'output_dir': None,
             'param_dict': None,
+            'fs': {
+                'model_fs': None,
+                'audio_fs': None
+            }
         }
+        if frontend_conf is not None and 'fs' in frontend_conf:
+            cmd['fs']['model_fs'] = frontend_conf['fs']
 
         user_args_dict = [
             'output_dir', 'batch_size', 'mode', 'ngpu', 'param_dict',
-            'num_workers'
+            'num_workers', 'fs'
         ]
 
         for user_args in user_args_dict:
@@ -218,6 +232,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
                 data_path_and_name_and_type=cmd['name_and_type'],
                 raw_inputs=cmd['raw_inputs'],
                 output_dir_v2=cmd['output_dir'],
+                fs=cmd['fs'],
                 param_dict=cmd['param_dict'])
         else:
             raise ValueError('model type is mismatching')

@@ -4,6 +4,7 @@ import unittest
 
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
+from modelscope.msdatasets.audio.asr_dataset import ASRDataset
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
@@ -112,6 +113,12 @@ class MsDatasetTest(unittest.TestCase):
         print(next(iter(tf_dataset)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_to_dataset_asr(self):
+        ms_ds_asr = ASRDataset.load(
+            'speech_asr_aishell1_trainsets', namespace='speech_asr')
+        print(next(iter(ms_ds_asr['train'])))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_torch
     def test_to_torch_dataset_img(self):
         ms_image_train = MsDataset.load(
@@ -197,7 +204,7 @@ class MsDatasetTest(unittest.TestCase):
         assert isinstance(data_example['Noisy Image:FILE:Object'],
                           PngImageFile)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_to_ms_dataset(self):
         """Test case for converting huggingface dataset to `MsDataset` instance."""
         from datasets.load import load_dataset

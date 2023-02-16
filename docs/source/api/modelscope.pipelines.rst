@@ -12,3 +12,7 @@ modelscope.pipelines
    base     <modelscope.pipelines.base>
    builder <modelscope.pipelines.builder>
    cv    <modelscope.pipelines.cv>
+   nlp    <modelscope.pipelines.nlp>
+   multi-modal    <modelscope.pipelines.multi-modal>
+   audio    <modelscope.pipelines.audio>
+   science <modelscope.pipelines.science>

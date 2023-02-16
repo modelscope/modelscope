@@ -14,6 +14,7 @@ from modelscope.utils.test_utils import test_level
 
 class TextRankingTest(unittest.TestCase):
     base_model_id = 'damo/nlp_corom_passage-ranking_english-base'
+    tiny_model_id = 'damo/nlp_corom_passage-ranking_english-tiny'
     inputs = {
         'source_sentence': ["how long it take to get a master's degree"],
         'sentences_to_compare': [
@@ -25,6 +26,7 @@ class TextRankingTest(unittest.TestCase):
     }
 
     chinese_base_model_id = 'damo/nlp_rom_passage-ranking_chinese-base'
+    chinese_tiny_model_id = 'damo/nlp_corom_passage-ranking_chinese-tiny'
     chinese_inputs = {
         'source_sentence': ['功和功率的区别'],
         'sentences_to_compare': [
@@ -36,12 +38,14 @@ class TextRankingTest(unittest.TestCase):
     }
 
     ecom_base_model_id = 'damo/nlp_corom_passage-ranking_chinese-base-ecom'
+    ecom_tiny_model_id = 'damo/nlp_corom_passage-ranking_chinese-tiny-ecom'
     ecom_inputs = {
         'source_sentence': ['毛绒玩具'],
         'sentences_to_compare': ['大熊泰迪熊猫毛绒玩具公仔布娃娃抱抱熊', '背心式狗狗牵引绳']
     }
 
     medical_base_model_id = 'damo/nlp_corom_passage-ranking_chinese-base-medical'
+    medical_tiny_model_id = 'damo/nlp_corom_passage-ranking_chinese-tiny-medical'
     medical_inputs = {
         'source_sentence': ['肠道不适可以服用益生菌吗'],
         'sentences_to_compare': ['肠胃不好能吃益生菌,益生菌有调节肠胃道菌群的作用', '身体发烧应该多喝水']
@@ -86,6 +90,9 @@ class TextRankingTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.text_ranking, model=self.base_model_id)
         print(pipeline_ins(input=self.inputs))
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.tiny_model_id)
+        print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
@@ -97,17 +104,26 @@ class TextRankingTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.text_ranking, model=self.chinese_base_model_id)
         print(pipeline_ins(input=self.chinese_inputs))
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.chinese_tiny_model_id)
+        print(pipeline_ins(input=self.chinese_inputs))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_ecom_model_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.text_ranking, model=self.ecom_base_model_id)
         print(pipeline_ins(input=self.ecom_inputs))
+        pipeline_tiny_ins = pipeline(
+            task=Tasks.text_ranking, model=self.ecom_tiny_model_id)
+        print(pipeline_tiny_ins(input=self.ecom_inputs))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_medical_model_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.text_ranking, model=self.medical_base_model_id)
+        print(pipeline_ins(input=self.medical_inputs))
+        pipeline_ins = pipeline(
+            task=Tasks.text_ranking, model=self.medical_tiny_model_id)
         print(pipeline_ins(input=self.medical_inputs))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

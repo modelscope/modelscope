@@ -42,10 +42,11 @@ class GPT3ForTextGeneration(TorchModel):
 
         Returns:
             Dict[str, Tensor]: results
-                Example:
-                    {
-                        'logits': Tensor([[0.54, 0.32...])]), # logits
-                    }
+
+        Example:
+            >>> {
+            >>>     'logits': Tensor([[0.54, 0.32...])]), # logits
+            >>> }
         """
         return self.model(**input)
 

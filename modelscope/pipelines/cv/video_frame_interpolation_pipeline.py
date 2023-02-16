@@ -496,8 +496,9 @@ __all__ = ['VideoFrameInterpolationPipeline']
     module_name=Pipelines.video_frame_interpolation)
 class VideoFrameInterpolationPipeline(Pipeline):
     """ Video Frame Interpolation Pipeline.
-    Example:
-    ```python
+
+    Examples:
+
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
     >>> from modelscope.outputs import OutputKeys
@@ -507,7 +508,6 @@ class VideoFrameInterpolationPipeline(Pipeline):
     'damo/cv_raft_video-frame-interpolation')
     >>> result = video_frame_interpolation_pipeline(video)[OutputKeys.OUTPUT_VIDEO]
     >>> print('pipeline: the output video path is {}'.format(result))
-    ```
     """
 
     def __init__(self,
@@ -525,8 +525,11 @@ class VideoFrameInterpolationPipeline(Pipeline):
         logger.info('load video frame-interpolation done')
 
     def preprocess(self, input: Input, out_fps: float = 0) -> Dict[str, Any]:
-        # input is a video file
-        video_reader = VideoReader(input)
+        # Determine the input type
+        if isinstance(input, str):
+            video_reader = VideoReader(input)
+        elif isinstance(input, dict):
+            video_reader = VideoReader(input['video'])
         inputs = []
         for frame in video_reader:
             inputs.append(frame)
@@ -536,8 +539,15 @@ class VideoFrameInterpolationPipeline(Pipeline):
             img = torch.from_numpy(img.copy()).permute(2, 0, 1).float()
             inputs[i] = img.unsqueeze(0)
 
-        if out_fps == 0:
+        if isinstance(input, str):
             out_fps = 2 * fps
+        elif isinstance(input, dict):
+            if 'interp_ratio' in input:
+                out_fps = input['interp_ratio'] * fps
+            elif 'out_fps' in input:
+                out_fps = input['out_fps']
+            else:
+                out_fps = 2 * fps
         return {'video': inputs, 'fps': fps, 'out_fps': out_fps}
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:

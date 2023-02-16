@@ -25,14 +25,20 @@ class CsanmtForTranslation(Model):
         """
         super().__init__(model_dir, *args, **kwargs)
         self.params = kwargs
+        print(self.params)
 
     def __call__(self,
                  input: Dict[str, Tensor],
-                 label: Dict[str, Tensor] = None) -> Dict[str, Tensor]:
+                 label: Dict[str, Tensor] = None,
+                 prefix: Dict[str, Tensor] = None,
+                 prefix_hit: Dict[bool, Tensor] = None) -> Dict[str, Tensor]:
         """return the result by the model
 
         Args:
-            input: the preprocessed data
+            input: the preprocessed input source sequence
+            label: the ground truth target data for model training
+            prefix: the preprocessed input target prefix sequence for interactive translation
+            prefix_hit: the preprocessed target prefix subword vector for interactive translation
 
         Returns:
             output_seqs: output sequence of target ids
@@ -40,7 +46,11 @@ class CsanmtForTranslation(Model):
         if label is None:
             with tf.compat.v1.variable_scope('NmtModel'):
                 output_seqs, output_scores = self.beam_search(
-                    input, self.params)
+                    {
+                        'input_wids': input,
+                        'prefix_wids': prefix,
+                        'prefix_hit': prefix_hit
+                    }, self.params)
             return {
                 'output_seqs': output_seqs,
                 'output_scores': output_scores,
@@ -85,7 +95,7 @@ class CsanmtForTranslation(Model):
         src_bias = tf.compat.v1.get_variable('encoder_input_bias',
                                              [hidden_size])
 
-        eos_padding = tf.zeros([tf.shape(input=features)[0], 1], tf.int64)
+        eos_padding = tf.zeros_like(features, dtype=tf.int64)[:, :1]
         src_seq = tf.concat([features, eos_padding], 1)
         src_mask = tf.cast(tf.not_equal(src_seq, 0), dtype=tf.float32)
         shift_src_mask = src_mask[:, :-1]
@@ -135,7 +145,7 @@ class CsanmtForTranslation(Model):
             embedding_mat = tf.compat.v1.get_variable(
                 'Weights', [vocab_size, hidden_size], initializer=initializer)
 
-        eos_padding = tf.zeros([tf.shape(input=features)[0], 1], tf.int64)
+        eos_padding = tf.zeros_like(features, dtype=tf.int64)[:, :1]
         input_seq = tf.concat([features, eos_padding], 1)
         input_mask = tf.cast(tf.not_equal(input_seq, 0), dtype=tf.float32)
         shift_input_mask = input_mask[:, :-1]
@@ -233,7 +243,7 @@ class CsanmtForTranslation(Model):
                     'Weights', [trg_vocab_size, hidden_size],
                     initializer=initializer)
 
-        eos_padding = tf.zeros([tf.shape(input=labels)[0], 1], tf.int64)
+        eos_padding = tf.zeros_like(labels, dtype=tf.int64)[:, :1]
         trg_seq = tf.concat([labels, eos_padding], 1)
         trg_mask = tf.cast(tf.not_equal(trg_seq, 0), dtype=tf.float32)
         shift_trg_mask = trg_mask[:, :-1]
@@ -441,7 +451,8 @@ class CsanmtForTranslation(Model):
                        trg_seq,
                        states_key,
                        states_val,
-                       params={}):
+                       params={},
+                       is_prefix=False):
         trg_vocab_size = params['trg_vocab_size']
         hidden_size = params['hidden_size']
 
@@ -468,9 +479,10 @@ class CsanmtForTranslation(Model):
             tensor=decoder_input, paddings=[[0, 0], [1, 0], [0, 0]])[:, :-1, :]
         if params['position_info_type'] == 'absolute':
             decoder_input = add_timing_signal(decoder_input)
-
-        decoder_input = decoder_input[:, -1:, :]
-        decoder_self_attention_bias = decoder_self_attention_bias[:, :, -1:, :]
+        if not is_prefix:
+            decoder_input = decoder_input[:, -1:, :]
+            decoder_self_attention_bias = decoder_self_attention_bias[:, :,
+                                                                      -1:, :]
         decoder_output, attention_weights = transformer_decoder(
             decoder_input,
             encoder_output,
@@ -480,8 +492,12 @@ class CsanmtForTranslation(Model):
             states_val=states_val,
             embedding_augmentation=feature_output,
             params=params)
-        decoder_output_last = decoder_output[:, -1, :]
-        attention_weights_last = attention_weights[:, -1, :]
+        if not is_prefix:
+            decoder_output_last = decoder_output[:, -1, :]
+            attention_weights_last = attention_weights[:, -1, :]
+        else:
+            decoder_output_last = decoder_output
+            attention_weights_last = attention_weights
 
         if params['shared_embedding_and_softmax_weights']:
             embedding_scope = \
@@ -502,34 +518,35 @@ class CsanmtForTranslation(Model):
         num_decoder_layers = params['num_decoder_layers']
         lp_rate = params['lp_rate']
         max_decoded_trg_len = params['max_decoded_trg_len']
-        batch_size = tf.shape(input=features)[0]
+        src_input = features['input_wids']
+        if 'prefix_wids' in features:
+            prefix = features['prefix_wids']
+            prefix_hit = features['prefix_hit']
+        else:
+            prefix = None
+            prefix_hit = None
+        batch_size = tf.shape(src_input)[0]
 
-        features = tile_to_beam_size(features, beam_size)
-        features = merge_first_two_dims(features)
+        src_input = tile_to_beam_size(src_input, beam_size)
+        src_input = merge_first_two_dims(src_input)
+        if prefix is not None:
+            prefix = tf.cast(tile_to_beam_size(prefix, beam_size), tf.int32)
+            prefix_hit = tile_to_beam_size(prefix_hit, beam_size)
 
         encoder_output, encoder_self_attention_bias = self.encoding_graph(
-            features, params)
+            src_input, params)
         source_name = 'source'
         if params['shared_source_target_embedding']:
             source_name = None
         feature_output = self.semantic_encoding_graph(
-            features, params, name=source_name)
-
-        init_seqs = tf.fill([batch_size, beam_size, 1], 0)
-        init_log_probs = \
-            tf.constant([[0.] + [tf.float32.min] * (beam_size - 1)])
-        init_log_probs = tf.tile(init_log_probs, [batch_size, 1])
-        init_scores = tf.zeros_like(init_log_probs)
-        fin_seqs = tf.zeros([batch_size, beam_size, 1], tf.int32)
-        fin_scores = tf.fill([batch_size, beam_size], tf.float32.min)
-        fin_flags = tf.zeros([batch_size, beam_size], tf.bool)
+            src_input, params, name=source_name)
 
         states_key = [
-            tf.zeros([batch_size, 0, hidden_size])
+            tf.fill([batch_size, 0, hidden_size], 0.0)
             for layer in range(num_decoder_layers)
         ]
         states_val = [
-            tf.zeros([batch_size, 0, hidden_size])
+            tf.fill([batch_size, 0, hidden_size], 0.0)
             for layer in range(num_decoder_layers)
         ]
         for layer in range(num_decoder_layers):
@@ -545,6 +562,66 @@ class CsanmtForTranslation(Model):
             tile_to_beam_size(states_val[layer], beam_size)
             for layer in range(num_decoder_layers)
         ]
+        fixed_length = 1
+        if prefix is not None:
+            init_seqs = tf.concat(
+                [prefix, tf.fill([batch_size, beam_size, 1], 0)], axis=2)
+            fixed_length = tf.shape(init_seqs)[-1]
+            flat_seqs = merge_first_two_dims(init_seqs)
+            flat_states_key = [
+                merge_first_two_dims(states_key[layer])
+                for layer in range(num_decoder_layers)
+            ]
+            flat_states_val = [
+                merge_first_two_dims(states_val[layer])
+                for layer in range(num_decoder_layers)
+            ]
+
+            step_log_probs, step_attn_weights, step_states_key, step_states_val = self.inference_func(
+                encoder_output,
+                feature_output,
+                encoder_self_attention_bias,
+                flat_seqs,
+                flat_states_key,
+                flat_states_val,
+                params=params,
+                is_prefix=True)
+
+            states_key = [
+                split_first_two_dims(step_states_key[layer], batch_size,
+                                     beam_size)
+                for layer in range(num_decoder_layers)
+            ]
+            states_val = [
+                split_first_two_dims(step_states_val[layer], batch_size,
+                                     beam_size)
+                for layer in range(num_decoder_layers)
+            ]
+
+            prefix_hit = merge_first_two_dims(prefix_hit)
+            log_probs = tf.where(
+                prefix_hit, step_log_probs[:, -1, :],
+                tf.ones_like(step_log_probs[:, -1, :]) * tf.float32.min)
+
+            init_seqs = tf.concat([
+                flat_seqs[:, :-1],
+                tf.expand_dims(
+                    tf.cast(tf.argmax(log_probs, -1), tf.int32), -1)
+            ], -1)
+
+            init_seqs = split_first_two_dims(init_seqs, batch_size, beam_size)
+            init_seqs = tf.concat(
+                [init_seqs, tf.fill([batch_size, beam_size, 1], 0)], axis=2)
+        else:
+            init_seqs = tf.fill([batch_size, beam_size, 1], 0)
+
+        init_log_probs = \
+            tf.constant([[0.] + [tf.float32.min] * (beam_size - 1)])
+        init_log_probs = tf.tile(init_log_probs, [batch_size, 1])
+        init_scores = tf.zeros_like(init_log_probs)
+        fin_seqs = init_seqs
+        fin_scores = tf.fill([batch_size, beam_size], tf.float32.min)
+        fin_flags = tf.cast(tf.fill([batch_size, beam_size], 0), tf.bool)
 
         state = BeamSearchState(
             inputs=(init_seqs, init_log_probs, init_scores),
@@ -573,7 +650,8 @@ class CsanmtForTranslation(Model):
                 flat_seqs,
                 flat_states_key,
                 flat_states_val,
-                params=params)
+                params=params,
+                is_prefix=False)
 
             step_log_probs = split_first_two_dims(step_log_probs, batch_size,
                                                   beam_size)
@@ -737,7 +815,7 @@ class CsanmtForTranslation(Model):
             tf.reduce_any(input_tensor=final_flags, axis=1), final_scores,
             alive_scores)
 
-        final_seqs = final_seqs[:, :, :-1]
+        final_seqs = final_seqs[:, :, fixed_length - 1:-1]
         return final_seqs, final_scores
 
 
@@ -936,7 +1014,7 @@ def transformer_encoder(encoder_input,
     layer_postproc = params['layer_postproc']
     x = encoder_input
     mask = tf.expand_dims(mask, 2)
-    with tf.compat.v1.variable_scope(name):
+    with tf.compat.v1.variable_scope(name, reuse=tf.compat.v1.AUTO_REUSE):
         for layer in range(num_encoder_layers):
             with tf.compat.v1.variable_scope('layer_%d' % layer):
                 max_relative_dis = params['max_relative_dis'] \
@@ -1032,7 +1110,7 @@ def transformer_decoder(decoder_input,
     layer_preproc = params['layer_preproc']
     layer_postproc = params['layer_postproc']
     x = decoder_input
-    with tf.compat.v1.variable_scope(name):
+    with tf.compat.v1.variable_scope(name, reuse=tf.compat.v1.AUTO_REUSE):
         for layer in range(num_decoder_layers):
             with tf.compat.v1.variable_scope('layer_%d' % layer):
                 max_relative_dis = params['max_relative_dis'] \
@@ -1117,7 +1195,8 @@ def attention_bias(inputs, mode, inf=-1e9, dtype=None):
 
     elif mode == 'causal':
         length = inputs
-        lower_triangle = tf.linalg.band_part(tf.ones([length, length]), -1, 0)
+        lower_triangle = tf.linalg.band_part(
+            tf.fill([length, length], 1.0), -1, 0)
         ret = inf * (1.0 - lower_triangle)
         ret = tf.reshape(ret, [1, 1, length, length])
     else:

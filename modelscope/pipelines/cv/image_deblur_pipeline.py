@@ -23,9 +23,8 @@ __all__ = ['ImageDeblurPipeline']
 class ImageDeblurPipeline(Pipeline):
     """
 
-    Example:
+    Examples:
 
-    ```python
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
     >>> from modelscope.outputs import OutputKeys
@@ -35,7 +34,6 @@ class ImageDeblurPipeline(Pipeline):
     >>> image_deblur_pipeline = pipeline(Tasks.image_deblurring, 'damo/cv_nafnet_image-deblur_gopro')
     >>> result = image_deblur_pipeline(img)[OutputKeys.OUTPUT_IMG]
     >>> cv2.imwrite('result.png', result)
-    ```
     """
 
     def __init__(self,

@@ -3,7 +3,6 @@ import os
 from contextlib import contextmanager
 
 from modelscope.utils.constant import Devices, Frameworks
-from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -50,11 +49,9 @@ def device_placement(framework, device_name='gpu:0'):
 
     Examples:
 
-    ```python
-    # Requests for using model on cuda:0 for gpu
-    with device_placement('pytorch', device='gpu:0'):
-        model = Model.from_pretrained(...)
-    ```
+        >>> # Requests for using model on cuda:0 for gpu
+        >>> with device_placement('pytorch', device='gpu:0'):
+        >>>     model = Model.from_pretrained(...)
     """
     device_type, device_id = verify_device(device_name)
 

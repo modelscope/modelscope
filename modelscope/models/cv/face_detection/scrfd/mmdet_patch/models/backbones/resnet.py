@@ -51,7 +51,8 @@ class ResNet(nn.Module):
         zero_init_residual (bool): Whether to use zero init for last norm layer
             in resblocks to let them behave as identity.
 
-    Example:
+    Examples:
+
         >>> from mmdet.models import ResNet
         >>> import torch
         >>> self = ResNet(depth=18)

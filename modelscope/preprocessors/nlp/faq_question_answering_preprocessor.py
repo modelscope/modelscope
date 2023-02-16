@@ -57,6 +57,8 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         self.support_set = support_set
         self.label_in_support_set = label_in_support_set
         self.text_in_support_set = text_in_support_set
+        # support non-prototype network
+        self.pad_support = kwargs.get('pad_support', False)
 
     def pad(self, samples, max_len):
         result = []
@@ -79,6 +81,23 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         ] + self.tokenizer.convert_tokens_to_ids(
             self.tokenizer.tokenize(text)) + [self.tokenizer.sep_token_id]
 
+    def preprocess(self, support_set):
+        label_to_samples = {}
+        for item in support_set:
+            label = item[self.label_in_support_set]
+            if label not in label_to_samples:
+                label_to_samples[label] = []
+            label_to_samples[label].append(item)
+        max_cnt = 0
+        for label, samples in label_to_samples.items():
+            if len(samples) > max_cnt:
+                max_cnt = len(samples)
+        new_support_set = []
+        for label, samples in label_to_samples.items():
+            new_support_set.extend(
+                samples + [samples[0] for _ in range(max_cnt - len(samples))])
+        return new_support_set
+
     @type_assert(object, Dict)
     def __call__(self, data: Dict[str, Any],
                  **preprocessor_param) -> Dict[str, Any]:
@@ -93,6 +112,8 @@ class FaqQuestionAnsweringTransformersPreprocessor(Preprocessor):
         if not isinstance(queryset, list):
             queryset = [queryset]
         supportset = data[self.support_set]
+        if self.pad_support:
+            supportset = self.preprocess(supportset)
         supportset = sorted(
             supportset, key=lambda d: d[self.label_in_support_set])
 

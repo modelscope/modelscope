@@ -13,7 +13,8 @@ if TYPE_CHECKING:
                         ImageColorEnhanceFinetunePreprocessor,
                         ImageInstanceSegmentationPreprocessor,
                         ImageDenoisePreprocessor, ImageDeblurPreprocessor)
-    from .cv import (ImageClassificationMmcvPreprocessor)
+    from .cv import (ImageClassificationMmcvPreprocessor,
+                     ImageRestorationPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
@@ -39,7 +40,10 @@ if TYPE_CHECKING:
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
         TranslationEvaluationPreprocessor,
-        DialogueClassificationUsePreprocessor)
+        DialogueClassificationUsePreprocessor, SiameseUiePreprocessor,
+        DocumentGroundedDialogGeneratePreprocessor,
+        DocumentGroundedDialogRetrievalPreprocessor,
+        DocumentGroundedDialogRerankPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -55,7 +59,10 @@ else:
             'ImageInstanceSegmentationPreprocessor',
             'ImageDenoisePreprocessor', 'ImageDeblurPreprocessor'
         ],
-        'cv': ['ImageClassificationMmcvPreprocessor'],
+        'cv': [
+            'ImageClassificationMmcvPreprocessor',
+            'ImageRestorationPreprocessor'
+        ],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],
         'multi_modal':
@@ -85,7 +92,11 @@ else:
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
             'TranslationEvaluationPreprocessor',
-            'DialogueClassificationUsePreprocessor'
+            'DialogueClassificationUsePreprocessor', 'SiameseUiePreprocessor',
+            'DialogueClassificationUsePreprocessor',
+            'DocumentGroundedDialogGeneratePreprocessor',
+            'DocumentGroundedDialogRetrievalPreprocessor',
+            'DocumentGroundedDialogRerankPreprocessor'
         ],
     }
 

@@ -1,15 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import pickle
 from typing import Dict, Optional, Union
 from urllib.parse import urlparse
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
-from modelscope.hub.constants import (FILE_HASH, MODEL_META_FILE_NAME,
-                                      MODEL_META_MODEL_ID)
+from modelscope.hub.constants import FILE_HASH
 from modelscope.hub.git import GitCommandWrapper
-from modelscope.hub.utils.caching import FileSystemCache, ModelFileSystemCache
+from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 

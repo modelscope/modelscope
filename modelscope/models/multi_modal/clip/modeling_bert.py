@@ -425,13 +425,12 @@ class BertModel(BertPreTrainedModel):
             Attentions weights after the attention softmax,
             used to compute the weighted average in the self-attention heads.
 
-    Examples::
-
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        model = BertModel.from_pretrained('bert-base-uncased')
-        input_ids = torch.tensor(tokenizer.encode("Hello, my dog is cute")).unsqueeze(0)  # Batch size 1
-        outputs = model(input_ids)
-        last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
+    Examples:
+        >>> tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        >>> model = BertModel.from_pretrained('bert-base-uncased')
+        >>> input_ids = torch.tensor(tokenizer.encode("Hello, my dog is cute")).unsqueeze(0)  # Batch size 1
+        >>> outputs = model(input_ids)
+        >>> last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
 
     """
 

@@ -3,7 +3,6 @@
 # https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
 import copy
-import dataclasses
 import os
 import os.path as osp
 import platform
@@ -11,7 +10,6 @@ import shutil
 import sys
 import tempfile
 import types
-from dataclasses import fields
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Union
@@ -36,9 +34,9 @@ class ConfigDict(addict.Dict):
     """ Dict which support get value through getattr
 
     Examples:
-    >>> cdict = ConfigDict({'a':1232})
-    >>> print(cdict.a)
-    1232
+        >>> cdict = ConfigDict({'a':1232})
+        >>> print(cdict.a)
+        >>> # 1232
     """
 
     def __missing__(self, name):
@@ -339,7 +337,7 @@ class Config:
         super(Config, self).__setattr__('_filename', _filename)
         super(Config, self).__setattr__('_text', _text)
 
-    def safe_get(self, key_chain: str, default=None):
+    def safe_get(self, key_chain: str, default=None, type_field='type'):
         """Get a value with a key-chain in str format, if key does not exist, the default value will be returned.
 
         This method is safe to call, and will not edit any value.
@@ -347,7 +345,9 @@ class Config:
         Args:
             key_chain: The input key chain, for example: 'train.hooks[0].type'
             default: The default value returned when any key does not exist, default None.
-
+            type_field: Get an object from a list or tuple for example by 'train.hooks.CheckPointHook', in which
+                'hooks' is a list, and 'CheckPointHook' is a value of the content of key `type_field`.
+                If there are multiple matched objects, the first element will be returned.
         Returns:
             The value, or the default value.
         """
@@ -359,7 +359,15 @@ class Config:
                 if '[' in key:
                     key, val = key.split('[')
                     val, _ = val.split(']')
-                _cfg_dict = getattr(_cfg_dict, key)
+
+                if isinstance(_cfg_dict, (list, tuple)):
+                    assert type_field is not None, 'Getting object without an index from a list or tuple ' \
+                                                   'needs an valid `type_field` param.'
+                    _sub_cfg_dict = list(
+                        filter(lambda sub: sub[type_field] == key, _cfg_dict))
+                    _cfg_dict = _sub_cfg_dict[0]
+                else:
+                    _cfg_dict = _cfg_dict[key]
                 if val is not None:
                     _cfg_dict = _cfg_dict[int(val)]
             return _cfg_dict

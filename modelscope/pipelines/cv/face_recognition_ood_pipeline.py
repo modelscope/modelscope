@@ -23,7 +23,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.face_recognition_ood, module_name=Pipelines.face_recognition_ood)
+    Tasks.face_recognition, module_name=Pipelines.face_recognition_ood)
 class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
 
     def __init__(self, model: str, **kwargs):
@@ -31,15 +31,14 @@ class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
         use `model` to create a face recognition ood pipeline for prediction
         Args:
             model: model id on modelscope hub.
-        Example:
 
-        ```python
+        Examples:
+
         >>> from modelscope.pipelines import pipeline
         >>> fr_ood= pipeline('face-recognition-ood', 'damo/cv_ir_face-recognition-ood_rts')
         >>> fr_ood("https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png")
         {{'img_embedding': array([[ 0.02276129, -0.00761525, ...,0.05735306]],
             dtype=float32, 'scores': [[0.7656678557395935]]}
-        ```
         """
 
         # face recong model

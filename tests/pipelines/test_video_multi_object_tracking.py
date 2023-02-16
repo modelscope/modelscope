@@ -20,7 +20,9 @@ class MultiObjectTracking(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.video_multi_object_tracking, model=self.model_id)
         video_path = 'data/test/videos/MOT17-03-partial.mp4'
         result = video_multi_object_tracking(video_path)
-        print('result is : ', result[OutputKeys.BOXES])
+        assert result and (OutputKeys.LABELS in result) and (OutputKeys.BOXES
+                                                             in result)
+        assert len(result[OutputKeys.LABELS]) == len(result[OutputKeys.BOXES])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
@@ -28,7 +30,9 @@ class MultiObjectTracking(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.video_multi_object_tracking)
         video_path = 'data/test/videos/MOT17-03-partial.mp4'
         result = video_multi_object_tracking(video_path)
-        print('result is : ', result[OutputKeys.BOXES])
+        assert result and (OutputKeys.LABELS in result) and (OutputKeys.BOXES
+                                                             in result)
+        assert len(result[OutputKeys.LABELS]) == len(result[OutputKeys.BOXES])
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

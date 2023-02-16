@@ -27,9 +27,9 @@ def load(file, file_format=None, **kwargs):
             Currently supported formats include "json", "yaml/yml".
 
     Examples:
-        >>> load('/path/of/your/file')  # file is storaged in disk
-        >>> load('https://path/of/your/file')  # file is storaged in Internet
-        >>> load('oss://path/of/your/file')  # file is storaged in petrel
+        >>> load('/path/of/your/file')  # file is stored in disk
+        >>> load('https://path/of/your/file')  # file is stored on internet
+        >>> load('oss://path/of/your/file')  # file is stored in petrel
 
     Returns:
         The content from the file.

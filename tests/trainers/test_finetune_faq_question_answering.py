@@ -32,6 +32,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
         }]
     }
     model_id = 'damo/nlp_structbert_faq-question-answering_chinese-base'
+    mgimn_model_id = 'damo/nlp_mgimn_faq-question-answering_chinese-base'
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -43,7 +44,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    def build_trainer(self):
+    def build_trainer(self, model_id, revision):
         train_dataset = MsDataset.load(
             'jd', namespace='DAMO_NLP',
             split='train').remap_columns({'sentence': 'text'})
@@ -51,7 +52,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
             'jd', namespace='DAMO_NLP',
             split='validation').remap_columns({'sentence': 'text'})
 
-        cfg: Config = read_config(self.model_id, revision='v1.0.1')
+        cfg: Config = read_config(model_id, revision)
         cfg.train.train_iters_per_epoch = 50
         cfg.evaluation.val_iters_per_epoch = 2
         cfg.train.seed = 1234
@@ -75,7 +76,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
         trainer = build_trainer(
             Trainers.faq_question_answering_trainer,
             default_args=dict(
-                model=self.model_id,
+                model=model_id,
                 work_dir=self.tmp_dir,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
@@ -84,7 +85,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_faq_model_finetune(self):
-        trainer = self.build_trainer()
+        trainer = self.build_trainer(self.model_id, 'v1.0.1')
         trainer.train()
         evaluate_result = trainer.evaluate()
         self.assertAlmostEqual(evaluate_result['accuracy'], 0.95, delta=0.1)
@@ -105,6 +106,32 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
         self.assertEqual(result_after['output'][0][0]['label'], '1')
         self.assertAlmostEqual(
             result_after['output'][0][0]['score'], 0.8, delta=0.2)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_faq_mgimn_model_finetune(self):
+        trainer = self.build_trainer(self.mgimn_model_id, 'v1.0.0')
+        trainer.train()
+        evaluate_result = trainer.evaluate()
+        self.assertAlmostEqual(evaluate_result['accuracy'], 0.75, delta=0.1)
+
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(ModelFile.TRAIN_OUTPUT_DIR, results_files)
+
+        output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        pipeline_ins = pipeline(
+            task=Tasks.faq_question_answering,
+            model=self.mgimn_model_id,
+            model_revision='v1.0.0')
+        result_before = pipeline_ins(self.param)
+        self.assertEqual(result_before['output'][0][0]['label'], '1')
+        self.assertAlmostEqual(
+            result_before['output'][0][0]['score'], 0.9, delta=0.2)
+        pipeline_ins = pipeline(
+            task=Tasks.faq_question_answering, model=output_dir)
+        result_after = pipeline_ins(self.param)
+        self.assertEqual(result_after['output'][0][0]['label'], '1')
+        self.assertAlmostEqual(
+            result_after['output'][0][0]['score'], 0.9, delta=0.2)
 
 
 if __name__ == '__main__':

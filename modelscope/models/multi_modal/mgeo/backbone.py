@@ -1350,7 +1350,7 @@ class BertForPreTraining(BertPreTrainedModel):
         kwargs (:obj:`Dict[str, any]`, optional, defaults to `{}`):
             Used to hide legacy arguments that have been deprecated.
         Returns:
-        Example::
+        Example:
             >>> from transformers import BertTokenizer, BertForPreTraining
             >>> import torch
             >>> tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1483,7 +1483,10 @@ class BertLMHeadModel(BertPreTrainedModel):
             If set to :obj:`True`, :obj:`past_key_values` key value states are
             returned and can be used to speed up decoding (see
             :obj:`past_key_values`).
-        Returns: Example::
+
+        Returns:
+
+        Example:
             >>> from transformers import BertTokenizer, BertLMHeadModel, BertConfig
             >>> import torch
             >>> tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -1943,7 +1946,8 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
             - 0 indicates sequence B is a continuation of sequence A,
             - 1 indicates sequence B is a random sequence.
         Returns:
-        Example::
+
+        Example:
             >>> from transformers import BertTokenizer, BertForNextSentencePrediction
             >>> import torch
             >>> tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')

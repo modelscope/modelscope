@@ -7,24 +7,24 @@ from inspect import signature
 def type_assert(*ty_args, **ty_kwargs):
     """a decorator which is used to check the types of arguments in a function or class
     Examples:
-    >>> @type_assert(str)
-    ... def main(a: str, b: list):
-    ...     print(a, b)
-    >>> main(1)
-    Argument a must be a str
+        >>> @type_assert(str)
+        ... def main(a: str, b: list):
+        ...     print(a, b)
+        >>> main(1)
+        Argument a must be a str
 
-    >>> @type_assert(str, (int, str))
-    ... def main(a: str, b: int | str):
-    ...     print(a, b)
-    >>> main('1', [1])
-    Argument b must be (<class 'int'>, <class 'str'>)
+        >>> @type_assert(str, (int, str))
+        ... def main(a: str, b: int | str):
+        ...     print(a, b)
+        >>> main('1', [1])
+        Argument b must be (<class 'int'>, <class 'str'>)
 
-    >>> @type_assert(str, (int, str))
-    ... class A:
-    ...     def __init__(self, a: str, b: int | str)
-    ...         print(a, b)
-    >>> a = A('1', [1])
-    Argument b must be (<class 'int'>, <class 'str'>)
+        >>> @type_assert(str, (int, str))
+        ... class A:
+        ...     def __init__(self, a: str, b: int | str)
+        ...         print(a, b)
+        >>> a = A('1', [1])
+        Argument b must be (<class 'int'>, <class 'str'>)
     """
 
     def decorate(func):

@@ -39,9 +39,8 @@ __all__ = ['VideoStabilizationPipeline']
 class VideoStabilizationPipeline(Pipeline):
     """  Video Stabilization Pipeline.
 
-    Example:
+    Examples:
 
-    ```python
     >>> import cv2
     >>> from modelscope.outputs import OutputKeys
     >>> from modelscope.pipelines import pipeline
@@ -51,7 +50,6 @@ class VideoStabilizationPipeline(Pipeline):
     >>> video_stabilization = pipeline(Tasks.video_stabilization, model='damo/cv_dut-raft_video-stabilization_base')
     >>> out_video_path = video_stabilization(test_video)[OutputKeys.OUTPUT_VIDEO]
     >>> print('Pipeline: the output video path is {}'.format(out_video_path))
-    ```
     """
 
     def __init__(self,

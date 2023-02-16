@@ -60,21 +60,14 @@ class BartForTextErrorCorrection(TorchModel):
         """return the result by the model
 
         Args:
-            input (Dict[str, Tensor]): the preprocessed data
-            Example:
-                1 sent:
-                {'net_input':
-                    {'src_tokens':tensor([2478,242,24,4]),
-                    'src_lengths': tensor([4])}
-                }
+            input (Dict[str, Tensor]): the preprocessed data which contains following:
+                - src_tokens: tensor with shape (2478,242,24,4),
+                - src_lengths: tensor with shape (4)
 
 
         Returns:
-            Dict[str, Tensor]: results
-                Example:
-                    {
-                        'predictions': Tensor([1377, 4959, 2785, 6392...]), # tokens need to be decode by tokenizer
-                    }
+            Dict[str, Tensor]: results which contains following:
+                - predictions: tokens need to be decode by tokenizer with shape [1377, 4959, 2785, 6392...]
         """
         import fairseq.utils
 

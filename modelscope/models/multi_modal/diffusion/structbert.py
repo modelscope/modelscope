@@ -751,19 +751,17 @@ class BERTPooler(nn.Module):
 class BertModel(nn.Module):
     """BERT model ("Bidirectional Embedding Representations from a Transformer").
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 2, 0]])
+    Example:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 2, 0]])
 
-    config = modeling.BertConfig(vocab_size=32000, hidden_size=512,
-        num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
+        >>> config = modeling.BertConfig(vocab_size=32000, hidden_size=512,
+        >>>     num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
 
-    model = modeling.BertModel(config=config)
-    all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = modeling.BertModel(config=config)
+        >>> all_encoder_layers, pooled_output = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config: BertConfig):
@@ -846,21 +844,19 @@ class BertForSequenceClassificationMultiTask(nn.Module):
     This module is composed of the BERT model with a linear layer on top of
     the pooled output.
 
-    Example usage:
-    ```python
-    # Already been converted into WordPiece token ids
-    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
-    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
-    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 2, 0]])
+    Example:
+        >>> # Already been converted into WordPiece token ids
+        >>> input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+        >>> input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+        >>> token_type_ids = torch.LongTensor([[0, 0, 1], [0, 2, 0]])
 
-    config = BertConfig(vocab_size=32000, hidden_size=512,
-        num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
+        >>> config = BertConfig(vocab_size=32000, hidden_size=512,
+        >>>     num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
 
-    num_labels = 2
+        >>> num_labels = 2
 
-    model = BertForSequenceClassification(config, num_labels)
-    logits = model(input_ids, token_type_ids, input_mask)
-    ```
+        >>> model = BertForSequenceClassification(config, num_labels)
+        >>> logits = model(input_ids, token_type_ids, input_mask)
     """
 
     def __init__(self, config, label_list, core_encoder):

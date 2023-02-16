@@ -153,6 +153,49 @@ class TinynasObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
             OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
         print('results: ', result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_phone_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_phone')
+        result = tinynas_object_detection('data/test/images/image_phone.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_phone_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_object-detection_damoyolo_phone')
+        img = Image.open('data/test/images/image_phone.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_head_detection_damoyolo(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_head-detection_damoyolo')
+        result = tinynas_object_detection(
+            'data/test/images/image_detection.jpg')
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_head_detection_damoyolo_with_image(self):
+        tinynas_object_detection = pipeline(
+            Tasks.domain_specific_object_detection,
+            model='damo/cv_tinynas_head-detection_damoyolo')
+        img = Image.open('data/test/images/image_detection.jpg')
+        result = tinynas_object_detection(img)
+        assert result and (OutputKeys.SCORES in result) and (
+            OutputKeys.LABELS in result) and (OutputKeys.BOXES in result)
+        print('results: ', result)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,7 +6,6 @@ from torchvision import transforms
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.cv.image_color_enhance import ImageColorEnhance
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -19,18 +18,42 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
+    Tasks.image_color_enhancement,
+    module_name=Pipelines.adaint_image_color_enhance)
+@PIPELINES.register_module(
+    Tasks.image_color_enhancement,
+    module_name=Pipelines.deeplpf_image_color_enhance)
+@PIPELINES.register_module(
     Tasks.image_color_enhancement, module_name=Pipelines.image_color_enhance)
 class ImageColorEnhancePipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[ImageColorEnhance, str],
+                 model: Union[Model, 'AdaIntImageColorEnhance',
+                              'DeepLPFImageColorEnhance', 'ImageColorEnhance',
+                              str],
                  preprocessor: Optional[
                      ImageColorEnhanceFinetunePreprocessor] = None,
                  **kwargs):
-        """
-        use `model` and `preprocessor` to create a image color enhance pipeline for prediction
+        """The inference pipeline for image color enhance.
+
         Args:
-            model: model id on modelscope hub.
+            model (`str` or `Model` or module instance): A model instance or a model local dir
+                or a model id in the model hub.
+            preprocessor (`Preprocessor`, `optional`): A Preprocessor instance.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+
+        Example:
+            >>> import cv2
+            >>> from modelscope.outputs import OutputKeys
+            >>> from modelscope.pipelines import pipeline
+            >>> from modelscope.utils.constant import Tasks
+
+            >>> img = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_color_enhance.png'
+                image_color_enhance = pipeline(Tasks.image_color_enhancement,
+                    model='damo/cv_deeplpfnet_image-color-enhance-models')
+                result = image_color_enhance(img)
+            >>> cv2.imwrite('enhanced_result.png', result[OutputKeys.OUTPUT_IMG])
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model.eval()

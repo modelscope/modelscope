@@ -40,6 +40,10 @@ class KWSFarfieldPipeline(Pipeline):
         self.model.eval()
         frame_size = self.INPUT_CHANNELS * self.SAMPLE_WIDTH
         self._nframe = self.model.size_in // frame_size
+        if 'keyword_map' in kwargs:
+            self._keyword_map = kwargs['keyword_map']
+        else:
+            self._keyword_map = {}
 
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         if isinstance(inputs, bytes):
@@ -85,6 +89,10 @@ class KWSFarfieldPipeline(Pipeline):
                 fout.writeframes(result['pcm'])
             if 'kws' in result:
                 result['kws']['offset'] += start_index / self.SAMPLE_RATE
+                result['kws']['type'] = 'wakeup'
+                keyword = result['kws']['keyword']
+                if keyword in self._keyword_map:
+                    result['kws']['keyword'] = self._keyword_map[keyword]
                 kws_list.append(result['kws'])
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:

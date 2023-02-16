@@ -20,6 +20,9 @@ class ImageCartoonTest(unittest.TestCase, DemoCompatibilityCheck):
         self.model_id_handdrawn = 'damo/cv_unet_person-image-cartoon-handdrawn_compound-models'
         self.model_id_sketch = 'damo/cv_unet_person-image-cartoon-sketch_compound-models'
         self.model_id_artstyle = 'damo/cv_unet_person-image-cartoon-artstyle_compound-models'
+        self.model_id_design = 'damo/cv_unet_person-image-cartoon-sd-design_compound-models'
+        self.model_id_illu = 'damo/cv_unet_person-image-cartoon-sd-illustration_compound-models'
+
         self.task = Tasks.image_portrait_stylization
         self.test_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_cartoon.png'
 
@@ -57,6 +60,22 @@ class ImageCartoonTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_artstyle(self):
         img_cartoon = pipeline(
             Tasks.image_portrait_stylization, model=self.model_id_artstyle)
+        self.pipeline_inference(img_cartoon, self.test_image)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_modelhub_design(self):
+        img_cartoon = pipeline(
+            Tasks.image_portrait_stylization,
+            model=self.model_id_design,
+            model_revision='v1.0.0')
+        self.pipeline_inference(img_cartoon, self.test_image)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_modelhub_illustration(self):
+        img_cartoon = pipeline(
+            Tasks.image_portrait_stylization,
+            model=self.model_id_illu,
+            model_revision='v1.0.0')
         self.pipeline_inference(img_cartoon, self.test_image)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

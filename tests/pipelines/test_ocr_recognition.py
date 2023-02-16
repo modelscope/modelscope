@@ -13,7 +13,7 @@ from modelscope.utils.test_utils import test_level
 class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.model_id = 'damo/cv_convnextTiny_ocr-recognition-general_damo'
+        self.model_id = 'damo/cv_crnn_ocr-recognition-general_damo'
         self.test_image = 'data/test/images/ocr_recognition.jpg'
         self.task = Tasks.ocr_recognition
 
@@ -23,18 +23,25 @@ class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
-        ocr_recognition = pipeline(Tasks.ocr_recognition, model=self.model_id)
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition,
+            model=self.model_id,
+            model_revision='v1.0.0')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub_PILinput(self):
-        ocr_recognition = pipeline(Tasks.ocr_recognition, model=self.model_id)
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition,
+            model=self.model_id,
+            model_revision='v1.0.0')
         imagePIL = PIL.Image.open(self.test_image)
         self.pipeline_inference(ocr_recognition, imagePIL)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
-        ocr_recognition = pipeline(Tasks.ocr_recognition)
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition, model_revision='v2.0.0')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')

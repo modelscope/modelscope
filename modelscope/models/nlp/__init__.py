@@ -14,20 +14,31 @@ if TYPE_CHECKING:
         BertForDocumentSegmentation,
         BertModel,
         BertConfig,
+        SiameseUieModel,
     )
+    from .bloom import BloomModel
+    from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
     from .gpt2 import GPT2Model
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
     from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
-    from .heads import SequenceClassificationHead
+    from .heads import TextClassificationHead
+    from .hf_transformers import TransformersModel
+    from .lstm import (
+        LSTMModel,
+        LSTMForTokenClassificationWithCRF,
+    )
     from .megatron_bert import (
         MegatronBertConfig,
         MegatronBertForMaskedLM,
         MegatronBertModel,
     )
+    from .mglm import MGLMForTextSummarization
     from .palm_v2 import PalmForTextGeneration
+    from .plug_mental import (PlugMentalConfig, PlugMentalModel,
+                              PlugMentalForSequenceClassification)
     from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
     from .space import SpaceForDialogIntent, SpaceForDialogModeling, SpaceForDST
     from .space_T_cn import TableQuestionAnswering
@@ -40,36 +51,51 @@ if TYPE_CHECKING:
         SbertModel,
     )
     from .T5 import T5ForConditionalGeneration
-    from .mglm import MGLMForTextSummarization
-    from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
     from .task_models import (
-        FeatureExtractionModel,
-        InformationExtractionModel,
-        LSTMCRFForNamedEntityRecognition,
-        LSTMCRFForWordSegmentation,
-        LSTMCRFForPartOfSpeech,
-        SequenceClassificationModel,
+        ModelForFeatureExtraction,
+        ModelForInformationExtraction,
+        ModelForTextClassification,
         SingleBackboneTaskModelBase,
-        TaskModelForTextGeneration,
-        TokenClassificationModel,
-        TransformerCRFForNamedEntityRecognition,
-        TransformerCRFForWordSegmentation,
+        ModelForTextGeneration,
+        ModelForTextRanking,
+        ModelForTokenClassification,
+        ModelForTokenClassificationWithCRF,
     )
+    from .unite import UniTEForTranslationEvaluation
+    from .use import UserSatisfactionEstimation
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,
                        VecoForTokenClassification, VecoModel)
-    from .bloom import BloomModel
-    from .unite import UniTEModel
-    from .use import UserSatisfactionEstimation
+    from .dgds import (DocumentGroundedDialogGenerateModel,
+                       DocumentGroundedDialogRetrievalModel,
+                       DocumentGroundedDialogRerankModel)
+    from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
+
 else:
     _import_structure = {
-        'backbones': ['SbertModel'],
         'bart': ['BartForTextErrorCorrection'],
+        'bert': [
+            'BertForMaskedLM',
+            'BertForTextRanking',
+            'BertForSentenceEmbedding',
+            'BertForSequenceClassification',
+            'BertForTokenClassification',
+            'BertForDocumentSegmentation',
+            'BertModel',
+            'BertConfig',
+            'SiameseUieModel',
+        ],
+        'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
-        'heads': ['SequenceClassificationHead'],
+        'codegeex':
+        ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
+        'deberta_v2': ['DebertaV2ForMaskedLM', 'DebertaV2Model'],
+        'heads': ['TextClassificationHead'],
+        'hf_transformers': ['TransformersModel'],
         'gpt2': ['GPT2Model'],
         'gpt3': ['GPT3ForTextGeneration', 'DistributedGPT3'],
         'gpt_moe': ['GPTMoEForTextGeneration', 'DistributedGPTMoE'],
+        'gpt_neo': ['GPTNeoModel'],
         'structbert': [
             'SbertForFaqQuestionAnswering',
             'SbertForMaskedLM',
@@ -84,50 +110,47 @@ else:
             'VecoForTokenClassification',
             'VecoModel',
         ],
-        'bert': [
-            'BertForMaskedLM',
-            'BertForTextRanking',
-            'BertForSentenceEmbedding',
-            'BertForSequenceClassification',
-            'BertForTokenClassification',
-            'BertForDocumentSegmentation',
-            'BertModel',
-            'BertConfig',
+        'lstm': [
+            'LSTM',
+            'LSTMForTokenClassificationWithCRF',
         ],
         'megatron_bert': [
             'MegatronBertConfig',
             'MegatronBertForMaskedLM',
             'MegatronBertModel',
         ],
-        'ponet': ['PoNetForMaskedLM', 'PoNetModel', 'PoNetConfig'],
+        'mglm': ['MGLMForTextSummarization'],
         'palm_v2': ['PalmForTextGeneration'],
-        'deberta_v2': ['DebertaV2ForMaskedLM', 'DebertaV2Model'],
+        'plug_mental': [
+            'PlugMentalConfig',
+            'PlugMentalModel',
+            'PlugMentalForSequenceClassification',
+        ],
+        'ponet': ['PoNetForMaskedLM', 'PoNetModel', 'PoNetConfig'],
         'space_T_en': ['StarForTextToSql'],
         'space_T_cn': ['TableQuestionAnswering'],
         'space':
         ['SpaceForDialogIntent', 'SpaceForDialogModeling', 'SpaceForDST'],
         'task_models': [
-            'FeatureExtractionModel',
-            'InformationExtractionModel',
-            'LSTMCRFForNamedEntityRecognition',
-            'LSTMCRFForWordSegmentation',
-            'LSTMCRFForPartOfSpeech',
-            'SequenceClassificationModel',
+            'ModelForFeatureExtraction',
+            'ModelForInformationExtraction',
+            'ModelForTextClassification',
             'SingleBackboneTaskModelBase',
-            'TaskModelForTextGeneration',
-            'TokenClassificationModel',
-            'TransformerCRFForNamedEntityRecognition',
-            'TransformerCRFForWordSegmentation',
+            'ModelForTextGeneration',
+            'ModelForTextRanking',
+            'ModelForTokenClassification',
+            'ModelForTokenClassificationWithCRF',
         ],
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],
-        'mglm': ['MGLMForTextSummarization'],
-        'codegeex':
-        ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
-        'gpt_neo': ['GPTNeoModel'],
-        'bloom': ['BloomModel'],
-        'unite': ['UniTEModel'],
-        'use': ['UserSatisfactionEstimation']
+        'unite': ['UniTEForTranslationEvaluation'],
+        'use': ['UserSatisfactionEstimation'],
+        'dgds': [
+            'DocumentGroundedDialogGenerateModel',
+            'DocumentGroundedDialogRetrievalModel',
+            'DocumentGroundedDialogRerankModel'
+        ],
+        'xlm_roberta': ['XLMRobertaConfig', 'XLMRobertaModel'],
     }
 
     import sys

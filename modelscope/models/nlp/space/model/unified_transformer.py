@@ -107,7 +107,7 @@ class UnifiedTransformer(SpaceModelBase):
         return
 
     def _create_parameters(self):
-        """ Create model's paramters. """
+        """ Create model's parameters. """
         sequence_mask = np.tri(
             self.num_pos_embeddings,
             self.num_pos_embeddings,

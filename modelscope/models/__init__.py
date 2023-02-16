@@ -9,4 +9,5 @@ from .base import Head, Model
 from .builder import BACKBONES, HEADS, MODELS, build_model
 
 if is_torch_available():
-    from .base import TorchModel, TorchHead
+    from .base.base_torch_model import TorchModel
+    from .base.base_torch_head import TorchHead

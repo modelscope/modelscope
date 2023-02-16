@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
-import os
 from typing import Any, Dict, Union
 
 import cv2
@@ -12,7 +11,6 @@ from PIL import Image, ImageOps
 from modelscope.fileio import File
 from modelscope.metainfo import Preprocessors
 from modelscope.utils.constant import Fields
-from modelscope.utils.hub import read_config
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
 from .builder import PREPROCESSORS

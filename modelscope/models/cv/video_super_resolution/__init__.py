@@ -5,11 +5,13 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .real_basicvsr_for_video_super_resolution import RealBasicVSRNetForVideoSR
+    from .msrresnet_lite_model import MSRResNetLiteModel
 
 else:
     _import_structure = {
         'real_basicvsr_for_video_super_resolution':
-        ['RealBasicVSRNetForVideoSR']
+        ['RealBasicVSRNetForVideoSR'],
+        'msrresnet_lite_model': ['MSRResNetLiteModel']
     }
 
     import sys

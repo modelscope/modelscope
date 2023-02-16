@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
     apt-get clean && \
     cp /tmp/resources/ubuntu20.04_sources.tuna /etc/apt/sources.list && \
     apt-get update && \
-    apt-get install -y locales wget git strace gdb  vim ffmpeg libsm6 tzdata language-pack-zh-hans ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
+    apt-get install -y locales wget git strace gdb sox libopenmpi-dev curl strace vim ffmpeg libsm6 tzdata language-pack-zh-hans ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
     wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
     dpkg -i ./git-lfs_3.2.0_amd64.deb && \
     rm -f ./git-lfs_3.2.0_amd64.deb && \
@@ -58,11 +58,45 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
     fi
 
+# mmcv-full<=1.7.0 for mmdet3d compatible
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="5.0 5.2 6.0 6.1 7.0 7.5 8.0 8.6" MMCV_WITH_OPS=1 MAX_JOBS=8 FORCE_CUDA=1 pip install --no-cache-dir mmcv-full && pip cache purge; \
+        CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="5.0 5.2 6.0 6.1 7.0 7.5 8.0 8.6" MMCV_WITH_OPS=1 MAX_JOBS=8 FORCE_CUDA=1 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
     else \
-        MMCV_WITH_OPS=1 MAX_JOBS=8 pip install --no-cache-dir mmcv-full && pip cache purge; \
+        MMCV_WITH_OPS=1 MAX_JOBS=8 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
     fi
+
+# default shell bash
+ENV SHELL=/bin/bash
+# install special package
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
+    else \
+        pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
+    fi
+
+# copy install scripts
+COPY docker/scripts/install_unifold.sh docker/scripts/install_colmap.sh docker/scripts/install_pytorch3d_nvdiffrast.sh docker/scripts/install_tiny_cuda_nn.sh docker/scripts/install_apex.sh /tmp/
+
+# for uniford
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_unifold.sh; \
+    else \
+     echo 'cpu unsupport uniford'; \
+    fi
+
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
+    else \
+     echo 'cpu unsupport Pointnet2'; \
+    fi
+
+RUN pip install --no-cache-dir detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+
+# 3d supports
+RUN bash /tmp/install_colmap.sh
+RUN bash /tmp/install_tiny_cuda_nn.sh
+RUN bash /tmp/install_pytorch3d_nvdiffrast.sh
+# end of 3D
 
 # install modelscope
 COPY requirements /var/modelscope
@@ -76,42 +110,17 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /var/modelscope/tests.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip cache purge
 
-# default shell bash
-ENV SHELL=/bin/bash
-
-# install special package
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    else \
-        pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    fi
-
 # install  jupyter plugin
 RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
     cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/
 
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
-RUN pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/xtcocotools-1.12-cp37-cp37m-linux_x86_64.whl --force
+RUN pip install --no-cache-dir xtcocotools==1.12  detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --force
 
-# for uniford
-COPY docker/scripts/install_unifold.sh /tmp/install_unifold.sh
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_unifold.sh; \
-    else \
-     echo 'cpu unsupport uniford'; \
-    fi
-
-RUN pip install --no-cache-dir mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 https://pypi.tuna.tsinghua.edu.cn/packages/70/ad/06f8a06cef819606cb1a521bcc144288daee5c7e73c5d722492866cb1b92/wenetruntime-1.11.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ipykernel fairseq fasttext deepspeed
-COPY docker/scripts/install_apex.sh /tmp/install_apex.sh
+# speechbrain==0.5.7 for audio compatible
+RUN pip install --no-cache-dir speechbrain==0.5.7 adaseq>=0.5.0 mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 wenetruntime==1.11.0 ipykernel fairseq fasttext deepspeed
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_apex.sh; \
     else \
      echo 'cpu unsupport apex'; \
-    fi
-RUN  apt-get update && apt-get install -y sox && \
-    apt-get clean
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
-    else \
-     echo 'cpu unsupport Pointnet2'; \
     fi

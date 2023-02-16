@@ -13,7 +13,7 @@ if TYPE_CHECKING:
                      ReferringVideoObjectSegmentationTrainer)
     from .multi_modal import CLIPTrainer
     from .nlp import SequenceClassificationTrainer, TextRankingTrainer
-    from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer, NlpTrainerArguments
+    from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
     from .trainer import EpochBasedTrainer
 
 else:
@@ -28,8 +28,7 @@ else:
         ],
         'multi_modal': ['CLIPTrainer'],
         'nlp': ['SequenceClassificationTrainer', 'TextRankingTrainer'],
-        'nlp_trainer':
-        ['NlpEpochBasedTrainer', 'VecoTrainer', 'NlpTrainerArguments'],
+        'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
         'trainer': ['EpochBasedTrainer']
     }
 

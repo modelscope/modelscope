@@ -84,14 +84,16 @@ class TestKwsNearfieldTrainer(unittest.TestCase):
         kwargs = dict(
             model=self.model_id,
             work_dir=self.tmp_dir,
-            cfg_file=self.config_file,
-            train_data=self.train_scp,
-            cv_data=self.cv_scp,
-            trans_data=self.trans_file)
+            cfg_file=self.config_file)
 
         trainer = build_trainer(
             Trainers.speech_kws_fsmn_char_ctc_nearfield, default_args=kwargs)
-        trainer.train()
+
+        kwargs = dict(
+            train_data=self.train_scp,
+            cv_data=self.cv_scp,
+            trans_data=self.trans_file)
+        trainer.train(**kwargs)
 
         rank, _ = get_dist_info()
         if rank == 0:

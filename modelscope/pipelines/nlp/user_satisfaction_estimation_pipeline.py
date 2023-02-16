@@ -36,7 +36,7 @@ class UserSatisfactionEstimationPipeline(Pipeline):
             device (str): device str, should be either cpu, cuda, gpu, gpu:X or cuda:X
             auto_collate (bool): automatically to convert data to tensor or not.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline('text-classification',
                 model='damo/nlp_user-satisfaction-estimation_chinese')

@@ -7,7 +7,6 @@ ftfy
 langdetect
 lsh
 matplotlib
-mpi4py
 nltk
 pandas
 regex

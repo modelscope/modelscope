@@ -1,17 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import glob
-import os
-import shutil
-import tempfile
 import unittest
 
-import cv2
-import json
-import numpy as np
-import torch
-
-from modelscope.trainers.training_args import (ArgAttr, CliArgumentParser,
-                                               training_args)
+from modelscope.trainers.default_config import DEFAULT_CONFIG
+from modelscope.trainers.training_args import CliArgumentParser, TrainingArgs
 from modelscope.utils.test_utils import test_level
 
 
@@ -25,54 +16,32 @@ class TrainingArgsTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_define_args(self):
-        myparser = CliArgumentParser(training_args)
+        myparser = CliArgumentParser(TrainingArgs())
         input_args = [
-            '--max_epochs', '100', '--work_dir', 'ddddd', '--train_batch_size',
-            '8', '--unkown', 'unkown'
+            '--max_epochs', '100', '--work_dir', 'ddddd',
+            '--per_device_train_batch_size', '8', '--unkown', 'unkown'
         ]
         args, remainning = myparser.parse_known_args(input_args)
         myparser.print_help()
         self.assertTrue(args.max_epochs == 100)
         self.assertTrue(args.work_dir == 'ddddd')
-        self.assertTrue(args.train_batch_size == 8)
+        self.assertTrue(args.per_device_train_batch_size == 8)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_new_args(self):
-        training_args.num_classes = ArgAttr(
-            'model.mm_model.head.num_classes',
-            type=int,
-            help='number of classes')
-        training_args.mean = ArgAttr(
-            'train.data.mean', help='3-dim mean vector')
-        training_args.flip = ArgAttr('train.data.flip', help='flip or not')
-        training_args.img_size = ArgAttr(
-            'train.data.img_size', help='image size')
-        myparser = CliArgumentParser(training_args)
+    def test_flatten_args(self):
+        cfg = DEFAULT_CONFIG
         input_args = [
-            '--max_epochs', '100', '--work_dir', 'ddddd', '--train_batch_size',
-            '8', '--num_classes', '10', '--mean', '[125.0,125.0,125.0]',
-            '--flip', 'false', '--img_size', '(640,640)'
+            '--optimizer_params',
+            'weight_decay=0.8,eps=1e-6,correct_bias=False',
+            '--lr_scheduler_params', 'initial_lr=3e-5,niter_decay=1'
         ]
-        args, remainning = myparser.parse_known_args(input_args)
-        myparser.print_help()
-        self.assertTrue(args.max_epochs == 100)
-        self.assertTrue(args.work_dir == 'ddddd')
-        self.assertTrue(args.train_batch_size == 8)
-        self.assertTrue(args.num_classes == 10)
-        self.assertTrue(len(args.mean) == 3)
-        self.assertTrue(not args.flip)
-        self.assertAlmostEqual(args.mean[0], 125.0)
-        self.assertAlmostEqual(args.img_size, (640, 640))
-
-        cfg_dict = myparser.get_cfg_dict(args=input_args)
-        self.assertTrue(cfg_dict['model.mm_model.head.num_classes'] == 10)
-        self.assertAlmostEqual(cfg_dict['train.data.mean'],
-                               [125.0, 125.0, 125.0])
-        self.assertTrue(not cfg_dict['train.data.flip'])
-        self.assertEqual(cfg_dict['train.dataloader.batch_size_per_gpu'], 8)
-        self.assertEqual(cfg_dict['train.work_dir'], 'ddddd')
-        self.assertEqual(cfg_dict['train.max_epochs'], 100)
-        self.assertEqual(cfg_dict['train.data.img_size'], (640, 640))
+        training_args = TrainingArgs.from_cli(input_args)
+        cfg = training_args(cfg)
+        self.assertAlmostEqual(cfg.train.optimizer.weight_decay, 0.8)
+        self.assertAlmostEqual(cfg.train.optimizer.eps, 1e-6)
+        self.assertFalse(cfg.train.optimizer.correct_bias)
+        self.assertAlmostEqual(cfg.train.lr_scheduler.initial_lr, 3e-5)
+        self.assertEqual(cfg.train.lr_scheduler.niter_decay, 1)
 
 
 if __name__ == '__main__':

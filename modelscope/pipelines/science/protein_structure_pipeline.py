@@ -109,7 +109,7 @@ class ProteinStructurePipeline(Pipeline):
             preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
             the model if supplied.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipeline_ins = pipeline(task='protein-structure',
             >>>    model='DPTech/uni-fold-monomer')

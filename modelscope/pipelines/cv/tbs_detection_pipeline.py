@@ -1,22 +1,24 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
-import torch
-import numpy as np
-import cv2
-import os
 import colorsys
-from PIL import ImageFile
-from PIL import Image, ImageFont, ImageDraw
+import os
+from typing import Any, Dict
+
+import cv2
+import numpy as np
+import torch
+from PIL import Image, ImageDraw, ImageFile, ImageFont
+
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.cv.tbs_detection_utils.utils import (_get_anchors,
+                                                               generate,
+                                                               post_process)
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from modelscope.pipelines.cv.tbs_detection_utils.utils import _get_anchors, generate, post_process
-
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -64,10 +66,10 @@ class TBSDetectionPipeline(Pipeline):
     ```
     """
     _defaults = {
-        "class_names": ['positive'],
-        "model_image_size": (416, 416, 3),
-        "confidence": 0.5,
-        "iou": 0.3,
+        'class_names': ['positive'],
+        'model_image_size': (416, 416, 3),
+        'confidence': 0.5,
+        'iou': 0.3,
     }
 
     @classmethod
@@ -131,19 +133,17 @@ class TBSDetectionPipeline(Pipeline):
         result = {'data': outputs, 'img_path': input['img_path']}
         return result
 
-    def postprocess(self, input: Dict[str, Any], *args, **kwargs) -> Dict[str, Any]:
+    def postprocess(self, input: Dict[str, Any], *args,
+                    **kwargs) -> Dict[str, Any]:
 
         bboxes, scores = post_process(self, input['data'], input['img_path'])
 
         if bboxes is None:
-            outputs = {
-                OutputKeys.SCORES: [],
-                OutputKeys.BOXES: []
-            }
+            outputs = {OutputKeys.SCORES: [], OutputKeys.BOXES: []}
             return outputs
         outputs = {
             OutputKeys.SCORES: scores.tolist(),
-            OutputKeys.LABELS: ["Positive"],
+            OutputKeys.LABELS: ['Positive'],
             OutputKeys.BOXES: bboxes
         }
         return outputs

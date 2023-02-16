@@ -25,8 +25,8 @@ class PanoramaDepthEstimationPipeline(Pipeline):
     """ This pipeline will estimation the depth panoramic image from one rgb panoramic image.
         The input panoramic image should be equirectanlar, in the size of 512x1024.
 
-    Example:
-    '''python
+    Examples:
+
     >>> import cv2
     >>> from modelscope.outputs import OutputKeys
     >>> from modelscope.pipelines import pipeline
@@ -40,7 +40,6 @@ class PanoramaDepthEstimationPipeline(Pipeline):
     >>> result = estimator(input_location)
     >>> depth_vis = result[OutputKeys.DEPTHS_COLOR]
     >>> cv2.imwrite('result.jpg', depth_vis)
-    '''
     """
 
     def __init__(self, model: str, **kwargs):

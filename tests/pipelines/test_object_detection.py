@@ -59,6 +59,15 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         image_object_detection_auto.show_result(test_image, result,
                                                 'auto_demo_ret.jpg')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_image_object_detection_dino_pipeline(self):
+        model_id = 'damo/cv_swinl_image-object-detection_dino'
+        test_image = 'data/test/images/image_detection.jpg'
+        image_object_detection_dino = pipeline(
+            Tasks.image_object_detection, model=model_id)
+        result = image_object_detection_dino(test_image)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

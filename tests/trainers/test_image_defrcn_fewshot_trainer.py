@@ -46,17 +46,35 @@ class TestImageDefrcnFewShotTrainer(unittest.TestCase):
     def test_trainer(self):
 
         split = 1
-        kwargs = dict(
-            model=self.model_id,
-            data_dir=self.data_dir,
-            work_dir=self.tmp_dir,
-            model_weights=os.path.join(get_cache_dir(), self.model_id,
-                                       'ImageNetPretrained/MSRA/R-101.pkl'),
-            data_type='pascal_voc',
-            config_path='defrcn_det_r101_base{}.yaml'.format(split),
-            datasets_train=('voc_2007_trainval_base{}'.format(split),
-                            'voc_2012_trainval_base{}'.format(split)),
-            datasets_test=('voc_2007_test_base{}'.format(split), ))
+
+        def base_cfg_modify_fn(cfg):
+            cfg.train.work_dir = self.tmp_dir
+
+            cfg.model.roi_heads.backward_scale = 0.75
+            cfg.model.roi_heads.num_classes = 15
+            cfg.model.roi_heads.freeze_feat = False
+            cfg.model.roi_heads.cls_dropout = False
+            cfg.model.weights = os.path.join(
+                get_cache_dir(), self.model_id,
+                'ImageNetPretrained/MSRA/R-101.pkl')
+
+            cfg.datasets.root = self.data_dir
+            cfg.datasets.type = 'pascal_voc'
+            cfg.datasets.train = [
+                'voc_2007_trainval_base{}'.format(split),
+                'voc_2012_trainval_base{}'.format(split)
+            ]
+            cfg.datasets.test = ['voc_2007_test_base{}'.format(split)]
+            cfg.input.min_size_test = 50
+            cfg.train.dataloader.ims_per_batch = 4
+            cfg.train.max_iter = 300
+            cfg.train.optimizer.lr = 0.001
+            cfg.train.lr_scheduler.warmup_iters = 100
+
+            cfg.test.pcb_enable = False
+            return cfg
+
+        kwargs = dict(model=self.model_id, cfg_modify_fn=base_cfg_modify_fn)
         trainer = build_trainer(
             name=Trainers.image_fewshot_detection, default_args=kwargs)
         trainer.train()

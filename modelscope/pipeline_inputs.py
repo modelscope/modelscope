@@ -68,6 +68,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_recognition:
     InputType.IMAGE,
+    Tasks.face_reconstruction:
+    InputType.IMAGE,
     Tasks.human_detection:
     InputType.IMAGE,
     Tasks.face_image_generation:
@@ -83,6 +85,14 @@ TASK_INPUTS = {
     Tasks.portrait_matting:
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
+    InputType.IMAGE,
+    Tasks.open_vocabulary_detection: {
+        'img': InputType.IMAGE,
+        'category_names': InputType.TEXT
+    },
+    Tasks.image_driving_perception:
+    InputType.IMAGE,
+    Tasks.vision_efficient_tuning:
     InputType.IMAGE,
 
     # image editing task result for a single image
@@ -104,10 +114,17 @@ TASK_INPUTS = {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,
     },
+    Tasks.image_paintbyexample: {
+        'img': InputType.IMAGE,
+        'mask': InputType.IMAGE,
+        'reference': InputType.IMAGE,
+    },
     Tasks.image_skychange: {
         'sky_image': InputType.IMAGE,
         'scene_image': InputType.IMAGE,
     },
+    Tasks.video_colorization:
+    InputType.VIDEO,
 
     # image generation task result for a single image
     Tasks.image_to_image_generation:
@@ -148,6 +165,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.movie_scene_segmentation:
     InputType.VIDEO,
+    Tasks.bad_image_detecting:
+    InputType.IMAGE,
 
     # ============ nlp tasks ===================
     Tasks.text_classification: [
@@ -184,6 +203,12 @@ TASK_INPUTS = {
     Tasks.text_ranking: (InputType.TEXT, InputType.TEXT),
     Tasks.text_generation:
     InputType.TEXT,
+    Tasks.fid_dialogue: {
+        'history': InputType.TEXT,
+        'knowledge': InputType.TEXT,
+        'bot_profile': InputType.TEXT,
+        'user_profile': InputType.TEXT,
+    },
     Tasks.fill_mask:
     InputType.TEXT,
     Tasks.task_oriented_conversation: {
@@ -208,6 +233,19 @@ TASK_INPUTS = {
     Tasks.text2sql: {
         'text': InputType.TEXT,
         'database': InputType.TEXT
+    },
+    Tasks.document_grounded_dialog_generate: {
+        'query': InputType.LIST,
+        'context': InputType.LIST,
+        'label': InputType.LIST,
+    },
+    Tasks.document_grounded_dialog_rerank: {
+        'dataset': InputType.LIST
+    },
+    Tasks.document_grounded_dialog_retrieval: {
+        'query': InputType.LIST,
+        'positive': InputType.LIST,
+        'negative': InputType.LIST
     },
 
     # ============ audio tasks ===================

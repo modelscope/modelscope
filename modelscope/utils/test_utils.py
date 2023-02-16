@@ -12,13 +12,12 @@ import tarfile
 import tempfile
 import unittest
 from collections import OrderedDict
+from collections.abc import Mapping
 
+import numpy as np
 import requests
-import torch
-from torch.utils.data import Dataset
 
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
-from modelscope.utils.torch_utils import _find_free_port
 
 TEST_LEVEL = 2
 TEST_LEVEL_STR = 'TEST_LEVEL'
@@ -49,7 +48,7 @@ def set_test_level(level: int):
     TEST_LEVEL = level
 
 
-class DummyTorchDataset(Dataset):
+class DummyTorchDataset:
 
     def __init__(self, feat, label, num) -> None:
         self.feat = feat
@@ -57,6 +56,7 @@ class DummyTorchDataset(Dataset):
         self.num = num
 
     def __getitem__(self, index):
+        import torch
         return {
             'feat': torch.Tensor(self.feat),
             'labels': torch.Tensor(self.label)
@@ -119,6 +119,92 @@ def get_case_model_info():
     return model_cases
 
 
+def compare_arguments_nested(print_content,
+                             arg1,
+                             arg2,
+                             rtol=1.e-3,
+                             atol=1.e-8,
+                             ignore_unknown_type=True):
+    type1 = type(arg1)
+    type2 = type(arg2)
+    if type1.__name__ != type2.__name__:
+        if print_content is not None:
+            print(
+                f'{print_content}, type not equal:{type1.__name__} and {type2.__name__}'
+            )
+        return False
+
+    if arg1 is None:
+        return True
+    elif isinstance(arg1, (int, str, bool, np.bool, np.integer, np.str)):
+        if arg1 != arg2:
+            if print_content is not None:
+                print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
+            return False
+        return True
+    elif isinstance(arg1, (float, np.floating)):
+        if not np.isclose(arg1, arg2, rtol=rtol, atol=atol, equal_nan=True):
+            if print_content is not None:
+                print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
+            return False
+        return True
+    elif isinstance(arg1, (tuple, list)):
+        if len(arg1) != len(arg2):
+            if print_content is not None:
+                print(
+                    f'{print_content}, length is not equal:{len(arg1)}, {len(arg2)}'
+                )
+            return False
+        if not all([
+                compare_arguments_nested(
+                    None, sub_arg1, sub_arg2, rtol=rtol, atol=atol)
+                for sub_arg1, sub_arg2 in zip(arg1, arg2)
+        ]):
+            if print_content is not None:
+                print(f'{print_content}')
+            return False
+        return True
+    elif isinstance(arg1, Mapping):
+        keys1 = arg1.keys()
+        keys2 = arg2.keys()
+        if len(keys1) != len(keys2):
+            if print_content is not None:
+                print(
+                    f'{print_content}, key length is not equal:{len(keys1)}, {len(keys2)}'
+                )
+            return False
+        if len(set(keys1) - set(keys2)) > 0:
+            if print_content is not None:
+                print(f'{print_content}, key diff:{set(keys1) - set(keys2)}')
+            return False
+        if not all([
+                compare_arguments_nested(
+                    None, arg1[key], arg2[key], rtol=rtol, atol=atol)
+                for key in keys1
+        ]):
+            if print_content is not None:
+                print(f'{print_content}')
+            return False
+        return True
+    elif isinstance(arg1, np.ndarray):
+        arg1 = np.where(np.equal(arg1, None), np.NaN,
+                        arg1).astype(dtype=np.float)
+        arg2 = np.where(np.equal(arg2, None), np.NaN,
+                        arg2).astype(dtype=np.float)
+        if not all(
+                np.isclose(arg1, arg2, rtol=rtol, atol=atol,
+                           equal_nan=True).flatten()):
+            if print_content is not None:
+                print(f'{print_content}')
+            return False
+        return True
+    else:
+        if ignore_unknown_type:
+            return True
+        else:
+            raise ValueError(f'type not supported: {type1}')
+
+
 _DIST_SCRIPT_TEMPLATE = """
 import ast
 import argparse
@@ -156,31 +242,31 @@ if __name__ == '__main__':
 class DistributedTestCase(unittest.TestCase):
     """Distributed TestCase for test function with distributed mode.
     Examples:
-        import torch
-        from torch import distributed as dist
-        from modelscope.utils.torch_utils import init_dist
+        >>> import torch
+        >>> from torch import distributed as dist
+        >>> from modelscope.utils.torch_utils import init_dist
 
-        def _test_func(*args, **kwargs):
-            init_dist(launcher='pytorch')
-            rank = dist.get_rank()
-            if rank == 0:
-                value = torch.tensor(1.0).cuda()
-            else:
-                value = torch.tensor(2.0).cuda()
-            dist.all_reduce(value)
-            return value.cpu().numpy()
+        >>> def _test_func(*args, **kwargs):
+        >>>     init_dist(launcher='pytorch')
+        >>>     rank = dist.get_rank()
+        >>>     if rank == 0:
+        >>>         value = torch.tensor(1.0).cuda()
+        >>>     else:
+        >>>         value = torch.tensor(2.0).cuda()
+        >>>     dist.all_reduce(value)
+        >>>     return value.cpu().numpy()
 
-        class DistTest(DistributedTestCase):
-            def test_function_dist(self):
-                args = ()  # args should be python builtin type
-                kwargs = {}  # kwargs should be python builtin type
-                self.start(
-                    _test_func,
-                    num_gpus=2,
-                    assert_callback=lambda x: self.assertEqual(x, 3.0),
-                    *args,
-                    **kwargs,
-                )
+        >>> class DistTest(DistributedTestCase):
+        >>>     def test_function_dist(self):
+        >>>         args = ()  # args should be python builtin type
+        >>>         kwargs = {}  # kwargs should be python builtin type
+        >>>         self.start(
+        >>>             _test_func,
+        >>>             num_gpus=2,
+        >>>             assert_callback=lambda x: self.assertEqual(x, 3.0),
+        >>>             *args,
+        >>>             **kwargs,
+        >>>         )
     """
 
     def _start(self,
@@ -263,6 +349,7 @@ class DistributedTestCase(unittest.TestCase):
               save_all_ranks=False,
               *args,
               **kwargs):
+        from .torch_utils import _find_free_port
         ip = socket.gethostbyname(socket.gethostname())
         dist_start_cmd = '%s -m torch.distributed.launch --nproc_per_node=%d --master_addr=\'%s\' --master_port=%s' % (
             sys.executable, num_gpus, ip, _find_free_port())

@@ -10,7 +10,6 @@ from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from tensorflow.keras.preprocessing import image
 
 from modelscope.exporters import TfModelExporter
-from modelscope.utils.regress_test_utils import compare_arguments_nested
 from modelscope.utils.test_utils import test_level
 
 

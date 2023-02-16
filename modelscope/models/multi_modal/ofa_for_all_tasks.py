@@ -43,9 +43,9 @@ __all__ = ['OfaForAllTasks']
 class OfaForAllTasks(TorchModel):
     r"""
     All ofa tasks using uniform ofa model structure. So far, we support three types of tasks:
-    1. text generation tasks: ocr_recognition, image_captioning and text_summarization
-    2. visual grounding tasks: visual grounding
-    3. classification tasks: text classification and image classification.
+        1. text generation tasks: ocr_recognition, image_captioning and text_summarization
+        2. visual grounding tasks: visual grounding
+        3. classification tasks: text classification and image classification.
 
     Attributes:
         cfg: Task configs exclude model configs, such as generator's config.
@@ -235,12 +235,13 @@ class OfaForAllTasks(TorchModel):
     def postprocess(self, input: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         r"""
         Do post processing after task's forward function is executed. So far, we have three strategies while do post
-        processing.
-        1. If the task is image captioning and using English language, some special words will be removed, such as
-           `!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~`
-        2. If the task is not visual grounding, but a generation task using Chinese language, we will remove the blank
-            after/before the words except ` a-zA-Z0-9.,:!?`
-        3. Other cases will return the input as result.
+            processing.
+
+            1. If the task is image captioning and using English language, some special words will be removed, such as
+               `!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~`
+            2. If the task is not visual grounding, but a generation task using Chinese language, we will remove the
+                blank after/before the words except ` a-zA-Z0-9.,:!?`
+            3. Other cases will return the input as result.
 
         Args:
             input (`Dict[Str, Any]`):

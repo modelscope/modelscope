@@ -54,6 +54,79 @@ class CustomPipelineTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             CustomPipeline1()
 
+    def test_batch(self):
+        import torch
+
+        dummy_task = 'dummy-task'
+        dummy_module = 'custom-batch'
+
+        @PIPELINES.register_module(
+            group_key=dummy_task, module_name=dummy_module)
+        class CustomBatchPipeline(Pipeline):
+
+            def __init__(self,
+                         config_file: str = None,
+                         model=None,
+                         preprocessor=None,
+                         **kwargs):
+                super().__init__(config_file, model, preprocessor, **kwargs)
+
+            def _batch(self, sample_list):
+                sample_batch = {'img': [], 'url': []}
+                for sample in sample_list:
+                    resized_img = torch.from_numpy(
+                        np.array(sample['img'].resize((640, 640))))
+                    sample_batch['img'].append(torch.unsqueeze(resized_img, 0))
+                    sample_batch['url'].append(sample['url'])
+
+                sample_batch['img'] = torch.concat(sample_batch['img'])
+                return sample_batch
+
+            def preprocess(self, input: Union[str,
+                                              'PIL.Image']) -> Dict[str, Any]:
+                """ Provide default implementation based on preprocess_cfg and user can reimplement it
+
+                """
+                if not isinstance(input, Image.Image):
+                    from modelscope.preprocessors import load_image
+                    data_dict = {'img': load_image(input), 'url': input}
+                else:
+                    data_dict = {'img': input}
+                return data_dict
+
+            def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                """ Provide default implementation using self.model and user can reimplement it
+                """
+                inputs['img'] += 1
+                return inputs
+
+            def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                inputs['url'] += 'dummy_end'
+                return inputs
+
+        self.assertTrue(dummy_module in PIPELINES.modules[dummy_task])
+        add_default_pipeline_info(dummy_task, dummy_module, overwrite=True)
+        pipe = pipeline(
+            task=dummy_task, pipeline_name=dummy_module, model=self.model_dir)
+
+        img_url = 'data/test/images/dogs.jpg'
+        output = pipe([img_url for _ in range(9)], batch_size=2)
+        for out in output:
+            self.assertEqual(out['url'], img_url + 'dummy_end')
+            self.assertEqual(out['img'].shape, (640, 640, 3))
+
+        pipe_nocollate = pipeline(
+            task=dummy_task,
+            pipeline_name=dummy_module,
+            model=self.model_dir,
+            auto_collate=False)
+
+        img_url = 'data/test/images/dogs.jpg'
+        output = pipe_nocollate([img_url for _ in range(9)], batch_size=2)
+        for out in output:
+            self.assertEqual(out['url'], img_url + 'dummy_end')
+            self.assertEqual(out['img'].shape, (640, 640, 3))
+
     def test_custom(self):
         dummy_task = 'dummy-task'
 

@@ -4,8 +4,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (LSTMCRFForPartOfSpeech,
-                                   TokenClassificationModel)
+from modelscope.models.nlp import (LSTMForTokenClassificationWithCRF,
+                                   ModelForTokenClassification)
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TokenClassificationPipeline
 from modelscope.preprocessors import \
@@ -23,7 +23,7 @@ class PartOfSpeechTest(unittest.TestCase):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = TokenClassificationModel.from_pretrained(cache_path)
+        model = ModelForTokenClassification.from_pretrained(cache_path)
         pipeline1 = TokenClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.part_of_speech, model=model, preprocessor=tokenizer)
@@ -36,7 +36,7 @@ class PartOfSpeechTest(unittest.TestCase):
     def test_run_lstmcrf_news_by_direct_model_download(self):
         cache_path = snapshot_download(self.lstmcrf_news_model_id)
         tokenizer = TokenClassificationTransformersPreprocessor(cache_path)
-        model = LSTMCRFForPartOfSpeech.from_pretrained(cache_path)
+        model = LSTMForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = TokenClassificationPipeline(model, preprocessor=tokenizer)
         pipeline2 = pipeline(
             Tasks.part_of_speech, model=model, preprocessor=tokenizer)

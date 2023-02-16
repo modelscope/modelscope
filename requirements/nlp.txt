@@ -20,7 +20,6 @@ seqeval
 spacy>=2.3.5
 subword_nmt>=0.3.8
 termcolor
-text2sql_lgesql
 tokenizers
 transformers>=4.12.0
 zhconv

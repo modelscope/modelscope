@@ -5,9 +5,13 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .rrdbnet_arch import RRDBNet
+    from .ecbsr_model import ECBSRModel
 
 else:
-    _import_structure = {'rrdbnet_arch': ['RRDBNet']}
+    _import_structure = {
+        'rrdbnet_arch': ['RRDBNet'],
+        'ecbsr_model': ['ECBSRModel']
+    }
 
     import sys
 

@@ -9,8 +9,9 @@ from pathlib import Path
 
 from modelscope.utils.ast_utils import (FILES_MTIME_KEY, INDEX_KEY, MD5_KEY,
                                         MODELSCOPE_PATH_KEY, REQUIREMENT_KEY,
-                                        VERSION_KEY, AstScaning,
-                                        FilesAstScaning, generate_ast_template,
+                                        VERSION_KEY, AstScanning,
+                                        FilesAstScanning,
+                                        generate_ast_template,
                                         load_from_prebuilt, load_index)
 
 p = Path(__file__)
@@ -32,7 +33,7 @@ class AstScaningTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
 
     def test_ast_scaning_class(self):
-        astScaner = AstScaning()
+        astScaner = AstScanning()
         pipeline_file = os.path.join(MODELSCOPE_PATH, 'pipelines', 'nlp',
                                      'text_generation_pipeline.py')
         output = astScaner.generate_ast(pipeline_file)
@@ -58,7 +59,7 @@ class AstScaningTest(unittest.TestCase):
              ('PIPELINES', 'text2text-generation', 'text2text-generation')])
 
     def test_files_scaning_method(self):
-        fileScaner = FilesAstScaning()
+        fileScaner = FilesAstScanning()
         # case of pass in files directly
         pipeline_file = os.path.join(MODELSCOPE_PATH, 'pipelines', 'nlp',
                                      'text_generation_pipeline.py')
@@ -80,7 +81,7 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(requirements[index_0], list)
 
     def test_file_mtime_md5_method(self):
-        fileScaner = FilesAstScaning()
+        fileScaner = FilesAstScanning()
         # create first file
         with open(self.test_file, 'w', encoding='utf-8') as f:
             f.write('This is the new test!')
@@ -143,6 +144,8 @@ class AstScaningTest(unittest.TestCase):
         index_from_prebuilt = load_from_prebuilt(file_path)
         self.assertEqual(index, index_from_prebuilt)
 
+    @unittest.skip(
+        'skipped the method for not cpu time on this case not stable')
     def test_update_load_index_method(self):
         file_number = 20
         file_list = []

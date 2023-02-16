@@ -120,13 +120,12 @@ class Encoder(nn.Module):
         in_channels: Number of  input channels.
         out_channels: Number of output channels.
 
-    Example:
-    -------
+    Examples:
+
     >>> x = torch.randn(2, 1000)
     >>> encoder = Encoder(kernel_size=4, out_channels=64)
     >>> h = encoder(x)
-    >>> h.shape
-    torch.Size([2, 64, 499])
+    >>> h.shape # torch.Size([2, 64, 499])
     """
 
     def __init__(self,

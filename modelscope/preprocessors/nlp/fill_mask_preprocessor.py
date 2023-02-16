@@ -43,8 +43,7 @@ class FillMaskPreprocessorBase(Preprocessor):
         Args:
             data (tuple): [sentence1, sentence2]
                 sentence1 (str): a sentence
-                    Example:
-                        'you are so handsome.'
+
         Returns:
             Dict[str, Any]: the preprocessed data
         """

@@ -42,6 +42,16 @@ class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
         print(pipeline_ins(input=input))
 
+        pipeline_ins = pipeline(
+            self.task, model=self.model_id_large, device='cpu')
+        print(pipeline_ins(input=input))
+
+        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
+        print(pipeline_ins(input=input))
+
+        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
+        print(pipeline_ins(input=input))
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name_for_unite_base(self):
         input = {
@@ -60,6 +70,16 @@ class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
         }
 
         pipeline_ins = pipeline(self.task, model=self.model_id_base)
+        print(pipeline_ins(input=input))
+
+        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
+        print(pipeline_ins(input=input))
+
+        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
+        print(pipeline_ins(input=input))
+
+        pipeline_ins = pipeline(
+            self.task, model=self.model_id_base, device='cpu')
         print(pipeline_ins(input=input))
 
         pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)

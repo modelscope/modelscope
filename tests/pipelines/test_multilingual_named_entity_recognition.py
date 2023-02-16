@@ -3,8 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import (LSTMCRFForNamedEntityRecognition,
-                                   TransformerCRFForNamedEntityRecognition)
+from modelscope.models.nlp import ModelForTokenClassificationWithCRF
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import NERPreprocessorThai, NERPreprocessorViet
@@ -33,8 +32,7 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
     def test_run_tcrf_by_direct_model_download_thai(self):
         cache_path = snapshot_download(self.thai_tcrf_model_id)
         tokenizer = NERPreprocessorThai(cache_path)
-        model = TransformerCRFForNamedEntityRecognition(
-            cache_path, tokenizer=tokenizer)
+        model = ModelForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(
@@ -73,8 +71,7 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
     def test_run_tcrf_by_direct_model_download_viet(self):
         cache_path = snapshot_download(self.viet_tcrf_model_id)
         tokenizer = NERPreprocessorViet(cache_path)
-        model = TransformerCRFForNamedEntityRecognition(
-            cache_path, tokenizer=tokenizer)
+        model = ModelForTokenClassificationWithCRF.from_pretrained(cache_path)
         pipeline1 = NamedEntityRecognitionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(

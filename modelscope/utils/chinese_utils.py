@@ -9,21 +9,12 @@ CHINESE_PUNCTUATION = '＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠
 ENGLISH_PUNCTUATION = string.punctuation
 
 
-def is_chinese_char(word: str):
-    chinese_punctuations = {
-        '，', '。', '；', '：'
-        '！', '？', '《', '》', '‘', '’', '“', '”', '（', '）', '【', '】'
-    }
-    return len(word) == 1 \
-        and ('\u4e00' <= word <= '\u9fa5' or word in chinese_punctuations)
-
-
 def remove_space_between_chinese_chars(decoded_str: str):
     old_word_list = decoded_str.split(' ')
     new_word_list = []
     start = -1
     for i, word in enumerate(old_word_list):
-        if is_chinese_char(word):
+        if _is_chinese_str(word):
             if start == -1:
                 start = i
         else:
@@ -39,8 +30,31 @@ def remove_space_between_chinese_chars(decoded_str: str):
 # add space for each chinese char
 def rebuild_chinese_str(string: str):
     return ' '.join(''.join([
-        f' {char} ' if is_chinese_char(char) else char for char in string
+        f' {char} '
+        if _is_chinese_char(char) or char in CHINESE_PUNCTUATION else char
+        for char in string
     ]).split())
+
+
+def _is_chinese_str(string: str) -> bool:
+    return all(
+        _is_chinese_char(cp) or cp in CHINESE_PUNCTUATION
+        or cp in ENGLISH_PUNCTUATION or cp for cp in string)
+
+
+def _is_chinese_char(cp: str) -> bool:
+    """Checks whether CP is the codepoint of a CJK character."""
+    cp = ord(cp)
+    if ((cp >= 0x4E00 and cp <= 0x9FFF) or (cp >= 0x3400 and cp <= 0x4DBF)
+            or (cp >= 0x20000 and cp <= 0x2A6DF)
+            or (cp >= 0x2A700 and cp <= 0x2B73F)
+            or (cp >= 0x2B740 and cp <= 0x2B81F)
+            or (cp >= 0x2B820 and cp <= 0x2CEAF)
+            or (cp >= 0xF900 and cp <= 0xFAFF)
+            or (cp >= 0x2F800 and cp <= 0x2FA1F)):
+        return True
+
+    return False
 
 
 def normalize_chinese_number(text):

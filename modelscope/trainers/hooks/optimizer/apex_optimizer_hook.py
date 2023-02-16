@@ -8,8 +8,10 @@ from .base import OptimizerHook
 
 @HOOKS.register_module(module_name=Hooks.ApexAMPOptimizerHook)
 class ApexAMPOptimizerHook(OptimizerHook):
-    """Fp16 optimizer, if torch version is less than 1.6.0,
+    """
+    Fp16 optimizer, if torch version is less than 1.6.0,
     you must install apex (https://www.github.com/nvidia/apex) else use torch.cuda.amp by default
+
     Args:
         cumulative_iters (int): interval of gradients accumulation. Default: 1
         grad_clip (dict): Default None. Containing keys:

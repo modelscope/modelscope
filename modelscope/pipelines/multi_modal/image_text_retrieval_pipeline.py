@@ -8,7 +8,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import MPlugPreprocessor, Preprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -30,6 +30,8 @@ class ImageTextRetrievalPipeline(Pipeline):
         """
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
         self.model.eval()
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         if preprocessor is None:
             self.preprocessor = MPlugPreprocessor(self.model.model_dir)
 

@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
-from modelscope.models.nlp import InformationExtractionModel
+from modelscope.models.nlp import ModelForInformationExtraction
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import InformationExtractionPipeline
 from modelscope.preprocessors import RelationExtractionTransformersPreprocessor
@@ -24,7 +24,7 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         tokenizer = RelationExtractionTransformersPreprocessor(cache_path)
-        model = InformationExtractionModel.from_pretrained(cache_path)
+        model = ModelForInformationExtraction.from_pretrained(cache_path)
         pipeline1 = InformationExtractionPipeline(
             model, preprocessor=tokenizer)
         pipeline2 = pipeline(

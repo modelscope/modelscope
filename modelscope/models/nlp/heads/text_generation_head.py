@@ -24,7 +24,7 @@ class TextGenerationHead(TorchHead):
     def get_output_embeddings(self):
         return self.linear
 
-    def forward(self, inputs=None):
+    def forward(self, inputs=None, **kwargs):
         logits = self.linear(inputs)
         return logits
 

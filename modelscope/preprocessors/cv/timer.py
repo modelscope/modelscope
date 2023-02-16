@@ -13,7 +13,8 @@ class TimerError(Exception):
 
 class Timer:
     """A flexible Timer class.
-    :Example:
+    Example:
+
     >>> import time
     >>> import mmcv
     >>> with mmcv.Timer():
@@ -90,7 +91,8 @@ def check_time(timer_id):
     """Add check points in a single line.
     This method is suitable for running a task on a list of items. A timer will
     be registered when the method is called for the first time.
-    :Example:
+    Example:
+
     >>> import time
     >>> import mmcv
     >>> for i in range(1, 6):

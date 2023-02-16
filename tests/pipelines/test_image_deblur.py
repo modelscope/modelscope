@@ -18,7 +18,7 @@ class ImageDenoiseTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.image_deblurring
         self.model_id = 'damo/cv_nafnet_image-deblur_gopro'
 
-    demo_image_path = 'data/test/images/blurry.jpg'
+    demo_image_path = 'data/test/images/GOPR0384_11_00-000001.png'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):

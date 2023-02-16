@@ -28,7 +28,9 @@ class InverseTextProcessingPipeline(Pipeline):
         model (BartForTextErrorCorrection): A model instance, or a model local dir, or a model id in the model hub.
         kwargs (dict, `optional`):
             Extra kwargs passed into the preprocessor's constructor.
-    Example:
+
+    Examples:
+
     >>> from modelscope.pipelines import pipeline
     >>> pipeline_itn = pipeline(
     >>>    task=Tasks.inverse_text_processing, model='damo/speech_inverse_text_processing_fun-text-processing-itn-id')

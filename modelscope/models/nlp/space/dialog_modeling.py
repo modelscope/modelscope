@@ -87,6 +87,7 @@ class SpaceForDialogModeling(TorchModel):
                         'aspn': array([47,8345,32,29,1983]),
                         'db': array([19, 24, 20]),
                     }
+
         Examples:
             >>> from modelscope.hub.snapshot_download import snapshot_download
             >>> from modelscope.models.nlp import SpaceForDialogModeling

@@ -37,7 +37,7 @@ class SpaceModelBase(nn.Module):
         return
 
     def _create_parameters(self):
-        """ Create model's paramters. """
+        """ Create model's parameters. """
         raise NotImplementedError
 
     def _forward(self, inputs, is_training, with_label):

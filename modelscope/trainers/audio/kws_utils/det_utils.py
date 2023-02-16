@@ -15,12 +15,14 @@
 
 import glob
 import os
+import threading
 
 import json
+import kaldiio
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
-import torchaudio
+import torch
 
 from modelscope.utils.logger import get_logger
 from .file_utils import make_pair, read_lists
@@ -28,6 +30,51 @@ from .file_utils import make_pair, read_lists
 logger = get_logger()
 
 font = fm.FontProperties(size=15)
+
+
+class thread_wrapper(threading.Thread):
+
+    def __init__(self, func, args=()):
+        super(thread_wrapper, self).__init__()
+        self.func = func
+        self.args = args
+        self.result = []
+
+    def run(self):
+        self.result = self.func(*self.args)
+
+    def get_result(self):
+        try:
+            return self.result
+        except Exception:
+            return None
+
+
+def count_duration(tid, data_lists):
+    results = []
+
+    for obj in data_lists:
+        assert 'key' in obj
+        assert 'wav' in obj
+        assert 'txt' in obj
+        # key = obj['key']
+        wav_file = obj['wav']
+        # txt = obj['txt']
+
+        try:
+            rate, waveform = kaldiio.load_mat(wav_file)
+            waveform = torch.tensor(waveform, dtype=torch.float32)
+            waveform = waveform.unsqueeze(0)
+            frames = len(waveform[0])
+            duration = frames / float(rate)
+        except Exception:
+            logging.info(f'load file failed: {wav_file}')
+            duration = 0.0
+
+        obj['duration'] = duration
+        results.append(obj)
+
+    return results
 
 
 def load_data_and_score(keywords_list, data_file, trans_file, score_file):
@@ -54,6 +101,26 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
     trans_lists = read_lists(trans_file)
     data_lists = make_pair(wav_lists, trans_lists)
 
+    # count duration for each wave use multi-thread
+    num_workers = 8
+    start = 0
+    step = int(len(data_lists) / num_workers)
+    tasks = []
+    for idx in range(8):
+        if idx != num_workers - 1:
+            task = thread_wrapper(count_duration,
+                                  (idx, data_lists[start:start + step]))
+        else:
+            task = thread_wrapper(count_duration, (idx, data_lists[start:]))
+        task.start()
+        tasks.append(task)
+        start += step
+
+    duration_lists = []
+    for task in tasks:
+        task.join()
+        duration_lists += task.get_result()
+
     # build empty structure for keyword-filler infos
     keyword_filler_table = {}
     for keyword in keywords_list:
@@ -63,35 +130,36 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
         keyword_filler_table[keyword]['filler_table'] = {}
         keyword_filler_table[keyword]['filler_duration'] = 0.0
 
-    for obj in data_lists:
+    for obj in duration_lists:
         assert 'key' in obj
         assert 'wav' in obj
         assert 'txt' in obj
-        key = obj['key']
-        wav_file = obj['wav']
-        txt = obj['txt']
-        assert key in score_table
+        assert 'duration' in obj
 
-        waveform, rate = torchaudio.load(wav_file)
-        frames = len(waveform[0])
-        duration = frames / float(rate)
+        key = obj['key']
+        # wav_file = obj['wav']
+        txt = obj['txt']
+        duration = obj['duration']
+        assert key in score_table
 
         for keyword in keywords_list:
             if txt.find(keyword) != -1:
                 if keyword == score_table[key]['kw']:
                     keyword_filler_table[keyword]['keyword_table'].update(
                         {key: score_table[key]['confi']})
-                    keyword_filler_table[keyword][
-                        'keyword_duration'] += duration
                 else:
                     # uttrance detected but not match this keyword
                     keyword_filler_table[keyword]['keyword_table'].update(
                         {key: -1.0})
-                    keyword_filler_table[keyword][
-                        'keyword_duration'] += duration
+                keyword_filler_table[keyword]['keyword_duration'] += duration
             else:
-                keyword_filler_table[keyword]['filler_table'].update(
-                    {key: score_table[key]['confi']})
+                if keyword == score_table[key]['kw']:
+                    keyword_filler_table[keyword]['filler_table'].update(
+                        {key: score_table[key]['confi']})
+                else:
+                    # uttrance if detected, which is not FA for this keyword
+                    keyword_filler_table[keyword]['filler_table'].update(
+                        {key: -1.0})
                 keyword_filler_table[keyword]['filler_duration'] += duration
 
     return keyword_filler_table

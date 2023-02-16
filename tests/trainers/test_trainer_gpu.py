@@ -15,7 +15,7 @@ from torch.utils.data import IterableDataset
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics.builder import MetricKeys
-from modelscope.models.base import Model
+from modelscope.models.base import Model, TorchModel
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
 from modelscope.utils.test_utils import (DistributedTestCase,
@@ -38,7 +38,7 @@ dummy_dataset_big = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 40)
 
 
-class DummyModel(nn.Module, Model):
+class DummyModel(TorchModel):
 
     def __init__(self):
         super().__init__()

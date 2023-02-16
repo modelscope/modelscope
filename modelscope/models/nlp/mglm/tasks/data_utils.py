@@ -48,16 +48,16 @@ class InputExample(object):
                  meta: Optional[Dict] = None,
                  idx=-1,
                  num_choices=1):
-        """
-        Create a new InputExample.
+        """Create a new InputExample.
 
-        :param guid: a unique textual identifier
-        :param text_a: the sequence of text
-        :param text_b: an optional, second sequence of text
-        :param label: an optional label
-        :param logits: an optional list of per-class logits
-        :param meta: an optional dictionary to store arbitrary meta information
-        :param idx: an optional numeric index
+        Args:
+            guid: a unique textual identifier
+            text_a: the sequence of text
+            text_b: an optional, second sequence of text
+            label: an optional label
+            logits: an optional list of per-class logits
+            meta: an optional dictionary to store arbitrary meta information
+            idx: an optional numeric index
         """
         self.guid = guid
         self.text_a = text_a

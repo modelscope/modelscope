@@ -32,6 +32,7 @@ class TranslationEvaluationPipeline(Pipeline):
                  model: InputModel,
                  preprocessor: Optional[Preprocessor] = None,
                  eval_mode: EvaluationMode = EvaluationMode.SRC_REF,
+                 device: str = 'gpu',
                  **kwargs):
         r"""Build a translation pipeline with a model dir or a model id in the model hub.
 
@@ -45,13 +46,16 @@ class TranslationEvaluationPipeline(Pipeline):
 
         self.eval_mode = eval_mode
         self.checking_eval_mode()
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         self.preprocessor = TranslationEvaluationPreprocessor(
             self.model.model_dir,
             self.eval_mode) if preprocessor is None else preprocessor
 
         self.model.load_checkpoint(
-            osp.join(self.model.model_dir, ModelFile.TORCH_MODEL_BIN_FILE))
+            osp.join(self.model.model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
+            self.device)
         self.model.eval()
 
         return

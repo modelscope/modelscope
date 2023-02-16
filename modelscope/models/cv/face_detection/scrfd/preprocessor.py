@@ -50,17 +50,16 @@ class SCRFDPreprocessor(Preprocessor):
         Args:
             data (str or dict):  image path or data dict containing following info:
                 filename, ori_filename, img, img_shape, ori_shape, img_fields
-                example:
-                    ```python
-                    {
-                        "filename": "xxx.jpg"
-                        "ori_filename": "xxx.jpg",
-                        "img": np.ndarray,
-                        "img_shape": (300, 300, 3)
-                        "ori_shape": (300, 300, 3)
-                        "img_fields": "img"
-                    }
-                    ```
+                Example:
+                    >>> {
+                    >>>     "filename": "xxx.jpg"
+                    >>>     "ori_filename": "xxx.jpg",
+                    >>>     "img": np.ndarray,
+                    >>>     "img_shape": (300, 300, 3)
+                    >>>     "ori_shape": (300, 300, 3)
+                    >>>     "img_fields": "img"
+                    >>> }
+
         Returns:
             Dict[str, Any]: the preprocessed data
         """

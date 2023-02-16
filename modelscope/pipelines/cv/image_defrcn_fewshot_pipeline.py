@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.base.base_model import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -18,24 +19,18 @@ from modelscope.utils.constant import ModelFile, Tasks
     Tasks.image_fewshot_detection,
     module_name=Pipelines.image_fewshot_detection)
 class ImageDefrcnDetectionPipeline(Pipeline):
-    """ Image DeFRCN few-shot detection Pipeline. Given a image,
-        pipeline will return the detection results on the image.
-        Example:
+    r"""
+    Image DeFRCN few-shot detection Pipeline. Given a image, pipeline will return the detection results on the image.
 
-        ```python
+    Examples:
+
         >>> from modelscope.pipelines import pipeline
         >>> detector = pipeline('image-fewshot-detection', 'damo/cv_resnet101_detection_fewshot-defrcn')
         >>> detector('/Path/Image')
-           {
-            'scores': [0.8307567834854126, 0.1606406420469284],
-            'labels': ['person', 'dog'],
-            'boxes': [
-                [27.391937255859375, 0.0, 353.0, 500.0],
-                [64.22428131103516, 229.2884521484375, 213.90573120117188, 370.0657958984375]
-            ]
-            }
-        >>> #
-        ```
+        >>> {'scores': [0.8307567834854126, 0.1606406420469284],
+        >>>  'labels': ['person', 'dog'],
+        >>>  'boxes': [[27.391937255859375, 0.0, 353.0, 500.0],
+        >>>            [64.22428131103516, 229.2884521484375, 213.90573120117188, 370.0657958984375]]}
     """
 
     def __init__(self, model: str, **kwargs):
@@ -43,6 +38,10 @@ class ImageDefrcnDetectionPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, auto_collate=False, **kwargs)
+
+        assert isinstance(
+            self.model, Model
+        ), f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
         model_path = os.path.join(self.model.model_dir,
                                   ModelFile.TORCH_MODEL_FILE)
@@ -65,12 +64,11 @@ class ImageDefrcnDetectionPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
         img = LoadImage.convert_to_ndarray(input)
-        img = img.astype(np.float)
 
         image = img[..., ::-1].copy()  # rgb to bgr
-        tim = torch.Tensor(image).permute(2, 0, 1)
+        tim = torch.Tensor(image).permute(2, 0, 1)  # hwc to chw
 
-        result = {'image': tim}
+        result = {'image': tim, 'image_numpy': image}
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:

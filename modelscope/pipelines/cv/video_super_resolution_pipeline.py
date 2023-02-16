@@ -13,8 +13,8 @@ import torch
 from torchvision.utils import make_grid
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.video_super_resolution import \
-    RealBasicVSRNetForVideoSR
+from modelscope.models.cv.video_super_resolution import (
+    MSRResNetLiteModel, RealBasicVSRNetForVideoSR)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
@@ -94,7 +94,8 @@ def tensor2img(tensor, out_type=np.uint8, min_max=(0, 1)):
 class VideoSuperResolutionPipeline(Pipeline):
 
     def __init__(self,
-                 model: Union[RealBasicVSRNetForVideoSR, str],
+                 model: Union[RealBasicVSRNetForVideoSR, MSRResNetLiteModel,
+                              str],
                  preprocessor=None,
                  **kwargs):
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)

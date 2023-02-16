@@ -29,7 +29,7 @@ class PunctuationProcessingPipeline(Pipeline):
         model (PunctuationProcessingPipeline): A model instance, or a model local dir, or a model id in the model hub.
         kwargs (dict, `optional`):
             Extra kwargs passed into the preprocessor's constructor.
-    Example:
+    Examples
     >>> from modelscope.pipelines import pipeline
     >>> pipeline_punc = pipeline(
     >>>    task=Tasks.punctuation, model='damo/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
@@ -43,33 +43,38 @@ class PunctuationProcessingPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
-        self.cmd = self.get_cmd()
-        self.output_dir = None
-        if 'output_dir' in kwargs:
-            self.output_dir = kwargs['output_dir']
+        self.cmd = self.get_cmd(kwargs)
+
         from funasr.bin import punc_inference_launch
         self.funasr_infer_modelscope = punc_inference_launch.inference_launch(
             mode=self.cmd['mode'],
-            ngpu=self.cmd['ngpu'],
-            log_level=self.cmd['log_level'],
-            dtype=self.cmd['dtype'],
-            seed=self.cmd['seed'],
-            output_dir=self.output_dir,
             batch_size=self.cmd['batch_size'],
+            dtype=self.cmd['dtype'],
+            ngpu=self.cmd['ngpu'],
+            seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
+            log_level=self.cmd['log_level'],
             key_file=self.cmd['key_file'],
             train_config=self.cmd['train_config'],
-            model_file=self.cmd['model_file'])
+            model_file=self.cmd['model_file'],
+            output_dir=self.cmd['output_dir'],
+            param_dict=self.cmd['param_dict'])
 
     def __call__(self,
                  text_in: str = None,
-                 output_dir: str = None) -> Dict[str, Any]:
+                 output_dir: str = None,
+                 cache: List[Any] = None,
+                 param_dict: dict = None) -> Dict[str, Any]:
         if len(text_in) == 0:
             raise ValueError('The input of punctuation should not be null.')
         else:
             self.text_in = text_in
         if output_dir is not None:
             self.cmd['output_dir'] = output_dir
+        if cache is not None:
+            self.cmd['cache'] = cache
+        if param_dict is not None:
+            self.cmd['param_dict'] = param_dict
 
         output = self.forward(self.text_in)
         result = self.postprocess(output)
@@ -88,7 +93,7 @@ class PunctuationProcessingPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self) -> Dict[str, Any]:
+    def get_cmd(self, extra_args) -> Dict[str, Any]:
         # generate inference command
         lang = self.model_cfg['model_config']['lang']
         punc_model_path = self.model_cfg['punc_model_path']
@@ -98,18 +103,38 @@ class PunctuationProcessingPipeline(Pipeline):
         mode = self.model_cfg['model_config']['mode']
         cmd = {
             'mode': mode,
-            'output_dir': None,
             'batch_size': 1,
-            'num_workers': 1,
-            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
-            'log_level': 'ERROR',
             'dtype': 'float32',
+            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'seed': 0,
+            'num_workers': 0,
+            'log_level': 'ERROR',
             'key_file': None,
-            'model_file': punc_model_path,
             'train_config': punc_model_config,
-            'lang': lang
+            'model_file': punc_model_path,
+            'output_dir': None,
+            'lang': lang,
+            'cache': None,
+            'param_dict': None,
         }
+
+        user_args_dict = [
+            'batch_size',
+            'dtype',
+            'ngpu',
+            'seed',
+            'num_workers',
+            'log_level',
+            'train_config',
+            'model_file',
+            'output_dir',
+            'lang',
+            'param_dict',
+        ]
+
+        for user_args in user_args_dict:
+            if user_args in extra_args and extra_args[user_args] is not None:
+                cmd[user_args] = extra_args[user_args]
 
         return cmd
 
@@ -136,7 +161,9 @@ class PunctuationProcessingPipeline(Pipeline):
             punc_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
                 raw_inputs=cmd['raw_inputs'],
-                output_dir_v2=cmd['output_dir'])
+                output_dir_v2=cmd['output_dir'],
+                cache=cmd['cache'],
+                param_dict=cmd['param_dict'])
         else:
             raise ValueError('model type is mismatching')
 

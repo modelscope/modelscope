@@ -40,7 +40,7 @@ class FeatureExtractionPipeline(Pipeline):
             kwargs (dict, `optional`):
                 Extra kwargs passed into the preprocessor's constructor.
 
-            Example:
+        Examples:
             >>> from modelscope.pipelines import pipeline
             >>> pipe_ins = pipeline('feature_extraction', model='damo/nlp_structbert_feature-extraction_english-large')
             >>> input = 'Everything you love is treasure'
@@ -55,6 +55,8 @@ class FeatureExtractionPipeline(Pipeline):
             device=device,
             auto_collate=auto_collate)
 
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
         if preprocessor is None:
             self.preprocessor = Preprocessor.from_pretrained(
                 self.model.model_dir,

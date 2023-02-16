@@ -1,169 +1,625 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import dataclasses
+import re
 from argparse import Action, ArgumentDefaultsHelpFormatter, ArgumentParser
-from typing import Any, Dict, List, Union
+from dataclasses import dataclass, field, fields
+from functools import partial
+from typing import Any, Dict, List, Tuple, Union
 
-from addict import Dict as Adict
-
-
-@dataclasses.dataclass
-class ArgAttr():
-    """ Attributes for each arg
-
-    Args:
-        cfg_node_name (str or list[str]): if set empty, it means a normal arg for argparse, otherwise it means
-            this arg value correspond to those nodes in configuration file, and will replace them for training.
-        default:  default value for current argument.
-        type:  type for current argument.
-        choices (list of str): choices of value for this argument.
-        help (str): help str for this argument.
-
-    Examples:
-    ```python
-    # define argument train_batch_size which corresponds to train.dataloader.batch_size_per_gpu
-    training_args = Adict(
-        train_batch_size=ArgAttr(
-            'train.dataloader.batch_size_per_gpu',
-            default=16,
-            type=int,
-            help='training batch size')
-    )
-
-    # num_classes which will modify three places in configuration
-    training_args = Adict(
-    num_classes = ArgAttr(
-        ['model.mm_model.head.num_classes',
-         'model.mm_model.train_cfg.augments.0.num_classes',
-         'model.mm_model.train_cfg.augments.1.num_classes'],
-        type=int,
-        help='number of classes')
-    )
-    ```
-    # a normal argument which has no relation with configuration
-    training_args = Adict(
-        local_rank = ArgAttr(
-            '',
-            default=1,
-            type=int,
-            help='local rank for current training process')
-        )
-
-    """
-    cfg_node_name: Union[str, List[str]] = ''
-    default: Any = None
-    type: type = None
-    choices: List[str] = None
-    help: str = ''
+from modelscope.trainers.default_config import DEFAULT_CONFIG
+from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.hub import read_config
 
 
-training_args = Adict(
-    train_batch_size=ArgAttr(
-        'train.dataloader.batch_size_per_gpu',
-        default=16,
-        type=int,
-        help='training batch size'),
-    train_data_worker=ArgAttr(
-        'train.dataloader.workers_per_gpu',
-        default=8,
-        type=int,
-        help='number of data worker used for training'),
-    eval_batch_size=ArgAttr(
-        'evaluation.dataloader.batch_size_per_gpu',
-        default=16,
-        type=int,
-        help='training batch size'),
-    max_epochs=ArgAttr(
-        'train.max_epochs',
-        default=10,
-        type=int,
-        help='max number of training epoch'),
-    work_dir=ArgAttr(
-        'train.work_dir',
-        default='./work_dir',
-        type=str,
-        help='training directory to save models and training logs'),
-    lr=ArgAttr(
-        'train.optimizer.lr',
-        default=0.001,
-        type=float,
-        help='initial learning rate'),
-    optimizer=ArgAttr(
-        'train.optimizer.type',
-        default='SGD',
-        type=str,
-        choices=[
-            'Adadelta', 'Adagrad', 'Adam', 'AdamW', 'Adamax', 'ASGD',
-            'RMSprop', 'Rprop'
-            'SGD'
-        ],
-        help='optimizer type'),
-    local_rank=ArgAttr(
-        '', default=0, type=int, help='local rank for this process'))
+def get_flatten_value(config: Config, metadata: Dict, exclusions=None):
+    cfg_node = metadata['cfg_node']
+    if exclusions is None:
+        exclusions = []
+
+    values = config.safe_get(cfg_node)
+    if isinstance(values, dict):
+        param_map = []
+        for key, value in values.items():
+            if key in exclusions or not isinstance(value,
+                                                   (str, int, float, bool)):
+                continue
+            value = add_quotes_for_str(value)
+            param_map.append(f'{key}={value}')
+        return ','.join(param_map)
+    else:
+        return values
+
+
+def set_flatten_value(config: Config, values: Union[str, List[str]],
+                      metadata: Dict):
+    cfg_node = metadata['cfg_node']
+    if values is None:
+        return config
+
+    pairs = values.split(',') if isinstance(values, str) else values
+    for kv in pairs:
+        if len(kv.strip()) == 0:
+            continue
+        key, value = kv.split('=')
+        value = parse_value(value)
+        config.merge_from_dict({cfg_node + '.' + key: value})
+    return config
+
+
+def get_base_hook_args(config: Config, metadata: Dict):
+    cfg_node = metadata['cfg_node']
+    hook_type = metadata['hook_type']
+    key = metadata['key']
+    value = config.safe_get(cfg_node)
+    if value is None:
+        return get_hook_param(config, hook_type, key)
+    else:
+        return True if key == 'type' else value
+
+
+def set_base_hook_args(config: Config, value: Any, metadata: Dict):
+    cfg_node = metadata['cfg_node']
+    hook_type = metadata['hook_type']
+    key = metadata['key']
+    if 'hooks' in config.train:
+        config.train.hooks = [
+            hook for hook in config.train.hooks if hook['type'] != hook_type
+        ]
+    if key == 'type':
+        if value and config.safe_get(cfg_node) is None:
+            config.merge_from_dict({cfg_node: {}})
+    else:
+        config.merge_from_dict({cfg_node: value})
+
+
+def get_strategy(config: Config,
+                 metadata: Dict,
+                 value_pair: Tuple[str] = ('by_epoch', 'by_step')):
+    flag = get_base_hook_args(config, metadata)
+    if flag is None:
+        return None
+    return value_pair[0] if flag else value_pair[1]
+
+
+def set_strategy(config: Config,
+                 value: Any,
+                 metadata: Dict,
+                 value_pair: Tuple[str] = ('by_epoch', 'by_step')):
+    set_base_hook_args(config, value == value_pair[0], metadata)
+
+
+def get_hook_param(config, hook_type: str, key='type'):
+    hooks = config.safe_get('train.hooks', [])
+    _hooks = list(filter(lambda hook: hook['type'] == hook_type, hooks))
+    if key == 'type':
+        return len(_hooks) > 0
+    elif len(_hooks) > 0:
+        return getattr(_hooks[0], key, None)
+    return None
+
+
+def add_quotes_for_str(value: Union[str, float, bool, None]) -> str:
+    if isinstance(value, str):
+        return f'"{value}"'
+    else:
+        return str(value)
+
+
+def parse_value(value: str) -> Union[str, float, bool, None]:
+    const_map = {
+        'True': True,
+        'true': True,
+        'False': False,
+        'false': False,
+        'None': None,
+        'none': None,
+        'null': None
+    }
+    if value in const_map:
+        return const_map[value]
+    elif '"' in value or "'" in value:
+        return value.replace('"', '').replace("'", '')
+    elif re.match(r'^\d+$', value):
+        return int(value)
+    elif re.match(r'[+-]?(?=\d*[.eE])(?=\.?\d)\d*\.?\d*(?:[eE][+-]?\d+)?',
+                  value):
+        return float(value)
+    else:
+        return value
+
+
+@dataclass
+class TrainingArgs:
+    model: str = field(
+        default=None, metadata={
+            'help': 'A model id or model dir',
+        })
+
+    seed: int = field(
+        default=42, metadata={
+            'help': 'The random seed',
+        })
+
+    task: str = field(
+        default=None,
+        metadata={
+            'help': 'The task code to be used',
+            'cfg_node': 'task'
+        })
+
+    dataset_name: str = field(
+        default=None, metadata={
+            'help': 'The dataset name',
+        })
+
+    subset_name: str = field(
+        default=None, metadata={
+            'help': 'The subset name of the dataset',
+        })
+
+    train_dataset_name: str = field(
+        default=None, metadata={
+            'help': 'The train dataset name',
+        })
+
+    val_dataset_name: str = field(
+        default=None, metadata={
+            'help': 'The validation dataset name',
+        })
+
+    per_device_train_batch_size: int = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.dataloader.batch_size_per_gpu',
+            'help': 'The training batch size per GPU',
+        })
+
+    train_data_worker: int = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.dataloader.workers_per_gpu',
+            'help': 'The number of data workers for train dataloader',
+        })
+
+    train_shuffle: bool = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.dataloader.shuffle',
+            'help': 'Shuffle the train dataset or not',
+        })
+
+    per_device_eval_batch_size: int = field(
+        default=None,
+        metadata={
+            'cfg_node': 'evaluation.dataloader.batch_size_per_gpu',
+            'help': 'The eval batch size per GPU',
+        })
+
+    eval_data_worker: int = field(
+        default=None,
+        metadata={
+            'cfg_node': 'evaluation.dataloader.workers_per_gpu',
+            'help': 'The number of data workers for eval dataloader',
+        })
+
+    eval_shuffle: bool = field(
+        default=None,
+        metadata={
+            'cfg_node': 'evaluation.dataloader.shuffle',
+            'help': 'Shuffle the eval dataset or not',
+        })
+
+    max_epochs: int = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.max_epochs',
+            'help': 'The training epochs',
+        })
+
+    work_dir: str = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.work_dir',
+            'help': 'The training dir to save models and logs',
+        })
+
+    lr: float = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.optimizer.lr',
+            'help': 'The learning rate of the optimizer',
+        })
+
+    optimizer: str = field(
+        default=None,
+        metadata={
+            'cfg_node': 'train.optimizer.type',
+            'help': 'The optimizer type',
+        })
+
+    optimizer_params: str = field(
+        default=None,
+        metadata={
+            'cfg_node':
+            'train.optimizer',
+            'cfg_getter':
+            partial(get_flatten_value, exclusions=['type', 'lr', 'options']),
+            'cfg_setter':
+            set_flatten_value,
+            'help':
+            'The optimizer init params except `lr`',
+        })
+
+    lr_scheduler_params: str = field(
+        default=None,
+        metadata={
+            'cfg_node':
+            'train.lr_scheduler',
+            'cfg_getter':
+            partial(get_flatten_value, exclusions=['type', 'lr', 'options']),
+            'cfg_setter':
+            set_flatten_value,
+            'help':
+            'The lr_scheduler init params',
+        })
+
+    local_rank: int = field(
+        default=0, metadata={
+            'help': 'The training local rank',
+        })
+
+    save_ckpt: bool = field(
+        default=True,
+        metadata={
+            'help':
+            'Periodically save checkpoint when True, corresponding to CheckpointHook',
+            'cfg_node': 'train.checkpoint.period',
+            'hook_type': 'CheckpointHook',
+            'key': 'type',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    save_ckpt_best: bool = field(
+        default=None,
+        metadata={
+            'help':
+            'Save best checkpoint when True, corresponding to BestCkptSaverHook',
+            'cfg_node': 'train.checkpoint.best',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'type',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    evaluate: bool = field(
+        default=True,
+        metadata={
+            'help': 'Evaluate when True, corresponding to EvaluationHook',
+            'cfg_node': 'evaluation.period',
+            'hook_type': 'EvaluationHook',
+            'key': 'type',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    save_ckpt_strategy: str = field(
+        default=None,
+        metadata={
+            'help': 'Periodically save checkpoint by epoch or by step'
+            'use with `CheckpointHook`, can be `by_epoch` or `by_step`',
+            'cfg_node': 'train.checkpoint.period.by_epoch',
+            'hook_type': 'CheckpointHook',
+            'key': 'by_epoch',
+            'choices': ['by_epoch', 'by_step'],
+            'cfg_getter': get_strategy,
+            'cfg_setter': set_strategy,
+        })
+
+    save_ckpt_best_strategy: str = field(
+        default=None,
+        metadata={
+            'help': 'Save best checkpoint by epoch or by step'
+            'use with `BestCkptSaverHook`, can be `by_epoch` or `by_step`',
+            'cfg_node': 'train.checkpoint.best.by_epoch',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'by_epoch',
+            'choices': ['by_epoch', 'by_step'],
+            'cfg_getter': get_strategy,
+            'cfg_setter': set_strategy,
+        })
+
+    ckpt_period_interval: int = field(
+        default=1,
+        metadata={
+            'help':
+            'The interval of epoch or iter of saving checkpoint period',
+            'cfg_node': 'train.checkpoint.period.interval',
+            'hook_type': 'CheckpointHook',
+            'key': 'interval',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    ckpt_best_interval: int = field(
+        default=None,
+        metadata={
+            'help': 'The interval of epoch or iter of saving checkpoint best',
+            'cfg_node': 'train.checkpoint.best.interval',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'interval',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    metric_for_best_model: str = field(
+        default=None,
+        metadata={
+            'help':
+            'Which metric key to judge the checkpoint is better or not, use with `BestCkptSaverHook`, '
+            'please make sure this key is returned by the `evaluation_metrics` classes',
+            'cfg_node':
+            'train.checkpoint.best.metric_key',
+            'hook_type':
+            'BestCkptSaverHook',
+            'key':
+            'metric_key',
+            'cfg_getter':
+            get_base_hook_args,
+            'cfg_setter':
+            set_base_hook_args,
+        })
+
+    metric_rule_for_best_model: str = field(
+        default=None,
+        metadata={
+            'help':
+            'Which rule to compare the value of `checkpoint_saving_metric`, '
+            'use with `BestCkptSaverHook`, can be `max` or `min`',
+            'cfg_node':
+            'train.checkpoint.best.rule',
+            'hook_type':
+            'BestCkptSaverHook',
+            'key':
+            'rule',
+            'cfg_getter':
+            get_base_hook_args,
+            'cfg_setter':
+            set_base_hook_args,
+        })
+
+    save_ckpt_peroid_limit: int = field(
+        default=None,
+        metadata={
+            'help':
+            'The max saving number of checkpoint, older checkpoints will be deleted.',
+            'cfg_node': 'train.checkpoint.period.max_checkpoint_num',
+            'hook_type': 'CheckpointHook',
+            'key': 'max_checkpoint_num',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    save_ckpt_best_limit: int = field(
+        default=None,
+        metadata={
+            'help':
+            'The max saving number of checkpoint, worse checkpoints will be deleted.',
+            'cfg_node': 'train.checkpoint.best.max_checkpoint_num',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'max_checkpoint_num',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    logging_interval: int = field(
+        default=None,
+        metadata={
+            'help': 'The interval of iter of logging information',
+            'cfg_node': 'train.logging.interval',
+            'hook_type': 'TextLoggerHook',
+            'key': 'interval',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    eval_strategy: str = field(
+        default=None,
+        metadata={
+            'help': 'Evaluate model by epoch or by step'
+            'use with `EvaluationHook`, can be `by_epoch` or `by_step`',
+            'cfg_node': 'evaluation.period.by_epoch',
+            'hook_type': 'EvaluationHook',
+            'key': 'by_epoch',
+            'choices': ['by_epoch', 'by_step'],
+            'cfg_getter': get_strategy,
+            'cfg_setter': set_strategy,
+        })
+
+    eval_interval: int = field(
+        default=1,
+        metadata={
+            'help': 'Evaluation interval by epoch or iter',
+            'cfg_node': 'evaluation.period.interval',
+            'hook_type': 'EvaluationHook',
+            'key': 'interval',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    eval_metrics: str = field(
+        default=None,
+        metadata={
+            'help': 'The metric module name used in evaluation',
+            'cfg_node': 'evaluation.metrics'
+        })
+
+    @classmethod
+    def from_cli(cls, parser_args=None, **extra_kwargs):
+        """Construct a TrainingArg class by the parameters of CLI.
+
+        Args:
+            **extra_kwargs: Extra args which can be defined in code.
+
+        Returns:
+            The output TrainingArg class with the parameters from CLI.
+        """
+        self = cls(**extra_kwargs)
+        parser = CliArgumentParser(self)
+        args, unknown = parser.parse_known_args(parser_args)
+        unknown = [item for item in unknown if item not in ('\\', '\n')]
+        _unknown = {}
+        for i in range(0, len(unknown), 2):
+            _unknown[unknown[i].replace('-', '')] = parse_value(unknown[i + 1])
+        cfg_dict = vars(args)
+
+        if args.model is not None:
+            try:
+                cfg = read_config(args.model)
+            except Exception as e:
+                print('Read config failed with error:', e)
+            else:
+                cfg.merge_from_dict(_unknown)
+                self = cls.from_config(cfg, **extra_kwargs)
+        for key, value in cfg_dict.items():
+            if key is not None and hasattr(self,
+                                           key) and key in parser.manual_args:
+                setattr(self, key, value)
+        return self
+
+    def to_args(self):
+        """Convert the TrainingArg class to key-value pairs.
+
+        Returns: The key-value pair.
+
+        """
+        _args = {}
+        for f in fields(self):
+            _args[f.name] = getattr(self, f.name)
+        return _args
+
+    @classmethod
+    def from_config(cls, config=DEFAULT_CONFIG, **kwargs):
+        """Construct the TrainingArg class by a `Config` class.
+
+        Args:
+            config: The Config class. By default, `DEFAULT_CONFIG` is used.
+            **kwargs: Extra args which can be defined in code.
+
+        Returns: The output TrainingArg class with the parameters from the config.
+
+        """
+
+        self = cls(**kwargs)
+        for f in fields(self):
+            if 'cfg_node' in f.metadata and getattr(self, f.name) is None:
+                self._to_field(f, config)
+        return self
+
+    def _to_field(self, f, config):
+        assert 'cfg_node' in f.metadata
+        if 'cfg_getter' in f.metadata:
+            cfg_getter = f.metadata['cfg_getter']
+            setattr(self, f.name, cfg_getter(config, f.metadata))
+        else:
+            cfg_node = f.metadata['cfg_node']
+            setattr(self, f.name, config.safe_get(cfg_node))
+
+    def _to_config(self, f, config: Config):
+        assert 'cfg_node' in f.metadata
+        value = getattr(self, f.name)
+        if 'cfg_setter' in f.metadata:
+            cfg_setter = f.metadata['cfg_setter']
+            config = cfg_setter(config, value, f.metadata)
+        else:
+            cfg_node = f.metadata['cfg_node']
+            if isinstance(cfg_node, str):
+                cfg_node = [cfg_node]
+            for _node in cfg_node:
+                config.merge_from_dict({_node: value})
+        return config
+
+    def __call__(self, cfg: Config):
+        for f in fields(self):
+            if 'cfg_node' not in f.metadata:
+                continue
+
+            value = getattr(self, f.name)
+            if value is not None:
+                self._to_config(f, cfg)
+            else:
+                self._to_field(f, cfg)
+        return cfg
 
 
 class CliArgumentParser(ArgumentParser):
     """ Argument Parser to define and parse command-line args for training.
 
     Args:
-        arg_dict (dict of `ArgAttr` or list of them): dict or list of dict which defines different
+        training_args (TrainingArgs): dict or list of dict which defines different
             paramters for training.
     """
 
-    def __init__(self, arg_dict: Union[Dict[str, ArgAttr],
-                                       List[Dict[str, ArgAttr]]], **kwargs):
+    def __init__(self, training_args: TrainingArgs = None, **kwargs):
         if 'formatter_class' not in kwargs:
             kwargs['formatter_class'] = ArgumentDefaultsHelpFormatter
         super().__init__(**kwargs)
-        self.arg_dict = arg_dict if isinstance(
-            arg_dict, Dict) else self._join_args(arg_dict)
+        self.training_args = training_args
         self.define_args()
 
-    def _join_args(self, arg_dict_list: List[Dict[str, ArgAttr]]):
-        total_args = arg_dict_list[0].copy()
-        for args in arg_dict_list[1:]:
-            total_args.update(args)
-        return total_args
+    def get_manual_args(self, args):
+        return [arg[2:] for arg in args if arg.startswith('--')]
+
+    def _parse_known_args(self, args: List = None, namespace=None):
+        self.model_id = namespace.model if namespace is not None else None
+        if '--model' in args:
+            self.model_id = args[args.index('--model') + 1]
+        self.manual_args = self.get_manual_args(args)
+        return super()._parse_known_args(args, namespace)
+
+    def print_help(self, file=None):
+        config = DEFAULT_CONFIG
+        if self.model_id is not None:
+            try:
+                config = read_config(self.model_id)
+            except Exception as e:
+                print('Read config failed with error:', e)
+
+        if config is not None:
+            for action_group in self._optionals._group_actions:
+                if hasattr(self.training_args, action_group.dest):
+                    value = getattr(self.training_args, action_group.dest)
+                    f = {f.name: f
+                         for f in fields(self.training_args)
+                         }.get(action_group.dest)
+                    if value is not None:
+                        action_group.default = value
+                    elif 'cfg_node' in f.metadata:
+                        cfg_node = f.metadata['cfg_node']
+                        if isinstance(cfg_node, str):
+                            cfg_node = [cfg_node]
+
+                        assert isinstance(cfg_node, (list, tuple))
+                        if isinstance(cfg_node[0], str):
+                            action_group.default = config.safe_get(cfg_node[0])
+                        else:
+                            action_group.default = cfg_node[0](config)
+        return super().print_help(file)
 
     def define_args(self):
-        for arg_name, arg_attr in self.arg_dict.items():
-            name = f'--{arg_name}'
-            kwargs = dict(type=arg_attr.type, help=arg_attr.help)
-            if arg_attr.default is not None:
-                kwargs['default'] = arg_attr.default
-            else:
-                kwargs['required'] = True
+        if self.training_args is not None:
+            for f in fields(self.training_args):
+                arg_name = f.name
+                arg_attr = getattr(self.training_args, f.name)
+                name = f'--{arg_name}'
+                kwargs = dict(type=f.type, help=f.metadata['help'])
+                kwargs['default'] = arg_attr
 
-            if arg_attr.choices is not None:
-                kwargs['choices'] = arg_attr.choices
+                if 'choices' in f.metadata:
+                    kwargs['choices'] = f.metadata['choices']
 
-            kwargs['action'] = SingleAction
-            self.add_argument(name, **kwargs)
-
-    def get_cfg_dict(self, args=None):
-        """
-        Args:
-            args (default None):
-                List of strings to parse. The default is taken from sys.argv. (same as argparse.ArgumentParser)
-
-        Returns:
-            cfg_dict (dict of config): each key is a config node name such as 'train.max_epochs', this cfg_dict
-                should be used with function `cfg.merge_from_dict` to update config object.
-        """
-        self.args, remainning = self.parse_known_args(args)
-        args_dict = vars(self.args)
-        cfg_dict = {}
-        for k, v in args_dict.items():
-            if k not in self.arg_dict or self.arg_dict[k].cfg_node_name == '':
-                continue
-            cfg_node = self.arg_dict[k].cfg_node_name
-            if isinstance(cfg_node, list):
-                for node in cfg_node:
-                    cfg_dict[node] = v
-            else:
-                cfg_dict[cfg_node] = v
-
-        return cfg_dict
+                kwargs['action'] = SingleAction
+                self.add_argument(name, **kwargs)
 
 
 class DictAction(Action):
@@ -215,8 +671,8 @@ class DictAction(Action):
             inside these brackets are ignored.
             """
             assert (string.count('(') == string.count(')')) and (
-                string.count('[') == string.count(']')), \
-                f'Imbalanced brackets exist in {string}'
+                string.count('[')
+                == string.count(']')), f'Imbalanced brackets exist in {string}'
             end = len(string)
             for idx, char in enumerate(string):
                 pre = string[:idx]

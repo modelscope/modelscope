@@ -21,6 +21,8 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.task = Tasks.faq_question_answering
         self.model_id = 'damo/nlp_structbert_faq-question-answering_chinese-base'
+        self.mgimn_model_id = 'damo/nlp_mgimn_faq-question-answering_chinese-base'
+        self.model_id_multilingual = 'damo/nlp_faq-question-answering_multilingual-base'
 
     param = {
         'query_set': ['如何使用优惠券', '在哪里领券', '在哪里领券'],
@@ -75,9 +77,26 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
         result = pipeline_ins(self.param)
         print(result)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_multilingual_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.faq_question_answering,
+            model=self.model_id_multilingual,
+            model_revision='v1.0.0')
+        result = pipeline_ins(self.param)
+        print(result)
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.faq_question_answering)
+        print(pipeline_ins(self.param, max_seq_length=20))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_mgimn_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.faq_question_answering,
+            model=self.mgimn_model_id,
+            model_revision='v1.0.0')
         print(pipeline_ins(self.param, max_seq_length=20))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

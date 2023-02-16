@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from modelscope.utils.constant import Fields, Tasks
 
 
 class Models(object):
@@ -7,35 +8,44 @@ class Models(object):
         Holds the standard model name to use for identifying different model.
     This should be used to register models.
 
-        Model name should only contain model info but not task info.
+        Model name should only contain model information but not task information.
     """
     # tinynas models
     tinynas_detection = 'tinynas-detection'
     tinynas_damoyolo = 'tinynas-damoyolo'
-
     # vision models
     detection = 'detection'
+    mask_scoring = 'MaskScoring'
+    image_restoration = 'image-restoration'
     realtime_object_detection = 'realtime-object-detection'
     realtime_video_object_detection = 'realtime-video-object-detection'
     scrfd = 'scrfd'
+    depe = 'depe'
     classification_model = 'ClassificationModel'
     easyrobust_model = 'EasyRobustModel'
     bnext = 'bnext'
+    yolopv2 = 'yolopv2'
     nafnet = 'nafnet'
     csrnet = 'csrnet'
+    adaint = 'adaint'
+    deeplpfnet = 'deeplpfnet'
+    rrdb = 'rrdb'
     cascade_mask_rcnn_swin = 'cascade_mask_rcnn_swin'
     maskdino_swin = 'maskdino_swin'
     gpen = 'gpen'
     product_retrieval_embedding = 'product-retrieval-embedding'
     body_2d_keypoints = 'body-2d-keypoints'
     body_3d_keypoints = 'body-3d-keypoints'
+    body_3d_keypoints_hdformer = 'hdformer'
     crowd_counting = 'HRNetCrowdCounting'
     face_2d_keypoints = 'face-2d-keypoints'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     r50_panoptic_segmentation = 'r50-panoptic-segmentation'
     image_reid_person = 'passvitb'
     image_inpainting = 'FFTInpainting'
+    image_paintbyexample = 'Stablediffusion-Paintbyexample'
     video_summarization = 'pgl-video-summarization'
+    video_panoptic_segmentation = 'swinb-video-panoptic-segmentation'
     language_guided_video_summarization = 'clip-it-language-guided-video-summarization'
     swinL_semantic_segmentation = 'swinL-semantic-segmentation'
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
@@ -70,6 +80,7 @@ class Models(object):
     video_human_matting = 'video-human-matting'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
+    video_deinterlace = 'video-deinterlace'
     quadtree_attention_image_matching = 'quadtree-attention-image-matching'
     vision_middleware = 'vision-middleware'
     video_stabilization = 'video-stabilization'
@@ -78,14 +89,31 @@ class Models(object):
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
     vop_retrieval_model = 'vop-retrieval-model'
     ddcolor = 'ddcolor'
+    image_probing_model = 'image-probing-model'
     defrcn = 'defrcn'
     image_face_fusion = 'image-face-fusion'
+    content_check = 'content-check'
+    open_vocabulary_detection_vild = 'open-vocabulary-detection-vild'
+    ecbsr = 'ecbsr'
+    msrresnet_lite = 'msrresnet-lite'
+    object_detection_3d = 'object_detection_3d'
+    ddpm = 'ddpm'
+    ocr_recognition = 'OCRRecognition'
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_degradation = 'image-quality-assessment-degradation'
+    m2fp = 'm2fp'
+    nerf_recon_acc = 'nerf-recon-acc'
+    bts_depth_estimation = 'bts-depth-estimation'
+    vision_efficient_tuning = 'vision-efficient-tuning'
+
+    bad_image_detecting = 'bad-image-detecting'
 
     # EasyCV models
     yolox = 'YOLOX'
     segformer = 'Segformer'
     hand_2d_keypoints = 'HRNet-Hand2D-Keypoints'
     image_object_detection_auto = 'image-object-detection-auto'
+    dino = 'DINO'
 
     # nlp models
     bert = 'bert'
@@ -122,6 +150,12 @@ class Models(object):
     unite = 'unite'
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
+    fid_plug = 'fid-plug'
+    lstm = 'lstm'
+    xlm_roberta = 'xlm-roberta'
+    transformers = 'transformers'
+    plug_mental = 'plug-mental'
+    doc2bot = 'doc2bot'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -135,6 +169,8 @@ class Models(object):
     generic_itn = 'generic-itn'
     generic_punc = 'generic-punc'
     generic_sv = 'generic-sv'
+    ecapa_tdnn_sv = 'ecapa-tdnn-sv'
+    generic_lm = 'generic-lm'
 
     # multi-modal models
     ofa = 'ofa'
@@ -162,6 +198,7 @@ class TaskModels(object):
     fill_mask = 'fill-mask'
     feature_extraction = 'feature-extraction'
     text_generation = 'text-generation'
+    text_ranking = 'text-ranking'
 
 
 class Heads(object):
@@ -179,6 +216,11 @@ class Heads(object):
     information_extraction = 'information-extraction'
     # text gen
     text_generation = 'text-generation'
+    # text ranking
+    text_ranking = 'text-ranking'
+    # crf
+    lstm_crf = 'lstm-crf'
+    transformer_crf = 'transformer-crf'
 
 
 class Pipelines(object):
@@ -193,6 +235,7 @@ class Pipelines(object):
     """
     # vision tasks
     portrait_matting = 'unet-image-matting'
+    universal_matting = 'unet-universal-matting'
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
     person_image_cartoon = 'unet-person-image-cartoon'
@@ -209,16 +252,19 @@ class Pipelines(object):
     hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
     object_detection = 'vit-object-detection'
+    abnormal_object_detection = 'abnormal-object-detection'
     easycv_detection = 'easycv-detection'
     easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     salient_boudary_detection = 'res2net-salient-detection'
     camouflaged_detection = 'res2net-camouflaged-detection'
+    image_demoire = 'uhdm-image-demoireing'
     image_classification = 'image-classification'
     face_detection = 'resnet-face-detection-scrfd10gkps'
     face_liveness_ir = 'manual-face-liveness-flir'
     face_liveness_rgb = 'manual-face-liveness-flir'
+    face_liveness_xc = 'manual-face-liveness-flxc'
     card_detection = 'resnet-card-detection-scrfd34gkps'
     ulfd_face_detection = 'manual-face-detection-ulfd'
     tinymog_face_detection = 'manual-face-detection-tinymog'
@@ -234,20 +280,28 @@ class Pipelines(object):
     nextvit_small_daily_image_classification = 'nextvit-small_image-classification_Dailylife-labels'
     convnext_base_image_classification_garbage = 'convnext-base_image-classification_garbage'
     bnext_small_image_classification = 'bnext-small_image-classification_ImageNet-labels'
+    yolopv2_image_driving_percetion_bdd100k = 'yolopv2_image-driving-percetion_bdd100k'
     common_image_classification = 'common-image-classification'
     image_color_enhance = 'csrnet-image-color-enhance'
+    adaint_image_color_enhance = 'adaint-image-color-enhance'
+    deeplpf_image_color_enhance = 'deeplpf-image-color-enhance'
     virtual_try_on = 'virtual-try-on'
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'
+    image_debanding = 'rrdb-image-debanding'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
-    realtime_object_detection = 'cspnet_realtime-object-detection_yolox'
     realtime_video_object_detection = 'cspnet_realtime-video-object-detection_streamyolo'
     face_recognition = 'ir101-face-recognition-cfglint'
     face_recognition_ood = 'ir-face-recognition-ood-rts'
+    face_quality_assessment = 'manual-face-quality-assessment-fqa'
+    face_recognition_ood = 'ir-face-recognition-rts'
+    face_recognition_onnx_ir = 'manual-face-recognition-frir'
+    face_recognition_onnx_fm = 'manual-face-recognition-frfm'
     arc_face_recognition = 'ir50-face-recognition-arcface'
     mask_face_recognition = 'resnet-face-recognition-facemask'
+    content_check = 'resnet50-image-classification-cc'
     image_instance_segmentation = 'cascade-mask-rcnn-swin-image-instance-segmentation'
     maskdino_instance_segmentation = 'maskdino-swin-image-instance-segmentation'
     image2image_translation = 'image-to-image-translation'
@@ -259,6 +313,7 @@ class Pipelines(object):
     image_object_detection_auto = 'yolox_image-object-detection-auto'
     hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
+    face_reconstruction = 'resnet50-face-reconstruction'
     tinynas_classification = 'tinynas-classification'
     easyrobust_classification = 'easyrobust-classification'
     tinynas_detection = 'tinynas-detection'
@@ -277,6 +332,8 @@ class Pipelines(object):
     panorama_depth_estimation = 'panorama-depth-estimation'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
+    image_paintbyexample = 'stablediffusion-paintbyexample'
+    image_inpainting_sdv2 = 'image-inpainting-sdv2'
     text_driven_segmentation = 'text-driven-segmentation'
     movie_scene_segmentation = 'resnet50-bert-movie-scene-segmentation'
     shop_segmentation = 'shop-segmentation'
@@ -294,15 +351,31 @@ class Pipelines(object):
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
+    video_deinterlace = 'video-deinterlace'
     image_matching = 'image-matching'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
     image_multi_view_depth_estimation = 'image-multi-view-depth-estimation'
+    video_panoptic_segmentation = 'video-panoptic-segmentation'
     vop_retrieval = 'vop-video-text-retrieval'
     ddcolor_image_colorization = 'ddcolor-image-colorization'
+    image_structured_model_probing = 'image-structured-model-probing'
     image_fewshot_detection = 'image-fewshot-detection'
     image_face_fusion = 'image-face-fusion'
+    open_vocabulary_detection_vild = 'open-vocabulary-detection-vild'
+    ddpm_image_semantic_segmentation = 'ddpm-image-semantic-segmentation'
+    video_colorization = 'video-colorization'
+    motion_generattion = 'mdm-motion-generation'
+    mobile_image_super_resolution = 'mobile-image-super-resolution'
+    image_human_parsing = 'm2fp-image-human-parsing'
+    object_detection_3d_depe = 'object-detection-3d-depe'
+    nerf_recon_acc = 'nerf-recon-acc'
+    bad_image_detecting = 'bad-image-detecting'
+
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_degradation = 'image-quality-assessment-degradation'
+    vision_efficient_tuning = 'vision-efficient-tuning'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -317,6 +390,7 @@ class Pipelines(object):
     named_entity_recognition_thai = 'named-entity-recognition-thai'
     named_entity_recognition_viet = 'named-entity-recognition-viet'
     text_generation = 'text-generation'
+    fid_dialogue = 'fid-dialogue'
     text2text_generation = 'text2text-generation'
     sentiment_analysis = 'sentiment-analysis'
     sentiment_classification = 'sentiment-classification'
@@ -324,6 +398,7 @@ class Pipelines(object):
     fill_mask = 'fill-mask'
     fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
+    interactive_translation = 'interactive-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
     dialog_modeling = 'dialog-modeling'
@@ -353,6 +428,10 @@ class Pipelines(object):
     token_classification = 'token-classification'
     translation_evaluation = 'translation-evaluation'
     user_satisfaction_estimation = 'user-satisfaction-estimation'
+    siamese_uie = 'siamese-uie'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -366,6 +445,9 @@ class Pipelines(object):
     itn_inference = 'itn-inference'
     punc_inference = 'punc-inference'
     sv_inference = 'sv-inference'
+    vad_inference = 'vad-inference'
+    speaker_verification = 'speaker-verification'
+    lm_inference = 'language-model'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'
@@ -387,31 +469,322 @@ class Pipelines(object):
     diffusers_stable_diffusion = 'diffusers-stable-diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
+    gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
+    gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
 
 
-class Trainers(object):
-    """ Names for different trainer.
+DEFAULT_MODEL_FOR_PIPELINE = {
+    # TaskName: (pipeline_module_name, model_repo)
+    Tasks.sentence_embedding:
+    (Pipelines.sentence_embedding,
+     'damo/nlp_corom_sentence-embedding_english-base'),
+    Tasks.text_ranking: (Pipelines.mgeo_ranking,
+                         'damo/mgeo_address_ranking_chinese_base'),
+    Tasks.text_ranking: (Pipelines.text_ranking,
+                         'damo/nlp_corom_passage-ranking_english-base'),
+    Tasks.word_segmentation:
+    (Pipelines.word_segmentation,
+     'damo/nlp_structbert_word-segmentation_chinese-base'),
+    Tasks.part_of_speech: (Pipelines.part_of_speech,
+                           'damo/nlp_structbert_part-of-speech_chinese-base'),
+    Tasks.token_classification:
+    (Pipelines.part_of_speech,
+     'damo/nlp_structbert_part-of-speech_chinese-base'),
+    Tasks.named_entity_recognition:
+    (Pipelines.named_entity_recognition,
+     'damo/nlp_raner_named-entity-recognition_chinese-base-news'),
+    Tasks.relation_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
+    Tasks.information_extraction:
+    (Pipelines.relation_extraction,
+     'damo/nlp_bert_relation-extraction_chinese-base'),
+    Tasks.sentence_similarity:
+    (Pipelines.sentence_similarity,
+     'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.translation: (Pipelines.csanmt_translation,
+                        'damo/nlp_csanmt_translation_zh2en'),
+    Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
+    Tasks.sentiment_classification:
+    (Pipelines.sentiment_classification,
+     'damo/nlp_structbert_sentiment-classification_chinese-base'
+     ),  # TODO: revise back after passing the pr
+    Tasks.portrait_matting: (Pipelines.portrait_matting,
+                             'damo/cv_unet_image-matting'),
+    Tasks.universal_matting: (Pipelines.universal_matting,
+                              'damo/cv_unet_universal-matting'),
+    Tasks.human_detection: (Pipelines.human_detection,
+                            'damo/cv_resnet18_human-detection'),
+    Tasks.image_object_detection: (Pipelines.object_detection,
+                                   'damo/cv_vit_object-detection_coco'),
+    Tasks.image_denoising: (Pipelines.image_denoise,
+                            'damo/cv_nafnet_image-denoise_sidd'),
+    Tasks.image_deblurring: (Pipelines.image_deblur,
+                             'damo/cv_nafnet_image-deblur_gopro'),
+    Tasks.video_stabilization: (Pipelines.video_stabilization,
+                                'damo/cv_dut-raft_video-stabilization_base'),
+    Tasks.video_super_resolution:
+    (Pipelines.video_super_resolution,
+     'damo/cv_realbasicvsr_video-super-resolution_videolq'),
+    Tasks.text_classification:
+    (Pipelines.sentiment_classification,
+     'damo/nlp_structbert_sentiment-classification_chinese-base'),
+    Tasks.text_generation: (Pipelines.text_generation,
+                            'damo/nlp_palm2.0_text-generation_chinese-base'),
+    Tasks.zero_shot_classification:
+    (Pipelines.zero_shot_classification,
+     'damo/nlp_structbert_zero-shot-classification_chinese-base'),
+    Tasks.task_oriented_conversation: (Pipelines.dialog_modeling,
+                                       'damo/nlp_space_dialog-modeling'),
+    Tasks.dialog_state_tracking: (Pipelines.dialog_state_tracking,
+                                  'damo/nlp_space_dialog-state-tracking'),
+    Tasks.table_question_answering:
+    (Pipelines.table_question_answering_pipeline,
+     'damo/nlp-convai-text2sql-pretrain-cn'),
+    Tasks.document_grounded_dialog_generate:
+    (Pipelines.document_grounded_dialog_generate,
+     'DAMO_ConvAI/nlp_convai_generation_pretrain'),
+    Tasks.document_grounded_dialog_rerank:
+    (Pipelines.document_grounded_dialog_rerank,
+     'damo/nlp_convai_rerank_pretrain'),
+    Tasks.document_grounded_dialog_retrieval:
+    (Pipelines.document_grounded_dialog_retrieval,
+     'DAMO_ConvAI/nlp_convai_retrieval_pretrain'),
+    Tasks.text_error_correction:
+    (Pipelines.text_error_correction,
+     'damo/nlp_bart_text-error-correction_chinese'),
+    Tasks.image_captioning: (Pipelines.image_captioning,
+                             'damo/ofa_image-caption_coco_large_en'),
+    Tasks.video_captioning:
+    (Pipelines.video_captioning,
+     'damo/multi-modal_hitea_video-captioning_base_en'),
+    Tasks.image_portrait_stylization:
+    (Pipelines.person_image_cartoon,
+     'damo/cv_unet_person-image-cartoon_compound-models'),
+    Tasks.ocr_detection: (Pipelines.ocr_detection,
+                          'damo/cv_resnet18_ocr-detection-line-level_damo'),
+    Tasks.table_recognition:
+    (Pipelines.table_recognition,
+     'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.document_vl_embedding:
+    (Pipelines.document_vl_embedding,
+     'damo/multi-modal_convnext-roberta-base_vldoc-embedding'),
+    Tasks.license_plate_detection:
+    (Pipelines.license_plate_detection,
+     'damo/cv_resnet18_license-plate-detection_damo'),
+    Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
+    Tasks.feature_extraction: (Pipelines.feature_extraction,
+                               'damo/pert_feature-extraction_base-test'),
+    Tasks.action_recognition: (Pipelines.action_recognition,
+                               'damo/cv_TAdaConv_action-recognition'),
+    Tasks.action_detection: (Pipelines.action_detection,
+                             'damo/cv_ResNetC3D_action-detection_detection2d'),
+    Tasks.live_category: (Pipelines.live_category,
+                          'damo/cv_resnet50_live-category'),
+    Tasks.video_category: (Pipelines.video_category,
+                           'damo/cv_resnet50_video-category'),
+    Tasks.multi_modal_embedding: (Pipelines.multi_modal_embedding,
+                                  'damo/multi-modal_clip-vit-base-patch16_zh'),
+    Tasks.generative_multi_modal_embedding:
+    (Pipelines.generative_multi_modal_embedding,
+     'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
+     ),
+    Tasks.multi_modal_similarity:
+    (Pipelines.multi_modal_similarity,
+     'damo/multi-modal_team-vit-large-patch14_multi-modal-similarity'),
+    Tasks.visual_question_answering:
+    (Pipelines.visual_question_answering,
+     'damo/mplug_visual-question-answering_coco_large_en'),
+    Tasks.video_question_answering:
+    (Pipelines.video_question_answering,
+     'damo/multi-modal_hitea_video-question-answering_base_en'),
+    Tasks.video_embedding: (Pipelines.cmdssl_video_embedding,
+                            'damo/cv_r2p1d_video_embedding'),
+    Tasks.text_to_image_synthesis:
+    (Pipelines.text_to_image_synthesis,
+     'damo/cv_diffusion_text-to-image-synthesis_tiny'),
+    Tasks.body_2d_keypoints: (Pipelines.body_2d_keypoints,
+                              'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
+    Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,
+                              'damo/cv_canonical_body-3d-keypoints_video'),
+    Tasks.hand_2d_keypoints:
+    (Pipelines.hand_2d_keypoints,
+     'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody'),
+    Tasks.card_detection: (Pipelines.card_detection,
+                           'damo/cv_resnet_carddetection_scrfd34gkps'),
+    Tasks.content_check: (Pipelines.content_check,
+                          'damo/cv_resnet50_content-check_cc'),
+    Tasks.face_detection:
+    (Pipelines.mog_face_detection,
+     'damo/cv_resnet101_face-detection_cvpr22papermogface'),
+    Tasks.face_liveness: (Pipelines.face_liveness_ir,
+                          'damo/cv_manual_face-liveness_flir'),
+    Tasks.face_recognition: (Pipelines.face_recognition,
+                             'damo/cv_ir101_facerecognition_cfglint'),
+    Tasks.facial_expression_recognition:
+    (Pipelines.facial_expression_recognition,
+     'damo/cv_vgg19_facial-expression-recognition_fer'),
+    Tasks.face_attribute_recognition:
+    (Pipelines.face_attribute_recognition,
+     'damo/cv_resnet34_face-attribute-recognition_fairface'),
+    Tasks.face_2d_keypoints: (Pipelines.face_2d_keypoints,
+                              'damo/cv_mobilenet_face-2d-keypoints_alignment'),
+    Tasks.face_quality_assessment:
+    (Pipelines.face_quality_assessment,
+     'damo/cv_manual_face-quality-assessment_fqa'),
+    Tasks.video_multi_modal_embedding:
+    (Pipelines.video_multi_modal_embedding,
+     'damo/multi_modal_clip_vtretrival_msrvtt_53'),
+    Tasks.image_color_enhancement:
+    (Pipelines.image_color_enhance,
+     'damo/cv_csrnet_image-color-enhance-models'),
+    Tasks.virtual_try_on: (Pipelines.virtual_try_on,
+                           'damo/cv_daflow_virtual-try-on_base'),
+    Tasks.image_colorization: (Pipelines.ddcolor_image_colorization,
+                               'damo/cv_ddcolor_image-colorization'),
+    Tasks.video_colorization: (Pipelines.video_colorization,
+                               'damo/cv_unet_video-colorization'),
+    Tasks.image_segmentation:
+    (Pipelines.image_instance_segmentation,
+     'damo/cv_swin-b_image-instance-segmentation_coco'),
+    Tasks.image_driving_perception:
+    (Pipelines.yolopv2_image_driving_percetion_bdd100k,
+     'damo/cv_yolopv2_image-driving-perception_bdd100k'),
+    Tasks.image_depth_estimation:
+    (Pipelines.image_depth_estimation,
+     'damo/cv_newcrfs_image-depth-estimation_indoor'),
+    Tasks.indoor_layout_estimation:
+    (Pipelines.indoor_layout_estimation,
+     'damo/cv_panovit_indoor-layout-estimation'),
+    Tasks.video_depth_estimation:
+    (Pipelines.video_depth_estimation,
+     'damo/cv_dro-resnet18_video-depth-estimation_indoor'),
+    Tasks.panorama_depth_estimation:
+    (Pipelines.panorama_depth_estimation,
+     'damo/cv_unifuse_panorama-depth-estimation'),
+    Tasks.image_style_transfer: (Pipelines.image_style_transfer,
+                                 'damo/cv_aams_style-transfer_damo'),
+    Tasks.face_image_generation: (Pipelines.face_image_generation,
+                                  'damo/cv_gan_face-image-generation'),
+    Tasks.image_super_resolution: (Pipelines.image_super_resolution,
+                                   'damo/cv_rrdb_image-super-resolution'),
+    Tasks.image_debanding: (Pipelines.image_debanding,
+                            'damo/cv_rrdb_image-debanding'),
+    Tasks.image_portrait_enhancement:
+    (Pipelines.image_portrait_enhancement,
+     'damo/cv_gpen_image-portrait-enhancement'),
+    Tasks.product_retrieval_embedding:
+    (Pipelines.product_retrieval_embedding,
+     'damo/cv_resnet50_product-bag-embedding-models'),
+    Tasks.image_to_image_generation:
+    (Pipelines.image_to_image_generation,
+     'damo/cv_latent_diffusion_image2image_generate'),
+    Tasks.image_classification:
+    (Pipelines.daily_image_classification,
+     'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_object_detection:
+    (Pipelines.image_object_detection_auto,
+     'damo/cv_yolox_image-object-detection-auto'),
+    Tasks.ocr_recognition:
+    (Pipelines.ocr_recognition,
+     'damo/cv_convnextTiny_ocr-recognition-general_damo'),
+    Tasks.skin_retouching: (Pipelines.skin_retouching,
+                            'damo/cv_unet_skin-retouching'),
+    Tasks.faq_question_answering:
+    (Pipelines.faq_question_answering,
+     'damo/nlp_structbert_faq-question-answering_chinese-base'),
+    Tasks.crowd_counting: (Pipelines.crowd_counting,
+                           'damo/cv_hrnet_crowd-counting_dcanet'),
+    Tasks.video_single_object_tracking:
+    (Pipelines.video_single_object_tracking,
+     'damo/cv_vitb_video-single-object-tracking_ostrack'),
+    Tasks.image_reid_person: (Pipelines.image_reid_person,
+                              'damo/cv_passvitb_image-reid-person_market'),
+    Tasks.text_driven_segmentation:
+    (Pipelines.text_driven_segmentation,
+     'damo/cv_vitl16_segmentation_text-driven-seg'),
+    Tasks.movie_scene_segmentation: (
+        Pipelines.movie_scene_segmentation,
+        'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),
+    Tasks.shop_segmentation: (Pipelines.shop_segmentation,
+                              'damo/cv_vitb16_segmentation_shop-seg'),
+    Tasks.image_inpainting: (Pipelines.image_inpainting,
+                             'damo/cv_fft_inpainting_lama'),
+    Tasks.image_paintbyexample: (Pipelines.image_paintbyexample,
+                                 'damo/cv_stable-diffusion_paint-by-example'),
+    Tasks.video_inpainting: (Pipelines.video_inpainting,
+                             'damo/cv_video-inpainting'),
+    Tasks.video_human_matting: (Pipelines.video_human_matting,
+                                'damo/cv_effnetv2_video-human-matting'),
+    Tasks.video_frame_interpolation: (
+        Pipelines.video_frame_interpolation,
+        'damo/cv_raft_video-frame-interpolation'),
+    Tasks.video_deinterlace: (Pipelines.video_deinterlace,
+                              'damo/cv_unet_video-deinterlace'),
+    Tasks.human_wholebody_keypoint: (
+        Pipelines.human_wholebody_keypoint,
+        'damo/cv_hrnetw48_human-wholebody-keypoint_image'),
+    Tasks.hand_static: (Pipelines.hand_static,
+                        'damo/cv_mobileface_hand-static'),
+    Tasks.face_human_hand_detection: (
+        Pipelines.face_human_hand_detection,
+        'damo/cv_nanodet_face-human-hand-detection'),
+    Tasks.face_emotion: (Pipelines.face_emotion, 'damo/cv_face-emotion'),
+    Tasks.product_segmentation: (Pipelines.product_segmentation,
+                                 'damo/cv_F3Net_product-segmentation'),
+    Tasks.referring_video_object_segmentation: (
+        Pipelines.referring_video_object_segmentation,
+        'damo/cv_swin-t_referring_video-object-segmentation'),
+    Tasks.video_summarization: (Pipelines.video_summarization,
+                                'damo/cv_googlenet_pgl-video-summarization'),
+    Tasks.image_skychange: (Pipelines.image_skychange,
+                            'damo/cv_hrnetocr_skychange'),
+    Tasks.translation_evaluation: (
+        Pipelines.translation_evaluation,
+        'damo/nlp_unite_mup_translation_evaluation_multilingual_large'),
+    Tasks.video_object_segmentation: (
+        Pipelines.video_object_segmentation,
+        'damo/cv_rdevos_video-object-segmentation'),
+    Tasks.video_multi_object_tracking: (
+        Pipelines.video_multi_object_tracking,
+        'damo/cv_yolov5_video-multi-object-tracking_fairmot'),
+    Tasks.image_multi_view_depth_estimation: (
+        Pipelines.image_multi_view_depth_estimation,
+        'damo/cv_casmvs_multi-view-depth-estimation_general'),
+    Tasks.image_fewshot_detection: (
+        Pipelines.image_fewshot_detection,
+        'damo/cv_resnet101_detection_fewshot-defrcn'),
+    Tasks.image_body_reshaping: (Pipelines.image_body_reshaping,
+                                 'damo/cv_flow-based-body-reshaping_damo'),
+    Tasks.image_face_fusion: (Pipelines.image_face_fusion,
+                              'damo/cv_unet-image-face-fusion_damo'),
+    Tasks.image_matching: (
+        Pipelines.image_matching,
+        'damo/cv_quadtree_attention_image-matching_outdoor'),
+    Tasks.image_quality_assessment_mos: (
+        Pipelines.image_quality_assessment_mos,
+        'damo/cv_resnet_image-quality-assessment-mos_youtubeUGC'),
+    Tasks.image_quality_assessment_degradation: (
+        Pipelines.image_quality_assessment_degradation,
+        'damo/cv_resnet50_image-quality-assessment_degradation'),
+    Tasks.vision_efficient_tuning: (
+        Pipelines.vision_efficient_tuning,
+        'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'),
+    Tasks.object_detection_3d: (Pipelines.object_detection_3d_depe,
+                                'damo/cv_object-detection-3d_depe'),
+    Tasks.bad_image_detecting: (Pipelines.bad_image_detecting,
+                                'damo/cv_mobilenet-v2_bad-image-detecting'),
+    Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
+                           'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
+    Tasks.siamese_uie: (Pipelines.siamese_uie,
+                        'damo/nlp_structbert_siamese-uie_chinese-base'),
+}
 
-        Holds the standard trainer name to use for identifying different trainer.
-    This should be used to register trainers.
 
-        For a general Trainer, you can use EpochBasedTrainer.
-        For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
-    """
-
-    default = 'trainer'
-    easycv = 'easycv'
-    tinynas_damoyolo = 'tinynas-damoyolo'
-
-    # multi-modal trainers
-    clip_multi_modal_embedding = 'clip-multi-modal-embedding'
-    ofa = 'ofa'
-    mplug = 'mplug'
-    mgeo_ranking_trainer = 'mgeo-ranking-trainer'
-
+class CVTrainers(object):
     # cv trainers
     image_instance_segmentation = 'image-instance-segmentation'
     image_portrait_enhancement = 'image-portrait-enhancement'
@@ -425,6 +798,8 @@ class Trainers(object):
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
 
+
+class NLPTrainers(object):
     # nlp trainers
     bert_sentiment_analysis = 'bert-sentiment-analysis'
     dialog_modeling_trainer = 'dialog-modeling-trainer'
@@ -432,20 +807,71 @@ class Trainers(object):
     nlp_base_trainer = 'nlp-base-trainer'
     nlp_veco_trainer = 'nlp-veco-trainer'
     nlp_text_ranking_trainer = 'nlp-text-ranking-trainer'
+    nlp_sentence_embedding_trainer = 'nlp-sentence-embedding-trainer'
     text_generation_trainer = 'text-generation-trainer'
     nlp_plug_trainer = 'nlp-plug-trainer'
     gpt3_trainer = 'nlp-gpt3-trainer'
     faq_question_answering_trainer = 'faq-question-answering-trainer'
     gpt_moe_trainer = 'nlp-gpt-moe-trainer'
     table_question_answering_trainer = 'table-question-answering-trainer'
+    document_grounded_dialog_generate_trainer = 'document-grounded-dialog-generate-trainer'
+    document_grounded_dialog_rerank_trainer = 'document-grounded-dialog-rerank-trainer'
+    document_grounded_dialog_retrieval_trainer = 'document-grounded-dialog-retrieval-trainer'
 
-    # audio trainers
+
+class MultiModalTrainers(object):
+    clip_multi_modal_embedding = 'clip-multi-modal-embedding'
+    ofa = 'ofa'
+    mplug = 'mplug'
+    mgeo_ranking_trainer = 'mgeo-ranking-trainer'
+
+
+class AudioTrainers(object):
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_kantts_trainer = 'speech-kantts-trainer'
     speech_asr_trainer = 'speech-asr-trainer'
     speech_separation = 'speech-separation'
+
+
+class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
+    """ Names for different trainer.
+
+        Holds the standard trainer name to use for identifying different trainer.
+    This should be used to register trainers.
+
+        For a general Trainer, you can use EpochBasedTrainer.
+        For a model specific Trainer, you can use ${ModelName}-${Task}-trainer.
+    """
+
+    default = 'trainer'
+    easycv = 'easycv'
+    tinynas_damoyolo = 'tinynas-damoyolo'
+
+    @staticmethod
+    def get_trainer_domain(attribute_or_value):
+        if attribute_or_value in vars(
+                CVTrainers) or attribute_or_value in vars(CVTrainers).values():
+            return Fields.cv
+        elif attribute_or_value in vars(
+                NLPTrainers) or attribute_or_value in vars(
+                    NLPTrainers).values():
+            return Fields.nlp
+        elif attribute_or_value in vars(
+                AudioTrainers) or attribute_or_value in vars(
+                    AudioTrainers).values():
+            return Fields.audio
+        elif attribute_or_value in vars(
+                MultiModalTrainers) or attribute_or_value in vars(
+                    MultiModalTrainers).values():
+            return Fields.multi_modal
+        elif attribute_or_value == Trainers.default:
+            return Trainers.default
+        elif attribute_or_value == Trainers.easycv:
+            return Trainers.easycv
+        else:
+            return 'unknown'
 
 
 class Preprocessors(object):
@@ -467,12 +893,18 @@ class Preprocessors(object):
     image_classification_mmcv_preprocessor = 'image-classification-mmcv-preprocessor'
     image_color_enhance_preprocessor = 'image-color-enhance-preprocessor'
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
+    image_driving_perception_preprocessor = 'image-driving-perception-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
+    image_quality_assessment_mos_preprocessor = 'image-quality_assessment-mos-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'
     image_classification_bypass_preprocessor = 'image-classification-bypass-preprocessor'
     object_detection_scrfd = 'object-detection-scrfd'
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
+    image_demoire_preprocessor = 'image-demoire-preprocessor'
+    ocr_recognition = 'ocr-recognition'
+    bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
+    nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -512,6 +944,10 @@ class Preprocessors(object):
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
     dialog_use_preprocessor = 'dialog-use-preprocessor'
+    siamese_uie_preprocessor = 'siamese-uie-preprocessor'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -557,10 +993,14 @@ class Metrics(object):
     image_ins_seg_coco_metric = 'image-ins-seg-coco-metric'
     # metrics for sequence classification task
     seq_cls_metric = 'seq-cls-metric'
+    # loss metric
+    loss_metric = 'loss-metric'
     # metrics for token-classification task
     token_cls_metric = 'token-cls-metric'
     # metrics for text-generation task
     text_gen_metric = 'text-gen-metric'
+    # file saving wrapper
+    prediction_saving_wrapper = 'prediction-saving-wrapper'
     # metrics for image-color-enhance task
     image_color_enhance_metric = 'image-color-enhance-metric'
     # metrics for image-portrait-enhancement task
@@ -578,6 +1018,12 @@ class Metrics(object):
     referring_video_object_segmentation_metric = 'referring-video-object-segmentation-metric'
     # metric for video stabilization task
     video_stabilization_metric = 'video-stabilization-metric'
+    # metirc for image-quality-assessment-mos task
+    image_quality_assessment_mos_metric = 'image-quality-assessment-mos-metric'
+    # metirc for image-quality-assessment-degradation task
+    image_quality_assessment_degradation_metric = 'image-quality-assessment-degradation-metric'
+    # metric for text-ranking task
+    text_ranking_metric = 'text-ranking-metric'
 
 
 class Optimizers(object):
@@ -611,6 +1057,7 @@ class Hooks(object):
     # checkpoint
     CheckpointHook = 'CheckpointHook'
     BestCkptSaverHook = 'BestCkptSaverHook'
+    LoadCheckpointHook = 'LoadCheckpointHook'
 
     # logger
     TextLoggerHook = 'TextLoggerHook'

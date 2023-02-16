@@ -16,8 +16,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 from .manual_landmark_net import LandmarkConfidence
 
 
-@MODELS.register_module(
-    Tasks.facial_landmark_confidence, module_name=Models.flc)
+@MODELS.register_module(Tasks.face_2d_keypoints, module_name=Models.flc)
 class FacialLandmarkConfidence(TorchModel):
 
     def __init__(self, model_path, device='cuda'):

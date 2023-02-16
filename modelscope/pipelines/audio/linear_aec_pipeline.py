@@ -122,10 +122,7 @@ class LinearAECPipeline(Pipeline):
                 'base' the base audio to mask.
 
         Returns:
-            dict:
-                {
-                    'output_pcm': generated audio array
-                }
+            output_pcm: generated audio array
         """
         output_data = self._process(inputs['feature'], inputs['base'])
         output_data = output_data.astype(np.int16).tobytes()
@@ -135,17 +132,12 @@ class LinearAECPipeline(Pipeline):
         r"""The post process. Will save audio to file, if the output_path is given.
 
         Args:
-            inputs: dict:
-                {
-                    'output_pcm': generated audio array
-                }
+            inputs: a dict contains following keys:
+                - output_pcm: generated audio array
             kwargs: accept 'output_path' which is the path to write generated audio
 
         Returns:
-            dict:
-                {
-                    'output_pcm': generated audio array
-                }
+            output_pcm: generated audio array
         """
         if 'output_path' in kwargs.keys():
             wav.write(

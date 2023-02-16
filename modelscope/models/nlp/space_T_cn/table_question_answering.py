@@ -740,32 +740,32 @@ class TableQuestionAnswering(Model):
 
 
         Returns:
-            Dict[str, Tensor]: results
-                Example:
-                    {
-                        'result':
-                            {
-                                'question_tok': ['有', '哪', '些', '风', '险', '类', '型', '？'],
-                                'question': '有哪些风险类型？',
-                                'table_id': 'fund',
-                                'sql': {
-                                    'cond_conn_op': 0,
-                                    'sel': [5],
-                                    'agg': [0],
-                                    'conds': [[10, 2, 'Nulll']]
-                                },
-                                'action': 10,
-                                'model_out': [
-                                    [6, 0, 0, 0],
-                                    [0, 0, 0, 0],
-                                    [0, 0, 0, 0, 0, 0],
-                                    [2, 0, 0, 0, 0, 0],
-                                    [0, 0, 0, 0, 0, 0],
-                                    [0, 0, 0, 0, 0, 0]
-                                ]
-                            },
-                        'history_sql': None
-                    }
+            Dict[str, Tensor]: results dict as follows:
+
+                >>> {
+                >>>     'result':
+                >>>         {
+                >>>             'question_tok': ['有', '哪', '些', '风', '险', '类', '型', '？'],
+                >>>             'question': '有哪些风险类型？',
+                >>>             'table_id': 'fund',
+                >>>             'sql': {
+                >>>                 'cond_conn_op': 0,
+                >>>                 'sel': [5],
+                >>>                 'agg': [0],
+                >>>                 'conds': [[10, 2, 'Nulll']]
+                >>>             },
+                >>>             'action': 10,
+                >>>             'model_out': [
+                >>>                 [6, 0, 0, 0],
+                >>>                 [0, 0, 0, 0],
+                >>>                 [0, 0, 0, 0, 0, 0],
+                >>>                 [2, 0, 0, 0, 0, 0],
+                >>>                 [0, 0, 0, 0, 0, 0],
+                >>>                 [0, 0, 0, 0, 0, 0]
+                >>>             ]
+                >>>         },
+                >>>     'history_sql': None
+                >>> }
 
         Example:
             >>> from modelscope.models.nlp import TableQuestionAnswering

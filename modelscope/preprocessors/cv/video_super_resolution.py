@@ -49,7 +49,8 @@ class VideoReader:
     Cache is used when decoding videos. So if the same frame is visited for
     the second time, there is no need to decode again if it is stored in the
     cache.
-    :Example:
+    Example:
+
     >>> import mmcv
     >>> v = mmcv.VideoReader('sample.mp4')
     >>> len(v)  # get the total frame number with `len()`

@@ -23,11 +23,10 @@ class CVTasks(object):
     animal_recognition = 'animal-recognition'
     face_detection = 'face-detection'
     face_liveness = 'face-liveness'
+    face_quality_assessment = 'face-quality-assessment'
     card_detection = 'card-detection'
     face_recognition = 'face-recognition'
-    face_recognition_ood = 'face-recognition-ood'
     facial_expression_recognition = 'facial-expression-recognition'
-    facial_landmark_confidence = 'facial-landmark-confidence'
     face_processing_base = 'face-processing-base'
     face_attribute_recognition = 'face-attribute-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
@@ -48,14 +47,18 @@ class CVTasks(object):
     image_object_detection = 'image-object-detection'
     video_object_detection = 'video-object-detection'
     image_fewshot_detection = 'image-fewshot-detection'
+    open_vocabulary_detection = 'open-vocabulary-detection'
+    object_detection_3d = 'object-detection-3d'
 
     image_segmentation = 'image-segmentation'
     semantic_segmentation = 'semantic-segmentation'
+    image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
     portrait_matting = 'portrait-matting'
+    universal_matting = 'universal-matting'
     text_driven_segmentation = 'text-driven-segmentation'
     shop_segmentation = 'shop-segmentation'
     hand_static = 'hand-static'
@@ -63,19 +66,23 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_matching = 'image-matching'
+    image_quality_assessment_degradation = 'image-quality-assessment-degradation'
 
     crowd_counting = 'crowd-counting'
 
     # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
+    image_debanding = 'image-debanding'
     image_colorization = 'image-colorization'
     image_color_enhancement = 'image-color-enhancement'
     image_denoising = 'image-denoising'
     image_deblurring = 'image-deblurring'
     image_portrait_enhancement = 'image-portrait-enhancement'
     image_inpainting = 'image-inpainting'
+    image_paintbyexample = 'image-paintbyexample'
     image_skychange = 'image-skychange'
+    image_demoireing = 'image-demoireing'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
@@ -102,12 +109,15 @@ class CVTasks(object):
     video_object_segmentation = 'video-object-segmentation'
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     video_human_matting = 'video-human-matting'
+    video_panoptic_segmentation = 'video-panoptic-segmentation'
 
     # video editing
     video_inpainting = 'video-inpainting'
     video_frame_interpolation = 'video-frame-interpolation'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'video-super-resolution'
+    video_deinterlace = 'video-deinterlace'
+    video_colorization = 'video-colorization'
 
     # reid and tracking
     video_single_object_tracking = 'video-single-object-tracking'
@@ -122,6 +132,25 @@ class CVTasks(object):
 
     # domain specific object detection
     domain_specific_object_detection = 'domain-specific-object-detection'
+
+    # content check
+    content_check = 'content-check'
+
+    # 3d face reconstruction
+    face_reconstruction = 'face-reconstruction'
+
+    # image quality assessment mos
+    image_quality_assessment_mos = 'image-quality-assessment-mos'
+    # motion generation
+    motion_generation = 'motion-generation'
+    # 3d reconstruction
+    nerf_recon_acc = 'nerf-recon-acc'
+
+    # vision efficient tuning
+    vision_efficient_tuning = 'vision-efficient-tuning'
+
+    # bad image detecting
+    bad_image_detecting = 'bad-image-detecting'
 
 
 class NLPTasks(object):
@@ -140,8 +169,10 @@ class NLPTasks(object):
     zero_shot = 'zero-shot'
     translation = 'translation'
     token_classification = 'token-classification'
+    transformer_crf = 'transformer-crf'
     conversational = 'conversational'
     text_generation = 'text-generation'
+    fid_dialogue = 'fid-dialogue'
     text2text_generation = 'text2text-generation'
     task_oriented_conversation = 'task-oriented-conversation'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -164,6 +195,10 @@ class NLPTasks(object):
     translation_evaluation = 'translation-evaluation'
     sudoku = 'sudoku'
     text2sql = 'text2sql'
+    siamese_uie = 'siamese-uie'
+    document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
+    document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
+    document_grounded_dialog_generate = 'document-grounded-dialog-generate'
 
 
 class AudioTasks(object):
@@ -178,6 +213,8 @@ class AudioTasks(object):
     inverse_text_processing = 'inverse-text-processing'
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
+    voice_activity_detection = 'voice-activity-detection'
+    language_model = 'language-model'
 
 
 class MultiModalTasks(object):
@@ -332,9 +369,11 @@ class ModelFile(object):
     ONNX_MODEL_FILE = 'model.onnx'
     LABEL_MAPPING = 'label_mapping.json'
     TRAIN_OUTPUT_DIR = 'output'
+    TRAIN_BEST_OUTPUT_DIR = 'output_best'
     TS_MODEL_FILE = 'model.ts'
     YAML_FILE = 'model.yaml'
     TOKENIZER_FOLDER = 'tokenizer'
+    CONFIG = 'config.json'
 
 
 class Invoke(object):

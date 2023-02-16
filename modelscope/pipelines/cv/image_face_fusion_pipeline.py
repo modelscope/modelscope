@@ -17,10 +17,11 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_face_fusion, module_name=Pipelines.image_face_fusion)
 class ImageFaceFusionPipeline(Pipeline):
-    """ Image face fusion pipeline
-    Example:
+    """
+    Image face fusion pipeline.
 
-    python
+    Examples:
+
     >>> from modelscope.pipelines import pipeline
     >>> image_face_fusion = pipeline(Tasks.image_face_fusion,
                    model='damo/cv_unet-image-face-fusion_damo')
@@ -31,7 +32,6 @@ class ImageFaceFusionPipeline(Pipeline):
        {
         "output_img": [H * W * 3] 0~255, we can use cv2.imwrite to save output_img as an image.
         }
-    >>> #
     """
 
     def __init__(self, model: str, **kwargs):

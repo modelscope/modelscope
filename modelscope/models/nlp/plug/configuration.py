@@ -183,7 +183,6 @@ class PlugNLGConfig(PlugNLUConfig):
 
     Example:
 
-    ```python
     >>> # The PLUG model has 27B parameters and usually need to run on multiple GPUs. The example given
     >>> # here only initializes a slice of the model on a single GPU.
     >>> # Check out the [`~DistributedPipeline.__init__`] method to initialize entire PLUG model.
@@ -197,7 +196,6 @@ class PlugNLGConfig(PlugNLUConfig):
 
     >>> # Accessing the model configuration
     >>> configuration = model.config
-    ```
     """
 
     model_type = 'plugNLG'

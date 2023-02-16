@@ -7,11 +7,14 @@ import torch
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.msdatasets import MsDataset
 from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import DownloadMode, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .models.defaults_config import _C
+from .models.calibration_layer import PrototypicalCalibrationBlock
 from .models.defrcn import DeFRCN
+from .utils.configuration_mapper import CfgMapper
+from .utils.register_data import register_data
 from .utils.requirements_check import requires_version
 
 logger = get_logger()
@@ -26,36 +29,63 @@ class DeFRCNForFewShot(TorchModel):
         Detail configs can be visited on detectron2.config.defaults and .models.defaults_config.
     """
 
-    def __init__(self, model_dir: str, *args, **kwargs):
+    def __init__(self,
+                 model_dir: str,
+                 _cfg_dict: Config = None,
+                 *args,
+                 **kwargs):
         """initialize the few-shot defrcn model from the `model_dir` path.
 
         Args:
             model_dir (str): the model path.
-
+            _cfg_dict (Config): An optional model config. If provided, it will replace
+                the config read out of the `model_name_or_path`
         """
         requires_version()
 
         super().__init__(model_dir, *args, **kwargs)
 
-        self.model_dir = model_dir
-        self.config = Config.from_file(
-            os.path.join(self.model_dir, ModelFile.CONFIGURATION))
+        if _cfg_dict is None:
+            self.config = Config.from_file(
+                os.path.join(model_dir, ModelFile.CONFIGURATION))
+        else:
+            self.config = _cfg_dict
 
-        if 'config_path' in kwargs:
-            self.config.merge_from_dict(
-                {'model.config_path': kwargs['config_path']})
+        self.model_cfg = CfgMapper(self.config).__call__()
 
-        self.model_cfg = _C.clone()
-        self.model_cfg.merge_from_file(
-            os.path.join(model_dir, self.config.model.config_path))
+        data_dir = self.config.safe_get('datasets.root', None)
+        data_type = self.config.safe_get('datasets.type', 'pascal_voc')
 
-        if 'model_weights' in kwargs:
-            self.model_cfg.merge_from_list(
-                ['MODEL.WEIGHTS', kwargs['model_weights']])
-
-        self.model_cfg.freeze()
+        if self.training or self.model_cfg.TEST.PCB_ENABLE:
+            if data_dir is None:  # use default datasets
+                dataset_name = 'VOC_fewshot' if data_type == 'pascal_voc' else 'coco2014_fewshot'
+                logger.warning('data_dir is none, use default {} data.'.format(
+                    dataset_name))
+                data_voc = MsDataset.load(
+                    dataset_name=dataset_name,
+                    namespace='shimin2023',
+                    split='train',
+                    download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS)
+                data_dir = os.path.join(
+                    data_voc.config_kwargs['split_config']['train'], 'data')
+                logger.info('{} datasets download dir is {}'.format(
+                    dataset_name, data_dir))
+            register_data(data_type, data_dir)
 
         self.model = DeFRCN(self.model_cfg)
+
+        if self.model_cfg.TEST.PCB_ENABLE:
+            if not os.path.exists(self.model_cfg.TEST.PCB_MODELPATH):
+                logger.warning('{} no model.'.format(
+                    self.model_cfg.TEST.PCB_MODELPATH))
+                self.model_cfg.TEST.PCB_MODELPATH = os.path.join(
+                    model_dir,
+                    'ImageNetPretrained/torchvision/resnet101-5d3b4d8f.pth')
+                logger.info('PCB use default model {}'.format(
+                    self.model_cfg.TEST.PCB_MODELPATH))
+            self.pcb = PrototypicalCalibrationBlock(self.model_cfg)
+
+        self.model_cfg.freeze()
 
     def forward(self, inputs) -> Any:
         """return the result by the model
@@ -74,6 +104,8 @@ class DeFRCNForFewShot(TorchModel):
     def inference(self, input: Dict[str, Any]) -> Any:
         with torch.no_grad():
             results = self.model([input])
+            if self.model_cfg.TEST.PCB_ENABLE:
+                results = self.pcb.execute_calibration([input], results)
         return results[0] if len(results) > 0 else None
 
     def get_model_cfg(self):

@@ -8,6 +8,7 @@ import torch
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.base.base_model import Model
 from modelscope.models.cv.image_instance_segmentation import (
     CascadeMaskRCNNSwinModel, get_img_ins_seg_result)
 from modelscope.pipelines.base import Input, Pipeline
@@ -40,6 +41,8 @@ class ImageInstanceSegmentationPipeline(Pipeline):
         super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
         if preprocessor is None:
+            assert isinstance(self.model, Model), \
+                f'please check whether model config exists in {ModelFile.CONFIGURATION}'
             config_path = os.path.join(self.model.model_dir,
                                        ModelFile.CONFIGURATION)
             cfg = Config.from_file(config_path)

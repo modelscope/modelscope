@@ -65,6 +65,7 @@ class TokenClassificationPreprocessorBase(Preprocessor):
         label2id: Dict = None,
         label_all_tokens: bool = False,
         mode: str = ModeKeys.INFERENCE,
+        keep_original_columns: List[str] = None,
     ):
         """The base class for all the token-classification tasks.
 
@@ -79,6 +80,8 @@ class TokenClassificationPreprocessorBase(Preprocessor):
                 If label_all_tokens is true, all non-initial sub-tokens will get labels like `I-xxx`,
                 or else the labels will be filled with -100, default False.
             mode: The preprocessor mode.
+            keep_original_columns(List[str], `optional`): The original columns to keep,
+                only available when the input is a `dict`, default None
         """
         super().__init__(mode)
         self.model_dir = model_dir
@@ -86,6 +89,7 @@ class TokenClassificationPreprocessorBase(Preprocessor):
         self.label = label
         self.label2id = label2id
         self.label_all_tokens = label_all_tokens
+        self.keep_original_columns = keep_original_columns
         if self.label2id is None and self.model_dir is not None:
             self.label2id = parse_label_mapping(self.model_dir)
 
@@ -157,6 +161,9 @@ class TokenClassificationPreprocessorBase(Preprocessor):
             k: np.array(v) if isinstance(v, list) else v
             for k, v in outputs.items()
         }
+        if self.keep_original_columns and isinstance(data, dict):
+            for column in self.keep_original_columns:
+                outputs[column] = data[column]
         if self.mode == ModeKeys.INFERENCE:
             outputs['text'] = text
         return outputs
@@ -200,6 +207,7 @@ class TokenClassificationTransformersPreprocessor(
                  mode: str = ModeKeys.INFERENCE,
                  max_length=None,
                  use_fast=None,
+                 keep_original_columns=None,
                  **kwargs):
         """
 
@@ -210,7 +218,7 @@ class TokenClassificationTransformersPreprocessor(
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         super().__init__(model_dir, first_sequence, label, label2id,
-                         label_all_tokens, mode)
+                         label_all_tokens, mode, keep_original_columns)
         self.is_lstm_model = 'lstm' in model_dir
         model_type = None
         if self.is_lstm_model:

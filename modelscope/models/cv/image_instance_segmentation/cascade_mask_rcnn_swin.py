@@ -89,7 +89,7 @@ class CascadeMaskRCNNSwin(nn.Module):
             model_path = os.path.join(kwargs['model_dir'],
                                       ModelFile.TORCH_MODEL_FILE)
             logger.info(f'loading model from {model_path}')
-            weight = torch.load(model_path)['state_dict']
+            weight = torch.load(model_path, map_location='cpu')['state_dict']
             tgt_weight = self.state_dict()
             for name in list(weight.keys()):
                 if name in tgt_weight:

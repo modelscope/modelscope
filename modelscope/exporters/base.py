@@ -6,8 +6,10 @@ from typing import Dict, Union
 from modelscope.models import Model
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import ModelFile
-from modelscope.utils.hub import snapshot_download
+from modelscope.utils.logger import get_logger
 from .builder import build_exporter
+
+logger = get_logger(__name__)
 
 
 class Exporter(ABC):
@@ -46,7 +48,12 @@ class Exporter(ABC):
         if hasattr(cfg, 'export'):
             export_cfg.update(cfg.export)
         export_cfg['model'] = model
-        exporter = build_exporter(export_cfg, task_name, kwargs)
+        try:
+            exporter = build_exporter(export_cfg, task_name, kwargs)
+        except KeyError as e:
+            raise KeyError(
+                f'The exporting of model \'{model_cfg.type}\' with task: \'{task_name}\' '
+                f'is not supported currently.') from e
         return exporter
 
     @abstractmethod

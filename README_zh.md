@@ -41,7 +41,7 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 
 <p align="center">
     <br>
-    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif"/>
+    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif" width="1024"/>
     <br>
 <p>
 

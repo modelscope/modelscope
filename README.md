@@ -40,6 +40,12 @@ Apart from harboring implementations of various models, ModelScope library also 
 
 Hundreds of models are made publicly available on ModelScope (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in the fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use cloud CPU/GPU development environment, and is only a click away on ModelScope website.
 
+<p align="center">
+    <br>
+    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif" width="1024"/>
+    <br>
+<p>
+
 Some of the representative examples include:
 
 NLP:

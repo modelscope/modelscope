@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -326,6 +326,14 @@ class TextErrorCorrectionOutput(ModelOutputBase):
     """
 
     predictions: np.ndarray = None
+
+
+@dataclass
+class WordAlignmentOutput(ModelOutputBase):
+    """The output class for word alignment models.
+    """
+
+    predictions: List = None
 
 
 @dataclass

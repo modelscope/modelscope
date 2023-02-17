@@ -1,7 +1,7 @@
 
 <p align="center">
     <br>
-    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/logo.png" width="400"/>
+    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/modelscope.gif" width="400"/>
     <br>
 <p>
 
@@ -43,71 +43,71 @@ Here are some examples:
 
 NLP:
 
-[nlp_gpt3_text-generation_2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
+* [nlp_gpt3_text-generation_2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
 
-[ChatYuan-large](https://modelscope.cn/models/ClueAI/ChatYuan-large)
+* [ChatYuan-large](https://modelscope.cn/models/ClueAI/ChatYuan-large)
 
-[mengzi-t5-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
+* [mengzi-t5-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
 
-[nlp_csanmt_translation_en2zh](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
+* [nlp_csanmt_translation_en2zh](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
 
-[nlp_raner_named-entity-recognition_chinese-base-news](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
+* [nlp_raner_named-entity-recognition_chinese-base-news](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
 
-[nlp_structbert_word-segmentation_chinese-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
+* * [nlp_structbert_word-segmentation_chinese-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
 
-[Erlangshen-RoBERTa-330M-Sentiment](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
+* [Erlangshen-RoBERTa-330M-Sentiment](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
 
-[nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
+* [nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
 
 Audio:
 
-[speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
 
-[speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
 
-[speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
 
-[u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+* [u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
 
-[speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
+* [speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
 
-[speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
+* [speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
 
 
 CV:
 
-[cv_tinynas_object-detection_damoyolo](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
+* [cv_tinynas_object-detection_damoyolo](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
 
-[cv_unet_person-image-cartoon_compound-models](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
+* [cv_unet_person-image-cartoon_compound-models](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
 
-[cv_convnextTiny_ocr-recognition-general_damo](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
+* [cv_convnextTiny_ocr-recognition-general_damo](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
 
-[cv_resnet18_human-detection](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
+* [cv_resnet18_human-detection](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
 
-[cv_resnet50_face-detection_retinaface](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
+* [cv_resnet50_face-detection_retinaface](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
 
-[cv_unet_image-matting](https://modelscope.cn/models/damo/cv_unet_image-matting)
+* [cv_unet_image-matting](https://modelscope.cn/models/damo/cv_unet_image-matting)
 
-[cv_F3Net_product-segmentation](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
+* [cv_F3Net_product-segmentation](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
 
-[cv_resnest101_general_recognition](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
+* [cv_resnest101_general_recognition](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
 
 
 Multi-Modal:
 
-[multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
 
-[ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
 
-[Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
 
-[mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
 
 AI for Science:
 
-[uni-fold-monomer](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
+* [uni-fold-monomer](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
 
-[uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
+* [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
 # QuickTour
 
@@ -162,11 +162,13 @@ For finetuning and evaluation, you need ten more lines of code to construct data
 
 # Why should I use ModelScope library
 
-1. ModelScope library provides a unified way for model inference, training, and evaluation, which is simple to use.
+1. A unified and concise user interface is abstracted for different tasks and different models. Three lines of code complete the inference, and 10 lines of code complete the model training. It is convenient for users to use different models in multiple fields in the ModelScope community. It is ready to use and easy to get started with AI. and teaching.
 
-2. ModelScope library provides interfaces and implementations for different models to access the ModelScope ecosystem. It is compatible with various machine learning frameworks and seamlessly connects model application and development.
+2. Construct a model-centric development and application experience, support model training, inference, export and deployment, and facilitate users to build their own MLOps based on the ModelScope Library.
 
-3. There are more than 600 models in ModelScope community, covering CV, speech, NLP, multi-modality and AI for Science, covering more than 60 tasks. It contains nearly a hundred SOTA (industry-leading) models and more than a dozen pre-trained large models, all of which have been open source or open for use.
+3. For the model inference and training process, a modular design is carried out, and a wealth of functional module implementations are provided, which is convenient for users to customize development to customize their own model inference, training and other processes.
+
+4. For distributed model training, especially for large models, it provides rich training strategy support.
 
 # Installation
 ModelScope Library currently supports tensorflow and pytorch deep learning framework for model training and inference, and it is tested and run on Python 3.7+, Pytorch 1.8+, Tensorflow1.15 or Tensorflow2.0+.

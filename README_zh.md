@@ -1,7 +1,7 @@
 
 <p align="center">
     <br>
-    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/logo.png" width="400"/>
+    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/modelscope.gif" width="400"/>
     <br>
 <p>
 
@@ -43,71 +43,71 @@ ModelScope开源了600多个模型，涵盖NLP、CV、Audio、多模态、科学
 
 自然语言处理：
 
-[GPT-3预训练生成模型-中文-2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
+* [GPT-3预训练生成模型-中文-2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
 
-[元语功能型对话大模型](https://modelscope.cn/models/ClueAI/ChatYuan-large)
+* [元语功能型对话大模型](https://modelscope.cn/models/ClueAI/ChatYuan-large)
 
-[孟子T5预训练生成模型-中文-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
+* [孟子T5预训练生成模型-中文-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
 
-[CSANMT连续语义增强机器翻译-英中-通用领域-large](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
+* [CSANMT连续语义增强机器翻译-英中-通用领域-large](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
 
-[RaNER命名实体识别-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
+* [RaNER命名实体识别-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
 
-[BAStructBERT分词-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
+* [BAStructBERT分词-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
 
-[二郎神-RoBERTa-330M-情感分类](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
+* [二郎神-RoBERTa-330M-情感分类](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
 
-[SPACE-T表格问答预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
+* [SPACE-T表格问答预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
 
 语音：
 
-[Paraformer语音识别-中文-通用-16k-离线-large-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [Paraformer语音识别-中文-通用-16k-离线-large-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
 
-[语音合成-中文-多情感领域-16k-多发音人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [语音合成-中文-多情感领域-16k-多发音人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
 
-[CTC语音唤醒-移动端-单麦-16k-小云小云](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [CTC语音唤醒-移动端-单麦-16k-小云小云](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
 
-[WeNet-U2pp_Conformer-语音识别-中文-16k-实时](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+* [WeNet-U2pp_Conformer-语音识别-中文-16k-实时](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
 
-[FRCRN语音降噪-单麦-16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
+* [FRCRN语音降噪-单麦-16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
 
-[DFSMN回声消除-单麦单参考-16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
+* [DFSMN回声消除-单麦单参考-16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
 
 
 计算机视觉：
 
-[DAMOYOLO-高性能通用检测模型-S](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
+* [DAMOYOLO-高性能通用检测模型-S](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
 
-[DCT-Net人像卡通化](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
+* [DCT-Net人像卡通化](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
 
-[读光-文字识别-行识别模型-中英-通用领域](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
+* [读光-文字识别-行识别模型-中英-通用领域](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
 
-[人体检测-通用-Base](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
+* [人体检测-通用-Base](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
 
-[RetinaFace人脸检测关键点模型](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
+* [RetinaFace人脸检测关键点模型](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
 
-[BSHM人像抠图](https://modelscope.cn/models/damo/cv_unet_image-matting)
+* [BSHM人像抠图](https://modelscope.cn/models/damo/cv_unet_image-matting)
 
-[图像分割-商品展示图场景的商品分割-电商领域](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
+* [图像分割-商品展示图场景的商品分割-电商领域](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
 
-[万物识别-中文-通用领域](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
+* [万物识别-中文-通用领域](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
 
 
 多模态：
 
-[CLIP模型-中文-通用领域-base](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [CLIP模型-中文-通用领域-base](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
 
-[OFA预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [OFA预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
 
-[太乙-Stable-Diffusion-1B-中文-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [太乙-Stable-Diffusion-1B-中文-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
 
-[mPLUG视觉问答模型-英文-large](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [mPLUG视觉问答模型-英文-large](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
 
 科学计算：
 
-[Uni-Fold-Monomer 开源的蛋白质单体结构预测模型](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
+* [Uni-Fold-Monomer 开源的蛋白质单体结构预测模型](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
 
-[Uni-Fold-Multimer 开源的蛋白质复合物结构预测模型](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
+* [Uni-Fold-Multimer 开源的蛋白质复合物结构预测模型](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
 # 快速上手
 
@@ -161,12 +161,13 @@ ModelScope开源了600多个模型，涵盖NLP、CV、Audio、多模态、科学
 
 # 为什么要用ModelScope library
 
-1. 魔搭ModelScope Library针对模型推理、训练、评估提供了统一的接口，开箱即用。
+1. 针对不同任务、不同模型抽象了统一简洁的用户接口，3行代码完成推理，10行代码完成模型训练，方便用户使用ModelScope社区中多个领域的不同模型，开箱即用，便于AI入门和教学。
 
-2. 魔搭ModelScope Library提供了不同模型接入ModelScope生态的接口和实现，底层能够兼容各种机器学习框架，无缝衔接模型应用与开发。
+2. 构造以模型为中心的开发应用体验，支持模型训练、推理、导出部署，方便用户基于ModelScope Library构建自己的MLOps.
 
-3. 魔搭ModelScope社区上架模型超过600个，覆盖了视觉、语音、自然语言处理、多模态等AI主要领域，覆盖任务超过60个。其中包含近百个SOTA（业界领先）模型和十多个预训练大模型，均已开源代码或开放使用。 。
+3. 针对模型推理、训练流程，进行了模块化的设计，并提供了丰富的功能模块实现，方便用户定制化开发来自定义自己的推理、训练等过程。
 
+4. 针对分布式模型训练，尤其是大模型，提供了丰富的训练策略支持。
 
 # 安装
 ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.15/Tensorflow2.0+测试可运行。

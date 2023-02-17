@@ -168,9 +168,11 @@ For finetuning and evaluation, you need ten more lines of code to construct data
 
 3. For the model inference and training process, a modular design is carried out, and a wealth of functional module implementations are provided, which is convenient for users to customize development to customize their own model inference, training and other processes.
 
-4. For distributed model training, especially for large models, it provides rich training strategy support.
+4. For distributed model training, especially for large models, it provides rich training strategy support, including data parallel, model parallel, hybrid parallel and so on.
 
 # Installation
+
+## Docker
 ModelScope Library currently supports tensorflow and pytorch deep learning framework for model training and inference, and it is tested and run on Python 3.7+, Pytorch 1.8+, Tensorflow1.15 or Tensorflow2.0+.
 
 In order to allow everyone to directly use all the models on the ModelScope platform without configuring the environment, ModelScope provides official docker image for developers who need it. Based on the official image, you can skip all environment installation and configuration and use it directly. Currently, the latest version of the CPU image and GPU image we provide can be obtained from the following address
@@ -184,6 +186,8 @@ GPU docker image
 ```shell
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.3.0
 ```
+
+## Setup Local Python Environment
 
 Also you can setup your local python environment using pip and conda.  We suggest to use [anaconda](https://docs.anaconda.com/anaconda/install/) to create your python environment:
 

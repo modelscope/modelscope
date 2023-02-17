@@ -30,14 +30,14 @@
 
 # 简介
 
-[ModelScope]( https://www.modelscope.cn) 是一个“模型即服务”(MaaS) 平台，旨在汇集来自 AI 社区的最先进的机器学习模型，并简化流程在实际应用中利用 AI 模型。核心 ModelScope 库使开发人员能够通过丰富的 API 设计层执行推理、训练和评估，从而促进跨不同 AI 领域的最先进模型的统一体验。
+[ModelScope]( https://www.modelscope.cn) 是一个“模型即服务”(MaaS)平台，旨在汇集来自AI社区的最先进的机器学习模型，并简化在实际应用中使用AI模型的流程。ModelScope库使开发人员能够通过丰富的API设计执行推理、训练和评估，从而促进跨不同AI领域的最先进模型的统一体验。
 
-Python 库为模型贡献者提供了必要的分层 API，以便将来自 CV、NLP、语音、多模态以及科学计算的模型集成到 ModelScope 生态系统中。所有这些不同模型的实现都以一种允许轻松统一访问的方式封装在库中。通过这种集成，只需几行代码即可完成模型推理、微调和评估。同时，提供了灵活性，以便在必要时也可以自定义模型应用程序中的不同组件。
+ModelScope Library为模型贡献者提供了必要的分层API，以便将来自 CV、NLP、语音、多模态以及科学计算的模型集成到ModelScope生态系统中。所有这些不同模型的实现都以一种简单统一访问的方式进行封装，用户只需几行代码即可完成模型推理、微调和评估。同时，灵活的模块化设计使得在必要时也可以自定义模型训练推理过程中的不同组件。
 
-除了包含各种模型的实现之外，ModelScope 库还支持与 ModelScope 后端服务进行必要的交互，特别是与 Model-Hub 和 Dataset-Hub 的交互。这种交互促进了各种实体（模型和数据集）的管理在后台无缝执行，包括实体查找、版本控制、缓存管理等。
+除了包含各种模型的实现之外，ModelScope Library还支持与ModelScope后端服务进行必要的交互，特别是与Model-Hub和Dataset-Hub的交互。这种交互促进了模型和数据集的管理在后台无缝执行，包括模型数据集查询、版本控制、缓存管理等。
 
 # 部分模型和在线体验
-ModelScope开源了600多个模型，涵盖NLP、CV、Audio、多模态、科学计算等，还包含数百个SOTA模型。用户可以进入ModelScope的模型中心零门槛在线体验，或者Notebook方式体验模型。
+ModelScope开源了600多个模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，还包含数百个SOTA模型。用户可以进入ModelScope的模型中心零门槛在线体验，或者Notebook方式体验模型。
 
 示例如下:
 
@@ -167,12 +167,14 @@ ModelScope开源了600多个模型，涵盖NLP、CV、Audio、多模态、科学
 
 3. 针对模型推理、训练流程，进行了模块化的设计，并提供了丰富的功能模块实现，方便用户定制化开发来自定义自己的推理、训练等过程。
 
-4. 针对分布式模型训练，尤其是大模型，提供了丰富的训练策略支持。
+4. 针对分布式模型训练，尤其是大模型，提供了丰富的训练策略支持，包括数据并行、模型并行、混合并行等。
 
 # 安装
+
+## 镜像
 ModelScope Library目前支持tensorflow，pytorch深度学习框架进行模型训练、推理， 在Python 3.7+, Pytorch 1.8+, Tensorflow1.15/Tensorflow2.0+测试可运行。
 
-为了让大家能直接用上ModelScope平台上的所有模型，无需配置环境，ModelScope除了在网站上集成了Notebook在线编程环境以外，同时也提供了官方镜像，方便有需要的开发者获取。基于官方镜像，可以跳过所有的环境安装和配置，直接使用，当前我们提供的最新版本的CPU镜像和GPU镜像可从如下地址获取：
+为了让大家能直接用上ModelScope平台上的所有模型，无需配置环境，ModelScope提供了官方镜像，方便有需要的开发者获取。地址如下：
 
 CPU镜像
 ```shell
@@ -183,6 +185,8 @@ GPU镜像
 ```shell
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.3.0
 ```
+
+## 搭建本地Python环境
 
 你也可以使用pip和conda搭建本地python环境，我们推荐使用[Anaconda](https://docs.anaconda.com/anaconda/install/)，安装完成后，执行如下命令为modelscope library创建对应的python环境：
 ```shell

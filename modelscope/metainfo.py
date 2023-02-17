@@ -431,6 +431,7 @@ class Pipelines(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    language_identification = 'language_identification'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'

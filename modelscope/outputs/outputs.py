@@ -856,7 +856,7 @@ TASK_OUTPUTS = {
     #               p( </s> | 呀 ) = 0.01524554 [ -4.18346834 ]
     #           logprob= -17.755 ppl= 12.6345
     # "}
-    Tasks.language_model: [OutputKeys.TEXT],
+    Tasks.language_score_prediction: [OutputKeys.TEXT],
 
     # audio processed for single file in PCM format
     # {

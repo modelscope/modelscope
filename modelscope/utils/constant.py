@@ -213,7 +213,7 @@ class AudioTasks(object):
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
     voice_activity_detection = 'voice-activity-detection'
-    language_model = 'language-model'
+    language_score_prediction = 'language-score-prediction'
 
 
 class MultiModalTasks(object):

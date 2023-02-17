@@ -37,7 +37,13 @@ ModelScope Library为模型贡献者提供了必要的分层API，以便将来�
 除了包含各种模型的实现之外，ModelScope Library还支持与ModelScope后端服务进行必要的交互，特别是与Model-Hub和Dataset-Hub的交互。这种交互促进了模型和数据集的管理在后台无缝执行，包括模型数据集查询、版本控制、缓存管理等。
 
 # 部分模型和在线体验
-ModelScope开源了600多个模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，还包含数百个SOTA模型。用户可以进入ModelScope的模型中心零门槛在线体验，或者Notebook方式体验模型。
+ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
+
+<p align="center">
+    <br>
+    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif"/>
+    <br>
+<p>
 
 示例如下:
 
@@ -136,8 +142,9 @@ ModelScope开源了600多个模型，涵盖自然语言处理、计算机视觉�
 输出图像如下
 ![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
 
-对于微调和评估模型， 你需要通过十多行代码构建dataset和trainer，调用`trainer.train()`和`trainer.evaluate()`即可.
+对于微调和评估模型， 你需要通过十多行代码构建dataset和trainer，调用`trainer.train()`和`trainer.evaluate()`即可。
 
+例如我们利用gpt3 1.3B的模型，加载是诗歌数据集进行finetune，可以完成古诗生成模型的训练。
 ```python
 >>> from modelscope.metainfo import Trainers
 >>> from modelscope.msdatasets import MsDataset

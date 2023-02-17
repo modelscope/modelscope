@@ -37,9 +37,10 @@ The Python library offers the layered-APIs necessary for model contributors to i
 Apart from harboring implementations of various models, ModelScope library also enables the necessary interactions with ModelScope backend services, particularly with the Model-Hub and Dataset-Hub. Such interactions facilitate management of  various entities (models and datasets) to be performed seamlessly under-the-hood, including entity lookup, version control, cache management, and many others.
 
 # Models and Online Demos
-ModelScope has open-sourced more than 600 models, covering NLP, CV, Audio, Multi-modality, and AI for Science, etc., and also contains hundreds of SOTA models. Users can enter the modelhub of ModelScope through Zero-threshold online experience, or experience the model in the way of developing a cloud environment.
 
-Here are some examples:
+Hundreds of models are made publicly available on ModelScope (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in the fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use cloud CPU/GPU development environment, and is only a click away on ModelScope website.
+
+Some of the representative examples include:
 
 NLP:
 
@@ -113,7 +114,8 @@ AI for Science:
 
 We provide unified interface for inference using `pipeline`, finetuning and evaluation using `Trainer` for different tasks.
 
-For any tasks with any type of input(image, text, audio, video...), you need only 3 lines of code to load model and get the inference result as follows:
+For any given task with any type of input (image, text, audio, video...), inference pipeline can be implemented with only a few lines of code, which will automatically load the associated model to get inference result, as is exemplified below:
+
 ```python
 >>> from modelscope.pipelines import pipeline
 >>> word_segmentation = pipeline('word-segmentation',model='damo/nlp_structbert_word-segmentation_chinese-base')
@@ -138,6 +140,8 @@ The output image is
 
 For finetuning and evaluation, you need ten more lines of code to construct dataset and trainer, and by calling `traner.train()` and
 `trainer.evaluate()` you can finish finetuning and evaluating a certain model.
+
+For example, we use the gpt3 1.3B model to load the chinese poetry dataset and finetune the model, the resulted model can be used for poetry generation.
 
 ```python
 >>> from modelscope.metainfo import Trainers

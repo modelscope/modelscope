@@ -21,7 +21,7 @@
 <h4 align="center">
     <p>
         <b>English</b> |
-        <a href="https://github.com/modelscope/modelscope/blob/master/README_zh.md">中文</a> |
+        <a href="https://github.com/modelscope/modelscope/blob/master/README_zh.md">中文</a>
     <p>
 </h4>
 
@@ -42,7 +42,7 @@ Hundreds of models are made publicly available on ModelScope (600+ and counting)
 
 <p align="center">
     <br>
-    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif" width="1024"/>
+    <img src="data/resource/inference.gif" width="1024"/>
     <br>
 <p>
 
@@ -131,7 +131,7 @@ For any given task with any type of input (image, text, audio, video...), infere
 
 Given an image, you can use following code to cut out the human.
 
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989748829-9ab3aa9b-461d-44f8-98fb-c85bc6f670f9.png)
+![image](data/resource/portrait_input.png)
 
 ```python
 >>> import cv2
@@ -142,7 +142,7 @@ Given an image, you can use following code to cut out the human.
 >>> cv2.imwrite('result.png', result['output_img'])
 ```
 The output image is
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
+![image](data/resource/portrait_output.png)
 
 For finetuning and evaluation, you need ten more lines of code to construct dataset and trainer, and by calling `traner.train()` and
 `trainer.evaluate()` you can finish finetuning and evaluating a certain model.

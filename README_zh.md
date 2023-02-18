@@ -21,7 +21,7 @@
 <h4 align="center">
     <p>
       <a href="https://github.com/modelscope/modelscope/blob/master/README.md">English</a> |
-       <b>中文</b> |
+       <b>中文</b>
     <p>
 </h4>
 

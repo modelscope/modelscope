@@ -21,7 +21,7 @@
 <h4 align="center">
     <p>
         <b>English</b> |
-        <a href="https://github.com/modelscope/modelscope/blob/master/README_zh.md">中文</a> |
+        <a href="https://github.com/modelscope/modelscope/blob/master/README_zh.md">中文</a>
     <p>
 </h4>
 
@@ -40,6 +40,12 @@ Apart from harboring implementations of a wide range of different models, ModelS
 # Models and Online Accessibility
 
 Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+
+<p align="center">
+    <br>
+    <img src="data/resource/inference.gif" width="1024"/>
+    <br>
+<p>
 
 Some representative examples include:
 
@@ -126,7 +132,7 @@ For any given task with any type of input (image, text, audio, video...), infere
 
 Given an image, portrait matting (aka. background-removal) can be accomplished with the following code snippet:
 
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989748829-9ab3aa9b-461d-44f8-98fb-c85bc6f670f9.png)
+![image](data/resource/portrait_input.png)
 
 ```python
 >>> import cv2
@@ -138,7 +144,8 @@ Given an image, portrait matting (aka. background-removal) can be accomplished w
 ```
 
 The output image with the background removed is:
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
+![image](data/resource/portrait_output.png)
+
 
 Fine-tuning and evaluation can also be done with a few more lines of code to set up training dataset and trainer, with the heavy-lifting work of training and evaluation a model encapsulated in the implementation of  `traner.train()` and
 `trainer.evaluate()`  interfaces.
@@ -179,6 +186,7 @@ For example, the gpt3 base model (1.3B) can be fine-tuned with the chinese-poetr
 # Installation
 
 ## Docker
+
 ModelScope Library currently supports popular deep learning framework for model training and inference, including PyTorch, TensorFlow and ONNX. All releases are tested and run on Python 3.7+, Pytorch 1.8+, Tensorflow1.15 or Tensorflow2.0+.
 
 To allow out-of-box usage for all the models on ModelScope, official docker images are provided for all releases. Based on the docker image, developers can skip all environment installation and configuration and use it directly. Currently, the latest version of the CPU image and GPU image can be obtained from:

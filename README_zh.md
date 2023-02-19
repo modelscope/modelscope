@@ -21,7 +21,7 @@
 <h4 align="center">
     <p>
       <a href="https://github.com/modelscope/modelscope/blob/master/README.md">English</a> |
-       <b>中文</b> |
+       <b>中文</b>
     <p>
 </h4>
 
@@ -41,7 +41,7 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 
 <p align="center">
     <br>
-    <img src="https://modelscope.oss-cn-beijing.aliyuncs.com/resource/inference.gif"/>
+    <img src="data/resource/inference.gif" width="1024"/>
     <br>
 <p>
 
@@ -129,7 +129,7 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 
 给定一张图片，你可以使用如下代码进行人像抠图.
 
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989748829-9ab3aa9b-461d-44f8-98fb-c85bc6f670f9.png)
+![image](data/resource/portrait_input.png)
 
 ```python
 >>> import cv2
@@ -140,7 +140,7 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 >>> cv2.imwrite('result.png', result['output_img'])
 ```
 输出图像如下
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
+![image](data/resource/portrait_output.png)
 
 对于微调和评估模型， 你需要通过十多行代码构建dataset和trainer，调用`trainer.train()`和`trainer.evaluate()`即可。
 

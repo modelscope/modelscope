@@ -30,17 +30,18 @@
 
 # Introduction
 
-[ModelScope]( https://www.modelscope.cn) is a “Model-as-a-Service” (MaaS) platform that seeks to bring together most advanced machine learning models from the AI community, and to streamline the process of leveraging AI models in real applications. The core ModelScope library enables developers to perform inference, training and evaluation, through rich layers of API designs that facilitate a unified experience across state-of-the-art models from different AI domains.
+[ModelScope]( https://www.modelscope.cn) is built upon the notion of “Model-as-a-Service” (MaaS). It seeks to bring together most advanced machine learning models from the AI community, and streamlines the process of leveraging AI models in real-world applications. The core ModelScope library open-sourced in this repository provides the interfaces and implementations that allow developers to perform  model inference, training and evaluation.
 
-The Python library offers the layered-APIs necessary for model contributors to integrate models from CV, NLP, Speech, Multi-Modality, as well as Scientific-computation, into the ModelScope ecosystem. Implementations for all these different models are encapsulated within the library in a way that allows easy and unified access. With such integration, model inference, finetuning, and evaluations can be done with only a few lines of codes. In the meantime, flexibilities are provided so that different components in the model applications can be customized as well, where necessary.
 
-Apart from harboring implementations of various models, ModelScope library also enables the necessary interactions with ModelScope backend services, particularly with the Model-Hub and Dataset-Hub. Such interactions facilitate management of  various entities (models and datasets) to be performed seamlessly under-the-hood, including entity lookup, version control, cache management, and many others.
+In particular, with rich layers of API-abstraction, the ModelScope library offers unified experience to explore state-of-the-art models spanning across domains such as CV, NLP, Speech, Multi-Modality, and Scientific-computation. Model contributors of different areas can integrate models into the ModelScope ecosystem through the layered-APIs, allowing easy and unified access to their models. Once integrated, model inference, fine-tuning, and evaluations can be done with only a few lines of codes. In the meantime, flexibilities are also provided so that different components in the model applications can be customized wherever necessary.
 
-# Models and Online Demos
+Apart from harboring implementations of a wide range of different models, ModelScope library also enables the necessary interactions with ModelScope backend services, particularly with the Model-Hub and Dataset-Hub. Such interactions facilitate management of  various entities (models and datasets) to be performed seamlessly under-the-hood, including entity lookup, version control, cache management, and many others.
 
-Hundreds of models are made publicly available on ModelScope (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in the fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use cloud CPU/GPU development environment, and is only a click away on ModelScope website.
+# Models and Online Accessibility
 
-Some of the representative examples include:
+Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+
+Some representative examples include:
 
 NLP:
 
@@ -112,9 +113,9 @@ AI for Science:
 
 # QuickTour
 
-We provide unified interface for inference using `pipeline`, finetuning and evaluation using `Trainer` for different tasks.
+We provide unified interface for inference using `pipeline`, fine-tuning and evaluation using `Trainer` for different tasks.
 
-For any given task with any type of input (image, text, audio, video...), inference pipeline can be implemented with only a few lines of code, which will automatically load the associated model to get inference result, as is exemplified below:
+For any given task with any type of input (image, text, audio, video...), inference pipeline can be implemented with only a few lines of code, which will automatically load the underlying model to get inference result, as is exemplified below:
 
 ```python
 >>> from modelscope.pipelines import pipeline
@@ -123,7 +124,7 @@ For any given task with any type of input (image, text, audio, video...), infere
 {'output': '今天 天气 不错 ， 适合 出去 游玩'}
 ```
 
-Given an image, you can use following code to cut out the human.
+Given an image, portrait matting (aka. background-removal) can be accomplished with the following code snippet:
 
 ![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989748829-9ab3aa9b-461d-44f8-98fb-c85bc6f670f9.png)
 
@@ -135,13 +136,14 @@ Given an image, you can use following code to cut out the human.
 >>> result = portrait_matting('https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matting.png')
 >>> cv2.imwrite('result.png', result['output_img'])
 ```
-The output image is
+
+The output image with the background removed is:
 ![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
 
-For finetuning and evaluation, you need ten more lines of code to construct dataset and trainer, and by calling `traner.train()` and
-`trainer.evaluate()` you can finish finetuning and evaluating a certain model.
+Fine-tuning and evaluation can also be done with a few more lines of code to set up training dataset and trainer, with the heavy-lifting work of training and evaluation a model encapsulated in the implementation of  `traner.train()` and
+`trainer.evaluate()`  interfaces.
 
-For example, we use the gpt3 1.3B model to load the chinese poetry dataset and finetune the model, the resulted model can be used for poetry generation.
+For example, the gpt3 base model (1.3B) can be fine-tuned with the chinese-poetry dataset, resulting in a model that can be used for chinese-poetry generation.
 
 ```python
 >>> from modelscope.metainfo import Trainers
@@ -166,20 +168,20 @@ For example, we use the gpt3 1.3B model to load the chinese poetry dataset and f
 
 # Why should I use ModelScope library
 
-1. A unified and concise user interface is abstracted for different tasks and different models. Three lines of code complete the inference, and 10 lines of code complete the model training. It is convenient for users to use different models in multiple fields in the ModelScope community. It is ready to use and easy to get started with AI. and teaching.
+1. A unified and concise user interface is abstracted for different tasks and different models. Model inferences and training can be implemented by as few as 3 and 10 lines of code, respectively. It is convenient for users to explore models in different fields in the ModelScope community. All models integrated into ModelScope are ready to use, which makes it easy to get started with AI, in both educational and industrial settings.
 
-2. Construct a model-centric development and application experience, support model training, inference, export and deployment, and facilitate users to build their own MLOps based on the ModelScope Library.
+2. ModelScope offers a model-centric development and application experience. It streamlines the support for model training, inference, export and deployment, and facilitates users to build their own MLOps based on the ModelScope ecosystem.
 
-3. For the model inference and training process, a modular design is carried out, and a wealth of functional module implementations are provided, which is convenient for users to customize development to customize their own model inference, training and other processes.
+3. For the model inference and training process, a modular design is put in place, and a wealth of functional module implementations are provided, which is convenient for users to customize their own model inference, training and other processes.
 
 4. For distributed model training, especially for large models, it provides rich training strategy support, including data parallel, model parallel, hybrid parallel and so on.
 
 # Installation
 
 ## Docker
-ModelScope Library currently supports tensorflow and pytorch deep learning framework for model training and inference, and it is tested and run on Python 3.7+, Pytorch 1.8+, Tensorflow1.15 or Tensorflow2.0+.
+ModelScope Library currently supports popular deep learning framework for model training and inference, including PyTorch, TensorFlow and ONNX. All releases are tested and run on Python 3.7+, Pytorch 1.8+, Tensorflow1.15 or Tensorflow2.0+.
 
-In order to allow everyone to directly use all the models on the ModelScope platform without configuring the environment, ModelScope provides official docker image for developers who need it. Based on the official image, you can skip all environment installation and configuration and use it directly. Currently, the latest version of the CPU image and GPU image we provide can be obtained from the following address
+To allow out-of-box usage for all the models on ModelScope, official docker images are provided for all releases. Based on the docker image, developers can skip all environment installation and configuration and use it directly. Currently, the latest version of the CPU image and GPU image can be obtained from:
 
 CPU docker image
 ```shell
@@ -193,20 +195,20 @@ registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.
 
 ## Setup Local Python Environment
 
-Also you can setup your local python environment using pip and conda.  We suggest to use [anaconda](https://docs.anaconda.com/anaconda/install/) to create your python environment:
+One can also set up local ModelScope environment using pip and conda.  We suggest [anaconda](https://docs.anaconda.com/anaconda/install/) for creating local python environment:
 
 ```shell
 conda create -n modelscope python=3.7
 conda activate modelscope
 ```
 
-Then you can install pytorch or tensorflow according to your model requirements.
+PyTorch or TensorFlow can be installed separately according to each model's requirements.
 * Install pytorch [doc](https://pytorch.org/get-started/locally/)
 * Install tensorflow [doc](https://www.tensorflow.org/install/pip)
 
-After installing the necessary framework, you can install modelscope library as follows:
+After installing the necessary machine-learning framework, you can install modelscope library as follows:
 
-If you only want to download models and datasets, install modelscope framework
+If you only want to play around with the modelscope framework, of trying out model/dataset download, you can install the core modelscope components:
 ```shell
 pip install modelscope
 ```
@@ -237,7 +239,7 @@ pip install modelscope[science] -f https://modelscope.oss-cn-beijing.aliyuncs.co
 ```
 
 `Notes`:
-1. Currently, some audio-task models only support python3.7, tensorflow1.15.4 Linux environments. Most other models can be installed and used on windows and Mac (x86).
+1. Currently, some audio-task models only support python3.7, tensorflow1.15.4 Linux environments. Most other models can be installed and used on Windows and Mac (x86).
 
 2. Some models in the audio field use the third-party library SoundFile for wav file processing. On the Linux system, users need to manually install libsndfile of SoundFile([doc link](https://github.com/bastibe/python-soundfile#installation)). On Windows and MacOS, it will be installed automatically without user operation. For example, on Ubuntu, you can use following commands:
     ```shell

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .token_classification import BertForTokenClassification
     from .document_segmentation import BertForDocumentSegmentation
     from .siamese_uie import SiameseUieModel
+    from .word_alignment import MBertForWordAlignment
 else:
     _import_structure = {
         'backbone': [

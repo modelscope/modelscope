@@ -41,6 +41,12 @@ Apart from harboring implementations of a wide range of different models, ModelS
 
 Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
 
+<p align="center">
+    <br>
+    <img src="data/resource/inference.gif" width="1024"/>
+    <br>
+<p>
+
 Some representative examples include:
 
 NLP:
@@ -126,7 +132,7 @@ For any given task with any type of input (image, text, audio, video...), infere
 
 Given an image, portrait matting (aka. background-removal) can be accomplished with the following code snippet:
 
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989748829-9ab3aa9b-461d-44f8-98fb-c85bc6f670f9.png)
+![image](data/resource/portrait_input.png)
 
 ```python
 >>> import cv2
@@ -138,7 +144,8 @@ Given an image, portrait matting (aka. background-removal) can be accomplished w
 ```
 
 The output image with the background removed is:
-![image](https://resouces.modelscope.cn/document/docdata/2023-2-16_20:53/dist/ModelScope%20Library%E6%95%99%E7%A8%8B/resources/1656989768092-5470f8ac-cda8-4703-ac98-dbb6fd675b34.png)
+![image](data/resource/portrait_output.png)
+
 
 Fine-tuning and evaluation can also be done with a few more lines of code to set up training dataset and trainer, with the heavy-lifting work of training and evaluation a model encapsulated in the implementation of  `traner.train()` and
 `trainer.evaluate()`  interfaces.
@@ -173,150 +180,6 @@ For example, the gpt3 base model (1.3B) can be fine-tuned with the chinese-poetr
 2. ModelScope offers a model-centric development and application experience. It streamlines the support for model training, inference, export and deployment, and facilitates users to build their own MLOps based on the ModelScope ecosystem.
 
 3. For the model inference and training process, a modular design is put in place, and a wealth of functional module implementations are provided, which is convenient for users to customize their own model inference, training and other processes.
-
-4. For distributed model training, especially for large models, it provides rich training strategy support, including data parallel, model parallel, hybrid parallel and so on.
-
-# Models and Online Demos
-
-Hundreds of models are made publicly available on ModelScope (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in the fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use cloud CPU/GPU development environment, and is only a click away on ModelScope website.
-
-<p align="center">
-    <br>
-    <img src="data/resource/inference.gif" width="1024"/>
-    <br>
-<p>
-
-Some of the representative examples include:
-
-NLP:
-
-* [nlp_gpt3_text-generation_2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
-
-* [ChatYuan-large](https://modelscope.cn/models/ClueAI/ChatYuan-large)
-
-* [mengzi-t5-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
-
-* [nlp_csanmt_translation_en2zh](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
-
-* [nlp_raner_named-entity-recognition_chinese-base-news](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
-
-* [nlp_structbert_word-segmentation_chinese-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
-
-* [Erlangshen-RoBERTa-330M-Sentiment](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
-
-* [nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
-
-Audio:
-
-* [speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
-
-* [speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
-
-* [speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
-
-* [u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
-
-* [speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
-
-* [speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
-
-
-CV:
-
-* [cv_tinynas_object-detection_damoyolo](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
-
-* [cv_unet_person-image-cartoon_compound-models](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
-
-* [cv_convnextTiny_ocr-recognition-general_damo](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
-
-* [cv_resnet18_human-detection](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
-
-* [cv_resnet50_face-detection_retinaface](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
-
-* [cv_unet_image-matting](https://modelscope.cn/models/damo/cv_unet_image-matting)
-
-* [cv_F3Net_product-segmentation](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
-
-* [cv_resnest101_general_recognition](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
-
-
-Multi-Modal:
-
-* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
-
-* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
-
-* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
-
-* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
-
-AI for Science:
-
-* [uni-fold-monomer](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
-
-* [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
-
-# QuickTour
-
-We provide unified interface for inference using `pipeline`, finetuning and evaluation using `Trainer` for different tasks.
-
-For any given task with any type of input (image, text, audio, video...), inference pipeline can be implemented with only a few lines of code, which will automatically load the associated model to get inference result, as is exemplified below:
-
-```python
->>> from modelscope.pipelines import pipeline
->>> word_segmentation = pipeline('word-segmentation',model='damo/nlp_structbert_word-segmentation_chinese-base')
->>> word_segmentation('今天天气不错，适合出去游玩')
-{'output': '今天 天气 不错 ， 适合 出去 游玩'}
-```
-
-Given an image, you can use following code to cut out the human.
-
-![image](data/resource/portrait_input.png)
-
-```python
->>> import cv2
->>> from modelscope.pipelines import pipeline
-
->>> portrait_matting = pipeline('portrait-matting')
->>> result = portrait_matting('https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matting.png')
->>> cv2.imwrite('result.png', result['output_img'])
-```
-The output image is
-![image](data/resource/portrait_output.png)
-
-For finetuning and evaluation, you need ten more lines of code to construct dataset and trainer, and by calling `traner.train()` and
-`trainer.evaluate()` you can finish finetuning and evaluating a certain model.
-
-For example, we use the gpt3 1.3B model to load the chinese poetry dataset and finetune the model, the resulted model can be used for poetry generation.
-
-```python
->>> from modelscope.metainfo import Trainers
->>> from modelscope.msdatasets import MsDataset
->>> from modelscope.trainers import build_trainer
-
->>> train_dataset = MsDataset.load('chinese-poetry-collection', split='train'). remap_columns({'text1': 'src_txt'})
->>> eval_dataset = MsDataset.load('chinese-poetry-collection', split='test').remap_columns({'text1': 'src_txt'})
->>> max_epochs = 10
->>> tmp_dir = './gpt3_poetry'
-
->>> kwargs = dict(
-     model='damo/nlp_gpt3_text-generation_1.3B',
-     train_dataset=train_dataset,
-     eval_dataset=eval_dataset,
-     max_epochs=max_epochs,
-     work_dir=tmp_dir)
-
->>> trainer = build_trainer(name=Trainers.gpt3_trainer, default_args=kwargs)
->>> trainer.train()
-```
-
-# Why should I use ModelScope library
-
-1. A unified and concise user interface is abstracted for different tasks and different models. Three lines of code complete the inference, and 10 lines of code complete the model training. It is convenient for users to use different models in multiple fields in the ModelScope community. It is ready to use and easy to get started with AI. and teaching.
-
-2. Construct a model-centric development and application experience, support model training, inference, export and deployment, and facilitate users to build their own MLOps based on the ModelScope Library.
-
-3. For the model inference and training process, a modular design is carried out, and a wealth of functional module implementations are provided, which is convenient for users to customize development to customize their own model inference, training and other processes.
 
 4. For distributed model training, especially for large models, it provides rich training strategy support, including data parallel, model parallel, hybrid parallel and so on.
 

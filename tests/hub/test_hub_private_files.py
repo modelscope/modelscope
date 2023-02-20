@@ -13,9 +13,10 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.constant import ModelFile
-from .test_utils import (TEST_ACCESS_TOKEN1, TEST_ACCESS_TOKEN2,
-                         TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
-                         delete_credential)
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
+                                         TEST_ACCESS_TOKEN2,
+                                         TEST_MODEL_CHINESE_NAME,
+                                         TEST_MODEL_ORG, delete_credential)
 
 download_model_file_name = 'test.bin'
 

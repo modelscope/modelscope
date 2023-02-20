@@ -38,7 +38,7 @@ def get_checkpoint_names(checkpoints_path,
                                f'mp_rank_{tensor_rank:02d}')
 
     if num_experts[0] > 0:
-        model_name = common_path + '_model_states.pt'
+        model_name = os.path.join(common_path, 'model_rng.pt')
         optim_name = os.path.join(
             checkpoints_path, path_load_tag,
             f'expp_rank_{expp_rank}_mp_rank_{tensor_rank:02d}_optim_states.pt')

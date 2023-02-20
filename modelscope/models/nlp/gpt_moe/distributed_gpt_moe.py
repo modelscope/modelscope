@@ -1151,7 +1151,8 @@ class DistributedGPTMoE(TorchModel):
                 attention_mask=None,
                 position_ids=None,
                 labels=None,
-                prompt_length=None):
+                prompt_length=None,
+                is_pair=(False, )):
 
         outputs, *other_losses = self.dist_model(
             tokens,

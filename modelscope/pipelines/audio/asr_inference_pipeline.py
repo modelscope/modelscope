@@ -145,7 +145,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 lm_file=self.cmd['lm_file'],
                 token_type=self.cmd['token_type'],
                 key_file=self.cmd['key_file'],
-                word_lm_train_config=self.cmd['word_lm_train_config'],
+                lm_train_config=self.cmd['lm_train_config'],
                 bpemodel=self.cmd['bpemodel'],
                 allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
                 output_dir=self.cmd['output_dir'],

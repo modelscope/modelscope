@@ -975,6 +975,8 @@ class EpochBasedTrainer(BaseTrainer):
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:
             sampler = None
+            if not isinstance(dataset, torch.utils.data.IterableDataset):
+                kwargs['shuffle'] = shuffle
 
         batch_sampler = None
 

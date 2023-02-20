@@ -1,5 +1,5 @@
 # The implementation here is modified based on SceneSeg,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/AnyiRao/SceneSeg
+# originally Apache 2.0 License and publicly available at https://github.com/AnyiRao/SceneSeg
 import os
 import os.path as osp
 import subprocess

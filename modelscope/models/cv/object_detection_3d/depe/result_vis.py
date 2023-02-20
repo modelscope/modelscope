@@ -1,5 +1,5 @@
 """
-The implementation here is modified based on BEVDet, originally Apache-2.0 license and publicly avaialbe at
+The implementation here is modified based on BEVDet, originally Apache-2.0 license and publicly available at
 https://github.com/HuangJunJie2017/BEVDet/blob/dev2.0/tools/analysis_tools/vis.py
 """
 import argparse

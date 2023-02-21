@@ -49,7 +49,7 @@ def model_file_download(
             Can be any of a branch, tag or commit hash.
         cache_dir (str, Path, optional): Path to the folder where cached files are stored.
         user_agent (dict, str, optional): The user-agent info in the form of a dictionary or a string.
-        local_files_only (bool, optional）:  If `True`, avoid downloading the file and return the path to the
+        local_files_only (bool, optional):  If `True`, avoid downloading the file and return the path to the
             local cached file if it exists. if `False`, download the file anyway even it exists.
         cookies (CookieJar, optional): The cookie of download request.
 
@@ -201,7 +201,7 @@ def http_get_file(
             http headers to carry necessary info when requesting the remote file
 
     Raises:
-        FileDownloadError: Failed download failed.
+        FileDownloadError: File download failed.
 
     """
     total = -1

@@ -14,9 +14,9 @@ from .builder import METRICS, MetricKeys
 @METRICS.register_module(
     group_key=default_group, module_name=Metrics.multi_average_precision)
 class AveragePrecisionMetric(Metric):
-    """The metric computation class for multi avarage precision classes.
+    """The metric computation class for multi average precision classes.
 
-    This metric class calculates multi avarage precision for the whole input batches.
+    This metric class calculates multi average precision for the whole input batches.
     """
 
     def __init__(self, *args, **kwargs):

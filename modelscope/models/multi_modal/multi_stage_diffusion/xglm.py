@@ -1,5 +1,5 @@
 # Part of the implementation is borrowed and modified from HuggingFace XGLM,
-# publicly avaialbe at https://github.com/huggingface/transformers.
+# publicly available at https://github.com/huggingface/transformers.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import math

@@ -1063,7 +1063,7 @@ class BaseHead(nn.Module, metaclass=ABCMeta):
         elif labels.dim() == 1 and labels.size()[0] == self.num_classes \
                 and cls_score.size()[0] == 1:
             # Fix a bug when training with soft labels and batch size is 1.
-            # When using soft labels, `labels` and `cls_socre` share the same
+            # When using soft labels, `labels` and `cls_score` share the same
             # shape.
             labels = labels.unsqueeze(0)
 

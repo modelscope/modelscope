@@ -1,7 +1,7 @@
 # Implementation in this file is modified based on deeplabv3
-# Originally MIT license,publicly avaialbe at https://github.com/fregu856/deeplabv3/blob/master/model/aspp.py
+# Originally MIT license,publicly available at https://github.com/fregu856/deeplabv3/blob/master/model/aspp.py
 # Implementation in this file is modified based on attention-module
-# Originally MIT license,publicly avaialbe at https://github.com/Jongchan/attention-module/blob/master/MODELS/cbam.py
+# Originally MIT license,publicly available at https://github.com/Jongchan/attention-module/blob/master/MODELS/cbam.py
 import torch
 import torch.nn as nn
 

@@ -61,7 +61,7 @@ def do_prosody_text_normalization(line):
     text = text.replace('"', ' ')
     text = text.replace(
         '-',
-        '')  # don't replace by space because compond word like two-year-old
+        '')  # don't replace by space because compound word like two-year-old
     text = text.replace(
         "'", '')  # don't replace by space because English word like that's
 

@@ -514,7 +514,7 @@ def average_by_duration(x, durs):
         return None
     durs_cum = np.cumsum(np.pad(durs, (1, 0), 'constant'))
 
-    # average over each symbol's duraion
+    # average over each symbol's duration
     x_symbol = np.zeros((durs.shape[0], ), dtype=np.float32)
     for idx, start, end in zip(
             range(durs.shape[0]), durs_cum[:-1], durs_cum[1:]):

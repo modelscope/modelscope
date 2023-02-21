@@ -129,7 +129,13 @@ def get_modified_files():
     cmd_output = run_command_get_output(cmd)
     logger.info('Modified files: ')
     logger.info(cmd_output)
-    return cmd_output.splitlines()
+    modified_files = []
+    # remove the deleted file.
+    for diff_file in cmd_output.splitlines():
+        if os.path.exists(diff_file):
+            modified_files.append(diff_file)
+
+    return modified_files
 
 
 def analysis_diff():

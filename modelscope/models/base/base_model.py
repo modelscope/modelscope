@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.builder import build_model
+from modelscope.metainfo import Tasks
+from modelscope.models.builder import build_backbone, build_model
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
@@ -129,7 +130,9 @@ class Model(ABC):
             model_cfg[k] = v
         if device is not None:
             model_cfg.device = device
-            model = build_model(model_cfg, task_name=task_name)
+        if task_name is Tasks.backbone:
+            model_cfg.init_backbone = True
+            model = build_backbone(model_cfg)
         else:
             model = build_model(model_cfg, task_name=task_name)
 

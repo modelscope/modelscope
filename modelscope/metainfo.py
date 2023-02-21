@@ -99,6 +99,7 @@ class Models(object):
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     ocr_recognition = 'OCRRecognition'
+    ocr_detection = 'OCRDetection'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
@@ -903,6 +904,7 @@ class Preprocessors(object):
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
     ocr_recognition = 'ocr-recognition'
+    ocr_detection = 'ocr-detection'
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
 

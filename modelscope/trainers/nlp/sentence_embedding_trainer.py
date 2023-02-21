@@ -86,7 +86,7 @@ class SentenceEmbeddingTrainer(NlpEpochBasedTrainer):
             model_revision=model_revision,
             **kwargs)
 
-    def get_data_collator(self, data_collator):
+    def get_data_collator(self, data_collator, **kwargs):
         """Get the data collator for both training and evaluating.
 
         Args:
@@ -99,7 +99,7 @@ class SentenceEmbeddingTrainer(NlpEpochBasedTrainer):
             data_collator = SentenceEmbeddingCollator(
                 tokenizer=self.train_preprocessor.nlp_tokenizer,
                 max_length=self.train_preprocessor.max_length)
-        return super().get_data_collator(data_collator)
+        return super().get_data_collator(data_collator, **kwargs)
 
     def evauate(self):
         return {}

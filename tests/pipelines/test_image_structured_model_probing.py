@@ -15,7 +15,8 @@ class ImageStructuredModelProbingTest(unittest.TestCase,
         self.task = Tasks.image_classification
         self.model_id = 'damo/structured_model_probing'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test due to model is private')
     def test_run_modelhub(self):
 
         recognition_pipeline = pipeline(self.task, self.model_id)

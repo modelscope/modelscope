@@ -251,6 +251,7 @@ class Pipelines(object):
     body_3d_keypoints = 'canonical_body-3d-keypoints_video'
     hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
+    tbs_detection = 'tbs-detection'
     object_detection = 'vit-object-detection'
     abnormal_object_detection = 'abnormal-object-detection'
     easycv_detection = 'easycv-detection'

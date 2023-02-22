@@ -26,7 +26,7 @@ def estimate_aggd_param(block):
         block (ndarray): 2D Image block.
     Returns:
         tuple: alpha (float), beta_l (float) and beta_r (float) for the AGGD
-            distribution (Estimating the parames in Equation 7 in the paper).
+            distribution (Estimating the parameters in Equation 7 in the paper).
     """
     block = block.flatten()
     gam = np.arange(0.2, 10.001, 0.001)  # len = 9801
@@ -124,7 +124,7 @@ def niqe(img,
         feat = []
         for idx_w in range(num_block_w):
             for idx_h in range(num_block_h):
-                # process ecah block
+                # process each block
                 block = img_nomalized[idx_h * block_size_h // scale:(idx_h + 1)
                                       * block_size_h // scale,
                                       idx_w * block_size_w // scale:(idx_w + 1)

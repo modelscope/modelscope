@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Implementation in this file is modified based on mmdetection
-# Originally Apache 2.0 License and publicly avaialbe at https://github.com/open-mmlab/mmdetection
+# Originally Apache 2.0 License and publicly available at https://github.com/open-mmlab/mmdetection
 import torch
 from mmcv.runner import force_fp32
 from mmdet.models.builder import ROI_EXTRACTORS

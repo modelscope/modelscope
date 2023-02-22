@@ -1,4 +1,5 @@
 from __future__ import division
+import colorsys
 import os
 
 import numpy as np
@@ -201,8 +202,8 @@ def non_max_suppression(prediction,
         class_conf, class_pred = torch.max(
             image_pred[:, 5:5 + num_classes], 1, keepdim=True)
         # 利用置信度进行第一轮筛选
-        selected = class_conf[:, 0] >= conf_thres
-        conf_mask = (image_pred[:, 4] * selected).squeeze()
+        score = image_pred[:, 4] * class_conf[:, 0]
+        conf_mask = (score >= conf_thres).squeeze()
 
         image_pred = image_pred[conf_mask]
         class_conf = class_conf[conf_mask]
@@ -346,7 +347,7 @@ def generate(self):
 def post_process(self, outputs, img_path):
     new_boxes = []
     output_list = []
-    top_confs = 0
+    top_confs = torch.empty(0)
     for i in range(3):
         output_list.append(self.yolo_decodes[i](outputs[i]))
     output = torch.cat(output_list, 1)

@@ -384,6 +384,12 @@ class Invoke(object):
     PREPROCESSOR = 'preprocessor'
 
 
+class ThirdParty(object):
+    KEY = 'third_party'
+    EASYCV = 'easycv'
+    ADASEQ = 'adaseq'
+
+
 class ConfigFields(object):
     """ First level keyword in configuration file
     """

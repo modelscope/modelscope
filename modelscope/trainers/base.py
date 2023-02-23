@@ -9,7 +9,7 @@ from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Invoke
+from modelscope.utils.constant import Invoke, ThirdParty
 from .utils.log_buffer import LogBuffer
 
 
@@ -37,17 +37,35 @@ class BaseTrainer(ABC):
         self.visualization_buffer = LogBuffer()
         self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
 
-    def get_or_download_model_dir(self, model, model_revision=None):
+    def get_or_download_model_dir(self,
+                                  model,
+                                  model_revision=None,
+                                  third_party=None):
+        """ Get local model directory or download model if necessary.
+
+        Args:
+            model (str): model id or path to local model directory.
+            model_revision  (str, optional): model version number.
+            third_party (str, optional): in which third party library
+                this function is called.
+        """
         if os.path.exists(model):
             model_cache_dir = model if os.path.isdir(
                 model) else os.path.dirname(model)
             check_local_model_is_latest(
-                model_cache_dir, user_agent={Invoke.KEY: Invoke.LOCAL_TRAINER})
+                model_cache_dir,
+                user_agent={
+                    Invoke.KEY: Invoke.LOCAL_TRAINER,
+                    ThirdParty.KEY: third_party
+                })
         else:
             model_cache_dir = snapshot_download(
                 model,
                 revision=model_revision,
-                user_agent={Invoke.KEY: Invoke.TRAINER})
+                user_agent={
+                    Invoke.KEY: Invoke.TRAINER,
+                    ThirdParty.KEY: third_party
+                })
         return model_cache_dir
 
     @abstractmethod

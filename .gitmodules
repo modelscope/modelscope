@@ -1,0 +1,3 @@
+[submodule "data/tmp"]
+	path = data/tmp
+	url = http://www.modelscope.cn/damo/cv_manual_face-detection_tinymog.git

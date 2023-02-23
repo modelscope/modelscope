@@ -96,7 +96,7 @@ def compute_adv_loss(embedding,
             1, keepdim=True)[0]
     is_nan = torch.any(torch.isnan(emb_grad_norm))
     if is_nan:
-        logger.warning('Nan occured when calculating adv loss.')
+        logger.warning('Nan occurred when calculating adv loss.')
         return ori_loss
     emb_grad = emb_grad / (emb_grad_norm + 1e-6)
     embedding_2 = embedding_1 + adv_grad_factor * emb_grad
@@ -154,7 +154,7 @@ def compute_adv_loss_pair(embedding,
             1, keepdim=True)[0]
     is_nan = torch.any(torch.isnan(emb_grad_norm))
     if is_nan:
-        logger.warning('Nan occured when calculating pair adv loss.')
+        logger.warning('Nan occurred when calculating pair adv loss.')
         return ori_loss
     emb_grad = emb_grad / emb_grad_norm
     embedding_2 = embedding_1 + adv_grad_factor * emb_grad

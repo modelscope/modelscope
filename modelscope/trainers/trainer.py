@@ -33,7 +33,7 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, ModeKeys, ModelFile,
-                                       TrainerStages)
+                                       ThirdParty, TrainerStages)
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
@@ -121,8 +121,12 @@ class EpochBasedTrainer(BaseTrainer):
         self._stop_training = False
 
         if isinstance(model, str):
+            third_party = kwargs.get(ThirdParty.KEY)
+            if third_party is not None:
+                kwargs.pop(ThirdParty.KEY)
+
             self.model_dir = self.get_or_download_model_dir(
-                model, model_revision)
+                model, model_revision, third_party)
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)

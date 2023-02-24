@@ -102,7 +102,7 @@ class ImageDrivingPerceptionPreprocessor(Preprocessor):
             img = self._check_image(img)
         else:
             raise Exception('img is None')
-        img = cv2.resize(img, output_shape, interpolation=cv2.INTER_LINEAR)
+        ori_h, ori_w, _ = img.shape
         img = self._letterbox(img, new_shape)[0]
         img = img.transpose(2, 0, 1)  # to 3x640x640
 
@@ -117,4 +117,5 @@ class ImageDrivingPerceptionPreprocessor(Preprocessor):
 
         return {
             'img': img,
+            'ori_img_shape': (ori_h, ori_w),
         }

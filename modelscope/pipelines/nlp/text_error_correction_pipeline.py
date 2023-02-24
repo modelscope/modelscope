@@ -82,8 +82,8 @@ class TextErrorCorrectionPipeline(Pipeline):
         if isinstance(sc_tensor, list):
             sc_tensor = sc_tensor[0]
         sc_sent = self.vocab.string(
-            sc_tensor, '@@', extra_symbols_to_ignore={self.vocab.pad()})
-
+            sc_tensor, extra_symbols_to_ignore={self.vocab.pad()})
+        sc_sent = (sc_sent + ' ').replace('##', '').rstrip()
         sc_sent = ''.join(sc_sent.split())
 
         return {OutputKeys.OUTPUT: sc_sent}

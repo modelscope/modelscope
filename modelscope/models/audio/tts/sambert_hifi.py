@@ -218,5 +218,6 @@ class SambertHifigan(Model):
         for line in texts:
             line = line.strip().split('\t')
             audio = self.__synthesis_one_sentences(voice, line[1])
-            audio_total = np.append(audio_total, audio, axis=0)
+            audio = 32768.0 * audio
+            audio_total = np.append(audio_total, audio.astype('int16'), axis=0)
         return ndarray_pcm_to_wav(self.__sample_rate, audio_total)

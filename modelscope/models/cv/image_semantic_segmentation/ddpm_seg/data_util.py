@@ -1,5 +1,5 @@
 # The implementation here is adopted from ddpm-segmentation,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/yandex-research/ddpm-segmentation
+# originally Apache 2.0 License and publicly available at https://github.com/yandex-research/ddpm-segmentation
 
 
 def get_palette(category):

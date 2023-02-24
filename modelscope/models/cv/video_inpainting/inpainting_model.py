@@ -1,6 +1,6 @@
 """ VideoInpaintingProcess
 The implementation here is modified based on STTN,
- originally Apache 2.0 License and publicly avaialbe at https://github.com/researchmm/STTN
+ originally Apache 2.0 License and publicly available at https://github.com/researchmm/STTN
 """
 
 import math

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Implementation in this file is modified based on ViTAE-Transformer
-# Originally Apache 2.0 License and publicly avaialbe at https://github.com/ViTAE-Transformer/ViTDet
+# Originally Apache 2.0 License and publicly available at https://github.com/ViTAE-Transformer/ViTDet
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.runner import BaseModule, auto_fp16

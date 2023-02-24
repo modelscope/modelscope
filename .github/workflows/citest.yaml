@@ -27,7 +27,7 @@ on:
       - "tools/**"
       - ".dev_scripts/**"
       - "README.md"
-      - "README_zh-CN.md"
+      - "README_*.md"
       - "NOTICE"
       - ".github/workflows/lint.yaml"
       - ".github/workflows/publish.yaml"

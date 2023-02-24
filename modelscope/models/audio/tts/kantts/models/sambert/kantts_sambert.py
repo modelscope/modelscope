@@ -628,7 +628,7 @@ class PostNet(nn.Module):
     def forward(self, x, mask=None):
         postnet_fsmn_output = self.fsmn(x, mask)
         # The input can also be a packed variable length sequence,
-        # here we just omit it for simpliciy due to the mask and uni-directional lstm.
+        # here we just omit it for simplicity due to the mask and uni-directional lstm.
         postnet_lstm_output, _ = self.lstm(postnet_fsmn_output)
         mel_residual_output = self.fc(postnet_lstm_output)
 
@@ -736,7 +736,7 @@ class KanTtsSAMBERT(nn.Module):
 
     def binarize_attention_parallel(self, attn, in_lens, out_lens):
         """For training purposes only. Binarizes attention with MAS.
-           These will no longer recieve a gradient.
+           These will no longer receive a gradient.
 
         Args:
             attn: B x 1 x max_mel_len x max_text_len

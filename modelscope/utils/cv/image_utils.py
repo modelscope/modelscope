@@ -498,8 +498,6 @@ def show_image_driving_perception_result(img,
                                          results,
                                          out_file='result.jpg',
                                          if_draw=[1, 1, 1]):
-    assert img.shape == (720, 1280,
-                         3), 'input image shape need fix to (720, 1280, 3)'
     bboxes = results.get(OutputKeys.BOXES)
     if if_draw[0]:
         for x in bboxes:

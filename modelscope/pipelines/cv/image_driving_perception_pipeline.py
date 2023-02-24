@@ -84,13 +84,17 @@ class ImageDrivingPerceptionPipeline(Pipeline):
         # Apply NMS
         pred = non_max_suppression(pred)
 
-        da_seg_mask = driving_area_mask(inputs['driving_area_mask'])
-        ll_seg_mask = lane_line_mask(inputs['lane_line_mask'])
+        h, w = inputs['ori_img_shape']
+        da_seg_mask = driving_area_mask(
+            inputs['driving_area_mask'], out_shape=(h, w))
+        ll_seg_mask = lane_line_mask(
+            inputs['lane_line_mask'], out_shape=(h, w))
 
         for det in pred:  # detections per image
             if len(det):
-                # Rescale boxes from img_size to (720, 1280)
-                det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4]).round()
+                # Rescale boxes from img_size to (h, w)
+                det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4],
+                                          (h, w)).round()
 
         results_dict[OutputKeys.BOXES] = det[:, :4].cpu().numpy()
         results_dict[OutputKeys.MASKS].append(da_seg_mask)

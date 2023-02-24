@@ -29,10 +29,7 @@ def split_for_trace_model(pred=None, anchor_grid=None):
     return pred
 
 
-def scale_coords(img1_shape,
-                 coords,
-                 img0_shape=(720, 1280, 3),
-                 ratio_pad=None):
+def scale_coords(img1_shape, coords, img0_shape=(720, 1280), ratio_pad=None):
     # Rescale coords (xyxy) from img1_shape to img0_shape
     if ratio_pad is None:  # calculate from img0_shape
         gain = min(img1_shape[0] / img0_shape[0],
@@ -190,19 +187,17 @@ def box_iou(box1, box2):
                     )  # iou = inter / (area1 + area2 - inter)
 
 
-def driving_area_mask(seg=None):
-    da_predict = seg[:, :, 12:372, :]
+def driving_area_mask(da_predict=None, out_shape=(720, 1280)):
     da_seg_mask = torch.nn.functional.interpolate(
-        da_predict, scale_factor=2, mode='bilinear')
+        da_predict, size=out_shape, mode='bilinear')
     _, da_seg_mask = torch.max(da_seg_mask, 1)
     da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
     return da_seg_mask
 
 
-def lane_line_mask(ll=None):
-    ll_predict = ll[:, :, 12:372, :]
+def lane_line_mask(ll_predict=None, out_shape=(720, 1280)):
     ll_seg_mask = torch.nn.functional.interpolate(
-        ll_predict, scale_factor=2, mode='bilinear')
+        ll_predict, size=out_shape, mode='bilinear')
     ll_seg_mask = torch.round(ll_seg_mask).squeeze(1)
     ll_seg_mask = ll_seg_mask.int().squeeze().cpu().numpy()
     return ll_seg_mask

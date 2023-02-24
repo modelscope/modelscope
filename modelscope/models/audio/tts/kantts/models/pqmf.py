@@ -126,7 +126,7 @@ class PQMF(torch.nn.Module):
             Tensor: Output tensor (B, 1, T).
 
         """
-        # NOTE(kan-bayashi): Power will be dreased so here multipy by # subbands.
+        # NOTE(kan-bayashi): Power will be dreased so here multiply by # subbands.
         #   Not sure this is the correct way, it is better to check again.
         x = F.conv_transpose1d(
             x, self.updown_filter * self.subbands, stride=self.subbands)

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .word_alignment_preprocessor import WordAlignmentPreprocessor
     from .text_error_correction import TextErrorCorrectionPreprocessor
     from .text_generation_preprocessor import TextGenerationJiebaPreprocessor
     from .bert_seq_cls_tokenizer import Tokenize
@@ -65,6 +66,9 @@ else:
         ['ZeroShotClassificationTransformersPreprocessor'],
         'text_error_correction': [
             'TextErrorCorrectionPreprocessor',
+        ],
+        'word_alignment_preprocessor': [
+            'WordAlignmentPreprocessor',
         ],
         'mglm_summarization_preprocessor': ['MGLMSummarizationPreprocessor'],
         'token_classification_thai_preprocessor': [

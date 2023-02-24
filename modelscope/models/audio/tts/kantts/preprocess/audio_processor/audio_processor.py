@@ -411,7 +411,7 @@ class AudioProcessor:
                     self.badcase_list.append(wav_basename)
                 else:
                     durs, phone_list = result
-                    #  Algin length with melspec
+                    #  Align length with melspec
                     if len(self.mel_dict) > 0:
                         pair_mel = self.mel_dict.get(wav_basename, None)
                         if pair_mel is None:

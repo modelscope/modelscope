@@ -125,7 +125,7 @@ class HubApi:
                      visibility: Optional[int] = ModelVisibility.PUBLIC,
                      license: Optional[str] = Licenses.APACHE_V2,
                      chinese_name: Optional[str] = None) -> str:
-        """Create model repo at ModelScopeHub.
+        """Create model repo at ModelScope Hub.
 
         Args:
             model_id (str): The model id

@@ -4,6 +4,7 @@ av>=9.2.0
 bmt_clipit>=1.0
 chumpy
 clip>=1.0
+control_ldm
 ddpm_guided_diffusion
 diffusers
 easydict

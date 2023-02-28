@@ -168,6 +168,8 @@ PREPROCESSOR_MAP = {
     Preprocessors.object_detection_tinynas_preprocessor,
     (Models.tinynas_damoyolo, Tasks.domain_specific_object_detection):
     Preprocessors.object_detection_tinynas_preprocessor,
+    (Models.controllable_image_generation, Tasks.controllable_image_generation):
+    Preprocessors.controllable_image_generation_preprocessor,
 }
 
 

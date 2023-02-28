@@ -106,8 +106,8 @@ class Models(object):
     nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
-
     bad_image_detecting = 'bad-image-detecting'
+    controllable_image_generation = 'controllable-image-generation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -374,6 +374,7 @@ class Pipelines(object):
     object_detection_3d_depe = 'object-detection-3d-depe'
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
+    controllable_image_generation = 'controllable-image-generation'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -718,6 +719,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_fft_inpainting_lama'),
     Tasks.image_paintbyexample: (Pipelines.image_paintbyexample,
                                  'damo/cv_stable-diffusion_paint-by-example'),
+    Tasks.controllable_image_generation:
+    (Pipelines.controllable_image_generation,
+     'dienstag/cv_controlnet_controllable-image-generation_nine-annotators'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
@@ -909,6 +913,7 @@ class Preprocessors(object):
     ocr_detection = 'ocr-detection'
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
+    controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

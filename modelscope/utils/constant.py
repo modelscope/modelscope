@@ -507,3 +507,10 @@ class MetaDataFields:
 
 
 DatasetVisibilityMap = {1: 'private', 3: 'internal', 5: 'public'}
+
+
+class DistributedParallelType(object):
+    """Parallel Strategies for Distributed Models"""
+    DP = 'data_parallel'
+    TP = 'tensor_model_parallel'
+    PP = 'pipeline_model_parallel'

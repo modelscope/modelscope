@@ -10,7 +10,9 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
+from modelscope.utils.constant import DistributedParallelType
 from modelscope.utils.data_utils import to_device
+from modelscope.utils.megatron_utils import is_megatron_initialized
 from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
                                           make_tmp_dir)
 
@@ -187,9 +189,10 @@ def evaluate_batch(trainer, data, metric_classes, vis_closure):
 
 
 def get_metric_values(metric_classes):
-    rank, world_size = get_dist_info()
+    _, world_size = get_dist_info()
     metric_values = {}
-    if rank == 0:
+    if is_master(
+            DistributedParallelType.DP if is_megatron_initialized() else None):
         for metric_cls in metric_classes:
             metric_values.update(metric_cls.evaluate())
     if world_size > 1:
@@ -218,16 +221,17 @@ def collect_results_cpu(result_part, tmpdir=None):
     rank, world_size = get_dist_info()
     if tmpdir is None:
         tmpdir = make_tmp_dir()
-    if not os.path.exists(tmpdir) and is_master():
+    if not os.path.exists(tmpdir) and is_master(DistributedParallelType.TP):
         os.makedirs(tmpdir)
     dist.barrier()
 
     # dump the part result to the dir
-    with open(os.path.join(tmpdir, f'part_{rank}.pkl'), 'wb') as f:
-        pickle.dump(result_part, f)
+    if is_master(DistributedParallelType.TP):
+        with open(os.path.join(tmpdir, f'part_{rank}.pkl'), 'wb') as f:
+            pickle.dump(result_part, f)
     dist.barrier()
     # collect all parts
-    if rank != 0:
+    if not is_master():
         return None
     else:
         # load results of all parts from tmp dir
@@ -261,14 +265,19 @@ def collect_results_gpu(result_part):
     Returns:
         list: The collected results.
     """
-    rank, world_size = get_dist_info()
+    _, world_size = get_dist_info()
+    group = None
+    if is_megatron_initialized():
+        from megatron_util import mpu
+        group = mpu.get_data_parallel_group()
+
     # dump result part to tensor with pickle
     part_tensor = torch.tensor(
         bytearray(pickle.dumps(result_part)), dtype=torch.uint8, device='cuda')
     # gather all result part tensor shape
     shape_tensor = torch.tensor(part_tensor.shape, device='cuda')
     shape_list = [shape_tensor.clone() for _ in range(world_size)]
-    dist.all_gather(shape_list, shape_tensor)
+    dist.all_gather(shape_list, shape_tensor, group)
     # padding result part tensor to max length
     shape_max = torch.tensor(shape_list).max()
     part_send = torch.zeros(shape_max, dtype=torch.uint8, device='cuda')
@@ -277,9 +286,9 @@ def collect_results_gpu(result_part):
         part_tensor.new_zeros(shape_max) for _ in range(world_size)
     ]
     # gather all result part
-    dist.all_gather(part_recv_list, part_send)
+    dist.all_gather(part_recv_list, part_send, group)
 
-    if rank == 0:
+    if is_master():
         part_list = []
         for recv, shape in zip(part_recv_list, shape_list):
             part_result = pickle.loads(recv[:shape[0]].cpu().numpy().tobytes())

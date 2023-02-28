@@ -19,6 +19,7 @@ from modelscope.fileio import File, LocalStorage
 from modelscope.utils.config import JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
 from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import is_master
 
 logger = get_logger()
 
@@ -574,7 +575,8 @@ def save_pretrained(model,
     ignore_file_set = set(origin_file_to_be_ignored)
     ignore_file_set.add(ModelFile.CONFIGURATION)
     ignore_file_set.add('.*')
-    if hasattr(model, 'model_dir') and model.model_dir is not None:
+    if hasattr(model,
+               'model_dir') and model.model_dir is not None and is_master():
         copytree(
             model.model_dir,
             target_folder,

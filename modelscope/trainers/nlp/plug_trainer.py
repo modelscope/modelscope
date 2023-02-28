@@ -1,12 +1,13 @@
 import os
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Union
 
 import torch
+from deepspeed import DeepSpeedEngine
 from megatron_util import mpu
 from torch import nn
 
 from modelscope.metainfo import Trainers
-from modelscope.models.base import Model, TorchModel
+from modelscope.models.base import TorchModel
 from modelscope.models.nlp.plug import DistributedPlug
 from modelscope.models.nlp.plug.backbone import BertLayerNorm
 from modelscope.models.nlp.plug.generator import TextGenerator
@@ -28,6 +29,7 @@ class PlugTrainer(NlpEpochBasedTrainer):
             master_ip=master_ip,
             master_port=master_port,
             **self.cfg.model)
+        self.unwrap_module(model.model).model_dir = self.model_dir
         return model.model
 
     def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
@@ -160,11 +162,16 @@ class PlugTrainer(NlpEpochBasedTrainer):
 
     def evaluation_step(self, data):
         # wapper 1: DeepspeedEngine, wapper 2: DDP
-        model = self.model.module
+        # model = self.model.module
+        if isinstance(self.model, DeepSpeedEngine):
+            model = self.model.module
+        else:
+            model = self.model
+
         model.eval()
 
         # model: fp16 wapper; model.module : distributedPlug
-        vocab_size = model.module.config.original_vocab_size
+        vocab_size = self.unwrap_module(self.model).config.original_vocab_size
         batch_size = data['input_ids'].shape[0]
         beam_generator = TextGenerator(model,
                                        self.eval_preprocessor.nlp_tokenizer,

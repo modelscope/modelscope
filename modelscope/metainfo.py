@@ -1084,6 +1084,7 @@ class Hooks(object):
     # train
     EarlyStopHook = 'EarlyStopHook'
     DeepspeedHook = 'DeepspeedHook'
+    MegatronHook = 'MegatronHook'
 
 
 class LR_Schedulers(object):

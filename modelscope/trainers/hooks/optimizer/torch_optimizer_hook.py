@@ -2,12 +2,13 @@
 import logging
 
 from modelscope.metainfo import Hooks
+from modelscope.trainers.hooks import Hook
 from modelscope.trainers.hooks.builder import HOOKS
 from .base import OptimizerHook
 
 
 @HOOKS.register_module(module_name=Hooks.TorchAMPOptimizerHook)
-class TorchAMPOptimizerHook(OptimizerHook):
+class TorchAMPOptimizerHook(Hook):
     """
     Fp16 optimizer, if torch version is less than 1.6.0,
     you must install apex (https://www.github.com/nvidia/apex) else use torch.cuda.amp by default
@@ -26,15 +27,9 @@ class TorchAMPOptimizerHook(OptimizerHook):
             please refer to: https://pytorch.org/docs/stable/amp.html#torch.cuda.amp.GradScaler for the parameters.
     """
 
-    def __init__(self,
-                 cumulative_iters=1,
-                 grad_clip=None,
-                 loss_keys='loss',
-                 loss_scale={}):
+    PRIORITY = OptimizerHook.PRIORITY
 
-        super(TorchAMPOptimizerHook, self).__init__(
-            grad_clip=grad_clip, loss_keys=loss_keys)
-        self.cumulative_iters = cumulative_iters
+    def __init__(self, loss_scale={}, **kwargs):
         self._scale_update_param = None
 
         from torch.cuda import amp
@@ -49,34 +44,36 @@ class TorchAMPOptimizerHook(OptimizerHook):
                 '`loss_scale` type must be in [float, dict], but got {loss_scale}'
             )
 
-    def before_run(self, trainer):
+    def register_strategy(self):
+        Hook.overload(
+            name='OptimizerHook.initialize_optimizer',
+            function=self.initialize_optimizer)
+        Hook.overload(name='OptimizerHook.backward', function=self.backward)
+
+    def initialize_optimizer(self, trainer):
         logging.info('open fp16')
         trainer.optimizer.zero_grad()
 
-        if hasattr(trainer.model, 'module'):
-            self._ori_model_forward = trainer.model.module.forward
-            self._model = trainer.model.module
-        else:
-            self._ori_model_forward = trainer.model.forward
-            self._model = trainer.model
-
-        self.ori_model_forward = trainer.model.forward
+        model = trainer.unwrap_module(trainer.model)
+        self._ori_model_forward = model.forward
+        self._model = model
 
     def before_train_iter(self, trainer):
         from torch.cuda import amp
         setattr(self._model, 'forward', amp.autocast()(self._model.forward))
 
-    def after_train_iter(self, trainer):
-        for k in self.loss_keys:
-            trainer.train_outputs[k] /= self.cumulative_iters
+    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
+        for k in loss_keys:
+            trainer.train_outputs[k] /= cumulative_iters
 
-        for k in self.loss_keys:
+        for k in loss_keys:
             self.scaler.scale(trainer.train_outputs[k]).backward()
 
-        if self.every_n_iters(trainer, self.cumulative_iters):
+        if self.every_n_iters(trainer, cumulative_iters):
             self.scaler.unscale_(trainer.optimizer)
-            if self.grad_clip is not None:
-                self.clip_grads(trainer.model.parameters(), **self.grad_clip)
+            if grad_clip is not None:
+                OptimizerHook.clip_grads(trainer.model.parameters(),
+                                         **grad_clip)
 
             self.scaler.step(trainer.optimizer)
             self.scaler.update(self._scale_update_param)

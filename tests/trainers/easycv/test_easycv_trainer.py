@@ -118,7 +118,7 @@ class EasyCVTrainerTestSingleGpu(unittest.TestCase):
                 LogKeys.MODE: ModeKeys.TRAIN,
                 LogKeys.EPOCH: 1,
                 LogKeys.ITER: 3,
-                LogKeys.LR: 0.00013
+                LogKeys.LR: 0.00029
             }, json.loads(lines[0]))
         self.assertDictContainsSubset(
             {
@@ -131,7 +131,7 @@ class EasyCVTrainerTestSingleGpu(unittest.TestCase):
                 LogKeys.MODE: ModeKeys.TRAIN,
                 LogKeys.EPOCH: 2,
                 LogKeys.ITER: 3,
-                LogKeys.LR: 0.00157
+                LogKeys.LR: 0.00205
             }, json.loads(lines[2]))
         self.assertDictContainsSubset(
             {

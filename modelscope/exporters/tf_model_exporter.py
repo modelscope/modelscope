@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from abc import abstractmethod
 from typing import Any, Callable, Dict, Mapping
 
 import tensorflow as tf
@@ -30,13 +29,11 @@ class TfModelExporter(Exporter):
         self._tf2_export_onnx(model, onnx_file, opset=opset, **kwargs)
         return {'model': onnx_file}
 
-    @abstractmethod
     def export_saved_model(self, output_dir: str, **kwargs):
-        pass
+        raise NotImplementedError()
 
-    @abstractmethod
     def export_frozen_graph_def(self, output_dir: str, **kwargs):
-        pass
+        raise NotImplementedError()
 
     def _tf2_export_onnx(self,
                          model,

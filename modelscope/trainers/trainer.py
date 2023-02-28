@@ -1,8 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import inspect
 import os
-import time
 from collections.abc import Mapping
+from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -39,9 +39,9 @@ from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (broadcast, get_dist_info,
-                                          get_local_rank, init_dist, is_dist,
-                                          is_master, set_random_seed)
+from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
+                                          init_dist, is_dist, is_master,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks
@@ -139,15 +139,6 @@ class EpochBasedTrainer(BaseTrainer):
         # add default config
         merge_cfg(self.cfg)
         self.cfg = self.rebuild_config(self.cfg)
-        self.logger = get_logger(log_level=self.cfg.get('log_level', 'INFO'))
-        self.logger.info(
-            '==========================Training Config Start=========================='
-        )
-        self.logger.info(
-            json.dumps(self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
-        self.logger.info(
-            '===========================Training Config End==========================='
-        )
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
 
@@ -175,6 +166,17 @@ class EpochBasedTrainer(BaseTrainer):
         log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
         self.logger = get_logger(
             log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
+
+        if is_master():
+            self.logger.info(
+                '==========================Training Config Start=========================='
+            )
+            self.logger.info(
+                json.dumps(
+                    self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
+            self.logger.info(
+                '===========================Training Config End==========================='
+            )
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,
@@ -206,6 +208,8 @@ class EpochBasedTrainer(BaseTrainer):
         self.use_fp16 = kwargs.get('use_fp16', False)
         # model placement
         self.place_model()
+
+        Hook.clear_strategies()
 
     def place_model(self):
         """Place model to device, or to DDP
@@ -503,22 +507,20 @@ class EpochBasedTrainer(BaseTrainer):
             metrics = [metrics]
         return metrics
 
-    def set_checkpoint_file_to_hook(self, checkpoint_path, load_all_state):
+    def set_checkpoint_file_to_hook(self, checkpoint_path, load_all_state,
+                                    strict):
         if checkpoint_path is not None:
-            if os.path.isfile(checkpoint_path):
-                from modelscope.trainers.hooks import LoadCheckpointHook
-                load_ckpt_hooks = list(
-                    filter(lambda hook: isinstance(hook, LoadCheckpointHook),
-                           self.hooks))
-                if len(load_ckpt_hooks) == 0:
-                    load_ckpt_hook = LoadCheckpointHook()
-                    self.hooks.append(load_ckpt_hook)
-                    load_ckpt_hooks.append(load_ckpt_hook)
-                load_ckpt_hooks[0].checkpoint_file = checkpoint_path
-                load_ckpt_hooks[0].load_all_state = load_all_state
-            else:
-                self.logger.error(
-                    f'No {checkpoint_path} found in local file system.')
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            load_ckpt_hooks = list(
+                filter(lambda hook: isinstance(hook, LoadCheckpointHook),
+                       self.hooks))
+            if len(load_ckpt_hooks) == 0:
+                load_ckpt_hook = LoadCheckpointHook()
+                self.register_hook(load_ckpt_hook)
+                load_ckpt_hooks.append(load_ckpt_hook)
+            load_ckpt_hooks[0].checkpoint_file = checkpoint_path
+            load_ckpt_hooks[0].load_all_state = load_all_state
+            load_ckpt_hooks[0].strict = strict
 
     def train(self,
               checkpoint_path=None,
@@ -533,6 +535,8 @@ class EpochBasedTrainer(BaseTrainer):
             load_all_state(`bool`: `optional`): Load all state out of the `checkpoint_path` file, including the
                 state dict of model, optimizer, lr_scheduler, the random state and epoch/iter number. If False, only
                 the model's state dict will be read, and model will be trained again.
+            kwargs:
+                strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
 
         self._mode = ModeKeys.TRAIN
@@ -541,7 +545,10 @@ class EpochBasedTrainer(BaseTrainer):
         self.register_optimizers_hook()
         hooks = merge_hooks(self.cfg)
         self.register_hook_from_cfg(hooks)
-        self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state)
+        if is_master():
+            self.logger.info(self.get_hook_info())
+        self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
+                                         kwargs.get('strict', False))
         self.model.train()
 
         self.train_loop(self.train_dataloader)
@@ -549,7 +556,8 @@ class EpochBasedTrainer(BaseTrainer):
     def predict(self,
                 predict_datasets: Union[Dataset, List[Dataset]],
                 saving_fn,
-                checkpoint_path=None):
+                checkpoint_path=None,
+                strict=False):
         """Start prediction.
 
         Args:
@@ -574,11 +582,18 @@ class EpochBasedTrainer(BaseTrainer):
             checkpoint_path(`str`, `optional`): The previous saving checkpoint to read,
                 usually it's a `some-file-name.pth` file or a pure PyTorch `some-file.bin` file
                 generated by this trainer.
-        """
 
-        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+            strict(`boolean`): If strict, any unmatched keys will cause an error.
+        """
+        if not self._hooks:
+            hooks = merge_hooks(self.cfg)
+            self.register_hook_from_cfg(hooks)
+            if is_master():
+                self.logger.info(self.get_hook_info())
+        if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
-            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
+            LoadCheckpointHook.load_checkpoint(
+                checkpoint_path, self, strict=strict)
         self.model.eval()
         self._mode = ModeKeys.EVAL
         predict_dataloader = self.get_predict_data_loader(predict_datasets)
@@ -609,10 +624,18 @@ class EpochBasedTrainer(BaseTrainer):
                 >>>         with open(self.filename, 'a') as f:
                 >>>             for id, pred in zip(ids, predictions):
                 >>>                 f.writelines(f'{id}, {pred}')
+            kwargs:
+                strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
-        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
+        if not self._hooks:
+            hooks = merge_hooks(self.cfg)
+            self.register_hook_from_cfg(hooks)
+            if is_master():
+                self.logger.info(self.get_hook_info())
+        if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
-            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
+            LoadCheckpointHook.load_checkpoint(
+                checkpoint_path, self, strict=kwargs.get('strict', False))
         self.model.eval()
         self._mode = ModeKeys.EVAL
         self.eval_dataloader = self.get_eval_data_loader()
@@ -649,9 +672,10 @@ class EpochBasedTrainer(BaseTrainer):
     def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
         # config format to reserve custom ddp
         if self.cfg.get('parallel', None) is not None:
-            self.cfg.parallel.update(
+            dp_cfg = deepcopy(self.cfg['parallel'])
+            dp_cfg.update(
                 dict(module=model, device_ids=[torch.cuda.current_device()]))
-            return build_parallel(self.cfg.parallel)
+            return build_parallel(dp_cfg)
 
         dp_cfg = dict(
             type='DistributedDataParallel',
@@ -660,6 +684,18 @@ class EpochBasedTrainer(BaseTrainer):
             device_ids=[torch.cuda.current_device()])
 
         return build_parallel(dp_cfg)
+
+    def unwrap_module(self, model) -> Union[nn.Module, TorchModel]:
+        """Unwrap the model until it's a naked nn.Module.
+
+        Args:
+            model: An module.
+        """
+        if hasattr(model, 'module'):
+            return self.unwrap_module(model.module)
+        else:
+            assert isinstance(model, torch.nn.Module)
+            return model
 
     def train_step(self, model, inputs):
         """ Perform a training step on a batch of inputs.
@@ -683,11 +719,8 @@ class EpochBasedTrainer(BaseTrainer):
         self._mode = ModeKeys.TRAIN
         # call model forward but not __call__ to skip postprocess
 
-        if is_parallel(model):
-            receive_dict_inputs = func_receive_dict_inputs(
-                model.module.forward)
-        else:
-            receive_dict_inputs = func_receive_dict_inputs(model.forward)
+        receive_dict_inputs = func_receive_dict_inputs(
+            self.unwrap_module(self.model).forward)
 
         if isinstance(inputs, Mapping) and not receive_dict_inputs:
             train_outputs = model.forward(**inputs)
@@ -722,25 +755,9 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_outputs = train_outputs
 
     def prediction_step(self, model, inputs):
-        """ Perform forward step by `model` using `inputs`.
-
-        Args:
-            model (`TorchModel`): The model to evaluate.
-            inputs (`Dict[str, Union[torch.Tensor, Any]]`):
-                The inputs and targets of the model.
-
-                The dictionary will be unpacked before being fed to the model. Most models expect the targets under the
-                argument `labels`. Check your model's documentation for all accepted arguments.
-            prediction_loss_only (`bool`):
-                Whether or not to return the loss only.
-            ignore_keys (`Lst[str]`, *optional*):
-                A list of keys in the output of your model (if it is a dictionary) that should be ignored when
-                gathering predictions.
-
-        Return:
-            Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]: A tuple with the loss,
-            logits and labels (each being optional).
+        """Deprecated method
         """
+        self.logger.warn('This prediction_step method is deprecated.')
         raise NotImplementedError
 
     def get_train_dataloader(self):
@@ -834,7 +851,9 @@ class EpochBasedTrainer(BaseTrainer):
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
-                self.model, cfg=cfg, default_args=default_args)
+                self.unwrap_module(self.model),
+                cfg=cfg,
+                default_args=default_args)
         except KeyError as e:
             self.logger.error(
                 f'Build optimizer error, the optimizer {cfg} is a torch native component, '
@@ -892,12 +911,12 @@ class EpochBasedTrainer(BaseTrainer):
         _, lr_scheduler, optim_options, lr_options = self.create_optimizer_and_scheduler(
         )
 
-        optim_hook = self.cfg.train.get('optimizer_hook', None)
-        lr_hook = self.cfg.train.get('lr_scheduler_hook', None)
+        optim_hook = self.cfg.train.get('optimizer_hook', {})
+        lr_hook = self.cfg.train.get('lr_scheduler_hook', {})
 
         # adapt to `ReduceLROnPlateau`
         from torch.optim.lr_scheduler import ReduceLROnPlateau
-        if isinstance(lr_scheduler, ReduceLROnPlateau) and lr_hook is None:
+        if isinstance(lr_scheduler, ReduceLROnPlateau) and not lr_hook:
             plateau_cfg = {
                 'train': {
                     'lr_scheduler_hook': {
@@ -913,16 +932,54 @@ class EpochBasedTrainer(BaseTrainer):
                 'Must add `lr_scheduler_hook` to configuration for `ReduceLROnPlateau` lr scheduler as follows:'
                 + '\n' + plateau_cfg)
 
-        if lr_hook is None:
-            lr_hook = dict(type='LrSchedulerHook', **lr_options)
-        if optim_hook is None:
-            if self.use_fp16:
-                optim_hook = dict(
-                    type='TorchAMPOptimizerHook', **optim_options)
-            else:
-                optim_hook = dict(type='OptimizerHook', **optim_options)
+        def _fit_to_old_keys():
+            """This function used to fit `optimizer_hook` key and `lr_scheduler_hook` key for easycv configs.
 
-        self.register_hook_from_cfg([lr_hook, optim_hook])
+            The logic is:
+                If the optimizer_hook is provided and it's not TorchAMPOptimizerHook or ApexAMPOptimizerHook,
+                (which means the hook is a complete one for optimization, which does not need the OptimizerHook),
+                The OptimizerHook will not be registered, or else the OptimizerHook will be registered.
+
+                Same logic to the LrSchedulerHook, the only difference is the condition of lr_scheduler_hook is
+                PlateauLrSchedulerHook.
+
+                If TorchAMPOptimizerHook or ApexAMPOptimizerHook is provided, self.use_fp16 will be set to False
+                in case of the duplication of registration.
+
+            """
+            if lr_hook:
+                self.register_hook_from_cfg([lr_hook])
+
+            _lr_options = None
+            if not lr_hook or lr_hook.get('type') == 'PlateauLrSchedulerHook':
+                lr_hook.pop('type', None)
+                _lr_options = {**lr_options, **lr_hook}
+
+            if optim_hook:
+                self.register_hook_from_cfg([optim_hook])
+
+            _optim_options = None
+            if optim_hook.get('type') in ('TorchAMPOptimizerHook',
+                                          'ApexAMPOptimizerHook'):
+                self.use_fp16 = False
+            if not optim_hook or optim_hook.get('type') in (
+                    'TorchAMPOptimizerHook', 'ApexAMPOptimizerHook'):
+                optim_hook.pop('type', None)
+                _optim_options = {**optim_options, **optim_hook}
+
+            return _optim_options, _lr_options
+
+        optim_options, lr_options = _fit_to_old_keys()
+
+        if optim_options is not None:
+            self.register_hook_from_cfg(
+                [dict(type='OptimizerHook', **optim_options)])
+        if lr_options is not None:
+            self.register_hook_from_cfg(
+                [dict(type='LrSchedulerHook', **lr_options)])
+        if self.use_fp16:
+            self.register_hook_from_cfg(
+                [dict(type='TorchAMPOptimizerHook', **optim_options)])
 
     def _build_dataloader_with_dataset(self,
                                        dataset: Dataset,
@@ -971,10 +1028,7 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist and not isinstance(
-                dataset,
-                torch.utils.data.IterableDataset) and self.cfg.model.get(
-                    'model_parallel_size', 1) == 1:
+        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
             sampler = DistributedSampler(
                 dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
         else:
@@ -1048,20 +1102,16 @@ class EpochBasedTrainer(BaseTrainer):
         Subclass and override to inject custom behavior.
 
         """
-        model = self.model.module if self._dist else self.model
-        model.eval()
+        self.model.eval()
 
-        if is_parallel(model):
-            receive_dict_inputs = func_receive_dict_inputs(
-                model.module.forward)
-        else:
-            receive_dict_inputs = func_receive_dict_inputs(model.forward)
+        receive_dict_inputs = func_receive_dict_inputs(
+            self.unwrap_module(self.model).forward)
 
         with torch.no_grad():
             if isinstance(data, Mapping) and not receive_dict_inputs:
-                result = model.forward(**data)
+                result = self.model.forward(**data)
             else:
-                result = model.forward(data)
+                result = self.model.forward(data)
         return result
 
     def evaluation_loop(self, data_loader, metric_classes):
@@ -1074,7 +1124,7 @@ class EpochBasedTrainer(BaseTrainer):
             vis_closure = partial(
                 self.visualization, dataset=self.eval_dataset, **vis_cfg)
 
-        if self._dist and self.cfg.model.get('model_parallel_size', 1) == 1:
+        if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
             metric_values = multi_gpu_test(
@@ -1145,7 +1195,7 @@ class EpochBasedTrainer(BaseTrainer):
         if not inserted:
             self._hooks.insert(0, hook)
 
-    def register_hook_from_cfg(self, hook_cfg: List) -> None:
+    def register_hook_from_cfg(self, hook_cfg: List) -> List:
         """Register a hook from its cfg.
 
         Args:
@@ -1155,12 +1205,23 @@ class EpochBasedTrainer(BaseTrainer):
         Note:
             The specific hook class to register should not use 'type' and
             'priority' arguments during initialization.
+
+        Returns:
+            A list of instances of registered hooks.
         """
         hook_cfg = hook_cfg.copy()
         assert isinstance(hook_cfg, list)
+        hooks = []
         for cfg_i in hook_cfg:
             hook = build_from_cfg(cfg_i, HOOKS)
+            if hasattr(hook, 'register_strategy'):
+                hook.register_strategy()
             self.register_hook(hook)
+            hooks.append(hook)
+        return hooks
+
+    def get_hook(self, cls):
+        return [h for h in self._hooks if h.__class__ == cls]
 
     def invoke_hook(self, fn_name: str) -> None:
         """Call all hooks.
@@ -1177,9 +1238,9 @@ class EpochBasedTrainer(BaseTrainer):
         stage_hook_map: Dict[str, list] = {stage: [] for stage in Hook.stages}
         for hook in self.hooks:
             try:
-                priority = Priority(hook.priority).name  # type: ignore
-            except ValueError:
-                priority = hook.priority  # type: ignore
+                priority = Priority(hook.PRIORITY).name  # type: ignore
+            except Exception:
+                priority = Priority.NORMAL  # type: ignore
             classname = hook.__class__.__name__
             hook_info = f'({priority:<12}) {classname:<35}'
             for trigger_stage in hook.get_triggered_stages():
@@ -1189,11 +1250,19 @@ class EpochBasedTrainer(BaseTrainer):
         for stage in Hook.stages:
             hook_infos = stage_hook_map[stage]
             if len(hook_infos) > 0:
-                info = f'{stage}:\n'
-                info += '\n'.join(hook_infos)
+                info = f'Stage: {stage}:\n    '
+                info += '\n    '.join(hook_infos)
                 info += '\n -------------------- '
                 stage_hook_infos.append(info)
-        return '\n'.join(stage_hook_infos)
+        stage_hook_infos = '\n'.join(stage_hook_infos)
+
+        strategy_info = '\n --- Hook strategies info --- \n'
+        for consumer, methods in Hook._strategies.items():
+            strategy_info += f'Method: {consumer} ' \
+                             f'replaced by: ' \
+                             f'{[method.__self__.__class__.__name__ + "." + method.__name__ for method in methods]}\n'
+        strategy_info += '\n --- Hook strategies info end --- \n'
+        return stage_hook_infos + strategy_info
 
 
 def worker_init_fn(worker_id, num_workers, rank, seed):

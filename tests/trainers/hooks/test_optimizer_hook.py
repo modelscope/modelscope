@@ -7,6 +7,7 @@ import unittest
 import json
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
@@ -31,7 +32,7 @@ class DummyModel(nn.Module, Model):
     def forward(self, feat, labels):
         x = self.linear(feat)
         x = self.bn(x)
-        loss = torch.sum(x)
+        loss = F.cross_entropy(x, labels.to(torch.long).squeeze())
         return dict(logits=x, loss=loss)
 
 
@@ -165,6 +166,79 @@ class TorchAMPOptimizerHookTest(unittest.TestCase):
                 trainer.train_step(trainer.model, data_batch)
                 self.assertEqual(trainer.train_outputs['logits'].dtype,
                                  torch.float32)
+
+                self.assertEqual(
+                    len(trainer.optimizer.param_groups[0]['params']), 4)
+                for i in range(4):
+                    self.assertTrue(trainer.optimizer.param_groups[0]['params']
+                                    [i].requires_grad)
+
+            trainer.invoke_hook(TrainerStages.after_train_epoch)
+            trainer._epoch += 1
+        trainer.invoke_hook(TrainerStages.after_run)
+
+
+class TorchApexOptimizerHookTest(unittest.TestCase):
+
+    def setUp(self):
+        print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
+        self.tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(self.tmp_dir):
+            os.makedirs(self.tmp_dir)
+
+    def tearDown(self):
+        super().tearDown()
+        shutil.rmtree(self.tmp_dir)
+
+    @unittest.skip('Apex works abnormally with torch 1.13')
+    def test_apex_optimizer_hook(self):
+        json_cfg = {
+            'task': 'image_classification',
+            'train': {
+                'work_dir': self.tmp_dir,
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1
+                },
+            }
+        }
+
+        config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
+        with open(config_path, 'w') as f:
+            json.dump(json_cfg, f)
+
+        model = DummyModel().cuda()
+        optimizer = SGD(model.parameters(), lr=0.01)
+        lr_scheduler = MultiStepLR(optimizer, milestones=[1, 2])
+        trainer_name = Trainers.default
+        kwargs = dict(
+            cfg_file=config_path,
+            model=model,
+            train_dataset=dummy_dataset,
+            optimizers=(optimizer, lr_scheduler),
+            max_epochs=2)
+
+        trainer = build_trainer(trainer_name, kwargs)
+        train_dataloader = trainer._build_dataloader_with_dataset(
+            trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
+        trainer.register_optimizers_hook()
+        trainer.register_hook_from_cfg([{'type': 'ApexAMPOptimizerHook'}])
+        trainer.invoke_hook(TrainerStages.before_run)
+
+        for _ in range(trainer._epoch, trainer._max_epochs):
+            trainer.invoke_hook(TrainerStages.before_train_epoch)
+            for _, data_batch in enumerate(train_dataloader):
+                for k, v in data_batch.items():
+                    data_batch[k] = v.cuda()
+                trainer.invoke_hook(TrainerStages.before_train_iter)
+                trainer.train_step(trainer.model, data_batch)
+                trainer.invoke_hook(TrainerStages.after_train_iter)
+
+                self.assertEqual(trainer.train_outputs['logits'].dtype,
+                                 torch.float16)
+
+                # test if `after_train_iter`, whether the model is reset to fp32
+                trainer.train_step(trainer.model, data_batch)
 
                 self.assertEqual(
                     len(trainer.optimizer.param_groups[0]['params']), 4)

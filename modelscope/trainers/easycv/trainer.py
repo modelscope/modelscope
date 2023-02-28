@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from copy import deepcopy
 from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
@@ -155,9 +156,10 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
 
     def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
         if self.cfg.get('parallel', None) is not None:
-            self.cfg.parallel.update(
+            dp_cfg = deepcopy(self.cfg['parallel'])
+            dp_cfg.update(
                 dict(module=model, device_ids=[torch.cuda.current_device()]))
-            return build_parallel(self.cfg.parallel)
+            return build_parallel(dp_cfg)
 
         dp_cfg = dict(
             type='MMDistributedDataParallel',

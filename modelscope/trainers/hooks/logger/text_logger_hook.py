@@ -9,12 +9,11 @@ import torch
 from torch import distributed as dist
 
 from modelscope.metainfo import Hooks
-from modelscope.outputs import OutputKeys
 from modelscope.trainers.hooks.builder import HOOKS
-from modelscope.trainers.hooks.logger.base import LoggerHook
 from modelscope.utils.constant import LogKeys, ModeKeys
 from modelscope.utils.json_utils import EnhancedEncoder
-from modelscope.utils.torch_utils import get_dist_info, is_master
+from modelscope.utils.torch_utils import is_master
+from .base import LoggerHook
 
 
 @HOOKS.register_module(module_name=Hooks.TextLoggerHook)
@@ -22,7 +21,7 @@ class TextLoggerHook(LoggerHook):
     """Logger hook in text, Output log to both console and local json file.
 
     Args:
-        by_epoch (bool, optional): Whether EpochBasedtrainer is used.
+        by_epoch (bool, optional): Whether EpochBasedTrainer is used.
             Default: True.
         interval (int, optional): Logging interval (every k iterations).
             It is interval of iterations even by_epoch is true. Default: 10.
@@ -79,9 +78,7 @@ class TextLoggerHook(LoggerHook):
         mem_mb = torch.tensor([mem / (1024 * 1024)],
                               dtype=torch.int,
                               device=device)
-        _, world_size = get_dist_info()
-        if world_size > 1 and getattr(trainer.cfg.model, 'model_parallel_size',
-                                      1) < world_size:
+        if trainer._dist:
             dist.reduce(mem_mb, 0, op=dist.ReduceOp.MAX)
         return mem_mb.item()
 

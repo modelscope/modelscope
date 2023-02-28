@@ -12,7 +12,7 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR
 
 from modelscope.metainfo import Trainers
-from modelscope.models.base import Model
+from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile, TrainerStages
 from modelscope.utils.test_utils import create_dummy_test_dataset
@@ -21,7 +21,7 @@ dummy_dataset = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 10)
 
 
-class DummyModel(nn.Module, Model):
+class DummyModel(TorchModel):
 
     def __init__(self):
         super().__init__()

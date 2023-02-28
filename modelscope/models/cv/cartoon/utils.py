@@ -1,9 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import random
 
 import cv2
 import numpy as np
+import tensorflow as tf
 
 
 def resize_size(image, size=720):
@@ -83,11 +85,87 @@ def find_pupil(landmarks, np_img):
     return xm + xmin, ym + ymin
 
 
+def next_batch(filename_list, batch_size, fineSize=256):
+    idx = np.arange(0, len(filename_list))
+    np.random.shuffle(idx)
+    idx = idx[:batch_size]
+    batch_data = []
+    for i in range(batch_size):
+        image = cv2.imread(filename_list[idx[i]])
+        h, w, c = image.shape
+        rw = random.randint(0, w - fineSize)
+        rh = random.randint(0, h - fineSize)
+        image = image[rh:rh + fineSize, rw:rw + fineSize, :]
+        image = image.astype(np.float32) / 127.5 - 1
+        batch_data.append(image)
+
+    return np.asarray(batch_data)
+
+
+def read_image(image_path, IMAGE_SIZE=256):
+    image = tf.io.read_file(image_path)
+    image = tf.image.decode_image(image, channels=3)
+    image = tf.image.convert_image_dtype(image, tf.float32)
+    image.set_shape([None, None, 3])
+    image = tf.image.resize(images=image, size=[IMAGE_SIZE, IMAGE_SIZE])
+    image = image[..., ::-1]
+    # image = image / 127.5 - 1
+    image = (image - 0.5) * 2
+
+    return image
+
+
+def load_data(photo_list):
+    photo = read_image(photo_list)
+    return photo
+
+
+def tf_data_loader(image_list, batch_size):
+    dataset = tf.data.Dataset.from_tensor_slices((image_list))
+    dataset = dataset.shuffle(len(image_list))
+    dataset = dataset.map(load_data, num_parallel_calls=4)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(1)
+    return dataset
+
+
+def write_batch_image(image, save_dir, name, n):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    fused_dir = os.path.join(save_dir, name)
+    fused_image = [0] * n
+    for i in range(n):
+        fused_image[i] = []
+        for j in range(n):
+            k = i * n + j
+            image[k] = (image[k] + 1) * 127.5
+            image[k] = np.clip(image[k], 0, 255)
+            fused_image[i].append(image[k])
+        fused_image[i] = np.hstack(fused_image[i])
+    fused_image = np.vstack(fused_image)
+    cv2.imwrite(fused_dir, fused_image.astype(np.uint8))
+
+
+def grid_batch_image(image, n):
+    fused_image = [0] * n
+    for i in range(n):
+        fused_image[i] = []
+        for j in range(n):
+            k = i * n + j
+            image[k] = (image[k] + 1) * 127.5
+            image[k] = np.clip(image[k], 0, 255)
+            fused_image[i].append(image[k])
+        fused_image[i] = np.hstack(fused_image[i])
+    fused_image = np.vstack(fused_image)
+    return fused_image
+
+
 def all_file(file_dir):
     L = []
     for root, dirs, files in os.walk(file_dir):
         for file in files:
             extend = os.path.splitext(file)[1]
-            if extend == '.png' or extend == '.jpg' or extend == '.jpeg':
+            if extend == '.png' or extend == '.jpg' or extend == '.jpeg' or extend == '.JPG':
                 L.append(os.path.join(root, file))
     return L

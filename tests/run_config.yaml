@@ -59,6 +59,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_video_deinterlace.py
   - test_image_inpainting_sdv2.py
   - test_bad_image_detecting.py
+  - test_image_portrait_stylization_trainer.py
   - test_controllable_image_generation.py
 
 envs:
@@ -80,3 +81,4 @@ envs:
       - test_person_image_cartoon.py
       - test_skin_retouching.py
       - test_image_style_transfer.py
+      - test_image_portrait_stylization_trainer.py

@@ -32,7 +32,7 @@ class JiebaBPETokenizer:
         except ImportError:
             raise ImportError(
                 'You need to install jieba to use JiebaTokenizer. '
-                'See https://pypi.org/project/rjieba/ for installation.')
+                'See https://pypi.org/project/jieba/ for installation.')
         self.jieba = jieba
         self.new_line = self.vocab['\n']
         self.sep_token = self.vocab['<sep>']
@@ -64,7 +64,9 @@ class JiebaBPETokenizer:
             return self.tokenizer.encode(
                 text, is_pretokenized=False, add_special_tokens=True).ids
 
-    def detokenize(self, token_ids):
+    def detokenize(self, token_ids: List[int], early_stop: bool = True) -> str:
+        if early_stop and self.sep_token in token_ids:
+            token_ids = token_ids[:token_ids.index(self.sep_token)]
         text = self.tokenizer.decode(token_ids, skip_special_tokens=True)
         return text
 

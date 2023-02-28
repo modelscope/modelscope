@@ -38,6 +38,7 @@ from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
+from modelscope.utils.megatron_utils import is_megatron_initialized
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
                                           init_dist, is_dist, is_master,
@@ -682,6 +683,13 @@ class EpochBasedTrainer(BaseTrainer):
             module=model,
             find_unused_parameters=True,
             device_ids=[torch.cuda.current_device()])
+
+        if is_megatron_initialized():
+            from megatron_util import mpu
+            dp_cfg.update({
+                'output_device': torch.cuda.current_device(),
+                'process_group': mpu.get_data_parallel_group()
+            })
 
         return build_parallel(dp_cfg)
 

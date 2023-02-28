@@ -7,9 +7,10 @@ import unittest
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
+from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 
-class TestFinetuneTextGeneration(unittest.TestCase):
+class TestFinetuneTextGeneration(DistributedTestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -20,62 +21,6 @@ class TestFinetuneTextGeneration(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
-
-    @unittest.skip(
-        'skip since the test requires multiple GPU and takes a long time to run'
-    )
-    def test_finetune_poetry(self):
-        dataset_dict = MsDataset.load('chinese-poetry-collection')
-        train_dataset = dataset_dict['train'].remap_columns(
-            {'text1': 'src_txt'})
-        eval_dataset = dataset_dict['test'].remap_columns({'text1': 'src_txt'})
-        max_epochs = 10
-        tmp_dir = './gpt3_poetry'
-
-        num_warmup_steps = 100
-
-        def noam_lambda(current_step: int):
-            current_step += 1
-            return min(current_step**(-0.5),
-                       current_step * num_warmup_steps**(-1.5))
-
-        def cfg_modify_fn(cfg):
-            cfg.train.lr_scheduler = {
-                'type': 'LambdaLR',
-                'lr_lambda': noam_lambda,
-                'options': {
-                    'by_epoch': False
-                }
-            }
-            cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
-            cfg.train.dataloader = {
-                'batch_size_per_gpu': 16,
-                'workers_per_gpu': 1
-            }
-            cfg.train.hooks.append({
-                'type': 'EvaluationHook',
-                'by_epoch': True,
-                'interval': 1
-            })
-            cfg.evaluation.dataloader = {
-                'batch_size_per_gpu': 8,
-                'workers_per_gpu': 1
-            }
-            cfg.evaluation.metrics = 'ppl'
-            return cfg
-
-        kwargs = dict(
-            model='damo/nlp_gpt3_text-generation_1.3B',
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            max_epochs=max_epochs,
-            work_dir=tmp_dir,
-            cfg_modify_fn=cfg_modify_fn)
-
-        # Construct trainer and train
-        trainer = build_trainer(
-            name=Trainers.gpt3_trainer, default_args=kwargs)
-        trainer.train()
 
     @unittest.skip(
         'skip since the test requires multiple GPU and takes a long time to run'
@@ -136,6 +81,69 @@ class TestFinetuneTextGeneration(unittest.TestCase):
         trainer = build_trainer(
             name=Trainers.gpt3_trainer, default_args=kwargs)
         trainer.train()
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_single_finetune_portry(self):
+        finetune_poetry()
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_multi_finetune_portry(self):
+        self.start(
+            finetune_poetry, num_gpus=4, work_dir=self.tmp_dir, dp_tp=True)
+
+    # TODO: add gpt3 trainer predict unittest
+
+
+def finetune_poetry(dp_tp=False):
+    dataset_dict = MsDataset.load('chinese-poetry-collection')
+    train_dataset = dataset_dict['train'].remap_columns({'text1': 'src_txt'})
+    eval_dataset = dataset_dict['test'].remap_columns({'text1': 'src_txt'})
+    max_epochs = 2
+    tmp_dir = './gpt3_poetry'
+
+    num_warmup_steps = 100
+
+    def noam_lambda(current_step: int):
+        current_step += 1
+        return min(current_step**(-0.5),
+                   current_step * num_warmup_steps**(-1.5))
+
+    def cfg_modify_fn(cfg):
+        cfg.train.lr_scheduler = {
+            'type': 'LambdaLR',
+            'lr_lambda': noam_lambda,
+            'options': {
+                'by_epoch': False
+            }
+        }
+        cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
+        cfg.train.dataloader = {'batch_size_per_gpu': 2, 'workers_per_gpu': 1}
+        cfg.train.hooks.append({
+            'type': 'EvaluationHook',
+            'by_epoch': True,
+            'interval': 1
+        })
+        cfg.evaluation.dataloader = {
+            'batch_size_per_gpu': 8,
+            'workers_per_gpu': 1
+        }
+        cfg.evaluation.metrics = 'ppl'
+        cfg.train.train_iters_per_epoch = 10
+        if dp_tp:
+            cfg.megatron = {'world_size': 4, 'tensor_model_parallel_size': 2}
+        return cfg
+
+    kwargs = dict(
+        model='damo/nlp_gpt3_text-generation_1.3B',
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        max_epochs=max_epochs,
+        work_dir=tmp_dir,
+        cfg_modify_fn=cfg_modify_fn)
+
+    # Construct trainer and train
+    trainer = build_trainer(name=Trainers.gpt3_trainer, default_args=kwargs)
+    trainer.train()
 
 
 if __name__ == '__main__':

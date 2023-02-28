@@ -41,7 +41,7 @@ class TensorboardHook(LoggerHook):
         self.out_dir = out_dir
         self.skip_keys = skip_keys
 
-    @master_only
+    @master_only()
     def before_run(self, trainer):
         super(TensorboardHook, self).before_run(trainer)
         try:
@@ -59,7 +59,7 @@ class TensorboardHook(LoggerHook):
             f'tensorboard files will be saved to {self.out_dir}')
         self.writer = SummaryWriter(self.out_dir)
 
-    @master_only
+    @master_only()
     def log(self, trainer):
         if len(trainer.visualization_buffer.output) > 0:
             self.visualization_log(trainer)
@@ -112,6 +112,6 @@ class TensorboardHook(LoggerHook):
         # avoiding repeated writing of the same image buffer every self.interval
         trainer.visualization_buffer.clear_output()
 
-    @master_only
+    @master_only()
     def after_run(self, trainer):
         self.writer.close()

@@ -108,6 +108,7 @@ if TYPE_CHECKING:
     from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
+    from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
 
 else:
     _import_structure = {
@@ -264,6 +265,9 @@ else:
         'bad_image_detecting_pipeline': ['BadImageDetecingPipeline'],
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
+        'controllable_image_generation_pipeline': [
+            'ControllableImageGenerationPipeline'
+        ],
     }
 
     import sys

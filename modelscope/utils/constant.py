@@ -93,6 +93,7 @@ class CVTasks(object):
     image_embedding = 'image-embedding'
     image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
+    controllable_image_generation = 'controllable-image-generation'
 
     # video recognition
     live_category = 'live-category'

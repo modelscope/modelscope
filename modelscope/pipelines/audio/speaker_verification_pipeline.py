@@ -88,21 +88,29 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         rst = {}
         for i in range(len(inputs)):
-            if i == 0:
+            # for demo service(environ is 'eas'), only show the first result
+            # audio_in:
+            #   list/tuple: return speaker verification scores
+            #   single wav/bytes: return speaker embedding
+            if 'MODELSCOPE_ENVIRONMENT' in os.environ and \
+                    os.environ['MODELSCOPE_ENVIRONMENT'] == 'eas':
                 if isinstance(self.audio_in, tuple) or isinstance(
                         self.audio_in, list):
                     score = inputs[0]['value']
-                    rst[OutputKeys.SCORES] = score
+                    rst[OutputKeys.LABEL] = ['Same', 'Different']
+                    rst[OutputKeys.SCORES] = [score / 100.0, 1 - score / 100.0]
                 else:
                     embedding = inputs[0]['value']
                     rst[OutputKeys.SPK_EMBEDDING] = embedding
-            rst[inputs[i]['key']] = inputs[i]['value']
+            else:
+                # for notebook/local jobs, copy results
+                rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
     def get_cmd(self, extra_args) -> Dict[str, Any]:
         # generate asr inference command
         mode = self.model_cfg['model_config']['mode']
-        sv_model_path = self.model_cfg['sv_model_path']
+        sv_model_path = self.model_cfg['model_path']
         sv_model_config = os.path.join(
             self.model_cfg['model_workspace'],
             self.model_cfg['model_config']['sv_model_config'])

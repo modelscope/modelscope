@@ -449,6 +449,7 @@ class Pipelines(object):
     itn_inference = 'itn-inference'
     punc_inference = 'punc-inference'
     sv_inference = 'sv-inference'
+    speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     lm_inference = 'language-score-prediction'

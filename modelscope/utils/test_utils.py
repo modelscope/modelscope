@@ -22,18 +22,6 @@ from modelscope.utils.import_utils import is_tf_available, is_torch_available
 TEST_LEVEL = 2
 TEST_LEVEL_STR = 'TEST_LEVEL'
 
-# for user citest and sdkdev
-TEST_ACCESS_TOKEN1 = os.environ.get('TEST_ACCESS_TOKEN_CITEST', None)
-TEST_ACCESS_TOKEN2 = os.environ.get('TEST_ACCESS_TOKEN_SDKDEV', None)
-
-TEST_MODEL_CHINESE_NAME = '内部测试模型'
-TEST_MODEL_ORG = 'citest'
-
-
-def delete_credential():
-    path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
-    shutil.rmtree(path_credential, ignore_errors=True)
-
 
 def test_level():
     global TEST_LEVEL

@@ -249,9 +249,33 @@ def generate_scp_for_sv(url: str, key: str = None):
     return wav_scp_path
 
 
-def generate_sv_scp_from_url(url: tuple):
-    if len(url) != 2:
-        raise Exception('Speaker Verification needs 2 input wav file!')
-    audio_scp1 = generate_scp_for_sv(url[0], key='test1')
-    audio_scp2 = generate_scp_for_sv(url[1], key='test1')
-    return audio_scp1, audio_scp2
+def generate_sv_scp_from_url(urls: Union[tuple, list]):
+    """
+    generate audio_scp files from url input for speaker verification.
+    """
+    audio_scps = []
+    for url in urls:
+        audio_scp = generate_scp_for_sv(url, key='test1')
+        audio_scps.append(audio_scp)
+    return audio_scps
+
+
+def generate_sd_scp_from_url(urls: Union[tuple, list]):
+    """
+    generate audio_scp files from url input for speaker diarization.
+    """
+    audio_scps = []
+    for url in urls:
+        if os.path.exists(url) and (
+                url.lower().endswith(SUPPORT_AUDIO_TYPE_SETS)):
+            audio_scp = url
+        else:
+            result = urlparse(url)
+            if result.scheme is not None and len(result.scheme) > 0:
+                storage = HTTPStorage()
+                wav_bytes = storage.read(url)
+                audio_scp = wav_bytes
+            else:
+                raise ValueError("Can't download from {}.".format(url))
+        audio_scps.append(audio_scp)
+    return audio_scps

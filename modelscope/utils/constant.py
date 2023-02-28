@@ -212,6 +212,7 @@ class AudioTasks(object):
     inverse_text_processing = 'inverse-text-processing'
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
+    speaker_diarization = 'speaker-diarization'
     voice_activity_detection = 'voice-activity-detection'
     language_model = 'language-model'
 

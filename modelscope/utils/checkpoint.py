@@ -5,6 +5,7 @@ import os
 import re
 import time
 from collections import OrderedDict
+from functools import partial
 from shutil import copytree, ignore_patterns, rmtree
 from typing import Callable, Dict, Optional, Union
 
@@ -16,7 +17,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from modelscope import __version__
 from modelscope.fileio import File, LocalStorage
-from modelscope.utils.config import JSONIteratorEncoder
+from modelscope.utils.config import Config, JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import is_master
@@ -48,7 +49,8 @@ def save_checkpoint(model: torch.nn.Module,
                     optimizer: Optional[Optimizer] = None,
                     lr_scheduler: Optional[_LRScheduler] = None,
                     meta: Optional[dict] = None,
-                    with_meta: bool = True) -> None:
+                    with_meta: bool = True,
+                    with_model: bool = True) -> None:
     """Save checkpoint to file.
 
     The checkpoint will have 3 fields: ``meta``, ``state_dict`` and
@@ -60,26 +62,30 @@ def save_checkpoint(model: torch.nn.Module,
         optimizer (:obj:`Optimizer`, optional): Optimizer to be saved.
         lr_scheduler(:obj:`_LRScheduler`, optional): LRScheduler to be saved.
         meta (dict, optional): Metadata to be saved in checkpoint.
-        with_meta (bool, optional):
+        with_meta (bool, optional): Save meta info.
+        with_model(bool, optional): Save model states.
     """
-    if meta is None:
-        meta = {}
-    elif not isinstance(meta, dict):
-        raise TypeError(f'meta must be a dict or None, but got {type(meta)}')
-    meta.update(modelscope=__version__, time=time.asctime())
-
-    if isinstance(model, torch.nn.parallel.DistributedDataParallel):
-        model = model.module
-
-    if hasattr(model, 'CLASSES') and model.CLASSES is not None:
-        # save class name to the meta
-        meta.update(CLASSES=model.CLASSES)
+    checkpoint = {}
+    if not with_meta and not with_model:
+        raise ValueError(
+            'Save meta by "with_meta=True" or model by "with_model=True"')
 
     if with_meta:
-        checkpoint = {
-            'meta': meta,
-            'state_dict': weights_to_cpu(model.state_dict())
-        }
+        if meta is None:
+            meta = {}
+        elif not isinstance(meta, dict):
+            raise TypeError(
+                f'meta must be a dict or None, but got {type(meta)}')
+        meta.update(modelscope=__version__, time=time.asctime())
+
+        if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+            model = model.module
+
+        if hasattr(model, 'CLASSES') and model.CLASSES is not None:
+            # save class name to the meta
+            meta.update(CLASSES=model.CLASSES)
+
+        checkpoint['meta'] = meta
 
         # save optimizer state dict in the checkpoint
         if isinstance(optimizer, Optimizer):
@@ -92,8 +98,13 @@ def save_checkpoint(model: torch.nn.Module,
         # save lr_scheduler state dict in the checkpoint
         if lr_scheduler is not None and hasattr(lr_scheduler, 'state_dict'):
             checkpoint['lr_scheduler'] = lr_scheduler.state_dict()
-    else:
-        checkpoint = weights_to_cpu(model.state_dict())
+
+    if with_model:
+        _weights = weights_to_cpu(model.state_dict())
+        if not with_meta:
+            checkpoint = _weights
+        else:
+            checkpoint['state_dict'] = _weights
 
     with io.BytesIO() as f:
         torch.save(checkpoint, f)
@@ -134,9 +145,10 @@ def load_checkpoint(filename,
                 f'The state dict of lr_scheduler cannot be found in checkpoint file: {filename}'
             )
 
-    state_dict = checkpoint if 'state_dict' not in checkpoint else checkpoint[
-        'state_dict']
-    model.load_state_dict(state_dict)
+    if model is not None:
+        state_dict = checkpoint if 'state_dict' not in checkpoint else checkpoint[
+            'state_dict']
+        model.load_state_dict(state_dict)
     return checkpoint.get('meta', {})
 
 
@@ -521,7 +533,6 @@ def load_task_model_checkpoint(model_to_load,
 
 
 def save_configuration(target_folder, config: Dict):
-    from modelscope.utils.config import Config
     if isinstance(config, Config):
         config = config.to_dict()
     if ConfigFields.pipeline not in config:

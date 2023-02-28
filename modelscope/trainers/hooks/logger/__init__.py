@@ -8,16 +8,13 @@ if TYPE_CHECKING:
     from .base import LoggerHook
     from .tensorboard_hook import TensorboardHook
     from .text_logger_hook import TextLoggerHook
-
 else:
     _import_structure = {
         'base': ['LoggerHook'],
         'tensorboard_hook': ['TensorboardHook'],
         'text_logger_hook': ['TextLoggerHook']
     }
-
     import sys
-
     sys.modules[__name__] = LazyImportModule(
         __name__,
         globals()['__file__'],

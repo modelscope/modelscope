@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from modelscope.metainfo import Models, Preprocessors, TaskModels
@@ -348,14 +347,13 @@ class Preprocessor(ABC):
 
         Args:
             target_folder (Union[str, os.PathLike]):
-            Directory to which to save. Will be created if it doesn't exist.
+                Directory to which to save. Will be created if it doesn't exist.
 
             config (Optional[dict], optional):
-            The config for the configuration.json
+                The config for the configuration.json
 
             save_config_function (Callable): The function used to save the configuration, call this function
                 after the config is updated.
-
         """
         if config is None and hasattr(self, 'cfg'):
             config = self.cfg

@@ -1,10 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import importlib
 import os
 import random
+import re
+from shutil import rmtree
 
 import numpy as np
 import torch
+from packaging import version
 
 from modelscope import __version__
 from modelscope.metainfo import Hooks, Pipelines
@@ -38,6 +40,10 @@ class CheckpointHook(Hook):
 
     PRIORITY = Priority.LOW
 
+    TRAINER_STATE_SUFFIX = '_trainer_state.pth'
+
+    MODEL_STATE_SUFFIX = '.pth'
+
     def __init__(self,
                  interval=0,
                  by_epoch=True,
@@ -63,8 +69,8 @@ class CheckpointHook(Hook):
         if not self.save_dir:
             self.save_dir = trainer.work_dir
 
-        if not os.path.exists(self.save_dir) and is_master():
-            os.makedirs(self.save_dir)
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir, exist_ok=True)
 
         if not hasattr(trainer, 'logger'):
             self.logger = get_logger()
@@ -72,34 +78,85 @@ class CheckpointHook(Hook):
             self.logger = trainer.logger
 
         if is_master():
+            output_dir = os.path.join(self.save_dir, self.output_sub_dir)
+            # only global master prepares the output folder
+            self.prepare_output(trainer, output_dir)
             self.logger.info(f'Checkpoints will be saved to {self.save_dir}')
 
     def after_train_epoch(self, trainer):
         if not self.by_epoch:
             return
 
-        if self._should_save(trainer):
-            if is_master() or trainer.cfg.model.get('model_parallel_size',
-                                                    1) != 1:
+        if self._should_save(trainer) and self.should_save_on_rank(trainer):
+            if is_master():
                 self.logger.info(
                     f'Saving checkpoint at {trainer.epoch + 1} epoch')
-                self._save_checkpoint(trainer)
+            self._save_checkpoint(trainer)
+
+    def after_train_iter(self, trainer):
+        if self.by_epoch:
+            return
+
+        if self._should_save(trainer) and self.should_save_on_rank(trainer):
+            if is_master():
+                self.logger.info(
+                    f'Saving checkpoint at {trainer.iter + 1} epoch')
+            self._save_checkpoint(trainer)
 
     def _save_checkpoint(self, trainer):
-        if self.by_epoch:
-            cur_save_name = os.path.join(
-                self.save_dir, f'{LogKeys.EPOCH}_{trainer.epoch + 1}.pth')
-        else:
-            cur_save_name = os.path.join(
-                self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}.pth')
-        cur_save_name = extend_save_name_for_parallel(cur_save_name)
+        """Save checkpoint files and remove obsolete ones
+        """
 
+        if self.by_epoch:
+            checkpoint_path_prefix = os.path.join(
+                self.save_dir, f'{LogKeys.EPOCH}_{trainer.epoch + 1}')
+        else:
+            checkpoint_path_prefix = os.path.join(
+                self.save_dir, f'{LogKeys.ITER}_{trainer.iter + 1}')
+
+        meta = self._create_training_state(trainer)
+        self.save_checkpoints(trainer, checkpoint_path_prefix,
+                              self.output_sub_dir, meta)
+        self.history_checkpoints.append(checkpoint_path_prefix)
+        self._remove_obsolete_checkpoints(trainer)
+
+    def _remove_obsolete_checkpoints(self, trainer):
+        if self.max_checkpoint_num is not None and \
+                len(self.history_checkpoints) > self.max_checkpoint_num:
+            history_checkpoints = [ckpt for ckpt in self.history_checkpoints]
+            self.history_checkpoints.clear()
+            for i, checkpoint_path_prefix in enumerate(history_checkpoints):
+                if i < len(history_checkpoints) - self.max_checkpoint_num:
+                    self.logger.info(
+                        f'deleting checkpoint: {checkpoint_path_prefix}')
+                    self.remove_checkpoints(
+                        trainer, checkpoint_path_prefix=checkpoint_path_prefix)
+                else:
+                    self.history_checkpoints.append(checkpoint_path_prefix)
+
+    def _should_save(self, trainer):
+        if self.by_epoch:
+            check_last = self.is_last_epoch
+            check_frequency = self.every_n_epochs
+        else:
+            check_last = self.is_last_iter
+            check_frequency = self.every_n_iters
+
+        if check_frequency(trainer,
+                           self.interval) or (self.save_last
+                                              and check_last(trainer)):
+            return True
+        return False
+
+    def _create_training_state(self, trainer):
         self.rng_state = {
             'random': random.getstate(),
             'numpy': np.random.get_state(),
             'cpu': torch.random.get_rng_state(),
             'cuda': torch.cuda.get_rng_state_all(),
         }
+
+        # keep epoch/iter/inner_iter/random_state
         meta = {
             'epoch': trainer.epoch,
             'iter': trainer.iter + 1,
@@ -107,6 +164,7 @@ class CheckpointHook(Hook):
             'rng_state': self.rng_state,
         }
 
+        # keep hooks state
         i = 0
         for hook in trainer.hooks:
             if hasattr(hook, 'state_dict') and getattr(hook, '_should_save',
@@ -114,54 +172,13 @@ class CheckpointHook(Hook):
                 meta[f'{hook.__class__}-{i}'] = hook.state_dict()
                 i += 1
 
-        save_checkpoint(
-            trainer.model,
-            cur_save_name,
-            trainer.optimizer,
-            trainer.lr_scheduler,
-            meta=meta)
-        if (self.is_last_epoch(trainer)
-                and self.by_epoch) or (self.is_last_iter(trainer)
-                                       and not self.by_epoch):
-            self._save_pretrained(trainer)
+        return meta
 
-        self.history_checkpoints.append(cur_save_name)
-        self.remove_obsolete_checkpoints()
-
-    def remove_obsolete_checkpoints(self):
-        if self.max_checkpoint_num is not None and \
-                len(self.history_checkpoints) > self.max_checkpoint_num:
-            history_checkpoints = [ckpt for ckpt in self.history_checkpoints]
-            self.history_checkpoints.clear()
-            for i, ckpt_file in enumerate(history_checkpoints):
-                if i < len(history_checkpoints) - self.max_checkpoint_num:
-                    if os.path.isfile(ckpt_file):
-                        os.remove(ckpt_file)
-                else:
-                    self.history_checkpoints.append(ckpt_file)
-
-    def _save_pretrained(self, trainer):
-        output_dir = os.path.join(self.save_dir, self.output_sub_dir)
-        from modelscope.trainers.parallel.utils import is_parallel
-
-        if is_parallel(trainer.model):
-            model = trainer.model.module
-        else:
-            model = trainer.model
-
-        config = trainer.cfg.to_dict()
-        # override pipeline by tasks name after finetune done,
-        # avoid case like fill mask pipeline with a text cls task
-        if config['task'] in [
-                getattr(Pipelines, attr) for attr in dir(Pipelines)
-                if not attr.startswith('__')
-        ]:
-            # TODO a temp fix to avoid pipeline_name and task mismatch
-            config['pipeline'] = {'type': config['task']}
-
-        # remove parallel module that is not JSON serializable
-        if 'parallel' in config and 'module' in config['parallel']:
-            del config['parallel']['module']
+    @staticmethod
+    def copy_files_and_dump_config(trainer, output_dir, config, bin_file):
+        """Copy useful files to target output folder and dumps the target configuration.json.
+        """
+        model = trainer.unwrap_module(trainer.model)
 
         class SaveConfig:
 
@@ -178,20 +195,14 @@ class CheckpointHook(Hook):
         save_config_fn = SaveConfig(output_dir, config)
 
         if hasattr(model, 'save_pretrained'):
-            # Now support two binary files: pytorch_model.bin and pytorch_model.pt
-            default_bin_file = ModelFile.TORCH_MODEL_BIN_FILE
-            if hasattr(
-                    model,
-                    'model_dir') and ModelFile.TORCH_MODEL_FILE in os.listdir(
-                        model.model_dir):
-                default_bin_file = ModelFile.TORCH_MODEL_FILE
+            # Save pretrained of model, skip saving checkpoint
             model.save_pretrained(
                 output_dir,
-                default_bin_file,
-                save_function=save_checkpoint,
+                bin_file,
+                save_function=lambda *args, **kwargs: None,
                 config=save_config_fn.config,
-                save_config_function=save_config_fn,
-                with_meta=False)
+                save_config_function=save_config_fn)
+
         if trainer.train_preprocessor is not None:
             trainer.train_preprocessor.save_pretrained(
                 output_dir,
@@ -204,30 +215,141 @@ class CheckpointHook(Hook):
                 save_config_function=save_config_fn)
         save_config_fn.save_config()
 
-    def after_train_iter(self, trainer):
-        if self.by_epoch:
-            return
+    @staticmethod
+    def _bin_file(model):
+        """Get bin file path.
+        """
+        default_bin_file = ModelFile.TORCH_MODEL_BIN_FILE
+        if hasattr(model,
+                   'model_dir') and ModelFile.TORCH_MODEL_FILE in os.listdir(
+                       model.model_dir):
+            default_bin_file = ModelFile.TORCH_MODEL_FILE
+        return default_bin_file
 
-        if self._should_save(trainer):
-            if is_master() or trainer.cfg.model.get('model_parallel_size',
-                                                    1) != 1:
-                self.logger.info(
-                    f'Saving checkpoint at {trainer.iter + 1} iterations')
-                self._save_checkpoint(trainer)
+    @Hook.overload_func(name='CheckpointHook.prepare_output')
+    def prepare_output(self, trainer, output_dir):
+        """Prepares the output of target folder.
 
-    def _should_save(self, trainer):
-        if self.by_epoch:
-            check_last = self.is_last_epoch
-            check_frequency = self.every_n_epochs
-        else:
-            check_last = self.is_last_iter
-            check_frequency = self.every_n_iters
+        This is a strategic function which can be registered by other hook's function.
 
-        if check_frequency(trainer,
-                           self.interval) or (self.save_last
-                                              and check_last(trainer)):
-            return True
-        return False
+        Args:
+            trainer: The trainer instance.
+            output_dir: The target folder used in inference.
+        """
+        model = trainer.unwrap_module(trainer.model)
+        config = trainer.cfg.to_dict()
+
+        # override pipeline by tasks name after finetune done,
+        # avoid case like fill mask pipeline with a text cls task
+        if config['task'] in [
+                getattr(Pipelines, attr) for attr in dir(Pipelines)
+                if not attr.startswith('__')
+        ]:
+            # TODO a temp fix to avoid pipeline_name and task mismatch
+            config['pipeline'] = {'type': config['task']}
+
+        self.copy_files_and_dump_config(trainer, output_dir, config,
+                                        self._bin_file(model))
+
+    def link(self, model, src_file, output_dir):
+        """Links the src bin file to the output folder.
+
+        Args:
+            model: The model instance.
+            src_file: The src bin file path.
+            output_dir: The target folder used in inference.
+        """
+
+        bin_file = self._bin_file(model)
+        dest_file = os.path.join(output_dir, bin_file)
+        if os.path.isfile(dest_file):
+            os.unlink(dest_file)
+
+        os.link(src_file, dest_file)
+
+    def save_trainer_state(self, trainer, model, train_state_file, meta):
+        """Save the trainer state, including optimizer/lr_scheduler's state dict, random states etc.
+
+        Args:
+            trainer: The trainer instance.
+            model: The model instance.
+            train_state_file: The target file name for saving trainer states.
+            meta: Some extra meta info.
+        """
+        save_checkpoint(
+            model,
+            train_state_file,
+            trainer.optimizer,
+            trainer.lr_scheduler,
+            meta=meta,
+            with_model=False)
+
+    def save_model_state(self, model, model_file):
+        """Save the model state.
+
+        Args:
+            model: The model instance.
+            model_file: The target file name for saving model states.
+        """
+        save_checkpoint(
+            model, model_file, None, None, meta=None, with_meta=False)
+
+    @Hook.overload_func(name='CheckpointHook.save_checkpoints')
+    def save_checkpoints(self,
+                         trainer,
+                         checkpoint_path_prefix,
+                         output_sub_dir,
+                         meta=None):
+        """Save the state dict for trainer and model.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            checkpoint_path_prefix(`str`): The saving dir with a prefix.
+                like: /tmp/test/epoch_0
+            output_sub_dir(`str`): The sub-dir in the saving dir used in inference.
+            meta: (`dict`): The meta info needed to be saved into files.
+        """
+        model = trainer.unwrap_module(trainer.model)
+        _model_file, _train_state_file = _get_state_file_name(
+            checkpoint_path_prefix)
+
+        # Save pth file without model state_dict
+        self.save_trainer_state(trainer, model, _train_state_file, meta)
+        self.save_model_state(model, _model_file)
+        output_dir = os.path.join(self.save_dir, output_sub_dir)
+        self.link(model, _model_file, output_dir)
+
+    @Hook.overload_func(name='CheckpointHook.remove_checkpoints')
+    def remove_checkpoints(self, trainer, checkpoint_path_prefix):
+        """Remove obsolete checkpoint files.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            checkpoint_path_prefix(`str`): The saving dir with a prefix.
+                like: /tmp/test/epoch_0
+        """
+        _model_file, _train_state_file = _get_state_file_name(
+            checkpoint_path_prefix)
+        if os.path.isfile(_train_state_file):
+            os.remove(_train_state_file)
+
+        if os.path.isfile(_model_file):
+            os.remove(_model_file)
+
+    @Hook.overload_func(name='CheckpointHook.should_save_on_rank')
+    def should_save_on_rank(self, trainer):
+        """Used in ddp or other distributed training scenario, returns whether do saving in current rank.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+        """
+        return is_master()
 
 
 @HOOKS.register_module(module_name=Hooks.BestCkptSaverHook)
@@ -306,52 +428,33 @@ class BestCkptSaverHook(CheckpointHook):
         return False
 
     def _save_checkpoint(self, trainer):
-        cur_save_name = self.save_file_name
-        if cur_save_name is None:
+        checkpoint_path_prefix = self.save_file_name
+        if checkpoint_path_prefix is None:
             if self.by_epoch:
-                cur_save_name = os.path.join(
+                checkpoint_path_prefix = os.path.join(
                     self.save_dir,
-                    f'best_{LogKeys.EPOCH}{trainer.epoch + 1}_{self.metric_key}{self._best_metric}.pth'
+                    f'best_{LogKeys.EPOCH}{trainer.epoch + 1}_{self.metric_key}{self._best_metric}'
                 )
             else:
-                cur_save_name = os.path.join(
+                checkpoint_path_prefix = os.path.join(
                     self.save_dir,
-                    f'best_{LogKeys.ITER}{trainer.iter + 1}_{self.metric_key}{self._best_metric}.pth'
+                    f'best_{LogKeys.ITER}{trainer.iter + 1}_{self.metric_key}{self._best_metric}'
                 )
         else:
-            if '.' not in cur_save_name:
-                cur_save_name = f'{cur_save_name}.pth'
-            cur_save_name = os.path.join(self.save_dir, cur_save_name)
-        cur_save_name = extend_save_name_for_parallel(cur_save_name)
+            checkpoint_path_prefix = os.path.join(self.save_dir,
+                                                  checkpoint_path_prefix)
 
-        meta = {
-            'epoch': trainer.epoch,
-            'iter': trainer.iter + 1,
-            'inner_iter': trainer.inner_iter + 1,
-            'rng_state': self.rng_state,
-        }
+        self._best_ckpt_file = checkpoint_path_prefix
+        meta = self._create_training_state(trainer)
+        self.save_checkpoints(trainer, checkpoint_path_prefix,
+                              self.output_sub_dir, meta)
+        self.history_checkpoints.add(checkpoint_path_prefix)
+        self._remove_obsolete_checkpoints(trainer)
 
-        i = 0
-        for hook in trainer.hooks:
-            if hasattr(hook, 'state_dict') and getattr(hook, '_should_save',
-                                                       True):
-                meta[f'{hook.__class__}-{i}'] = hook.state_dict()
-                i += 1
-
-        if os.path.isfile(cur_save_name):
-            os.remove(cur_save_name)
-        save_checkpoint(trainer.model, cur_save_name, trainer.optimizer,
-                        trainer.lr_scheduler, meta)
-        self._best_ckpt_file = cur_save_name
-        self._save_pretrained(trainer)
-        self.history_checkpoints.add(cur_save_name)
-        self.remove_obsolete_checkpoints()
-
-    def remove_obsolete_checkpoints(self):
+    def _remove_obsolete_checkpoints(self, trainer):
 
         def extract_metric_from_filename(name1):
-            metric1 = float('.'.join(
-                name1.split(self.metric_key)[1].split('.')[:-1]))
+            metric1 = float(name1.split(self.metric_key)[1])
             if self.rule == 'max':
                 return -metric1
             else:
@@ -362,11 +465,14 @@ class BestCkptSaverHook(CheckpointHook):
             history_checkpoints = sorted(
                 self.history_checkpoints, key=extract_metric_from_filename)
             self.history_checkpoints.clear()
-            for i, ckpt_file in enumerate(history_checkpoints):
+            for i, checkpoint_path_prefix in enumerate(history_checkpoints):
                 if i < self.max_checkpoint_num:
-                    self.history_checkpoints.add(ckpt_file)
-                elif os.path.isfile(ckpt_file):
-                    os.remove(ckpt_file)
+                    self.history_checkpoints.add(checkpoint_path_prefix)
+                else:
+                    self.logger.info(
+                        f'deleting checkpoint: {checkpoint_path_prefix}')
+                    self.remove_checkpoints(
+                        trainer, checkpoint_path_prefix=checkpoint_path_prefix)
 
     def state_dict(self):
         return {
@@ -383,9 +489,9 @@ class BestCkptSaverHook(CheckpointHook):
 
     def after_run(self, trainer):
         if self.restore_best:
-            if is_master():
-                LoadCheckpointHook.load_checkpoint(self._best_ckpt_file,
-                                                   trainer)
+            # If restore_best is True, will call the LoadCheckpointHook to load the best checkpoint
+            # for later evaluation or prediction.
+            LoadCheckpointHook.load_checkpoint(self._best_ckpt_file, trainer)
 
 
 @HOOKS.register_module(module_name=Hooks.LoadCheckpointHook)
@@ -403,21 +509,26 @@ class LoadCheckpointHook(Hook):
         checkpoint_file (str): The checkpoint file to be loaded.
         load_all_state (bool): Load all states(optimizer, epoch, lr_scheduler, random_state, etc.) when loading old
             training state file or not. The model's state dict will only be loaded if False.
+        strict (bool): If strict, any unmatched keys will cause an error.
     """
 
     PRIORITY = Priority.HIGH
 
     _should_save = False
 
+    _TWO_PTH_FILE_VERSION = '1.3.1'
+
     def __init__(
         self,
         checkpoint_file=None,
         load_all_state=True,
+        strict=False,
     ):
         self.checkpoint_file = checkpoint_file
         self.rng_state = None
         self.need_load_rng_state = False
         self.load_all_state = load_all_state
+        self.strict = strict
 
     def before_run(self, trainer):
         if not hasattr(trainer, 'logger'):
@@ -425,10 +536,9 @@ class LoadCheckpointHook(Hook):
         else:
             self.logger = trainer.logger
 
-        if self.checkpoint_file is not None and os.path.isfile(
-                self.checkpoint_file):
+        if self.checkpoint_file is not None:
             meta = self.load_checkpoint(self.checkpoint_file, trainer,
-                                        self.load_all_state)
+                                        self.load_all_state, self.strict)
             self.rng_state = meta.get('rng_state')
             self.need_load_rng_state = self.load_all_state
 
@@ -442,69 +552,136 @@ class LoadCheckpointHook(Hook):
                     torch.cuda.random.set_rng_state_all(self.rng_state['cuda'])
                 self.need_load_rng_state = False
             else:
-                self.logger.warning(
+                self.logger.info(
                     'Random state cannot be found in checkpoint file, '
                     'this may cause a random data order or model initialization.'
                 )
 
+    @staticmethod
+    def _restore_training_state(trainer, meta):
+        trainer._epoch = meta.get('epoch', trainer._epoch)
+        trainer._iter = meta.get('iter', trainer._iter)
+        trainer._inner_iter = meta.get('inner_iter', trainer._inner_iter)
+
+        i = 0
+        for hook in trainer.hooks:
+            if hasattr(hook, 'load_state_dict') and getattr(
+                    hook, '_should_save', True):
+                key = f'{hook.__class__}-{i}'
+                if key in meta:
+                    hook.load_state_dict(meta.get(key, {}))
+                else:
+                    trainer.logger.warning(
+                        f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
+                    )
+                i += 1
+
     @classmethod
-    def load_checkpoint(cls, filename, trainer, load_all_state=True):
-        from modelscope.trainers.parallel.utils import is_parallel
-        if is_parallel(trainer.model):
-            model = trainer.model.module
-        else:
-            model = trainer.model
-        meta = load_checkpoint(
-            filename, model,
-            getattr(trainer, 'optimizer', None) if load_all_state else None,
-            getattr(trainer, 'lr_scheduler', None) if load_all_state else None)
+    def load_checkpoint(cls,
+                        filename,
+                        trainer,
+                        load_all_state=True,
+                        strict=False):
+        """A static method to load checkpoint files.
+
+        Args:
+            filename(str): An absolute model bin file(pth or bin) or a dir path with a file prefix(like epoch_1).
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            load_all_state(`bool`): Load all states including the trainer states.
+            strict(`bool`): Load module state dict strictly.
+
+        Returns:
+            A dict containing the train states saved by `_create_training_state`
+        """
+        meta = cls().load_checkpoints(filename, trainer, load_all_state,
+                                      strict)
         if load_all_state:
-            trainer._epoch = meta.get('epoch', trainer._epoch)
-            trainer._iter = meta.get('iter', trainer._iter)
-            trainer._inner_iter = meta.get('inner_iter', trainer._inner_iter)
+            cls._restore_training_state(trainer, meta)
 
-            i = 0
-            for hook in trainer.hooks:
-                if hasattr(hook, 'load_state_dict') and getattr(
-                        hook, '_should_save', True):
-                    key = f'{hook.__class__}-{i}'
-                    if key in meta:
-                        hook.load_state_dict(meta.get(key, {}))
-                    else:
-                        trainer.logger.warning(
-                            f'The state_dict of hook {hook.__class__} at index {i} is not found in the checkpoint file.'
-                        )
-                    i += 1
-
-        version = meta.get('modelscope')
-        if version != __version__:
-            trainer.logger.warning(
-                f'The modelscope version of loaded checkpoint does not match the runtime version. '
-                f'The saved version: {version}, runtime version: {__version__}'
+        if meta is not None:
+            _version = meta.get('modelscope')
+            if _version is not None and version.parse(
+                    _version) < version.parse(
+                        LoadCheckpointHook._TWO_PTH_FILE_VERSION):
+                trainer.logger.warning(
+                    'The unique pth file is split into a model file and '
+                    f'a trainer file since version {LoadCheckpointHook._TWO_PTH_FILE_VERSION},'
+                    'consider re-training your model or '
+                    'using a converting script to split the single pth file into two.'
+                )
+            trainer.logger.info(
+                f'Checkpoint {filename} saving time: {meta.get("time")}, modelscope version: {_version}'
             )
-        trainer.logger.info(
-            f'Checkpoint {filename} saving time: {meta.get("time")}')
+        return meta
+
+    @staticmethod
+    def load_trainer_state(trainer, train_state_file, load_all_state):
+        """Load trainer state file.
+        """
+
+        optimizer = getattr(trainer, 'optimizer',
+                            None) if load_all_state else None
+        lr_scheduler = getattr(trainer, 'lr_scheduler',
+                               None) if load_all_state else None
+        return load_checkpoint(train_state_file, None, optimizer, lr_scheduler)
+
+    def load_model_state(self, trainer, model_file, strict):
+        """Load model state file.
+        """
+        return load_checkpoint(model_file,
+                               trainer.unwrap_module(trainer.model), None,
+                               None)
+
+    @Hook.overload_func(name='LoadCheckpointHook.load_checkpoints')
+    def load_checkpoints(self, checkpoint_path_prefix, trainer, load_all_state,
+                         strict):
+        """Load checkpoint files of trainer state and model state.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            checkpoint_path_prefix(str): The checkpoint dir with prefix or a model state file.
+                Example: '/tmp/test/epoch_0' or '/tmp/test/epoch_0.pth'
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            load_all_state(`boolean`): Load all states (else load only module states).
+            strict(`boolean`): If strict, any unmatched keys will cause an error.
+
+        Returns:
+            The meta info in json.
+        """
+        _model_file, _train_state_file = _get_state_file_name(
+            checkpoint_path_prefix)
+        meta = {}
+        if os.path.isfile(_train_state_file):
+            meta = self.load_trainer_state(trainer, _train_state_file,
+                                           load_all_state)
+        else:
+            print(f'No trainer state file {_train_state_file} found, skip.')
+        self.load_model_state(trainer, _model_file, strict)
         return meta
 
 
-def extend_save_name_for_parallel(cur_save_name: str) -> str:
-    """Saving model parameters during tensor parallel training
-    requires each process to save its own parameters,
-    This function will try to get the local rank of the process
-    and extend save name for multi-slice model.
+def _get_state_file_name(checkpoint_path_prefix):
+    """Get the default file name for state files.
+
+    If the input is a checkpoint dir with prefix, this function will append suffix for both checkpoint files.
+    If the input is an absolute file name, this function will return it as the model file name, and append
+        suffix for the trainer file name.
+
+    NOTE: a best checkpoint filename with float or int metric value inside
+        will not be judged as having a extension file name. like: '/tmp/test/epoch_0_accuracy0.85'
 
     Args:
-        cur_save_name (str): Original save name.
+        checkpoint_path_prefix(`str`): The checkpoint dir with prefix or a model state file with extension file name.
+            like: '/tmp/test/epoch_0'
 
     Returns:
-        str: Extended save name.
+          A tuple of model state file name and trainer state file name.
     """
-    try:
-        mpu = importlib.import_module('megatron_util.mpu')
-        tp_world_size = mpu.get_tensor_model_parallel_world_size()
-        if tp_world_size == 1:
-            return cur_save_name
-        mp_rank = mpu.get_tensor_model_parallel_rank()
-        return cur_save_name.replace('.', '_mp_rank_{:02d}.'.format(mp_rank))
-    except (ImportError, AssertionError):
-        return cur_save_name
+    base, ext = os.path.splitext(checkpoint_path_prefix)
+    if len(ext) == 0 or re.match(r'^\d+$', ext[1:]):
+        return checkpoint_path_prefix + CheckpointHook.MODEL_STATE_SUFFIX, \
+            checkpoint_path_prefix + CheckpointHook.TRAINER_STATE_SUFFIX
+    else:
+        return checkpoint_path_prefix, base + CheckpointHook.TRAINER_STATE_SUFFIX.split(
+            '.')[0] + '.' + ext[1:]

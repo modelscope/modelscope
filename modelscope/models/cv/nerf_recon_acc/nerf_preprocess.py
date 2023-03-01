@@ -50,9 +50,6 @@ class NeRFReconPreprocessor(Preprocessor):
             raise Exception('data type {} is not support currently'.format(
                 self.data_type))
 
-        if 'data_dir' not in data.keys():
-            raise Exception('Do not specify the data dir')
-
         data_dir = data['data_dir']
         os.makedirs(data_dir, exist_ok=True)
         if self.data_type == 'blender':
@@ -61,10 +58,9 @@ class NeRFReconPreprocessor(Preprocessor):
                 raise Exception('Blender dataset is not found')
 
         if self.data_type == 'colmap':
-            if 'video_input_path' not in data.keys():
-                raise Exception('Do not specify the video path')
             video_path = data['video_input_path']
-            self.split_frames(video_path, data_dir, self.frame_count)
+            if video_path != '':
+                self.split_frames(video_path, data_dir, self.frame_count)
             self.gen_poses(data_dir, self.match_type, self.use_distortion)
             files_needed = [
                 '{}.bin'.format(f) for f in ['cameras', 'images', 'points3D']

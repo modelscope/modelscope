@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .referring_video_object_segmentation_trainer import ReferringVideoObjectSegmentationTrainer
     from .image_defrcn_fewshot_detection_trainer import ImageDefrcnFewshotTrainer
     from .cartoon_translation_trainer import CartoonTranslationTrainer
+    from .nerf_recon_acc_trainer import NeRFReconAccTrainer
 
 else:
     _import_structure = {
@@ -25,7 +26,8 @@ else:
         ['ReferringVideoObjectSegmentationTrainer'],
         'image_defrcn_fewshot_detection_trainer':
         ['ImageDefrcnFewshotTrainer'],
-        'cartoon_translation_trainer': ['CartoonTranslationTrainer']
+        'cartoon_translation_trainer': ['CartoonTranslationTrainer'],
+        'nerf_recon_acc_trainer': ['NeRFReconAccTrainer'],
     }
 
     import sys

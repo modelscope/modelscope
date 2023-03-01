@@ -11,3 +11,4 @@ if is_tf_available():
 if is_torch_available():
     from .nlp import SbertForSequenceClassificationExporter, SbertForZeroShotClassificationExporter
     from .torch_model_exporter import TorchModelExporter
+    from .cv import FaceDetectionSCRFDExporter

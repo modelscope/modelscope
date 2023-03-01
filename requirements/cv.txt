@@ -33,6 +33,8 @@ nerfacc==0.2.2
 networkx
 numba
 omegaconf
+onnx
+onnx-simplifier
 onnxruntime>=1.10
 open-clip-torch>=2.7.0
 opencv-python

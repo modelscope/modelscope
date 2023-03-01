@@ -4,6 +4,7 @@ from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
 import torch
+from easycv.utils.checkpoint import load_checkpoint as ev_load_checkpoint
 from torch import nn
 from torch.utils.data import Dataset
 
@@ -102,6 +103,16 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
                         'Not support hook %s now, we will support it in the future!'
                         % h_i['type'])
                 register_util.register_hook_to_ms(h_i['type'], self.logger)
+
+        # load pretrained model
+        load_from = self.cfg.get('load_from', None)
+        if load_from is not None:
+            ev_load_checkpoint(
+                self.model,
+                filename=load_from,
+                map_location=self.device,
+                strict=False,
+            )
 
         # reset parallel
         if not self._dist:

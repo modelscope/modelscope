@@ -160,7 +160,7 @@ def get_split_objects_map(file_map, objects):
 
     for obj_key in objects:
         for k, v in file_map.items():
-            if obj_key.startswith(v + '/'):
+            if obj_key.startswith(v.rstrip('/') + '/'):
                 res[k].append(obj_key)
 
     return res

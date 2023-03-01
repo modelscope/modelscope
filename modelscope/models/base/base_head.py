@@ -24,7 +24,7 @@ class Head(ABC):
     def forward(self, *args, **kwargs) -> Dict[str, Any]:
         """
         This method will use the output from backbone model to do any
-        downstream tasks. Recieve The output from backbone model.
+        downstream tasks. Receive The output from backbone model.
 
         Returns (Dict[str, Any]): The output from downstream task.
         """

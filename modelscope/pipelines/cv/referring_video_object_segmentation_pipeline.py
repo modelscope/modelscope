@@ -1,5 +1,5 @@
 # The implementation here is modified based on MTTR,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/mttr2021/MTTR
+# originally Apache 2.0 License and publicly available at https://github.com/mttr2021/MTTR
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import tempfile

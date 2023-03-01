@@ -175,7 +175,7 @@ class CiderScorer(object):
             :return: array of score for each n-grams cosine similarity
             '''
             delta = float(length_hyp - length_ref)
-            # measure consine similarity
+            # measure cosine similarity
             val = np.array([0.0 for _ in range(self.n)])
             for n in range(self.n):
                 # ngram

@@ -185,7 +185,7 @@ class DeleteServiceParameters(AttrsToQueryString):
 
 
 class ServiceDeployer(object):
-    """Faciliate model deployment on to supported service provider(s).
+    """Facilitate model deployment on to supported service provider(s).
     """
 
     def __init__(self, endpoint=None):

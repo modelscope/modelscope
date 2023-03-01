@@ -799,6 +799,7 @@ class CVTrainers(object):
     image_classification_team = 'image-classification-team'
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
+    nerf_recon_acc = 'nerf-recon-acc'
 
 
 class NLPTrainers(object):

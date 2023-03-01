@@ -29,7 +29,7 @@ class ImagePaintbyexampleTest(unittest.TestCase):
 
     def save_result(self, result):
         vis_img = result[OutputKeys.OUTPUT_IMG]
-        vis_img.save('result.png')
+        cv2.imwrite('result.png', vis_img)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest')

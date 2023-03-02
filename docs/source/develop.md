@@ -10,7 +10,7 @@ We use the following toolsseed isortseed isortseed isort for linting and formatt
 
 Style configurations of yapf and isort can be found in [setup.cfg](../../setup.cfg).
 We use [pre-commit hook](https://pre-commit.com/) that checks and formats for `flake8`, `yapf`, `seed-isort-config`, `isort`, `trailing whitespaces`,
-fixes `end-of-files`, sorts `requirments.txt` automatically on every commit.
+fixes `end-of-files`, sorts `requirements.txt` automatically on every commit.
 The config for a pre-commit hook is stored in [.pre-commit-config](../../.pre-commit-config.yaml).
 After you clone the repository, you will need to install initialize pre-commit hook.
 ```bash
@@ -81,7 +81,7 @@ exists in the environment and unset it.
 python tests/path/to/your_test.py
 ```
 
-2. Remember to run core tests in local environment before start a codereview, by default it will
+2. Remember to run core tests in local environment before start a code review, by default it will
 only run test cases with level 0.
 ```bash
 make tests
@@ -153,7 +153,7 @@ git pull origin branch_name
     git add .
     git commit -m "[to #42322933] my commit message"
     ```
-   note: you may replace [to #42322933]  with your own aone issue id (if any).
+   note: you may replace [to #42322933]  with your own alone issue id (if any).
 4. Push your change:
    ```shell
     git push --set-upstream origin dev/my-dev-branch

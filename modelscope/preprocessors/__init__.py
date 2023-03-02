@@ -78,7 +78,7 @@ else:
             'TextGenerationSentencePiecePreprocessor',
             'TextClassificationTransformersPreprocessor',
             'TokenClassificationTransformersPreprocessor',
-            'TextErrorCorrectionPreprocessor',
+            'TextErrorCorrectionPreprocessor', 'WordAlignmentPreprocessor',
             'TextGenerationTransformersPreprocessor', 'Tokenize',
             'TextGenerationT5Preprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',

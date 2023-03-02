@@ -2,6 +2,7 @@
 import os.path as osp
 
 import cv2
+import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
@@ -9,9 +10,8 @@ from torchvision import transforms
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
-from .models import U2NET, SENet
+from .models import U2NET
 
 
 @MODELS.register_module(
@@ -22,25 +22,13 @@ class SalientDetection(TorchModel):
         """str -- model file root."""
         super().__init__(model_dir, *args, **kwargs)
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
-
-        self.norm_mean = [0.485, 0.456, 0.406]
-        self.norm_std = [0.229, 0.224, 0.225]
-        self.norm_size = (320, 320)
-
-        config_path = osp.join(model_dir, 'config.py')
-        if osp.exists(config_path) is False:
-            self.model = U2NET(3, 1)
-        else:
-            self.model = SENet(backbone_path=None, pretrained=False)
-            config = Config.from_file(config_path)
-            self.norm_mean = config.norm_mean
-            self.norm_std = config.norm_std
-            self.norm_size = config.norm_size
+        self.model = U2NET(3, 1)
         checkpoint = torch.load(model_path, map_location='cpu')
         self.transform_input = transforms.Compose([
-            transforms.Resize(self.norm_size),
+            transforms.Resize((320, 320)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.norm_mean, std=self.norm_std)
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         self.model.load_state_dict(checkpoint)
         self.model.eval()

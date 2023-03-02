@@ -826,6 +826,7 @@ class NLPTrainers(object):
     document_grounded_dialog_generate_trainer = 'document-grounded-dialog-generate-trainer'
     document_grounded_dialog_rerank_trainer = 'document-grounded-dialog-rerank-trainer'
     document_grounded_dialog_retrieval_trainer = 'document-grounded-dialog-retrieval-trainer'
+    siamese_uie_trainer = 'siamese-uie-trainer'
 
 
 class MultiModalTrainers(object):

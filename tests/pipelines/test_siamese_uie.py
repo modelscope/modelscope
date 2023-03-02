@@ -31,12 +31,12 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         tokenizer = SiameseUiePreprocessor(cache_path)
         model = SiameseUieModel.from_pretrained(cache_path)
         pipeline1 = SiameseUiePipeline(
-            model, preprocessor=tokenizer, model_revision='v1.0')
+            model, preprocessor=tokenizer, model_revision='v1.1')
         pipeline2 = pipeline(
             Tasks.siamese_uie,
             model=model,
             preprocessor=tokenizer,
-            model_revision='v1.0')
+            model_revision='v1.1')
 
         print(
             f'sentence: {self.sentence}\n'
@@ -53,18 +53,18 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.siamese_uie,
             model=model,
             preprocessor=tokenizer,
-            model_revision='v1.0')
+            model_revision='v1.1')
         print(pipeline_ins(input=self.sentence, schema=self.schema))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
-            task=Tasks.siamese_uie, model=self.model_id, model_revision='v1.0')
+            task=Tasks.siamese_uie, model=self.model_id, model_revision='v1.1')
         print(pipeline_ins(input=self.sentence, schema=self.schema))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.siamese_uie, model_revision='v1.0')
+        pipeline_ins = pipeline(task=Tasks.siamese_uie, model_revision='v1.1')
         print(pipeline_ins(input=self.sentence, schema=self.schema))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')

@@ -781,7 +781,6 @@ class EpochBasedTrainer(BaseTrainer):
                 train_data,
                 mode=ModeKeys.TRAIN,
                 preprocessor=self.train_preprocessor)
-
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,
             dist=self._dist,

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
                      MovieSceneSegmentationTrainer, ImageInpaintingTrainer,
                      ReferringVideoObjectSegmentationTrainer)
     from .multi_modal import CLIPTrainer
-    from .nlp import SequenceClassificationTrainer, TextRankingTrainer
+    from .nlp import SequenceClassificationTrainer, TextRankingTrainer, SiameseUIETrainer
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
     from .trainer import EpochBasedTrainer
 
@@ -27,7 +27,10 @@ else:
             'ImageInpaintingTrainer'
         ],
         'multi_modal': ['CLIPTrainer'],
-        'nlp': ['SequenceClassificationTrainer', 'TextRankingTrainer'],
+        'nlp': [
+            'SequenceClassificationTrainer', 'TextRankingTrainer',
+            'SiameseUIETrainer'
+        ],
         'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
         'trainer': ['EpochBasedTrainer']
     }

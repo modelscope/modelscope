@@ -411,7 +411,7 @@ class DistributedPipeline(Pipeline):
         else:
             self.model_dir = snapshot_download(model)
         self.cfg = read_config(self.model_dir)
-        self.world_size = self.cfg.model.world_size
+        self.world_size = self._get_world_size(self.cfg)
         self.model_pool = None
         self.device_name = 'cpu'
         self.device = create_device(self.device_name)
@@ -423,17 +423,17 @@ class DistributedPipeline(Pipeline):
         self.model_pool = Pool(self.world_size)
         master_ip = '127.0.0.1' if 'master_ip' not in kwargs else kwargs[
             'master_ip']
+        os.environ['MASTER_ADDR'] = master_ip
         master_port = '29500' if 'master_port' not in kwargs else kwargs[
             'master_port']
         from modelscope.utils.torch_utils import _find_free_port, _is_free_port
         if not _is_free_port(int(master_port)):
             master_port = str(_find_free_port())
+        os.environ['MASTER_PORT'] = master_port
         self.model_pool.map(
             partial(
                 self.__class__._instantiate_one,
                 model_dir=self.model_dir,
-                master_ip=master_ip,
-                master_port=master_port,
                 **self.cfg.model,
                 **kwargs), ranks)
         self.models = []
@@ -486,6 +486,12 @@ class DistributedPipeline(Pipeline):
             The forward results.
         """
         pass
+
+    def _get_world_size(self, cfg: Config) -> int:
+        m_world_size = cfg.safe_get('megatron.world_size')
+        if m_world_size is None:
+            return cfg.safe_get('model.world_size')
+        return m_world_size
 
 
 def collate_fn(data, device):

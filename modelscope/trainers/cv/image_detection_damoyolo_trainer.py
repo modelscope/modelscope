@@ -55,6 +55,19 @@ class ImageDetectionDamoyoloTrainer(BaseTrainer):
             load_pretrain: Whether load pretrain model for finetune.
                 if False, means training from scratch.
             cache_path: cache path of model files.
+            model_revision: the git version of model on modelhub.
+            gpu_ids: the id list of gpu.
+            batch_size: total batch size.
+            max_epochs: maximum number of training epoch.
+            train_image_dir: the directory of training image.
+            val_image_dir: the directory of validation image.
+            train_ann: the path of train set annotation file.
+            val_ann: the path of val set annotation file.
+            num_classes: class number.
+            base_lr_per_img: learning rate per image. The final learning rate is base_lr_per_img*batch_size.
+            pretrain_model: the path of pretrained model.
+            work_dir: the directory of work folder.
+            exp_name: the name of experiment.
         """
         if model is not None:
             self.cache_path = self.get_or_download_model_dir(
@@ -102,6 +115,10 @@ class ImageDetectionDamoyoloTrainer(BaseTrainer):
             cfg.model.head.num_classes = kwargs['num_classes']
         if 'base_lr_per_img' in kwargs:
             cfg.train.base_lr_per_img = kwargs['base_lr_per_img']
+        if 'work_dir' in kwargs:
+            cfg.miscs.output_dir = kwargs['work_dir']
+        if 'exp_name' in kwargs:
+            cfg.miscs.exp_name = kwargs['exp_name']
 
         self.gpu_ids = cfg.train.gpu_ids
         self.world_size = len(self.gpu_ids)

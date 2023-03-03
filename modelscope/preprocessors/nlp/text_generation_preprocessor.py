@@ -2,7 +2,7 @@
 
 import os
 import os.path as osp
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -223,14 +223,6 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
         """
         return self.tokenizer.detokenize(tokens)
 
-    def _truncate(self, array: np.ndarray) -> np.ndarray:
-        if len(array) < self.max_length:
-            return np.pad(
-                array, (0, self.max_length - len(array)),
-                constant_values=self.tokenizer.eod)
-        else:
-            return array[:self.max_length]
-
     def _tokenize_text(self, sequence1, sequence2=None, **kwargs):
         """Tokenize the text.
 
@@ -246,18 +238,46 @@ class TextGenerationJiebaPreprocessor(TextGenerationPreprocessorBase):
                 'input_ids':
                 torch.tensor(self.tokenizer.tokenize(sequence1)).unsqueeze_(0)
             }
+        # continue write train: | inputs | <sep> |
+        # input & output train: | inputs | outputs | <sep> |
         else:
-            tokens = self.tokenizer.tokenize(sequence1)
-            prompt_length = min(len(tokens), self.max_length - 1)
-            if sequence2 is not None:
-                tokens += self.tokenizer.tokenize(sequence2)
-            tokens = self._truncate(np.array(tokens))
-            return {
-                'tokens': tokens[:-1],
-                'labels': tokens[1:],
-                'prompt_length': prompt_length,
-                'is_pair': int(sequence2 is not None),
-            }
+            input_tokens = self.tokenizer.tokenize(sequence1)
+            if sequence2 is None:
+                return self._only_input(input_tokens)
+            else:
+                return self._input_and_output(
+                    input_tokens, self.tokenizer.tokenize(sequence2))
+
+    def _only_input(self, input_tokens: List[int]) -> Dict[str, Any]:
+        prompts_len = len(input_tokens)
+        input_tokens.append(self.tokenizer.sep_token)
+        tokens = self._truncate(np.asarray(input_tokens))
+        return {
+            'tokens': tokens[:-1],
+            'labels': tokens[1:],
+            'prompts_len': min(prompts_len, self.max_length),
+        }
+
+    def _input_and_output(self, input_tokens: List[int],
+                          output_tokens: List[int]) -> Dict[str, Any]:
+        tokens = input_tokens[:]
+        tokens.extend(output_tokens)
+        tokens.append(self.tokenizer.sep_token)
+        inputs_len = len(tokens)
+        tokens = self._truncate(np.asarray(tokens))
+        return {
+            'tokens': tokens[:-1],
+            'labels': tokens[1:],
+            'prompts_len': min(len(input_tokens), self.max_length),
+            'inputs_len': min(inputs_len, self.max_length),
+        }
+
+    def _truncate(self, array: np.ndarray) -> np.ndarray:
+        if len(array) < self.max_length:
+            return np.pad(
+                array, (0, self.max_length - len(array)), constant_values=0)
+        else:
+            return array[:self.max_length]
 
 
 @PREPROCESSORS.register_module(

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import hashlib
+import os
 import unittest
 
 from modelscope.models import Model
@@ -32,6 +33,34 @@ class ImgPreprocessor(Preprocessor):
         }
 
 
+class GenLocalFile:
+
+    @staticmethod
+    def gen_mock_data() -> (str, str):
+        mock_data_list = [
+            'Title,Content,Label', 'mock title1,mock content1,mock label1',
+            'mock title2,mock content2,mock label2',
+            'mock title3,mock content3,mock label3'
+        ]
+
+        mock_file_name = 'mock_file.csv'
+        md = hashlib.md5()
+        md.update('GenLocalFile.gen_mock_data.out_file_path'.encode('utf-8'))
+        mock_dir = os.path.join(os.getcwd(), md.hexdigest())
+        os.makedirs(mock_dir, exist_ok=True)
+        mock_relative_path = os.path.join(md.hexdigest(), mock_file_name)
+        with open(mock_relative_path, 'w') as f:
+            for line in mock_data_list:
+                f.write(line + '\n')
+
+        return mock_relative_path, md.hexdigest()
+
+    @staticmethod
+    def clear_mock_dir(mock_dir) -> None:
+        import shutil
+        shutil.rmtree(mock_dir)
+
+
 class MsDatasetTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -56,6 +85,23 @@ class MsDatasetTest(unittest.TestCase):
             'clue', subset_name='afqmc',
             split='train').to_hf_dataset().select(range(5))
         print(next(iter(ms_ds_train)))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_load_local_csv(self):
+        mock_relative_path, mock_dir_name = GenLocalFile.gen_mock_data()
+        # To test dataset_name in the form of `xxx/xxx.csv`
+        ds_from_single_file = MsDataset.load(mock_relative_path)
+        # To test dataset_name in the form of `xxx/`
+        ds_from_dir = MsDataset.load(mock_dir_name + '/')
+
+        GenLocalFile.clear_mock_dir(mock_dir_name)
+        ds_from_single_file_sample = next(iter(ds_from_single_file))
+        ds_from_dir_sample = next(iter(ds_from_dir))
+
+        print(ds_from_single_file_sample)
+        print(ds_from_dir_sample)
+        assert ds_from_single_file_sample
+        assert ds_from_dir_sample
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_ds_basic(self):

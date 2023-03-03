@@ -223,5 +223,8 @@ if __name__ == '__main__':
         tests_require=parse_requirements('requirements/tests.txt'),
         install_requires=install_requires,
         extras_require=extra_requires,
+        entry_points={
+            'console_scripts': ['modelscope=modelscope.cli.cli:run_cmd']
+        },
         dependency_links=deps_link,
         zip_safe=False)

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import math
 import os
 
 import cv2
@@ -71,6 +72,8 @@ class OCRRecognitionPreprocessor(Preprocessor):
             )
 
         if self.do_chunking:
+            PRED_LENTH = 75
+            PRED_PAD = 6
             data = []
             img_h, img_w = img.shape
             wh_ratio = img_w / img_h

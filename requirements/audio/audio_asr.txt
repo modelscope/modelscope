@@ -1,2 +1,2 @@
 easyasr>=0.0.2
-funasr>=0.2.0
+funasr>=0.2.2

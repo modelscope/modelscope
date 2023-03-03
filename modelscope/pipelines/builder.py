@@ -7,7 +7,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
 from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict, check_config
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, Tasks
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 from modelscope.utils.hub import read_config
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline

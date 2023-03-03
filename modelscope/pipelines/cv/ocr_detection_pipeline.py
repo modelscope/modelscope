@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
+import os
 import os.path as osp
 from typing import Any, Dict
 
@@ -9,11 +10,12 @@ import tensorflow as tf
 import torch
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.cv.ocr_detection import OCRDetection
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.pipelines.cv.ocr_utils.model_vlpt import DBModel, VLPTModel
 from modelscope.preprocessors import LoadImage
+from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
@@ -48,7 +50,7 @@ tf.app.flags.DEFINE_float('link_threshold', 0.6,
 @PIPELINES.register_module(
     Tasks.ocr_detection, module_name=Pipelines.ocr_detection)
 class OCRDetectionPipeline(Pipeline):
-    """ OCR Recognition Pipeline.
+    """ OCR Detection Pipeline.
 
     Example:
 
@@ -82,39 +84,19 @@ class OCRDetectionPipeline(Pipeline):
         Args:
             model: model id on modelscope hub.
         """
+        assert isinstance(model, str), 'model must be a single str'
         super().__init__(model=model, **kwargs)
-        if 'vlpt' in self.model:
-            # for model cv_resnet50_ocr-detection-vlpt
-            model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
-            logger.info(f'loading model from {model_path}')
+        logger.info(f'loading model from dir {model}')
+        cfgs = Config.from_file(os.path.join(model, ModelFile.CONFIGURATION))
+        if hasattr(cfgs, 'model') and hasattr(cfgs.model, 'model_type'):
+            self.model_type = cfgs.model.model_type
+        else:
+            self.model_type = 'SegLink++'
 
-            self.thresh = 0.3
-            self.image_short_side = 736
-            self.device = torch.device(
-                'cuda' if torch.cuda.is_available() else 'cpu')
-            self.infer_model = VLPTModel().to(self.device)
-            self.infer_model.eval()
-            checkpoint = torch.load(model_path, map_location=self.device)
-            if 'state_dict' in checkpoint:
-                self.infer_model.load_state_dict(checkpoint['state_dict'])
-            else:
-                self.infer_model.load_state_dict(checkpoint)
-        elif 'db' in self.model:
-            # for model cv_resnet18_ocr-detection-db-line-level_damo (original dbnet)
-            model_path = osp.join(self.model, ModelFile.TORCH_MODEL_FILE)
-            logger.info(f'loading model from {model_path}')
-
-            self.thresh = 0.2
-            self.image_short_side = 736
-            self.device = torch.device(
-                'cuda' if torch.cuda.is_available() else 'cpu')
-            self.infer_model = DBModel().to(self.device)
-            self.infer_model.eval()
-            checkpoint = torch.load(model_path, map_location=self.device)
-            if 'state_dict' in checkpoint:
-                self.infer_model.load_state_dict(checkpoint['state_dict'])
-            else:
-                self.infer_model.load_state_dict(checkpoint)
+        if self.model_type == 'DBNet':
+            self.ocr_detector = self.model.to(self.device)
+            self.ocr_detector.eval()
+            logger.info('loading model done')
         else:
             # for model seglink++
             tf.reset_default_graph()
@@ -191,26 +173,29 @@ class OCRDetectionPipeline(Pipeline):
                             variable_averages.variables_to_restore())
                         model_loader.restore(sess, model_path)
 
-    def preprocess(self, input: Input) -> Dict[str, Any]:
-        if 'vlpt' in self.model or 'db' in self.model:
-            img = LoadImage.convert_to_ndarray(input)[:, :, ::-1]
-            height, width, _ = img.shape
-            if height < width:
-                new_height = self.image_short_side
-                new_width = int(
-                    math.ceil(new_height / height * width / 32) * 32)
-            else:
-                new_width = self.image_short_side
-                new_height = int(
-                    math.ceil(new_width / width * height / 32) * 32)
-            resized_img = cv2.resize(img, (new_width, new_height))
-            resized_img = resized_img - np.array([123.68, 116.78, 103.94],
-                                                 dtype=np.float32)
-            resized_img /= 255.
-            resized_img = torch.from_numpy(resized_img).permute(
-                2, 0, 1).float().unsqueeze(0)
+    def __call__(self, input, **kwargs):
+        """
+        Detect text instance in the text image.
 
-            result = {'img': resized_img, 'org_shape': [height, width]}
+        Args:
+            input (`Image`):
+                The pipeline handles three types of images:
+
+                - A string containing an HTTP link pointing to an image
+                - A string containing a local path to an image
+                - An image loaded in PIL or opencv directly
+
+                The pipeline currently supports single image input.
+
+        Return:
+            An array of contour polygons of detected N text instances in image,
+            every row is [x1, y1, x2, y2, x3, y3, x4, y4, ...].
+        """
+        return super().__call__(input, **kwargs)
+
+    def preprocess(self, input: Input) -> Dict[str, Any]:
+        if self.model_type == 'DBNet':
+            result = self.preprocessor(input)
             return result
         else:
             img = LoadImage.convert_to_ndarray(input)
@@ -235,9 +220,9 @@ class OCRDetectionPipeline(Pipeline):
             return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        if 'vlpt' in self.model or 'db' in self.model:
-            pred = self.infer_model(input['img'])
-            return {'results': pred, 'org_shape': input['org_shape']}
+        if self.model_type == 'DBNet':
+            outputs = self.ocr_detector(input)
+            return outputs
         else:
             with self._graph.as_default():
                 with self._session.as_default():
@@ -247,23 +232,8 @@ class OCRDetectionPipeline(Pipeline):
                     return sess_outputs
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        if 'vlpt' in self.model:
-            pred = inputs['results'][0]
-            height, width = inputs['org_shape']
-            segmentation = pred > self.thresh
-
-            boxes, scores = polygons_from_bitmap(pred, segmentation, width,
-                                                 height)
-            result = {OutputKeys.POLYGONS: np.array(boxes)}
-            return result
-        elif 'db' in self.model:
-            pred = inputs['results'][0]
-            height, width = inputs['org_shape']
-            segmentation = pred > self.thresh
-
-            boxes, scores = boxes_from_bitmap(pred, segmentation, width,
-                                              height)
-            result = {OutputKeys.POLYGONS: np.array(boxes)}
+        if self.model_type == 'DBNet':
+            result = {OutputKeys.POLYGONS: inputs['det_polygons']}
             return result
         else:
             rboxes = inputs['combined_rboxes'][0]

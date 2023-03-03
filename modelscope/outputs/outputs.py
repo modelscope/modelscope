@@ -361,6 +361,7 @@ TASK_OUTPUTS = {
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
     Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],
     Tasks.image_paintbyexample: [OutputKeys.OUTPUT_IMG],
+    Tasks.controllable_image_generation: [OutputKeys.OUTPUT_IMG],
 
     # image generation task result for a single image
     # {"output_img": np.array with shape (h, w, 3)}
@@ -375,7 +376,7 @@ TASK_OUTPUTS = {
     Tasks.video_frame_interpolation: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
-    Tasks.nerf_recon_acc: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.nerf_recon_acc: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
     # image quality assessment degradation result for single image
@@ -861,7 +862,7 @@ TASK_OUTPUTS = {
     #               p( </s> | 呀 ) = 0.01524554 [ -4.18346834 ]
     #           logprob= -17.755 ppl= 12.6345
     # "}
-    Tasks.language_model: [OutputKeys.TEXT],
+    Tasks.language_score_prediction: [OutputKeys.TEXT],
 
     # audio processed for single file in PCM format
     # {

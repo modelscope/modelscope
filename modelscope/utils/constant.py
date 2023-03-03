@@ -93,6 +93,7 @@ class CVTasks(object):
     image_embedding = 'image-embedding'
     image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
+    controllable_image_generation = 'controllable-image-generation'
 
     # video recognition
     live_category = 'live-category'
@@ -213,8 +214,9 @@ class AudioTasks(object):
     inverse_text_processing = 'inverse-text-processing'
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
+    speaker_diarization = 'speaker-diarization'
     voice_activity_detection = 'voice-activity-detection'
-    language_model = 'language-model'
+    language_score_prediction = 'language-score-prediction'
 
 
 class MultiModalTasks(object):
@@ -385,6 +387,12 @@ class Invoke(object):
     PREPROCESSOR = 'preprocessor'
 
 
+class ThirdParty(object):
+    KEY = 'third_party'
+    EASYCV = 'easycv'
+    ADASEQ = 'adaseq'
+
+
 class ConfigFields(object):
     """ First level keyword in configuration file
     """
@@ -501,3 +509,10 @@ class MetaDataFields:
 
 
 DatasetVisibilityMap = {1: 'private', 3: 'internal', 5: 'public'}
+
+
+class DistributedParallelType(object):
+    """Parallel Strategies for Distributed Models"""
+    DP = 'data_parallel'
+    TP = 'tensor_model_parallel'
+    PP = 'pipeline_model_parallel'

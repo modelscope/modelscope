@@ -91,11 +91,20 @@ class TransformersModel(TorchModel, PreTrainedModel):
 
     @classmethod
     def _instantiate(cls, model_dir=None, **config):
+        init_backbone = config.pop('init_backbone', False)
+
+        # return the model with pretrained weights
+        if init_backbone:
+            model = AutoModel.from_pretrained(model_dir)
+            return model
+
+        # return the model only
         config, kwargs = AutoConfig.from_pretrained(
             model_dir,
             return_unused_kwargs=True,
             trust_remote_code=False,
             **config)
+
         model_mapping = AutoModel._model_mapping
         if type(config) in model_mapping.keys():
             model_class = _get_model_class(config, model_mapping)

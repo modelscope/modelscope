@@ -17,20 +17,40 @@ class LrSchedulerHook(Hook):
         by_epoch (bool): Whether lr changes by epoch
         warmup (dict): warm up config
     """
-    PRIORITY = Priority.VERY_HIGH
+    PRIORITY = Priority.LOW
 
-    def __init__(self, by_epoch=True, warmup=None) -> None:
+    def __init__(self, by_epoch=True, warmup=None, **kwargs) -> None:
         super().__init__()
         self.by_epoch = by_epoch
         self.warmup = warmup
         self.warmup_lr_scheduler = None
 
     def before_run(self, trainer):
+        self.initialize_lr_scheduler(trainer)
         if self.warmup is not None:
             assert isinstance(self.warmup, dict) and 'type' in self.warmup
             self.warmup_lr_scheduler = build_lr_scheduler(
                 cfg=self.warmup,
                 default_args={'base_scheduler': trainer.lr_scheduler})
+
+    @Hook.overload_func(name='LrSchedulerHook.initialize_lr_scheduler')
+    def initialize_lr_scheduler(self, trainer):
+        """Initialize the lr scheduler.
+
+        This is a strategic function which can be registered by other hook's function.
+        """
+        pass
+
+    @Hook.overload_func(name='LrSchedulerHook.step')
+    def step(self, trainer):
+        """Do lr scheduler's step.
+
+        This is a strategic function which can be registered by other hook's function.
+        """
+        if self.warmup_lr_scheduler is not None:
+            self.warmup_lr_scheduler.step()
+        else:
+            trainer.lr_scheduler.step()
 
     def get_current_lr(self, trainer):
         import torch
@@ -46,13 +66,10 @@ class LrSchedulerHook(Hook):
                 'lr is not applicable because optimizer does not exist.')
         return lr
 
-    def before_train_iter(self, trainer):
+    def after_train_iter(self, trainer):
         if not self.by_epoch and trainer.iter >= getattr(
-                trainer, 'cumulative_iters', 1):
-            if self.warmup_lr_scheduler is not None:
-                self.warmup_lr_scheduler.step()
-            else:
-                trainer.lr_scheduler.step()
+                trainer, 'cumulative_iters', 1) - 1:
+            self.step(trainer)
         trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def before_train_epoch(self, trainer):
@@ -60,10 +77,7 @@ class LrSchedulerHook(Hook):
 
     def after_train_epoch(self, trainer):
         if self.by_epoch:
-            if self.warmup_lr_scheduler is not None:
-                self.warmup_lr_scheduler.step()
-            else:
-                trainer.lr_scheduler.step()
+            self.step(trainer)
 
     def _get_log_lr(self, trainer):
         cur_lr = self.get_current_lr(trainer)
@@ -81,29 +95,28 @@ class LrSchedulerHook(Hook):
 
 
 @HOOKS.register_module(module_name=Hooks.PlateauLrSchedulerHook)
-class PlateauLrSchedulerHook(LrSchedulerHook):
+class PlateauLrSchedulerHook(Hook):
     """Lr scheduler hook for `ReduceLROnPlateau`.
 
     Args:
         metric_key (str): Metric key returned from `trainer.metric_values`,
             get the value of metric key and pass it to `ReduceLROnPlateau.step`.
-        by_epoch (bool): Whether lr changes by epoch
-        warmup (dict): warm up config
     """
     PRIORITY = Priority.LOW  # should be after EvaluationHook
 
-    def __init__(self, metric_key, by_epoch=True, warmup=None) -> None:
-        super().__init__(by_epoch=by_epoch, warmup=warmup)
+    def __init__(self, metric_key, **kwargs):
         self.metric_key = metric_key
 
+    def register_strategy(self):
+        Hook.overload(name='LrSchedulerHook.step', function=self.step)
+
     def before_run(self, trainer):
-        super().before_run(trainer)
         if not hasattr(trainer, 'logger'):
             self.logger = get_logger()
         else:
             self.logger = trainer.logger
 
-    def after_train_epoch(self, trainer):
+    def step(self, trainer):
         # adapt to evaluation intervel is greater than 1
         if trainer.metric_values is None:
             if is_master():
@@ -113,10 +126,10 @@ class PlateauLrSchedulerHook(LrSchedulerHook):
             return
 
         metrics = trainer.metric_values[self.metric_key]
-
-        if self.by_epoch:
-            if self.warmup_lr_scheduler is not None:
-                self.warmup_lr_scheduler.step(metrics=metrics)
+        lr_scheduler_hook = trainer.get_hook(LrSchedulerHook)[0]
+        if lr_scheduler_hook.by_epoch:
+            if lr_scheduler_hook.warmup_lr_scheduler is not None:
+                lr_scheduler_hook.warmup_lr_scheduler.step(metrics=metrics)
             else:
                 trainer.lr_scheduler.step(metrics=metrics)
 

@@ -18,10 +18,13 @@ class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.task = Tasks.text_error_correction
         self.model_id = 'damo/nlp_bart_text-error-correction_chinese'
+        self.law_model_id = 'damo/nlp_bart_text-error-correction_chinese-law'
 
     input = '随着中国经济突飞猛近，建造工业与日俱增'
     input_2 = '这洋的话，下一年的福气来到自己身上。'
     input_3 = '在拥挤时间，为了让人们尊守交通规律，派至少两个警察或者交通管理者。'
+    input_4 = 'LSTM在拥挤时间，为了让人们尊守交通规律，派至少两个警察或者交通管理者。'
+    input_law = '2012年、2013年收入统计表复印件各一份，欲证明被告未足额知府社保费用。'
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_direct_download(self):
@@ -66,6 +69,17 @@ class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_error_correction)
         print(pipeline_ins(self.input))
+
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    def test_run_with_english_input(self):
+        pipeline_ins = pipeline(task=Tasks.text_error_correction)
+        print(pipeline_ins(self.input_4))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_law_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.text_error_correction, model=self.law_model_id)
+        print(pipeline_ins(self.input_law))
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

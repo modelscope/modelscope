@@ -123,6 +123,10 @@ TASK_INPUTS = {
         'sky_image': InputType.IMAGE,
         'scene_image': InputType.IMAGE,
     },
+    Tasks.controllable_image_generation: {
+        'image': InputType.IMAGE,
+        'prompt': InputType.TEXT,
+    },
     Tasks.video_colorization:
     InputType.VIDEO,
 

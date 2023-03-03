@@ -1,15 +1,12 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .depth_estimation_bts_model import DepthEstimationBtsModel
+    from .controlnet import ControlNet
 
 else:
-    _import_structure = {
-        'depth_estimation_bts_model': ['DepthEstimationBtsModel']
-    }
+    _import_structure = {'controlnet': ['ControlNet']}
 
     import sys
 

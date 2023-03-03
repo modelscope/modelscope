@@ -11,6 +11,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from modelscope.models.base import TorchModel
+from modelscope.preprocessors import Preprocessor
+from modelscope.utils.regress_test_utils import (compare_arguments_nested,
+                                                 numpify_tensor_nested)
 
 
 class TorchBaseTest(unittest.TestCase):
@@ -69,8 +72,14 @@ class TorchBaseTest(unittest.TestCase):
         self.assertTrue(np.all(out.detach().numpy() > (add_bias - 10)))
 
     def test_save_pretrained(self):
+        preprocessor = Preprocessor.from_pretrained(
+            'damo/nlp_structbert_sentence-similarity_chinese-tiny')
         model = TorchModel.from_pretrained(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny')
+        model.eval()
+        with torch.no_grad():
+            res1 = numpify_tensor_nested(
+                model(**preprocessor(('test1', 'test2'))))
         save_path = os.path.join(self.tmp_dir, 'test_save_pretrained')
         model.save_pretrained(
             save_path, save_checkpoint_names='pytorch_model.bin')
@@ -79,6 +88,12 @@ class TorchBaseTest(unittest.TestCase):
         self.assertTrue(
             os.path.isfile(os.path.join(save_path, 'configuration.json')))
         self.assertTrue(os.path.isfile(os.path.join(save_path, 'vocab.txt')))
+        model = TorchModel.from_pretrained(save_path)
+        model.eval()
+        with torch.no_grad():
+            res2 = numpify_tensor_nested(
+                model(**preprocessor(('test1', 'test2'))))
+        self.assertTrue(compare_arguments_nested('', res1, res2))
 
 
 if __name__ == '__main__':

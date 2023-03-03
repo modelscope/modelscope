@@ -7,8 +7,9 @@ from modelscope.metainfo import Models
 from modelscope.msdatasets.task_datasets.builder import TASK_DATASETS
 from modelscope.msdatasets.task_datasets.torch_base_dataset import \
     TorchTaskDataset
+from modelscope.outputs import OutputKeys
 from modelscope.preprocessors import LoadImage
-from modelscope.preprocessors.cv.bad_image_preprocessor import \
+from modelscope.preprocessors.cv.bad_image_detecting_preprocessor import \
     BadImageDetectingPreprocessor
 from modelscope.utils.constant import Tasks
 
@@ -31,9 +32,11 @@ class BadImageDetectingDataset(TorchTaskDataset):
 
         # Load input video paths.
         item_dict = self.dataset[index]
-        iterm_label = item_dict['label']
-
-        img = LoadImage.convert_to_ndarray(input)
+        iterm_label = item_dict['category']
+        # print(input)
+        img = LoadImage.convert_to_ndarray(item_dict['image:FILE'])
         img = self.preprocessor(img)
-
-        return {'input': img['input'], 'target': iterm_label}
+        return {
+            'input': img['input'].squeeze(0),
+            OutputKeys.LABEL: iterm_label
+        }

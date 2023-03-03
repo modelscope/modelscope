@@ -11,8 +11,8 @@ from modelscope.hub.errors import GitError, HTTPError, NotLoginException
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import test_level
-from .test_utils import TEST_ACCESS_TOKEN1, TEST_MODEL_ORG, delete_credential
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
+                                         delete_credential, test_level)
 
 logger = get_logger()
 

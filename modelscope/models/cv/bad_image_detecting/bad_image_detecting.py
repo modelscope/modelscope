@@ -10,6 +10,7 @@ from modelscope.metainfo import Models
 from modelscope.models.base import Tensor
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -52,15 +53,14 @@ class BadImageDetecting(TorchModel):
 
         return {'output': ret}
 
-    def _evaluate_postprocess(self, input: Tensor,
-                              target: Tensor) -> Dict[str, list]:
+    def _evaluate_postprocess(self, input: Tensor) -> Dict[str, list]:
         torch.cuda.empty_cache()
         with torch.no_grad():
             preds = self.model(input)
             _, pred_ = torch.max(preds, dim=1)
         del input
         torch.cuda.empty_cache()
-        return {'pred': pred_, 'target': target}
+        return {OutputKeys.LABEL: pred_}
 
     def forward(self, inputs: Dict[str,
                                    Tensor]) -> Dict[str, Union[list, Tensor]]:
@@ -74,7 +74,8 @@ class BadImageDetecting(TorchModel):
         """
         if self.training:
             return self._train_forward(**inputs)
-        elif 'target' in inputs:
-            return self._evaluate_postprocess(**inputs)
+        elif OutputKeys.LABEL in inputs:
+            infeat = inputs['input']
+            return self._evaluate_postprocess(infeat)
         else:
             return self._inference_forward(**inputs)

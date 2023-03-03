@@ -18,7 +18,7 @@ __all__ = ['LanguageModelPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.language_model, module_name=Pipelines.lm_inference)
+    Tasks.language_score_prediction, module_name=Pipelines.lm_inference)
 class LanguageModelPipeline(Pipeline):
     """Language Model Inference Pipeline
 
@@ -26,11 +26,11 @@ class LanguageModelPipeline(Pipeline):
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
 
-    >>> pipeline_lm = pipeline(
-    >>>    task=Tasks.language_model,
+    >>> inference_pipeline = pipeline(
+    >>>    task=Tasks.language_score_prediction,
     >>>    model='damo/speech_transformer_lm_zh-cn-common-vocab8404-pytorch')
     >>> text_in='hello 大 家 好 呀'
-    >>> print(pipeline_lm(text_in))
+    >>> print(inference_pipeline(text_in))
 
     """
 

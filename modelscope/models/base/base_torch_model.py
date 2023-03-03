@@ -2,6 +2,7 @@
 
 import os
 from copy import deepcopy
+from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
@@ -94,7 +95,8 @@ class TorchModel(Model, torch.nn.Module):
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         save_checkpoint_names: Union[str, List[str]] = None,
-                        save_function: Callable = save_checkpoint,
+                        save_function: Callable = partial(
+                            save_checkpoint, with_meta=False),
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):

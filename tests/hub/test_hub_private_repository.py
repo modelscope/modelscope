@@ -9,9 +9,10 @@ from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import GitError
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
-from .test_utils import (TEST_ACCESS_TOKEN1, TEST_ACCESS_TOKEN2,
-                         TEST_MODEL_CHINESE_NAME, TEST_MODEL_ORG,
-                         delete_credential)
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
+                                         TEST_ACCESS_TOKEN2,
+                                         TEST_MODEL_CHINESE_NAME,
+                                         TEST_MODEL_ORG, delete_credential)
 
 DEFAULT_GIT_PATH = 'git'
 

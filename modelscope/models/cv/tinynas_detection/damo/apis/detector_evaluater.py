@@ -58,6 +58,7 @@ class Evaluater:
 
         output_folder = os.path.join(self.output_dir, self.exp_name,
                                      'inference')
+        os.makedirs(output_folder, exist_ok=True)
         for data_loader_val in self.val_loader:
             inference(
                 self.model,

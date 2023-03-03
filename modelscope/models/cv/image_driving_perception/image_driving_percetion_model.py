@@ -37,6 +37,7 @@ class YOLOPv2(TorchModel):
             [pred, anchor_grid], seg, ll = self.model(img)
         return {
             'img_hw': data['img'].shape[2:],
+            'ori_img_shape': data['ori_img_shape'],
             'pred': pred,
             'anchor_grid': anchor_grid,
             'driving_area_mask': seg,

@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from functools import wraps
+
 from modelscope.utils.constant import TrainerStages
 from modelscope.utils.import_utils import is_method_overridden
 from .priority import Priority
@@ -17,6 +19,9 @@ class Hook:
               TrainerStages.after_val_epoch, TrainerStages.after_run)
 
     PRIORITY = Priority.NORMAL
+
+    # The strategic function dict.
+    _strategies = dict()
 
     def before_run(self, trainer):
         """
@@ -221,3 +226,54 @@ class Hook:
 
     def load_state_dict(self, state_dict):
         pass
+
+    @staticmethod
+    def clear_strategies():
+        Hook._strategies.clear()
+
+    @staticmethod
+    def overload(function, name=None):
+        """Register a function to a strategic function.
+
+        Args:
+            function(`method` or `Callable`): The function instance.
+            name(`str`): The name of the strategic function, which specifies by the method `consume`
+        """
+
+        _name = name or function.__name__
+        if _name not in Hook._strategies:
+            Hook._strategies[_name] = []
+
+        Hook._strategies[_name].append(function)
+
+    @staticmethod
+    def overload_func(name=None):
+        """Declare a function as a strategic function, which can be replaced by some other functions.
+
+        This function should be used in annotations.
+
+        Args:
+            name(str): The strategic function name.
+        """
+
+        def _register(function):
+
+            @wraps(function)
+            def _call(*args, **kwargs):
+                _name = name or function.__name__
+                producers = Hook._strategies.get(_name, [])
+
+                if len(producers) == 0:
+                    return function(*args, **kwargs)
+                else:
+                    if len(producers) > 1:
+                        raise ValueError(
+                            f'Multiple functions registered to {_name}, '
+                            f'here is the list: {producers}')
+                    if isinstance(args[0], Hook):
+                        args = args[1:]
+                    return producers[0](*args, **kwargs)
+
+            return _call
+
+        return _register

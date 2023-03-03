@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_generate_pipeline import DocumentGroundedDialogGeneratePipeline
     from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
     from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
+    from .language_identification_pipline import LanguageIdentificationPipeline
 
 else:
     _import_structure = {
@@ -100,7 +101,8 @@ else:
         ],
         'document_grounded_dialog_retrieval_pipeline': [
             'DocumentGroundedDialogRetrievalPipeline'
-        ]
+        ],
+        'language_identification_pipline': ['LanguageIdentificationPipeline']
     }
 
     import sys

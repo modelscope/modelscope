@@ -16,8 +16,9 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.logger import get_logger
-from .test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_CHINESE_NAME,
-                         TEST_MODEL_ORG)
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
+                                         TEST_MODEL_CHINESE_NAME,
+                                         TEST_MODEL_ORG)
 
 logger = get_logger()
 logger.setLevel('DEBUG')

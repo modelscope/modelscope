@@ -28,7 +28,8 @@ class OptimizerHook(Hook):
     def __init__(self,
                  cumulative_iters=1,
                  grad_clip=None,
-                 loss_keys=OutputKeys.LOSS) -> None:
+                 loss_keys=OutputKeys.LOSS,
+                 **kwargs) -> None:
         if isinstance(loss_keys, str):
             loss_keys = [loss_keys]
         assert isinstance(loss_keys, (tuple, list))
@@ -36,27 +37,51 @@ class OptimizerHook(Hook):
         self.cumulative_iters = cumulative_iters
         self.grad_clip = grad_clip
 
-    def clip_grads(self, params, **clip_args):
+    @staticmethod
+    def clip_grads(params, **clip_args):
         params = list(
             filter(lambda p: p.requires_grad and p.grad is not None, params))
         if len(params) > 0:
             return clip_grad.clip_grad_norm_(params, **clip_args)
 
-    def before_run(self, trainer):
+    @Hook.overload_func(name='OptimizerHook.initialize_optimizer')
+    def initialize_optimizer(self, trainer):
+        """Initialize the optimizer.
+
+        This is a strategic function which can be registered by other hook's function.
+        """
         trainer.optimizer.zero_grad()
+
+    def before_run(self, trainer):
+        self.initialize_optimizer(trainer)
         trainer.cumulative_iters = self.cumulative_iters
 
-    def after_train_iter(self, trainer):
-        for k in self.loss_keys:
-            trainer.train_outputs[k] /= self.cumulative_iters
+    @Hook.overload_func(name='OptimizerHook.backward')
+    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
+        """Do module backward, optimizer's step and zero_grad and clip the grads.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            loss_keys(`list`): The list of loss keys.
+            cumulative_iters(`int`): The cumulative iters for gradients.
+            grad_clip(`dict`): The grad clipping options.
+        """
+        for k in loss_keys:
+            trainer.train_outputs[k] /= cumulative_iters
             trainer.train_outputs[k].backward()
 
-        if self.every_n_iters(trainer, self.cumulative_iters):
-            if self.grad_clip is not None:
-                self.clip_grads(trainer.model.parameters(), **self.grad_clip)
+        if self.every_n_iters(trainer, cumulative_iters):
+            if grad_clip is not None:
+                self.clip_grads(trainer.model.parameters(), **grad_clip)
 
             trainer.optimizer.step()
             trainer.optimizer.zero_grad()
+
+    def after_train_iter(self, trainer):
+        self.backward(trainer, self.loss_keys, self.cumulative_iters,
+                      self.grad_clip)
 
 
 @HOOKS.register_module(module_name=Hooks.NoneOptimizerHook)

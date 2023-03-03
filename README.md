@@ -39,7 +39,8 @@ Apart from harboring implementations of a wide range of different models, ModelS
 
 # Models and Online Accessibility
 
-Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (700+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+
 
 <p align="center">
     <br>
@@ -119,6 +120,8 @@ AI for Science:
 * [uni-fold-monomer](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
+
+**Note** To download public models, you do not need to register for the modelscope website(www.modelscope.cn), please refer to [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD) using api provided by modelscope library or using git
 
 # QuickTour
 

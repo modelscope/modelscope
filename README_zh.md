@@ -37,7 +37,7 @@ ModelScope Library为模型贡献者提供了必要的分层API，以便将来�
 除了包含各种模型的实现之外，ModelScope Library还支持与ModelScope后端服务进行必要的交互，特别是与Model-Hub和Dataset-Hub的交互。这种交互促进了模型和数据集的管理在后台无缝执行，包括模型数据集查询、版本控制、缓存管理等。
 
 # 部分模型和在线体验
-ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
+ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
 
 <p align="center">
     <br>

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .speaker_verification_pipeline import SpeakerVerificationPipeline
 else:
     _import_structure = {
+        'ans_dfsmn_pipeline': ['ANSDFSMNPipeline'],
         'ans_pipeline': ['ANSPipeline'],
         'asr_inference_pipeline': ['AutomaticSpeechRecognitionPipeline'],
         'kws_farfield_pipeline': ['KWSFarfieldPipeline'],

@@ -105,6 +105,28 @@ def extract_pcm_from_wav(wav: bytes) -> bytes:
     return data, sample_rate
 
 
+def expect_token_number(instr, token):
+    first_token = re.match(r'^\s*' + token, instr)
+    if first_token is None:
+        return None
+    instr = instr[first_token.end():]
+    lr = re.match(r'^\s*(-?\d+\.?\d*e?-?\d*?)', instr)
+    if lr is None:
+        return None
+    return instr[lr.end():], lr.groups()[0]
+
+
+def expect_kaldi_matrix(instr):
+    pos2 = instr.find('[', 0)
+    pos3 = instr.find(']', pos2)
+    mat = []
+    for stt in instr[pos2 + 1:pos3].split('\n'):
+        tmp_mat = np.fromstring(stt, dtype=np.float32, sep=' ')
+        if tmp_mat.size > 0:
+            mat.append(tmp_mat)
+    return instr[pos3 + 1:], np.array(mat)
+
+
 # This implementation is adopted from scipy.io.wavfile.write,
 # made publicly available under the BSD-3-Clause license at
 # https://github.com/scipy/scipy/blob/v1.9.3/scipy/io/wavfile.py

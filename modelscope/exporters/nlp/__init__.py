@@ -9,3 +9,5 @@ if is_torch_available():
         SbertForSequenceClassificationExporter
     from .sbert_for_zero_shot_classification_exporter import \
         SbertForZeroShotClassificationExporter
+    from .model_for_token_classification_exporter import \
+        ModelForSequenceClassificationExporter

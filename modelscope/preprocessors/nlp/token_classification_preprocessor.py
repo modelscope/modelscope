@@ -57,16 +57,15 @@ class WordSegmentationBlankSetToLabelPreprocessor(Preprocessor):
 
 class TokenClassificationPreprocessorBase(Preprocessor):
 
-    def __init__(
-        self,
-        model_dir: str = None,
-        first_sequence: str = None,
-        label: str = 'label',
-        label2id: Dict = None,
-        label_all_tokens: bool = False,
-        mode: str = ModeKeys.INFERENCE,
-        keep_original_columns: List[str] = None,
-    ):
+    def __init__(self,
+                 model_dir: str = None,
+                 first_sequence: str = None,
+                 label: str = 'label',
+                 label2id: Dict = None,
+                 label_all_tokens: bool = False,
+                 mode: str = ModeKeys.INFERENCE,
+                 keep_original_columns: List[str] = None,
+                 return_text: bool = True):
         """The base class for all the token-classification tasks.
 
         Args:
@@ -82,6 +81,7 @@ class TokenClassificationPreprocessorBase(Preprocessor):
             mode: The preprocessor mode.
             keep_original_columns(List[str], `optional`): The original columns to keep,
                 only available when the input is a `dict`, default None
+            return_text: Whether to return `text` field in inference mode, default: True.
         """
         super().__init__(mode)
         self.model_dir = model_dir
@@ -90,6 +90,7 @@ class TokenClassificationPreprocessorBase(Preprocessor):
         self.label2id = label2id
         self.label_all_tokens = label_all_tokens
         self.keep_original_columns = keep_original_columns
+        self.return_text = return_text
         if self.label2id is None and self.model_dir is not None:
             self.label2id = parse_label_mapping(self.model_dir)
 
@@ -164,7 +165,7 @@ class TokenClassificationPreprocessorBase(Preprocessor):
         if self.keep_original_columns and isinstance(data, dict):
             for column in self.keep_original_columns:
                 outputs[column] = data[column]
-        if self.mode == ModeKeys.INFERENCE:
+        if self.mode == ModeKeys.INFERENCE and self.return_text:
             outputs['text'] = text
         return outputs
 
@@ -208,6 +209,7 @@ class TokenClassificationTransformersPreprocessor(
                  max_length=None,
                  use_fast=None,
                  keep_original_columns=None,
+                 return_text=True,
                  **kwargs):
         """
 
@@ -218,7 +220,8 @@ class TokenClassificationTransformersPreprocessor(
             **kwargs: Extra args input into the tokenizer's __call__ method.
         """
         super().__init__(model_dir, first_sequence, label, label2id,
-                         label_all_tokens, mode, keep_original_columns)
+                         label_all_tokens, mode, keep_original_columns,
+                         return_text)
         self.is_lstm_model = 'lstm' in model_dir
         model_type = None
         if self.is_lstm_model:

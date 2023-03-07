@@ -49,6 +49,7 @@ class SingleStageDetector(TorchModel):
         self.head = build_head(self.cfg.model.head)
         self.head.nms = False
         self.apply(self.init_bn)
+        self.onnx_export = False
 
         self.load_pretrain_model(model_path)
 
@@ -82,6 +83,9 @@ class SingleStageDetector(TorchModel):
             return prediction
 
     def postprocess(self, preds):
+        if self.onnx_export:
+            return preds
+
         bboxes, scores, labels_idx = postprocess_gfocal(
             preds, self.num_classes, self.conf_thre, self.nms_thre)
         bboxes = bboxes.cpu().numpy()

@@ -5,3 +5,4 @@ if is_tf_available():
     from .cartoon_translation_exporter import CartoonTranslationExporter
 if is_torch_available():
     from .face_detection_scrfd_exporter import FaceDetectionSCRFDExporter
+    from .object_detection_damoyolo_exporter import ObjectDetectionDamoyoloExporter

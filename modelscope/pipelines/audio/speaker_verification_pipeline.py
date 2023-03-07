@@ -34,8 +34,9 @@ class SpeakerVerificationPipeline(Pipeline):
         >>> from modelscope.pipelines import pipeline
         >>> pipeline_sv = pipeline(
         >>>    task=Tasks.speaker_verification, model='damo/speech_xvector_sv-zh-cn-cnceleb-16k-spk3465-pytorch')
-        >>> audio_in=('','')
+        >>> audio_in=('sv_example_enroll.wav', 'sv_example_same.wav')
         >>> print(pipeline_sv(audio_in))
+        >>> # {'label': ['Same', 'Different'], 'scores': [0.8540488358969999, 0.14595116410300013]}
 
     """
 
@@ -88,12 +89,11 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         rst = {}
         for i in range(len(inputs)):
-            # for demo service(environ is 'eas'), only show the first result
+            # for single input, re-formate the output
             # audio_in:
             #   list/tuple: return speaker verification scores
             #   single wav/bytes: return speaker embedding
-            if 'MODELSCOPE_ENVIRONMENT' in os.environ and \
-                    os.environ['MODELSCOPE_ENVIRONMENT'] == 'eas':
+            if len(inputs) == 1 and i == 0:
                 if isinstance(self.audio_in, tuple) or isinstance(
                         self.audio_in, list):
                     score = inputs[0]['value']
@@ -103,7 +103,7 @@ class SpeakerVerificationPipeline(Pipeline):
                     embedding = inputs[0]['value']
                     rst[OutputKeys.SPK_EMBEDDING] = embedding
             else:
-                # for notebook/local jobs, copy results
+                # for multiple inputs
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 

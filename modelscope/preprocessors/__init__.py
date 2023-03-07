@@ -14,7 +14,8 @@ if TYPE_CHECKING:
                         ImageInstanceSegmentationPreprocessor,
                         ImageDenoisePreprocessor, ImageDeblurPreprocessor)
     from .cv import (ImageClassificationMmcvPreprocessor,
-                     ImageRestorationPreprocessor)
+                     ImageRestorationPreprocessor,
+                     ControllableImageGenerationPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
@@ -30,9 +31,9 @@ if TYPE_CHECKING:
         TextGenerationSentencePiecePreprocessor,
         TokenClassificationTransformersPreprocessor,
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
-        TextGenerationTransformersPreprocessor, Tokenize,
-        WordSegmentationBlankSetToLabelPreprocessor, CodeGeeXPreprocessor,
-        MGLMSummarizationPreprocessor,
+        WordAlignmentPreprocessor, TextGenerationTransformersPreprocessor,
+        Tokenize, WordSegmentationBlankSetToLabelPreprocessor,
+        CodeGeeXPreprocessor, MGLMSummarizationPreprocessor,
         ZeroShotClassificationTransformersPreprocessor,
         TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
@@ -61,7 +62,8 @@ else:
         ],
         'cv': [
             'ImageClassificationMmcvPreprocessor',
-            'ImageRestorationPreprocessor'
+            'ImageRestorationPreprocessor',
+            'ControllableImageGenerationPreprocessor'
         ],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],
@@ -78,7 +80,7 @@ else:
             'TextGenerationSentencePiecePreprocessor',
             'TextClassificationTransformersPreprocessor',
             'TokenClassificationTransformersPreprocessor',
-            'TextErrorCorrectionPreprocessor',
+            'TextErrorCorrectionPreprocessor', 'WordAlignmentPreprocessor',
             'TextGenerationTransformersPreprocessor', 'Tokenize',
             'TextGenerationT5Preprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',

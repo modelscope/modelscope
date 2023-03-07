@@ -171,41 +171,6 @@ class WavToScp(Preprocessor):
                                         inputs['model_config']['mvn_file'])
                 assert os.path.exists(mvn_file), 'mvn_file does not exist'
                 inputs['mvn_file'] = mvn_file
-            if inputs['model_config'].__contains__('vad_model_name'):
-                vad_model_name = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['vad_model_name'])
-                assert os.path.exists(
-                    vad_model_name), 'vad_model_name does not exist'
-                inputs['vad_model_name'] = vad_model_name
-            if inputs['model_config'].__contains__('vad_model_config'):
-                vad_model_config = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['vad_model_config'])
-                assert os.path.exists(
-                    vad_model_config), 'vad_model_config does not exist'
-                inputs['vad_model_config'] = vad_model_config
-            if inputs['model_config'].__contains__('vad_mvn_file'):
-                vad_mvn_file = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['vad_mvn_file'])
-                assert os.path.exists(
-                    vad_mvn_file), 'vad_mvn_file does not exist'
-                inputs['vad_mvn_file'] = vad_mvn_file
-            if inputs['model_config'].__contains__('punc_model_name'):
-                punc_model_name = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['punc_model_name'])
-                assert os.path.exists(
-                    punc_model_name), 'punc_model_name does not exist'
-                inputs['punc_model_name'] = punc_model_name
-            if inputs['model_config'].__contains__('punc_model_config'):
-                punc_model_config = os.path.join(
-                    inputs['model_workspace'],
-                    inputs['model_config']['punc_model_config'])
-                assert os.path.exists(
-                    punc_model_config), 'punc_model_config does not exist'
-                inputs['punc_model_config'] = punc_model_config
 
         elif inputs['model_type'] == Frameworks.tf:
             assert inputs['model_config'].__contains__(

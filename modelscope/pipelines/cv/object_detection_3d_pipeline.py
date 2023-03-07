@@ -55,6 +55,10 @@ class ObjectDetection3DPipeline(Pipeline):
         else:
             self.device = torch.device('cpu')
         self.detector = DepeDetect(model).to(self.device)
+        if os.getenv('MODELSCOPE_ENVIRONMENT') == 'eas':
+            self.num_workers = 0
+        else:
+            self.num_workers = 4
 
     def __call__(self, input, **kwargs):
         """
@@ -110,7 +114,7 @@ class ObjectDetection3DPipeline(Pipeline):
         data_loader = build_dataloader(
             self.dataset,
             samples_per_gpu=1,
-            workers_per_gpu=4,
+            workers_per_gpu=self.num_workers,
             dist=False,
             shuffle=False)
         result = next(iter(data_loader))

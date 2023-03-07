@@ -45,6 +45,8 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             './data/test/images/image_detection/annotations/coco_sample.json',
             val_ann=
             './data/test/images/image_detection/annotations/coco_sample.json',
+            work_dir='./workdirs',
+            exp_name='damoyolo_s',
         )
         trainer = build_trainer(
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
@@ -71,6 +73,8 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             './data/test/images/image_detection/annotations/coco_sample.json',
             val_ann=
             './data/test/images/image_detection/annotations/coco_sample.json',
+            work_dir='./workdirs',
+            exp_name='damoyolo_s',
         )
         trainer = build_trainer(
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
@@ -96,7 +100,10 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             train_ann=
             './data/test/images/image_detection/annotations/coco_sample.json',
             val_ann=
-            './data/test/images/image_detection/annotations/coco_sample.json')
+            './data/test/images/image_detection/annotations/coco_sample.json',
+            work_dir='./workdirs',
+            exp_name='damoyolo_s',
+        )
         trainer = build_trainer(
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
         trainer.train()
@@ -120,7 +127,10 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             train_ann=
             './data/test/images/image_detection/annotations/coco_sample.json',
             val_ann=
-            './data/test/images/image_detection/annotations/coco_sample.json')
+            './data/test/images/image_detection/annotations/coco_sample.json',
+            work_dir='./workdirs',
+            exp_name='damoyolo_s',
+        )
         trainer = build_trainer(
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
         trainer.train()

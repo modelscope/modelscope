@@ -33,15 +33,13 @@ class ImageDrivingPerceptionPipeline(Pipeline):
                                                         model='damo/cv_yolopv2_image-driving-perception_bdd100k')
     >>> image_driving_perception_pipeline(img_path)
     {
-        'boxes': [
-                    tensor([[1.0000e+00, 2.8600e+02, 4.0700e+02, 6.2600e+02],
-                            [8.8200e+02, 2.9600e+02, 1.0910e+03, 4.4700e+02],
-                            [3.7200e+02, 2.7500e+02, 5.2100e+02, 3.5500e+02],
-                            ...,
-                            [7.8600e+02, 2.8100e+02, 8.0400e+02, 3.0800e+02],
-                            [5.7000e+02, 2.8000e+02, 5.9400e+02, 3.0000e+02],
-                            [7.0500e+02, 2.7800e+02, 7.2100e+02, 2.9000e+02]])
-                ],
+        'boxes': array([[1.0000e+00, 2.8600e+02, 4.0700e+02, 6.2600e+02],
+                        [8.8200e+02, 2.9600e+02, 1.0910e+03, 4.4700e+02],
+                        [3.7200e+02, 2.7500e+02, 5.2100e+02, 3.5500e+02],
+                        ...,
+                        [7.8600e+02, 2.8100e+02, 8.0400e+02, 3.0800e+02],
+                        [5.7000e+02, 2.8000e+02, 5.9400e+02, 3.0000e+02],
+                        [7.0500e+02, 2.7800e+02, 7.2100e+02, 2.9000e+02]], dtype=float32)
         'masks': [
                     array([[0, 0, 0, ..., 0, 0, 0],
                             [0, 0, 0, ..., 0, 0, 0],
@@ -86,15 +84,19 @@ class ImageDrivingPerceptionPipeline(Pipeline):
         # Apply NMS
         pred = non_max_suppression(pred)
 
-        da_seg_mask = driving_area_mask(inputs['driving_area_mask'])
-        ll_seg_mask = lane_line_mask(inputs['lane_line_mask'])
+        h, w = inputs['ori_img_shape']
+        da_seg_mask = driving_area_mask(
+            inputs['driving_area_mask'], out_shape=(h, w))
+        ll_seg_mask = lane_line_mask(
+            inputs['lane_line_mask'], out_shape=(h, w))
 
         for det in pred:  # detections per image
             if len(det):
-                # Rescale boxes from img_size to (720, 1280)
-                det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4]).round()
+                # Rescale boxes from img_size to (h, w)
+                det[:, :4] = scale_coords(inputs['img_hw'], det[:, :4],
+                                          (h, w)).round()
 
-        results_dict[OutputKeys.BOXES].append(det[:, :4].cpu().numpy())
+        results_dict[OutputKeys.BOXES] = det[:, :4].cpu().numpy()
         results_dict[OutputKeys.MASKS].append(da_seg_mask)
         results_dict[OutputKeys.MASKS].append(ll_seg_mask)
         return results_dict

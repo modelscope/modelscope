@@ -125,7 +125,7 @@ class HubApi:
                      visibility: Optional[int] = ModelVisibility.PUBLIC,
                      license: Optional[str] = Licenses.APACHE_V2,
                      chinese_name: Optional[str] = None) -> str:
-        """Create model repo at ModelScopeHub.
+        """Create model repo at ModelScope Hub.
 
         Args:
             model_id (str): The model id
@@ -395,8 +395,8 @@ class HubApi:
         Args:
             model_id (str): The model id
             cutoff_timestamp (int): Tags created before the cutoff will be included.
-                                    The timestamp is represented by the seconds elasped from the epoch time.
-            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
+                                    The timestamp is represented by the seconds elapsed from the epoch time.
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
 
         Returns:
@@ -472,7 +472,7 @@ class HubApi:
 
         Args:
             model_id (str): The model id
-            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True, will
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
 
         Returns:

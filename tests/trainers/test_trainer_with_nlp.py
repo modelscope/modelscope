@@ -1,5 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import hashlib
 import os
+import pathlib
 import shutil
 import tempfile
 import unittest
@@ -121,6 +123,20 @@ class TestTrainerWithNlp(unittest.TestCase):
             checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10.pth'))
         self.assertTrue(Metrics.accuracy in eval_results)
 
+        def saving_fn(inputs, outputs):
+            with open(f'{self.tmp_dir}/predicts.txt', 'a') as f:
+                labels = inputs['labels'].cpu().numpy()
+                predictions = np.argmax(
+                    outputs['logits'].cpu().numpy(), axis=1)
+                for label, pred in zip(labels, predictions):
+                    f.writelines(f'{label}, {pred}\n')
+
+        trainer.predict(
+            predict_datasets=self.dataset,
+            saving_fn=saving_fn,
+            checkpoint_path=os.path.join(self.tmp_dir, 'epoch_10'))
+        self.assertTrue(os.path.isfile(f'{self.tmp_dir}/predicts.txt'))
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_save_best_ckpt(self):
 
@@ -208,6 +224,24 @@ class TestTrainerWithNlp(unittest.TestCase):
             os.path.isfile(
                 os.path.join(self.tmp_dir, 'output_best',
                              'pytorch_model.bin')))
+        md51 = hashlib.md5(
+            pathlib.Path(
+                os.path.join(self.tmp_dir, 'output',
+                             'pytorch_model.bin')).read_bytes()).hexdigest()
+        md52 = hashlib.md5(
+            pathlib.Path(os.path.join(
+                self.tmp_dir, 'epoch_10.pth')).read_bytes()).hexdigest()
+        self.assertEqual(md51, md52)
+        md51 = hashlib.md5(
+            pathlib.Path(
+                os.path.join(self.tmp_dir, 'output_best',
+                             'pytorch_model.bin')).read_bytes()).hexdigest()
+        md52 = hashlib.md5(
+            pathlib.Path(
+                os.path.join(
+                    self.tmp_dir,
+                    'best_iter19_accuracy28.pth')).read_bytes()).hexdigest()
+        self.assertEqual(md51, md52)
 
     @unittest.skip('skip for now before test is re-configured')
     def test_trainer_with_configured_datasets(self):
@@ -313,7 +347,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         regress_tool = MsRegressTool(baseline=False)
         with regress_tool.monitor_ms_train(
                 trainer, 'trainer_continue_train', level='strict'):
-            trainer.train(os.path.join(self.tmp_dir, 'iter_3.pth'))
+            trainer.train(os.path.join(self.tmp_dir, 'iter_3'))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_new_style_configuration(self):
@@ -488,6 +522,49 @@ class TestTrainerWithNlp(unittest.TestCase):
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         for i in range(2):
             self.assertIn(f'epoch_{i + 1}.pth', results_files)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_hook_register(self):
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+
+        def cfg_modify_fn(cfg):
+            cfg.train.hooks.append({'type': 'TorchAMPOptimizerHook'})
+            return cfg
+
+        kwargs = dict(
+            model=model_id,
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            cfg_modify_fn=cfg_modify_fn,
+            work_dir=self.tmp_dir)
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files)
+        for i in range(10):
+            self.assertIn(f'epoch_{i + 1}.pth', results_files)
+
+        output_files = os.listdir(
+            os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR))
+        self.assertIn(ModelFile.CONFIGURATION, output_files)
+        self.assertIn(ModelFile.TORCH_MODEL_BIN_FILE, output_files)
+        copy_src_files = os.listdir(trainer.model_dir)
+
+        print(f'copy_src_files are {copy_src_files}')
+        print(f'output_files are {output_files}')
+        for item in copy_src_files:
+            if not item.startswith('.'):
+                self.assertIn(item, output_files)
+
+        def pipeline_sentence_similarity(model_dir):
+            model = Model.from_pretrained(model_dir)
+            pipeline_ins = pipeline(
+                task=Tasks.sentence_similarity, model=model)
+            print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+        output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
+        pipeline_sentence_similarity(output_dir)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 """
-The implementation here is modified based on BEVDepth, originally MIT license and publicly avaialbe at
+The implementation here is modified based on BEVDepth, originally MIT license and publicly available at
 https://github.com/Megvii-BaseDetection/BEVDepth/blob/main/bevdepth/layers/backbones/base_lss_fpn.py
 """
 import torch

@@ -99,14 +99,15 @@ class Models(object):
     object_detection_3d = 'object_detection_3d'
     ddpm = 'ddpm'
     ocr_recognition = 'OCRRecognition'
+    ocr_detection = 'OCRDetection'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
     nerf_recon_acc = 'nerf-recon-acc'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
-
     bad_image_detecting = 'bad-image-detecting'
+    controllable_image_generation = 'controllable-image-generation'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -251,6 +252,7 @@ class Pipelines(object):
     body_3d_keypoints = 'canonical_body-3d-keypoints_video'
     hand_2d_keypoints = 'hrnetv2w18_hand-2d-keypoints_image'
     human_detection = 'resnet18-human-detection'
+    tbs_detection = 'tbs-detection'
     object_detection = 'vit-object-detection'
     abnormal_object_detection = 'abnormal-object-detection'
     easycv_detection = 'easycv-detection'
@@ -372,6 +374,7 @@ class Pipelines(object):
     object_detection_3d_depe = 'object-detection-3d-depe'
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
+    controllable_image_generation = 'controllable-image-generation'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -405,6 +408,7 @@ class Pipelines(object):
     dialog_state_tracking = 'dialog-state-tracking'
     zero_shot_classification = 'zero-shot-classification'
     text_error_correction = 'text-error-correction'
+    word_alignment = 'word-alignment'
     plug_generation = 'plug-generation'
     gpt3_generation = 'gpt3-generation'
     gpt_moe_generation = 'gpt-moe-generation'
@@ -431,6 +435,7 @@ class Pipelines(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    language_identification = 'language_identification'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -444,9 +449,10 @@ class Pipelines(object):
     itn_inference = 'itn-inference'
     punc_inference = 'punc-inference'
     sv_inference = 'sv-inference'
+    speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
-    lm_inference = 'language-model'
+    lm_inference = 'language-score-prediction'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'
@@ -714,6 +720,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_fft_inpainting_lama'),
     Tasks.image_paintbyexample: (Pipelines.image_paintbyexample,
                                  'damo/cv_stable-diffusion_paint-by-example'),
+    Tasks.controllable_image_generation:
+    (Pipelines.controllable_image_generation,
+     'dienstag/cv_controlnet_controllable-image-generation_nine-annotators'),
     Tasks.video_inpainting: (Pipelines.video_inpainting,
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
@@ -796,6 +805,7 @@ class CVTrainers(object):
     image_classification_team = 'image-classification-team'
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
+    nerf_recon_acc = 'nerf-recon-acc'
 
 
 class NLPTrainers(object):
@@ -902,8 +912,10 @@ class Preprocessors(object):
     image_sky_change_preprocessor = 'image-sky-change-preprocessor'
     image_demoire_preprocessor = 'image-demoire-preprocessor'
     ocr_recognition = 'ocr-recognition'
+    ocr_detection = 'ocr-detection'
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
+    controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'
@@ -925,6 +937,7 @@ class Preprocessors(object):
     sbert_token_cls_tokenizer = 'sbert-token-cls-tokenizer'
     zero_shot_cls_tokenizer = 'zero-shot-cls-tokenizer'
     text_error_correction = 'text-error-correction'
+    word_alignment = 'word-alignment'
     sentence_embedding = 'sentence-embedding'
     text_ranking = 'text-ranking'
     sequence_labeling_tokenizer = 'sequence-labeling-tokenizer'
@@ -1073,6 +1086,7 @@ class Hooks(object):
     # train
     EarlyStopHook = 'EarlyStopHook'
     DeepspeedHook = 'DeepspeedHook'
+    MegatronHook = 'MegatronHook'
 
 
 class LR_Schedulers(object):

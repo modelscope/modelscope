@@ -1,5 +1,5 @@
 # The implementation here is modified based on BaSSL,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/kakaobrain/bassl
+# originally Apache 2.0 License and publicly available at https://github.com/kakaobrain/bassl
 
 import torch.nn as nn
 import torch.nn.functional as F

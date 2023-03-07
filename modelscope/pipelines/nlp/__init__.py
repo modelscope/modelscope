@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .summarization_pipeline import SummarizationPipeline
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
+    from .word_alignment_pipeline import WordAlignmentPipeline
     from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
     from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_generate_pipeline import DocumentGroundedDialogGeneratePipeline
     from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
     from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
+    from .language_identification_pipline import LanguageIdentificationPipeline
 
 else:
     _import_structure = {
@@ -70,6 +72,7 @@ else:
         ['TableQuestionAnsweringPipeline'],
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
+        'word_alignment_pipeline': ['WordAlignmentPipeline'],
         'text_generation_pipeline':
         ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
@@ -98,7 +101,8 @@ else:
         ],
         'document_grounded_dialog_retrieval_pipeline': [
             'DocumentGroundedDialogRetrievalPipeline'
-        ]
+        ],
+        'language_identification_pipline': ['LanguageIdentificationPipeline']
     }
 
     import sys

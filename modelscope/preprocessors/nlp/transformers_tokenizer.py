@@ -75,11 +75,6 @@ class NLPTokenizer:
         # fast version lead to parallel inference failed
         model_type = self.model_type
         model_dir = self.model_dir
-        if model_type == Models.deberta_v2:
-            from modelscope.models.nlp.deberta_v2 import DebertaV2Tokenizer, DebertaV2TokenizerFast
-            tokenizer = DebertaV2TokenizerFast if self.use_fast else DebertaV2Tokenizer
-            return tokenizer.from_pretrained(
-                model_dir) if model_dir is not None else tokenizer()
 
         if model_type in (Models.structbert, Models.gpt3, Models.palm,
                           Models.plug, Models.megatron_bert,

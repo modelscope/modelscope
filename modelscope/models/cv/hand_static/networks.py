@@ -1,6 +1,6 @@
 """ HandStatic
 The implementation here is modified based on MobileFaceNet,
-originally Apache 2.0 License and publicly avaialbe at https://github.com/xuexingyu24/MobileFaceNet_Tutorial_Pytorch
+originally Apache 2.0 License and publicly available at https://github.com/xuexingyu24/MobileFaceNet_Tutorial_Pytorch
 """
 
 import os

@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.optim import SGD
-from torch.optim.lr_scheduler import MultiStepLR
+from torch.optim.lr_scheduler import LinearLR, MultiStepLR
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
@@ -127,6 +127,86 @@ class LrSchedulerHookTest(unittest.TestCase):
                                                                  ] * iters * 1
         self.assertListEqual(log_lrs, target_lrs)
         self.assertListEqual(optim_lrs, target_lrs)
+
+    def test_accumulation_step(self):
+        json_cfg = {
+            'task': 'image_classification',
+            'train': {
+                'work_dir': self.tmp_dir,
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1
+                },
+                'optimizer': {
+                    'type': 'SGD',
+                    'lr': 0.01,
+                    'options': {
+                        'cumulative_iters': 4,
+                    }
+                },
+                'lr_scheduler': {
+                    'type': 'LinearLR',
+                    'start_factor': 1.0,
+                    'end_factor': 0.0,
+                    'total_iters': int(8 * len(dummy_dataset) / 2),
+                    'options': {
+                        'by_epoch': False,
+                    }
+                }
+            }
+        }
+
+        config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
+        with open(config_path, 'w') as f:
+            json.dump(json_cfg, f)
+
+        model = DummyModel()
+        trainer_name = Trainers.default
+        kwargs = dict(
+            cfg_file=config_path,
+            model=model,
+            train_dataset=dummy_dataset,
+            max_epochs=8,
+            device='cpu')
+
+        trainer = build_trainer(trainer_name, kwargs)
+        train_dataloader = trainer._build_dataloader_with_dataset(
+            trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
+        trainer.register_optimizers_hook()
+
+        trainer.invoke_hook(TrainerStages.before_run)
+        log_lrs = []
+        optim_lrs = []
+        for epoch in range(trainer._epoch, trainer._max_epochs):
+            trainer.invoke_hook(TrainerStages.before_train_epoch)
+            for iter, data_batch in enumerate(train_dataloader):
+                trainer.invoke_hook(TrainerStages.before_train_iter)
+                trainer.train_step(trainer.model, data_batch)
+                trainer.invoke_hook(TrainerStages.after_train_iter)
+
+                if (trainer.iter + 1) % 4 == 0:
+                    log_lrs.append(trainer.log_buffer.output[LogKeys.LR])
+                    optim_lrs.append(trainer.optimizer.param_groups[0]['lr'])
+
+                trainer._iter += 1
+
+            trainer.invoke_hook(TrainerStages.after_train_epoch)
+            trainer._epoch += 1
+        trainer.invoke_hook(TrainerStages.after_run)
+        lr = 0.01
+        decay = 0.01 / 40
+        target_lrs = []
+        for i in range(40):
+            if i >= 3:
+                lr -= decay
+                target_lrs.append(lr)
+            else:
+                target_lrs.append(lr)
+        target_lrs = [
+            i for idx, i in enumerate(target_lrs) if (idx + 1) % 4 == 0
+        ]
+        self.assertTrue(all(np.isclose(log_lrs, target_lrs)))
+        self.assertTrue(all(np.isclose(optim_lrs, target_lrs)))
 
     def test_warmup_lr_scheduler_hook(self):
         global _global_iter

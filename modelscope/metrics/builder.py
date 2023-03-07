@@ -70,6 +70,7 @@ task_default_metrics = {
     [Metrics.image_quality_assessment_degradation_metric],
     Tasks.image_quality_assessment_mos:
     [Metrics.image_quality_assessment_mos_metric],
+    Tasks.bad_image_detecting: [Metrics.accuracy],
 }
 
 

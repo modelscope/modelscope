@@ -14,6 +14,9 @@ import torch
 import torch.multiprocessing as mp
 from torch import distributed as dist
 
+from modelscope.utils.constant import DistributedParallelType
+from modelscope.utils.megatron_utils import is_megatron_initialized
+
 
 def _find_free_port() -> str:
     # Copied from https://github.com/facebookresearch/detectron2/blob/main/detectron2/engine/launch.py # noqa: E501
@@ -107,14 +110,12 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
 
 def get_dist_info() -> Tuple[int, int]:
     if is_dist():
-        try:
+        group = None
+        if is_megatron_initialized():
             from megatron_util import mpu
-            assert mpu.model_parallel_is_initialized()
-            rank = mpu.get_data_parallel_rank()
-            world_size = mpu.get_data_parallel_world_size()
-        except (ImportError, AssertionError):
-            rank = dist.get_rank()
-            world_size = dist.get_world_size()
+            group = mpu.get_data_parallel_group()
+        rank = dist.get_rank(group)
+        world_size = dist.get_world_size(group)
     else:
         rank = 0
         world_size = 1
@@ -160,18 +161,37 @@ def is_dist():
     return dist.is_available() and dist.is_initialized()
 
 
-def is_master():
-    return dist.get_rank() == 0 if is_dist() else True
+def is_master(group=None):
+    if isinstance(group, str):
+        group = _parse_parallel_group(group)
+    return dist.get_rank(group) == 0 if is_dist() else True
 
 
-def master_only(func: Callable) -> Callable:
+def _parse_parallel_group(group: str):
+    from megatron_util import mpu
+    if group == DistributedParallelType.DP:
+        return mpu.get_data_parallel_group()
+    if group == DistributedParallelType.TP:
+        return mpu.get_tensor_model_parallel_group()
+    if group == DistributedParallelType.PP:
+        return mpu.get_pipeline_model_parallel_group()
+    raise ValueError(
+        f"Wrong group '{group}'. Supported groups are '{DistributedParallelType.DP}', "
+        f"'{DistributedParallelType.TP}' or '{DistributedParallelType.PP}'")
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        if is_master():
-            return func(*args, **kwargs)
 
-    return wrapper
+def master_only(group=None):
+
+    def decorate(func: Callable) -> Callable:
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if is_master(group):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate
 
 
 def make_tmp_dir():

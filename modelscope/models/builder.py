@@ -54,8 +54,12 @@ def build_backbone(cfg: ConfigDict, default_args: dict = None):
         cfg (:obj:`ConfigDict`): config dict for backbone object.
         default_args (dict, optional): Default initialization arguments.
     """
-    try:
+    if not cfg.get('init_backbone', False):
         model_dir = cfg.pop('model_dir', None)
+    else:
+        model_dir = cfg.get('model_dir', None)
+
+    try:
         model = build_from_cfg(
             cfg,
             BACKBONES,
@@ -65,12 +69,11 @@ def build_backbone(cfg: ConfigDict, default_args: dict = None):
         # Handle backbone that is not in the register group by using transformers AutoModel.
         # AutoModel are mostly using in NLP and part of Multi-Modal, while the number of backbone in CV、Audio and MM
         # is limited, thus could be added and registered in Modelscope directly
-        logger.WARNING(
+        logger.warning(
             f'The backbone {cfg.type} is not registered in modelscope, try to import the backbone from hf transformers.'
         )
         cfg['type'] = Models.transformers
-        if model_dir is not None:
-            cfg['model_dir'] = model_dir
+        cfg['model_dir'] = model_dir
         model = build_from_cfg(
             cfg,
             BACKBONES,

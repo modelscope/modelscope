@@ -1,16 +1,17 @@
 """
-The implementation here is modified based on insightface, originally MIT license and publicly avaialbe at
+The implementation here is modified based on insightface, originally MIT license and publicly available at
 https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/models/detectors/scrfd.py
 """
 import torch
 from mmdet.models.builder import DETECTORS
-from mmdet.models.detectors.single_stage import SingleStageDetector
 
 from ....mmdet_patch.core.bbox import bbox2result
+from ....mmdet_patch.models.detectors.single_stage import \
+    CustomSingleStageDetector
 
 
 @DETECTORS.register_module()
-class SCRFD(SingleStageDetector):
+class SCRFD(CustomSingleStageDetector):
 
     def __init__(self,
                  backbone,
@@ -47,7 +48,7 @@ class SCRFD(SingleStageDetector):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-        super(SingleStageDetector, self).forward_train(img, img_metas)
+        super(CustomSingleStageDetector, self).forward_train(img, img_metas)
         x = self.extract_feat(img)
         losses = self.bbox_head.forward_train(x, img_metas, gt_bboxes,
                                               gt_labels, gt_keypointss,
@@ -60,7 +61,7 @@ class SCRFD(SingleStageDetector):
                     rescale=False,
                     repeat_head=1,
                     output_kps_var=0,
-                    output_results=1):
+                    output_results=2):
         """Test function without test time augmentation.
 
         Args:

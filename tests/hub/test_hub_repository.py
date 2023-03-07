@@ -16,8 +16,9 @@ from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
-from .test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_CHINESE_NAME,
-                         TEST_MODEL_ORG, delete_credential)
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
+                                         TEST_MODEL_CHINESE_NAME,
+                                         TEST_MODEL_ORG, delete_credential)
 
 logger = get_logger()
 logger.setLevel('DEBUG')

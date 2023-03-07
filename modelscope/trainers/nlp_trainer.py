@@ -151,9 +151,9 @@ class VecoTrainer(NlpEpochBasedTrainer):
 
         """
         from modelscope.msdatasets.task_datasets import VecoDataset
-        if checkpoint_path is not None and os.path.isfile(checkpoint_path):
-            from modelscope.trainers.hooks import CheckpointHook
-            CheckpointHook.load_checkpoint(checkpoint_path, self)
+        if checkpoint_path is not None:
+            from modelscope.trainers.hooks import LoadCheckpointHook
+            LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
         self.model.eval()
         self._mode = ModeKeys.EVAL
         metric_values = {}

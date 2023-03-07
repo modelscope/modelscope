@@ -9,7 +9,6 @@ from tensorflow.python.tools import freeze_graph
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.tf_model_exporter import TfModelExporter
 from modelscope.metainfo import Models
-from modelscope.pipelines.nlp.translation_pipeline import TranslationPipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import compare_arguments_nested
@@ -18,7 +17,6 @@ logger = get_logger(__name__)
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
-    tf.disable_eager_execution()
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -27,7 +25,10 @@ tf.logging.set_verbosity(tf.logging.INFO)
 class CsanmtForTranslationExporter(TfModelExporter):
 
     def __init__(self, model=None):
+        tf.disable_eager_execution()
         super().__init__(model)
+
+        from modelscope.pipelines.nlp.translation_pipeline import TranslationPipeline
         self.pipeline = TranslationPipeline(self.model)
 
     def generate_dummy_inputs(self, **kwargs) -> Dict[str, Any]:
@@ -68,7 +69,7 @@ class CsanmtForTranslationExporter(TfModelExporter):
 
         dummy_inputs = self.generate_dummy_inputs()
         with tf.Session(graph=tf.Graph()) as sess:
-            # Restore model from the saved_modle file, that is exported by TensorFlow estimator.
+            # Restore model from the saved_model file, that is exported by TensorFlow estimator.
             MetaGraphDef = tf.saved_model.loader.load(sess, ['serve'],
                                                       output_dir)
 
@@ -181,5 +182,5 @@ class CsanmtForTranslationExporter(TfModelExporter):
 
     def export_onnx(self, output_dir: str, opset=13, **kwargs):
         raise NotImplementedError(
-            'csanmt model does not support onnx format, consider using savedmodel instead.'
+            'csanmt model does not support onnx format, consider using saved model instead.'
         )

@@ -4,6 +4,7 @@ import os.path as osp
 from typing import Any, Dict
 
 import torch
+from transformers import BertTokenizer
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor
@@ -29,6 +30,9 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
             model_dir (str): model path
         """
         super().__init__(*args, **kwargs)
+        self.tokenizer = BertTokenizer(
+            vocab_file=osp.join(model_dir, 'chinese_vocab.txt'),
+            do_lower_case=True)
         self.vocab = Dictionary.load(osp.join(model_dir, 'dict.src.txt'))
         self.max_length = max_length + 1 if max_length is not None else 129  # 1 is eos token
         self.padding_value = self.vocab.pad()
@@ -49,7 +53,7 @@ class TextErrorCorrectionPreprocessor(Preprocessor):
             }
         """
 
-        text = ' '.join([x for x in data])
+        text = ' '.join(self.tokenizer.tokenize(data))
         inputs = self.vocab.encode_line(
             text, append_eos=True, add_if_not_exist=False)
         lengths = inputs.size()[0]

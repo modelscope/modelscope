@@ -214,7 +214,9 @@ class MsDataset:
             return MsDataset.to_ms_dataset(dataset_inst, target=target)
 
         dataset_name = os.path.expanduser(dataset_name)
-        if is_relative_path(dataset_name) and dataset_name.count('/') == 1:
+        is_local_path = os.path.exists(dataset_name)
+        if is_relative_path(dataset_name) and dataset_name.count(
+                '/') == 1 and not is_local_path:
             dataset_name_split = dataset_name.split('/')
             namespace = dataset_name_split[0].strip()
             dataset_name = dataset_name_split[1].strip()

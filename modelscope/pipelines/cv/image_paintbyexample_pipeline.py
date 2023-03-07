@@ -143,7 +143,8 @@ class ImagePaintbyexamplePipeline(Pipeline):
 
                 x_sample = 255. * rearrange(
                     x_checked_image_torch.cpu().numpy(), 'c h w -> h w c')
-                img = Image.fromarray(x_sample.astype(np.uint8))
+                img = x_sample.astype(np.uint8)
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

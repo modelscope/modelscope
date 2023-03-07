@@ -19,7 +19,7 @@ class AddLrLogHook(LrSchedulerHook):
     def before_run(self, trainer):
         pass
 
-    def before_train_iter(self, trainer):
+    def after_train_iter(self, trainer):
         trainer.log_buffer.output[LogKeys.LR] = self._get_log_lr(trainer)
 
     def before_train_epoch(self, trainer):

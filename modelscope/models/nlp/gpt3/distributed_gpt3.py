@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import math
 import os
-from os import path as osp
+from collections import OrderedDict
 from typing import Callable, Dict, List, Optional, Union
 
 import torch
-from megatron_util import mpu
+from megatron_util import get_args, mpu
 from megatron_util.global_vars import get_global_memory_buffer
 from megatron_util.model import (AttnMaskType, Float16Module, LayerNorm,
                                  bias_gelu_impl)
@@ -29,11 +28,9 @@ from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
 
-from modelscope.fileio import File
 from modelscope.models import TorchModel
 from modelscope.models.nlp.gpt3 import GPT3Config
 from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
-from modelscope.utils.checkpoint import weights_to_cpu
 from modelscope.utils.megatron_utils import init_megatron_util
 from modelscope.utils.nlp.load_checkpoint import pre_load
 
@@ -948,21 +945,6 @@ def split_state_dict(state_dict: Dict[str, torch.Tensor], model: GPT3Model,
     return state_dict
 
 
-def save_checkpoint(model: torch.nn.Module, filename: str, **kwargs) -> None:
-    if isinstance(model, torch.nn.parallel.DistributedDataParallel):
-        model = model.module
-
-    checkpoint = {'module': weights_to_cpu(model.state_dict())}
-    mp_rank = mpu.get_tensor_model_parallel_rank()
-    filename = osp.join(
-        osp.dirname(filename), 'model',
-        'mp_rank_{:02d}'.format(mp_rank) + '_model_states.pt')
-
-    with io.BytesIO() as f:
-        torch.save(checkpoint, f)
-        File.write(f.getvalue(), filename)
-
-
 class DistributedGPT3(TorchModel):
 
     def __init__(self,
@@ -992,7 +974,8 @@ class DistributedGPT3(TorchModel):
         self.dist_model = model
 
         tensor_ws = mpu.get_tensor_model_parallel_world_size()
-        ckpt_ws = kwargs.pop('checkpoint_model_parallel_size', tensor_ws)
+        ckpt_ws = get_args().get('checkpoint_tensor_model_parallel_size',
+                                 tensor_ws)
         ckpt_rank = mpu.get_tensor_model_parallel_rank() * ckpt_ws // tensor_ws
         load_model = pre_load(ckpt_rank, model_dir, tag=path_load_tag)
         load_model = split_state_dict(load_model, model, tensor_ws // ckpt_ws)
@@ -1011,8 +994,8 @@ class DistributedGPT3(TorchModel):
                 attention_mask=None,
                 position_ids=None,
                 labels=None,
-                prompt_length=None,
-                is_pair=(False, )):
+                prompts_len=None,
+                inputs_len=None):
 
         logits, losses = self.dist_model(
             tokens,
@@ -1026,10 +1009,15 @@ class DistributedGPT3(TorchModel):
             self.inference_params.sequence_len_offset += tokens.size(1)
         else:
             loss_mask = torch.ones(
-                tokens.size(), dtype=torch.float, device=tokens.device)
-            if is_pair[0]:
-                for i, length in enumerate(prompt_length):
-                    loss_mask[i, :length] = 0
+                labels.size(), dtype=torch.float, device=tokens.device)
+            if inputs_len is None:
+                for i, l in enumerate(prompts_len):
+                    loss_mask[i, l:] = 0
+            else:
+                for i, l in enumerate(inputs_len):
+                    loss_mask[i, l - 1:] = 0
+                for i, l in enumerate(prompts_len):
+                    loss_mask[i, :l - 1] = 0
 
             losses = losses.float()
             loss_mask = loss_mask.view(-1).float()
@@ -1039,15 +1027,15 @@ class DistributedGPT3(TorchModel):
 
     def sample(self,
                tokens,
-               temperature=1.0,
+               prompts_len=None,
                use_eod_token_for_early_termination=True,
                stop_on_double_eol=False,
                stop_on_eol=False,
                **kwargs):
         batch_size = tokens.size(0)
-        lengths = kwargs.pop(
-            'prompt_length',
-            torch.tensor([tokens.size(1)], device=tokens.device))
+        lengths = prompts_len
+        if lengths is None:
+            lengths = torch.tensor([tokens.size(1)], device=tokens.device)
         pads = torch.ones(
             batch_size, self.config.tokens_to_generate,
             device=tokens.device).long() * self.config.eod_id
@@ -1096,9 +1084,9 @@ class DistributedGPT3(TorchModel):
             last_token_logits = logits[:, -1, :]
             new_sample = sample(
                 last_token_logits,
-                top_k=self.config.top_k,
-                top_p=self.config.top_p,
-                temperature=temperature,
+                top_k=kwargs.pop('top_k', self.config.top_k),
+                top_p=kwargs.pop('top_p', self.config.top_p),
+                temperature=kwargs.pop('temperature', self.config.temperature),
                 vocab_size=self.config.vocab_size)
 
             # If a prompt length is smaller or equal th current context
@@ -1257,6 +1245,11 @@ class DistributedGPT3(TorchModel):
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         return self.dist_model.state_dict(destination, prefix, keep_vars)
 
+    def load_state_dict(self,
+                        state_dict: 'OrderedDict[str, torch.Tensor]',
+                        strict: bool = True):
+        return self.dist_model.load_state_dict(state_dict, strict)
+
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         save_checkpoint_names: Union[str, List[str]] = None,
@@ -1265,13 +1258,15 @@ class DistributedGPT3(TorchModel):
                         **kwargs):
         # DistributedPipeline type is different from task name
         config['pipeline']['type'] = 'gpt3-generation'
-        # a temp fix for master_ip, master_port and rank
-        # can be removed after refactoring megatron_util
-        for unused_key in ('master_ip', 'master_port', 'rank'):
-            config['model'].pop(unused_key, None)
+
+        config['model'].pop('rank', None)
+        config['megatron'].pop('checkpoint_tensor_model_parallel_size', None)
+        tp_size = get_args().tensor_model_parallel_size
+        pp_size = get_args().pipeline_model_parallel_size
+        config['megatron']['world_size'] = tp_size * pp_size
 
         return super().save_pretrained(target_folder, save_checkpoint_names,
-                                       save_checkpoint, config, **kwargs)
+                                       save_function, config, **kwargs)
 
 
 class BeamHypotheses:

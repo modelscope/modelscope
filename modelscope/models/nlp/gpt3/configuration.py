@@ -21,6 +21,83 @@ logger = logging.get_logger()
 
 
 class GPT3Config(PretrainedConfig):
+    r"""
+    Configuration classes for GPT-3 model.
+
+    Class attributes:
+
+    - **model_type** (`str`) -- An identifier for the model type, serialized into the JSON file, can be used to recreate
+      the correct object in [`~transformers.AutoConfig`].
+
+    Args:
+        vocab_size (`int`, *optional*, defaults to 25600):
+            Vocabulary size of the GPT model. Defines the number of different
+            tokens that can be represented by the `inputs_ids` passed when
+            calling [`GPT3Model`].
+        hidden_size (`int`, *optional*, defaults to 768):
+            Dimensionality of the decoder layers and the pooler layer.
+        ffn_hidden_size (`int`, *optional*, defaults to None):
+            Dimensionality of the ffn layer, None defaults to four times the hidden_size.
+        num_hidden_layers (`int`, *optional*, defaults to 12):
+            Number of hidden layers in the Transformer decoder.
+        num_attention_heads (`int`, *optional*, defaults to 12):
+            Number of attention heads for each attention layer in the
+            Transformer decoder.
+        intermediate_size (`int`, *optional*, defaults to 3072):
+            Dimensionality of the "intermediate" (often named feed-forward)
+            layer in the Transformer decoder.
+        hidden_act (`str` or `Callable`, *optional*, defaults to `"gelu"`):
+            The non-linear activation function (function or string) in the
+            decoder and pooler. If string, `"gelu"`, `"relu"`, `"silu"` and
+            `"gelu_new"` are supported.
+        hidden_dropout_prob (`float`, *optional*, defaults to 0.1):
+            The dropout probability for all fully connected layers in the
+            embeddings, decoder, and pooler.
+        attention_probs_dropout_prob (`float`, *optional*, defaults to 0.1):
+            The dropout ratio for the attention probabilities.
+        max_position_embeddings (`int`, *optional*, defaults to 512):
+            The maximum sequence length that this model might ever be used with.
+            Typically set this to something large just in case (e.g., 512 or
+            1024 or 2048).
+        type_vocab_size (`int`, *optional*, defaults to 2):
+            The vocabulary size of the `token_type_ids` passed when calling
+            [`GPT3Model`].
+        layernorm_epsilon (`float`, *optional*, defaults to 1e-12):
+            The epsilon used by the layer normalization layers.
+        bias_gelu_fusion (`bool`, *optional*, defaults to True):
+            Whether to use gelu activation function when mixing bias.
+        fp32_residual_connection (`bool`, *optional*, defaults to False):
+            Whether to use fp32 for residual connection
+            between layers to improve accuracy.
+        sequence_parallel (`bool`, *optional*, defaults to False):
+            Whether to use sequence parallel during training.
+        bf16 (`bool`, *optional*, defaults to `False`):
+            Whether to use bf16 16-bit (mixed) precision training instead of 32-bit training.
+            Requires Ampere or higher NVIDIA architecture or using CPU (no_cuda).
+            This is an experimental API and it may change.
+        fp16 (`bool`, *optional*, defaults to `False`):
+            Whether to use fp16 16-bit (mixed) precision training instead of 32-bit training.
+        apply_query_key_layer_scaling (`bool`, *optional*, defaults to `True`):
+            Whether to scale query and key layer parameters during training.
+        init_method_std (`float`, *optional*, defaults to `0.02`):
+            The standard deviation of the normal distribution for initialization process.
+        eod_id (`int`, *optional*, defaults to `1`):
+            The end of text label for tokenizer, also indicates the end of the generation.
+        tokens_to_generate (`int`, *optional*, defaults to 100):
+            Number of tokens to generate.
+        top_k (`int`, *optional*, defaults to 0):
+            Number of highest probability vocabulary tokens to keep for
+            top-k-filtering that will be used by default in
+            the `generate` method of the model.
+        top_p (`float`, *optional*, defaults to 0.9):
+            Value that will be used by default in the `generate` method of the model
+            for `top_p`. If set to float < 1,
+            only the most probable tokens with probabilities that add up to `top_p`
+            or higher are kept for generation.
+        temperature (`float`, *optional*, defaults to 1.0):
+            The value used to module the next token probabilities that will be used
+            by default in the `generate` method of the model. Must be strictly positive.
+    """
 
     model_type = 'gpt3'
 
@@ -53,10 +130,11 @@ class GPT3Config(PretrainedConfig):
             hidden_dropout=0.1,
             init_method_std=0.02,
             # generate
-            eod_id=7,
+            eod_id=1,
             tokens_to_generate=100,
             top_k=0,
             top_p=0.9,
+            temperature=1.0,
             **kwargs):
         super().__init__(layer_norm_eps=layernorm_epsilon, **kwargs)
 
@@ -95,6 +173,7 @@ class GPT3Config(PretrainedConfig):
         self.tokens_to_generate = tokens_to_generate
         self.top_k = top_k
         self.top_p = top_p
+        self.temperature = temperature
 
         TORCH_MAJOR = int(torch.__version__.split('.')[0])
         TORCH_MINOR = int(torch.__version__.split('.')[1])

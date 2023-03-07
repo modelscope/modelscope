@@ -8,7 +8,7 @@ from typing import Any
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
-SYSTEM_TRAINER_BUILDER_FINCTION_NAME = 'build_trainer'
+SYSTEM_TRAINER_BUILDER_FUNCTION_NAME = 'build_trainer'
 SYSTEM_TRAINER_BUILDER_PARAMETER_NAME = 'name'
 SYSTEM_PIPELINE_BUILDER_FUNCTION_NAME = 'pipeline'
 SYSTEM_PIPELINE_BUILDER_PARAMETER_NAME = 'task'
@@ -263,12 +263,12 @@ def analysis_trainer_test_suite(test_file, modified_register_modules):
     # get test file global function and test class
     test_suite_root = ast.parse(src, test_file)
     test_suite_analyzer = AnalysisTestFile(
-        test_file, SYSTEM_TRAINER_BUILDER_FINCTION_NAME)
+        test_file, SYSTEM_TRAINER_BUILDER_FUNCTION_NAME)
     test_suite_analyzer.visit(test_suite_root)
 
     for test_class in test_suite_analyzer.test_classes:
         test_class_analyzer = AnalysisTestClass(
-            test_class, SYSTEM_TRAINER_BUILDER_FINCTION_NAME)
+            test_class, SYSTEM_TRAINER_BUILDER_FUNCTION_NAME)
         test_class_analyzer.visit(test_class)
         for test_method in test_class_analyzer.test_methods:
             for idx, custom_global_builder in enumerate(
@@ -278,7 +278,7 @@ def analysis_trainer_test_suite(test_file, modified_register_modules):
                     test_method, test_class_analyzer.setup_variables,
                     custom_global_builder,
                     test_suite_analyzer.custom_global_builder_calls[idx],
-                    SYSTEM_TRAINER_BUILDER_FINCTION_NAME,
+                    SYSTEM_TRAINER_BUILDER_FUNCTION_NAME,
                     SYSTEM_TRAINER_BUILDER_PARAMETER_NAME)
                 if trainer_name is not None:
                     tested_trainers.append(trainer_name)
@@ -289,14 +289,14 @@ def analysis_trainer_test_suite(test_file, modified_register_modules):
                     test_method, test_class_analyzer.setup_variables,
                     custom_class_method_builder,
                     test_class_analyzer.custom_class_method_builder_calls[idx],
-                    SYSTEM_TRAINER_BUILDER_FINCTION_NAME,
+                    SYSTEM_TRAINER_BUILDER_FUNCTION_NAME,
                     SYSTEM_TRAINER_BUILDER_PARAMETER_NAME)
                 if trainer_name is not None:
                     tested_trainers.append(trainer_name)
 
             trainer_name = get_builder_parameter_value(
                 test_method, test_class_analyzer.setup_variables, None, None,
-                SYSTEM_TRAINER_BUILDER_FINCTION_NAME,
+                SYSTEM_TRAINER_BUILDER_FUNCTION_NAME,
                 SYSTEM_TRAINER_BUILDER_PARAMETER_NAME
             )  # direct call the build_trainer
             if trainer_name is not None:

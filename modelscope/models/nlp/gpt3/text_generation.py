@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from collections import OrderedDict
 from typing import Dict
 
 import torch
@@ -9,6 +10,7 @@ from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.gpt3 import GPT3Model
 from modelscope.utils.constant import Tasks
+from modelscope.utils.hub import read_config
 
 __all__ = ['GPT3ForTextGeneration']
 
@@ -27,7 +29,7 @@ class GPT3ForTextGeneration(TorchModel):
         # Temporarily compatible with DistributedGPT3 and GPT3Model,
         # the base/large model based on GPT3Model will be replaced in the future,
         # and GPT3Model will be deprecated
-        if 'world_size' in kwargs:
+        if 'megatron' in read_config(model_dir):
             from modelscope.models.nlp import DistributedGPT3
             self.model = DistributedGPT3(model_dir, **kwargs)
         else:
@@ -66,3 +68,11 @@ class GPT3ForTextGeneration(TorchModel):
         if not isinstance(self.model, GPT3Model):
             return self.model.save_pretrained(*args, **kwargs)
         return super().save_pretrained(*args, **kwargs)
+
+    def state_dict(self, destination=None, prefix='', keep_vars=False):
+        return self.model.state_dict(destination, prefix, keep_vars)
+
+    def load_state_dict(self,
+                        state_dict: 'OrderedDict[str, Tensor]',
+                        strict: bool = True):
+        return self.model.load_state_dict(state_dict, strict)

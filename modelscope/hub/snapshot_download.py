@@ -122,7 +122,7 @@ def snapshot_download(model_id: str,
                 # check model_file is exist in cache, if existed, skip download, otherwise download
                 if cache.exists(model_file):
                     file_name = os.path.basename(model_file['Name'])
-                    logger.info(
+                    logger.debug(
                         f'File {file_name} already in cache, skip downloading!'
                     )
                     continue

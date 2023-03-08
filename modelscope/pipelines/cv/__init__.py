@@ -84,6 +84,7 @@ if TYPE_CHECKING:
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .image_driving_perception_pipeline import ImageDrivingPerceptionPipeline
     from .vop_retrieval_pipeline import VopRetrievalPipeline
+    from .vop_retrieval_se_pipeline import VopRetrievalSEPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_deinterlace_pipeline import VideoDeinterlacePipeline
     from .image_matching_pipeline import ImageMatchingPipeline
@@ -225,6 +226,7 @@ else:
             'ImageDrivingPerceptionPipeline'
         ],
         'vop_retrieval_pipeline': ['VopRetrievalPipeline'],
+        'vop_retrieval_se_pipeline': ['VopRetrievalSEPipeline'],
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],

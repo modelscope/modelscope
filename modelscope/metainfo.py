@@ -101,6 +101,7 @@ class Models(object):
     ocr_recognition = 'OCRRecognition'
     ocr_detection = 'OCRDetection'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
     nerf_recon_acc = 'nerf-recon-acc'
@@ -378,6 +379,7 @@ class Pipelines(object):
     controllable_image_generation = 'controllable-image-generation'
 
     image_quality_assessment_mos = 'image-quality-assessment-mos'
+    image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
@@ -908,6 +910,7 @@ class Preprocessors(object):
     image_instance_segmentation_preprocessor = 'image-instance-segmentation-preprocessor'
     image_driving_perception_preprocessor = 'image-driving-perception-preprocessor'
     image_portrait_enhancement_preprocessor = 'image-portrait-enhancement-preprocessor'
+    image_quality_assessment_man_preprocessor = 'image-quality_assessment-man-preprocessor'
     image_quality_assessment_mos_preprocessor = 'image-quality_assessment-mos-preprocessor'
     video_summarization_preprocessor = 'video-summarization-preprocessor'
     movie_scene_segmentation_preprocessor = 'movie-scene-segmentation-preprocessor'

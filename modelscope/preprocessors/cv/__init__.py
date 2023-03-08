@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
 
     from .image_quality_assessment_mos import ImageQualityAssessmentMosPreprocessor
+    from .image_quality_assessment_man import ImageQualityAssessmentMANPreprocessor
     from .image_restoration_preprocessor import ImageRestorationPreprocessor
     from .bad_image_detecting_preprocessor import BadImageDetectingPreprocessor
     from .controllable_image_generation import ControllableImageGenerationPreprocessor
@@ -21,6 +22,8 @@ else:
         'mmcls_preprocessor': ['ImageClassificationMmcvPreprocessor'],
         'image_quality_assessment_mos':
         ['ImageQualityAssessmentMosPreprocessor'],
+        'image_quality_assessment_man':
+        ['ImageQualityAssessmentMANPreprocessor'],
         'image_restoration_preprocessor': ['ImageRestorationPreprocessor'],
         'bad_image_detecting_preprocessor': ['BadImageDetectingPreprocessor'],
         'controllable_image_generation':

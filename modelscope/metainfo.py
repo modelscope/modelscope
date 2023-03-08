@@ -181,6 +181,7 @@ class Models(object):
     ofa = 'ofa'
     clip = 'clip-multi-modal-embedding'
     gemm = 'gemm-generative-multi-modal'
+    rleg = 'rleg-generative-multi-modal'
     mplug = 'mplug'
     diffusion = 'diffusion-text-to-image-synthesis'
     multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'

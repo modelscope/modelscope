@@ -1,5 +1,5 @@
-# The implementation is adopted from OSTrack,
-# made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
+# The ProContEXT implementation is also open-sourced by the authors,
+# and available at https://github.com/jp-lan/ProContEXT
 import torch
 from torch import nn
 
@@ -8,8 +8,8 @@ from modelscope.models.cv.video_single_object_tracking.models.layers.head import
 from .vit_ce import vit_base_patch16_224_ce
 
 
-class OSTrack(nn.Module):
-    """ This is the base class for OSTrack """
+class ProContEXT(nn.Module):
+    """ This is the base class for ProContEXT """
 
     def __init__(self,
                  transformer,
@@ -49,13 +49,13 @@ class OSTrack(nn.Module):
         feat_last = x
         if isinstance(x, list):
             feat_last = x[-1]
-        out = self.forward_head(feat_last)
+        out = self.forward_head(feat_last, None)
 
         out.update(aux_dict)
         out['backbone_feat'] = x
         return out
 
-    def forward_head(self, cat_feature):
+    def forward_head(self, cat_feature, gt_score_map=None):
         """
         cat_feature: output embeddings of the backbone, it can be (HW1+HW2, B, C) or (HW2, B, C)
         """
@@ -67,21 +67,23 @@ class OSTrack(nn.Module):
 
         if self.head_type == 'CENTER':
             # run the center head
-            score_map_ctr, bbox, size_map, offset_map = self.box_head(opt_feat)
+            score_map_ctr, bbox, size_map, offset_map, score = self.box_head(
+                opt_feat, return_score=True)
             outputs_coord = bbox
             outputs_coord_new = outputs_coord.view(bs, Nq, 4)
             out = {
                 'pred_boxes': outputs_coord_new,
                 'score_map': score_map_ctr,
                 'size_map': size_map,
-                'offset_map': offset_map
+                'offset_map': offset_map,
+                'score': score
             }
             return out
         else:
             raise NotImplementedError
 
 
-def build_ostrack(cfg):
+def build_procontext(cfg):
     if cfg.MODEL.BACKBONE.TYPE == 'vit_base_patch16_224_ce':
         backbone = vit_base_patch16_224_ce(
             False,
@@ -98,7 +100,7 @@ def build_ostrack(cfg):
 
     box_head = build_box_head(cfg, hidden_dim)
 
-    model = OSTrack(
+    model = ProContEXT(
         backbone,
         box_head,
         aux_loss=False,

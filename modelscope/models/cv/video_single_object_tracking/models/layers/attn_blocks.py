@@ -38,6 +38,10 @@ def candidate_elimination(attn: torch.Tensor, tokens: torch.Tensor,
     attn_t = attn[:, :, :lens_t, lens_t:]
 
     if box_mask_z is not None:
+        if not isinstance(box_mask_z, list):
+            box_mask_z = [box_mask_z]
+        box_mask_z_cat = torch.stack(box_mask_z, dim=1)
+        box_mask_z = box_mask_z_cat.flatten(1)
         box_mask_z = box_mask_z.unsqueeze(1).unsqueeze(-1).expand(
             -1, attn_t.shape[1], -1, attn_t.shape[-1])
         attn_t = attn_t[box_mask_z]

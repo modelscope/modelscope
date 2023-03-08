@@ -326,6 +326,7 @@ class Pipelines(object):
     crowd_counting = 'hrnet-crowd-counting'
     action_detection = 'ResNetC3D-action-detection'
     video_single_object_tracking = 'ostrack-vitb-video-single-object-tracking'
+    video_single_object_tracking_procontext = 'procontext-vitb-video-single-object-tracking'
     video_multi_object_tracking = 'video-multi-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
     image_panoptic_segmentation_easycv = 'image-panoptic-segmentation-easycv'

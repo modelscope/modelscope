@@ -86,9 +86,12 @@ class PunctuationProcessingPipeline(Pipeline):
         rst = {}
         for i in range(len(inputs)):
             if i == 0:
-                text = inputs[0]['value']
-                if len(text) > 0:
-                    rst[OutputKeys.TEXT] = text
+                for key, value in inputs[0].items():
+                    if key == 'value':
+                        if len(value) > 0:
+                            rst[OutputKeys.TEXT] = value
+                    elif key != 'key':
+                        rst[key] = value
             else:
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst

@@ -194,12 +194,8 @@ def load_bytes_from_url(url: str) -> Union[bytes, str]:
 def generate_scp_from_url(url: str, key: str = None):
     wav_scp_path = None
     raw_inputs = None
-    # for local wav.scp inputs
-    if os.path.exists(url) and url.lower().endswith('.scp'):
-        wav_scp_path = url
-        return wav_scp_path, raw_inputs
-    # for local wav file inputs
-    if os.path.exists(url) and (url.lower().endswith(SUPPORT_AUDIO_TYPE_SETS)):
+    # for local inputs
+    if os.path.exists(url):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
     # for wav url, download bytes data

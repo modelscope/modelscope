@@ -51,6 +51,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  punc_model_revision: Optional[str] = None,
                  lm_model: Optional[Union[Model, str]] = None,
                  lm_model_revision: Optional[str] = None,
+                 timestamp_model: Optional[Union[Model, str]] = None,
+                 timestamp_model_revision: Optional[str] = None,
                  **kwargs):
         """
         Use `model` and `preprocessor` to create an asr pipeline for prediction
@@ -72,6 +74,9 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             lm_model (Optional: 'Model' or 'str'):
                 language model from model hub or local
                 example: 'damo/speech_transformer_lm_zh-cn-common-vocab8404-pytorch'
+            timestamp_model (Optional: 'Model' or 'str'):
+                timestamp model from model hub or local
+                example: 'damo/'
             output_dir('str'):
                 output dir path
             batch_size('int'):
@@ -108,6 +113,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.punc_model_revision = punc_model_revision
         self.lm_model = lm_model
         self.lm_model_revision = lm_model_revision
+        self.timestamp_model = timestamp_model
+        self.timestamp_model_revision = timestamp_model_revision
         self.model_cfg = self.model.forward()
 
         self.cmd = self.get_cmd(kwargs)
@@ -144,6 +151,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 vad_cmvn_file=self.cmd['vad_cmvn_file'],
                 punc_model_file=self.cmd['punc_model_file'],
                 punc_infer_config=self.cmd['punc_infer_config'],
+                timestamp_model_file=self.cmd['timestamp_model_file'],
+                timestamp_infer_config=self.cmd['timestamp_infer_config'],
                 outputs_dict=self.cmd['outputs_dict'],
                 param_dict=self.cmd['param_dict'],
                 token_num_relax=self.cmd['token_num_relax'],
@@ -288,6 +297,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'time_stamp_writer': True,
             'punc_infer_config': None,
             'punc_model_file': None,
+            'timestamp_infer_config': None,
+            'timestamp_model_file': None,
             'outputs_dict': True,
             'param_dict': None,
             'model_type': outputs['model_type'],
@@ -355,9 +366,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 self.punc_model = model_config['punc_model']
             if model_config.__contains__('punc_model_revision'):
                 self.punc_model_revision = model_config['punc_model_revision']
+            if model_config.__contains__(
+                    'timestamp_model') and self.timestamp_model != '':
+                self.timestamp_model = model_config['timestamp_model']
+            if model_config.__contains__('timestamp_model_revision'):
+                self.timestamp_model_revision = model_config[
+                    'timestamp_model_revision']
             self.load_vad_model(cmd)
             self.load_punc_model(cmd)
             self.load_lm_model(cmd)
+            self.load_timestamp_model(cmd)
 
             user_args_dict = [
                 'output_dir',
@@ -459,6 +477,28 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             cmd['lm_train_config'] = os.path.join(
                 model_dir,
                 model_cfg['model']['model_config']['lm_model_config'])
+
+    # FIXME
+    def load_timestamp_model(self, cmd):
+        if self.timestamp_model is not None and self.timestamp_model != '':
+            if os.path.exists(self.timestamp_model):
+                timestamp_model = self.timestamp_model
+            else:
+                timestamp_model = snapshot_download(
+                    self.timestamp_model,
+                    revision=self.timestamp_model_revision)
+            logger.info(
+                'loading timestamp model from {0} ...'.format(timestamp_model))
+            config_path = os.path.join(timestamp_model,
+                                       ModelFile.CONFIGURATION)
+            model_cfg = json.loads(open(config_path).read())
+            model_dir = os.path.dirname(config_path)
+            cmd['timestamp_model_file'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['timestamp_model_name'])
+            cmd['timestamp_infer_config'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['timestamp_model_config'])
 
     def forward(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Decoding

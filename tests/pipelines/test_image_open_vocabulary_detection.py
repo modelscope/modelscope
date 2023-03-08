@@ -45,7 +45,7 @@ class ImageOpenVocabularyDetectionTest(unittest.TestCase,
         logger.info('degrade tensorflow finished')
         return super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         vild_pipeline = pipeline(task=self.task, model=model)

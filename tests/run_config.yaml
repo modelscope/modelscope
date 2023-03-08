@@ -72,7 +72,6 @@ envs:
       - tensorflow1x.txt
     dependencies: # requirement packages，pip install before test case run.
       - numpy==1.18.5
-      - protobuf>=3.19.0,<3.21.0
     tests:
       - test_text_to_speech.py
       - test_csanmt_translation.py

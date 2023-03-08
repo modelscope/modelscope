@@ -160,6 +160,7 @@ class Models(object):
     transformers = 'transformers'
     plug_mental = 'plug-mental'
     doc2bot = 'doc2bot'
+    peer = 'peer'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

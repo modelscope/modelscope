@@ -7,6 +7,8 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
+OUTPUT_WAV = 'output.wav'
+
 TEST_SPEECH_FILE = 'data/test/audios/3ch_nihaomiya.wav'
 TEST_SPEECH_FILE_MONO = 'data/test/audios/1ch_nihaomiya.wav'
 TEST_SPEECH_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
@@ -17,12 +19,24 @@ class KWSFarfieldTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/speech_dfsmn_kws_char_farfield_16k_nihaomiya'
+        if os.path.isfile(OUTPUT_WAV):
+            os.remove(OUTPUT_WAV)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_normal(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
         result = kws(os.path.join(os.getcwd(), TEST_SPEECH_FILE))
         self.assertEqual(len(result['kws_list']), 5)
+        print(result['kws_list'][-1])
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_output(self):
+        kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
+        result = kws(
+            os.path.join(os.getcwd(), TEST_SPEECH_FILE),
+            output_file=OUTPUT_WAV)
+        self.assertEqual(len(result['kws_list']), 5)
+        self.assertTrue(os.path.exists(OUTPUT_WAV))
         print(result['kws_list'][-1])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

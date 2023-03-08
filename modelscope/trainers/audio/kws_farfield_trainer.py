@@ -123,7 +123,7 @@ class KWSFarfieldTrainer(BaseTrainer):
         self.conf_files = []
         for conf_key in self.conf_keys:
             template_file = os.path.join(self.model_dir, conf_key)
-            conf_file = os.path.join(self.model_dir, f'{conf_key}.conf')
+            conf_file = os.path.join(self.work_dir, f'{conf_key}.conf')
             update_conf(template_file, conf_file, custom_conf[conf_key])
             self.conf_files.append(conf_file)
         self._current_epoch = 0

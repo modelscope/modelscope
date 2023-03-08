@@ -8,7 +8,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import DownloadMode, Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
@@ -18,8 +18,11 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
     def setUp(self) -> None:
         self.model_id = 'damo/cv_nerf-3d-reconstruction-accelerate_damo'
         data_dir = MsDataset.load(
-            'nerf_recon_dataset', namespace='damo',
-            split='train').config_kwargs['split_config']['train']
+            'nerf_recon_dataset',
+            namespace='damo',
+            split='train',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD
+        ).config_kwargs['split_config']['train']
         nerf_synthetic_dataset = os.path.join(data_dir, 'nerf_synthetic')
         blender_scene = 'lego'
         self.data_dir = os.path.join(nerf_synthetic_dataset, blender_scene)

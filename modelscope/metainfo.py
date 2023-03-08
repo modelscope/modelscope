@@ -109,6 +109,7 @@ class Models(object):
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
+    longshortnet = 'longshortnet'
 
     # EasyCV models
     yolox = 'YOLOX'

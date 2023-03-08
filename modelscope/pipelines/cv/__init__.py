@@ -110,6 +110,7 @@ if TYPE_CHECKING:
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
+    from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
 
 else:
     _import_structure = {
@@ -272,6 +273,9 @@ else:
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],
+        'image_bts_depth_estimation_pipeline': [
+            'ImageBTSDepthEstimationPipeline'
+        ]
     }
 
     import sys

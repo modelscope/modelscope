@@ -383,6 +383,7 @@ class Pipelines(object):
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
+    image_bts_depth_estimation = 'image-bts-depth-estimation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

@@ -123,6 +123,7 @@ tensorboard.sh
 replace.sh
 result.png
 result.jpg
+result.mp4
 
 # Pytorch
 *.pth

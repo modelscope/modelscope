@@ -182,6 +182,7 @@ class Models(object):
     mplug = 'mplug'
     diffusion = 'diffusion-text-to-image-synthesis'
     multi_stage_diffusion = 'multi-stage-diffusion-text-to-image-synthesis'
+    video_synthesis = 'latent-text-to-video-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
     mgeo = 'mgeo'
@@ -478,6 +479,7 @@ class Pipelines(object):
     diffusers_stable_diffusion = 'diffusers-stable-diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
+    text_to_video_synthesis = 'latent-text-to-video-synthesis'  # latent-text-to-video-synthesis
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
 
@@ -615,6 +617,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.text_to_image_synthesis:
     (Pipelines.text_to_image_synthesis,
      'damo/cv_diffusion_text-to-image-synthesis_tiny'),
+    Tasks.text_to_video_synthesis: (Pipelines.text_to_video_synthesis,
+                                    'damo/text-to-video-synthesis'),
     Tasks.body_2d_keypoints: (Pipelines.body_2d_keypoints,
                               'damo/cv_hrnetv2w32_body-2d-keypoints_image'),
     Tasks.body_3d_keypoints: (Pipelines.body_3d_keypoints,

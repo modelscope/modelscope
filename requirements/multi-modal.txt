@@ -12,11 +12,13 @@ rapidfuzz
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4
 sacrebleu
+# scikit-video
 soundfile
 taming-transformers-rom1504
 timm
 tokenizers
 torchvision
 transformers>=4.12.0
+# triton==2.0.0.dev20221120
 unicodedata2
 zhconv

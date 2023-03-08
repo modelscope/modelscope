@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .image_restoration_preprocessor import ImageRestorationPreprocessor
     from .bad_image_detecting_preprocessor import BadImageDetectingPreprocessor
     from .controllable_image_generation import ControllableImageGenerationPreprocessor
+    from .image_classification_preprocessor import ImageClassificationPreprocessor
 
 else:
     _import_structure = {
@@ -24,6 +25,8 @@ else:
         'bad_image_detecting_preprocessor': ['BadImageDetectingPreprocessor'],
         'controllable_image_generation':
         ['ControllableImageGenerationPreprocessor'],
+        'image_classification_preprocessor':
+        ['ImageClassificationPreprocessor']
     }
 
     import sys

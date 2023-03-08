@@ -30,6 +30,7 @@ TASKS_INPUT_TEMPLATES = {
     Tasks.ocr_detection: TasksIODescriptions.image_to_text,
     Tasks.ocr_recognition: TasksIODescriptions.image_to_text,
     Tasks.body_2d_keypoints: TasksIODescriptions.image_to_text,
+    Tasks.vision_efficient_tuning: TasksIODescriptions.image_to_text,
 
     # nlp tasks
     Tasks.text_classification: TasksIODescriptions.text_to_text,

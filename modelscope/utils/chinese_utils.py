@@ -3,8 +3,6 @@
 import re
 import string
 
-from zhconv import convert
-
 CHINESE_PUNCTUATION = '＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､\u3000、〃〈〉《》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏﹑﹔·！？｡。'
 ENGLISH_PUNCTUATION = string.punctuation
 
@@ -58,6 +56,8 @@ def _is_chinese_char(cp: str) -> bool:
 
 
 def normalize_chinese_number(text):
+    from zhconv import convert
+
     chinese_number = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
     new_text = ''
     for x in text:

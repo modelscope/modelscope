@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .image_defrcn_fewshot_detection_trainer import ImageDefrcnFewshotTrainer
     from .cartoon_translation_trainer import CartoonTranslationTrainer
     from .nerf_recon_acc_trainer import NeRFReconAccTrainer
+    from .vision_efficient_tuning_trainer import VisionEfficientTuningTrainer
 
 else:
     _import_structure = {
@@ -28,6 +29,7 @@ else:
         ['ImageDefrcnFewshotTrainer'],
         'cartoon_translation_trainer': ['CartoonTranslationTrainer'],
         'nerf_recon_acc_trainer': ['NeRFReconAccTrainer'],
+        'vision_efficient_tuning_trainer': ['VisionEfficientTuningTrainer'],
     }
 
     import sys

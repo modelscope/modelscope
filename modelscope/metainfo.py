@@ -808,6 +808,7 @@ class CVTrainers(object):
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
     nerf_recon_acc = 'nerf-recon-acc'
+    vision_efficient_tuning = 'vision-efficient-tuning'
 
 
 class NLPTrainers(object):
@@ -919,6 +920,7 @@ class Preprocessors(object):
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
     controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
+    image_classification_preprocessor = 'image-classification-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

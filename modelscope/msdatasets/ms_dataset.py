@@ -314,7 +314,7 @@ class MsDataset:
 
             def type_converter(self, x):
                 import torch
-                if self.to_tensor:
+                if self.to_tensor and not isinstance(x, torch.Tensor):
                     return torch.tensor(x)
                 else:
                     return x

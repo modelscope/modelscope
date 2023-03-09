@@ -5,6 +5,7 @@ import argparse
 from modelscope.cli.download import DownloadCMD
 from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
+from modelscope.cli.plugins import PluginsCMD
 
 
 def run_cmd():
@@ -13,6 +14,7 @@ def run_cmd():
     subparsers = parser.add_subparsers(help='modelscope commands helpers')
 
     DownloadCMD.define_args(subparsers)
+    PluginsCMD.define_args(subparsers)
     PipelineCMD.define_args(subparsers)
     ModelCardCMD.define_args(subparsers)
 

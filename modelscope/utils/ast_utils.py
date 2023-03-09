@@ -376,6 +376,7 @@ class FilesAstScanning(object):
     def __init__(self) -> None:
         self.astScaner = AstScanning()
         self.file_dirs = []
+        self.requirement_dirs = []
 
     def _parse_import_path(self,
                            import_package: str,
@@ -436,15 +437,15 @@ class FilesAstScanning(object):
                     ignored.add(item)
         return list(set(output) - set(ignored))
 
-    def traversal_files(self, path, check_sub_dir):
+    def traversal_files(self, path, check_sub_dir=None):
         self.file_dirs = []
         if check_sub_dir is None or len(check_sub_dir) == 0:
             self._traversal_files(path)
-
-        for item in check_sub_dir:
-            sub_dir = os.path.join(path, item)
-            if os.path.isdir(sub_dir):
-                self._traversal_files(sub_dir)
+        else:
+            for item in check_sub_dir:
+                sub_dir = os.path.join(path, item)
+                if os.path.isdir(sub_dir):
+                    self._traversal_files(sub_dir)
 
     def _traversal_files(self, path):
         dir_list = os.scandir(path)
@@ -455,6 +456,8 @@ class FilesAstScanning(object):
                 self._traversal_files(item.path)
             elif item.is_file() and item.name.endswith('.py'):
                 self.file_dirs.append(item.path)
+            elif item.is_file() and 'requirement' in item.name:
+                self.requirement_dirs.append(item.path)
 
     def _get_single_file_scan_result(self, file):
         try:

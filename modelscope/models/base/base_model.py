@@ -12,6 +12,8 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
+from modelscope.utils.plugins import (register_modelhub_repo,
+                                      register_plugins_repo)
 
 logger = get_logger()
 
@@ -126,6 +128,11 @@ class Model(ABC):
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
         model_cfg.model_dir = local_model_dir
+
+        # install and import remote repos before build
+        register_plugins_repo(cfg.safe_get('plugins'))
+        register_modelhub_repo(local_model_dir, cfg.get('allow_remote', False))
+
         for k, v in kwargs.items():
             model_cfg[k] = v
         if device is not None:

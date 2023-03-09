@@ -4,12 +4,20 @@ import unittest
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.demo_utils import DemoCompatibilityCheck
+from modelscope.utils.plugins import PluginsManager
 from modelscope.utils.test_utils import test_level
 
 
-class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
+class PluginModelTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self):
+        self.package = 'adaseq'
+
+    def tearDown(self):
+        # make sure uninstalled after installing
+        uninstall_args = [self.package, '-y']
+        PluginsManager.pip_command('uninstall', uninstall_args)
+        super().tearDown()
         import subprocess
         result = subprocess.run(
             ['pip', 'install', 'adaseq>=0.6.2', '--no-deps'],

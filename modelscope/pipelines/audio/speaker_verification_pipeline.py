@@ -146,9 +146,25 @@ class SpeakerVerificationPipeline(Pipeline):
             'param_dict',
         ]
 
+        # re-write the config with configure.json
+        for user_args in user_args_dict:
+            if (user_args in self.model_cfg['model_config']
+                    and self.model_cfg['model_config'][user_args] is not None):
+                if isinstance(cmd[user_args], dict) and isinstance(
+                        self.model_cfg['model_config'][user_args], dict):
+                    cmd[user_args].update(
+                        self.model_cfg['model_config'][user_args])
+                else:
+                    cmd[user_args] = self.model_cfg['model_config'][user_args]
+
+        # rewrite the config with user args
         for user_args in user_args_dict:
             if user_args in extra_args and extra_args[user_args] is not None:
-                cmd[user_args] = extra_args[user_args]
+                if isinstance(cmd[user_args], dict) and isinstance(
+                        extra_args[user_args], dict):
+                    cmd[user_args].update(extra_args[user_args])
+                else:
+                    cmd[user_args] = extra_args[user_args]
 
         return cmd
 

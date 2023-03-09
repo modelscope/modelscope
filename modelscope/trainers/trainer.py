@@ -32,17 +32,17 @@ from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
-                                       ConfigKeys, ModeKeys, ModelFile,
-                                       ThirdParty, TrainerStages)
+                                       ConfigKeys, DistributedParallelType,
+                                       ModeKeys, ModelFile, ThirdParty,
+                                       TrainerStages)
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
-from modelscope.utils.megatron_utils import is_megatron_initialized
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, is_dist, is_master,
-                                          set_random_seed)
+from modelscope.utils.torch_utils import (compile_model, get_dist_info,
+                                          get_local_rank, init_dist, is_dist,
+                                          is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks
@@ -83,6 +83,9 @@ class EpochBasedTrainer(BaseTrainer):
         remove_unused_data: Automatically remove unused data keys in mini-batches.
             The remove action based on the `inspect` on the model's forward method, the removed columns will be
             moved to the mini-batch's attributes.
+        compile (bool, optional): Compile the model with torch 2.0, default False
+        compile_options (dict, optional): The compile options if compile=True,
+            default None to use the default params of 'TorchModel.compile'.
 
         Examples of cfg_modify_fn:
             >>> def cfg_modify_fn(cfg):
@@ -108,6 +111,7 @@ class EpochBasedTrainer(BaseTrainer):
                                                                         None),
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
+            callbacks: Optional[List[Hook]] = None,
             **kwargs):
 
         self._seed = seed
@@ -120,6 +124,7 @@ class EpochBasedTrainer(BaseTrainer):
         self._iter = 0
         self._inner_iter = 0
         self._stop_training = False
+        self._compile = kwargs.get('compile', False)
 
         if isinstance(model, str):
             third_party = kwargs.get(ThirdParty.KEY)
@@ -148,6 +153,13 @@ class EpochBasedTrainer(BaseTrainer):
         else:
             self.model = self.build_model()
 
+        if self._compile:
+            # Compile the model with torch 2.0
+            compile_options = kwargs.get('compile_options')
+            if compile_options is None:
+                compile_options = {}
+            self.model = compile_model(self.model, **compile_options)
+
         if 'work_dir' in kwargs:
             self.work_dir = kwargs['work_dir']
         else:
@@ -156,28 +168,62 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_preprocessor, self.eval_preprocessor = self.get_preprocessors(
             preprocessor)
 
-        self._dist = self.init_dist(kwargs.get('launcher'))
-
-        if is_master() and not os.path.exists(self.work_dir):
-            os.makedirs(self.work_dir)
-
-        self.device = self.get_device(kwargs.get('device'))
+        if not os.path.exists(self.work_dir):
+            # TODO duplicate makedirs may cause errors in dlc envs.
+            os.makedirs(self.work_dir, exist_ok=True)
 
         # init logger after distribution init
         log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
         self.logger = get_logger(
             log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
-        if is_master():
-            self.logger.info(
-                '==========================Training Config Start=========================='
-            )
-            self.logger.info(
-                json.dumps(
-                    self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
-            self.logger.info(
-                '===========================Training Config End==========================='
-            )
+        self.train_data_collator, self.eval_data_collator = self.get_data_collator(
+            data_collator,
+            remove_unused_data=kwargs.get('remove_unused_data', False))
+        self._max_epochs = kwargs.get('max_epochs',
+                                      self.cfg.safe_get('train.max_epochs'))
+        assert self._max_epochs is not None, 'max_epochs should be provided by the init arguments or configured ' \
+                                             'in the `train.max_epochs` key in the configuration file.'
+        self._train_iters_per_epoch = kwargs.get(
+            'train_iters_per_epoch',
+            self.cfg.safe_get('train.train_iters_per_epoch'))
+        self._eval_iters_per_epoch = kwargs.get(
+            'val_iters_per_epoch',
+            self.cfg.safe_get('evaluation.val_iters_per_epoch'))
+        self.use_fp16 = kwargs.get('use_fp16', False)
+        self.launcher = kwargs.get('launcher')
+        self.device = kwargs.get('device')
+
+        # The parallel_groups field will be initialized in the hooks' after_init stage.
+        # Please check the DDPHook and MegatronHook for details.
+        self.parallel_groups = {}
+
+        # Clear the Hook overload functions to avoid duplication.
+        Hook.clear_strategies()
+
+        if self.launcher is not None and not self.cfg.safe_get(
+                'train.hooks.DDPHook'):
+            # A logic to fit the current code
+            # Put a DDPHook in if launcher is provided.
+            if 'hooks' not in self.cfg.train:
+                self.cfg.train['hooks'] = ConfigDict([])
+            self.cfg.train['hooks'].append({
+                'type': 'DDPHook',
+                'launcher': self.launcher
+            })
+
+        hooks = merge_hooks(self.cfg)
+        self.register_hook_from_cfg(hooks)
+        # Add user callback to hooks
+        if callable(callbacks):
+            callbacks = [callbacks]
+        for callback in callbacks or []:
+            self.register_hook(callback)
+        self.invoke_hook(TrainerStages.after_init)
+
+        # _dist represents for if dp is initialized and its world_size > 1
+        self._dist = self.is_dp_group_available() and dist.get_world_size(
+            self.dp_group) > 1
 
         self.train_dataset = self.to_task_dataset(
             train_dataset,
@@ -192,25 +238,16 @@ class EpochBasedTrainer(BaseTrainer):
             preprocessor=self.eval_preprocessor,
             **kwargs)
 
-        self.train_data_collator, self.eval_data_collator = self.get_data_collator(
-            data_collator,
-            remove_unused_data=kwargs.get('remove_unused_data', False))
         self.metrics = self.get_metrics()
-        self._max_epochs = kwargs.get('max_epochs',
-                                      self.cfg.safe_get('train.max_epochs'))
-        assert self._max_epochs is not None, 'max_epochs should be provided by the init arguments or configured ' \
-                                             'in the `train.max_epochs` key in the configuration file.'
-        self._train_iters_per_epoch = kwargs.get(
-            'train_iters_per_epoch',
-            self.cfg.safe_get('train.train_iters_per_epoch'))
-        self._eval_iters_per_epoch = kwargs.get(
-            'val_iters_per_epoch',
-            self.cfg.safe_get('evaluation.val_iters_per_epoch'))
-        self.use_fp16 = kwargs.get('use_fp16', False)
-        # model placement
-        self.place_model()
 
-        Hook.clear_strategies()
+        if not self.parallel_groups:
+            # If not working in parallel scenario, put model to device as a default logic.
+            device_name = self.device if self.device is not None else 'gpu'
+            self.device = create_device(device_name)
+            if self.device.type == 'cuda':
+                self.model.to(self.device)
+
+        self.print_cfg()
 
     def place_model(self):
         """Place model to device, or to DDP
@@ -329,6 +366,45 @@ class EpochBasedTrainer(BaseTrainer):
         if hasattr(self, 'cfg_modify_fn') and self.cfg_modify_fn is not None:
             cfg = self.cfg_modify_fn(cfg)
         return cfg
+
+    @property
+    def dp_group(self):
+        """
+        Get the data parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.DP]
+
+    @property
+    def tp_group(self):
+        """
+        Get the tensor parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.TP]
+
+    @property
+    def pp_group(self):
+        """
+        Get the pipeline parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.PP]
+
+    def is_dp_group_available(self):
+        """
+        Get whether the data parallel group is initialized.
+        """
+        return DistributedParallelType.DP in self.parallel_groups
+
+    def is_tp_group_available(self):
+        """
+        Get whether the tensor parallel group is initialized.
+        """
+        return DistributedParallelType.TP in self.parallel_groups
+
+    def is_pp_group_available(self):
+        """
+        Get whether the pipeline parallel group is initialized.
+        """
+        return DistributedParallelType.PP in self.parallel_groups
 
     @property
     def mode(self):
@@ -544,10 +620,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
         self.register_optimizers_hook()
-        hooks = merge_hooks(self.cfg)
-        self.register_hook_from_cfg(hooks)
-        if is_master():
-            self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
                                          kwargs.get('strict', False))
         self.model.train()
@@ -586,11 +659,7 @@ class EpochBasedTrainer(BaseTrainer):
 
             strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
-        if not self._hooks:
-            hooks = merge_hooks(self.cfg)
-            self.register_hook_from_cfg(hooks)
-            if is_master():
-                self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(
@@ -628,11 +697,7 @@ class EpochBasedTrainer(BaseTrainer):
             kwargs:
                 strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
-        if not self._hooks:
-            hooks = merge_hooks(self.cfg)
-            self.register_hook_from_cfg(hooks)
-            if is_master():
-                self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(
@@ -682,14 +747,8 @@ class EpochBasedTrainer(BaseTrainer):
             type='DistributedDataParallel',
             module=model,
             find_unused_parameters=True,
-            device_ids=[torch.cuda.current_device()])
-
-        if is_megatron_initialized():
-            from megatron_util import mpu
-            dp_cfg.update({
-                'output_device': torch.cuda.current_device(),
-                'process_group': mpu.get_data_parallel_group()
-            })
+            device_ids=[torch.cuda.current_device()],
+            process_group=self.dp_group)
 
         return build_parallel(dp_cfg)
 
@@ -1023,7 +1082,11 @@ class EpochBasedTrainer(BaseTrainer):
         Returns:
             DataLoader: A PyTorch dataloader.
         """
-        rank, world_size = get_dist_info()
+        rank = 0
+        world_size = 1
+        if self.is_dp_group_available():
+            rank = torch.distributed.get_rank(self.dp_group)
+            world_size = torch.distributed.get_world_size(self.dp_group)
 
         if dist:
             # When model is :obj:`DistributedDataParallel`,
@@ -1131,6 +1194,7 @@ class EpochBasedTrainer(BaseTrainer):
             vis_closure = partial(
                 self.visualization, dataset=self.eval_dataset, **vis_cfg)
 
+        self.invoke_hook(TrainerStages.before_val)
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
@@ -1153,6 +1217,7 @@ class EpochBasedTrainer(BaseTrainer):
                 vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
 
+        self.invoke_hook(TrainerStages.after_val)
         return metric_values
 
     def visualization(self, batch_result, dataset, **kwargs):
@@ -1238,7 +1303,26 @@ class EpochBasedTrainer(BaseTrainer):
                 "before_train_epoch".
         """
         for hook in self._hooks:
-            getattr(hook, fn_name)(self)
+            if hasattr(hook, fn_name):
+                getattr(hook, fn_name)(self)
+
+    def print_cfg(self):
+        if is_master():
+            cfg = deepcopy(self.cfg)
+            cfg.train.work_dir = self.work_dir
+            self.logger.info(
+                '==========================Training Config Start=========================='
+            )
+            self.logger.info(
+                json.dumps(cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
+            self.logger.info(
+                '===========================Training Config End==========================='
+            )
+
+    def print_hook_info(self):
+        if is_master() and not getattr(self, '_hook_info_printed', False):
+            self.logger.info(self.get_hook_info())
+            self._hook_info_printed = True
 
     def get_hook_info(self) -> str:
         # Get hooks info in each stage
@@ -1250,8 +1334,9 @@ class EpochBasedTrainer(BaseTrainer):
                 priority = Priority.NORMAL  # type: ignore
             classname = hook.__class__.__name__
             hook_info = f'({priority:<12}) {classname:<35}'
-            for trigger_stage in hook.get_triggered_stages():
-                stage_hook_map[trigger_stage].append(hook_info)
+            if hasattr(hook, 'get_triggered_stages'):
+                for trigger_stage in hook.get_triggered_stages():
+                    stage_hook_map[trigger_stage].append(hook_info)
 
         stage_hook_infos = []
         for stage in Hook.stages:

@@ -1,13 +1,31 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from modelscope.utils.import_utils import is_tf_available, is_torch_available
+from typing import TYPE_CHECKING
 
-if is_tf_available():
+from modelscope.utils.import_utils import LazyImportModule
+
+if TYPE_CHECKING:
     from .csanmt_for_translation_exporter import CsanmtForTranslationExporter
-if is_torch_available():
+    from .model_for_token_classification_exporter import ModelForSequenceClassificationExporter
     from .sbert_for_sequence_classification_exporter import \
         SbertForSequenceClassificationExporter
     from .sbert_for_zero_shot_classification_exporter import \
         SbertForZeroShotClassificationExporter
-    from .model_for_token_classification_exporter import \
-        ModelForSequenceClassificationExporter
+else:
+    _import_structure = {
+        'csanmt_for_translation_exporter': ['CsanmtForTranslationExporter'],
+        'model_for_token_classification_exporter':
+        ['ModelForSequenceClassificationExporter'],
+        'sbert_for_zero_shot_classification_exporter':
+        ['SbertForZeroShotClassificationExporter'],
+    }
+
+    import sys
+
+    sys.modules[__name__] = LazyImportModule(
+        __name__,
+        globals()['__file__'],
+        _import_structure,
+        module_spec=__spec__,
+        extra_objects={},
+    )

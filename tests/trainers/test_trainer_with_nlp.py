@@ -7,10 +7,12 @@ import tempfile
 import unittest
 
 import numpy as np
+import torch
+from packaging import version
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
-from modelscope.models.base import Model
+from modelscope.models.base import Model, TorchModel
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
@@ -75,6 +77,52 @@ class TestTrainerWithNlp(unittest.TestCase):
 
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         pipeline_sentence_similarity(output_dir)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_callback(self):
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+
+        class CustomCallback:
+
+            def after_train_iter(self, trainer):
+                if trainer.iter == 2:
+                    trainer._stop_training = True
+
+        kwargs = dict(
+            model=model_id,
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            work_dir=self.tmp_dir,
+            callbacks=[CustomCallback()])
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
+
+        self.assertEqual(trainer.iter, 3)
+
+    @unittest.skipIf(
+        version.parse(torch.__version__) < version.parse('2.0.0.dev'),
+        'skip test when torch version < 2.0')
+    def test_trainer_compile(self):
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+
+        class CustomCallback:
+
+            def after_train_iter(self, trainer):
+                if trainer.iter == 5:
+                    trainer._stop_training = True
+
+        kwargs = dict(
+            model=model_id,
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            work_dir=self.tmp_dir,
+            callbacks=[CustomCallback()],
+            compile=True)
+
+        trainer = build_trainer(default_args=kwargs)
+        self.assertTrue(isinstance(trainer.model._orig_mod, TorchModel))
+        trainer.train()
 
     @unittest.skip
     def test_trainer_with_backbone_head(self):

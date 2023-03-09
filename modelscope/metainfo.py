@@ -1115,6 +1115,7 @@ class Hooks(object):
     EarlyStopHook = 'EarlyStopHook'
     DeepspeedHook = 'DeepspeedHook'
     MegatronHook = 'MegatronHook'
+    DDPHook = 'DDPHook'
 
 
 class LR_Schedulers(object):

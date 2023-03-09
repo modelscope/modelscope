@@ -10,11 +10,9 @@ import torch
 from torch import distributed as dist
 from tqdm import tqdm
 
-from modelscope.utils.constant import DistributedParallelType
 from modelscope.utils.data_utils import to_device
-from modelscope.utils.megatron_utils import is_megatron_initialized
-from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_master,
-                                          make_tmp_dir)
+from modelscope.utils.torch_utils import (broadcast, get_dist_info, is_dist,
+                                          is_master, make_tmp_dir)
 
 
 def single_gpu_test(trainer,
@@ -107,7 +105,7 @@ def multi_gpu_test(trainer,
         list: The prediction results.
     """
     dataset = data_loader.dataset
-    rank, world_size = get_dist_info()
+    rank, world_size = get_dist_info(trainer.dp_group)
 
     progress_with_iters = False
     if data_loader_iters_per_gpu is None:
@@ -164,12 +162,13 @@ def multi_gpu_test(trainer,
 
     # collect results and data from all ranks
     if gpu_collect:
-        metric_classes_list = collect_results_gpu(metric_classes)
+        metric_classes_list = collect_results_gpu(metric_classes,
+                                                  trainer.dp_group)
     else:
         if tmpdir is None:
             tmpdir = make_tmp_dir()
         metric_classes_list = collect_results_cpu(
-            metric_classes, os.path.join(tmpdir, 'metrics'))
+            metric_classes, trainer, os.path.join(tmpdir, 'metrics'))
 
     metric_classes = merge_metrics(metric_classes_list)
 
@@ -189,18 +188,16 @@ def evaluate_batch(trainer, data, metric_classes, vis_closure):
 
 
 def get_metric_values(metric_classes):
-    _, world_size = get_dist_info()
     metric_values = {}
-    if is_master(
-            DistributedParallelType.DP if is_megatron_initialized() else None):
+    if is_master():
         for metric_cls in metric_classes:
             metric_values.update(metric_cls.evaluate())
-    if world_size > 1:
+    if is_dist():
         metric_values = broadcast(metric_values, 0)
     return metric_values
 
 
-def collect_results_cpu(result_part, tmpdir=None):
+def collect_results_cpu(result_part, trainer, tmpdir=None):
     """Collect results under cpu mode.
 
     On cpu mode, this function will save the results on different gpus to
@@ -209,8 +206,7 @@ def collect_results_cpu(result_part, tmpdir=None):
     Args:
         result_part (list): Result list containing result parts
             to be collected.
-        size (int): Size of the results, commonly equal to length of
-            the results.
+        trainer(`EpochBasedTrainer`): The trainer instance to get the parallel groups.
         tmpdir (str | None): temporal directory for collected results to
             store. If set to None, it will create a random temporal directory
             for it.
@@ -218,15 +214,16 @@ def collect_results_cpu(result_part, tmpdir=None):
     Returns:
         list: The collected results.
     """
-    rank, world_size = get_dist_info()
+    rank, world_size = get_dist_info(trainer.dp_group)
     if tmpdir is None:
         tmpdir = make_tmp_dir()
-    if not os.path.exists(tmpdir) and is_master(DistributedParallelType.TP):
-        os.makedirs(tmpdir)
+    if not os.path.exists(tmpdir):
+        os.makedirs(tmpdir, exist_ok=True)
     dist.barrier()
 
     # dump the part result to the dir
-    if is_master(DistributedParallelType.TP):
+    if (not trainer.is_tp_group_available() or is_master(trainer.tp_group)) \
+            and (not trainer.is_pp_group_available() or is_master(trainer.pp_group)):
         with open(os.path.join(tmpdir, f'part_{rank}.pkl'), 'wb') as f:
             pickle.dump(result_part, f)
     dist.barrier()
@@ -250,7 +247,7 @@ def collect_results_cpu(result_part, tmpdir=None):
         return part_list
 
 
-def collect_results_gpu(result_part):
+def collect_results_gpu(result_part, dp_group=None):
     """Collect results under gpu mode.
 
     On gpu mode, this function will encode results to gpu tensors and use gpu
@@ -259,17 +256,12 @@ def collect_results_gpu(result_part):
     Args:
         result_part (list): Result list containing result parts
             to be collected.
-        size (int): Size of the results, commonly equal to length of
-            the results.
+        dp_group(`ProcessGroup` or None): The data parallel group, default None for global group.
 
     Returns:
         list: The collected results.
     """
-    _, world_size = get_dist_info()
-    group = None
-    if is_megatron_initialized():
-        from megatron_util import mpu
-        group = mpu.get_data_parallel_group()
+    _, world_size = get_dist_info(dp_group)
 
     # dump result part to tensor with pickle
     part_tensor = torch.tensor(
@@ -277,7 +269,7 @@ def collect_results_gpu(result_part):
     # gather all result part tensor shape
     shape_tensor = torch.tensor(part_tensor.shape, device='cuda')
     shape_list = [shape_tensor.clone() for _ in range(world_size)]
-    dist.all_gather(shape_list, shape_tensor, group)
+    dist.all_gather(shape_list, shape_tensor, dp_group)
     # padding result part tensor to max length
     shape_max = torch.tensor(shape_list).max()
     part_send = torch.zeros(shape_max, dtype=torch.uint8, device='cuda')
@@ -286,7 +278,7 @@ def collect_results_gpu(result_part):
         part_tensor.new_zeros(shape_max) for _ in range(world_size)
     ]
     # gather all result part
-    dist.all_gather(part_recv_list, part_send, group)
+    dist.all_gather(part_recv_list, part_send, dp_group)
 
     if is_master():
         part_list = []

@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 import torch
 from megatron_util import mpu
@@ -6,7 +7,12 @@ from megatron_util import mpu
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.hook import Hook
+from modelscope.trainers.parallel.builder import build_parallel
 from modelscope.utils.checkpoint import load_checkpoint, save_checkpoint
+from modelscope.utils.constant import DistributedParallelType
+from modelscope.utils.device import create_device
+from modelscope.utils.megatron_utils import is_megatron_initialized
+from modelscope.utils.torch_utils import get_local_rank
 from .checkpoint_hook import CheckpointHook, LoadCheckpointHook
 
 
@@ -14,6 +20,9 @@ from .checkpoint_hook import CheckpointHook, LoadCheckpointHook
 class MegatronHook(Hook):
 
     _BIN_FILE_DIR = 'model'
+
+    def __init__(self):
+        self.wrapped = False
 
     def register_strategy(self):
         Hook.overload(
@@ -30,6 +39,30 @@ class MegatronHook(Hook):
             function=self.remove_checkpoints)
         Hook.overload(
             name='CheckpointHook.prepare_output', function=self.prepare_output)
+
+    def after_init(self, trainer):
+        assert is_megatron_initialized()
+        local_rank = get_local_rank()
+        trainer.device = create_device(f'cuda:{local_rank}')
+        trainer.model.to(trainer.device)
+        trainer.parallel_groups[
+            DistributedParallelType.DP] = mpu.get_data_parallel_group()
+        trainer.parallel_groups[DistributedParallelType.
+                                TP] = mpu.get_tensor_model_parallel_group()
+        trainer.parallel_groups[DistributedParallelType.
+                                PP] = mpu.get_pipeline_model_parallel_group()
+
+    def before_run(self, trainer):
+        self.wrap_module(trainer)
+
+    def before_val(self, trainer):
+        self.wrap_module(trainer)
+
+    def wrap_module(self, trainer):
+        if trainer._dist:
+            if not self.wrapped:
+                trainer.model = trainer.to_parallel(trainer.model)
+                self.wrapped = True
 
     def should_save_on_rank(self, trainer):
         # TODO

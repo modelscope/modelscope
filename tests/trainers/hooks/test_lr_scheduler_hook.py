@@ -104,7 +104,10 @@ class LrSchedulerHookTest(unittest.TestCase):
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
-
+        trainer._hooks = [
+            hook for hook in trainer._hooks if hook.__class__.__name__ not in
+            ['CheckpointHook', 'TextLoggerHook', 'IterTimerHook']
+        ]
         trainer.invoke_hook(TrainerStages.before_run)
         log_lrs = []
         optim_lrs = []
@@ -173,7 +176,10 @@ class LrSchedulerHookTest(unittest.TestCase):
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
-
+        trainer._hooks = [
+            hook for hook in trainer._hooks if hook.__class__.__name__ not in
+            ['CheckpointHook', 'TextLoggerHook', 'IterTimerHook']
+        ]
         trainer.invoke_hook(TrainerStages.before_run)
         log_lrs = []
         optim_lrs = []
@@ -254,7 +260,10 @@ class LrSchedulerHookTest(unittest.TestCase):
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
-
+        trainer._hooks = [
+            hook for hook in trainer._hooks if hook.__class__.__name__ not in
+            ['CheckpointHook', 'TextLoggerHook', 'IterTimerHook']
+        ]
         trainer.invoke_hook(TrainerStages.before_run)
         log_lrs = []
         optim_lrs = []
@@ -355,8 +364,10 @@ class PlateauLrSchedulerHookTest(unittest.TestCase):
         trainer.train_dataloader = train_dataloader
         trainer.data_loader = train_dataloader
         trainer.register_optimizers_hook()
-        trainer.register_hook_from_cfg(trainer.cfg.train.hooks)
-
+        trainer._hooks = [
+            hook for hook in trainer._hooks if hook.__class__.__name__ not in
+            ['CheckpointHook', 'TextLoggerHook', 'IterTimerHook']
+        ]
         trainer.invoke_hook(TrainerStages.before_run)
         log_lrs = []
         optim_lrs = []

@@ -35,7 +35,8 @@ INDEXER_FILE_DIR = get_default_cache_dir()
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
-    'models', 'metrics', 'pipelines', 'preprocessors', 'trainers', 'msdatasets'
+    'models', 'metrics', 'pipelines', 'preprocessors', 'trainers',
+    'msdatasets', 'exporters'
 ]
 INDEXER_FILE = 'ast_indexer'
 DECORATOR_KEY = 'decorators'

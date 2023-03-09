@@ -106,8 +106,6 @@ class ModelForSequenceClassificationExporter(TorchModelExporter):
             tols['rtol'] = rtol
         if atol is not None:
             tols['atol'] = atol
-        print(outputs)
-        print(outputs_origin)
         if not compare_arguments_nested('Onnx model output match failed',
                                         outputs, outputs_origin, **tols):
             raise RuntimeError(

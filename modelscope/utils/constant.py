@@ -462,7 +462,9 @@ class LogKeys:
 
 
 class TrainerStages:
+    after_init = 'after_init'
     before_run = 'before_run'
+    before_val = 'before_val'
     before_train_epoch = 'before_train_epoch'
     before_train_iter = 'before_train_iter'
     after_train_iter = 'after_train_iter'
@@ -472,6 +474,7 @@ class TrainerStages:
     after_val_iter = 'after_val_iter'
     after_val_epoch = 'after_val_epoch'
     after_run = 'after_run'
+    after_val = 'after_val'
 
 
 class ColorCodes:

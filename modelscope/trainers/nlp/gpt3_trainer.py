@@ -1,13 +1,20 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Any, Dict, List
+from copy import deepcopy
+from typing import Any, Dict, List, Union
+
+import torch
+from torch import nn
 
 from modelscope.metainfo import Trainers
+from modelscope.models.base import TorchModel
 from modelscope.models.nlp import GPT3ForTextGeneration
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
+from modelscope.trainers.parallel.builder import build_parallel
 from modelscope.utils.config import Config
+from modelscope.utils.megatron_utils import is_megatron_initialized
 
 
 @TRAINERS.register_module(module_name=Trainers.gpt3_trainer)
@@ -17,6 +24,29 @@ class GPT3Trainer(NlpEpochBasedTrainer):
         cfg = super().rebuild_config(cfg)
         cfg.model.rank = int(os.environ.get('RANK', 0))
         return cfg
+
+    def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
+        # config format to reserve custom ddp
+        if self.cfg.get('parallel', None) is not None:
+            dp_cfg = deepcopy(self.cfg['parallel'])
+            dp_cfg.update(
+                dict(module=model, device_ids=[torch.cuda.current_device()]))
+            return build_parallel(dp_cfg)
+
+        dp_cfg = dict(
+            type='DistributedDataParallel',
+            module=model,
+            find_unused_parameters=True,
+            device_ids=[torch.cuda.current_device()])
+
+        if is_megatron_initialized():
+            from megatron_util import mpu
+            dp_cfg.update({
+                'output_device': torch.cuda.current_device(),
+                'process_group': mpu.get_data_parallel_group()
+            })
+
+        return build_parallel(dp_cfg)
 
     def _decode(self, tokens):
         tokenizer = self.eval_preprocessor.tokenizer

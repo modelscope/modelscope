@@ -88,22 +88,6 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
             collate,
             samples_per_gpu=self.cfg.evaluation.dataloader.batch_size_per_gpu)
 
-        # Register easycv hooks dynamicly. If the hook already exists in modelscope,
-        # the hook in modelscope will be used, otherwise register easycv hook into ms.
-        # We must manually trigger lazy import to detect whether the hook is in modelscope.
-        # TODO: use ast index to detect whether the hook is in modelscope
-        for h_i in self.cfg.train.get('hooks', []):
-            sig = ('HOOKS', default_group, h_i['type'])
-            LazyImportModule.import_module(sig)
-            if h_i['type'] not in HOOKS._modules[default_group]:
-                if h_i['type'] in [
-                        'TensorboardLoggerHookV2', 'WandbLoggerHookV2'
-                ]:
-                    raise ValueError(
-                        'Not support hook %s now, we will support it in the future!'
-                        % h_i['type'])
-                register_util.register_hook_to_ms(h_i['type'], self.logger)
-
         # load pretrained model
         load_from = self.cfg.get('load_from', None)
         if load_from is not None:
@@ -124,6 +108,25 @@ class EasyCVEpochBasedTrainer(EpochBasedTrainer):
                 module=self.model,
                 device_ids=[torch.cuda.current_device()])
             self.model = build_parallel(dp_cfg)
+
+    def rebuild_config(self, cfg: Config):
+        cfg = super().rebuild_config(cfg)
+        # Register easycv hooks dynamicly. If the hook already exists in modelscope,
+        # the hook in modelscope will be used, otherwise register easycv hook into ms.
+        # We must manually trigger lazy import to detect whether the hook is in modelscope.
+        # TODO: use ast index to detect whether the hook is in modelscope
+        for h_i in cfg.train.get('hooks', []):
+            sig = ('HOOKS', default_group, h_i['type'])
+            LazyImportModule.import_module(sig)
+            if h_i['type'] not in HOOKS._modules[default_group]:
+                if h_i['type'] in [
+                        'TensorboardLoggerHookV2', 'WandbLoggerHookV2'
+                ]:
+                    raise ValueError(
+                        'Not support hook %s now, we will support it in the future!'
+                        % h_i['type'])
+                register_util.register_hook_to_ms(h_i['type'])
+        return cfg
 
     def create_optimizer_and_scheduler(self):
         """ Create optimizer and lr scheduler

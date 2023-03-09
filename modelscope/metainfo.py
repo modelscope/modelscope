@@ -827,6 +827,7 @@ class CVTrainers(object):
     image_fewshot_detection = 'image-fewshot-detection'
     ocr_detection_db = 'ocr-detection-db'
     nerf_recon_acc = 'nerf-recon-acc'
+    action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
 

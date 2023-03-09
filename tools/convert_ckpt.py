@@ -1,8 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import shutil
 import argparse
-import torch
 import os
+import shutil
+
+import torch
 
 
 def convert_single_pth(fullname):
@@ -31,5 +32,6 @@ assert folder
 all_files = os.listdir(folder)
 all_files = [file for file in all_files if file.endswith('.pth')]
 for file in all_files:
-    shutil.copy(os.path.join(folder, file), os.path.join(folder, file + '.legacy'))
+    shutil.copy(
+        os.path.join(folder, file), os.path.join(folder, file + '.legacy'))
     convert_single_pth(os.path.join(folder, file))

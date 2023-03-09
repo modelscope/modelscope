@@ -218,6 +218,7 @@ class AudioTasks(object):
     speaker_diarization = 'speaker-diarization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
+    speech_timestamp = 'speech-timestamp'
 
 
 class MultiModalTasks(object):

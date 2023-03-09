@@ -852,6 +852,7 @@ TASK_OUTPUTS = {
     # punctuation result for single sample
     # { "text": "你好，明天！"}
     Tasks.punctuation: [OutputKeys.TEXT],
+
     # language model result for single sample
     # { "text": " hel@@ lo 大 家 好 呀 </s>
     #               p( hel@@ | <s> ) = 0.00057767 [ -7.45650959 ]
@@ -864,6 +865,22 @@ TASK_OUTPUTS = {
     #           logprob= -17.755 ppl= 12.6345
     # "}
     Tasks.language_score_prediction: [OutputKeys.TEXT],
+
+    # speech timestamp result for single sample
+    # {
+    #   'text': '<sil> 0.000 0.376;一 0.376 0.556;个 0.556 0.796;东 0.796 0.976;
+    #            太 0.976 1.136;平 1.136 1.256;洋 1.256 1.436;国 1.436 1.676;
+    #            <sil> 1.676 1.676;家 1.676 1.916;<sil> 1.916 2.036;为 2.036 2.196;
+    #            什 2.196 2.316;么 2.316 2.496;跑 2.496 2.676;到 2.676 2.856;
+    #            西 2.856 3.036;太 3.036 3.196;平 3.196 3.376;洋 3.376 3.496;
+    #            来 3.496 3.636;了 3.636 3.796;呢 3.796 4.148;<sil> 4.148 4.440;',
+    #   'timestamp': [[0, 376], [376, 556], [556, 795], [795, 976],
+    #                 [976, 1136], [1136, 1256], [1256, 1436], [1436, 1676],
+    #                 [1676, 1676], [1676, 1916], [1916, 2036], [2036, 2196],
+    #                 [2196, 2316], [2316, 2496], [2496, 2676], [2676, 2856],
+    #                 [2856, 3036], [3036, 3196], [3196, 3376], [3376, 3496]]
+    # }
+    Tasks.speech_timestamp: [OutputKeys.TEXT],
 
     # audio processed for single file in PCM format
     # {

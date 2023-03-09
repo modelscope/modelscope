@@ -76,7 +76,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 example: 'damo/speech_transformer_lm_zh-cn-common-vocab8404-pytorch'
             timestamp_model (Optional: 'Model' or 'str'):
                 timestamp model from model hub or local
-                example: 'damo/'
+                example: 'damo/speech_timestamp_predictor-v1-16k-offline'
             output_dir('str'):
                 output dir path
             batch_size('int'):

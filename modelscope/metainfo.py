@@ -467,6 +467,7 @@ class Pipelines(object):
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     lm_inference = 'language-score-prediction'
+    speech_timestamp_inference = 'speech-timestamp-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

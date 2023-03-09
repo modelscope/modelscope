@@ -17,38 +17,57 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-__all__ = ['VoiceActivityDetectionPipeline']
+__all__ = ['TimestampPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.voice_activity_detection, module_name=Pipelines.vad_inference)
-class VoiceActivityDetectionPipeline(Pipeline):
-    """Voice Activity Detection Inference Pipeline
-    use `model` to create a Voice Activity Detection pipeline.
-
-    Args:
-        model: A model instance, or a model local dir, or a model id in the model hub.
-        kwargs (dict, `optional`):
-            Extra kwargs passed into the preprocessor's constructor.
-
+    Tasks.speech_timestamp, module_name=Pipelines.speech_timestamp_inference)
+class TimestampPipeline(Pipeline):
+    """Timestamp Inference Pipeline
     Example:
-        >>> from modelscope.pipelines import pipeline
-        >>> pipeline_vad = pipeline(
-        >>>    task=Tasks.voice_activity_detection, model='damo/speech_fsmn_vad_zh-cn-16k-common-pytorch')
-        >>> audio_in='https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audio/vad_example.pcm'
-        >>> print(pipeline_vad(audio_in))
+
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
+
+    >>> pipeline_infer = pipeline(
+    >>>    task=Tasks.speech_timestamp,
+    >>>    model='damo/speech_timestamp_predictor-v1-16k-offline')
+
+    >>> audio_in='https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audio/asr_example_timestamps.wav'
+    >>> text_in='一 个 东 太 平 洋 国 家 为 什 么 跑 到 西 太 平 洋 来 了 呢'
+    >>> print(pipeline_infer(audio_in, text_in))
 
     """
 
     def __init__(self, model: Union[Model, str] = None, **kwargs):
-        """use `model` to create an vad pipeline for prediction
+        """
+        Use `model` and `preprocessor` to create an asr pipeline for prediction
+        Args:
+            model ('Model' or 'str'):
+                The pipeline handles three types of model:
+
+                - A model instance
+                - A model local dir
+                - A model id in the model hub
+            output_dir('str'):
+                output dir path
+            batch_size('int'):
+                the batch size for inference
+            ngpu('int'):
+                the number of gpus, 0 indicates CPU mode
+            split_with_space('bool'):
+                split the input sentence by space
+            seg_dict_file('str'):
+                seg dict file
+            param_dict('dict'):
+                extra kwargs
         """
         super().__init__(model=model, **kwargs)
         config_path = os.path.join(model, ModelFile.CONFIGURATION)
         self.cmd = self.get_cmd(config_path, kwargs)
 
-        from funasr.bin import vad_inference_launch
-        self.funasr_infer_modelscope = vad_inference_launch.inference_launch(
+        from funasr.bin import tp_inference_launch
+        self.funasr_infer_modelscope = tp_inference_launch.inference_launch(
             mode=self.cmd['mode'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
@@ -57,12 +76,18 @@ class VoiceActivityDetectionPipeline(Pipeline):
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
             key_file=self.cmd['key_file'],
-            vad_infer_config=self.cmd['vad_infer_config'],
-            vad_model_file=self.cmd['vad_model_file'],
-            vad_cmvn_file=self.cmd['vad_cmvn_file'])
+            timestamp_infer_config=self.cmd['timestamp_infer_config'],
+            timestamp_model_file=self.cmd['timestamp_model_file'],
+            timestamp_cmvn_file=self.cmd['timestamp_cmvn_file'],
+            output_dir=self.cmd['output_dir'],
+            allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
+            split_with_space=self.cmd['split_with_space'],
+            seg_dict_file=self.cmd['seg_dict_file'],
+            param_dict=self.cmd['param_dict'])
 
     def __call__(self,
                  audio_in: Union[str, bytes],
+                 text_in: str = None,
                  audio_fs: int = None,
                  recog_type: str = None,
                  audio_format: str = None,
@@ -76,7 +101,9 @@ class VoiceActivityDetectionPipeline(Pipeline):
                 - A string containing a local path to a wav file
                 - A string containing a local path to a scp
                 - A string containing a wav url
-                - A bytes input
+            text_in('str'):
+                - A text str input
+                - A local text file input endswith .txt or .scp
             audio_fs('int'):
                 frequency of sample
             recog_type('str'):
@@ -91,9 +118,10 @@ class VoiceActivityDetectionPipeline(Pipeline):
             A dictionary of result or a list of dictionary of result.
 
             The dictionary contain the following keys:
-            - **text** ('str') --The vad result.
+            - **text** ('str') --The timestamp result.
         """
         self.audio_in = None
+        self.text_in = None
         self.raw_inputs = None
         self.recog_type = recog_type
         self.audio_format = audio_format
@@ -103,6 +131,8 @@ class VoiceActivityDetectionPipeline(Pipeline):
             self.cmd['output_dir'] = output_dir
         if param_dict is not None:
             self.cmd['param_dict'] = param_dict
+
+        # audio
         if isinstance(audio_in, str):
             # for funasr code, generate wav.scp from url or local path
             self.audio_in, self.raw_inputs = generate_scp_from_url(audio_in)
@@ -118,6 +148,11 @@ class VoiceActivityDetectionPipeline(Pipeline):
             elif isinstance(audio_in, numpy.ndarray):
                 self.audio_in = None
                 self.raw_inputs = audio_in
+        # text
+        if text_in.startswith('http'):
+            self.text_in, _ = generate_text_from_url(text_in)
+        else:
+            self.text_in = text_in
 
         # set the sample_rate of audio_in if checking_audio_fs is valid
         if checking_audio_fs is not None:
@@ -140,7 +175,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
         else:
             self.cmd['fs']['audio_fs'] = self.audio_fs
 
-        output = self.forward(self.audio_in, **kwargs)
+        output = self.forward(self.audio_in, self.text_in, **kwargs)
         result = self.postprocess(output)
         return result
 
@@ -150,9 +185,12 @@ class VoiceActivityDetectionPipeline(Pipeline):
         rst = {}
         for i in range(len(inputs)):
             if i == 0:
-                text = inputs[0]['value']
-                if len(text) > 0:
-                    rst[OutputKeys.TEXT] = text
+                for key, value in inputs[0].items():
+                    if key == 'value':
+                        if len(value) > 0:
+                            rst[OutputKeys.TEXT] = value
+                    elif key != 'key':
+                        rst[key] = value
             else:
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
@@ -161,32 +199,43 @@ class VoiceActivityDetectionPipeline(Pipeline):
         model_cfg = json.loads(open(config_path).read())
         model_dir = os.path.dirname(config_path)
         # generate inference command
-        vad_model_path = os.path.join(
-            model_dir, model_cfg['model']['model_config']['vad_model_name'])
-        vad_model_config = os.path.join(
-            model_dir, model_cfg['model']['model_config']['vad_model_config'])
-        vad_cmvn_file = os.path.join(
-            model_dir, model_cfg['model']['model_config']['vad_mvn_file'])
+        timestamp_model_file = os.path.join(
+            model_dir,
+            model_cfg['model']['model_config']['timestamp_model_file'])
+        timestamp_infer_config = os.path.join(
+            model_dir,
+            model_cfg['model']['model_config']['timestamp_infer_config'])
+        timestamp_cmvn_file = os.path.join(
+            model_dir,
+            model_cfg['model']['model_config']['timestamp_cmvn_file'])
         mode = model_cfg['model']['model_config']['mode']
         frontend_conf = None
-        if os.path.exists(vad_model_config):
-            config_file = open(vad_model_config, encoding='utf-8')
+        if os.path.exists(timestamp_infer_config):
+            config_file = open(timestamp_infer_config, encoding='utf-8')
             root = yaml.full_load(config_file)
             config_file.close()
             if 'frontend_conf' in root:
                 frontend_conf = root['frontend_conf']
+        seg_dict_file = None
+        if 'seg_dict_file' in model_cfg['model']['model_config']:
+            seg_dict_file = os.path.join(
+                model_dir, model_cfg['model']['model_config']['seg_dict_file'])
+
         cmd = {
             'mode': mode,
             'batch_size': 1,
             'dtype': 'float32',
-            'ngpu': 1,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
+            'ngpu': 0,  # 0: only CPU, ngpu>=1: gpu number if cuda is available
             'seed': 0,
             'num_workers': 0,
             'log_level': 'ERROR',
             'key_file': None,
-            'vad_infer_config': vad_model_config,
-            'vad_model_file': vad_model_path,
-            'vad_cmvn_file': vad_cmvn_file,
+            'allow_variable_data_keys': False,
+            'split_with_space': True,
+            'seg_dict_file': seg_dict_file,
+            'timestamp_infer_config': timestamp_infer_config,
+            'timestamp_model_file': timestamp_model_file,
+            'timestamp_cmvn_file': timestamp_cmvn_file,
             'output_dir': None,
             'param_dict': None,
             'fs': {
@@ -198,8 +247,15 @@ class VoiceActivityDetectionPipeline(Pipeline):
             cmd['fs']['model_fs'] = frontend_conf['fs']
 
         user_args_dict = [
-            'output_dir', 'batch_size', 'mode', 'ngpu', 'param_dict',
-            'num_workers', 'fs'
+            'output_dir',
+            'batch_size',
+            'mode',
+            'ngpu',
+            'param_dict',
+            'num_workers',
+            'log_level',
+            'split_with_space',
+            'seg_dict_file',
         ]
 
         for user_args in user_args_dict:
@@ -208,30 +264,37 @@ class VoiceActivityDetectionPipeline(Pipeline):
 
         return cmd
 
-    def forward(self, audio_in: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    def forward(self, audio_in: Dict[str, Any], text_in: Dict[str, Any],
+                **kwargs) -> Dict[str, Any]:
         """Decoding
         """
-        logger.info('VAD Processing ...')
+        logger.info('Timestamp Processing ...')
         # generate inputs
         data_cmd: Sequence[Tuple[str, str, str]]
         if isinstance(self.audio_in, bytes):
-            data_cmd = [self.audio_in, 'speech', 'bytes']
+            data_cmd = [(self.audio_in, 'speech', 'bytes')]
+            data_cmd.append((text_in, 'text', 'text'))
         elif isinstance(self.audio_in, str):
-            data_cmd = [self.audio_in, 'speech', 'sound']
+            data_cmd = [(self.audio_in, 'speech', 'sound')]
+            data_cmd.append((text_in, 'text', 'text'))
         elif self.raw_inputs is not None:
             data_cmd = None
+
+        if self.raw_inputs is None and data_cmd is None:
+            raise ValueError('please check audio_in')
+
         self.cmd['name_and_type'] = data_cmd
         self.cmd['raw_inputs'] = self.raw_inputs
         self.cmd['audio_in'] = self.audio_in
 
-        vad_result = self.run_inference(self.cmd, **kwargs)
+        tp_result = self.run_inference(self.cmd, **kwargs)
 
-        return vad_result
+        return tp_result
 
     def run_inference(self, cmd, **kwargs):
-        vad_result = []
+        tp_result = []
         if self.framework == Frameworks.torch:
-            vad_result = self.funasr_infer_modelscope(
+            tp_result = self.funasr_infer_modelscope(
                 data_path_and_name_and_type=cmd['name_and_type'],
                 raw_inputs=cmd['raw_inputs'],
                 output_dir_v2=cmd['output_dir'],
@@ -241,4 +304,4 @@ class VoiceActivityDetectionPipeline(Pipeline):
         else:
             raise ValueError('model type is mismatching')
 
-        return vad_result
+        return tp_result

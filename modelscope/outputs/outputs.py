@@ -457,6 +457,16 @@ TASK_OUTPUTS = {
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],
 
+    # 3D human reconstruction result for single sample
+    # {
+    #     "output": {
+    #         "vertices": np.array with shape(n, 3),
+    #         "faces": np.array with shape(n, 3),
+    #         "colors": np.array with shape(n, 3),
+    #     }
+    # }
+    Tasks.human_reconstruction: [OutputKeys.OUTPUT],
+
     # 2D hand keypoints result for single sample
     # {
     #     "keypoints": [

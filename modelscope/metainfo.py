@@ -78,6 +78,7 @@ class Models(object):
     image_body_reshaping = 'image-body-reshaping'
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    human_reconstruction = 'human-reconstruction'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
@@ -361,6 +362,7 @@ class Pipelines(object):
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
+    human_reconstruction = 'human-reconstruction'
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     vidt = 'vidt'
     video_frame_interpolation = 'video-frame-interpolation'
@@ -751,6 +753,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                              'damo/cv_video-inpainting'),
     Tasks.video_human_matting: (Pipelines.video_human_matting,
                                 'damo/cv_effnetv2_video-human-matting'),
+    Tasks.human_reconstruction: (Pipelines.human_reconstruction,
+                                 'damo/cv_hrnet_image-human-reconstruction'),
     Tasks.video_frame_interpolation: (
         Pipelines.video_frame_interpolation,
         'damo/cv_raft_video-frame-interpolation'),

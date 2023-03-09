@@ -60,6 +60,7 @@ torchmetrics>=0.6.2
 torchsummary>=1.5.1
 torchvision
 transformers>=4.26.0
+trimesh
 ujson
 utils
 videofeatures_clipit>=1.0

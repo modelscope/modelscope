@@ -486,6 +486,7 @@ class Pipelines(object):
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
     diffusers_stable_diffusion = 'diffusers-stable-diffusion'
+    disco_guided_diffusion = 'disco_guided_diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
     text_to_video_synthesis = 'latent-text-to-video-synthesis'  # latent-text-to-video-synthesis

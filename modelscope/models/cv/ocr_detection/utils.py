@@ -180,7 +180,7 @@ def boxes_from_bitmap(pred, _bitmap, dest_width, dest_height):
     contours, _ = cv2.findContours((bitmap * 255).astype(np.uint8),
                                    cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-    for contour in contours[:100]:
+    for contour in contours[:1000]:
         points, sside = get_mini_boxes(contour)
         if sside < 3:
             continue

@@ -101,6 +101,7 @@ class Models(object):
     ddpm = 'ddpm'
     ocr_recognition = 'OCRRecognition'
     ocr_detection = 'OCRDetection'
+    lineless_table_recognition = 'LoreModel'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -249,6 +250,7 @@ class Pipelines(object):
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
+    lineless_table_recognition = 'lore-lineless-table-recognition'
     license_plate_detection = 'resnet18-license-plate-detection'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
@@ -587,6 +589,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.table_recognition:
     (Pipelines.table_recognition,
      'damo/cv_dla34_table-structure-recognition_cycle-centernet'),
+    Tasks.lineless_table_recognition:
+    (Pipelines.lineless_table_recognition,
+     'damo/cv_resnet-transformer_table-structure-recognition_lore'),
     Tasks.document_vl_embedding:
     (Pipelines.document_vl_embedding,
      'damo/multi-modal_convnext-roberta-base_vldoc-embedding'),
@@ -723,9 +728,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
-    Tasks.text_driven_segmentation:
-    (Pipelines.text_driven_segmentation,
-     'damo/cv_vitl16_segmentation_text-driven-seg'),
+    Tasks.text_driven_segmentation: (
+        Pipelines.text_driven_segmentation,
+        'damo/cv_vitl16_segmentation_text-driven-seg'),
     Tasks.movie_scene_segmentation: (
         Pipelines.movie_scene_segmentation,
         'damo/cv_resnet50-bert_video-scene-segmentation_movienet'),

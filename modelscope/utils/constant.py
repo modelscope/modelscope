@@ -17,6 +17,7 @@ class CVTasks(object):
     ocr_detection = 'ocr-detection'
     ocr_recognition = 'ocr-recognition'
     table_recognition = 'table-recognition'
+    lineless_table_recognition = 'lineless-table-recognition'
     license_plate_detection = 'license-plate-detection'
 
     # human face body related

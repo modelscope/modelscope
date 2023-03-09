@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
+    from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
     from .face_reconstruction_pipeline import FaceReconstructionPipeline
     from .tinynas_classification_pipeline import TinynasClassificationPipeline

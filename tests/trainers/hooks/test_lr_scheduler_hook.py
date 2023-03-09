@@ -15,6 +15,7 @@ from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import METRICS, MetricKeys
 from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
+from modelscope.trainers.default_config import merge_hooks
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.registry import default_group
 from modelscope.utils.test_utils import create_dummy_test_dataset

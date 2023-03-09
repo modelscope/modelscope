@@ -14,6 +14,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
+from modelscope.trainers.default_config import merge_hooks
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.test_utils import create_dummy_test_dataset
 

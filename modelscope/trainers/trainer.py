@@ -45,7 +45,7 @@ from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
-from .default_config import merge_cfg, merge_hooks
+from .default_config import merge_cfg, merge_hooks, update_cfg
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
@@ -147,6 +147,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.cfg = self.rebuild_config(self.cfg)
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
+        self.cfg = update_cfg(self.cfg)
 
         if isinstance(model, (TorchModel, nn.Module)):
             self.model = model

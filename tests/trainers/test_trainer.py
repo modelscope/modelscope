@@ -22,6 +22,7 @@ from modelscope.trainers.base import DummyTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
+from modelscope.utils.hub import read_config
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
 
@@ -548,6 +549,146 @@ class TrainerTest(unittest.TestCase):
             self.assertIn(LogKeys.ITER_TIME, lines[i])
         for i in [2, 5, 8]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_train_with_old_and_new_cfg(self):
+        old_cfg = {
+            'task': Tasks.image_classification,
+            'train': {
+                'work_dir':
+                self.tmp_dir,
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1
+                },
+                'optimizer': {
+                    'type': 'SGD',
+                    'lr': 0.01,
+                    'options': {
+                        'grad_clip': {
+                            'max_norm': 2.0
+                        }
+                    }
+                },
+                'lr_scheduler': {
+                    'type': 'StepLR',
+                    'step_size': 2,
+                    'options': {
+                        'warmup': {
+                            'type': 'LinearWarmup',
+                            'warmup_iters': 2
+                        }
+                    }
+                },
+                'hooks': [{
+                    'type': 'CheckpointHook',
+                    'interval': 1
+                }, {
+                    'type': 'TextLoggerHook',
+                    'interval': 1
+                }, {
+                    'type': 'IterTimerHook'
+                }, {
+                    'type': 'EvaluationHook',
+                    'interval': 1
+                }, {
+                    'type': 'TensorboardHook',
+                    'interval': 1
+                }]
+            },
+            'evaluation': {
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1,
+                    'shuffle': False
+                },
+                'metrics': [Metrics.seq_cls_metric],
+            }
+        }
+
+        new_cfg = {
+            'task': Tasks.image_classification,
+            'train': {
+                'work_dir':
+                self.tmp_dir,
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1
+                },
+                'optimizer': {
+                    'type': 'SGD',
+                    'lr': 0.01,
+                    'options': {
+                        'grad_clip': {
+                            'max_norm': 2.0
+                        }
+                    }
+                },
+                'lr_scheduler': {
+                    'type': 'StepLR',
+                    'step_size': 2,
+                    'options': {
+                        'warmup': {
+                            'type': 'LinearWarmup',
+                            'warmup_iters': 2
+                        }
+                    }
+                },
+                'checkpoint': {
+                    'period': {
+                        'interval': 1
+                    }
+                },
+                'logging': {
+                    'interval': 1
+                },
+                'hooks': [{
+                    'type': 'IterTimerHook'
+                }, {
+                    'type': 'TensorboardHook',
+                    'interval': 1
+                }]
+            },
+            'evaluation': {
+                'dataloader': {
+                    'batch_size_per_gpu': 2,
+                    'workers_per_gpu': 1,
+                    'shuffle': False
+                },
+                'metrics': [Metrics.seq_cls_metric],
+                'period': {
+                    'interval': 1
+                }
+            }
+        }
+
+        def assert_new_cfg(cfg):
+            self.assertNotIn('CheckpointHook', cfg.train.hooks)
+            self.assertNotIn('TextLoggerHook', cfg.train.hooks)
+            self.assertNotIn('EvaluationHook', cfg.train.hooks)
+            self.assertIn('checkpoint', cfg.train)
+            self.assertIn('logging', cfg.train)
+            self.assertIn('period', cfg.evaluation)
+
+        for json_cfg in (new_cfg, old_cfg):
+            config_path = os.path.join(self.tmp_dir, ModelFile.CONFIGURATION)
+            with open(config_path, 'w') as f:
+                json.dump(json_cfg, f)
+            trainer_name = Trainers.default
+            kwargs = dict(
+                cfg_file=config_path,
+                model=DummyModel(),
+                data_collator=None,
+                train_dataset=dummy_dataset_small,
+                eval_dataset=dummy_dataset_small,
+                max_epochs=3,
+                device='cpu')
+
+            trainer = build_trainer(trainer_name, kwargs)
+            assert_new_cfg(trainer.cfg)
+            trainer.train()
+            cfg = read_config(os.path.join(self.tmp_dir, 'output'))
+            assert_new_cfg(cfg)
 
 
 class DummyTrainerTest(unittest.TestCase):

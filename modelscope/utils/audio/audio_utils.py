@@ -21,6 +21,18 @@ class TtsTrainType(object):
     TRAIN_TYPE_VOC = 'train-type-voc'
 
 
+class TtsCustomParams(object):
+    VOICE_NAME = 'voice_name'
+    AM_CKPT = 'am_ckpt'
+    VOC_CKPT = 'voc_ckpt'
+    AM_CONFIG = 'am_config'
+    VOC_CONFIG = 'voc_config'
+    AUIDO_CONFIG = 'audio_config'
+    SE_FILE = 'se_file'
+    SE_MODEL = 'se_model'
+    MVN_FILE = 'mvn_file'
+
+
 def to_segment(batch, segment_length=SEGMENT_LENGTH_TRAIN):
     """
     Dataset mapping function to split one audio into segments.

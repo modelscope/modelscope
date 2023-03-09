@@ -83,3 +83,4 @@ envs:
       - test_skin_retouching.py
       - test_image_style_transfer.py
       - test_image_portrait_stylization_trainer.py
+      - test_language_identification.py

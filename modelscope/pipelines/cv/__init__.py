@@ -81,6 +81,7 @@ if TYPE_CHECKING:
     from .vision_efficient_tuning_prefix_pipeline import VisionEfficientTuningPrefixPipeline
     from .vision_efficient_tuning_lora_pipeline import VisionEfficientTuningLoRAPipeline
     from .vision_middleware_pipeline import VisionMiddlewarePipeline
+    from .vidt_pipeline import VidtPipeline
     from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .image_driving_perception_pipeline import ImageDrivingPerceptionPipeline
@@ -219,6 +220,7 @@ else:
             'VisionEfficientTuningLoRAPipeline'
         ],
         'vision_middleware_pipeline': ['VisionMiddlewarePipeline'],
+        'vidt_pipeline': ['VidtPipeline'],
         'video_frame_interpolation_pipeline': [
             'VideoFrameInterpolationPipeline'
         ],

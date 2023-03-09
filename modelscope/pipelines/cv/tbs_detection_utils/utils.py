@@ -382,7 +382,6 @@ def post_process(self, outputs, img_path):
         top_xmax = np.expand_dims(top_bboxes[:, 2], -1)
         top_ymax = np.expand_dims(top_bboxes[:, 3], -1)
 
-        # 去掉灰条
         boxes = yolo_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax,
                                    np.array(self.model_image_size[:2]),
                                    image_shape)

@@ -825,6 +825,7 @@ class CVTrainers(object):
     image_classification_team = 'image-classification-team'
     image_classification = 'image-classification'
     image_fewshot_detection = 'image-fewshot-detection'
+    ocr_recognition = 'ocr-recognition'
     ocr_detection_db = 'ocr-detection-db'
     nerf_recon_acc = 'nerf-recon-acc'
     action_detection = 'action-detection'
@@ -1061,6 +1062,7 @@ class Metrics(object):
     image_quality_assessment_degradation_metric = 'image-quality-assessment-degradation-metric'
     # metric for text-ranking task
     text_ranking_metric = 'text-ranking-metric'
+    ocr_recognition_metric = 'ocr-recognition-metric'
 
 
 class Optimizers(object):

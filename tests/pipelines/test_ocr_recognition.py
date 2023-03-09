@@ -26,7 +26,7 @@ class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         ocr_recognition = pipeline(
             Tasks.ocr_recognition,
             model=self.model_id,
-            model_revision='v1.0.0')
+            model_revision='v2.2.1')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -34,14 +34,14 @@ class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         ocr_recognition = pipeline(
             Tasks.ocr_recognition,
             model=self.model_id,
-            model_revision='v1.0.0')
+            model_revision='v2.2.1')
         imagePIL = PIL.Image.open(self.test_image)
         self.pipeline_inference(ocr_recognition, imagePIL)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
         ocr_recognition = pipeline(
-            Tasks.ocr_recognition, model_revision='v2.0.0')
+            Tasks.ocr_recognition, model_revision='v2.3.0')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')

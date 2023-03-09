@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .video_summarization_dataset import VideoSummarizationDataset
     from .language_guided_video_summarization_dataset import LanguageGuidedVideoSummarizationDataset
     from .image_inpainting import ImageInpaintingDataset
+    from .ocr_recognition_dataset import OCRRecognitionDataset
     from .text_ranking_dataset import TextRankingDataset
     from .referring_video_object_segmentation import ReferringVideoObjectSegmentationDataset
     from .bad_image_detecting import BadImageDetectingDataset
@@ -31,6 +32,7 @@ else:
         ['LanguageGuidedVideoSummarizationDataset'],
         'movie_scene_segmentation': ['MovieSceneSegmentationDataset'],
         'image_inpainting': ['ImageInpaintingDataset'],
+        'ocr_recognition_dataset': ['OCRRecognitionDataset'],
         'sidd_image_denoising_dataset': ['SiddImageDenoisingDataset'],
         'image_portrait_enhancement_dataset':
         ['ImagePortraitEnhancementDataset'],

@@ -16,6 +16,53 @@ from .modules.crnn import CRNN
 LOGGER = get_logger()
 
 
+def flatten_label(target):
+    label_flatten = []
+    label_length = []
+    label_dict = []
+    for i in range(0, target.size()[0]):
+        cur_label = target[i].tolist()
+        temp_label = cur_label[:cur_label.index(0)]
+        label_flatten += temp_label
+        label_dict.append(temp_label)
+        label_length.append(len(temp_label))
+    label_flatten = torch.LongTensor(label_flatten)
+    label_length = torch.IntTensor(label_length)
+    return (label_dict, label_length, label_flatten)
+
+
+class cha_encdec():
+
+    def __init__(self, charMapping, case_sensitive=True):
+        self.case_sensitive = case_sensitive
+        self.text_seq_len = 160
+        self.charMapping = charMapping
+
+    def encode(self, label_batch):
+        max_len = max([len(s) for s in label_batch])
+        out = torch.zeros(len(label_batch), max_len + 1).long()
+        for i in range(0, len(label_batch)):
+            if not self.case_sensitive:
+                cur_encoded = torch.tensor([
+                    self.charMapping[char.lower()] - 1 if char.lower()
+                    in self.charMapping else len(self.charMapping)
+                    for char in label_batch[i]
+                ]) + 1
+            else:
+                cur_encoded = torch.tensor([
+                    self.charMapping[char]
+                    - 1 if char in self.charMapping else len(self.charMapping)
+                    for char in label_batch[i]
+                ]) + 1
+            out[i][0:len(cur_encoded)] = cur_encoded
+        out = torch.cat(
+            (out, torch.zeros(
+                (out.size(0), self.text_seq_len - out.size(1))).type_as(out)),
+            dim=1)
+        label_dict, label_length, label_flatten = flatten_label(out)
+        return label_dict, label_length, label_flatten
+
+
 @MODELS.register_module(
     Tasks.ocr_recognition, module_name=Models.ocr_recognition)
 class OCRRecognition(TorchModel):
@@ -27,11 +74,12 @@ class OCRRecognition(TorchModel):
             model_dir (str): the model path.
         """
         super().__init__(model_dir, **kwargs)
-
         model_path = os.path.join(model_dir, ModelFile.TORCH_MODEL_FILE)
         cfgs = Config.from_file(
             os.path.join(model_dir, ModelFile.CONFIGURATION))
         self.do_chunking = cfgs.model.inference_kwargs.do_chunking
+        self.target_height = cfgs.model.inference_kwargs.img_height
+        self.target_width = cfgs.model.inference_kwargs.img_width
         self.recognizer = None
         if cfgs.model.recognizer == 'ConvNextViT':
             self.recognizer = ConvNextViT()
@@ -47,13 +95,21 @@ class OCRRecognition(TorchModel):
 
         dict_path = os.path.join(model_dir, ModelFile.VOCAB_FILE)
         self.labelMapping = dict()
+        self.charMapping = dict()
         with open(dict_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             cnt = 1
+            # ConvNextViT model start from index=2
+            if self.do_chunking:
+                cnt += 1
             for line in lines:
                 line = line.strip('\n')
                 self.labelMapping[cnt] = line
+                self.charMapping[line] = cnt
                 cnt += 1
+
+        self.encdec = cha_encdec(self.charMapping)
+        self.criterion_CTC = torch.nn.CTCLoss(zero_infinity=True)
 
     def forward(self, inputs):
         """
@@ -66,44 +122,37 @@ class OCRRecognition(TorchModel):
         """
         return self.recognizer(inputs)
 
-    def postprocess(self, inputs):
-        # naive decoder
+    def do_step(self, batch):
+        inputs = batch['images']
+        labels = batch['labels']
+        bs = inputs.shape[0]
         if self.do_chunking:
-            preds = inputs
-            batchSize, length = preds.shape
-            PRED_LENTH = 75
-            PRED_PAD = 6
-            pred_idx = []
-            if batchSize == 1:
-                pred_idx = preds[0].cpu().data.tolist()
-            else:
-                for idx in range(batchSize):
-                    if idx == 0:
-                        pred_idx.extend(
-                            preds[idx].cpu().data[:PRED_LENTH
-                                                  - PRED_PAD].tolist())
-                    elif idx == batchSize - 1:
-                        pred_idx.extend(
-                            preds[idx].cpu().data[PRED_PAD:].tolist())
-                    else:
-                        pred_idx.extend(
-                            preds[idx].cpu().data[PRED_PAD:PRED_LENTH
-                                                  - PRED_PAD].tolist())
-            pred_idx = [its - 1 for its in pred_idx if its > 0]
+            inputs = inputs.view(bs * 3, 1, self.target_height, 300)
         else:
-            outprobs = inputs
-            outprobs = F.softmax(outprobs, dim=-1)
-            preds = torch.argmax(outprobs, -1)
-            length, batchSize = preds.shape
-            assert batchSize == 1, 'only support onesample inference'
-            pred_idx = preds[:, 0].cpu().data.tolist()
+            inputs = inputs.view(bs, 1, self.target_height, self.target_width)
+        output = self(inputs)
+        probs = output['probs'].permute(1, 0, 2)
+        _, label_length, label_flatten = self.encdec.encode(labels)
+        probs_sizes = torch.IntTensor([probs.size(0)] * probs.size(1))
+        loss = self.criterion_CTC(
+            probs.log_softmax(2), label_flatten, probs_sizes, label_length)
+        output = dict(loss=loss, preds=output['preds'])
+        return output
 
-        pred_idx = pred_idx
-        last_p = 0
-        str_pred = []
-        for p in pred_idx:
-            if p != last_p and p != 0:
-                str_pred.append(self.labelMapping[p])
-            last_p = p
-        final_str = ''.join(str_pred)
-        return final_str
+    def postprocess(self, inputs):
+        outprobs = inputs
+        outprobs = F.softmax(outprobs, dim=-1)
+        preds = torch.argmax(outprobs, -1)
+        batchSize, length = preds.shape
+        final_str_list = []
+        for i in range(batchSize):
+            pred_idx = preds[i].cpu().data.tolist()
+            last_p = 0
+            str_pred = []
+            for p in pred_idx:
+                if p != last_p and p != 0:
+                    str_pred.append(self.labelMapping[p])
+                last_p = p
+            final_str = ''.join(str_pred)
+            final_str_list.append(final_str)
+        return {'preds': final_str_list, 'probs': inputs}

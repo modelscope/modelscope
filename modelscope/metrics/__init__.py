@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from .image_quality_assessment_mos_metric import ImageQualityAssessmentMosMetric
     from .text_ranking_metric import TextRankingMetric
     from .loss_metric import LossMetric
+    from .ocr_recognition_metric import OCRRecognitionMetric
 else:
     _import_structure = {
         'audio_noise_metric': ['AudioNoiseMetric'],
@@ -58,7 +59,8 @@ else:
         'image_quality_assessment_mos_metric':
         ['ImageQualityAssessmentMosMetric'],
         'text_ranking_metric': ['TextRankingMetric'],
-        'loss_metric': ['LossMetric']
+        'loss_metric': ['LossMetric'],
+        'ocr_recognition_metric': ['OCRRecognitionMetric']
     }
 
     import sys

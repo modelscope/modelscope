@@ -9,6 +9,7 @@ ddpm_guided_diffusion
 diffusers
 easydict
 easyrobust
+edit_distance
 face_alignment>=1.3.5
 fairscale>=0.4.1
 fastai>=1.0.51

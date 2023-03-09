@@ -96,4 +96,5 @@ class CRNN(nn.Module):
 
         rnnfeats = self.rnn(convfeats)
         output = self.cls(rnnfeats)
+        output = output.permute(1, 0, 2)  # [b, w, c]
         return output

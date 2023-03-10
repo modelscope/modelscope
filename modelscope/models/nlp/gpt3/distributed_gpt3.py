@@ -952,10 +952,11 @@ class DistributedGPT3(TorchModel):
                  rank,
                  path_load_tag='model',
                  *args,
+                 megatron_cfg=None,
                  **kwargs):
         super().__init__(model_dir, *args, **kwargs)
 
-        init_megatron_util(model_dir=model_dir, rank=rank)
+        init_megatron_util(megatron_cfg, model_dir, rank=rank)
 
         self.config = GPT3Config.from_pretrained(model_dir)
         # Build model.

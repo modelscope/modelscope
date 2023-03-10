@@ -5,8 +5,10 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule, normal_init
 from mmcv.cnn.bricks.transformer import build_positional_encoding
+from mmdet.models.builder import NECKS
 
 
+@NECKS.register_module()
 class SemanticFPNWrapper(nn.Module):
     """
     Implementation of Semantic FPN used in Panoptic FPN.

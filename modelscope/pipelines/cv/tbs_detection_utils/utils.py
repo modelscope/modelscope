@@ -1,11 +1,12 @@
 from __future__ import division
 import colorsys
 import os
-
+import requests as req
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from io import BytesIO
 from matplotlib import pyplot as plt
 from PIL import Image
 from torchvision.ops.boxes import batched_nms, nms
@@ -365,7 +366,8 @@ def post_process(self, outputs, img_path):
         except Exception:
             return
 
-        image = Image.open(img_path)
+        response = req.get(img_path)
+        image = Image.open(BytesIO(response.content))
         image_shape = np.array(np.shape(image)[0:2])
         top_index = batch_detection[:,
                                     4] * batch_detection[:,

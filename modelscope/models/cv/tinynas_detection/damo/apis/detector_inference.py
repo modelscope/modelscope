@@ -5,7 +5,7 @@ import os
 import torch
 from tqdm import tqdm
 
-from modelscope.msdatasets.task_datasets.damoyolo.evaluation import evaluate
+from modelscope.msdatasets.dataset_cls.custom_datasets.damoyolo import evaluate
 from modelscope.utils.logger import get_logger
 from modelscope.utils.timer import Timer, get_time_str
 from modelscope.utils.torch_utils import (all_gather, get_world_size,

@@ -10,5 +10,4 @@ modelscope.msdatasets.ms_dataset
     :nosignatures:
     :template: classtemplate.rst
 
-    MsMapDataset
     MsDataset

@@ -16,8 +16,7 @@ class TestFinetuneSiameseUIE(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
         self.tmp_dir = tempfile.TemporaryDirectory().name
-        if not os.path.exists(self.tmp_dir):
-            os.makedirs(self.tmp_dir)
+        os.makedirs(self.tmp_dir, exist_ok=True)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)

@@ -12,7 +12,8 @@ from torch import optim as optim
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel
-from modelscope.msdatasets.task_datasets.audio import KWSDataLoader, KWSDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets.audio import (
+    KWSDataLoader, KWSDataset)
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.audio.audio_utils import update_conf

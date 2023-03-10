@@ -14,15 +14,19 @@ logger = get_logger()
 
 
 class ExternalDataset(object):
+    """Dataset class for custom datasets."""
 
     def __init__(self, split_path_dict, config_kwargs):
         self.split_path_dict = split_path_dict
         self.config_kwargs = copy.deepcopy(config_kwargs)
         self.config_kwargs.update({'split_config': split_path_dict})
-        self.ext_dataset = None
+        # dataset for specific extensions
+        self.spec_extension_dataset = None
         self.split_data_files = {k: [] for k, _ in split_path_dict.items()}
-        file_ext = ''
+        self.custom_map = {}
 
+        # the extension of file
+        file_ext = ''
         for split_name, split_dir in split_path_dict.items():
             if isinstance(split_dir, str) and os.path.isdir(split_dir):
                 split_file_names = os.listdir(split_dir)
@@ -52,25 +56,27 @@ class ExternalDataset(object):
 
         if file_ext:
             file_ext = EXTENSIONS_TO_LOAD.get(file_ext)
-            self.ext_dataset = datasets.load_dataset(
+            self.spec_extension_dataset = datasets.load_dataset(
                 file_ext, data_files=self.split_data_files, **config_kwargs)
 
     def __len__(self):
-        return len(self.split_path_dict
-                   ) if not self.ext_dataset else self.ext_dataset.__len__()
+        return len(
+            self.split_path_dict
+        ) if not self.spec_extension_dataset else self.spec_extension_dataset.__len__(
+        )
 
     def __getitem__(self, item):
-        if not self.ext_dataset:
+        if not self.spec_extension_dataset:
             return self.split_path_dict.get(item)
         else:
-            return self.ext_dataset.__getitem__(item)
+            return self.spec_extension_dataset.__getitem__(item)
 
     def __iter__(self):
-        if not self.ext_dataset:
+        if not self.spec_extension_dataset:
             for k, v in self.split_path_dict.items():
                 yield k, v
         else:
-            for k, v in self.ext_dataset.items():
+            for k, v in self.spec_extension_dataset.items():
                 yield k, v
 
 
@@ -99,3 +105,6 @@ class NativeIterableDataset(IterableDataset):
                 entity = ret
 
             yield entity
+
+    def __len__(self):
+        return 1

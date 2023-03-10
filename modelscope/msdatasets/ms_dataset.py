@@ -16,18 +16,26 @@ from modelscope.msdatasets.context.dataset_context_config import \
 from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
+from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
+    build_custom_dataset
 from modelscope.msdatasets.dataset_cls.dataset import (ExternalDataset,
                                                        NativeIterableDataset)
-from modelscope.msdatasets.task_datasets.builder import build_task_dataset
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
-from modelscope.utils.config import ConfigDict
+from modelscope.preprocessors import build_preprocessor
+from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
-                                       DEFAULT_DATASET_REVISION, DownloadMode,
-                                       Hubs, UploadMode)
+                                       DEFAULT_DATASET_REVISION, ConfigFields,
+                                       DownloadMode, Hubs, ModeKeys, Tasks,
+                                       UploadMode)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
+
+try:
+    from tensorflow.data import Dataset as TfDataset
+except Exception as e:
+    print(e)
 
 logger = get_logger()
 
@@ -53,6 +61,7 @@ class MsDataset:
     """
     # the underlying huggingface Dataset
     _hf_ds = None
+    _dataset_context_config: DatasetContextConfig = None
 
     def __init__(self,
                  ds_instance: Union[Dataset, IterableDataset, ExternalDataset],
@@ -63,6 +72,7 @@ class MsDataset:
                 f'"target" must be a column of the dataset({list(self._hf_ds.features.keys())}, but got {target}'
             )
         self.target = target
+        self.is_custom = False
 
     def __iter__(self):
         for item in self._hf_ds:
@@ -77,10 +87,10 @@ class MsDataset:
     def __len__(self):
         if isinstance(self._hf_ds, IterableDataset) or isinstance(
                 self._hf_ds, NativeIterableDataset):
-            logger.error(
-                f'object of type `{self._hf_ds.__class__.__name__}` has no __len__()'
+            logger.warning(
+                f'object of type `{self._hf_ds.__class__.__name__}` has default length 1'
             )
-            return None
+            return 1
         return len(self._hf_ds)
 
     @property
@@ -163,6 +173,7 @@ class MsDataset:
         REUSE_DATASET_IF_EXISTS,
         cache_dir: Optional[str] = MS_DATASETS_CACHE,
         use_streaming: Optional[bool] = False,
+        custom_cfg: Optional[Config] = Config(),
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -191,6 +202,8 @@ class MsDataset:
                 use_streaming (bool, Optional): If set to True, no need to download all data files.
                                                 Instead, it streams the data progressively, and returns
                                                 NativeIterableDataset or a dict of NativeIterableDataset.
+                custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
+                                           see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -245,304 +258,43 @@ class MsDataset:
             dataset_inst = LocalDataLoaderManager(
                 dataset_context_config).load_dataset(
                     LocalDataLoaderType.HF_DATA_LOADER)
-            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
+            if isinstance(dataset_inst, MsDataset):
+                dataset_inst._dataset_context_config = dataset_context_config
+                if custom_cfg:
+                    dataset_inst.to_custom_dataset(
+                        custom_cfg=custom_cfg, **config_kwargs)
+                    dataset_inst.is_custom = True
+            return dataset_inst
         # Load from the huggingface hub
         elif hub == Hubs.huggingface:
             dataset_inst = RemoteDataLoaderManager(
                 dataset_context_config).load_dataset(
                     RemoteDataLoaderType.HF_DATA_LOADER)
-            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
+            dataset_inst._dataset_context_config = dataset_context_config
+            if custom_cfg:
+                dataset_inst.to_custom_dataset(
+                    custom_cfg=custom_cfg, **config_kwargs)
+                dataset_inst.is_custom = True
+            return dataset_inst
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
-            dataset_inst = RemoteDataLoaderManager(
-                dataset_context_config).load_dataset(
-                    RemoteDataLoaderType.MS_DATA_LOADER)
-            return MsDataset.to_ms_dataset(dataset_inst, target=target)
+            remote_dataloader_manager = RemoteDataLoaderManager(
+                dataset_context_config)
+            dataset_inst = remote_dataloader_manager.load_dataset(
+                RemoteDataLoaderType.MS_DATA_LOADER)
+            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
+            if isinstance(dataset_inst, MsDataset):
+                dataset_inst._dataset_context_config = remote_dataloader_manager.dataset_context_config
+                if custom_cfg:
+                    dataset_inst.to_custom_dataset(
+                        custom_cfg=custom_cfg, **config_kwargs)
+                    dataset_inst.is_custom = True
+            return dataset_inst
         else:
             raise 'Please adjust input args to specify a loading mode, we support following scenes: ' \
                   'loading from local disk, huggingface hub and modelscope hub.'
-
-    def to_torch_dataset_with_processors(
-        self,
-        preprocessors: Union[Callable, List[Callable]],
-        columns: Union[str, List[str]] = None,
-        to_tensor: bool = True,
-    ):
-        import torch
-        preprocessor_list = preprocessors if isinstance(
-            preprocessors, list) else [preprocessors]
-
-        columns = format_list(columns)
-
-        columns = [
-            key for key in self._hf_ds.features.keys() if key in columns
-        ]
-        retained_columns = []
-        if to_tensor:
-            sample = next(iter(self._hf_ds))
-
-            sample_res = {k: np.array(sample[k]) for k in columns}
-            for processor in preprocessor_list:
-                sample_res.update(
-                    {k: np.array(v)
-                     for k, v in processor(sample).items()})
-
-            def is_numpy_number(value):
-                return np.issubdtype(value.dtype, np.integer) or np.issubdtype(
-                    value.dtype, np.floating)
-
-            for k in sample_res.keys():
-                if not is_numpy_number(sample_res[k]):
-                    logger.warning(
-                        f'Data of column {k} is non-numeric, will be removed')
-                    continue
-                retained_columns.append(k)
-
-        class MsMapDataset(torch.utils.data.Dataset):
-
-            def __init__(self, dataset: Iterable, preprocessor_list,
-                         retained_columns, columns, to_tensor):
-                super(MsDataset).__init__()
-                self.dataset = dataset
-                self.preprocessor_list = preprocessor_list
-                self.to_tensor = to_tensor
-                self.retained_columns = retained_columns
-                self.columns = columns
-
-            def __len__(self):
-                return len(self.dataset)
-
-            def type_converter(self, x):
-                import torch
-                if self.to_tensor and not isinstance(x, torch.Tensor):
-                    return torch.tensor(x)
-                else:
-                    return x
-
-            def __getitem__(self, index):
-                item_dict = self.dataset[index]
-                res = {
-                    k: self.type_converter(item_dict[k])
-                    for k in self.columns
-                    if (not self.to_tensor) or k in self.retained_columns
-                }
-                for preprocessor in self.preprocessor_list:
-                    res.update({
-                        k: self.type_converter(v)
-                        for k, v in preprocessor(item_dict).items()
-                        if (not self.to_tensor) or k in self.retained_columns
-                    })
-                return res
-
-        return MsMapDataset(self._hf_ds, preprocessor_list, retained_columns,
-                            columns, to_tensor)
-
-    def to_torch_dataset(
-        self,
-        columns: Union[str, List[str]] = None,
-        preprocessors: Union[Callable, List[Callable]] = None,
-        task_name: str = None,
-        task_data_config: ConfigDict = None,
-        to_tensor: bool = True,
-        **format_kwargs,
-    ):
-        """Create a torch.utils.data.Dataset from the MS Dataset. The torch.utils.data.Dataset can be passed to
-           torch.utils.data.DataLoader.
-
-        Args:
-            preprocessors (Callable or List[Callable], default None): (list of) Preprocessor object used to process
-                every sample of the dataset. The output type of processors is dict, and each (numeric) field of the dict
-                will be used as a field of torch.utils.data.Dataset.
-            columns (str or List[str], default None): Dataset column(s) to be loaded (numeric data only if
-                `to_tensor` is True). If the preprocessor is None, the arg columns must have at least one column.
-                If the `preprocessors` is not None, the output fields of processors will also be added.
-            task_name (str, default None):  task name, refer to :obj:`Tasks` for more details
-            task_data_config (ConfigDict, default None): config dict for model object.
-            to_tensor (bool, default None): whether convert the data types of dataset column(s) to torch.tensor or not.
-            format_kwargs: A `dict` of arguments to be passed to the `torch.tensor`.
-
-        Returns:
-            :class:`tf.data.Dataset`
-
-        """
-        if not is_torch_available():
-            raise ImportError(
-                'The function to_torch_dataset requires pytorch to be installed'
-            )
-        if isinstance(self._hf_ds, ExternalDataset):
-            task_data_config.update({'preprocessor': preprocessors})
-            task_data_config.update(self._hf_ds.config_kwargs)
-            return build_task_dataset(task_data_config, task_name)
-        if preprocessors is not None:
-            return self.to_torch_dataset_with_processors(
-                preprocessors, columns=columns, to_tensor=to_tensor)
-        else:
-            self._hf_ds.reset_format()
-            self._hf_ds.set_format(
-                type='torch', columns=columns, format_kwargs=format_kwargs)
-            return self._hf_ds
-
-    def to_tf_dataset_with_processors(
-        self,
-        batch_size: int,
-        shuffle: bool,
-        preprocessors: Union[Callable, List[Callable]],
-        drop_remainder: bool = None,
-        prefetch: bool = True,
-        label_cols: Union[str, List[str]] = None,
-        columns: Union[str, List[str]] = None,
-    ):
-        preprocessor_list = preprocessors if isinstance(
-            preprocessors, list) else [preprocessors]
-
-        label_cols = format_list(label_cols)
-        columns = format_list(columns)
-        cols_to_retain = list(set(label_cols + columns))
-        retained_columns = [
-            key for key in self._hf_ds.features.keys() if key in cols_to_retain
-        ]
-        import tensorflow as tf
-        tf_dataset = tf.data.Dataset.from_tensor_slices(
-            np.arange(len(self._hf_ds), dtype=np.int64))
-        if shuffle:
-            tf_dataset = tf_dataset.shuffle(buffer_size=len(self._hf_ds))
-
-        def func(i, return_dict=False):
-            i = int(i)
-            res = {k: np.array(self._hf_ds[i][k]) for k in retained_columns}
-            for preprocessor in preprocessor_list:
-                # TODO preprocessor output may have the same key
-                res.update({
-                    k: np.array(v)
-                    for k, v in preprocessor(self._hf_ds[i]).items()
-                })
-            if return_dict:
-                return res
-            return tuple(list(res.values()))
-
-        sample_res = func(0, True)
-
-        @tf.function(input_signature=[tf.TensorSpec(None, tf.int64)])
-        def fetch_function(i):
-            output = tf.numpy_function(
-                func,
-                inp=[i],
-                Tout=[
-                    tf.dtypes.as_dtype(val.dtype)
-                    for val in sample_res.values()
-                ],
-            )
-            return {key: output[i] for i, key in enumerate(sample_res)}
-
-        from tensorflow.data.experimental import AUTOTUNE
-        tf_dataset = tf_dataset.map(
-            fetch_function, num_parallel_calls=AUTOTUNE)
-        if label_cols:
-
-            def split_features_and_labels(input_batch):
-                labels = {
-                    key: tensor
-                    for key, tensor in input_batch.items() if key in label_cols
-                }
-                if len(input_batch) == 1:
-                    input_batch = next(iter(input_batch.values()))
-                if len(labels) == 1:
-                    labels = next(iter(labels.values()))
-                return input_batch, labels
-
-            tf_dataset = tf_dataset.map(split_features_and_labels)
-
-        elif len(columns) == 1:
-            tf_dataset = tf_dataset.map(lambda x: next(iter(x.values())))
-        if batch_size > 1:
-            tf_dataset = tf_dataset.batch(
-                batch_size, drop_remainder=drop_remainder)
-
-        if prefetch:
-            tf_dataset = tf_dataset.prefetch(AUTOTUNE)
-        return tf_dataset
-
-    def to_tf_dataset(
-        self,
-        batch_size: int,
-        shuffle: bool,
-        preprocessors: Union[Callable, List[Callable]] = None,
-        columns: Union[str, List[str]] = None,
-        collate_fn: Callable = None,
-        drop_remainder: bool = None,
-        collate_fn_args: Dict[str, Any] = None,
-        label_cols: Union[str, List[str]] = None,
-        prefetch: bool = True,
-    ):
-        """Create a tf.data.Dataset from the MS Dataset. This tf.data.Dataset can be passed to tf methods like
-           model.fit() or model.predict().
-
-        Args:
-            batch_size (int): Number of samples in a single batch.
-            shuffle(bool): Shuffle the dataset order.
-            preprocessors (Callable or List[Callable], default None): (list of) Preprocessor object used to process
-                every sample of the dataset. The output type of processors is dict, and each field of the dict will be
-                used as a field of the tf.data. Dataset. If the `preprocessors` is None, the `collate_fn`
-                shouldn't be None.
-            columns (str or List[str], default None): Dataset column(s) to be loaded. If the preprocessor is None,
-                the arg columns must have at least one column. If the `preprocessors` is not None, the output fields of
-                processors will also be added.
-            collate_fn(Callable, default None): A callable object used to collect lists of samples into a batch. If
-                the `preprocessors` is None, the `collate_fn` shouldn't be None.
-            drop_remainder(bool, default None): Drop the last incomplete batch when loading.
-            collate_fn_args (Dict, optional): A `dict` of arguments to be passed to the`collate_fn`.
-            label_cols (str or List[str], defalut None): Dataset column(s) to load as labels.
-            prefetch (bool, default True): Prefetch data.
-
-        Returns:
-            :class:`tf.data.Dataset`
-
-        """
-        if not is_tf_available():
-            raise ImportError(
-                'The function to_tf_dataset requires Tensorflow to be installed.'
-            )
-        if preprocessors is not None:
-            return self.to_tf_dataset_with_processors(
-                batch_size,
-                shuffle,
-                preprocessors,
-                drop_remainder=drop_remainder,
-                prefetch=prefetch,
-                label_cols=label_cols,
-                columns=columns)
-
-        if collate_fn is None:
-            logger.error(
-                'The `preprocessors` and the `collate_fn` should`t be both None.'
-            )
-            return None
-        self._hf_ds.reset_format()
-        return self._hf_ds.to_tf_dataset(
-            columns,
-            batch_size,
-            shuffle,
-            collate_fn,
-            drop_remainder=drop_remainder,
-            collate_fn_args=collate_fn_args,
-            label_cols=label_cols,
-            prefetch=prefetch)
-
-    def to_hf_dataset(self) -> Dataset:
-        self._hf_ds.reset_format()
-        return self._hf_ds
-
-    def remap_columns(self, column_mapping: Dict[str, str]) -> Dataset:
-        """
-        Rename columns and return the underlying hf dataset directly
-        TODO: support native MsDataset column rename.
-        Args:
-            column_mapping: the mapping of the original and new column names
-        Returns:
-            underlying hf dataset
-        """
-        self._hf_ds.reset_format()
-        return self._hf_ds.rename_columns(column_mapping)
 
     @staticmethod
     def upload(
@@ -695,3 +447,358 @@ class MsDataset:
         resp_msg = _delete_manager.delete(object_name=object_name)
         logger.info(f'Object {object_name} successfully removed!')
         return resp_msg
+
+    def to_torch_dataset(
+        self,
+        columns: Union[str, List[str]] = None,
+        preprocessors: Union[Callable, List[Callable]] = None,
+        task_name: str = None,
+        data_config: ConfigDict = None,
+        to_tensor: bool = True,
+        **format_kwargs,
+    ):
+        """Create a torch.utils.data.Dataset from the MS Dataset. The torch.utils.data.Dataset can be passed to
+           torch.utils.data.DataLoader.
+
+        Args:
+            preprocessors (Callable or List[Callable], default None): (list of) Preprocessor object used to process
+                every sample of the dataset. The output type of processors is dict, and each (numeric) field of the dict
+                will be used as a field of torch.utils.data.Dataset.
+            columns (str or List[str], default None): Dataset column(s) to be loaded (numeric data only if
+                `to_tensor` is True). If the preprocessor is None, the arg columns must have at least one column.
+                If the `preprocessors` is not None, the output fields of processors will also be added.
+            task_name (str, default None):  task name, refer to :obj:`Tasks` for more details
+            data_config (ConfigDict, default None): config dict for model object.
+                Attributes of ConfigDict:
+                    `preprocessor` (Callable, List[Callable], optional): preprocessors to deal with dataset
+                    `type` (str): the type of task
+                    `split_config` (dict, optional): get the split config for ExternalDataset
+                    `test_mode` (bool, optional): is test mode or not
+            to_tensor (bool, default None): whether convert the data types of dataset column(s) to torch.tensor or not.
+            format_kwargs: A `dict` of arguments to be passed to the `torch.tensor`.
+
+        Returns:
+            :class:`torch.utils.data.Dataset`
+
+        """
+        if not is_torch_available():
+            raise ImportError(
+                'The function to_torch_dataset requires pytorch to be installed'
+            )
+        if isinstance(self._hf_ds, ExternalDataset):
+            data_config.update({'preprocessor': preprocessors})
+            data_config.update(self._hf_ds.config_kwargs)
+            return build_custom_dataset(data_config, task_name)
+        if preprocessors is not None:
+            return self._to_torch_dataset_with_processors(
+                preprocessors, columns=columns, to_tensor=to_tensor)
+        else:
+            self._hf_ds.reset_format()
+            self._hf_ds.set_format(
+                type='torch', columns=columns, format_kwargs=format_kwargs)
+            return self._hf_ds
+
+    def to_tf_dataset(
+        self,
+        batch_size: int,
+        shuffle: bool,
+        preprocessors: Union[Callable, List[Callable]] = None,
+        columns: Union[str, List[str]] = None,
+        collate_fn: Callable = None,
+        drop_remainder: bool = None,
+        collate_fn_args: Dict[str, Any] = None,
+        label_cols: Union[str, List[str]] = None,
+        prefetch: bool = True,
+    ):
+        """Create a tf.data.Dataset from the MS Dataset. This tf.data.Dataset can be passed to tf methods like
+           model.fit() or model.predict().
+
+        Args:
+            batch_size (int): Number of samples in a single batch.
+            shuffle(bool): Shuffle the dataset order.
+            preprocessors (Callable or List[Callable], default None): (list of) Preprocessor object used to process
+                every sample of the dataset. The output type of processors is dict, and each field of the dict will be
+                used as a field of the tf.data. Dataset. If the `preprocessors` is None, the `collate_fn`
+                shouldn't be None.
+            columns (str or List[str], default None): Dataset column(s) to be loaded. If the preprocessor is None,
+                the arg columns must have at least one column. If the `preprocessors` is not None, the output fields of
+                processors will also be added.
+            collate_fn(Callable, default None): A callable object used to collect lists of samples into a batch. If
+                the `preprocessors` is None, the `collate_fn` shouldn't be None.
+            drop_remainder(bool, default None): Drop the last incomplete batch when loading.
+            collate_fn_args (Dict, optional): A `dict` of arguments to be passed to the`collate_fn`.
+            label_cols (str or List[str], defalut None): Dataset column(s) to load as labels.
+            prefetch (bool, default True): Prefetch data.
+
+        Returns:
+            :class:`tf.data.Dataset`
+
+        """
+        if not is_tf_available():
+            raise ImportError(
+                'The function to_tf_dataset requires Tensorflow to be installed.'
+            )
+        if preprocessors is not None:
+            return self._to_tf_dataset_with_processors(
+                batch_size,
+                shuffle,
+                preprocessors,
+                drop_remainder=drop_remainder,
+                prefetch=prefetch,
+                label_cols=label_cols,
+                columns=columns)
+
+        if collate_fn is None:
+            logger.error(
+                'The `preprocessors` and the `collate_fn` should`t be both None.'
+            )
+            return None
+        self._hf_ds.reset_format()
+        return self._hf_ds.to_tf_dataset(
+            columns,
+            batch_size,
+            shuffle,
+            collate_fn,
+            drop_remainder=drop_remainder,
+            collate_fn_args=collate_fn_args,
+            label_cols=label_cols,
+            prefetch=prefetch)
+
+    def to_hf_dataset(self) -> Dataset:
+        self._hf_ds.reset_format()
+        return self._hf_ds
+
+    def remap_columns(self, column_mapping: Dict[str, str]) -> Dataset:
+        """
+        Rename columns and return the underlying hf dataset directly
+        TODO: support native MsDataset column rename.
+        Args:
+            column_mapping: the mapping of the original and new column names
+        Returns:
+            underlying hf dataset
+        """
+        self._hf_ds.reset_format()
+        return self._hf_ds.rename_columns(column_mapping)
+
+    def _to_torch_dataset_with_processors(
+        self,
+        preprocessors: Union[Callable, List[Callable]],
+        columns: Union[str, List[str]] = None,
+        to_tensor: bool = True,
+    ):
+        preprocessor_list = preprocessors if isinstance(
+            preprocessors, list) else [preprocessors]
+
+        columns = format_list(columns)
+
+        columns = [
+            key for key in self._hf_ds.features.keys() if key in columns
+        ]
+        retained_columns = []
+        if to_tensor:
+            sample = next(iter(self._hf_ds))
+
+            sample_res = {k: np.array(sample[k]) for k in columns}
+            for processor in preprocessor_list:
+                sample_res.update(
+                    {k: np.array(v)
+                     for k, v in processor(sample).items()})
+
+            def is_numpy_number(value):
+                return np.issubdtype(value.dtype, np.integer) or np.issubdtype(
+                    value.dtype, np.floating)
+
+            for k in sample_res.keys():
+                if not is_numpy_number(sample_res[k]):
+                    logger.warning(
+                        f'Data of column {k} is non-numeric, will be removed')
+                    continue
+                retained_columns.append(k)
+
+        import torch
+
+        class MsMapDataset(torch.utils.data.Dataset):
+
+            def __init__(self, dataset: Iterable, preprocessor_list,
+                         retained_columns, columns, to_tensor):
+                super(MsDataset).__init__()
+                self.dataset = dataset
+                self.preprocessor_list = preprocessor_list
+                self.to_tensor = to_tensor
+                self.retained_columns = retained_columns
+                self.columns = columns
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def type_converter(self, x):
+                if self.to_tensor:
+                    return torch.tensor(x)
+                else:
+                    return x
+
+            def __getitem__(self, index):
+                item_dict = self.dataset[index]
+                res = {
+                    k: self.type_converter(item_dict[k])
+                    for k in self.columns
+                    if (not self.to_tensor) or k in self.retained_columns
+                }
+                for preprocessor in self.preprocessor_list:
+                    res.update({
+                        k: self.type_converter(v)
+                        for k, v in preprocessor(item_dict).items()
+                        if (not self.to_tensor) or k in self.retained_columns
+                    })
+                return res
+
+        return MsMapDataset(self._hf_ds, preprocessor_list, retained_columns,
+                            columns, to_tensor)
+
+    def _to_tf_dataset_with_processors(
+        self,
+        batch_size: int,
+        shuffle: bool,
+        preprocessors: Union[Callable, List[Callable]],
+        drop_remainder: bool = None,
+        prefetch: bool = True,
+        label_cols: Union[str, List[str]] = None,
+        columns: Union[str, List[str]] = None,
+    ):
+        preprocessor_list = preprocessors if isinstance(
+            preprocessors, list) else [preprocessors]
+
+        label_cols = format_list(label_cols)
+        columns = format_list(columns)
+        cols_to_retain = list(set(label_cols + columns))
+        retained_columns = [
+            key for key in self._hf_ds.features.keys() if key in cols_to_retain
+        ]
+        import tensorflow as tf
+        tf_dataset = tf.data.Dataset.from_tensor_slices(
+            np.arange(len(self._hf_ds), dtype=np.int64))
+        if shuffle:
+            tf_dataset = tf_dataset.shuffle(buffer_size=len(self._hf_ds))
+
+        def func(i, return_dict=False):
+            i = int(i)
+            res = {k: np.array(self._hf_ds[i][k]) for k in retained_columns}
+            for preprocessor in preprocessor_list:
+                # TODO preprocessor output may have the same key
+                res.update({
+                    k: np.array(v)
+                    for k, v in preprocessor(self._hf_ds[i]).items()
+                })
+            if return_dict:
+                return res
+            return tuple(list(res.values()))
+
+        sample_res = func(0, True)
+
+        @tf.function(input_signature=[tf.TensorSpec(None, tf.int64)])
+        def fetch_function(i):
+            output = tf.numpy_function(
+                func,
+                inp=[i],
+                Tout=[
+                    tf.dtypes.as_dtype(val.dtype)
+                    for val in sample_res.values()
+                ],
+            )
+            return {key: output[i] for i, key in enumerate(sample_res)}
+
+        from tensorflow.data.experimental import AUTOTUNE
+        tf_dataset = tf_dataset.map(
+            fetch_function, num_parallel_calls=AUTOTUNE)
+        if label_cols:
+
+            def split_features_and_labels(input_batch):
+                labels = {
+                    key: tensor
+                    for key, tensor in input_batch.items() if key in label_cols
+                }
+                if len(input_batch) == 1:
+                    input_batch = next(iter(input_batch.values()))
+                if len(labels) == 1:
+                    labels = next(iter(labels.values()))
+                return input_batch, labels
+
+            tf_dataset = tf_dataset.map(split_features_and_labels)
+
+        elif len(columns) == 1:
+            tf_dataset = tf_dataset.map(lambda x: next(iter(x.values())))
+        if batch_size > 1:
+            tf_dataset = tf_dataset.batch(
+                batch_size, drop_remainder=drop_remainder)
+
+        if prefetch:
+            tf_dataset = tf_dataset.prefetch(AUTOTUNE)
+        return tf_dataset
+
+    def to_custom_dataset(self,
+                          custom_cfg: Config,
+                          preprocessor=None,
+                          mode=None,
+                          **kwargs):
+        """Convert the input datasets to specific custom datasets by given model configuration and preprocessor.
+
+        Args:
+            custom_cfg (Config): The model configuration for custom datasets.
+            preprocessor (Preprocessor, Optional): Preprocessor for data samples.
+            mode (str, Optional): See modelscope.utils.constant.ModeKeys
+
+        Returns:
+            `MsDataset`
+        """
+
+        if not is_torch_available():
+            raise ImportError(
+                'The function to_custom_dataset requires pytorch to be installed'
+            )
+        if not custom_cfg:
+            return
+
+        # Set the flag that it has been converted to custom dataset
+        self.is_custom = True
+
+        # Check mode
+        if mode is None:
+            if 'mode' in kwargs:
+                mode = kwargs.get('mode')
+
+        # Parse cfg
+        ds_cfg_key = 'train' if mode == ModeKeys.TRAIN else 'val'
+        data_cfg = custom_cfg.safe_get(f'dataset.{ds_cfg_key}')
+        if data_cfg is None:
+            data_cfg = ConfigDict(type=custom_cfg.model.type) if hasattr(
+                custom_cfg, ConfigFields.model) else ConfigDict(type=None)
+        data_cfg.update(dict(mode=mode))
+
+        # Get preprocessors from custom_cfg
+        task_name = custom_cfg.task
+        if 'task' in kwargs:
+            task_name = kwargs.pop('task')
+        field_name = Tasks.find_field_by_task(task_name)
+        if 'field' in kwargs:
+            field_name = kwargs.pop('field')
+        if preprocessor is None and hasattr(custom_cfg, 'preprocessor'):
+            preprocessor_cfg = custom_cfg.preprocessor
+            if preprocessor_cfg:
+                preprocessor = build_preprocessor(preprocessor_cfg, field_name)
+
+        # Build custom dataset
+        if isinstance(self._hf_ds, ExternalDataset):
+            data_cfg.update(dict(preprocessor=preprocessor))
+            data_cfg.update(self._hf_ds.config_kwargs)
+            self._hf_ds = build_custom_dataset(
+                cfg=data_cfg, task_name=custom_cfg.task)
+            return
+
+        if preprocessor is not None:
+            to_tensor = kwargs.get('to_tensor', True)
+            self._hf_ds = self._to_torch_dataset_with_processors(
+                preprocessors=preprocessor, to_tensor=to_tensor)
+        else:
+            self._hf_ds.reset_format()
+            self._hf_ds.set_format(type='torch')
+        return

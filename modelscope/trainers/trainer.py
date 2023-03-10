@@ -20,10 +20,11 @@ from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.metrics.prediction_saving_wrapper import \
     PredictionSavingWrapper
 from modelscope.models.base import Model, TorchModel
+from modelscope.msdatasets.dataset_cls.custom_datasets import \
+    TorchCustomDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
+    build_custom_dataset
 from modelscope.msdatasets.ms_dataset import MsDataset
-from modelscope.msdatasets.task_datasets.builder import build_task_dataset
-from modelscope.msdatasets.task_datasets.torch_base_dataset import \
-    TorchTaskDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.trainers.hooks.builder import HOOKS
@@ -126,6 +127,10 @@ class EpochBasedTrainer(BaseTrainer):
         self._stop_training = False
         self._compile = kwargs.get('compile', False)
 
+        self.train_dataloader = None
+        self.eval_dataloader = None
+        self.data_loader = None
+
         if isinstance(model, str):
             third_party = kwargs.get(ThirdParty.KEY)
             if third_party is not None:
@@ -178,6 +183,21 @@ class EpochBasedTrainer(BaseTrainer):
         self.logger = get_logger(
             log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
+        # Get train datasets
+        self.train_dataset = self.build_dataset(
+            datasets=train_dataset,
+            model_cfg=self.cfg,
+            mode=ModeKeys.TRAIN,
+            preprocessor=self.train_preprocessor,
+            **kwargs)
+        # Get evaluation datasets
+        self.eval_dataset = self.build_dataset(
+            datasets=eval_dataset,
+            model_cfg=self.cfg,
+            mode=ModeKeys.EVAL,
+            preprocessor=self.eval_preprocessor,
+            **kwargs)
+
         self.train_data_collator, self.eval_data_collator = self.get_data_collator(
             data_collator,
             remove_unused_data=kwargs.get('remove_unused_data', False))
@@ -225,19 +245,6 @@ class EpochBasedTrainer(BaseTrainer):
         # _dist represents for if dp is initialized and its world_size > 1
         self._dist = self.is_dp_group_available() and dist.get_world_size(
             self.dp_group) > 1
-
-        self.train_dataset = self.to_task_dataset(
-            train_dataset,
-            mode=ModeKeys.TRAIN,
-            task_data_config=self.cfg.safe_get('dataset.train'),
-            preprocessor=self.train_preprocessor,
-            **kwargs)
-        self.eval_dataset = self.to_task_dataset(
-            eval_dataset,
-            mode=ModeKeys.EVAL,
-            task_data_config=self.cfg.safe_get('dataset.val'),
-            preprocessor=self.eval_preprocessor,
-            **kwargs)
 
         self.metrics = self.get_metrics()
 
@@ -466,84 +473,107 @@ class EpochBasedTrainer(BaseTrainer):
             else:
                 return _get_data_len(self.eval_dataloader)
 
-    def to_task_dataset(self,
-                        datasets: Union[Dataset, List[Dataset]],
-                        mode: str,
-                        task_data_config: Config = None,
-                        preprocessor: Optional[Preprocessor] = None,
-                        **kwargs):
-        """Build the task specific dataset processor for this trainer.
+    def build_dataset(self,
+                      datasets: Union[Dataset, MsDataset, List[Dataset]],
+                      model_cfg: Config,
+                      mode: str,
+                      preprocessor: Optional[Preprocessor] = None,
+                      **kwargs):
+        """Build input datasets by given model configuration and preprocessor.
 
-        Returns: The task dataset processor for the task. If no result for the very model-type and task,
-        the default TaskDataset will be returned.
+        Args:
+            datasets (Union[Dataset, MsDataset, List[Dataset]]): The input datasets.
+            model_cfg (Config): The model configuration.
+            mode (str): `train`, `eval` or `inference`. See modelscope.utils.constant.ModeKeys
+            preprocessor (Preprocessor, Optional): The preprocessor for input data samples.
+
+        Returns:
+            Preprocessed datasets.
         """
         try:
-            to_tensor = kwargs.get('to_tensor', True)
             if not datasets:
-                return datasets
-            if isinstance(datasets, TorchTaskDataset):
+                return EpochBasedTrainer.build_dataset_from_cfg(
+                    model_cfg=model_cfg, mode=mode, preprocessor=preprocessor)
+
+            if isinstance(datasets, TorchCustomDataset):
                 return datasets
             elif isinstance(datasets, MsDataset):
-                if task_data_config is None:
-                    # adapt to some special models
-                    task_data_config = ConfigDict(
-                        type=self.cfg.model.type) if hasattr(
-                            self.cfg, ConfigFields.model) else ConfigDict(
-                                type=None)
-                task_data_config.update(dict(mode=mode))
-                return datasets.to_torch_dataset(
-                    task_data_config=task_data_config,
-                    task_name=self.cfg.task,
-                    preprocessors=preprocessor,
-                    to_tensor=to_tensor)
+                if not datasets.is_custom:
+                    datasets.to_custom_dataset(
+                        custom_cfg=model_cfg,
+                        preprocessor=preprocessor,
+                        mode=mode,
+                        **kwargs)
+                return datasets.ds_instance
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
-                if task_data_config is None:
-                    # adapt to some special models
-                    task_data_config = ConfigDict(
-                        type=self.cfg.model.type) if hasattr(
-                            self.cfg, ConfigFields.model) else ConfigDict(
-                                type=None)
-                task_data_config.update(dict(mode=mode))
-                datasets = [
-                    d.to_torch_dataset(
-                        task_data_config=task_data_config,
-                        task_name=self.cfg.task,
-                        preprocessors=preprocessor,
-                        to_tensor=to_tensor) for d in datasets
-                ]
-                cfg = ConfigDict(
-                    type=self.cfg.model.type, mode=mode, datasets=datasets)
-                task_dataset = build_task_dataset(cfg, self.cfg.task)
-                task_dataset.trainer = self
-                return task_dataset
+                custom_datasets = []
+                for dataset in datasets:
+                    if not dataset.is_custom:
+                        dataset.to_custom_dataset(
+                            custom_cfg=model_cfg,
+                            preprocessor=preprocessor,
+                            mode=mode,
+                            **kwargs)
+                    custom_datasets.append(dataset.ds_instance)
+                torch_custom_dataset = TorchCustomDataset(
+                    datasets=custom_datasets,
+                    mode=mode,
+                    preprocessor=None,
+                    **kwargs)
+                torch_custom_dataset.trainer = self
+                return torch_custom_dataset
             else:
-                if task_data_config is None:
+                dataset_mode_key = 'train' if mode == ModeKeys.TRAIN else 'val'
+                data_config = model_cfg.safe_get(f'dataset.{dataset_mode_key}')
+                if data_config is None:
                     # adapt to some special models
-                    task_data_config = {}
+                    data_config = {}
                 # avoid add no str value datasets, preprocessors in cfg
-                task_data_build_config = ConfigDict(
-                    type=self.cfg.model.type,
+                data_build_config = ConfigDict(
+                    type=model_cfg.model.type,
                     mode=mode,
                     datasets=datasets,
                     preprocessor=preprocessor)
-                task_data_build_config.update(task_data_config)
-                task_dataset = build_task_dataset(task_data_build_config,
-                                                  self.cfg.task)
-                task_dataset.trainer = self
-                return task_dataset
-        except Exception:
+                data_build_config.update(data_config)
+                custom_dataset = build_custom_dataset(data_build_config,
+                                                      model_cfg.task)
+                custom_dataset.trainer = self
+                return custom_dataset
+        except Exception as e:
+            print('** build_dataset error log:', e)
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
-                task_dataset = TorchTaskDataset(
+                custom_dataset = TorchCustomDataset(
                     datasets,
                     mode=mode,
                     preprocessor=preprocessor,
-                    **(dict(type=self.cfg.model.type) if hasattr(
-                        self.cfg, 'model') else {}))
-                task_dataset.trainer = self
-                return task_dataset
+                    **(dict(type=model_cfg.model.type) if hasattr(
+                        model_cfg, 'model') else {}))
+                custom_dataset.trainer = self
+                return custom_dataset
             else:
                 return datasets
+
+    @staticmethod
+    def build_dataset_from_cfg(model_cfg: Config,
+                               mode: str,
+                               preprocessor: Preprocessor = None):
+        dataset = None
+        dataset_name = model_cfg.safe_get('dataset.name')
+        subset_name = model_cfg.safe_get('dataset.subset', default='default')
+        split_name = model_cfg.safe_get(f'dataset.split_{mode}')
+        if not dataset_name or not split_name:
+            return dataset
+        dataset = MsDataset.load(
+            dataset_name=dataset_name,
+            subset_name=subset_name,
+            split=split_name,
+            custom_cfg=model_cfg)
+        if not dataset.is_custom:
+            dataset.to_custom_dataset(
+                custom_cfg=model_cfg, preprocessor=preprocessor, mode=mode)
+
+        return dataset.ds_instance
 
     def build_preprocessor(self) -> Tuple[Preprocessor, Preprocessor]:
         """Build train and eval preprocessor.
@@ -667,7 +697,7 @@ class EpochBasedTrainer(BaseTrainer):
                 checkpoint_path, self, strict=strict)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-        predict_dataloader = self.get_predict_data_loader(predict_datasets)
+        predict_dataloader = self.get_predict_dataloader(predict_datasets)
         metric_classes = [PredictionSavingWrapper(saving_fn=saving_fn)]
 
         for m in metric_classes:
@@ -836,11 +866,7 @@ class EpochBasedTrainer(BaseTrainer):
         (or `get_train_dataloader` in a subclass.
         """
         if self.train_dataset is None:
-            train_data = self.cfg.dataset.train
-            self.train_dataset = self.build_dataset(
-                train_data,
-                mode=ModeKeys.TRAIN,
-                preprocessor=self.train_preprocessor)
+            raise 'The train_dataset cannot be None.'
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,
             dist=self._dist,
@@ -857,11 +883,7 @@ class EpochBasedTrainer(BaseTrainer):
         pass
         """
         if self.eval_dataset is None:
-            val_data = self.cfg.dataset.val
-            self.eval_dataset = self.build_dataset(
-                val_data,
-                mode=ModeKeys.EVAL,
-                preprocessor=self.eval_preprocessor)
+            raise 'The eval_dataset cannot be None.'
 
         default_config = {'shuffle': False}
         default_config.update(self.cfg.evaluation.get('dataloader', {}))
@@ -873,15 +895,16 @@ class EpochBasedTrainer(BaseTrainer):
             **default_config)
         return data_loader
 
-    def get_predict_data_loader(self, predict_datasets: Union[Dataset,
-                                                              List[Dataset]]):
+    def get_predict_dataloader(self, predict_datasets: Union[Dataset,
+                                                             List[Dataset]]):
         """ Builder torch dataloader for prediction with the config of evaluation.
 
         Args:
             predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
         """
-        dataset = self.to_task_dataset(
-            predict_datasets,
+        dataset = self.build_dataset(
+            datasets=predict_datasets,
+            model_cfg=self.cfg,
             mode=ModeKeys.EVAL,
             preprocessor=self.eval_preprocessor)
 
@@ -894,26 +917,6 @@ class EpochBasedTrainer(BaseTrainer):
             collate_fn=self.eval_data_collator,
             **default_config)
         return data_loader
-
-    def build_dataset(self, data_cfg, mode, preprocessor=None):
-        """ Build torch dataset object using data config
-        """
-        # TODO: support MsDataset load for cv
-        if hasattr(data_cfg, 'name'):
-            dataset_name = data_cfg.pop('name')
-            dataset = MsDataset.load(
-                dataset_name=dataset_name,
-                **data_cfg,
-            )
-            cfg = ConfigDict(type=self.cfg.model.type, mode=mode)
-            torch_dataset = dataset.to_torch_dataset(
-                task_data_config=cfg,
-                task_name=self.cfg.task,
-                preprocessors=preprocessor)
-        else:
-            torch_dataset = build_task_dataset(data_cfg, self.cfg.task)
-        dataset = self.to_task_dataset(torch_dataset, mode)
-        return dataset
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:

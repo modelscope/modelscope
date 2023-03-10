@@ -106,17 +106,21 @@ class SiameseUIETrainer(EpochBasedTrainer):
             seed=seed,
             **kwargs)
 
-    def to_task_dataset(self,
-                        datasets: Union[Dataset, List[Dataset]],
-                        mode: str,
-                        task_data_config: Config = None,
-                        preprocessor: Optional[Preprocessor] = None,
-                        **kwargs):
-        if mode == 'train':
+    def build_dataset(self,
+                      datasets: Union[torch.utils.data.Dataset, MsDataset,
+                                      List[torch.utils.data.Dataset]],
+                      model_cfg: Config,
+                      mode: str,
+                      preprocessor: Optional[Preprocessor] = None,
+                      **kwargs):
+        if mode == ModeKeys.TRAIN:
             datasets = self.load_dataset(datasets)
-            # print('****self.train_dataset*******', self.train_dataset[0])
-        return super().to_task_dataset(datasets, mode, task_data_config,
-                                       preprocessor, **kwargs)
+        return super(SiameseUIETrainer, self).build_dataset(
+            datasets=datasets,
+            model_cfg=self.cfg,
+            mode=mode,
+            preprocessor=preprocessor,
+            **kwargs)
 
     def get_train_dataloader(self):
         """ Builder torch dataloader for training.
@@ -125,12 +129,6 @@ class SiameseUIETrainer(EpochBasedTrainer):
         the config for data.train in configuration file, or subclass and override this method
         (or `get_train_dataloader` in a subclass.
         """
-        if self.train_dataset is None:
-            train_data = self.cfg.dataset.train
-            self.train_dataset = self.build_dataset(
-                train_data,
-                mode=ModeKeys.TRAIN,
-                preprocessor=self.train_preprocessor)
         self.train_dataset.preprocessor = None
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,

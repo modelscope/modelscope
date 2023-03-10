@@ -1,11 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import copy
 import datetime
 import math
 import os
-import os.path as osp
 import time
-from typing import Callable, Dict, Optional
+from typing import Dict
 
 import torch
 import torch.distributed as dist
@@ -25,8 +23,8 @@ from modelscope.models.cv.tinynas_detection.damo.detectors.detector import (
     build_ddp_model, build_local_model)
 from modelscope.models.cv.tinynas_detection.damo.utils import (
     cosine_scheduler, ema_model)
-from modelscope.msdatasets.task_datasets.damoyolo import (build_dataloader,
-                                                          build_dataset)
+from modelscope.msdatasets.dataset_cls.custom_datasets.damoyolo import (
+    build_dataloader, build_dataset)
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.checkpoint import save_checkpoint

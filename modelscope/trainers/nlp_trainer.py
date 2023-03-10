@@ -150,7 +150,7 @@ class VecoTrainer(NlpEpochBasedTrainer):
         """Veco evaluates the datasets one by one.
 
         """
-        from modelscope.msdatasets.task_datasets import VecoDataset
+        from modelscope.msdatasets.dataset_cls.custom_datasets import VecoDataset
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(checkpoint_path, self)
@@ -159,9 +159,10 @@ class VecoTrainer(NlpEpochBasedTrainer):
         metric_values = {}
 
         if self.eval_dataset is None:
-            val_data = self.cfg.dataset.val
-            self.eval_dataset = self.build_dataset(
-                val_data, mode=ModeKeys.EVAL)
+            self.eval_dataset = self.build_dataset_from_cfg(
+                model_cfg=self.cfg,
+                mode=self._mode,
+                preprocessor=self.eval_preprocessor)
 
         idx = 0
         dataset_cnt = 1

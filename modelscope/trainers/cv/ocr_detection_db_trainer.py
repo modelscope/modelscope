@@ -19,10 +19,8 @@ from modelscope.models.cv.ocr_detection.modules.dbnet import (DBModel,
                                                               DBModel_v2)
 from modelscope.models.cv.ocr_detection.utils import (boxes_from_bitmap,
                                                       polygons_from_bitmap)
-from modelscope.msdatasets.task_datasets.ocr_detection import (DataLoader,
-                                                               ImageDataset)
-from modelscope.msdatasets.task_datasets.ocr_detection.measures import \
-    QuadMeasurer
+from modelscope.msdatasets.dataset_cls.custom_datasets.ocr_detection import (
+    DataLoader, ImageDataset, QuadMeasurer)
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile

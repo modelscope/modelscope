@@ -16,7 +16,7 @@ import json
 
 from modelscope import __version__
 from modelscope.fileio.file import LocalStorage
-from modelscope.metainfo import (Datasets, Heads, Hooks, LR_Schedulers,
+from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks

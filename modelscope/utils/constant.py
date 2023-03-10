@@ -526,3 +526,8 @@ class DistributedParallelType(object):
     DP = 'data_parallel'
     TP = 'tensor_model_parallel'
     PP = 'pipeline_model_parallel'
+
+
+class DatasetTensorflowConfig:
+    BATCH_SIZE = 'batch_size'
+    DEFAULT_BATCH_SIZE_VALUE = 5

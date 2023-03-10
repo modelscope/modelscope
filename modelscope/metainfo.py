@@ -1137,7 +1137,7 @@ class LR_Schedulers(object):
     ExponentialWarmup = 'ExponentialWarmup'
 
 
-class Datasets(object):
+class CustomDatasets(object):
     """ Names for different datasets.
     """
     ClsDataset = 'ClsDataset'

@@ -11,8 +11,6 @@ from modelscope.metainfo import Trainers
 from modelscope.models.cv.image_instance_segmentation import \
     CascadeMaskRCNNSwinModel
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.task_datasets import \
-    ImageInstanceSegmentationCocoDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DownloadMode, ModelFile

@@ -45,7 +45,7 @@ for i in "$@"; do
       ;;
     --modelscope=*)
       modelscope_version="${i#*=}"
-      shift # cudatoolkit for pytorch
+      shift # modelscope version
       ;;
     --test)
       run_ci_test=True
@@ -65,7 +65,7 @@ for i in "$@"; do
       ;;
     --push)
       is_push=True
-      shift # is dsw, will set dsw cache location
+      shift # option for push image to remote repo
       ;;
     --help)
       usage
@@ -126,7 +126,7 @@ echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
     echo "Not DSW image"
 else
-    echo "Building dsw image well need set ModelScope lib cache location."
+    echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
 fi
 if [ "$is_ci_test" == "True" ]; then

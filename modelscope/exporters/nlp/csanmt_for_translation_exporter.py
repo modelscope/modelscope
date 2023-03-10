@@ -69,7 +69,7 @@ class CsanmtForTranslationExporter(TfModelExporter):
 
         dummy_inputs = self.generate_dummy_inputs()
         with tf.Session(graph=tf.Graph()) as sess:
-            # Restore model from the saved_modle file, that is exported by TensorFlow estimator.
+            # Restore model from the saved_model file, that is exported by TensorFlow estimator.
             MetaGraphDef = tf.saved_model.loader.load(sess, ['serve'],
                                                       output_dir)
 
@@ -182,5 +182,5 @@ class CsanmtForTranslationExporter(TfModelExporter):
 
     def export_onnx(self, output_dir: str, opset=13, **kwargs):
         raise NotImplementedError(
-            'csanmt model does not support onnx format, consider using savedmodel instead.'
+            'csanmt model does not support onnx format, consider using saved model instead.'
         )

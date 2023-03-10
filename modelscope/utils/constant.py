@@ -239,6 +239,7 @@ class MultiModalTasks(object):
     document_vl_embedding = 'document-vl-embedding'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
+    video_temporal_grounding = 'video-temporal-grounding'
     text_to_video_synthesis = 'text-to-video-synthesis'
 
 

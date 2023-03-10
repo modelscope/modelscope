@@ -57,6 +57,7 @@ class OutputKeys(object):
     MATCHES = 'matches'
     PCD12 = 'pcd12'
     PCD12_ALIGN = 'pcd12_align'
+    TBOUNDS = 'tbounds'
 
 
 TASK_OUTPUTS = {
@@ -1105,6 +1106,7 @@ TASK_OUTPUTS = {
     Tasks.document_grounded_dialog_generate: [OutputKeys.TEXT],
     Tasks.document_grounded_dialog_rerank: [OutputKeys.OUTPUT],
     Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
+    Tasks.video_temporal_grounding: [OutputKeys.SCORES, OutputKeys.TBOUNDS],
 }
 
 

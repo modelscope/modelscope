@@ -195,6 +195,7 @@ class Models(object):
     mgeo = 'mgeo'
     vldoc = 'vldoc'
     hitea = 'hitea'
+    soonet = 'soonet'
 
     # science models
     unifold = 'unifold'
@@ -497,6 +498,7 @@ class Pipelines(object):
     text_to_video_synthesis = 'latent-text-to-video-synthesis'  # latent-text-to-video-synthesis
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
+    soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

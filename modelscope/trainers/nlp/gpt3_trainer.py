@@ -8,7 +8,7 @@ import torch
 from torch import nn
 
 from modelscope.metainfo import Trainers
-from modelscope.models.base import TorchModel
+from modelscope.models.base import Model, TorchModel
 from modelscope.models.nlp import GPT3ForTextGeneration
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.nlp_trainer import NlpEpochBasedTrainer
@@ -81,3 +81,7 @@ class GPT3Trainer(NlpEpochBasedTrainer):
     def _forward_eval(self, model: GPT3ForTextGeneration,
                       data: Dict[str, Any]) -> Dict[str, Any]:
         return model.forward(data)
+
+    def build_model(self) -> TorchModel:
+        return Model.from_pretrained(
+            self.model_dir, cfg_dict=self.cfg, megatron_cfg=self.cfg.megatron)

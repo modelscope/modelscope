@@ -22,7 +22,7 @@ class TestActionDetectionTrainer(unittest.TestCase):
         cmd_uninstall = ['pip', 'uninstall', '-y', 'detectron2']
         cmd = [
             'pip', 'install', '--upgrade',
-            'git+https://github.com/facebookresearch/detectron2.git'
+            'git+https://gitee.com/lllcho/detectron2.git'
         ]
         subprocess.run(cmd_uninstall)
         subprocess.run(cmd)

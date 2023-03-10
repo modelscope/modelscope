@@ -211,13 +211,19 @@ def generate_scp_from_url(url: str, key: str = None):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
     # for wav url, download bytes data
-    result = urlparse(url)
-    if result.scheme is not None and len(result.scheme) > 0:
-        storage = HTTPStorage()
-        # bytes
-        wav_scp_path = storage.read(url)
-
-        return wav_scp_path, raw_inputs
+    if url.startswith('http'):
+        result = urlparse(url)
+        if result.scheme is not None and len(result.scheme) > 0:
+            storage = HTTPStorage()
+            # bytes
+            data = storage.read(url)
+            work_dir = tempfile.TemporaryDirectory().name
+            if not os.path.exists(work_dir):
+                os.makedirs(work_dir)
+            wav_path = os.path.join(work_dir, os.path.basename(url))
+            with open(wav_path, 'wb') as fb:
+                fb.write(data)
+            return wav_path, raw_inputs
 
     return wav_scp_path, raw_inputs
 

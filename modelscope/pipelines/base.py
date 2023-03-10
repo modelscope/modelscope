@@ -2,6 +2,7 @@
 
 import os
 import os.path as osp
+import random
 from abc import ABC, abstractmethod
 from functools import partial
 from multiprocessing import Pool
@@ -436,15 +437,20 @@ class DistributedPipeline(Pipeline):
 
         ranks = list(range(self.world_size))
         self.model_pool = Pool(self.world_size)
-        master_ip = '127.0.0.1' if 'master_ip' not in kwargs else kwargs[
-            'master_ip']
-        os.environ['MASTER_ADDR'] = master_ip
-        master_port = '29500' if 'master_port' not in kwargs else kwargs[
-            'master_port']
+
+        if 'master_ip' not in kwargs:
+            kwargs['master_ip'] = '127.0.0.1'
+        master_port = int(kwargs['master_port']
+                          ) if 'master_port' in kwargs else random.randint(
+                              29500, 39500)
         from modelscope.utils.torch_utils import _find_free_port, _is_free_port
-        if not _is_free_port(int(master_port)):
-            master_port = str(_find_free_port())
-        os.environ['MASTER_PORT'] = master_port
+        if not _is_free_port(master_port):
+            master_port = _find_free_port()
+        kwargs['master_port'] = str(master_port)
+        # TODO: Pass ip and port to megatron_util for initialization
+        os.environ['MASTER_ADDR'] = kwargs['master_ip']
+        os.environ['MASTER_PORT'] = kwargs['master_port']
+
         self.model_pool.map(
             partial(
                 self.__class__._instantiate_one,

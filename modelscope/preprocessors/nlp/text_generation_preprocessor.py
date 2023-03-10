@@ -107,7 +107,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
                  mode: str = ModeKeys.INFERENCE,
                  src_txt='src_txt',
                  tgt_txt='tgt_txt',
-                 max_length: int = None,
+                 sequence_length: int = None,
                  use_fast: bool = None,
                  keep_original_columns=None,
                  **kwargs):
@@ -118,7 +118,7 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
             mode: The mode for the preprocessor.
             src_txt: The key of the source sentence.
             tgt_txt: The key of the generated sentence.
-            max_length: The max sequence length which the model supported,
+            sequence_length: The max sequence length which the model supported,
                 will be passed into tokenizer as the 'max_length' param.
             use_fast: Whether to use the fast tokenizer or not.
             **kwargs: Extra args input into the tokenizer's __call__ method.
@@ -130,10 +130,10 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         kwargs['padding'] = kwargs.get('padding', 'max_length')
         kwargs['return_token_type_ids'] = kwargs.get('return_token_type_ids',
                                                      False)
-        kwargs[
-            'max_length'] = max_length if max_length is not None else kwargs.get(
-                'sequence_length', 128)
-        kwargs.pop('sequence_length', None)
+        # sequence_length > max_length
+        kwargs['max_length'] = sequence_length if sequence_length is not None \
+            else kwargs.get('max_length', 128)
+
         self.src_length = kwargs['max_length']
         self.tgt_length = kwargs.pop('target_max_length', kwargs['max_length'])
         model_type = None

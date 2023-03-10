@@ -67,6 +67,17 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.run_pipeline_with_model_id(self.palm_model_id_zh_base,
                                         self.palm_input_zh)
 
+    @unittest.skipUnless(test_level() >= -1, 'skip test in current test level')
+    def test_palm_zh_base_with_model_name_with_args(self):
+        self.run_pipeline_with_model_id(
+            self.palm_model_id_zh_base,
+            self.palm_input_zh,
+            run_kwargs={
+                'top_p': 0.9,
+                'temperature': 0.9,
+                'max_length': 64
+            })
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_palm_zh_base_with_model_name_batch(self):
         self.run_pipeline_with_model_id(
@@ -94,6 +105,17 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_gpt_base_with_model_name(self):
         self.run_pipeline_with_model_id(self.gpt3_base_model_id,
                                         self.gpt3_input)
+
+    @unittest.skipUnless(test_level() >= -1, 'skip test in current test level')
+    def test_gpt_base_with_model_name_with_args(self):
+        self.run_pipeline_with_model_id(
+            self.gpt3_base_model_id,
+            self.gpt3_input,
+            run_kwargs={
+                'top_p': 0.9,
+                'temperature': 0.9,
+                'max_length': 64
+            })
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_gpt_base_with_model_name_batch(self):

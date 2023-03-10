@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .object_detection import DetDataset, DetImagesMixDataset
     from .ocr_detection import DataLoader, ImageDataset, QuadMeasurer
     from .ocr_recognition_dataset import OCRRecognitionDataset
+    from .image_colorization import ImageColorizationDataset
 else:
     _import_structure = {
         'easycv_base': ['EasyCVBaseDataset'],
@@ -72,6 +73,7 @@ else:
         'object_detection': ['DetDataset', 'DetImagesMixDataset'],
         'ocr_detection': ['DataLoader', 'ImageDataset', 'QuadMeasurer'],
         'ocr_recognition_dataset': ['OCRRecognitionDataset'],
+        'image_colorization': ['ImageColorizationDataset'],
     }
 
     import sys

@@ -1074,6 +1074,8 @@ class Metrics(object):
     image_quality_assessment_degradation_metric = 'image-quality-assessment-degradation-metric'
     # metric for text-ranking task
     text_ranking_metric = 'text-ranking-metric'
+    # metric for image-colorization task
+    image_colorization_metric = 'image-colorization-metric'
     ocr_recognition_metric = 'ocr-recognition-metric'
 
 

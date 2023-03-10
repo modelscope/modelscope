@@ -40,6 +40,7 @@ def discretized_gaussian_log_likelihood(x0, mean, log_scale):
 
 
 def _i(tensor, t, x):
+    tensor = tensor.to(x.device)
     shape = (x.size(0), ) + (1, ) * (x.ndim - 1)
     return tensor[t].view(shape).to(x)
 

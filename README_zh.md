@@ -37,7 +37,7 @@ ModelScope Library为模型贡献者提供了必要的分层API，以便将来�
 除了包含各种模型的实现之外，ModelScope Library还支持与ModelScope后端服务进行必要的交互，特别是与Model-Hub和Dataset-Hub的交互。这种交互促进了模型和数据集的管理在后台无缝执行，包括模型数据集查询、版本控制、缓存管理等。
 
 # 部分模型和在线体验
-ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
+ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
 
 <p align="center">
     <br>
@@ -65,22 +65,19 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 
 * [SPACE-T表格问答预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
 
-语音：
+多模态：
 
-* [Paraformer语音识别-中文-通用-16k-离线-large-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [CLIP模型-中文-通用领域-base](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
 
-* [语音合成-中文-多情感领域-16k-多发音人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [OFA预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
 
-* [CTC语音唤醒-移动端-单麦-16k-小云小云](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [太乙-Stable-Diffusion-1B-中文-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
 
-* [WeNet-U2pp_Conformer-语音识别-中文-16k-实时](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
-
-* [FRCRN语音降噪-单麦-16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
-
-* [DFSMN回声消除-单麦单参考-16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
-
+* [mPLUG视觉问答模型-英文-large](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
 
 计算机视觉：
+
+* [ControlNet可控图像生成](https://modelscope.cn/models/dienstag/cv_controlnet_controllable-image-generation_nine-annotators/summary)
 
 * [DAMOYOLO-高性能通用检测模型-S](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
 
@@ -99,15 +96,22 @@ ModelScope开源了数百个(当前600+)模型，涵盖自然语言处理、计�
 * [万物识别-中文-通用领域](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
 
 
-多模态：
+语音：
 
-* [CLIP模型-中文-通用领域-base](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [Paraformer语音识别-中文-通用-16k-离线-large-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
 
-* [OFA预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [语音合成-中文-多情感领域-16k-多发音人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
 
-* [太乙-Stable-Diffusion-1B-中文-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [CTC语音唤醒-移动端-单麦-16k-小云小云](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
 
-* [mPLUG视觉问答模型-英文-large](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [WeNet-U2pp_Conformer-语音识别-中文-16k-实时](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+
+* [FRCRN语音降噪-单麦-16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
+
+* [DFSMN回声消除-单麦单参考-16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
+
+
+
 
 科学计算：
 

@@ -39,7 +39,8 @@ Apart from harboring implementations of a wide range of different models, ModelS
 
 # Models and Online Accessibility
 
-Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (600+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+Hundreds of models are made publicly available on [ModelScope]( https://www.modelscope.cn)  (700+ and counting), covering the latest development in areas such as NLP, CV, Audio, Multi-modality, and AI for Science, etc. Many of these models represent the SOTA in their specific fields, and made their open-sourced debut on ModelScope. Users can visit ModelScope([modelscope.cn](http://www.modelscope.cn)) and experience first-hand how these models perform via online experience, with just a few clicks. Immediate developer-experience is also possible through the ModelScope Notebook, which is backed by ready-to-use CPU/GPU development environment in the cloud - only one click away on [ModelScope](https://www.modelscope.cn).
+
 
 <p align="center">
     <br>
@@ -67,22 +68,19 @@ NLP:
 
 * [nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
 
-Audio:
+Multi-Modal:
 
-* [speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
 
-* [speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
 
-* [speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
 
-* [u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
-
-* [speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
-
-* [speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
-
+* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
 
 CV:
+
+* [cv_controlnet_controllable-image-generation_nine-annotators](https://modelscope.cn/models/dienstag/cv_controlnet_controllable-image-generation_nine-annotators/summary)
 
 * [cv_tinynas_object-detection_damoyolo](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
 
@@ -101,21 +99,29 @@ CV:
 * [cv_resnest101_general_recognition](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
 
 
-Multi-Modal:
+Audio:
 
-* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
 
-* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
 
-* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
 
-* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+
+* [speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
+
+* [speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
+
+
 
 AI for Science:
 
 * [uni-fold-monomer](https://modelscope.cn/models/DPTech/uni-fold-monomer/summary)
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
+
+**Note:** Most models on ModelScope are public and can be downloaded without account registration on modelscope website([www.modelscope.cn](www.modelscope.cn)), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for dowloading models with api provided by modelscope library or git.
 
 # QuickTour
 

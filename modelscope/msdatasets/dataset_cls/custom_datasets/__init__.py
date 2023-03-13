@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .text_ranking_dataset import TextRankingDataset
     from .veco_dataset import VecoDataset
     from .video_summarization_dataset import VideoSummarizationDataset
-    from .audio import KWSDataset, KWSDataLoader, kws_nearfield_dataset
+    from .audio import KWSDataset, KWSDataLoader, kws_nearfield_dataset, ASRDataset
     from .bad_image_detecting import BadImageDetectingDataset
     from .image_inpainting import ImageInpaintingDataset
     from .image_portrait_enhancement import ImagePortraitEnhancementDataset
@@ -52,7 +52,8 @@ else:
         'text_ranking_dataset': ['TextRankingDataset'],
         'veco_dataset': ['VecoDataset'],
         'video_summarization_dataset': ['VideoSummarizationDataset'],
-        'audio': ['KWSDataset', 'KWSDataLoader', 'kws_nearfield_dataset'],
+        'audio':
+        ['KWSDataset', 'KWSDataLoader', 'kws_nearfield_dataset', 'ASRDataset'],
         'bad_image_detecting': ['BadImageDetectingDataset'],
         'image_inpainting': ['ImageInpaintingDataset'],
         'image_portrait_enhancement': ['ImagePortraitEnhancementDataset'],

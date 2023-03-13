@@ -10,6 +10,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import depth_to_color
 from modelscope.utils.logger import get_logger
@@ -50,9 +51,7 @@ class ImageBTSDepthEstimationPipeline(Pipeline):
         logger.info('BTS depth estimation model, pipeline init')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        img = cv2.imread(input)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = np.array(img, dtype=np.uint8)
+        img = LoadImage.convert_to_ndarray(input)
 
         h, w, _ = img.shape
         top, left = int(h - 352), int((w - 1216) / 2)

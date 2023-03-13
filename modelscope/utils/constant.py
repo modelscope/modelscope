@@ -399,6 +399,7 @@ class ThirdParty(object):
     KEY = 'third_party'
     EASYCV = 'easycv'
     ADASEQ = 'adaseq'
+    ADADET = 'adadet'
 
 
 class ConfigFields(object):

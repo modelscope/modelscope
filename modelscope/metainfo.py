@@ -1153,3 +1153,6 @@ class CustomDatasets(object):
     DetImagesMixDataset = 'DetImagesMixDataset'
     PanopticDataset = 'PanopticDataset'
     PairedDataset = 'PairedDataset'
+    SiddDataset = 'SiddDataset'
+    GoproDataset = 'GoproDataset'
+    RedsDataset = 'RedsDataset'

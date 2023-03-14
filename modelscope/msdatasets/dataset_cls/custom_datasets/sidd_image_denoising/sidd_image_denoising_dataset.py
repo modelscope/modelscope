@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from modelscope.metainfo import Models
+from modelscope.metainfo import CustomDatasets
 from modelscope.msdatasets.dataset_cls.custom_datasets import (
     CUSTOM_DATASETS, TorchCustomDataset)
 from modelscope.utils.constant import Tasks
@@ -16,7 +16,7 @@ def default_loader(path):
 
 
 @CUSTOM_DATASETS.register_module(
-    Tasks.image_denoising, module_name=Models.nafnet)
+    Tasks.image_denoising, module_name=CustomDatasets.SiddDataset)
 class SiddImageDenoisingDataset(TorchCustomDataset):
     """Paired image dataset for image restoration.
     """

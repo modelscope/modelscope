@@ -554,6 +554,23 @@ class EpochBasedTrainer(BaseTrainer):
             else:
                 return datasets
 
+    def to_task_dataset(self, dataset: Dataset, mode: str,
+                        preprocessor: Preprocessor,
+                        **kwargs) -> TorchCustomDataset:
+        r"""
+        @deprecated
+        This method is deprecated and may be removed in future releases, please use `build_dataset()` instead. Could be
+        compatible with methods that override the to_task_dataset in other classes.
+        """
+        self.logger.warning(
+            'This to_task_dataset method is deprecated, please use build_dataset instead.'
+        )
+
+        task_dataset = TorchCustomDataset(
+            dataset, mode=mode, preprocessor=preprocessor, **kwargs)
+        task_dataset.trainer = self
+        return task_dataset
+
     @staticmethod
     def build_dataset_from_cfg(model_cfg: Config,
                                mode: str,

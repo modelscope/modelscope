@@ -18,7 +18,7 @@ def default_loader(path):
 
 
 @CUSTOM_DATASETS.register_module(
-    Tasks.image_deblurring, module_name=CustomDatasets.PairedDataset)
+    Tasks.image_deblurring, module_name=CustomDatasets.RedsDataset)
 class RedsImageDeblurringDataset(TorchCustomDataset):
     """Paired image dataset for image restoration.
     """

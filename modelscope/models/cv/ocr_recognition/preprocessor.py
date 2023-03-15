@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import PIL
 import torch
-import math
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor, load_image

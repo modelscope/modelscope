@@ -3,7 +3,7 @@ greenlet>=1.1.2
 inflect
 jedi>=0.18.1
 kantts
-librosa
+librosa<=0.9.2
 lxml
 matplotlib
 msgpack>=1.0.4

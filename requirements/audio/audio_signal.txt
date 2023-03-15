@@ -1,5 +1,5 @@
 hyperpyyaml
-librosa
+librosa<=0.9.2
 MinDAEC
 mir_eval>=0.7
 numpy

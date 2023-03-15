@@ -1,6 +1,7 @@
 from __future__ import division
 import colorsys
 import os
+
 import numpy as np
 import pandas as pd
 import torch
@@ -8,6 +9,7 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 from PIL import Image
 from torchvision.ops.boxes import batched_nms, nms
+
 from modelscope.preprocessors.image import load_image
 
 plt.switch_backend('Agg')

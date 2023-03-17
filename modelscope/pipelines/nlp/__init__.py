@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
     from .codegeex_code_translation_pipeline import CodeGeeXCodeTranslationPipeline
     from .codegeex_code_generation_pipeline import CodeGeeXCodeGenerationPipeline
+    from .chatglm6b_text_generation_pipeline import ChatGLM6bTextGenerationPipeline
     from .translation_evaluation_pipeline import TranslationEvaluationPipeline
     from .user_satisfaction_estimation_pipeline import UserSatisfactionEstimationPipeline
     from .siamese_uie_pipeline import SiameseUiePipeline
@@ -89,6 +90,7 @@ else:
         ['CodeGeeXCodeTranslationPipeline'],
         'codegeex_code_generation_pipeline':
         ['CodeGeeXCodeGenerationPipeline'],
+        'chatglm6b_text_generation_pipeline': ['ChatGLM6bTextGenerationPipeline'],
         'translation_evaluation_pipeline': ['TranslationEvaluationPipeline'],
         'user_satisfaction_estimation_pipeline':
         ['UserSatisfactionEstimationPipeline'],

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     )
     from .bloom import BloomModel
     from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
+    from .chatglm_6b import ChatGLM6bForTextGeneration
     from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
@@ -89,6 +90,7 @@ else:
         'csanmt': ['CsanmtForTranslation'],
         'codegeex':
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
+        'chatglm_6b': ['ChatGLM6bForTextGeneration'],
         'deberta_v2': ['DebertaV2ForMaskedLM', 'DebertaV2Model'],
         'heads': ['TextClassificationHead'],
         'hf_transformers': ['TransformersModel'],

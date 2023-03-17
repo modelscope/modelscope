@@ -147,6 +147,7 @@ class Models(object):
     T5 = 'T5'
     mglm = 'mglm'
     codegeex = 'codegeex'
+    chatglm6b = 'chatglm6b'
     bloom = 'bloom'
     unite = 'unite'
     megatron_bert = 'megatron-bert'
@@ -424,6 +425,7 @@ class Pipelines(object):
     feature_extraction = 'feature-extraction'
     mglm_text_summarization = 'mglm-text-summarization'
     codegeex_code_translation = 'codegeex-code-translation'
+    chatglm6b_text_generation = 'chatglm6b-text-generation'
     codegeex_code_generation = 'codegeex-code-generation'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore

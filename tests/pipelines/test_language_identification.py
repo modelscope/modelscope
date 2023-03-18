@@ -13,7 +13,8 @@ class LanguageIdentificationTest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.text_classification
         self.model_id = 'damo/nlp_language_identification-classification-base'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0,
+                         'skip test case in current test level')
     def test_run_with_model_name_for_en2de(self):
         inputs = 'Elon Musk, co-founder and chief executive officer of Tesla Motors.\n' \
                  'Gleichzeitig nahm die Legion an der Befriedung Algeriens teil, die von.\n' \
@@ -21,7 +22,8 @@ class LanguageIdentificationTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(self.task, model=self.model_id)
         print(pipeline_ins(input=inputs))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0,
+                         'skip test case in current test level')
     def test_demo_compatibility(self):
         self.compatibility_check()
 

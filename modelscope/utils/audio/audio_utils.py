@@ -21,6 +21,18 @@ class TtsTrainType(object):
     TRAIN_TYPE_VOC = 'train-type-voc'
 
 
+class TtsCustomParams(object):
+    VOICE_NAME = 'voice_name'
+    AM_CKPT = 'am_ckpt'
+    VOC_CKPT = 'voc_ckpt'
+    AM_CONFIG = 'am_config'
+    VOC_CONFIG = 'voc_config'
+    AUIDO_CONFIG = 'audio_config'
+    SE_FILE = 'se_file'
+    SE_MODEL = 'se_model'
+    MVN_FILE = 'mvn_file'
+
+
 def to_segment(batch, segment_length=SEGMENT_LENGTH_TRAIN):
     """
     Dataset mapping function to split one audio into segments.
@@ -105,6 +117,28 @@ def extract_pcm_from_wav(wav: bytes) -> bytes:
     return data, sample_rate
 
 
+def expect_token_number(instr, token):
+    first_token = re.match(r'^\s*' + token, instr)
+    if first_token is None:
+        return None
+    instr = instr[first_token.end():]
+    lr = re.match(r'^\s*(-?\d+\.?\d*e?-?\d*?)', instr)
+    if lr is None:
+        return None
+    return instr[lr.end():], lr.groups()[0]
+
+
+def expect_kaldi_matrix(instr):
+    pos2 = instr.find('[', 0)
+    pos3 = instr.find(']', pos2)
+    mat = []
+    for stt in instr[pos2 + 1:pos3].split('\n'):
+        tmp_mat = np.fromstring(stt, dtype=np.float32, sep=' ')
+        if tmp_mat.size > 0:
+            mat.append(tmp_mat)
+    return instr[pos3 + 1:], np.array(mat)
+
+
 # This implementation is adopted from scipy.io.wavfile.write,
 # made publicly available under the BSD-3-Clause license at
 # https://github.com/scipy/scipy/blob/v1.9.3/scipy/io/wavfile.py
@@ -172,22 +206,24 @@ def load_bytes_from_url(url: str) -> Union[bytes, str]:
 def generate_scp_from_url(url: str, key: str = None):
     wav_scp_path = None
     raw_inputs = None
-    # for local wav.scp inputs
-    if os.path.exists(url) and url.lower().endswith('.scp'):
-        wav_scp_path = url
-        return wav_scp_path, raw_inputs
-    # for local wav file inputs
-    if os.path.exists(url) and (url.lower().endswith(SUPPORT_AUDIO_TYPE_SETS)):
+    # for local inputs
+    if os.path.exists(url):
         wav_scp_path = url
         return wav_scp_path, raw_inputs
     # for wav url, download bytes data
-    result = urlparse(url)
-    if result.scheme is not None and len(result.scheme) > 0:
-        storage = HTTPStorage()
-        # bytes
-        wav_scp_path = storage.read(url)
-
-        return wav_scp_path, raw_inputs
+    if url.startswith('http'):
+        result = urlparse(url)
+        if result.scheme is not None and len(result.scheme) > 0:
+            storage = HTTPStorage()
+            # bytes
+            data = storage.read(url)
+            work_dir = tempfile.TemporaryDirectory().name
+            if not os.path.exists(work_dir):
+                os.makedirs(work_dir)
+            wav_path = os.path.join(work_dir, os.path.basename(url))
+            with open(wav_path, 'wb') as fb:
+                fb.write(data)
+            return wav_path, raw_inputs
 
     return wav_scp_path, raw_inputs
 

@@ -2,19 +2,16 @@
 import os
 import random
 import re
-from shutil import rmtree
 
 import numpy as np
 import torch
 from packaging import version
 
-from modelscope import __version__
 from modelscope.metainfo import Hooks, Pipelines
 from modelscope.utils.checkpoint import (load_checkpoint, save_checkpoint,
                                          save_configuration)
 from modelscope.utils.constant import LogKeys, ModelFile
 from modelscope.utils.logger import get_logger
-from modelscope.utils.megatron_utils import is_megatron_initialized
 from modelscope.utils.torch_utils import is_master
 from .builder import HOOKS
 from .hook import Hook

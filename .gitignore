@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+test.py
 # C extensions
 *.so
 
@@ -123,6 +123,7 @@ tensorboard.sh
 replace.sh
 result.png
 result.jpg
+result.mp4
 
 # Pytorch
 *.pth

@@ -1,11 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import copy
 import datetime
 import math
 import os
-import os.path as osp
 import time
-from typing import Callable, Dict, Optional
+from typing import Dict
 
 import torch
 import torch.distributed as dist
@@ -25,12 +23,13 @@ from modelscope.models.cv.tinynas_detection.damo.detectors.detector import (
     build_ddp_model, build_local_model)
 from modelscope.models.cv.tinynas_detection.damo.utils import (
     cosine_scheduler, ema_model)
-from modelscope.msdatasets.task_datasets.damoyolo import (build_dataloader,
-                                                          build_dataset)
+from modelscope.msdatasets.dataset_cls.custom_datasets.damoyolo import (
+    build_dataloader, build_dataset)
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.checkpoint import save_checkpoint
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ModelFile,
+                                       ThirdParty)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.metric import MeterBuffer
 from modelscope.utils.torch_utils import get_rank, synchronize
@@ -64,14 +63,19 @@ class ImageDetectionDamoyoloTrainer(BaseTrainer):
             train_ann: the path of train set annotation file.
             val_ann: the path of val set annotation file.
             num_classes: class number.
-            base_lr_per_img: learning rate per image. The final learning rate is base_lr_per_img*batch_size.
+            base_lr_per_img: learning rate per image.
+                The final learning rate is base_lr_per_img*batch_size.
             pretrain_model: the path of pretrained model.
             work_dir: the directory of work folder.
             exp_name: the name of experiment.
+            third_party: in which third party library this function is called.
         """
         if model is not None:
+            third_party = kwargs.get(ThirdParty.KEY)
+            if third_party is not None:
+                kwargs.pop(ThirdParty.KEY)
             self.cache_path = self.get_or_download_model_dir(
-                model, model_revision)
+                model, model_revision, third_party)
             if cfg_file is None:
                 self.cfg_file = os.path.join(self.cache_path,
                                              ModelFile.CONFIGURATION)

@@ -204,7 +204,7 @@ if __name__ == '__main__':
         author_email='modelscope@list.alibaba-inc.com',
         keywords='python,nlp,science,cv,speech,multi-modal',
         url='https://github.com/modelscope/modelscope',
-        packages=find_packages(exclude=('configs', 'tools', 'demo')),
+        packages=find_packages(exclude=('configs', 'demo')),
         include_package_data=True,
         package_data={
             '': ['*.h', '*.cpp', '*.cu'],

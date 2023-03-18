@@ -6,6 +6,7 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
+from packaging import version
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
@@ -128,3 +129,19 @@ class TorchModel(Model, torch.nn.Module):
 
         if config is not None:
             save_config_function(target_folder, config)
+
+    def compile(self, **kwargs):
+        """Compile torch model with torch>=2.0
+
+        Args:
+            kwargs:
+                backend: The backend param of torch.compile
+                mode: The mode param of torch.compile
+        """
+        if version.parse(torch.__version__) >= version.parse('2.0.0.dev'):
+            return torch.compile(self, **kwargs)
+        else:
+            logger.warning(
+                f'Torch compiling needs torch version >= 2.0.0, your torch version is : {torch.__version__},'
+                f' returns original model')
+            return self

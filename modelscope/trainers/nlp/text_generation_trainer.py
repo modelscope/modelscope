@@ -22,12 +22,7 @@ class TextGenerationTrainer(NlpEpochBasedTrainer):
         model.eval()
 
         with torch.no_grad():
-            if isinstance(
-                    data,
-                    Mapping) and not func_receive_dict_inputs(model.generate):
-                result = model.generate(**data)
-            else:
-                result = model.generate(data)
+            result = model.generate(data)
 
         result['preds'] = [self._decode(seq) for seq in result['sequences']]
         data['tgts'] = [self._decode(seq) for seq in data['labels']]

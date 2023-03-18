@@ -44,6 +44,20 @@ class SiameseUieModel(BertPreTrainedModel):
         self.plm.encoder.layer = self.plm.encoder.layer[:self.config.
                                                         num_hidden_layers]
 
+    def circle_loss(self, y_pred, y_true):
+        batch_size = y_true.size(0)
+        y_true = y_true.view(batch_size, -1)
+        y_pred = y_pred.view(batch_size, -1)
+        y_pred = (1 - 2 * y_true) * y_pred
+        y_pred_neg = y_pred - y_true * 1e12
+        y_pred_pos = y_pred - (1 - y_true) * 1e12
+        zeros = torch.zeros_like(y_pred[:, :1])
+        y_pred_neg = torch.cat([y_pred_neg, zeros], dim=-1)
+        y_pred_pos = torch.cat([y_pred_pos, zeros], dim=-1)
+        neg_loss = torch.logsumexp(y_pred_neg, dim=-1)
+        pos_loss = torch.logsumexp(y_pred_pos, dim=-1)
+        return (neg_loss + pos_loss).mean()
+
     def get_cross_attention_output(self, hidden_states, attention_mask,
                                    encoder_hidden_states,
                                    encoder_attention_mask):
@@ -72,8 +86,44 @@ class SiameseUieModel(BertPreTrainedModel):
             position_ids=position_ids)[0]
         return sequence_output
 
-    def forward(self, sequence_output, attention_masks, hint_ids,
-                cross_attention_masks):
+    def forward(self, input_ids, attention_masks, hint_ids,
+                cross_attention_masks, head_labels, tail_labels):
+        """train forward
+
+        Args:
+            input_ids (Tensor): input token ids of text.
+            attention_masks (Tensor): attention_masks of text.
+            hint_ids (Tensor): input token ids of prompt.
+            cross_attention_masks (Tensor): attention_masks of prompt.
+            head_labels (Tensor): labels of start position.
+            tail_labels (Tensor): labels of end position.
+
+        Returns:
+            Dict[str, float]: the loss
+            Example:
+            {"loss": 0.5091743}
+        """
+        sequence_output = self.get_plm_sequence_output(input_ids,
+                                                       attention_masks)
+        assert hint_ids.size(1) + input_ids.size(1) <= 512
+        position_ids = torch.arange(hint_ids.size(1)).expand(
+            (1, -1)) + input_ids.size(1)
+        position_ids = position_ids.to(sequence_output.device)
+        hint_sequence_output = self.get_plm_sequence_output(
+            hint_ids, cross_attention_masks, position_ids, is_hint=True)
+        sequence_output = self.get_cross_attention_output(
+            sequence_output, attention_masks, hint_sequence_output,
+            cross_attention_masks)
+        # (b, l, n)
+        head_logits = self.head_clsf(sequence_output).squeeze(-1)
+        tail_logits = self.tail_clsf(sequence_output).squeeze(-1)
+        loss_func = self.circle_loss
+        head_loss = loss_func(head_logits, head_labels)
+        tail_loss = loss_func(tail_logits, tail_labels)
+        return {'loss': head_loss + tail_loss}
+
+    def fast_inference(self, sequence_output, attention_masks, hint_ids,
+                       cross_attention_masks):
         """
 
         Args:

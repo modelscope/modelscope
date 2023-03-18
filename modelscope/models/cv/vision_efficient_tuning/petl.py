@@ -1,8 +1,10 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import math
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
+import torchvision
 
 
 class Prompt(nn.Module):
@@ -172,3 +174,101 @@ class Prefix(nn.Module):
         k, v = torch.cat((k, prefix_key), dim=2), torch.cat((v, prefix_value),
                                                             dim=2)
         return q, k, v
+
+
+class SideTune(nn.Module):
+    """The implementation of vision side-tuning method.
+
+    Side-Tuning only needs to train one side network and
+    weights the output of pre-trained model and side network.
+    'Side-Tuning: A Baseline for Network Adaptation via Additive Side Networks'
+    by Zhang et al.(2019)
+    See https://arxiv.org/abs/1912.13503
+
+    Attributes:
+        sidetune_length: An integer indicating the linear dimension.
+        sidetune_type: A string indicating the type of side network.
+    """
+
+    def __init__(self, sidetune_length=None, sidetune_type=None):
+        super(SideTune, self).__init__()
+        self.sidetune_length = sidetune_length
+        self.sidetune_type = sidetune_type
+        if sidetune_type.lower() == 'fcn4':
+            self.side = FCN4(out_dims=self.sidetune_length)
+        if sidetune_type.lower() == 'alexnet':
+            mm = torchvision.models.alexnet(pretrained=True)
+            self.side = nn.Sequential(
+                OrderedDict([
+                    ('features', mm.features), ('avgpool', mm.avgpool),
+                    ('flatten', nn.Flatten()),
+                    ('fc', nn.Linear(9216, self.sidetune_length, bias=False))
+                ]))
+        self.alpha = nn.Parameter(torch.tensor(0.0))
+
+    def forward(self, x, x_base):
+        alpha_squashed = torch.sigmoid(self.alpha)
+        x_side = self.side(x)
+        x_out = alpha_squashed * x_base + (1 - alpha_squashed) * x_side
+        return x_out
+
+
+class FCN4(nn.Module):
+    """The implementation of simple FCN4 network for side network.
+    """
+
+    def __init__(self, out_dims=-1, **kwargs):
+        super(FCN4, self).__init__(**kwargs)
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(
+                3,
+                16,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+                dilation=1), nn.GroupNorm(2, 16), nn.ReLU())
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(
+                16,
+                16,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+                bias=False,
+                dilation=1), nn.GroupNorm(2, 16), nn.ReLU())
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(
+                16,
+                32,
+                kernel_size=3,
+                stride=2,
+                padding=0,
+                bias=False,
+                dilation=1), nn.GroupNorm(2, 32), nn.ReLU())
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(
+                32,
+                64,
+                kernel_size=3,
+                stride=1,
+                padding=0,
+                bias=False,
+                dilation=1), nn.GroupNorm(2, 64), nn.ReLU())
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        if out_dims > 0:
+            self.fc = nn.Linear(64, out_dims)
+        else:
+            self.fc = None
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        x = self.pool(x)
+        x = x.view(x.size(0), -1)
+        if self.fc is not None:
+            x = self.fc(x)
+        return x

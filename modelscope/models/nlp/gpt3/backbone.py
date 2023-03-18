@@ -354,6 +354,9 @@ class GPT3Model(PreTrainedModel):
         return model
 
     def generate(self, tokens, temperature=1.0, **kwargs):
+        top_k = kwargs.pop('top_k', self.config.top_k)
+        top_p = kwargs.pop('top_p', self.config.top_p)
+        max_length = kwargs.pop('max_length', tokens.size(1) + 100)
 
         batch_size = tokens.size(0)
         lengths = kwargs.pop(
@@ -361,13 +364,18 @@ class GPT3Model(PreTrainedModel):
             torch.tensor([tokens.size(1)], device=tokens.device))
 
         min_prompt_length = lengths.min().item()
-        max_sequence_length = tokens.size(1)
-        max_sequence_length = min(max_sequence_length,
+        max_sequence_length = min(max_length,
                                   self.config.max_position_embeddings)
 
         # If the context is too big, this happens
         if min_prompt_length >= max_sequence_length:
-            raise ValueError('context length + tokens_to_generate too large')
+            raise ValueError('context length too large')
+
+        pad_length = max_sequence_length - tokens.size(1)
+        if pad_length > 0:
+            pads = torch.zeros(
+                batch_size, pad_length, device=tokens.device).long()
+            tokens = torch.cat((tokens, pads), dim=-1)
 
         # Added termination_id to support the case that we want to terminate the
         # generation once that id is generated.
@@ -391,8 +399,8 @@ class GPT3Model(PreTrainedModel):
                 last_token_logits = logits[:, -1, :]
                 new_sample = sample(
                     last_token_logits,
-                    top_k=self.config.top_k,
-                    top_p=self.config.top_p,
+                    top_k=top_k,
+                    top_p=top_p,
                     temperature=temperature,
                     vocab_size=self.config.vocab_size)
 

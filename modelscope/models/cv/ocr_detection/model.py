@@ -46,7 +46,7 @@ class OCRDetection(TorchModel):
             )
         if model_path != '':
             self.detector.load_state_dict(
-                torch.load(model_path, map_location='cpu'))
+                torch.load(model_path, map_location='cpu'), strict=False)
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         """

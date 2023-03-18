@@ -7,7 +7,7 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.image_deblur import NAFNetForImageDeblur
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.task_datasets.gopro_image_deblurring_dataset import \
+from modelscope.msdatasets.dataset_cls.custom_datasets.gopro_image_deblurring_dataset import \
     GoproImageDeblurringDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config

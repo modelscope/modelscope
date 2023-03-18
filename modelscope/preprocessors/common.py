@@ -7,6 +7,7 @@ from typing import Mapping
 import numpy as np
 import torch
 
+from modelscope.utils.registry import default_group
 from .builder import PREPROCESSORS, build_preprocessor
 
 
@@ -28,13 +29,14 @@ class Compose(object):
         for transform in transforms:
             if isinstance(transform, dict):
                 if self.field_name is None:
-                    transform = build_preprocessor(transform, field_name)
+                    transform = build_preprocessor(transform, default_group)
                 else:
                     # if not found key in field_name, try field_name=None(default_group)
                     try:
                         transform = build_preprocessor(transform, field_name)
                     except KeyError:
-                        transform = build_preprocessor(transform, None)
+                        transform = build_preprocessor(transform,
+                                                       default_group)
             elif callable(transform):
                 pass
             else:
@@ -108,7 +110,8 @@ class ToTensor(object):
                 self.keys = list(data.keys())
 
             for key in self.keys:
-                data[key] = to_tensor(data[key])
+                if key in data:
+                    data[key] = to_tensor(data[key])
         else:
             data = to_tensor(data)
 
@@ -135,9 +138,93 @@ class Filter(object):
 
         reserved_data = {}
         for key in self.reserved_keys:
-            reserved_data[key] = data[key]
+            if key in data:
+                reserved_data[key] = data[key]
 
         return reserved_data
 
     def __repr__(self):
         return self.__class__.__name__ + f'(keys={self.reserved_keys})'
+
+
+def to_numpy(data):
+    """Convert objects of various python types to `numpy.ndarray`.
+
+    Args:
+        data (torch.Tensor | numpy.ndarray | Sequence | int | float): Data to
+            be converted.
+    """
+
+    if isinstance(data, torch.Tensor):
+        return data.numpy()
+    elif isinstance(data, np.ndarray):
+        return data
+    elif isinstance(data, Sequence) and not isinstance(data, str):
+        return np.asarray(data)
+    elif isinstance(data, int):
+        return np.asarray(data, dtype=np.int64)
+    elif isinstance(data, float):
+        return np.asarray(data, dtype=np.float64)
+    else:
+        raise TypeError(f'type {type(data)} cannot be converted to tensor.')
+
+
+@PREPROCESSORS.register_module()
+class ToNumpy(object):
+    """Convert target object to numpy.ndarray.
+
+    Args:
+        keys (Sequence[str]): Key of data to be converted to numpy.ndarray.
+            Only valid when data is type of `Mapping`. If `keys` is None,
+            all values of keys ​​will be converted to numpy.ndarray by default.
+    """
+
+    def __init__(self, keys=None):
+        self.keys = keys
+
+    def __call__(self, data):
+        if isinstance(data, Mapping):
+            if self.keys is None:
+                self.keys = list(data.keys())
+
+            for key in self.keys:
+                if key in data:
+                    data[key] = to_numpy(data[key])
+        else:
+            data = to_numpy(data)
+
+        return data
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(keys={self.keys})'
+
+
+@PREPROCESSORS.register_module()
+class Rename(object):
+    """Change the name of the input keys to output keys, respectively.
+    """
+
+    def __init__(self, input_keys=[], output_keys=[]):
+        self.input_keys = input_keys
+        self.output_keys = output_keys
+
+    def __call__(self, data):
+        if isinstance(data, Mapping):
+            for in_key, out_key in zip(self.input_keys, self.output_keys):
+                if in_key in data and out_key not in data:
+                    data[out_key] = data[in_key]
+                    data.pop(in_key)
+        return data
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(keys={self.keys})'
+
+
+@PREPROCESSORS.register_module()
+class Identity(object):
+
+    def __init__(self):
+        pass
+
+    def __call__(self, item):
+        return item

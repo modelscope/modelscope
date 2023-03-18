@@ -16,7 +16,7 @@ import json
 
 from modelscope import __version__
 from modelscope.fileio.file import LocalStorage
-from modelscope.metainfo import (Datasets, Heads, Hooks, LR_Schedulers,
+from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
@@ -35,7 +35,8 @@ INDEXER_FILE_DIR = get_default_cache_dir()
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
-    'models', 'metrics', 'pipelines', 'preprocessors', 'trainers', 'msdatasets'
+    'models', 'metrics', 'pipelines', 'preprocessors', 'trainers',
+    'msdatasets', 'exporters'
 ]
 INDEXER_FILE = 'ast_indexer'
 DECORATOR_KEY = 'decorators'
@@ -82,11 +83,11 @@ class AstScanning(object):
         else:
             return True
 
-    def _skip_function(self, node: ast.AST) -> bool:
-        if type(node).__name__ == 'FunctionDef' and SKIP_FUNCTION_SCANNING:
-            return True
-        else:
-            return False
+    def _skip_function(self, node: Union[ast.AST, 'str']) -> bool:
+        if SKIP_FUNCTION_SCANNING:
+            if type(node).__name__ == 'FunctionDef' or node == 'FunctionDef':
+                return True
+        return False
 
     def _fields(self, n: ast.AST, show_offsets: bool = True) -> tuple:
         if show_offsets:
@@ -120,9 +121,7 @@ class AstScanning(object):
     def scan_import(
         self,
         node: Union[ast.AST, None, str],
-        indent: Union[str, int] = '    ',
         show_offsets: bool = True,
-        _indent: int = 0,
         parent_node_name: str = '',
     ) -> tuple:
         if node is None:
@@ -131,23 +130,11 @@ class AstScanning(object):
             return self._leaf(node, show_offsets=show_offsets)
         else:
 
-            class state:
-                indent = _indent
-
-            @contextlib.contextmanager
-            def indented() -> Generator[None, None, None]:
-                state.indent += 1
-                yield
-                state.indent -= 1
-
             def _scan_import(el: Union[ast.AST, None, str],
-                             _indent: int = 0,
                              parent_node_name: str = '') -> str:
                 return self.scan_import(
                     el,
-                    indent=indent,
                     show_offsets=show_offsets,
-                    _indent=_indent,
                     parent_node_name=parent_node_name)
 
             outputs = dict()
@@ -162,80 +149,73 @@ class AstScanning(object):
                         setattr(node, 'module', path_level)
                     else:
                         setattr(node, 'module', path_level + module_name)
-            with indented():
-                for field in self._fields(node, show_offsets=show_offsets):
-                    attr = getattr(node, field)
-                    if attr == []:
-                        outputs[field] = []
-                    elif (isinstance(attr, list) and len(attr) == 1
-                          and isinstance(attr[0], ast.AST)
-                          and self._skip_function(attr[0])):
-                        continue
-                    elif (isinstance(attr, list) and len(attr) == 1
-                          and isinstance(attr[0], ast.AST)
-                          and self._is_leaf(attr[0])):
-                        local_out = _scan_import(attr[0])
-                        outputs[field] = local_out
-                    elif isinstance(attr, list):
-                        el_dict = dict()
-                        with indented():
-                            for el in attr:
-                                local_out = _scan_import(
-                                    el, state.indent,
-                                    type(el).__name__)
-                                name = type(el).__name__
-                                if (name == 'Import' or name == 'ImportFrom'
-                                        or parent_node_name == 'ImportFrom'
-                                        or parent_node_name == 'Import'):
-                                    if name not in el_dict:
-                                        el_dict[name] = []
-                                    el_dict[name].append(local_out)
-                        outputs[field] = el_dict
-                    elif isinstance(attr, ast.AST):
-                        output = _scan_import(attr, state.indent)
-                        outputs[field] = output
-                    else:
-                        outputs[field] = attr
+            for field in self._fields(node, show_offsets=show_offsets):
+                attr = getattr(node, field)
+                if attr == []:
+                    outputs[field] = []
+                elif self._skip_function(parent_node_name):
+                    continue
+                elif (isinstance(attr, list) and len(attr) == 1
+                      and isinstance(attr[0], ast.AST)
+                      and self._is_leaf(attr[0])):
+                    local_out = _scan_import(attr[0])
+                    outputs[field] = local_out
+                elif isinstance(attr, list):
+                    el_dict = dict()
+                    for el in attr:
+                        local_out = _scan_import(el, type(el).__name__)
+                        name = type(el).__name__
+                        if (name == 'Import' or name == 'ImportFrom'
+                                or parent_node_name == 'ImportFrom'
+                                or parent_node_name == 'Import'):
+                            if name not in el_dict:
+                                el_dict[name] = []
+                            el_dict[name].append(local_out)
+                    outputs[field] = el_dict
+                elif isinstance(attr, ast.AST):
+                    output = _scan_import(attr)
+                    outputs[field] = output
+                else:
+                    outputs[field] = attr
 
-                    if (type(node).__name__ == 'Import'
-                            or type(node).__name__ == 'ImportFrom'):
-                        if type(node).__name__ == 'ImportFrom':
-                            if field == 'module':
+                if (type(node).__name__ == 'Import'
+                        or type(node).__name__ == 'ImportFrom'):
+                    if type(node).__name__ == 'ImportFrom':
+                        if field == 'module':
+                            self.result_from_import[outputs[field]] = dict()
+                        if field == 'names':
+                            if isinstance(outputs[field]['alias'], list):
+                                item_name = []
+                                for item in outputs[field]['alias']:
+                                    local_name = item['alias']['name']
+                                    item_name.append(local_name)
                                 self.result_from_import[
-                                    outputs[field]] = dict()
-                            if field == 'names':
-                                if isinstance(outputs[field]['alias'], list):
-                                    item_name = []
-                                    for item in outputs[field]['alias']:
-                                        local_name = item['alias']['name']
-                                        item_name.append(local_name)
-                                    self.result_from_import[
-                                        outputs['module']] = item_name
-                                else:
-                                    local_name = outputs[field]['alias'][
-                                        'name']
-                                    self.result_from_import[
-                                        outputs['module']] = [local_name]
-
-                        if type(node).__name__ == 'Import':
-                            final_dict = outputs[field]['alias']
-                            if isinstance(final_dict, list):
-                                for item in final_dict:
-                                    self.result_import[
-                                        item['alias']['name']] = item['alias']
+                                    outputs['module']] = item_name
                             else:
-                                self.result_import[outputs[field]['alias']
-                                                   ['name']] = final_dict
+                                local_name = outputs[field]['alias']['name']
+                                self.result_from_import[outputs['module']] = [
+                                    local_name
+                                ]
 
-                    if 'decorator_list' == field and attr != []:
-                        for item in attr:
-                            setattr(item, CLASS_NAME, node.name)
-                        self.result_decorator.extend(attr)
+                    if type(node).__name__ == 'Import':
+                        final_dict = outputs[field]['alias']
+                        if isinstance(final_dict, list):
+                            for item in final_dict:
+                                self.result_import[item['alias']
+                                                   ['name']] = item['alias']
+                        else:
+                            self.result_import[outputs[field]['alias']
+                                               ['name']] = final_dict
 
-                    if attr != [] and type(
-                            attr
-                    ).__name__ == 'Call' and parent_node_name == 'Expr':
-                        self.result_express.append(attr)
+                if 'decorator_list' == field and attr != []:
+                    for item in attr:
+                        setattr(item, CLASS_NAME, node.name)
+                    self.result_decorator.extend(attr)
+
+                if attr != [] and type(
+                        attr
+                ).__name__ == 'Call' and parent_node_name == 'Expr':
+                    self.result_express.append(attr)
 
             return {
                 IMPORT_KEY: self.result_import,
@@ -384,7 +364,7 @@ class AstScanning(object):
         data = ''.join(data)
 
         node = gast.parse(data)
-        output = self.scan_import(node, indent='  ', show_offsets=False)
+        output = self.scan_import(node, show_offsets=False)
         output[DECORATOR_KEY] = self.parse_decorators(output[DECORATOR_KEY])
         output[EXPRESS_KEY] = self.parse_decorators(output[EXPRESS_KEY])
         output[DECORATOR_KEY].extend(output[EXPRESS_KEY])
@@ -396,6 +376,7 @@ class FilesAstScanning(object):
     def __init__(self) -> None:
         self.astScaner = AstScanning()
         self.file_dirs = []
+        self.requirement_dirs = []
 
     def _parse_import_path(self,
                            import_package: str,
@@ -456,15 +437,15 @@ class FilesAstScanning(object):
                     ignored.add(item)
         return list(set(output) - set(ignored))
 
-    def traversal_files(self, path, check_sub_dir):
+    def traversal_files(self, path, check_sub_dir=None):
         self.file_dirs = []
         if check_sub_dir is None or len(check_sub_dir) == 0:
             self._traversal_files(path)
-
-        for item in check_sub_dir:
-            sub_dir = os.path.join(path, item)
-            if os.path.isdir(sub_dir):
-                self._traversal_files(sub_dir)
+        else:
+            for item in check_sub_dir:
+                sub_dir = os.path.join(path, item)
+                if os.path.isdir(sub_dir):
+                    self._traversal_files(sub_dir)
 
     def _traversal_files(self, path):
         dir_list = os.scandir(path)
@@ -475,6 +456,8 @@ class FilesAstScanning(object):
                 self._traversal_files(item.path)
             elif item.is_file() and item.name.endswith('.py'):
                 self.file_dirs.append(item.path)
+            elif item.is_file() and 'requirement' in item.name:
+                self.requirement_dirs.append(item.path)
 
     def _get_single_file_scan_result(self, file):
         try:

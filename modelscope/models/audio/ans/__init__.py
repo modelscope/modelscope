@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 else:
     _import_structure = {
         'frcrn': ['FRCRNDecorator'],
+        'dnoise_net': ['DenoiseNet'],
     }
 
     import sys

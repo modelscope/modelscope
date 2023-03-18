@@ -49,13 +49,13 @@ class OSTrack(nn.Module):
         feat_last = x
         if isinstance(x, list):
             feat_last = x[-1]
-        out = self.forward_head(feat_last, None)
+        out = self.forward_head(feat_last)
 
         out.update(aux_dict)
         out['backbone_feat'] = x
         return out
 
-    def forward_head(self, cat_feature, gt_score_map=None):
+    def forward_head(self, cat_feature):
         """
         cat_feature: output embeddings of the backbone, it can be (HW1+HW2, B, C) or (HW2, B, C)
         """
@@ -67,8 +67,7 @@ class OSTrack(nn.Module):
 
         if self.head_type == 'CENTER':
             # run the center head
-            score_map_ctr, bbox, size_map, offset_map = self.box_head(
-                opt_feat, gt_score_map)
+            score_map_ctr, bbox, size_map, offset_map = self.box_head(opt_feat)
             outputs_coord = bbox
             outputs_coord_new = outputs_coord.view(bs, Nq, 4)
             out = {

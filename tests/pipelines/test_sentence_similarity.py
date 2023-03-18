@@ -1,8 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+import torch
+from packaging import version
+
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models import Model
+from modelscope.models import Model, TorchModel
 from modelscope.models.nlp import SbertForSequenceClassification
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
@@ -89,6 +92,18 @@ class SentenceSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
             model=self.model_id_retail,
             model_revision='v1.0.0')
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+    @unittest.skipIf(
+        version.parse(torch.__version__) < version.parse('2.0.0.dev'),
+        'skip when torch version < 2.0')
+    def test_compile(self):
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_similarity,
+            model=self.model_id_retail,
+            model_revision='v1.0.0',
+            compile=True)
+        print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+        self.assertTrue(isinstance(pipeline_ins.model._orig_mod, TorchModel))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

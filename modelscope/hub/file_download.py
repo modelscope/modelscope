@@ -121,7 +121,7 @@ def model_file_download(
 
         if model_file['Path'] == file_path:
             if cache.exists(model_file):
-                logger.info(
+                logger.debug(
                     f'File {model_file["Name"]} already in cache, skip downloading!'
                 )
                 return cache.get_file_by_info(model_file)
@@ -209,7 +209,7 @@ def http_get_file(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
     get_headers = {} if headers is None else copy.deepcopy(headers)
     with temp_file_manager() as temp_file:
-        logger.info('downloading %s to %s', url, temp_file.name)
+        logger.debug('downloading %s to %s', url, temp_file.name)
         # retry sleep 0.5s, 1s, 2s, 4s
         retry = Retry(
             total=API_FILE_DOWNLOAD_RETRY_TIMES,
@@ -248,7 +248,7 @@ def http_get_file(
                 retry = retry.increment('GET', url, error=e)
                 retry.sleep()
 
-    logger.info('storing %s in cache at %s', url, local_dir)
+    logger.debug('storing %s in cache at %s', url, local_dir)
     downloaded_length = os.path.getsize(temp_file.name)
     if total != downloaded_length:
         os.remove(temp_file.name)

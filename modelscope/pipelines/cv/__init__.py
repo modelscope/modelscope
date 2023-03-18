@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
+    from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
     from .face_reconstruction_pipeline import FaceReconstructionPipeline
     from .tinynas_classification_pipeline import TinynasClassificationPipeline
@@ -80,10 +81,12 @@ if TYPE_CHECKING:
     from .vision_efficient_tuning_prefix_pipeline import VisionEfficientTuningPrefixPipeline
     from .vision_efficient_tuning_lora_pipeline import VisionEfficientTuningLoRAPipeline
     from .vision_middleware_pipeline import VisionMiddlewarePipeline
+    from .vidt_pipeline import VidtPipeline
     from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
     from .image_skychange_pipeline import ImageSkychangePipeline
     from .image_driving_perception_pipeline import ImageDrivingPerceptionPipeline
     from .vop_retrieval_pipeline import VopRetrievalPipeline
+    from .vop_retrieval_se_pipeline import VopRetrievalSEPipeline
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_deinterlace_pipeline import VideoDeinterlacePipeline
     from .image_matching_pipeline import ImageMatchingPipeline
@@ -104,11 +107,13 @@ if TYPE_CHECKING:
     from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
     from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
     from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
+    from .image_quality_assessment_man_pipeline import ImageQualityAssessmentMANPipeline
     from .bad_image_detecting_pipeline import BadImageDetecingPipeline
     from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
+    from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
 
 else:
     _import_structure = {
@@ -215,6 +220,7 @@ else:
             'VisionEfficientTuningLoRAPipeline'
         ],
         'vision_middleware_pipeline': ['VisionMiddlewarePipeline'],
+        'vidt_pipeline': ['VidtPipeline'],
         'video_frame_interpolation_pipeline': [
             'VideoFrameInterpolationPipeline'
         ],
@@ -223,6 +229,7 @@ else:
             'ImageDrivingPerceptionPipeline'
         ],
         'vop_retrieval_pipeline': ['VopRetrievalPipeline'],
+        'vop_retrieval_se_pipeline': ['VopRetrievalSEPipeline'],
         'video_object_segmentation_pipeline': [
             'VideoObjectSegmentationPipeline'
         ],
@@ -259,6 +266,9 @@ else:
         'image_quality_assessment_mos_pipeline': [
             'ImageQualityAssessmentMosPipeline'
         ],
+        'image_quality_assessment_man_pipeline': [
+            'ImageQualityAssessmentMANPipeline'
+        ],
         'mobile_image_super_resolution_pipeline': [
             'MobileImageSuperResolutionPipeline'
         ],
@@ -268,6 +278,9 @@ else:
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],
+        'image_bts_depth_estimation_pipeline': [
+            'ImageBTSDepthEstimationPipeline'
+        ]
     }
 
     import sys

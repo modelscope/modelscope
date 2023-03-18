@@ -97,7 +97,7 @@ class TransformersCRFHead(TorchHead):
             mask = label_mask
             masked_lengths = mask.sum(-1).long()
             masked_logits = torch.zeros_like(logits)
-            for i in range(len(mask)):
+            for i in range(mask.shape[0]):
                 masked_logits[
                     i, :masked_lengths[i], :] = logits[i].masked_select(
                         mask[i].unsqueeze(-1)).view(masked_lengths[i], -1)

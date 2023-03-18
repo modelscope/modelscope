@@ -7,9 +7,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .petl import Adapter, LoRA, Prefix, Prompt
+from .petl import Adapter, LoRA, Prefix, Prompt, SideTune
 from .timm_vision_transformer import (Attention, Block, DropPath, LayerScale,
-                                      Mlp, PatchEmbed, VisionTransformer)
+                                      Mlp, PatchEmbed, VisionTransformer,
+                                      checkpoint_seq)
 
 
 class AttentionPETL(nn.Module):
@@ -212,40 +213,74 @@ class VisionTransformerPETL(VisionTransformer):
     The implementation of several tuning methods (prompt, prefix, adapter, and LoRA) based on ViT.
     """
 
-    def __init__(
-        self,
-        img_size=224,
-        patch_size=16,
-        in_chans=3,
-        num_classes=1000,
-        global_pool='token',
-        embed_dim=768,
-        depth=12,
-        num_heads=12,
-        mlp_ratio=4.,
-        qkv_bias=True,
-        init_values=None,
-        class_token=True,
-        no_embed_class=False,
-        pre_norm=False,
-        fc_norm=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.,
-        weight_init='',
-        embed_layer=PatchEmbed,
-        norm_layer=None,
-        act_layer=None,
-        block_fn=Block,
-        prompt_length=None,
-        prompt_type=None,
-        prefix_length=None,
-        prefix_type=None,
-        adapter_length=None,
-        adapter_type=None,
-        lora_length=None,
-        lora_type=None,
-    ):
+    def __init__(self,
+                 img_size=224,
+                 patch_size=16,
+                 in_chans=3,
+                 num_classes=1000,
+                 global_pool='token',
+                 embed_dim=768,
+                 depth=12,
+                 num_heads=12,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 init_values=None,
+                 class_token=True,
+                 no_embed_class=False,
+                 pre_norm=False,
+                 fc_norm=None,
+                 drop_rate=0.,
+                 attn_drop_rate=0.,
+                 drop_path_rate=0.,
+                 weight_init='',
+                 embed_layer=PatchEmbed,
+                 norm_layer=None,
+                 act_layer=None,
+                 block_fn=Block,
+                 prompt_length=None,
+                 prompt_type=None,
+                 prefix_length=None,
+                 prefix_type=None,
+                 adapter_length=None,
+                 adapter_type=None,
+                 lora_length=None,
+                 lora_type=None,
+                 sidetune_length=None,
+                 sidetune_type=None):
+        """ Initialize a Parameter-efficient Transfer Learning Method based on Vision Transformer.
+
+        Args:
+            img_size (int, tuple): input image size
+            patch_size (int, tuple): patch size
+            in_chans (int): number of input channels
+            num_classes (int): number of classes for classification head
+            global_pool (str): type of global pooling for final sequence (default: 'token')
+            embed_dim (int): embedding dimension
+            depth (int): depth of transformer
+            num_heads (int): number of attention heads
+            mlp_ratio (int): ratio of mlp hidden dim to embedding dim
+            qkv_bias (bool): enable bias for qkv if True
+            init_values: (float): layer-scale init values
+            class_token (bool): use class token
+            fc_norm (Optional[bool]): pre-fc norm after pool, set if global_pool == 'avg' if None (default: None)
+            drop_rate (float): dropout rate
+            attn_drop_rate (float): attention dropout rate
+            drop_path_rate (float): stochastic depth rate
+            weight_init (str): weight init scheme
+            embed_layer (nn.Module): patch embedding layer
+            norm_layer: (nn.Module): normalization layer
+            act_layer: (nn.Module): MLP activation layer
+            prompt_length: An integer indicating the length of prompt tuning.
+            prompt_type: A string indicating the type of prompt tuning.
+            prefix_length: An integer indicating the length of prefix tuning.
+            prefix_type: A string indicating the type of prefix tuning.
+            adapter_length: An integer indicating the length of adapter tuning.
+            adapter_type: A string indicating the type of adapter tuning.
+            lora_length: An integer indicating the length of LoRA tuning.
+            lora_type: A string indicating the type of LoRA tuning.
+            sidetune_length: An integer indicating the linear dimension.
+            sidetune_type: A string indicating the type of side network.
+        """
 
         super().__init__()
         assert global_pool in ('', 'avg', 'token')
@@ -349,3 +384,49 @@ class VisionTransformerPETL(VisionTransformer):
 
         if weight_init != 'skip':
             self.init_weights(weight_init)
+
+        if sidetune_type is not None:
+            self.sidetune = SideTune(sidetune_length, sidetune_type)
+        else:
+            self.sidetune = None
+
+    def forward_features(self, x):
+        """ feature forward function of VisionTransformer.
+
+        Args:
+            x (Tensor): the input data.
+        Returns:
+            res (Dict): the output data, contains:
+                - inputs: the original input.
+                - x: the intermediate feature.
+        """
+        res = dict(inputs=x)
+        x = self.patch_embed(x)
+        x = self._pos_embed(x)
+        x = self.norm_pre(x)
+        if self.grad_checkpointing and not torch.jit.is_scripting():
+            x = checkpoint_seq(self.blocks, x)
+        else:
+            x = self.blocks(x)
+        x = self.norm(x)
+        res['x'] = x
+        return res
+
+    def forward_head(self, res, pre_logits: bool = False):
+        """ head forward function of VisionTransformer.
+
+        Args:
+            res (Dict): the input data, contains:
+                - inputs: the original input.
+                - x: the intermediate feature.
+        Returns:
+            x (Tensor): the output data.
+        """
+        x = res['x']
+        if self.global_pool:
+            x = x[:, self.num_prefix_tokens:].mean(
+                dim=1) if self.global_pool == 'avg' else x[:, 0]
+        if self.sidetune and 'inputs' in res:
+            x = self.sidetune(res['inputs'], x)
+        x = self.fc_norm(x)
+        return x if pre_logits else self.head(x)

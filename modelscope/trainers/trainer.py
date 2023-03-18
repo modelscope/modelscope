@@ -20,10 +20,11 @@ from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.metrics.prediction_saving_wrapper import \
     PredictionSavingWrapper
 from modelscope.models.base import Model, TorchModel
+from modelscope.msdatasets.dataset_cls.custom_datasets import \
+    TorchCustomDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
+    build_custom_dataset
 from modelscope.msdatasets.ms_dataset import MsDataset
-from modelscope.msdatasets.task_datasets.builder import build_task_dataset
-from modelscope.msdatasets.task_datasets.torch_base_dataset import \
-    TorchTaskDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.trainers.hooks.builder import HOOKS
@@ -32,20 +33,20 @@ from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
-                                       ConfigKeys, ModeKeys, ModelFile,
-                                       ThirdParty, TrainerStages)
+                                       ConfigKeys, DistributedParallelType,
+                                       ModeKeys, ModelFile, ThirdParty,
+                                       TrainerStages)
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.logger import get_logger
-from modelscope.utils.megatron_utils import is_megatron_initialized
 from modelscope.utils.registry import build_from_cfg
-from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, is_dist, is_master,
-                                          set_random_seed)
+from modelscope.utils.torch_utils import (compile_model, get_dist_info,
+                                          get_local_rank, init_dist, is_dist,
+                                          is_master, set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
-from .default_config import merge_cfg, merge_hooks
+from .default_config import merge_cfg, merge_hooks, update_cfg
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
@@ -83,6 +84,9 @@ class EpochBasedTrainer(BaseTrainer):
         remove_unused_data: Automatically remove unused data keys in mini-batches.
             The remove action based on the `inspect` on the model's forward method, the removed columns will be
             moved to the mini-batch's attributes.
+        compile (bool, optional): Compile the model with torch 2.0, default False
+        compile_options (dict, optional): The compile options if compile=True,
+            default None to use the default params of 'TorchModel.compile'.
 
         Examples of cfg_modify_fn:
             >>> def cfg_modify_fn(cfg):
@@ -108,6 +112,7 @@ class EpochBasedTrainer(BaseTrainer):
                                                                         None),
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
+            callbacks: Optional[List[Hook]] = None,
             **kwargs):
 
         self._seed = seed
@@ -120,6 +125,11 @@ class EpochBasedTrainer(BaseTrainer):
         self._iter = 0
         self._inner_iter = 0
         self._stop_training = False
+        self._compile = kwargs.get('compile', False)
+
+        self.train_dataloader = None
+        self.eval_dataloader = None
+        self.data_loader = None
 
         if isinstance(model, str):
             third_party = kwargs.get(ThirdParty.KEY)
@@ -142,11 +152,19 @@ class EpochBasedTrainer(BaseTrainer):
         self.cfg = self.rebuild_config(self.cfg)
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
+        self.cfg = update_cfg(self.cfg)
 
         if isinstance(model, (TorchModel, nn.Module)):
             self.model = model
         else:
             self.model = self.build_model()
+
+        if self._compile:
+            # Compile the model with torch 2.0
+            compile_options = kwargs.get('compile_options')
+            if compile_options is None:
+                compile_options = {}
+            self.model = compile_model(self.model, **compile_options)
 
         if 'work_dir' in kwargs:
             self.work_dir = kwargs['work_dir']
@@ -156,46 +174,33 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_preprocessor, self.eval_preprocessor = self.get_preprocessors(
             preprocessor)
 
-        self._dist = self.init_dist(kwargs.get('launcher'))
-
-        if is_master() and not os.path.exists(self.work_dir):
-            os.makedirs(self.work_dir)
-
-        self.device = self.get_device(kwargs.get('device'))
+        if not os.path.exists(self.work_dir):
+            # TODO duplicate makedirs may cause errors in dlc envs.
+            os.makedirs(self.work_dir, exist_ok=True)
 
         # init logger after distribution init
         log_file = os.path.join(self.work_dir, '{}.log'.format(self.timestamp))
         self.logger = get_logger(
             log_file=log_file, log_level=self.cfg.get('log_level', 'INFO'))
 
-        if is_master():
-            self.logger.info(
-                '==========================Training Config Start=========================='
-            )
-            self.logger.info(
-                json.dumps(
-                    self.cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
-            self.logger.info(
-                '===========================Training Config End==========================='
-            )
-
-        self.train_dataset = self.to_task_dataset(
-            train_dataset,
+        # Get train datasets
+        self.train_dataset = self.build_dataset(
+            datasets=train_dataset,
+            model_cfg=self.cfg,
             mode=ModeKeys.TRAIN,
-            task_data_config=self.cfg.safe_get('dataset.train'),
             preprocessor=self.train_preprocessor,
             **kwargs)
-        self.eval_dataset = self.to_task_dataset(
-            eval_dataset,
+        # Get evaluation datasets
+        self.eval_dataset = self.build_dataset(
+            datasets=eval_dataset,
+            model_cfg=self.cfg,
             mode=ModeKeys.EVAL,
-            task_data_config=self.cfg.safe_get('dataset.val'),
             preprocessor=self.eval_preprocessor,
             **kwargs)
 
         self.train_data_collator, self.eval_data_collator = self.get_data_collator(
             data_collator,
             remove_unused_data=kwargs.get('remove_unused_data', False))
-        self.metrics = self.get_metrics()
         self._max_epochs = kwargs.get('max_epochs',
                                       self.cfg.safe_get('train.max_epochs'))
         assert self._max_epochs is not None, 'max_epochs should be provided by the init arguments or configured ' \
@@ -207,10 +212,50 @@ class EpochBasedTrainer(BaseTrainer):
             'val_iters_per_epoch',
             self.cfg.safe_get('evaluation.val_iters_per_epoch'))
         self.use_fp16 = kwargs.get('use_fp16', False)
-        # model placement
-        self.place_model()
+        self.launcher = kwargs.get('launcher')
+        self.device = kwargs.get('device')
 
+        # The parallel_groups field will be initialized in the hooks' after_init stage.
+        # Please check the DDPHook and MegatronHook for details.
+        self.parallel_groups = {}
+
+        # Clear the Hook overload functions to avoid duplication.
         Hook.clear_strategies()
+
+        if self.launcher is not None and not self.cfg.safe_get(
+                'train.hooks.DDPHook'):
+            # A logic to fit the current code
+            # Put a DDPHook in if launcher is provided.
+            if 'hooks' not in self.cfg.train:
+                self.cfg.train['hooks'] = ConfigDict([])
+            self.cfg.train['hooks'].append({
+                'type': 'DDPHook',
+                'launcher': self.launcher
+            })
+
+        hooks = merge_hooks(self.cfg)
+        self.register_hook_from_cfg(hooks)
+        # Add user callback to hooks
+        if callable(callbacks):
+            callbacks = [callbacks]
+        for callback in callbacks or []:
+            self.register_hook(callback)
+        self.invoke_hook(TrainerStages.after_init)
+
+        # _dist represents for if dp is initialized and its world_size > 1
+        self._dist = self.is_dp_group_available() and dist.get_world_size(
+            self.dp_group) > 1
+
+        self.metrics = self.get_metrics()
+
+        if not self.parallel_groups:
+            # If not working in parallel scenario, put model to device as a default logic.
+            device_name = self.device if self.device is not None else 'gpu'
+            self.device = create_device(device_name)
+            if self.device.type == 'cuda':
+                self.model.to(self.device)
+
+        self.print_cfg()
 
     def place_model(self):
         """Place model to device, or to DDP
@@ -331,6 +376,45 @@ class EpochBasedTrainer(BaseTrainer):
         return cfg
 
     @property
+    def dp_group(self):
+        """
+        Get the data parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.DP]
+
+    @property
+    def tp_group(self):
+        """
+        Get the tensor parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.TP]
+
+    @property
+    def pp_group(self):
+        """
+        Get the pipeline parallel group.
+        """
+        return self.parallel_groups[DistributedParallelType.PP]
+
+    def is_dp_group_available(self):
+        """
+        Get whether the data parallel group is initialized.
+        """
+        return DistributedParallelType.DP in self.parallel_groups
+
+    def is_tp_group_available(self):
+        """
+        Get whether the tensor parallel group is initialized.
+        """
+        return DistributedParallelType.TP in self.parallel_groups
+
+    def is_pp_group_available(self):
+        """
+        Get whether the pipeline parallel group is initialized.
+        """
+        return DistributedParallelType.PP in self.parallel_groups
+
+    @property
     def mode(self):
         return self._mode
 
@@ -389,84 +473,124 @@ class EpochBasedTrainer(BaseTrainer):
             else:
                 return _get_data_len(self.eval_dataloader)
 
-    def to_task_dataset(self,
-                        datasets: Union[Dataset, List[Dataset]],
-                        mode: str,
-                        task_data_config: Config = None,
-                        preprocessor: Optional[Preprocessor] = None,
-                        **kwargs):
-        """Build the task specific dataset processor for this trainer.
+    def build_dataset(self,
+                      datasets: Union[Dataset, MsDataset, List[Dataset]],
+                      model_cfg: Config,
+                      mode: str,
+                      preprocessor: Optional[Preprocessor] = None,
+                      **kwargs):
+        """Build input datasets by given model configuration and preprocessor.
 
-        Returns: The task dataset processor for the task. If no result for the very model-type and task,
-        the default TaskDataset will be returned.
+        Args:
+            datasets (Union[Dataset, MsDataset, List[Dataset]]): The input datasets.
+            model_cfg (Config): The model configuration.
+            mode (str): `train`, `eval` or `inference`. See modelscope.utils.constant.ModeKeys
+            preprocessor (Preprocessor, Optional): The preprocessor for input data samples.
+
+        Returns:
+            Preprocessed datasets.
         """
         try:
-            to_tensor = kwargs.get('to_tensor', True)
             if not datasets:
-                return datasets
-            if isinstance(datasets, TorchTaskDataset):
+                return EpochBasedTrainer.build_dataset_from_cfg(
+                    model_cfg=model_cfg, mode=mode, preprocessor=preprocessor)
+
+            if isinstance(datasets, TorchCustomDataset):
                 return datasets
             elif isinstance(datasets, MsDataset):
-                if task_data_config is None:
-                    # adapt to some special models
-                    task_data_config = ConfigDict(
-                        type=self.cfg.model.type) if hasattr(
-                            self.cfg, ConfigFields.model) else ConfigDict(
-                                type=None)
-                task_data_config.update(dict(mode=mode))
-                return datasets.to_torch_dataset(
-                    task_data_config=task_data_config,
-                    task_name=self.cfg.task,
-                    preprocessors=preprocessor,
-                    to_tensor=to_tensor)
+                if not datasets.is_custom:
+                    datasets.to_custom_dataset(
+                        custom_cfg=model_cfg,
+                        preprocessor=preprocessor,
+                        mode=mode,
+                        **kwargs)
+                return datasets.ds_instance
             elif isinstance(datasets, List) and isinstance(
                     datasets[0], MsDataset):
-                if task_data_config is None:
-                    # adapt to some special models
-                    task_data_config = ConfigDict(
-                        type=self.cfg.model.type) if hasattr(
-                            self.cfg, ConfigFields.model) else ConfigDict(
-                                type=None)
-                task_data_config.update(dict(mode=mode))
-                datasets = [
-                    d.to_torch_dataset(
-                        task_data_config=task_data_config,
-                        task_name=self.cfg.task,
-                        preprocessors=preprocessor,
-                        to_tensor=to_tensor) for d in datasets
-                ]
-                cfg = ConfigDict(
-                    type=self.cfg.model.type, mode=mode, datasets=datasets)
-                task_dataset = build_task_dataset(cfg, self.cfg.task)
-                task_dataset.trainer = self
-                return task_dataset
+                custom_datasets = []
+                for dataset in datasets:
+                    if not dataset.is_custom:
+                        dataset.to_custom_dataset(
+                            custom_cfg=model_cfg,
+                            preprocessor=preprocessor,
+                            mode=mode,
+                            **kwargs)
+                    custom_datasets.append(dataset.ds_instance)
+                torch_custom_dataset = TorchCustomDataset(
+                    datasets=custom_datasets,
+                    mode=mode,
+                    preprocessor=None,
+                    **kwargs)
+                torch_custom_dataset.trainer = self
+                return torch_custom_dataset
             else:
-                if task_data_config is None:
+                dataset_mode_key = 'train' if mode == ModeKeys.TRAIN else 'val'
+                data_config = model_cfg.safe_get(f'dataset.{dataset_mode_key}')
+                if data_config is None:
                     # adapt to some special models
-                    task_data_config = {}
+                    data_config = {}
                 # avoid add no str value datasets, preprocessors in cfg
-                task_data_build_config = ConfigDict(
-                    type=self.cfg.model.type,
+                data_build_config = ConfigDict(
+                    type=model_cfg.model.type,
                     mode=mode,
                     datasets=datasets,
                     preprocessor=preprocessor)
-                task_data_build_config.update(task_data_config)
-                task_dataset = build_task_dataset(task_data_build_config,
-                                                  self.cfg.task)
-                task_dataset.trainer = self
-                return task_dataset
-        except Exception:
+                data_build_config.update(data_config)
+                custom_dataset = build_custom_dataset(data_build_config,
+                                                      model_cfg.task)
+                custom_dataset.trainer = self
+                return custom_dataset
+        except Exception as e:
+            print('** build_dataset error log:', e)
             if isinstance(datasets, (List, Tuple)) or preprocessor is not None:
-                task_dataset = TorchTaskDataset(
+                custom_dataset = TorchCustomDataset(
                     datasets,
                     mode=mode,
                     preprocessor=preprocessor,
-                    **(dict(type=self.cfg.model.type) if hasattr(
-                        self.cfg, 'model') else {}))
-                task_dataset.trainer = self
-                return task_dataset
+                    **(dict(type=model_cfg.model.type) if hasattr(
+                        model_cfg, 'model') else {}))
+                custom_dataset.trainer = self
+                return custom_dataset
             else:
                 return datasets
+
+    def to_task_dataset(self, dataset: Dataset, mode: str,
+                        preprocessor: Preprocessor,
+                        **kwargs) -> TorchCustomDataset:
+        r"""
+        @deprecated
+        This method is deprecated and may be removed in future releases, please use `build_dataset()` instead. Could be
+        compatible with methods that override the to_task_dataset in other classes.
+        """
+        self.logger.warning(
+            'This to_task_dataset method is deprecated, please use build_dataset instead.'
+        )
+
+        task_dataset = TorchCustomDataset(
+            dataset, mode=mode, preprocessor=preprocessor, **kwargs)
+        task_dataset.trainer = self
+        return task_dataset
+
+    @staticmethod
+    def build_dataset_from_cfg(model_cfg: Config,
+                               mode: str,
+                               preprocessor: Preprocessor = None):
+        dataset = None
+        dataset_name = model_cfg.safe_get('dataset.name')
+        subset_name = model_cfg.safe_get('dataset.subset', default='default')
+        split_name = model_cfg.safe_get(f'dataset.split_{mode}')
+        if not dataset_name or not split_name:
+            return dataset
+        dataset = MsDataset.load(
+            dataset_name=dataset_name,
+            subset_name=subset_name,
+            split=split_name,
+            custom_cfg=model_cfg)
+        if not dataset.is_custom:
+            dataset.to_custom_dataset(
+                custom_cfg=model_cfg, preprocessor=preprocessor, mode=mode)
+
+        return dataset.ds_instance
 
     def build_preprocessor(self) -> Tuple[Preprocessor, Preprocessor]:
         """Build train and eval preprocessor.
@@ -544,10 +668,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
         self.register_optimizers_hook()
-        hooks = merge_hooks(self.cfg)
-        self.register_hook_from_cfg(hooks)
-        if is_master():
-            self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
                                          kwargs.get('strict', False))
         self.model.train()
@@ -586,18 +707,14 @@ class EpochBasedTrainer(BaseTrainer):
 
             strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
-        if not self._hooks:
-            hooks = merge_hooks(self.cfg)
-            self.register_hook_from_cfg(hooks)
-            if is_master():
-                self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(
                 checkpoint_path, self, strict=strict)
         self.model.eval()
         self._mode = ModeKeys.EVAL
-        predict_dataloader = self.get_predict_data_loader(predict_datasets)
+        predict_dataloader = self.get_predict_dataloader(predict_datasets)
         metric_classes = [PredictionSavingWrapper(saving_fn=saving_fn)]
 
         for m in metric_classes:
@@ -628,11 +745,7 @@ class EpochBasedTrainer(BaseTrainer):
             kwargs:
                 strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
-        if not self._hooks:
-            hooks = merge_hooks(self.cfg)
-            self.register_hook_from_cfg(hooks)
-            if is_master():
-                self.logger.info(self.get_hook_info())
+        self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(
@@ -682,14 +795,8 @@ class EpochBasedTrainer(BaseTrainer):
             type='DistributedDataParallel',
             module=model,
             find_unused_parameters=True,
-            device_ids=[torch.cuda.current_device()])
-
-        if is_megatron_initialized():
-            from megatron_util import mpu
-            dp_cfg.update({
-                'output_device': torch.cuda.current_device(),
-                'process_group': mpu.get_data_parallel_group()
-            })
+            device_ids=[torch.cuda.current_device()],
+            process_group=self.dp_group)
 
         return build_parallel(dp_cfg)
 
@@ -776,12 +883,7 @@ class EpochBasedTrainer(BaseTrainer):
         (or `get_train_dataloader` in a subclass.
         """
         if self.train_dataset is None:
-            train_data = self.cfg.dataset.train
-            self.train_dataset = self.build_dataset(
-                train_data,
-                mode=ModeKeys.TRAIN,
-                preprocessor=self.train_preprocessor)
-
+            raise 'The train_dataset cannot be None.'
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,
             dist=self._dist,
@@ -798,11 +900,7 @@ class EpochBasedTrainer(BaseTrainer):
         pass
         """
         if self.eval_dataset is None:
-            val_data = self.cfg.dataset.val
-            self.eval_dataset = self.build_dataset(
-                val_data,
-                mode=ModeKeys.EVAL,
-                preprocessor=self.eval_preprocessor)
+            raise 'The eval_dataset cannot be None.'
 
         default_config = {'shuffle': False}
         default_config.update(self.cfg.evaluation.get('dataloader', {}))
@@ -814,15 +912,16 @@ class EpochBasedTrainer(BaseTrainer):
             **default_config)
         return data_loader
 
-    def get_predict_data_loader(self, predict_datasets: Union[Dataset,
-                                                              List[Dataset]]):
+    def get_predict_dataloader(self, predict_datasets: Union[Dataset,
+                                                             List[Dataset]]):
         """ Builder torch dataloader for prediction with the config of evaluation.
 
         Args:
             predict_datasets(Union[Dataset, List[Dataset]]): The datasets used to predict ground truth.
         """
-        dataset = self.to_task_dataset(
-            predict_datasets,
+        dataset = self.build_dataset(
+            datasets=predict_datasets,
+            model_cfg=self.cfg,
             mode=ModeKeys.EVAL,
             preprocessor=self.eval_preprocessor)
 
@@ -835,26 +934,6 @@ class EpochBasedTrainer(BaseTrainer):
             collate_fn=self.eval_data_collator,
             **default_config)
         return data_loader
-
-    def build_dataset(self, data_cfg, mode, preprocessor=None):
-        """ Build torch dataset object using data config
-        """
-        # TODO: support MsDataset load for cv
-        if hasattr(data_cfg, 'name'):
-            dataset_name = data_cfg.pop('name')
-            dataset = MsDataset.load(
-                dataset_name=dataset_name,
-                **data_cfg,
-            )
-            cfg = ConfigDict(type=self.cfg.model.type, mode=mode)
-            torch_dataset = dataset.to_torch_dataset(
-                task_data_config=cfg,
-                task_name=self.cfg.task,
-                preprocessors=preprocessor)
-        else:
-            torch_dataset = build_task_dataset(data_cfg, self.cfg.task)
-        dataset = self.to_task_dataset(torch_dataset, mode)
-        return dataset
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
@@ -1024,7 +1103,11 @@ class EpochBasedTrainer(BaseTrainer):
         Returns:
             DataLoader: A PyTorch dataloader.
         """
-        rank, world_size = get_dist_info()
+        rank = 0
+        world_size = 1
+        if self.is_dp_group_available():
+            rank = torch.distributed.get_rank(self.dp_group)
+            world_size = torch.distributed.get_world_size(self.dp_group)
 
         if dist:
             # When model is :obj:`DistributedDataParallel`,
@@ -1132,6 +1215,7 @@ class EpochBasedTrainer(BaseTrainer):
             vis_closure = partial(
                 self.visualization, dataset=self.eval_dataset, **vis_cfg)
 
+        self.invoke_hook(TrainerStages.before_val)
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
             # list of batched result and data samples
@@ -1154,6 +1238,7 @@ class EpochBasedTrainer(BaseTrainer):
                 vis_closure=vis_closure,
                 data_loader_iters=self._eval_iters_per_epoch)
 
+        self.invoke_hook(TrainerStages.after_val)
         return metric_values
 
     def visualization(self, batch_result, dataset, **kwargs):
@@ -1239,7 +1324,26 @@ class EpochBasedTrainer(BaseTrainer):
                 "before_train_epoch".
         """
         for hook in self._hooks:
-            getattr(hook, fn_name)(self)
+            if hasattr(hook, fn_name):
+                getattr(hook, fn_name)(self)
+
+    def print_cfg(self):
+        if is_master():
+            cfg = deepcopy(self.cfg)
+            cfg.train.work_dir = self.work_dir
+            self.logger.info(
+                '==========================Training Config Start=========================='
+            )
+            self.logger.info(
+                json.dumps(cfg._cfg_dict, indent=4, cls=JSONIteratorEncoder))
+            self.logger.info(
+                '===========================Training Config End==========================='
+            )
+
+    def print_hook_info(self):
+        if is_master() and not getattr(self, '_hook_info_printed', False):
+            self.logger.info(self.get_hook_info())
+            self._hook_info_printed = True
 
     def get_hook_info(self) -> str:
         # Get hooks info in each stage
@@ -1251,8 +1355,9 @@ class EpochBasedTrainer(BaseTrainer):
                 priority = Priority.NORMAL  # type: ignore
             classname = hook.__class__.__name__
             hook_info = f'({priority:<12}) {classname:<35}'
-            for trigger_stage in hook.get_triggered_stages():
-                stage_hook_map[trigger_stage].append(hook_info)
+            if hasattr(hook, 'get_triggered_stages'):
+                for trigger_stage in hook.get_triggered_stages():
+                    stage_hook_map[trigger_stage].append(hook_info)
 
         stage_hook_infos = []
         for stage in Hook.stages:

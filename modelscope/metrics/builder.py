@@ -40,6 +40,7 @@ class MetricKeys(object):
     RMSE = 'rmse'
     MRR = 'mrr'
     NDCG = 'ndcg'
+    AR = 'AR'
 
 
 task_default_metrics = {
@@ -71,6 +72,7 @@ task_default_metrics = {
     Tasks.image_quality_assessment_mos:
     [Metrics.image_quality_assessment_mos_metric],
     Tasks.bad_image_detecting: [Metrics.accuracy],
+    Tasks.ocr_recognition: [Metrics.ocr_recognition_metric],
 }
 
 

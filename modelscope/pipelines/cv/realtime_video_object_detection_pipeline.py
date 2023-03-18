@@ -29,7 +29,6 @@ class RealtimeVideoObjectDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         super().__init__(model=model, **kwargs)
-        self.model = RealtimeVideoDetector(model)
 
     def preprocess(self, input: Input) -> Dict[Tensor, Union[str, np.ndarray]]:
         return input

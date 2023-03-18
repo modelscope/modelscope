@@ -952,10 +952,11 @@ class DistributedGPT3(TorchModel):
                  rank,
                  path_load_tag='model',
                  *args,
+                 megatron_cfg=None,
                  **kwargs):
         super().__init__(model_dir, *args, **kwargs)
 
-        init_megatron_util(model_dir=model_dir, rank=rank)
+        init_megatron_util(megatron_cfg, model_dir, rank=rank)
 
         self.config = GPT3Config.from_pretrained(model_dir)
         # Build model.
@@ -974,8 +975,8 @@ class DistributedGPT3(TorchModel):
         self.dist_model = model
 
         tensor_ws = mpu.get_tensor_model_parallel_world_size()
-        ckpt_ws = get_args().get('checkpoint_tensor_model_parallel_size',
-                                 tensor_ws)
+        ckpt_ws = get_args().get('checkpoint_tensor_model_parallel_size', None)
+        ckpt_ws = tensor_ws if ckpt_ws is None else ckpt_ws
         ckpt_rank = mpu.get_tensor_model_parallel_rank() * ckpt_ws // tensor_ws
         load_model = pre_load(ckpt_rank, model_dir, tag=path_load_tag)
         load_model = split_state_dict(load_model, model, tensor_ws // ckpt_ws)
@@ -1032,23 +1033,31 @@ class DistributedGPT3(TorchModel):
                stop_on_double_eol=False,
                stop_on_eol=False,
                **kwargs):
+        top_k = kwargs.pop('top_k', self.config.top_k)
+        top_p = kwargs.pop('top_p', self.config.top_p)
+        temperature = kwargs.pop('temperature', self.config.temperature)
+        max_length = kwargs.pop(
+            'max_length',
+            tokens.size(1) + self.config.tokens_to_generate)
+
         batch_size = tokens.size(0)
         lengths = prompts_len
         if lengths is None:
             lengths = torch.tensor([tokens.size(1)], device=tokens.device)
-        pads = torch.ones(
-            batch_size, self.config.tokens_to_generate,
-            device=tokens.device).long() * self.config.eod_id
-        tokens = torch.cat((tokens, pads), dim=-1)
 
         min_prompt_length = lengths.min().item()
-        max_sequence_length = tokens.size(1)
-        max_sequence_length = min(max_sequence_length,
+        max_sequence_length = min(max_length,
                                   self.config.max_position_embeddings)
 
         # If the context is too big, this happens
         if min_prompt_length >= max_sequence_length:
             raise ValueError('context length + tokens_to_generate too large')
+
+        pad_length = max_sequence_length - tokens.size(1)
+        if pad_length > 0:
+            pads = torch.zeros(
+                batch_size, pad_length, device=tokens.device).long()
+            tokens = torch.cat((tokens, pads), dim=-1)
 
         # Initialize inference parameters.
         self.inference_params = InferenceParams(batch_size,
@@ -1084,9 +1093,9 @@ class DistributedGPT3(TorchModel):
             last_token_logits = logits[:, -1, :]
             new_sample = sample(
                 last_token_logits,
-                top_k=kwargs.pop('top_k', self.config.top_k),
-                top_p=kwargs.pop('top_p', self.config.top_p),
-                temperature=kwargs.pop('temperature', self.config.temperature),
+                top_k=top_k,
+                top_p=top_p,
+                temperature=temperature,
                 vocab_size=self.config.vocab_size)
 
             # If a prompt length is smaller or equal th current context

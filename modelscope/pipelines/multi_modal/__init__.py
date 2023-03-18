@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
     from .diffusers_wrapped import StableDiffusionWrapperPipeline, ChineseStableDiffusionPipeline
+    from .soonet_video_temporal_grounding_pipeline import SOONetVideoTemporalGroundingPipeline
+    from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -39,7 +41,10 @@ else:
         'video_question_answering_pipeline':
         ['VideoQuestionAnsweringPipeline'],
         'diffusers_wrapped':
-        ['StableDiffusionWrapperPipeline', 'ChineseStableDiffusionPipeline']
+        ['StableDiffusionWrapperPipeline', 'ChineseStableDiffusionPipeline'],
+        'soonet_video_temporal_grounding_pipeline':
+        ['SOONetVideoTemporalGroundingPipeline'],
+        'text_to_video_synthesis_pipeline': ['TextToVideoSynthesisPipeline'],
     }
 
     import sys

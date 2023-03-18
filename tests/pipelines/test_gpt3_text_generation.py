@@ -27,6 +27,11 @@ class TextGPT3GenerationTest(unittest.TestCase):
         pipe = pipeline(Tasks.text_generation, model=self.model_id_2_7B)
         print(pipe(self.input))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_gpt3_1_3B_with_args(self):
+        pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
+        print(pipe(self.input, top_p=0.9, temperature=0.9, max_length=32))
+
     @unittest.skip('distributed gpt3 13B, skipped')
     def test_gpt3_13B(self):
         """ The model can be downloaded from the link on

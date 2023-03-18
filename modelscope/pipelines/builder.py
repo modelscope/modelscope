@@ -9,6 +9,8 @@ from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 from modelscope.utils.hub import read_config
+from modelscope.utils.plugins import (register_modelhub_repo,
+                                      register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
 from .base import Pipeline
 from .util import is_official_hub_path
@@ -63,7 +65,6 @@ def pipeline(task: str = None,
              framework: str = None,
              device: str = 'gpu',
              model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
-             plugins: List[str] = None,
              **kwargs) -> Pipeline:
     """ Factory method to build an obj:`Pipeline`.
 
@@ -96,8 +97,6 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
-    try_import_plugins(plugins)
-
     model = normalize_model_input(model, model_revision)
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
@@ -111,7 +110,8 @@ def pipeline(task: str = None,
                         model, str) else read_config(
                             model[0], revision=model_revision)
                 check_config(cfg)
-                try_import_plugins(cfg.safe_get('plugins'))
+                register_plugins_repo(cfg.safe_get('plugins'))
+                register_modelhub_repo(model, cfg.get('allow_remote', False))
                 pipeline_props = cfg.pipeline
         elif model is not None:
             # get pipeline info from Model object
@@ -120,7 +120,6 @@ def pipeline(task: str = None,
                 # model is instantiated by user, we should parse config again
                 cfg = read_config(first_model.model_dir)
                 check_config(cfg)
-                try_import_plugins(cfg.safe_get('plugins'))
                 first_model.pipeline = cfg.pipeline
             pipeline_props = first_model.pipeline
         else:
@@ -178,10 +177,3 @@ def get_default_pipeline_info(task):
     else:
         pipeline_name, default_model = DEFAULT_MODEL_FOR_PIPELINE[task]
     return pipeline_name, default_model
-
-
-def try_import_plugins(plugins: List[str]) -> None:
-    """ Try to import plugins """
-    if plugins is not None:
-        from modelscope.utils.plugins import import_plugins
-        import_plugins(plugins)

@@ -6,6 +6,7 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .basic_utils import set_seed, get_state_dict, load_data, init_transform_dict, load_frames_from_video
     from .model import VoP
+    from .model_se import VoP_SE
     from .tokenization_clip import LengthAdaptiveTokenizer
 else:
     _import_structure = {
@@ -14,6 +15,7 @@ else:
             'load_frames_from_video'
         ],
         'model': ['VoP'],
+        'model_se': ['VideoTextRetrievalModelSeries'],
         'tokenization_clip': ['LengthAdaptiveTokenizer']
     }
 

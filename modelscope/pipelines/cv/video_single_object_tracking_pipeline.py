@@ -7,8 +7,8 @@ import cv2
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_single_object_tracking.config.ostrack import \
     cfg
-from modelscope.models.cv.video_single_object_tracking.tracker.ostrack import \
-    OSTrack
+from modelscope.models.cv.video_single_object_tracking.tracker import (
+    OSTrack, ProContEXT)
 from modelscope.models.cv.video_single_object_tracking.utils.utils import (
     check_box, timestamp_format)
 from modelscope.outputs import OutputKeys
@@ -22,6 +22,9 @@ logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.video_single_object_tracking,
+    module_name=Pipelines.video_single_object_tracking_procontext)
+@PIPELINES.register_module(
+    Tasks.video_single_object_tracking,
     module_name=Pipelines.video_single_object_tracking)
 class VideoSingleObjectTrackingPipeline(Pipeline):
 
@@ -32,10 +35,14 @@ class VideoSingleObjectTrackingPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        self.cfg = cfg
         ckpt_path = osp.join(model, ModelFile.TORCH_MODEL_BIN_FILE)
         logger.info(f'loading model from {ckpt_path}')
-        self.tracker = OSTrack(ckpt_path, self.device)
+        if self.cfg.get('tracker', None) == 'ProContEXT':
+            self.tracker = ProContEXT(ckpt_path, self.device, self.cfg)
+        else:
+            self.cfg = cfg
+            self.tracker = OSTrack(ckpt_path, self.device)
+
         logger.info('init tracker done')
 
     def preprocess(self, input) -> Input:

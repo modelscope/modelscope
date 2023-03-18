@@ -6,7 +6,8 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.video_summarization import PGLVideoSummarization
-from modelscope.msdatasets.task_datasets import VideoSummarizationDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets import \
+    VideoSummarizationDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
@@ -17,6 +18,7 @@ logger = get_logger()
 
 
 class VideoSummarizationTrainerTest(unittest.TestCase):
+    # TODO: To be added to CUSTOM_DATASETS register
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))

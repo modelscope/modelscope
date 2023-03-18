@@ -779,8 +779,6 @@ class Translator(object):
         self.end_token = self.symbols['EOS']
         self.alpha = self.args.alpha
         self.beam_size = self.args.beam_size
-        self.min_length = self.args.min_length
-        self.max_length = self.args.max_length
 
     def from_batch(self, translation_batch):
         batch = translation_batch['batch']
@@ -1065,8 +1063,7 @@ class Translator(object):
         """
         self.model.eval()
         with torch.no_grad():
-            return self._fast_translate_batch(
-                batch, self.max_length, min_length=self.min_length)
+            return self._fast_translate_batch(batch)
 
     def _tile(self, x, count, dim=0):
         perm = list(range(len(x.size())))
@@ -1121,12 +1118,12 @@ class Translator(object):
             logits[indices_to_remove] = filter_value
         return logits
 
-    def _fast_translate_batch(self,
-                              batch: 'Batch',
-                              max_length: int,
-                              min_length: int = 0):
+    def _fast_translate_batch(self, batch: 'Batch'):
         # TODO: faster code path for beam_size == 1.
         # TODO: support these blacklisted features.
+
+        max_length = self.args.max_length
+        min_length = self.args.min_length
 
         beam_size = self.beam_size
         batch_size = batch.batch_size
@@ -1366,7 +1363,10 @@ class PalmForTextGeneration(PalmPreTrainedModel):
             logits=output[0],
         )
 
-    def generate(self, input: Dict[str, Tensor]) -> TokenGeneratorOutput:
+    def generate(self, input: Dict[str, Tensor],
+                 **kwargs) -> TokenGeneratorOutput:
+        for k, v in kwargs.items():
+            setattr(self.generator.args, k, v)
         outputs = self.generator(**input)
         preds = outputs['predictions']
         return TokenGeneratorOutput(sequences=[pred[0] for pred in preds])

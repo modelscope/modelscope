@@ -8,8 +8,8 @@ from modelscope.models.cv.tinynas_detection.damo.apis.detector_inference import 
     inference
 from modelscope.models.cv.tinynas_detection.damo.detectors.detector import \
     build_local_model
-from modelscope.msdatasets.task_datasets.damoyolo import (build_dataloader,
-                                                          build_dataset)
+from modelscope.msdatasets.dataset_cls.custom_datasets.damoyolo import (
+    build_dataloader, build_dataset)
 
 
 def mkdir(path):

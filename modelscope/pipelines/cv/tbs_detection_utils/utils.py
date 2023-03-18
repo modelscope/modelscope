@@ -10,6 +10,8 @@ from matplotlib import pyplot as plt
 from PIL import Image
 from torchvision.ops.boxes import batched_nms, nms
 
+from modelscope.preprocessors.image import load_image
+
 plt.switch_backend('Agg')
 
 
@@ -365,7 +367,7 @@ def post_process(self, outputs, img_path):
         except Exception:
             return
 
-        image = Image.open(img_path)
+        image = load_image(img_path)
         image_shape = np.array(np.shape(image)[0:2])
         top_index = batch_detection[:,
                                     4] * batch_detection[:,

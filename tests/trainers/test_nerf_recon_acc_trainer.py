@@ -4,6 +4,7 @@ import unittest
 
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers.cv import NeRFReconAccTrainer
+from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import test_level
 
 
@@ -14,8 +15,11 @@ class TestNeRFReconAccTrainer(unittest.TestCase):
         model_id = 'damo/cv_nerf-3d-reconstruction-accelerate_damo'
 
         data_dir = MsDataset.load(
-            'nerf_recon_dataset', namespace='damo',
-            split='train').config_kwargs['split_config']['train']
+            'nerf_recon_dataset',
+            namespace='damo',
+            split='train',
+            download_mode=DownloadMode.FORCE_REDOWNLOAD
+        ).config_kwargs['split_config']['train']
 
         trainer = NeRFReconAccTrainer(
             model=model_id,

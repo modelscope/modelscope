@@ -52,13 +52,14 @@ class GPT3ForTextGeneration(TorchModel):
         """
         return self.model(**input)
 
-    def generate(self, inputs: Dict[str, Tensor]) -> Dict[str, Tensor]:
+    def generate(self, inputs: Dict[str, Tensor],
+                 **kwargs) -> Dict[str, Tensor]:
         if not isinstance(self.model, GPT3Model):
-            return self.model.generate(**inputs)
+            return self.model.generate(**inputs, **kwargs)
 
         tokens = inputs['input_ids']
         lengths = self._get_length(inputs['attention_mask'])
-        return self.model.generate(tokens, prompt_length=lengths)
+        return self.model.generate(tokens, prompt_length=lengths, **kwargs)
 
     @staticmethod
     def _get_length(attention_mask: torch.Tensor) -> Tensor:

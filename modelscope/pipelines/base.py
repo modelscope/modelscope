@@ -2,6 +2,7 @@
 
 import os
 import os.path as osp
+import random
 from abc import ABC, abstractmethod
 from functools import partial
 from multiprocessing import Pool
@@ -9,6 +10,7 @@ from threading import Lock
 from typing import Any, Dict, Generator, List, Mapping, Union
 
 import numpy as np
+from packaging import version
 
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
@@ -22,6 +24,7 @@ from modelscope.utils.device import (create_device, device_placement,
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import compile_model
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -80,6 +83,9 @@ class Pipeline(ABC):
             preprocessor: (list of) Preprocessor object
             device (str): device str, should be either cpu, cuda, gpu, gpu:X or cuda:X
             auto_collate (bool): automatically to convert data to tensor or not.
+            compile (bool, optional): Compile the model with torch 2.0, default False
+            compile_options (dict, optional): The compile options if compile=True,
+                default None to use the default params of 'TorchModel.compile'.
         """
         verify_device(device)
         self.device_name = device
@@ -118,6 +124,8 @@ class Pipeline(ABC):
         self._model_prepare = False
         self._model_prepare_lock = Lock()
         self._auto_collate = auto_collate
+        self._compile = kwargs.get('compile', False)
+        self._compile_options = kwargs.get('compile_options', {})
 
     def prepare_model(self):
         """ Place model on certain device for pytorch models before first inference
@@ -139,8 +147,16 @@ class Pipeline(ABC):
                 if self.has_multiple_models:
                     for m in self.models:
                         _prepare_single(m)
+                    if self._compile:
+                        self.models = [
+                            compile_model(m, **self._compile_options)
+                            for m in self.models
+                        ]
                 else:
                     _prepare_single(self.model)
+                    if self._compile:
+                        self.model = compile_model(self.model,
+                                                   **self._compile_options)
             self._model_prepare = True
         self._model_prepare_lock.release()
 
@@ -421,15 +437,20 @@ class DistributedPipeline(Pipeline):
 
         ranks = list(range(self.world_size))
         self.model_pool = Pool(self.world_size)
-        master_ip = '127.0.0.1' if 'master_ip' not in kwargs else kwargs[
-            'master_ip']
-        os.environ['MASTER_ADDR'] = master_ip
-        master_port = '29500' if 'master_port' not in kwargs else kwargs[
-            'master_port']
+
+        if 'master_ip' not in kwargs:
+            kwargs['master_ip'] = '127.0.0.1'
+        master_port = int(kwargs['master_port']
+                          ) if 'master_port' in kwargs else random.randint(
+                              29500, 39500)
         from modelscope.utils.torch_utils import _find_free_port, _is_free_port
-        if not _is_free_port(int(master_port)):
-            master_port = str(_find_free_port())
-        os.environ['MASTER_PORT'] = master_port
+        if not _is_free_port(master_port):
+            master_port = _find_free_port()
+        kwargs['master_port'] = str(master_port)
+        # TODO: Pass ip and port to megatron_util for initialization
+        os.environ['MASTER_ADDR'] = kwargs['master_ip']
+        os.environ['MASTER_PORT'] = kwargs['master_port']
+
         self.model_pool.map(
             partial(
                 self.__class__._instantiate_one,

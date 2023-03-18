@@ -316,6 +316,8 @@ TASK_INPUTS = {
     },
     Tasks.action_detection:
     InputType.VIDEO,
+    Tasks.human_reconstruction:
+    InputType.IMAGE,
     Tasks.image_reid_person:
     InputType.IMAGE,
     Tasks.video_inpainting: {

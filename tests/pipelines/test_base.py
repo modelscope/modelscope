@@ -179,13 +179,13 @@ class CustomPipelineTest(unittest.TestCase):
         img_url = 'data/test/images/dogs.jpg'
         output = pipe(img_url)
         self.assertEqual(output['filename'], img_url)
-        self.assertEqual(output[OutputKeys.OUTPUT_IMG].shape, (318, 512, 3))
+        self.assertEqual(output[OutputKeys.OUTPUT_IMG].shape, (598, 600, 3))
 
         outputs = pipe([img_url for i in range(4)])
         self.assertEqual(len(outputs), 4)
         for out in outputs:
             self.assertEqual(out['filename'], img_url)
-            self.assertEqual(out[OutputKeys.OUTPUT_IMG].shape, (318, 512, 3))
+            self.assertEqual(out[OutputKeys.OUTPUT_IMG].shape, (598, 600, 3))
 
 
 if __name__ == '__main__':

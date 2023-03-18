@@ -3,7 +3,7 @@
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional
 
 from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download

@@ -67,7 +67,8 @@ class VoiceActivityDetectionPipeline(Pipeline):
                  recog_type: str = None,
                  audio_format: str = None,
                  output_dir: str = None,
-                 param_dict: dict = None) -> Dict[str, Any]:
+                 param_dict: dict = None,
+                 **kwargs) -> Dict[str, Any]:
         """
         Decoding the input audios
         Args:
@@ -92,15 +93,16 @@ class VoiceActivityDetectionPipeline(Pipeline):
             The dictionary contain the following keys:
             - **text** ('str') --The vad result.
         """
+        self.audio_in = None
+        self.raw_inputs = None
         self.recog_type = recog_type
         self.audio_format = audio_format
-        self.audio_fs = audio_fs
+        self.audio_fs = None
         checking_audio_fs = None
-        self.raw_inputs = None
         if output_dir is not None:
             self.cmd['output_dir'] = output_dir
-        if audio_fs is not None:
-            self.cmd['fs']['audio_fs'] = audio_fs
+        if param_dict is not None:
+            self.cmd['param_dict'] = param_dict
         if isinstance(audio_in, str):
             # for funasr code, generate wav.scp from url or local path
             self.audio_in, self.raw_inputs = generate_scp_from_url(audio_in)
@@ -116,10 +118,6 @@ class VoiceActivityDetectionPipeline(Pipeline):
             elif isinstance(audio_in, numpy.ndarray):
                 self.audio_in = None
                 self.raw_inputs = audio_in
-        if output_dir is not None:
-            self.cmd['output_dir'] = output_dir
-        if param_dict is not None:
-            self.cmd['param_dict'] = param_dict
 
         # set the sample_rate of audio_in if checking_audio_fs is valid
         if checking_audio_fs is not None:
@@ -137,7 +135,12 @@ class VoiceActivityDetectionPipeline(Pipeline):
                 self.audio_in, self.audio_format)
             if checking_audio_fs is not None:
                 self.audio_fs = checking_audio_fs
-        output = self.forward(self.audio_in)
+        if audio_fs is not None:
+            self.cmd['fs']['audio_fs'] = audio_fs
+        else:
+            self.cmd['fs']['audio_fs'] = self.audio_fs
+
+        output = self.forward(self.audio_in, **kwargs)
         result = self.postprocess(output)
         return result
 
@@ -205,7 +208,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
 
         return cmd
 
-    def forward(self, audio_in: Dict[str, Any]) -> Dict[str, Any]:
+    def forward(self, audio_in: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Decoding
         """
         logger.info('VAD Processing ...')
@@ -221,11 +224,11 @@ class VoiceActivityDetectionPipeline(Pipeline):
         self.cmd['raw_inputs'] = self.raw_inputs
         self.cmd['audio_in'] = self.audio_in
 
-        vad_result = self.run_inference(self.cmd)
+        vad_result = self.run_inference(self.cmd, **kwargs)
 
         return vad_result
 
-    def run_inference(self, cmd):
+    def run_inference(self, cmd, **kwargs):
         vad_result = []
         if self.framework == Frameworks.torch:
             vad_result = self.funasr_infer_modelscope(
@@ -233,7 +236,8 @@ class VoiceActivityDetectionPipeline(Pipeline):
                 raw_inputs=cmd['raw_inputs'],
                 output_dir_v2=cmd['output_dir'],
                 fs=cmd['fs'],
-                param_dict=cmd['param_dict'])
+                param_dict=cmd['param_dict'],
+                **kwargs)
         else:
             raise ValueError('model type is mismatching')
 

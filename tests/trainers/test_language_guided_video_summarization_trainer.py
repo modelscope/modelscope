@@ -7,7 +7,7 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.language_guided_video_summarization import \
     ClipItVideoSummarization
-from modelscope.msdatasets.task_datasets import \
+from modelscope.msdatasets.dataset_cls.custom_datasets import \
     LanguageGuidedVideoSummarizationDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config

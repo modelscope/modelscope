@@ -2,7 +2,8 @@ bitstring
 greenlet>=1.1.2
 inflect
 jedi>=0.18.1
-librosa
+kantts
+librosa<=0.9.2
 lxml
 matplotlib
 msgpack>=1.0.4
@@ -22,6 +23,6 @@ sox
 tensorboardx
 tqdm
 traitlets>=5.3.0
-ttsfrd>=0.1.1
+ttsfrd>=0.1.2
 unidecode
 wcwidth>=0.2.5

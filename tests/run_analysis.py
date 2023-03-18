@@ -259,7 +259,7 @@ def get_test_suites_to_run():
                         affected_trainer_cases.extend(
                             model_trainer_map[model_id])
         elif (affected_register_module[0] == 'HOOKS'
-              or affected_register_module[0] == 'TASK_DATASETS'):
+              or affected_register_module[0] == 'CUSTOM_DATASETS'):
             # ["HOOKS", "", "CheckpointHook", "CheckpointHook"]
             # ["HOOKS", "", hook_name, class_name]
             # HOOKS, DATASETS modify run all trainer cases

@@ -245,7 +245,7 @@ class SiameseUiePipeline(Pipeline):
         with torch.no_grad():
             with autocast():
                 for batch_data in zip(*all_tensor_data):
-                    batch_head_probs, batch_tail_probs = self.model(
+                    batch_head_probs, batch_tail_probs = self.model.fast_inference(
                         *batch_data)
                     batch_head_probs, batch_tail_probs = batch_head_probs.tolist(
                     ), batch_tail_probs.tolist()  # (b, n, l)

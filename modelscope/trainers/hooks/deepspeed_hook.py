@@ -138,6 +138,9 @@ class DeepspeedHook(MegatronHook):
                 checkpoint, strict=strict)
         return meta
 
+    def before_val(self, trainer):
+        pass
+
     def before_run(self, trainer):
         if not hasattr(trainer, 'logger'):
             self.logger = get_logger()

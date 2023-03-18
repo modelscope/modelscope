@@ -75,7 +75,7 @@ class DataMetaManager(object):
         elif download_mode == DownloadMode.FORCE_REDOWNLOAD:
             # Clean meta-files
             if os.path.exists(meta_cache_dir) and os.listdir(meta_cache_dir):
-                shutil.rmtree(meta_cache_dir)
+                shutil.rmtree(meta_cache_dir, ignore_errors=True)
             # Re-download meta-files
             with FileLock(lock_file=lock_file_path):
                 os.makedirs(meta_cache_dir, exist_ok=True)
@@ -129,12 +129,13 @@ class DataMetaManager(object):
         else:
             target_subset_name, target_dataset_structure = get_target_dataset_structure(
                 dataset_json, subset_name, split)
-            meta_map, file_map, args_map = get_dataset_files(
+            meta_map, file_map, args_map, type_map = get_dataset_files(
                 target_dataset_structure, dataset_name, namespace, version)
 
             data_meta_config.meta_data_files = meta_map
             data_meta_config.zip_data_files = file_map
             data_meta_config.meta_args_map = args_map
+            data_meta_config.meta_type_map = type_map
             data_meta_config.target_dataset_structure = target_dataset_structure
 
         self.dataset_context_config.data_meta_config = data_meta_config

@@ -13,6 +13,7 @@ from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
 from modelscope.msdatasets.data_files.data_files_manager import \
     DataFilesManager
+from modelscope.msdatasets.dataset_cls.dataset import ExternalDataset
 from modelscope.msdatasets.meta.data_meta_manager import DataMetaManager
 from modelscope.utils.constant import DatasetFormations
 
@@ -62,7 +63,8 @@ class OssDataLoader(BaseDataLoader):
 
         self.data_files_builder: Optional[DataFilesManager] = None
         self.dataset: Optional[Union[Dataset, IterableDataset, DatasetDict,
-                                     IterableDatasetDict]] = None
+                                     IterableDatasetDict,
+                                     ExternalDataset]] = None
         self.builder: Optional[DatasetBuilder] = None
         self.data_files_manager: Optional[DataFilesManager] = None
 
@@ -141,7 +143,8 @@ class OssDataLoader(BaseDataLoader):
                 self.builder)
 
     def _post_process(self) -> None:
-        ...
+        if isinstance(self.dataset, ExternalDataset):
+            self.dataset.custom_map = self.dataset_context_config.data_meta_config.meta_type_map
 
 
 class MaxComputeDataLoader(BaseDataLoader):

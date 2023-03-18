@@ -45,6 +45,9 @@ class KWSFarfieldPipeline(Pipeline):
         else:
             self._keyword_map = {}
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return pipeline_parameters, pipeline_parameters, pipeline_parameters
+
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
         if isinstance(inputs, bytes):
             return dict(input_file=inputs)
@@ -65,8 +68,8 @@ class KWSFarfieldPipeline(Pipeline):
             frames = numpy.stack((frames, frames, numpy.zeros_like(frames)), 1)
 
         kws_list = []
-        if 'output_file' in inputs:
-            with wave.open(inputs['output_file'], 'wb') as fout:
+        if 'output_file' in forward_params:
+            with wave.open(forward_params['output_file'], 'wb') as fout:
                 fout.setframerate(self.SAMPLE_RATE)
                 fout.setnchannels(self.OUTPUT_CHANNELS)
                 fout.setsampwidth(self.SAMPLE_WIDTH)

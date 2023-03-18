@@ -13,7 +13,7 @@ class GEMMMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
         self.task = Tasks.generative_multi_modal_embedding
-        self.model_id = 'damo/multi-modal_gemm-vit-large-patch14_generative-multi-modal-embedding'
+        self.model_id = 'damo/multi-modal_rleg-vit-large-patch14'
 
     test_input = {
         'image': 'data/test/images/generative_multimodal.jpg',

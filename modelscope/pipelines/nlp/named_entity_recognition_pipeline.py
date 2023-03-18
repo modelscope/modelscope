@@ -48,7 +48,7 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
             >>> input = '这与温岭市新河镇的一个神秘的传说有关。'
             >>> print(pipeline_ins(input))
 
-            To view other examples plese check the tests/pipelines/test_named_entity_recognition.py.
+            To view other examples plese check the tests/pipelines/test_plugin_model.py.
         """
         super().__init__(
             model=model,

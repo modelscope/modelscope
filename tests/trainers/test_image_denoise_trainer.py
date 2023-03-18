@@ -7,7 +7,7 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.image_denoise import NAFNetForImageDenoise
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.task_datasets.sidd_image_denoising import \
+from modelscope.msdatasets.dataset_cls.custom_datasets.sidd_image_denoising import \
     SiddImageDenoisingDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config

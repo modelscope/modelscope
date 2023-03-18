@@ -1,6 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import inspect
 
+import torch
+from packaging import version
+
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.registry import Registry, build_from_cfg, default_group
 
@@ -35,7 +38,10 @@ def build_lr_scheduler(cfg: ConfigDict, default_args: dict = None):
 
 def register_torch_lr_scheduler():
     from torch.optim import lr_scheduler
-    from torch.optim.lr_scheduler import _LRScheduler
+    if version.parse(torch.__version__) < version.parse('2.0.0.dev'):
+        from torch.optim.lr_scheduler import _LRScheduler
+    else:
+        from torch.optim.lr_scheduler import LRScheduler as _LRScheduler
 
     members = inspect.getmembers(lr_scheduler)
 

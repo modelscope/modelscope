@@ -1,21 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import os.path as osp
 import shutil
 import tempfile
 import unittest
-from typing import Callable, List, Optional, Tuple, Union
-
-import cv2
-import torch
-from torch.utils import data as data
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.models.cv.image_portrait_enhancement import \
     ImagePortraitEnhancement
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.task_datasets.image_portrait_enhancement import \
+from modelscope.msdatasets.dataset_cls.custom_datasets.image_portrait_enhancement import \
     ImagePortraitEnhancementDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode, ModelFile

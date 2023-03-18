@@ -36,8 +36,11 @@ class ANSPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model.eval()
+        self.stream_mode = kwargs.get('stream_mode', False)
 
     def preprocess(self, inputs: Input, **preprocess_params) -> Dict[str, Any]:
+        if self.stream_mode:
+            raise TypeError('This model does not support stream mode!')
         if isinstance(inputs, bytes):
             data1, fs = sf.read(io.BytesIO(inputs))
         elif isinstance(inputs, str):

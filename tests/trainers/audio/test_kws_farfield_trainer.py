@@ -81,3 +81,5 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files,
                       f'work_dir:{self.tmp_dir}')
+        self.assertIn('val_dataset.bin', results_files,
+                      f'work_dir:{self.tmp_dir}')

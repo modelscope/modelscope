@@ -17,6 +17,7 @@ class CVTasks(object):
     ocr_detection = 'ocr-detection'
     ocr_recognition = 'ocr-recognition'
     table_recognition = 'table-recognition'
+    lineless_table_recognition = 'lineless-table-recognition'
     license_plate_detection = 'license-plate-detection'
 
     # human face body related
@@ -111,6 +112,7 @@ class CVTasks(object):
     referring_video_object_segmentation = 'referring-video-object-segmentation'
     video_human_matting = 'video-human-matting'
     video_panoptic_segmentation = 'video-panoptic-segmentation'
+    video_instance_segmentation = 'video-instance-segmentation'
 
     # video editing
     video_inpainting = 'video-inpainting'
@@ -139,6 +141,9 @@ class CVTasks(object):
 
     # 3d face reconstruction
     face_reconstruction = 'face-reconstruction'
+
+    # 3d human reconstruction
+    human_reconstruction = 'human-reconstruction'
 
     # image quality assessment mos
     image_quality_assessment_mos = 'image-quality-assessment-mos'
@@ -217,6 +222,7 @@ class AudioTasks(object):
     speaker_diarization = 'speaker-diarization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
+    speech_timestamp = 'speech-timestamp'
 
 
 class MultiModalTasks(object):
@@ -234,6 +240,8 @@ class MultiModalTasks(object):
     document_vl_embedding = 'document-vl-embedding'
     video_captioning = 'video-captioning'
     video_question_answering = 'video-question-answering'
+    video_temporal_grounding = 'video-temporal-grounding'
+    text_to_video_synthesis = 'text-to-video-synthesis'
 
 
 class ScienceTasks(object):
@@ -391,6 +399,7 @@ class ThirdParty(object):
     KEY = 'third_party'
     EASYCV = 'easycv'
     ADASEQ = 'adaseq'
+    ADADET = 'adadet'
 
 
 class ConfigFields(object):
@@ -460,7 +469,9 @@ class LogKeys:
 
 
 class TrainerStages:
+    after_init = 'after_init'
     before_run = 'before_run'
+    before_val = 'before_val'
     before_train_epoch = 'before_train_epoch'
     before_train_iter = 'before_train_iter'
     after_train_iter = 'after_train_iter'
@@ -470,6 +481,7 @@ class TrainerStages:
     after_val_iter = 'after_val_iter'
     after_val_epoch = 'after_val_epoch'
     after_run = 'after_run'
+    after_val = 'after_val'
 
 
 class ColorCodes:
@@ -516,3 +528,8 @@ class DistributedParallelType(object):
     DP = 'data_parallel'
     TP = 'tensor_model_parallel'
     PP = 'pipeline_model_parallel'
+
+
+class DatasetTensorflowConfig:
+    BATCH_SIZE = 'batch_size'
+    DEFAULT_BATCH_SIZE_VALUE = 5

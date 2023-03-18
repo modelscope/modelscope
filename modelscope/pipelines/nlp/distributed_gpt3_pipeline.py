@@ -43,7 +43,7 @@ class DistributedGPT3Pipeline(DistributedPipeline):
     def _forward_one(cls, inputs: Dict[str, Any]) -> Dict[str, Any]:
         tokens = inputs['inputs']['input_ids'].cuda(
             torch.cuda.current_device())
-        return cls.model.generate(tokens)
+        return cls.model.generate(tokens, **inputs['forward_params'])
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, str]:
@@ -61,3 +61,6 @@ class DistributedGPT3Pipeline(DistributedPipeline):
             self.preprocessor.tokenizer.detokenize(
                 inputs.sequences[0].tolist())
         }
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}

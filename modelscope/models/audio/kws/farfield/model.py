@@ -68,6 +68,7 @@ class FSMNSeleNetV2Decorator(TorchModel):
                 'keyword':
                 self._sc.kwsKeyword(self._sc.kwsSpottedKeywordIndex()),
                 'offset': self._sc.kwsKeywordOffset(),
+                'channel': self._sc.kwsBestChannel(),
                 'length': self._sc.kwsKeywordLength(),
                 'confidence': self._sc.kwsConfidence()
             }

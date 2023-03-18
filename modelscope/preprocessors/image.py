@@ -24,10 +24,12 @@ class LoadImage:
     "scale_factor" (1.0) and "img_norm_cfg" (means=0 and stds=1).
     Args:
         mode (str): See :ref:`PIL.Mode<https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes>`.
+        backend (str): Type of loading image. Should be: cv2 or pillow. Default is pillow.
     """
 
-    def __init__(self, mode='rgb'):
+    def __init__(self, mode='rgb', backend='pillow'):
         self.mode = mode.upper()
+        self.backend = backend
 
     def __call__(self, input: Union[str, Dict[str, str]]):
         """Call functions to load image and get image meta information.
@@ -42,21 +44,38 @@ class LoadImage:
         else:
             image_path_or_url = input
 
-        bytes = File.read(image_path_or_url)
-        # TODO @wenmeng.zwm add opencv decode as optional
-        # we should also look at the input format which is the most commonly
-        # used in Mind' image related models
-        with io.BytesIO(bytes) as infile:
-            img = Image.open(infile)
-            img = ImageOps.exif_transpose(img)
-            img = img.convert(self.mode)
+        if self.backend == 'cv2':
+            storage = File._get_storage(image_path_or_url)
+            with storage.as_local_path(image_path_or_url) as img_path:
+                img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+                if self.mode == 'RGB':
+                    cv2.cvtColor(img, cv2.COLOR_BGR2RGB, img)
+                img_h, img_w, img_c = img.shape[0], img.shape[1], img.shape[2]
+                img_shape = (img_h, img_w, img_c)
+        elif self.backend == 'pillow':
+            bytes = File.read(image_path_or_url)
+            # TODO @wenmeng.zwm add opencv decode as optional
+            # we should also look at the input format which is the most commonly
+            # used in Mind' image related models
+            with io.BytesIO(bytes) as infile:
+                img = Image.open(infile)
+                img = ImageOps.exif_transpose(img)
+                img = img.convert(self.mode)
+            img_shape = (img.size[1], img.size[0], 3)
+        else:
+            raise TypeError(f'backend should be either cv2 or pillow,'
+                            f'but got {self.backend}')
 
         results = {
             'filename': image_path_or_url,
             'img': img,
-            'img_shape': (img.size[1], img.size[0], 3),
+            'img_shape': img_shape,
             'img_field': 'img',
         }
+        if isinstance(input, dict):
+            input_ret = input.copy()
+            input_ret.update(results)
+            results = input_ret
         return results
 
     def __repr__(self):

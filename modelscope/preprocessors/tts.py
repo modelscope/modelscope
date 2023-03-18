@@ -3,9 +3,9 @@
 import os
 from typing import Any, Dict, List, Union
 
+from kantts.preprocess.data_process import process_data
+
 from modelscope.metainfo import Preprocessors
-from modelscope.models.audio.tts.kantts.preprocess.data_process import \
-    process_data
 from modelscope.models.base import Model
 from modelscope.utils.audio.tts_exceptions import (
     TtsDataPreprocessorAudioConfigNotExistsException,
@@ -28,22 +28,22 @@ class KanttsDataPreprocessor(Preprocessor):
     def __call__(self,
                  data_dir,
                  output_dir,
-                 lang_dir,
                  audio_config_path,
                  speaker_name='F7',
                  target_lang='PinYin',
-                 skip_script=False):
-        self.do_data_process(data_dir, output_dir, lang_dir, audio_config_path,
-                             speaker_name, target_lang, skip_script)
+                 skip_script=False,
+                 se_model=None):
+        self.do_data_process(data_dir, output_dir, audio_config_path,
+                             speaker_name, target_lang, skip_script, se_model)
 
     def do_data_process(self,
                         datadir,
                         outputdir,
-                        langdir,
                         audio_config,
                         speaker_name='F7',
                         targetLang='PinYin',
-                        skip_script=False):
+                        skip_script=False,
+                        se_model=None):
         if not os.path.exists(datadir):
             raise TtsDataPreprocessorDirNotExistsException(
                 'Preprocessor: dataset dir not exists')
@@ -53,8 +53,5 @@ class KanttsDataPreprocessor(Preprocessor):
         if not os.path.exists(audio_config):
             raise TtsDataPreprocessorAudioConfigNotExistsException(
                 'Preprocessor: audio config not exists')
-        if not os.path.exists(langdir):
-            raise TtsDataPreprocessorDirNotExistsException(
-                'Preprocessor: language dir not exists')
-        process_data(datadir, outputdir, langdir, audio_config, speaker_name,
-                     targetLang, skip_script)
+        process_data(datadir, outputdir, audio_config, speaker_name,
+                     targetLang, skip_script, se_model)

@@ -2,11 +2,13 @@
 import os
 import shutil
 import tempfile
+import zipfile
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import json
 
 from modelscope.metainfo import Preprocessors, Trainers
+from modelscope.models import Model
 from modelscope.models.audio.tts import SambertHifigan
 from modelscope.msdatasets import MsDataset
 from modelscope.preprocessors.builder import build_preprocessor
@@ -17,6 +19,7 @@ from modelscope.utils.audio.tts_exceptions import (
     TtsTrainingCfgNotExistsException, TtsTrainingDatasetInvalidException,
     TtsTrainingHparamsInvalidException, TtsTrainingInvalidModelException,
     TtsTrainingWorkDirNotExistsException)
+from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION, ModelFile,
@@ -35,12 +38,12 @@ class KanttsTrainer(BaseTrainer):
     ORIG_MODEL_DIR = 'orig_model'
 
     def __init__(self,
-                 model: str,
+                 model: Union[Model, str],
                  work_dir: str = None,
                  speaker: str = 'F7',
                  lang_type: str = 'PinYin',
-                 cfg_file: Optional[str] = None,
-                 train_dataset: Optional[Union[MsDataset, str]] = None,
+                 cfg_file: str = None,
+                 train_dataset: Union[MsDataset, str] = None,
                  train_dataset_namespace: str = DEFAULT_DATASET_NAMESPACE,
                  train_dataset_revision: str = DEFAULT_DATASET_REVISION,
                  train_type: dict = {
@@ -76,7 +79,6 @@ class KanttsTrainer(BaseTrainer):
             self.train_type[TtsTrainType.TRAIN_TYPE_VOC] = {}
 
         logger.info(f'Set workdir to {self.work_dir}')
-
         self.data_dir = os.path.join(self.work_dir, self.DATA_DIR)
         self.am_tmp_dir = os.path.join(self.work_dir, self.AM_TMP_DIR)
         self.voc_tmp_dir = os.path.join(self.work_dir, self.VOC_TMP_DIR)
@@ -84,7 +86,6 @@ class KanttsTrainer(BaseTrainer):
         self.raw_dataset_path = ''
         self.skip_script = preprocess_skip_script
         self.audio_config_path = ''
-        self.lang_path = ''
         self.am_config_path = ''
         self.voc_config_path = ''
 
@@ -99,15 +100,29 @@ class KanttsTrainer(BaseTrainer):
 
         if train_dataset:
             if isinstance(train_dataset, str):
-                logger.info(f'load {train_dataset_namespace}/{train_dataset}')
-                train_dataset = MsDataset.load(
-                    dataset_name=train_dataset,
-                    namespace=train_dataset_namespace,
-                    version=train_dataset_revision)
-                logger.info(f'train dataset:{train_dataset.config_kwargs}')
-            self.raw_dataset_path = self.load_dataset_raw_path(train_dataset)
+                if os.path.exists(train_dataset):
+                    logger.info(f'load {train_dataset}')
+                    self.raw_dataset_path = train_dataset
+                else:
+                    logger.info(
+                        f'load {train_dataset_namespace}/{train_dataset}')
+                    train_dataset = MsDataset.load(
+                        dataset_name=train_dataset,
+                        namespace=train_dataset_namespace,
+                        version=train_dataset_revision)
+                    logger.info(f'train dataset:{train_dataset.config_kwargs}')
+                    self.raw_dataset_path = self.load_dataset_raw_path(
+                        train_dataset)
+            else:
+                self.raw_dataset_path = self.load_dataset_raw_path(
+                    train_dataset)
 
-        model_dir = self.get_or_download_model_dir(model, model_revision)
+        if not model:
+            raise TtsTrainingInvalidModelException('model param is none')
+        if isinstance(model, str):
+            model_dir = self.get_or_download_model_dir(model, model_revision)
+        else:
+            model_dir = model.model_dir
         shutil.copytree(model_dir, self.orig_model_dir)
         self.model_dir = self.orig_model_dir
 
@@ -121,11 +136,10 @@ class KanttsTrainer(BaseTrainer):
 
         self.finetune_from_pretrain = False
         self.speaker = speaker
-        self.lang_type = lang_type
         self.model = None
         self.device = kwargs.get('device', 'gpu')
-        self.model = self.get_model(self.model_dir, self.speaker,
-                                    self.lang_type)
+        self.model = self.get_model(self.model_dir, self.speaker)
+        self.lang_type = self.model.lang_type
         if TtsTrainType.TRAIN_TYPE_SAMBERT in self.train_type or TtsTrainType.TRAIN_TYPE_VOC in self.train_type:
             self.audio_data_preprocessor = build_preprocessor(
                 dict(type=Preprocessors.kantts_data_preprocessor),
@@ -152,26 +166,25 @@ class KanttsTrainer(BaseTrainer):
                                           config['train']['voc_config'])
                 if os.path.exists(voc_config):
                     self.voc_config_path = voc_config
-            if 'language_path' in config['train']:
-                lang_path = os.path.join(cur_dir,
-                                         config['train']['language_path'])
-                if os.path.exists(lang_path):
-                    self.lang_path = lang_path
             if not self.raw_dataset_path:
                 if 'train_dataset' in config['train']:
                     dataset = config['train']['train_dataset']
-                    if 'id' in dataset:
-                        namespace = dataset.get('namespace',
-                                                DEFAULT_DATASET_NAMESPACE)
-                        revision = dataset.get('revision',
-                                               DEFAULT_DATASET_REVISION)
-                        ms = MsDataset.load(
-                            dataset_name=dataset['id'],
-                            namespace=namespace,
-                            version=revision)
-                        self.raw_dataset_path = self.load_dataset_raw_path(ms)
-                    elif 'path' in dataset:
-                        self.raw_dataset_path = dataset['path']
+                    if os.path.exists(dataset):
+                        self.raw_dataset_path = dataset
+                    else:
+                        if 'id' in dataset:
+                            namespace = dataset.get('namespace',
+                                                    DEFAULT_DATASET_NAMESPACE)
+                            revision = dataset.get('revision',
+                                                   DEFAULT_DATASET_REVISION)
+                            ms = MsDataset.load(
+                                dataset_name=dataset['id'],
+                                namespace=namespace,
+                                version=revision)
+                            self.raw_dataset_path = self.load_dataset_raw_path(
+                                ms)
+                        elif 'path' in dataset:
+                            self.raw_dataset_path = dataset['path']
 
     def load_dataset_raw_path(self, dataset: MsDataset):
         if 'split_config' not in dataset.config_kwargs:
@@ -188,19 +201,21 @@ class KanttsTrainer(BaseTrainer):
             if not audio_config or not os.path.exists(audio_config):
                 audio_config = self.model.get_voice_audio_config_path(
                     self.speaker)
-            lang_path = self.lang_path
-            if not lang_path or not os.path.exists(lang_path):
-                lang_path = self.model.get_voice_lang_path(self.speaker)
+            se_model = self.model.get_voice_se_model_path(self.speaker)
             self.audio_data_preprocessor(self.raw_dataset_path, self.data_dir,
-                                         lang_path, audio_config, self.speaker,
-                                         self.lang_type, self.skip_script)
+                                         audio_config, self.speaker,
+                                         self.lang_type, self.skip_script,
+                                         se_model)
 
     def prepare_text(self):
         pass
 
-    def get_model(self, model_dir, speaker, lang_type):
+    def get_model(self, model_dir, speaker):
+        cfg = Config.from_file(
+            os.path.join(self.model_dir, ModelFile.CONFIGURATION))
+        model_cfg = cfg.get('model', {})
         model = SambertHifigan(
-            model_dir=self.model_dir, lang_type=self.lang_type, is_train=True)
+            model_dir=self.model_dir, is_train=True, **model_cfg)
         return model
 
     def train(self, *args, **kwargs):

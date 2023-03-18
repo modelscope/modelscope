@@ -55,18 +55,17 @@ class CenterPredictor(
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, x, gt_score_map=None):
+    def forward(self, x, return_score=False):
         """ Forward pass with input x. """
         score_map_ctr, size_map, offset_map = self.get_score_map(x)
 
-        # assert gt_score_map is None
-        if gt_score_map is None:
-            bbox = self.cal_bbox(score_map_ctr, size_map, offset_map)
+        if return_score:
+            bbox, max_score = self.cal_bbox(
+                score_map_ctr, size_map, offset_map, return_score=True)
+            return score_map_ctr, bbox, size_map, offset_map, max_score
         else:
-            bbox = self.cal_bbox(
-                gt_score_map.unsqueeze(1), size_map, offset_map)
-
-        return score_map_ctr, bbox, size_map, offset_map
+            bbox = self.cal_bbox(score_map_ctr, size_map, offset_map)
+            return score_map_ctr, bbox, size_map, offset_map
 
     def cal_bbox(self,
                  score_map_ctr,

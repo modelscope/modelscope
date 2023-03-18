@@ -1,6 +1,5 @@
-# Implementation in this file is modified based on Res2Net-PretrainedModels
-# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License
-# publicly available at https://github.com/Res2Net/Res2Net-PretrainedModels/blob/master/res2net_v1b.py
+# Implementation in this file is modified based on SINet-V2,made publicly available under the Apache 2.0 License
+# publicly available at https://github.com/GewelsJI/SINet-V2
 import math
 
 import torch

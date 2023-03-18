@@ -3,12 +3,16 @@ import hashlib
 import os
 import unittest
 
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.msdatasets.audio.asr_dataset import ASRDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets.audio.asr_dataset import \
+    ASRDataset
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DownloadMode
+from modelscope.utils.config import Config
+from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE, DownloadMode,
+                                       ModelFile)
 from modelscope.utils.test_utils import require_tf, require_torch, test_level
 
 
@@ -68,6 +72,7 @@ class MsDatasetTest(unittest.TestCase):
         ms_ds_train = MsDataset.load('movie_scene_seg_toydata', split='train')
         print(ms_ds_train._hf_ds.config_kwargs)
         assert next(iter(ms_ds_train.config_kwargs['split_config'].values()))
+        assert next(iter(ms_ds_train))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_coco(self):
@@ -259,6 +264,34 @@ class MsDatasetTest(unittest.TestCase):
         data_example = next(iter(ms_dataset))
         print(data_example)
         assert data_example.values()
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_to_custom_dataset_movie_scene_toydata(self):
+        from modelscope.msdatasets.dataset_cls.custom_datasets.movie_scene_segmentation import \
+            MovieSceneSegmentationDataset
+        from modelscope.msdatasets.dataset_cls.dataset import ExternalDataset
+
+        model_id = 'damo/cv_resnet50-bert_video-scene-segmentation_movienet'
+        cache_path = snapshot_download(model_id)
+        config_path = os.path.join(cache_path, ModelFile.CONFIGURATION)
+        cfg = Config.from_file(config_path)
+
+        # ds_test.ds_instance got object 'MovieSceneSegmentationDataset' when the custom_cfg is not none.
+        ds_test_1 = MsDataset.load(
+            'modelscope/movie_scene_seg_toydata',
+            split='test',
+            custom_cfg=cfg,
+            test_mode=True)
+        assert ds_test_1.is_custom
+        assert isinstance(ds_test_1.ds_instance, MovieSceneSegmentationDataset)
+
+        # ds_test.ds_instance got object 'ExternalDataset' when the custom_cfg is none. (by default)
+        ds_test_2 = MsDataset.load(
+            'modelscope/movie_scene_seg_toydata',
+            split='test',
+            custom_cfg=None)
+        assert not ds_test_2.is_custom
+        assert isinstance(ds_test_2.ds_instance, ExternalDataset)
 
 
 if __name__ == '__main__':

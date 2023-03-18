@@ -1,42 +1,30 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import copy
 import datetime
-import math
 import os
-import random
 import re
-import sys
-from shutil import copyfile
 from typing import Callable, Dict, Optional
 
-import numpy as np
 import torch
-import torch.distributed as dist
-import torch.nn.functional as F
 import yaml
 from tensorboardX import SummaryWriter
 from torch import nn as nn
 from torch import optim as optim
-from torch.distributed import ReduceOp
-from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel
-from modelscope.msdatasets.task_datasets.audio.kws_nearfield_dataset import \
+from modelscope.msdatasets.dataset_cls.custom_datasets.audio.kws_nearfield_dataset import \
     kws_nearfield_dataset
 from modelscope.trainers.base import BaseTrainer
 from modelscope.trainers.builder import TRAINERS
-from modelscope.utils.audio.audio_utils import update_conf
 from modelscope.utils.checkpoint import load_checkpoint, save_checkpoint
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
-from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import (get_dist_info, get_local_rank,
-                                          init_dist, is_master,
-                                          set_random_seed)
+                                          init_dist, set_random_seed)
 from .kws_utils.batch_utils import executor_cv, executor_test, executor_train
 from .kws_utils.det_utils import compute_det
 from .kws_utils.file_utils import query_tokens_id, read_lexicon, read_token

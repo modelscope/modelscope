@@ -37,6 +37,22 @@ class RealtimeVideoObjectDetectionTest(unittest.TestCase,
         else:
             raise ValueError('process error')
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_longshortnet(self):
+        model_id = 'damo/cv_cspnet_video-object-detection_longshortnet'
+        test_video = 'data/test/videos/test_realtime_vod.mp4'
+        realtime_video_object_detection = pipeline(
+            Tasks.video_object_detection, model=model_id)
+        result = realtime_video_object_detection(test_video)
+        if result:
+            logger.info('Video output to test_vod_results.avi')
+            show_video_object_detection_result(test_video,
+                                               result[OutputKeys.BOXES],
+                                               result[OutputKeys.LABELS],
+                                               'test_vod_results.avi')
+        else:
+            raise ValueError('process error')
+
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):
         self.compatibility_check()

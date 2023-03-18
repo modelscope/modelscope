@@ -18,9 +18,12 @@ class NLITest(unittest.TestCase, DemoCompatibilityCheck):
         self.task = Tasks.nli
         self.model_id = 'damo/nlp_structbert_nli_chinese-base'
         self.model_id_fact_checking = 'damo/nlp_structbert_fact-checking_chinese-base'
+        self.model_id_peer = 'damo/nlp_peer_mnli_english-base'
 
     sentence1 = '四川商务职业学院和四川财经职业学院哪个好？'
     sentence2 = '四川商务职业学院商务管理在哪个校区？'
+    en_sentence1 = 'Conceptually cream skimming has two basic dimensions - product and geography.'
+    en_sentence2 = 'Product and geography are what make cream skimming work.'
     regress_tool = MsRegressTool(baseline=False)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
@@ -60,6 +63,15 @@ class NLITest(unittest.TestCase, DemoCompatibilityCheck):
             model=self.model_id_fact_checking,
             model_revision='v1.0.1')
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_peer_model(self):
+        pipeline_ins = pipeline(
+            task=Tasks.nli,
+            model=self.model_id_peer,
+            model_revision='v1.0.0',
+        )
+        print(pipeline_ins(input=(self.en_sentence1, self.en_sentence2)))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):

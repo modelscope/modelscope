@@ -12,9 +12,9 @@ from typing import Callable, List, Optional, Tuple
 import numpy as np
 import torch
 import torch.multiprocessing as mp
+from packaging import version
 from torch import distributed as dist
 
-from modelscope.utils.constant import DistributedParallelType
 from modelscope.utils.megatron_utils import is_megatron_initialized
 
 
@@ -34,6 +34,20 @@ def _is_free_port(port: int) -> bool:
     ips.append('localhost')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return all(s.connect_ex((ip, port)) != 0 for ip in ips)
+
+
+def compile_model(model, **compile_options):
+    # Compile the model with torch 2.0
+    if hasattr(model, 'compile'):
+        model = model.compile(**compile_options)
+    elif version.parse(torch.__version__) >= version.parse('2.0.0.dev'):
+        model = torch.compile(model, **compile_options)
+    else:
+        print(
+            'Compiling model needs torch version > 2.0.0, '
+            f'your torch version is: {torch.__version__}, origin model will be returned.'
+        )
+    return model
 
 
 def init_dist(launcher: str, backend: str = 'nccl', **kwargs) -> None:
@@ -108,10 +122,17 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
     dist.init_process_group(backend=backend)
 
 
-def get_dist_info() -> Tuple[int, int]:
+def get_dist_info(group=None) -> Tuple[int, int]:
+    """Get dist info of a specified group
+
+    Args:
+        group: The parallel group, default None, for the global group
+
+    Returns:
+        A tuple of the current rank and world_size of the group
+    """
     if is_dist():
-        group = None
-        if is_megatron_initialized():
+        if group is None and is_megatron_initialized():
             from megatron_util import mpu
             group = mpu.get_data_parallel_group()
         rank = dist.get_rank(group)
@@ -162,22 +183,7 @@ def is_dist():
 
 
 def is_master(group=None):
-    if isinstance(group, str):
-        group = _parse_parallel_group(group)
     return dist.get_rank(group) == 0 if is_dist() else True
-
-
-def _parse_parallel_group(group: str):
-    from megatron_util import mpu
-    if group == DistributedParallelType.DP:
-        return mpu.get_data_parallel_group()
-    if group == DistributedParallelType.TP:
-        return mpu.get_tensor_model_parallel_group()
-    if group == DistributedParallelType.PP:
-        return mpu.get_pipeline_model_parallel_group()
-    raise ValueError(
-        f"Wrong group '{group}'. Supported groups are '{DistributedParallelType.DP}', "
-        f"'{DistributedParallelType.TP}' or '{DistributedParallelType.PP}'")
 
 
 def master_only(group=None):

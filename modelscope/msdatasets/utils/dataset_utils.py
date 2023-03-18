@@ -184,9 +184,11 @@ def get_dataset_files(subset_split_into: dict,
     meta_map = defaultdict(dict)
     file_map = defaultdict(dict)
     args_map = defaultdict(dict)
+    custom_type_map = defaultdict(dict)
     modelscope_api = HubApi()
 
     for split, info in subset_split_into.items():
+        custom_type_map[split] = info.get('custom', '')
         meta_map[split] = modelscope_api.get_dataset_file_url(
             info.get('meta', ''), dataset_name, namespace, revision)
         if info.get('file'):
@@ -221,4 +223,4 @@ def get_dataset_files(subset_split_into: dict,
         if contains_dir(file_map):
             file_map = get_split_objects_map(file_map, objects)
 
-    return meta_map, file_map, args_map
+    return meta_map, file_map, args_map, custom_type_map

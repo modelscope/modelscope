@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
     from .clip import CLIPForMultiModalEmbedding
     from .gemm import GEMMForMultiModalEmbedding
+    from .rleg import RLEGForMultiModalEmbedding
     from .team import TEAMForMultiModalSimilarity
     from .diffusion import DiffusionForTextToImageSynthesis
     from .mmr import VideoCLIPForMultiModalEmbedding
@@ -17,12 +18,14 @@ if TYPE_CHECKING:
     from .multi_stage_diffusion import \
         MultiStageDiffusionForTextToImageSynthesis
     from .vldoc import VLDocForDocVLEmbedding
+    from .video_synthesis import TextToVideoSynthesis
 
 else:
     _import_structure = {
         'clip': ['CLIPForMultiModalEmbedding'],
         'diffusion': ['DiffusionForTextToImageSynthesis'],
         'gemm': ['GEMMForMultiModalEmbedding'],
+        'rleg': ['RLEGForMultiModalEmbedding'],
         'team': ['TEAMForMultiModalSimilarity'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
         'mplug_for_all_tasks': ['MPlugForAllTasks', 'HiTeAForAllTasks'],
@@ -32,6 +35,7 @@ else:
         'multi_stage_diffusion':
         ['MultiStageDiffusionForTextToImageSynthesis'],
         'vldoc': ['VLDocForDocVLEmbedding'],
+        'video_synthesis': ['TextToVideoSynthesis'],
     }
 
     import sys

@@ -16,8 +16,5 @@ class ConvNextViT(nn.Module):
     def forward(self, input):
         """ Transformation stage """
         features = self.cnn_model(input)
-        prediction = self.vitstr(features)
-        prediction = torch.nn.functional.softmax(prediction, dim=-1)
-
-        output = torch.argmax(prediction, -1)
+        output = self.vitstr(features)
         return output

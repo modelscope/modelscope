@@ -25,7 +25,6 @@ class SiameseUiePreprocessor(Preprocessor):
         **kwargs,
     ):
         """preprocess the data
-`
         Args:
             model_dir (str): model path
         """

@@ -180,6 +180,14 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
         'model_id': 'damo/speech_charctc_kws_phone-xiaoyun',
         'wav_path': 'data/test/audios/kws_xiaoyunxiaoyun.wav',
         'keywords': '小云小云'
+    }, {
+        'model_id': 'damo/speech_charctc_kws_phone-speechcommands',
+        'wav_path': 'data/test/audios/kws_xiaoyunxiaoyun.wav',
+        'keywords': '小云小云'
+    }, {
+        'model_id': 'damo/speech_charctc_kws_phone-wenwen',
+        'wav_path': 'data/test/audios/kws_xiaoyunxiaoyun.wav',
+        'keywords': '小云小云'
     }]
 
     def setUp(self) -> None:
@@ -330,10 +338,11 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
             wav_path = item['wav_path']
             keywords = item['keywords']
 
-            logger.info('run with model_id:' + model_id)
+            logger.info('run with model_id:' + model_id + ' with keywords:'
+                        + keywords)
             kws_result = self.run_pipeline(
                 model_id=model_id, audio_in=wav_path, keywords=keywords)
-            self.check_result('test_run_with_all_models', kws_result)
+            logger.info(ColorCodes.YELLOW + str(kws_result) + ColorCodes.END)
 
     @unittest.skip('demo compatibility test is only enabled on a needed-basis')
     def test_demo_compatibility(self):

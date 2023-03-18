@@ -1,18 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import glob
-import os
-import shutil
-import tempfile
-import unittest
 
-import torch
+import os
+import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
-from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile
-from modelscope.utils.test_utils import DistributedTestCase, test_level
+from modelscope.utils.test_utils import test_level
 
 
 def _setup():

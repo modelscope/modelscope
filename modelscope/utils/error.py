@@ -153,3 +153,12 @@ MPI4PY_IMPORT_ERROR = """
 `pip install mpi4py' and with following the instruction to install openmpi,
 https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html`
 """
+
+# docstyle-ignore
+OPENCLIP_IMPORT_ERROR = """
+{0} requires the fasttext library but it was not found in your environment.
+You can install it with pip on linux or mac:
+`pip install open_clip_torch`
+Or you can checkout the instructions on the
+installation page: https://github.com/mlfoundations/open_clip and follow the ones that match your environment.
+"""

@@ -70,5 +70,5 @@ class OCRRecognitionPipeline(Pipeline):
         return outputs
 
     def postprocess(self, inputs):
-        outputs = {OutputKeys.TEXT: inputs}
+        outputs = {OutputKeys.TEXT: inputs['preds']}
         return outputs

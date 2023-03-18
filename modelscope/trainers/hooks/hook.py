@@ -12,20 +12,28 @@ class Hook:
     The Hook base class of any modelscope trainer. You can build your own hook inherited from this class.
     """
 
-    stages = (TrainerStages.before_run, TrainerStages.before_train_epoch,
+    stages = (TrainerStages.after_init, TrainerStages.before_run,
+              TrainerStages.before_val, TrainerStages.before_train_epoch,
               TrainerStages.before_train_iter, TrainerStages.after_train_iter,
               TrainerStages.after_train_epoch, TrainerStages.before_val_epoch,
               TrainerStages.before_val_iter, TrainerStages.after_val_iter,
-              TrainerStages.after_val_epoch, TrainerStages.after_run)
+              TrainerStages.after_val_epoch, TrainerStages.after_run,
+              TrainerStages.after_val)
 
     PRIORITY = Priority.NORMAL
 
     # The strategic function dict.
     _strategies = dict()
 
+    def after_init(self, trainer):
+        """
+        Will be called at the end of the trainer's `__init__` method
+        """
+        pass
+
     def before_run(self, trainer):
         """
-        Will be called before any loop begins.
+        Will be called before trainer loop begins.
         Args:
             trainer: The trainer instance.
 
@@ -36,7 +44,29 @@ class Hook:
 
     def after_run(self, trainer):
         """
-        Will be called after all loops end.
+        Will be called after trainer loop end.
+        Args:
+            trainer: The trainer instance.
+
+        Returns: None
+
+        """
+        pass
+
+    def before_val(self, trainer):
+        """
+        Will be called before eval loop begins.
+        Args:
+            trainer: The trainer instance.
+
+        Returns: None
+
+        """
+        pass
+
+    def after_val(self, trainer):
+        """
+        Will be called after eval loop end.
         Args:
             trainer: The trainer instance.
 

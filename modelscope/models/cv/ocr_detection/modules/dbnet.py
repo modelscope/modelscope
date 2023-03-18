@@ -2,10 +2,10 @@
 # Part of implementation is adopted from ViLT,
 # made publicly available under the Apache License 2.0 at https://github.com/dandelin/ViLT.
 # ------------------------------------------------------------------------------
-
 import math
 import os
 import sys
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -413,10 +413,46 @@ class SegDetector(nn.Module):
         # this is the pred module, not binarization module;
         # We do not correct the name due to the trained model.
         binary = self.binarize(fuse)
-        return binary
+        if self.training:
+            result = OrderedDict(binary=binary)
+        else:
+            return binary
+        if self.adaptive and self.training:
+            if self.serial:
+                fuse = torch.cat(
+                    (fuse, nn.functional.interpolate(binary, fuse.shape[2:])),
+                    1)
+            thresh = self.thresh(fuse)
+            thresh_binary = self.step_function(binary, thresh)
+            result.update(thresh=thresh, thresh_binary=thresh_binary)
+        return result
 
     def step_function(self, x, y):
         return torch.reciprocal(1 + torch.exp(-self.k * (x - y)))
+
+
+class BasicModel(nn.Module):
+
+    def __init__(self, *args, **kwargs):
+        nn.Module.__init__(self)
+
+        self.backbone = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+        self.decoder = SegDetector(
+            in_channels=[64, 128, 256, 512], adaptive=True, k=50, **kwargs)
+
+    def forward(self, data, *args, **kwargs):
+        return self.decoder(self.backbone(data), *args, **kwargs)
+
+
+def parallelize(model, distributed, local_rank):
+    if distributed:
+        return nn.parallel.DistributedDataParallel(
+            model,
+            device_ids=[local_rank],
+            output_device=[local_rank],
+            find_unused_parameters=True)
+    else:
+        return nn.DataParallel(model)
 
 
 class VLPTModel(nn.Module):
@@ -449,3 +485,44 @@ class DBModel(nn.Module):
 
     def forward(self, x):
         return self.decoder(self.backbone(x))
+
+
+class DBModel_v2(nn.Module):
+
+    def __init__(self,
+                 device,
+                 distributed: bool = False,
+                 local_rank: int = 0,
+                 *args,
+                 **kwargs):
+        """
+        DBNet-resnet18 model without deformable conv,
+        paper reference: https://arxiv.org/pdf/1911.08947.pdf
+        """
+        super(DBModel_v2, self).__init__()
+        from .seg_detector_loss import L1BalanceCELoss
+
+        self.model = BasicModel(*args, **kwargs)
+        self.model = parallelize(self.model, distributed, local_rank)
+        self.criterion = L1BalanceCELoss()
+        self.criterion = parallelize(self.criterion, distributed, local_rank)
+        self.device = device
+        self.to(self.device)
+
+    def forward(self, batch, training=False):
+        if isinstance(batch, dict):
+            data = batch['image'].to(self.device)
+        else:
+            data = batch.to(self.device)
+        data = data.float()
+        pred = self.model(data, training=self.training)
+
+        if self.training:
+            for key, value in batch.items():
+                if value is not None:
+                    if hasattr(value, 'to'):
+                        batch[key] = value.to(self.device)
+            loss_with_metrics = self.criterion(pred, batch)
+            loss, metrics = loss_with_metrics
+            return loss, pred, metrics
+        return pred

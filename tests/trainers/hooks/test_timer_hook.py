@@ -14,6 +14,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel
 from modelscope.trainers import build_trainer
+from modelscope.trainers.default_config import merge_hooks
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.test_utils import create_dummy_test_dataset
 
@@ -83,7 +84,6 @@ class IterTimerHookTest(unittest.TestCase):
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
-        trainer.register_hook_from_cfg(trainer.cfg.train.hooks)
         trainer.train_dataloader = train_dataloader
         trainer.data_loader = train_dataloader
         trainer.invoke_hook(TrainerStages.before_run)

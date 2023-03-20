@@ -50,6 +50,7 @@ task_default_metrics = {
     Tasks.sentiment_classification: [Metrics.seq_cls_metric],
     Tasks.token_classification: [Metrics.token_cls_metric],
     Tasks.text_generation: [Metrics.text_gen_metric],
+    Tasks.chat: [Metrics.text_gen_metric],
     Tasks.text_classification: [Metrics.seq_cls_metric],
     Tasks.image_denoising: [Metrics.image_denoise_metric],
     Tasks.image_deblurring: [Metrics.image_denoise_metric],

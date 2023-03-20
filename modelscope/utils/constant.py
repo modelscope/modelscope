@@ -160,6 +160,8 @@ class CVTasks(object):
 
 
 class NLPTasks(object):
+    # chat
+    chat = 'chat'
     # nlp tasks
     word_segmentation = 'word-segmentation'
     part_of_speech = 'part-of-speech'

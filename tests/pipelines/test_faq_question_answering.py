@@ -81,8 +81,7 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_multilingual_model(self):
         pipeline_ins = pipeline(
             task=Tasks.faq_question_answering,
-            model=self.model_id_multilingual,
-            model_revision='v1.0.0')
+            model=self.model_id_multilingual)
         result = pipeline_ins(self.param)
         print(result)
 
@@ -94,9 +93,7 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_mgimn_model(self):
         pipeline_ins = pipeline(
-            task=Tasks.faq_question_answering,
-            model=self.mgimn_model_id,
-            model_revision='v1.0.0')
+            task=Tasks.faq_question_answering, model=self.mgimn_model_id)
         print(pipeline_ins(self.param, max_seq_length=20))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

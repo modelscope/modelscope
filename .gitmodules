@@ -1,0 +1,3 @@
+[submodule "data/test"]
+	path = data/test
+	url = https://www.modelscope.cn/ModelScope_Developer/modelscope-library-test-data.git

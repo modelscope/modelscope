@@ -23,15 +23,14 @@ class GLM130bTextGenerationPipeline(Pipeline):
         model = GLM130bForTextGeneration(model) if isinstance(model,
                                                               str) else model
         self.model = model
-        self.model('我爱你')
-        super().__init__(model=model, **kwargs)
+        # super().__init__(model=model, **kwargs)
 
     def preprocess(self, inputs, **preprocess_params) -> str:
         return inputs
 
     # define the forward pass
-    def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
-        return self.model(inputs)
+    def __call__(self, input: str, **forward_params) -> Dict[str, Any]:
+        return self.model(input)
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

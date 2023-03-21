@@ -117,25 +117,35 @@ sudo apt-get install git-lfs
 git lfs install
 ```
 
-2. track your data type using git lfs, for example, to track png files
-```bash
+2. We use a public read model repository from ModelScope to store test data. The repository has been added by default as a submodule with the path data/test. To clone it, use the following command:
+```shell
+git clone git@github.com:modelscope/modelscope.git --recursive
+```
+
+3. Each time you add new data, go to the data/test directory (note that you are now in the submodule's git directory), check if you are on the master branch, and pull the latest master branch:
+```shell
+git branch
+git checkout master
+git pull origin master
+```
+
+4. Track your new test data type, and update and commit the new files on the master branch:
+```shell
+cd data/test/
 git lfs track "*.png"
+git add test.png
+git commit -m "add test.png"
+git push origin master
 ```
 
-3. add your test files to `data/test/` folder, you can make directories if you need.
-```bash
-git add data/test/test.png
+5. Return to the modelscope directory and commit the submodule update:
+```shell
+cd ../../
+git add data/test
+git commit -m "update test data"
 ```
 
-4. commit your test data to remote branch
-```bash
-git commit -m "xxx"
-```
-
-To pull data from remote repo, just as the same way you pull git files.
-```bash
-git pull origin branch_name
-```
+Note: By default, we grant write permissions to all members of the ModelScope organization. If you encounter any permission issues, please send an email to ModelScope's official email address ([contact@modelscope.cn](contact@modelscope.cn)), and a dedicated person will contact you via email.
 
 
 

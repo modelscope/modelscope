@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Union
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .glm130b_for_text_generation import GLM130bForTextGeneration
+    from .text_generation import GLM130bForTextGeneration
 else:
     _import_structure = {
-        'glm130b_for_text_generation': ['GLM130bForTextGeneration']
+        'text_generation': ['GLM130bForTextGeneration']
     }
 
     import sys

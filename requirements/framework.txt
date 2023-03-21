@@ -4,7 +4,6 @@ datasets>=2.7.0,<=2.8.0
 einops
 filelock>=3.3.0
 gast>=0.2.2
-jsonplus
 numpy<1.24.0
 oss2
 Pillow>=6.2.0

@@ -324,7 +324,7 @@ class GLM130bForTextGeneration(TorchModel):
 
         if mpu.get_model_parallel_rank() == 0:
             logger.info('Output:' + str(answers_with_style[0]))
-            
+
         return str(answers_with_style[0])
 
     def forward(self, input: str) -> Dict[str, str]:

@@ -7,9 +7,7 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .text_generation import GLM130bForTextGeneration
 else:
-    _import_structure = {
-        'text_generation': ['GLM130bForTextGeneration']
-    }
+    _import_structure = {'text_generation': ['GLM130bForTextGeneration']}
 
     import sys
 

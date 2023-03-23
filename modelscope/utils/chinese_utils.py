@@ -37,7 +37,7 @@ def rebuild_chinese_str(string: str):
 def _is_chinese_str(string: str) -> bool:
     return all(
         _is_chinese_char(cp) or cp in CHINESE_PUNCTUATION
-        or cp in ENGLISH_PUNCTUATION or cp for cp in string)
+        or cp in ENGLISH_PUNCTUATION for cp in string)
 
 
 def _is_chinese_char(cp: str) -> bool:

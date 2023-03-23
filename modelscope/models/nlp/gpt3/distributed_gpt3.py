@@ -1269,6 +1269,8 @@ class DistributedGPT3(TorchModel):
         config['pipeline']['type'] = 'gpt3-generation'
 
         config['model'].pop('rank', None)
+        config['model'].pop('megatron_cfg', None)
+        config['megatron'].pop('rank', None)
         config['megatron'].pop('checkpoint_tensor_model_parallel_size', None)
         tp_size = get_args().tensor_model_parallel_size
         pp_size = get_args().pipeline_model_parallel_size

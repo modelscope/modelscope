@@ -160,7 +160,7 @@ def model_file_download(
 def get_file_download_url(model_id: str, file_path: str, revision: str):
     """Format file download url according to `model_id`, `revision` and `file_path`.
     e.g., Given `model_id=john/bert`, `revision=master`, `file_path=README.md`,
-    the resulted download url is: https://modelscope.co/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md
+    the resulted download url is: https://modelscope.cn/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md
 
     Args:
         model_id (str): The model_id.

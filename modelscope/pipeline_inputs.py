@@ -173,6 +173,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
 
     # ============ nlp tasks ===================
+    Tasks.chat: {
+        'text': InputType.TEXT,
+        'history': InputType.LIST,
+    },
     Tasks.text_classification: [
         InputType.TEXT,
         (InputType.TEXT, InputType.TEXT),

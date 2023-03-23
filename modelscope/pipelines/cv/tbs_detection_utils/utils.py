@@ -394,6 +394,6 @@ def post_process(self, outputs, img_path):
             left = max(0, round(left, 2))
             bottom = min(image.size[1], round(bottom, 2))
             right = min(image.size[0], round(right, 2))
-            new_boxes.append([top, left, bottom, right])
+            new_boxes.append([left, top, right, bottom])
 
     return new_boxes, top_confs

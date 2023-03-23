@@ -1,3 +1,4 @@
+# Copyright (c) 2022 Zhipu.AI
 import torch
 
 from ..kernels import extract_weight_to_half

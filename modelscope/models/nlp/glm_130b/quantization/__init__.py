@@ -1,3 +1,4 @@
+# Copyright (c) 2022 Zhipu.AI
 import torch
 
 from .layers import QuantizedColumnParallelLinear, QuantizedRowParallelLinear

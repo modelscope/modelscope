@@ -1,3 +1,4 @@
+# Copyright (c) 2022 Zhipu.AI
 import torch
 from SwissArmyTransformer.mpu import (ColumnParallelLinear, RowParallelLinear,
                                       copy_to_model_parallel_region,

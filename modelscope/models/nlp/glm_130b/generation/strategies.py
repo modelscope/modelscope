@@ -1,3 +1,4 @@
+# Copyright (c) 2022 Zhipu.AI
 import numpy as np
 import torch
 import torch.nn.functional as F

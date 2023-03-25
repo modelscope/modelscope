@@ -402,6 +402,10 @@ class PluginsManager(object):
         options, args = command.parse_args(command_args)
 
         status_code = command.main(command_args)
+
+        # reload the pkg_resources in order to get the latest pkgs information
+        importlib.reload(pkg_resources)
+
         return status_code, options, args
 
     def install_plugins(self,

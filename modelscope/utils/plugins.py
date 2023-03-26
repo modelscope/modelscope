@@ -324,13 +324,11 @@ def install_requirements_by_names(plugins: List[str]):
             f'The required packages {",".join(uninstalled_plugins)} are not installed.',
             f'Please run the command `modelscope plugin install {" ".join(uninstalled_plugins)}` to install them.'
         )
-    install_modelscope_if_need()
 
 
 def install_requirements_by_files(requirements: List[str]):
     for requirement in requirements:
         install_module_from_requirements(requirement)
-    install_modelscope_if_need()
 
 
 def register_plugins_repo(plugins: List[str]) -> None:
@@ -370,11 +368,31 @@ class PluginsManager(object):
 
     @staticmethod
     def check_plugin_installed(package):
+        """ Check if the plugin is installed, and if the version is valid
+
+        Args:
+            package: the package name need to be installed
+
+        Returns:
+
+        """
+        from pip._internal.utils.packaging import get_requirement, specifiers
+        req = get_requirement(package)
+
         try:
             importlib.reload(pkg_resources)
-            package_meta_info = pkg_resources.working_set.by_key[package]
+            package_meta_info = pkg_resources.working_set.by_key[req.name]
             version = package_meta_info.version
+
+            # To test if the package is installed
             installed = True
+
+            # If installed, test if the version is correct
+            for spec in req.specifier:
+                installed_valid_version = spec.contains(version)
+                if not installed_valid_version:
+                    installed = False
+                    break
         except KeyError:
             version = ''
             installed = False

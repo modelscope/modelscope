@@ -7,7 +7,10 @@ def inject_lora(module):
 def add_lora_hook(trainer):
     from modelscope.trainers.hooks import Hook
 
-    class LORAHOOK(Hook):
+    class LoraHook(Hook):
+
+        def __init__(self):
+            self._wrapped = False
 
         def before_run(self, trainer):
             pass
@@ -16,7 +19,9 @@ def add_lora_hook(trainer):
             pass
 
         def wrap_module(self, trainer):
-            trainer.model = inject_lora(trainer.model)
+            if not self._wrapped:
+                trainer.model = inject_lora(trainer.model)
+                self._wrapped = True
 
         def strategy(self):
             Hook.overload(self.save_checkpoints, name='CheckpointHook.save_checkpoints')
@@ -32,4 +37,4 @@ def add_lora_hook(trainer):
         def remove_checkpoints(self):
             pass
 
-    trainer.register_hook(LORAHOOK())
+    trainer.register_hook(LoraHook())

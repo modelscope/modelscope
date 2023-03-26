@@ -309,18 +309,6 @@ def import_module_from_model_dir(model_dir):
         import_module_from_file(module_name, file)
 
 
-def install_modelscope_if_need():
-    plugin_installed, version = PluginsManager.check_plugin_installed(
-        'modelscope')
-    if not plugin_installed:
-        status_code, _, args = PluginsManager.pip_command(
-            'install',
-            ['modelscope'],
-        )
-        if status_code != 0:
-            raise ImportError('Failed to install package modelscope')
-
-
 def install_requirements_by_names(plugins: List[str]):
     plugins_manager = PluginsManager()
     uninstalled_plugins = []

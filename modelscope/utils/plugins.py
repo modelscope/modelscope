@@ -263,14 +263,22 @@ def install_module_from_requirements(requirement_path, ):
 
     """
 
-    install_args = ['-r', requirement_path]
-    status_code, _, args = PluginsManager.pip_command(
-        'install',
-        install_args,
-    )
-    if status_code != 0:
-        raise ImportError(
-            f'Failed to install requirements from {requirement_path}')
+    install_list = []
+    with open(requirement_path, 'r', encoding='utf-8') as f:
+        requirements = f.read().splitlines()
+        for req in requirements:
+            installed, _ = PluginsManager.check_plugin_installed(req)
+            if not installed:
+                install_list.append(req)
+
+    if len(install_list) > 0:
+        status_code, _, args = PluginsManager.pip_command(
+            'install',
+            install_list,
+        )
+        if status_code != 0:
+            raise ImportError(
+                f'Failed to install requirements from {requirement_path}')
 
 
 def import_module_from_file(module_name, file_path):

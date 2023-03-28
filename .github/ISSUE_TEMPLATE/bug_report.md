@@ -11,7 +11,7 @@ Thanks for your error report and we appreciate it a lot.
 
 **Checklist**
 
-* I have searched the tutorial on modelscope  [doc-site](https://modelscope.cn/docs) 
+* I have searched the tutorial on modelscope  [doc-site](https://modelscope.cn/docs)
 * I have searched related issues but cannot get the expected help.
 * The bug has not been fixed in the latest version.
 

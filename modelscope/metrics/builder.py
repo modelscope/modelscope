@@ -41,6 +41,7 @@ class MetricKeys(object):
     MRR = 'mrr'
     NDCG = 'ndcg'
     AR = 'AR'
+    Colorfulness = 'colorfulness'
 
 
 task_default_metrics = {

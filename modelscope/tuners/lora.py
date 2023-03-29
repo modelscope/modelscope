@@ -1,40 +1,39 @@
+from .base_tuner import Tuner
+import torch
+from lora_diffusion import inject_trainable_lora
 
 
-def inject_lora(module):
-    pass
+def lora_state_dict(self: torch.nn.Module, *args, **kwargs):
+    state_dict = self._state_dict_origin(*args, **kwargs)
+    return {k: state_dict[k] for k in state_dict if "lora_" in k}
 
 
-def add_lora_hook(trainer):
-    from modelscope.trainers.hooks import Hook
+class LoRATuner(Tuner):
 
-    class LoraHook(Hook):
+    def tune(self, model, **kwargs):
+        model.requires_grad_(False)
+        require_grad_params = inject_trainable_lora(model, **kwargs)
+        model._state_dict_origin = model.state_dict
+        model.state_dict = lora_state_dict
+        return require_grad_params
 
-        def __init__(self):
-            self._wrapped = False
+    def add_hook(self, trainer, **kwargs):
+        from modelscope.trainers.hooks import Hook
 
-        def before_run(self, trainer):
-            pass
+        class LoRAHook(Hook):
 
-        def before_eval(self, trainer):
-            pass
+            def __init__(self):
+                self._wrapped = False
 
-        def wrap_module(self, trainer):
-            if not self._wrapped:
-                trainer.model = inject_lora(trainer.model)
-                self._wrapped = True
+            def before_run(self, trainer):
+                self.wrap_module(trainer)
 
-        def strategy(self):
-            Hook.overload(self.save_checkpoints, name='CheckpointHook.save_checkpoints')
-            Hook.overload(self.remove_checkpoints, name='CheckpointHook.remove_checkpoints')
-            Hook.overload(self.load_checkpoints, name='CheckpointHook.load_checkpoints')
+            def before_eval(self, trainer):
+                self.wrap_module(trainer)
 
-        def save_checkpoints(self):
-            pass
+            def wrap_module(_, trainer):
+                if not self._wrapped:
+                    self.tune(trainer.model, **kwargs)
+                    self._wrapped = True
 
-        def load_checkpoints(self):
-            pass
-
-        def remove_checkpoints(self):
-            pass
-
-    trainer.register_hook(LoraHook())
+        trainer.register_hook(LoRAHook())

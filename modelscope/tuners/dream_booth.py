@@ -1,13 +1,17 @@
+import hashlib
 from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import Dataset
-import hashlib
+
 from modelscope.outputs import OutputKeys
-from modelscope.utils.torch_utils import is_master
 from modelscope.pipelines import pipeline
+from modelscope.utils.torch_utils import is_master
+from .base_tuner import Tuner
+from torch.nn.modules.module import register_module_forward_hook
+from torchvision import transforms
 
 
 class DreamBoothDataset(Dataset):
@@ -20,6 +24,13 @@ class DreamBoothDataset(Dataset):
         class_prompt=None,
         with_prior_preservation=False,
         model=None,
+        preprocess_data=True,
+        tokenizer=None,
+        size=512,
+        center_crop=False,
+        color_jitter=False,
+        h_flip=False,
+        resize=False,
     ):
         self.instance_data_root = Path(instance_data_root)
         if not self.instance_data_root.exists():
@@ -32,6 +43,8 @@ class DreamBoothDataset(Dataset):
         self.with_prior_preservation = with_prior_preservation
         self.model = model
         self._prepared = False
+        self.preprocess_data = preprocess_data
+        self.tokenizer = tokenizer
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -42,6 +55,25 @@ class DreamBoothDataset(Dataset):
             self.class_prompt = class_prompt
         else:
             self.class_data_root = None
+
+        img_transforms = []
+
+        if resize:
+            img_transforms.append(
+                transforms.Resize(
+                    size, interpolation=transforms.InterpolationMode.BILINEAR
+                )
+            )
+        if center_crop:
+            img_transforms.append(transforms.CenterCrop(size))
+        if color_jitter:
+            img_transforms.append(transforms.ColorJitter(0.2, 0.1))
+        if h_flip:
+            img_transforms.append(transforms.RandomHorizontalFlip())
+
+        self.image_transforms = transforms.Compose(
+            [*img_transforms, transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+        )
 
     def prepare_dataset(self):
         if not self._prepared and self.with_prior_preservation and is_master():
@@ -56,9 +88,8 @@ class DreamBoothDataset(Dataset):
                     image = pipeline_ins(self.class_prompt).image
                     hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                     image_filename = (
-                            self.class_data_root
-                            / f"{index + cur_class_images}-{hash_image}.jpg"
-                    )
+                        self.class_data_root
+                        / f'{index + cur_class_images}-{hash_image}.jpg')
                     image.save(image_filename)
 
                 del pipeline_ins
@@ -67,6 +98,34 @@ class DreamBoothDataset(Dataset):
 
             self._prepared = True
 
+    def preprocess(self, item):
+        instance_image = item['instance_images']
+        instance_prompt = item['instance_prompt_ids']
+        if not instance_image.mode == "RGB":
+            instance_image = instance_image.convert("RGB")
+        item["instance_images"] = self.image_transforms(instance_image)
+        item["instance_prompt_ids"] = self.tokenizer(
+            instance_prompt,
+            padding="do_not_pad",
+            truncation=True,
+            max_length=self.tokenizer.model_max_length,
+        ).input_ids
+
+        if self.class_data_root:
+            class_image = item['class_images']
+            class_prompt = item['class_prompt_ids']
+            if not class_image.mode == "RGB":
+                class_image = class_image.convert("RGB")
+            item["class_images"] = self.image_transforms(class_image)
+            item["class_prompt_ids"] = self.tokenizer(
+                class_prompt,
+                padding="do_not_pad",
+                truncation=True,
+                max_length=self.tokenizer.model_max_length,
+            ).input_ids
+
+        return item
+
     def __len__(self):
         return self._length
 
@@ -74,72 +133,96 @@ class DreamBoothDataset(Dataset):
         self.prepare_dataset()
         example = {}
         instance_image = Image.open(
-            self.instance_images_path[index % self.num_instance_images]
-        )
+            self.instance_images_path[index % self.num_instance_images])
         example['instance_images'] = instance_image
-        example["instance_prompt_ids"] = self.instance_prompt
+        example['instance_prompt_ids'] = self.instance_prompt
 
         if self.class_data_root:
             class_image = Image.open(
-                self.class_images_path[index % self.num_class_images]
-            )
+                self.class_images_path[index % self.num_class_images])
             example['class_images'] = class_image
-            example["class_prompt_ids"] = self.class_prompt
+            example['class_prompt_ids'] = self.class_prompt
+        if self.preprocess_data:
+            example = self.preprocess(example)
         return example
 
 
-def initialize_dream_booth(model,
-                           instance_data_root,
-                           instance_prompt,
-                           class_data_root=None,
-                           class_prompt=None,
-                           with_prior_preservation=False):
-    dataset = DreamBoothDataset(instance_data_root, instance_prompt,
-                                class_data_root, class_prompt,
-                                with_prior_preservation,
-                                model=model)
-    return dataset
+class DreamBoothTuner(Tuner):
 
+    def tune(self, model,
+             tokenizer,
+             instance_data_root,
+             instance_prompt,
+             class_data_root=None,
+             class_prompt=None,
+             with_prior_preservation=False,
+             prior_loss_weight=0.9):
+        dataset = DreamBoothDataset(
+            instance_data_root,
+            instance_prompt,
+            class_data_root,
+            class_prompt,
+            with_prior_preservation,
+            model=model)
 
-def add_dream_booth_hook(trainer, prior_loss_weight: float):
-    from modelscope.trainers.hooks import Hook
+        def do_prior_preservation(module, input, output):
+            if module is model:
+                if with_prior_preservation:
+                    model_pred, model_pred_prior = torch.chunk(
+                        output[OutputKeys.LOGITS], 2, dim=0)
+                    target, target_prior = torch.chunk(
+                        output['target'], 2, dim=0)
 
-    class DreamBoothHook(Hook):
+                    # Compute instance loss
+                    loss = (
+                        F.mse_loss(
+                            model_pred.float(), target.float(),
+                            reduction='none').mean([1, 2, 3]).mean())
 
-        PRIORITY = 5
+                    # Compute prior loss
+                    prior_loss = F.mse_loss(
+                        model_pred_prior.float(),
+                        target_prior.float(),
+                        reduction='mean')
 
-        def after_train_iter(self, trainer):
-            model_pred, model_pred_prior = torch.chunk(trainer.train_outputs[OutputKeys.LOGITS], 2, dim=0)
-            target, target_prior = torch.chunk(trainer.train_outputs['target'], 2, dim=0)
+                    # Add the prior loss to the instance loss.
+                    loss = loss + prior_loss_weight * prior_loss
+                    output['loss'] = loss
+                else:
+                    loss = F.mse_loss(output[OutputKeys.LOGITS], output['target'], reduction="mean")
+                    output['loss'] = loss
+                return input, output
+            return None
 
-            # Compute instance loss
-            loss = (
-                F.mse_loss(model_pred.float(), target.float(), reduction="none")
-                .mean([1, 2, 3])
-                .mean()
-            )
+        register_module_forward_hook(do_prior_preservation)
 
-            # Compute prior loss
-            prior_loss = F.mse_loss(
-                model_pred_prior.float(), target_prior.float(), reduction="mean"
-            )
+        def collate_fn(examples):
+            input_ids = [example["instance_prompt_ids"] for example in examples]
+            pixel_values = [example["instance_images"] for example in examples]
 
-            # Add the prior loss to the instance loss.
-            loss = loss + prior_loss_weight * prior_loss
-            trainer.train_outputs['loss'] = loss
+            # Concat class and instance examples for prior preservation.
+            # We do this to avoid doing two forward passes.
+            if with_prior_preservation:
+                input_ids += [example["class_prompt_ids"] for example in examples]
+                pixel_values += [example["class_images"] for example in examples]
 
-        def strategy(self):
-            Hook.overload(self.save_checkpoints, name='CheckpointHook.save_checkpoints')
-            Hook.overload(self.remove_checkpoints, name='CheckpointHook.remove_checkpoints')
-            Hook.overload(self.load_checkpoints, name='CheckpointHook.load_checkpoints')
+            pixel_values = torch.stack(pixel_values)
+            pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
 
-        def save_checkpoints(self):
-            pass
+            input_ids = tokenizer.pad(
+                {"input_ids": input_ids},
+                padding="max_length",
+                max_length=tokenizer.model_max_length,
+                return_tensors="pt",
+            ).input_ids
 
-        def load_checkpoints(self):
-            pass
+            batch = {
+                "input_ids": input_ids,
+                "pixel_values": pixel_values,
+            }
+            return batch
 
-        def remove_checkpoints(self):
-            pass
+        return dataset, collate_fn
 
-    trainer.register_hook(DreamBoothHook())
+    def add_hook(self, trainer):
+        pass

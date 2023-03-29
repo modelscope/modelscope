@@ -1,20 +1,24 @@
-from .base_tuner import Tuner
+from types import MethodType
+
 import torch
 from lora_diffusion import inject_trainable_lora
+
+from .base_tuner import Tuner
 
 
 def lora_state_dict(self: torch.nn.Module, *args, **kwargs):
     state_dict = self._state_dict_origin(*args, **kwargs)
-    return {k: state_dict[k] for k in state_dict if "lora_" in k}
+    return {k: state_dict[k] for k in state_dict if 'lora_' in k}
 
 
 class LoRATuner(Tuner):
 
     def tune(self, model, **kwargs):
         model.requires_grad_(False)
-        require_grad_params = inject_trainable_lora(model, **kwargs)
+        # print(target_replace_module, lora_rank)
+        require_grad_params, _ = inject_trainable_lora(model, **kwargs)
         model._state_dict_origin = model.state_dict
-        model.state_dict = lora_state_dict
+        model.state_dict = MethodType(lora_state_dict, model)
         return require_grad_params
 
     def add_hook(self, trainer, **kwargs):

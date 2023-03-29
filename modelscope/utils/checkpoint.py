@@ -100,6 +100,9 @@ def save_checkpoint(model: torch.nn.Module,
             checkpoint['lr_scheduler'] = lr_scheduler.state_dict()
 
     if with_model:
+        if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+            model = model.module
+
         _weights = weights_to_cpu(model.state_dict())
         if not with_meta:
             checkpoint = _weights

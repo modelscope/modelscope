@@ -5,7 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .document_grounded_dialog_generate import DocumentGroundedDialogGenerateModel
-    from .document_grounded_dialog_retrieval import DocumentGroundedDialogRerankModel
+    from .document_grounded_dialog_rerank import DocumentGroundedDialogRerankModel
     from .document_grounded_dialog_retrieval import DocumentGroundedDialogRetrievalModel
 else:
     _import_structure = {

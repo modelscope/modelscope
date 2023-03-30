@@ -15,8 +15,6 @@ class PluginModelTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def tearDown(self):
         # make sure uninstalled after installing
-        uninstall_args = [self.package, '-y']
-        PluginsManager.pip_command('uninstall', uninstall_args)
         super().tearDown()
         import subprocess
         result = subprocess.run(

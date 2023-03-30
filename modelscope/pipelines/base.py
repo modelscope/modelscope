@@ -339,15 +339,18 @@ class Pipeline(ABC):
                         check_input_type(input_type[k], input[k])
             else:
                 raise ValueError(f'invalid input_type definition {input_type}')
-        else:
+        elif getattr(self, '_input_has_warned', False):
             logger.warning(f'task {task_name} input definition is missing')
+            self._input_has_warned = True
 
     def _check_output(self, input):
         # this attribute is dynamically attached by registry
         # when cls is registered in registry using task name
         task_name = self.group_key
         if task_name not in TASK_OUTPUTS:
-            logger.warning(f'task {task_name} output keys are missing')
+            if getattr(self, '_output_has_warned', False):
+                logger.warning(f'task {task_name} output keys are missing')
+                self._output_has_warned = True
             return
         output_keys = TASK_OUTPUTS[task_name]
         missing_keys = []

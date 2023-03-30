@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from .siamese_uie_preprocessor import SiameseUiePreprocessor
     from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
     from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRetrievalPreprocessor
-    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRerankPreprocessor
+    from .document_grounded_dialog_rerank_preprocessor import DocumentGroundedDialogRerankPreprocessor
 else:
     _import_structure = {
         'bert_seq_cls_tokenizer': ['Tokenize'],

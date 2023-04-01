@@ -381,6 +381,10 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
     _no_split_modules = ['LlamaDecoderLayer']
     _keys_to_ignore_on_load_unexpected = [r'decoder\.version']
 
+    def __init__(self, config, **kwargs):
+        super().__init__(config.name_or_path, **kwargs)
+        super(Model, self).__init__(config)
+
     def _init_weights(self, module):
         std = self.config.initializer_range
         if isinstance(module, nn.Linear):
@@ -422,7 +426,7 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
         return model
 
 
-@MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
+@MODELS.register_module(Tasks.backbone, module_name=Models.llama)
 class LlamaModel(LlamaPreTrainedModel):
     """
     Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]
@@ -431,7 +435,7 @@ class LlamaModel(LlamaPreTrainedModel):
         config: LlamaConfig
     """
 
-    def __init__(self, config: LlamaConfig):
+    def __init__(self, config: LlamaConfig, **kwargs):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size

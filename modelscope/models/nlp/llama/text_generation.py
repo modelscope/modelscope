@@ -1,10 +1,11 @@
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import CrossEntropyLoss
 
 from modelscope.metainfo import Models
+from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import AttentionTextGenerationModelOutput
 from modelscope.utils.constant import Tasks
@@ -15,7 +16,7 @@ from .backbone import LlamaModel, LlamaPreTrainedModel
 class LlamaForTextGeneration(LlamaPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r'lm_head.weight']
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         super().__init__(config)
         self.model = LlamaModel(config)
 
@@ -150,3 +151,7 @@ class LlamaForTextGeneration(LlamaPreTrainedModel):
                 past_state.index_select(0, beam_idx)
                 for past_state in layer_past), )
         return reordered_past
+
+    def generate(self, inputs: Dict[str, Tensor],
+                 **kwargs) -> Dict[str, Tensor]:
+        return super().generate(**inputs, **kwargs)

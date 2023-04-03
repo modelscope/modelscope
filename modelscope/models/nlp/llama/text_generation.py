@@ -31,6 +31,7 @@ from modelscope.utils.constant import Tasks
 from .backbone import LlamaModel, LlamaPreTrainedModel
 
 
+# This file is mainly copied from the llama code of transformers
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
 class LlamaForTextGeneration(LlamaPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r'lm_head.weight']

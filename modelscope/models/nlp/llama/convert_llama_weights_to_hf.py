@@ -24,6 +24,7 @@ import torch
 from .configuration import LlamaConfig
 from .text_generation import LlamaForTextGeneration
 
+# This file is mainly copied from the llama code of transformers
 INTERMEDIATE_SIZE_MAP = {
     '7B': 11008,
     '13B': 13824,

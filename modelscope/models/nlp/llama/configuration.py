@@ -24,6 +24,7 @@ from transformers.configuration_utils import PretrainedConfig
 LLAMA_PRETRAINED_CONFIG_ARCHIVE_MAP = {}
 
 
+# This file is mainly copied from the llama code of transformers
 class LlamaConfig(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`LlamaModel`]. It is used to instantiate an LLaMA

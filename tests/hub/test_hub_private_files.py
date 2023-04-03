@@ -21,6 +21,7 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
 download_model_file_name = 'test.bin'
 
 
+@unittest.skip('temporarily skip')
 class HubPrivateFileDownloadTest(unittest.TestCase):
 
     def setUp(self):

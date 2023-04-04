@@ -378,6 +378,8 @@ _decode_handlers = {
     'tuple': tuple,
     'set': set,
     'ndarray': np.asarray,
+    'float16': np.float16,
+    'float32': np.float32,
     'frozenset': frozenset,
     'complex': kwargified(complex),
     'Decimal': Decimal,

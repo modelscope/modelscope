@@ -295,7 +295,12 @@ class Pipeline(ABC):
                 out = {}
                 for k, element in batched_out.items():
                     if element is not None:
-                        out[k] = element[batch_idx]
+                        if isinstance(element, torch.Tensor):
+                            out[k] = element[batch_idx:batch_idx + 1]
+                        elif isinstance(element, (tuple, list)) and isinstance(element[0], torch.Tensor):
+                            out[k] = type(element)(e[batch_idx:batch_idx + 1] for e in element)
+                        else:
+                            out[k] = element[batch_idx:batch_idx + 1]
                 out = self.postprocess(out, **postprocess_params)
                 self._check_output(out)
                 output_list.append(out)

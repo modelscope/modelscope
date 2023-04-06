@@ -154,6 +154,7 @@ class Models(object):
     T5 = 'T5'
     mglm = 'mglm'
     codegeex = 'codegeex'
+    glm130b = 'glm130b'
     bloom = 'bloom'
     unite = 'unite'
     megatron_bert = 'megatron-bert'
@@ -445,6 +446,7 @@ class Pipelines(object):
     mglm_text_summarization = 'mglm-text-summarization'
     codegeex_code_translation = 'codegeex-code-translation'
     codegeex_code_generation = 'codegeex-code-generation'
+    glm130b_text_generation = 'glm130b-text-generation'
     translation_en_to_de = 'translation_en_to_de'  # keep it underscore
     translation_en_to_ro = 'translation_en_to_ro'  # keep it underscore
     translation_en_to_fr = 'translation_en_to_fr'  # keep it underscore

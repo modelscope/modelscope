@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import io
 import os
 import shutil
 from typing import Any, Dict
@@ -12,14 +13,14 @@ import torch
 from scipy.io import loadmat, savemat
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
-from modelscope.models.cv.face_reconstruction.models.facelandmark.large_model_infer import \
-    LargeModelInfer
-from modelscope.models.cv.face_reconstruction.utils import (align_for_lm,
-                                                            align_img,
-                                                            load_lm3d,
-                                                            read_obj,
-                                                            write_obj)
+from modelscope.models.cv.face_reconstruction.models.facelandmark.large_base_lmks_infer import \
+    LargeBaseLmkInfer
+from modelscope.models.cv.face_reconstruction.utils import (
+    align_for_lm, align_img, draw_line, enlarged_bbox, image_warp_grid1,
+    load_lm3d, mesh_to_string, read_obj, resize_on_long_side, spread_flow,
+    write_obj)
+from modelscope.models.cv.skin_retouching.retinaface.predict_single import \
+    Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Input, Pipeline
@@ -54,7 +55,10 @@ class FaceReconstructionPipeline(Pipeline):
             >>> pipeline_faceRecon = pipeline('face-reconstruction',
                 model='damo/cv_resnet50_face-reconstruction')
             >>> result = pipeline_faceRecon(test_image)
-            >>> write_obj('result_face_reconstruction.obj', result[OutputKeys.OUTPUT])
+            >>> mesh = result[OutputKeys.OUTPUT]['mesh']
+            >>> texture_map = result[OutputKeys.OUTPUT_IMG]
+            >>> mesh['texture_map'] = texture_map
+            >>> write_obj('hrn_mesh_mid.obj', mesh)
         """
         super().__init__(model=model, device=device)
 
@@ -62,16 +66,28 @@ class FaceReconstructionPipeline(Pipeline):
         bfm_folder = os.path.join(model_root, 'assets')
         checkpoint_path = os.path.join(model_root, ModelFile.TORCH_MODEL_FILE)
 
-        self.face_mark_model = LargeModelInfer(
-            os.path.join(model_root, 'large_base_net.pth'), device='cuda')
+        if 'gpu' in device:
+            self.device_name_ = 'cuda'
+        else:
+            self.device_name_ = device
+        self.device_name_ = self.device_name_.lower()
+        lmks_cpkt_path = os.path.join(model_root, 'large_base_net.pth')
+        self.large_base_lmks_model = LargeBaseLmkInfer.model_preload(
+            lmks_cpkt_path, self.device_name_ == 'cuda')
+        self.detector = Model(max_size=512, device=self.device_name_)
+        detector_ckpt_name = 'retinaface_resnet50_2020-07-20_old_torch.pth'
+        state_dict = torch.load(
+            os.path.join(os.path.dirname(lmks_cpkt_path), detector_ckpt_name),
+            map_location='cpu')
+        self.detector.load_state_dict(state_dict)
+        self.detector.eval()
 
-        device = torch.device(0)
-        torch.cuda.set_device(device)
+        device = torch.device(self.device_name_)
+        self.model.set_device(device)
         self.model.setup(checkpoint_path)
-        self.model.device = device
         self.model.parallelize()
         self.model.eval()
-        self.model.set_render(image_res=1024)
+        self.model.set_render(image_res=512)
 
         save_ckpt_dir = os.path.join(
             os.path.expanduser('~'), '.cache/torch/hub/checkpoints')
@@ -107,52 +123,6 @@ class FaceReconstructionPipeline(Pipeline):
 
         self.tex_size = 4096
 
-        self.bald_tex_bg = cv2.imread(
-            '{}/assets/template_texture.jpg'.format(model_root)).astype(
-                np.float32)
-
-        front_mask = cv2.imread(
-            '{}/assets/face_mask.jpg'.format(model_root)).astype(
-                np.float32) / 255
-        front_mask = cv2.resize(front_mask, (1024, 1024))
-        front_mask = cv2.resize(front_mask, (0, 0), fx=0.1, fy=0.1)
-        front_mask = cv2.erode(front_mask,
-                               np.ones(shape=(7, 7), dtype=np.float32))
-        front_mask = cv2.GaussianBlur(front_mask, (13, 13), 0)
-        self.front_mask = cv2.resize(front_mask,
-                                     (self.tex_size, self.tex_size))
-        self.binary_front_mask = self.front_mask.copy()
-        self.binary_front_mask[(self.front_mask < 0.3)
-                               + (self.front_mask > 0.7)] = 0
-        self.binary_front_mask[self.binary_front_mask != 0] = 1.0
-        self.binary_front_mask_ = self.binary_front_mask.copy()
-        self.binary_front_mask = np.zeros((4096 + 1024, 4096, 3),
-                                          dtype=np.float32)
-        self.binary_front_mask[:4096, :] = self.binary_front_mask_
-        self.front_mask_ = self.front_mask.copy()
-        self.front_mask = np.zeros((4096 + 1024, 4096, 3), dtype=np.float32)
-        self.front_mask[:4096, :] = self.front_mask_
-
-        l_eye_mask = cv2.imread(
-            '{}/assets/l_eye_mask.png'.format(model_root))[:, :, :1] / 255.0
-        l_eye_mask = cv2.erode(l_eye_mask,
-                               np.ones(shape=(5, 5), dtype=np.float32))
-        self.l_eye_mask = cv2.GaussianBlur(l_eye_mask, (7, 7), 0)[..., None]
-        self.l_eye_binary_mask = self.l_eye_mask.copy()
-        self.l_eye_binary_mask[(self.l_eye_mask < 0.3)
-                               + (self.l_eye_mask > 0.7)] = 0
-        self.l_eye_binary_mask[self.l_eye_binary_mask != 0] = 1.0
-
-        r_eye_mask = cv2.imread(
-            '{}/assets/r_eye_mask.png'.format(model_root))[:, :, :1] / 255.0
-        r_eye_mask = cv2.dilate(r_eye_mask,
-                                np.ones(shape=(7, 7), dtype=np.float32))
-        self.r_eye_mask = cv2.GaussianBlur(r_eye_mask, (7, 7), 0)[..., None]
-        self.r_eye_binary_mask = self.r_eye_mask.copy()
-        self.r_eye_binary_mask[(self.r_eye_mask < 0.3)
-                               + (self.r_eye_mask > 0.7)] = 0
-        self.r_eye_binary_mask[self.r_eye_binary_mask != 0] = 1.0
-
         self.lm3d_std = load_lm3d(bfm_folder)
         self.align_params = loadmat(
             '{}/assets/BBRegressorParam_r.mat'.format(model_root))
@@ -168,46 +138,22 @@ class FaceReconstructionPipeline(Pipeline):
         result = {'img': img}
         return result
 
-    def read_data(self,
-                  img,
-                  lm,
-                  lm3d_std,
-                  to_tensor=True,
-                  image_res=1024,
-                  img_fat=None):
+    def read_data(self, img, lm, lm3d_std, to_tensor=True, image_res=1024):
         # to RGB
         im = PIL.Image.fromarray(img[..., ::-1])
         W, H = im.size
         lm[:, -1] = H - 1 - lm[:, -1]
-
-        im_lr_coeff, lm_lr_coeff = None, None
-        head_mask = None
-
-        _, im_lr, lm_lr, mask_lr_head = align_img(
-            im, lm, lm3d_std, mask=head_mask)
+        _, im_lr, lm_lr, _ = align_img(im, lm, lm3d_std)
         _, im_hd, lm_hd, _ = align_img(
             im,
             lm,
             lm3d_std,
             target_size=image_res,
-            rescale_factor=102.0 * image_res / 224)
+            rescale_factor=102. * image_res / 224)
 
         mask_lr = self.face_sess.run(
             self.face_sess.graph.get_tensor_by_name('output_alpha:0'),
             feed_dict={'input_image:0': np.array(im_lr)})
-
-        if img_fat is not None:
-            assert img_fat.shape == img.shape
-            im_fat = PIL.Image.fromarray(img_fat[..., ::-1])
-
-            _, im_hd, _, _ = align_img(
-                im_fat,
-                lm,
-                lm3d_std,
-                target_size=image_res,
-                rescale_factor=102.0 * image_res / 224)
-
-        im_hd = np.array(im_hd).astype(np.float32)
 
         if to_tensor:
             im_lr = torch.tensor(
@@ -219,12 +165,12 @@ class FaceReconstructionPipeline(Pipeline):
             mask_lr = torch.tensor(
                 np.array(mask_lr) / 255., dtype=torch.float32)[None,
                                                                None, :, :]
-            mask_lr_head = torch.tensor(
-                np.array(mask_lr_head) / 255., dtype=torch.float32)[
-                    None, None, :, :] if mask_lr_head is not None else None
             lm_lr = torch.tensor(lm_lr).unsqueeze(0)
             lm_hd = torch.tensor(lm_hd).unsqueeze(0)
-        return im_lr, lm_lr, im_hd, lm_hd, mask_lr, mask_lr_head, im_lr_coeff, lm_lr_coeff
+        return im_lr, lm_lr, im_hd, lm_hd, mask_lr
+
+    def parse_label(self, label):
+        return torch.tensor(np.array(label).astype(np.float32))
 
     def prepare_data(self, img, lm_sess, five_points=None):
         input_img, scale, bbox = align_for_lm(
@@ -246,58 +192,276 @@ class FaceReconstructionPipeline(Pipeline):
 
         return landmark
 
-    def blend_eye_corner(self, tex_map, template_tex):
-        tex_map = tex_map.astype(np.float32)
+    def get_img_for_texture(self, input_img_tensor):
+        input_img = input_img_tensor.permute(
+            0, 2, 3, 1).detach().cpu().numpy()[0] * 255.
+        input_img = input_img.astype(np.uint8)
 
-        x1 = int(288 * 4096 / 758)
-        y1 = int(235 * 4096 / 758)
-        w = int(90 * 4096 / 758)
-        h = int(50 * 4096 / 758)
-        template_tex_l = template_tex[y1:y1 + h, x1:x1 + w]
-        pred_tex_l = tex_map[y1:y1 + h, x1:x1 + w]
-        pred_tex_l_mean_rgb = np.sum(
-            pred_tex_l * self.l_eye_binary_mask, axis=(0, 1))
-        template_tex_l_mean_rgb = np.sum(
-            template_tex_l * self.l_eye_binary_mask, axis=(0, 1))
-        for ch in range(3):
-            template_tex_l[:, :, ch] *= pred_tex_l_mean_rgb[
-                ch] / template_tex_l_mean_rgb[ch]
-        pred_tex_l = pred_tex_l * (
-            1 - self.l_eye_mask) + template_tex_l * self.l_eye_mask
+        input_img_for_texture = self.fat_face(input_img, degree=0.03)
+        input_img_for_texture_tensor = torch.tensor(
+            np.array(input_img_for_texture) / 255.,
+            dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+        input_img_for_texture_tensor = input_img_for_texture_tensor.to(
+            self.model.device)
+        return input_img_for_texture_tensor
 
-        x2 = 4096 - x1 - w
-        y2 = y1
-        template_tex_r = template_tex[y2:y2 + h, x2:x2 + w]
-        pred_tex_r = tex_map[y2:y2 + h, x2:x2 + w]
-        pred_tex_r_mean_rgb = np.sum(
-            pred_tex_r * self.r_eye_binary_mask, axis=(0, 1))
-        template_tex_r_mean_rgb = np.sum(
-            template_tex_r * self.r_eye_binary_mask, axis=(0, 1))
-        for ch in range(3):
-            template_tex_r[:, :, ch] *= pred_tex_r_mean_rgb[
-                ch] / template_tex_r_mean_rgb[ch]
-        pred_tex_r = pred_tex_r * (
-            1 - self.r_eye_mask) + template_tex_r * self.r_eye_mask
+    def infer_lmks(self, img_bgr):
+        INPUT_SIZE = 224
+        ENLARGE_RATIO = 1.35
 
-        tex_map[y1:y1 + h, x1:x1 + w] = pred_tex_l
-        tex_map[y2:y2 + h, x2:x2 + w] = pred_tex_r
+        landmarks = []
 
-        return tex_map
+        rgb_image = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        results = self.detector.predict_jsons(rgb_image)
 
-    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        rgb_image = input['img'].cpu().numpy().astype(np.uint8)
+        boxes = []
+        for anno in results:
+            if anno['score'] == -1:
+                break
+            boxes.append({
+                'x1': anno['bbox'][0],
+                'y1': anno['bbox'][1],
+                'x2': anno['bbox'][2],
+                'y2': anno['bbox'][3]
+            })
 
-        bgr_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+        for detect_result in boxes:
+            x1 = detect_result['x1']
+            y1 = detect_result['y1']
+            x2 = detect_result['x2']
+            y2 = detect_result['y2']
 
-        img = bgr_image
-        # preprocess
-        flag = 0
-        box, results = self.face_mark_model.infer(img)
+            w = x2 - x1 + 1
+            h = y2 - y1 + 1
+
+            cx = (x2 + x1) / 2
+            cy = (y2 + y1) / 2
+
+            sz = max(h, w) * ENLARGE_RATIO
+
+            x1 = cx - sz / 2
+            y1 = cy - sz / 2
+            trans_x1 = x1
+            trans_y1 = y1
+            x2 = x1 + sz
+            y2 = y1 + sz
+
+            height, width, _ = rgb_image.shape
+            dx = max(0, -x1)
+            dy = max(0, -y1)
+            x1 = max(0, x1)
+            y1 = max(0, y1)
+
+            edx = max(0, x2 - width)
+            edy = max(0, y2 - height)
+            x2 = min(width, x2)
+            y2 = min(height, y2)
+
+            crop_img = rgb_image[int(y1):int(y2), int(x1):int(x2)]
+            if dx > 0 or dy > 0 or edx > 0 or edy > 0:
+                crop_img = cv2.copyMakeBorder(
+                    crop_img,
+                    int(dy),
+                    int(edy),
+                    int(dx),
+                    int(edx),
+                    cv2.BORDER_CONSTANT,
+                    value=(103.94, 116.78, 123.68))
+            crop_img = cv2.resize(crop_img, (INPUT_SIZE, INPUT_SIZE))
+
+            base_lmks = LargeBaseLmkInfer.infer_img(
+                crop_img, self.large_base_lmks_model,
+                self.device_name_ == 'cuda')
+
+            inv_scale = sz / INPUT_SIZE
+
+            affine_base_lmks = np.zeros((106, 2))
+            for idx in range(106):
+                affine_base_lmks[idx][
+                    0] = base_lmks[0][idx * 2 + 0] * inv_scale + trans_x1
+                affine_base_lmks[idx][
+                    1] = base_lmks[0][idx * 2 + 1] * inv_scale + trans_y1
+
+            x1 = np.min(affine_base_lmks[:, 0])
+            y1 = np.min(affine_base_lmks[:, 1])
+            x2 = np.max(affine_base_lmks[:, 0])
+            y2 = np.max(affine_base_lmks[:, 1])
+
+            w = x2 - x1 + 1
+            h = y2 - y1 + 1
+
+            cx = (x2 + x1) / 2
+            cy = (y2 + y1) / 2
+
+            sz = max(h, w) * ENLARGE_RATIO
+
+            x1 = cx - sz / 2
+            y1 = cy - sz / 2
+            trans_x1 = x1
+            trans_y1 = y1
+            x2 = x1 + sz
+            y2 = y1 + sz
+
+            height, width, _ = rgb_image.shape
+            dx = max(0, -x1)
+            dy = max(0, -y1)
+            x1 = max(0, x1)
+            y1 = max(0, y1)
+
+            edx = max(0, x2 - width)
+            edy = max(0, y2 - height)
+            x2 = min(width, x2)
+            y2 = min(height, y2)
+
+            crop_img = rgb_image[int(y1):int(y2), int(x1):int(x2)]
+            if dx > 0 or dy > 0 or edx > 0 or edy > 0:
+                crop_img = cv2.copyMakeBorder(
+                    crop_img,
+                    int(dy),
+                    int(edy),
+                    int(dx),
+                    int(edx),
+                    cv2.BORDER_CONSTANT,
+                    value=(103.94, 116.78, 123.68))
+            crop_img = cv2.resize(crop_img, (INPUT_SIZE, INPUT_SIZE))
+
+            base_lmks = LargeBaseLmkInfer.infer_img(
+                crop_img, self.large_base_lmks_model,
+                self.device_name_.lower() == 'cuda')
+
+            inv_scale = sz / INPUT_SIZE
+
+            affine_base_lmks = np.zeros((106, 2))
+            for idx in range(106):
+                affine_base_lmks[idx][
+                    0] = base_lmks[0][idx * 2 + 0] * inv_scale + trans_x1
+                affine_base_lmks[idx][
+                    1] = base_lmks[0][idx * 2 + 1] * inv_scale + trans_y1
+
+            landmarks.append(affine_base_lmks)
+
+        return boxes, landmarks
+
+    def find_face_contour(self, image):
+
+        boxes, landmarks = self.infer_lmks(image)
+        landmarks = np.array(landmarks)
+
+        args = [[0, 33, False], [33, 38, False], [42, 47, False],
+                [51, 55, False], [57, 64, False], [66, 74, True],
+                [75, 83, True], [84, 96, True]]
+
+        roi_bboxs = []
+
+        for i in range(len(boxes)):
+            roi_bbox = enlarged_bbox([
+                boxes[i]['x1'], boxes[i]['y1'], boxes[i]['x2'], boxes[i]['y2']
+            ], image.shape[1], image.shape[0], 0.5)
+            roi_bbox = [int(x) for x in roi_bbox]
+            roi_bboxs.append(roi_bbox)
+
+        people_maps = []
+
+        for i in range(landmarks.shape[0]):
+            landmark = landmarks[i, :, :]
+            maps = []
+            whole_mask = np.zeros((image.shape[0], image.shape[1]), np.uint8)
+
+            roi_box = roi_bboxs[i]
+            roi_box_width = roi_box[2] - roi_box[0]
+            roi_box_height = roi_box[3] - roi_box[1]
+            short_side_length = roi_box_width if roi_box_width < roi_box_height else roi_box_height
+
+            line_width = short_side_length // 10
+
+            if line_width == 0:
+                line_width = 1
+
+            kernel_size = line_width * 2
+            gaussian_kernel = kernel_size if kernel_size % 2 == 1 else kernel_size + 1
+
+            for t, arg in enumerate(args):
+                mask = np.zeros((image.shape[0], image.shape[1]), np.uint8)
+                draw_line(mask, landmark[arg[0]:arg[1]], (255, 255, 255),
+                          line_width, arg[2])
+                mask = cv2.GaussianBlur(mask,
+                                        (gaussian_kernel, gaussian_kernel), 0)
+                if t >= 1:
+                    draw_line(whole_mask, landmark[arg[0]:arg[1]],
+                              (255, 255, 255), line_width * 2, arg[2])
+                maps.append(mask)
+            whole_mask = cv2.GaussianBlur(whole_mask,
+                                          (gaussian_kernel, gaussian_kernel),
+                                          0)
+            maps.append(whole_mask)
+            people_maps.append(maps)
+
+        return people_maps[0], boxes
+
+    def fat_face(self, img, degree=0.1):
+
+        _img, scale = resize_on_long_side(img, 800)
+
+        contour_maps, boxes = self.find_face_contour(_img)
+
+        contour_map = contour_maps[0]
+
+        boxes = boxes[0]
+
+        Flow = np.zeros(
+            shape=(contour_map.shape[0], contour_map.shape[1], 2),
+            dtype=np.float32)
+
+        box_center = [(boxes['x1'] + boxes['x2']) / 2,
+                      (boxes['y1'] + boxes['y2']) / 2]
+
+        box_length = max(
+            abs(boxes['y1'] - boxes['y2']), abs(boxes['x1'] - boxes['x2']))
+
+        value_1 = 2 * (Flow.shape[0] - box_center[1] - 1)
+        value_2 = 2 * (Flow.shape[1] - box_center[0] - 1)
+        value_list = [
+            box_length * 2, 2 * (box_center[0] - 1), 2 * (box_center[1] - 1),
+            value_1, value_2
+        ]
+        flow_box_length = min(value_list)
+        flow_box_length = int(flow_box_length)
+
+        sf = spread_flow(100, flow_box_length * degree)
+        sf = cv2.resize(sf, (flow_box_length, flow_box_length))
+
+        Flow[int(box_center[1]
+                 - flow_box_length / 2):int(box_center[1]
+                                            + flow_box_length / 2),
+             int(box_center[0]
+                 - flow_box_length / 2):int(box_center[0]
+                                            + flow_box_length / 2)] = sf
+
+        Flow = Flow * np.dstack((contour_map, contour_map)) / 255.0
+
+        inter_face_maps = contour_maps[-1]
+
+        Flow = Flow * (1.0 - np.dstack(
+            (inter_face_maps, inter_face_maps)) / 255.0)
+
+        Flow = cv2.resize(Flow, (img.shape[1], img.shape[0]))
+
+        Flow = Flow / scale
+
+        pred, top_bound, bottom_bound, left_bound, right_bound = image_warp_grid1(
+            Flow[..., 0], Flow[..., 1], img, 1.0, [0, 0, 0, 0])
+
+        return pred
+
+    def predict_base(self, img):
+
+        if img.shape[0] > 2000 or img.shape[1] > 2000:
+            img, _ = resize_on_long_side(img, 1500)
+
+        box, results = self.infer_lmks(img)
+
         if results is None or np.array(results).shape[0] == 0:
-            flag = 1  # no face
-            return flag, {}
-
-        fatbgr = self.face_mark_model.fat_face(img, degree=0.02)
+            return {}
 
         landmarks = []
         results = results[0]
@@ -307,64 +471,79 @@ class FaceReconstructionPipeline(Pipeline):
 
         landmarks = self.prepare_data(img, self.lm_sess, five_points=landmarks)
 
-        im_tensor, lm_tensor, im_hd_tensor, lm_hd_tensor, mask, _, _, _ = self.read_data(
-            img, landmarks, self.lm3d_std, image_res=1024, img_fat=fatbgr)
+        im_tensor, lm_tensor, im_hd_tensor, lm_hd_tensor, mask = self.read_data(
+            img, landmarks, self.lm3d_std, image_res=512)
         data = {
             'imgs': im_tensor,
             'imgs_hd': im_hd_tensor,
             'lms': lm_tensor,
             'lms_hd': lm_hd_tensor,
             'face_mask': mask,
-            'img_name': 'temp',
         }
-        self.model.set_input(data)  # unpack data from data loader
+        self.model.set_input_base(data)  # unpack data from data loader
 
-        # reconstruct
-        out_dir = None
-        output = self.model(out_dir=out_dir)  # run inference
+        output = self.model.predict_results_base()  # run inference
 
-        # process texture map
-        tex_map = output['head_tex_map'].astype(np.float32)
-        tex_map = cv2.resize(tex_map, (self.tex_size, self.tex_size + 1024))
-        bg_mean_rgb = np.sum(
-            self.bald_tex_bg * self.binary_front_mask, axis=(0, 1))
-        pred_tex_mean_rgb = np.sum(
-            tex_map * self.binary_front_mask, axis=(0, 1)) * 1.05
-        mid_mean_rgb = bg_mean_rgb * 0.8 + pred_tex_mean_rgb * 0.2
-        tex_map += (
-            (mid_mean_rgb - pred_tex_mean_rgb)
-            / np.sum(self.binary_front_mask, axis=(0, 1)))[None, None] * 0.5
-        pred_tex_mean_rgb = np.sum(
-            tex_map * self.binary_front_mask, axis=(0, 1)) * 1.05
-        _bald_tex_bg = self.bald_tex_bg.copy()
-        for ch in range(3):
-            _bald_tex_bg[:, :, ch] *= pred_tex_mean_rgb[ch] / bg_mean_rgb[ch]
-        tex_map = _bald_tex_bg * (
-            1. - self.front_mask) + tex_map * self.front_mask
-        tex_map = tex_map * 1.05
-        tex_map = self.blend_eye_corner(tex_map, self.bald_tex_bg)
+        return output
 
-        # export mesh
+    def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        rgb_image = input['img'].cpu().numpy().astype(np.uint8)
+        bgr_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+        img = bgr_image
+
+        base_model_output = self.predict_base(img)
+
+        input_img_for_tex = self.get_img_for_texture(
+            base_model_output['input_img'])
+
+        hrn_input = {
+            'input_img': base_model_output['input_img'],
+            'input_img_for_tex': input_img_for_tex,
+            'input_img_hd': base_model_output['input_img_hd'],
+            'face_mask': base_model_output['face_mask'],
+            'gt_lm': base_model_output['gt_lm'],
+            'coeffs': base_model_output['coeffs'],
+            'position_map': base_model_output['position_map'],
+            'texture_map': base_model_output['texture_map'],
+            'tex_valid_mask': base_model_output['tex_valid_mask'],
+            'de_retouched_albedo_map':
+            base_model_output['de_retouched_albedo_map']
+        }
+
+        self.model.set_input_hrn(hrn_input)
+        self.model.get_edge_points_horizontal()
+
+        self.model(visualize=True)
+
+        results = self.model.save_results_hrn()
+        texture_map = results['texture_map']
         results = {
-            'vertices': output['head_vertices'],
-            'faces': output['head_faces'],
-            'UVs': output['head_UVs'],
-            'faces_uv': output['head_faces_uv'],
-            'normals': output['head_normals'],
-            'texture_map': tex_map,
+            'mesh': results['face_mesh'],
+            'vis_image': results['vis_image'],
+            'frame_list': results['frame_list'],
         }
 
-        if out_dir is not None:
-            face_mesh = {
-                'vertices': output['face_vertices'],
-                'faces': output['face_faces'],
-                'colors': output['face_colors'],
-            }
+        return {
+            OutputKeys.OUTPUT_OBJ: None,
+            OutputKeys.OUTPUT_IMG: texture_map,
+            OutputKeys.OUTPUT: results
+        }
 
-            write_obj(os.path.join(out_dir, 'face.obj'), face_mesh)
-            write_obj(os.path.join(out_dir, 'head.obj'), results)
+    def postprocess(self, inputs, **kwargs) -> Dict[str, Any]:
+        render = kwargs.get('render', False)
+        output_obj = inputs[OutputKeys.OUTPUT_OBJ]
+        texture_map = inputs[OutputKeys.OUTPUT_IMG]
+        results = inputs[OutputKeys.OUTPUT]
 
-        return {OutputKeys.OUTPUT: results}
+        if render:
+            output_obj = io.BytesIO()
+            mesh_str = mesh_to_string(results['mesh'])
+            mesh_bytes = mesh_str.encode(encoding='utf-8')
+            output_obj.write(mesh_bytes)
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return inputs
+        result = {
+            OutputKeys.OUTPUT_OBJ: output_obj,
+            OutputKeys.OUTPUT_IMG: texture_map,
+            OutputKeys.OUTPUT: None if render else results,
+        }
+        return result

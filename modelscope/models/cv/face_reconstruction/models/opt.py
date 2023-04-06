@@ -11,3 +11,4 @@ use_ddp = False
 use_last_fc = False
 z_far = 15.0
 z_near = 5.0
+lr = 0.001

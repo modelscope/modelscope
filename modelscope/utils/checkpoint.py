@@ -508,6 +508,33 @@ def load_task_model_checkpoint(model_to_load,
                 retrieved_modules.append(module)
 
         return retrieved_modules
+    
+    def _tie_or_clone_weights(output_embeddings, input_embeddings, torchscript=False):
+        if torchscript:
+            output_embeddings.weight = nn.Parameter(input_embeddings.weight.clone())
+        else:
+            output_embeddings.weight = input_embeddings.weight
+
+        if getattr(output_embeddings, "bias", None) is not None:
+            output_embeddings.bias.data = nn.functional.pad(
+                output_embeddings.bias.data,
+                (
+                    0,
+                    output_embeddings.weight.shape[0] - output_embeddings.bias.shape[0],
+                ),
+                "constant",
+                0,
+            )
+
+        if hasattr(output_embeddings, "out_features") and hasattr(input_embeddings, "num_embeddings"):
+            output_embeddings.out_features = input_embeddings.num_embeddings
+
+    def tie_weights(model, tie_word_embeddings=False):
+        if tie_word_embeddings:
+            output_embeddings = model.head.get_output_embeddings()
+            if output_embeddings is not None:
+                input_embeddings = model.encoder.get_input_embeddings()
+                _tie_or_clone_weights(output_embeddings, input_embeddings)
 
     # TODO Sharded ckpt
     ckpt_file = os.path.join(model_local_dir, ModelFile.TORCH_MODEL_BIN_FILE)
@@ -522,6 +549,9 @@ def load_task_model_checkpoint(model_to_load,
         ignore_mismatched_sizes=True,
         _fast_init=True,
     )
+
+    if getattr(kwargs.get("head"), "tie_word_embeddings", False):
+        tie_weights(model_to_load, kwargs.get("head").tie_word_embeddings)
 
     return {
         'model': model_to_load,

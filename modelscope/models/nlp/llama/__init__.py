@@ -7,11 +7,15 @@ if TYPE_CHECKING:
     from .configuration import LlamaConfig
     from .text_generation import LlamaForTextGeneration
     from .backbone import LlamaModel
+    from .tokenization import LlamaTokenizer
+    from .tokenization_fast import LlamaTokenizerFast
 else:
     _import_structure = {
         'configuration': ['LlamaConfig'],
         'text_generation': ['LlamaForTextGeneration'],
         'backbone': ['LlamaModel'],
+        'tokenization': ['LlamaTokenizer'],
+        'tokenization_fast': ['LlamaTokenizerFast'],
     }
 
     import sys

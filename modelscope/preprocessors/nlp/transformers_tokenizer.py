@@ -88,6 +88,11 @@ class NLPTokenizer:
             tokenizer = XLMRobertaTokenizerFast if self.use_fast else XLMRobertaTokenizer
             return tokenizer.from_pretrained(
                 model_dir) if model_dir is not None else tokenizer()
+        elif model_type == Models.llama:
+            from modelscope.models.nlp import LlamaTokenizer, LlamaTokenizerFast
+            tokenizer = LlamaTokenizerFast if self.use_fast else LlamaTokenizer
+            return tokenizer.from_pretrained(
+                model_dir) if model_dir is not None else tokenizer()
 
         assert model_dir is not None
         return AutoTokenizer.from_pretrained(model_dir, use_fast=self.use_fast)

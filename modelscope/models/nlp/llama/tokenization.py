@@ -18,33 +18,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tokenization classes for LLaMA."""
 import os
 from shutil import copyfile
 from typing import Any, Dict, List, Optional, Tuple
 
 import sentencepiece as spm
+from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer
 
-from ...tokenization_utils import AddedToken, PreTrainedTokenizer
-from ...utils import logging
-
+from modelscope.utils.logger import get_logger
 
 # This file is mainly copied from the llama code of transformers
-logger = logging.get_logger(__name__)
+logger = get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "tokenizer.model"}
+VOCAB_FILES_NAMES = {'vocab_file': 'tokenizer.model'}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {
-        "hf-internal-testing/llama-tokenizer": "https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.model",
+    'vocab_file': {
+        'hf-internal-testing/llama-tokenizer':
+        'https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.model',
     },
-    "tokenizer_file": {
-        "hf-internal-testing/llama-tokenizer": "https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer_config.json",
+    'tokenizer_file': {
+        'hf-internal-testing/llama-tokenizer':
+        'https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer_config.json',
     },
 }
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
-    "hf-internal-testing/llama-tokenizer": 2048,
+    'hf-internal-testing/llama-tokenizer': 2048,
 }
 
 
@@ -60,14 +60,14 @@ class LlamaTokenizer(PreTrainedTokenizer):
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
-    model_input_names = ["input_ids", "attention_mask"]
+    model_input_names = ['input_ids', 'attention_mask']
 
     def __init__(
         self,
         vocab_file,
-        unk_token="<unk>",
-        bos_token="<s>",
-        eos_token="</s>",
+        unk_token='<unk>',
+        bos_token='<s>',
+        eos_token='</s>',
         pad_token=None,
         sp_model_kwargs: Optional[Dict[str, Any]] = None,
         add_bos_token=True,
@@ -76,10 +76,18 @@ class LlamaTokenizer(PreTrainedTokenizer):
         **kwargs,
     ):
         self.sp_model_kwargs = {} if sp_model_kwargs is None else sp_model_kwargs
-        bos_token = AddedToken(bos_token, lstrip=False, rstrip=False) if isinstance(bos_token, str) else bos_token
-        eos_token = AddedToken(eos_token, lstrip=False, rstrip=False) if isinstance(eos_token, str) else eos_token
-        unk_token = AddedToken(unk_token, lstrip=False, rstrip=False) if isinstance(unk_token, str) else unk_token
-        pad_token = AddedToken(pad_token, lstrip=False, rstrip=False) if isinstance(pad_token, str) else pad_token
+        bos_token = AddedToken(
+            bos_token, lstrip=False, rstrip=False) if isinstance(
+                bos_token, str) else bos_token
+        eos_token = AddedToken(
+            eos_token, lstrip=False, rstrip=False) if isinstance(
+                eos_token, str) else eos_token
+        unk_token = AddedToken(
+            unk_token, lstrip=False, rstrip=False) if isinstance(
+                unk_token, str) else unk_token
+        pad_token = AddedToken(
+            pad_token, lstrip=False, rstrip=False) if isinstance(
+                pad_token, str) else pad_token
         super().__init__(
             bos_token=bos_token,
             eos_token=eos_token,
@@ -99,7 +107,7 @@ class LlamaTokenizer(PreTrainedTokenizer):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["sp_model"] = None
+        state['sp_model'] = None
         return state
 
     def __setstate__(self, d):
@@ -114,7 +122,10 @@ class LlamaTokenizer(PreTrainedTokenizer):
 
     def get_vocab(self):
         """Returns vocab as a dict"""
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -134,13 +145,13 @@ class LlamaTokenizer(PreTrainedTokenizer):
     def convert_tokens_to_string(self, tokens):
         """Converts a sequence of tokens (string) in a single string."""
         current_sub_tokens = []
-        out_string = ""
+        out_string = ''
         prev_is_special = False
         for i, token in enumerate(tokens):
             # make sure that special tokens are not decoded using sentencepiece model
             if token in self.all_special_tokens:
                 if not prev_is_special and i != 0:
-                    out_string += " "
+                    out_string += ' '
                 out_string += self.sp_model.decode(current_sub_tokens) + token
                 prev_is_special = True
                 current_sub_tokens = []
@@ -150,7 +161,9 @@ class LlamaTokenizer(PreTrainedTokenizer):
         out_string += self.sp_model.decode(current_sub_tokens)
         return out_string
 
-    def save_vocabulary(self, save_directory, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         """
         Save the vocabulary and special tokens file to a directory.
 
@@ -162,20 +175,22 @@ class LlamaTokenizer(PreTrainedTokenizer):
             `Tuple(str)`: Paths to the files saved.
         """
         if not os.path.isdir(save_directory):
-            logger.error(f"Vocabulary path ({save_directory}) should be a directory")
+            logger.error(
+                f'Vocabulary path ({save_directory}) should be a directory')
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
-        )
+            save_directory, (filename_prefix + '-' if filename_prefix else '')
+            + VOCAB_FILES_NAMES['vocab_file'])
 
-        if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file) and os.path.isfile(self.vocab_file):
+        if os.path.abspath(self.vocab_file) != os.path.abspath(
+                out_vocab_file) and os.path.isfile(self.vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
         elif not os.path.isfile(self.vocab_file):
-            with open(out_vocab_file, "wb") as fi:
+            with open(out_vocab_file, 'wb') as fi:
                 content_spiece_model = self.sp_model.serialized_model_proto()
                 fi.write(content_spiece_model)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
         bos_token_id = [self.bos_token_id] if self.add_bos_token else []
@@ -189,8 +204,10 @@ class LlamaTokenizer(PreTrainedTokenizer):
         return output
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None,
+            already_has_special_tokens: bool = False) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
         special tokens using the tokenizer `prepare_for_model` method.
@@ -208,26 +225,24 @@ class LlamaTokenizer(PreTrainedTokenizer):
         """
         if already_has_special_tokens:
             return super().get_special_tokens_mask(
-                token_ids_0=token_ids_0, token_ids_1=token_ids_1, already_has_special_tokens=True
-            )
+                token_ids_0=token_ids_0,
+                token_ids_1=token_ids_1,
+                already_has_special_tokens=True)
 
         bos_token_id = [1] if self.add_bos_token else []
         eos_token_id = [1] if self.add_eos_token else []
 
         if token_ids_1 is None:
             return bos_token_id + ([0] * len(token_ids_0)) + eos_token_id
-        return (
-            bos_token_id
-            + ([0] * len(token_ids_0))
-            + eos_token_id
-            + bos_token_id
-            + ([0] * len(token_ids_1))
-            + eos_token_id
-        )
+        return (bos_token_id +  # noqa
+                ([0] * len(token_ids_0)) + eos_token_id + bos_token_id  # noqa
+                +  # noqa
+                ([0] * len(token_ids_1)) + eos_token_id)  # noqa
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Creates a mask from the two sequences passed to be used in a sequence-pair classification task. An ALBERT
         sequence pair mask has the following format:
@@ -253,4 +268,5 @@ class LlamaTokenizer(PreTrainedTokenizer):
 
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
-        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
+        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1
+                                                        + sep) * [1]

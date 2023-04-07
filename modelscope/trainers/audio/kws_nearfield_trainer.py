@@ -247,6 +247,7 @@ class KWSNearfieldTrainer(BaseTrainer):
         logger.info('Start training...')
         training_config = {}
         training_config['grad_clip'] = optim_conf['grad_clip']
+        training_config['grad_accum'] = optim_conf.get('grad_accum', 1)
         training_config['log_interval'] = log_interval
         training_config['world_size'] = self.world_size
         training_config['rank'] = self.rank

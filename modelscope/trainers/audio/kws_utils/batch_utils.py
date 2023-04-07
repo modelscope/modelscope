@@ -44,6 +44,7 @@ def executor_train(model, optimizer, data_loader, device, writer, args):
     rank = args.get('rank', 0)
     local_rank = args.get('local_rank', 0)
     world_size = args.get('world_size', 1)
+    accum_batchs = args.get('grad_accum', 1)
 
     # [For distributed] Because iteration counts are not always equals between
     # processes, send stop-flag to the other processes if iterator is finished
@@ -67,11 +68,16 @@ def executor_train(model, optimizer, data_loader, device, writer, args):
         logits, _ = model(feats)
         loss, acc = ctc_loss(logits, target, feats_lengths, target_lengths)
         loss = loss / num_utts
-        optimizer.zero_grad()
+
+        # normlize loss to account for batch accumulation
+        loss = loss / accum_batchs
         loss.backward()
-        grad_norm = clip_grad_norm_(model.parameters(), clip)
-        if torch.isfinite(grad_norm):
-            optimizer.step()
+        if (batch_idx + 1) % accum_batchs == 0:
+            grad_norm = clip_grad_norm_(model.parameters(), clip)
+            if torch.isfinite(grad_norm):
+                optimizer.step()
+            optimizer.zero_grad()
+
         if batch_idx % log_interval == 0:
             logger.info(
                 'RANK {}/{}/{} TRAIN Batch {}/{} size {} loss {:.6f}'.format(
@@ -127,7 +133,8 @@ def executor_cv(model, data_loader, device, args):
                 num_seen_tokens += target_lengths.sum()
                 total_loss += loss.item()
                 counter[0] += loss.item()
-                counter[1] += acc * target_lengths.sum()
+                counter[1] += acc * num_utts
+                # counter[1] += acc * target_lengths.sum()
                 counter[2] += num_utts
                 counter[3] += target_lengths.sum()
 

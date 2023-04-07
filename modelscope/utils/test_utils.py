@@ -368,8 +368,8 @@ class DistributedTestCase(unittest.TestCase):
         if 'dist_start_cmd' in kwargs:
             dist_start_cmd = kwargs.pop('dist_start_cmd')
         else:
-            dist_start_cmd = '%s -m torch.distributed.launch --nproc_per_node=%d --master_addr=\'%s\' --master_port=%s' % (
-                sys.executable, num_gpus, ip, _find_free_port())
+            dist_start_cmd = '%s -m torch.distributed.launch --nproc_per_node=%d ' \
+                             '--master_addr=\'%s\' --master_port=%s' % (sys.executable, num_gpus, ip, _find_free_port())
 
         return self._start(
             dist_start_cmd=dist_start_cmd,

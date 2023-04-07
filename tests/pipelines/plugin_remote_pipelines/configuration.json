@@ -1,0 +1,1 @@
+{"framework":"pytorch","task":"bilibili","model":{"type":"my-custom-model","scale":2,"weight_path":"weights_v3/up2x-latest-denoise3x.pth","half":true},"pipeline":{"type":"my-custom-pipeline"}}

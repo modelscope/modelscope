@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
     from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
+    from .canmt_translation import CanmtTranslationPreprocessor
     from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
     from .siamese_uie_preprocessor import SiameseUiePreprocessor
     from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
@@ -90,6 +91,9 @@ else:
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
         'translation_evaluation_preprocessor':
         ['TranslationEvaluationPreprocessor'],
+        'canmt_translation': [
+            'CanmtTranslationPreprocessor',
+        ],
         'dialog_classification_use_preprocessor':
         ['DialogueClassificationUsePreprocessor'],
         'siamese_uie_preprocessor': ['SiameseUiePreprocessor'],

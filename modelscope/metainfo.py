@@ -130,6 +130,7 @@ class Models(object):
     deberta_v2 = 'deberta_v2'
     veco = 'veco'
     translation = 'csanmt-translation'
+    canmt = 'canmt'
     space_dst = 'space-dst'
     space_intent = 'space-intent'
     space_modeling = 'space-modeling'
@@ -421,6 +422,7 @@ class Pipelines(object):
     fill_mask = 'fill-mask'
     fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
+    canmt_translation = 'canmt-translation'
     interactive_translation = 'interactive-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -535,6 +537,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.competency_aware_translation:
+    (Pipelines.canmt_translation, 'damo/nlp_canmt_translation_zh2en_large'),
     Tasks.translation: (Pipelines.csanmt_translation,
                         'damo/nlp_csanmt_translation_zh2en'),
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
@@ -733,9 +737,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
-    Tasks.video_single_object_tracking:
-    (Pipelines.video_single_object_tracking,
-     'damo/cv_vitb_video-single-object-tracking_ostrack'),
+    Tasks.video_single_object_tracking: (
+        Pipelines.video_single_object_tracking,
+        'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
     Tasks.text_driven_segmentation: (
@@ -993,6 +997,7 @@ class Preprocessors(object):
     mglm_summarization = 'mglm-summarization'
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
+    canmt_translation = 'canmt-translation'
     dialog_use_preprocessor = 'dialog-use-preprocessor'
     siamese_uie_preprocessor = 'siamese-uie-preprocessor'
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'

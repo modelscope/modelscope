@@ -251,6 +251,11 @@ def import_module_and_submodules(package_name: str,
                     continue
                 subpackage = f'{package_name}.{name}'
                 import_module_and_submodules(subpackage, exclude=exclude)
+        except SystemExit as e:
+            # this case is specific for easy_cv's tools/predict.py exit
+            logger.warning(
+                f'{package_name} not imported: {str(e)}, but should continue')
+            pass
         except Exception as e:
             logger.warning(f'{package_name} not imported: {str(e)}')
             if len(package_name.split('.')) == 1:
@@ -270,6 +275,8 @@ def install_module_from_requirements(requirement_path, ):
     with open(requirement_path, 'r', encoding='utf-8') as f:
         requirements = f.read().splitlines()
         for req in requirements:
+            if req == '':
+                continue
             installed, _ = PluginsManager.check_plugin_installed(req)
             if not installed:
                 install_list.append(req)

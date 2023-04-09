@@ -955,7 +955,6 @@ class DistributedGPT3(TorchModel):
                  megatron_cfg=None,
                  **kwargs):
         super().__init__(model_dir, *args, **kwargs)
-
         init_megatron_util(megatron_cfg, model_dir, rank=rank)
 
         self.config = GPT3Config.from_pretrained(model_dir)
@@ -981,7 +980,8 @@ class DistributedGPT3(TorchModel):
         load_model = pre_load(ckpt_rank, model_dir, tag=path_load_tag)
         load_model = split_state_dict(load_model, model, tensor_ws // ckpt_ws)
 
-        self.dist_model.load_state_dict(load_model)
+        self.dist_model.load_state_dict(
+            load_model, strict=kwargs.get('strict', True))
 
         self.inference_params = None
 

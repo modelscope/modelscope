@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
     from .glm_130b import GLM130bForTextGeneration
     from .csanmt import CsanmtForTranslation
+    from .canmt import CanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
     from .gpt2 import GPT2Model
@@ -88,6 +89,7 @@ else:
         ],
         'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
+        'canmt': ['CanmtForTranslation'],
         'codegeex':
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'glm_130b': ['GLM130bForTextGeneration'],

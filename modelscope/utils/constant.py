@@ -176,6 +176,7 @@ class NLPTasks(object):
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'
+    competency_aware_translation = 'competency-aware-translation'
     token_classification = 'token-classification'
     transformer_crf = 'transformer-crf'
     conversational = 'conversational'

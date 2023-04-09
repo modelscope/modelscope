@@ -3,6 +3,7 @@ import os
 import sys
 import zipfile
 
+from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.constant import ThirdParty
 from modelscope.utils.logger import get_logger

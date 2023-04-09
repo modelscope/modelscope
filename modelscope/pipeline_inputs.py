@@ -195,6 +195,8 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.translation:
     InputType.TEXT,
+    Tasks.competency_aware_translation:
+    InputType.TEXT,
     Tasks.word_segmentation: [InputType.TEXT, {
         'text': InputType.TEXT,
     }],

@@ -13,7 +13,8 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.audio.audio_utils import (generate_scp_for_sv,
-                                                generate_sd_scp_from_url)
+                                                generate_sd_scp_from_url,
+                                                update_local_model)
 from modelscope.utils.constant import Frameworks, ModelFile, Tasks
 from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
@@ -63,10 +64,11 @@ class SpeakerDiarizationPipeline(Pipeline):
                 speaker verfication model revision from model hub
         """
         super().__init__(model=model, **kwargs)
+        self.model_cfg = None
         config_path = os.path.join(model, ModelFile.CONFIGURATION)
         self.sv_model = sv_model
         self.sv_model_revision = sv_model_revision
-        self.cmd = self.get_cmd(config_path, kwargs)
+        self.cmd = self.get_cmd(config_path, kwargs, model)
 
         from funasr.bin import diar_inference_launch
         self.funasr_infer_modelscope = diar_inference_launch.inference_launch(
@@ -136,15 +138,19 @@ class SpeakerDiarizationPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self, config_path, extra_args) -> Dict[str, Any]:
-        model_cfg = json.loads(open(config_path).read())
+    def get_cmd(self, config_path, extra_args, model_path) -> Dict[str, Any]:
+        self.model_cfg = json.loads(open(config_path).read())
         model_dir = os.path.dirname(config_path)
         # generate sd inference command
-        mode = model_cfg['model']['model_config']['mode']
+        mode = self.model_cfg['model']['model_config']['mode']
         diar_model_path = os.path.join(
-            model_dir, model_cfg['model']['model_config']['diar_model_name'])
+            model_dir,
+            self.model_cfg['model']['model_config']['diar_model_name'])
         diar_model_config = os.path.join(
-            model_dir, model_cfg['model']['model_config']['diar_model_config'])
+            model_dir,
+            self.model_cfg['model']['model_config']['diar_model_config'])
+        update_local_model(self.model_cfg['model']['model_config'], model_path,
+                           extra_args)
         cmd = {
             'mode': mode,
             'output_dir': None,
@@ -182,23 +188,12 @@ class SpeakerDiarizationPipeline(Pipeline):
             'out_format',
             'param_dict',
         ]
-        model_config = model_cfg['model']['model_config']
+        model_config = self.model_cfg['model']['model_config']
         if model_config.__contains__('sv_model') and self.sv_model != '':
             self.sv_model = model_config['sv_model']
         if model_config.__contains__('sv_model_revision'):
             self.sv_model_revision = model_config['sv_model_revision']
         self.load_sv_model(cmd)
-
-        # re-write the config with configure.json
-        for user_args in user_args_dict:
-            if (user_args in self.model_cfg['model_config']
-                    and self.model_cfg['model_config'][user_args] is not None):
-                if isinstance(cmd[user_args], dict) and isinstance(
-                        self.model_cfg['model_config'][user_args], dict):
-                    cmd[user_args].update(
-                        self.model_cfg['model_config'][user_args])
-                else:
-                    cmd[user_args] = self.model_cfg['model_config'][user_args]
 
         # rewrite the config with user args
         for user_args in user_args_dict:

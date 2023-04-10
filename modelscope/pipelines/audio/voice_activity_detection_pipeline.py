@@ -11,7 +11,8 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.audio.audio_utils import generate_scp_from_url
+from modelscope.utils.audio.audio_utils import (generate_scp_from_url,
+                                                update_local_model)
 from modelscope.utils.constant import Frameworks, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -45,7 +46,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         config_path = os.path.join(model, ModelFile.CONFIGURATION)
-        self.cmd = self.get_cmd(config_path, kwargs)
+        self.cmd = self.get_cmd(config_path, kwargs, model)
 
         from funasr.bin import vad_inference_launch
         self.funasr_infer_modelscope = vad_inference_launch.inference_launch(
@@ -157,7 +158,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self, config_path, extra_args) -> Dict[str, Any]:
+    def get_cmd(self, config_path, extra_args, model_path) -> Dict[str, Any]:
         model_cfg = json.loads(open(config_path).read())
         model_dir = os.path.dirname(config_path)
         # generate inference command
@@ -175,6 +176,9 @@ class VoiceActivityDetectionPipeline(Pipeline):
             config_file.close()
             if 'frontend_conf' in root:
                 frontend_conf = root['frontend_conf']
+        update_local_model(model_cfg['model']['model_config'], model_path,
+                           extra_args)
+
         cmd = {
             'mode': mode,
             'batch_size': 1,

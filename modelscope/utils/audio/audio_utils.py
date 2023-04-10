@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import re
+import shutil
 import struct
 import sys
 import tempfile
@@ -10,6 +11,10 @@ from urllib.parse import urlparse
 import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
+from modelscope.utils.hub import snapshot_download
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 SEGMENT_LENGTH_TRAIN = 16000
 SUPPORT_AUDIO_TYPE_SETS = ('.flac', '.mp3', '.ogg', '.opus', '.wav', '.pcm')
@@ -315,3 +320,37 @@ def generate_sd_scp_from_url(urls: Union[tuple, list]):
                 raise ValueError("Can't download from {}.".format(url))
         audio_scps.append(audio_scp)
     return audio_scps
+
+
+def update_local_model(model_config, model_path, extra_args):
+    if 'update_model' in extra_args:
+        if extra_args['update_model'] == 'latest':
+            model_revision = None
+        else:
+            model_revision = extra_args['update_model']
+        if model_config.__contains__('model'):
+            model_name = model_config['model']
+            if isinstance(model_path, str) and os.path.exists(model_path):
+                try:
+                    logger.info(
+                        'Download the model to local path {0} ...'.format(
+                            model_path))
+                    src_path = snapshot_download(
+                        model_name, revision=model_revision)
+                    # cp to model_path
+                    if src_path == model_path:
+                        logger.warning('src_path is the same with model_path')
+                        return
+                    for filename in os.listdir(src_path):
+                        src_file = os.path.join(src_path, filename)
+                        dst_file = os.path.join(model_path, filename)
+                        if os.path.isfile(src_file):
+                            shutil.copy2(src_file, model_path)
+                        elif os.path.isdir(src_file):
+                            if os.path.exists(dst_file):
+                                shutil.rmtree(dst_file)
+                            shutil.copytree(src_file, dst_file)
+                except Exception as e:
+                    logger.warning(str(e))
+        else:
+            logger.warning('Can not find model name in configuration')

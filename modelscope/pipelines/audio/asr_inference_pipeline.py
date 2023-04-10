@@ -13,7 +13,8 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import WavToScp
 from modelscope.utils.audio.audio_utils import (extract_pcm_from_wav,
                                                 generate_scp_from_url,
-                                                load_bytes_from_url)
+                                                load_bytes_from_url,
+                                                update_local_model)
 from modelscope.utils.constant import Frameworks, ModelFile, Tasks
 from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
@@ -117,7 +118,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.timestamp_model_revision = timestamp_model_revision
         self.model_cfg = self.model.forward()
 
-        self.cmd = self.get_cmd(kwargs)
+        self.cmd = self.get_cmd(kwargs, model)
         if self.cmd['code_base'] == 'funasr':
             from funasr.bin import asr_inference_launch
             self.funasr_infer_modelscope = asr_inference_launch.inference_launch(
@@ -153,6 +154,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 punc_infer_config=self.cmd['punc_infer_config'],
                 timestamp_model_file=self.cmd['timestamp_model_file'],
                 timestamp_infer_config=self.cmd['timestamp_infer_config'],
+                timestamp_cmvn_file=self.cmd['timestamp_cmvn_file'],
                 outputs_dict=self.cmd['outputs_dict'],
                 param_dict=self.cmd['param_dict'],
                 token_num_relax=self.cmd['token_num_relax'],
@@ -259,7 +261,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         rst = self.postprocess(output)
         return rst
 
-    def get_cmd(self, extra_args) -> Dict[str, Any]:
+    def get_cmd(self, extra_args, model_path) -> Dict[str, Any]:
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
 
@@ -299,6 +301,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'punc_model_file': None,
             'timestamp_infer_config': None,
             'timestamp_model_file': None,
+            'timestamp_cmvn_file': None,
             'outputs_dict': True,
             'param_dict': None,
             'model_type': outputs['model_type'],
@@ -372,6 +375,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             if model_config.__contains__('timestamp_model_revision'):
                 self.timestamp_model_revision = model_config[
                     'timestamp_model_revision']
+            update_local_model(model_config, model_path, extra_args)
             self.load_vad_model(cmd)
             self.load_punc_model(cmd)
             self.load_lm_model(cmd)
@@ -495,10 +499,13 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             model_dir = os.path.dirname(config_path)
             cmd['timestamp_model_file'] = os.path.join(
                 model_dir,
-                model_cfg['model']['model_config']['timestamp_model_name'])
+                model_cfg['model']['model_config']['timestamp_model_file'])
             cmd['timestamp_infer_config'] = os.path.join(
                 model_dir,
-                model_cfg['model']['model_config']['timestamp_model_config'])
+                model_cfg['model']['model_config']['timestamp_infer_config'])
+            cmd['timestamp_cmvn_file'] = os.path.join(
+                model_dir,
+                model_cfg['model']['model_config']['timestamp_cmvn_file'])
 
     def forward(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Decoding

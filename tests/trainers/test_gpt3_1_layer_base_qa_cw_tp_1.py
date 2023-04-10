@@ -14,8 +14,7 @@ from modelscope.utils.hub import read_config, Config
 from modelscope.utils.constant import Tasks
 
 
-@unittest.skipIf(not torch.cuda.is_available()
-                 or torch.cuda.device_count() <= 1, 'distributed unittest')
+@unittest.skipIf(not torch.cuda.is_available(), 'distributed unittest')
 class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
 
     def setUp(self):
@@ -41,7 +40,7 @@ class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
         self.start(
             finetune_poetry_tp_1, num_gpus=1, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_evaluate_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(
@@ -49,13 +48,13 @@ class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
 
     # TODO: add gpt3 trainer predict unittest
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_predict_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(
             predict_poetry_tp_1, num_gpus=1, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_output_pipeline_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(
@@ -67,7 +66,7 @@ class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
         self.start(
             finetune_dureader_tp_1, num_gpus=1, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_evaluate_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(
@@ -75,13 +74,13 @@ class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
 
     # TODO: add gpt3 trainer predict unittest
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_predict_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(
             predict_dureader_tp_1, num_gpus=1, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_output_pipeline_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 1'
         self.start(

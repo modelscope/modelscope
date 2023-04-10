@@ -41,7 +41,7 @@ class TestGPT3OneLayerBaseQAandCWtp2(DistributedTestCase):
         self.start(
             finetune_poetry_tp_2, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_evaluate_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
@@ -49,13 +49,13 @@ class TestGPT3OneLayerBaseQAandCWtp2(DistributedTestCase):
 
     # TODO: add gpt3 trainer predict unittest
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_predict_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
             predict_poetry_tp_2, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_output_pipeline_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
@@ -67,7 +67,7 @@ class TestGPT3OneLayerBaseQAandCWtp2(DistributedTestCase):
         self.start(
             finetune_dureader_tp_2, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_evaluate_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
@@ -75,13 +75,13 @@ class TestGPT3OneLayerBaseQAandCWtp2(DistributedTestCase):
 
     # TODO: add gpt3 trainer predict unittest
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_predict_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
             predict_dureader_tp_2, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_output_pipeline_dureader(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(

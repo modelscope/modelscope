@@ -40,7 +40,7 @@ class TestGPT3OneLayerBaseTrain(DistributedTestCase):
         self.start(
             finetune_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_evaluate_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
@@ -48,13 +48,13 @@ class TestGPT3OneLayerBaseTrain(DistributedTestCase):
 
     # TODO: add gpt3 trainer predict unittest
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_predict_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
             predict_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
-    @unittest.skip()
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_1_layer_output_pipeline(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(

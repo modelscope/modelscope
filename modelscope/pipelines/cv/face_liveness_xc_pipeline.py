@@ -64,6 +64,10 @@ class FaceLivenessXcPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['input_tensor'] = None
+            return rtn_dict
         img = result['img']
         img = (img - 127.5) * 0.0078125
         img = np.expand_dims(img, 0).copy()
@@ -74,6 +78,8 @@ class FaceLivenessXcPipeline(FaceProcessingBasePipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['input_tensor'] is None:
+            return {OutputKeys.SCORES: None, OutputKeys.BOXES: None}
         input_feed = {}
         input_feed[
             self.input_node_name[0]] = input['input_tensor'].cpu().numpy()

@@ -44,12 +44,23 @@ class FacialLandmarkConfidencePipeline(FaceProcessingBasePipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['img'] = None
+            return rtn_dict
         img = LoadImage.convert_to_ndarray(input)
         img = img[:, :, ::-1]
         result['orig_img'] = img.astype(np.float32)
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['img'] is None:
+            return {
+                OutputKeys.SCORES: None,
+                OutputKeys.POSES: None,
+                OutputKeys.KEYPOINTS: None,
+                OutputKeys.BOXES: None
+            }
         result = self.flcm(input)
         assert result is not None
         lms = result[0].reshape(-1, 10).tolist()

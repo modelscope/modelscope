@@ -29,7 +29,10 @@ class FaceAttributeRecognitionTest(unittest.TestCase):
             Tasks.face_attribute_recognition, model=self.model_id)
         img_path = 'data/test/images/face_recognition_1.png'
         result = fair_face(img_path)
-        self.show_result(img_path, result)
+        if result[OutputKeys.SCORES] is None:
+            print('No Detected Face.')
+        else:
+            self.show_result(img_path, result)
 
 
 if __name__ == '__main__':

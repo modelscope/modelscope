@@ -51,6 +51,10 @@ class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['img'] = None
+            return rtn_dict
         align_img = result['img']
         face_img = align_img[:, :, ::-1]  # to rgb
         face_img = np.transpose(face_img, axes=(2, 0, 1))
@@ -60,7 +64,8 @@ class FaceRecognitionOodPipeline(FaceProcessingBasePipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        assert input['img'] is not None
+        if input['img'] is None:
+            return {OutputKeys.IMG_EMBEDDING: None, OutputKeys.SCORES: None}
         img = input['img'].unsqueeze(0)
         output = self.face_model(img)
         emb = output[0].detach().cpu().numpy()

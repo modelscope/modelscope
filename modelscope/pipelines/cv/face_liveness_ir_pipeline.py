@@ -57,6 +57,10 @@ class FaceLivenessIrPipeline(FaceProcessingBasePipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['input_tensor'] = None
+            return rtn_dict
         orig_img = LoadImage.convert_to_ndarray(input)
         orig_img = orig_img[:, :, ::-1]
         img = super(FaceLivenessIrPipeline,
@@ -70,6 +74,8 @@ class FaceLivenessIrPipeline(FaceProcessingBasePipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['input_tensor'] is None:
+            return {OutputKeys.SCORES: None, OutputKeys.BOXES: None}
         input_feed = {}
         input_feed[
             self.input_node_name[0]] = input['input_tensor'].cpu().numpy()

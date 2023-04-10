@@ -101,12 +101,14 @@ class FaceProcessingBasePipeline(Pipeline):
             face_lmks = face_lmks.reshape(5, 2)
             align_img, _ = align_face(img, (112, 112), face_lmks)
 
-        result = {}
-        result['img'] = np.ascontiguousarray(align_img)
-        result['scores'] = [scores]
-        result['bbox'] = bboxes
-        result['lmks'] = face_lmks
-        return result
+            result = {}
+            result['img'] = np.ascontiguousarray(align_img)
+            result['scores'] = [scores]
+            result['bbox'] = bboxes
+            result['lmks'] = face_lmks
+            return result
+        else:
+            return None
 
     def align_face_padding(self, img, rect, padding_size=16, pad_pixel=127):
         rect = np.reshape(rect, (-1, 4))

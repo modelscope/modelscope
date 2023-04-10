@@ -73,7 +73,9 @@ class BertFillMaskHead(TorchHead):
 
 @HEADS.register_module(Tasks.fill_mask, module_name=Heads.xlm_roberta_mlm)
 class XlmRobertaMaskHead(TorchHead):
-    _keys_to_ignore_on_load_missing = [r"lm_head.decoder.weight", "lm_head.decoder.bias"]
+    _keys_to_ignore_on_load_missing = [
+        r'lm_head.decoder.weight', 'lm_head.decoder.bias'
+    ]
 
     def __init__(self,
                  hidden_size=1024,
@@ -85,8 +87,7 @@ class XlmRobertaMaskHead(TorchHead):
             hidden_size=hidden_size,
             hidden_act=hidden_act,
             layer_norm_eps=layer_norm_eps,
-            vocab_size=vocab_size
-        )
+            vocab_size=vocab_size)
         self.lm_head = XLMRobertaLMHead(self.config)
 
     def forward(self,
@@ -173,7 +174,8 @@ class XLMRobertaLMHead(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        self.layer_norm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.layer_norm = nn.LayerNorm(
+            config.hidden_size, eps=config.layer_norm_eps)
 
         self.decoder = nn.Linear(config.hidden_size, config.vocab_size)
         self.bias = nn.Parameter(torch.zeros(config.vocab_size))
@@ -192,7 +194,7 @@ class XLMRobertaLMHead(nn.Module):
     def _tie_weights(self):
         # To tie those two weights if they get disconnected (on TPU or when the bias is resized)
         # For accelerate compatibility and to not break backward compatibility
-        if self.decoder.bias.device.type == "meta":
+        if self.decoder.bias.device.type == 'meta':
             self.decoder.bias = self.bias
         else:
             self.bias = self.decoder.bias

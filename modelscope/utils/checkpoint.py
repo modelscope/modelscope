@@ -508,25 +508,30 @@ def load_task_model_checkpoint(model_to_load,
                 retrieved_modules.append(module)
 
         return retrieved_modules
-    
-    def _tie_or_clone_weights(output_embeddings, input_embeddings, torchscript=False):
+
+    def _tie_or_clone_weights(output_embeddings,
+                              input_embeddings,
+                              torchscript=False):
         if torchscript:
-            output_embeddings.weight = nn.Parameter(input_embeddings.weight.clone())
+            output_embeddings.weight = nn.Parameter(
+                input_embeddings.weight.clone())
         else:
             output_embeddings.weight = input_embeddings.weight
 
-        if getattr(output_embeddings, "bias", None) is not None:
+        if getattr(output_embeddings, 'bias', None) is not None:
             output_embeddings.bias.data = nn.functional.pad(
                 output_embeddings.bias.data,
                 (
                     0,
-                    output_embeddings.weight.shape[0] - output_embeddings.bias.shape[0],
+                    output_embeddings.weight.shape[0]
+                    - output_embeddings.bias.shape[0],
                 ),
-                "constant",
+                'constant',
                 0,
             )
 
-        if hasattr(output_embeddings, "out_features") and hasattr(input_embeddings, "num_embeddings"):
+        if hasattr(output_embeddings, 'out_features') and hasattr(
+                input_embeddings, 'num_embeddings'):
             output_embeddings.out_features = input_embeddings.num_embeddings
 
     def tie_weights(model, tie_word_embeddings=False):
@@ -550,8 +555,8 @@ def load_task_model_checkpoint(model_to_load,
         _fast_init=True,
     )
 
-    if getattr(kwargs.get("head"), "tie_word_embeddings", False):
-        tie_weights(model_to_load, kwargs.get("head").tie_word_embeddings)
+    if getattr(kwargs.get('head'), 'tie_word_embeddings', False):
+        tie_weights(model_to_load, kwargs.get('head').tie_word_embeddings)
 
     return {
         'model': model_to_load,

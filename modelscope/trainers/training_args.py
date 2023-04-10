@@ -437,7 +437,7 @@ class TrainingArgs:
         })
 
     eval_interval: int = field(
-        default=1,
+        default=None,
         metadata={
             'help': 'Evaluation interval by epoch or iter',
             'cfg_node': 'evaluation.period.interval',

@@ -19,4 +19,5 @@ PYTHONPATH=. torchrun --nproc_per_node $WORLD_SIZE examples/pytorch/text_generat
     --eval_metrics 'ppl' \
     --world_size $WORLD_SIZE \
     --tensor_model_parallel_size $TENSOR_MODEL_PARALLEL_SIZE \
+    --use_megatron true \
     # --dataset_name 'DuReader_robust-QG' \ # input&output

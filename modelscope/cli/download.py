@@ -7,7 +7,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 
 
 def subparser_func(args):
-    """ Fuction which will be called for a specific sub parser.
+    """ Function which will be called for a specific sub parser.
     """
     return DownloadCMD(args)
 

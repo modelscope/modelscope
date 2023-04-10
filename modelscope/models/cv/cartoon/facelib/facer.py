@@ -94,7 +94,7 @@ class FaceAna():
         sorted_bboxes = [bboxes[x] for x in picked]
         return np.array(sorted_bboxes)
 
-    def judge_boxs(self, previuous_bboxs, now_bboxs):
+    def judge_boxs(self, previous_bboxs, now_bboxs):
 
         def iou(rec1, rec2):
 
@@ -116,17 +116,16 @@ class FaceAna():
 
             return intersect / (sum_area - intersect)
 
-        if previuous_bboxs is None:
+        if previous_bboxs is None:
             return now_bboxs
 
         result = []
 
         for i in range(now_bboxs.shape[0]):
             contain = False
-            for j in range(previuous_bboxs.shape[0]):
-                if iou(now_bboxs[i], previuous_bboxs[j]) > self.iou_thres:
-                    result.append(
-                        self.smooth(now_bboxs[i], previuous_bboxs[j]))
+            for j in range(previous_bboxs.shape[0]):
+                if iou(now_bboxs[i], previous_bboxs[j]) > self.iou_thres:
+                    result.append(self.smooth(now_bboxs[i], previous_bboxs[j]))
                     contain = True
                     break
             if not contain:

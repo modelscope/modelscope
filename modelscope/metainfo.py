@@ -182,6 +182,7 @@ class Models(object):
     generic_punc = 'generic-punc'
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
+    campplus_sv = 'cam++-sv'
     generic_lm = 'generic-lm'
 
     # multi-modal models

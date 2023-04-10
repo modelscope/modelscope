@@ -141,9 +141,11 @@ class EpochBasedTrainer(BaseTrainer):
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)
+            self.input_model_id = model
         else:
             assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
             self.model_dir = os.path.dirname(cfg_file)
+            self.input_model_id = None
 
         super().__init__(cfg_file, arg_parse_fn)
         self.cfg_modify_fn = cfg_modify_fn

@@ -124,7 +124,8 @@ class HubApi:
                      model_id: str,
                      visibility: Optional[int] = ModelVisibility.PUBLIC,
                      license: Optional[str] = Licenses.APACHE_V2,
-                     chinese_name: Optional[str] = None) -> str:
+                     chinese_name: Optional[str] = None,
+                     original_model_id: Optional[str] = '') -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -132,6 +133,7 @@ class HubApi:
             visibility (int, optional): visibility of the model(1-private, 5-public), default 5.
             license (str, optional): license of the model, default none.
             chinese_name (str, optional): chinese name of the model.
+            original_model_id (str, optional): the base model id which this model is trained from
 
         Returns:
             Name of the model created
@@ -156,7 +158,8 @@ class HubApi:
             'Name': name,
             'ChineseName': chinese_name,
             'Visibility': visibility,  # server check
-            'License': license
+            'License': license,
+            'OriginalModelId': original_model_id,
         }
         r = self.session.post(
             path, json=body, cookies=cookies, headers=self.headers)
@@ -233,7 +236,8 @@ class HubApi:
                    license: Optional[str] = Licenses.APACHE_V2,
                    chinese_name: Optional[str] = None,
                    commit_message: Optional[str] = 'upload model',
-                   revision: Optional[str] = DEFAULT_REPOSITORY_REVISION):
+                   revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+                   original_model_id: Optional[str] = None):
         """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 
@@ -267,6 +271,7 @@ class HubApi:
             revision (`str`, *optional*, default to DEFAULT_MODEL_REVISION):
                 which branch to push. If the branch is not exists, It will create a new
                 branch and push to it.
+            original_model_id (str, optional): The base model id which this model is trained from
 
         Raises:
             InvalidParameter: Parameter invalid.
@@ -299,7 +304,8 @@ class HubApi:
                 model_id=model_id,
                 visibility=visibility,
                 license=license,
-                chinese_name=chinese_name)
+                chinese_name=chinese_name,
+                original_model_id=original_model_id)
         tmp_dir = tempfile.mkdtemp()
         git_wrapper = GitCommandWrapper()
         try:

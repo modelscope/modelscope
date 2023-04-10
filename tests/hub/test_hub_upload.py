@@ -2,12 +2,14 @@
 import os
 import shutil
 import tempfile
+import time
 import unittest
 import uuid
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import GitError, HTTPError, NotLoginException
+from modelscope.hub.push_to_hub import push_to_hub
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
@@ -151,6 +153,24 @@ class HubUploadTest(unittest.TestCase):
                 model_dir=self.finetune_path,
                 visibility=ModelVisibility.PUBLIC,
                 license=Licenses.APACHE_V2)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_push_to_hub(self):
+        future = push_to_hub(
+            repo_name=self.create_model_name,
+            output_dir=self.finetune_path,
+            token=TEST_ACCESS_TOKEN1)
+        self.assertTrue(future is None)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_push_to_hub_async(self):
+        future = push_to_hub(
+            repo_name=self.create_model_name,
+            output_dir=self.finetune_path,
+            token=TEST_ACCESS_TOKEN1,
+            async_upload=True)
+        while not future.done():
+            time.sleep(1)
 
 
 if __name__ == '__main__':

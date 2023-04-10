@@ -32,7 +32,6 @@ from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
-
 logger = get_logger()
 
 

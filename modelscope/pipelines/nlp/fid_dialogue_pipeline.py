@@ -7,10 +7,12 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
+from modelscope.models.nlp.fid_T5.text_generation import T5Chat
 from modelscope.outputs import OutputKeys, TokenGeneratorOutput
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
+from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 
 context_template = '假设我和你正在进行对话，请你给我得体、准确、友好的回复。以下是我们的对话内容。{context}'
@@ -67,9 +69,17 @@ class FidDialoguePipeline(Pipeline):
             auto_collate=auto_collate,
             **kwargs)
 
+        self.is_t5 = isinstance(self.model, T5Chat)
+
         if preprocessor is None:
             self.preprocessor_tokenizer = Preprocessor.from_pretrained(
                 self.model.model_dir, **kwargs)
+        if not self.is_t5:
+            unused_list = []
+            for i in range(1, 100):
+                unused_list.append(f'[unused{i}]')
+            self.preprocessor_tokenizer.nlp_tokenizer.tokenizer.add_special_tokens(
+                {'additional_special_tokens': unused_list})
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'
@@ -77,6 +87,12 @@ class FidDialoguePipeline(Pipeline):
         self.model.eval()
 
         self.SEP = '[SEP]'
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        preprocess_params = pipeline_parameters.get('preprocess_params', {})
+        forward_params = pipeline_parameters.get('forward_params', {})
+        postprocess_params = pipeline_parameters.get('postprocess_params', {})
+        return preprocess_params, forward_params, postprocess_params
 
     def forward(self, inputs: Dict[str, Any], **forward_params):
         with torch.no_grad():
@@ -86,8 +102,12 @@ class FidDialoguePipeline(Pipeline):
                    **preprocess_params) -> Dict[str, Any]:
         # init params
         max_encoder_length = 300
+        context_turn = 3
         if 'max_encoder_length' in preprocess_params:
             max_encoder_length = preprocess_params.pop('max_encoder_length')
+        if 'context_turn' in preprocess_params:
+            context_turn = preprocess_params.pop('context_turn')
+
         # get raw data
         history = inputs['history'] if 'history' in inputs else ''
         if len(history) <= 0:
@@ -98,9 +118,9 @@ class FidDialoguePipeline(Pipeline):
         bot_profile = inputs['bot_profile'] if 'bot_profile' in inputs else ''
         # parse raw data
         history = history.split(self.SEP)
-        context = history[-3:]
+        context = history[-context_turn:]
         context = self.process_context(context)
-        history = history[:-3]
+        history = history[:-context_turn]
         history = self.process_history(history)
         knowledge = knowledge.split(self.SEP)
 
@@ -125,7 +145,15 @@ class FidDialoguePipeline(Pipeline):
             model_input.append(context_template.format(context=context))
 
         for i in range(len(model_input)):
-            model_input[i] = re.sub('[ \t]+', '▂', model_input[i])
+            if self.is_t5:
+                model_input[i] = model_input[i].replace(
+                    '\n', '▁<extra_id_22>').replace('\t',
+                                                    '▁<extra_id_33>').replace(
+                                                        '  ', '▁<extra_id_23>')
+            else:
+                model_input[i] = model_input[i].replace(
+                    '\n', '[unused22]').replace('\t', '[unused33]').replace(
+                        '  ', '[unused23]')
 
         # tokenization
         input_ids = self.preprocessor_tokenizer(
@@ -135,11 +163,7 @@ class FidDialoguePipeline(Pipeline):
             max_length=max_encoder_length,
             return_tensors='pt')['input_ids'].unsqueeze(0).to(self.device)
         input_dict = {
-            'input_ids':
-            input_ids.to(torch.int64).to(self.device),
-            'attention_mask': (input_ids != 0).to(torch.int64).to(self.device),
-            'token_type_ids':
-            torch.zeros(input_ids.shape).to(torch.int64).to(self.device)
+            'input_ids': input_ids.to(torch.int64).to(self.device),
         }
 
         return input_dict
@@ -171,6 +195,24 @@ class FidDialoguePipeline(Pipeline):
             hypotheses = inputs.sequences.detach().cpu().tolist()
 
         response = self.preprocessor_tokenizer.decode(
-            hypotheses[0], skip_special_tokens=True)
-        response = response.replace(' ', '')
+            hypotheses[0], skip_special_tokens=self.is_t5)
+
+        token_mapping = {
+            '<extra_id_22>': '\n',
+            '<extra_id_33>': '\t',
+            '<extra_id_23>': '  ',
+            '[unused22]': '\n',
+            '[unused33]': '\t',
+            '[unused23]': '  ',
+            '[SEP]': '',
+            '[CLS]': '',
+            '[PAD]': '',
+            '[UNK]': ''
+        }
+        for s, t in token_mapping.items():
+            response = response.replace(s, t)
+
+        if not self.is_t5:
+            response = remove_space_between_chinese_chars(response)
+
         return {OutputKeys.TEXT: response}

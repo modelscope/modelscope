@@ -852,6 +852,10 @@ class PlugForConditionalGeneration(PlugPreTrainedModel):
                               length_penalty=1.2,
                               repetition_penalty=1.2,
                               no_repeat_ngram_size=4,
+                              do_sample=False,
+                              temperature=1.0,
+                              top_k=0,
+                              top_p=1.0,
                               *args,
                               **kwargs):
         # TODO: faster code path for beam_size == 1.
@@ -912,7 +916,7 @@ class PlugForConditionalGeneration(PlugPreTrainedModel):
         results['batch'] = batch
 
         for step in range(max_length):
-            self.logger.info(f'step: {step + 1} / {max_length}')
+            # self.logger.info(f'step: {step + 1} / {max_length}')
             decoder_input = alive_seq[:, -1].view(1, -1)
 
             # Decoder forward.
@@ -966,14 +970,10 @@ class PlugForConditionalGeneration(PlugPreTrainedModel):
 
             curr_length_penalty = (step + 1)**length_penalty
             # '''
-            if self.config.sample_topk:
-                temperature = self.config.temperature
+            if do_sample:
                 _scores = log_probs / temperature
                 _scores = self._top_k_top_p_filtering(
-                    _scores,
-                    top_k=self.config.top_k,
-                    top_p=self.config.top_p,
-                    min_tokens_to_keep=1
+                    _scores, top_k=top_k, top_p=top_p, min_tokens_to_keep=1
                 )  # (batch_size * num_beams, vocab_size)
                 # Sample 2 next words for each beam (so we have some spare tokens
                 # and match output of greedy beam search)

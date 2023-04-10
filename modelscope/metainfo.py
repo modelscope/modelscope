@@ -161,6 +161,7 @@ class Models(object):
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
     fid_plug = 'fid-plug'
+    fid_T5 = 'fid-T5'
     lstm = 'lstm'
     xlm_roberta = 'xlm-roberta'
     transformers = 'transformers'

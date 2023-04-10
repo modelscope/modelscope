@@ -18,7 +18,7 @@ class FSMNUnit(nn.Module):
         Args:
             dimlinear:              input / output dimension
             dimproj:                fsmn input / output dimension
-            lorder:                 left ofder
+            lorder:                 left order
             rorder:                 right order
         """
         super(FSMNUnit, self).__init__()

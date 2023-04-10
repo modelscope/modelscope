@@ -39,8 +39,8 @@ class FSMNDecorator(TorchModel):
             model_dir (str): the model path.
             cmvn_file (str): cmvn file
             backbone (dict): params related to backbone
-            input_dim (int): input dimention of network
-            output_dim (int): output dimention of network
+            input_dim (int): input dimension of network
+            output_dim (int): output dimension of network
             training (bool): training or inference mode
         """
         super().__init__(model_dir, *args, **kwargs)
@@ -108,7 +108,7 @@ class FSMNDecorator(TorchModel):
 class KWSModel(nn.Module):
     """Our model consists of four parts:
     1. global_cmvn: Optional, (idim, idim)
-    2. preprocessing: feature dimention projection, (idim, hdim)
+    2. preprocessing: feature dimension projection, (idim, hdim)
     3. backbone: backbone or feature extractor of the whole network, (hdim, hdim)
     4. classifier: output layer or classifier of KWS model, (hdim, odim)
     5. activation:
@@ -133,7 +133,7 @@ class KWSModel(nn.Module):
             odim (int): output dimension of network
             hdim (int): hidden dimension of network
             global_cmvn (nn.Module): cmvn for input feature, (idim, idim)
-            preprocessing (nn.Module): feature dimention projection, (idim, hdim)
+            preprocessing (nn.Module): feature dimension projection, (idim, hdim)
             backbone (nn.Module): backbone or feature extractor of the whole network, (hdim, hdim)
             classifier (nn.Module): output layer or classifier of KWS model, (hdim, odim)
             activation (nn.Module): nn.Identity for training, nn.Sigmoid for inference

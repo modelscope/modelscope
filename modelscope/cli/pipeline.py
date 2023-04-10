@@ -13,7 +13,7 @@ template_path = os.path.join(curren_path, 'template')
 
 
 def subparser_func(args):
-    """ Fuction which will be called for a specific sub parser.
+    """ Function which will be called for a specific sub parser.
     """
     return PipelineCMD(args)
 

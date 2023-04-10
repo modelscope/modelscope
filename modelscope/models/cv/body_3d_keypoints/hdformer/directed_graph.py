@@ -46,14 +46,14 @@ class DiGraph():
         super().__init__()
         self.num_nodes = len(skeleton.parents())
         self.directed_edges_hop1 = [
-            (parrent, child)
-            for child, parrent in enumerate(skeleton.parents()) if parrent >= 0
+            (parent, child) for child, parent in enumerate(skeleton.parents())
+            if parent >= 0
         ]
         self.directed_edges_hop2 = [(0, 1, 2), (0, 4, 5), (0, 7, 8), (1, 2, 3),
                                     (4, 5, 6), (7, 8, 9),
                                     (7, 8, 11), (7, 8, 14), (8, 9, 10),
                                     (8, 11, 12), (8, 14, 15), (11, 12, 13),
-                                    (14, 15, 16)]  # (parrent, child)
+                                    (14, 15, 16)]  # (parent, child)
         self.directed_edges_hop3 = [(0, 1, 2, 3), (0, 4, 5, 6), (0, 7, 8, 9),
                                     (7, 8, 9, 10), (7, 8, 11, 12),
                                     (7, 8, 14, 15), (8, 11, 12, 13),
@@ -112,8 +112,8 @@ class Graph():
         # edge is a list of [child, parent] paris
         self.num_node = len(skeleton.parents())
         self_link = [(i, i) for i in range(self.num_node)]
-        neighbor_link = [(child, parrent)
-                         for child, parrent in enumerate(skeleton.parents())]
+        neighbor_link = [(child, parent)
+                         for child, parent in enumerate(skeleton.parents())]
         self.self_link = self_link
         self.neighbor_link = neighbor_link
         self.edge = self_link + neighbor_link

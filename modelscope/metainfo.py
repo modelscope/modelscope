@@ -60,6 +60,7 @@ class Models(object):
     fer = 'fer'
     fairface = 'fairface'
     retinaface = 'retinaface'
+    damofd = 'damofd'
     shop_segmentation = 'shop-segmentation'
     mogface = 'mogface'
     mtcnn = 'mtcnn'

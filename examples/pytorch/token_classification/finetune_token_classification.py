@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
+
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.trainers.training_args import (TrainingArgs, get_flatten_value,set_flatten_value)
+from modelscope.trainers.training_args import (TrainingArgs, get_flatten_value,
+                                               set_flatten_value)
+
 
 @dataclass
 class TokenClassificationArguments(TrainingArgs):
@@ -61,7 +64,9 @@ class TokenClassificationArguments(TrainingArgs):
         label_list.sort()
         return label_list
 
-args = TokenClassificationArguments.from_cli(task='token-classification',eval_metrics='token-cls-metric')
+
+args = TokenClassificationArguments.from_cli(
+    task='token-classification', eval_metrics='token-cls-metric')
 print(args)
 
 train_dataset = MsDataset.load(

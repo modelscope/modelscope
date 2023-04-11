@@ -32,7 +32,7 @@ class FaceProcessingBasePipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         # face detect pipeline
-        det_model_id = 'damo/cv_resnet50_face-detection_retinaface'
+        det_model_id = 'damo/cv_ddsar_face-detection_iclr23-damofd'
         self.face_detection = pipeline(
             Tasks.face_detection, model=det_model_id)
 

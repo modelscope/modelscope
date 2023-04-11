@@ -114,6 +114,7 @@ if TYPE_CHECKING:
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
+    from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
 
 else:
     _import_structure = {
@@ -280,6 +281,9 @@ else:
         ],
         'image_bts_depth_estimation_pipeline': [
             'ImageBTSDepthEstimationPipeline'
+        ],
+        'pedestrian_attribute_recognition_pipeline': [
+            'PedestrainAttributeRecognitionPipeline'
         ]
     }
 

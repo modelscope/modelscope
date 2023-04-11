@@ -445,6 +445,26 @@ TASK_OUTPUTS = {
         OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
     ],
 
+    # pedestrain attribute recognition result for single sample
+    # {
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    #   "labels": [
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #           ]
+    # }
+    Tasks.pedestrian_attribute_recognition: [
+        OutputKeys.BOXES, OutputKeys.LABELS
+    ],
+
     # 3D face reconstruction result for single sample
     # {
     #     "output_obj": io.BytesIO,

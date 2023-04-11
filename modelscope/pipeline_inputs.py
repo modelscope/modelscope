@@ -151,6 +151,8 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.hand_2d_keypoints:
     InputType.IMAGE,
+    Tasks.pedestrian_attribute_recognition:
+    InputType.IMAGE,
     Tasks.video_single_object_tracking: (InputType.VIDEO, InputType.BOX),
     Tasks.video_multi_object_tracking:
     InputType.VIDEO,

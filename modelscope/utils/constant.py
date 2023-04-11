@@ -39,6 +39,7 @@ class CVTasks(object):
     hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
     human_wholebody_keypoint = 'human-wholebody-keypoint'
+    pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'

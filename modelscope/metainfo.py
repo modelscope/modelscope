@@ -116,6 +116,7 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -404,6 +405,7 @@ class Pipelines(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
+    pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -830,6 +832,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
+    Tasks.pedestrian_attribute_recognition: (
+        Pipelines.pedestrian_attribute_recognition,
+        'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
 }
 
 

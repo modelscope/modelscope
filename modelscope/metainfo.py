@@ -166,6 +166,7 @@ class Models(object):
     plug_mental = 'plug-mental'
     doc2bot = 'doc2bot'
     peer = 'peer'
+    llama = 'llama'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

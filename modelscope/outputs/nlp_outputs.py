@@ -318,6 +318,7 @@ class AttentionTextClassificationModelOutput(TextClassificationModelOutput):
     """
     attentions: Tensor = None
     hidden_states: Tensor = None
+    past_key_values: Tensor = None
 
 
 @dataclass
@@ -349,6 +350,21 @@ class TextGenerationModelOutput(ModelOutputBase):
 
     logits: Tensor = None
     loss: Tensor = None
+
+
+@dataclass
+class AttentionTextGenerationModelOutput(TextGenerationModelOutput):
+    """The output class for text generation of attention based models.
+
+    Args:
+        logits (`Tensor`): The logits output of the model. loss (`Tensor`,
+        *optional*) The loss of the model, available when training.
+        hidden_states (`Tensor`, *optional*) Hidden-states of the model at the
+        output of each layer plus the optional initial embedding outputs.
+    """
+    attentions: Tensor = None
+    hidden_states: Tensor = None
+    past_key_values: Tensor = None
 
 
 @dataclass

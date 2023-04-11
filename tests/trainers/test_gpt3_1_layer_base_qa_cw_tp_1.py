@@ -14,7 +14,7 @@ from modelscope.utils.hub import read_config, Config
 from modelscope.utils.constant import Tasks
 
 
-@unittest.skipIf(not torch.cuda.is_available(), 'distributed unittest')
+@unittest.skipIf(not torch.cuda.is_available() or torch.cuda.device_count() <= 1, 'distributed unittest')
 class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
 
     def setUp(self):

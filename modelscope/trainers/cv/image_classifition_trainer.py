@@ -498,6 +498,8 @@ class ImageClassifitionTrainer(BaseTrainer):
             metric_options = self.cfg.evaluation.get('metric_options', {})
             if 'topk' in metric_options.keys():
                 metric_options['topk'] = tuple(metric_options['topk'])
+            elif len(CLASSES) < 6:
+                metric_options['topk'] = (1,)
             if self.cfg.evaluation.metrics:
                 eval_results = dataset.evaluate(
                     results=outputs,

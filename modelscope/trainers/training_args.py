@@ -175,7 +175,7 @@ class TrainingArgs:
         })
 
     train_data_worker: int = field(
-        default=None,
+        default=0,
         metadata={
             'cfg_node': 'train.dataloader.workers_per_gpu',
             'help': 'The number of data workers for train dataloader',
@@ -188,6 +188,15 @@ class TrainingArgs:
             'help': 'Shuffle the train dataset or not',
         })
 
+    train_drop_last: bool = field(
+        default=None,
+        metadata={
+            'cfg_node':
+            'train.dataloader.drop_last',
+            'help':
+            'Whether to drop out the last set of data in the train_dataset',
+        })
+
     per_device_eval_batch_size: int = field(
         default=None,
         metadata={
@@ -196,7 +205,7 @@ class TrainingArgs:
         })
 
     eval_data_worker: int = field(
-        default=None,
+        default=0,
         metadata={
             'cfg_node': 'evaluation.dataloader.workers_per_gpu',
             'help': 'The number of data workers for eval dataloader',
@@ -207,6 +216,14 @@ class TrainingArgs:
         metadata={
             'cfg_node': 'evaluation.dataloader.shuffle',
             'help': 'Shuffle the eval dataset or not',
+        })
+
+    eval_drop_last: bool = field(
+        default=None,
+        metadata={
+            'cfg_node': 'evaluation.dataloader.drop_last',
+            'help':
+            'Whether to drop out the last set of data in the eval_dataset',
         })
 
     max_epochs: int = field(

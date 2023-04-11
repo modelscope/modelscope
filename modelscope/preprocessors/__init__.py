@@ -18,7 +18,8 @@ if TYPE_CHECKING:
                      ControllableImageGenerationPreprocessor)
     from .kws import WavToLists
     from .tts import KanttsDataPreprocessor
-    from .multi_modal import (OfaPreprocessor, MPlugPreprocessor,
+    from .multi_modal import (DiffusionImageGenerationPreprocessor,
+                              OfaPreprocessor, MPlugPreprocessor,
                               HiTeAPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
@@ -67,8 +68,10 @@ else:
         ],
         'kws': ['WavToLists'],
         'tts': ['KanttsDataPreprocessor'],
-        'multi_modal':
-        ['OfaPreprocessor', 'MPlugPreprocessor', 'HiTeAPreprocessor'],
+        'multi_modal': [
+            'DiffusionImageGenerationPreprocessor', 'OfaPreprocessor',
+            'MPlugPreprocessor', 'HiTeAPreprocessor'
+        ],
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',
             'FaqQuestionAnsweringTransformersPreprocessor',

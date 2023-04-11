@@ -203,6 +203,7 @@ class Models(object):
     vldoc = 'vldoc'
     hitea = 'hitea'
     soonet = 'soonet'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
     # science models
     unifold = 'unifold'
@@ -510,6 +511,7 @@ class Pipelines(object):
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -884,6 +886,7 @@ class MultiModalTrainers(object):
     ofa = 'ofa'
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
 
 class AudioTrainers(object):
@@ -1028,6 +1031,7 @@ class Preprocessors(object):
     mgeo_ranking = 'mgeo-ranking'
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
+    diffusion_image_generation_preprocessor = 'diffusion-image-generation-preprocessor'
 
     # science preprocessor
     unifold_preprocessor = 'unifold-preprocessor'

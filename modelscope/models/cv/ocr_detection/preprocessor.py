@@ -45,6 +45,8 @@ class OCRDetectionPreprocessor(Preprocessor):
             img = np.array(load_image(inputs))
         elif isinstance(inputs, PIL.Image.Image):
             img = np.array(inputs)
+        elif isinstance(inputs, np.ndarray):
+            img = inputs
         else:
             raise TypeError(
                 f'inputs should be either str, PIL.Image, np.array, but got {type(inputs)}'

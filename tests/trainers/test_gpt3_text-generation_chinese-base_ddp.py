@@ -75,7 +75,6 @@ def finetune_poetry(work_dir='./gpt3_poetry'):
         }
         cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
         cfg.train.dataloader = {'batch_size_per_gpu': 16, 'workers_per_gpu': 1}
-        cfg.train.hooks.append({'type': 'MegatronHook'})
         cfg.evaluation.dataloader = {
             'batch_size_per_gpu': 2,
             'workers_per_gpu': 1

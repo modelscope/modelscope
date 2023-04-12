@@ -242,7 +242,6 @@ def finetune_poetry_helper(max_epochs, gpt3_one_layer_qa_cw_obj):
         }
         cfg.evaluation.metrics = 'ppl'
         cfg.num_hidden_layers = 1
-        cfg.model.strict = False
         cfg.megatron.world_size = gpt3_one_layer_qa_cw_obj.tp
         cfg.megatron.tensor_model_parallel_size = gpt3_one_layer_qa_cw_obj.tp
         return cfg

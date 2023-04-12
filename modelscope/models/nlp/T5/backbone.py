@@ -24,6 +24,8 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 from transformers.activations import ACT2FN
+from transformers.modeling_outputs import \
+    BaseModelOutputWithPastAndCrossAttentions
 from transformers.modeling_utils import (PreTrainedModel,
                                          find_pruneable_heads_and_indices,
                                          prune_linear_layer)
@@ -1184,7 +1186,7 @@ class T5Stack(T5PreTrainedModel):
                 all_attentions,
                 all_cross_attentions,
             ] if v is not None)
-        return AttentionBackboneModelOutput(
+        return BaseModelOutputWithPastAndCrossAttentions(
             last_hidden_state=hidden_states,
             past_key_values=present_key_value_states,
             hidden_states=all_hidden_states,

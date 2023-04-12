@@ -170,6 +170,7 @@ class Models(object):
     plug_mental = 'plug-mental'
     doc2bot = 'doc2bot'
     peer = 'peer'
+    llama = 'llama'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -230,6 +231,7 @@ class Heads(object):
     fill_mask = 'fill-mask'
     bert_mlm = 'bert-mlm'
     roberta_mlm = 'roberta-mlm'
+    xlm_roberta_mlm = 'xlm-roberta-mlm'
     # token cls
     token_classification = 'token-classification'
     # extraction

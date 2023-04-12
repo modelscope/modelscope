@@ -484,6 +484,16 @@ class EncoderModel(TorchModel):
         self.build_encoder(backbone_cfg)
         if head_cfg.type is not None:
             self.build_head(head_cfg)
+        self.post_init()
+
+    def post_init(self):
+        try:
+            head_keys_to_ignore_on_load_missing = getattr(
+                self.head, '_keys_to_ignore_on_load_missing')
+            for i in head_keys_to_ignore_on_load_missing:
+                self._keys_to_ignore_on_load_missing.append('head.' + i)
+        except Exception:
+            logger.info('head has no _keys_to_ignore_on_load_missing')
 
     def __repr__(self):
         # only log backbone and head name

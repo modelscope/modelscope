@@ -4,15 +4,13 @@ PYTHONPATH=. torchrun examples/pytorch/token_classification/finetune_token_class
     --model 'damo/nlp_structbert_backbone_base_std' \
     --dataset_name 'GeoGLUE' \
     --subset_name 'GeoETA' \
+    --train_dataset_params 'first_sequence=tokens,label=ner_tags,sequence_length=128' \
     --preprocessor 'token-cls-tokenizer' \
-    --padding 'max_length' \
-    --first_sequence 'tokens' \
-    --label 'ner_tags' \
-    --sequence_length 128 \
-    --max_epochs 2 \
+    --preprocessor_padding 'max_length' \
+    --max_epochs 1 \
     --per_device_train_batch_size 32 \
     --lr 3e-5 \
     --save_ckpt_strategy 'by_epoch' \
-    --logging_interval 1 \
+    --logging_interval 100 \
     --eval_strategy 'by_step' \
     --eval_interval 20 \

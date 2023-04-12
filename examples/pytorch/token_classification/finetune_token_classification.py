@@ -1,22 +1,10 @@
 from dataclasses import dataclass, field
-from functools import reduce
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.trainers.training_args import TrainingArgs
-
-
-def reducer(x, y):
-    x = x.split(' ') if isinstance(x, str) else x
-    y = y.split(' ') if isinstance(y, str) else y
-    return x + y
-
-
-def get_label_list(labels):
-    label_enumerate_values = list(set(reduce(reducer, labels)))
-    label_enumerate_values.sort()
-    return label_enumerate_values
+from modelscope.trainers.training_args import (TrainingArgs, get_flatten_value,
+                                               set_flatten_value)
 
 
 @dataclass
@@ -34,43 +22,28 @@ class TokenClassificationArguments(TrainingArgs):
             'cfg_node': 'preprocessor.type'
         })
 
-    padding: str = field(
+    preprocessor_padding: str = field(
         default=None,
         metadata={
             'help': 'The preprocessor padding',
             'cfg_node': 'preprocessor.padding'
         })
 
-    first_sequence: str = field(
+    train_dataset_params: str = field(
         default=None,
         metadata={
-            'help': 'The first_sequence of dataset',
-            'cfg_node': 'dataset.train.first_sequence'
-        })
-
-    label: str = field(
-        default=None,
-        metadata={
-            'help': 'The label of dataset',
-            'cfg_node': 'dataset.train.label'
-        })
-    sequence_length: int = field(
-        default=None,
-        metadata={
-            'help': 'The sequence_length of dataset',
-            'cfg_node': 'dataset.train.sequence_length'
-        })
-
-    work_dir: str = field(
-        default='./tmp',
-        metadata={
-            'help': 'The working path for saving checkpoint',
+            'cfg_node': 'dataset.train',
+            'cfg_getter': get_flatten_value,
+            'cfg_setter': set_flatten_value,
+            'help': 'The parameters for train dataset',
         })
 
     def __call__(self, config):
         config = super().__call__(config)
         if config.safe_get('dataset.train.label') == 'ner_tags':
-            label_enumerate_values = get_label_list(undeduplicated_labels)
+            ner_tags_labels = train_dataset['ner_tags'] + eval_dataset[
+                'ner_tags']
+            label_enumerate_values = self._get_label_list(ner_tags_labels)
             config.merge_from_dict(
                 {'dataset.train.labels': label_enumerate_values})
         if config.train.lr_scheduler.type == 'LinearLR':
@@ -78,11 +51,21 @@ class TokenClassificationArguments(TrainingArgs):
                 int(len(train_dataset) / self.per_device_train_batch_size) * self.max_epochs
         return config
 
+    # TODO: Future performance optimization in MsDataset
+    @staticmethod
+    def _get_label_list(labels):
+        unique_labels = set()
+        for label in labels:
+            unique_labels = unique_labels | set(label)
+        label_list = list(unique_labels)
+        label_list.sort()
+        return label_list
 
-args = TokenClassificationArguments.from_cli(
-    task='token-classification', eval_metrics='token-cls-metric')
+
+args = TokenClassificationArguments.from_cli(task='token-classification')
 print(args)
 
+# load dataset
 train_dataset = MsDataset.load(
     args.dataset_name,
     subset_name=args.subset_name,
@@ -93,8 +76,6 @@ eval_dataset = MsDataset.load(
     subset_name=args.subset_name,
     split='validation',
     namespace='damo')['validation']
-
-undeduplicated_labels = train_dataset['ner_tags'] + eval_dataset['ner_tags']
 
 kwargs = dict(
     model=args.model,

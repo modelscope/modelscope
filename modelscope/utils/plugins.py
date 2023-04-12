@@ -635,6 +635,10 @@ class PluginsManager(object):
         Returns:
 
         """
+
+        if package.split('.')[-1] == 'whl':
+            return False, ''
+
         from pip._internal.utils.packaging import get_requirement, specifiers
         req = get_requirement(package)
 
@@ -675,6 +679,11 @@ class PluginsManager(object):
         """
         from pip._internal.commands import create_command
         importlib.reload(pkg_resources)
+        if command == 'install':
+            command_args.append('-f')
+            command_args.append(
+                'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
+            )
         command = create_command(command)
         options, args = command.parse_args(command_args)
 

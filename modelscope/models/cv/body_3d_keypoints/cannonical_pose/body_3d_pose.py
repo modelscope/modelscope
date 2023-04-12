@@ -181,7 +181,7 @@ class BodyKeypointsDetection3D(TorchModel):
                 "camera_pose": Tensor, [1, NUM_FRAME, OUT_NUM_JOINTS, OUT_3D_FEATURE_DIM],
                     3D human pose keypoints in camera frame.
                 "camera_traj": Tensor, [1, NUM_FRAME, 1, 3],
-                    root keypoints coordinates in camere frame.
+                    root keypoints coordinates in camera frame.
         """
         inputs_2d = input['inputs_2d']
         pose2d_rr = input['pose2d_rr']

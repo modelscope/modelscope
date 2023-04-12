@@ -89,7 +89,7 @@ class ModelForSequenceClassificationExporter(TorchModelExporter):
             outputs_origin = list(numpify_tensor_nested(outputs_origin))
 
         outputs_origin = [outputs_origin[0]
-                          ]  # keeo `predictions`, drop other outputs
+                          ]  # keep `predictions`, drop other outputs
 
         np_dummy_inputs = numpify_tensor_nested(dummy_inputs)
         np_dummy_inputs['label_mask'] = np_dummy_inputs['label_mask'].astype(

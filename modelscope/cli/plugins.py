@@ -9,7 +9,7 @@ plugins_manager = PluginsManager()
 
 
 def subparser_func(args):
-    """ Fuction which will be called for a specific sub parser.
+    """ Function which will be called for a specific sub parser.
     """
     return PluginsCMD(args)
 

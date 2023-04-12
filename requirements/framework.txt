@@ -13,5 +13,6 @@ pyyaml
 requests
 scipy
 setuptools
+sortedcontainers>=1.5.9
 tqdm>=4.64.0
 yapf

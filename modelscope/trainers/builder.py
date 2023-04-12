@@ -27,11 +27,12 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
             or (isinstance(model, list) and isinstance(model[0], str)):
         if is_official_hub_path(model, revision=model_revision):
             # read config file from hub and parse
-            cfg = read_config(
+            configuration = read_config(
                 model, revision=model_revision) if isinstance(
                     model, str) else read_config(
                         model[0], revision=model_revision)
-            check_config(cfg)
-            register_plugins_repo(cfg.safe_get('plugins'))
-            register_modelhub_repo(model, cfg.get('allow_remote', False))
+            check_config(configuration)
+            register_plugins_repo(configuration.safe_get('plugins'))
+            register_modelhub_repo(model,
+                                   configuration.get('allow_remote', False))
     return build_from_cfg(cfg, TRAINERS, default_args=default_args)

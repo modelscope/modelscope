@@ -16,7 +16,7 @@ from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 @unittest.skipIf(not torch.cuda.is_available()
                  or torch.cuda.device_count() <= 1, 'distributed unittest')
-class TestGPT3OneLayerBaseQAandCWtp1(DistributedTestCase):
+class TestGPT3OneLayerBaseQAandCWTP(DistributedTestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -364,16 +364,16 @@ def pipeline_dureader_helper(gpt3_one_layer_qa_cw_obj):
     with open(
             fr'{gpt3_one_layer_qa_cw_obj.work_dir}/\
             gpt3_1_layer_base_tp_{gpt3_one_layer_qa_cw_obj.tp}_qa_pipeline_gen_text.txt',
-            'aw',
+            'a+',
             encoding='utf-8') as f:
-        f.write(gen_content1)
+        f.write(gen_content1 + '\n')
     gen_content2 = pipe(input2, max_length=128)
     with open(
             fr'{gpt3_one_layer_qa_cw_obj.work_dir}/\
             gpt3_1_layer_base_tp_{gpt3_one_layer_qa_cw_obj.tp}_qa_pipeline_gen_text.txt',
-            'aw',
+            'a+',
             encoding='utf-8') as f:
-        f.write(gen_content2)
+        f.write(gen_content2 + '\n')
 
 
 def pipeline_dureader_tp_1():
@@ -381,7 +381,7 @@ def pipeline_dureader_tp_1():
 
 
 gpt3_one_layer_qa_tp_2 = GPT3OneLayerQAandCW(
-    dataset_name='DuReader_robust-QG', tp=2, work_dir='./dureader_tp_1')
+    dataset_name='DuReader_robust-QG', tp=2, work_dir='./dureader_tp_2')
 
 
 def finetune_dureader_tp_2():

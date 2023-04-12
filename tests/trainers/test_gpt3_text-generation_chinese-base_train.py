@@ -11,7 +11,6 @@ from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import Config, read_config, snapshot_download
 from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 
@@ -26,42 +25,27 @@ class TestGPT3BaseTrain(DistributedTestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
-        self.model_dir = snapshot_download(
-            'damo/nlp_gpt3_text-generation_chinese-base')
-        config: Config = read_config(
-            os.path.join(self.model_dir, 'configuration.json'))
-        config.megatron.world_size = 2
-        config.megatron.tensor_model_parallel_size = 2
-        config.dump(os.path.join(self.model_dir, 'configuration.json'))
-
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_finetune_poetry(self):
-        dist_start_cmd = 'torchrun --nproc_per_node 2'
-        self.start(finetune_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
+        finetune_poetry()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_gpt3_base_evaluate_poetry(self):
-        dist_start_cmd = 'torchrun --nproc_per_node 2'
-        self.start(evaluate_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
+        evaluate_poetry()
 
     # TODO: add gpt3 trainer predict unittest
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_gpt3_base_predict_poetry(self):
-        dist_start_cmd = 'torchrun --nproc_per_node 2'
-        self.start(predict_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
+        predict_poetry()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_gpt3_base_output_pipeline(self):
-        dist_start_cmd = 'torchrun --nproc_per_node 2'
-        self.start(
-            pipeline_gpt3_base_output,
-            num_gpus=2,
-            dist_start_cmd=dist_start_cmd)
+        pipeline_gpt3_base_output()
 
 
 def finetune_poetry(work_dir='./gpt3_poetry'):
@@ -92,7 +76,6 @@ def finetune_poetry(work_dir='./gpt3_poetry'):
         }
         cfg.train.optimizer = {'type': 'AdamW', 'lr': 3e-4}
         cfg.train.dataloader = {'batch_size_per_gpu': 2, 'workers_per_gpu': 1}
-        cfg.train.hooks.append({'type': 'MegatronHook'})
         cfg.evaluation.dataloader = {
             'batch_size_per_gpu': 2,
             'workers_per_gpu': 1

@@ -1,10 +1,22 @@
 from dataclasses import dataclass, field
+from functools import reduce
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.trainers.training_args import (TrainingArgs, get_flatten_value,
-                                               set_flatten_value)
+from modelscope.trainers.training_args import TrainingArgs
+
+
+def reducer(x, y):
+    x = x.split(' ') if isinstance(x, str) else x
+    y = y.split(' ') if isinstance(y, str) else y
+    return x + y
+
+
+def get_label_list(labels):
+    label_enumerate_values = list(set(reduce(reducer, labels)))
+    label_enumerate_values.sort()
+    return label_enumerate_values
 
 
 @dataclass
@@ -29,13 +41,24 @@ class TokenClassificationArguments(TrainingArgs):
             'cfg_node': 'preprocessor.padding'
         })
 
-    train_dataset_params: str = field(
+    first_sequence: str = field(
         default=None,
         metadata={
-            'cfg_node': 'dataset.train',
-            'cfg_getter': get_flatten_value,
-            'cfg_setter': set_flatten_value,
-            'help': 'The parameters for train dataset',
+            'help': 'The first_sequence of dataset',
+            'cfg_node': 'dataset.train.first_sequence'
+        })
+
+    label: str = field(
+        default=None,
+        metadata={
+            'help': 'The label of dataset',
+            'cfg_node': 'dataset.train.label'
+        })
+    sequence_length: int = field(
+        default=None,
+        metadata={
+            'help': 'The sequence_length of dataset',
+            'cfg_node': 'dataset.train.sequence_length'
         })
 
     work_dir: str = field(
@@ -47,22 +70,13 @@ class TokenClassificationArguments(TrainingArgs):
     def __call__(self, config):
         config = super().__call__(config)
         if config.safe_get('dataset.train.label') == 'ner_tags':
-            label_enumerate_values = self._get_label_list(self.ner_tags_labels)
+            label_enumerate_values = get_label_list(undeduplicated_labels)
             config.merge_from_dict(
                 {'dataset.train.labels': label_enumerate_values})
         if config.train.lr_scheduler.type == 'LinearLR':
             config.train.lr_scheduler['total_iters'] = \
-                int(len(self.train_dataset) / self.per_device_train_batch_size) * self.max_epochs
+                int(len(train_dataset) / self.per_device_train_batch_size) * self.max_epochs
         return config
-
-    @staticmethod
-    def _get_label_list(labels):
-        unique_labels = set()
-        for label in labels:
-            unique_labels = unique_labels | set(label)
-        label_list = list(unique_labels)
-        label_list.sort()
-        return label_list
 
 
 args = TokenClassificationArguments.from_cli(
@@ -80,8 +94,7 @@ eval_dataset = MsDataset.load(
     split='validation',
     namespace='damo')['validation']
 
-args.ner_tags_labels = train_dataset['ner_tags'] + eval_dataset['ner_tags']
-args.train_dataset = train_dataset
+undeduplicated_labels = train_dataset['ner_tags'] + eval_dataset['ner_tags']
 
 kwargs = dict(
     model=args.model,

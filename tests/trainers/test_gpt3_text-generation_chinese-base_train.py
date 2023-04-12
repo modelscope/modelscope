@@ -17,7 +17,7 @@ from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 @unittest.skipIf(not torch.cuda.is_available()
                  or torch.cuda.device_count() <= 1, 'distributed unittest')
-class TestGPT3OneLayerBaseTrain(DistributedTestCase):
+class TestGPT3BaseTrain(DistributedTestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -27,7 +27,7 @@ class TestGPT3OneLayerBaseTrain(DistributedTestCase):
             os.makedirs(self.tmp_dir)
 
         self.model_dir = snapshot_download(
-            'damo/nlp_gpt3_text-generation_1.3B')
+            'damo/nlp_gpt3_text-generation_chinese-base')
         config: Config = read_config(
             os.path.join(self.model_dir, 'configuration.json'))
         config.megatron.world_size = 2
@@ -44,22 +44,22 @@ class TestGPT3OneLayerBaseTrain(DistributedTestCase):
         self.start(finetune_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_1_layer_evaluate_poetry(self):
+    def test_gpt3_base_evaluate_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(evaluate_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
     # TODO: add gpt3 trainer predict unittest
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_1_layer_predict_poetry(self):
+    def test_gpt3_base_predict_poetry(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(predict_poetry, num_gpus=2, dist_start_cmd=dist_start_cmd)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_1_layer_output_pipeline(self):
+    def test_gpt3_base_output_pipeline(self):
         dist_start_cmd = 'torchrun --nproc_per_node 2'
         self.start(
-            pipeline_one_layer_output,
+            pipeline_gpt3_base_output,
             num_gpus=2,
             dist_start_cmd=dist_start_cmd)
 
@@ -98,12 +98,11 @@ def finetune_poetry(work_dir='./gpt3_poetry'):
             'workers_per_gpu': 1
         }
         cfg.evaluation.metrics = 'ppl'
-        cfg.num_hidden_layers = 1
         cfg.model.strict = False
         return cfg
 
     kwargs = dict(
-        model='damo/nlp_gpt3_text-generation_1.3B',
+        model='damo/nlp_gpt3_text-generation_chinese-base',
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         max_epochs=max_epochs,
@@ -144,18 +143,27 @@ def predict_poetry(work_dir='./gpt3_poetry'):
     trainer.predict()
 
 
-def pipeline_one_layer_output(work_dir='./gpt3_poetry'):
+def pipeline_gpt3_base_output(work_dir='./gpt3_poetry'):
     input = '窗含西岭千秋雪'
     tmp_dir = './gpt3_poetry'
     pipeline_ins = pipeline(
         Tasks.text_generation, model=fr'{tmp_dir}/output', work_dir=tmp_dir)
     gen_content = pipeline_ins(input, max_length=128)
     with open(
-            fr'{work_dir}/gpt3_1_layer_base_pipeline_gen_text.txt',
+            fr'{work_dir}/nlp_gpt3_text-generation_chinese-base_pipeline_gen_text.txt',
             'w',
             encoding='utf-8') as f:
         f.write(gen_content)
 
 
+class CustomTestLoader(unittest.TestLoader):
+
+    def getTestCaseNames(self, testcase_class):
+        test_names = super().getTestCaseNames(testcase_class)
+        testcase_methods = list(testcase_class.__dict__.keys())
+        test_names.sort(key=testcase_methods.index)
+        return test_names
+
+
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(testLoader=CustomTestLoader())

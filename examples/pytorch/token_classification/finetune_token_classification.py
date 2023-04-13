@@ -48,7 +48,7 @@ class TokenClassificationArguments(TrainingArgs):
                 {'dataset.train.labels': label_enumerate_values})
         if config.train.lr_scheduler.type == 'LinearLR':
             config.train.lr_scheduler['total_iters'] = \
-                int(len(self.train_dataset) / self.per_device_train_batch_size) * self.max_epochs
+                int(len(train_dataset) / self.per_device_train_batch_size) * self.max_epochs
         return config
 
     # TODO: Future performance optimization in MsDataset

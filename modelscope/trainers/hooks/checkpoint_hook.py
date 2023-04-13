@@ -248,6 +248,15 @@ class CheckpointHook(Hook):
             def save_config(self):
                 save_configuration(self.output_dir, self.config)
 
+        for pop_key in [
+                'push_to_hub', 'model_id_with_org', 'hub_token', 'private_hub'
+        ]:
+            if config.safe_get('train.checkpoint.period.'
+                               + pop_key) is not None:
+                config.safe_get('train.checkpoint.period').pop(pop_key)
+            if config.safe_get('train.checkpoint.best.' + pop_key) is not None:
+                config.safe_get('train.checkpoint.best').pop(pop_key)
+
         save_config_fn = SaveConfig(output_dir, config)
 
         if hasattr(model, 'save_pretrained'):
@@ -293,7 +302,7 @@ class CheckpointHook(Hook):
             output_dir: The target folder used in inference.
         """
         model = trainer.unwrap_module(trainer.model)
-        config = trainer.cfg.to_dict()
+        config = trainer.cfg
 
         # override pipeline by tasks name after finetune done,
         # avoid case like fill mask pipeline with a text cls task

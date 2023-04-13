@@ -144,8 +144,6 @@ class AstScaningTest(unittest.TestCase):
         index_from_prebuilt = load_from_prebuilt(file_path)
         self.assertEqual(index, index_from_prebuilt)
 
-    @unittest.skip(
-        'skipped the method for not cpu time on this case not stable')
     def test_update_load_index_method(self):
         file_number = 20
         file_list = []
@@ -157,22 +155,27 @@ class AstScaningTest(unittest.TestCase):
 
         index_file = 'ast_indexer_1'
 
-        start = time.time()
         index = load_index(
             file_list=file_list,
             indexer_file_dir=self.tmp_dir,
             indexer_file=index_file)
-        duration_1 = time.time() - start
         self.assertEqual(len(index[FILES_MTIME_KEY]), file_number)
 
         # no changing case, time should be less than original
-        start = time.time()
         index = load_index(
             file_list=file_list,
             indexer_file_dir=self.tmp_dir,
             indexer_file=index_file)
-        duration_2 = time.time() - start
-        self.assertGreater(duration_1, duration_2)
+        self.assertEqual(len(index[FILES_MTIME_KEY]), file_number)
+
+        # modify case
+        with open(file_list[0], 'a', encoding='utf-8') as f:
+            f.write('\n\nimport typing')
+        file_list.append(filename)
+        index = load_index(
+            file_list=file_list,
+            indexer_file_dir=self.tmp_dir,
+            indexer_file=index_file)
         self.assertEqual(len(index[FILES_MTIME_KEY]), file_number)
 
         # adding new file, time should be less than original
@@ -181,24 +184,18 @@ class AstScaningTest(unittest.TestCase):
             f.write('import os')
         file_list.append(test_file_new_2)
 
-        start = time.time()
         index = load_index(
             file_list=file_list,
             indexer_file_dir=self.tmp_dir,
             indexer_file=index_file)
-        duration_3 = time.time() - start
-        self.assertGreater(duration_1, duration_3)
         self.assertEqual(len(index[FILES_MTIME_KEY]), file_number + 1)
 
         # deleting one file, time should be less than original
         file_list.pop()
-        start = time.time()
         index = load_index(
             file_list=file_list,
             indexer_file_dir=self.tmp_dir,
             indexer_file=index_file)
-        duration_4 = time.time() - start
-        self.assertGreater(duration_1, duration_4)
         self.assertEqual(len(index[FILES_MTIME_KEY]), file_number)
 
 

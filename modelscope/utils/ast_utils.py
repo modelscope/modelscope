@@ -613,6 +613,7 @@ def _update_index(index, files_mtime):
         if file not in removed_files and \
                 (origin_files_mtime[file] != files_mtime[file]):
             updated_files.append(file)
+    removed_files.extend(updated_files)
     updated_files.extend(new_files)
 
     # remove deleted index

@@ -128,7 +128,11 @@ def pipeline(task: str = None,
             pipeline_props = {'type': pipeline_name}
 
     pipeline_props['model'] = model
-    pipeline_props['device'] = device
+    # 'device' not in 'AutomaticSpeechRecognitionPipeline.get_cmd()', but ngpu
+    if device == 'gpu':
+        pipeline_props['ngpu'] = 1
+    elif device == 'cpu':
+        pipeline_props['ngpu'] = 0
     cfg = ConfigDict(pipeline_props)
 
     if kwargs:

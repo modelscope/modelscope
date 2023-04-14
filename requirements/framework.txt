@@ -9,10 +9,12 @@ oss2
 Pillow>=6.2.0
 # pyarrow 9.0.0 introduced event_loop core dump
 pyarrow>=6.0.0,!=9.0.0
+python-dateutil>=2.1
 pyyaml
 requests
 scipy
 setuptools
+simplejson>=3.3.0
 sortedcontainers>=1.5.9
 tqdm>=4.64.0
 yapf

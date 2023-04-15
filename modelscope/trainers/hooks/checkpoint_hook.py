@@ -9,7 +9,7 @@ import torch
 from packaging import version
 
 from modelscope.hub.check_model import check_model_is_id
-from modelscope.hub.push_to_hub import push_to_hub
+from modelscope.hub.push_to_hub import push_to_hub_async
 from modelscope.metainfo import Hooks, Pipelines
 from modelscope.utils.checkpoint import (load_checkpoint, save_checkpoint,
                                          save_configuration)
@@ -156,14 +156,13 @@ class CheckpointHook(Hook):
             self.is_model_id = check_model_is_id(trainer.input_model_id,
                                                  self.hub_token)
 
-        return push_to_hub(
+        return push_to_hub_async(
             self.model_id_with_org,
             os.path.join(self.save_dir, self.output_sub_dir),
             token=self.hub_token,
             private=self.private_hub,
             commit_message=prefix,
-            source_repo=trainer.input_model_id if self.is_model_id else '',
-            async_upload=True)
+            source_repo=trainer.input_model_id if self.is_model_id else '')
 
     def _save_checkpoint(self, trainer, prefix):
         """Save checkpoint files and remove obsolete ones

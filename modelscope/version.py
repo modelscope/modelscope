@@ -2,4 +2,4 @@
 __version__ = '1.5.0rc0'
 # default release datetime for branches under active development is set
 # to be a time far-far-away-into-the-future
-__release_datetime__ = '2023-04-16 08:00:00'
+__release_datetime__ = '2023-04-18 08:00:00'

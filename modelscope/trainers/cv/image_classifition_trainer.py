@@ -502,7 +502,7 @@ class ImageClassifitionTrainer(BaseTrainer):
             # will cause error when number of classes less then 5.
             # set topk as (1,) if len(CLASSES) < 5:
             elif len(CLASSES) < 5:
-                metric_options['topk'] = (1,)
+                metric_options['topk'] = (1, )
             if self.cfg.evaluation.metrics:
                 eval_results = dataset.evaluate(
                     results=outputs,

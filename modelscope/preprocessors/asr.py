@@ -241,7 +241,6 @@ class WavToScp(Preprocessor):
     def scp_generation_from_wav(self, inputs: Dict[str, Any]) -> List[Any]:
         """scp generation from waveform files
         """
-        from easyasr.common import asr_utils
 
         # find all waveform files
         wav_list = []
@@ -251,6 +250,7 @@ class WavToScp(Preprocessor):
                 if file_path.endswith('.wav') or file_path.endswith('.WAV'):
                     wav_list.append(file_path)
         else:
+            from easyasr.common import asr_utils
             wav_dir: str = inputs['wav_path']
             wav_list = asr_utils.recursion_dir_all_wav(wav_list, wav_dir)
 

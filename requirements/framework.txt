@@ -4,15 +4,18 @@ datasets>=2.7.0,<=2.8.0
 einops
 filelock>=3.3.0
 gast>=0.2.2
-jsonplus
+mmdet<=2.28.2
 numpy<1.24.0
 oss2
 Pillow>=6.2.0
 # pyarrow 9.0.0 introduced event_loop core dump
 pyarrow>=6.0.0,!=9.0.0
+python-dateutil>=2.1
 pyyaml
 requests
 scipy
-setuptools
+setuptools==59.8.0
+simplejson>=3.3.0
+sortedcontainers>=1.5.9
 tqdm>=4.64.0
 yapf

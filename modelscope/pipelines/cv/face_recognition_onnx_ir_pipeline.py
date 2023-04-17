@@ -63,6 +63,10 @@ class FaceRecognitionOnnxIrPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['input_tensor'] = None
+            return rtn_dict
         align_img = result['img']
         face_img = align_img[:, :, ::-1]  # to rgb
         face_img = (face_img / 255. - 0.5) / 0.5
@@ -73,6 +77,8 @@ class FaceRecognitionOnnxIrPipeline(FaceProcessingBasePipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['input_tensor'] is None:
+            return {OutputKeys.IMG_EMBEDDING: None}
         input_feed = {}
         input_feed[
             self.input_node_name[0]] = input['input_tensor'].cpu().numpy()

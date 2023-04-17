@@ -44,6 +44,7 @@ def executor_train(model, optimizer, data_loader, device, writer, args):
     rank = args.get('rank', 0)
     local_rank = args.get('local_rank', 0)
     world_size = args.get('world_size', 1)
+    accum_batchs = args.get('grad_accum', 1)
 
     # [For distributed] Because iteration counts are not always equals between
     # processes, send stop-flag to the other processes if iterator is finished
@@ -65,12 +66,18 @@ def executor_train(model, optimizer, data_loader, device, writer, args):
         if num_utts == 0:
             continue
         logits, _ = model(feats)
-        loss = ctc_loss(logits, target, feats_lengths, target_lengths)
-        optimizer.zero_grad()
+        loss, acc = ctc_loss(logits, target, feats_lengths, target_lengths)
+        loss = loss / num_utts
+
+        # normlize loss to account for batch accumulation
+        loss = loss / accum_batchs
         loss.backward()
-        grad_norm = clip_grad_norm_(model.parameters(), clip)
-        if torch.isfinite(grad_norm):
-            optimizer.step()
+        if (batch_idx + 1) % accum_batchs == 0:
+            grad_norm = clip_grad_norm_(model.parameters(), clip)
+            if torch.isfinite(grad_norm):
+                optimizer.step()
+            optimizer.zero_grad()
+
         if batch_idx % log_interval == 0:
             logger.info(
                 'RANK {}/{}/{} TRAIN Batch {}/{} size {} loss {:.6f}'.format(
@@ -90,11 +97,12 @@ def executor_cv(model, data_loader, device, args):
     epoch = args.get('epoch', 0)
     # in order to avoid division by 0
     num_seen_utts = 1
+    num_seen_tokens = 1
     total_loss = 0.0
     # [For distributed] Because iteration counts are not always equals between
     # processes, send stop-flag to the other processes if iterator is finished
     iterator_stop = torch.tensor(0).to(device)
-    counter = torch.zeros((3, ), device=device)
+    counter = torch.zeros((4, ), device=device)
 
     rank = args.get('rank', 0)
     local_rank = args.get('local_rank', 0)
@@ -117,18 +125,26 @@ def executor_cv(model, data_loader, device, args):
             if num_utts == 0:
                 continue
             logits, _ = model(feats)
-            loss = ctc_loss(logits, target, feats_lengths, target_lengths)
+
+            loss, acc = ctc_loss(logits, target, feats_lengths, target_lengths,
+                                 True)
             if torch.isfinite(loss):
                 num_seen_utts += num_utts
-                total_loss += loss.item() * num_utts
-                counter[0] += loss.item() * num_utts
-                counter[1] += num_utts
+                num_seen_tokens += target_lengths.sum()
+                total_loss += loss.item()
+                counter[0] += loss.item()
+                counter[1] += acc * num_utts
+                # counter[1] += acc * target_lengths.sum()
+                counter[2] += num_utts
+                counter[3] += target_lengths.sum()
 
             if batch_idx % log_interval == 0:
                 logger.info(
-                    'RANK {}/{}/{} CV Batch {}/{} size {} loss {:.6f} history loss {:.6f}'
+                    'RANK {}/{}/{} CV Batch {}/{} size {} loss {:.6f} acc {:.2f} history loss {:.6f}'
                     .format(world_size, rank, local_rank, epoch, batch_idx,
-                            num_utts, loss.item(), total_loss / num_seen_utts))
+                            num_utts,
+                            loss.item() / num_utts, acc,
+                            total_loss / num_seen_utts))
         else:
             iterator_stop.fill_(1)
             if world_size > 1:
@@ -136,14 +152,15 @@ def executor_cv(model, data_loader, device, args):
 
     if world_size > 1:
         dist.all_reduce(counter, ReduceOp.SUM)
-    logger.info('Total utts number is {}'.format(counter[1]))
+    logger.info('Total utts number is {}'.format(counter[2]))
     counter = counter.to('cpu')
 
-    return counter[0].item() / counter[1].item()
+    return counter[0].item() / counter[2].item(), counter[1].item(
+    ) / counter[2].item()
 
 
-def executor_test(model, data_loader, device, keywords_token,
-                  keywords_tokenset, args):
+def executor_test(model, data_loader, device, keywords_token, keywords_idxset,
+                  args):
     ''' Test model with decoder
     '''
     assert args.get('test_dir', None) is not None, \
@@ -151,6 +168,7 @@ def executor_test(model, data_loader, device, keywords_token,
     score_abs_path = os.path.join(args['test_dir'], 'score.txt')
     log_interval = args.get('log_interval', 10)
 
+    model.eval()
     infer_seconds = 0.0
     decode_seconds = 0.0
     with torch.no_grad(), open(score_abs_path, 'w', encoding='utf8') as fout:
@@ -175,8 +193,7 @@ def executor_test(model, data_loader, device, keywords_token,
                 key = keys[i]
                 score = logits[i][:feats_lengths[i]]
                 hyps = ctc_prefix_beam_search(score, feats_lengths[i],
-                                              keywords_tokenset)
-
+                                              keywords_idxset)
                 hit_keyword = None
                 hit_score = 1.0
                 # start = 0; end = 0
@@ -243,8 +260,11 @@ def is_sublist(main_list, check_list):
         return -1
 
 
-def ctc_loss(logits: torch.Tensor, target: torch.Tensor,
-             logits_lengths: torch.Tensor, target_lengths: torch.Tensor):
+def ctc_loss(logits: torch.Tensor,
+             target: torch.Tensor,
+             logits_lengths: torch.Tensor,
+             target_lengths: torch.Tensor,
+             need_acc: bool = False):
     """ CTC Loss
     Args:
         logits: (B, D), D is the number of keywords plus 1 (non-keyword)
@@ -255,14 +275,51 @@ def ctc_loss(logits: torch.Tensor, target: torch.Tensor,
         (float): loss of current batch
     """
 
+    acc = 0.0
+    if need_acc:
+        acc = acc_utterance(logits, target, logits_lengths, target_lengths)
+
     # logits: (B, L, D) -> (L, B, D)
     logits = logits.transpose(0, 1)
     logits = logits.log_softmax(2)
     loss = F.ctc_loss(
         logits, target, logits_lengths, target_lengths, reduction='sum')
-    loss = loss / logits.size(1)
+    # loss = loss / logits.size(1)
 
-    return loss
+    return loss, acc
+
+
+def acc_utterance(logits: torch.Tensor, target: torch.Tensor,
+                  logits_length: torch.Tensor, target_length: torch.Tensor):
+    if logits is None:
+        return 0
+
+    logits = logits.softmax(2)  # (1, maxlen, vocab_size)
+    logits = logits.cpu()
+    target = target.cpu()
+
+    total_word = 0
+    total_ins = 0
+    total_sub = 0
+    total_del = 0
+    calculator = Calculator()
+    for i in range(logits.size(0)):
+        score = logits[i][:logits_length[i]]
+        hyps = ctc_prefix_beam_search(score, logits_length[i], None, 3, 5)
+        lab = [str(item) for item in target[i][:target_length[i]].tolist()]
+        rec = []
+        if len(hyps) > 0:
+            rec = [str(item) for item in hyps[0][0]]
+        result = calculator.calculate(lab, rec)
+        # print(f'result:{result}')
+        if result['all'] != 0:
+            total_word += result['all']
+            total_ins += result['ins']
+            total_sub += result['sub']
+            total_del += result['del']
+
+    return float(total_word - total_ins - total_sub
+                 - total_del) * 100.0 / total_word
 
 
 def ctc_prefix_beam_search(
@@ -304,9 +361,14 @@ def ctc_prefix_beam_search(
         filter_probs = []
         filter_index = []
         for prob, idx in zip(top_k_probs.tolist(), top_k_index.tolist()):
-            if prob > 0.05 and idx in keywords_tokenset:
-                filter_probs.append(prob)
-                filter_index.append(idx)
+            if keywords_tokenset is not None:
+                if prob > 0.05 and idx in keywords_tokenset:
+                    filter_probs.append(prob)
+                    filter_index.append(idx)
+            else:
+                if prob > 0.05:
+                    filter_probs.append(prob)
+                    filter_index.append(idx)
 
         if len(filter_index) == 0:
             continue
@@ -363,3 +425,161 @@ def ctc_prefix_beam_search(
 
     hyps = [(y[0], y[1][0] + y[1][1], y[1][2]) for y in cur_hyps]
     return hyps
+
+
+class Calculator:
+
+    def __init__(self):
+        self.data = {}
+        self.space = []
+        self.cost = {}
+        self.cost['cor'] = 0
+        self.cost['sub'] = 1
+        self.cost['del'] = 1
+        self.cost['ins'] = 1
+
+    def calculate(self, lab, rec):
+        # Initialization
+        lab.insert(0, '')
+        rec.insert(0, '')
+        while len(self.space) < len(lab):
+            self.space.append([])
+        for row in self.space:
+            for element in row:
+                element['dist'] = 0
+                element['error'] = 'non'
+            while len(row) < len(rec):
+                row.append({'dist': 0, 'error': 'non'})
+        for i in range(len(lab)):
+            self.space[i][0]['dist'] = i
+            self.space[i][0]['error'] = 'del'
+        for j in range(len(rec)):
+            self.space[0][j]['dist'] = j
+            self.space[0][j]['error'] = 'ins'
+        self.space[0][0]['error'] = 'non'
+        for token in lab:
+            if token not in self.data and len(token) > 0:
+                self.data[token] = {
+                    'all': 0,
+                    'cor': 0,
+                    'sub': 0,
+                    'ins': 0,
+                    'del': 0
+                }
+        for token in rec:
+            if token not in self.data and len(token) > 0:
+                self.data[token] = {
+                    'all': 0,
+                    'cor': 0,
+                    'sub': 0,
+                    'ins': 0,
+                    'del': 0
+                }
+        # Computing edit distance
+        for i, lab_token in enumerate(lab):
+            for j, rec_token in enumerate(rec):
+                if i == 0 or j == 0:
+                    continue
+                min_dist = sys.maxsize
+                min_error = 'none'
+                dist = self.space[i - 1][j]['dist'] + self.cost['del']
+                error = 'del'
+                if dist < min_dist:
+                    min_dist = dist
+                    min_error = error
+                dist = self.space[i][j - 1]['dist'] + self.cost['ins']
+                error = 'ins'
+                if dist < min_dist:
+                    min_dist = dist
+                    min_error = error
+                if lab_token == rec_token:
+                    dist = self.space[i - 1][j - 1]['dist'] + self.cost['cor']
+                    error = 'cor'
+                else:
+                    dist = self.space[i - 1][j - 1]['dist'] + self.cost['sub']
+                    error = 'sub'
+                if dist < min_dist:
+                    min_dist = dist
+                    min_error = error
+                self.space[i][j]['dist'] = min_dist
+                self.space[i][j]['error'] = min_error
+        # Tracing back
+        result = {
+            'lab': [],
+            'rec': [],
+            'all': 0,
+            'cor': 0,
+            'sub': 0,
+            'ins': 0,
+            'del': 0
+        }
+        i = len(lab) - 1
+        j = len(rec) - 1
+        while True:
+            if self.space[i][j]['error'] == 'cor':  # correct
+                if len(lab[i]) > 0:
+                    self.data[lab[i]]['all'] = self.data[lab[i]]['all'] + 1
+                    self.data[lab[i]]['cor'] = self.data[lab[i]]['cor'] + 1
+                    result['all'] = result['all'] + 1
+                    result['cor'] = result['cor'] + 1
+                result['lab'].insert(0, lab[i])
+                result['rec'].insert(0, rec[j])
+                i = i - 1
+                j = j - 1
+            elif self.space[i][j]['error'] == 'sub':  # substitution
+                if len(lab[i]) > 0:
+                    self.data[lab[i]]['all'] = self.data[lab[i]]['all'] + 1
+                    self.data[lab[i]]['sub'] = self.data[lab[i]]['sub'] + 1
+                    result['all'] = result['all'] + 1
+                    result['sub'] = result['sub'] + 1
+                result['lab'].insert(0, lab[i])
+                result['rec'].insert(0, rec[j])
+                i = i - 1
+                j = j - 1
+            elif self.space[i][j]['error'] == 'del':  # deletion
+                if len(lab[i]) > 0:
+                    self.data[lab[i]]['all'] = self.data[lab[i]]['all'] + 1
+                    self.data[lab[i]]['del'] = self.data[lab[i]]['del'] + 1
+                    result['all'] = result['all'] + 1
+                    result['del'] = result['del'] + 1
+                result['lab'].insert(0, lab[i])
+                result['rec'].insert(0, '')
+                i = i - 1
+            elif self.space[i][j]['error'] == 'ins':  # insertion
+                if len(rec[j]) > 0:
+                    self.data[rec[j]]['ins'] = self.data[rec[j]]['ins'] + 1
+                    result['ins'] = result['ins'] + 1
+                result['lab'].insert(0, '')
+                result['rec'].insert(0, rec[j])
+                j = j - 1
+            elif self.space[i][j]['error'] == 'non':  # starting point
+                break
+            else:  # shouldn't reach here
+                print(
+                    'this should not happen , i = {i} , j = {j} , error = {error}'
+                    .format(i=i, j=j, error=self.space[i][j]['error']))
+        return result
+
+    def overall(self):
+        result = {'all': 0, 'cor': 0, 'sub': 0, 'ins': 0, 'del': 0}
+        for token in self.data:
+            result['all'] = result['all'] + self.data[token]['all']
+            result['cor'] = result['cor'] + self.data[token]['cor']
+            result['sub'] = result['sub'] + self.data[token]['sub']
+            result['ins'] = result['ins'] + self.data[token]['ins']
+            result['del'] = result['del'] + self.data[token]['del']
+        return result
+
+    def cluster(self, data):
+        result = {'all': 0, 'cor': 0, 'sub': 0, 'ins': 0, 'del': 0}
+        for token in data:
+            if token in self.data:
+                result['all'] = result['all'] + self.data[token]['all']
+                result['cor'] = result['cor'] + self.data[token]['cor']
+                result['sub'] = result['sub'] + self.data[token]['sub']
+                result['ins'] = result['ins'] + self.data[token]['ins']
+                result['del'] = result['del'] + self.data[token]['del']
+        return result
+
+    def keys(self):
+        return list(self.data.keys())

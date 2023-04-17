@@ -88,6 +88,25 @@ def realtime_object_detection_bbox_vis(image, bboxes):
     return image
 
 
+def draw_attribute(image, box, labels):
+    cv2.rectangle(image, (int(box[0]), int(box[1])),
+                  (int(box[2]), int(box[3])), (0, 0, 255), 2)
+    title = [
+        'gender      : ', 'age         : ', 'orient      : ', 'hat         : ',
+        'glass       : ', 'hand_bag    : ', 'shoulder_bag: ', 'back_pack   : ',
+        'upper_wear  : ', 'lower_wear  : ', 'upper_color : ', 'lower_color : '
+    ]
+
+    clr = (np.random.randint(0, 255), np.random.randint(0, 255),
+           np.random.randint(0, 255))
+
+    point = (int(box[0] + 5), int(box[1] + 20))
+    for idx, lb in enumerate(labels):
+        sz = title[idx] + lb
+        cv2.putText(image, f'{sz}', (point[0], point[1] + idx * 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, clr, 1)
+
+
 def draw_keypoints(output, original_image):
     poses = np.array(output[OutputKeys.KEYPOINTS])
     scores = np.array(output[OutputKeys.SCORES])
@@ -97,6 +116,16 @@ def draw_keypoints(output, original_image):
     for i in range(len(poses)):
         draw_box(image, np.array(boxes[i]))
         draw_joints(image, np.array(poses[i]), np.array(scores[i]))
+    return image
+
+
+def draw_pedestrian_attribute(output, original_image):
+    labels = np.array(output[OutputKeys.LABELS])
+    boxes = np.array(output[OutputKeys.BOXES])
+    assert len(labels) == len(boxes)
+    image = cv2.imread(original_image, -1)
+    for i in range(len(boxes)):
+        draw_attribute(image, np.array(boxes[i]), labels[i])
     return image
 
 

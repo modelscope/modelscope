@@ -15,6 +15,8 @@ logger = get_logger()
 
 PREPROCESSOR_MAP = {
     # nlp
+    (Models.canmt, Tasks.competency_aware_translation):
+    Preprocessors.canmt_translation,
     # bart
     (Models.bart, Tasks.text_error_correction):
     Preprocessors.text_error_correction,

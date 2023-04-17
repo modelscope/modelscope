@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import random
 
 import json
@@ -24,6 +23,9 @@ import torchaudio.compliance.kaldi as kaldi
 from torch.nn.utils.rnn import pad_sequence
 
 # torch.set_printoptions(profile="full")
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 def parse_wav(data):
@@ -53,54 +55,7 @@ def parse_wav(data):
                 key=key, label=txt, wav=waveform, sample_rate=sample_rate)
             yield example
         except Exception:
-            logging.warning('Failed to read {}'.format(wav_file))
-
-
-def tokenize(data, token_table, lexicon_table, split_with_space=False):
-    """ Decode text to chars
-        Inplace operation
-
-        Args:
-            data: Iterable[{key, wav, txt, sample_rate}]
-            token_table (Dict): token list, [token_str, token_id]
-            lexicon_table (Dict): words list defined with basic tokens
-            split_with_space (bool): if transciption split with space or not
-
-        Returns:
-            Iterable[{key, wav, txt, tokens, label, sample_rate}]
-    """
-    for sample in data:
-        assert 'label' in sample
-        txt = sample['label'].strip()
-
-        if token_table is None or lexicon_table is None:
-            # to compatible with hard token map for max-pooling loss
-            label = int(txt)
-        else:
-            parts = [txt]
-            tokens = []
-            for part in parts:
-                if split_with_space:
-                    part = part.split(' ')
-                for ch in part:
-                    if ch == ' ':
-                        ch = '▁'
-                    tokens.append(ch)
-
-            label = []
-            for ch in tokens:
-                if ch in lexicon_table:
-                    for sub_ch in lexicon_table[ch]:
-                        if sub_ch in token_table:
-                            label.append(token_table[sub_ch])
-                        else:
-                            label.append(token_table['<blk>'])
-                else:
-                    label.append(token_table['<blk>'])
-
-            sample['tokens'] = tokens
-        sample['label'] = label
-        yield sample
+            logger.warning('Failed to read {}'.format(wav_file))
 
 
 def filter(data, max_length=10240, min_length=10):
@@ -128,11 +83,11 @@ def filter(data, max_length=10240, min_length=10):
 
         # print("{} num frames is {}".format(sample['key'], num_frames))
         if num_frames < min_length:
-            logging.warning('{} is discard for too short: {} frames'.format(
+            logger.warning('{} is discard for too short: {} frames'.format(
                 sample['key'], num_frames))
             continue
         if num_frames > max_length:
-            logging.warning('{} is discard for too long: {} frames'.format(
+            logger.warning('{} is discard for too long: {} frames'.format(
                 sample['key'], num_frames))
             continue
         yield sample

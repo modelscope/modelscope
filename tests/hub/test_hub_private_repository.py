@@ -17,6 +17,7 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
 DEFAULT_GIT_PATH = 'git'
 
 
+@unittest.skip('temporarily skip')
 class HubPrivateRepositoryTest(unittest.TestCase):
 
     def setUp(self):

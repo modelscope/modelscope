@@ -49,11 +49,16 @@ class FacialExpressionRecognitionPipeline(FaceProcessingBasePipeline):
         ]
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        result = super(FacialExpressionRecognitionPipeline,
-                       self).preprocess(input)
+        result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['img'] = None
+            return rtn_dict
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['img'] is None:
+            return {OutputKeys.SCORES: None, OutputKeys.LABELS: None}
         result = self.fer(input)
         assert result is not None
         scores = result[0].tolist()

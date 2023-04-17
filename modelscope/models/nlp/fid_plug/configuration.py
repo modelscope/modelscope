@@ -83,7 +83,6 @@ class PlugConfig(PretrainedConfig):
                  dec_dropout=0.2,
                  use_bert_emb=True,
                  label_smoothing=0.1,
-                 sample_topk=False,
                  block_trigram=False,
                  **kwargs):
         super().__init__(**kwargs)
@@ -99,5 +98,4 @@ class PlugConfig(PretrainedConfig):
         self.use_bert_emb = use_bert_emb
         self.label_smoothing = label_smoothing
         # Translator
-        self.sample_topk = sample_topk
         self.block_trigram = block_trigram

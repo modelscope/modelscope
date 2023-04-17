@@ -87,6 +87,7 @@ class EpochBasedTrainer(BaseTrainer):
         compile (bool, optional): Compile the model with torch 2.0, default False
         compile_options (dict, optional): The compile options if compile=True,
             default None to use the default params of 'TorchModel.compile'.
+        efficient_tuners (dict, optional): The tuners to use to train the model
 
         Examples of cfg_modify_fn:
             >>> def cfg_modify_fn(cfg):
@@ -113,6 +114,7 @@ class EpochBasedTrainer(BaseTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             callbacks: Optional[List[Hook]] = None,
+            efficient_tuners: List[Dict] = None,
             **kwargs):
 
         self._seed = seed
@@ -141,9 +143,11 @@ class EpochBasedTrainer(BaseTrainer):
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)
+            self.input_model_id = model
         else:
             assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
             self.model_dir = os.path.dirname(cfg_file)
+            self.input_model_id = None
 
         super().__init__(cfg_file, arg_parse_fn)
         self.cfg_modify_fn = cfg_modify_fn
@@ -214,6 +218,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.use_fp16 = kwargs.get('use_fp16', False)
         self.launcher = kwargs.get('launcher')
         self.device = kwargs.get('device')
+        self.tune_module(efficient_tuners)
 
         # The parallel_groups field will be initialized in the hooks' after_init stage.
         # Please check the DDPHook and MegatronHook for details.
@@ -256,6 +261,14 @@ class EpochBasedTrainer(BaseTrainer):
                 self.model.to(self.device)
 
         self.print_cfg()
+
+    def tune_module(self, efficient_tuners):
+        if efficient_tuners is not None:
+            for tuner in efficient_tuners:
+                type = tuner.pop('type')
+                if type == 'lora':
+                    from modelscope.tuners.lora import LoRATuner
+                    LoRATuner.tune(self.model, **tuner)
 
     def place_model(self):
         """Place model to device, or to DDP

@@ -25,7 +25,7 @@ import numpy as np
 import torch
 
 from modelscope.utils.logger import get_logger
-from .file_utils import make_pair, read_lists
+from .file_utils import make_pair, read_lists, space_mixed_label
 
 logger = get_logger()
 
@@ -68,7 +68,7 @@ def count_duration(tid, data_lists):
             frames = len(waveform[0])
             duration = frames / float(rate)
         except Exception:
-            logging.info(f'load file failed: {wav_file}')
+            logger.info(f'load file failed: {wav_file}')
             duration = 0.0
 
         obj['duration'] = duration
@@ -88,11 +88,12 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
             is_detected = arr[1]
             if is_detected == 'detected':
                 if key not in score_table:
-                    score_table.update(
-                        {key: {
-                            'kw': arr[2],
+                    score_table.update({
+                        key: {
+                            'kw': space_mixed_label(arr[2]),
                             'confi': float(arr[3])
-                        }})
+                        }
+                    })
             else:
                 if key not in score_table:
                     score_table.update({key: {'kw': 'unknown', 'confi': -1.0}})
@@ -100,13 +101,14 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
     wav_lists = read_lists(data_file)
     trans_lists = read_lists(trans_file)
     data_lists = make_pair(wav_lists, trans_lists)
+    logger.info(f'origin list samples: {len(data_lists)}')
 
     # count duration for each wave use multi-thread
     num_workers = 8
     start = 0
     step = int(len(data_lists) / num_workers)
     tasks = []
-    for idx in range(8):
+    for idx in range(num_workers):
         if idx != num_workers - 1:
             task = thread_wrapper(count_duration,
                                   (idx, data_lists[start:start + step]))
@@ -120,10 +122,12 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
     for task in tasks:
         task.join()
         duration_lists += task.get_result()
+    logger.info(f'after list samples: {len(duration_lists)}')
 
     # build empty structure for keyword-filler infos
     keyword_filler_table = {}
     for keyword in keywords_list:
+        keyword = space_mixed_label(keyword)
         keyword_filler_table[keyword] = {}
         keyword_filler_table[keyword]['keyword_table'] = {}
         keyword_filler_table[keyword]['keyword_duration'] = 0.0
@@ -139,11 +143,15 @@ def load_data_and_score(keywords_list, data_file, trans_file, score_file):
         key = obj['key']
         # wav_file = obj['wav']
         txt = obj['txt']
+        txt = space_mixed_label(txt)
+        txt_regstr_lrblk = ' ' + txt + ' '
         duration = obj['duration']
         assert key in score_table
 
         for keyword in keywords_list:
-            if txt.find(keyword) != -1:
+            keyword = space_mixed_label(keyword)
+            keyword_regstr_lrblk = ' ' + keyword + ' '
+            if txt_regstr_lrblk.find(keyword_regstr_lrblk) != -1:
                 if keyword == score_table[key]['kw']:
                     keyword_filler_table[keyword]['keyword_table'].update(
                         {key: score_table[key]['confi']})
@@ -203,12 +211,13 @@ def compute_det(**kwargs):
 
     score_step = kwargs.get('score_step', 0.001)
 
-    keywords_list = keywords.replace(' ', '').strip().split(',')
+    keywords_list = keywords.strip().split(',')
     keyword_filler_table = load_data_and_score(keywords_list, test_data,
                                                trans_data, score_file)
 
     stats_files = {}
     for keyword in keywords_list:
+        keyword = space_mixed_label(keyword)
         keyword_dur = keyword_filler_table[keyword]['keyword_duration']
         keyword_num = len(keyword_filler_table[keyword]['keyword_table'])
         filler_dur = keyword_filler_table[keyword]['filler_duration']
@@ -221,7 +230,8 @@ def compute_det(**kwargs):
             keyword_dur / 3600.0, keyword_num))
         logger.info('  Filler duration: {} Hours'.format(filler_dur / 3600.0))
 
-        stats_file = os.path.join(stats_dir, 'stats_' + keyword + '.txt')
+        stats_file = os.path.join(
+            stats_dir, 'stats.' + keyword.replace(' ', '_') + '.txt')
         with open(stats_file, 'w', encoding='utf8') as fout:
             threshold = 0.0
             while threshold <= 1.0:

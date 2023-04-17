@@ -11,7 +11,8 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.audio.audio_utils import (generate_scp_for_sv,
-                                                generate_sv_scp_from_url)
+                                                generate_sv_scp_from_url,
+                                                update_local_model)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -45,7 +46,7 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
-        self.cmd = self.get_cmd(kwargs)
+        self.cmd = self.get_cmd(kwargs, model)
 
         from funasr.bin import sv_inference_launch
         self.funasr_infer_modelscope = sv_inference_launch.inference_launch(
@@ -107,13 +108,15 @@ class SpeakerVerificationPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self, extra_args) -> Dict[str, Any]:
+    def get_cmd(self, extra_args, model_path) -> Dict[str, Any]:
         # generate asr inference command
         mode = self.model_cfg['model_config']['mode']
         sv_model_path = self.model_cfg['model_path']
         sv_model_config = os.path.join(
             self.model_cfg['model_workspace'],
             self.model_cfg['model_config']['sv_model_config'])
+        update_local_model(self.model_cfg['model_config'], model_path,
+                           extra_args)
         cmd = {
             'mode': mode,
             'output_dir': None,

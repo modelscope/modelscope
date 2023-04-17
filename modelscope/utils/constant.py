@@ -39,6 +39,7 @@ class CVTasks(object):
     hand_2d_keypoints = 'hand-2d-keypoints'
     general_recognition = 'general-recognition'
     human_wholebody_keypoint = 'human-wholebody-keypoint'
+    pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     image_classification = 'image-classification'
     image_multilabel_classification = 'image-multilabel-classification'
@@ -176,6 +177,7 @@ class NLPTasks(object):
     relation_extraction = 'relation-extraction'
     zero_shot = 'zero-shot'
     translation = 'translation'
+    competency_aware_translation = 'competency-aware-translation'
     token_classification = 'token-classification'
     transformer_crf = 'transformer-crf'
     conversational = 'conversational'
@@ -244,6 +246,7 @@ class MultiModalTasks(object):
     video_question_answering = 'video-question-answering'
     video_temporal_grounding = 'video-temporal-grounding'
     text_to_video_synthesis = 'text-to-video-synthesis'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
 
 class ScienceTasks(object):
@@ -264,6 +267,7 @@ class TasksIODescriptions(object):
     visual_question_answering = 'visual_question_answering',
     visual_entailment = 'visual_entailment',
     generative_multi_modal_embedding = 'generative_multi_modal_embedding'
+    efficient_diffusion_tuning = 'efficient_diffusion_tuning'
 
 
 class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):

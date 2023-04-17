@@ -20,7 +20,8 @@ from torch.utils.data import IterableDataset
 
 import modelscope.msdatasets.dataset_cls.custom_datasets.audio.kws_nearfield_processor as processor
 from modelscope.trainers.audio.kws_utils.file_utils import (make_pair,
-                                                            read_lists)
+                                                            read_lists,
+                                                            tokenize)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -119,12 +120,41 @@ class DataList(IterableDataset):
             data.update(sampler_info)
             yield data
 
+    def dump(self, dump_file):
+        with open(dump_file, 'w', encoding='utf8') as fout:
+            for obj in self.lists:
+                if hasattr(obj, 'get') and obj.get('tokens', None) is not None:
+                    assert 'key' in obj
+                    assert 'wav' in obj
+                    assert 'txt' in obj
+                    assert len(obj['tokens']) == len(obj['txt'])
+                    dump_line = obj['key'] + ':\n'
+                    dump_line += '\t' + obj['wav'] + '\n'
+                    dump_line += '\t'
+                    for token, idx in zip(obj['tokens'], obj['txt']):
+                        dump_line += '%s(%d) ' % (token, idx)
+                    dump_line += '\n\n'
+                    fout.write(dump_line)
+                else:
+                    infos = json.loads(obj)
+                    assert 'key' in infos
+                    assert 'wav' in infos
+                    assert 'txt' in infos
+                    dump_line = infos['key'] + ':\n'
+                    dump_line += '\t' + infos['wav'] + '\n'
+                    dump_line += '\t'
+                    dump_line += '%d' % infos['txt']
+                    dump_line += '\n\n'
+                    fout.write(dump_line)
+
 
 def kws_nearfield_dataset(data_file,
                           trans_file,
                           conf,
                           symbol_table,
                           lexicon_table,
+                          need_dump=False,
+                          dump_file='',
                           partition=True):
     """ Construct dataset from arguments
 
@@ -137,6 +167,8 @@ def kws_nearfield_dataset(data_file,
             trans_file (str): transcription list with kaldi style
             symbol_table (Dict): token list, [token_str, token_id]
             lexicon_table (Dict): words list defined with basic tokens
+            need_dump (bool): whether to dump data with mapping tokens or not
+            dump_file (str): dumping file path
             partition (bool): whether to do data partition in terms of rank
     """
 
@@ -146,14 +178,14 @@ def kws_nearfield_dataset(data_file,
     wav_lists = read_lists(data_file)
     trans_lists = read_lists(trans_file)
     lists = make_pair(wav_lists, trans_lists)
+    lists = tokenize(lists, symbol_table, lexicon_table)
 
     shuffle = conf.get('shuffle', True)
     dataset = DataList(lists, shuffle=shuffle, partition=partition)
+    if need_dump:
+        dataset.dump(dump_file)
 
     dataset = Processor(dataset, processor.parse_wav)
-    dataset = Processor(dataset, processor.tokenize, symbol_table,
-                        lexicon_table, conf.get('split_with_space', False))
-
     dataset = Processor(dataset, processor.filter, **filter_conf)
 
     feature_extraction_conf = conf.get('feature_extraction_conf', {})

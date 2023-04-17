@@ -28,7 +28,10 @@ class FacialLandmarkConfidenceTest(unittest.TestCase):
         flcm = pipeline(Tasks.face_2d_keypoints, model=self.model_id)
         img_path = 'data/test/images/face_recognition_1.png'
         result = flcm(img_path)
-        self.show_result(img_path, result)
+        if result[OutputKeys.SCORES] is None:
+            print('No Detected Face.')
+        else:
+            self.show_result(img_path, result)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import unittest
 
 import cv2
 
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import draw_face_detection_no_lm_result
@@ -25,13 +26,19 @@ class FaceLivenessIrTest(unittest.TestCase):
     def test_run_modelhub(self):
         face_detection = pipeline(Tasks.face_liveness, model=self.model_id)
         result = face_detection(self.img_path)
-        self.show_result(self.img_path, result)
+        if result[OutputKeys.SCORES] is None:
+            print('No Detected Face.')
+        else:
+            self.show_result(self.img_path, result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_default_model(self):
         face_detection = pipeline(Tasks.face_liveness)
         result = face_detection(self.img_path)
-        self.show_result(self.img_path, result)
+        if result[OutputKeys.SCORES] is None:
+            print('No Detected Face.')
+        else:
+            self.show_result(self.img_path, result)
 
 
 if __name__ == '__main__':

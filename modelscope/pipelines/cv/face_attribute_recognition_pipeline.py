@@ -54,9 +54,15 @@ class FaceAttributeRecognitionPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['img'] = None
+            return rtn_dict
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['img'] is None:
+            return {OutputKeys.SCORES: None, OutputKeys.LABELS: None}
         scores = self.fairface(input['img'])
         assert scores is not None
         return {OutputKeys.SCORES: scores, OutputKeys.LABELS: self.map_list}

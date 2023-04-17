@@ -1,5 +1,5 @@
 accelerate
-diffusers>=0.11.1
+diffusers>=0.13.1,<0.15.0
 ftfy>=6.0.3
 librosa<=0.9.2
 opencv-python

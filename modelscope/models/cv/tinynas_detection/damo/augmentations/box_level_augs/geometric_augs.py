@@ -73,14 +73,25 @@ def _geometric_aug_func(x,
                 labels_new.append(labels[i])
         else:
             x_crop = transforms.functional.to_pil_image(x_crop.cpu())
-            x_crop = transforms.functional.affine(
-                x_crop,
-                angle,
-                translate,
-                scale,
-                shear,
-                resample=2,
-                fillcolor=tuple([int(i) for i in pixel_mean]))
+            try:
+                x_crop = transforms.functional.affine(
+                    x_crop,
+                    angle,
+                    translate,
+                    scale,
+                    shear,
+                    resample=2,
+                    fillcolor=tuple([int(i) for i in pixel_mean]))
+            except Exception:
+                x_crop = transforms.functional.affine(
+                    x_crop,
+                    angle,
+                    translate,
+                    scale,
+                    shear,
+                    interpolation=2,
+                    fill=tuple([int(i) for i in pixel_mean]))
+
             x_crop = transforms.functional.to_tensor(x_crop).to(x.device)
         x_crops.append(x_crop)
     y = _transform(x, x_crops, boxes_crops, translate)

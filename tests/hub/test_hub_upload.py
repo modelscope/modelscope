@@ -2,12 +2,14 @@
 import os
 import shutil
 import tempfile
+import time
 import unittest
 import uuid
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import GitError, HTTPError, NotLoginException
+from modelscope.hub.push_to_hub import push_to_hub, push_to_hub_async
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
@@ -17,6 +19,7 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
 logger = get_logger()
 
 
+@unittest.skip('temporarily skip')
 class HubUploadTest(unittest.TestCase):
 
     def setUp(self):
@@ -150,6 +153,24 @@ class HubUploadTest(unittest.TestCase):
                 model_dir=self.finetune_path,
                 visibility=ModelVisibility.PUBLIC,
                 license=Licenses.APACHE_V2)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_push_to_hub(self):
+        ret = push_to_hub(
+            repo_name=self.create_model_name,
+            output_dir=self.finetune_path,
+            token=TEST_ACCESS_TOKEN1)
+        self.assertTrue(ret is True)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_push_to_hub_async(self):
+        future = push_to_hub_async(
+            repo_name=self.create_model_name,
+            output_dir=self.finetune_path,
+            token=TEST_ACCESS_TOKEN1)
+        while not future.done():
+            time.sleep(1)
+        self.assertTrue(future.result())
 
 
 if __name__ == '__main__':

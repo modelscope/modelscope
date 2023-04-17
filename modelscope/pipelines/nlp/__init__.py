@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
+    from .canmt_translation_pipeline import CanmtTranslationPipeline
     from .word_segmentation_pipeline import WordSegmentationPipeline, WordSegmentationThaiPipeline
     from .zero_shot_classification_pipeline import ZeroShotClassificationPipeline
     from .mglm_text_summarization_pipeline import MGLMTextSummarizationPipeline
@@ -79,6 +80,7 @@ else:
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
+        'canmt_translation_pipeline': ['CanmtTranslationPipeline'],
         'translation_quality_estimation_pipeline':
         ['TranslationQualityEstimationPipeline'],
         'word_segmentation_pipeline':

@@ -589,7 +589,8 @@ class MsDataset:
         columns = [
             key for key in self._hf_ds.features.keys() if key in columns
         ]
-        retained_columns = []
+        retained_numeric_columns = []
+        retained_unumeric_columns = []
         if to_tensor:
             sample = next(iter(self._hf_ds))
 
@@ -607,20 +608,23 @@ class MsDataset:
                 if not is_numpy_number(sample_res[k]):
                     logger.warning(
                         f'Data of column {k} is non-numeric, will be removed')
+                    retained_unumeric_columns.append(k)
                     continue
-                retained_columns.append(k)
+                retained_numeric_columns.append(k)
 
         import torch
 
         class MsMapDataset(torch.utils.data.Dataset):
 
             def __init__(self, dataset: Iterable, preprocessor_list,
-                         retained_columns, columns, to_tensor):
+                         retained_numeric_columns, retained_unumeric_columns,
+                         columns, to_tensor):
                 super(MsDataset).__init__()
                 self.dataset = dataset
                 self.preprocessor_list = preprocessor_list
                 self.to_tensor = to_tensor
-                self.retained_columns = retained_columns
+                self.retained_numeric_columns = retained_numeric_columns
+                self.retained_unumeric_columns = retained_unumeric_columns
                 self.columns = columns
 
             def __len__(self):
@@ -636,19 +640,21 @@ class MsDataset:
                 item_dict = self.dataset[index]
                 res = {
                     k: self.type_converter(item_dict[k])
-                    for k in self.columns
-                    if (not self.to_tensor) or k in self.retained_columns
+                    for k in self.columns if (not self.to_tensor)
+                    or k in self.retained_numeric_columns
                 }
                 for preprocessor in self.preprocessor_list:
-                    res.update({
-                        k: self.type_converter(v)
-                        for k, v in preprocessor(item_dict).items()
-                        if (not self.to_tensor) or k in self.retained_columns
-                    })
+                    for k, v in preprocessor(item_dict).items():
+                        if (not self.to_tensor) or \
+                                k in self.retained_numeric_columns:
+                            res[k] = self.type_converter(v)
+                        elif k in self.retained_unumeric_columns:
+                            res[k] = v
                 return res
 
-        return MsMapDataset(self._hf_ds, preprocessor_list, retained_columns,
-                            columns, to_tensor)
+        return MsMapDataset(self._hf_ds, preprocessor_list,
+                            retained_numeric_columns,
+                            retained_unumeric_columns, columns, to_tensor)
 
     def _to_tf_dataset_with_processors(
         self,

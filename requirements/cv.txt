@@ -51,7 +51,7 @@ regex
 scikit-image>=0.19.3
 scikit-learn>=0.20.1
 shapely
-shotdetect_scenedetect_lgss
+shotdetect_scenedetect_lgss>=0.0.4
 smplx
 tensorflow-estimator>=1.15.1
 tf_slim

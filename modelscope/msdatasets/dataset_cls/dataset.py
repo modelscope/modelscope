@@ -4,11 +4,13 @@ import copy
 import os
 
 import datasets
+import pandas as pd
 from datasets import IterableDataset
 from PIL import Image
 
-from modelscope.utils.constant import EXTENSIONS_TO_LOAD
+from modelscope.utils.constant import EXTENSIONS_TO_LOAD, VirgoDatasetConfig
 from modelscope.utils.logger import get_logger
+from modelscope.utils.url_utils import fetch_csv_with_url, valid_url
 
 logger = get_logger()
 
@@ -108,3 +110,80 @@ class NativeIterableDataset(IterableDataset):
 
     def __len__(self):
         return 1
+
+
+class VirgoDataset(object):
+    """Dataset class for Virgo.
+
+    Attributes:
+        _meta_content (str): Virgo meta data content, could be a url that contains csv file.
+        _data_type (int): Virgo dataset type, 0-Standard virgo dataset; Others-User define dataset (to be supported)
+
+    Examples:
+        >>> from modelscope.msdatasets.dataset_cls import VirgoDataset
+        >>> input_kwargs = {'metaContent': 'http://xxx-xxx/xxx.csv', 'samplingType': 0}
+        >>> virgo_dataset = VirgoDataset(**input_kwargs)
+        >>> print(virgo_dataset[1])
+        >>> print(len(virgo_dataset))
+        >>> for line in virgo_dataset:
+        >>>     print(line)
+
+        Note: If you set `download_virgo_files` to True by using
+            MsDataset.load(dataset_name='your-virgo-dataset-id', hub=Hubs.virgo, download_virgo_files=True),
+            you can get the cache file path of the virgo dataset, the column name is `cache_file`.
+        >>> if virgo_dataset.download_virgo_files:
+        >>>     print(virgo_dataset[1].get('cache_file'))
+    """
+
+    def __init__(self, **kwargs):
+
+        self._meta_content: str = ''
+        self._data_type: int = 0
+        self._meta: pd.DataFrame = pd.DataFrame()
+
+        if VirgoDatasetConfig.meta_content in kwargs:
+            self._meta_content = kwargs.pop(VirgoDatasetConfig.meta_content)
+        if VirgoDatasetConfig.sampling_type in kwargs:
+            self._data_type = kwargs.pop(VirgoDatasetConfig.sampling_type)
+
+        self._check_variables()
+        self._parse_meta()
+
+        self.meta_content_cache_file = ''
+        self.virgo_cache_dir = ''
+        self.download_virgo_files: bool = False
+
+    def __getitem__(self, index):
+        return self._meta.iloc[index].to_dict()
+
+    def __len__(self):
+        return len(self._meta)
+
+    def __iter__(self):
+        for _, row in self._meta.iterrows():
+            yield row.to_dict()
+
+    @property
+    def meta(self) -> pd.DataFrame:
+        """
+        Virgo meta data. Contains columns: id, meta_info, analysis_result, external_info and
+            cache_file (if download_virgo_files is True).
+        """
+        return self._meta
+
+    def _parse_meta(self):
+        # Fetch csv content
+        meta_content_df = fetch_csv_with_url(self._meta_content)
+        self._meta = meta_content_df
+
+    def _check_variables(self):
+        """Check member variables in this class.
+            1. Condition-1: self._meta_content cannot be empty
+            2. Condition-2: self._meta_content must be url when self._data_type is 0
+        """
+        if not self._meta_content:
+            raise 'Them meta content cannot be empty.'
+        if self._data_type != 0:
+            raise 'Supported samplingType should be 0, others are not supported yet.'
+        if not valid_url(self._meta_content):
+            raise 'The meta content must be url when data type is 0.'

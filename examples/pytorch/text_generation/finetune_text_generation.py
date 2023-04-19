@@ -62,6 +62,11 @@ class TextGenerationArguments(TrainingArgs):
             'cfg_node': 'megatron.tensor_model_parallel_size'
         })
 
+    use_megatron: bool = field(
+        default=None, metadata={
+            'help': 'Whether to use MegatronHook',
+        })
+
     def __call__(self, config):
         config = super().__call__(config)
         if config.train.lr_scheduler.type == 'noam':
@@ -72,6 +77,7 @@ class TextGenerationArguments(TrainingArgs):
                     'by_epoch': False
                 }
             }
+        if self.use_megatron:
             config.train.hooks.append({'type': 'MegatronHook'})
         return config
 
@@ -82,7 +88,6 @@ def noam_lambda(current_step: int):
 
 
 args = TextGenerationArguments.from_cli(task='text-generation')
-
 print(args)
 
 dataset = MsDataset.load(args.dataset_name)

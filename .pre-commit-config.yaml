@@ -7,7 +7,8 @@ repos:
             (?x)^(
                 thirdparty/|
                 examples/|
-                modelscope/utils/ast_index_file.py
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
             )$
   - repo: https://github.com/PyCQA/isort.git
     rev: 4.3.21
@@ -16,7 +17,8 @@ repos:
         exclude: |
             (?x)^(
                 examples/|
-                modelscope/utils/ast_index_file.py
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
             )$
   - repo: https://github.com/pre-commit/mirrors-yapf.git
     rev: v0.30.0
@@ -26,26 +28,27 @@ repos:
             (?x)^(
                 thirdparty/|
                 examples/|
-                modelscope/utils/ast_index_file.py
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
             )$
   - repo: https://github.com/pre-commit/pre-commit-hooks.git
     rev: v3.1.0
     hooks:
       - id: trailing-whitespace
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: check-yaml
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: end-of-file-fixer
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: requirements-txt-fixer
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: double-quote-string-fixer
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: check-merge-conflict
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
       - id: fix-encoding-pragma
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
         args: ["--remove"]
       - id: mixed-line-ending
-        exclude: thirdparty/
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
         args: ["--fix=lf"]

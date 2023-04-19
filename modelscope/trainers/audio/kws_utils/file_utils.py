@@ -18,14 +18,35 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-remove_str = ['!sil', '(noise)', '(noise', 'noise)', '·', '’']
+symbol_str = '[’!"#$%&\'()*+,-./:;<>=?@，。?★、…【】《》？“”‘’！[\\]^_`{|}~]+'
+
+
+def split_mixed_label(input_str):
+    tokens = []
+    s = input_str.lower()
+    while len(s) > 0:
+        match = re.match(r'[A-Za-z!?,<>()\']+', s)
+        if match is not None:
+            word = match.group(0)
+        else:
+            word = s[0:1]
+        tokens.append(word)
+        s = s.replace(word, '', 1).strip(' ')
+    return tokens
+
+
+def space_mixed_label(input_str):
+    splits = split_mixed_label(input_str)
+    space_str = ''.join(f'{sub} ' for sub in splits)
+    return space_str.strip()
 
 
 def read_lists(list_file):
     lists = []
     with open(list_file, 'r', encoding='utf8') as fin:
         for line in fin:
-            lists.append(line.strip())
+            if line.strip() != '':
+                lists.append(line.strip())
     return lists
 
 
@@ -37,14 +58,7 @@ def make_pair(wav_lists, trans_lists):
             logger.debug('invalid line in trans file: {}'.format(line.strip()))
             continue
 
-        trans_table[arr[0]] = line.replace(arr[0], '')\
-                                  .replace(' ', '')\
-                                  .replace('(noise)', '')\
-                                  .replace('noise)', '')\
-                                  .replace('(noise', '')\
-                                  .replace('!sil', '')\
-                                  .replace('·', '')\
-                                  .replace('’', '').strip()
+        trans_table[arr[0]] = line.replace(arr[0], '').strip()
 
     lists = []
     for line in wav_lists:
@@ -86,27 +100,110 @@ def read_lexicon(lexicon_file):
     return lexicon_table
 
 
-def query_tokens_id(txt, symbol_table, lexicon_table):
-    label = tuple()
-    tokens = []
+def query_token_set(txt, symbol_table, lexicon_table):
+    tokens_str = tuple()
+    tokens_idx = tuple()
 
-    parts = [txt.replace(' ', '').strip()]
+    parts = split_mixed_label(txt)
     for part in parts:
-        for ch in part:
-            if ch == ' ':
-                ch = '▁'
-            tokens.append(ch)
-
-    for ch in tokens:
-        if ch in symbol_table:
-            label = label + (symbol_table[ch], )
-        elif ch in lexicon_table:
-            for sub_ch in lexicon_table[ch]:
-                if sub_ch in symbol_table:
-                    label = label + (symbol_table[sub_ch], )
-                else:
-                    label = label + (symbol_table['<blk>'], )
+        if part == '!sil' or part == '(sil)' or part == '<sil>':
+            tokens_str = tokens_str + ('!sil', )
+        elif part == '<blk>' or part == '<blank>':
+            tokens_str = tokens_str + ('<blk>', )
+        elif part == '(noise)' or part == 'noise)' or part == '(noise' or part == '<noise>':
+            tokens_str = tokens_str + ('<GBG>', )
+        elif part in symbol_table:
+            tokens_str = tokens_str + (part, )
+        elif part in lexicon_table:
+            for ch in lexicon_table[part]:
+                tokens_str = tokens_str + (ch, )
         else:
-            label = label + (symbol_table['<blk>'], )
+            # case with symbols or meaningless english letter combination
+            part = re.sub(symbol_str, '', part)
+            for ch in part:
+                tokens_str = tokens_str + (ch, )
 
-    return label
+    for ch in tokens_str:
+        if ch in symbol_table:
+            tokens_idx = tokens_idx + (symbol_table[ch], )
+        elif ch == '!sil':
+            if 'sil' in symbol_table:
+                tokens_idx = tokens_idx + (symbol_table['sil'], )
+            else:
+                tokens_idx = tokens_idx + (symbol_table['<blk>'], )
+        elif ch == '<GBG>':
+            if '<GBG>' in symbol_table:
+                tokens_idx = tokens_idx + (symbol_table['<GBG>'], )
+            else:
+                tokens_idx = tokens_idx + (symbol_table['<blk>'], )
+        else:
+            if '<GBG>' in symbol_table:
+                tokens_idx = tokens_idx + (symbol_table['<GBG>'], )
+                logger.info(
+                    f'\'{ch}\' is not in token set, replace with <GBG>')
+            else:
+                tokens_idx = tokens_idx + (symbol_table['<blk>'], )
+                logger.info(
+                    f'\'{ch}\' is not in token set, replace with <blk>')
+
+    return tokens_str, tokens_idx
+
+
+def query_token_list(txt, symbol_table, lexicon_table):
+    tokens_str = []
+    tokens_idx = []
+
+    parts = split_mixed_label(txt)
+    for part in parts:
+        if part == '!sil' or part == '(sil)' or part == '<sil>':
+            tokens_str.append('!sil')
+        elif part == '<blk>' or part == '<blank>':
+            tokens_str.append('<blk>')
+        elif part == '(noise)' or part == 'noise)' or part == '(noise' or part == '<noise>':
+            tokens_str.append('<GBG>')
+        elif part in symbol_table:
+            tokens_str.append(part)
+        elif part in lexicon_table:
+            for ch in lexicon_table[part]:
+                tokens_str.append(ch)
+        else:
+            # case with symbols or meaningless english letter combination
+            part = re.sub(symbol_str, '', part)
+            for ch in part:
+                tokens_str.append(ch)
+
+    for ch in tokens_str:
+        if ch in symbol_table:
+            tokens_idx.append(symbol_table[ch])
+        elif ch == '!sil':
+            if 'sil' in symbol_table:
+                tokens_idx.append(symbol_table['sil'])
+            else:
+                tokens_idx.append(symbol_table['<blk>'])
+        elif ch == '<GBG>':
+            if '<GBG>' in symbol_table:
+                tokens_idx.append(symbol_table['<GBG>'])
+            else:
+                tokens_idx.append(symbol_table['<blk>'])
+        else:
+            if '<GBG>' in symbol_table:
+                tokens_idx.append(symbol_table['<GBG>'])
+                logger.info(
+                    f'\'{ch}\' is not in token set, replace with <GBG>')
+            else:
+                tokens_idx.append(symbol_table['<blk>'])
+                logger.info(
+                    f'\'{ch}\' is not in token set, replace with <blk>')
+
+    return tokens_str, tokens_idx
+
+
+def tokenize(data_list, symbol_table, lexicon_table):
+    for sample in data_list:
+        assert 'txt' in sample
+        txt = sample['txt'].strip()
+        strs, indexs = query_token_list(txt, symbol_table, lexicon_table)
+        sample['tokens'] = strs
+        sample['txt'] = indexs
+
+    return data_list

@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import clip
 import numpy as np
 import torch
 import torch.nn as nn
@@ -11,51 +10,6 @@ def resize_n_crop(image, M, dsize=112):
     # image: (b, c, h, w)
     # M   :  (b, 2, 3)
     return warp_affine(image, M, dsize=(dsize, dsize))
-
-
-class CLIPLoss(torch.nn.Module):
-
-    def __init__(self):
-        super(CLIPLoss, self).__init__()
-        self.model, self.preprocess = clip.load('ViT-B/32', device='cuda')
-
-    def forward(self, image, text):
-        similarity = 1 - self.model(image, text)[0] / 100
-        return similarity
-
-
-class CLIPLoss_relative(torch.nn.Module):
-
-    def __init__(self):
-        super(CLIPLoss_relative, self).__init__()
-        self.model, self.preprocess = clip.load('ViT-B/32', device='cuda')
-
-    def forward(self, image, text, image_ori, text_ori):
-
-        image_features = self.model.encode_image(image)
-        text_features = self.model.encode_text(text)
-
-        # normalized features
-        image_features = image_features / image_features.norm(
-            dim=1, keepdim=True)
-        text_features = text_features / text_features.norm(dim=1, keepdim=True)
-
-        image_features_ori = self.model.encode_image(image_ori)
-        text_features_ori = self.model.encode_text(text_ori)
-
-        # normalized features
-        image_features_ori = image_features_ori / image_features_ori.norm(
-            dim=1, keepdim=True)
-        text_features_ori = text_features_ori / text_features_ori.norm(
-            dim=1, keepdim=True)
-
-        delta_image = image_features - image_features_ori
-        delta_text = text_features - text_features_ori
-
-        loss = 1 - torch.sum(delta_image * delta_text) / (
-            torch.norm(delta_image) * torch.norm(delta_text))
-
-        return loss
 
 
 # perceptual level loss

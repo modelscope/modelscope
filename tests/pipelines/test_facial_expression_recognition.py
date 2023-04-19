@@ -29,7 +29,10 @@ class FacialExpressionRecognitionTest(unittest.TestCase):
             Tasks.facial_expression_recognition, model=self.model_id)
         img_path = 'data/test/images/facial_expression_recognition.jpg'
         result = fer(img_path)
-        self.show_result(img_path, result)
+        if result[OutputKeys.SCORES] is None:
+            print('No Detected Face.')
+        else:
+            self.show_result(img_path, result)
 
 
 if __name__ == '__main__':

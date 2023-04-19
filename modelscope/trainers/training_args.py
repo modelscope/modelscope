@@ -175,7 +175,7 @@ class TrainingArgs:
         })
 
     train_data_worker: int = field(
-        default=None,
+        default=0,
         metadata={
             'cfg_node': 'train.dataloader.workers_per_gpu',
             'help': 'The number of data workers for train dataloader',
@@ -188,6 +188,15 @@ class TrainingArgs:
             'help': 'Shuffle the train dataset or not',
         })
 
+    train_drop_last: bool = field(
+        default=None,
+        metadata={
+            'cfg_node':
+            'train.dataloader.drop_last',
+            'help':
+            'Whether to drop out the last set of data in the train_dataset',
+        })
+
     per_device_eval_batch_size: int = field(
         default=None,
         metadata={
@@ -196,7 +205,7 @@ class TrainingArgs:
         })
 
     eval_data_worker: int = field(
-        default=None,
+        default=0,
         metadata={
             'cfg_node': 'evaluation.dataloader.workers_per_gpu',
             'help': 'The number of data workers for eval dataloader',
@@ -207,6 +216,14 @@ class TrainingArgs:
         metadata={
             'cfg_node': 'evaluation.dataloader.shuffle',
             'help': 'Shuffle the eval dataset or not',
+        })
+
+    eval_drop_last: bool = field(
+        default=None,
+        metadata={
+            'cfg_node': 'evaluation.dataloader.drop_last',
+            'help':
+            'Whether to drop out the last set of data in the eval_dataset',
         })
 
     max_epochs: int = field(
@@ -329,6 +346,100 @@ class TrainingArgs:
             'cfg_setter': set_strategy,
         })
 
+    push_to_hub: bool = field(
+        default=None,
+        metadata={
+            'help':
+            'Push to hub after one checkpoint saved by CheckpointHook in the local disk',
+            'cfg_node': 'train.checkpoint.period.push_to_hub',
+            'hook_type': 'CheckpointHook',
+            'key': 'push_to_hub',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    model_id_with_org: str = field(
+        default=None,
+        metadata={
+            'help':
+            'The repo id in modelhub, usually it\'s like "group/model"',
+            'cfg_node': 'train.checkpoint.period.model_id_with_org',
+            'hook_type': 'CheckpointHook',
+            'key': 'model_id_with_org',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    hub_token: str = field(
+        default=None,
+        metadata={
+            'help':
+            'The token to push to hub, you can also set the token to the env variable `MODELSCOPE_API_TOKEN`',
+            'cfg_node': 'train.checkpoint.period.hub_token',
+            'hook_type': 'CheckpointHook',
+            'key': 'hub_token',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    private_hub: bool = field(
+        default=None,
+        metadata={
+            'help': 'Upload to a private hub',
+            'cfg_node': 'train.checkpoint.period.private_hub',
+            'hook_type': 'CheckpointHook',
+            'key': 'private_hub',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    push_to_hub_best_model: bool = field(
+        default=None,
+        metadata={
+            'help':
+            'Push to hub after one checkpoint saved by BestCkptSaverHook in the local disk',
+            'cfg_node': 'train.checkpoint.best.push_to_hub',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'push_to_hub',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    model_id_with_org_best_model: str = field(
+        default=None,
+        metadata={
+            'help':
+            'The repo id in modelhub, usually it\'s like "group/model"',
+            'cfg_node': 'train.checkpoint.best.model_id_with_org',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'model_id_with_org',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    hub_token_best_model: str = field(
+        default=None,
+        metadata={
+            'help':
+            'The token to push to hub, you can also set the token to the env variable `MODELSCOPE_API_TOKEN`',
+            'cfg_node': 'train.checkpoint.best.hub_token',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'hub_token',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
+    private_hub_best_model: bool = field(
+        default=None,
+        metadata={
+            'help': 'Upload to a private hub',
+            'cfg_node': 'train.checkpoint.best.private_hub',
+            'hook_type': 'BestCkptSaverHook',
+            'key': 'private_hub',
+            'cfg_getter': get_base_hook_args,
+            'cfg_setter': set_base_hook_args,
+        })
+
     ckpt_period_interval: int = field(
         default=1,
         metadata={
@@ -437,7 +548,7 @@ class TrainingArgs:
         })
 
     eval_interval: int = field(
-        default=1,
+        default=None,
         metadata={
             'help': 'Evaluation interval by epoch or iter',
             'cfg_node': 'evaluation.period.interval',
@@ -479,12 +590,12 @@ class TrainingArgs:
             except Exception as e:
                 print('Read config failed with error:', e)
             else:
-                cfg.merge_from_dict(_unknown)
                 self = cls.from_config(cfg, **extra_kwargs)
         for key, value in cfg_dict.items():
             if key is not None and hasattr(self,
                                            key) and key in parser.manual_args:
                 setattr(self, key, value)
+        self.extra_args = _unknown
         return self
 
     def to_args(self):
@@ -547,6 +658,8 @@ class TrainingArgs:
             value = getattr(self, f.name)
             if value is not None:
                 self._to_config(f, cfg)
+                if hasattr(self, 'extra_args'):
+                    cfg.merge_from_dict(self.extra_args)
             else:
                 self._to_field(f, cfg)
         return cfg

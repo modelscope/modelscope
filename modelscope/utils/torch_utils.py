@@ -15,8 +15,6 @@ import torch.multiprocessing as mp
 from packaging import version
 from torch import distributed as dist
 
-from modelscope.utils.megatron_utils import is_megatron_initialized
-
 
 def _find_free_port() -> str:
     # Copied from https://github.com/facebookresearch/detectron2/blob/main/detectron2/engine/launch.py # noqa: E501
@@ -132,6 +130,7 @@ def get_dist_info(group=None) -> Tuple[int, int]:
         A tuple of the current rank and world_size of the group
     """
     if is_dist():
+        from modelscope.utils.megatron_utils import is_megatron_initialized
         if group is None and is_megatron_initialized():
             from megatron_util import mpu
             group = mpu.get_data_parallel_group()

@@ -383,6 +383,52 @@ def load_lm3d(bfm_folder):
     return Lm3D
 
 
+def mesh_to_string(mesh):
+    out_string = ''
+    out_string += '# Create by HRN\n'
+
+    if 'colors' in mesh:
+        for i, v in enumerate(mesh['vertices']):
+            out_string += \
+                'v {:.6f} {:.6f} {:.6f} {:.6f} {:.6f} {:.6f}\n'.format(
+                    v[0], v[1], v[2], mesh['colors'][i][0],
+                    mesh['colors'][i][1], mesh['colors'][i][2])
+    else:
+        for v in mesh['vertices']:
+            out_string += 'v {:.6f} {:.6f} {:.6f}\n'.format(v[0], v[1], v[2])
+
+    if 'UVs' in mesh:
+        for uv in mesh['UVs']:
+            out_string += 'vt {:.6f} {:.6f}\n'.format(uv[0], uv[1])
+
+    if 'normals' in mesh:
+        for vn in mesh['normals']:
+            out_string += 'vn {:.6f} {:.6f} {:.6f}\n'.format(
+                vn[0], vn[1], vn[2])
+
+    if 'faces' in mesh:
+        for ind, face in enumerate(mesh['faces']):
+            if 'faces_uv' in mesh or 'faces_normal' in mesh or 'UVs' in mesh:
+                if 'faces_uv' in mesh:
+                    face_uv = mesh['faces_uv'][ind]
+                else:
+                    face_uv = face
+                if 'faces_normal' in mesh:
+                    face_normal = mesh['faces_normal'][ind]
+                else:
+                    face_normal = face
+                row = 'f ' + ' '.join([
+                    '{}/{}/{}'.format(face[i], face_uv[i], face_normal[i])
+                    for i in range(len(face))
+                ]) + '\n'
+            else:
+                row = 'f ' + ' '.join(
+                    ['{}'.format(face[i]) for i in range(len(face))]) + '\n'
+            out_string += row
+
+    return out_string
+
+
 def write_obj(save_path, mesh):
     save_dir = os.path.dirname(save_path)
     save_name = os.path.splitext(os.path.basename(save_path))[0]
@@ -392,7 +438,7 @@ def write_obj(save_path, mesh):
             os.path.join(save_dir, save_name + '.jpg'), mesh['texture_map'])
 
         with open(os.path.join(save_dir, save_name + '.mtl'), 'w') as wf:
-            wf.write('# Created by ModelScope\n')
+            wf.write('# Created by HRN\n')
             wf.write('newmtl material_0\n')
             wf.write('Ka 1.000000 0.000000 0.000000\n')
             wf.write('Kd 1.000000 1.000000 1.000000\n')
@@ -404,29 +450,31 @@ def write_obj(save_path, mesh):
 
     with open(save_path, 'w') as wf:
         if 'texture_map' in mesh:
-            wf.write('# Create by ModelScope\n')
+            wf.write('# Create by HRN\n')
             wf.write('mtllib ./{}.mtl\n'.format(save_name))
 
         if 'colors' in mesh:
             for i, v in enumerate(mesh['vertices']):
-                wf.write('v {} {} {} {} {} {}\n'.format(
-                    v[0], v[1], v[2], mesh['colors'][i][0],
-                    mesh['colors'][i][1], mesh['colors'][i][2]))
+                wf.write(
+                    'v {:.6f} {:.6f} {:.6f} {:.6f} {:.6f} {:.6f}\n'.format(
+                        v[0], v[1], v[2], mesh['colors'][i][0],
+                        mesh['colors'][i][1], mesh['colors'][i][2]))
         else:
             for v in mesh['vertices']:
-                wf.write('v {} {} {}\n'.format(v[0], v[1], v[2]))
+                wf.write('v {:.6f} {:.6f} {:.6f}\n'.format(v[0], v[1], v[2]))
 
         if 'UVs' in mesh:
             for uv in mesh['UVs']:
-                wf.write('vt {} {}\n'.format(uv[0], uv[1]))
+                wf.write('vt {:.6f} {:.6f}\n'.format(uv[0], uv[1]))
 
         if 'normals' in mesh:
             for vn in mesh['normals']:
-                wf.write('vn {} {} {}\n'.format(vn[0], vn[1], vn[2]))
+                wf.write('vn {:.6f} {:.6f} {:.6f}\n'.format(
+                    vn[0], vn[1], vn[2]))
 
         if 'faces' in mesh:
             for ind, face in enumerate(mesh['faces']):
-                if 'faces_uv' in mesh or 'faces_normal' in mesh:
+                if 'faces_uv' in mesh or 'faces_normal' in mesh or 'UVs' in mesh:
                     if 'faces_uv' in mesh:
                         face_uv = mesh['faces_uv'][ind]
                     else:
@@ -750,3 +798,203 @@ def estimate_normals(vertices, faces):
     norm[inds] = [0, 0, 1.0]
     result = normalize_v3(norm)
     return result
+
+
+def draw_landmarks(img, landmark, color='r', step=2):
+    """
+    Return:
+        img              -- numpy.array, (B, H, W, 3) img with landmark, RGB order, range (0, 255)
+
+
+    Parameters:
+        img              -- numpy.array, (B, H, W, 3), RGB order, range (0, 255)
+        landmark         -- numpy.array, (B, 68, 2), y direction is opposite to v direction
+        color            -- str, 'r' or 'b' (red or blue)
+    """
+    if color == 'r':
+        c = np.array([255., 0, 0])
+    else:
+        c = np.array([0, 0, 255.])
+
+    _, H, W, _ = img.shape
+    img, landmark = img.copy(), landmark.copy()
+    landmark[..., 1] = H - 1 - landmark[..., 1]
+    landmark = np.round(landmark).astype(np.int32)
+    for i in range(landmark.shape[1]):
+        x, y = landmark[:, i, 0], landmark[:, i, 1]
+        for j in range(-step, step):
+            for k in range(-step, step):
+                u = np.clip(x + j, 0, W - 1)
+                v = np.clip(y + k, 0, H - 1)
+                for m in range(landmark.shape[0]):
+                    img[m, v[m], u[m]] = c
+    return img
+
+
+def split_vis(img_path, target_dir=None):
+    img = cv2.imread(img_path)
+    h, w = img.shape[:2]
+    n_split = w // h
+    if target_dir is None:
+        target_dir = os.path.dirname(img_path)
+    base_name = os.path.splitext(os.path.basename(img_path))[0]
+    for i in range(n_split):
+        img_i = img[:, i * h:(i + 1) * h, :]
+        cv2.imwrite(
+            os.path.join(target_dir, '{}_{:0>2d}.jpg'.format(base_name,
+                                                             i + 1)), img_i)
+
+
+def write_video(image_list, save_path, fps=20.0):
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # fourcc = cv2.VideoWriter_fourcc(*'MJPG')  # avi格式
+
+    h, w = image_list[0].shape[:2]
+
+    out = cv2.VideoWriter(save_path, fourcc, fps, (w, h), True)
+
+    for frame in image_list:
+        out.write(frame)
+
+    out.release()
+
+
+# ---------------------------- process/generate vertices, normals, faces
+def generate_triangles(h, w, margin_x=2, margin_y=5, mask=None):
+    # quad layout:
+    # 0 1 ... w-1
+    # w w+1
+    # .
+    # w*h
+    triangles = []
+    for x in range(margin_x, w - 1 - margin_x):
+        for y in range(margin_y, h - 1 - margin_y):
+            triangle0 = [y * w + x, y * w + x + 1, (y + 1) * w + x]
+            triangle1 = [y * w + x + 1, (y + 1) * w + x + 1, (y + 1) * w + x]
+            triangles.append(triangle0)
+            triangles.append(triangle1)
+    triangles = np.array(triangles)
+    triangles = triangles[:, [0, 2, 1]]
+    return triangles
+
+
+def face_vertices(vertices, faces):
+    """
+    :param vertices: [batch size, number of vertices, 3]
+    :param faces: [batch size, number of faces, 3]
+    :return: [batch size, number of faces, 3, 3]
+    """
+    assert (vertices.ndimension() == 3)
+    assert (faces.ndimension() == 3)
+    assert (vertices.shape[0] == faces.shape[0])
+    assert (vertices.shape[2] == 3)
+    assert (faces.shape[2] == 3)
+
+    bs, nv = vertices.shape[:2]
+    bs, nf = faces.shape[:2]
+    device = vertices.device
+    faces = faces + (torch.arange(bs, dtype=torch.int32).to(device)
+                     * nv)[:, None, None]
+    vertices = vertices.reshape((bs * nv, 3))
+    # pytorch only supports long and byte tensors for indexing
+    return vertices[faces.long()]
+
+
+def vertex_normals(vertices, faces):
+    """
+    :param vertices: [batch size, number of vertices, 3]
+    :param faces: [batch size, number of faces, 3]
+    :return: [batch size, number of vertices, 3]
+    """
+    assert (vertices.ndimension() == 3)
+    assert (faces.ndimension() == 3)
+    assert (vertices.shape[0] == faces.shape[0])
+    assert (vertices.shape[2] == 3)
+    assert (faces.shape[2] == 3)
+    bs, nv = vertices.shape[:2]
+    bs, nf = faces.shape[:2]
+    device = vertices.device
+    normals = torch.zeros(bs * nv, 3).to(device)
+
+    faces = faces + (torch.arange(bs, dtype=torch.int32).to(device)
+                     * nv)[:, None, None]  # expanded faces
+    vertices_faces = vertices.reshape((bs * nv, 3))[faces.long()]
+
+    faces = faces.reshape(-1, 3)
+    vertices_faces = vertices_faces.reshape(-1, 3, 3)
+
+    normals.index_add_(
+        0, faces[:, 1].long(),
+        torch.cross(vertices_faces[:, 2] - vertices_faces[:, 1],
+                    vertices_faces[:, 0] - vertices_faces[:, 1]))
+    normals.index_add_(
+        0, faces[:, 2].long(),
+        torch.cross(vertices_faces[:, 0] - vertices_faces[:, 2],
+                    vertices_faces[:, 1] - vertices_faces[:, 2]))
+    normals.index_add_(
+        0, faces[:, 0].long(),
+        torch.cross(vertices_faces[:, 1] - vertices_faces[:, 0],
+                    vertices_faces[:, 2] - vertices_faces[:, 0]))
+
+    normals = F.normalize(normals, eps=1e-6, dim=1)
+    normals = normals.reshape((bs, nv, 3))
+    # pytorch only supports long and byte tensors for indexing
+    return normals
+
+
+def dict2obj(d):
+    # if isinstance(d, list):
+    #     d = [dict2obj(x) for x in d]
+    if not isinstance(d, dict):
+        return d
+
+    class C(object):
+        pass
+
+    o = C()
+    for k in d:
+        o.__dict__[k] = dict2obj(d[k])
+    return o
+
+
+def enlarged_bbox(bbox, img_width, img_height, enlarge_ratio=0.2):
+    '''
+    :param bbox: [xmin,ymin,xmax,ymax]
+    :return: bbox: [xmin,ymin,xmax,ymax]
+    '''
+
+    left = bbox[0]
+    top = bbox[1]
+
+    right = bbox[2]
+    bottom = bbox[3]
+
+    roi_width = right - left
+    roi_height = bottom - top
+
+    new_left = left - int(roi_width * enlarge_ratio)
+    new_left = 0 if new_left < 0 else new_left
+
+    new_top = top - int(roi_height * enlarge_ratio)
+    new_top = 0 if new_top < 0 else new_top
+
+    new_right = right + int(roi_width * enlarge_ratio)
+    new_right = img_width if new_right > img_width else new_right
+
+    new_bottom = bottom + int(roi_height * enlarge_ratio)
+    new_bottom = img_height if new_bottom > img_height else new_bottom
+
+    bbox = [new_left, new_top, new_right, new_bottom]
+
+    bbox = [int(x) for x in bbox]
+
+    return bbox
+
+
+def draw_line(im, points, color, stroke_size=2, closed=False):
+    points = points.astype(np.int32)
+    for i in range(len(points) - 1):
+        cv2.line(im, tuple(points[i]), tuple(points[i + 1]), color,
+                 stroke_size)
+    if closed:
+        cv2.line(im, tuple(points[0]), tuple(points[-1]), color, stroke_size)

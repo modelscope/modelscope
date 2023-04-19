@@ -24,7 +24,7 @@ class ${model_name}(TorchModel):
     def init_model(self, **kwargs):
         """Provide default implementation based on TorchModel and user can reimplement it.
             include init model and load ckpt from the model_dir, maybe include preprocessor
-            if nothing to do, then return lambdx x: x
+            if nothing to do, then return lambda x: x
         """
         return lambda x: x
 
@@ -41,7 +41,7 @@ class ${preprocessor_name}(Preprocessor):
 
     def init_preprocessor(self, **kwarg):
         """ Provide default implementation based on preprocess_cfg and user can reimplement it.
-            if nothing to do, then return lambdx x: x
+            if nothing to do, then return lambda x: x
         """
         return lambda x: x
 

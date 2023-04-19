@@ -31,6 +31,8 @@ class OutputKeys(object):
     OUTPUT_PCM = 'output_pcm'
     OUTPUT_PCM_LIST = 'output_pcm_list'
     OUTPUT_WAV = 'output_wav'
+    OUTPUT_OBJ = 'output_obj'
+    OUTPUT_MESH = 'output_mesh'
     IMG_EMBEDDING = 'img_embedding'
     SPK_EMBEDDING = 'spk_embedding'
     SPO_LIST = 'spo_list'
@@ -443,17 +445,41 @@ TASK_OUTPUTS = {
         OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
     ],
 
+    # pedestrain attribute recognition result for single sample
+    # {
+    #   "boxes": [
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #               [x1, y1, x2, y2],
+    #             ]
+    #   "labels": [
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #                    ['Female', 'AgeOver60', 'Front', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes',
+    #                        'LongSleeve', 'Black', 'Trousers', 'Black' ],
+    #           ]
+    # }
+    Tasks.pedestrian_attribute_recognition: [
+        OutputKeys.BOXES, OutputKeys.LABELS
+    ],
+
     # 3D face reconstruction result for single sample
     # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
     #     "output": {
-    #         "vertices": np.array with shape(n, 3),
-    #         "faces": np.array with shape(n, 3),
-    #         "faces_uv": np.array with shape(n, 3),
-    #         "faces_normal": np.array with shape(n, 3),
-    #         "colors": np.array with shape(n, 3),
-    #         "UVs": np.array with shape(n, 2),
-    #         "normals": np.array with shape(n, 3),
-    #         "texture_map": np.array with shape(h, w, 3),
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #         "vis_image": np.array with shape(h, w, 3),
+    #         "frame_list", [np.array with shape(h, w, 3), ...],
     #     }
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],

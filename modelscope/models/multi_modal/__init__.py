@@ -19,6 +19,7 @@ if TYPE_CHECKING:
         MultiStageDiffusionForTextToImageSynthesis
     from .vldoc import VLDocForDocVLEmbedding
     from .video_synthesis import TextToVideoSynthesis
+    from .efficient_diffusion_tuning import EfficientStableDiffusion
 
 else:
     _import_structure = {
@@ -36,6 +37,7 @@ else:
         ['MultiStageDiffusionForTextToImageSynthesis'],
         'vldoc': ['VLDocForDocVLEmbedding'],
         'video_synthesis': ['TextToVideoSynthesis'],
+        'efficient_diffusion_tuning': ['EfficientStableDiffusion']
     }
 
     import sys

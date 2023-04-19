@@ -251,6 +251,11 @@ def import_module_and_submodules(package_name: str,
                     continue
                 subpackage = f'{package_name}.{name}'
                 import_module_and_submodules(subpackage, exclude=exclude)
+        except SystemExit as e:
+            # this case is specific for easy_cv's tools/predict.py exit
+            logger.warning(
+                f'{package_name} not imported: {str(e)}, but should continue')
+            pass
         except Exception as e:
             logger.warning(f'{package_name} not imported: {str(e)}')
             if len(package_name.split('.')) == 1:
@@ -270,6 +275,8 @@ def install_module_from_requirements(requirement_path, ):
     with open(requirement_path, 'r', encoding='utf-8') as f:
         requirements = f.read().splitlines()
         for req in requirements:
+            if req == '':
+                continue
             installed, _ = PluginsManager.check_plugin_installed(req)
             if not installed:
                 install_list.append(req)
@@ -628,6 +635,10 @@ class PluginsManager(object):
         Returns:
 
         """
+
+        if package.split('.')[-1] == 'whl':
+            return False, ''
+
         from pip._internal.utils.packaging import get_requirement, specifiers
         req = get_requirement(package)
 
@@ -668,6 +679,11 @@ class PluginsManager(object):
         """
         from pip._internal.commands import create_command
         importlib.reload(pkg_resources)
+        if command == 'install':
+            command_args.append('-f')
+            command_args.append(
+                'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
+            )
         command = create_command(command)
         options, args = command.parse_args(command_args)
 

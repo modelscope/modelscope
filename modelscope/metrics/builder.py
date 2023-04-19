@@ -41,6 +41,7 @@ class MetricKeys(object):
     MRR = 'mrr'
     NDCG = 'ndcg'
     AR = 'AR'
+    Colorfulness = 'colorfulness'
 
 
 task_default_metrics = {
@@ -74,6 +75,7 @@ task_default_metrics = {
     [Metrics.image_quality_assessment_mos_metric],
     Tasks.bad_image_detecting: [Metrics.accuracy],
     Tasks.ocr_recognition: [Metrics.ocr_recognition_metric],
+    Tasks.efficient_diffusion_tuning: [Metrics.loss_metric],
 }
 
 

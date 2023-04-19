@@ -141,7 +141,6 @@ class PlugV2FidChat(PlugV2Chat):
 
     def generate(self, inputs, *args, **kwargs):
         input_ids = inputs.get('input_ids')
-        attention_mask = inputs.get('attention_mask', None)
         token_type_ids = inputs.get('token_type_ids', None)
         n_passages = input_ids.size(1)
         self.backbone.plug.bert.set_n_passages(n_passages)
@@ -149,11 +148,7 @@ class PlugV2FidChat(PlugV2Chat):
         if token_type_ids is not None:
             token_type_ids = token_type_ids.view(token_type_ids.size(0), -1)
         response = super().generate(
-            input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            *args,
-            **kwargs)
+            input_ids, token_type_ids=token_type_ids, *args, **kwargs)
         return TokenGeneratorOutput(sequences=response)
 
     def forward(self,

@@ -435,7 +435,7 @@ class FSMN(nn.Module):
         """
         Args:
             input (torch.Tensor): Input tensor (B, T, D)
-            in_cache(torhc.Tensor): (B, D, C), C is the accumulated cache size
+            in_cache(torch.Tensor): (B, D, C), C is the accumulated cache size
         """
 
         # print("FSMN forward!!!!")

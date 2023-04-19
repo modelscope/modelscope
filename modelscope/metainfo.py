@@ -60,6 +60,7 @@ class Models(object):
     fer = 'fer'
     fairface = 'fairface'
     retinaface = 'retinaface'
+    damofd = 'damofd'
     shop_segmentation = 'shop-segmentation'
     mogface = 'mogface'
     mtcnn = 'mtcnn'
@@ -115,6 +116,7 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     # EasyCV models
     yolox = 'YOLOX'
@@ -130,6 +132,7 @@ class Models(object):
     deberta_v2 = 'deberta_v2'
     veco = 'veco'
     translation = 'csanmt-translation'
+    canmt = 'canmt'
     space_dst = 'space-dst'
     space_intent = 'space-intent'
     space_modeling = 'space-modeling'
@@ -160,12 +163,14 @@ class Models(object):
     megatron_bert = 'megatron-bert'
     use = 'user-satisfaction-estimation'
     fid_plug = 'fid-plug'
+    fid_T5 = 'fid-T5'
     lstm = 'lstm'
     xlm_roberta = 'xlm-roberta'
     transformers = 'transformers'
     plug_mental = 'plug-mental'
     doc2bot = 'doc2bot'
     peer = 'peer'
+    llama = 'llama'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -181,6 +186,7 @@ class Models(object):
     generic_punc = 'generic-punc'
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
+    campplus_sv = 'cam++-sv'
     generic_lm = 'generic-lm'
 
     # multi-modal models
@@ -198,6 +204,7 @@ class Models(object):
     vldoc = 'vldoc'
     hitea = 'hitea'
     soonet = 'soonet'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
     # science models
     unifold = 'unifold'
@@ -224,6 +231,7 @@ class Heads(object):
     fill_mask = 'fill-mask'
     bert_mlm = 'bert-mlm'
     roberta_mlm = 'roberta-mlm'
+    xlm_roberta_mlm = 'xlm-roberta-mlm'
     # token cls
     token_classification = 'token-classification'
     # extraction
@@ -400,6 +408,7 @@ class Pipelines(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
+    pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -422,6 +431,7 @@ class Pipelines(object):
     fill_mask = 'fill-mask'
     fill_mask_ponet = 'fill-mask-ponet'
     csanmt_translation = 'csanmt-translation'
+    canmt_translation = 'canmt-translation'
     interactive_translation = 'interactive-translation'
     nli = 'nli'
     dialog_intent_prediction = 'dialog-intent-prediction'
@@ -503,6 +513,7 @@ class Pipelines(object):
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -537,6 +548,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.sentence_similarity:
     (Pipelines.sentence_similarity,
      'damo/nlp_structbert_sentence-similarity_chinese-base'),
+    Tasks.competency_aware_translation:
+    (Pipelines.canmt_translation, 'damo/nlp_canmt_translation_zh2en_large'),
     Tasks.translation: (Pipelines.csanmt_translation,
                         'damo/nlp_csanmt_translation_zh2en'),
     Tasks.nli: (Pipelines.nli, 'damo/nlp_structbert_nli_chinese-base'),
@@ -735,9 +748,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
-    Tasks.video_single_object_tracking:
-    (Pipelines.video_single_object_tracking,
-     'damo/cv_vitb_video-single-object-tracking_ostrack'),
+    Tasks.video_single_object_tracking: (
+        Pipelines.video_single_object_tracking,
+        'damo/cv_vitb_video-single-object-tracking_ostrack'),
     Tasks.image_reid_person: (Pipelines.image_reid_person,
                               'damo/cv_passvitb_image-reid-person_market'),
     Tasks.text_driven_segmentation: (
@@ -823,6 +836,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
+    Tasks.pedestrian_attribute_recognition: (
+        Pipelines.pedestrian_attribute_recognition,
+        'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
 }
 
 
@@ -872,6 +888,7 @@ class MultiModalTrainers(object):
     ofa = 'ofa'
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
+    efficient_diffusion_tuning = 'efficient-diffusion-tuning'
 
 
 class AudioTrainers(object):
@@ -995,6 +1012,7 @@ class Preprocessors(object):
     mglm_summarization = 'mglm-summarization'
     sentence_piece = 'sentence-piece'
     translation_evaluation = 'translation-evaluation-preprocessor'
+    canmt_translation = 'canmt-translation'
     dialog_use_preprocessor = 'dialog-use-preprocessor'
     siamese_uie_preprocessor = 'siamese-uie-preprocessor'
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
@@ -1015,6 +1033,7 @@ class Preprocessors(object):
     mgeo_ranking = 'mgeo-ranking'
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
+    diffusion_image_generation_preprocessor = 'diffusion-image-generation-preprocessor'
 
     # science preprocessor
     unifold_preprocessor = 'unifold-preprocessor'

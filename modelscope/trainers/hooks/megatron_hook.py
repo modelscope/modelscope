@@ -152,7 +152,7 @@ class MegatronHook(Hook):
             return meta
 
     def prepare_output(self, trainer, output_dir):
-        config = trainer.cfg.to_dict()
+        config = trainer.cfg
         CheckpointHook.copy_files_and_dump_config(trainer, output_dir, config,
                                                   self._BIN_FILE_DIR)
         os.makedirs(

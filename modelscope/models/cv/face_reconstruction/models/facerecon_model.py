@@ -1,6 +1,6 @@
-# Part of the implementation is borrowed and modified from Deep3DFaceRecon_pytorch,
-# publicly available at https://github.com/sicxu/Deep3DFaceRecon_pytorch
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+from collections import OrderedDict
 
 import cv2
 import numpy as np
@@ -11,10 +11,11 @@ from modelscope.models.cv.face_reconstruction.models import opt
 from .. import utils
 from . import networks
 from .bfm import ParametricFaceModel
-from .losses import (CLIPLoss_relative, TVLoss, TVLoss_std, landmark_loss,
-                     perceptual_loss, photo_loss, points_loss_horizontal,
-                     reflectance_loss, reg_loss)
+from .de_retouching_module import DeRetouchingModule
+from .losses import TVLoss, photo_loss
 from .nv_diffrast import MeshRenderer
+from .pix2pix.pix2pix_model import Pix2PixModel
+from .pix2pix.pix2pix_options import Pix2PixOptions
 
 
 @MODELS.register_module('face-reconstruction', 'face_reconstruction')
@@ -23,12 +24,8 @@ class FaceReconModel(TorchModel):
     def __init__(self,
                  model_dir,
                  w_color=1.92,
-                 w_exp=0.8,
-                 w_gamma=10.0,
-                 w_id=1.0,
-                 w_lm=0.0016,
-                 w_reg=0.0003,
-                 w_tex=0.017,
+                 tex_iters=100,
+                 w_tex_smooth=10,
                  *args,
                  **kwargs):
         """The FaceReconModel is implemented based on Deep3DFaceRecon_pytorch, publicly available at
@@ -37,94 +34,86 @@ class FaceReconModel(TorchModel):
         Args:
             model_dir: the root directory of the model files
             w_color: the weight of color loss
-            w_exp: the regularization weight of expression
-            w_gamma: the regularization weight of lighting
-            w_id: the regularization weight of identity
-            w_lm: the weight of landmark loss
-            w_reg: the weight of regularization loss
-            w_tex: the regularization weight of texture
         """
         super().__init__(model_dir, *args, **kwargs)
 
         opt.bfm_folder = os.path.join(model_dir, 'assets')
         self.opt = opt
         self.w_color = w_color
-        self.w_exp = w_exp
-        self.w_gamma = w_gamma
-        self.w_id = w_id
-        self.w_lm = w_lm
-        self.w_reg = w_reg
-        self.w_tex = w_tex
-        self.device = torch.device('cpu')
+        self.w_tex_smooth = w_tex_smooth
+        self.tex_iters = tex_iters
         self.isTrain = opt.isTrain
         self.visual_names = ['output_vis']
-        self.model_names = ['net_recon']
-        self.parallel_names = self.model_names + ['renderer']
+        self.model_names = ['net_recon', 'mid_net', 'high_net']
+        self.parallel_names = self.model_names + [
+            'renderer', 'renderer_high_res'
+        ]
 
+        # networks
         self.net_recon = networks.define_net_recon(
             net_recon=opt.net_recon,
             use_last_fc=opt.use_last_fc,
             init_path=None)
 
-        self.facemodel = ParametricFaceModel(
-            bfm_folder=opt.bfm_folder,
-            camera_distance=opt.camera_d,
-            focal=opt.focal,
-            center=opt.center,
-            is_train=self.isTrain,
-            default_name=opt.bfm_model)
+        de_retouching_model_path = os.path.join(model_dir,
+                                                'de_retouching_model.pth')
+        self.de_retouching_module = DeRetouchingModule(
+            de_retouching_model_path)
 
+        self.mid_opt = Pix2PixOptions()
+        self.mid_opt.input_nc = 6
+        self.mid_opt.output_nc = 3
+        self.mid_opt.name = 'mid_net'
+        self.mid_net = Pix2PixModel(self.mid_opt).netG
+
+        self.high_opt = Pix2PixOptions()
+        self.high_opt.input_nc = 9
+        self.high_opt.output_nc = 1
+        self.high_opt.name = 'high_net'
+        self.high_net = Pix2PixModel(self.high_opt).netG
+
+        self.alpha = (torch.ones(1, dtype=torch.float32) * 0.01)
+        self.alpha.requires_grad = True
+        self.beta = (torch.ones(1, dtype=torch.float32) * 0.01)
+        self.beta.requires_grad = True
+
+        # assets
         self.facemodel_front = ParametricFaceModel(
-            bfm_folder=opt.bfm_folder,
+            assets_folder=opt.bfm_folder,
             camera_distance=opt.camera_d,
             focal=opt.focal,
             center=opt.center,
             is_train=self.isTrain,
-            default_name='face_model_for_maas.mat')
+            default_name='BFM_model_front.mat')
 
+        bfm_uvs_path = os.path.join(opt.bfm_folder, 'bfm_uvs2.npy')
+        self.bfm_UVs = np.load(bfm_uvs_path)
+        self.bfm_UVs = torch.from_numpy(self.bfm_UVs).float()
+
+        # renderer
         fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
+        self.renderer_high_res = MeshRenderer(
+            rasterize_fov=fov,
+            znear=opt.z_near,
+            zfar=opt.z_far,
+            rasterize_size=int(2 * opt.center))
+
         self.renderer = MeshRenderer(
             rasterize_fov=fov,
             znear=opt.z_near,
             zfar=opt.z_far,
             rasterize_size=int(2 * opt.center))
 
-        self.renderer_fitting = MeshRenderer(
-            rasterize_fov=fov,
-            znear=opt.z_near,
-            zfar=opt.z_far,
-            rasterize_size=int(2 * opt.center))
-
-        self.nonlinear_UVs = self.facemodel.nonlinear_UVs
-        self.nonlinear_UVs = torch.from_numpy(self.nonlinear_UVs).to(
-            torch.device('cuda'))
-
-        template_obj_path = os.path.join(opt.bfm_folder, 'template_mesh.obj')
-        self.template_mesh = utils.read_obj(template_obj_path)
-
-        self.input_imgs = []
-        self.input_img_hds = []
-        self.input_fat_img_hds = []
-        self.atten_masks = []
-        self.gt_lms = []
-        self.gt_lm_hds = []
-        self.trans_ms = []
-        self.img_names = []
-        self.face_masks = []
-        self.head_masks = []
-        self.input_imgs_coeff = []
-        self.gt_lms_coeff = []
-
-        self.loss_names = [
-            'all', 'feat', 'color', 'lm', 'reg', 'gamma', 'reflc'
-        ]
-
-        # loss func name: (compute_%s_loss) % loss_name
-        self.compute_feat_loss = perceptual_loss
         self.comupte_color_loss = photo_loss
-        self.compute_lm_loss = landmark_loss
-        self.compute_reg_loss = reg_loss
-        self.compute_reflc_loss = reflectance_loss
+
+    def set_device(self, device):
+        self.device = device
+        self.mid_net = self.mid_net.to(self.device)
+        self.high_net = self.high_net.to(self.device)
+        self.alpha = self.alpha.to(self.device)
+        self.beta = self.beta.to(self.device)
+        self.bfm_UVs = self.bfm_UVs.to(self.device)
+        self.facemodel_front.to(self.device)
 
     def load_networks(self, load_path):
         state_dict = torch.load(load_path, map_location=self.device)
@@ -136,6 +125,9 @@ class FaceReconModel(TorchModel):
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
                 net.load_state_dict(state_dict[name], strict=False)
+
+        self.alpha = state_dict['alpha']
+        self.beta = state_dict['beta']
 
         if self.opt.phase != 'test':
             if self.opt.continue_train:
@@ -199,18 +191,21 @@ class FaceReconModel(TorchModel):
                 net = getattr(self, name)
                 net.eval()
 
+        self.alpha.requires_grad = False
+        self.beta.requires_grad = False
+
     def set_render(self, image_res):
         fov = 2 * np.arctan(self.opt.center / self.opt.focal) * 180 / np.pi
         if image_res is None:
             image_res = int(2 * self.opt.center)
 
-        self.renderer = MeshRenderer(
+        self.renderer_high_res = MeshRenderer(
             rasterize_fov=fov,
             znear=self.opt.z_near,
             zfar=self.opt.z_far,
             rasterize_size=image_res)
 
-    def set_input(self, input):
+    def set_input_base(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
@@ -219,346 +214,477 @@ class FaceReconModel(TorchModel):
         self.input_img = input['imgs'].to(self.device)
         self.input_img_hd = input['imgs_hd'].to(
             self.device) if 'imgs_hd' in input else None
-
-        if 'imgs_fat_hd' not in input or input['imgs_fat_hd'] is None:
-            self.input_fat_img_hd = self.input_img_hd
-        else:
-            self.input_fat_img_hd = input['imgs_fat_hd'].to(self.device)
-
-        self.atten_mask = input['msks'].to(
-            self.device) if 'msks' in input else None
         self.gt_lm = input['lms'].to(self.device) if 'lms' in input else None
         self.gt_lm_hd = input['lms_hd'].to(
             self.device) if 'lms_hd' in input else None
-        self.trans_m = input['M'].to(self.device) if 'M' in input else None
-        self.image_paths = input['im_paths'] if 'im_paths' in input else None
-        self.img_name = input['img_name'] if 'img_name' in input else None
         self.face_mask = input['face_mask'].to(
             self.device) if 'face_mask' in input else None
-        self.head_mask = input['head_mask'].to(
-            self.device) if 'head_mask' in input else None
-        self.gt_normals = input['normals'].to(
-            self.device) if 'normals' in input else None
-        self.input_img_coeff = input['imgs_coeff'].to(
-            self.device) if 'imgs_coeff' in input else None
-        self.gt_lm_coeff = input['lms_coeff'].to(
-            self.device) if 'lms_coeff' in input else None
 
-    def get_edge_points_horizontal(self):
-        left_points = []
-        right_points = []
-        for i in range(self.face_mask.shape[2]):
-            inds = torch.where(self.face_mask[0, 0, i, :] > 0.5)  # 0.9
-            if len(inds[0]) > 0:  # i > 112 and len(inds[0]) > 0
-                left_points.append(int(inds[0][0]) + 1)
-                right_points.append(int(inds[0][-1]))
-            else:
-                left_points.append(0)
-                right_points.append(self.face_mask.shape[3] - 1)
-        self.left_points = torch.tensor(left_points).long().to(self.device)
-        self.right_points = torch.tensor(right_points).long().to(self.device)
+    def set_input_hrn(self, input):
+        """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
-    def get_edge_points_vertical(self):
-        top_points = []
-        bottom_points = []
-        for i in range(self.face_mask.shape[3]):
-            inds = torch.where(self.face_mask[0, 0, :, i] > 0.9)
-            if len(inds[0]) > 0:
-                top_points.append(int(inds[0][0]))
-                bottom_points.append(int(inds[0][-1]))
-            else:
-                top_points.append(0)
-                bottom_points.append(self.face_mask.shape[2] - 1)
-        self.top_points = torch.tensor(top_points).long().to(self.device)
-        self.bottom_points = torch.tensor(bottom_points).long().to(self.device)
-
-    def blur_shape_offset_uv(self, global_blur=False, blur_size=3):
-        if self.edge_mask is not None:
-            shape_offset_uv_blur = self.shape_offset_uv[0].detach().cpu(
-            ).numpy()
-            shape_offset_uv_blur = cv2.blur(shape_offset_uv_blur, (15, 15))
-            shape_offset_uv_blur = torch.from_numpy(
-                shape_offset_uv_blur).float().to(self.device)[None, ...]
-            value_1 = shape_offset_uv_blur * self.edge_mask[None, ..., None]
-            value_2 = self.shape_offset_uv * (
-                1 - self.edge_mask[None, ..., None])
-            self.shape_offset_uv = value_1 + value_2
-
-        self.shape_offset_uv = self.shape_offset_uv * self.fusion_mask[None,
-                                                                       ...,
-                                                                       None]
-
-        if global_blur and blur_size > 0:
-            shape_offset_uv_blur = self.shape_offset_uv[0].detach().cpu(
-            ).numpy()
-            shape_offset_uv_blur = cv2.blur(shape_offset_uv_blur,
-                                            (blur_size, blur_size))
-            shape_offset_uv_blur = torch.from_numpy(
-                shape_offset_uv_blur).float().to(self.device)[None, ...]
-            self.shape_offset_uv = shape_offset_uv_blur
-
-    def get_fusion_mask(self):
-
-        h, w = self.shape_offset_uv.shape[1:3]
-        self.fusion_mask = torch.zeros((h, w)).to(self.device).float()
-        UVs_coords = self.nonlinear_UVs.clone()[:35709]
-        UVs_coords[:, 0] *= w
-        UVs_coords[:, 1] *= h
-        UVs_coords_int = torch.floor(UVs_coords)
-        UVs_coords_int = UVs_coords_int.long()
-
-        self.fusion_mask[h - 1 - UVs_coords_int[:, 1], UVs_coords_int[:,
-                                                                      0]] = 1
-
-        # blur mask
-        self.fusion_mask = self.fusion_mask.cpu().numpy()
-        new_kernel1 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        new_kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 8))
-        self.fusion_mask = cv2.dilate(self.fusion_mask, new_kernel1, 1)
-        self.fusion_mask = cv2.erode(self.fusion_mask, new_kernel2, 1)
-        self.fusion_mask = cv2.blur(self.fusion_mask, (17, 17))
-        self.fusion_mask = torch.from_numpy(self.fusion_mask).float().to(
+        Parameters:
+            input: a dictionary that contains the data itself and its metadata information.
+        """
+        self.input_img = input['input_img'].to(self.device)
+        self.input_img_for_tex = input['input_img_for_tex'].to(self.device)
+        self.input_img_hd = input['input_img_hd'].to(self.device)
+        self.face_mask = input['face_mask'].to(self.device)
+        self.gt_lm = input['gt_lm'].to(self.device)
+        self.coeffs = input['coeffs'].to(self.device)
+        self.position_map = input['position_map'].to(self.device)
+        self.texture_map = input['texture_map'].to(self.device)
+        self.tex_valid_mask = input['tex_valid_mask'].to(self.device)
+        self.de_retouched_albedo_map = input['de_retouched_albedo_map'].to(
             self.device)
 
-    def get_edge_mask(self):
-
-        h, w = self.shape_offset_uv.shape[1:3]
-        self.edge_mask = torch.zeros((h, w)).to(self.device).float()
-        UVs_coords = self.nonlinear_UVs.clone()[self.edge_points_inds]
-        UVs_coords[:, 0] *= w
-        UVs_coords[:, 1] *= h
-        UVs_coords_int = torch.floor(UVs_coords)
-        UVs_coords_int = UVs_coords_int.long()
-
-        self.edge_mask[h - 1 - UVs_coords_int[:, 1], UVs_coords_int[:, 0]] = 1
-
-        # blur mask
-        self.edge_mask = self.edge_mask.cpu().numpy()
-        new_kernel1 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 8))
-        self.edge_mask = cv2.dilate(self.edge_mask, new_kernel1, 1)
-        self.edge_mask = cv2.blur(self.edge_mask, (5, 5))
-        self.edge_mask = torch.from_numpy(self.edge_mask).float().to(
-            self.device)
-
-    def fitting_nonlinear(self, coeff, debug=False, n_iters=100, out_dir=None):
-        output_coeff = coeff.detach().clone()
-
-        output_coeff = self.facemodel_front.split_coeff(output_coeff)
-        output_coeff['id'].requires_grad = True
-        output_coeff['exp'].requires_grad = True
-        output_coeff['tex'].requires_grad = True
-        output_coeff['angle'].requires_grad = True
-        output_coeff['gamma'].requires_grad = True
-        output_coeff['trans'].requires_grad = True
-
-        self.shape_offset_uv = torch.zeros(
-            (1, 300, 300, 3),
-            dtype=torch.float32).to(self.device)  # (1, 180, 256, 3)
-        self.shape_offset_uv.requires_grad = True
-
-        self.texture_offset_uv = torch.zeros(
-            (1, 300, 300, 3),
-            dtype=torch.float32).to(self.device)  # (1, 180, 256, 3)
-        self.texture_offset_uv.requires_grad = True
-
-        value_list = [
-            self.shape_offset_uv, self.texture_offset_uv, output_coeff['id'],
-            output_coeff['exp'], output_coeff['tex'], output_coeff['angle'],
-            output_coeff['gamma'], output_coeff['trans']
-        ]
-        optim = torch.optim.Adam(value_list, lr=1e-3)
-
-        self.get_edge_points_horizontal()
-        self.get_edge_points_vertical()
-
-        self.cur_iter = 0
-        for i in range(n_iters):  # 500
-            self.pred_vertex, _, self.pred_color, self.pred_lm, _, face_shape_offset, self.verts_proj = \
-                self.facemodel_front.compute_for_render_train_nonlinear(output_coeff, self.shape_offset_uv,
-                                                                        self.texture_offset_uv,
-                                                                        self.nonlinear_UVs[:35709, ...])
-            self.pred_mask, _, self.pred_face, self.occ = self.renderer_fitting(
-                self.pred_vertex,
-                self.facemodel_front.face_buf,
-                feat=self.pred_color)
-
-            self.pred_coeffs_dict = self.facemodel_front.split_coeff(
-                output_coeff)
-            self.compute_losses_fitting()
-            if debug and i % 10 == 0:
-                print('{}: total loss: {:.6f}'.format(i, self.loss_all.item()))
-
-            optim.zero_grad()
-            self.loss_all.backward()
-            optim.step()
-
-            self.cur_iter += 1
-
-        output_coeff = self.facemodel_front.merge_coeff(output_coeff)
-
-        self.get_edge_mask()
-        self.get_fusion_mask()
-        self.blur_shape_offset_uv()
-
-        self.pred_vertex, _, self.pred_color, self.pred_lm, _, face_shape_offset, self.verts_proj = \
-            self.facemodel_front.compute_for_render_train_nonlinear(output_coeff, self.shape_offset_uv,
-                                                                    self.texture_offset_uv,
-                                                                    self.nonlinear_UVs[:35709, ...])
-
-        if out_dir is not None:
-            input_img_numpy = 255. * (self.input_img).detach().cpu().permute(
-                0, 2, 3, 1).numpy()
-            input_img_numpy = np.squeeze(input_img_numpy)
-
-            output_vis = self.pred_face
-            output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(
-                0, 2, 3, 1).numpy()
-            output_vis_numpy_raw = np.squeeze(output_vis_numpy_raw)
-
-            output_vis_numpy = np.concatenate(
-                (input_img_numpy, output_vis_numpy_raw), axis=-2)
-
-            output_vis = np.squeeze(output_vis_numpy)
-            output_vis = output_vis[..., ::-1]  # rgb->bgr
-            output_face_mask = self.pred_mask.detach().cpu().permute(
-                0, 2, 3, 1).squeeze().numpy() * 255.0
-            output_vis = np.column_stack(
-                (output_vis, cv2.cvtColor(output_face_mask,
-                                          cv2.COLOR_GRAY2BGR)))
-            output_input_vis = output_vis[:, :224]
-            output_pred_vis = output_vis[:, 224:448]
-            output_mask_vis = output_vis[:, 448:]
-
-            face_mask_vis = 255. * self.face_mask.detach().cpu()[0, 0].numpy()
-
-            shape_offset_vis = self.shape_offset_uv.detach().cpu().numpy()[0]
-            shape_offset_vis = (shape_offset_vis - shape_offset_vis.min()) / (
-                shape_offset_vis.max() - shape_offset_vis.min()) * 255.0
-
-            cv2.imwrite(
-                os.path.join(out_dir, 'fitting_01_input.jpg'),
-                output_input_vis)
-            cv2.imwrite(
-                os.path.join(out_dir, 'fitting_02_pred.jpg'), output_pred_vis)
-            cv2.imwrite(
-                os.path.join(out_dir, 'fitting_03_mask.jpg'), output_mask_vis)
-            cv2.imwrite(
-                os.path.join(out_dir, 'fitting_04_facemask.jpg'),
-                face_mask_vis)
-            cv2.imwrite(
-                os.path.join(out_dir, 'fitting_05_shape_offset.jpg'),
-                shape_offset_vis)
-
-        recon_shape_offset = face_shape_offset
-        recon_shape_offset[..., -1] = 10 - recon_shape_offset[
-            ..., -1]  # from camera space to world space
-        recon_shape_offset = recon_shape_offset.detach().cpu().numpy()[0]
-
-        tri = self.facemodel_front.face_buf.cpu().numpy()
-        pred_color = self.pred_color.detach().cpu().numpy()[0].clip(0, 1)
-
-        output = {
-            'coeffs': output_coeff,
-            'face_vertices': recon_shape_offset,
-            'face_faces': tri + 1,
-            'face_colors': pred_color
-        }
-        return output
-
-    def forward(self, out_dir=None):
-        self.facemodel.to(self.device)
-        self.facemodel_front.to(self.device)
+    def predict_results_base(self):
+        # predict low-frequency coefficients
         with torch.no_grad():
-
             output_coeff = self.net_recon(self.input_img)
 
-        with torch.enable_grad():
-            output = self.fitting_nonlinear(
-                output_coeff, debug=True, out_dir=out_dir)
+        # 3DMM
+        face_vertex, face_albedo_map, face_color_map, landmark, face_vertex_noTrans, position_map = \
+            self.facemodel_front.compute_for_render(output_coeff)
 
-        output_coeff = output['coeffs']
-        output_coeff = self.facemodel.split_coeff(output_coeff)
-        eye_coeffs = output_coeff['exp'][0, 16] + output_coeff['exp'][
-            0, 17] + output_coeff['exp'][0, 19]
-        if eye_coeffs > 1.0:
-            degree = 0.5
-        else:
-            degree = 1.0
-        output_coeff['exp'][0, 16] += 1 * degree
-        output_coeff['exp'][0, 17] += 1 * degree
-        output_coeff['exp'][0, 19] += 1.5 * degree
-        output_coeff = self.facemodel.merge_coeff(output_coeff)
+        # get texture map
+        texture_map = self.facemodel_front.get_texture_map(
+            face_vertex, self.input_img_hd)
 
-        self.pred_vertex, face_shape_ori, head_shape = \
-            self.facemodel.compute_for_render_nonlinear_full(output_coeff, self.shape_offset_uv.detach(),
-                                                             self.nonlinear_UVs, nose_coeff=0.1)
+        # de-retouch
+        texture_map_input_high = texture_map.permute(
+            0, 3, 1, 2).detach()  # (1, 3, 256, 256)
+        texture_map_input_high = (texture_map_input_high - 0.5) * 2
+        de_retouched_face_albedo_map = self.de_retouching_module.run(
+            face_albedo_map, texture_map_input_high)
 
-        UVs_tensor = torch.tensor(
-            self.template_mesh['uvs'],
-            dtype=torch.float32)[None, ...].to(self.pred_vertex.device)
-        target_img = self.input_fat_img_hd.permute(0, 2, 3, 1)
-        with torch.enable_grad():
-            _, _, _, texture_map, _ = self.renderer.pred_shape_and_texture(
-                self.pred_vertex, self.facemodel.face_buf, UVs_tensor,
-                target_img)
+        # get valid texture mask to deal with occlusion
+        valid_mask = self.facemodel_front.get_texture_map(
+            face_vertex, self.face_mask)  # (256, 256, 1)
+        valid_mask = valid_mask.permute(0, 3, 1,
+                                        2).detach()  # (1, 1, 256, 256)
 
-        recon_shape = head_shape
-        recon_shape[
-            ...,
-            -1] = 10 - recon_shape[..., -1]  # from camera space to world space
-        recon_shape = recon_shape.cpu().numpy()[0]
-        tri = self.facemodel.face_buf.cpu().numpy()
-        normals = utils.estimate_normals(recon_shape, tri)
+        # render
+        pred_mask, _, pred_face = self.renderer.render_uv_texture(
+            face_vertex, self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+            face_color_map)
 
-        output['head_vertices'] = recon_shape
-        output['head_faces'] = tri + 1
-        output['head_tex_map'] = texture_map
-        output['head_UVs'] = self.template_mesh['uvs']
-        output['head_faces_uv'] = self.template_mesh['faces_uv']
-        output['head_normals'] = normals
+        input_img_numpy = 255. * (self.input_img).detach().cpu().permute(
+            0, 2, 3, 1).numpy()
+        input_img_numpy = np.squeeze(input_img_numpy)
+        output_vis = pred_face * pred_mask + (1 - pred_mask) * self.input_img
+        output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(
+            0, 2, 3, 1).numpy()
+        output_vis_numpy_raw = np.squeeze(output_vis_numpy_raw)
+        output_vis_numpy = np.concatenate(
+            (input_img_numpy, output_vis_numpy_raw), axis=-2)
+        output_vis = np.squeeze(output_vis_numpy)
+        output_vis = output_vis[..., ::-1]  # rgb->bgr
+        output_face_mask = pred_mask.detach().cpu().permute(
+            0, 2, 3, 1).squeeze().numpy() * 255.0
+        output_vis = np.column_stack(
+            (output_vis, cv2.cvtColor(output_face_mask, cv2.COLOR_GRAY2BGR)))
+        output_input_vis = output_vis[:, :224]
+        output_pred_vis = output_vis[:, 224:448]
+
+        input_img_hd = 255. * (self.input_img_hd).detach().cpu().permute(
+            0, 2, 3, 1).numpy()[..., ::-1]
+        input_img_hd = np.squeeze(input_img_hd)
+
+        # from camera space to world space
+        recon_vertices = face_vertex  # [1, 35709, 3]
+        recon_vertices[..., -1] = 10 - recon_vertices[..., -1]
+
+        recon_shape = face_vertex_noTrans  # [1, 35709, 3]
+        recon_shape[..., -1] = 10 - recon_shape[..., -1]
+
+        tri = self.facemodel_front.face_buf
+
+        # output
+        output = {}
+        output['coeffs'] = output_coeff.detach()  # [B, 257]
+        output['vertices'] = recon_vertices.detach()  # [B, 35709, 3]
+        output['vertices_noTrans'] = recon_shape.detach()  # [B, 35709, 3]
+        output['triangles'] = tri.detach()  # [n_faces, 3], start from 0
+        output['UVs'] = self.bfm_UVs.detach()  # [35709, 2]
+        output['texture_map'] = texture_map.detach()  # [B, h, w, 3], RGB
+        output['albedo_map'] = face_albedo_map.detach()  # [B, 3, h, w]
+        output['color_map'] = face_color_map.detach()  # [B, 3, h, w]
+        output['position_map'] = position_map.detach()  # [B, 3, h, w]
+
+        output['input_face'] = output_input_vis
+        output['pred_face'] = output_pred_vis
+        output['input_face_hd'] = input_img_hd
+
+        output['input_img'] = self.input_img
+        output['input_img_hd'] = self.input_img_hd
+        output['gt_lm'] = self.gt_lm
+        output['face_mask'] = self.face_mask
+        output['tex_valid_mask'] = valid_mask
+
+        output[
+            'de_retouched_albedo_map'] = de_retouched_face_albedo_map.detach()
 
         return output
 
-    def compute_losses_fitting(self):
-        face_mask = self.pred_mask
+    def forward(self, visualize=False):
+        self.bfm_UVs = self.bfm_UVs
 
-        face_mask = face_mask.detach()
-        self.loss_color = self.w_color * self.comupte_color_loss(
-            self.pred_face, self.input_img, face_mask)  # 1.0
+        # get valid mask to deal with occlusion
+        tex_valid_mask = self.tex_valid_mask  # (B, 1, 256, 256)
+        if visualize:
+            tex_valid_mask = self.smooth_valid_mask(tex_valid_mask)
+        tex_valid_mask_mid = torch.nn.functional.interpolate(
+            tex_valid_mask, (64, 64), mode='bilinear')
 
-        self.loss_color_nose = torch.tensor(0.0).float().to(self.device)
+        # mid frequency
+        texture_map_input = self.texture_map.permute(0, 3, 1,
+                                                     2).to(self.device)
+        texture_map_input = (texture_map_input - 0.5) * 2
+        texture_map_input_mid = torch.nn.functional.interpolate(
+            texture_map_input, (64, 64), mode='bilinear')
+        position_map_input_mid = torch.nn.functional.interpolate(
+            self.position_map, (64, 64), mode='bilinear')
+        input_mid = torch.cat([position_map_input_mid, texture_map_input_mid],
+                              dim=1)
+        self.deformation_map = self.mid_net(
+            input_mid) * 0.1 * self.alpha  # ori * 0.1 * self.alpha
+        self.deformation_map = self.deformation_map * tex_valid_mask_mid
+        self.deformation_map = self.deformation_map.permute(0, 2, 3, 1)
 
-        loss_reg, loss_gamma = self.compute_reg_loss(self.pred_coeffs_dict,
-                                                     self.w_id, self.w_exp,
-                                                     self.w_tex)
-        self.loss_reg = self.w_reg * loss_reg  # 1.0
-        self.loss_gamma = self.w_gamma * loss_gamma  # 1.0
+        # render
+        self.pred_vertex, self.pred_color, self.pred_lm, self.verts_proj, self.face_albedo_map, \
+            face_shape_transformed, face_norm_roted, self.extra_results = \
+            self.facemodel_front.compute_for_render_hierarchical_mid(self.coeffs, self.deformation_map, self.bfm_UVs,
+                                                                     visualize=visualize,
+                                                                     de_retouched_albedo_map=
+                                                                     self.de_retouched_albedo_map)
+        self.pred_mask, _, self.pred_face_mid = self.renderer.render_uv_texture(
+            self.pred_vertex, self.facemodel_front.face_buf,
+            self.bfm_UVs.clone(), self.pred_color)
+        self.deformation_map = self.deformation_map.permute(0, 3, 1, 2)
 
-        self.loss_lm = self.w_lm * self.compute_lm_loss(
-            self.pred_lm, self.gt_lm) * 0.1  # 0.1
+        # get re-aligned texture
+        texture_map_input_high = self.facemodel_front.get_texture_map(
+            self.pred_vertex, self.input_img_hd)  # (1, 256, 256, 3)
+        texture_map_input_high = texture_map_input_high.permute(
+            0, 3, 1, 2).detach()  # (1, 3, 256, 256)
+        texture_map_input_high = (texture_map_input_high - 0.5) * 2
 
-        self.loss_smooth_offset = TVLoss()(self.shape_offset_uv.permute(
-            0, 3, 1, 2)) * 10000  # 10000
+        # high frequency
+        position_map_input_high = torch.nn.functional.interpolate(
+            self.position_map, (256, 256), mode='bilinear')
+        deformation_map_input_high = torch.nn.functional.interpolate(
+            self.deformation_map, (256, 256), mode='bilinear')
+        value = [
+            position_map_input_high, texture_map_input_high,
+            deformation_map_input_high
+        ]
+        input_high = torch.cat(value, dim=1)
+        self.displacement_map = self.high_net(
+            input_high) * 0.1 * self.beta  # ori * 0.1 * self.alpha
+        self.displacement_map = self.displacement_map * tex_valid_mask
 
-        self.loss_reg_offset = torch.tensor(0.0).float().to(self.device)
+        # render
+        self.pred_color_high, self.extra_results = self.facemodel_front.compute_for_render_hierarchical_high(
+            self.coeffs,
+            self.displacement_map,
+            self.de_retouched_albedo_map,
+            face_shape_transformed,
+            face_norm_roted,
+            extra_results=self.extra_results)
+        _, _, self.pred_face_high = self.renderer.render_uv_texture(
+            self.pred_vertex, self.facemodel_front.face_buf,
+            self.bfm_UVs.clone(), self.pred_color_high)
 
-        self.loss_reg_textureOff = torch.mean(
-            torch.abs(self.texture_offset_uv)) * 10  # 10
+        self.pred_coeffs_dict = self.facemodel_front.split_coeff(self.coeffs)
 
-        self.loss_smooth_offset_std = TVLoss_std()(
-            self.shape_offset_uv.permute(0, 3, 1, 2)) * 50000  # 50000
+        if visualize:
+            # high
+            self.extra_results['pred_mask_high'] = self.pred_mask
+            self.extra_results['pred_face_high_color'] = self.pred_face_high
+            _, _, self.extra_results[
+                'pred_face_high_gray'] = self.renderer.render_uv_texture(
+                    self.pred_vertex, self.facemodel_front.face_buf,
+                    self.bfm_UVs.clone(), self.extra_results['tex_high_gray'])
 
-        self.loss_points_horizontal, self.edge_points_inds = points_loss_horizontal(
-            self.verts_proj, self.left_points, self.right_points)  # 20
-        self.loss_points_horizontal *= 20
-        self.loss_points_horizontal_jaw = torch.tensor(0.0).float().to(
-            self.device)
-        self.loss_points_vertical = torch.tensor(0.0).float().to(self.device)
-        self.loss_normals = torch.tensor(0.0).float().to(self.device)
+            # mid
+            self.extra_results['pred_mask_mid'] = self.pred_mask
+            self.extra_results['pred_face_mid_color'] = self.pred_face_mid
+            _, _, self.extra_results[
+                'pred_face_mid_gray'] = self.renderer.render_uv_texture(
+                    self.pred_vertex, self.facemodel_front.face_buf,
+                    self.bfm_UVs.clone(), self.extra_results['tex_mid_gray'])
 
-        self.loss_all = self.loss_color + self.loss_lm + self.loss_reg + self.loss_gamma + self.loss_smooth_offset
-        self.loss_all += self.loss_reg_offset + self.loss_smooth_offset_std + self.loss_points_horizontal
-        self.loss_all += self.loss_points_vertical + self.loss_reg_textureOff
-        self.loss_all += self.loss_color_nose + self.loss_normals + self.loss_points_horizontal_jaw
+            # base
+            self.extra_results['pred_mask_base'], _, self.extra_results[
+                'pred_face_base_color'] = self.renderer.render_uv_texture(
+                    self.extra_results['pred_vertex_base'],
+                    self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+                    self.extra_results['tex_base_color'])
+            _, _, self.extra_results[
+                'pred_face_base_gray'] = self.renderer.render_uv_texture(
+                    self.extra_results['pred_vertex_base'],
+                    self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+                    self.extra_results['tex_base_gray'])
 
-        self.loss_mask = torch.tensor(0.0).float().to(self.device)
+            # fit texture
+            with torch.enable_grad():
+                texture_offset = torch.zeros(
+                    (1, 3, 256, 256), dtype=torch.float32).to(self.device)
+                texture_offset.requires_grad = True
+
+                optim = torch.optim.Adam([texture_offset], lr=1e-2)
+
+                for i in range(self.tex_iters):
+                    pred_color_high = self.pred_color_high.detach(
+                    ) + texture_offset
+                    _, _, pred_face_high = self.renderer.render_uv_texture(
+                        self.pred_vertex.detach(),
+                        self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+                        pred_color_high)
+
+                    loss_color_high = self.w_color * self.comupte_color_loss(
+                        pred_face_high, self.input_img_for_tex,
+                        self.pred_mask.detach())
+                    loss_smooth = TVLoss()(texture_offset) * self.w_tex_smooth
+                    loss_all = loss_color_high + loss_smooth
+                    optim.zero_grad()
+                    loss_all.backward()
+                    optim.step()
+
+                self.pred_color_high = (self.pred_color_high
+                                        + texture_offset).detach()
+
+            # for video
+            self.extra_results['pred_face_high_gray_list'] = []
+            self.extra_results['pred_face_high_color_list'] = []
+            for i in range(len(self.extra_results['tex_high_gray_list'])):
+                _, _, pred_face_high_gray_i = self.renderer_high_res.render_uv_texture(
+                    self.extra_results['face_vertex_list'][i],
+                    self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+                    self.extra_results['tex_high_gray_list'][i])
+                self.extra_results['pred_face_high_gray_list'].append(
+                    pred_face_high_gray_i)
+
+                _, _, pred_face_high_color_i = self.renderer_high_res.render_uv_texture(
+                    self.extra_results['face_vertex_list'][i],
+                    self.facemodel_front.face_buf, self.bfm_UVs.clone(),
+                    self.pred_color_high)
+                self.extra_results['pred_face_high_color_list'].append(
+                    pred_face_high_color_i)
+
+    def get_edge_points_horizontal(self):
+        left_points_list = []
+        right_points_list = []
+        for k in range(self.face_mask.shape[0]):
+            left_points = []
+            right_points = []
+            for i in range(self.face_mask.shape[2]):
+                inds = torch.where(self.face_mask[k, 0, i, :] > 0.5)  # 0.9
+                if len(inds[0]) > 0:  # i > 112 and len(inds[0]) > 0
+                    left_points.append(int(inds[0][0]) + 1)
+                    right_points.append(int(inds[0][-1]))
+                else:
+                    left_points.append(0)
+                    right_points.append(self.face_mask.shape[3] - 1)
+            left_points_list.append(
+                torch.tensor(left_points).long().to(self.device))
+            right_points_list.append(
+                torch.tensor(right_points).long().to(self.device))
+        self.left_points = torch.stack(
+            left_points_list, dim=0).long().to(self.device)
+        self.right_points = torch.stack(
+            right_points_list, dim=0).long().to(self.device)
+
+    def smooth_valid_mask(self, tex_valid_mask):
+        """
+
+        :param tex_valid_mask: torch.tensor, (B, 1, 256, 256), value: 0~1
+        :return:
+        """
+        batch_size = tex_valid_mask.shape[0]
+        tex_valid_mask_ = tex_valid_mask.detach().cpu().numpy()
+        result_list = []
+        for i in range(batch_size):
+            mask = tex_valid_mask_[i, 0]
+            mask = cv2.erode(mask, np.ones(shape=(3, 3), dtype=np.float32))
+            mask = cv2.blur(mask, (11, 11), 0)
+            result_list.append(
+                torch.from_numpy(mask)[None].float().to(tex_valid_mask.device))
+        smoothed_mask = torch.stack(result_list, dim=0)
+        return smoothed_mask
+
+    def compute_visuals_hrn(self):
+        with torch.no_grad():
+
+            input_img_vis = 255. * self.input_img.detach().cpu().permute(
+                0, 2, 3, 1).numpy()
+            output_vis_mid = self.pred_face_mid * self.pred_mask + (
+                1 - self.pred_mask) * self.input_img
+            output_vis_mid = 255. * output_vis_mid.detach().cpu().permute(
+                0, 2, 3, 1).numpy()
+            output_vis_high = self.pred_face_high * self.pred_mask + (
+                1 - self.pred_mask) * self.input_img
+            output_vis_high = 255. * output_vis_high.detach().cpu().permute(
+                0, 2, 3, 1).numpy()
+
+            deformation_map_vis = torch.nn.functional.interpolate(
+                self.deformation_map,
+                input_img_vis.shape[1:3],
+                mode='bilinear').permute(0, 2, 3, 1)
+            deformation_map_vis = (
+                deformation_map_vis - deformation_map_vis.min()) / (
+                    deformation_map_vis.max() - deformation_map_vis.min())
+            deformation_map_vis = 255. * deformation_map_vis.detach().cpu(
+            ).numpy()
+
+            displacement_map_vis = torch.nn.functional.interpolate(
+                self.displacement_map,
+                input_img_vis.shape[1:3],
+                mode='bilinear').permute(0, 2, 3, 1)
+            displacement_vis = (
+                displacement_map_vis - displacement_map_vis.min()) / (
+                    displacement_map_vis.max() - displacement_map_vis.min())
+            displacement_vis = 255. * displacement_vis.detach().cpu().numpy()
+            displacement_vis = np.concatenate(
+                [displacement_vis, displacement_vis, displacement_vis],
+                axis=-1)
+
+            face_albedo_map_vis = torch.nn.functional.interpolate(
+                self.face_albedo_map,
+                input_img_vis.shape[1:3],
+                mode='bilinear').permute(0, 2, 3, 1)
+            face_albedo_map_vis = 255. * face_albedo_map_vis.detach().cpu(
+            ).numpy()
+
+            de_retouched_face_albedo_map_vis = torch.nn.functional.interpolate(
+                self.de_retouched_albedo_map,
+                input_img_vis.shape[1:3],
+                mode='bilinear').permute(0, 2, 3, 1)
+            de_retouched_face_albedo_map_vis = 255. * de_retouched_face_albedo_map_vis.detach(
+            ).cpu().numpy()
+
+            if self.extra_results is not None:
+                pred_mask_base = self.extra_results['pred_mask_base']
+                output_vis_base = self.extra_results[
+                    'pred_face_base_color'] * pred_mask_base + (
+                        1 - pred_mask_base) * self.input_img
+                output_vis_base = 255. * output_vis_base.detach().cpu(
+                ).permute(0, 2, 3, 1).numpy()
+
+                output_vis_base_gray = self.extra_results[
+                    'pred_face_base_gray'] * pred_mask_base + (
+                        1 - pred_mask_base) * self.input_img
+                output_vis_base_gray = 255. * output_vis_base_gray.detach(
+                ).cpu().permute(0, 2, 3, 1).numpy()
+                output_vis_mid_gray = self.extra_results[
+                    'pred_face_mid_gray'] * self.pred_mask + (
+                        1 - self.pred_mask) * self.input_img
+                output_vis_mid_gray = 255. * output_vis_mid_gray.detach().cpu(
+                ).permute(0, 2, 3, 1).numpy()
+                output_vis_high_gray = self.extra_results[
+                    'pred_face_high_gray'] * self.pred_mask + (
+                        1 - self.pred_mask) * self.input_img
+                output_vis_high_gray = 255. * output_vis_high_gray.detach(
+                ).cpu().permute(0, 2, 3, 1).numpy()
+
+                output_vis_numpy = np.concatenate(
+                    (input_img_vis, output_vis_high, output_vis_base_gray,
+                     output_vis_mid_gray, output_vis_high_gray,
+                     deformation_map_vis, displacement_vis,
+                     face_albedo_map_vis, de_retouched_face_albedo_map_vis),
+                    axis=-2)
+
+            elif self.gt_lm is not None:
+                gt_lm_numpy = self.gt_lm.cpu().numpy()
+                pred_lm_numpy = self.pred_lm.detach().cpu().numpy()
+                output_vis_high_lm = utils.draw_landmarks(
+                    output_vis_high, gt_lm_numpy, 'b')
+                output_vis_high_lm = utils.draw_landmarks(
+                    output_vis_high_lm, pred_lm_numpy, 'r')
+
+                output_vis_numpy = np.concatenate(
+                    (input_img_vis, output_vis_mid, output_vis_high,
+                     output_vis_high_lm, deformation_map_vis,
+                     displacement_vis),
+                    axis=-2)
+            else:
+                output_vis_numpy = np.concatenate(
+                    (input_img_vis, output_vis_mid, output_vis_high,
+                     deformation_map_vis, displacement_vis),
+                    axis=-2)
+
+            self.output_vis = torch.tensor(
+                output_vis_numpy / 255.,
+                dtype=torch.float32).permute(0, 3, 1, 2).to(self.device)
+
+    def get_current_visuals(self):
+        """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+        visual_ret = OrderedDict()
+        for name in self.visual_names:
+            if isinstance(name, str):
+                visual_ret[name] = getattr(self, name)[:, :3, ...]
+        return visual_ret
+
+    def save_results_hrn(self):
+        self.compute_visuals_hrn()
+        results = self.get_current_visuals()
+
+        hrn_output_vis_batch = (255.0 * results['output_vis']).permute(
+            0, 2, 3, 1).detach().cpu().numpy()[..., ::-1]
+
+        vertices_batch = self.pred_vertex.detach(
+        )  # get reconstructed shape, [1, 35709, 3]
+        vertices_batch[..., -1] = 10 - vertices_batch[
+            ..., -1]  # from camera space to world space
+        vertices_batch = vertices_batch.cpu().numpy()
+
+        texture_map_batch = (255.0 * self.pred_color_high).permute(
+            0, 2, 3, 1).detach().cpu().numpy()[..., ::-1]
+
+        output = {}
+
+        output['vis_image'] = hrn_output_vis_batch[0]
+
+        texture_map = texture_map_batch[0]
+        vertices = vertices_batch[0]
+        normals = utils.estimate_normals(
+            vertices,
+            self.facemodel_front.face_buf.cpu().numpy())
+        face_mesh = {
+            'vertices': vertices,
+            'faces': self.facemodel_front.face_buf.cpu().numpy() + 1,
+            'UVs': self.bfm_UVs.detach().cpu().numpy(),
+            'faces_uv': self.facemodel_front.face_buf.cpu().numpy() + 1,
+            'normals': normals,
+            'faces_normal': self.facemodel_front.face_buf.cpu().numpy() + 1,
+        }
+        output['face_mesh'] = face_mesh
+        output['texture_map'] = texture_map
+
+        frame_list = []
+        if 'pred_face_high_gray_list' in self.extra_results:
+            input_img_vis = 255. * self.input_img_hd.detach().cpu().permute(
+                0, 2, 3, 1).numpy()[0]
+            for j in range(
+                    len(self.extra_results['pred_face_high_gray_list'])):
+                pred_face_high_gray_j = self.extra_results[
+                    'pred_face_high_gray_list'][j][0, ...]
+                pred_face_high_gray_j = 255. * pred_face_high_gray_j.detach(
+                ).cpu().permute(1, 2, 0).numpy()
+                pred_face_high_color_j = self.extra_results[
+                    'pred_face_high_color_list'][j][0, ...]
+                pred_face_high_color_j = 255. * pred_face_high_color_j.detach(
+                ).cpu().permute(1, 2, 0).numpy()
+
+                value = [
+                    input_img_vis, pred_face_high_gray_j,
+                    pred_face_high_color_j
+                ]
+                vis_j = np.concatenate(value, axis=1)
+
+                frame_list.append(vis_j.clip(0, 255).astype(np.uint8))
+            output['frame_list'] = frame_list
+
+        return output

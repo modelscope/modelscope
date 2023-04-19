@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
     from .glm_130b import GLM130bForTextGeneration
     from .csanmt import CsanmtForTranslation
+    from .canmt import CanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .gpt_neo import GPTNeoModel
     from .gpt2 import GPT2Model
@@ -71,6 +72,7 @@ if TYPE_CHECKING:
                        DocumentGroundedDialogRetrievalModel,
                        DocumentGroundedDialogRerankModel)
     from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
+    from .llama import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
 
 else:
     _import_structure = {
@@ -88,6 +90,7 @@ else:
         ],
         'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
+        'canmt': ['CanmtForTranslation'],
         'codegeex':
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'glm_130b': ['GLM130bForTextGeneration'],
@@ -153,6 +156,10 @@ else:
             'DocumentGroundedDialogRerankModel'
         ],
         'xlm_roberta': ['XLMRobertaConfig', 'XLMRobertaModel'],
+        'llama': [
+            'LlamaForTextGeneration', 'LlamaConfig', 'LlamaModel',
+            'LlamaTokenizer', 'LlamaTokenizerFast'
+        ],
     }
 
     import sys

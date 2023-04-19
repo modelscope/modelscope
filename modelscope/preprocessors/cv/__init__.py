@@ -29,7 +29,9 @@ else:
         'controllable_image_generation':
         ['ControllableImageGenerationPreprocessor'],
         'image_classification_preprocessor':
-        ['ImageClassificationPreprocessor']
+        ['ImageClassificationPreprocessor'],
+        'diffusion_image_generation_preprocessor':
+        ['DiffusionImageGenerationPreprocessor']
     }
 
     import sys

@@ -17,10 +17,11 @@ from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.multi_modal import CLIPPreprocessor
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.trainers.builder import TRAINERS
+from modelscope.trainers.default_config import merge_cfg, update_cfg
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigKeys,
-                                       Invoke, ModeKeys)
+                                       Invoke, ModeKeys, ModelFile, ThirdParty)
 from .clip_trainer_utils import get_loss, get_optimizer_params, get_schedule
 
 
@@ -39,6 +40,7 @@ class CLIPTrainer(EpochBasedTrainer):
             self,
             model: Optional[Union[TorchModel, nn.Module, str]] = None,
             cfg_file: Optional[str] = None,
+            cfg_modify_fn: Optional[Callable] = None,
             arg_parse_fn: Optional[Callable] = None,
             data_collator: Optional[Union[Callable, Dict[str,
                                                          Callable]]] = None,
@@ -52,12 +54,36 @@ class CLIPTrainer(EpochBasedTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             **kwargs):
+        if isinstance(model, str):
+            third_party = kwargs.get(ThirdParty.KEY, None)
+            if third_party is not None:
+                kwargs.pop(ThirdParty.KEY)
+
+            self.model_dir = self.get_or_download_model_dir(
+                model, model_revision, third_party)
+            if cfg_file is None:
+                cfg_file = os.path.join(self.model_dir,
+                                        ModelFile.CONFIGURATION)
+        else:
+            assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
+            self.model_dir = os.path.dirname(cfg_file)
+        self.cfg = Config.from_file(cfg_file)
+
+        self.cfg_modify_fn = cfg_modify_fn
+        # add default config
+        merge_cfg(self.cfg)
+        self.cfg = self.rebuild_config(self.cfg)
+        if 'cfg_options' in kwargs:
+            self.cfg.merge_from_dict(kwargs['cfg_options'])
+        self.cfg = update_cfg(self.cfg)
+        cfg = self.cfg
+
         model = Model.from_pretrained(
             model, revision=model_revision, invoked_by=Invoke.TRAINER)
         # for training & eval, we convert the model from FP16 back to FP32
         # to compatible with modelscope amp training
         convert_models_to_fp32(model)
-        cfg = Config.from_file(cfg_file)
+
         if 'work_dir' not in kwargs or len(kwargs['work_dir']) == 0:
             work_dir = cfg.train.work_dir
         else:
@@ -162,6 +188,7 @@ class CLIPTrainer(EpochBasedTrainer):
         super().__init__(
             model=model,
             cfg_file=cfg_file,
+            cfg_modify_fn=cfg_modify_fn,
             arg_parse_fn=arg_parse_fn,
             data_collator=data_collator,
             train_dataset=train_dataset,

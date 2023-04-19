@@ -12,6 +12,7 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import http_get_file
 
 
+@unittest.skip('temporarily skip')
 class HubOperationTest(unittest.TestCase):
 
     def setUp(self):

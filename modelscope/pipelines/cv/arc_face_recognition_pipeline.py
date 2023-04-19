@@ -48,6 +48,10 @@ class ArcFaceRecognitionPipeline(FaceProcessingBasePipeline):
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         result = super().preprocess(input)
+        if result is None:
+            rtn_dict = {}
+            rtn_dict['img'] = None
+            return rtn_dict
         align_img = result['img']
         face_img = align_img[:, :, ::-1]  # to rgb
         face_img = np.transpose(face_img, axes=(2, 0, 1))
@@ -57,6 +61,8 @@ class ArcFaceRecognitionPipeline(FaceProcessingBasePipeline):
         return result
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        if input['img'] is None:
+            return {OutputKeys.IMG_EMBEDDING: None}
         img = input['img'].unsqueeze(0)
         emb = self.face_model(img).detach().cpu().numpy()
         emb /= np.sqrt(np.sum(emb**2, -1, keepdims=True))  # l2 norm

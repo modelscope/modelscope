@@ -10,7 +10,8 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.audio.audio_utils import generate_text_from_url
+from modelscope.utils.audio.audio_utils import (generate_text_from_url,
+                                                update_local_model)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -43,7 +44,7 @@ class PunctuationProcessingPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_cfg = self.model.forward()
-        self.cmd = self.get_cmd(kwargs)
+        self.cmd = self.get_cmd(kwargs, model)
 
         from funasr.bin import punc_inference_launch
         self.funasr_infer_modelscope = punc_inference_launch.inference_launch(
@@ -96,7 +97,7 @@ class PunctuationProcessingPipeline(Pipeline):
                 rst[inputs[i]['key']] = inputs[i]['value']
         return rst
 
-    def get_cmd(self, extra_args) -> Dict[str, Any]:
+    def get_cmd(self, extra_args, model_path) -> Dict[str, Any]:
         # generate inference command
         lang = self.model_cfg['model_config']['lang']
         punc_model_path = self.model_cfg['punc_model_path']
@@ -104,6 +105,8 @@ class PunctuationProcessingPipeline(Pipeline):
             self.model_cfg['model_workspace'],
             self.model_cfg['model_config']['punc_config'])
         mode = self.model_cfg['model_config']['mode']
+        update_local_model(self.model_cfg['model_config'], model_path,
+                           extra_args)
         cmd = {
             'mode': mode,
             'batch_size': 1,

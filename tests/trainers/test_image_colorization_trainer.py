@@ -89,6 +89,17 @@ class ImageColorizationTrainerTest(unittest.TestCase):
             task=Tasks.image_colorization, model=f'{self.tmp_dir}/output')
         pipeline_colorization('data/test/images/marilyn_monroe_4.jpg')
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_evaluation(self):
+        kwargs = dict(
+            model=self.model_id,
+            train_dataset=self.dataset_train,
+            eval_dataset=self.dataset_val,
+            work_dir=self.tmp_dir)
+        trainer = build_trainer(default_args=kwargs)
+        results = trainer.evaluate()
+        print(results)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -37,17 +37,15 @@ DEFAULT_CONFIG = Config({
 })
 
 DEFAULT_HOOKS_CONFIG = {
-    'train': {
-        'hooks': [{
-            'type': 'CheckpointHook',
-            'interval': 1
-        }, {
-            'type': 'TextLoggerHook',
-            'interval': 10
-        }, {
-            'type': 'IterTimerHook'
-        }]
-    }
+    'train.hooks': [{
+        'type': 'CheckpointHook',
+        'interval': 1
+    }, {
+        'type': 'TextLoggerHook',
+        'interval': 10
+    }, {
+        'type': 'IterTimerHook'
+    }]
 }
 
 _HOOK_KEY_CHAIN_MAP = {

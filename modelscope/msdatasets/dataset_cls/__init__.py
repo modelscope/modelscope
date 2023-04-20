@@ -1,3 +1,3 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from .dataset import ExternalDataset, NativeIterableDataset
+from .dataset import ExternalDataset, NativeIterableDataset, VirgoDataset

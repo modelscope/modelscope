@@ -15,6 +15,7 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
 
+import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
@@ -45,7 +46,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        MASTER_MODEL_BRANCH, DatasetFormations,
                                        DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
-                                       ModelFile)
+                                       ModelFile, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_release_datetime,
                           model_id_to_group_owner_name)
@@ -581,6 +582,17 @@ class HubApi:
         file_list = file_list['Files']
         return file_list
 
+    @staticmethod
+    def dump_datatype_file(dataset_type: int, meta_cache_dir: str):
+        """
+        Dump the data_type as a local file, in order to get the dataset formation without calling the datahub.
+        More details, please refer to the class `modelscope.utils.constant.DatasetFormations`.
+        """
+        dataset_type_file_path = os.path.join(meta_cache_dir,
+                                              f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
+        with open(dataset_type_file_path, 'w') as fp:
+            fp.write('*** Automatically-generated file, do not modify ***')
+
     def get_dataset_meta_files_local_paths(self, dataset_name: str,
                                            namespace: str,
                                            revision: str,
@@ -591,10 +603,7 @@ class HubApi:
         cookies = ModelScopeConfig.get_cookies()
 
         # Dump the data_type as a local file
-        dataset_type_file_path = os.path.join(meta_cache_dir,
-                                              f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
-        with open(dataset_type_file_path, 'w') as fp:
-            fp.write('*** Automatically-generated file, do not modify ***')
+        HubApi.dump_datatype_file(dataset_type=dataset_type, meta_cache_dir=meta_cache_dir)
 
         for file_info in file_list:
             file_path = file_info['Path']
@@ -661,13 +670,37 @@ class HubApi:
             cookies = self._check_cookie(use_cookies=True)
         else:
             cookies = ModelScopeConfig.get_cookies()
-        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
 
         r = self.session.get(
             url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
+
+    def get_virgo_meta(self, dataset_id: str, version: int = 1) -> dict:
+        """
+        Get virgo dataset meta info.
+        """
+        virgo_endpoint = os.environ.get(VirgoDatasetConfig.env_virgo_endpoint, '')
+        if not virgo_endpoint:
+            raise RuntimeError(f'Virgo endpoint is not set in env: {VirgoDatasetConfig.env_virgo_endpoint}')
+
+        virgo_dataset_url = f'{virgo_endpoint}/data/set/download'
+        cookies = requests.utils.dict_from_cookiejar(ModelScopeConfig.get_cookies())
+
+        dataset_info = dict(
+            dataSetId=dataset_id,
+            dataSetVersion=version
+        )
+        data = dict(
+            data=dataset_info,
+        )
+        r = self.session.post(url=virgo_dataset_url, json=data, cookies=cookies, headers=self.headers, timeout=900)
+        resp = r.json()
+        if resp['code'] != 0:
+            raise RuntimeError(f'Failed to get virgo dataset: {resp}')
+
+        return resp['data']
 
     def get_dataset_access_config_for_unzipped(self,
                                                dataset_name: str,

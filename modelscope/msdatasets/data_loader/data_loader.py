@@ -1,11 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 from datasets import (Dataset, DatasetBuilder, DatasetDict, IterableDataset,
                       IterableDatasetDict)
-from datasets import load_dataset as hf_data_loader
+from datasets import load_dataset as hf_load_dataset
 
 from modelscope.hub.api import ModelScopeConfig
 from modelscope.msdatasets.auth.auth_config import OssAuthConfig
@@ -15,11 +16,16 @@ from modelscope.msdatasets.data_files.data_files_manager import \
     DataFilesManager
 from modelscope.msdatasets.dataset_cls.dataset import ExternalDataset
 from modelscope.msdatasets.meta.data_meta_manager import DataMetaManager
-from modelscope.utils.constant import DatasetFormations
+from modelscope.utils.constant import (DatasetFormations, DatasetPathName,
+                                       DownloadMode, VirgoDatasetConfig)
+from modelscope.utils.logger import get_logger
+from modelscope.utils.url_utils import valid_url
+
+logger = get_logger()
 
 
-class BaseDataLoader(ABC):
-    """Base dataset loader to load data."""
+class BaseDownloader(ABC):
+    """Base dataset downloader to load data."""
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         self.dataset_context_config = dataset_context_config
@@ -28,35 +34,35 @@ class BaseDataLoader(ABC):
     def process(self):
         """The entity processing pipeline for fetching the data. """
         raise NotImplementedError(
-            f'No default implementation provided for {BaseDataLoader.__name__}.process.'
+            f'No default implementation provided for {BaseDownloader.__name__}.process.'
         )
 
     @abstractmethod
     def _authorize(self):
         raise NotImplementedError(
-            f'No default implementation provided for {BaseDataLoader.__name__}._authorize.'
+            f'No default implementation provided for {BaseDownloader.__name__}._authorize.'
         )
 
     @abstractmethod
     def _build(self):
         raise NotImplementedError(
-            f'No default implementation provided for {BaseDataLoader.__name__}._build.'
+            f'No default implementation provided for {BaseDownloader.__name__}._build.'
         )
 
     @abstractmethod
     def _prepare_and_download(self):
         raise NotImplementedError(
-            f'No default implementation provided for {BaseDataLoader.__name__}._prepare_and_download.'
+            f'No default implementation provided for {BaseDownloader.__name__}._prepare_and_download.'
         )
 
     @abstractmethod
     def _post_process(self):
         raise NotImplementedError(
-            f'No default implementation provided for {BaseDataLoader.__name__}._post_process.'
+            f'No default implementation provided for {BaseDownloader.__name__}._post_process.'
         )
 
 
-class OssDataLoader(BaseDataLoader):
+class OssDownloader(BaseDownloader):
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         super().__init__(dataset_context_config)
@@ -127,7 +133,7 @@ class OssDataLoader(BaseDataLoader):
             raise f'meta-file: {dataset_name}.py not found on the modelscope hub.'
 
         if dataset_py_script and dataset_formation == DatasetFormations.hf_compatible:
-            self.dataset = hf_data_loader(
+            self.dataset = hf_load_dataset(
                 dataset_py_script,
                 name=subset_name,
                 revision=version,
@@ -147,8 +153,126 @@ class OssDataLoader(BaseDataLoader):
             self.dataset.custom_map = self.dataset_context_config.data_meta_config.meta_type_map
 
 
-class MaxComputeDataLoader(BaseDataLoader):
-    """Data loader for MaxCompute data source."""
+class VirgoDownloader(BaseDownloader):
+    """Data downloader for Virgo data source."""
+
+    def __init__(self, dataset_context_config: DatasetContextConfig):
+        super().__init__(dataset_context_config)
+        self.dataset = None
+
+    def process(self):
+        """
+        Sequential data fetching virgo dataset process: authorize -> build -> prepare_and_download -> post_process
+        """
+        self._authorize()
+        self._build()
+        self._prepare_and_download()
+        self._post_process()
+
+    def _authorize(self):
+        """Authorization of virgo dataset."""
+        from modelscope.msdatasets.auth.auth_config import VirgoAuthConfig
+
+        cookies = ModelScopeConfig.get_cookies()
+        user_info = ModelScopeConfig.get_user_info()
+
+        if not self.dataset_context_config.auth_config:
+            auth_config = VirgoAuthConfig(
+                cookies=cookies, git_token='', user_info=user_info)
+        else:
+            auth_config = self.dataset_context_config.auth_config
+            auth_config.cookies = cookies
+            auth_config.git_token = ''
+            auth_config.user_info = user_info
+
+        self.dataset_context_config.auth_config = auth_config
+
+    def _build(self):
+        """
+        Fetch virgo meta and build virgo dataset.
+        """
+        from modelscope.msdatasets.dataset_cls import VirgoDataset
+
+        meta_manager = DataMetaManager(self.dataset_context_config)
+        meta_manager.fetch_virgo_meta()
+        self.dataset_context_config = meta_manager.dataset_context_config
+        self.dataset = VirgoDataset(**self.dataset_context_config.ext_config)
+
+        virgo_cache_dir = os.path.join(
+            self.dataset_context_config.cache_root_dir,
+            self.dataset_context_config.namespace,
+            self.dataset_context_config.dataset_name,
+            self.dataset_context_config.version)
+        os.makedirs(
+            os.path.join(virgo_cache_dir, DatasetPathName.META_NAME),
+            exist_ok=True)
+        meta_content_cache_file = os.path.join(virgo_cache_dir,
+                                               DatasetPathName.META_NAME,
+                                               'meta_content.csv')
+        meta_content_df = self.dataset.meta
+        meta_content_df.to_csv(meta_content_cache_file, index=False)
+        self.dataset.meta_content_cache_file = meta_content_cache_file
+        self.dataset.virgo_cache_dir = virgo_cache_dir
+        logger.info(f'Virgo meta content saved to {meta_content_cache_file}')
+
+    def _prepare_and_download(self):
+        """
+        Fetch data-files from oss-urls in the virgo meta content.
+        """
+
+        if self.dataset_context_config.download_virgo_files:
+            import requests
+            import json
+            import shutil
+            from urllib.parse import urlparse
+
+            def download_file(meta_info_val):
+                file_url = ''
+                file_path = ''
+                try:
+                    file_url = json.loads(meta_info_val)['url']
+                    is_url = valid_url(file_url)
+                    if is_url:
+                        url_parse_res = urlparse(file_url)
+                        file_name = os.path.basename(url_parse_res.path)
+                    else:
+                        raise ValueError(f'Unsupported url: {file_url}')
+                    file_path = os.path.join(data_files_dir, file_name)
+                except Exception as e:
+                    logger.warning(e)
+
+                if file_path and not os.path.exists(file_path):
+                    logger.info(
+                        f'Downloading file from {file_url} to {file_path}')
+                    with open(file_path, 'wb') as f:
+                        f.write(requests.get(file_url).content)
+
+                return file_path
+
+            self.dataset.download_virgo_files = True
+            download_mode = self.dataset_context_config.download_mode
+            data_files_dir = os.path.join(self.dataset.virgo_cache_dir,
+                                          DatasetPathName.DATA_FILES_NAME)
+            if download_mode == DownloadMode.REUSE_DATASET_IF_EXISTS:
+                self.dataset.meta[VirgoDatasetConfig.
+                                  col_cache_file] = self.dataset.meta.apply(
+                                      lambda row: download_file(row.meta_info),
+                                      axis=1)
+            elif download_mode == DownloadMode.FORCE_REDOWNLOAD:
+                shutil.rmtree(data_files_dir, ignore_errors=True)
+                self.dataset.meta[VirgoDatasetConfig.
+                                  col_cache_file] = self.dataset.meta.apply(
+                                      lambda row: download_file(row.meta_info),
+                                      axis=1)
+            else:
+                raise ValueError(f'Unsupported download mode: {download_mode}')
+
+    def _post_process(self):
+        ...
+
+
+class MaxComputeDownloader(BaseDownloader):
+    """Data downloader for MaxCompute data source."""
 
     # TODO: MaxCompute data source to be supported .
     def __init__(self, dataset_context_config: DatasetContextConfig):

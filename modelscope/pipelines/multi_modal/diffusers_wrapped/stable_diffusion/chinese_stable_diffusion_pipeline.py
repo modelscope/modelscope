@@ -46,7 +46,9 @@ class ChineseStableDiffusionPipeline(DiffusersPipeline):
 
         torch_dtype = kwargs.get('torch_dtype', torch.float32)
         self.pipeline = _DiffuersChineseStableDiffusionPipeline.from_pretrained(
-            model, torch_dtype=torch_dtype).to(self.device)
+            model, torch_dtype=torch_dtype)
+        self.pipeline.text_encoder.pooler = None
+        self.pipeline.to(self.device)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

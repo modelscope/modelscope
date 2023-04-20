@@ -19,7 +19,6 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
 logger = get_logger()
 
 
-@unittest.skip('temporarily skip')
 class HubUploadTest(unittest.TestCase):
 
     def setUp(self):

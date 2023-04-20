@@ -9,7 +9,7 @@ from datasets import load_dataset as hf_data_loader
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
-from modelscope.msdatasets.data_loader.data_loader import OssDataLoader
+from modelscope.msdatasets.data_loader.data_loader import OssDownloader
 from modelscope.utils.constant import EXTENSIONS_TO_LOAD
 from modelscope.utils.logger import get_logger
 
@@ -127,7 +127,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
             return dataset_ret
         # To use the modelscope data loader
         elif data_loader_type == RemoteDataLoaderType.MS_DATA_LOADER:
-            oss_data_loader = OssDataLoader(
+            oss_data_loader = OssDownloader(
                 dataset_context_config=self.dataset_context_config)
             oss_data_loader.process()
             # download statistics

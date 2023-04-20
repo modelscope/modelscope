@@ -13,13 +13,15 @@ from datasets.utils.file_utils import is_relative_path
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
+from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
 from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
+from modelscope.msdatasets.dataset_cls import (ExternalDataset,
+                                               NativeIterableDataset,
+                                               VirgoDataset)
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
-from modelscope.msdatasets.dataset_cls.dataset import (ExternalDataset,
-                                                       NativeIterableDataset)
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor
@@ -28,7 +30,7 @@ from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
                                        DownloadMode, Hubs, ModeKeys, Tasks,
-                                       UploadMode)
+                                       UploadMode, VirgoDatasetConfig)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -170,7 +172,7 @@ class MsDataset:
         use_streaming: Optional[bool] = False,
         custom_cfg: Optional[Config] = Config(),
         **config_kwargs,
-    ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
+    ) -> Union[dict, 'MsDataset', NativeIterableDataset, VirgoDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
 
             Args:
@@ -287,6 +289,26 @@ class MsDataset:
                         custom_cfg=custom_cfg, **config_kwargs)
                     dataset_inst.is_custom = True
             return dataset_inst
+        elif hub == Hubs.virgo:
+            # Rewrite the namespace, version and cache_dir for virgo dataset.
+            if namespace == DEFAULT_DATASET_NAMESPACE:
+                dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace
+            if version == DEFAULT_DATASET_REVISION:
+                dataset_context_config.version = VirgoDatasetConfig.default_dataset_version
+            if cache_dir == MS_DATASETS_CACHE:
+                from modelscope.utils.config_ds import CACHE_HOME
+                cache_dir = os.path.join(CACHE_HOME, 'virgo', 'hub',
+                                         'datasets')
+                dataset_context_config.cache_root_dir = cache_dir
+            if 'download_virgo_files' in config_kwargs:
+                dataset_context_config.download_virgo_files = config_kwargs.pop(
+                    'download_virgo_files')
+
+            virgo_downloader = VirgoDownloader(dataset_context_config)
+            virgo_downloader.process()
+
+            return virgo_downloader.dataset
+
         else:
             raise 'Please adjust input args to specify a loading mode, we support following scenes: ' \
                   'loading from local disk, huggingface hub and modelscope hub.'

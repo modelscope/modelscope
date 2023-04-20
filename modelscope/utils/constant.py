@@ -327,6 +327,7 @@ class Hubs(enum.Enum):
     """
     modelscope = 'modelscope'
     huggingface = 'huggingface'
+    virgo = 'virgo'
 
 
 class DownloadMode(enum.Enum):
@@ -539,3 +540,23 @@ class DistributedParallelType(object):
 class DatasetTensorflowConfig:
     BATCH_SIZE = 'batch_size'
     DEFAULT_BATCH_SIZE_VALUE = 5
+
+
+class VirgoDatasetConfig:
+
+    default_virgo_namespace = 'default_namespace'
+
+    default_dataset_version = '1'
+
+    env_virgo_endpoint = 'VIRGO_ENDPOINT'
+
+    # Columns for meta request
+    meta_content = 'metaContent'
+    sampling_type = 'samplingType'
+
+    # Columns for meta content
+    col_id = 'id'
+    col_meta_info = 'meta_info'
+    col_analysis_result = 'analysis_result'
+    col_external_info = 'external_info'
+    col_cache_file = 'cache_file'

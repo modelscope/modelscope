@@ -11,6 +11,7 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.audio.audio_utils import update_conf
 from modelscope.utils.constant import Tasks
 from .fsmn_sele_v2 import FSMNSeleNetV2
+from .fsmn_sele_v3 import FSMNSeleNetV3
 
 
 @MODELS.register_module(
@@ -18,6 +19,7 @@ from .fsmn_sele_v2 import FSMNSeleNetV2
 class FSMNSeleNetV2Decorator(TorchModel):
     r""" A decorator of FSMNSeleNetV2 for integrating into modelscope framework """
 
+    MODEL_CLASS = FSMNSeleNetV2
     MODEL_TXT = 'model.txt'
     SC_CONFIG = 'sound_connect.conf'
 
@@ -33,7 +35,7 @@ class FSMNSeleNetV2Decorator(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         if training:
-            self.model = FSMNSeleNetV2(*args, **kwargs)
+            self.model = self.MODEL_CLASS(*args, **kwargs)
         else:
             sc_config_file = os.path.join(model_dir, self.SC_CONFIG)
             model_txt_file = os.path.join(model_dir, self.MODEL_TXT)
@@ -42,7 +44,7 @@ class FSMNSeleNetV2Decorator(TorchModel):
 
             self._sc = None
             if os.path.exists(model_txt_file):
-                conf_dict = dict(mode=56542, kws_model=model_txt_file)
+                conf_dict = dict(kws_model=model_txt_file)
                 update_conf(sc_config_file, new_config_file, conf_dict)
                 import py_sound_connect
                 self._sc = py_sound_connect.SoundConnect(new_config_file)
@@ -50,8 +52,8 @@ class FSMNSeleNetV2Decorator(TorchModel):
                 self.size_out = self._sc.bytesPerBlockOut()
             else:
                 raise Exception(
-                    f'Invalid model directory! Failed to load model file: {model_txt_file}.'
-                )
+                    f'Invalid model directory! Failed to load model file:'
+                    f' {model_txt_file}.')
 
     def __del__(self):
         if hasattr(self, 'tmp_dir'):
@@ -73,3 +75,24 @@ class FSMNSeleNetV2Decorator(TorchModel):
                 'confidence': self._sc.kwsConfidence()
             }
         return result
+
+
+@MODELS.register_module(
+    Tasks.keyword_spotting,
+    module_name=Models.speech_dfsmn_kws_char_farfield_iot)
+class FSMNSeleNetV3Decorator(FSMNSeleNetV2Decorator):
+    r""" A decorator of FSMNSeleNetV3 for integrating into modelscope framework """
+
+    MODEL_CLASS = FSMNSeleNetV3
+
+    def __init__(self,
+                 model_dir: str,
+                 training: Optional[bool] = False,
+                 *args,
+                 **kwargs):
+        """initialize the dfsmn model from the `model_dir` path.
+
+        Args:
+            model_dir (str): the model path.
+        """
+        super().__init__(model_dir, training, *args, **kwargs)

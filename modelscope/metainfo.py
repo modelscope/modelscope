@@ -177,6 +177,7 @@ class Models(object):
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_ans = 'speech_dfsmn_ans'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
+    speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
     kws_kwsbp = 'kws-kwsbp'

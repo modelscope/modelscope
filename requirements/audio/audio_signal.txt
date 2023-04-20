@@ -6,6 +6,6 @@ numpy
 rotary_embedding_torch>=0.1.5
 scipy
 SoundFile>0.10
-speechbrain>=0.5.7
+speechbrain>=0.5.12
 torchaudio
 tqdm

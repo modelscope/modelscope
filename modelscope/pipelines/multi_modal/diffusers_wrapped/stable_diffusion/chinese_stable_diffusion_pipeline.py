@@ -75,7 +75,7 @@ class ChineseStableDiffusionPipeline(DiffusersPipeline):
             callback=inputs.get('callback'),
             callback_steps=inputs.get('callback_steps', 1))
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         images = []
         for img in inputs.images:
             if isinstance(img, Image.Image):

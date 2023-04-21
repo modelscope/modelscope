@@ -225,10 +225,10 @@ class VirgoDownloader(BaseDownloader):
             import json
             import shutil
             from urllib.parse import urlparse
+            from functools import partial
 
-            def download_file(meta_info_val):
+            def download_file(meta_info_val, data_dir):
                 file_url = ''
-                file_path = ''
                 try:
                     file_url = json.loads(meta_info_val)['url']
                     is_url = valid_url(file_url)
@@ -237,13 +237,15 @@ class VirgoDownloader(BaseDownloader):
                         file_name = os.path.basename(url_parse_res.path)
                     else:
                         raise ValueError(f'Unsupported url: {file_url}')
-                    file_path = os.path.join(data_files_dir, file_name)
+                    file_path = os.path.join(data_dir, file_name)
                 except Exception as e:
-                    logger.warning(e)
+                    logger.error(e)
+                    file_path = ''
 
                 if file_path and not os.path.exists(file_path):
                     logger.info(
                         f'Downloading file from {file_url} to {file_path}')
+                    os.makedirs(data_dir, exist_ok=True)
                     with open(file_path, 'wb') as f:
                         f.write(requests.get(file_url).content)
 
@@ -253,19 +255,18 @@ class VirgoDownloader(BaseDownloader):
             download_mode = self.dataset_context_config.download_mode
             data_files_dir = os.path.join(self.dataset.virgo_cache_dir,
                                           DatasetPathName.DATA_FILES_NAME)
-            if download_mode == DownloadMode.REUSE_DATASET_IF_EXISTS:
-                self.dataset.meta[VirgoDatasetConfig.
-                                  col_cache_file] = self.dataset.meta.apply(
-                                      lambda row: download_file(row.meta_info),
-                                      axis=1)
-            elif download_mode == DownloadMode.FORCE_REDOWNLOAD:
+
+            if download_mode == DownloadMode.FORCE_REDOWNLOAD:
                 shutil.rmtree(data_files_dir, ignore_errors=True)
-                self.dataset.meta[VirgoDatasetConfig.
-                                  col_cache_file] = self.dataset.meta.apply(
-                                      lambda row: download_file(row.meta_info),
-                                      axis=1)
-            else:
-                raise ValueError(f'Unsupported download mode: {download_mode}')
+
+            from tqdm import tqdm
+            tqdm.pandas(desc='apply download_file')
+            self.dataset.meta[
+                VirgoDatasetConfig.
+                col_cache_file] = self.dataset.meta.progress_apply(
+                    lambda row: partial(
+                        download_file, data_dir=data_files_dir)(row.meta_info),
+                    axis=1)
 
     def _post_process(self):
         ...

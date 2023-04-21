@@ -30,7 +30,7 @@ class TestVirgoDataset(unittest.TestCase):
         logger.info(ds_one)
 
         self.assertTrue(ds_one)
-        self.assertIsInstance(ds_one, VirgoDataset)
+        self.assertIsInstance(ds, VirgoDataset)
         self.assertIn(VirgoDatasetConfig.col_id, ds_one)
         self.assertIn(VirgoDatasetConfig.col_meta_info, ds_one)
         self.assertIn(VirgoDatasetConfig.col_analysis_result, ds_one)
@@ -47,8 +47,8 @@ class TestVirgoDataset(unittest.TestCase):
         logger.info(ds_one)
 
         self.assertTrue(ds_one)
-        self.assertIsInstance(ds_one, VirgoDataset)
-        self.assertTrue(ds_one.download_virgo_files)
+        self.assertIsInstance(ds, VirgoDataset)
+        self.assertTrue(ds.download_virgo_files)
         self.assertIn(VirgoDatasetConfig.col_cache_file, ds_one)
         cache_file_path = ds_one[VirgoDatasetConfig.col_cache_file]
         self.assertTrue(os.path.exists(cache_file_path))
@@ -65,8 +65,8 @@ class TestVirgoDataset(unittest.TestCase):
         logger.info(ds_one)
 
         self.assertTrue(ds_one)
-        self.assertIsInstance(ds_one, VirgoDataset)
-        self.assertTrue(ds_one.download_virgo_files)
+        self.assertIsInstance(ds, VirgoDataset)
+        self.assertTrue(ds.download_virgo_files)
         self.assertIn(VirgoDatasetConfig.col_cache_file, ds_one)
         cache_file_path = ds_one[VirgoDatasetConfig.col_cache_file]
         self.assertTrue(os.path.exists(cache_file_path))

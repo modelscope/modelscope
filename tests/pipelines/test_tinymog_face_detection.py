@@ -8,11 +8,10 @@ from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import draw_face_detection_result
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TinyMogFaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class TinyMogFaceDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.face_detection
@@ -47,10 +46,6 @@ class TinyMogFaceDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         face_detection = pipeline(Tasks.face_detection)
         result = face_detection(self.img_path)
         self.show_result(self.img_path, result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -11,7 +11,6 @@ import torch
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -20,8 +19,7 @@ import tensorflow as tf  # isort:skip
 logger = get_logger()
 
 
-class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
-                                                DemoCompatibilityCheck):
+class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_to_speech
@@ -108,10 +106,6 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase,
             wav = output[OutputKeys.OUTPUT_WAV]
             with open(f'output_{self.test_model_name[i]}', 'wb') as f:
                 f.write(wav)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

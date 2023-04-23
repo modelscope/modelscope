@@ -7,11 +7,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import BadImageDetecingPipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class BadImageDetectingTest(unittest.TestCase, DemoCompatibilityCheck):
+class BadImageDetectingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.bad_image_detecting
@@ -57,10 +56,6 @@ class BadImageDetectingTest(unittest.TestCase, DemoCompatibilityCheck):
         scores = out[OutputKeys.SCORES]
         print('pipeline: the out_label is {}'.format(labels))
         print('pipeline: the out_score is {}'.format(scores))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -7,14 +7,13 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import realtime_object_detection_bbox_vis
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class RealtimeObjectDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.easycv_small_model_id = 'damo/cv_cspnet_image-object-detection_yolox'
@@ -45,10 +44,6 @@ class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
             logger.info(result)
         else:
             raise ValueError('process error')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

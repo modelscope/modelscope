@@ -8,12 +8,11 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class MGeoTest(unittest.TestCase, DemoCompatibilityCheck):
+class MGeoTest(unittest.TestCase):
 
     multi_modal_inputs = {
         'source_sentence': ['杭州余杭东方未来学校附近世纪华联商场(金家渡北苑店)'],
@@ -116,10 +115,6 @@ class MGeoTest(unittest.TestCase, DemoCompatibilityCheck):
         for task, model, inputs in self.pipe_input:
             pipeline_ins = pipeline(task=task, model=model)
             print(pipeline_ins(input=inputs))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

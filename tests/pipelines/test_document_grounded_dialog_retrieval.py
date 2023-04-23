@@ -9,12 +9,10 @@ from modelscope.pipelines import pipeline
 from modelscope.preprocessors.nlp import \
     DocumentGroundedDialogRetrievalPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DocumentGroundedDialogRetrievalTest(unittest.TestCase,
-                                          DemoCompatibilityCheck):
+class DocumentGroundedDialogRetrievalTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.document_grounded_dialog_retrieval

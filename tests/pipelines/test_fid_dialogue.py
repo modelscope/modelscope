@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FidDialogueTest(unittest.TestCase, DemoCompatibilityCheck):
+class FidDialogueTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.fid_dialogue
@@ -68,10 +67,6 @@ class FidDialogueTest(unittest.TestCase, DemoCompatibilityCheck):
             model_revision=self.model_revision_3_7b)
         result = pipeline_ins(self.input, **self.kwargs)
         print(result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

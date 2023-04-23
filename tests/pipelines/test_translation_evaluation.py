@@ -5,11 +5,10 @@ import unittest
 from modelscope.models.nlp.unite.configuration_unite import EvaluationMode
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
+class TranslationEvaluationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.translation_evaluation

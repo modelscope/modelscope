@@ -11,11 +11,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import match_pair_visualization
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageMatchingTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageMatchingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'image-matching'

@@ -6,11 +6,10 @@ import PIL
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
+class OCRRecognitionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_convnextTiny_ocr-recognition-general_damo'
@@ -153,10 +152,6 @@ class OCRRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
         ocr_recognition = pipeline(
             Tasks.ocr_recognition, model_revision='v2.3.0', device='cpu')
         self.pipeline_inference(ocr_recognition, self.test_image)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

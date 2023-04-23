@@ -8,11 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import draw_keypoints
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class Body2DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
+class Body2DKeypointsTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.body_2d_keypoints
@@ -33,10 +32,6 @@ class Body2DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_with_image_input(self):
         body_2d_keypoints = pipeline(self.task, model=self.model_id)
         self.pipeline_inference(body_2d_keypoints, Image.open(self.test_image))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

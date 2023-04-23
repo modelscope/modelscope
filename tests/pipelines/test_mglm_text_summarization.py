@@ -6,11 +6,10 @@ from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.preprocessors import MGLMSummarizationPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class mGLMTest(unittest.TestCase, DemoCompatibilityCheck):
+class mGLMTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.output_dir = 'unittest_output'

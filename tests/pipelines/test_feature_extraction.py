@@ -11,12 +11,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FeatureExtractionPipeline
 from modelscope.preprocessors import FillMaskTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FeatureExtractionTaskModelTest(unittest.TestCase,
-                                     DemoCompatibilityCheck):
+class FeatureExtractionTaskModelTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.feature_extraction

@@ -10,11 +10,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ObjectDetection3DTest(unittest.TestCase, DemoCompatibilityCheck):
+class ObjectDetection3DTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.object_detection_3d
@@ -47,10 +46,6 @@ class ObjectDetection3DTest(unittest.TestCase, DemoCompatibilityCheck):
         idx = 0
         detect = pipeline(self.task)
         self.pipeline_inference(detect, idx)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

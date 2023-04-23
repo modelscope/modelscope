@@ -11,11 +11,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import created_boxed_image
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
+class OfaTasksTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.output_dir = 'unittest_output'
@@ -365,10 +364,6 @@ class OfaTasksTest(unittest.TestCase, DemoCompatibilityCheck):
         result = ofa_pipe([example for _ in range(3)], batch_size=2)
         for r in result:
             print(r[OutputKeys.TEXT])
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

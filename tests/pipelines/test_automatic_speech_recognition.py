@@ -10,7 +10,6 @@ import soundfile
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ColorCodes, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import download_and_untar, test_level
 
@@ -26,8 +25,7 @@ TFRECORD_TESTSETS_FILE = 'tfrecord.tar.gz'
 TFRECORD_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/datasets/tfrecord.tar.gz'
 
 
-class AutomaticSpeechRecognitionTest(unittest.TestCase,
-                                     DemoCompatibilityCheck):
+class AutomaticSpeechRecognitionTest(unittest.TestCase):
     action_info = {
         'test_run_with_wav_pytorch': {
             'checking_item': OutputKeys.TEXT,
@@ -456,10 +454,6 @@ class AutomaticSpeechRecognitionTest(unittest.TestCase,
             else:
                 logger.info(ColorCodes.MAGENTA + str(rec_result)
                             + ColorCodes.END)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

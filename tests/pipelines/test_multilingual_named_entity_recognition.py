@@ -8,12 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import NERPreprocessorThai, NERPreprocessorViet
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
-                                             DemoCompatibilityCheck):
+class MultilingualNamedEntityRecognitionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.named_entity_recognition
@@ -122,10 +120,6 @@ class MultilingualNamedEntityRecognitionTest(unittest.TestCase,
                 self.viet_sentence, self.viet_sentence[:10],
                 self.viet_sentence[5:]
             ]))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

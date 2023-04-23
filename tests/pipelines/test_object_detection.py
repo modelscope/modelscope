@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class ObjectDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.human_detection
@@ -42,10 +41,6 @@ class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         human_detect = pipeline(Tasks.human_detection)
         result = human_detect(input_location)
         print(result)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_image_object_detection_auto_pipeline(self):

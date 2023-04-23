@@ -9,11 +9,10 @@ from modelscope.pipelines.nlp import TextErrorCorrectionPipeline
 from modelscope.preprocessors import (Preprocessor,
                                       TextErrorCorrectionPreprocessor)
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class TextErrorCorrectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_error_correction
@@ -80,10 +79,6 @@ class TextErrorCorrectionTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.text_error_correction, model=self.law_model_id)
         print(pipeline_ins(self.input_law))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

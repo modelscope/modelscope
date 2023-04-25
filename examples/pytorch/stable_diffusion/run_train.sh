@@ -1,4 +1,11 @@
 PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/finetune_stable_diffusion.py \
     --model 'damo/multi-modal_efficient-diffusion-tuning-lora' \
+    --work_dir './tmp/stable_diffusion_tuning' \
+    --namespace 'damo' \
+    --dataset_name 'controlnet_dataset_condition_fill50k' \
     --max_epochs 1 \
-    --dataset_name 'controlnet_dataset_condition_fill50k'
+    --save_ckpt_strategy 'by_epoch' \
+    --logging_interval 100 \
+    --train.dataloader.workers_per_gpu 0 \
+    --evaluation.dataloader.workers_per_gpu 0 \
+    --train.optimizer.lr 1e-5

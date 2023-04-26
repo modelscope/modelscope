@@ -188,6 +188,7 @@ class Models(object):
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
+    rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
     # multi-modal models
@@ -486,6 +487,7 @@ class Pipelines(object):
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
+    speaker_verification_rdino = 'speaker-verification-rdino'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 

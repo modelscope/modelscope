@@ -8,13 +8,6 @@ from modelscope.trainers.training_args import TrainingArgs
 @dataclass
 class StableDiffusionArguments(TrainingArgs):
 
-    namespace: str = field(
-        default=None,
-        metadata={
-            'help': 'The namespace of dataset',
-            'cfg_node': 'namespace'
-        })
-
     def __call__(self, config):
         config = super().__call__(config)
         config.train.lr_scheduler.T_max = self.max_epochs

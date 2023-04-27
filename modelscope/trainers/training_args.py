@@ -565,6 +565,13 @@ class TrainingArgs:
             'cfg_node': 'evaluation.metrics'
         })
 
+    namespace: str = field(
+        default=None,
+        metadata={
+            'help': 'The namespace of dataset',
+            'cfg_node': 'namespace'
+        })
+
     @classmethod
     def from_cli(cls, parser_args=None, **extra_kwargs):
         """Construct a TrainingArg class by the parameters of CLI.

@@ -568,8 +568,7 @@ class TrainingArgs:
     namespace: str = field(
         default=None,
         metadata={
-            'help': 'The namespace of dataset',
-            'cfg_node': 'namespace'
+            'help': 'The namespace of dataset'
         })
 
     @classmethod

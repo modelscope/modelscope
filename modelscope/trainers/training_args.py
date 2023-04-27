@@ -566,10 +566,7 @@ class TrainingArgs:
         })
 
     namespace: str = field(
-        default=None,
-        metadata={
-            'help': 'The namespace of dataset'
-        })
+        default=None, metadata={'help': 'The namespace of dataset'})
 
     @classmethod
     def from_cli(cls, parser_args=None, **extra_kwargs):

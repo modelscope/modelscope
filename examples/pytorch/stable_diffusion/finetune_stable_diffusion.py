@@ -27,8 +27,7 @@ kwargs = dict(
     work_dir=args.work_dir,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
-    cfg_modify_fn=args
-    )
+    cfg_modify_fn=args)
 
 trainer: EpochBasedTrainer = build_trainer(name='trainer', default_args=kwargs)
 trainer.train()

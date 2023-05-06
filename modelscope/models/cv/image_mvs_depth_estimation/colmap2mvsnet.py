@@ -382,7 +382,7 @@ def processing_single_scene(args):
                 points3d[p3d_id].xyz[0], points3d[p3d_id].xyz[1],
                 points3d[p3d_id].xyz[2], 1
             ])
-            zs.append(np.asscalar(transformed[2]))
+            zs.append(transformed[2].item())
         zs_sorted = sorted(zs)
         # relaxed depth range
         max_ratio = 0.1

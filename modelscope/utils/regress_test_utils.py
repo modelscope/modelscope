@@ -483,9 +483,9 @@ def numpify_tensor_nested(tensors, reduction=None, clip_value=10000):
             t = np.where(t > clip_value, clip_value, t)
             t = np.where(t < -clip_value, -clip_value, t)
         if reduction == 'sum':
-            return t.sum(dtype=np.float)
+            return t.sum(dtype=float)
         elif reduction == 'mean':
-            return t.mean(dtype=np.float)
+            return t.mean(dtype=float)
         return t
     return tensors
 

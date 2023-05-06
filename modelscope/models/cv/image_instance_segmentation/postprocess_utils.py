@@ -108,16 +108,16 @@ def get_img_ins_seg_result(img_seg_result=None,
     for seg_result in img_seg_result:
 
         box = [
-            np.int(seg_result[0]),
-            np.int(seg_result[1]),
-            np.int(seg_result[2]),
-            np.int(seg_result[3])
+            int(seg_result[0]),
+            int(seg_result[1]),
+            int(seg_result[2]),
+            int(seg_result[3])
         ]
-        score = np.float(seg_result[4])
+        score = float(seg_result[4])
         category = seg_result[5]
 
         mask = np.array(seg_result[6], order='F', dtype='uint8')
-        mask = mask.astype(np.float)
+        mask = mask.astype(float)
 
         results_dict[OutputKeys.BOXES].append(box)
         results_dict[OutputKeys.MASKS].append(mask)

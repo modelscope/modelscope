@@ -105,7 +105,7 @@ class SkinRetouchingPipeline(Pipeline):
         img = LoadImage.convert_to_ndarray(input)
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        img = img.astype(np.float)
+        img = img.astype(float)
         result = {'img': img}
         return result
 

@@ -118,13 +118,6 @@ class Models(object):
     longshortnet = 'longshortnet'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
-    # EasyCV models
-    yolox = 'YOLOX'
-    segformer = 'Segformer'
-    hand_2d_keypoints = 'HRNet-Hand2D-Keypoints'
-    image_object_detection_auto = 'image-object-detection-auto'
-    dino = 'DINO'
-
     # nlp models
     bert = 'bert'
     palm = 'palm-v2'
@@ -279,8 +272,6 @@ class Pipelines(object):
     tbs_detection = 'tbs-detection'
     object_detection = 'vit-object-detection'
     abnormal_object_detection = 'abnormal-object-detection'
-    easycv_detection = 'easycv-detection'
-    easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     salient_boudary_detection = 'res2net-salient-detection'
@@ -349,7 +340,6 @@ class Pipelines(object):
     video_single_object_tracking_procontext = 'procontext-vitb-video-single-object-tracking'
     video_multi_object_tracking = 'video-multi-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
-    image_panoptic_segmentation_easycv = 'image-panoptic-segmentation-easycv'
     video_summarization = 'googlenet_pgl_video_summarization'
     language_guided_video_summarization = 'clip-it-video-summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
@@ -914,7 +904,6 @@ class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
     """
 
     default = 'trainer'
-    easycv = 'easycv'
     tinynas_damoyolo = 'tinynas-damoyolo'
 
     @staticmethod
@@ -936,8 +925,6 @@ class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
             return Fields.multi_modal
         elif attribute_or_value == Trainers.default:
             return Trainers.default
-        elif attribute_or_value == Trainers.easycv:
-            return Trainers.easycv
         else:
             return 'unknown'
 
@@ -1168,14 +1155,6 @@ class LR_Schedulers(object):
 class CustomDatasets(object):
     """ Names for different datasets.
     """
-    ClsDataset = 'ClsDataset'
-    Face2dKeypointsDataset = 'FaceKeypointDataset'
-    HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
-    HumanWholeBodyKeypointDataset = 'WholeBodyCocoTopDownDataset'
-    SegDataset = 'SegDataset'
-    DetDataset = 'DetDataset'
-    DetImagesMixDataset = 'DetImagesMixDataset'
-    PanopticDataset = 'PanopticDataset'
     PairedDataset = 'PairedDataset'
     SiddDataset = 'SiddDataset'
     GoproDataset = 'GoproDataset'

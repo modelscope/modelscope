@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
-    from .hand_2d_keypoints_pipeline import Hand2DKeypointsPipeline
     from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
     from .card_detection_pipeline import CardDetectionPipeline
     from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
@@ -29,13 +28,10 @@ if TYPE_CHECKING:
     from .image_classification_pipeline import GeneralImageClassificationPipeline
     from .image_color_enhance_pipeline import ImageColorEnhancePipeline
     from .image_colorization_pipeline import ImageColorizationPipeline
-    from .image_classification_pipeline import ImageClassificationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
-    from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
-    from .image_semantic_segmentation_pipeline import ImagePanopticSegmentationEasyCVPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
     from .image_reid_person_pipeline import ImageReidPersonPipeline
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
@@ -46,7 +42,6 @@ if TYPE_CHECKING:
     from .image_inpainting_pipeline import ImageInpaintingPipeline
     from .image_paintbyexample_pipeline import ImagePaintbyexamplePipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
-    from .realtime_object_detection_pipeline import RealtimeObjectDetectionPipeline
     from .live_category_pipeline import LiveCategoryPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
@@ -59,10 +54,6 @@ if TYPE_CHECKING:
     from .video_category_pipeline import VideoCategoryPipeline
     from .virtual_try_on_pipeline import VirtualTryonPipeline
     from .shop_segmentation_pipleline import ShopSegmentationPipeline
-    from .easycv_pipelines import (EasyCVDetectionPipeline,
-                                   EasyCVSegmentationPipeline,
-                                   Face2DKeypointsPipeline,
-                                   HumanWholebodyKeypointsPipeline)
     from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
     from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
     from .mog_face_detection_pipeline import MogFaceDetectionPipeline
@@ -123,7 +114,6 @@ else:
         'animal_recognition_pipeline': ['AnimalRecognitionPipeline'],
         'body_2d_keypoints_pipeline': ['Body2DKeypointsPipeline'],
         'body_3d_keypoints_pipeline': ['Body3DKeypointsPipeline'],
-        'hand_2d_keypoints_pipeline': ['Hand2DKeypointsPipeline'],
         'card_detection_pipeline': ['CardDetectionPipeline'],
         'cmdssl_video_embedding_pipeline': ['CMDSSLVideoEmbeddingPipeline'],
         'hicossl_video_embedding_pipeline': ['HICOSSLVideoEmbeddingPipeline'],
@@ -140,7 +130,7 @@ else:
         'face_recognition_onnx_fm_pipeline': ['FaceRecognitionOnnxFmPipeline'],
         'general_recognition_pipeline': ['GeneralRecognitionPipeline'],
         'image_classification_pipeline':
-        ['GeneralImageClassificationPipeline', 'ImageClassificationPipeline'],
+        ['GeneralImageClassificationPipeline'],
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_deblur_pipeline': ['ImageDeblurPipeline'],
@@ -149,10 +139,6 @@ else:
         'image_instance_segmentation_pipeline':
         ['ImageInstanceSegmentationPipeline'],
         'image_matting_pipeline': ['ImageMattingPipeline'],
-        'image_panoptic_segmentation_pipeline': [
-            'ImagePanopticSegmentationPipeline',
-            'ImagePanopticSegmentationEasyCVPipeline'
-        ],
         'image_portrait_enhancement_pipeline':
         ['ImagePortraitEnhancementPipeline'],
         'image_reid_person_pipeline': ['ImageReidPersonPipeline'],
@@ -164,8 +150,6 @@ else:
         ['Image2ImageTranslationPipeline'],
         'product_retrieval_embedding_pipeline':
         ['ProductRetrievalEmbeddingPipeline'],
-        'realtime_object_detection_pipeline':
-        ['RealtimeObjectDetectionPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generate_pipeline': ['Image2ImageGenerationPipeline'],
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
@@ -180,12 +164,6 @@ else:
         'video_category_pipeline': ['VideoCategoryPipeline'],
         'virtual_try_on_pipeline': ['VirtualTryonPipeline'],
         'shop_segmentation_pipleline': ['ShopSegmentationPipeline'],
-        'easycv_pipelines': [
-            'EasyCVDetectionPipeline',
-            'EasyCVSegmentationPipeline',
-            'Face2DKeypointsPipeline',
-            'HumanWholebodyKeypointsPipeline',
-        ],
         'text_driven_segmentation_pipleline':
         ['TextDrivenSegmentationPipeline'],
         'movie_scene_segmentation_pipeline':
@@ -202,9 +180,8 @@ else:
         ['FaceAttributeRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
-        'referring_video_object_segmentation_pipeline': [
-            'ReferringVideoObjectSegmentationPipeline'
-        ],
+        'referring_video_object_segmentation_pipeline':
+        ['ReferringVideoObjectSegmentationPipeline'],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
         ],

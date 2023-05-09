@@ -196,17 +196,6 @@ class MsDatasetTest(unittest.TestCase):
         print(next(iter(tf_dataset)))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_streaming_load_coco(self):
-        small_coco_for_test = MsDataset.load(
-            dataset_name='EasyCV/small_coco_for_test',
-            split='train',
-            use_streaming=True,
-            download_mode=DownloadMode.FORCE_REDOWNLOAD)
-        dataset_sample_dict = next(iter(small_coco_for_test))
-        print(dataset_sample_dict)
-        assert dataset_sample_dict.values()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_streaming_load_uni_fold(self):
         """Test case for loading large scale datasets."""
         dataset = MsDataset.load(

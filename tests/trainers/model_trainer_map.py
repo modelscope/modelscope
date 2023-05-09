@@ -11,33 +11,18 @@ model_trainer_map = {
     ['tests/trainers/audio/test_separation_trainer.py'],
     'speech_tts/speech_sambert-hifigan_tts_zh-cn_multisp_pretrain_16k':
     ['tests/trainers/audio/test_tts_trainer.py'],
-    'damo/cv_mobilenet_face-2d-keypoints_alignment':
-    ['tests/trainers/easycv/test_easycv_trainer_face_2d_keypoints.py'],
-    'damo/cv_hrnetw18_hand-pose-keypoints_coco-wholebody':
-    ['tests/trainers/easycv/test_easycv_trainer_hand_2d_keypoints.py'],
-    'damo/cv_yolox-pai_hand-detection':
-    ['tests/trainers/easycv/test_easycv_trainer_hand_detection.py'],
-    'damo/cv_r50_panoptic-segmentation_cocopan':
-    ['tests/trainers/easycv/test_easycv_trainer_panoptic_mask2former.py'],
-    'damo/cv_segformer-b0_image_semantic-segmentation_coco-stuff164k':
-    ['tests/trainers/easycv/test_segformer.py'],
     'damo/cv_resnet_carddetection_scrfd34gkps':
     ['tests/trainers/test_card_detection_scrfd_trainer.py'],
-    'damo/multi-modal_clip-vit-base-patch16_zh': [
-        'tests/trainers/test_clip_trainer.py'
-    ],
-    'damo/nlp_space_pretrained-dialog-model': [
-        'tests/trainers/test_dialog_intent_trainer.py'
-    ],
-    'damo/cv_resnet_facedetection_scrfd10gkps': [
-        'tests/trainers/test_face_detection_scrfd_trainer.py'
-    ],
-    'damo/nlp_structbert_faq-question-answering_chinese-base': [
-        'tests/trainers/test_finetune_faq_question_answering.py'
-    ],
-    'PAI/nlp_gpt3_text-generation_0.35B_MoE-64': [
-        'tests/trainers/test_finetune_gpt_moe.py'
-    ],
+    'damo/multi-modal_clip-vit-base-patch16_zh':
+    ['tests/trainers/test_clip_trainer.py'],
+    'damo/nlp_space_pretrained-dialog-model':
+    ['tests/trainers/test_dialog_intent_trainer.py'],
+    'damo/cv_resnet_facedetection_scrfd10gkps':
+    ['tests/trainers/test_face_detection_scrfd_trainer.py'],
+    'damo/nlp_structbert_faq-question-answering_chinese-base':
+    ['tests/trainers/test_finetune_faq_question_answering.py'],
+    'PAI/nlp_gpt3_text-generation_0.35B_MoE-64':
+    ['tests/trainers/test_finetune_gpt_moe.py'],
     'damo/nlp_gpt3_text-generation_1.3B': [
         'tests/trainers/test_finetune_gpt3.py'
     ],

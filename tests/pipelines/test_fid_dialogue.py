@@ -49,8 +49,7 @@ class FidDialogueTest(unittest.TestCase, DemoCompatibilityCheck):
             'forward_params': forward_params
         }
 
-    # @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    @unittest.skip('temporarily skip')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_240m_pipeline(self):
         pipeline_ins = pipeline(
             task=self.task,
@@ -59,8 +58,7 @@ class FidDialogueTest(unittest.TestCase, DemoCompatibilityCheck):
         result = pipeline_ins(self.input, **self.kwargs)
         print(result)
 
-    # @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    @unittest.skip('temporarily skip')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_3_7b_pipeline(self):
         pipeline_ins = pipeline(
             task=self.task,

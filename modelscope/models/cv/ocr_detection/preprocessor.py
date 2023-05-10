@@ -37,7 +37,7 @@ class OCRDetectionPreprocessor(Preprocessor):
             inputs:
                 - A string containing an HTTP link pointing to an image
                 - A string containing a local path to an image
-                - An image loaded in PIL or opencv directly
+                - An image loaded in PIL(PIL.Image.Image) or opencv(np.ndarray) directly, 3 channels RGB
         Returns:
             outputs: the preprocessed image
         """
@@ -45,6 +45,8 @@ class OCRDetectionPreprocessor(Preprocessor):
             img = np.array(load_image(inputs))
         elif isinstance(inputs, PIL.Image.Image):
             img = np.array(inputs)
+        elif isinstance(inputs, np.ndarray):
+            img = inputs
         else:
             raise TypeError(
                 f'inputs should be either str, PIL.Image, np.array, but got {type(inputs)}'

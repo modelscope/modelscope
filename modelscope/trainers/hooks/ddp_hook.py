@@ -37,6 +37,7 @@ class DDPHook(Hook):
     def before_val(self, trainer):
         self.wrap_module(trainer)
 
+    @Hook.overload_func(name='DDPHook.wrap_module')
     def wrap_module(self, trainer):
         if not self.wrapped:
             trainer.model = trainer.to_parallel(trainer.model)

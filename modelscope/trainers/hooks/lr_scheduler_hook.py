@@ -52,6 +52,7 @@ class LrSchedulerHook(Hook):
         else:
             trainer.lr_scheduler.step()
 
+    @Hook.overload_func(name='LrSchedulerHook.get_current_lr')
     def get_current_lr(self, trainer):
         import torch
 

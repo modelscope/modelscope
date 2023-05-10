@@ -48,7 +48,7 @@ if __name__ == '__main__':
     def cfg_modify_fn(cfg):
         cfg.train.lr_scheduler = {
             'type': 'CosineAnnealingLR',
-            'T_max': 3,
+            'T_max': 1,
             'options': {
                 'by_epoch': False
             }
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         train_dataset=train_dataset,
         eval_dataset=None,
         data_collator=data_collator,
-        max_epochs=3,
+        max_epochs=1,
         launcher='pytorch',
         work_dir="/run/model/ms_out",
         cfg_modify_fn=cfg_modify_fn)

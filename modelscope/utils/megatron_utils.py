@@ -96,15 +96,16 @@ def convert_megatron_checkpoint(
     log_master(
         f'origin_num_partitions: {origin_num_partitions}, target_num_partitions: {target_num_partitions}'
     )
-    os.makedirs(target_dir, exist_ok=True)
 
     if origin_num_partitions < target_num_partitions:
+        os.makedirs(target_dir, exist_ok=True)
         state_dict = _split_checkpoint(
             model, checkpoint_dir,
             target_num_partitions // origin_num_partitions)
         _save_converted_checkpoint(state_dict, target_dir)
         log_master('Split checkpoints succeeded.')
     elif origin_num_partitions > target_num_partitions:
+        os.makedirs(target_dir, exist_ok=True)
         state_dict = _merge_checkpoint(
             model, checkpoint_dir,
             origin_num_partitions // target_num_partitions)

@@ -48,8 +48,14 @@ class DocumentSegmentationPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            **kwargs)
 
+        kwargs = kwargs
+        if 'compile' in kwargs.keys():
+            kwargs.pop('compile')
+        if 'compile_options' in kwargs.keys():
+            kwargs.pop('compile_options')
         self.model_dir = self.model.model_dir
         self.model_cfg = self.model.model_cfg
         if preprocessor is None:

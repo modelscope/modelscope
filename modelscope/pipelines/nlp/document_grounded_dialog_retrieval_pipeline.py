@@ -55,7 +55,8 @@ class DocumentGroundedDialogRetrievalPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            **kwargs)
 
         if preprocessor is None:
             self.preprocessor = DocumentGroundedDialogRetrievalPreprocessor(

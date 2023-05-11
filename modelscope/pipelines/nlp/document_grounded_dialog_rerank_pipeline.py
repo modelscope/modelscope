@@ -64,7 +64,8 @@ class DocumentGroundedDialogRerankPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            seed=seed)
+            seed=seed,
+            **kwarg)
         self.model = model
         self.preprocessor = preprocessor
         self.device = device

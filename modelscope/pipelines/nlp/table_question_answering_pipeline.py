@@ -401,7 +401,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             OutputKeys.SQL_STRING: sql.string,
             OutputKeys.SQL_QUERY: sql.query,
             OutputKeys.HISTORY: result['sql'],
-            OutputKeys.QUERT_RESULT: tabledata,
+            OutputKeys.QUERY_RESULT: tabledata,
         }
 
         return {OutputKeys.OUTPUT: output}

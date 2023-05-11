@@ -250,6 +250,7 @@ class Pipelines(object):
     should use task name for this pipeline.
         For pipeline which suuport only one model, we should use ${Model}-${Task} as its name.
     """
+    pipeline_template = 'pipeline-template'
     # vision tasks
     portrait_matting = 'unet-image-matting'
     universal_matting = 'unet-universal-matting'

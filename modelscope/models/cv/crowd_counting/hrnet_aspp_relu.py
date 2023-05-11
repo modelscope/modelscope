@@ -356,7 +356,7 @@ class HighResolutionNet(nn.Module):
                                                        num_channels)
         self.stage3, pre_stage_channels = self._make_stage(
             self.stage3_cfg, num_channels)
-        last_inp_channels = np.int(np.sum(pre_stage_channels)) + 256
+        last_inp_channels = int(np.sum(pre_stage_channels)) + 256
         self.redc_layer = nn.Sequential(
             nn.Conv2d(
                 in_channels=last_inp_channels,

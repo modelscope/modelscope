@@ -40,7 +40,7 @@ def read_mask(filename):
 
 # save a binary mask
 def save_mask(filename, mask):
-    assert mask.dtype == np.bool
+    assert mask.dtype == bool
     mask = mask.astype(np.uint8) * 255
     Image.fromarray(mask).save(filename)
 

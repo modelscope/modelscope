@@ -116,7 +116,7 @@ class TBSDetectionPipeline(Pipeline):
             - **labels** (`List[str]`, optional) -- The boxes's class_names of detected object in image.
         """
         img = LoadImage.convert_to_ndarray(input)
-        img = img.astype(np.float)
+        img = img.astype(float)
         result = {'img': img, 'img_path': input}
         return result
 

@@ -277,6 +277,7 @@ class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):
     This should be used to register models, pipelines, trainers.
     """
     reverse_field_index = {}
+    task_template = 'task-template'
 
     @staticmethod
     def find_field_by_task(task_name):

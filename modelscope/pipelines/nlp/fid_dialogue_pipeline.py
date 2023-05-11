@@ -193,6 +193,8 @@ class FidDialoguePipeline(Pipeline):
 
         if torch.cuda.is_available():
             hypotheses = inputs.sequences.detach().cpu().tolist()
+        else:
+            hypotheses = inputs.sequences
 
         response = self.preprocessor_tokenizer.decode(
             hypotheses[0], skip_special_tokens=self.is_t5)

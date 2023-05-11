@@ -76,7 +76,7 @@ class TextClassificationPipeline(Pipeline):
                     field=Fields.multi_modal,
                     **kwargs)
             else:
-                first_sequence = kwargs.pop('first_sequence', 'first_sequence')
+                first_sequence = kwargs.pop('first_sequence', 'text')
                 second_sequence = kwargs.pop('second_sequence', None)
                 sequence_length = kwargs.pop('sequence_length', 512)
                 self.preprocessor = Preprocessor.from_pretrained(

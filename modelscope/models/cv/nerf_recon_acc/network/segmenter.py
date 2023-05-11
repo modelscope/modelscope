@@ -31,7 +31,7 @@ class ObjectSegmenter(object):
         elif img.shape[2] == 4:
             img = img[:, :, :3]
         img = img[:, :, ::-1]
-        img = img.astype(np.float)
+        img = img.astype(float)
         return img
 
     def run_mask(self, img):

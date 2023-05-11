@@ -21,6 +21,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_image_instance_segmentation_trainer.py
   - test_image_portrait_enhancement_trainer.py
   - test_translation_trainer.py
+  - test_translation_evaluation_trainer.py
   - test_unifold.py
   - test_automatic_post_editing.py
   - test_mplug_tasks.py
@@ -77,6 +78,7 @@ envs:
       - test_text_to_speech.py
       - test_csanmt_translation.py
       - test_translation_trainer.py
+      - test_translation_evaluation_trainer.py
       - test_ocr_detection.py
       - test_automatic_speech_recognition.py
       - test_image_matting.py

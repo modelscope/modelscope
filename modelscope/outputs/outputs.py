@@ -1447,9 +1447,9 @@ TASK_OUTPUTS = {
     # }
     Tasks.image_skychange: [OutputKeys.OUTPUT_IMG],
     # {
-    #     'scores': [0.1, 0.2, 0.3, ...]
+    #     'score': [0.1, 0.2, 0.3, ...]
     # }
-    Tasks.translation_evaluation: [OutputKeys.SCORES],
+    Tasks.translation_evaluation: [OutputKeys.SCORE],
 
     # video object segmentation result for a single video
     #   {

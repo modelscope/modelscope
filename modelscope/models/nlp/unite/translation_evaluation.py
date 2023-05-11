@@ -20,6 +20,8 @@ from transformers.activations import ACT2FN
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.nlp.unite.configuration import InputFormat
+from modelscope.outputs.nlp_outputs import TranslationEvaluationOutput
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -71,8 +73,16 @@ class LayerwiseAttention(Module):
         mask: torch.Tensor = None,
     ) -> torch.Tensor:
         tensors = torch.cat(list(x.unsqueeze(dim=0) for x in tensors), dim=0)
-        normed_weights = softmax(
-            self.scalar_parameters, dim=0).view(-1, 1, 1, 1)
+
+        if self.training and self.dropout:
+            normed_weights = softmax(
+                torch.where(self.dropout_mask.uniform_() > self.dropout,
+                            self.scalar_parameters, self.dropout_fill),
+                dim=-1)
+        else:
+            normed_weights = softmax(self.scalar_parameters, dim=-1)
+
+        normed_weights = normed_weights.view(-1, 1, 1, 1)
 
         mask_float = mask.float()
         weighted_sum = (normed_weights
@@ -97,18 +107,18 @@ class FeedForward(Module):
         Feed Forward Neural Network.
 
         Args:
-        in_dim (:obj:`int`):
-            Number of input features.
-        out_dim (:obj:`int`, defaults to 1):
-            Number of output features. Default is 1 -- a single scalar.
-        hidden_sizes (:obj:`List[int]`, defaults to `[3072, 768]`):
-            List with hidden layer sizes.
-        activations (:obj:`str`, defaults to `Sigmoid`):
-            Name of the activation function to be used in the hidden layers.
-        final_activation (:obj:`str`, Optional, defaults to `None`):
-            Name of the final activation function if any.
-        dropout (:obj:`float`, defaults to 0.1):
-            Dropout ratio to be used in the hidden layers.
+            in_dim (:obj:`int`):
+                Number of input features.
+            out_dim (:obj:`int`, defaults to 1):
+                Number of output features. Default is 1 -- a single scalar.
+            hidden_sizes (:obj:`List[int]`, defaults to `[3072, 768]`):
+                List with hidden layer sizes.
+            activations (:obj:`str`, defaults to `Sigmoid`):
+                Name of the activation function to be used in the hidden layers.
+            final_activation (:obj:`str`, Optional, defaults to `None`):
+                Name of the final activation function if any.
+            dropout (:obj:`float`, defaults to 0.1):
+                Dropout ratio to be used in the hidden layers.
         """
         super().__init__()
         modules = []
@@ -266,8 +276,11 @@ class UniTEForTranslationEvaluation(TorchModel):
 
         return
 
-    def forward(self, input_sentences: List[torch.Tensor]):
-        input_ids = self.combine_input_sentences(input_sentences)
+    def forward(self,
+                input_ids: torch.Tensor,
+                input_format: Optional[List[InputFormat]] = None,
+                score: Optional[torch.Tensor] = None,
+                **kwargs) -> TranslationEvaluationOutput:
         attention_mask = input_ids.ne(self.pad_token_id).long()
         outputs = self.encoder(
             input_ids=input_ids,
@@ -276,125 +289,138 @@ class UniTEForTranslationEvaluation(TorchModel):
             return_dict=True)
         mix_states = self.layerwise_attention(outputs['hidden_states'],
                                               attention_mask)
-        pred = self.estimator(mix_states)
-        return pred.squeeze(dim=-1)
+        pred = self.estimator(mix_states).squeeze(dim=-1)
+        output = TranslationEvaluationOutput(
+            score=pred.cpu().tolist(), input_format=input_format)
 
-    def load_checkpoint(self, path: str, device: torch.device):
-        state_dict = torch.load(path, map_location=device)
-        self.load_state_dict(state_dict)
+        if score is not None:
+            loss = (pred - score).pow(2).mean()
+            output['loss'] = loss
+
+        return output
+
+    def load_checkpoint(self, path: str, device: torch.device, plm_only: bool):
+        if plm_only:
+            self.encoder = self.encoder.from_pretrained(path).to(device)
+            self.encoder.pooler = None
+        else:
+            state_dict = torch.load(path, map_location=device)
+            self.load_state_dict(state_dict)
         logger.info('Loading checkpoint parameters from %s' % path)
         return
 
-    def combine_input_sentences(self, input_sent_groups: List[torch.Tensor]):
-        for input_sent_group in input_sent_groups[1:]:
-            input_sent_group[:, 0] = self.eos_token_id
 
-        if len(input_sent_groups) == 3:
-            cutted_sents = self.cut_long_sequences3(input_sent_groups)
-        else:
-            cutted_sents = self.cut_long_sequences2(input_sent_groups)
-        return cutted_sents
-
-    @staticmethod
-    def cut_long_sequences2(all_input_concat: List[List[torch.Tensor]],
+def combine_input_sentences(all_input_concat: List[List[torch.Tensor]],
                             maximum_length: int = 512,
-                            pad_idx: int = 1):
-        all_input_concat = list(zip(*all_input_concat))
-        collected_tuples = list()
-        for tensor_tuple in all_input_concat:
-            all_lens = tuple(len(x) for x in tensor_tuple)
+                            pad_idx: int = 1,
+                            eos_idx: int = 2):
+    for group in all_input_concat[1:]:
+        group[:, 0] = eos_idx
 
-            if sum(all_lens) > maximum_length:
-                lengths = dict(enumerate(all_lens))
-                lengths_sorted_idxes = list(x[0] for x in sorted(
-                    lengths.items(), key=lambda d: d[1], reverse=True))
+    if len(all_input_concat) == 3:
+        return cut_long_sequences3(all_input_concat, maximum_length, pad_idx)
+    else:
+        return cut_long_sequences2(all_input_concat, maximum_length, pad_idx)
 
-                offset = ceil((sum(lengths.values()) - maximum_length) / 2)
 
-                if min(all_lens) > (maximum_length
-                                    // 2) and min(all_lens) > offset:
-                    lengths = dict((k, v - offset) for k, v in lengths.items())
-                else:
-                    lengths[lengths_sorted_idxes[
-                        0]] = maximum_length - lengths[lengths_sorted_idxes[1]]
+def cut_long_sequences2(all_input_concat: List[List[torch.Tensor]],
+                        maximum_length: int = 512,
+                        pad_idx: int = 1):
+    all_input_concat = list(zip(*all_input_concat))
+    collected_tuples = list()
+    for tensor_tuple in all_input_concat:
+        tensor_tuple = tuple(
+            x.masked_select(x.ne(pad_idx)) for x in tensor_tuple)
+        all_lens = tuple(len(x) for x in tensor_tuple)
 
-                new_lens = list(lengths[k]
-                                for k in range(0, len(tensor_tuple)))
-                new_tensor_tuple = tuple(
-                    x[:y] for x, y in zip(tensor_tuple, new_lens))
-                for x, y in zip(new_tensor_tuple, tensor_tuple):
-                    x[-1] = y[-1]
-                collected_tuples.append(new_tensor_tuple)
+        if sum(all_lens) > maximum_length:
+            lengths = dict(enumerate(all_lens))
+            lengths_sorted_idxes = list(x[0] for x in sorted(
+                lengths.items(), key=lambda d: d[1], reverse=True))
+
+            offset = ceil((sum(lengths.values()) - maximum_length) / 2)
+
+            if min(all_lens) > (maximum_length
+                                // 2) and min(all_lens) > offset:
+                lengths = dict((k, v - offset) for k, v in lengths.items())
             else:
-                collected_tuples.append(tensor_tuple)
+                lengths[lengths_sorted_idxes[0]] = maximum_length - lengths[
+                    lengths_sorted_idxes[1]]
 
-        concat_tensor = list(torch.cat(x, dim=0) for x in collected_tuples)
-        all_input_concat_padded = pad_sequence(
-            concat_tensor, batch_first=True, padding_value=pad_idx)
+            new_lens = list(lengths[k] for k in range(0, len(tensor_tuple)))
+            new_tensor_tuple = tuple(x[:y]
+                                     for x, y in zip(tensor_tuple, new_lens))
+            for x, y in zip(new_tensor_tuple, tensor_tuple):
+                x[-1] = y[-1]
+            collected_tuples.append(new_tensor_tuple)
+        else:
+            collected_tuples.append(tensor_tuple)
 
-        return all_input_concat_padded
+    concat_tensor = list(torch.cat(x, dim=0) for x in collected_tuples)
+    all_input_concat_padded = pad_sequence(
+        concat_tensor, batch_first=True, padding_value=pad_idx)
+    return all_input_concat_padded
 
-    @staticmethod
-    def cut_long_sequences3(all_input_concat: List[List[torch.Tensor]],
-                            maximum_length: int = 512,
-                            pad_idx: int = 1):
-        all_input_concat = list(zip(*all_input_concat))
-        collected_tuples = list()
-        for tensor_tuple in all_input_concat:
-            all_lens = tuple(len(x) for x in tensor_tuple)
 
-            if sum(all_lens) > maximum_length:
-                lengths = dict(enumerate(all_lens))
-                lengths_sorted_idxes = list(x[0] for x in sorted(
-                    lengths.items(), key=lambda d: d[1], reverse=True))
+def cut_long_sequences3(all_input_concat: List[List[torch.Tensor]],
+                        maximum_length: int = 512,
+                        pad_idx: int = 1):
+    all_input_concat = list(zip(*all_input_concat))
+    collected_tuples = list()
+    for tensor_tuple in all_input_concat:
+        tensor_tuple = tuple(
+            x.masked_select(x.ne(pad_idx)) for x in tensor_tuple)
+        all_lens = tuple(len(x) for x in tensor_tuple)
 
-                offset = ceil((sum(lengths.values()) - maximum_length) / 3)
+        if sum(all_lens) > maximum_length:
+            lengths = dict(enumerate(all_lens))
+            lengths_sorted_idxes = list(x[0] for x in sorted(
+                lengths.items(), key=lambda d: d[1], reverse=True))
 
-                if min(all_lens) > (maximum_length
-                                    // 3) and min(all_lens) > offset:
-                    lengths = dict((k, v - offset) for k, v in lengths.items())
-                else:
-                    while sum(lengths.values()) > maximum_length:
-                        if lengths[lengths_sorted_idxes[0]] > lengths[
-                                lengths_sorted_idxes[1]]:
-                            offset = maximum_length - lengths[
-                                lengths_sorted_idxes[1]] - lengths[
-                                    lengths_sorted_idxes[2]]
-                            if offset > lengths[lengths_sorted_idxes[1]]:
-                                lengths[lengths_sorted_idxes[0]] = offset
-                            else:
-                                lengths[lengths_sorted_idxes[0]] = lengths[
-                                    lengths_sorted_idxes[1]]
-                        elif lengths[lengths_sorted_idxes[0]] == lengths[
-                                lengths_sorted_idxes[1]] > lengths[
-                                    lengths_sorted_idxes[2]]:
-                            offset = (maximum_length
-                                      - lengths[lengths_sorted_idxes[2]]) // 2
-                            if offset > lengths[lengths_sorted_idxes[2]]:
-                                lengths[lengths_sorted_idxes[0]] = lengths[
-                                    lengths_sorted_idxes[1]] = offset
-                            else:
-                                lengths[lengths_sorted_idxes[0]] = lengths[
-                                    lengths_sorted_idxes[1]] = lengths[
-                                        lengths_sorted_idxes[2]]
+            offset = ceil((sum(lengths.values()) - maximum_length) / 3)
+
+            if min(all_lens) > (maximum_length
+                                // 3) and min(all_lens) > offset:
+                lengths = dict((k, v - offset) for k, v in lengths.items())
+            else:
+                while sum(lengths.values()) > maximum_length:
+                    if lengths[lengths_sorted_idxes[0]] > lengths[
+                            lengths_sorted_idxes[1]]:
+                        offset = maximum_length - lengths[lengths_sorted_idxes[
+                            1]] - lengths[lengths_sorted_idxes[2]]
+                        if offset > lengths[lengths_sorted_idxes[1]]:
+                            lengths[lengths_sorted_idxes[0]] = offset
+                        else:
+                            lengths[lengths_sorted_idxes[0]] = lengths[
+                                lengths_sorted_idxes[1]]
+                    elif lengths[lengths_sorted_idxes[0]] == lengths[
+                            lengths_sorted_idxes[1]] > lengths[
+                                lengths_sorted_idxes[2]]:
+                        offset = (maximum_length
+                                  - lengths[lengths_sorted_idxes[2]]) // 2
+                        if offset > lengths[lengths_sorted_idxes[2]]:
+                            lengths[lengths_sorted_idxes[0]] = lengths[
+                                lengths_sorted_idxes[1]] = offset
                         else:
                             lengths[lengths_sorted_idxes[0]] = lengths[
                                 lengths_sorted_idxes[1]] = lengths[
-                                    lengths_sorted_idxes[
-                                        2]] = maximum_length // 3
+                                    lengths_sorted_idxes[2]]
+                    else:
+                        lengths[lengths_sorted_idxes[0]] = lengths[
+                            lengths_sorted_idxes[1]] = lengths[
+                                lengths_sorted_idxes[2]] = maximum_length // 3
 
-                new_lens = list(lengths[k] for k in range(0, len(lengths)))
-                new_tensor_tuple = tuple(
-                    x[:y] for x, y in zip(tensor_tuple, new_lens))
+            new_lens = list(lengths[k] for k in range(0, len(lengths)))
+            new_tensor_tuple = tuple(x[:y]
+                                     for x, y in zip(tensor_tuple, new_lens))
 
-                for x, y in zip(new_tensor_tuple, tensor_tuple):
-                    x[-1] = y[-1]
-                collected_tuples.append(new_tensor_tuple)
-            else:
-                collected_tuples.append(tensor_tuple)
+            for x, y in zip(new_tensor_tuple, tensor_tuple):
+                x[-1] = y[-1]
+            collected_tuples.append(new_tensor_tuple)
+        else:
+            collected_tuples.append(tensor_tuple)
 
-        concat_tensor = list(torch.cat(x, dim=0) for x in collected_tuples)
-        all_input_concat_padded = pad_sequence(
-            concat_tensor, batch_first=True, padding_value=pad_idx)
-
-        return all_input_concat_padded
+    concat_tensor = list(torch.cat(x, dim=0) for x in collected_tuples)
+    all_input_concat_padded = pad_sequence(
+        concat_tensor, batch_first=True, padding_value=pad_idx)
+    return all_input_concat_padded

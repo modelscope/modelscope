@@ -875,6 +875,7 @@ class NLPTrainers(object):
     document_grounded_dialog_rerank_trainer = 'document-grounded-dialog-rerank-trainer'
     document_grounded_dialog_retrieval_trainer = 'document-grounded-dialog-retrieval-trainer'
     siamese_uie_trainer = 'siamese-uie-trainer'
+    translation_evaluation_trainer = 'translation-evaluation-trainer'
 
 
 class MultiModalTrainers(object):
@@ -1089,6 +1090,8 @@ class Metrics(object):
     # metric for image-colorization task
     image_colorization_metric = 'image-colorization-metric'
     ocr_recognition_metric = 'ocr-recognition-metric'
+    # metric for translation evaluation
+    translation_evaluation_metric = 'translation-evaluation-metric'
 
 
 class Optimizers(object):

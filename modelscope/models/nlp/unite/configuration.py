@@ -9,7 +9,7 @@ from modelscope.utils.config import Config
 logger = logging.get_logger()
 
 
-class EvaluationMode(Enum):
+class InputFormat(Enum):
     SRC = 'src'
     REF = 'ref'
     SRC_REF = 'src-ref'

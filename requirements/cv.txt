@@ -39,7 +39,6 @@ onnxruntime>=1.10
 onnxsim
 open-clip-torch>=2.7.0
 opencv-python
-pai-easycv>=0.8,<0.10.0
 paint_ldm
 pandas
 panopticapi

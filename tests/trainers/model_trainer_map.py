@@ -124,6 +124,12 @@ model_trainer_map = {
     'damo/nlp_csanmt_translation_en2es': [
         'tests/trainers/test_translation_trainer.py'
     ],
+    'damo/nlp_unite_mup_translation_evaluation_multilingual_base': [
+        'tests/trainers/test_translation_evaluation_trainer.py'
+    ],
+    'damo/nlp_unite_mup_translation_evaluation_multilingual_large': [
+        'tests/trainers/test_translation_evaluation_trainer.py'
+    ],
     'damo/cv_googlenet_pgl-video-summarization': [
         'tests/trainers/test_video_summarization_trainer.py'
     ],

@@ -41,9 +41,9 @@ if TYPE_CHECKING:
         DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
-        TranslationEvaluationPreprocessor, CanmtTranslationPreprocessor,
-        DialogueClassificationUsePreprocessor, SiameseUiePreprocessor,
-        DocumentGroundedDialogGeneratePreprocessor,
+        TranslationEvaluationTransformersPreprocessor,
+        CanmtTranslationPreprocessor, DialogueClassificationUsePreprocessor,
+        SiameseUiePreprocessor, DocumentGroundedDialogGeneratePreprocessor,
         DocumentGroundedDialogRetrievalPreprocessor,
         DocumentGroundedDialogRerankPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
@@ -96,7 +96,7 @@ else:
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
-            'TranslationEvaluationPreprocessor',
+            'TranslationEvaluationTransformersPreprocessor',
             'CanmtTranslationPreprocessor',
             'DialogueClassificationUsePreprocessor', 'SiameseUiePreprocessor',
             'DialogueClassificationUsePreprocessor',

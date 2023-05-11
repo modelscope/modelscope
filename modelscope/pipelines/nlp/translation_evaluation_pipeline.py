@@ -42,7 +42,7 @@ class TranslationEvaluationPipeline(Pipeline):
                 `"EvaluationMode.SRC"`, `"EvaluationMode.REF"`. Aside from hypothesis, the
                 source/reference/source+reference can be presented during evaluation.
         """
-        super().__init__(model=model, preprocessor=preprocessor)
+        super().__init__(model=model, preprocessor=preprocessor, **kwargs)
 
         self.eval_mode = eval_mode
         self.checking_eval_mode()

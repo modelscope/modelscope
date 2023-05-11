@@ -16,7 +16,7 @@ python-dateutil>=2.1
 pyyaml
 requests
 scipy
-setuptools==59.8.0
+setuptools
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
 tqdm>=4.64.0

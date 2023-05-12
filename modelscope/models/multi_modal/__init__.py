@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .vldoc import VLDocForDocVLEmbedding
     from .video_synthesis import TextToVideoSynthesis
     from .efficient_diffusion_tuning import EfficientStableDiffusion
+    from .clip_interrogator import CLIP_Interrogator
 
 else:
     _import_structure = {
@@ -37,7 +38,8 @@ else:
         ['MultiStageDiffusionForTextToImageSynthesis'],
         'vldoc': ['VLDocForDocVLEmbedding'],
         'video_synthesis': ['TextToVideoSynthesis'],
-        'efficient_diffusion_tuning': ['EfficientStableDiffusion']
+        'efficient_diffusion_tuning': ['EfficientStableDiffusion'],
+        'clip_interrogator': ['CLIP_Interrogator'],
     }
 
     import sys

@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (DiffusionImageGenerationPreprocessor,
                               OfaPreprocessor, MPlugPreprocessor,
-                              HiTeAPreprocessor)
+                              HiTeAPreprocessor,
+                              ImageCaptioningClipInterrogatorPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
         FaqQuestionAnsweringTransformersPreprocessor,
@@ -70,7 +71,8 @@ else:
         'tts': ['KanttsDataPreprocessor'],
         'multi_modal': [
             'DiffusionImageGenerationPreprocessor', 'OfaPreprocessor',
-            'MPlugPreprocessor', 'HiTeAPreprocessor'
+            'MPlugPreprocessor', 'HiTeAPreprocessor',
+            'ImageCaptioningClipInterrogatorPreprocessor'
         ],
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',

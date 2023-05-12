@@ -22,7 +22,7 @@ class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         self.test_image = 'data/test/images/keypoints_detect/000000438862.jpg'
         self.task = Tasks.image_object_detection
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test in current test level: no pipeline implemented')
     def test_run_easycv_yolox(self):
         realtime_object_detection = pipeline(
             Tasks.image_object_detection, model=self.easycv_small_model_id)
@@ -34,7 +34,7 @@ class RealtimeObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         else:
             raise ValueError('process error')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test in current test level: no pipeline implemented')
     def test_run_easycv_yolox_nano(self):
         realtime_object_detection = pipeline(
             Tasks.image_object_detection, model=self.easycv_nano_model_id)

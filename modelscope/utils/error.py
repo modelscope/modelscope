@@ -162,3 +162,9 @@ You can install it with pip on linux or mac:
 Or you can checkout the instructions on the
 installation page: https://github.com/mlfoundations/open_clip and follow the ones that match your environment.
 """
+
+# docstyle-ignore
+TAMING_IMPORT_ERROR = """
+{0} requires the timm library but it was not found in your environment. You can install it with pip:
+`pip install taming-transformers-rom1504`
+"""

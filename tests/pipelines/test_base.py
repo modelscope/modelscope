@@ -70,13 +70,12 @@ class CustomPipelineTest(unittest.TestCase):
                          preprocessor=None,
                          **kwargs):
                 super().__init__(config_file, model, preprocessor, **kwargs)
+                self._postprocess_inputs = None
 
             def _batch(self, sample_list):
                 sample_batch = {'img': [], 'url': []}
                 for sample in sample_list:
-                    resized_img = torch.from_numpy(
-                        np.array(sample['img'].resize((640, 640))))
-                    sample_batch['img'].append(torch.unsqueeze(resized_img, 0))
+                    sample_batch['img'].append(sample['img'])
                     sample_batch['url'].append(sample['url'])
 
                 sample_batch['img'] = torch.concat(sample_batch['img'])
@@ -89,7 +88,11 @@ class CustomPipelineTest(unittest.TestCase):
                 """
                 if not isinstance(input, Image.Image):
                     from modelscope.preprocessors import load_image
-                    data_dict = {'img': load_image(input), 'url': input}
+                    image = load_image(input)
+                    resized_img = torch.from_numpy(
+                        np.array(image.resize((640, 640))))
+                    unsqueezed_img = torch.unsqueeze(resized_img, 0)
+                    data_dict = {'img': unsqueezed_img, 'url': input}
                 else:
                     data_dict = {'img': input}
                 return data_dict
@@ -101,8 +104,18 @@ class CustomPipelineTest(unittest.TestCase):
                 return inputs
 
             def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                if self._postprocess_inputs is None:
+                    self._postprocess_inputs = inputs
+                else:
+                    self._check_postprocess_input(inputs)
                 inputs['url'] += 'dummy_end'
                 return inputs
+
+            def _check_postprocess_input(self, current_input: Dict[str, Any]):
+                for key in current_input:
+                    if isinstance(current_input[key], torch.Tensor):
+                        assert len(current_input[key].shape) == len(
+                            self._postprocess_inputs[key].shape)
 
         self.assertTrue(dummy_module in PIPELINES.modules[dummy_task])
         add_default_pipeline_info(dummy_task, dummy_module, overwrite=True)
@@ -110,10 +123,11 @@ class CustomPipelineTest(unittest.TestCase):
             task=dummy_task, pipeline_name=dummy_module, model=self.model_dir)
 
         img_url = 'data/test/images/dogs.jpg'
+        pipe(img_url)
         output = pipe([img_url for _ in range(9)], batch_size=2)
         for out in output:
             self.assertEqual(out['url'], img_url + 'dummy_end')
-            self.assertEqual(out['img'].shape, (640, 640, 3))
+            self.assertEqual(out['img'].shape, (1, 640, 640, 3))
 
         pipe_nocollate = pipeline(
             task=dummy_task,
@@ -125,7 +139,7 @@ class CustomPipelineTest(unittest.TestCase):
         output = pipe_nocollate([img_url for _ in range(9)], batch_size=2)
         for out in output:
             self.assertEqual(out['url'], img_url + 'dummy_end')
-            self.assertEqual(out['img'].shape, (640, 640, 3))
+            self.assertEqual(out['img'].shape, (1, 640, 640, 3))
 
     def test_custom(self):
         dummy_task = 'dummy-task'

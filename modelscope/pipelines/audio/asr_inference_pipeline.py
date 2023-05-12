@@ -54,6 +54,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  lm_model_revision: Optional[str] = None,
                  timestamp_model: Optional[Union[Model, str]] = None,
                  timestamp_model_revision: Optional[str] = None,
+                 ngpu: int = 1,
                  **kwargs):
         """
         Use `model` and `preprocessor` to create an asr pipeline for prediction
@@ -127,7 +128,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 minlenratio=self.cmd['minlenratio'],
                 batch_size=self.cmd['batch_size'],
                 beam_size=self.cmd['beam_size'],
-                ngpu=self.cmd['ngpu'],
+                ngpu=ngpu,
                 ctc_weight=self.cmd['ctc_weight'],
                 lm_weight=self.cmd['lm_weight'],
                 penalty=self.cmd['penalty'],
@@ -160,6 +161,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 token_num_relax=self.cmd['token_num_relax'],
                 decoding_ind=self.cmd['decoding_ind'],
                 decoding_mode=self.cmd['decoding_mode'],
+                **kwargs,
             )
 
     def __call__(self,

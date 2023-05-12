@@ -41,7 +41,11 @@ class ExtractiveSummarizationPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            **kwargs)
+
+        kwargs.pop('compile', None)
+        kwargs.pop('compile_options', None)
 
         self.model_dir = self.model.model_dir
         self.model_cfg = self.model.model_cfg

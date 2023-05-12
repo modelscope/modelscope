@@ -6,11 +6,9 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import torch
 from datasets import Dataset
-from transformers.models.bert.modeling_bert import BertConfig
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
-from modelscope.models.nlp.ponet.configuration import PoNetConfig
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
@@ -48,7 +46,11 @@ class DocumentSegmentationPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            **kwargs)
+
+        kwargs.pop('compile', None)
+        kwargs.pop('compile_options', None)
 
         self.model_dir = self.model.model_dir
         self.model_cfg = self.model.model_cfg

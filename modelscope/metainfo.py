@@ -116,6 +116,7 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     # nlp models
@@ -181,6 +182,7 @@ class Models(object):
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
+    scl_sd = 'scl-sd'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
@@ -396,7 +398,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
-
+    fast_instance_segmentation = 'fast-instance-segmentation'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -480,6 +482,7 @@ class Pipelines(object):
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
+    speaker_change_locating = 'speaker-change-locating'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 

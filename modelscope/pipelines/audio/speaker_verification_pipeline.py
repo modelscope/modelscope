@@ -41,7 +41,10 @@ class SpeakerVerificationPipeline(Pipeline):
 
     """
 
-    def __init__(self, model: Union[Model, str] = None, **kwargs):
+    def __init__(self,
+                 model: Union[Model, str] = None,
+                 ngpu: int = 1,
+                 **kwargs):
         """use `model` to create an asr pipeline for prediction
         """
         super().__init__(model=model, **kwargs)
@@ -54,7 +57,7 @@ class SpeakerVerificationPipeline(Pipeline):
             output_dir=self.cmd['output_dir'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
@@ -67,6 +70,7 @@ class SpeakerVerificationPipeline(Pipeline):
             embedding_node=self.cmd['embedding_node'],
             sv_threshold=self.cmd['sv_threshold'],
             param_dict=self.cmd['param_dict'],
+            **kwargs,
         )
 
     def __call__(self,

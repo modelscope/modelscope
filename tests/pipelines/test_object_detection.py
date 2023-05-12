@@ -54,7 +54,7 @@ class ObjectDetectionTest(unittest.TestCase):
         image_object_detection_auto.show_result(test_image, result,
                                                 'auto_demo_ret.jpg')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test in current test level: no pipeline implemented')
     def test_image_object_detection_dino_pipeline(self):
         model_id = 'damo/cv_swinl_image-object-detection_dino'
         test_image = 'data/test/images/image_detection.jpg'

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
+from modelscope.hub.utils.utils import get_cache_dir
 from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
 
@@ -323,34 +324,31 @@ def generate_sd_scp_from_url(urls: Union[tuple, list]):
 
 
 def update_local_model(model_config, model_path, extra_args):
+    if 'update_model' in extra_args and not extra_args['update_model']:
+        return
+    model_revision = None
     if 'update_model' in extra_args:
         if extra_args['update_model'] == 'latest':
             model_revision = None
         else:
             model_revision = extra_args['update_model']
-        if model_config.__contains__('model'):
-            model_name = model_config['model']
-            if isinstance(model_path, str) and os.path.exists(model_path):
-                try:
-                    logger.info(
-                        'Download the model to local path {0} ...'.format(
-                            model_path))
-                    src_path = snapshot_download(
-                        model_name, revision=model_revision)
-                    # cp to model_path
-                    if src_path == model_path:
-                        logger.warning('src_path is the same with model_path')
-                        return
-                    for filename in os.listdir(src_path):
-                        src_file = os.path.join(src_path, filename)
-                        dst_file = os.path.join(model_path, filename)
-                        if os.path.isfile(src_file):
-                            shutil.copy2(src_file, model_path)
-                        elif os.path.isdir(src_file):
-                            if os.path.exists(dst_file):
-                                shutil.rmtree(dst_file)
-                            shutil.copytree(src_file, dst_file)
-                except Exception as e:
-                    logger.warning(str(e))
-        else:
-            logger.warning('Can not find model name in configuration')
+    if model_config.__contains__('model'):
+        model_name = model_config['model']
+        dst_dir_root = get_cache_dir()
+        if isinstance(model_path, str) and os.path.exists(
+                model_path) and not model_path.startswith(dst_dir_root):
+            try:
+                dst = os.path.join(dst_dir_root, '.cache/' + model_name)
+                dst_dir = os.path.dirname(dst)
+                os.makedirs(dst_dir, exist_ok=True)
+                if not os.path.exists(dst):
+                    os.symlink(os.path.abspath(model_path), dst)
+
+                snapshot_download(
+                    model_name,
+                    cache_dir=dst_dir_root,
+                    revision=model_revision)
+            except Exception as e:
+                logger.warning(str(e))
+    else:
+        logger.warning('Can not find model name in configuration')

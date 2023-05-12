@@ -48,6 +48,7 @@ class SpeakerDiarizationPipeline(Pipeline):
                  model: Union[Model, str] = None,
                  sv_model: Optional[Union[Model, str]] = None,
                  sv_model_revision: Optional[str] = None,
+                 ngpu: int = 1,
                  **kwargs):
         """use `model` to create a speaker diarization pipeline for prediction
         Args:
@@ -76,7 +77,7 @@ class SpeakerDiarizationPipeline(Pipeline):
             output_dir=self.cmd['output_dir'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
@@ -90,6 +91,7 @@ class SpeakerDiarizationPipeline(Pipeline):
             dur_threshold=self.cmd['dur_threshold'],
             out_format=self.cmd['out_format'],
             param_dict=self.cmd['param_dict'],
+            **kwargs,
         )
 
     def __call__(self,

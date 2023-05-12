@@ -642,3 +642,17 @@ class HiTeAPreprocessor(Preprocessor):
                 'answer_attention_mask': answer.attention_mask.squeeze(),
             }
             return output
+
+
+@PREPROCESSORS.register_module(
+    Fields.multi_modal,
+    module_name=Preprocessors.image_captioning_clip_interrogator_preprocessor)
+class ImageCaptioningClipInterrogatorPreprocessor(Preprocessor):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __call__(self, data) -> Dict[str, Any]:
+        image = load_image(data)
+        data = np.array(image).transpose(2, 0, 1)
+        return data

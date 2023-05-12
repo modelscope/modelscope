@@ -40,7 +40,10 @@ class TimestampPipeline(Pipeline):
 
     """
 
-    def __init__(self, model: Union[Model, str] = None, **kwargs):
+    def __init__(self,
+                 model: Union[Model, str] = None,
+                 ngpu: int = 1,
+                 **kwargs):
         """
         Use `model` and `preprocessor` to create an asr pipeline for prediction
         Args:
@@ -72,7 +75,7 @@ class TimestampPipeline(Pipeline):
             mode=self.cmd['mode'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
@@ -84,7 +87,9 @@ class TimestampPipeline(Pipeline):
             allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
             split_with_space=self.cmd['split_with_space'],
             seg_dict_file=self.cmd['seg_dict_file'],
-            param_dict=self.cmd['param_dict'])
+            param_dict=self.cmd['param_dict'],
+            **kwargs,
+        )
 
     def __call__(self,
                  audio_in: Union[str, bytes],

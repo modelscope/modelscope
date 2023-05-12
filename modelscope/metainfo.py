@@ -182,6 +182,7 @@ class Models(object):
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
+    scl_sd = 'scl-sd'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
@@ -481,6 +482,7 @@ class Pipelines(object):
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
+    speaker_change_locating = 'speaker-change-locating'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 

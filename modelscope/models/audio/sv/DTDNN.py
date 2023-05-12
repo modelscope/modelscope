@@ -76,11 +76,13 @@ class CAMPPlus(nn.Module):
                  bn_size=4,
                  init_channels=128,
                  config_str='batchnorm-relu',
-                 memory_efficient=True):
+                 memory_efficient=True,
+                 output_level='segment'):
         super(CAMPPlus, self).__init__()
 
         self.head = FCM(feat_dim=feat_dim)
         channels = self.head.out_channels
+        self.output_level = output_level
 
         self.xvector = nn.Sequential(
             OrderedDict([
@@ -118,10 +120,14 @@ class CAMPPlus(nn.Module):
         self.xvector.add_module('out_nonlinear',
                                 get_nonlinear(config_str, channels))
 
-        self.xvector.add_module('stats', StatsPool())
-        self.xvector.add_module(
-            'dense',
-            DenseLayer(channels * 2, embedding_size, config_str='batchnorm_'))
+        if self.output_level == 'segment':
+            self.xvector.add_module('stats', StatsPool())
+            self.xvector.add_module(
+                'dense',
+                DenseLayer(
+                    channels * 2, embedding_size, config_str='batchnorm_'))
+        else:
+            assert self.output_level == 'frame', '`output_level` should be set to \'segment\' or \'frame\'. '
 
         for m in self.modules():
             if isinstance(m, (nn.Conv1d, nn.Linear)):
@@ -133,6 +139,8 @@ class CAMPPlus(nn.Module):
         x = x.permute(0, 2, 1)  # (B,T,F) => (B,F,T)
         x = self.head(x)
         x = self.xvector(x)
+        if self.output_level == 'frame':
+            x = x.transpose(1, 2)
         return x
 
 

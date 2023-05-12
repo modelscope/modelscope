@@ -24,7 +24,6 @@ class DatasetContextConfig:
         self._config_kwargs = kwargs
         self._dataset_version_cache_root_dir = None
         self._auth_config = None
-        self._ext_config: dict = {}
 
         # The lock file path for meta-files and data-files
         self._global_meta_lock_file_path = None
@@ -100,11 +99,3 @@ class DatasetContextConfig:
     @auth_config.setter
     def auth_config(self, val: BaseAuthConfig):
         self._auth_config = val
-
-    @property
-    def ext_config(self) -> dict:
-        return self._ext_config
-
-    @ext_config.setter
-    def ext_config(self, val: dict):
-        self._ext_config = val

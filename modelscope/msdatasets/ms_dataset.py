@@ -18,8 +18,7 @@ from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
 from modelscope.msdatasets.dataset_cls import (ExternalDataset,
-                                               NativeIterableDataset,
-                                               VirgoDataset)
+                                               NativeIterableDataset)
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
@@ -172,7 +171,7 @@ class MsDataset:
         use_streaming: Optional[bool] = False,
         custom_cfg: Optional[Config] = Config(),
         **config_kwargs,
-    ) -> Union[dict, 'MsDataset', NativeIterableDataset, VirgoDataset]:
+    ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
 
             Args:
@@ -190,9 +189,6 @@ class MsDataset:
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
                 hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
-                download_mode (DownloadMode or str, optional):
-                    How to treat existing datasets. default DownloadMode.REUSE_DATASET_IF_EXISTS
-                config_kwargs (additional keyword arguments): Keyword arguments to be passed
                 download_mode (DownloadMode or str, optional): How to treat existing datasets. default
                                                                DownloadMode.REUSE_DATASET_IF_EXISTS
                 cache_dir (str, Optional): User-define local cache directory.
@@ -300,9 +296,6 @@ class MsDataset:
                 cache_dir = os.path.join(CACHE_HOME, 'virgo', 'hub',
                                          'datasets')
                 dataset_context_config.cache_root_dir = cache_dir
-            if 'download_virgo_files' in config_kwargs:
-                dataset_context_config.download_virgo_files = config_kwargs.pop(
-                    'download_virgo_files')
 
             virgo_downloader = VirgoDownloader(dataset_context_config)
             virgo_downloader.process()

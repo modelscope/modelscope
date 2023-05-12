@@ -18,8 +18,8 @@ from datasets.utils.py_utils import map_nested
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
-from modelscope.msdatasets.dataset_cls.dataset import (ExternalDataset,
-                                                       NativeIterableDataset)
+from modelscope.msdatasets.dataset_cls import (ExternalDataset,
+                                               NativeIterableDataset)
 from modelscope.msdatasets.download.download_manager import \
     DataStreamingDownloadManager
 from modelscope.msdatasets.utils.dataset_utils import \

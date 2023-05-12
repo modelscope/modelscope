@@ -14,7 +14,7 @@ from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
 from modelscope.msdatasets.data_files.data_files_manager import \
     DataFilesManager
-from modelscope.msdatasets.dataset_cls.dataset import ExternalDataset
+from modelscope.msdatasets.dataset_cls import ExternalDataset
 from modelscope.msdatasets.meta.data_meta_manager import DataMetaManager
 from modelscope.utils.constant import (DatasetFormations, DatasetPathName,
                                        DownloadMode, VirgoDatasetConfig)
@@ -191,12 +191,14 @@ class VirgoDownloader(BaseDownloader):
         """
         Fetch virgo meta and build virgo dataset.
         """
-        from modelscope.msdatasets.dataset_cls import VirgoDataset
+        from modelscope.msdatasets.dataset_cls.dataset import VirgoDataset
+        import pandas as pd
 
         meta_manager = DataMetaManager(self.dataset_context_config)
         meta_manager.fetch_virgo_meta()
         self.dataset_context_config = meta_manager.dataset_context_config
-        self.dataset = VirgoDataset(**self.dataset_context_config.ext_config)
+        self.dataset = VirgoDataset(
+            **self.dataset_context_config.config_kwargs)
 
         virgo_cache_dir = os.path.join(
             self.dataset_context_config.cache_root_dir,
@@ -209,18 +211,24 @@ class VirgoDownloader(BaseDownloader):
         meta_content_cache_file = os.path.join(virgo_cache_dir,
                                                DatasetPathName.META_NAME,
                                                'meta_content.csv')
-        meta_content_df = self.dataset.meta
-        meta_content_df.to_csv(meta_content_cache_file, index=False)
-        self.dataset.meta_content_cache_file = meta_content_cache_file
-        self.dataset.virgo_cache_dir = virgo_cache_dir
-        logger.info(f'Virgo meta content saved to {meta_content_cache_file}')
+
+        if isinstance(self.dataset.meta, pd.DataFrame):
+            meta_content_df = self.dataset.meta
+            meta_content_df.to_csv(meta_content_cache_file, index=False)
+            self.dataset.meta_content_cache_file = meta_content_cache_file
+            self.dataset.virgo_cache_dir = virgo_cache_dir
+            logger.info(
+                f'Virgo meta content saved to {meta_content_cache_file}')
 
     def _prepare_and_download(self):
         """
         Fetch data-files from oss-urls in the virgo meta content.
         """
 
-        if self.dataset_context_config.download_virgo_files:
+        download_virgo_files = self.dataset_context_config.config_kwargs.pop(
+            'download_virgo_files', '')
+
+        if self.dataset.data_type == 0 and download_virgo_files:
             import requests
             import json
             import shutil
@@ -228,28 +236,44 @@ class VirgoDownloader(BaseDownloader):
             from functools import partial
 
             def download_file(meta_info_val, data_dir):
-                file_url = ''
+                file_url_list = []
+                file_path_list = []
                 try:
-                    file_url = json.loads(meta_info_val)['url']
-                    is_url = valid_url(file_url)
-                    if is_url:
-                        url_parse_res = urlparse(file_url)
-                        file_name = os.path.basename(url_parse_res.path)
+                    meta_info_val = json.loads(meta_info_val)
+                    # get url first, if not exist, try to get inner_url
+                    file_url = meta_info_val.get('url', '')
+                    if file_url:
+                        file_url_list.append(file_url)
                     else:
-                        raise ValueError(f'Unsupported url: {file_url}')
-                    file_path = os.path.join(data_dir, file_name)
+                        tmp_inner_member_list = meta_info_val.get(
+                            'inner_url', '')
+                        for item in tmp_inner_member_list:
+                            file_url = item.get('url', '')
+                            if file_url:
+                                file_url_list.append(file_url)
+
+                    for one_file_url in file_url_list:
+                        is_url = valid_url(one_file_url)
+                        if is_url:
+                            url_parse_res = urlparse(file_url)
+                            file_name = os.path.basename(url_parse_res.path)
+                        else:
+                            raise ValueError(f'Unsupported url: {file_url}')
+                        file_path = os.path.join(data_dir, file_name)
+                        file_path_list.append((one_file_url, file_path))
+
                 except Exception as e:
-                    logger.error(e)
-                    file_path = ''
+                    logger.error(f'parse virgo meta info error: {e}')
+                    file_path_list = []
 
-                if file_path and not os.path.exists(file_path):
-                    logger.info(
-                        f'Downloading file from {file_url} to {file_path}')
-                    os.makedirs(data_dir, exist_ok=True)
-                    with open(file_path, 'wb') as f:
-                        f.write(requests.get(file_url).content)
+                for file_url_item, file_path_item in file_path_list:
+                    if file_path_item and not os.path.exists(file_path_item):
+                        logger.info(f'Downloading file to {file_path_item}')
+                        os.makedirs(data_dir, exist_ok=True)
+                        with open(file_path_item, 'wb') as f:
+                            f.write(requests.get(file_url_item).content)
 
-                return file_path
+                return file_path_list
 
             self.dataset.download_virgo_files = True
             download_mode = self.dataset_context_config.download_mode

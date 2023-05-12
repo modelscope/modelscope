@@ -561,3 +561,17 @@ class VirgoDatasetConfig:
     col_analysis_result = 'analysis_result'
     col_external_info = 'external_info'
     col_cache_file = 'cache_file'
+
+
+DEFAULT_MAXCOMPUTE_ENDPOINT = 'http://service-corp.odps.aliyun-inc.com/api'
+
+
+class MaxComputeEnvs:
+
+    ACCESS_ID = 'ODPS_ACCESS_ID'
+
+    ACCESS_SECRET_KEY = 'ODPS_ACCESS_SECRET_KEY'
+
+    PROJECT_NAME = 'ODPS_PROJECT_NAME'
+
+    ENDPOINT = 'ODPS_ENDPOINT'

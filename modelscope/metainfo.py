@@ -200,6 +200,7 @@ class Models(object):
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    clip_interrogator = 'clip-interrogator'
 
     # science models
     unifold = 'unifold'
@@ -1026,6 +1027,7 @@ class Preprocessors(object):
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
     diffusion_image_generation_preprocessor = 'diffusion-image-generation-preprocessor'
+    image_captioning_clip_interrogator_preprocessor = 'image-captioning-clip-interrogator-preprocessor'
 
     # science preprocessor
     unifold_preprocessor = 'unifold-preprocessor'

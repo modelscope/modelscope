@@ -116,6 +116,7 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     # nlp models
@@ -396,7 +397,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
-
+    fast_instance_segmentation = 'fast-instance-segmentation'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'

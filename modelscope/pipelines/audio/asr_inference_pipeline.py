@@ -265,6 +265,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
 
+        # pipeline() from pipelines/builder.py passes 'device' but 'ngpu' needed here
+        device = extra_args.get('device')
+        if device == 'cpu':
+            extra_args['ngpu'] = 0
+        elif device == 'gpu':
+            extra_args['ngpu'] = 1
         outputs = self.preprocessor.config_checking(self.model_cfg)
         # generate asr inference command
         cmd = {

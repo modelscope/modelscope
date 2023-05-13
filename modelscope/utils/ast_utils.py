@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import ast
-import contextlib
 import hashlib
 import os
 import os.path as osp
@@ -9,12 +8,11 @@ import time
 import traceback
 from functools import reduce
 from pathlib import Path
-from typing import Generator, Union
+from typing import Union
 
 import gast
 import json
 
-from modelscope import __version__
 from modelscope.fileio.file import LocalStorage
 from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
@@ -574,6 +572,7 @@ file_scanner = FilesAstScanning()
 def _save_index(index, file_path, file_list=None, with_template=False):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
+    from modelscope.version import __version__
     index[VERSION_KEY] = __version__
     index[MD5_KEY], index[FILES_MTIME_KEY] = file_scanner.files_mtime_md5(
         file_list=file_list)
@@ -682,6 +681,7 @@ def load_index(
     if not force_rebuild and os.path.exists(file_path):
         wrapped_index = _load_index(file_path)
         md5, files_mtime = file_scanner.files_mtime_md5(file_list=file_list)
+        from modelscope.version import __version__
         if (wrapped_index[VERSION_KEY] == __version__):
             index = wrapped_index
             if (wrapped_index[MD5_KEY] != md5):

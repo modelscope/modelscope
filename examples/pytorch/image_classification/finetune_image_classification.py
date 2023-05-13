@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets.ms_dataset import MsDataset
+from modelscope.trainers.args import TrainingArgs
 from modelscope.trainers.builder import build_trainer
-from modelscope.trainers.training_args import TrainingArgs
 
 
 @dataclass

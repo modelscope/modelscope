@@ -5,7 +5,6 @@ import os
 import re
 import time
 from collections import OrderedDict
-from functools import partial
 from shutil import copytree, ignore_patterns, rmtree
 from typing import Callable, Dict, Optional, Union
 
@@ -15,7 +14,6 @@ from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from modelscope import __version__
 from modelscope.fileio import File, LocalStorage
 from modelscope.utils.config import Config, JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
@@ -76,6 +74,7 @@ def save_checkpoint(model: torch.nn.Module,
         elif not isinstance(meta, dict):
             raise TypeError(
                 f'meta must be a dict or None, but got {type(meta)}')
+        from modelscope import __version__
         meta.update(modelscope=__version__, time=time.asctime())
 
         if isinstance(model, torch.nn.parallel.DistributedDataParallel):

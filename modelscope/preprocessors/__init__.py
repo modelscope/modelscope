@@ -35,7 +35,7 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
         WordAlignmentPreprocessor, TextGenerationTransformersPreprocessor,
         Tokenize, WordSegmentationBlankSetToLabelPreprocessor,
-        CodeGeeXPreprocessor, MGLMSummarizationPreprocessor,
+        MGLMSummarizationPreprocessor,
         ZeroShotClassificationTransformersPreprocessor,
         TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,

@@ -1,7 +1,7 @@
 PYTHONPATH=. python examples/pytorch/text_classification/finetune_text_classification.py \
     --model 'damo/nlp_structbert_backbone_base_std' \
-    --dataset_name 'clue' \
-    --subset_name 'tnews' \
+    --train_dataset_name 'clue' \
+    --train_subset_name 'tnews' \
     --first_sequence 'sentence' \
     --preprocessor.label label \
     --model.num_labels 15 \
@@ -10,3 +10,4 @@ PYTHONPATH=. python examples/pytorch/text_classification/finetune_text_classific
     --train.dataloader.workers_per_gpu 0 \
     --evaluation.dataloader.workers_per_gpu 0 \
     --train.optimizer.lr 1e-5 \
+    --use_model_config true \

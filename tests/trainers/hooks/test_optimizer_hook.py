@@ -150,6 +150,7 @@ class TorchAMPOptimizerHookTest(unittest.TestCase):
         train_dataloader = trainer._build_dataloader_with_dataset(
             trainer.train_dataset, **trainer.cfg.train.get('dataloader', {}))
         trainer.register_optimizers_hook()
+        trainer.register_processors()
         trainer._hooks = [
             hook for hook in trainer._hooks if hook.__class__.__name__ not in
             ['CheckpointHook', 'TextLoggerHook', 'IterTimerHook']

@@ -1,26 +1,17 @@
 import os
 from dataclasses import dataclass, field
 
-from modelscope.msdatasets import MsDataset
-from modelscope.trainers import EpochBasedTrainer, build_trainer
-from modelscope.trainers.training_args import TrainingArgs
+from modelscope import (EpochBasedTrainer, MsDataset, TrainingArgs,
+                        build_dataset_from_file, build_trainer)
 
 
-def get_labels(cfg, metadata):
-    label2id = cfg.safe_get(metadata['cfg_node'])
-    if label2id is not None:
-        return ','.join(label2id.keys())
-
-
-def set_labels(cfg, labels, metadata):
+def set_labels(labels):
     if isinstance(labels, str):
         labels = labels.split(',')
-    cfg.merge_from_dict(
-        {metadata['cfg_node']: {label: id
-                                for id, label in enumerate(labels)}})
+    return {label: id for id, label in enumerate(labels)}
 
 
-@dataclass
+@dataclass(init=False)
 class TextClassificationArguments(TrainingArgs):
 
     first_sequence: str = field(
@@ -49,7 +40,6 @@ class TextClassificationArguments(TrainingArgs):
         metadata={
             'help': 'The labels of the dataset',
             'cfg_node': 'preprocessor.label2id',
-            'cfg_getter': get_labels,
             'cfg_setter': set_labels,
         })
 
@@ -60,30 +50,39 @@ class TextClassificationArguments(TrainingArgs):
             'cfg_node': 'preprocessor.type'
         })
 
-    def __call__(self, config):
-        config = super().__call__(config)
-        config.model['num_labels'] = len(self.labels)
-        if config.train.lr_scheduler.type == 'LinearLR':
-            config.train.lr_scheduler['total_iters'] = \
-                int(len(train_dataset) / self.per_device_train_batch_size) * self.max_epochs
-        return config
+
+config, args = TextClassificationArguments().parse_cli().to_config()
+
+print(config, args)
 
 
-args = TextClassificationArguments.from_cli(
-    task='text-classification', eval_metrics='seq-cls-metric')
+def cfg_modify_fn(cfg):
+    if args.use_model_config:
+        cfg.merge_from_dict(config)
+    else:
+        cfg = config
+    cfg.model['num_labels'] = len(cfg.preprocessor.label2id)
+    if cfg.train.lr_scheduler.type == 'LinearLR':
+        cfg.train.lr_scheduler['total_iters'] = \
+            int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
+    return cfg
 
-print(args)
 
-dataset = MsDataset.load(args.dataset_name, subset_name=args.subset_name)
-train_dataset = dataset['train']
-validation_dataset = dataset['validation']
+if args.dataset_json_file is None:
+    dataset = MsDataset.load(
+        args.train_dataset_name, subset_name=args.train_subset_name)
+    train_dataset = dataset['train']
+    validation_dataset = dataset['validation']
+else:
+    train_dataset, validation_dataset = build_dataset_from_file(
+        args.dataset_json_file)
 
 kwargs = dict(
     model=args.model,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     seed=args.seed,
-    cfg_modify_fn=args)
+    cfg_modify_fn=cfg_modify_fn)
 
 os.environ['LOCAL_RANK'] = str(args.local_rank)
 trainer: EpochBasedTrainer = build_trainer(name='trainer', default_args=kwargs)

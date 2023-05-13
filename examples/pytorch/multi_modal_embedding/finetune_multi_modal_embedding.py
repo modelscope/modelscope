@@ -5,8 +5,8 @@ from functools import partial
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.trainers.training_args import (TrainingArgs, get_flatten_value,
-                                               set_flatten_value)
+from modelscope.trainers.args import (TrainingArgs, get_flatten_value,
+                                      set_flatten_value)
 
 
 @dataclass

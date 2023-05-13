@@ -1,11 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from modelscope.metainfo import Hooks
+from modelscope.trainers.hooks.builder import HOOKS
+from modelscope.trainers.hooks.hook import Hook
+from modelscope.trainers.hooks.priority import Priority
 from modelscope.utils.constant import DistributedParallelType
 from modelscope.utils.device import create_device
 from modelscope.utils.torch_utils import get_local_rank, init_dist
-from .builder import HOOKS
-from .hook import Hook
-from .priority import Priority
 
 
 @HOOKS.register_module(module_name=Hooks.DDPHook)

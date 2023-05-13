@@ -8,72 +8,48 @@ from deepspeed import DeepSpeedEngine
 from megatron_util import mpu, print_rank_0
 
 from modelscope.metainfo import Hooks
+from modelscope.trainers.hooks import LoadCheckpointHook
 from modelscope.trainers.hooks.builder import HOOKS
+from modelscope.trainers.hooks.checkpoint.checkpoint_hook import (
+    BestCkptSaverHook, CheckpointHook)
 from modelscope.trainers.hooks.hook import Hook
 from modelscope.trainers.hooks.priority import Priority
 from modelscope.utils.checkpoint import save_checkpoint
 from modelscope.utils.logger import get_logger
-from .checkpoint_hook import CheckpointHook, LoadCheckpointHook
-from .megatron_hook import MegatronHook
+from ..checkpoint.checkpoint_processor import CheckpointProcessor
+from ..lr_scheduler_hook import LrSchedulerProcessor
+from ..optimizer.base import OptimizerHook, OptimizerProcessor
 
 
-@HOOKS.register_module(module_name=Hooks.DeepspeedHook)
-class DeepspeedHook(MegatronHook):
-    PRIORITY = Priority.VERY_HIGH
+class DeepspeedProcessor(CheckpointProcessor, LrSchedulerProcessor,
+                         OptimizerProcessor):
 
-    def __init__(self,
-                 deepspeed_activation_checkpointing=True,
-                 save_zero_checkpoint=False,
-                 with_mpu=True):
-        self.save_zero_checkpoint = save_zero_checkpoint
-        self.deepspeed_activation_checkpointing = deepspeed_activation_checkpointing
-        # TODO without mpu
-        self.with_mpu = with_mpu
-        assert with_mpu, 'DeepspeedHook now is only for mpu models.'
+    _BIN_FILE_DIR = 'model'
 
-    def register_strategy(self):
-        Hook.overload(name='OptimizerHook.backward', function=self.backward)
-        Hook.overload(
-            name='OptimizerHook.initialize_optimizer', function=self.idle)
-        Hook.overload(name='LrSchedulerHook.step', function=self.idle)
-        Hook.overload(
-            name='CheckpointHook.save_checkpoints',
-            function=self.save_checkpoints)
-        Hook.overload(
-            name='LoadCheckpointHook.load_checkpoints',
-            function=self.load_checkpoints)
-        Hook.overload(
-            name='CheckpointHook.remove_checkpoints',
-            function=self.remove_checkpoints)
-        Hook.overload(
-            name='CheckpointHook.prepare_output', function=self.prepare_output)
-        if self.with_mpu:
-            Hook.overload(
-                name='CheckpointHook.should_save_on_rank',
-                function=self.should_save_on_rank)
+    def rank_name(self):
+        # TODO
+        try:
+            tp_world_size = mpu.get_tensor_model_parallel_world_size()
+            if tp_world_size == 1:
+                return ''
+            mp_rank = mpu.get_tensor_model_parallel_rank()
+            return '_mp_rank_{:02d}'.format(mp_rank)
+        except (ImportError, AssertionError):
+            return ''
 
-    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
-        # assert cumulative_iters == 1, 'DeepSpeed only support cumulative_iters=1'
-        # The `trainer.model` here is actually a deepspeed engine object.
-        # backward step
-        for k in loss_keys:
-            loss = trainer.train_outputs[k]
-            trainer.model.backward(loss)
-
-        # update parameters
-        trainer.model.step()
-
-    def idle(self, *args, **kwargs):
-        pass
+    def get_bin_file(self):
+        mp_rank = mpu.get_tensor_model_parallel_rank()
+        rank = '{:02d}'.format(mp_rank)
+        return f'mp_rank_{rank}_model_states.pt'
 
     def save_checkpoints(self,
                          trainer,
                          checkpoint_path_prefix,
-                         output_sub_dir,
+                         output_dir,
                          meta=None):
         model = trainer.unwrap_module(trainer.model)
         _train_state_file = checkpoint_path_prefix + self.rank_name(
-        ) + CheckpointHook.TRAINER_STATE_SUFFIX
+        ) + CheckpointProcessor.TRAINER_STATE_SUFFIX
         # Save pth file without model state_dict
         save_checkpoint(
             model, _train_state_file, None, None, meta=meta, with_model=False)
@@ -84,16 +60,22 @@ class DeepspeedHook(MegatronHook):
 
         bin_file = self.get_bin_file()
         src_file = os.path.join(checkpoint_path_prefix, bin_file)
-        dest_file = os.path.join(save_dir, output_sub_dir, self._BIN_FILE_DIR,
-                                 bin_file)
+        dest_file = os.path.join(output_dir, self._BIN_FILE_DIR, bin_file)
         if os.path.isfile(dest_file):
             os.unlink(dest_file)
 
-        os.link(src_file, dest_file)
+        try:
+            os.link(src_file, dest_file)
+        except OSError as e:
+            get_logger().error(
+                f'Link {src_file} to {dest_file} error: {e}, '
+                'changing to copy the bin file, this may case more space usage.'
+            )
+            shutil.copyfile(src_file, dest_file)
 
     def remove_checkpoints(self, trainer, checkpoint_path_prefix):
         _train_state_file = checkpoint_path_prefix + self.rank_name(
-        ) + CheckpointHook.TRAINER_STATE_SUFFIX
+        ) + CheckpointProcessor.TRAINER_STATE_SUFFIX
         if os.path.isfile(_train_state_file):
             os.remove(_train_state_file)
 
@@ -107,10 +89,10 @@ class DeepspeedHook(MegatronHook):
 
         meta = {}
         _train_state_file = checkpoint_path_prefix + self.rank_name(
-        ) + CheckpointHook.TRAINER_STATE_SUFFIX
+        ) + CheckpointProcessor.TRAINER_STATE_SUFFIX
         if os.path.isfile(_train_state_file):
-            meta = LoadCheckpointHook.load_trainer_state(
-                trainer, _train_state_file, load_all_state)
+            meta = self.load_trainer_state(trainer, _train_state_file,
+                                           load_all_state)
 
         if isinstance(trainer.model, DeepSpeedEngine):
             # DeepSpeedEngine is initialized
@@ -137,6 +119,57 @@ class DeepspeedHook(MegatronHook):
             trainer.unwrap_module(trainer.model).load_state_dict(
                 checkpoint, strict=strict)
         return meta
+
+    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
+        # assert cumulative_iters == 1, 'DeepSpeed only support cumulative_iters=1'
+        # The `trainer.model` here is actually a deepspeed engine object.
+        # backward step
+        for k in loss_keys:
+            loss = trainer.train_outputs[k]
+            trainer.model.backward(loss)
+
+        # update parameters
+        trainer.model.step()
+
+    def initialize_optimizer(self, trainer):
+        pass
+
+    def step(self, trainer):
+        pass
+
+
+@HOOKS.register_module(module_name=Hooks.DeepspeedHook)
+class DeepspeedHook(Hook):
+    PRIORITY = Priority.VERY_HIGH
+
+    def __init__(self,
+                 deepspeed_activation_checkpointing=True,
+                 save_zero_checkpoint=False,
+                 with_mpu=True):
+        self.save_zero_checkpoint = save_zero_checkpoint
+        self.deepspeed_activation_checkpointing = deepspeed_activation_checkpointing
+        # TODO without mpu
+        self.with_mpu = with_mpu
+        assert with_mpu, 'DeepspeedHook now is only for mpu models.'
+
+    def register_processor(self, trainer):
+        processor = DeepspeedProcessor()
+        optimizer_hook = trainer.get_hook(OptimizerHook)
+        if len(optimizer_hook) > 0 and not isinstance(
+                optimizer_hook[0].processor, DeepspeedProcessor):
+            optimizer_hook[0].set_processor(processor)
+        ckpt_hook = trainer.get_hook(CheckpointHook)
+        if len(ckpt_hook) > 0 and not isinstance(ckpt_hook[0].processor,
+                                                 DeepspeedProcessor):
+            ckpt_hook[0].set_processor(processor)
+        best_ckpt_hook = trainer.get_hook(BestCkptSaverHook)
+        if len(best_ckpt_hook) > 0 and not isinstance(
+                best_ckpt_hook[0].processor, DeepspeedProcessor):
+            best_ckpt_hook[0].set_processor(processor)
+        load_ckpt_hook = trainer.get_hook(LoadCheckpointHook)
+        if len(load_ckpt_hook) > 0 and not isinstance(
+                load_ckpt_hook[0].processor, DeepspeedProcessor):
+            load_ckpt_hook[0].set_processor(processor)
 
     def before_val(self, trainer):
         pass

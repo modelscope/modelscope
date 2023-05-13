@@ -6,6 +6,7 @@ import functools
 import os
 import pickle
 import platform
+import re
 import shutil
 import tempfile
 import uuid
@@ -19,7 +20,6 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope import __version__
 from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
@@ -161,6 +161,7 @@ class HubApi:
             'Visibility': visibility,  # server check
             'License': license,
             'OriginalModelId': original_model_id,
+            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
         }
         r = self.session.post(
             path, json=body, cookies=cookies, headers=self.headers)
@@ -237,8 +238,10 @@ class HubApi:
                    license: Optional[str] = Licenses.APACHE_V2,
                    chinese_name: Optional[str] = None,
                    commit_message: Optional[str] = 'upload model',
+                   tag: Optional[str] = None,
                    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-                   original_model_id: Optional[str] = None):
+                   original_model_id: Optional[str] = None,
+                   ignore_file_pattern: Optional[Union[List[str], str]] = None):
         """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 
@@ -269,10 +272,13 @@ class HubApi:
                 chinese name of the new created model.
             commit_message(`str`, *optional*, defaults to `None`):
                 commit message of the push request.
+            tag(`str`, *optional*, defaults to `None`):
+                The tag on this commit
             revision (`str`, *optional*, default to DEFAULT_MODEL_REVISION):
                 which branch to push. If the branch is not exists, It will create a new
                 branch and push to it.
             original_model_id (str, optional): The base model id which this model is trained from
+            ignore_file_pattern (`Union[List[str], str]`, optional): The file pattern to ignore uploading
 
         Raises:
             InvalidParameter: Parameter invalid.
@@ -293,6 +299,10 @@ class HubApi:
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
+        if ignore_file_pattern is None:
+            ignore_file_pattern = []
+        if isinstance(ignore_file_pattern, str):
+            ignore_file_pattern = [ignore_file_pattern]
         try:
             self.get_model(model_id=model_id)
         except Exception:
@@ -326,6 +336,8 @@ class HubApi:
                         shutil.rmtree(src, ignore_errors=True)
             for f in files_to_save:
                 if f[0] != '.':
+                    if any([re.search(pattern, f) is not None for pattern in ignore_file_pattern]):
+                        continue
                     src = os.path.join(model_dir, f)
                     if os.path.isdir(src):
                         shutil.copytree(src, os.path.join(tmp_dir, f))
@@ -339,6 +351,8 @@ class HubApi:
                 commit_message=commit_message,
                 local_branch=revision,
                 remote_branch=revision)
+            if tag is not None:
+                repo.tag_and_push(tag, tag)
         except Exception:
             raise
         finally:
@@ -928,6 +942,7 @@ class ModelScopeConfig:
         if MODELSCOPE_CLOUD_USERNAME in os.environ:
             user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
 
+        from modelscope import __version__
         ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s; user/%s' % (
             __version__,
             platform.python_version(),

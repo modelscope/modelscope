@@ -12,7 +12,6 @@ import requests
 from requests.adapters import Retry
 from tqdm import tqdm
 
-from modelscope import __version__
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
                                       API_FILE_DOWNLOAD_RETRY_TIMES,

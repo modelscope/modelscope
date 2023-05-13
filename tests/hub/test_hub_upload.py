@@ -37,6 +37,7 @@ class HubUploadTest(unittest.TestCase):
         os.mkdir(self.finetune_path)
         os.system("echo '{}'>%s"
                   % os.path.join(self.finetune_path, ModelFile.CONFIGURATION))
+        os.environ['MODELSCOPE_TRAIN_ID'] = 'test-id'
 
     def tearDown(self):
         logger.info('TearDown')

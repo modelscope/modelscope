@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from .nlp import SequenceClassificationTrainer, TextRankingTrainer, SiameseUIETrainer
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
     from .trainer import EpochBasedTrainer
+    from .training_args import TrainingArgs, build_dataset_from_file
+    from .hooks import Hook, Priority
 
 else:
     _import_structure = {
@@ -32,7 +34,9 @@ else:
             'SiameseUIETrainer'
         ],
         'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
-        'trainer': ['EpochBasedTrainer']
+        'trainer': ['EpochBasedTrainer'],
+        'training_args': ['TrainingArgs', 'build_dataset_from_file'],
+        'hooks': ['Hook']
     }
 
     import sys

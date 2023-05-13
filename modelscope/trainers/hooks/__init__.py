@@ -5,7 +5,6 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .builder import HOOKS, build_hook
-    from .checkpoint_hook import BestCkptSaverHook, CheckpointHook, LoadCheckpointHook
     from .early_stop_hook import EarlyStopHook
     from .compression import SparsityHook
     from .evaluation_hook import EvaluationHook
@@ -16,6 +15,8 @@ if TYPE_CHECKING:
     from .optimizer import (ApexAMPOptimizerHook, NoneOptimizerHook,
                             OptimizerHook, TorchAMPOptimizerHook)
     from .priority import Priority, get_priority
+    from .checkpoint import CheckpointHook, LoadCheckpointHook, BestCkptSaverHook
+    from .distributed import DDPHook, DeepspeedHook, MegatronHook
 
 else:
     _import_structure = {
@@ -32,6 +33,9 @@ else:
             'ApexAMPOptimizerHook', 'NoneOptimizerHook', 'OptimizerHook',
             'TorchAMPOptimizerHook'
         ],
+        'checkpoint':
+        ['CheckpointHook', 'LoadCheckpointHook', 'BestCkptSaverHook'],
+        'distributed': ['DDPHook', 'DeepspeedHook', 'MegatronHook'],
         'priority': ['Priority', 'get']
     }
 

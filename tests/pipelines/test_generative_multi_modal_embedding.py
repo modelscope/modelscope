@@ -5,11 +5,10 @@ import unittest
 from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class GEMMMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
+class GEMMMultiModalEmbeddingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.generative_multi_modal_embedding
@@ -67,10 +66,6 @@ class GEMMMultiModalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         test_input = {'text': self.test_input['text']}
         output = generative_multi_modal_embedding_pipeline(test_input)
         print(output)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

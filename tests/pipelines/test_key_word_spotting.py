@@ -10,7 +10,6 @@ import soundfile
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ColorCodes, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import download_and_untar, test_level
 
@@ -27,7 +26,7 @@ NEG_TESTSETS_FILE = 'neg_testsets.tar.gz'
 NEG_TESTSETS_URL = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/KWS/neg_testsets.tar.gz'
 
 
-class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
+class KeyWordSpottingTest(unittest.TestCase):
     action_info = {
         'test_run_with_wav': {
             'checking_item': [OutputKeys.KWS_LIST, 0, 'keyword'],
@@ -343,10 +342,6 @@ class KeyWordSpottingTest(unittest.TestCase, DemoCompatibilityCheck):
             kws_result = self.run_pipeline(
                 model_id=model_id, audio_in=wav_path, keywords=keywords)
             logger.info(ColorCodes.YELLOW + str(kws_result) + ColorCodes.END)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

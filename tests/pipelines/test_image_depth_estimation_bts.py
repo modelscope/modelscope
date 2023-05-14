@@ -8,11 +8,10 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageDepthEstimationBtsTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageDepthEstimationBtsTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_depth_estimation
@@ -44,10 +43,6 @@ class ImageDepthEstimationBtsTest(unittest.TestCase, DemoCompatibilityCheck):
         depth_vis = result[OutputKeys.DEPTHS_COLOR]
         cv2.imwrite('result_snapshot.jpg', depth_vis)
         print('Test run with snapshot ok.')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

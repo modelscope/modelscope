@@ -10,11 +10,10 @@ from modelscope.models import Model
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DocumentVLEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
+class DocumentVLEmbeddingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/multi-modal_convnext-roberta-base_vldoc-embedding'
@@ -50,10 +49,6 @@ class DocumentVLEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         # default model: VLDoc
         vldoc_doc_VL_emb_pipeline = pipeline(self.task)
         self.pipeline_inference(vldoc_doc_VL_emb_pipeline)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

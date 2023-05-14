@@ -4,11 +4,10 @@ import unittest
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class OCRDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class OCRDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_resnet18_ocr-detection-line-level_damo'
@@ -42,10 +41,6 @@ class OCRDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_default_model(self):
         ocr_detection = pipeline(Tasks.ocr_detection)
         self.pipeline_inference(ocr_detection, self.test_image)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -9,12 +9,11 @@ from modelscope.pipelines.nlp import ZeroShotClassificationPipeline
 from modelscope.preprocessors import \
     ZeroShotClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ZeroShotClassificationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.zero_shot_classification
@@ -78,10 +77,6 @@ class ZeroShotClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.zero_shot_classification)
         print(pipeline_ins(input=self.sentence, candidate_labels=self.labels))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

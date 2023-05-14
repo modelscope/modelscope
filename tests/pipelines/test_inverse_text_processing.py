@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class InverseTextProcessingTest(unittest.TestCase, DemoCompatibilityCheck):
+class InverseTextProcessingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.inverse_text_processing,
@@ -60,10 +59,6 @@ class InverseTextProcessingTest(unittest.TestCase, DemoCompatibilityCheck):
             lang_text_in = self.text_in_dict[lang]
             itn_result = itn_inference_pipline(text_in=lang_text_in)
             print(itn_result)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

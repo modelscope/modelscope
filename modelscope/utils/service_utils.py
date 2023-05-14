@@ -156,6 +156,7 @@ def service_data_decoder(task, data):
         return input_data
     elif isinstance(input_type, dict):
         input_data = {}
+        data = json.loads(data)
         for key, val in input_type.items():
             if val == InputType.IMAGE:
                 input_data[key] = decode_base64_to_image(data[key])
@@ -163,6 +164,8 @@ def service_data_decoder(task, data):
                 input_data[key] = decode_base64_to_binary(data[key])[0]
             elif val == InputType.TEXT:
                 input_data[key] = data[key]
+            else:
+                return data
 
     return input_data
 

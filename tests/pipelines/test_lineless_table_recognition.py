@@ -8,11 +8,10 @@ import numpy as np
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TableRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
+class TableRecognitionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_resnet-transformer_table-structure-recognition_lore'
@@ -34,10 +33,6 @@ class TableRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_default_model(self):
         lineless_table_recognition = pipeline(Tasks.lineless_table_recognition)
         self.pipeline_inference(lineless_table_recognition, self.test_image)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

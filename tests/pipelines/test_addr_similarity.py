@@ -8,12 +8,11 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class AddrSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
+class AddrSimilarityTest(unittest.TestCase):
 
     sentence1 = '阿里巴巴西溪园区'
     sentence2 = '文一西路阿里巴巴'
@@ -36,10 +35,6 @@ class AddrSimilarityTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(
             task=Tasks.text_classification, model=self.model_id)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

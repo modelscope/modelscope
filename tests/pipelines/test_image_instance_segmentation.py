@@ -12,11 +12,10 @@ from modelscope.pipelines.cv import ImageInstanceSegmentationPipeline
 from modelscope.preprocessors import build_preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Fields, ModelFile, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageInstanceSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageInstanceSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_segmentation
@@ -60,10 +59,6 @@ class ImageInstanceSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.image_segmentation, model=model, preprocessor=preprocessor)
         print(f'pipeline1:{pipeline1(input=self.image)[OutputKeys.LABELS]}')
         print(f'pipeline2: {pipeline2(input=self.image)[OutputKeys.LABELS]}')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

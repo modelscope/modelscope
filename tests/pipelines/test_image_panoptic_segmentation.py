@@ -9,11 +9,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import panoptic_seg_masks_to_image
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImagePanopticSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImagePanopticSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_segmentation
@@ -39,10 +38,6 @@ class ImagePanopticSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
         draw_img = panoptic_seg_masks_to_image(result[OutputKeys.MASKS])
         cv2.imwrite('result.jpg', draw_img)
         print('print test_image_panoptic_segmentation from PIL return success')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

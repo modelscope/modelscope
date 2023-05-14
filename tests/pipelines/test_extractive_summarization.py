@@ -6,14 +6,13 @@ from typing import Any, Dict
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class ExtractiveSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ExtractiveSummarizationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.extractive_summarization
@@ -45,10 +44,6 @@ class ExtractiveSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
         result = self.run_pipeline(
             model_id=self.ponet_topic_model_id, documents=self.sentences)
         print(result[OutputKeys.TEXT])
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

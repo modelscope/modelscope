@@ -7,12 +7,11 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class NLITest(unittest.TestCase, DemoCompatibilityCheck):
+class NLITest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.nli
@@ -77,10 +76,6 @@ class NLITest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.nli)
         print(pipeline_ins(input=(self.sentence1, self.sentence2)))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

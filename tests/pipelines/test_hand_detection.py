@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class ObjectDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.domain_specific_object_detection

@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -19,7 +18,7 @@ SPEAKER2_A_EN_16K_WAV = 'data/test/audios/speaker2_a_en_16k.wav'
 SCL_EXAMPLE_WAV = 'data/test/audios/scl_example1.wav'
 
 
-class SpeakerVerificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class SpeakerVerificationTest(unittest.TestCase):
     ecapatdnn_voxceleb_16k_model_id = 'damo/speech_ecapa-tdnn_sv_en_voxceleb_16k'
     campplus_voxceleb_16k_model_id = 'damo/speech_campplus_sv_en_voxceleb_16k'
     rdino_voxceleb_16k_model_id = 'damo/speech_rdino_ecapa_tdnn_sv_en_voxceleb_16k'

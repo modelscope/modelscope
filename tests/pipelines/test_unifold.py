@@ -4,11 +4,10 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class UnifoldProteinStructureTest(unittest.TestCase, DemoCompatibilityCheck):
+class UnifoldProteinStructureTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.protein_structure

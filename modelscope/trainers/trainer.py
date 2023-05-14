@@ -990,7 +990,8 @@ class EpochBasedTrainer(BaseTrainer):
             optimizer = self.build_optimizer(cfg=optimizer_cfg)
 
         if lr_scheduler is None:
-            lr_scheduler_cfg = deepcopy(self.cfg.train.get('lr_scheduler', None))
+            lr_scheduler_cfg = deepcopy(
+                self.cfg.train.get('lr_scheduler', None))
         else:
             lr_scheduler_cfg = None
 

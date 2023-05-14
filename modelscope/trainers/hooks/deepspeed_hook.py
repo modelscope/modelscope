@@ -1,27 +1,26 @@
 # Copyright 2020 The HuggingFace Team. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import math
 import os
 import shutil
+from functools import partialmethod
 
-import math
 import deepspeed
 import torch
-from functools import partialmethod
 from deepspeed import DeepSpeedEngine
 from megatron_util import mpu, print_rank_0
+from transformers.deepspeed import HfTrainerDeepSpeedConfig
 
-from modelscope.utils.torch_utils import get_local_rank, get_dist_info
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.hook import Hook
 from modelscope.trainers.hooks.priority import Priority
 from modelscope.utils.checkpoint import save_checkpoint
-from modelscope.utils.logger import get_logger
-from .checkpoint_hook import CheckpointHook, LoadCheckpointHook
 from modelscope.utils.constant import DistributedParallelType
+from modelscope.utils.logger import get_logger
+from modelscope.utils.torch_utils import get_dist_info, get_local_rank
+from .checkpoint_hook import CheckpointHook, LoadCheckpointHook
 
-# from accelerate.utils.deepspeed import HfDeepSpeedConfig
-from transformers.deepspeed import HfTrainerDeepSpeedConfig
 
 class DeepSpeedConfig(HfTrainerDeepSpeedConfig):
     """
@@ -39,66 +38,73 @@ class DeepSpeedConfig(HfTrainerDeepSpeedConfig):
 
         # deal with config keys that use `auto` value and rely on model's hidden_size
         hidden_size_based_keys = [
-            "zero_optimization.reduce_bucket_size",
-            "zero_optimization.stage3_prefetch_bucket_size",
-            "zero_optimization.stage3_param_persistence_threshold",
+            'zero_optimization.reduce_bucket_size',
+            'zero_optimization.stage3_prefetch_bucket_size',
+            'zero_optimization.stage3_param_persistence_threshold',
         ]
-        hidden_size_auto_keys = [x for x in hidden_size_based_keys if self.is_auto(x)]
+        hidden_size_auto_keys = [
+            x for x in hidden_size_based_keys if self.is_auto(x)
+        ]
 
         if len(hidden_size_auto_keys) > 0:
-            if hasattr(model.config, "hidden_size"):
+            if hasattr(model.config, 'hidden_size'):
                 hidden_size = model.config.hidden_size
-            elif hasattr(model.config, "hidden_sizes"):
+            elif hasattr(model.config, 'hidden_sizes'):
                 # if there are many hidden sizes pick the largest one
                 hidden_size = max(model.config.hidden_sizes)
             else:
                 raise ValueError(
                     "The model's config file has neither `hidden_size` nor `hidden_sizes` entry, "
                     "therefore it's not possible to automatically fill out the following `auto` entries "
-                    f"in the DeepSpeed config file: {hidden_size_auto_keys}. You can fix that by replacing "
-                    "`auto` values for these keys with an integer value of your choice."
+                    f'in the DeepSpeed config file: {hidden_size_auto_keys}. You can fix that by replacing '
+                    '`auto` values for these keys with an integer value of your choice.'
                 )
 
-            self.fill_only("zero_optimization.reduce_bucket_size", hidden_size * hidden_size)
+            self.fill_only('zero_optimization.reduce_bucket_size',
+                           hidden_size * hidden_size)
             if self.is_zero3():
                 # automatically assign the optimal config values based on model config
-                self.fill_only("zero_optimization.stage3_prefetch_bucket_size", 0.9 * hidden_size * hidden_size)
-                self.fill_only("zero_optimization.stage3_param_persistence_threshold", 10 * hidden_size)
+                self.fill_only('zero_optimization.stage3_prefetch_bucket_size',
+                               0.9 * hidden_size * hidden_size)
+                self.fill_only(
+                    'zero_optimization.stage3_param_persistence_threshold',
+                    10 * hidden_size)
 
         # scheduler
-        warmup = args.train.optimizer["options"].get("warmup", {})
-        warmup_steps = warmup.get("warmup_steps", 0)
-        warmup_ratio = warmup.get("warmup_ratio", 0.0)
-        warmup_steps = warmup_steps if warmup_steps > 0 else math.ceil(num_training_steps * warmup_ratio)
-        self.fill_match("scheduler.params.total_num_steps", num_training_steps)
-        self.fill_match("scheduler.params.warmup_num_steps", warmup_steps)
-
+        warmup = args.train.optimizer['options'].get('warmup', {})
+        warmup_steps = warmup.get('warmup_steps', 0)
+        warmup_ratio = warmup.get('warmup_ratio', 0.0)
+        warmup_steps = warmup_steps if warmup_steps > 0 else math.ceil(
+            num_training_steps * warmup_ratio)
+        self.fill_match('scheduler.params.total_num_steps', num_training_steps)
+        self.fill_match('scheduler.params.warmup_num_steps', warmup_steps)
 
         if len(self.mismatches) > 0:
-            mismatches = "\n".join(self.mismatches)
+            mismatches = '\n'.join(self.mismatches)
             raise ValueError(
-                "Please correct the following DeepSpeed config values that mismatch TrainingArguments"
+                'Please correct the following DeepSpeed config values that mismatch TrainingArguments'
                 f" values:\n{mismatches}\nThe easiest method is to set these DeepSpeed config values to 'auto'."
             )
+
 
 def deepspeed_optim_sched(trainer, hf_deepspeed_config, num_training_steps):
     config = hf_deepspeed_config.config
     optimizer = None
-    if "optimizer" not in config:
+    if 'optimizer' not in config:
         if hf_deepspeed_config.is_offload():
             logger.info(
-                "Detected ZeRO Offload and non-DeepSpeed optimizers: This combination should work as long as the"
-                " custom optimizer has both CPU and GPU implementation (except LAMB)"
+                'Detected ZeRO Offload and non-DeepSpeed optimizers: This combination should work as long as the'
+                ' custom optimizer has both CPU and GPU implementation (except LAMB)'
             )
 
         # ds supports Adam, OneBitAdam, and Lamb optimizers and can import other optimizers from torch.
         # But trainer uses AdamW by default.
         optimizer = trainer.optimizer
         # To use other optimizers requires voiding warranty with: `zero_allow_untested_optimizer`
-        config["zero_allow_untested_optimizer"] = True
+        config['zero_allow_untested_optimizer'] = True
 
     lr_scheduler = None
-    if "scheduler" not in config:
+    if 'scheduler' not in config:
         lr_scheduler = trainer.scheduler
 
     return optimizer, lr_scheduler
@@ -119,14 +125,15 @@ class DeepspeedHook(Hook):
         # TODO without mpu
         self.with_mpu = with_mpu
         self.deepspeed_config = config
-        #assert with_mpu, 'DeepspeedHook now is only for mpu models.'
 
     def register_strategy(self):
         Hook.overload(name='OptimizerHook.backward', function=self.backward)
         Hook.overload(
             name='OptimizerHook.initialize_optimizer', function=self.idle)
         Hook.overload(name='LrSchedulerHook.step', function=self.idle)
-        Hook.overload(name='LrSchedulerHook.get_current_lr', function=self.get_current_lr)
+        Hook.overload(
+            name='LrSchedulerHook.get_current_lr',
+            function=self.get_current_lr)
         Hook.overload(
             name='CheckpointHook.save_checkpoints',
             function=self.save_checkpoints)
@@ -138,17 +145,18 @@ class DeepspeedHook(Hook):
             function=self.remove_checkpoints)
         Hook.overload(
             name='CheckpointHook.prepare_output', function=self.prepare_output)
+        Hook.overload(name='DDPHook.wrap_module', function=self.wrap_module)
         Hook.overload(
-            name='DDPHook.wrap_module', function=self.wrap_module)
-        if self.with_mpu:
-            Hook.overload(
-                name='CheckpointHook.should_save_on_rank',
-                function=self.should_save_on_rank)
+            name='CheckpointHook.should_save_on_rank',
+            function=self.should_save_on_rank)
 
     def should_save_on_rank(self, trainer):
-        # TODO
-        return (not torch.distributed.is_initialized()
-                ) or mpu.get_data_parallel_rank() == 0
+        return True
+
+    def get_bin_file(self):
+        mp_rank = mpu.get_tensor_model_parallel_rank()
+        rank = '{:02d}'.format(mp_rank)
+        return f'mp_rank_{rank}_model_states.pt'
 
     def wrap_module(self, trainer):
         # deepspeed initializes its own ddp
@@ -180,7 +188,8 @@ class DeepspeedHook(Hook):
         pass
 
     def get_current_lr(self, trainer):
-        if isinstance(trainer.optimizer, torch.optim.Optimizer) or isinstance(trainer.optimizer, deepspeed.DeepSpeedOptimizer):
+        if isinstance(trainer.optimizer, torch.optim.Optimizer) or isinstance(
+                trainer.optimizer, deepspeed.DeepSpeedOptimizer):
             lr = [group['lr'] for group in trainer.optimizer.param_groups]
         elif isinstance(trainer.optimizer, dict):
             lr = dict()
@@ -190,7 +199,6 @@ class DeepspeedHook(Hook):
             raise RuntimeError(
                 'lr is not applicable because optimizer does not exist.')
         return lr
-
 
     def save_checkpoints(self,
                          trainer,
@@ -207,15 +215,6 @@ class DeepspeedHook(Hook):
         save_dir = os.path.dirname(checkpoint_path_prefix)
         prefix = os.path.basename(checkpoint_path_prefix)
         trainer.model.save_checkpoint(save_dir, prefix)
-
-        bin_file = self.get_bin_file()
-        src_file = os.path.join(checkpoint_path_prefix, bin_file)
-        dest_file = os.path.join(save_dir, output_sub_dir, self._BIN_FILE_DIR,
-                                 bin_file)
-        if os.path.isfile(dest_file):
-            os.unlink(dest_file)
-
-        os.link(src_file, dest_file)
 
     def remove_checkpoints(self, trainer, checkpoint_path_prefix):
         _train_state_file = checkpoint_path_prefix + self.rank_name(
@@ -274,30 +273,28 @@ class DeepspeedHook(Hook):
     def before_val(self, trainer):
         pass
 
-    def after_init(self, trainer):
-        device_id = get_local_rank()
-        trainer.device = f'cuda:{device_id}'
-        #trainer.parallel_groups[DistributedParallelType.DP] = None
-
     def prepare_args(self, args):
-        args.per_device_train_batch_size = args.train.dataloader.get("batch_size_per_gpu", 4)
-        args.gradient_accumulation_steps = args.train.get("gradient_accumulation_steps", 1)
-        args.max_grad_norm = args.train.get("clip_grad", 1.0)
-        args.learning_rate = args.train.optimizer.get("lr", 2e-5)
-        args.adam_beta1 = args.train.optimizer.get("adam_beta1", 0.9)
-        args.adam_beta2 = args.train.optimizer.get("adam_beta2", 0.999)
-        args.adam_epsilon = args.train.optimizer.get("adam_epsilon", 1e-8)
-        args.weight_decay = args.train.optimizer.get("weight_decay", 0.0)
-        args.fp16 = args.train.get("use_fp16", False)
-        args.fp16_full_eval = args.train.get("use_fp16", False)
-        args.fp16_backend = args.train.get("fp16_backend", "amp")
-        args.save_on_each_node = args.train.get("save_on_each_node", False)
-        args.fp16_opt_level = args.train.get("fp16_opt_level", None)
-        args.fp16_opt_level = next((item["opt_level"] for item in args.train.hooks if item["type"] == "ApexAMPOptimizerHook"), args.fp16_opt_level)
+        args.per_device_train_batch_size = args.train.dataloader.get(
+            'batch_size_per_gpu', 4)
+        args.gradient_accumulation_steps = args.train.get(
+            'gradient_accumulation_steps', 1)
+        args.max_grad_norm = args.train.get('clip_grad', 1.0)
+        args.learning_rate = args.train.optimizer.get('lr', 2e-5)
+        args.adam_beta1 = args.train.optimizer.get('adam_beta1', 0.9)
+        args.adam_beta2 = args.train.optimizer.get('adam_beta2', 0.999)
+        args.adam_epsilon = args.train.optimizer.get('adam_epsilon', 1e-8)
+        args.weight_decay = args.train.optimizer.get('weight_decay', 0.0)
+        args.fp16 = args.train.get('use_fp16', False)
+        args.fp16_full_eval = args.train.get('use_fp16', False)
+        args.fp16_backend = args.train.get('fp16_backend', 'amp')
+        args.save_on_each_node = args.train.get('save_on_each_node', False)
+        args.fp16_opt_level = args.train.get('fp16_opt_level', None)
+        args.fp16_opt_level = next(
+            (item['opt_level'] for item in args.train.hooks
+             if item['type'] == 'ApexAMPOptimizerHook'), args.fp16_opt_level)
         if not args.fp16_opt_level:
-            args.fp16_opt_level = "O1"
-        args.bf16 = args.train.get("bf16", False)
-
+            args.fp16_opt_level = 'O1'
+        args.bf16 = args.train.get('bf16', False)
 
     def get_deepspeed_config(self, trainer, max_steps):
         args = trainer.cfg
@@ -308,25 +305,13 @@ class DeepspeedHook(Hook):
         else:
             deepspeed_config = os.path.join(trainer.model_dir,
                                             self.deepspeed_config)
-        self.logger.info(f"Loading deepspeed config from {deepspeed_config}")
+        self.logger.info(f'Loading deepspeed config from {deepspeed_config}')
 
         ds_config = DeepSpeedConfig(deepspeed_config)
         ds_config.trainer_config_process(args)
 
         ds_config.trainer_config_finalize(args, trainer.model, max_steps)
         return ds_config
-
-    # def prepare_for_init(self, trainer):
-
-    #     gradient_accumulation_steps = trainer.cfg.train.get("gradient_accumulation_steps", 1)
-    #     num_update_steps_per_epoch = trainer.iters_per_epoch // gradient_accumulation_steps
-    #     max_steps = math.ceil(trainer._max_epochs * num_update_steps_per_epoch)
-
-    #     ds_config = self.get_deepspeed_config(trainer, max_steps)
-
-    #     optimizer, lr_scheduler = deepspeed_optim_sched(trainer, ds_config, max_steps)
-    #     config = ds_config.config
-    #     return config, optimizer, lr_scheduler
 
     def before_run(self, trainer):
         if not hasattr(trainer, 'logger'):
@@ -335,19 +320,19 @@ class DeepspeedHook(Hook):
             self.logger = trainer.logger
 
         # deepspeed init
-        gradient_accumulation_steps = trainer.cfg.train.get("gradient_accumulation_steps", 1)
+        gradient_accumulation_steps = trainer.cfg.train.get(
+            'gradient_accumulation_steps', 1)
         num_update_steps_per_epoch = trainer.iters_per_epoch // gradient_accumulation_steps
         max_steps = math.ceil(trainer._max_epochs * num_update_steps_per_epoch)
 
         ds_config = self.get_deepspeed_config(trainer, max_steps)
 
-        optimizer, lr_scheduler = deepspeed_optim_sched(trainer, ds_config, max_steps)
+        optimizer, lr_scheduler = deepspeed_optim_sched(
+            trainer, ds_config, max_steps)
         config = ds_config.config
- 
-        # TODO: 判断是否需要dist_init 和 mpu 而非写死;
+
         trainer.model, trainer.optimizer, _, trainer.lr_scheduler = deepspeed.initialize(
             model=trainer.model,
             optimizer=optimizer,
             config=config,
             lr_scheduler=lr_scheduler)
-        trainer.model.save_zero_checkpoint = self.save_zero_checkpoint

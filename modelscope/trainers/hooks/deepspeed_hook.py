@@ -71,7 +71,8 @@ class DeepSpeedConfig(HfTrainerDeepSpeedConfig):
                     10 * hidden_size)
 
         # scheduler
-        warmup = args.train.optimizer['options'].get('warmup', {})
+        options = args.train.optimizer.get('options', {})
+        warmup = options.get('warmup', {})
         warmup_steps = warmup.get('warmup_steps', 0)
         warmup_ratio = warmup.get('warmup_ratio', 0.0)
         warmup_steps = warmup_steps if warmup_steps > 0 else math.ceil(

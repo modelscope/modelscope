@@ -306,6 +306,10 @@ class DeepspeedHook(Hook):
         else:
             deepspeed_config = os.path.join(trainer.model_dir,
                                             self.deepspeed_config)
+        if not os.path.exists(deepspeed_config):
+            raise RuntimeError(
+                f'No such DeepSpeed json config file: {self.deepspeed_config}.'
+            )
         self.logger.info(f'Loading deepspeed config from {deepspeed_config}')
 
         ds_config = DeepSpeedConfig(deepspeed_config)

@@ -26,7 +26,8 @@ class UserSatisfactionEstimationPipeline(Pipeline):
                  preprocessor: DialogueClassificationUsePreprocessor = None,
                  config_file: str = None,
                  device: str = 'gpu',
-                 auto_collate=True):
+                 auto_collate=True,
+                 **kwargs):
         """The inference pipeline for the user satisfaction estimation task.
 
         Args:
@@ -49,7 +50,8 @@ class UserSatisfactionEstimationPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            **kwargs)
 
         if hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label

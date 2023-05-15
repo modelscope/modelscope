@@ -191,10 +191,8 @@ class FidDialoguePipeline(Pipeline):
     def postprocess(self, inputs: TokenGeneratorOutput,
                     **postprocess_params) -> Dict[str, Any]:
 
-        if torch.cuda.is_available():
-            hypotheses = inputs.sequences.detach().cpu().tolist()
-        else:
-            hypotheses = inputs.sequences
+        # if torch.cuda.is_available():
+        hypotheses = inputs.sequences.detach().cpu().tolist()
 
         response = self.preprocessor_tokenizer.decode(
             hypotheses[0], skip_special_tokens=self.is_t5)

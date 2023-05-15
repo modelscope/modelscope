@@ -197,7 +197,8 @@ if __name__ == '__main__':
     setup(
         name='modelscope',
         version=get_version(),
-        description='',
+        description=
+        'ModelScope: bring the notion of Model-as-a-Service to life.',
         long_description=readme(),
         long_description_content_type='text/markdown',
         author='Alibaba ModelScope team',

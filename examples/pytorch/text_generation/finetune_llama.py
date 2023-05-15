@@ -7,17 +7,19 @@ import os
 import shutil
 import tempfile
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import torch
 import utils
 
+from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.models.nlp.llama import (LlamaForTextGeneration,
                                          LlamaTokenizerFast)
 from modelscope.msdatasets.dataset_cls.custom_datasets.torch_custom_dataset import \
     TorchCustomDataset
 from modelscope.trainers import build_trainer
+from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 IGNORE_INDEX = -100
@@ -36,6 +38,28 @@ PROMPT_DICT = {
      'Write a response that appropriately completes the request.\n\n'
      '### Instruction:\n{instruction}\n\n### Response:'),
 }
+
+
+@dataclass
+class TextGenerationArguments(TrainingArgs):
+    work_dir: str = field(
+        default='./tmp',
+        metadata={
+            'help': 'The working path for saving checkpoint',
+        })
+
+    src_txt: str = field(
+        default=None,
+        metadata={
+            'help': 'The source text key of preprocessor',
+            'cfg_node': 'preprocessor.src_txt'
+        })
+
+    deepspeed: str = field(
+        default=None,
+        metadata={
+            'help': 'The location of DeepSpeed json config file',
+        })
 
 
 def _tokenize_fn(strings, tokenizer):
@@ -154,6 +178,8 @@ class DataCollatorForSupervisedDataset(object):
         )
 
 
+args = TextGenerationArguments.from_cli(task='text-generation')
+
 if __name__ == '__main__':
 
     def cfg_modify_fn(cfg):
@@ -181,8 +207,7 @@ if __name__ == '__main__':
         cfg.train.dataloader = {'batch_size_per_gpu': 4, 'workers_per_gpu': 2}
         cfg.train.hooks.append({
             'type': 'DeepspeedHook',
-            'config':
-            '/root/work/stanford_alpaca/configs/default_offload_opt_param.json',
+            'config': args.deepspeed,
             'save_zero_checkpoint': True,
             'with_mpu': False,
         })
@@ -190,18 +215,15 @@ if __name__ == '__main__':
         cfg.preprocessor.sequence_length = 512
         return cfg
 
-    model_name_or_path = '/run/model/llama-7b'
-    model = LlamaForTextGeneration.from_pretrained(
-        model_name_or_path,
-        cache_dir='/run/model/ms_out',
-    )
+    model_path = snapshot_download(args.model)
+    data_path = args.src_txt if args.src_txt else os.path.join(
+        model_path, 'alpaca_data.json')
+    model = LlamaForTextGeneration.from_pretrained(model_path, )
 
     tokenizer = LlamaTokenizerFast.from_pretrained(
-        model_name_or_path,
-        cache_dir='/run/model/ms_out',
+        model_path,
         model_max_length=512,
         padding_side='right',
-        use_fast=False,
     )
 
     special_tokens_dict = dict()
@@ -220,20 +242,17 @@ if __name__ == '__main__':
         model=model,
     )
 
-    train_dataset = SupervisedDataset(
-        tokenizer=tokenizer,
-        data_path='/root/work/stanford_alpaca/alpaca_data.json')
+    train_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=data_path)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
 
     kwargs = dict(
         model=model,
-        cfg_file=os.path.join(model_name_or_path, 'configuration.json'),
+        cfg_file=os.path.join(model_path, 'configuration.json'),
         train_dataset=train_dataset,
-        eval_dataset=None,
         data_collator=data_collator,
         max_epochs=1,
         launcher='pytorch',
-        work_dir='/run/model/ms_out',
+        work_dir=args.work_dir,
         cfg_modify_fn=cfg_modify_fn)
 
     # Construct trainer and train

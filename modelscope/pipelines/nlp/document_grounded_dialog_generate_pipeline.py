@@ -47,7 +47,8 @@ class DocumentGroundedDialogGeneratePipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            **kwargs)
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         if preprocessor is None:
             self.preprocessor = DocumentGroundedDialogGeneratePreprocessor(

@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path
 import unittest
 from typing import Any, Dict, List, Union
 
@@ -80,10 +79,6 @@ class SpeakerVerificationTest(unittest.TestCase):
             audios=SCL_EXAMPLE_WAV)
         print(result)
         self.assertTrue(OutputKeys.TEXT in result)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

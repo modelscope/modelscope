@@ -58,7 +58,7 @@ class TextGenerationArguments(TrainingArgs):
     deepspeed: str = field(
         default=None,
         metadata={
-            'help': 'The location of DeepSpeed json config file',
+            'help': 'The location of DeepSpeed json config file.',
         })
 
 

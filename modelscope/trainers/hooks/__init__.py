@@ -16,7 +16,9 @@ if TYPE_CHECKING:
                             OptimizerHook, TorchAMPOptimizerHook)
     from .priority import Priority, get_priority
     from .checkpoint import CheckpointHook, LoadCheckpointHook, BestCkptSaverHook
-    from .distributed import DDPHook, DeepspeedHook, MegatronHook
+    from .distributed.ddp_hook import DDPHook
+    from .distributed.deepspeed_hook import DeepspeedHook
+    from .distributed.megatron_hook import MegatronHook
 
 else:
     _import_structure = {
@@ -35,8 +37,10 @@ else:
         ],
         'checkpoint':
         ['CheckpointHook', 'LoadCheckpointHook', 'BestCkptSaverHook'],
-        'distributed': ['DDPHook', 'DeepspeedHook', 'MegatronHook'],
-        'priority': ['Priority', 'get']
+        'distributed.ddp_hook': ['DDPHook'],
+        'distributed.deepspeed_hook': ['DeepspeedHook'],
+        'distributed.megatron_hook': ['MegatronHook'],
+        'priority': ['Priority', 'get_priority']
     }
 
     import sys

@@ -51,6 +51,16 @@ class DatasetArgs:
             'help': 'The subset name used for evaluating, can be None',
         })
 
+    train_split: str = field(
+        default=None, metadata={
+            'help': 'The split of train dataset',
+        })
+
+    val_split: str = field(
+        default=None, metadata={
+            'help': 'The split of val dataset',
+        })
+
     train_dataset_namespace: str = field(
         default=None,
         metadata={
@@ -431,7 +441,10 @@ class TrainingArgs(DatasetArgs, TrainArgs, ModelArgs):
         """
         parser = CliArgumentParser(self)
         args, unknown = parser.parse_known_args(parser_args)
-        unknown = [item for item in unknown if item not in ('\\', '\n')]
+        unknown = [
+            item for item in unknown
+            if item not in ('\\', '\n') and '--local-rank=' not in item
+        ]
         _unknown = {}
         for i in range(0, len(unknown), 2):
             _unknown[unknown[i].replace('-', '')] = parse_value(unknown[i + 1])
@@ -460,8 +473,11 @@ class TrainingArgs(DatasetArgs, TrainArgs, ModelArgs):
             cfg_setter = f.metadata.get('cfg_setter') or (lambda x: x)
             if cfg_node is not None:
                 if f.name in self.manual_args or not ignore_default_config:
-                    cfg.merge_from_dict(
-                        {cfg_node: cfg_setter(getattr(self, f.name))})
+                    if isinstance(cfg_node, str):
+                        cfg_node = [cfg_node]
+                    for _node in cfg_node:
+                        cfg.merge_from_dict(
+                            {_node: cfg_setter(getattr(self, f.name))})
             else:
                 args_dict[f.name] = getattr(self, f.name)
 

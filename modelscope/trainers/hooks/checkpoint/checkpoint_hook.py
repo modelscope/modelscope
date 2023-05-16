@@ -348,7 +348,7 @@ class BestCkptSaverHook(CheckpointHook):
             self._do_save(trainer, 'by_step')
 
     def _should_save(self, trainer):
-        return self._is_best_metric(trainer.metric_values) and self.save_best
+        return self.save_best and self._is_best_metric(trainer.metric_values)
 
     def _is_best_metric(self, metric_values):
         if metric_values is None:

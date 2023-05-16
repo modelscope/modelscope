@@ -1,1 +1,0 @@
-{"framework":"pytorch","train":{"work_dir":"/tmp","max_epochs":10,"dataloader":{"batch_size_per_gpu":16,"workers_per_gpu":0},"optimizer":{"type":"SGD","lr":0.001},"lr_scheduler":{"type":"StepLR","step_size":2},"hooks":[{"type":"CheckpointHook","interval":1}]},"evaluation":{"dataloader":{"batch_size_per_gpu":16,"workers_per_gpu":0,"shuffle":false}}}

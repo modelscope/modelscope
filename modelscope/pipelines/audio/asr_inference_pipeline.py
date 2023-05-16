@@ -88,7 +88,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             beam_size('int'):
                 beam size for decoding
             ctc_weight('float'):
-                CTC weight in joint decoding
+                the CTC weight in joint decoding
             lm_weight('float'):
                 lm weight
             decoding_ind('int', defaults to 0):
@@ -127,7 +127,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             minlenratio=self.cmd['minlenratio'],
             batch_size=self.cmd['batch_size'],
             beam_size=self.cmd['beam_size'],
-            ngpu=ngpu,
+            ngpu=self.cmd['ngpu'],
             ctc_weight=self.cmd['ctc_weight'],
             lm_weight=self.cmd['lm_weight'],
             penalty=self.cmd['penalty'],
@@ -308,109 +308,88 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             }
         }
 
-        if self.framework == Frameworks.torch:
-            frontend_conf = None
-            token_num_relax = None
-            decoding_ind = None
-            decoding_mode = None
-            if os.path.exists(outputs['am_model_config']):
-                config_file = open(
-                    outputs['am_model_config'], encoding='utf-8')
-                root = yaml.full_load(config_file)
-                config_file.close()
-                if 'frontend_conf' in root:
-                    frontend_conf = root['frontend_conf']
-            if os.path.exists(outputs['asr_model_config']):
-                config_file = open(
-                    outputs['asr_model_config'], encoding='utf-8')
-                root = yaml.full_load(config_file)
-                config_file.close()
-                if 'token_num_relax' in root:
-                    token_num_relax = root['token_num_relax']
-                if 'decoding_ind' in root:
-                    decoding_ind = root['decoding_ind']
-                if 'decoding_mode' in root:
-                    decoding_mode = root['decoding_mode']
+        frontend_conf = None
+        token_num_relax = None
+        decoding_ind = None
+        decoding_mode = None
+        if os.path.exists(outputs['am_model_config']):
+            config_file = open(outputs['am_model_config'], encoding='utf-8')
+            root = yaml.full_load(config_file)
+            config_file.close()
+            if 'frontend_conf' in root:
+                frontend_conf = root['frontend_conf']
+        if os.path.exists(outputs['asr_model_config']):
+            config_file = open(outputs['asr_model_config'], encoding='utf-8')
+            root = yaml.full_load(config_file)
+            config_file.close()
+            if 'token_num_relax' in root:
+                token_num_relax = root['token_num_relax']
+            if 'decoding_ind' in root:
+                decoding_ind = root['decoding_ind']
+            if 'decoding_mode' in root:
+                decoding_mode = root['decoding_mode']
 
-                cmd['beam_size'] = root['beam_size']
-                cmd['penalty'] = root['penalty']
-                cmd['maxlenratio'] = root['maxlenratio']
-                cmd['minlenratio'] = root['minlenratio']
-                cmd['ctc_weight'] = root['ctc_weight']
-                cmd['lm_weight'] = root['lm_weight']
-            cmd['asr_train_config'] = outputs['am_model_config']
-            cmd['lm_file'] = outputs['lm_model_path']
-            cmd['lm_train_config'] = outputs['lm_model_config']
-            cmd['batch_size'] = outputs['model_config']['batch_size']
-            cmd['frontend_conf'] = frontend_conf
-            if frontend_conf is not None and 'fs' in frontend_conf:
-                cmd['fs']['model_fs'] = frontend_conf['fs']
-            cmd['token_num_relax'] = token_num_relax
-            cmd['decoding_ind'] = decoding_ind
-            cmd['decoding_mode'] = decoding_mode
-            if outputs.__contains__('mvn_file'):
-                cmd['cmvn_file'] = outputs['mvn_file']
-            model_config = self.model_cfg['model_config']
-            if model_config.__contains__('vad_model') and self.vad_model != '':
-                self.vad_model = model_config['vad_model']
-            if model_config.__contains__('vad_model_revision'):
-                self.vad_model_revision = model_config['vad_model_revision']
-            if model_config.__contains__(
-                    'punc_model') and self.punc_model != '':
-                self.punc_model = model_config['punc_model']
-            if model_config.__contains__('punc_model_revision'):
-                self.punc_model_revision = model_config['punc_model_revision']
-            if model_config.__contains__(
-                    'timestamp_model') and self.timestamp_model != '':
-                self.timestamp_model = model_config['timestamp_model']
-            if model_config.__contains__('timestamp_model_revision'):
-                self.timestamp_model_revision = model_config[
-                    'timestamp_model_revision']
-            update_local_model(model_config, model_path, extra_args)
-            self.load_vad_model(cmd)
-            self.load_punc_model(cmd)
-            self.load_lm_model(cmd)
-            self.load_timestamp_model(cmd)
+            cmd['beam_size'] = root['beam_size']
+            cmd['penalty'] = root['penalty']
+            cmd['maxlenratio'] = root['maxlenratio']
+            cmd['minlenratio'] = root['minlenratio']
+            cmd['ctc_weight'] = root['ctc_weight']
+            cmd['lm_weight'] = root['lm_weight']
+        cmd['asr_train_config'] = outputs['am_model_config']
+        cmd['lm_file'] = outputs['lm_model_path']
+        cmd['lm_train_config'] = outputs['lm_model_config']
+        cmd['batch_size'] = outputs['model_config']['batch_size']
+        cmd['frontend_conf'] = frontend_conf
+        if frontend_conf is not None and 'fs' in frontend_conf:
+            cmd['fs']['model_fs'] = frontend_conf['fs']
+        cmd['token_num_relax'] = token_num_relax
+        cmd['decoding_ind'] = decoding_ind
+        cmd['decoding_mode'] = decoding_mode
+        if outputs.__contains__('mvn_file'):
+            cmd['cmvn_file'] = outputs['mvn_file']
+        model_config = self.model_cfg['model_config']
+        if model_config.__contains__('vad_model') and self.vad_model != '':
+            self.vad_model = model_config['vad_model']
+        if model_config.__contains__('vad_model_revision'):
+            self.vad_model_revision = model_config['vad_model_revision']
+        if model_config.__contains__('punc_model') and self.punc_model != '':
+            self.punc_model = model_config['punc_model']
+        if model_config.__contains__('punc_model_revision'):
+            self.punc_model_revision = model_config['punc_model_revision']
+        if model_config.__contains__(
+                'timestamp_model') and self.timestamp_model != '':
+            self.timestamp_model = model_config['timestamp_model']
+        if model_config.__contains__('timestamp_model_revision'):
+            self.timestamp_model_revision = model_config[
+                'timestamp_model_revision']
+        update_local_model(model_config, model_path, extra_args)
+        self.load_vad_model(cmd)
+        self.load_punc_model(cmd)
+        self.load_lm_model(cmd)
+        self.load_timestamp_model(cmd)
 
-            user_args_dict = [
-                'output_dir',
-                'batch_size',
-                'mode',
-                'ngpu',
-                'beam_size',
-                'ctc_weight',
-                'lm_weight',
-                'decoding_ind',
-                'decoding_mode',
-                'vad_model_file',
-                'vad_infer_config',
-                'vad_cmvn_file',
-                'punc_model_file',
-                'punc_infer_config',
-                'param_dict',
-            ]
+        user_args_dict = [
+            'output_dir',
+            'batch_size',
+            'mode',
+            'ngpu',
+            'beam_size',
+            'ctc_weight',
+            'lm_weight',
+            'decoding_ind',
+            'decoding_mode',
+            'vad_model_file',
+            'vad_infer_config',
+            'vad_cmvn_file',
+            'punc_model_file',
+            'punc_infer_config',
+            'param_dict',
+        ]
 
-            for user_args in user_args_dict:
-                if user_args in extra_args and extra_args[
-                        user_args] is not None:
-                    cmd[user_args] = extra_args[user_args]
-
-        elif self.framework == Frameworks.tf:
-            cmd['fs']['model_fs'] = outputs['model_config']['fs']
-            cmd['hop_length'] = outputs['model_config']['hop_length']
-            cmd['feature_dims'] = outputs['model_config']['feature_dims']
-            cmd['predictions_file'] = 'text'
-            cmd['cmvn_file'] = outputs['am_mvn_file']
-            cmd['vocab_file'] = outputs['vocab_file']
-            if 'idx_text' in outputs:
-                cmd['idx_text'] = outputs['idx_text']
-            if 'sampled_ids' in outputs['model_config']:
-                cmd['sampled_ids'] = outputs['model_config']['sampled_ids']
-            if 'sampled_lengths' in outputs['model_config']:
-                cmd['sampled_lengths'] = outputs['model_config'][
-                    'sampled_lengths']
-        else:
-            raise ValueError('model type is mismatching')
+        for user_args in user_args_dict:
+            if user_args in extra_args and extra_args[user_args] is not None:
+                cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

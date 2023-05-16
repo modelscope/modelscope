@@ -1,20 +1,24 @@
 import os
 from dataclasses import dataclass, field
-from functools import partial
 
+from modelscope import MsDataset, TrainingArgs
 from modelscope.metainfo import Trainers
-from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.trainers.args import (TrainingArgs, get_flatten_value,
-                                      set_flatten_value)
+from modelscope.trainers.training_args import set_flatten_value
 
 
-@dataclass
+@dataclass(init=False)
 class MultiModalEmbeddingArguments(TrainingArgs):
 
     trainer: str = field(
         default=Trainers.default, metadata={
             'help': 'The trainer used',
+        })
+
+    work_dir: str = field(
+        default='./tmp',
+        metadata={
+            'help': 'The working path for saving checkpoint',
         })
 
     use_fp16: bool = field(
@@ -35,7 +39,6 @@ class MultiModalEmbeddingArguments(TrainingArgs):
         default=None,
         metadata={
             'cfg_node': 'train.optimizer_hparams',
-            'cfg_getter': partial(get_flatten_value, exclusions=['lr']),
             'cfg_setter': set_flatten_value,
             'help': 'The optimizer init params except `lr`',
         })
@@ -51,7 +54,6 @@ class MultiModalEmbeddingArguments(TrainingArgs):
         default=None,
         metadata={
             'cfg_node': 'dataset.column_map',
-            'cfg_getter': get_flatten_value,
             'cfg_setter': set_flatten_value,
             'help': 'The column map for dataset',
         })
@@ -67,7 +69,6 @@ class MultiModalEmbeddingArguments(TrainingArgs):
         default=None,
         metadata={
             'cfg_node': 'train.lr_scheduler_hook',
-            'cfg_getter': get_flatten_value,
             'cfg_setter': set_flatten_value,
             'help': 'The parameters for lr scheduler hook',
         })
@@ -76,7 +77,6 @@ class MultiModalEmbeddingArguments(TrainingArgs):
         default=None,
         metadata={
             'cfg_node': 'train.optimizer_hook',
-            'cfg_getter': get_flatten_value,
             'cfg_setter': set_flatten_value,
             'help': 'The parameters for optimizer hook',
         })
@@ -92,23 +92,28 @@ class MultiModalEmbeddingArguments(TrainingArgs):
             'help': 'The data parallel world size',
         })
 
-    def __call__(self, config):
-        config = super().__call__(config)
-        config.merge_from_dict({'pretrained_model.model_name': self.model})
-        if self.clip_clamp:
-            config.train.hooks.append({'type': 'ClipClampLogitScaleHook'})
-        if self.world_size > 1:
-            config.train.launcher = 'pytorch'
-        return config
+
+config, args = MultiModalEmbeddingArguments().parse_cli().to_config()
+print(config, args)
 
 
-args = MultiModalEmbeddingArguments.from_cli(task='multi-modal-embedding')
-print(args)
+def cfg_modify_fn(cfg):
+    if args.use_model_config:
+        cfg.merge_from_dict(config)
+    else:
+        cfg = config
+    cfg.merge_from_dict({'pretrained_model.model_name': args.model})
+    if args.clip_clamp:
+        cfg.train.hooks.append({'type': 'ClipClampLogitScaleHook'})
+    if args.world_size > 1:
+        cfg.train.launcher = 'pytorch'
+    return cfg
+
 
 train_dataset = MsDataset.load(
-    args.dataset_name, namespace='modelscope', split='train')
+    args.train_dataset_name, namespace='modelscope', split='train')
 eval_dataset = MsDataset.load(
-    args.dataset_name, namespace='modelscope', split='validation')
+    args.train_dataset_name, namespace='modelscope', split='validation')
 
 os.makedirs(args.work_dir, exist_ok=True)
 kwargs = dict(
@@ -116,6 +121,6 @@ kwargs = dict(
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
     work_dir=args.work_dir,
-    cfg_modify_fn=args)
+    cfg_modify_fn=cfg_modify_fn)
 trainer = build_trainer(name=args.trainer, default_args=kwargs)
 trainer.train()

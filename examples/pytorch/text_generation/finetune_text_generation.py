@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from modelscope import (EpochBasedTrainer, MsDataset, TrainingArgs,
-                        build_trainer)
+from modelscope import EpochBasedTrainer, MsDataset, TrainingArgs
 from modelscope.metainfo import Trainers
+from modelscope.trainers import build_trainer
 
 
 @dataclass(init=False)

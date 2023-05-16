@@ -2,7 +2,8 @@ import os
 from dataclasses import dataclass, field
 
 from modelscope import (EpochBasedTrainer, MsDataset, TrainingArgs,
-                        build_dataset_from_file, build_trainer)
+                        build_dataset_from_file)
+from modelscope.trainers import build_trainer
 
 
 def set_labels(labels):

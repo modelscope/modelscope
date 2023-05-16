@@ -1,7 +1,8 @@
 PYTHONPATH=. torchrun examples/pytorch/text_generation/finetune_text_generation.py \
     --trainer 'text-generation-trainer' \
     --work_dir './tmp' \
-    --model 'damo/nlp_palm2.0_pretrained_chinese-base' \
+    --task 'text2text-generation' \
+    --model 'damo/nlp_mt5_zero-shot-augment_chinese-base' \
     --train_dataset_name 'DuReader_robust-QG' \
     --src_txt 'text1' \
     --tgt_txt 'text2' \

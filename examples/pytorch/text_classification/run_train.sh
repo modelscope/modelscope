@@ -1,4 +1,5 @@
 PYTHONPATH=. python examples/pytorch/text_classification/finetune_text_classification.py \
+    --task 'text-classification' \
     --model 'damo/nlp_structbert_backbone_base_std' \
     --train_dataset_name 'clue' \
     --train_subset_name 'tnews' \
@@ -7,7 +8,9 @@ PYTHONPATH=. python examples/pytorch/text_classification/finetune_text_classific
     --model.num_labels 15 \
     --labels '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14' \
     --preprocessor 'sen-cls-tokenizer' \
+    --use_model_config True \
+    --max_epochs 1 \
     --train.dataloader.workers_per_gpu 0 \
     --evaluation.dataloader.workers_per_gpu 0 \
     --train.optimizer.lr 1e-5 \
-    --use_model_config true \
+    --eval_metrics 'seq-cls-metric' \

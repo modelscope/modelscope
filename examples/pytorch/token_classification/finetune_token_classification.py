@@ -1,18 +1,20 @@
 from dataclasses import dataclass, field
 
-from modelscope.metainfo import Trainers
-from modelscope.msdatasets import MsDataset
-from modelscope.trainers import build_trainer
-from modelscope.trainers.args import (TrainingArgs, get_flatten_value,
-                                      set_flatten_value)
+from modelscope import (EpochBasedTrainer, MsDataset, TrainingArgs,
+                        build_dataset_from_file)
 
 
-@dataclass
+@dataclass(init=False)
 class TokenClassificationArguments(TrainingArgs):
-
     trainer: str = field(
-        default=Trainers.default, metadata={
+        default=None, metadata={
             'help': 'The trainer used',
+        })
+
+    work_dir: str = field(
+        default='./tmp',
+        metadata={
+            'help': 'The working path for saving checkpoint',
         })
 
     preprocessor: str = field(
@@ -29,60 +31,99 @@ class TokenClassificationArguments(TrainingArgs):
             'cfg_node': 'preprocessor.padding'
         })
 
-    train_dataset_params: str = field(
+    mode: str = field(
+        default='inference',
+        metadata={
+            'help': 'The preprocessor padding',
+            'cfg_node': 'preprocessor.mode'
+        })
+
+    first_sequence: str = field(
         default=None,
         metadata={
-            'cfg_node': 'dataset.train',
-            'cfg_getter': get_flatten_value,
-            'cfg_setter': set_flatten_value,
+            'cfg_node': 'preprocessor.first_sequence',
             'help': 'The parameters for train dataset',
         })
 
-    def __call__(self, config):
-        config = super().__call__(config)
-        if config.safe_get('dataset.train.label') == 'ner_tags':
-            ner_tags_labels = train_dataset['ner_tags'] + eval_dataset[
-                'ner_tags']
-            label_enumerate_values = self._get_label_list(ner_tags_labels)
-            config.merge_from_dict(
-                {'dataset.train.labels': label_enumerate_values})
-        if config.train.lr_scheduler.type == 'LinearLR':
-            config.train.lr_scheduler['total_iters'] = \
-                int(len(train_dataset) / self.per_device_train_batch_size) * self.max_epochs
-        return config
+    label: str = field(
+        default=None,
+        metadata={
+            'cfg_node': 'preprocessor.label',
+            'help': 'The parameters for train dataset',
+        })
 
-    # TODO: Future performance optimization in MsDataset
-    @staticmethod
-    def _get_label_list(labels):
-        unique_labels = set()
-        for label in labels:
-            unique_labels = unique_labels | set(label)
-        label_list = list(unique_labels)
-        label_list.sort()
-        return label_list
+    sequence_length: int = field(
+        default=128,
+        metadata={
+            'cfg_node': 'preprocessor.sequence_length',
+            'help': 'The parameters for train dataset',
+        })
 
 
-args = TokenClassificationArguments.from_cli(task='token-classification')
+training_args = TokenClassificationArguments().parse_cli()
+config, args = training_args.to_config()
 print(args)
 
-# load dataset
-train_dataset = MsDataset.load(
-    args.dataset_name,
-    subset_name=args.subset_name,
-    split='train',
-    namespace='damo')['train']
-eval_dataset = MsDataset.load(
-    args.dataset_name,
-    subset_name=args.subset_name,
-    split='validation',
-    namespace='damo')['validation']
+
+def get_label_list(labels):
+    unique_labels = set()
+    for label in labels:
+        unique_labels = unique_labels | set(label)
+    label_list = list(unique_labels)
+    label_list.sort()
+    return label_list
+
+
+def cfg_modify_fn(cfg):
+    if args.use_model_config:
+        cfg.merge_from_dict(config)
+    else:
+        cfg = config
+    labels = train_dataset[training_args.label] + validation_dataset[
+        training_args.label]
+    label_enumerate_values = get_label_list(labels)
+    cfg.merge_from_dict({
+        'preprocessor.label2id':
+        {label: id
+         for id, label in enumerate(label_enumerate_values)}
+    })
+    cfg.merge_from_dict({'model.num_labels': len(label_enumerate_values)})
+    cfg.merge_from_dict({'preprocessor.use_fast': True})
+    cfg.merge_from_dict({
+        'evaluation.metrics': {
+            'type': 'token-cls-metric',
+            'label2id':
+            {label: id
+             for id, label in enumerate(label_enumerate_values)}
+        }
+    })
+    if cfg.train.lr_scheduler.type == 'LinearLR':
+        cfg.train.lr_scheduler['total_iters'] = \
+            int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
+    return cfg
+
+
+if args.dataset_json_file is None:
+    train_dataset = MsDataset.load(
+        args.train_dataset_name,
+        subset_name=args.train_subset_name,
+        split='train',
+        namespace=args.train_dataset_namespace)['train']
+    validation_dataset = MsDataset.load(
+        args.train_dataset_name,
+        subset_name=args.train_subset_name,
+        split='validation',
+        namespace=args.train_dataset_namespace)['validation']
+else:
+    train_dataset, validation_dataset = build_dataset_from_file(
+        args.dataset_json_file)
 
 kwargs = dict(
     model=args.model,
     train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
+    eval_dataset=validation_dataset,
     work_dir=args.work_dir,
-    cfg_modify_fn=args)
+    cfg_modify_fn=cfg_modify_fn)
 
-trainer = build_trainer(name=args.trainer, default_args=kwargs)
+trainer = EpochBasedTrainer(**kwargs)
 trainer.train()

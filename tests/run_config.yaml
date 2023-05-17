@@ -87,3 +87,9 @@ envs:
       - test_image_style_transfer.py
       - test_image_portrait_stylization_trainer.py
       - test_language_identification.py
+      - test_ocr_detection_db_trainer.py
+      - test_nerf_recon_acc.py
+      - test_tensorboard_hook.py
+      - test_efficient_diffusion_tuning_trainer.py
+      - test_trainer.py
+      - test_nerf_recon_acc_trainer.py

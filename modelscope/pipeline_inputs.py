@@ -337,6 +337,9 @@ TASK_INPUTS = {
     Tasks.video_captioning: [InputType.VIDEO, {
         'video': InputType.VIDEO,
     }],
+    Tasks.multimodal_dialogue: {
+        'messages': InputType.LIST,
+    },
     Tasks.visual_grounding: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT

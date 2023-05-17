@@ -116,6 +116,7 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
 
     # nlp models
@@ -181,6 +182,8 @@ class Models(object):
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
+    eres2net_sv = 'eres2net-sv'
+    scl_sd = 'scl-sd'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
@@ -200,6 +203,7 @@ class Models(object):
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
 
     # science models
@@ -396,7 +400,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
-
+    fast_instance_segmentation = 'fast-instance-segmentation'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -480,6 +484,8 @@ class Pipelines(object):
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
+    speaker_verification_eres2net = 'speaker-verification-eres2net'
+    speaker_change_locating = 'speaker-change-locating'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 
@@ -509,6 +515,7 @@ class Pipelines(object):
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    multimodal_dialogue = 'multimodal-dialogue'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -1027,6 +1034,7 @@ class Preprocessors(object):
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
     diffusion_image_generation_preprocessor = 'diffusion-image-generation-preprocessor'
+    mplug_owl_preprocessor = 'mplug-owl-preprocessor'
     image_captioning_clip_interrogator_preprocessor = 'image-captioning-clip-interrogator-preprocessor'
 
     # science preprocessor

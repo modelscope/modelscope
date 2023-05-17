@@ -247,6 +247,7 @@ class MultiModalTasks(object):
     video_temporal_grounding = 'video-temporal-grounding'
     text_to_video_synthesis = 'text-to-video-synthesis'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    multimodal_dialogue = 'multimodal-dialogue'
 
 
 class ScienceTasks(object):

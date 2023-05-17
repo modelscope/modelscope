@@ -66,7 +66,9 @@ class ZeroShotClassificationPipeline(Pipeline):
             preprocessor=preprocessor,
             config_file=config_file,
             device=device,
-            auto_collate=auto_collate)
+            auto_collate=auto_collate,
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
         self.entailment_id = 0
         self.contradiction_id = 2
 

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (DiffusionImageGenerationPreprocessor,
                               OfaPreprocessor, MPlugPreprocessor,
-                              HiTeAPreprocessor,
+                              HiTeAPreprocessor, MplugOwlPreprocessor,
                               ImageCaptioningClipInterrogatorPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
         WordAlignmentPreprocessor, TextGenerationTransformersPreprocessor,
         Tokenize, WordSegmentationBlankSetToLabelPreprocessor,
-        CodeGeeXPreprocessor, MGLMSummarizationPreprocessor,
+        MGLMSummarizationPreprocessor,
         ZeroShotClassificationTransformersPreprocessor,
         TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
@@ -71,7 +71,7 @@ else:
         'tts': ['KanttsDataPreprocessor'],
         'multi_modal': [
             'DiffusionImageGenerationPreprocessor', 'OfaPreprocessor',
-            'MPlugPreprocessor', 'HiTeAPreprocessor',
+            'MPlugPreprocessor', 'HiTeAPreprocessor', 'MplugOwlPreprocessor',
             'ImageCaptioningClipInterrogatorPreprocessor'
         ],
         'nlp': [

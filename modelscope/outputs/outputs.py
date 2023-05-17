@@ -1369,6 +1369,10 @@ TASK_OUTPUTS = {
     # {"text": "this is a text answser. "}
     Tasks.video_question_answering: [OutputKeys.TEXT],
 
+    # Multimodal Dialogue result for a sample
+    # {"text": "this is a text response. "}
+    Tasks.multimodal_dialogue: [OutputKeys.TEXT],
+
     # auto_speech_recognition result for a single sample
     # {
     #    "text": "每天都要快乐喔"

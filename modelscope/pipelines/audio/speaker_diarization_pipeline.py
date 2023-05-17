@@ -77,7 +77,7 @@ class SpeakerDiarizationPipeline(Pipeline):
             output_dir=self.cmd['output_dir'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
-            ngpu=ngpu,
+            ngpu=self.cmd['ngpu'],
             seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
@@ -205,6 +205,7 @@ class SpeakerDiarizationPipeline(Pipeline):
                     cmd[user_args].update(extra_args[user_args])
                 else:
                     cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

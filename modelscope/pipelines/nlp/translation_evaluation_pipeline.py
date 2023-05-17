@@ -43,7 +43,11 @@ class TranslationEvaluationPipeline(Pipeline):
                 source/reference/source+reference can be presented during evaluation.
             device: Used device for this pipeline.
         """
-        super().__init__(model=model, preprocessor=preprocessor)
+        super().__init__(
+            model=model,
+            preprocessor=preprocessor,
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         self.input_format = input_format
         self.checking_input_format()

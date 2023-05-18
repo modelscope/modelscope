@@ -205,6 +205,7 @@ class Models(object):
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    dreambooth_diffusion = 'dreambooth-diffusion'
 
     # science models
     unifold = 'unifold'
@@ -514,6 +515,7 @@ class Pipelines(object):
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    dreambooth_diffusion = 'dreambooth-diffusion'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -889,6 +891,7 @@ class MultiModalTrainers(object):
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    dreambooth_diffusion = 'dreambooth-diffusion'
 
 
 class AudioTrainers(object):

@@ -9,6 +9,9 @@ PYTHONPATH=. torchrun --nproc_per_node $WORLD_SIZE examples/pytorch/text_generat
     --work_dir './tmp' \
     --model 'damo/nlp_gpt3_text-generation_1.3B' \
     --train_dataset_name 'chinese-poetry-collection' \
+    --val_dataset_name 'chinese-poetry-collection' \
+    --train_split 'train' \
+    --val_split 'test' \
     --preprocessor 'text-gen-jieba-tokenizer' \
     --src_txt 'text1' \
     --tgt_txt 'text2' \

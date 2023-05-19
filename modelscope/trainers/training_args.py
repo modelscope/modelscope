@@ -9,6 +9,7 @@ import json
 
 from modelscope.trainers.cli_argument_parser import CliArgumentParser
 from modelscope.utils.config import Config
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
 
 
 def set_flatten_value(values: Union[str, List[str]]):
@@ -62,13 +63,13 @@ class DatasetArgs:
         })
 
     train_dataset_namespace: str = field(
-        default=None,
+        default=DEFAULT_DATASET_NAMESPACE,
         metadata={
             'help': 'The dataset namespace used for training',
         })
 
     val_dataset_namespace: str = field(
-        default=None,
+        default=DEFAULT_DATASET_NAMESPACE,
         metadata={
             'help': 'The dataset namespace used for evaluating',
         })
@@ -450,7 +451,7 @@ class TrainingArgs(DatasetArgs, TrainArgs, ModelArgs):
             _unknown[unknown[i].replace('-', '')] = parse_value(unknown[i + 1])
         args_dict = vars(args)
         self.manual_args += parser.manual_args
-
+        self._unknown_args.update(_unknown)
         for key, value in deepcopy(args_dict).items():
             if key is not None and hasattr(self, key):
                 setattr(self, key, value)

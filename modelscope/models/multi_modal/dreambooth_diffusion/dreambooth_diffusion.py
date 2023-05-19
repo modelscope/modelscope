@@ -215,7 +215,6 @@ class DreamboothDiffusion(TorchModel):
                                      encoder_hidden_states.float())
             model_pred = model_output['sample']
 
-            loss_dict = dict()
             if self.prior_loss_weight != 0:
                 model_pred, prior_pred = model_pred.split(2, dim=1)
                 gt, prior_gt = gt.split(2, dim=1)

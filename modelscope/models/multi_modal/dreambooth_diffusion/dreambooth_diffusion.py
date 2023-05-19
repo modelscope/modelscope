@@ -54,6 +54,7 @@ class DreamboothDiffusion(TorchModel):
         self.prompt = 'a photo of sks dog'  # just for test
         self.prior_loss_weight = 1  # just for test
         self.num_class_images = 5  # just for test
+        self.class_images = []
 
         self.weight_dtype = torch.float32
         self.inference = inference

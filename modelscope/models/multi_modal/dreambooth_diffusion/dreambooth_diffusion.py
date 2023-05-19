@@ -7,6 +7,7 @@ from functools import partial
 from typing import Any, Callable, List, Mapping, Optional, Union
 
 import torch
+import random
 import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        DPMSolverMultistepScheduler, UNet2DConditionModel,
@@ -50,7 +51,9 @@ class DreamboothDiffusion(TorchModel):
             'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
         revision = kwargs.pop('revision', None)
         inference = kwargs.pop('inference', True)
-
+        self.prompt = 'a photo of sks dog'  # just for test
+        self.prior_loss_weight = 1  # just for test
+        self.num_class_images = 5  # just for test
 
         self.weight_dtype = torch.float32
         self.inference = inference
@@ -88,7 +91,7 @@ class DreamboothDiffusion(TorchModel):
                 pretrained_model_name_or_path,
                 subfolder='unet',
                 revision=revision)
-            self.unet.requires_grad_(False)
+            # self.unet.requires_grad_(False)
             self.vae.requires_grad_(False)
             self.text_encoder.requires_grad_(False)
 
@@ -106,14 +109,66 @@ class DreamboothDiffusion(TorchModel):
             truncation=True,
             return_tensors='pt')
         return inputs.input_ids
+    
+    @torch.no_grad()
+    def generate_class_prior_images(self, num_batches=None):
+        """Generate images for class prior loss.
 
-    def forward(self, prompt='', cond=None, target=None):
+        Args:
+            num_batches (int): Number of batches to generate images.
+                If not passed, all images will be generated in one
+                forward. Defaults to None.
+        """
+        if self.prior_loss_weight == 0:
+            return
+        if self.class_images:
+            return
+
+        assert self.class_prior_prompt is not None, (
+            '\'class_prior_prompt\' must be set when \'prior_loss_weight\' is '
+            'larger than 0.')
+        assert self.num_class_images is not None, (
+            '\'num_class_images\' must be set when \'prior_loss_weight\' is '
+            'larger than 0.')
+
+        # print_log(
+        #     'Generating class prior images with prompt: '
+        #     f'{self.class_prior_prompt}', 'current')
+        num_batches = num_batches or self.num_class_images
+
+        unet_dtype = next(self.unet.parameters()).dtype
+        self.unet.to(self.dtype)
+        for idx in range(0, self.num_class_images, num_batches):
+            prompt = self.class_prior_prompt
+            if self.num_class_images > 1:
+                prompt += f' {idx + 1} of {self.num_class_images}'
+
+            output = self.infer(prompt, return_type='tensor')
+            samples = output['samples']
+            self.class_images.append(samples.clamp(-1, 1))
+        self.unet.to(unet_dtype)
+    
+    def forward(self, prompt='', target=None):
         if self.inference:
             generator = torch.Generator(device=self.device).manual_seed(0)
             images = self.pipe(
                 prompt, num_inference_steps=30, generator=generator).images
             return images
         else:
+            image = target
+            num_batches = image.shape[0]
+            if self.prior_loss_weight != 0:
+                # image and prompt for prior preservation
+                self.generate_class_prior_images(num_batches=num_batches)
+                class_images_used = []
+                for _ in range(num_batches):
+                    idx = random.randint(0, len(self.class_images) - 1)
+                    class_images_used.append(self.class_images[idx])
+
+                image = torch.cat([image, *class_images_used], dim=0)
+                prompt = prompt + [self.class_prior_prompt]
+            
+            image = image.to(dtype=self.weight_dtype)
             with torch.no_grad():
                 latents = self.vae.encode(
                     target.to(dtype=self.weight_dtype)).latent_dist.sample()
@@ -141,9 +196,11 @@ class DreamboothDiffusion(TorchModel):
 
             # Get the target for loss depending on the prediction type
             if self.noise_scheduler.config.prediction_type == 'epsilon':
-                target = noise
+                # target = noise
+                gt = noise
             elif self.noise_scheduler.config.prediction_type == 'v_prediction':
-                target = self.noise_scheduler.get_velocity(
+                gt = self.noise_scheduler.get_velocity(
+                # target = self.noise_scheduler.get_velocity(
                     latents, noise, timesteps)
             else:
                 raise ValueError(
@@ -151,10 +208,29 @@ class DreamboothDiffusion(TorchModel):
                 )
 
             # Predict the noise residual and compute loss
-            model_pred = self.unet(noisy_latents, timesteps,
-                                   encoder_hidden_states).sample
-            loss = F.mse_loss(
-                model_pred.float(), target.float(), reduction='mean')
+            # model_pred = self.unet(noisy_latents, timesteps,
+            #                        encoder_hidden_states).sample
+            model_output = self.unet(noisy_latents.float(), 
+                                     timesteps,
+                                     encoder_hidden_states.float())
+            model_pred = model_output['sample']
+
+            loss_dict = dict()
+            if self.prior_loss_weight != 0:
+                model_pred, prior_pred = model_pred.split(2, dim=1)
+                gt, prior_gt = gt.split(2, dim=1)
+                # calculate loss in FP32
+                dreambooth_loss = F.mse_loss(model_pred.float(), gt.float())
+                prior_loss = F.mse_loss(prior_pred.float(), prior_gt.float())
+                loss = dreambooth_loss + prior_loss * self.prior_loss_weight
+ 
+            else:
+                # calculate loss in FP32
+                dreambooth_loss = F.mse_loss(model_pred.float(), gt.float())
+                loss = dreambooth_loss
+            
+            # loss = F.mse_loss(
+                # model_pred.float(), target.float(), reduction='mean')
             output = {OutputKeys.LOSS: loss}
             return output
 
@@ -185,7 +261,6 @@ class DreamboothDiffusion(TorchModel):
             model_dir,
             pretrained_model_name_or_path=config.model.
             pretrained_model_name_or_path,
-            # pretrained_tuner=config.model.get('pretrained_tuner', None),
             inference=config.model.get('inference', False))
         model.config = config
         return model

@@ -52,9 +52,10 @@ class DreamboothDiffusion(TorchModel):
         revision = kwargs.pop('revision', None)
         inference = kwargs.pop('inference', True)
         self.prompt = 'a photo of sks dog'  # just for test
-        self.prior_loss_weight = 1  # just for test
+        self.prior_loss_weight = 0  # just for test
         self.num_class_images = 5  # just for test
         self.class_images = []
+        self.class_prior_prompt = None
 
         self.weight_dtype = torch.float32
         self.inference = inference
@@ -92,9 +93,11 @@ class DreamboothDiffusion(TorchModel):
                 pretrained_model_name_or_path,
                 subfolder='unet',
                 revision=revision)
-            # self.unet.requires_grad_(False)
-            self.vae.requires_grad_(False)
-            self.text_encoder.requires_grad_(False)
+            
+            if self.vae is not None:
+                self.vae.requires_grad_(False)
+            if self.text_encoder is None:
+                self.text_encoder.requires_grad_(False)
 
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.
@@ -156,6 +159,7 @@ class DreamboothDiffusion(TorchModel):
                 prompt, num_inference_steps=30, generator=generator).images
             return images
         else:
+            self.unet.train()
             image = target
             num_batches = image.shape[0]
             if self.prior_loss_weight != 0:
@@ -185,13 +189,10 @@ class DreamboothDiffusion(TorchModel):
             timesteps = timesteps.long()
 
             # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_latents = self.noise_scheduler.add_noise(
-                latents, noise, timesteps)
-
-            input_ids = self.tokenize_caption(prompt).to(self.device)
+            noisy_latents = self.noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
+            input_ids = self.tokenize_caption(prompt).to(self.device)
             with torch.no_grad():
                 encoder_hidden_states = self.text_encoder(input_ids)[0]
 
@@ -204,16 +205,10 @@ class DreamboothDiffusion(TorchModel):
                 # target = self.noise_scheduler.get_velocity(
                     latents, noise, timesteps)
             else:
-                raise ValueError(
-                    f'Unknown prediction type {self.noise_scheduler.config.prediction_type}'
-                )
+                raise ValueError(f'Unknown prediction type {self.noise_scheduler.config.prediction_type}')
 
             # Predict the noise residual and compute loss
-            # model_pred = self.unet(noisy_latents, timesteps,
-            #                        encoder_hidden_states).sample
-            model_output = self.unet(noisy_latents.float(), 
-                                     timesteps,
-                                     encoder_hidden_states.float())
+            model_output = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float())
             model_pred = model_output['sample']
 
             if self.prior_loss_weight != 0:
@@ -226,11 +221,8 @@ class DreamboothDiffusion(TorchModel):
  
             else:
                 # calculate loss in FP32
-                dreambooth_loss = F.mse_loss(model_pred.float(), gt.float())
-                loss = dreambooth_loss
+                loss = F.mse_loss(model_pred.float(), gt.float())
             
-            # loss = F.mse_loss(
-                # model_pred.float(), target.float(), reduction='mean')
             output = {OutputKeys.LOSS: loss}
             return output
 

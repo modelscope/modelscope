@@ -1,9 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from collections import OrderedDict
+from typing import Optional
 
 from modelscope.metainfo import Hooks
 from .builder import HOOKS
 from .hook import Hook
+
+
+class EvaluationStrategy:
+    by_epoch = 'by_epoch'
+    by_step = 'by_step'
+    no = 'no'
 
 
 @HOOKS.register_module(module_name=Hooks.EvaluationHook)
@@ -18,21 +25,34 @@ class EvaluationHook(Hook):
             Default: None, validate every interval epochs/iterations from scratch.
     """
 
-    def __init__(self, interval=1, by_epoch=True, start_idx=None):
+    def __init__(self,
+                 interval: Optional[int] = 1,
+                 eval_strategy: Optional[str] = EvaluationStrategy.by_epoch,
+                 start_idx: Optional[int] = None,
+                 **kwargs):
         assert interval > 0, 'interval must be a positive number'
         self.interval = interval
         self.start_idx = start_idx
-        self.by_epoch = by_epoch
+        self.last_eval_tag = (None, None)
+        if 'by_epoch' in kwargs:
+            self.eval_strategy = EvaluationStrategy.by_epoch if kwargs[
+                'by_epoch'] else EvaluationStrategy.by_step
+        else:
+            self.eval_strategy = eval_strategy
 
     def after_train_iter(self, trainer):
         """Called after every training iter to evaluate the results."""
-        if not self.by_epoch and self._should_evaluate(trainer):
+        if self.eval_strategy == EvaluationStrategy.by_step and self._should_evaluate(
+                trainer):
             self.do_evaluate(trainer)
+            self.last_eval_tag = ('iter', trainer.iter)
 
     def after_train_epoch(self, trainer):
         """Called after every training epoch to evaluate the results."""
-        if self.by_epoch and self._should_evaluate(trainer):
+        if self.eval_strategy == EvaluationStrategy.by_epoch and self._should_evaluate(
+                trainer):
             self.do_evaluate(trainer)
+            self.last_eval_tag = ('epoch', trainer.epoch)
 
     def add_visualization_info(self, trainer, results):
         if trainer.visualization_buffer.output.get('eval_results',
@@ -64,7 +84,7 @@ class EvaluationHook(Hook):
         Returns:
             bool: The flag indicating whether to perform evaluation.
         """
-        if self.by_epoch:
+        if self.eval_strategy == EvaluationStrategy.by_epoch:
             current = trainer.epoch
             check_time = self.every_n_epochs
         else:

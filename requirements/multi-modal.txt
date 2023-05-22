@@ -1,7 +1,7 @@
 accelerate
 diffusers>=0.13.1,<0.15.0
 ftfy>=6.0.3
-librosa<=0.9.2
+librosa==0.9.2
 opencv-python
 pycocoevalcap>=1.2
 pycocotools>=2.0.4
@@ -12,13 +12,14 @@ rapidfuzz
 # which introduced compatability issues that are being investigated
 rouge_score<=0.0.4
 sacrebleu
+safetensors
 # scikit-video
 soundfile
 taming-transformers-rom1504
 timm
 tokenizers
 torchvision
-transformers>=4.12.0
+transformers>=4.27.1
 # triton==2.0.0.dev20221120
 unicodedata2
 zhconv

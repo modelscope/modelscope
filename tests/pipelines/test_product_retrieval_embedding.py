@@ -8,11 +8,10 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ProductRetrievalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
+class ProductRetrievalEmbeddingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.product_retrieval_embedding
@@ -40,10 +39,6 @@ class ProductRetrievalEmbeddingTest(unittest.TestCase, DemoCompatibilityCheck):
         product_embed = pipeline(task=Tasks.product_retrieval_embedding)
         result = product_embed(self.img_input)[OutputKeys.IMG_EMBEDDING]
         print('abs sum value is: {}'.format(np.sum(np.abs(result))))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

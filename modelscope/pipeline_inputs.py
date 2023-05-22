@@ -20,7 +20,7 @@ class InputType(object):
     BOX = 'box'
     DICT = 'dict'
     LIST = 'list'
-    INT = 'int'
+    NUMBER = 'number'
 
 
 INPUT_TYPE = {
@@ -31,7 +31,42 @@ INPUT_TYPE = {
     InputType.BOX: (list, np.ndarray),
     InputType.DICT: (dict, type(None)),
     InputType.LIST: (list, type(None)),
-    InputType.INT: int,
+    InputType.NUMBER: int,
+}
+
+INPUT_TYPE_SCHEMA = {
+    InputType.IMAGE: {
+        'type': 'string',
+        'description': 'Base64 encoded image file or url string.'
+    },  # support url or base64 encoded file.
+    InputType.AUDIO: {
+        'type': 'string',
+        'description': 'Base64 encoded audio file or url string..'
+    },  # support url or base64 encoded file.
+    InputType.VIDEO: {
+        'type': 'string',
+        'description': 'Base64 encoded video file or url string..'
+    },  # support url or base64 encoded file.
+    InputType.TEXT: {
+        'type': 'string',
+        'description': 'The input text.'
+    },
+    InputType.BOX: {
+        'type': 'array',
+        'description': 'Box coordinate, should be int.',
+        'items': {
+            'type': 'number'
+        }
+    },
+    InputType.DICT: {  # unknown properties
+        'type': 'object',
+    },
+    InputType.LIST: {
+        'type': 'array'
+    },  # unknown item type.
+    InputType.NUMBER: {
+        'type': 'integer'
+    },
 }
 
 
@@ -47,12 +82,19 @@ def check_input_type(input_type, input):
 
 
 TASK_INPUTS = {
+
+    Tasks.task_template: {
+        'image': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
     # if task input is single var, value is  InputType
     # if task input is a tuple,  value is tuple of InputType
     # if task input is a dict, value is a dict of InputType, where key
     # equals the one needed in pipeline input dict
     # if task input is a list, value is a set of input format, in which
-    # each element corresponds to one input format as described above.
+    # each element corresponds to one input format as described above and
+    # must include a dict format.
+
     # ============ vision tasks ===================
     Tasks.ocr_detection:
     InputType.IMAGE,
@@ -73,7 +115,7 @@ TASK_INPUTS = {
     Tasks.human_detection:
     InputType.IMAGE,
     Tasks.face_image_generation:
-    InputType.INT,
+    InputType.NUMBER,
     Tasks.image_classification:
     InputType.IMAGE,
     Tasks.image_object_detection:
@@ -191,8 +233,7 @@ TASK_INPUTS = {
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
-    Tasks.zero_shot_classification:
-    InputType.TEXT,
+    Tasks.zero_shot_classification: InputType.TEXT,
     Tasks.relation_extraction:
     InputType.TEXT,
     Tasks.translation:
@@ -212,7 +253,13 @@ TASK_INPUTS = {
         'source_sentence': InputType.LIST,
         'sentences_to_compare': InputType.LIST,
     },
-    Tasks.text_ranking: (InputType.TEXT, InputType.TEXT),
+    Tasks.text_ranking: [
+        (InputType.TEXT, InputType.TEXT),
+        {
+            'source_sentence': InputType.LIST,
+            'sentences_to_compare': InputType.LIST
+        }
+    ],
     Tasks.text_generation:
     InputType.TEXT,
     Tasks.fid_dialogue: {
@@ -261,7 +308,7 @@ TASK_INPUTS = {
     },
 
     # ============ audio tasks ===================
-    Tasks.auto_speech_recognition:
+    Tasks.auto_speech_recognition:  # input can be audio, or audio and text.
     [InputType.AUDIO, {
         'wav': InputType.AUDIO,
         'text': InputType.TEXT
@@ -290,6 +337,9 @@ TASK_INPUTS = {
     Tasks.video_captioning: [InputType.VIDEO, {
         'video': InputType.VIDEO,
     }],
+    Tasks.multimodal_dialogue: {
+        'messages': InputType.LIST,
+    },
     Tasks.visual_grounding: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT
@@ -332,5 +382,9 @@ TASK_INPUTS = {
         'video_input_path': InputType.TEXT,
         'video_output_path': InputType.TEXT,
         'mask_path': InputType.TEXT,
-    }
+    },
+    Tasks.text_to_video_synthesis: {
+        'text': InputType.TEXT
+    },
+    Tasks.video_summarization: InputType.TEXT,
 }

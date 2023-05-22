@@ -55,16 +55,10 @@ class GitCommandWrapper(metaclass=Singleton):
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            if response.returncode == 1:
-                logger.info('Nothing to commit.')
-                return response
-            else:
-                logger.error(
-                    'There are error run git command, you may need to login first.'
-                )
-                raise GitError('stdout: %s, stderr: %s' %
-                               (response.stdout.decode('utf8'),
-                                error.stderr.decode('utf8')))
+            logger.error('There are error run git command.')
+            raise GitError(
+                'stdout: %s, stderr: %s' %
+                (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
 
     def config_auth_token(self, repo_dir, auth_token):
         url = self.get_repo_remote_url(repo_dir)
@@ -199,8 +193,11 @@ class GitCommandWrapper(metaclass=Singleton):
         else:
             return ['/'.join(line.split('/')[1:]) for line in info[1:]]
 
-    def pull(self, repo_dir: str):
-        cmds = ['-C', repo_dir, 'pull']
+    def pull(self,
+             repo_dir: str,
+             remote: str = 'origin',
+             branch: str = 'master'):
+        cmds = ['-C', repo_dir, 'pull', remote, branch]
         return self._run_git_command(*cmds)
 
     def push(self,

@@ -8,11 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import DialogIntentPredictionPipeline
 from modelscope.preprocessors import DialogIntentPredictionPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DialogIntentPredictionTest(unittest.TestCase, DemoCompatibilityCheck):
+class DialogIntentPredictionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.task_oriented_conversation
@@ -67,10 +66,6 @@ class DialogIntentPredictionTest(unittest.TestCase, DemoCompatibilityCheck):
         pipelines = [pipeline(task=self.task, model=self.model_id)]
         for my_pipeline, item in list(zip(pipelines, self.test_case)):
             print(my_pipeline(item))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

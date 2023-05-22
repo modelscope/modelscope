@@ -23,6 +23,15 @@ class OssAuthConfig(BaseAuthConfig):
             cookies=cookies, git_token=git_token, user_info=user_info)
 
 
+class VirgoAuthConfig(BaseAuthConfig):
+    """The authorization config for virgo dataset."""
+
+    def __init__(self, cookies: CookieJar, git_token: str,
+                 user_info: Tuple[str, str]):
+        super().__init__(
+            cookies=cookies, git_token=git_token, user_info=user_info)
+
+
 class MaxComputeAuthConfig(BaseAuthConfig):
     # TODO: MaxCompute dataset to be supported.
     def __init__(self, cookies: CookieJar, git_token: str,

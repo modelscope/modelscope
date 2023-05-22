@@ -69,8 +69,8 @@ def eval_grid(coords,
               num_samples=512 * 512 * 512):
     resolution = coords.shape[1:4]
     sdf = np.zeros(resolution)
-    dirty = np.ones(resolution, dtype=np.bool)
-    grid_mask = np.zeros(resolution, dtype=np.bool)
+    dirty = np.ones(resolution, dtype=bool)
+    grid_mask = np.zeros(resolution, dtype=bool)
     reso = resolution[0] // init_resolution
 
     while reso > 0:

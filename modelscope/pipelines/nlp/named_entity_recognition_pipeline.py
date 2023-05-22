@@ -56,7 +56,8 @@ class NamedEntityRecognitionPipeline(TokenClassificationPipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            **kwargs)
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'

@@ -7,12 +7,10 @@ import numpy as np
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class PointCloudSceneFlowEstimationTest(unittest.TestCase,
-                                        DemoCompatibilityCheck):
+class PointCloudSceneFlowEstimationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'pointcloud-sceneflow-estimation'

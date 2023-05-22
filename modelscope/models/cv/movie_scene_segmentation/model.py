@@ -13,7 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as TF
 from PIL import Image
-from shotdetect_scenedetect_lgss import shot_detect
+from shotdetect_scenedetect_lgss import shot_detector
+from tqdm import tqdm
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
@@ -60,6 +61,9 @@ class MovieSceneSegmentationModel(TorchModel):
         self.head_sbd = nn.Linear(hdim, 2)
         load_param_with_prefix('head_sbd', self.head_sbd, params)
 
+        self.shot_detector = shot_detector()
+        self.shot_detector.init(**self.cfg.preprocessor.shot_detect)
+
         self.test_transform = TF.Compose([
             TF.Resize(size=256, interpolation=Image.BICUBIC),
             TF.CenterCrop(224),
@@ -98,29 +102,45 @@ class MovieSceneSegmentationModel(TorchModel):
     def inference(self, batch):
         logger.info('Begin scene detect ......')
         bs = self.cfg.pipeline.batch_size_per_gpu
-        sids = batch['sid']
-        inputs = batch['shot_feat']
+        device = self.crn.attention_mask.device
 
-        shot_num = len(sids)
+        shot_timecode_lst = batch['shot_timecode_lst']
+        shot_idx_lst = batch['shot_idx_lst']
+
+        shot_num = len(shot_timecode_lst)
         cnt = math.ceil(shot_num / bs)
 
-        infer_sid, infer_pred = [], []
+        infer_pred = []
         infer_result = {}
-        for i in range(cnt):
+        self.shot_detector.start()
+
+        for i in tqdm(range(cnt)):
             start = i * bs
             end = (i + 1) * bs if (i + 1) * bs < shot_num else shot_num
-            input_ = inputs[start:end]
-            sid_ = sids[start:end]
-            input_ = torch.stack(input_)
+
+            batch_shot_idx_lst = shot_idx_lst[start:end]
+
+            shot_start_idx = batch_shot_idx_lst[0][0]
+            shot_end_idx = batch_shot_idx_lst[-1][-1]
+            batch_timecode_lst = {
+                i: shot_timecode_lst[i]
+                for i in range(shot_start_idx, shot_end_idx + 1)
+            }
+            batch_shot_keyf_lst = self.shot_detector.get_frame_img(
+                batch_timecode_lst, shot_start_idx, shot_num)
+            inputs = self.get_batch_input(batch_shot_keyf_lst, shot_start_idx,
+                                          batch_shot_idx_lst)
+
+            input_ = torch.stack(inputs).to(device)
             outputs = self.shared_step(input_)  # shape [b,2]
             prob = F.softmax(outputs, dim=1)
-            infer_sid.extend(sid_.cpu().detach().numpy())
             infer_pred.extend(prob[:, 1].cpu().detach().numpy())
-        infer_result.update({'pred': np.stack(infer_pred)})
-        infer_result.update({'sid': infer_sid})
 
-        assert len(infer_result['sid']) == len(sids)
-        assert len(infer_result['pred']) == len(inputs)
+        infer_result.update({'pred': np.stack(infer_pred)})
+        infer_result.update({'sid': np.arange(shot_num)})
+
+        assert len(infer_result['pred']) == shot_num
+        self.shot_detector.release()
         return infer_result
 
     def shared_step(self, inputs):
@@ -162,38 +182,48 @@ class MovieSceneSegmentationModel(TorchModel):
         logger.info('Generate scene .......')
 
         pred_dict = inputs['feat']
+        shot2keyf = inputs['shot2keyf']
         thres = self.cfg.pipeline.save_threshold
 
         anno_dict = get_pred_boundary(pred_dict, thres)
         scene_dict_lst, scene_list, shot_num, shot_dict_lst = pred2scene(
-            self.shot2keyf, anno_dict)
+            shot2keyf, anno_dict)
         if self.cfg.pipeline.save_split_scene:
             re_dir = scene2video(inputs['input_video_pth'], scene_list, thres)
             print(f'Split scene video saved to {re_dir}')
         return len(scene_list), scene_dict_lst, shot_num, shot_dict_lst
 
-    def preprocess(self, inputs):
-        logger.info('Begin shot detect......')
-        shot_keyf_lst, anno, shot2keyf = shot_detect(
-            inputs, **self.cfg.preprocessor.shot_detect)
-        logger.info('Shot detect done!')
+    def get_batch_input(self, shot_keyf_lst, shot_start_idx, shot_idx_lst):
 
-        single_shot_feat, sid = [], []
+        single_shot_feat = []
         for idx, one_shot in enumerate(shot_keyf_lst):
             one_shot = [
                 self.test_transform(one_frame) for one_frame in one_shot
             ]
             one_shot = torch.stack(one_shot, dim=0)
             single_shot_feat.append(one_shot)
-            sid.append(idx)
+
         single_shot_feat = torch.stack(single_shot_feat, dim=0)
+
         shot_feat = []
+        for idx, shot_idx in enumerate(shot_idx_lst):
+            shot_idx_ = shot_idx - shot_start_idx
+            _one_shot = single_shot_feat[shot_idx_]
+            shot_feat.append(_one_shot)
+
+        return shot_feat
+
+    def preprocess(self, inputs):
+        logger.info('Begin shot detect......')
+        shot_timecode_lst, anno, shot2keyf = self.shot_detector.shot_detect(
+            inputs, **self.cfg.preprocessor.shot_detect)
+        logger.info('Shot detect done!')
+
+        shot_idx_lst = []
         for idx, one_shot in enumerate(anno):
             shot_idx = int(one_shot['shot_id']) + np.arange(
                 -self.neighbor_size, self.neighbor_size + 1)
-            shot_idx = np.clip(shot_idx, 0, one_shot['num_shot'])
-            _one_shot = single_shot_feat[shot_idx]
-            shot_feat.append(_one_shot)
-        self.shot2keyf = shot2keyf
-        self.anno = anno
-        return shot_feat, sid
+            shot_idx = np.clip(shot_idx, 0, one_shot['num_shot'] - 1)
+            shot_idx_lst.append(shot_idx)
+
+        return shot2keyf, anno, shot_timecode_lst, shot_idx_lst

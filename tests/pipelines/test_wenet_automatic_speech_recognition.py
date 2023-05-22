@@ -10,7 +10,6 @@ import soundfile
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ColorCodes, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import download_and_untar, test_level
 
@@ -20,8 +19,7 @@ WAV_FILE = 'data/test/audios/asr_example.wav'
 URL_FILE = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audio/asr_example.wav'
 
 
-class WeNetAutomaticSpeechRecognitionTest(unittest.TestCase,
-                                          DemoCompatibilityCheck):
+class WeNetAutomaticSpeechRecognitionTest(unittest.TestCase):
     action_info = {
         'test_run_with_pcm': {
             'checking_item': OutputKeys.TEXT,

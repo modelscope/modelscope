@@ -8,11 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import InformationExtractionPipeline
 from modelscope.preprocessors import RelationExtractionTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
+class RelationExtractionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.relation_extraction
@@ -54,10 +53,6 @@ class RelationExtractionTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.relation_extraction)
         print(pipeline_ins(input=self.sentence))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

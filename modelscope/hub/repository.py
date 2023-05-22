@@ -88,6 +88,26 @@ class Repository:
             remote = None
         return remote
 
+    def pull(self, remote: str = 'origin', branch: str = 'master'):
+        """Pull remote branch
+
+        Args:
+            remote (str, optional): The remote name. Defaults to 'origin'.
+            branch (str, optional): The remote branch. Defaults to 'master'.
+        """
+        self.git_wrapper.pull(self.model_dir, remote=remote, branch=branch)
+
+    def add_lfs_type(self, file_name_suffix: str):
+        """Add file suffix to lfs list.
+
+        Args:
+            file_name_suffix (str): The file name suffix.
+                examples '*.safetensors'
+        """
+        os.system(
+            "printf '%s filter=lfs diff=lfs merge=lfs -text\n'>>%s" %
+            (file_name_suffix, os.path.join(self.model_dir, '.gitattributes')))
+
     def push(self,
              commit_message: str,
              local_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
@@ -120,7 +140,6 @@ class Repository:
                                        self.model_repo_name)
 
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
-        self.git_wrapper.pull(self.model_dir)
 
         self.git_wrapper.add(self.model_dir, all_files=True)
         self.git_wrapper.commit(self.model_dir, commit_message)

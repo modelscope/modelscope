@@ -81,7 +81,7 @@ class FaceLandmark:
         bbox[2] = center[0] + one_edge // 2
         bbox[3] = center[1] + one_edge // 2
 
-        bbox = bbox.astype(np.int)
+        bbox = bbox.astype(int)
         crop_image = bimg[bbox[1]:bbox[3], bbox[0]:bbox[2], :]
         h, w, _ = crop_image.shape
         crop_image = cv2.resize(

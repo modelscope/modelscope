@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines.multi_modal.gridvlp_pipeline import (
     GridVlpClassificationPipeline, GridVlpEmbeddingPipeline)
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class GridVlpClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class GridVlpClassificationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'rgtjf1/multi-modal_gridvlp_classification_chinese-base-ecom-cate'
@@ -61,10 +60,6 @@ class GridVlpClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
         outputs = gridvlp_embedding_pipeline.forward(inputs)
         print(f'text: {self.text}\nimage: {self.image}\n'
               f'outputs shape: {outputs.shape}')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

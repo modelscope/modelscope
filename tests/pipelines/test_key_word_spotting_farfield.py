@@ -19,12 +19,20 @@ class KWSFarfieldTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/speech_dfsmn_kws_char_farfield_16k_nihaomiya'
+        self.model_id_iot = 'damo/speech_dfsmn_kws_char_farfield_iot_16k_nihaomiya'
         if os.path.isfile(OUTPUT_WAV):
             os.remove(OUTPUT_WAV)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_normal(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
+        result = kws(os.path.join(os.getcwd(), TEST_SPEECH_FILE))
+        self.assertEqual(len(result['kws_list']), 5)
+        print(result['kws_list'][-1])
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_normal_iot(self):
+        kws = pipeline(Tasks.keyword_spotting, model=self.model_id_iot)
         result = kws(os.path.join(os.getcwd(), TEST_SPEECH_FILE))
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])

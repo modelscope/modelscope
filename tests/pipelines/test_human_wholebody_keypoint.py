@@ -11,7 +11,7 @@ from modelscope.utils.test_utils import test_level
 
 class EasyCVFace2DKeypointsPipelineTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip easycv related cases')
     def test_human_wholebody_keypoint(self):
         img_path = 'data/test/images/keypoints_detect/img_test_wholebody.jpg'
         model_id = 'damo/cv_hrnetw48_human-wholebody-keypoint_image'

@@ -10,15 +10,13 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import draw_box
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class ImageOpenVocabularyDetectionTest(unittest.TestCase,
-                                       DemoCompatibilityCheck):
+class ImageOpenVocabularyDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         os.system(
@@ -73,10 +71,6 @@ class ImageOpenVocabularyDetectionTest(unittest.TestCase,
         draw_box(image, result[OutputKeys.BOXES][0, :])
         cv2.imwrite('result_snapshot.jpg', image)
         print('Test run with snapshot ok.')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

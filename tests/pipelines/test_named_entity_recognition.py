@@ -10,11 +10,10 @@ from modelscope.pipelines.nlp import NamedEntityRecognitionPipeline
 from modelscope.preprocessors import \
     TokenClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
+class NamedEntityRecognitionTest(unittest.TestCase):
     language_examples = {
         'zh':
         '新华社北京二月十一日电（记者唐虹）',
@@ -469,10 +468,6 @@ class NamedEntityRecognitionTest(unittest.TestCase, DemoCompatibilityCheck):
                 pipeline_ins = pipeline(Tasks.named_entity_recognition,
                                         model_id)
                 print(pipeline_ins(input=sentence))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

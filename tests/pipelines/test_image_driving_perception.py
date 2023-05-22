@@ -17,11 +17,10 @@ from modelscope.preprocessors.image import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import \
     show_image_driving_perception_result
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageDrivingPerceptionTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageDrivingPerceptionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_yolopv2_image-driving-perception_bdd100k'
@@ -58,10 +57,6 @@ class ImageDrivingPerceptionTest(unittest.TestCase, DemoCompatibilityCheck):
             model, preprocessor=None)
         self.pipeline_inference(image_driving_perception_pipeline,
                                 self.img_path)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

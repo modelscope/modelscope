@@ -10,11 +10,10 @@ from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import ModelFile, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class MovieSceneSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+class MovieSceneSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.movie_scene_segmentation
@@ -122,10 +121,6 @@ class MovieSceneSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
             print(result)
         else:
             raise ValueError('process error')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

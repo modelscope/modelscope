@@ -8,11 +8,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
+class Body3DKeypointsTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_canonical_body-3d-keypoints_video'
@@ -40,10 +39,6 @@ class Body3DKeypointsTest(unittest.TestCase, DemoCompatibilityCheck):
             raise Exception('modelscope error: %s cannot be decoded by OpenCV.'
                             % (self.test_video))
         self.pipeline_inference(body_3d_keypoints, pipeline_input=cap)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

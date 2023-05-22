@@ -9,12 +9,10 @@ from modelscope.pipelines import pipeline
 from modelscope.preprocessors.nlp import \
     DocumentGroundedDialogGeneratePreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DocumentGroundedDialogGenerateTest(unittest.TestCase,
-                                         DemoCompatibilityCheck):
+class DocumentGroundedDialogGenerateTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.document_grounded_dialog_generate

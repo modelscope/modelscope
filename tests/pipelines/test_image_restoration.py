@@ -4,11 +4,10 @@ import unittest
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageRestorationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageRestorationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_demoireing
@@ -23,10 +22,6 @@ class ImageRestorationTest(unittest.TestCase, DemoCompatibilityCheck):
         from PIL import Image
         Image.fromarray(result[OutputKeys.OUTPUT_IMG]).save(input_location
                                                             + '_demoire.jpg')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

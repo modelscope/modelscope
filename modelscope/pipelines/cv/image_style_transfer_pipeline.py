@@ -73,12 +73,12 @@ class ImageStyleTransferPipeline(Pipeline):
         content = LoadImage.convert_to_ndarray(content)
         if len(content.shape) == 2:
             content = cv2.cvtColor(content, cv2.COLOR_GRAY2BGR)
-        content_img = content.astype(np.float)
+        content_img = content.astype(float)
 
         style_img = LoadImage.convert_to_ndarray(style)
         if len(style_img.shape) == 2:
             style_img = cv2.cvtColor(style_img, cv2.COLOR_GRAY2BGR)
-        style_img = style_img.astype(np.float)
+        style_img = style_img.astype(float)
 
         result = {'content': content_img, 'style': style_img}
         return result

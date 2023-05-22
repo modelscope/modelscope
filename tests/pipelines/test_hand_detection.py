@@ -3,17 +3,16 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ObjectDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class ObjectDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.domain_specific_object_detection
         self.model_id = 'damo/cv_yolox-pai_hand-detection'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test in current test level: no pipeline implemented')
     def test_hand_detection_pipeline(self):
         test_image = 'data/test/images/hand_detection.jpg'
 

@@ -9,14 +9,12 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import ImageQualityAssessmentDegradationPipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 sys.path.insert(0, '.')
 
 
-class ImageQualityAssessmentDegradationTest(unittest.TestCase,
-                                            DemoCompatibilityCheck):
+class ImageQualityAssessmentDegradationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_quality_assessment_degradation
@@ -53,10 +51,6 @@ class ImageQualityAssessmentDegradationTest(unittest.TestCase,
             task=Tasks.image_quality_assessment_degradation)
         out_path = pipeline_ins(input=self.test_img)[OutputKeys.SCORES]
         print('pipeline: the out_path is {}'.format(out_path))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

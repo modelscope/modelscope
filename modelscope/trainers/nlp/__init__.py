@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from .text_generation_trainer import TextGenerationTrainer
     from .sentence_embedding_trainer import SentenceEmbeddingTrainer
     from .siamese_uie_trainer import SiameseUIETrainer
+    from .translation_evaluation_trainer import TranslationEvaluationTrainer
 else:
     _import_structure = {
         'sequence_classification_trainer': ['SequenceClassificationTrainer'],
@@ -17,7 +18,8 @@ else:
         'text_ranking_trainer': ['TextRankingTrainer'],
         'text_generation_trainer': ['TextGenerationTrainer'],
         'sentence_emebedding_trainer': ['SentenceEmbeddingTrainer'],
-        'siamese_uie_trainer': ['SiameseUIETrainer']
+        'siamese_uie_trainer': ['SiameseUIETrainer'],
+        'translation_evaluation_trainer': ['TranslationEvaluationTrainer']
     }
 
     import sys

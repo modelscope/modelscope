@@ -8,11 +8,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageCartoonTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageCartoonTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_unet_person-image-cartoon_compound-models'
@@ -82,10 +81,6 @@ class ImageCartoonTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_modelhub_default_model(self):
         img_cartoon = pipeline(Tasks.image_portrait_stylization)
         self.pipeline_inference(img_cartoon, self.test_image)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

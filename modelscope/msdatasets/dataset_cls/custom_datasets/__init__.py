@@ -27,12 +27,6 @@ if TYPE_CHECKING:
     from .video_frame_interpolation import VideoFrameInterpolationDataset
     from .video_stabilization import VideoStabilizationDataset
     from .video_super_resolution import VideoSuperResolutionDataset
-    from .image_semantic_segmentation import SegDataset
-    from .face_2d_keypoins import FaceKeypointDataset
-    from .hand_2d_keypoints import HandCocoWholeBodyDataset
-    from .human_wholebody_keypoint import WholeBodyCocoTopDownDataset
-    from .image_classification import ClsDataset
-    from .object_detection import DetDataset, DetImagesMixDataset
     from .ocr_detection import DataLoader, ImageDataset, QuadMeasurer
     from .ocr_recognition_dataset import OCRRecognitionDataset
     from .image_colorization import ImageColorizationDataset
@@ -66,12 +60,6 @@ else:
         'video_frame_interpolation': ['VideoFrameInterpolationDataset'],
         'video_stabilization': ['VideoStabilizationDataset'],
         'video_super_resolution': ['VideoSuperResolutionDataset'],
-        'image_semantic_segmentation': ['SegDataset'],
-        'face_2d_keypoins': ['FaceKeypointDataset'],
-        'hand_2d_keypoints': ['HandCocoWholeBodyDataset'],
-        'human_wholebody_keypoint': ['WholeBodyCocoTopDownDataset'],
-        'image_classification': ['ClsDataset'],
-        'object_detection': ['DetDataset', 'DetImagesMixDataset'],
         'ocr_detection': ['DataLoader', 'ImageDataset', 'QuadMeasurer'],
         'ocr_recognition_dataset': ['OCRRecognitionDataset'],
         'image_colorization': ['ImageColorizationDataset'],

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
+import re
 from io import BytesIO
 from typing import Any, Dict, List, Tuple, Union
 
@@ -29,7 +30,7 @@ from .ofa.utils.constant import OFA_TASK_KEY_MAPPING
 
 __all__ = [
     'DiffusionImageGenerationPreprocessor', 'OfaPreprocessor',
-    'MPlugPreprocessor', 'HiTeAPreprocessor'
+    'MPlugPreprocessor', 'HiTeAPreprocessor', 'MplugOwlPreprocessor'
 ]
 
 
@@ -642,3 +643,159 @@ class HiTeAPreprocessor(Preprocessor):
                 'answer_attention_mask': answer.attention_mask.squeeze(),
             }
             return output
+
+
+@PREPROCESSORS.register_module(
+    Fields.multi_modal, module_name=Preprocessors.mplug_owl_preprocessor)
+class MplugOwlPreprocessor(Preprocessor):
+
+    def __init__(self,
+                 model_dir: str,
+                 mode: str = ModeKeys.INFERENCE,
+                 *args,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_dir = model_dir
+        self.mode = mode
+
+        self._tokenizer = None
+        self._patch_resize_transform = None
+        self.media_token = {'<image>': 65}
+        self._image_map = {}
+
+    @property
+    def tokenizer(self):
+        from modelscope.models.nlp.llama import LlamaTokenizer
+
+        if self._tokenizer is None:
+            self._tokenizer = LlamaTokenizer.from_pretrained(self.model_dir)
+        return self._tokenizer
+
+    @property
+    def patch_resize_transform(self):
+        if self._patch_resize_transform is None:
+            from torchvision import transforms
+
+            mean = (0.48145466, 0.4578275, 0.40821073)
+            std = (0.26862954, 0.26130258, 0.27577711)
+
+            self._patch_resize_transform = transforms.Compose([
+                transforms.Resize((224, 224), interpolation=Image.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+            ])
+        return self._patch_resize_transform
+
+    def image_open(self, path: str) -> Tuple[Image.Image, int]:
+        if path not in self._image_map:
+            index = len(self._image_map)
+            self._image_map[path] = (load_image(path), index)
+        return self._image_map[path]
+
+    def tokenize_text(self, text: str) -> List[int]:
+        media_tokens = {
+            k: -int(i + 1)
+            for i, k in enumerate(self.media_token.keys())
+        }
+        media_lengths = self.media_token.copy()
+
+        prompt_chunk = [self.tokenizer.bos_token_id]
+
+        # Pure Text
+        condition = [
+            media_token not in text for media_token in media_tokens.keys()
+        ]
+        if all(condition):
+            enc_chunk = prompt_chunk + \
+                self.tokenizer(text, add_special_tokens=False)['input_ids']
+
+        # Multi-Modal Text
+        else:
+            enc_chunk = prompt_chunk
+            pattern = '|'.join(map(re.escape, list(media_tokens.keys())))
+            chunk_strs = re.split(f'({pattern})', text)
+            chunk_strs = [x for x in chunk_strs if len(x) > 0]
+            for idx, chunk_str in enumerate(chunk_strs):
+                if chunk_str in media_tokens:
+                    enc_chunk += [media_tokens[chunk_str]] * \
+                        media_lengths[chunk_str]
+                else:
+                    tmp_chunk = self.tokenizer(
+                        chunk_str, add_special_tokens=False)['input_ids']
+                    enc_chunk += tmp_chunk
+        return enc_chunk
+
+    def convert(self, messages: Dict[str, List[Dict]]) -> str:
+        texts = []
+        image = []
+        messages = messages['messages']
+        for turn in messages:
+            if turn['role'] == 'system':
+                role = ''
+            elif turn['role'] == 'user':
+                role = 'Human: '
+            else:
+                role = 'AI: '
+            if isinstance(turn['content'], str):
+                text = f"{role}{turn['content']}"
+                texts.append(text)
+            else:
+                for t in turn['content']:
+                    if isinstance(t, str):
+                        text = f'{role}{t}'
+                    else:
+                        text = f'{role}<image>'
+                        image.append(t['image'])
+                    texts.append(text)
+        texts = '\n'.join(texts)
+        texts += '\nAI: '
+        return image, texts
+
+    def __call__(self, messages: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Args:
+            messages: {[
+                {'role': 'system', 'content': 'message1'},
+                {'role': 'user', 'content': 'message2'},
+                {'role': 'user', 'content': ['message2', {"image": 'image_path'}, 'message3', ...]},
+            ]}
+            The 'role' should be choose from ['system', 'user', 'assistant'].
+            The 'content' can be either str or List[Union[str, Dict]]
+        Return:
+            output: Dict[str, Tensor]
+        """
+        output = {}
+        images, text = self.convert(messages)
+
+        if len(images) > 0:
+            pixel_values = []
+            for image in images:
+                pixel_values.append(
+                    self.patch_resize_transform(self.image_open(image)[0]))
+                pixel_values = torch.stack(pixel_values, dim=0)
+        else:
+            pixel_values = None
+
+        input_ids = self.tokenize_text(text)
+        input_ids = torch.LongTensor([input_ids])
+
+        output = {
+            'pixel_values': pixel_values,
+            'input_ids': input_ids,
+        }
+
+        return output
+
+
+@PREPROCESSORS.register_module(
+    Fields.multi_modal,
+    module_name=Preprocessors.image_captioning_clip_interrogator_preprocessor)
+class ImageCaptioningClipInterrogatorPreprocessor(Preprocessor):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __call__(self, data) -> Dict[str, Any]:
+        image = load_image(data)
+        data = np.array(image).transpose(2, 0, 1)
+        return data

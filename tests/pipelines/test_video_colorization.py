@@ -11,11 +11,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.cv import VideoColorizationPipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VideoColorizationTest(unittest.TestCase, DemoCompatibilityCheck):
+class VideoColorizationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.video_colorization
@@ -43,10 +42,6 @@ class VideoColorizationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_with_default_model(self):
         video_colorization = pipeline(Tasks.video_colorization)
         self.pipeline_inference(video_colorization, self.test_video)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

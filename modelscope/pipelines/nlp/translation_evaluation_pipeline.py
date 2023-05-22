@@ -9,12 +9,11 @@ import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
-from modelscope.models.nlp.unite.configuration_unite import EvaluationMode
+from modelscope.models.nlp.unite.configuration import InputFormat
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import InputModel, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import (Preprocessor,
-                                      TranslationEvaluationPreprocessor)
+from modelscope.preprocessors import Preprocessor
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -31,16 +30,18 @@ class TranslationEvaluationPipeline(Pipeline):
     def __init__(self,
                  model: InputModel,
                  preprocessor: Optional[Preprocessor] = None,
-                 eval_mode: EvaluationMode = EvaluationMode.SRC_REF,
+                 input_format: InputFormat = InputFormat.SRC_REF,
                  device: str = 'gpu',
                  **kwargs):
-        r"""Build a translation pipeline with a model dir or a model id in the model hub.
+        r"""Build a translation evaluation pipeline with a model dir or a model id in the model hub.
 
         Args:
             model: A Model instance.
-            eval_mode: Evaluation mode, choosing one from `"EvaluationMode.SRC_REF"`,
-                `"EvaluationMode.SRC"`, `"EvaluationMode.REF"`. Aside from hypothesis, the
+            preprocessor: The preprocessor for this pipeline.
+            input_format: Input format, choosing one from `"InputFormat.SRC_REF"`,
+                `"InputFormat.SRC"`, `"InputFormat.REF"`. Aside from hypothesis, the
                 source/reference/source+reference can be presented during evaluation.
+            device: Used device for this pipeline.
         """
         super().__init__(
             model=model,
@@ -48,44 +49,40 @@ class TranslationEvaluationPipeline(Pipeline):
             compile=kwargs.pop('compile', False),
             compile_options=kwargs.pop('compile_options', {}))
 
-        self.eval_mode = eval_mode
-        self.checking_eval_mode()
+        self.input_format = input_format
+        self.checking_input_format()
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'
 
-        self.preprocessor = TranslationEvaluationPreprocessor(
-            self.model.model_dir,
-            self.eval_mode) if preprocessor is None else preprocessor
-
         self.model.load_checkpoint(
             osp.join(self.model.model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
-            self.device)
+            device=self.device,
+            plm_only=False)
         self.model.eval()
 
         return
 
-    def checking_eval_mode(self):
-        if self.eval_mode == EvaluationMode.SRC:
+    def checking_input_format(self):
+        if self.input_format == InputFormat.SRC:
             logger.info('Evaluation mode: source-only')
-        elif self.eval_mode == EvaluationMode.REF:
+        elif self.input_format == InputFormat.REF:
             logger.info('Evaluation mode: reference-only')
-        elif self.eval_mode == EvaluationMode.SRC_REF:
+        elif self.input_format == InputFormat.SRC_REF:
             logger.info('Evaluation mode: source-reference-combined')
         else:
-            raise ValueError(
-                'Evaluation mode should be one choice among'
-                '\'EvaluationMode.SRC\', \'EvaluationMode.REF\', and'
-                '\'EvaluationMode.SRC_REF\'.')
+            raise ValueError('Evaluation mode should be one choice among'
+                             '\'InputFormat.SRC\', \'InputFormat.REF\', and'
+                             '\'InputFormat.SRC_REF\'.')
 
-    def change_eval_mode(self,
-                         eval_mode: EvaluationMode = EvaluationMode.SRC_REF):
+    def change_input_format(self,
+                            input_format: InputFormat = InputFormat.SRC_REF):
         logger.info('Changing the evaluation mode.')
-        self.eval_mode = eval_mode
-        self.checking_eval_mode()
-        self.preprocessor.eval_mode = eval_mode
+        self.input_format = input_format
+        self.checking_input_format()
+        self.preprocessor.change_input_format(input_format)
         return
 
-    def __call__(self, input: Dict[str, Union[str, List[str]]], **kwargs):
+    def __call__(self, input_dict: Dict[str, Union[str, List[str]]], **kwargs):
         r"""Implementation of __call__ function.
 
         Args:
@@ -108,12 +105,12 @@ class TranslationEvaluationPipeline(Pipeline):
                 }
                 ```
         """
-        return super().__call__(input=input, **kwargs)
+        return super().__call__(input=input_dict, **kwargs)
 
-    def forward(self,
-                input_ids: List[torch.Tensor]) -> Dict[str, torch.Tensor]:
-        return self.model(input_ids)
+    def forward(
+            self, input_dict: Dict[str,
+                                   torch.Tensor]) -> Dict[str, torch.Tensor]:
+        return self.model(**input_dict)
 
     def postprocess(self, output: torch.Tensor) -> Dict[str, Any]:
-        result = {OutputKeys.SCORES: output.cpu().tolist()}
-        return result
+        return output

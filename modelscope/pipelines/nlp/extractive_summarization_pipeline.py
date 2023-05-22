@@ -44,11 +44,8 @@ class ExtractiveSummarizationPipeline(Pipeline):
             auto_collate=auto_collate,
             **kwargs)
 
-        kwargs = kwargs
-        if 'compile' in kwargs.keys():
-            kwargs.pop('compile')
-        if 'compile_options' in kwargs.keys():
-            kwargs.pop('compile_options')
+        kwargs.pop('compile', None)
+        kwargs.pop('compile_options', None)
 
         self.model_dir = self.model.model_dir
         self.model_cfg = self.model.model_cfg

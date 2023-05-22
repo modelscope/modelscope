@@ -10,7 +10,7 @@ from modelscope.utils.test_utils import test_level
 
 class EasyCVFace2DKeypointsPipelineTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip easycv related cases')
     def test_face_2d_keypoints(self):
         img_path = 'data/test/images/face_detection.png'
         model_id = 'damo/cv_mobilenet_face-2d-keypoints_alignment'

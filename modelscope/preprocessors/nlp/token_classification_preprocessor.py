@@ -201,7 +201,7 @@ class TokenClassificationTransformersPreprocessor(
 
     def __init__(self,
                  model_dir: str = None,
-                 first_sequence: str = None,
+                 first_sequence: str = 'text',
                  label: str = 'label',
                  label2id: Dict = None,
                  label_all_tokens: bool = False,

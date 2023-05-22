@@ -48,6 +48,7 @@ class SpeakerDiarizationPipeline(Pipeline):
                  model: Union[Model, str] = None,
                  sv_model: Optional[Union[Model, str]] = None,
                  sv_model_revision: Optional[str] = None,
+                 ngpu: int = 1,
                  **kwargs):
         """use `model` to create a speaker diarization pipeline for prediction
         Args:
@@ -90,6 +91,7 @@ class SpeakerDiarizationPipeline(Pipeline):
             dur_threshold=self.cmd['dur_threshold'],
             out_format=self.cmd['out_format'],
             param_dict=self.cmd['param_dict'],
+            **kwargs,
         )
 
     def __call__(self,
@@ -203,6 +205,7 @@ class SpeakerDiarizationPipeline(Pipeline):
                     cmd[user_args].update(extra_args[user_args])
                 else:
                     cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

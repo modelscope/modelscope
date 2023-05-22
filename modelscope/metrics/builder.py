@@ -42,6 +42,7 @@ class MetricKeys(object):
     NDCG = 'ndcg'
     AR = 'AR'
     Colorfulness = 'colorfulness'
+    Kendall_Tau_Correlation = 'kendall_tau_correlation'
 
 
 task_default_metrics = {
@@ -76,6 +77,7 @@ task_default_metrics = {
     Tasks.bad_image_detecting: [Metrics.accuracy],
     Tasks.ocr_recognition: [Metrics.ocr_recognition_metric],
     Tasks.efficient_diffusion_tuning: [Metrics.loss_metric],
+    Tasks.translation_evaluation: [Metrics.translation_evaluation_metric]
 }
 
 

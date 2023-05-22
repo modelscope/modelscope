@@ -6,11 +6,10 @@ from modelscope.models.cv.vision_efficient_tuning.model import \
     VisionEfficientTuningModel
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
+class VisionEfficientTuningTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.vision_efficient_tuning
@@ -30,11 +29,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_adapter_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'
-        self.compatibility_check()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_lora_run_pipeline(self):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
         img_path = 'data/test/images/vision_efficient_tuning_test_1.png'
@@ -47,11 +41,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
         model = Model.from_pretrained(model_id)
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_lora_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
-        self.compatibility_check()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_prefix_run_pipeline(self):
@@ -68,11 +57,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_prefix_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prefix'
-        self.compatibility_check()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_prompt_run_pipeline(self):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
         img_path = 'data/test/images/vision_efficient_tuning_test_1.png'
@@ -87,11 +71,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_prompt_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
-        self.compatibility_check()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_bitfit_run_pipeline(self):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-bitfit'
         img_path = 'data/test/images/vision_efficient_tuning_test_1.png'
@@ -104,11 +83,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-bitfit'
         model = Model.from_pretrained(model_id)
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_bitfit_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-bitfit'
-        self.compatibility_check()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_sidetuning_run_pipeline(self):
@@ -126,11 +100,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_sidetuning_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-sidetuning'
-        self.compatibility_check()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_utuning_run_pipeline(self):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-utuning'
         img_path = 'data/test/images/vision_efficient_tuning_test_1.png'
@@ -143,11 +112,6 @@ class VisionEfficientTuningTest(unittest.TestCase, DemoCompatibilityCheck):
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-utuning'
         model = Model.from_pretrained(model_id)
         self.assertTrue(model.__class__ == VisionEfficientTuningModel)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_vision_efficient_tuning_utuning_demo_compatibility(self):
-        self.model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-utuning'
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

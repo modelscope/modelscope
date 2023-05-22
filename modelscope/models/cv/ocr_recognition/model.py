@@ -90,8 +90,15 @@ class OCRRecognition(TorchModel):
                 f'recognizer should be either ConvNextViT, CRNN, but got {cfgs.model.recognizer}'
             )
         if model_path != '':
-            self.recognizer.load_state_dict(
-                torch.load(model_path, map_location='cpu'))
+            params_pretrained = torch.load(model_path, map_location='cpu')
+            model_dict = self.recognizer.state_dict()
+            # remove prefix for finetuned models
+            check_point = {
+                k.replace('recognizer.', ''): v
+                for k, v in params_pretrained.items()
+            }
+            model_dict.update(check_point)
+            self.recognizer.load_state_dict(model_dict)
 
         dict_path = os.path.join(model_dir, ModelFile.VOCAB_FILE)
         self.labelMapping = dict()

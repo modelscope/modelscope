@@ -8,12 +8,11 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import WordSegmentationThaiPipeline
 from modelscope.preprocessors import WordSegmentationPreprocessorThai
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.regress_test_utils import MsRegressTool
 from modelscope.utils.test_utils import test_level
 
 
-class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+class WordSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.word_segmentation
@@ -64,10 +63,6 @@ class WordSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
         print(
             pipeline_ins(
                 input=[self.sentence, self.sentence[:10], self.sentence[6:]]))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -2,14 +2,13 @@
 
 import unittest
 
-from modelscope.models.nlp.unite.configuration_unite import EvaluationMode
+from modelscope.models.nlp.unite.configuration import InputFormat
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
+class TranslationEvaluationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.translation_evaluation
@@ -18,7 +17,7 @@ class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name_for_unite_large(self):
-        input = {
+        input_dict = {
             'hyp': [
                 'This is a sentence.',
                 'This is another sentence.',
@@ -34,27 +33,27 @@ class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
         }
 
         pipeline_ins = pipeline(self.task, model=self.model_id_large)
-        print(pipeline_ins(input=input))
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.SRC)
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.REF)
+        print(pipeline_ins(input_dict)['score'])
 
         pipeline_ins = pipeline(
             self.task, model=self.model_id_large, device='cpu')
-        print(pipeline_ins(input=input))
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.SRC)
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.REF)
+        print(pipeline_ins(input_dict)['score'])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name_for_unite_base(self):
-        input = {
+        input_dict = {
             'hyp': [
                 'This is a sentence.',
                 'This is another sentence.',
@@ -70,23 +69,23 @@ class TranslationEvaluationTest(unittest.TestCase, DemoCompatibilityCheck):
         }
 
         pipeline_ins = pipeline(self.task, model=self.model_id_base)
-        print(pipeline_ins(input=input))
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.SRC)
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.REF)
+        print(pipeline_ins(input_dict)['score'])
 
         pipeline_ins = pipeline(
             self.task, model=self.model_id_base, device='cpu')
-        print(pipeline_ins(input=input))
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.SRC)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.SRC)
+        print(pipeline_ins(input_dict)['score'])
 
-        pipeline_ins.change_eval_mode(eval_mode=EvaluationMode.REF)
-        print(pipeline_ins(input=input))
+        pipeline_ins.change_input_format(input_format=InputFormat.REF)
+        print(pipeline_ins(input_dict)['score'])
 
 
 if __name__ == '__main__':

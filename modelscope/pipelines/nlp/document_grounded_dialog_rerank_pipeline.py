@@ -65,7 +65,8 @@ class DocumentGroundedDialogRerankPipeline(Pipeline):
             device=device,
             auto_collate=auto_collate,
             seed=seed,
-            **kwarg)
+            compile=kwarg.pop('compile', False),
+            compile_options=kwarg.pop('compile_options', {}))
         self.model = model
         self.preprocessor = preprocessor
         self.device = device

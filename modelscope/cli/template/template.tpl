@@ -122,10 +122,11 @@ class ${pipeline_name}(Pipeline):
 # Tips: usr_config_path is the temporary save configuration location， after upload modelscope hub, it is the model_id
 usr_config_path = '${configuration_path}'
 config = Config({
-    'framework': 'pytorch',
-    'task': '${task_name}',
-    'model': {'type': 'my-custom-model'},
-    "pipeline": {"type": "my-custom-pipeline"}
+    "framework": 'pytorch',
+    "task": '${task_name}',
+    "model": {'type': 'my-custom-model'},
+    "pipeline": {"type": "my-custom-pipeline"},
+    "allow_remote": True
 })
 config.dump('${configuration_path}' + 'configuration.json')
 

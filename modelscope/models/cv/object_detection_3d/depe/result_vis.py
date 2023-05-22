@@ -30,7 +30,7 @@ def depth2color(depth):
     if gray == 1:
         return tuple(colors[-1].tolist())
     num_rank = len(colors) - 1
-    rank = np.floor(gray * num_rank).astype(np.int)
+    rank = np.floor(gray * num_rank).astype(int)
     diff = (gray - rank / num_rank) * num_rank
     tmp = colors[rank + 1] - colors[rank]
     return tuple((colors[rank] + tmp * diff).tolist())
@@ -136,7 +136,7 @@ def plot_result(res_path,
             l2g = get_lidar2global(infos)
             corners_lidar = corners_global @ np.linalg.inv(l2g).T
             corners_lidar = corners_lidar[:, :3]
-        pred_flag = np.ones((corners_lidar.shape[0] // 8, ), dtype=np.bool)
+        pred_flag = np.ones((corners_lidar.shape[0] // 8, ), dtype=bool)
         scores = [
             pred_res[rid]['detection_score'] for rid in range(len(pred_res))
         ]
@@ -151,7 +151,7 @@ def plot_result(res_path,
                    origin=(0.5, 0.5, 0.5)).corners.numpy().reshape(-1, 3)
             corners_lidar = np.concatenate([corners_lidar, corners_lidar_gt],
                                            axis=0)
-            gt_flag = np.ones((corners_lidar_gt.shape[0] // 8), dtype=np.bool)
+            gt_flag = np.ones((corners_lidar_gt.shape[0] // 8), dtype=bool)
             pred_flag = np.concatenate(
                 [pred_flag, np.logical_not(gt_flag)], axis=0)
             scores = scores + [0 for _ in range(infos['gt_boxes'].shape[0])]
@@ -169,7 +169,7 @@ def plot_result(res_path,
                 check_point_in_img(corners_img, img.shape[0], img.shape[1]))
             valid = valid.reshape(
                 -1, 8)  # valid means: d>0 and visible in current view
-            corners_img = corners_img.reshape(-1, 8, 2).astype(np.int)
+            corners_img = corners_img.reshape(-1, 8, 2).astype(int)
             for aid in range(valid.shape[0]):
                 if scores[aid] < vis_thred and pred_flag[aid]:
                     continue

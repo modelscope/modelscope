@@ -9,11 +9,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class AdaIntImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
+class AdaIntImageColorEnhanceTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_adaint_image-color-enhance-models'
@@ -39,11 +38,6 @@ class AdaIntImageColorEnhanceTest(unittest.TestCase, DemoCompatibilityCheck):
         img_color_enhance = pipeline(Tasks.image_color_enhancement)
         self.pipeline_inference(img_color_enhance,
                                 'data/test/images/image_color_enhance.png')
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

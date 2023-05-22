@@ -5,12 +5,10 @@ from modelscope.models import Model
 from modelscope.models.multi_modal.soonet import SOONet
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SOONetVideoTemporalGroundingTest(unittest.TestCase,
-                                       DemoCompatibilityCheck):
+class SOONetVideoTemporalGroundingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.video_temporal_grounding

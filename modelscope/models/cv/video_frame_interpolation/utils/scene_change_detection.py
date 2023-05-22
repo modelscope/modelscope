@@ -85,7 +85,7 @@ def do_scene_detect(F01_tensor, F10_tensor, img0_tensor, img1_tensor):
     img_diff = ori_img.float() - ref_img.float()
     img_diff = torch.abs(img_diff)
 
-    kernel = np.ones([8, 8], np.float) / 64
+    kernel = np.ones([8, 8], float) / 64
     kernel = torch.FloatTensor(kernel).to(device).unsqueeze(0).unsqueeze(0)
     diff = F.conv2d(img_diff, kernel, padding=4)
 

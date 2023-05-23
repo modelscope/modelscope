@@ -16,8 +16,6 @@ from modelscope.utils.config import Config, ConfigDict
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
-        print("----------DreamboothDiffusionTrainer init")
-        # optimizers = build_optimizer(self.model, cfg=cfg, default_args=default_args)
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:

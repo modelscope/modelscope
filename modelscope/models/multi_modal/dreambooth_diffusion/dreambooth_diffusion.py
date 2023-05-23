@@ -193,7 +193,6 @@ class DreamboothDiffusion(TorchModel):
 
             # Get the target for loss depending on the prediction type
             if self.noise_scheduler.config.prediction_type == 'epsilon':
-                # target = noise
                 gt = noise
             elif self.noise_scheduler.config.prediction_type == 'v_prediction':
                 gt = self.noise_scheduler.get_velocity(latents, noise, timesteps)
@@ -201,8 +200,6 @@ class DreamboothDiffusion(TorchModel):
                 raise ValueError(f'Unknown prediction type {self.noise_scheduler.config.prediction_type}')
 
             # Predict the noise residual and compute loss
-            # model_output = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float())
-            # model_pred = model_output['sample']
             model_pred = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float()).sample
             if model_pred.shape[1] == 6:
                 model_pred, _ = torch.chunk(model_pred, 2, dim=1)
@@ -216,7 +213,6 @@ class DreamboothDiffusion(TorchModel):
                 prior_loss = F.mse_loss(model_pred_prior.float(), gt_prior.float(), reduction="mean")
                 # Add the prior loss to the instance loss.
                 loss = dreambooth_loss + prior_loss * self.prior_loss_weight
- 
             else:
                 # calculate loss in FP32
                 loss = F.mse_loss(model_pred.float(), gt.float(), reduction="mean")
@@ -249,8 +245,7 @@ class DreamboothDiffusion(TorchModel):
 
         model = DreamboothDiffusion(
             model_dir,
-            pretrained_model_name_or_path=config.model.
-            pretrained_model_name_or_path,
+            pretrained_model_name_or_path=config.model.pretrained_model_name_or_path,
             inference=config.model.get('inference', False))
         model.config = config
         return model

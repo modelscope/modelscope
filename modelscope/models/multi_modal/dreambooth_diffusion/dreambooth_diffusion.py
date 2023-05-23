@@ -135,9 +135,6 @@ class DreamboothDiffusion(TorchModel):
             '\'num_class_images\' must be set when \'prior_loss_weight\' is '
             'larger than 0.')
 
-        # print_log(
-        #     'Generating class prior images with prompt: '
-        #     f'{self.class_prior_prompt}', 'current')
         num_batches = num_batches or self.num_class_images
 
         unet_dtype = next(self.unet.parameters()).dtype
@@ -155,8 +152,7 @@ class DreamboothDiffusion(TorchModel):
     def forward(self, prompt='', target=None):
         if self.inference:
             generator = torch.Generator(device=self.device).manual_seed(0)
-            images = self.pipe(
-                prompt, num_inference_steps=30, generator=generator).images
+            images = self.pipe(prompt, num_inference_steps=30, generator=generator).images
             return images
         else:
             self.unet.train()
@@ -175,8 +171,7 @@ class DreamboothDiffusion(TorchModel):
             
             image = image.to(dtype=self.weight_dtype)
             with torch.no_grad():
-                latents = self.vae.encode(
-                    target.to(dtype=self.weight_dtype)).latent_dist.sample()
+                latents = self.vae.encode(target.to(dtype=self.weight_dtype)).latent_dist.sample()
             latents = latents * self.vae.config.scaling_factor
             # Sample noise that we'll add to the latents
             noise = torch.randn_like(latents)
@@ -201,27 +196,30 @@ class DreamboothDiffusion(TorchModel):
                 # target = noise
                 gt = noise
             elif self.noise_scheduler.config.prediction_type == 'v_prediction':
-                gt = self.noise_scheduler.get_velocity(
-                # target = self.noise_scheduler.get_velocity(
-                    latents, noise, timesteps)
+                gt = self.noise_scheduler.get_velocity(latents, noise, timesteps)
             else:
                 raise ValueError(f'Unknown prediction type {self.noise_scheduler.config.prediction_type}')
 
             # Predict the noise residual and compute loss
-            model_output = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float())
-            model_pred = model_output['sample']
+            # model_output = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float())
+            # model_pred = model_output['sample']
+            model_pred = self.unet(noisy_latents.float(), timesteps, encoder_hidden_states.float()).sample
+            if model_pred.shape[1] == 6:
+                model_pred, _ = torch.chunk(model_pred, 2, dim=1)
 
             if self.prior_loss_weight != 0:
-                model_pred, prior_pred = model_pred.split(2, dim=1)
-                gt, prior_gt = gt.split(2, dim=1)
-                # calculate loss in FP32
-                dreambooth_loss = F.mse_loss(model_pred.float(), gt.float())
-                prior_loss = F.mse_loss(prior_pred.float(), prior_gt.float())
+                model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
+                gt, gt_prior = torch.chunk(gt, 2, dim=0)
+                # # Compute instance loss
+                dreambooth_loss = F.mse_loss(model_pred.float(), gt.float(), reduction="mean")
+                # Compute prior loss
+                prior_loss = F.mse_loss(model_pred_prior.float(), gt_prior.float(), reduction="mean")
+                # Add the prior loss to the instance loss.
                 loss = dreambooth_loss + prior_loss * self.prior_loss_weight
  
             else:
                 # calculate loss in FP32
-                loss = F.mse_loss(model_pred.float(), gt.float())
+                loss = F.mse_loss(model_pred.float(), gt.float(), reduction="mean")
             
             output = {OutputKeys.LOSS: loss}
             return output

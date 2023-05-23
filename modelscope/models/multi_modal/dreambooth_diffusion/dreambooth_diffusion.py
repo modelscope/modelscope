@@ -54,8 +54,8 @@ class DreamboothDiffusion(TorchModel):
         self.prompt = 'a photo of sks dog'  # just for test
         self.prior_loss_weight = 0  # just for test
         self.num_class_images = 5  # just for test
-        self.class_images = []
-        self.class_prior_prompt = None
+        self.class_images = []  # just for test
+        self.class_prior_prompt = None  # just for test
 
         self.weight_dtype = torch.float32
         self.inference = inference
@@ -96,7 +96,7 @@ class DreamboothDiffusion(TorchModel):
             
             if self.vae is not None:
                 self.vae.requires_grad_(False)
-            if self.text_encoder is None:
+            if self.text_encoder is not None:
                 self.text_encoder.requires_grad_(False)
 
     def tokenize_caption(self, captions):

@@ -8,7 +8,7 @@ PYTHONPATH=. torchrun --nproc_per_node $WORLD_SIZE examples/pytorch/text_generat
     --trainer 'nlp-gpt3-trainer' \
     --work_dir './tmp' \
     --model 'damo/nlp_gpt3_text-generation_1.3B' \
-    --dataset_name 'chinese-poetry-collection' \
+    --train_dataset_name 'chinese-poetry-collection' \
     --preprocessor 'text-gen-jieba-tokenizer' \
     --src_txt 'text1' \
     --tgt_txt 'text2' \
@@ -20,4 +20,5 @@ PYTHONPATH=. torchrun --nproc_per_node $WORLD_SIZE examples/pytorch/text_generat
     --world_size $WORLD_SIZE \
     --tensor_model_parallel_size $TENSOR_MODEL_PARALLEL_SIZE \
     --use_megatron true \
-    # --dataset_name 'DuReader_robust-QG' \ # input&output
+    --use_model_config true \
+    # --train_dataset_name 'DuReader_robust-QG' \ # input&output

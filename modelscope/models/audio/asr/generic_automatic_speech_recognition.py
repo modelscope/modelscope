@@ -45,27 +45,5 @@ class GenericAutomaticSpeechRecognition(Model):
     def forward(self) -> Dict[str, Any]:
         """preload model and return the info of the model
         """
-        if self.model_cfg['model_config']['type'] == Frameworks.tf:
-            from easyasr import asr_inference_paraformer_tf
-            if hasattr(asr_inference_paraformer_tf, 'preload'):
-                model_workspace = self.model_cfg['model_workspace']
-                model_path = os.path.join(model_workspace,
-                                          self.model_cfg['am_model'])
-                vocab_path = os.path.join(
-                    model_workspace,
-                    self.model_cfg['model_config']['vocab_file'])
-                sampled_ids = 'seq2seq/sampled_ids'
-                sampled_lengths = 'seq2seq/sampled_lengths'
-                if 'sampled_ids' in self.model_cfg['model_config']:
-                    sampled_ids = self.model_cfg['model_config']['sampled_ids']
-                if 'sampled_lengths' in self.model_cfg['model_config']:
-                    sampled_lengths = self.model_cfg['model_config'][
-                        'sampled_lengths']
-                asr_inference_paraformer_tf.preload(
-                    ngpu=1,
-                    asr_model_file=model_path,
-                    vocab_file=vocab_path,
-                    sampled_ids=sampled_ids,
-                    sampled_lengths=sampled_lengths)
 
         return self.model_cfg

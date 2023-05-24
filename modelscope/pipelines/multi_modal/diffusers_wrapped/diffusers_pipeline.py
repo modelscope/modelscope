@@ -39,10 +39,10 @@ class DiffusersPipeline(Pipeline):
         self.models = [self.model]
         self.has_multiple_models = len(self.models) > 1
 
-    def preprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
 
     def __call__(self, input: Union[Input, List[Input]], *args,

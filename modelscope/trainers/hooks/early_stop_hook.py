@@ -9,6 +9,12 @@ from .hook import Hook
 from .priority import Priority
 
 
+class EarlyStopStrategy:
+    by_epoch = 'by_epoch'
+    by_step = 'by_step'
+    no = 'no'
+
+
 @HOOKS.register_module(module_name=Hooks.EarlyStopHook)
 class EarlyStopHook(Hook):
     """Early stop when a specific metric stops improving.
@@ -16,14 +22,13 @@ class EarlyStopHook(Hook):
     Args:
         metric_key (str):  Metric key to be monitored.
         rule (str): Comparison rule for best score. Support "max" and "min".
-            If rule is "max", the training will stop when `metric_key` has stopped increaing.
+            If rule is "max", the training will stop when `metric_key` has stopped increasing.
             If rule is "min", the training will stop when `metric_key` has stopped decreasing.
         patience (int): Trainer will stop if the monitored metric did not improve for the last `patience` times.
-        min_delta (float): Minimum change in the monitored metric to quailfy as an improvement.
+        min_delta (float): Minimum change in the monitored metric to qualify as an improvement.
         check_finite (bool): If true, stops training when the metric becomes NaN or infinite.
-        by_epoch (int): Saving checkpoints by epoch or by iteration.
-        interval (int): The frequency to trigger early stop check. If `by_epoch=True`,
-            it means the number of epochs, else means the number of iterations.
+        early_stop_strategy (str): The strategy to early stop, can be by_epoch/by_step/none
+        interval (int): The frequency to trigger early stop check, by epoch or step.
     """
 
     PRIORITY = Priority.VERY_LOW
@@ -35,14 +40,19 @@ class EarlyStopHook(Hook):
                  patience: int = 3,
                  min_delta: float = 0.0,
                  check_finite: bool = True,
-                 by_epoch: bool = True,
-                 interval: int = 1):
+                 early_stop_strategy: str = EarlyStopStrategy.by_epoch,
+                 interval: int = 1,
+                 **kwargs):
         self.metric_key = metric_key
         self.rule = rule
         self.patience = patience
         self.min_delta = min_delta
         self.check_finite = check_finite
-        self.by_epoch = by_epoch
+        if 'by_epoch' in kwargs:
+            self.early_stop_strategy = EarlyStopStrategy.by_epoch if kwargs[
+                'by_epoch'] else EarlyStopStrategy.by_step
+        else:
+            self.early_stop_strategy = early_stop_strategy
         self.interval = interval
 
         self.wait_count = 0
@@ -89,7 +99,7 @@ class EarlyStopHook(Hook):
         trainer._stop_training = True
 
     def after_train_epoch(self, trainer):
-        if not self.by_epoch:
+        if self.early_stop_strategy != EarlyStopStrategy.by_epoch:
             return
 
         if not self.every_n_epochs(trainer, self.interval):
@@ -99,7 +109,7 @@ class EarlyStopHook(Hook):
             self._stop_training(trainer)
 
     def after_train_iter(self, trainer):
-        if self.by_epoch:
+        if self.early_stop_strategy != EarlyStopStrategy.by_step:
             return
 
         if not self.every_n_iters(trainer, self.interval):

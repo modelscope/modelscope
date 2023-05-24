@@ -8,11 +8,10 @@ from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import ModelFile, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class UniversalMattingTest(unittest.TestCase, DemoCompatibilityCheck):
+class UniversalMattingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_unet_universal-matting'
@@ -34,10 +33,6 @@ class UniversalMattingTest(unittest.TestCase, DemoCompatibilityCheck):
         result = img_matting('data/test/images/universal_matting.jpg')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
         print(f'Output written to {osp.abspath("result.png")}')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

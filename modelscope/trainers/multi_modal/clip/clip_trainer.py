@@ -176,11 +176,10 @@ class CLIPTrainer(EpochBasedTrainer):
         self.dataset_cfg = cfg.dataset
         if hasattr(self.dataset_cfg, 'column_map'):
             # cases where dataset key names are not "img" and "text"
-            img_key_name = getattr(self.dataset_cfg.column_map, 'img', 'img')
+            img_key_name = self.dataset_cfg['column_map'].get('img', 'img')
             preprocessor[ConfigKeys.train].set_input_img_key(img_key_name)
             preprocessor[ConfigKeys.val].set_input_img_key(img_key_name)
-            text_key_name = getattr(self.dataset_cfg.column_map, 'text',
-                                    'text')
+            text_key_name = self.dataset_cfg['column_map'].get('text', 'text')
             preprocessor[ConfigKeys.train].set_input_text_key(text_key_name)
             preprocessor[ConfigKeys.val].set_input_text_key(text_key_name)
         self.global_batch_size = cfg.train.dataloader.batch_size_per_gpu * world_size

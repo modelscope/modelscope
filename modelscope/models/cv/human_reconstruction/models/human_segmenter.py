@@ -31,7 +31,7 @@ class human_segmenter(object):
             img = np.dstack((img, img, img))
         elif img.shape[2] == 4:
             img = img[:, :, :3]
-        img = img.astype(np.float)
+        img = img.astype(float)
         return img
 
     def run(self, img):

@@ -8,12 +8,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import MaskDINOInstanceSegmentationPipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class MaskDINOInstanceSegmentationTest(unittest.TestCase,
-                                       DemoCompatibilityCheck):
+class MaskDINOInstanceSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_segmentation
@@ -44,10 +42,6 @@ class MaskDINOInstanceSegmentationTest(unittest.TestCase,
             Tasks.image_segmentation, model=model, preprocessor=None)
         print(f'pipeline1:{pipeline1(input=self.image)[OutputKeys.LABELS]}')
         print(f'pipeline2: {pipeline2(input=self.image)[OutputKeys.LABELS]}')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

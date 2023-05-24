@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from .space_T_en import ConversationalTextToSqlPreprocessor
     from .space_T_cn import TableQuestionAnsweringPreprocessor
     from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
-    from .translation_evaluation_preprocessor import TranslationEvaluationPreprocessor
+    from .translation_evaluation_preprocessor import TranslationEvaluationTransformersPreprocessor
     from .canmt_translation import CanmtTranslationPreprocessor
     from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
     from .siamese_uie_preprocessor import SiameseUiePreprocessor
@@ -90,7 +90,7 @@ else:
         'space_T_en': ['ConversationalTextToSqlPreprocessor'],
         'space_T_cn': ['TableQuestionAnsweringPreprocessor'],
         'translation_evaluation_preprocessor':
-        ['TranslationEvaluationPreprocessor'],
+        ['TranslationEvaluationTransformersPreprocessor'],
         'canmt_translation': [
             'CanmtTranslationPreprocessor',
         ],

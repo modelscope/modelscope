@@ -22,9 +22,6 @@ class Hook:
 
     PRIORITY = Priority.NORMAL
 
-    # The strategic function dict.
-    _strategies = dict()
-
     def after_init(self, trainer):
         """
         Will be called at the end of the trainer's `__init__` method
@@ -201,42 +198,48 @@ class Hook:
         """
         self.after_iter(trainer)
 
-    def every_n_epochs(self, trainer, n):
+    @staticmethod
+    def every_n_epochs(trainer, n):
         """
         Whether to reach every ``n`` epochs
         Returns: bool
         """
         return (trainer.epoch + 1) % n == 0 if n > 0 else False
 
-    def every_n_inner_iters(self, runner, n):
+    @staticmethod
+    def every_n_inner_iters(runner, n):
         """
         Whether to reach every ``n`` iterations at every epoch
         Returns: bool
         """
         return (runner.inner_iter + 1) % n == 0 if n > 0 else False
 
-    def every_n_iters(self, trainer, n):
+    @staticmethod
+    def every_n_iters(trainer, n):
         """
         Whether to reach every ``n`` iterations
         Returns: bool
         """
         return (trainer.iter + 1) % n == 0 if n > 0 else False
 
-    def end_of_epoch(self, trainer):
+    @staticmethod
+    def end_of_epoch(trainer):
         """
         Whether to reach the end of every epoch
         Returns: bool
         """
         return trainer.inner_iter + 1 == trainer.iters_per_epoch
 
-    def is_last_epoch(self, trainer):
+    @staticmethod
+    def is_last_epoch(trainer):
         """
         Whether to reach the last epoch
         Returns: bool
         """
         return trainer.epoch + 1 == trainer.max_epochs
 
-    def is_last_iter(self, trainer):
+    @staticmethod
+    def is_last_iter(trainer):
         """
         Whether to reach the last iteration in the entire training process
         Returns: bool
@@ -256,54 +259,3 @@ class Hook:
 
     def load_state_dict(self, state_dict):
         pass
-
-    @staticmethod
-    def clear_strategies():
-        Hook._strategies.clear()
-
-    @staticmethod
-    def overload(function, name=None):
-        """Register a function to a strategic function.
-
-        Args:
-            function(`method` or `Callable`): The function instance.
-            name(`str`): The name of the strategic function, which specifies by the method `consume`
-        """
-
-        _name = name or function.__name__
-        if _name not in Hook._strategies:
-            Hook._strategies[_name] = []
-
-        Hook._strategies[_name].append(function)
-
-    @staticmethod
-    def overload_func(name=None):
-        """Declare a function as a strategic function, which can be replaced by some other functions.
-
-        This function should be used in annotations.
-
-        Args:
-            name(str): The strategic function name.
-        """
-
-        def _register(function):
-
-            @wraps(function)
-            def _call(*args, **kwargs):
-                _name = name or function.__name__
-                producers = Hook._strategies.get(_name, [])
-
-                if len(producers) == 0:
-                    return function(*args, **kwargs)
-                else:
-                    if len(producers) > 1:
-                        raise ValueError(
-                            f'Multiple functions registered to {_name}, '
-                            f'here is the list: {producers}')
-                    if isinstance(args[0], Hook):
-                        args = args[1:]
-                    return producers[0](*args, **kwargs)
-
-            return _call
-
-        return _register

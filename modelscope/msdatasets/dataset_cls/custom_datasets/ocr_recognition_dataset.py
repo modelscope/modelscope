@@ -34,10 +34,12 @@ def Q2B(uchar):
     Tasks.ocr_recognition, module_name=Models.ocr_recognition)
 class OCRRecognitionDataset(TorchCustomDataset):
 
-    def __init__(self, **kwargs):
+    def __init__(self, local_lmdb=None, preprocessor=None, **kwargs):
         split_config = kwargs['split_config']
         cache_root = next(iter(split_config.values()))
         lmdb_path = os.path.join(cache_root, DATASET_STRUCTURE['lmdb'])
+        if local_lmdb is not None:
+            lmdb_path = local_lmdb
         self.env = lmdb.open(
             lmdb_path,
             max_readers=1,
@@ -51,7 +53,7 @@ class OCRRecognitionDataset(TorchCustomDataset):
         self.nSamples = 0
         with self.env.begin(write=False) as txn:
             self.nSamples = int(txn.get('num-samples'.encode()))
-        self.reco_preprocess = kwargs['preprocessor']
+        self.reco_preprocess = preprocessor
 
     def __len__(self):
         return self.nSamples

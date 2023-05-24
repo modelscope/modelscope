@@ -8,11 +8,10 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TextToImageSynthesisTest(unittest.TestCase, DemoCompatibilityCheck):
+class TextToImageSynthesisTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_to_image_synthesis
@@ -60,10 +59,6 @@ class TextToImageSynthesisTest(unittest.TestCase, DemoCompatibilityCheck):
         img = pipe_line_text_to_image_synthesis(
             self.test_text)[OutputKeys.OUTPUT_IMGS][0]
         print(np.sum(np.abs(img)))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

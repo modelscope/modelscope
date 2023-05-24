@@ -35,7 +35,10 @@ class LanguageModelPipeline(Pipeline):
 
     """
 
-    def __init__(self, model: Union[Model, str] = None, **kwargs):
+    def __init__(self,
+                 model: Union[Model, str] = None,
+                 ngpu: int = 1,
+                 **kwargs):
         """
         Use `model` to create a LM pipeline for prediction
         Args:
@@ -88,7 +91,9 @@ class LanguageModelPipeline(Pipeline):
             split_with_space=self.cmd['split_with_space'],
             seg_dict_file=self.cmd['seg_dict_file'],
             output_dir=self.cmd['output_dir'],
-            param_dict=self.cmd['param_dict'])
+            param_dict=self.cmd['param_dict'],
+            **kwargs,
+        )
 
     def __call__(self,
                  text_in: str = None,
@@ -189,6 +194,7 @@ class LanguageModelPipeline(Pipeline):
         for user_args in user_args_dict:
             if user_args in extra_args and extra_args[user_args] is not None:
                 cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

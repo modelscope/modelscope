@@ -46,7 +46,9 @@ class ChineseStableDiffusionPipeline(DiffusersPipeline):
 
         torch_dtype = kwargs.get('torch_dtype', torch.float32)
         self.pipeline = _DiffuersChineseStableDiffusionPipeline.from_pretrained(
-            model, torch_dtype=torch_dtype).to(self.device)
+            model, torch_dtype=torch_dtype)
+        self.pipeline.text_encoder.pooler = None
+        self.pipeline.to(self.device)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -73,7 +75,7 @@ class ChineseStableDiffusionPipeline(DiffusersPipeline):
             callback=inputs.get('callback'),
             callback_steps=inputs.get('callback_steps', 1))
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         images = []
         for img in inputs.images:
             if isinstance(img, Image.Image):

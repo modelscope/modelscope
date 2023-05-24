@@ -43,23 +43,32 @@ class MovieSceneSegmentationPipeline(Pipeline):
         """
         self.input_video_pth = input
         if isinstance(input, str):
-            shot_feat, sid = self.model.preprocess(input)
+            self.shot2keyf, self.anno, self.shot_timecode_lst, self.shot_idx_lst = self.model.preprocess(
+                input)
         else:
             raise TypeError(f'input should be a str,'
                             f'  but got {type(input)}')
 
-        result = {'sid': sid, 'shot_feat': shot_feat}
+        result = {
+            'shot_timecode_lst': self.shot_timecode_lst,
+            'shot_idx_lst': self.shot_idx_lst
+        }
 
-        return result
+        with torch.no_grad():
+            output = self.model.inference(result)
+
+        return output
 
     def forward(self, input: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
-        with torch.no_grad():
-            output = self.model.inference(input)
-        return output
+        return input
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        data = {'input_video_pth': self.input_video_pth, 'feat': inputs}
+        data = {
+            'input_video_pth': self.input_video_pth,
+            'feat': inputs,
+            'shot2keyf': self.shot2keyf
+        }
         scene_num, scene_meta_lst, shot_num, shot_meta_lst = self.model.postprocess(
             data)
         result = {

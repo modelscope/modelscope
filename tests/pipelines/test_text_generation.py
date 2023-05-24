@@ -8,11 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationPipeline
 from modelscope.preprocessors import TextGenerationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
+class TextGenerationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.palm_model_id_zh_base = 'damo/nlp_palm2.0_text-generation_chinese-base'
@@ -260,10 +259,6 @@ class TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
             task=Tasks.text_generation,
             model='damo/nlp_gpt2_text-generation_english-base')
         print(pipe('My name is Teven and I am'))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

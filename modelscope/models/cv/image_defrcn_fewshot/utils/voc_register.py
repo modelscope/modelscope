@@ -163,7 +163,7 @@ def load_filtered_voc_instances(name: str, root: str, dirname: str, split: str,
                     os.path.join(split_dir,
                                  'box_{}shot_{}_train.txt'.format(shot,
                                                                   cls))) as f:
-                fileids_ = np.loadtxt(f, dtype=np.str).tolist()
+                fileids_ = np.loadtxt(f, dtype=np.str_).tolist()
                 if isinstance(fileids_, str):
                     fileids_ = [fileids_]
                 fileids_ = [
@@ -219,7 +219,7 @@ def load_filtered_voc_instances(name: str, root: str, dirname: str, split: str,
         with PathManager.open(
                 os.path.join(root, dirname, 'ImageSets', 'Main',
                              split + '.txt')) as f:
-            fileids = np.loadtxt(f, dtype=np.str)
+            fileids = np.loadtxt(f, dtype=np.str_)
 
         for fileid in fileids:
             anno_file = os.path.join(root, dirname, 'Annotations',

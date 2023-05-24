@@ -17,7 +17,7 @@ def main():
         num_iters=300000,
         decay_style='cosine',
         decay_ratio=0.1)
-    steps = np.arange(0, 400000, 10, dtype=np.long)
+    steps = np.arange(0, 400000, 10, dtype=int)
     rates = []
     for step in steps:
         lr_scheduler.num_iters = step

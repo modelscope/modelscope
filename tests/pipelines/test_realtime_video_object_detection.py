@@ -9,15 +9,13 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import show_video_object_detection_result
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class RealtimeVideoObjectDetectionTest(unittest.TestCase,
-                                       DemoCompatibilityCheck):
+class RealtimeVideoObjectDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_cspnet_video-object-detection_streamyolo'
@@ -52,10 +50,6 @@ class RealtimeVideoObjectDetectionTest(unittest.TestCase,
                                                'test_vod_results.avi')
         else:
             raise ValueError('process error')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

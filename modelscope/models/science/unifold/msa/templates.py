@@ -1100,9 +1100,9 @@ class HmmsearchHitFeaturizer(TemplateHitFeaturizer):
                 np.zeros((1, num_res, residue_constants.atom_type_num, 3),
                          np.float32),
                 'template_domain_names':
-                np.array([''.encode()], dtype=np.object),
+                np.array([''.encode()], dtype=np.object_),
                 'template_sequence':
-                np.array([''.encode()], dtype=np.object),
+                np.array([''.encode()], dtype=np.object_),
                 'template_sum_probs':
                 np.array([0], dtype=np.float32),
             }

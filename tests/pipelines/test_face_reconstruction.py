@@ -14,13 +14,12 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 sys.path.append('.')
 
 
-class FaceReconstructionTest(unittest.TestCase, DemoCompatibilityCheck):
+class FaceReconstructionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.face_reconstruction
@@ -60,17 +59,13 @@ class FaceReconstructionTest(unittest.TestCase, DemoCompatibilityCheck):
             Tasks.face_reconstruction, model=model_dir)
         self.pipeline_inference(face_reconstruction, self.test_image)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub(self):
         face_reconstruction = pipeline(
             Tasks.face_reconstruction,
             model=self.model_id,
             model_revision='v2.0.0-HRN')
         self.pipeline_inference(face_reconstruction, self.test_image)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

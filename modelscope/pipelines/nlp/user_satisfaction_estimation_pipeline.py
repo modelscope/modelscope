@@ -51,7 +51,8 @@ class UserSatisfactionEstimationPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            **kwargs)
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         if hasattr(self.preprocessor, 'id2label'):
             self.id2label = self.preprocessor.id2label

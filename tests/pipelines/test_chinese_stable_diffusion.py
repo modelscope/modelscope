@@ -6,11 +6,10 @@ import cv2
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ChineseStableDiffusionTest(unittest.TestCase, DemoCompatibilityCheck):
+class ChineseStableDiffusionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_to_image_synthesis

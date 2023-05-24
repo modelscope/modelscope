@@ -5,11 +5,10 @@ from modelscope.models import Model
 from modelscope.models.cv.vop_retrieval import VoP
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VopRetrievalTest(unittest.TestCase, DemoCompatibilityCheck):
+class VopRetrievalTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.vop_retrieval

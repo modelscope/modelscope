@@ -6,6 +6,7 @@ import functools
 import os
 import pickle
 import platform
+import re
 import shutil
 import tempfile
 import uuid
@@ -15,10 +16,10 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
 
+import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope import __version__
 from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
@@ -45,7 +46,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        MASTER_MODEL_BRANCH, DatasetFormations,
                                        DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
-                                       ModelFile)
+                                       ModelFile, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_release_datetime,
                           model_id_to_group_owner_name)
@@ -160,6 +161,7 @@ class HubApi:
             'Visibility': visibility,  # server check
             'License': license,
             'OriginalModelId': original_model_id,
+            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
         }
         r = self.session.post(
             path, json=body, cookies=cookies, headers=self.headers)
@@ -236,8 +238,10 @@ class HubApi:
                    license: Optional[str] = Licenses.APACHE_V2,
                    chinese_name: Optional[str] = None,
                    commit_message: Optional[str] = 'upload model',
+                   tag: Optional[str] = None,
                    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-                   original_model_id: Optional[str] = None):
+                   original_model_id: Optional[str] = None,
+                   ignore_file_pattern: Optional[Union[List[str], str]] = None):
         """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 
@@ -268,10 +272,13 @@ class HubApi:
                 chinese name of the new created model.
             commit_message(`str`, *optional*, defaults to `None`):
                 commit message of the push request.
+            tag(`str`, *optional*, defaults to `None`):
+                The tag on this commit
             revision (`str`, *optional*, default to DEFAULT_MODEL_REVISION):
                 which branch to push. If the branch is not exists, It will create a new
                 branch and push to it.
             original_model_id (str, optional): The base model id which this model is trained from
+            ignore_file_pattern (`Union[List[str], str]`, optional): The file pattern to ignore uploading
 
         Raises:
             InvalidParameter: Parameter invalid.
@@ -292,6 +299,10 @@ class HubApi:
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
+        if ignore_file_pattern is None:
+            ignore_file_pattern = []
+        if isinstance(ignore_file_pattern, str):
+            ignore_file_pattern = [ignore_file_pattern]
         try:
             self.get_model(model_id=model_id)
         except Exception:
@@ -325,6 +336,8 @@ class HubApi:
                         shutil.rmtree(src, ignore_errors=True)
             for f in files_to_save:
                 if f[0] != '.':
+                    if any([re.search(pattern, f) is not None for pattern in ignore_file_pattern]):
+                        continue
                     src = os.path.join(model_dir, f)
                     if os.path.isdir(src):
                         shutil.copytree(src, os.path.join(tmp_dir, f))
@@ -338,6 +351,8 @@ class HubApi:
                 commit_message=commit_message,
                 local_branch=revision,
                 remote_branch=revision)
+            if tag is not None:
+                repo.tag_and_push(tag, tag)
         except Exception:
             raise
         finally:
@@ -581,6 +596,17 @@ class HubApi:
         file_list = file_list['Files']
         return file_list
 
+    @staticmethod
+    def dump_datatype_file(dataset_type: int, meta_cache_dir: str):
+        """
+        Dump the data_type as a local file, in order to get the dataset formation without calling the datahub.
+        More details, please refer to the class `modelscope.utils.constant.DatasetFormations`.
+        """
+        dataset_type_file_path = os.path.join(meta_cache_dir,
+                                              f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
+        with open(dataset_type_file_path, 'w') as fp:
+            fp.write('*** Automatically-generated file, do not modify ***')
+
     def get_dataset_meta_files_local_paths(self, dataset_name: str,
                                            namespace: str,
                                            revision: str,
@@ -591,10 +617,7 @@ class HubApi:
         cookies = ModelScopeConfig.get_cookies()
 
         # Dump the data_type as a local file
-        dataset_type_file_path = os.path.join(meta_cache_dir,
-                                              f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
-        with open(dataset_type_file_path, 'w') as fp:
-            fp.write('*** Automatically-generated file, do not modify ***')
+        HubApi.dump_datatype_file(dataset_type=dataset_type, meta_cache_dir=meta_cache_dir)
 
         for file_info in file_list:
             file_path = file_info['Path']
@@ -661,13 +684,37 @@ class HubApi:
             cookies = self._check_cookie(use_cookies=True)
         else:
             cookies = ModelScopeConfig.get_cookies()
-        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
 
         r = self.session.get(
             url=datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
+
+    def get_virgo_meta(self, dataset_id: str, version: int = 1) -> dict:
+        """
+        Get virgo dataset meta info.
+        """
+        virgo_endpoint = os.environ.get(VirgoDatasetConfig.env_virgo_endpoint, '')
+        if not virgo_endpoint:
+            raise RuntimeError(f'Virgo endpoint is not set in env: {VirgoDatasetConfig.env_virgo_endpoint}')
+
+        virgo_dataset_url = f'{virgo_endpoint}/data/set/download'
+        cookies = requests.utils.dict_from_cookiejar(ModelScopeConfig.get_cookies())
+
+        dataset_info = dict(
+            dataSetId=dataset_id,
+            dataSetVersion=version
+        )
+        data = dict(
+            data=dataset_info,
+        )
+        r = self.session.post(url=virgo_dataset_url, json=data, cookies=cookies, headers=self.headers, timeout=900)
+        resp = r.json()
+        if resp['code'] != 0:
+            raise RuntimeError(f'Failed to get virgo dataset: {resp}')
+
+        return resp['data']
 
     def get_dataset_access_config_for_unzipped(self,
                                                dataset_name: str,
@@ -895,6 +942,7 @@ class ModelScopeConfig:
         if MODELSCOPE_CLOUD_USERNAME in os.environ:
             user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
 
+        from modelscope import __version__
         ua = 'modelscope/%s; python/%s; session_id/%s; platform/%s; processor/%s; env/%s; user/%s' % (
             __version__,
             platform.python_version(),

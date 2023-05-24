@@ -72,7 +72,7 @@ class Cube2Equirec(nn.Module):
                 self.equ_h, 0), 3 * self.equ_w // 8, 1)
 
         # Prepare ceil mask
-        mask = np.zeros((self.equ_h, self.equ_w // 4), np.bool)
+        mask = np.zeros((self.equ_h, self.equ_w // 4), bool)
         idx = np.linspace(-np.pi, np.pi, self.equ_w // 4) / 4
         idx = self.equ_h // 2 - np.round(
             np.arctan(np.cos(idx)) * self.equ_h / np.pi).astype(int)

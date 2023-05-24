@@ -10,6 +10,48 @@ from modelscope.trainers.hooks.hook import Hook
 from modelscope.trainers.hooks.priority import Priority
 
 
+class OptimizerProcessor:
+
+    def initialize_optimizer(self, trainer):
+        """Initialize the optimizer.
+
+        This is a strategic function which can be registered by other hook's function.
+        """
+        trainer.optimizer.zero_grad()
+
+    def before_forward(self, trainer):
+        pass
+
+    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
+        """Do module backward, optimizer's step and zero_grad and clip the grads.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            loss_keys(`list`): The list of loss keys.
+            cumulative_iters(`int`): The cumulative iters for gradients.
+            grad_clip(`dict`): The grad clipping options.
+        """
+        for k in loss_keys:
+            trainer.train_outputs[k] /= cumulative_iters
+            trainer.train_outputs[k].backward()
+
+        if Hook.every_n_iters(trainer, cumulative_iters):
+            if grad_clip is not None:
+                self.clip_grads(trainer.model.parameters(), **grad_clip)
+
+            trainer.optimizer.step()
+            trainer.optimizer.zero_grad()
+
+    @staticmethod
+    def clip_grads(params, **clip_args):
+        params = list(
+            filter(lambda p: p.requires_grad and p.grad is not None, params))
+        if len(params) > 0:
+            return clip_grad.clip_grad_norm_(params, **clip_args)
+
+
 @HOOKS.register_module(module_name=Hooks.OptimizerHook)
 class OptimizerHook(Hook):
     """Optimizer hook
@@ -36,52 +78,21 @@ class OptimizerHook(Hook):
         self.loss_keys = loss_keys
         self.cumulative_iters = cumulative_iters
         self.grad_clip = grad_clip
+        self.processor = OptimizerProcessor()
 
-    @staticmethod
-    def clip_grads(params, **clip_args):
-        params = list(
-            filter(lambda p: p.requires_grad and p.grad is not None, params))
-        if len(params) > 0:
-            return clip_grad.clip_grad_norm_(params, **clip_args)
-
-    @Hook.overload_func(name='OptimizerHook.initialize_optimizer')
-    def initialize_optimizer(self, trainer):
-        """Initialize the optimizer.
-
-        This is a strategic function which can be registered by other hook's function.
-        """
-        trainer.optimizer.zero_grad()
+    def set_processor(self, processor):
+        self.processor = processor
 
     def before_run(self, trainer):
-        self.initialize_optimizer(trainer)
         trainer.cumulative_iters = self.cumulative_iters
+        self.processor.initialize_optimizer(trainer)
 
-    @Hook.overload_func(name='OptimizerHook.backward')
-    def backward(self, trainer, loss_keys, cumulative_iters, grad_clip):
-        """Do module backward, optimizer's step and zero_grad and clip the grads.
-
-        This is a strategic function which can be registered by other hook's function.
-
-        Args:
-            trainer(`EpochBasedTrainer`): The trainer instance.
-            loss_keys(`list`): The list of loss keys.
-            cumulative_iters(`int`): The cumulative iters for gradients.
-            grad_clip(`dict`): The grad clipping options.
-        """
-        for k in loss_keys:
-            trainer.train_outputs[k] /= cumulative_iters
-            trainer.train_outputs[k].backward()
-
-        if self.every_n_iters(trainer, cumulative_iters):
-            if grad_clip is not None:
-                self.clip_grads(trainer.model.parameters(), **grad_clip)
-
-            trainer.optimizer.step()
-            trainer.optimizer.zero_grad()
+    def before_train_iter(self, trainer):
+        self.processor.before_forward(trainer)
 
     def after_train_iter(self, trainer):
-        self.backward(trainer, self.loss_keys, self.cumulative_iters,
-                      self.grad_clip)
+        self.processor.backward(trainer, self.loss_keys, self.cumulative_iters,
+                                self.grad_clip)
 
 
 @HOOKS.register_module(module_name=Hooks.NoneOptimizerHook)

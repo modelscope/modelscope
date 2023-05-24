@@ -72,7 +72,7 @@ class PoseHighResolutionNetV2(TorchModel):
         self.stage4, pre_stage_channels = self._make_stage(
             self.stage4_cfg, num_channels, multi_scale_output=True)
         """final four layers"""
-        last_inp_channels = np.int(np.sum(pre_stage_channels))
+        last_inp_channels = int(np.sum(pre_stage_channels))
         self.final_layer = nn.Sequential(
             nn.Conv2d(
                 in_channels=last_inp_channels,

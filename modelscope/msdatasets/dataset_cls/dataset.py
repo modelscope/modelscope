@@ -4,11 +4,15 @@ import copy
 import os
 
 import datasets
+import pandas as pd
 from datasets import IterableDataset
-from PIL import Image
 
-from modelscope.utils.constant import EXTENSIONS_TO_LOAD
+from modelscope.msdatasets.utils.maxcompute_utils import MaxComputeUtil
+from modelscope.utils.constant import (DEFAULT_MAXCOMPUTE_ENDPOINT,
+                                       EXTENSIONS_TO_LOAD, MaxComputeEnvs,
+                                       VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
+from modelscope.utils.url_utils import fetch_csv_with_url, valid_url
 
 logger = get_logger()
 
@@ -97,6 +101,7 @@ class NativeIterableDataset(IterableDataset):
                         ex_cache_path = dl_manager.download_and_extract(v)
                         ret[k] = ex_cache_path
                         if k.endswith('Image:FILE'):
+                            from PIL import Image
                             ret[k + ':Object'] = Image.open(fp=ex_cache_path)
                         if k.endswith('Audio:FILE'):
                             import torchaudio
@@ -108,3 +113,154 @@ class NativeIterableDataset(IterableDataset):
 
     def __len__(self):
         return 1
+
+
+class VirgoDataset(object):
+    """Dataset class for Virgo.
+
+    Attributes:
+        _meta_content (str): Virgo meta data content, could be a url that contains csv file.
+        _data_type (int): Virgo dataset type, 0-Standard virgo dataset; Others-User define dataset (to be supported)
+
+    Examples:
+        >>> from modelscope.msdatasets.dataset_cls.dataset import VirgoDataset
+        >>> input_kwargs = {'metaContent': 'http://xxx-xxx/xxx.csv', 'samplingType': 0}
+        >>> virgo_dataset = VirgoDataset(**input_kwargs)
+        >>> print(virgo_dataset[1])
+        >>> print(len(virgo_dataset))
+        >>> for line in virgo_dataset:
+        >>>     print(line)
+
+        Note: If you set `download_virgo_files` to True by using
+            MsDataset.load(dataset_name='your-virgo-dataset-id', hub=Hubs.virgo, download_virgo_files=True),
+            you can get the cache file path of the virgo dataset, the column name is `cache_file`.
+        >>> if virgo_dataset.download_virgo_files:
+        >>>     print(virgo_dataset[1].get('cache_file'))
+    """
+
+    def __init__(self, **kwargs):
+
+        self._meta_content: str = ''
+        self.data_type: int = 0
+        self.odps_table_name: str = ''
+        self.odps_table_partition: str = None
+        self._odps_utils: MaxComputeUtil = None
+        self.config_kwargs = kwargs
+
+        self._meta: pd.DataFrame = pd.DataFrame()
+
+        self._meta_content = self.config_kwargs.pop(
+            VirgoDatasetConfig.meta_content, '')
+        self.data_type = self.config_kwargs.pop(
+            VirgoDatasetConfig.sampling_type, 0)
+
+        self._check_variables()
+        self._parse_meta()
+
+        self.meta_content_cache_file = ''
+        self.virgo_cache_dir = ''
+        self.download_virgo_files: bool = False
+
+        self.odps_table_ins = None
+        self.odps_reader_ins = None
+        self.odps_batch_size = self.config_kwargs.pop('odps_batch_size', 100)
+        self.odps_limit = self.config_kwargs.pop('odps_limit', None)
+        self.odps_drop_last = self.config_kwargs.pop('odps_drop_last', False)
+        if self._odps_utils:
+            self.odps_table_ins, self.odps_reader_ins = self._odps_utils.get_table_reader_ins(
+                self.odps_table_name, self.odps_table_partition)
+
+    def __getitem__(self, index):
+        if self.odps_reader_ins:
+            return MaxComputeUtil.gen_reader_item(
+                reader=self.odps_reader_ins,
+                index=index,
+                batch_size_in=self.odps_batch_size,
+                limit_in=self.odps_limit,
+                drop_last_in=self.odps_drop_last,
+                partitions=self.odps_table_ins.table_schema.partitions,
+                columns=self.odps_table_ins.table_schema.names)
+        return self._meta.iloc[index].to_dict()
+
+    def __len__(self):
+        if isinstance(self._meta, dict):
+            return self._meta.get('odpsCount', 0)
+        return len(self._meta)
+
+    def __iter__(self):
+        if self.odps_reader_ins:
+            odps_batch_data = MaxComputeUtil.gen_reader_batch(
+                reader=self.odps_reader_ins,
+                batch_size_in=self.odps_batch_size,
+                limit_in=self.odps_limit,
+                drop_last_in=self.odps_drop_last,
+                partitions=self.odps_table_ins.table_schema.partitions,
+                columns=self.odps_table_ins.table_schema.names)
+            for batch in odps_batch_data:
+                yield batch
+        else:
+            for _, row in self._meta.iterrows():
+                yield row.to_dict()
+
+    @property
+    def meta(self) -> pd.DataFrame:
+        """
+        Virgo meta data. Contains columns: id, meta_info, analysis_result, external_info and
+            cache_file (if download_virgo_files is True).
+        """
+        return self._meta
+
+    def _parse_meta(self):
+        # Fetch csv content
+        if isinstance(self._meta_content, str) and valid_url(
+                self._meta_content):
+            meta_content_df = fetch_csv_with_url(self._meta_content)
+            self._meta = meta_content_df
+        elif isinstance(self._meta_content, dict):
+            self._meta = self._meta_content
+            self.odps_table_name = self._meta.get('odpsTableName', '')
+            self.odps_table_partition = self._meta.get('odpsTablePartition',
+                                                       None)
+            self._odps_utils = self._get_odps_info()
+        else:
+            raise 'The meta content must be url or dict.'
+
+    @staticmethod
+    def _get_odps_info() -> MaxComputeUtil:
+        """
+        Get MaxComputeUtil instance.
+
+        Args:
+            None
+
+        Returns:
+            MaxComputeUtil instance.
+        """
+        access_id = os.environ.get(MaxComputeEnvs.ACCESS_ID, '')
+        access_key = os.environ.get(MaxComputeEnvs.ACCESS_SECRET_KEY, '')
+        proj_name = os.environ.get(MaxComputeEnvs.PROJECT_NAME, '')
+        endpoint = os.environ.get(MaxComputeEnvs.ENDPOINT,
+                                  DEFAULT_MAXCOMPUTE_ENDPOINT)
+
+        if not access_id or not access_key or not proj_name:
+            raise ValueError(
+                f'Please set MaxCompute envs for Virgo: {MaxComputeEnvs.ACCESS_ID}, '
+                f'{MaxComputeEnvs.ACCESS_SECRET_KEY}, {MaxComputeEnvs.PROJECT_NAME}, '
+                f'{MaxComputeEnvs.ENDPOINT}(default: http://service-corp.odps.aliyun-inc.com/api)'
+            )
+
+        return MaxComputeUtil(access_id, access_key, proj_name, endpoint)
+
+    def _check_variables(self):
+        """Check member variables in this class.
+            1. Condition-1: self._meta_content cannot be empty
+            2. Condition-2: self._meta_content must be url when self._data_type is 0
+        """
+        if not self._meta_content:
+            raise 'Them meta content cannot be empty.'
+        if self.data_type not in [0, 1]:
+            raise 'Supported samplingType should be 0 or 1, others are not supported yet.'
+        if self.data_type == 0 and not valid_url(self._meta_content):
+            raise 'The meta content must be url when data type is 0.'
+        if self.data_type == 1 and not isinstance(self._meta_content, dict):
+            raise 'The meta content must be dict when data type is 1.'

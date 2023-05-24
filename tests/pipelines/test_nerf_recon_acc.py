@@ -9,11 +9,10 @@ from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import DownloadMode, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
+class NeRFReconAccTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_nerf-3d-reconstruction-accelerate_damo'
@@ -62,11 +61,6 @@ class NeRFReconAccTest(unittest.TestCase, DemoCompatibilityCheck):
         nerf_recon_acc(
             dict(data_dir=self.data_dir, render_dir=self.render_dir))
         print('facefusion.test_run_modelhub_default_model done')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

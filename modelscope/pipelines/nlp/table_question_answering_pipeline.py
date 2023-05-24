@@ -52,7 +52,8 @@ class TableQuestionAnsweringPipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            **kwargs)
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'
@@ -402,7 +403,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             OutputKeys.SQL_STRING: sql.string,
             OutputKeys.SQL_QUERY: sql.query,
             OutputKeys.HISTORY: result['sql'],
-            OutputKeys.QUERT_RESULT: tabledata,
+            OutputKeys.QUERY_RESULT: tabledata,
         }
 
         return {OutputKeys.OUTPUT: output}

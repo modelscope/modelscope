@@ -5,11 +5,10 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageHumanParsingTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageHumanParsingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_segmentation
@@ -38,10 +37,6 @@ class ImageHumanParsingTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_parsing = pipeline(
             task=Tasks.image_segmentation, model=model, preprocessor=None)
         print(pipeline_parsing(input=self.image_multiple)[OutputKeys.LABELS])
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

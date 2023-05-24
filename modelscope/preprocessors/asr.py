@@ -74,14 +74,6 @@ class WavToScp(Preprocessor):
         if code_base != 'funasr':
             cmd = self.config_checking(cmd)
         cmd = self.env_setting(cmd)
-        if audio_format == 'wav':
-            cmd['audio_lists'] = self.scp_generation_from_wav(cmd)
-        elif audio_format == 'kaldi_ark':
-            cmd['audio_lists'] = self.scp_generation_from_ark(cmd)
-        elif audio_format == 'tfrecord':
-            cmd['audio_lists'] = os.path.join(cmd['wav_path'], 'data.records')
-        elif audio_format == 'pcm' or audio_format == 'scp':
-            cmd['audio_lists'] = audio_in
 
         return cmd
 
@@ -235,63 +227,4 @@ class WavToScp(Preprocessor):
             inputs['model_lang'] = inputs['model_config']['lang']
         else:
             inputs['model_lang'] = 'zh-cn'
-
         return inputs
-
-    def scp_generation_from_wav(self, inputs: Dict[str, Any]) -> List[Any]:
-        """scp generation from waveform files
-        """
-
-        # find all waveform files
-        wav_list = []
-        if inputs['recog_type'] == 'wav':
-            file_path = inputs['wav_path']
-            if os.path.isfile(file_path):
-                if file_path.endswith('.wav') or file_path.endswith('.WAV'):
-                    wav_list.append(file_path)
-        else:
-            from easyasr.common import asr_utils
-            wav_dir: str = inputs['wav_path']
-            wav_list = asr_utils.recursion_dir_all_wav(wav_list, wav_dir)
-
-        list_count: int = len(wav_list)
-        inputs['wav_count'] = list_count
-
-        # store all wav into audio list
-        audio_lists = []
-        j: int = 0
-        while j < list_count:
-            wav_file = wav_list[j]
-            wave_key: str = os.path.splitext(os.path.basename(wav_file))[0]
-            item = {'key': wave_key, 'file': wav_file}
-            audio_lists.append(item)
-            j += 1
-
-        return audio_lists
-
-    def scp_generation_from_ark(self, inputs: Dict[str, Any]) -> List[Any]:
-        """scp generation from kaldi ark file
-        """
-
-        ark_scp_path = os.path.join(inputs['wav_path'], 'data.scp')
-        ark_file_path = os.path.join(inputs['wav_path'], 'data.ark')
-        assert os.path.exists(ark_scp_path), 'data.scp does not exist'
-        assert os.path.exists(ark_file_path), 'data.ark does not exist'
-
-        with open(ark_scp_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-
-        # store all ark item into audio list
-        audio_lists = []
-        for line in lines:
-            outs = line.strip().split(' ')
-            if len(outs) == 2:
-                key = outs[0]
-                sub = outs[1].split(':')
-                if len(sub) == 2:
-                    nums = sub[1]
-                    content = ark_file_path + ':' + nums
-                    item = {'key': key, 'file': content}
-                    audio_lists.append(item)
-
-        return audio_lists

@@ -11,7 +11,7 @@ import json
 import torch
 from torch import distributed as dist
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Sampler
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
@@ -88,7 +88,7 @@ class EpochBasedTrainer(BaseTrainer):
         compile_options (dict, optional): The compile options if compile=True,
             default None to use the default params of 'TorchModel.compile'.
         efficient_tuners (dict, optional): The tuners to use to train the model
-
+        samplers: (:obj:`Sampler` or `Dict[Sampler]`, *optional*): samplers used in the train/eval DataLoader.
         Examples of cfg_modify_fn:
             >>> def cfg_modify_fn(cfg):
             >>>     cfg.preprocessor.first_sequence= 'text1'
@@ -114,6 +114,7 @@ class EpochBasedTrainer(BaseTrainer):
             model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
             seed: int = 42,
             callbacks: Optional[List[Hook]] = None,
+            samplers: Optional[Union[Sampler, Dict[str, Sampler]]] = None,
             efficient_tuners: List[Dict] = None,
             **kwargs):
 
@@ -132,6 +133,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataloader = None
         self.eval_dataloader = None
         self.data_loader = None
+        self._samplers = samplers
 
         if isinstance(model, str):
             third_party = kwargs.get(ThirdParty.KEY)
@@ -223,9 +225,6 @@ class EpochBasedTrainer(BaseTrainer):
         # The parallel_groups field will be initialized in the hooks' after_init stage.
         # Please check the DDPHook and MegatronHook for details.
         self.parallel_groups = {}
-
-        # Clear the Hook overload functions to avoid duplication.
-        Hook.clear_strategies()
 
         if self.launcher is not None and not self.cfg.safe_get(
                 'train.hooks.DDPHook'):
@@ -681,6 +680,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader
         self.register_optimizers_hook()
+        self.register_processors()
         self.print_hook_info()
         self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
                                          kwargs.get('strict', False))
@@ -720,6 +720,7 @@ class EpochBasedTrainer(BaseTrainer):
 
             strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
+        self.register_processors()
         self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
@@ -758,6 +759,7 @@ class EpochBasedTrainer(BaseTrainer):
             kwargs:
                 strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
+        self.register_processors()
         self.print_hook_info()
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
@@ -897,11 +899,18 @@ class EpochBasedTrainer(BaseTrainer):
         """
         if self.train_dataset is None:
             raise 'The train_dataset cannot be None.'
+
+        sampler_cfg = {}
+        if self._samplers is not None:
+            sampler_cfg['sampler'] = self._samplers[
+                ConfigKeys.train] if isinstance(self._samplers,
+                                                dict) else self._samplers
         data_loader = self._build_dataloader_with_dataset(
             self.train_dataset,
             dist=self._dist,
             seed=self._seed,
             collate_fn=self.train_data_collator,
+            **sampler_cfg,
             **self.cfg.train.get('dataloader', {}))
         return data_loader
 
@@ -915,6 +924,11 @@ class EpochBasedTrainer(BaseTrainer):
         if self.eval_dataset is None:
             raise 'The eval_dataset cannot be None.'
 
+        sampler_cfg = {}
+        if self._samplers is not None:
+            sampler_cfg['sampler'] = self._samplers[
+                ConfigKeys.val] if isinstance(self._samplers,
+                                              dict) else self._samplers
         default_config = {'shuffle': False}
         default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
@@ -922,6 +936,7 @@ class EpochBasedTrainer(BaseTrainer):
             dist=self._dist,
             seed=self._seed,
             collate_fn=self.eval_data_collator,
+            **sampler_cfg,
             **default_config)
         return data_loader
 
@@ -938,6 +953,11 @@ class EpochBasedTrainer(BaseTrainer):
             mode=ModeKeys.EVAL,
             preprocessor=self.eval_preprocessor)
 
+        sampler_cfg = {}
+        if self._samplers is not None:
+            sampler_cfg['sampler'] = self._samplers[
+                ConfigKeys.val] if isinstance(self._samplers,
+                                              dict) else self._samplers
         default_config = {'shuffle': False}
         default_config.update(self.cfg.evaluation.get('dataloader', {}))
         data_loader = self._build_dataloader_with_dataset(
@@ -945,6 +965,7 @@ class EpochBasedTrainer(BaseTrainer):
             dist=self._dist,
             seed=self._seed,
             collate_fn=self.eval_data_collator,
+            **sampler_cfg,
             **default_config)
         return data_loader
 
@@ -1132,13 +1153,19 @@ class EpochBasedTrainer(BaseTrainer):
             batch_size = batch_size_per_gpu
             num_workers = workers_per_gpu
 
-        if dist and not isinstance(dataset, torch.utils.data.IterableDataset):
-            sampler = DistributedSampler(
-                dataset, num_replicas=world_size, rank=rank, shuffle=shuffle)
-        else:
-            sampler = None
-            if not isinstance(dataset, torch.utils.data.IterableDataset):
-                kwargs['shuffle'] = shuffle
+        sampler = kwargs.pop('sampler', None)
+        if sampler is None:
+            if dist and not isinstance(dataset,
+                                       torch.utils.data.IterableDataset):
+                sampler = DistributedSampler(
+                    dataset,
+                    num_replicas=world_size,
+                    rank=rank,
+                    shuffle=shuffle)
+            else:
+                sampler = None
+                if not isinstance(dataset, torch.utils.data.IterableDataset):
+                    kwargs['shuffle'] = shuffle
 
         batch_sampler = None
 
@@ -1169,7 +1196,6 @@ class EpochBasedTrainer(BaseTrainer):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
         self.invoke_hook(TrainerStages.before_run)
-        kwargs = {}
         self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
@@ -1181,7 +1207,7 @@ class EpochBasedTrainer(BaseTrainer):
                 self.data_batch = data_batch
                 self._inner_iter = i
                 self.invoke_hook(TrainerStages.before_train_iter)
-                self.train_step(self.model, data_batch, **kwargs)
+                self.train_step(self.model, data_batch)
                 self.invoke_hook(TrainerStages.after_train_iter)
                 # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
                 del self.data_batch
@@ -1320,11 +1346,16 @@ class EpochBasedTrainer(BaseTrainer):
         hooks = []
         for cfg_i in hook_cfg:
             hook = build_from_cfg(cfg_i, HOOKS)
-            if hasattr(hook, 'register_strategy'):
-                hook.register_strategy()
             self.register_hook(hook)
             hooks.append(hook)
         return hooks
+
+    def register_processors(self):
+        """Register processors to hooks
+        """
+        for hook in self.hooks:
+            if hasattr(hook, 'register_processor'):
+                hook.register_processor(self)
 
     def get_hook(self, cls):
         return [h for h in self._hooks if h.__class__ == cls]
@@ -1381,14 +1412,7 @@ class EpochBasedTrainer(BaseTrainer):
                 info += '\n -------------------- '
                 stage_hook_infos.append(info)
         stage_hook_infos = '\n'.join(stage_hook_infos)
-
-        strategy_info = '\n --- Hook strategies info --- \n'
-        for consumer, methods in Hook._strategies.items():
-            strategy_info += f'Method: {consumer} ' \
-                             f'replaced by: ' \
-                             f'{[method.__self__.__class__.__name__ + "." + method.__name__ for method in methods]}\n'
-        strategy_info += '\n --- Hook strategies info end --- \n'
-        return stage_hook_infos + strategy_info
+        return stage_hook_infos
 
 
 def worker_init_fn(worker_id, num_workers, rank, seed):

@@ -40,7 +40,7 @@ def tableqa_tracking_and_print_results_with_history(
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
-            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('query result:', output_dict[OutputKeys.QUERY_RESULT])
             print('json dumps', json.dumps(output_dict, ensure_ascii=False))
             print()
             historical_queries = output_dict[OutputKeys.HISTORY]
@@ -66,7 +66,7 @@ def tableqa_tracking_and_print_results_without_history(
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
-            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('query result:', output_dict[OutputKeys.QUERY_RESULT])
             print('json dumps', json.dumps(output_dict, ensure_ascii=False))
             print()
 
@@ -99,7 +99,7 @@ def tableqa_tracking_and_print_results_with_tableid(
             print('question', question)
             print('sql text:', output_dict[OutputKeys.SQL_STRING])
             print('sql query:', output_dict[OutputKeys.SQL_QUERY])
-            print('query result:', output_dict[OutputKeys.QUERT_RESULT])
+            print('query result:', output_dict[OutputKeys.QUERY_RESULT])
             print('json dumps', json.dumps(output_dict, ensure_ascii=False))
             print()
             historical_queries = output_dict[OutputKeys.HISTORY]
@@ -135,7 +135,7 @@ class TableQuestionAnswering(unittest.TestCase):
                 'history_sql': None
             })
             print(i, result[OutputKeys.OUTPUT][OutputKeys.SQL_QUERY],
-                  result[OutputKeys.OUTPUT][OutputKeys.QUERT_RESULT],
+                  result[OutputKeys.OUTPUT][OutputKeys.QUERY_RESULT],
                   json.dumps(result))
 
         procs = []

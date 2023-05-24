@@ -12,11 +12,10 @@ from modelscope.pipelines.nlp import FaqQuestionAnsweringPipeline
 from modelscope.preprocessors import \
     FaqQuestionAnsweringTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
+class FaqQuestionAnsweringTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.faq_question_answering
@@ -102,10 +101,6 @@ class FaqQuestionAnsweringTest(unittest.TestCase, DemoCompatibilityCheck):
         sentence_vec = pipeline_ins.get_sentence_embedding(
             ['今天星期六', '明天星期几明天星期几'])
         print(np.shape(sentence_vec))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

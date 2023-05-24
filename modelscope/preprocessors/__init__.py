@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from .tts import KanttsDataPreprocessor
     from .multi_modal import (DiffusionImageGenerationPreprocessor,
                               OfaPreprocessor, MPlugPreprocessor,
-                              HiTeAPreprocessor)
+                              HiTeAPreprocessor, MplugOwlPreprocessor,
+                              ImageCaptioningClipInterrogatorPreprocessor)
     from .nlp import (
         DocumentSegmentationTransformersPreprocessor,
         FaqQuestionAnsweringTransformersPreprocessor,
@@ -34,16 +35,16 @@ if TYPE_CHECKING:
         TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
         WordAlignmentPreprocessor, TextGenerationTransformersPreprocessor,
         Tokenize, WordSegmentationBlankSetToLabelPreprocessor,
-        CodeGeeXPreprocessor, MGLMSummarizationPreprocessor,
+        MGLMSummarizationPreprocessor,
         ZeroShotClassificationTransformersPreprocessor,
         TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
         DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
         DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
         TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
         NERPreprocessorThai, WordSegmentationPreprocessorThai,
-        TranslationEvaluationPreprocessor, CanmtTranslationPreprocessor,
-        DialogueClassificationUsePreprocessor, SiameseUiePreprocessor,
-        DocumentGroundedDialogGeneratePreprocessor,
+        TranslationEvaluationTransformersPreprocessor,
+        CanmtTranslationPreprocessor, DialogueClassificationUsePreprocessor,
+        SiameseUiePreprocessor, DocumentGroundedDialogGeneratePreprocessor,
         DocumentGroundedDialogRetrievalPreprocessor,
         DocumentGroundedDialogRerankPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
@@ -70,7 +71,8 @@ else:
         'tts': ['KanttsDataPreprocessor'],
         'multi_modal': [
             'DiffusionImageGenerationPreprocessor', 'OfaPreprocessor',
-            'MPlugPreprocessor', 'HiTeAPreprocessor'
+            'MPlugPreprocessor', 'HiTeAPreprocessor', 'MplugOwlPreprocessor',
+            'ImageCaptioningClipInterrogatorPreprocessor'
         ],
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',
@@ -96,7 +98,7 @@ else:
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
-            'TranslationEvaluationPreprocessor',
+            'TranslationEvaluationTransformersPreprocessor',
             'CanmtTranslationPreprocessor',
             'DialogueClassificationUsePreprocessor', 'SiameseUiePreprocessor',
             'DialogueClassificationUsePreprocessor',

@@ -30,7 +30,7 @@ class ImageDetectionPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
 
         img = LoadImage.convert_to_ndarray(input)
-        img = img.astype(np.float)
+        img = img.astype(np.float64)
         img = self.model.preprocess(img)
         result = {'img': img}
         return result

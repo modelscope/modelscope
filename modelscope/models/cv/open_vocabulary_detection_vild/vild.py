@@ -176,8 +176,7 @@ class OpenVocabularyDetectionViLD(Model):
         # Filter out invalid rois (nmsed rois)
         valid_indices = np.where(
             np.logical_and(
-                np.isin(
-                    np.arange(len(roi_scores), dtype=np.int), nmsed_indices),
+                np.isin(np.arange(len(roi_scores), dtype=int), nmsed_indices),
                 np.logical_and(
                     np.logical_not(np.all(roi_boxes == 0., axis=-1)),
                     np.logical_and(roi_scores >= min_rpn_score_thresh,

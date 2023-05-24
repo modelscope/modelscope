@@ -21,7 +21,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor, SiameseUiePreprocessor
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import ModelFile, Tasks
 
 Input = Union[str, tuple, MsDataset, 'Image.Image', 'numpy.ndarray']
 
@@ -68,7 +68,8 @@ class SiameseUiePipeline(Pipeline):
             config_file=config_file,
             device=device,
             auto_collate=auto_collate,
-            **kwargs)
+            compile=kwargs.pop('compile', False),
+            compile_options=kwargs.pop('compile_options', {}))
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'

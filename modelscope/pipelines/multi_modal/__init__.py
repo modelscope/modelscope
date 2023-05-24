@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from .soonet_video_temporal_grounding_pipeline import SOONetVideoTemporalGroundingPipeline
     from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
     from .diffusers_wrapped.stable_diffusion.dreambooth_pipeline import DreamboothDiffusionPipeline
+    from .multimodal_dialogue_pipeline import MultimodalDialoguePipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -47,6 +48,7 @@ else:
         ['SOONetVideoTemporalGroundingPipeline'],
         'text_to_video_synthesis_pipeline': ['TextToVideoSynthesisPipeline'],
         'dreambooth_diffusion': ['DreamboothDiffusionPipeline'],
+        'multimodal_dialogue_pipeline': ['MultimodalDialoguePipeline']
     }
 
     import sys

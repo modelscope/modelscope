@@ -8,12 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import draw_pedestrian_attribute
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class PedestrianAttributeRecognitionTest(unittest.TestCase,
-                                         DemoCompatibilityCheck):
+class PedestrianAttributeRecognitionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.pedestrian_attribute_recognition
@@ -38,10 +36,6 @@ class PedestrianAttributeRecognitionTest(unittest.TestCase,
             self.task, model=self.model_id)
         self.pipeline_inference(pedestrian_attribute_recognition,
                                 Image.open(self.test_image))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

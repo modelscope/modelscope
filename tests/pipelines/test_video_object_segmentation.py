@@ -9,11 +9,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import masks_visualization
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VideoObjectSegmentationTest(unittest.TestCase, DemoCompatibilityCheck):
+class VideoObjectSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'video-object-segmentation'

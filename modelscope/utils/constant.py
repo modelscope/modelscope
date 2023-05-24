@@ -247,6 +247,7 @@ class MultiModalTasks(object):
     video_temporal_grounding = 'video-temporal-grounding'
     text_to_video_synthesis = 'text-to-video-synthesis'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    multimodal_dialogue = 'multimodal-dialogue'
 
 
 class ScienceTasks(object):
@@ -277,6 +278,7 @@ class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):
     This should be used to register models, pipelines, trainers.
     """
     reverse_field_index = {}
+    task_template = 'task-template'
 
     @staticmethod
     def find_field_by_task(task_name):
@@ -327,6 +329,7 @@ class Hubs(enum.Enum):
     """
     modelscope = 'modelscope'
     huggingface = 'huggingface'
+    virgo = 'virgo'
 
 
 class DownloadMode(enum.Enum):
@@ -539,3 +542,37 @@ class DistributedParallelType(object):
 class DatasetTensorflowConfig:
     BATCH_SIZE = 'batch_size'
     DEFAULT_BATCH_SIZE_VALUE = 5
+
+
+class VirgoDatasetConfig:
+
+    default_virgo_namespace = 'default_namespace'
+
+    default_dataset_version = '1'
+
+    env_virgo_endpoint = 'VIRGO_ENDPOINT'
+
+    # Columns for meta request
+    meta_content = 'metaContent'
+    sampling_type = 'samplingType'
+
+    # Columns for meta content
+    col_id = 'id'
+    col_meta_info = 'meta_info'
+    col_analysis_result = 'analysis_result'
+    col_external_info = 'external_info'
+    col_cache_file = 'cache_file'
+
+
+DEFAULT_MAXCOMPUTE_ENDPOINT = 'http://service-corp.odps.aliyun-inc.com/api'
+
+
+class MaxComputeEnvs:
+
+    ACCESS_ID = 'ODPS_ACCESS_ID'
+
+    ACCESS_SECRET_KEY = 'ODPS_ACCESS_SECRET_KEY'
+
+    PROJECT_NAME = 'ODPS_PROJECT_NAME'
+
+    ENDPOINT = 'ODPS_ENDPOINT'

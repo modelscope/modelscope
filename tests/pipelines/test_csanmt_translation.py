@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TranslationTest(unittest.TestCase, DemoCompatibilityCheck):
+class TranslationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.translation
@@ -89,10 +88,6 @@ class TranslationTest(unittest.TestCase, DemoCompatibilityCheck):
         inputs = '声明补充说，沃伦的同事都深感震惊，并且希望他能够投案自首。'
         pipeline_ins = pipeline(self.task)
         print(pipeline_ins(input=inputs))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

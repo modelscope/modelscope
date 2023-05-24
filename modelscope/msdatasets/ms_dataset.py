@@ -13,13 +13,14 @@ from datasets.utils.file_utils import is_relative_path
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
+from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
 from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
+from modelscope.msdatasets.dataset_cls import (ExternalDataset,
+                                               NativeIterableDataset)
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
-from modelscope.msdatasets.dataset_cls.dataset import (ExternalDataset,
-                                                       NativeIterableDataset)
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor
@@ -28,7 +29,7 @@ from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
                                        DownloadMode, Hubs, ModeKeys, Tasks,
-                                       UploadMode)
+                                       UploadMode, VirgoDatasetConfig)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -188,9 +189,6 @@ class MsDataset:
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
                 hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
-                download_mode (DownloadMode or str, optional):
-                    How to treat existing datasets. default DownloadMode.REUSE_DATASET_IF_EXISTS
-                config_kwargs (additional keyword arguments): Keyword arguments to be passed
                 download_mode (DownloadMode or str, optional): How to treat existing datasets. default
                                                                DownloadMode.REUSE_DATASET_IF_EXISTS
                 cache_dir (str, Optional): User-define local cache directory.
@@ -287,6 +285,23 @@ class MsDataset:
                         custom_cfg=custom_cfg, **config_kwargs)
                     dataset_inst.is_custom = True
             return dataset_inst
+        elif hub == Hubs.virgo:
+            # Rewrite the namespace, version and cache_dir for virgo dataset.
+            if namespace == DEFAULT_DATASET_NAMESPACE:
+                dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace
+            if version == DEFAULT_DATASET_REVISION:
+                dataset_context_config.version = VirgoDatasetConfig.default_dataset_version
+            if cache_dir == MS_DATASETS_CACHE:
+                from modelscope.utils.config_ds import CACHE_HOME
+                cache_dir = os.path.join(CACHE_HOME, 'virgo', 'hub',
+                                         'datasets')
+                dataset_context_config.cache_root_dir = cache_dir
+
+            virgo_downloader = VirgoDownloader(dataset_context_config)
+            virgo_downloader.process()
+
+            return virgo_downloader.dataset
+
         else:
             raise 'Please adjust input args to specify a loading mode, we support following scenes: ' \
                   'loading from local disk, huggingface hub and modelscope hub.'

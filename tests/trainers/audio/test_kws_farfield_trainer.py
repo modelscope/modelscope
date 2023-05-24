@@ -23,6 +23,7 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
         self.model_id = 'damo/speech_dfsmn_kws_char_farfield_16k_nihaomiya'
+        self.model_id_iot = 'damo/speech_dfsmn_kws_char_farfield_iot_16k_nihaomiya'
 
         train_pos_list = self.create_list('pos.list', POS_FILE)
         train_neg_list = self.create_list('neg.list', NEG_FILE)
@@ -68,6 +69,26 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
     def test_normal(self):
         kwargs = dict(
             model=self.model_id,
+            work_dir=self.tmp_dir,
+            workers=2,
+            max_epochs=2,
+            train_iters_per_epoch=2,
+            val_iters_per_epoch=1,
+            custom_conf=self.custom_conf)
+
+        trainer = build_trainer(
+            Trainers.speech_dfsmn_kws_char_farfield, default_args=kwargs)
+        trainer.train()
+        results_files = os.listdir(self.tmp_dir)
+        self.assertIn(f'{trainer.timestamp}.log.json', results_files,
+                      f'work_dir:{self.tmp_dir}')
+        self.assertIn('val_dataset.bin', results_files,
+                      f'work_dir:{self.tmp_dir}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_normal_iot(self):
+        kwargs = dict(
+            model=self.model_id_iot,
             work_dir=self.tmp_dir,
             workers=2,
             max_epochs=2,

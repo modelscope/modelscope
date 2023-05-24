@@ -7,19 +7,14 @@ from PIL import Image
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class TrafficSignDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class TrafficSignDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.domain_specific_object_detection
         self.model_id = 'damo/cv_tinynas_object-detection_damoyolo_traffic_sign'
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_traffic_sign_detection_damoyolo(self):

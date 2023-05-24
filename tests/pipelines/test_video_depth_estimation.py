@@ -5,11 +5,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import show_video_depth_estimation_result
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VideoDepthEstimationTest(unittest.TestCase, DemoCompatibilityCheck):
+class VideoDepthEstimationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'video-depth-estimation'

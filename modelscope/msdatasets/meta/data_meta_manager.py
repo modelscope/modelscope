@@ -140,6 +140,14 @@ class DataMetaManager(object):
 
         self.dataset_context_config.data_meta_config = data_meta_config
 
+    def fetch_virgo_meta(self) -> None:
+        virgo_dataset_id = self.dataset_context_config.dataset_name
+        version = int(self.dataset_context_config.version)
+
+        meta_content = self.api.get_virgo_meta(
+            dataset_id=virgo_dataset_id, version=version)
+        self.dataset_context_config.config_kwargs.update(meta_content)
+
     def _fetch_meta_from_cache(self, meta_cache_dir):
         local_paths = defaultdict(list)
         dataset_type = None

@@ -197,11 +197,12 @@ if __name__ == '__main__':
     setup(
         name='modelscope',
         version=get_version(),
-        description='',
+        description=
+        'ModelScope: bring the notion of Model-as-a-Service to life.',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Alibaba ModelScope team',
-        author_email='modelscope@list.alibaba-inc.com',
+        author='ModelScope team',
+        author_email='contact@modelscope.cn',
         keywords='python,nlp,science,cv,speech,multi-modal',
         url='https://github.com/modelscope/modelscope',
         packages=find_packages(exclude=('configs', 'demo')),

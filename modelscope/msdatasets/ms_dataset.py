@@ -647,7 +647,7 @@ class MsDataset:
 
             def type_converter(self, x):
                 if self.to_tensor:
-                    return torch.tensor(x)
+                    return torch.as_tensor(x)
                 else:
                     return x
 

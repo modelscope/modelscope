@@ -48,7 +48,7 @@ class DreamboothDiffusion(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
+            'pretrained_model_name_or_path', 'CompVis/stable-diffusion-v1-4')
         revision = kwargs.pop('revision', None)
         inference = kwargs.pop('inference', True)
         self.prompt = 'a photo of sks dog'  # just for test

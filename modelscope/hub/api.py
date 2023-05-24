@@ -16,6 +16,7 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
 
+import pandas as pd
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
@@ -650,6 +651,41 @@ class HubApi:
         text_content = text_list[1:]
 
         return text_headers, text_content
+
+    @staticmethod
+    def fetch_csv_from_url(url, out_path, chunk_size=1000000):
+        from io import StringIO
+        import hashlib
+        out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
+        if os.path.exists(out_path):
+            return out_path
+        cookies = ModelScopeConfig.get_cookies()
+
+        # Make the request and get the response content as TextIO
+        response = requests.get(url, cookies=cookies)
+        data = StringIO(response.text)
+
+        # Use read_csv with the TextIO object
+        csv_file_reader = pd.read_csv(data, iterator=True, dtype=str, delimiter=None)
+
+        loop = True
+        iter_num = 0
+        while loop:
+            try:
+                chunk = csv_file_reader.get_chunk(size=chunk_size)
+
+                if iter_num == 0:
+                    with_header = True
+                else:
+                    with_header = False
+
+                chunk.to_csv(out_path, mode='a', index=False, header=with_header)
+                iter_num += 1
+            except StopIteration:
+                loop = False
+                logger.info('stop chunk iteration')
+
+        return out_path
 
     def get_dataset_file_url(
             self,

@@ -9,7 +9,7 @@ from modelscope.models.base import Model, TorchModel
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import ConfigDict
 
 
 @TRAINERS.register_module(module_name=Trainers.dreambooth_diffusion)
@@ -42,7 +42,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             raise e
 
     def train(self, *args, **kwargs):
-        self.print_model_params_status()
+        # self.print_model_params_status()
+        self.model.unet.train()
         super().train(*args, **kwargs)
 
     def evaluate(self, *args, **kwargs):

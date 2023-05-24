@@ -23,7 +23,7 @@ class Hand2DKeypointsPipelineTest(unittest.TestCase):
         self.assertEqual(results[OutputKeys.KEYPOINTS].shape[2], 3)
         self.assertEqual(results[OutputKeys.BOXES].shape[1], 4)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('skip test in current test level: no pipeline implemented')
     def test_hand_2d_keypoints_with_default_model(self):
         img_path = 'data/test/images/hand_keypoints.jpg'
 

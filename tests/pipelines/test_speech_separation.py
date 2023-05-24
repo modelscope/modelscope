@@ -8,13 +8,12 @@ import numpy
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 MIX_SPEECH_FILE = 'data/test/audios/mix_speech.wav'
 
 
-class SpeechSeparationTest(unittest.TestCase, DemoCompatibilityCheck):
+class SpeechSeparationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         pass
@@ -31,10 +30,6 @@ class SpeechSeparationTest(unittest.TestCase, DemoCompatibilityCheck):
             save_file = f'output_spk{i}.wav'
             sf.write(save_file, numpy.frombuffer(signal, dtype=numpy.int16),
                      8000)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

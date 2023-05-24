@@ -583,8 +583,8 @@ class XLDataset(data.Dataset):
     def getidx(self, idx):
         tokens, targets, loss_masks = [], [], []
         attention_mask = np.concatenate(
-            (np.zeros((self.max_seq_len, self.mem_len), dtype=np.long),
-             np.ones((self.max_seq_len, self.max_seq_len), dtype=np.long)),
+            (np.zeros((self.max_seq_len, self.mem_len), dtype=int),
+             np.ones((self.max_seq_len, self.max_seq_len), dtype=int)),
             axis=1)
         sample_idx = bisect_right(self.indices, idx * self.max_seq_len)
         last_end = 0 if sample_idx == 0 else self.indices[sample_idx - 1]

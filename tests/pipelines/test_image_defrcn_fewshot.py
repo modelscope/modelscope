@@ -8,14 +8,13 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class ImageDefrcnFewShotTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageDefrcnFewShotTest(unittest.TestCase):
 
     def setUp(self) -> None:
         logger.info('start install detectron2-0.3')
@@ -57,10 +56,6 @@ class ImageDefrcnFewShotTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_defrcn = pipeline(
             self.task, model=cache_path, model_revision=self.revision)
         print(pipeline_defrcn(input=self.image)[OutputKeys.LABELS])
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

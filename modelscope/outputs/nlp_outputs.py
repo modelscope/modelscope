@@ -454,3 +454,13 @@ class SentencEmbeddingModelOutput(ModelOutputBase):
     query_embeddings: Tensor = None
     doc_embeddings: Tensor = None
     loss: Tensor = None
+
+
+@dataclass
+class TranslationEvaluationOutput(ModelOutputBase):
+    """The output class for translation evaluation models.
+    """
+
+    score: Tensor = None
+    loss: Tensor = None
+    input_format: List[str] = None

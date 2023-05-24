@@ -42,6 +42,7 @@ class DatasetContextConfig:
         self.data_files = data_files
         self.cache_root_dir = cache_root_dir
         self.use_streaming = use_streaming
+        self.download_virgo_files: bool = False
 
     @property
     def config_kwargs(self) -> dict:

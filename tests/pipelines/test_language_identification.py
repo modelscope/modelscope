@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class LanguageIdentificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class LanguageIdentificationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_classification
@@ -21,11 +20,6 @@ class LanguageIdentificationTest(unittest.TestCase, DemoCompatibilityCheck):
                  '使用pipeline推理及在线体验功能的时候，尽量输入单句文本，如果是多句长文本建议人工分句。'
         pipeline_ins = pipeline(self.task, model=self.model_id)
         print(pipeline_ins(input=inputs))
-
-    @unittest.skipUnless(test_level() >= 0,
-                         'skip test case in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

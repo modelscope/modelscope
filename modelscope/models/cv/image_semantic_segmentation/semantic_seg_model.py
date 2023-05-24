@@ -60,7 +60,7 @@ class SemanticSegmentation(TorchModel):
         ids = ids[legal_indices]
 
         segms = (semantic_result[None] == ids[:, None, None])
-        masks = [it.astype(np.int) for it in segms]
+        masks = [it.astype(int) for it in segms]
         labels_txt = np.array(self.CLASSES)[ids].tolist()
 
         results = {

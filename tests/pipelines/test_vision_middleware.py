@@ -5,11 +5,10 @@ from modelscope.models import Model
 from modelscope.models.cv.vision_middleware import VisionMiddlewareModel
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VisionMiddlewareTest(unittest.TestCase, DemoCompatibilityCheck):
+class VisionMiddlewareTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_segmentation

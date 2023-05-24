@@ -7,7 +7,6 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 NEAREND_MIC_FILE = 'data/test/audios/nearend_mic.wav'
@@ -24,7 +23,7 @@ NOISE_SPEECH_URL = 'https://modelscope.oss-cn-beijing.aliyuncs.com/' \
                    'test/audios/speech_with_noise.wav'
 
 
-class SpeechSignalProcessTest(unittest.TestCase, DemoCompatibilityCheck):
+class SpeechSignalProcessTest(unittest.TestCase):
 
     def setUp(self) -> None:
         pass
@@ -149,10 +148,6 @@ class SpeechSignalProcessTest(unittest.TestCase, DemoCompatibilityCheck):
                     pcm = result[OutputKeys.OUTPUT_PCM]
                     w.write(pcm)
                     audio = f.read(block_size)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

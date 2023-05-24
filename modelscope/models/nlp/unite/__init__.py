@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration_unite import UniTEConfig
-    from .modeling_unite import UniTEForTranslationEvaluation
+    from .configuration import UniTEConfig
+    from .translation_evaluation import UniTEForTranslationEvaluation
 else:
     _import_structure = {
-        'configuration_unite': ['UniTEConfig'],
-        'modeling_unite': ['UniTEForTranslationEvaluation'],
+        'configuration': ['UniTEConfig'],
+        'translation_evaluation': ['UniTEForTranslationEvaluation'],
     }
 
     import sys

@@ -8,11 +8,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationT5Pipeline
 from modelscope.preprocessors import TextGenerationT5Preprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
+class Text2TextGenerationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id_generate = 'damo/t5-cn-base-test'
@@ -85,10 +84,6 @@ class Text2TextGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
     def test_run_pipeline_without_model_id(self):
         pipeline_ins = pipeline(task=Tasks.text2text_generation)
         print(pipeline_ins(self.input_generate))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

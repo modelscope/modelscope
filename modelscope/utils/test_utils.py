@@ -150,7 +150,7 @@ def compare_arguments_nested(print_content,
 
     if arg1 is None:
         return True
-    elif isinstance(arg1, (int, str, bool, np.bool, np.integer, np.str)):
+    elif isinstance(arg1, (int, str, bool, np.bool_, np.integer, np.str_)):
         if arg1 != arg2:
             if print_content is not None:
                 print(f'{print_content}, arg1:{arg1}, arg2:{arg2}')
@@ -201,10 +201,8 @@ def compare_arguments_nested(print_content,
             return False
         return True
     elif isinstance(arg1, np.ndarray):
-        arg1 = np.where(np.equal(arg1, None), np.NaN,
-                        arg1).astype(dtype=np.float)
-        arg2 = np.where(np.equal(arg2, None), np.NaN,
-                        arg2).astype(dtype=np.float)
+        arg1 = np.where(np.equal(arg1, None), np.NaN, arg1).astype(dtype=float)
+        arg2 = np.where(np.equal(arg2, None), np.NaN, arg2).astype(dtype=float)
         if not all(
                 np.isclose(arg1, arg2, rtol=rtol, atol=atol,
                            equal_nan=True).flatten()):

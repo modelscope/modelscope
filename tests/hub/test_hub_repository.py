@@ -26,7 +26,6 @@ DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
 
 
-@unittest.skip('temporarily skip')
 class HubRepositoryTest(unittest.TestCase):
 
     def setUp(self):
@@ -80,6 +79,20 @@ class HubRepositoryTest(unittest.TestCase):
         lfs_files = git_wrapper.list_lfs_files(self.model_dir)
         assert lfs_file1 in lfs_files
         assert lfs_file2 in lfs_files
+
+    def test_add_lfs_file_type(self):
+        repo = Repository(self.model_dir, clone_from=self.model_id)
+        assert os.path.exists(os.path.join(self.model_dir, ModelFile.README))
+        os.chdir(self.model_dir)
+        lfs_file = 'test.safetensors'
+        os.system("echo 'safttensor'>%s"
+                  % os.path.join(self.model_dir, lfs_file))
+        repo.add_lfs_type('*.safetensors')
+        repo.push('test')
+        # check lfs files.
+        git_wrapper = GitCommandWrapper()
+        lfs_files = git_wrapper.list_lfs_files(self.model_dir)
+        assert lfs_file in lfs_files
 
 
 if __name__ == '__main__':

@@ -54,6 +54,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                  lm_model_revision: Optional[str] = None,
                  timestamp_model: Optional[Union[Model, str]] = None,
                  timestamp_model_revision: Optional[str] = None,
+                 ngpu: int = 1,
                  **kwargs):
         """
         Use `model` and `preprocessor` to create an asr pipeline for prediction
@@ -87,7 +88,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             beam_size('int'):
                 beam size for decoding
             ctc_weight('float'):
-                CTC weight in joint decoding
+                the CTC weight in joint decoding
             lm_weight('float'):
                 lm weight
             decoding_ind('int', defaults to 0):
@@ -119,48 +120,48 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         self.model_cfg = self.model.forward()
 
         self.cmd = self.get_cmd(kwargs, model)
-        if self.cmd['code_base'] == 'funasr':
-            from funasr.bin import asr_inference_launch
-            self.funasr_infer_modelscope = asr_inference_launch.inference_launch(
-                mode=self.cmd['mode'],
-                maxlenratio=self.cmd['maxlenratio'],
-                minlenratio=self.cmd['minlenratio'],
-                batch_size=self.cmd['batch_size'],
-                beam_size=self.cmd['beam_size'],
-                ngpu=self.cmd['ngpu'],
-                ctc_weight=self.cmd['ctc_weight'],
-                lm_weight=self.cmd['lm_weight'],
-                penalty=self.cmd['penalty'],
-                log_level=self.cmd['log_level'],
-                asr_train_config=self.cmd['asr_train_config'],
-                asr_model_file=self.cmd['asr_model_file'],
-                cmvn_file=self.cmd['cmvn_file'],
-                lm_file=self.cmd['lm_file'],
-                token_type=self.cmd['token_type'],
-                key_file=self.cmd['key_file'],
-                lm_train_config=self.cmd['lm_train_config'],
-                bpemodel=self.cmd['bpemodel'],
-                allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
-                output_dir=self.cmd['output_dir'],
-                dtype=self.cmd['dtype'],
-                seed=self.cmd['seed'],
-                ngram_weight=self.cmd['ngram_weight'],
-                nbest=self.cmd['nbest'],
-                num_workers=self.cmd['num_workers'],
-                vad_infer_config=self.cmd['vad_infer_config'],
-                vad_model_file=self.cmd['vad_model_file'],
-                vad_cmvn_file=self.cmd['vad_cmvn_file'],
-                punc_model_file=self.cmd['punc_model_file'],
-                punc_infer_config=self.cmd['punc_infer_config'],
-                timestamp_model_file=self.cmd['timestamp_model_file'],
-                timestamp_infer_config=self.cmd['timestamp_infer_config'],
-                timestamp_cmvn_file=self.cmd['timestamp_cmvn_file'],
-                outputs_dict=self.cmd['outputs_dict'],
-                param_dict=self.cmd['param_dict'],
-                token_num_relax=self.cmd['token_num_relax'],
-                decoding_ind=self.cmd['decoding_ind'],
-                decoding_mode=self.cmd['decoding_mode'],
-            )
+        from funasr.bin import asr_inference_launch
+        self.funasr_infer_modelscope = asr_inference_launch.inference_launch(
+            mode=self.cmd['mode'],
+            maxlenratio=self.cmd['maxlenratio'],
+            minlenratio=self.cmd['minlenratio'],
+            batch_size=self.cmd['batch_size'],
+            beam_size=self.cmd['beam_size'],
+            ngpu=self.cmd['ngpu'],
+            ctc_weight=self.cmd['ctc_weight'],
+            lm_weight=self.cmd['lm_weight'],
+            penalty=self.cmd['penalty'],
+            log_level=self.cmd['log_level'],
+            asr_train_config=self.cmd['asr_train_config'],
+            asr_model_file=self.cmd['asr_model_file'],
+            cmvn_file=self.cmd['cmvn_file'],
+            lm_file=self.cmd['lm_file'],
+            token_type=self.cmd['token_type'],
+            key_file=self.cmd['key_file'],
+            lm_train_config=self.cmd['lm_train_config'],
+            bpemodel=self.cmd['bpemodel'],
+            allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
+            output_dir=self.cmd['output_dir'],
+            dtype=self.cmd['dtype'],
+            seed=self.cmd['seed'],
+            ngram_weight=self.cmd['ngram_weight'],
+            nbest=self.cmd['nbest'],
+            num_workers=self.cmd['num_workers'],
+            vad_infer_config=self.cmd['vad_infer_config'],
+            vad_model_file=self.cmd['vad_model_file'],
+            vad_cmvn_file=self.cmd['vad_cmvn_file'],
+            punc_model_file=self.cmd['punc_model_file'],
+            punc_infer_config=self.cmd['punc_infer_config'],
+            timestamp_model_file=self.cmd['timestamp_model_file'],
+            timestamp_infer_config=self.cmd['timestamp_infer_config'],
+            timestamp_cmvn_file=self.cmd['timestamp_cmvn_file'],
+            outputs_dict=self.cmd['outputs_dict'],
+            param_dict=self.cmd['param_dict'],
+            token_num_relax=self.cmd['token_num_relax'],
+            decoding_ind=self.cmd['decoding_ind'],
+            decoding_mode=self.cmd['decoding_mode'],
+            **kwargs,
+        )
 
     def __call__(self,
                  audio_in: Union[str, bytes],
@@ -197,7 +198,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         """
 
         # code base
-        code_base = self.cmd['code_base']
+        # code_base = self.cmd['code_base']
         self.recog_type = recog_type
         self.audio_format = audio_format
         self.audio_fs = None
@@ -207,31 +208,21 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             self.cmd['output_dir'] = output_dir
         self.cmd['param_dict'] = param_dict
 
-        if code_base == 'funasr':
-            if isinstance(audio_in, str):
-                # for funasr code, generate wav.scp from url or local path
-                self.audio_in, self.raw_inputs = generate_scp_from_url(
-                    audio_in)
-            elif isinstance(audio_in, bytes):
-                self.audio_in = audio_in
-                self.raw_inputs = None
-            else:
-                import numpy
-                import torch
-                if isinstance(audio_in, torch.Tensor):
-                    self.audio_in = None
-                    self.raw_inputs = audio_in
-                elif isinstance(audio_in, numpy.ndarray):
-                    self.audio_in = None
-                    self.raw_inputs = audio_in
-        elif isinstance(audio_in, str):
-            # load pcm data from url if audio_in is url str
-            self.audio_in, checking_audio_fs = load_bytes_from_url(audio_in)
+        if isinstance(audio_in, str):
+            # for funasr code, generate wav.scp from url or local path
+            self.audio_in, self.raw_inputs = generate_scp_from_url(audio_in)
         elif isinstance(audio_in, bytes):
-            # load pcm data from wav data if audio_in is wave format
-            self.audio_in, checking_audio_fs = extract_pcm_from_wav(audio_in)
-        else:
             self.audio_in = audio_in
+            self.raw_inputs = None
+        else:
+            import numpy
+            import torch
+            if isinstance(audio_in, torch.Tensor):
+                self.audio_in = None
+                self.raw_inputs = audio_in
+            elif isinstance(audio_in, numpy.ndarray):
+                self.audio_in = None
+                self.raw_inputs = audio_in
 
         # set the sample_rate of audio_in if checking_audio_fs is valid
         if checking_audio_fs is not None:
@@ -265,12 +256,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if self.preprocessor is None:
             self.preprocessor = WavToScp()
 
-        # pipeline() from pipelines/builder.py passes 'device' but 'ngpu' needed here
-        device = extra_args.get('device')
-        if device == 'cpu':
-            extra_args['ngpu'] = 0
-        elif device == 'gpu':
-            extra_args['ngpu'] = 1
         outputs = self.preprocessor.config_checking(self.model_cfg)
         # generate asr inference command
         cmd = {
@@ -323,109 +308,88 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             }
         }
 
-        if self.framework == Frameworks.torch:
-            frontend_conf = None
-            token_num_relax = None
-            decoding_ind = None
-            decoding_mode = None
-            if os.path.exists(outputs['am_model_config']):
-                config_file = open(
-                    outputs['am_model_config'], encoding='utf-8')
-                root = yaml.full_load(config_file)
-                config_file.close()
-                if 'frontend_conf' in root:
-                    frontend_conf = root['frontend_conf']
-            if os.path.exists(outputs['asr_model_config']):
-                config_file = open(
-                    outputs['asr_model_config'], encoding='utf-8')
-                root = yaml.full_load(config_file)
-                config_file.close()
-                if 'token_num_relax' in root:
-                    token_num_relax = root['token_num_relax']
-                if 'decoding_ind' in root:
-                    decoding_ind = root['decoding_ind']
-                if 'decoding_mode' in root:
-                    decoding_mode = root['decoding_mode']
+        frontend_conf = None
+        token_num_relax = None
+        decoding_ind = None
+        decoding_mode = None
+        if os.path.exists(outputs['am_model_config']):
+            config_file = open(outputs['am_model_config'], encoding='utf-8')
+            root = yaml.full_load(config_file)
+            config_file.close()
+            if 'frontend_conf' in root:
+                frontend_conf = root['frontend_conf']
+        if os.path.exists(outputs['asr_model_config']):
+            config_file = open(outputs['asr_model_config'], encoding='utf-8')
+            root = yaml.full_load(config_file)
+            config_file.close()
+            if 'token_num_relax' in root:
+                token_num_relax = root['token_num_relax']
+            if 'decoding_ind' in root:
+                decoding_ind = root['decoding_ind']
+            if 'decoding_mode' in root:
+                decoding_mode = root['decoding_mode']
 
-                cmd['beam_size'] = root['beam_size']
-                cmd['penalty'] = root['penalty']
-                cmd['maxlenratio'] = root['maxlenratio']
-                cmd['minlenratio'] = root['minlenratio']
-                cmd['ctc_weight'] = root['ctc_weight']
-                cmd['lm_weight'] = root['lm_weight']
-            cmd['asr_train_config'] = outputs['am_model_config']
-            cmd['lm_file'] = outputs['lm_model_path']
-            cmd['lm_train_config'] = outputs['lm_model_config']
-            cmd['batch_size'] = outputs['model_config']['batch_size']
-            cmd['frontend_conf'] = frontend_conf
-            if frontend_conf is not None and 'fs' in frontend_conf:
-                cmd['fs']['model_fs'] = frontend_conf['fs']
-            cmd['token_num_relax'] = token_num_relax
-            cmd['decoding_ind'] = decoding_ind
-            cmd['decoding_mode'] = decoding_mode
-            if outputs.__contains__('mvn_file'):
-                cmd['cmvn_file'] = outputs['mvn_file']
-            model_config = self.model_cfg['model_config']
-            if model_config.__contains__('vad_model') and self.vad_model != '':
-                self.vad_model = model_config['vad_model']
-            if model_config.__contains__('vad_model_revision'):
-                self.vad_model_revision = model_config['vad_model_revision']
-            if model_config.__contains__(
-                    'punc_model') and self.punc_model != '':
-                self.punc_model = model_config['punc_model']
-            if model_config.__contains__('punc_model_revision'):
-                self.punc_model_revision = model_config['punc_model_revision']
-            if model_config.__contains__(
-                    'timestamp_model') and self.timestamp_model != '':
-                self.timestamp_model = model_config['timestamp_model']
-            if model_config.__contains__('timestamp_model_revision'):
-                self.timestamp_model_revision = model_config[
-                    'timestamp_model_revision']
-            update_local_model(model_config, model_path, extra_args)
-            self.load_vad_model(cmd)
-            self.load_punc_model(cmd)
-            self.load_lm_model(cmd)
-            self.load_timestamp_model(cmd)
+            cmd['beam_size'] = root['beam_size']
+            cmd['penalty'] = root['penalty']
+            cmd['maxlenratio'] = root['maxlenratio']
+            cmd['minlenratio'] = root['minlenratio']
+            cmd['ctc_weight'] = root['ctc_weight']
+            cmd['lm_weight'] = root['lm_weight']
+        cmd['asr_train_config'] = outputs['am_model_config']
+        cmd['lm_file'] = outputs['lm_model_path']
+        cmd['lm_train_config'] = outputs['lm_model_config']
+        cmd['batch_size'] = outputs['model_config']['batch_size']
+        cmd['frontend_conf'] = frontend_conf
+        if frontend_conf is not None and 'fs' in frontend_conf:
+            cmd['fs']['model_fs'] = frontend_conf['fs']
+        cmd['token_num_relax'] = token_num_relax
+        cmd['decoding_ind'] = decoding_ind
+        cmd['decoding_mode'] = decoding_mode
+        if outputs.__contains__('mvn_file'):
+            cmd['cmvn_file'] = outputs['mvn_file']
+        model_config = self.model_cfg['model_config']
+        if model_config.__contains__('vad_model') and self.vad_model != '':
+            self.vad_model = model_config['vad_model']
+        if model_config.__contains__('vad_model_revision'):
+            self.vad_model_revision = model_config['vad_model_revision']
+        if model_config.__contains__('punc_model') and self.punc_model != '':
+            self.punc_model = model_config['punc_model']
+        if model_config.__contains__('punc_model_revision'):
+            self.punc_model_revision = model_config['punc_model_revision']
+        if model_config.__contains__(
+                'timestamp_model') and self.timestamp_model != '':
+            self.timestamp_model = model_config['timestamp_model']
+        if model_config.__contains__('timestamp_model_revision'):
+            self.timestamp_model_revision = model_config[
+                'timestamp_model_revision']
+        update_local_model(model_config, model_path, extra_args)
+        self.load_vad_model(cmd)
+        self.load_punc_model(cmd)
+        self.load_lm_model(cmd)
+        self.load_timestamp_model(cmd)
 
-            user_args_dict = [
-                'output_dir',
-                'batch_size',
-                'mode',
-                'ngpu',
-                'beam_size',
-                'ctc_weight',
-                'lm_weight',
-                'decoding_ind',
-                'decoding_mode',
-                'vad_model_file',
-                'vad_infer_config',
-                'vad_cmvn_file',
-                'punc_model_file',
-                'punc_infer_config',
-                'param_dict',
-            ]
+        user_args_dict = [
+            'output_dir',
+            'batch_size',
+            'mode',
+            'ngpu',
+            'beam_size',
+            'ctc_weight',
+            'lm_weight',
+            'decoding_ind',
+            'decoding_mode',
+            'vad_model_file',
+            'vad_infer_config',
+            'vad_cmvn_file',
+            'punc_model_file',
+            'punc_infer_config',
+            'param_dict',
+        ]
 
-            for user_args in user_args_dict:
-                if user_args in extra_args and extra_args[
-                        user_args] is not None:
-                    cmd[user_args] = extra_args[user_args]
-
-        elif self.framework == Frameworks.tf:
-            cmd['fs']['model_fs'] = outputs['model_config']['fs']
-            cmd['hop_length'] = outputs['model_config']['hop_length']
-            cmd['feature_dims'] = outputs['model_config']['feature_dims']
-            cmd['predictions_file'] = 'text'
-            cmd['cmvn_file'] = outputs['am_mvn_file']
-            cmd['vocab_file'] = outputs['vocab_file']
-            if 'idx_text' in outputs:
-                cmd['idx_text'] = outputs['idx_text']
-            if 'sampled_ids' in outputs['model_config']:
-                cmd['sampled_ids'] = outputs['model_config']['sampled_ids']
-            if 'sampled_lengths' in outputs['model_config']:
-                cmd['sampled_lengths'] = outputs['model_config'][
-                    'sampled_lengths']
-        else:
-            raise ValueError('model type is mismatching')
+        for user_args in user_args_dict:
+            if user_args in extra_args and extra_args[user_args] is not None:
+                cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 
@@ -520,23 +484,12 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         logger.info(f"Decoding with {inputs['audio_format']} files ...")
 
         data_cmd: Sequence[Tuple[str, str, str]]
-        if self.cmd['code_base'] == 'funasr':
-            if isinstance(self.audio_in, bytes):
-                data_cmd = [self.audio_in, 'speech', 'bytes']
-            elif isinstance(self.audio_in, str):
-                data_cmd = [self.audio_in, 'speech', 'sound']
-            elif self.raw_inputs is not None:
-                data_cmd = None
-        else:
-            if inputs['audio_format'] == 'wav' or inputs[
-                    'audio_format'] == 'pcm':
-                data_cmd = ['speech', 'sound']
-            elif inputs['audio_format'] == 'kaldi_ark':
-                data_cmd = ['speech', 'kaldi_ark']
-            elif inputs['audio_format'] == 'tfrecord':
-                data_cmd = ['speech', 'tfrecord']
-            if inputs.__contains__('mvn_file'):
-                data_cmd.append(inputs['mvn_file'])
+        if isinstance(self.audio_in, bytes):
+            data_cmd = [self.audio_in, 'speech', 'bytes']
+        elif isinstance(self.audio_in, str):
+            data_cmd = [self.audio_in, 'speech', 'sound']
+        elif self.raw_inputs is not None:
+            data_cmd = None
 
         # generate asr inference command
         self.cmd['name_and_type'] = data_cmd
@@ -618,34 +571,9 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         return ref_list
 
     def run_inference(self, cmd, **kwargs):
-        asr_result = []
-        if self.framework == Frameworks.torch and cmd['code_base'] == 'funasr':
-            asr_result = self.funasr_infer_modelscope(
-                cmd['name_and_type'], cmd['raw_inputs'], cmd['output_dir'],
-                cmd['fs'], cmd['param_dict'], **kwargs)
-
-        elif self.framework == Frameworks.tf:
-            from easyasr import asr_inference_paraformer_tf
-            if hasattr(asr_inference_paraformer_tf, 'set_parameters'):
-                asr_inference_paraformer_tf.set_parameters(
-                    language=cmd['lang'])
-            else:
-                # in order to support easyasr-0.0.2
-                cmd['fs'] = cmd['fs']['model_fs']
-
-            asr_result = asr_inference_paraformer_tf.asr_inference(
-                ngpu=cmd['ngpu'],
-                name_and_type=cmd['name_and_type'],
-                audio_lists=cmd['audio_in'],
-                idx_text_file=cmd['idx_text'],
-                asr_model_file=cmd['asr_model_file'],
-                vocab_file=cmd['vocab_file'],
-                am_mvn_file=cmd['cmvn_file'],
-                predictions_file=cmd['predictions_file'],
-                fs=cmd['fs'],
-                hop_length=cmd['hop_length'],
-                feature_dims=cmd['feature_dims'],
-                sampled_ids=cmd['sampled_ids'],
-                sampled_lengths=cmd['sampled_lengths'])
+        asr_result = self.funasr_infer_modelscope(cmd['name_and_type'],
+                                                  cmd['raw_inputs'],
+                                                  cmd['output_dir'], cmd['fs'],
+                                                  cmd['param_dict'], **kwargs)
 
         return asr_result

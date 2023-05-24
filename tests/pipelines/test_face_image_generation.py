@@ -8,11 +8,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class FaceGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
+class FaceGenerationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.face_image_generation
@@ -38,10 +37,6 @@ class FaceGenerationTest(unittest.TestCase, DemoCompatibilityCheck):
         seed = 10
         face_generation = pipeline(self.task)
         self.pipeline_inference(face_generation, seed)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

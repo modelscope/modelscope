@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VideoSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
+class VideoSummarizationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.video_summarization
@@ -29,10 +28,6 @@ class VideoSummarizationTest(unittest.TestCase, DemoCompatibilityCheck):
         result = summarization_pipeline(video_path)
 
         print(f'video summarization output:\n {result}.')
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -41,7 +41,10 @@ class VoiceActivityDetectionPipeline(Pipeline):
 
     """
 
-    def __init__(self, model: Union[Model, str] = None, **kwargs):
+    def __init__(self,
+                 model: Union[Model, str] = None,
+                 ngpu: int = 1,
+                 **kwargs):
         """use `model` to create an vad pipeline for prediction
         """
         super().__init__(model=model, **kwargs)
@@ -60,7 +63,9 @@ class VoiceActivityDetectionPipeline(Pipeline):
             key_file=self.cmd['key_file'],
             vad_infer_config=self.cmd['vad_infer_config'],
             vad_model_file=self.cmd['vad_model_file'],
-            vad_cmvn_file=self.cmd['vad_cmvn_file'])
+            vad_cmvn_file=self.cmd['vad_cmvn_file'],
+            **kwargs,
+        )
 
     def __call__(self,
                  audio_in: Union[str, bytes],
@@ -209,6 +214,7 @@ class VoiceActivityDetectionPipeline(Pipeline):
         for user_args in user_args_dict:
             if user_args in extra_args and extra_args[user_args] is not None:
                 cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

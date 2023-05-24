@@ -8,14 +8,13 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import numpy_to_cv2img
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
 
-class CrowdCountingTest(unittest.TestCase, DemoCompatibilityCheck):
+class CrowdCountingTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.input_location = 'data/test/images/crowd_counting.jpg'
@@ -55,10 +54,6 @@ class CrowdCountingTest(unittest.TestCase, DemoCompatibilityCheck):
             self.save_result(result)
         else:
             raise ValueError('process error')
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

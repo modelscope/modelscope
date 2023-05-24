@@ -259,7 +259,7 @@ class HrnetSuperAndOcr(HrnetBackBone):
             num_channels = [64, last_inp_channels]
             self.stage_super, super_stage_channels = self._make_stage(
                 self.super_dict, num_channels)
-            last_inp_channels = np.int(np.sum(super_stage_channels))
+            last_inp_channels = int(np.sum(super_stage_channels))
 
             if self.is_contain_aspp:
                 aspp_param = kwargs['aspp']
@@ -372,7 +372,7 @@ class HrnetSuperAndOcr(HrnetBackBone):
             num_channels = [64, ocr_mid_channels]
             self.stage_super, super_stage_channels = self._make_stage(
                 self.super_dict, num_channels)
-            last_inp_channels = np.int(np.sum(super_stage_channels))
+            last_inp_channels = int(np.sum(super_stage_channels))
 
             self.cls_head = nn.Sequential(
                 nn.Conv2d(

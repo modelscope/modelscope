@@ -116,14 +116,8 @@ class Models(object):
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     longshortnet = 'longshortnet'
+    fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
-
-    # EasyCV models
-    yolox = 'YOLOX'
-    segformer = 'Segformer'
-    hand_2d_keypoints = 'HRNet-Hand2D-Keypoints'
-    image_object_detection_auto = 'image-object-detection-auto'
-    dino = 'DINO'
 
     # nlp models
     bert = 'bert'
@@ -177,6 +171,7 @@ class Models(object):
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_dfsmn_ans = 'speech_dfsmn_ans'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
+    speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
     kws_kwsbp = 'kws-kwsbp'
@@ -187,6 +182,9 @@ class Models(object):
     generic_sv = 'generic-sv'
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
+    eres2net_sv = 'eres2net-sv'
+    scl_sd = 'scl-sd'
+    rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
     # multi-modal models
@@ -205,6 +203,8 @@ class Models(object):
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    mplug_owl = 'mplug-owl'
+    clip_interrogator = 'clip-interrogator'
 
     # science models
     unifold = 'unifold'
@@ -255,6 +255,7 @@ class Pipelines(object):
     should use task name for this pipeline.
         For pipeline which suuport only one model, we should use ${Model}-${Task} as its name.
     """
+    pipeline_template = 'pipeline-template'
     # vision tasks
     portrait_matting = 'unet-image-matting'
     universal_matting = 'unet-universal-matting'
@@ -277,8 +278,6 @@ class Pipelines(object):
     tbs_detection = 'tbs-detection'
     object_detection = 'vit-object-detection'
     abnormal_object_detection = 'abnormal-object-detection'
-    easycv_detection = 'easycv-detection'
-    easycv_segmentation = 'easycv-segmentation'
     face_2d_keypoints = 'mobilenet_face-2d-keypoints_alignment'
     salient_detection = 'u2net-salient-detection'
     salient_boudary_detection = 'res2net-salient-detection'
@@ -347,7 +346,6 @@ class Pipelines(object):
     video_single_object_tracking_procontext = 'procontext-vitb-video-single-object-tracking'
     video_multi_object_tracking = 'video-multi-object-tracking'
     image_panoptic_segmentation = 'image-panoptic-segmentation'
-    image_panoptic_segmentation_easycv = 'image-panoptic-segmentation-easycv'
     video_summarization = 'googlenet_pgl_video_summarization'
     language_guided_video_summarization = 'clip-it-video-summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
@@ -402,7 +400,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
-
+    fast_instance_segmentation = 'fast-instance-segmentation'
     image_quality_assessment_mos = 'image-quality-assessment-mos'
     image_quality_assessment_man = 'image-quality-assessment-man'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
@@ -485,6 +483,9 @@ class Pipelines(object):
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     speaker_verification = 'speaker-verification'
+    speaker_verification_rdino = 'speaker-verification-rdino'
+    speaker_verification_eres2net = 'speaker-verification-eres2net'
+    speaker_change_locating = 'speaker-change-locating'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 
@@ -514,6 +515,7 @@ class Pipelines(object):
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    multimodal_dialogue = 'multimodal-dialogue'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -881,6 +883,7 @@ class NLPTrainers(object):
     document_grounded_dialog_rerank_trainer = 'document-grounded-dialog-rerank-trainer'
     document_grounded_dialog_retrieval_trainer = 'document-grounded-dialog-retrieval-trainer'
     siamese_uie_trainer = 'siamese-uie-trainer'
+    translation_evaluation_trainer = 'translation-evaluation-trainer'
 
 
 class MultiModalTrainers(object):
@@ -911,7 +914,6 @@ class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
     """
 
     default = 'trainer'
-    easycv = 'easycv'
     tinynas_damoyolo = 'tinynas-damoyolo'
 
     @staticmethod
@@ -933,8 +935,6 @@ class Trainers(CVTrainers, NLPTrainers, MultiModalTrainers, AudioTrainers):
             return Fields.multi_modal
         elif attribute_or_value == Trainers.default:
             return Trainers.default
-        elif attribute_or_value == Trainers.easycv:
-            return Trainers.easycv
         else:
             return 'unknown'
 
@@ -1034,6 +1034,8 @@ class Preprocessors(object):
     vldoc_preprocessor = 'vldoc-preprocessor'
     hitea_tasks_preprocessor = 'hitea-tasks-preprocessor'
     diffusion_image_generation_preprocessor = 'diffusion-image-generation-preprocessor'
+    mplug_owl_preprocessor = 'mplug-owl-preprocessor'
+    image_captioning_clip_interrogator_preprocessor = 'image-captioning-clip-interrogator-preprocessor'
 
     # science preprocessor
     unifold_preprocessor = 'unifold-preprocessor'
@@ -1098,6 +1100,8 @@ class Metrics(object):
     # metric for image-colorization task
     image_colorization_metric = 'image-colorization-metric'
     ocr_recognition_metric = 'ocr-recognition-metric'
+    # metric for translation evaluation
+    translation_evaluation_metric = 'translation-evaluation-metric'
 
 
 class Optimizers(object):
@@ -1165,14 +1169,6 @@ class LR_Schedulers(object):
 class CustomDatasets(object):
     """ Names for different datasets.
     """
-    ClsDataset = 'ClsDataset'
-    Face2dKeypointsDataset = 'FaceKeypointDataset'
-    HandCocoWholeBodyDataset = 'HandCocoWholeBodyDataset'
-    HumanWholeBodyKeypointDataset = 'WholeBodyCocoTopDownDataset'
-    SegDataset = 'SegDataset'
-    DetDataset = 'DetDataset'
-    DetImagesMixDataset = 'DetImagesMixDataset'
-    PanopticDataset = 'PanopticDataset'
     PairedDataset = 'PairedDataset'
     SiddDataset = 'SiddDataset'
     GoproDataset = 'GoproDataset'

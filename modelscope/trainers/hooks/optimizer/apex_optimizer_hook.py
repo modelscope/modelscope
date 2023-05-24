@@ -7,39 +7,13 @@ from packaging import version
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks import Hook
 from modelscope.trainers.hooks.builder import HOOKS
-from .base import OptimizerHook
+from .base import OptimizerHook, OptimizerProcessor
 
 
-@HOOKS.register_module(module_name=Hooks.ApexAMPOptimizerHook)
-class ApexAMPOptimizerHook(Hook):
-    """
-    Fp16 optimizer, if torch version is less than 1.6.0,
-    you must install apex (https://www.github.com/nvidia/apex) else use torch.cuda.amp by default
+class ApexOptimizerProcessor(OptimizerProcessor):
 
-    Args:
-        opt_level (str): "O0" and "O3" are not true mixed precision,
-            but they are useful for establishing accuracy and speed baselines, respectively.
-            "O1" and "O2" are different implementations of mixed precision.
-            Try both, and see what gives the best speedup and accuracy for your model.
-    """
-
-    PRIORITY = OptimizerHook.PRIORITY
-
-    def __init__(self, opt_level='O1', **kwargs):
+    def __init__(self, opt_level):
         self.opt_level = opt_level
-
-        try:
-            from apex import amp
-        except ImportError:
-            raise ValueError(
-                'apex not installed, please install apex from https://www.github.com/nvidia/apex.'
-            )
-
-    def register_strategy(self):
-        Hook.overload(
-            name='OptimizerHook.initialize_optimizer',
-            function=self.initialize_optimizer)
-        Hook.overload(name='OptimizerHook.backward', function=self.backward)
 
     def initialize_optimizer(self, trainer):
         from apex import amp
@@ -68,10 +42,44 @@ class ApexAMPOptimizerHook(Hook):
                                 trainer.optimizer) as scaled_loss:
                 scaled_loss.backward()
 
-        if self.every_n_iters(trainer, cumulative_iters):
+        if Hook.every_n_iters(trainer, cumulative_iters):
             if grad_clip is not None:
-                OptimizerHook.clip_grads(trainer.model.parameters(),
-                                         **grad_clip)
+                OptimizerProcessor.clip_grads(trainer.model.parameters(),
+                                              **grad_clip)
 
             trainer.optimizer.step()
             trainer.optimizer.zero_grad()
+
+
+@HOOKS.register_module(module_name=Hooks.ApexAMPOptimizerHook)
+class ApexAMPOptimizerHook(Hook):
+    """
+    Fp16 optimizer, if torch version is less than 1.6.0,
+    you must install apex (https://www.github.com/nvidia/apex) else use torch.cuda.amp by default
+
+    Args:
+        opt_level (str): "O0" and "O3" are not true mixed precision,
+            but they are useful for establishing accuracy and speed baselines, respectively.
+            "O1" and "O2" are different implementations of mixed precision.
+            Try both, and see what gives the best speedup and accuracy for your model.
+    """
+
+    PRIORITY = OptimizerHook.PRIORITY
+
+    def __init__(self, opt_level='O1', **kwargs):
+        self.opt_level = opt_level
+
+        try:
+            from apex import amp
+        except ImportError:
+            raise ValueError(
+                'apex not installed, please install apex from https://www.github.com/nvidia/apex.'
+            )
+
+    def register_processor(self, trainer):
+        optimizer_hook = trainer.get_hook(OptimizerHook)
+        if len(optimizer_hook) > 0 and type(
+                optimizer_hook[0].processor) in (type(None),
+                                                 OptimizerProcessor):
+            optimizer_hook[0].set_processor(
+                ApexOptimizerProcessor(self.opt_level))

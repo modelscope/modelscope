@@ -7,11 +7,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import ImageQualityAssessmentMosPipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageQualityAssessmentMosTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageQualityAssessmentMosTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_quality_assessment_mos
@@ -46,10 +45,6 @@ class ImageQualityAssessmentMosTest(unittest.TestCase, DemoCompatibilityCheck):
         pipeline_ins = pipeline(task=Tasks.image_quality_assessment_mos)
         out_path = pipeline_ins(input=self.test_img)[OutputKeys.SCORE]
         print('pipeline: the out_path is {}'.format(out_path))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

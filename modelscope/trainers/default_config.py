@@ -4,38 +4,6 @@ from typing import Dict, List, Optional, Tuple
 
 from modelscope.utils.config import Config
 
-DEFAULT_CONFIG = Config({
-    'framework': 'pytorch',
-    'train': {
-        'work_dir': '/tmp',
-        'max_epochs': 10,
-        'dataloader': {
-            'batch_size_per_gpu': 16,
-            'workers_per_gpu': 0
-        },
-        'optimizer': {
-            'type': 'SGD',
-            'lr': 1e-3
-        },
-        'lr_scheduler': {
-            'type': 'StepLR',
-            'step_size': 2
-        },
-        'checkpoint': {
-            'period': {
-                'interval': 1
-            }
-        }
-    },
-    'evaluation': {
-        'dataloader': {
-            'batch_size_per_gpu': 16,
-            'workers_per_gpu': 0,
-            'shuffle': False
-        },
-    }
-})
-
 DEFAULT_HOOKS_CONFIG = {
     'train.hooks': [{
         'type': 'CheckpointHook',
@@ -68,7 +36,7 @@ def merge_cfg(cfg: Config):
 
 
 def merge_hooks(cfg: Config) -> List[Dict]:
-    hooks = cfg.train.hooks.copy()
+    hooks = getattr(cfg.train, 'hooks', []).copy()
     for hook_type, key_chain in _HOOK_KEY_CHAIN_MAP.items():
         hook = _key_chain_to_hook(cfg, key_chain, hook_type)
         if hook is not None:
@@ -107,7 +75,8 @@ def _check_basic_hook(cfg: Config, key_chain: str, hook_type: str) -> bool:
     if cfg.safe_get(key_chain) is None:
         return False
     hooks = list(
-        filter(lambda hook: hook['type'] == hook_type, cfg.train.hooks))
+        filter(lambda hook: hook['type'] == hook_type,
+               getattr(cfg.train, 'hooks', [])))
     assert len(hooks) == 0, f'The key_chain {key_chain} and the traditional hook ' \
                             f'cannot exist at the same time, ' \
                             f'please delete {hook_type} in the configuration file.'

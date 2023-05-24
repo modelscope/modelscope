@@ -6,7 +6,7 @@ chumpy
 clip>=1.0
 control_ldm
 ddpm_guided_diffusion
-diffusers
+diffusers>=0.13.1,<0.15.0
 easydict
 easyrobust
 edit_distance
@@ -25,7 +25,7 @@ lmdb
 lpips
 ml_collections
 mmcls>=0.21.0
-mmdet>=2.25.0
+mmdet>=2.25.0,<=2.28.2
 # mmdet3d-1.0.0rc6 remove networkx and numba version restriction
 mmdet3d==1.0.0a1
 mmsegmentation<=0.30.0
@@ -39,7 +39,6 @@ onnxruntime>=1.10
 onnxsim
 open-clip-torch>=2.7.0
 opencv-python
-pai-easycv>=0.8,<0.10.0
 paint_ldm
 pandas
 panopticapi
@@ -51,7 +50,7 @@ regex
 scikit-image>=0.19.3
 scikit-learn>=0.20.1
 shapely
-shotdetect_scenedetect_lgss
+shotdetect_scenedetect_lgss>=0.0.4
 smplx
 tensorflow-estimator>=1.15.1
 tf_slim

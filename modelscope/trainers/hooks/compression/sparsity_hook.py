@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 
-from modelscope import __version__
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.hook import Hook

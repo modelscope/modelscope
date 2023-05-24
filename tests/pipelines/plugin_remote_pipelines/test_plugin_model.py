@@ -3,12 +3,11 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.plugins import PluginsManager
 from modelscope.utils.test_utils import test_level
 
 
-class PluginModelTest(unittest.TestCase, DemoCompatibilityCheck):
+class PluginModelTest(unittest.TestCase):
 
     def setUp(self):
         self.package = 'adaseq'

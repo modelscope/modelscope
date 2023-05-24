@@ -6,11 +6,10 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class ImageMVSDepthEstimationTest(unittest.TestCase, DemoCompatibilityCheck):
+class ImageMVSDepthEstimationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'image-multi-view-depth-estimation'

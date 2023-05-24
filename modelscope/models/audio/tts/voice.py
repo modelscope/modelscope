@@ -17,11 +17,9 @@ from kantts.train.trainer import GAN_Trainer, Sambert_Trainer, distributed_init
 from kantts.utils.ling_unit.ling_unit import KanTtsLinguisticUnit
 from torch.utils.data import DataLoader
 
-from modelscope import __version__
 from modelscope.utils.audio.audio_utils import TtsCustomParams
 from modelscope.utils.audio.tts_exceptions import (
     TtsModelConfigurationException, TtsModelNotExistsException)
-from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -394,6 +392,7 @@ class Voice:
         logger.info(f'TRAINING steps: {train_max_steps}')
         config['create_time'] = time.strftime('%Y-%m-%d %H:%M:%S',
                                               time.localtime())
+        from modelscope import __version__
         config['modelscope_version'] = __version__
 
         with open(os.path.join(stage_dir, 'config.yaml'), 'w') as f:
@@ -558,6 +557,7 @@ class Voice:
         logger.info(f'resume from: {resume_from}')
         config['create_time'] = time.strftime('%Y-%m-%d %H:%M:%S',
                                               time.localtime())
+        from modelscope import __version__
         config['modelscope_version'] = __version__
 
         with open(os.path.join(stage_dir, 'config.yaml'), 'w') as f:

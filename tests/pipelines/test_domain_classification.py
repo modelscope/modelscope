@@ -3,11 +3,10 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class DomainClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class DomainClassificationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.text_classification
@@ -35,10 +34,6 @@ class DomainClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
                  'Helicopter RC Drone Parts 3s Lithium battery 11.1v Battery'
         pipeline_ins = pipeline(self.task, model=model_id)
         print(pipeline_ins(input=inputs))
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ def load_depth(file):
     elif file.endswith('png'):
         depth_png = np.array(load_image(file), dtype=int)
         assert (np.max(depth_png) > 255), 'Wrong .png depth file'
-        return depth_png.astype(np.float) / 256.
+        return depth_png.astype(float) / 256.
     else:
         raise NotImplementedError('Depth extension not supported.')
 

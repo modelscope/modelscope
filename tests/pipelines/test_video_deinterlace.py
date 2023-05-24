@@ -8,11 +8,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import VideoDeinterlacePipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class VideoDeinterlaceTest(unittest.TestCase, DemoCompatibilityCheck):
+class VideoDeinterlaceTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.video_deinterlace
@@ -51,10 +50,6 @@ class VideoDeinterlaceTest(unittest.TestCase, DemoCompatibilityCheck):
         out_video_path = pipeline_ins(
             input=self.test_video)[OutputKeys.OUTPUT_VIDEO]
         print('pipeline: the output video path is {}'.format(out_video_path))
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -5,11 +5,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import show_video_tracking_result
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SingleObjectTracking(unittest.TestCase, DemoCompatibilityCheck):
+class SingleObjectTracking(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.video_single_object_tracking
@@ -45,10 +44,6 @@ class SingleObjectTracking(unittest.TestCase, DemoCompatibilityCheck):
         init_bbox = [414, 343, 514, 449]  # [x1, y1, x2, y2]
         result = video_single_object_tracking((video_path, init_bbox))
         print('result is : ', result[OutputKeys.BOXES])
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

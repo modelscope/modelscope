@@ -9,6 +9,7 @@ import unittest
 import numpy as np
 import torch
 from packaging import version
+from torch.utils.data import RandomSampler
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Metrics
@@ -204,12 +205,20 @@ class TestTrainerWithNlp(unittest.TestCase):
         cfg.preprocessor.val['label2id'] = {'0': 0, '1': 1}
         cfg.train.dataloader.batch_size_per_gpu = 2
         cfg.train.hooks = [{
-            'type': 'BestCkptSaverHook',
-            'interval': 1,
-            'by_epoch': False,
-            'metric_key': 'accuracy',
-            'max_checkpoint_num': 4,
-            'restore_best': True,
+            'type':
+            'BestCkptSaverHook',
+            'interval':
+            1,
+            'by_epoch':
+            False,
+            'output_dir':
+            os.path.join(self.tmp_dir, 'output_test_best'),
+            'metric_key':
+            'accuracy',
+            'max_checkpoint_num':
+            4,
+            'restore_best':
+            True,
         }, {
             'type': 'TextLoggerHook',
             'interval': 1
@@ -270,7 +279,7 @@ class TestTrainerWithNlp(unittest.TestCase):
                 os.path.join(self.tmp_dir, 'output', 'pytorch_model.bin')))
         self.assertTrue(
             os.path.isfile(
-                os.path.join(self.tmp_dir, 'output_best',
+                os.path.join(self.tmp_dir, 'output_test_best',
                              'pytorch_model.bin')))
         md51 = hashlib.md5(
             pathlib.Path(
@@ -282,7 +291,7 @@ class TestTrainerWithNlp(unittest.TestCase):
         self.assertEqual(md51, md52)
         md51 = hashlib.md5(
             pathlib.Path(
-                os.path.join(self.tmp_dir, 'output_best',
+                os.path.join(self.tmp_dir, 'output_test_best',
                              'pytorch_model.bin')).read_bytes()).hexdigest()
         md52 = hashlib.md5(
             pathlib.Path(
@@ -471,6 +480,34 @@ class TestTrainerWithNlp(unittest.TestCase):
             trainer.evaluate(
                 cache_path + '/pytorch_model.bin', saving_fn=saving_fn))
         self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_trainer_with_custom_sampler(self):
+        tmp_dir = tempfile.TemporaryDirectory().name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
+        cache_path = snapshot_download(model_id)
+        model = SbertForSequenceClassification.from_pretrained(cache_path)
+
+        class CustomSampler(RandomSampler):
+
+            pass
+
+        kwargs = dict(
+            cfg_file=os.path.join(cache_path, ModelFile.CONFIGURATION),
+            model=model,
+            train_dataset=self.dataset,
+            eval_dataset=self.dataset,
+            samplers=CustomSampler(self.dataset),
+            work_dir=self.tmp_dir)
+
+        trainer = build_trainer(default_args=kwargs)
+        trainer.train()
+        self.assertTrue(
+            type(trainer.train_dataloader.sampler) == CustomSampler)
+        self.assertTrue(type(trainer.eval_dataloader.sampler) == CustomSampler)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_prediction(self):

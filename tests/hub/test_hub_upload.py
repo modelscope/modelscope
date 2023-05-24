@@ -19,7 +19,6 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
 logger = get_logger()
 
 
-@unittest.skip('temporarily skip')
 class HubUploadTest(unittest.TestCase):
 
     def setUp(self):
@@ -38,6 +37,7 @@ class HubUploadTest(unittest.TestCase):
         os.mkdir(self.finetune_path)
         os.system("echo '{}'>%s"
                   % os.path.join(self.finetune_path, ModelFile.CONFIGURATION))
+        os.environ['MODELSCOPE_TRAIN_ID'] = 'test-id'
 
     def tearDown(self):
         logger.info('TearDown')

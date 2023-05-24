@@ -39,7 +39,10 @@ class PunctuationProcessingPipeline(Pipeline):
 
     """
 
-    def __init__(self, model: Union[Model, str] = None, **kwargs):
+    def __init__(self,
+                 model: Union[Model, str] = None,
+                 ngpu: int = 1,
+                 **kwargs):
         """use `model` to create an asr pipeline for prediction
         """
         super().__init__(model=model, **kwargs)
@@ -59,7 +62,9 @@ class PunctuationProcessingPipeline(Pipeline):
             train_config=self.cmd['train_config'],
             model_file=self.cmd['model_file'],
             output_dir=self.cmd['output_dir'],
-            param_dict=self.cmd['param_dict'])
+            param_dict=self.cmd['param_dict'],
+            **kwargs,
+        )
 
     def __call__(self,
                  text_in: str = None,
@@ -141,6 +146,7 @@ class PunctuationProcessingPipeline(Pipeline):
         for user_args in user_args_dict:
             if user_args in extra_args and extra_args[user_args] is not None:
                 cmd[user_args] = extra_args[user_args]
+                del extra_args[user_args]
 
         return cmd
 

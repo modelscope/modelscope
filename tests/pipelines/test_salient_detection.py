@@ -4,11 +4,10 @@ import unittest
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SalientDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
+class SalientDetectionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.semantic_segmentation
@@ -43,10 +42,6 @@ class SalientDetectionTest(unittest.TestCase, DemoCompatibilityCheck):
         import cv2
         cv2.imwrite(input_location + '_camouflag.jpg',
                     result[OutputKeys.MASKS])
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

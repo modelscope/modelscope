@@ -7,11 +7,10 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
+class SequenceClassificationTest(unittest.TestCase):
     sentence1 = 'i like this wonderful place'
 
     def setUp(self) -> None:
@@ -90,10 +89,6 @@ class SequenceClassificationTest(unittest.TestCase, DemoCompatibilityCheck):
             target='premise')
         result = text_classification(dataset)
         self.printDataset(result)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
-from modelscope.trainers.default_config import DEFAULT_CONFIG
-from modelscope.trainers.training_args import CliArgumentParser, TrainingArgs
+from modelscope import TrainingArgs
+from modelscope.trainers.cli_argument_parser import CliArgumentParser
 from modelscope.utils.test_utils import test_level
 
 
@@ -29,14 +29,14 @@ class TrainingArgsTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_flatten_args(self):
-        cfg = DEFAULT_CONFIG
+        training_args = TrainingArgs()
         input_args = [
             '--optimizer_params',
             'weight_decay=0.8,eps=1e-6,correct_bias=False',
             '--lr_scheduler_params', 'initial_lr=3e-5,niter_decay=1'
         ]
-        training_args = TrainingArgs.from_cli(input_args)
-        cfg = training_args(cfg)
+        training_args = training_args.parse_cli(input_args)
+        cfg, _ = training_args.to_config()
         self.assertAlmostEqual(cfg.train.optimizer.weight_decay, 0.8)
         self.assertAlmostEqual(cfg.train.optimizer.eps, 1e-6)
         self.assertFalse(cfg.train.optimizer.correct_bias)

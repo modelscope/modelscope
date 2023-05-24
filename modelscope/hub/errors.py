@@ -2,6 +2,7 @@
 
 from http import HTTPStatus
 
+import requests
 from requests.exceptions import HTTPError
 
 from modelscope.utils.logger import get_logger
@@ -57,13 +58,22 @@ def is_ok(rsp):
     return rsp['Code'] == HTTPStatus.OK and rsp['Success']
 
 
+def _decode_response_error(response: requests.Response):
+    if 'application/json' in response.headers.get('content-type', ''):
+        message = response.json()
+    else:
+        message = response.content.decode('utf-8')
+    return message
+
+
 def handle_http_post_error(response, url, request_body):
     try:
         response.raise_for_status()
     except HTTPError as error:
         logger.error('Request %s with body: %s exception' %
                      (url, request_body))
-        logger.error('Response details: %s' % response.content)
+        message = _decode_response_error(response)
+        logger.error('Response details: %s' % message)
         raise error
 
 
@@ -75,7 +85,8 @@ def handle_http_response(response, logger, cookies, model_id):
             logger.error(
                 f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
                 private. Please login first.')
-        logger.error('Response details: %s' % response.content)
+        message = _decode_response_error(response)
+        logger.error('Response details: %s' % message)
         raise error
 
 

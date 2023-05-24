@@ -9,11 +9,10 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import depth_to_color
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class PanoramaDepthEstimationTest(unittest.TestCase, DemoCompatibilityCheck):
+class PanoramaDepthEstimationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'panorama-depth-estimation'

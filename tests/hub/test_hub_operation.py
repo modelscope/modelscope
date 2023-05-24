@@ -22,7 +22,6 @@ DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
 
 
-@unittest.skip('temporarily skip')
 class HubOperationTest(unittest.TestCase):
 
     def setUp(self):

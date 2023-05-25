@@ -4,8 +4,13 @@ from modelscope.msdatasets import MsDataset
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 
-training_args = TrainingArgs(task='efficient-diffusion-tuning').parse_cli()
-config, args = training_args.to_config()
+@dataclass(init=False)
+class StableDiffusionArguments(TrainingArgs):
+    
+
+
+config, args = StableDiffusionArguments().parse_cli().to_config()
+
 print(args)
 
 dataset = MsDataset.load(

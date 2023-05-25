@@ -155,10 +155,10 @@ class EpochBasedTrainer(BaseTrainer):
         self.cfg_modify_fn = cfg_modify_fn
         # add default config
         merge_cfg(self.cfg)
+        self.cfg = self.rebuild_config(self.cfg)
         if 'cfg_options' in kwargs:
             self.cfg.merge_from_dict(kwargs['cfg_options'])
         self.cfg = update_cfg(self.cfg)
-        self.cfg = self.rebuild_config(self.cfg)
 
         if isinstance(model, (TorchModel, nn.Module)):
             self.model = model

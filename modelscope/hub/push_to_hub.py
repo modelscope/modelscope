@@ -2,6 +2,8 @@
 
 import concurrent.futures
 import os
+import shutil
+from multiprocessing import Manager, Process, Value
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility
@@ -11,6 +13,10 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 _executor = concurrent.futures.ProcessPoolExecutor(max_workers=8)
+_queues = dict()
+_flags = dict()
+_tasks = dict()
+_manager = None
 
 
 def _api_push_to_hub(repo_name,
@@ -131,3 +137,64 @@ def push_to_hub_async(repo_name,
     return _executor.submit(_api_push_to_hub, repo_name, output_dir, token,
                             private, commit_message, tag, source_repo,
                             ignore_file_pattern, revision)
+
+
+def submit_task(q, b):
+    while True:
+        b.value = False
+        item = q.get()
+        logger.info(item)
+        b.value = True
+        if not item.pop('done', False):
+            delete_dir = item.pop('delete_dir', False)
+            output_dir = item.get('output_dir')
+            try:
+                push_to_hub(**item)
+                if delete_dir and os.path.exists(output_dir):
+                    shutil.rmtree(output_dir)
+            except Exception as e:
+                logger.error(e)
+        else:
+            break
+
+
+class UploadStrategy:
+    cancel = 'cancel'
+    wait = 'wait'
+
+
+def push_to_hub_in_queue(queue_name, strategy=UploadStrategy.cancel, **kwargs):
+    assert queue_name is not None and len(
+        queue_name) > 0, 'Please specify a valid queue name!'
+    global _manager
+    if _manager is None:
+        _manager = Manager()
+    if queue_name not in _queues:
+        _queues[queue_name] = _manager.Queue()
+        _flags[queue_name] = Value('b', False)
+        process = Process(
+            target=submit_task, args=(_queues[queue_name], _flags[queue_name]))
+        process.start()
+        _tasks[queue_name] = process
+
+    queue = _queues[queue_name]
+    flag: Value = _flags[queue_name]
+    if kwargs.get('done', False):
+        queue.put(kwargs)
+    elif flag.value and strategy == UploadStrategy.cancel:
+        logger.error(
+            f'Another uploading is running, '
+            f'this uploading with message {kwargs.get("commit_message")} will be canceled.'
+        )
+    else:
+        queue.put(kwargs)
+
+
+def wait_for_done(queue_name):
+    process: Process = _tasks.pop(queue_name, None)
+    if process is None:
+        return
+    process.join()
+
+    _queues.pop(queue_name)
+    _flags.pop(queue_name)

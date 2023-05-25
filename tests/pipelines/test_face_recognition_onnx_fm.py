@@ -15,9 +15,7 @@ class FmFaceRecognitionTest(unittest.TestCase):
         self.task = Tasks.face_recognition
         self.model_id = 'damo/cv_manual_face-recognition_frfm'
 
-    # @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @unittest.skip(
-        'currently this model has been unavailable due to accuracy problem.')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_face_compare(self):
         img1 = 'data/test/images/face_recognition_1.png'
         img2 = 'data/test/images/face_recognition_2.png'

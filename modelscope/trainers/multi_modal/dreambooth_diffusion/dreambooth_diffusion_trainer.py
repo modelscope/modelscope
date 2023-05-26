@@ -69,18 +69,11 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             subfolder="text_encoder", 
             revision=None)
         if self.vae is not None:
-            self.vae = to_device(self.vae, self.device)
             self.vae.requires_grad_(False)
         if self.text_encoder is not None:
-            self.text_encoder = to_device(self.text_encoder, self.device)
             self.text_encoder.requires_grad_(False)
         
-        return to_device(UnetModel(self.unet), self.device)
-        # model = Model.from_pretrained(self.model_dir, cfg_dict=self.cfg)
-        # if not isinstance(model, nn.Module) and hasattr(model, 'model'):
-        #     return model.model
-        # elif isinstance(model, nn.Module):
-        #     return model
+        return UnetModel(self.unet)
 
     def train(self,
               checkpoint_path=None,
@@ -115,6 +108,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
         self.invoke_hook(TrainerStages.before_run)
+        self.unet = to_device(self.unet, self.device)
         self.unet.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)

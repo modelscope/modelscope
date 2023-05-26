@@ -41,9 +41,10 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.prior_loss_weight = kwargs['prior_loss_weight']
         # self.num_class_images = kwargs['num_class_images']
         # self.with_prior_preservation = kwargs['with_prior_preservation']
-        super().__init__(*args, **kwargs)
-        self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
+        # self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
+        self.pretrained_model_name_or_path = "runwayml/stable-diffusion-v1-5"
         self.instance_prompt = kwargs['instance_prompt']
+        super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
         self.noise_scheduler = DDPMScheduler.from_pretrained(

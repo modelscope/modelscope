@@ -24,6 +24,15 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import is_dist
 
 
+class UnetModel(TorchModel):
+    def __init__(self, unet, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model = unet
+    
+    def forward(self, *args, **kwargs):
+        return self.model.forward()
+
+
 @TRAINERS.register_module(module_name=Trainers.dreambooth_diffusion)
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
@@ -32,8 +41,11 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.prior_loss_weight = kwargs['prior_loss_weight']
         # self.num_class_images = kwargs['num_class_images']
         # self.with_prior_preservation = kwargs['with_prior_preservation']
-        self.pretrained_model_name_or_path = kwargs['model']['pretrained_model_name_or_path']
+        # self.pretrained_model_name_or_path = kwargs['model']['pretrained_model_name_or_path']
         super().__init__(*args, **kwargs)
+        # self.cfg.safe_get('train.')
+        self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
+        self.instance_prompt = kwargs['instance_prompt']
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
         self.noise_scheduler = DDPMScheduler.from_pretrained(
@@ -62,7 +74,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         
-        return self.unet
+        return UnetModel(self.unet)
         # model = Model.from_pretrained(self.model_dir, cfg_dict=self.cfg)
         # if not isinstance(model, nn.Module) and hasattr(model, 'model'):
         #     return model.model
@@ -149,13 +161,15 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             `torch.Tensor`: The tensor with training loss on this batch.
         """
         # model.train()
-        self.unet.train()
+        model.train()
         self._mode = ModeKeys.TRAIN
-        print("-------------inputs: ", inputs)
-        pixel_values = inputs["pixel_values"].to(dtype=torch.float32)
+        # inputs
+        example = self.data_assemble(inputs)
+        batch = self.collate_fn(example)
+        pixel_values = batch["pixel_values"].to(dtype=torch.float32)
         if self.vae is not None:
             # Convert images to latent space
-            model_input = self.vae.encode(inputs["pixel_values"].to(dtype=torch.float32)).latent_dist.sample()
+            model_input = self.vae.encode(batch["pixel_values"].to(dtype=torch.float32)).latent_dist.sample()
             model_input = model_input * self.vae.config.scaling_factor
         else:
             model_input = pixel_values
@@ -169,8 +183,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # Get the text embedding for conditioning
         encoder_hidden_states = self.encode_prompt(
             self.text_encoder,
-            inputs["input_ids"],
-            inputs["attention_mask"],
+            batch["input_ids"],
+            batch["attention_mask"],
             text_encoder_use_attention_mask=False,
         )
         # Predict the noise residual
@@ -258,3 +272,58 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         prompt_embeds = prompt_embeds[0]
 
         return prompt_embeds
+    
+    def data_assemble(self, inputs):
+        example = {}
+        example["instance_images"] = inputs["target"]
+        text_inputs = self.tokenize_prompt(self.tokenizer, self.instance_prompt)
+        example["instance_prompt_ids"] = text_inputs.input_ids
+        example["instance_attention_mask"] = text_inputs.attention_mask
+
+        return example
+    
+    def collate_fn(examples, with_prior_preservation=False):
+        has_attention_mask = "instance_attention_mask" in examples[0]
+
+        input_ids = [example["instance_prompt_ids"] for example in examples]
+        pixel_values = [example["instance_images"] for example in examples]
+
+        if has_attention_mask:
+            attention_mask = [example["instance_attention_mask"] for example in examples]
+
+        # Concat class and instance examples for prior preservation.
+        # We do this to avoid doing two forward passes.
+        if with_prior_preservation:
+            input_ids += [example["class_prompt_ids"] for example in examples]
+            pixel_values += [example["class_images"] for example in examples]
+
+            if has_attention_mask:
+                attention_mask += [example["class_attention_mask"] for example in examples]
+
+        pixel_values = torch.stack(pixel_values)
+        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+        input_ids = torch.cat(input_ids, dim=0)
+        batch = {
+            "input_ids": input_ids,
+            "pixel_values": pixel_values,
+        }
+        if has_attention_mask:
+            batch["attention_mask"] = attention_mask
+
+        return batch
+
+    def tokenize_prompt(self, tokenizer, prompt, tokenizer_max_length=None):
+        if tokenizer_max_length is not None:
+            max_length = tokenizer_max_length
+        else:
+            max_length = tokenizer.model_max_length
+
+        text_inputs = tokenizer(
+            prompt,
+            truncation=True,
+            padding="max_length",
+            max_length=max_length,
+            return_tensors="pt",
+        )
+
+        return text_inputs

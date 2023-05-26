@@ -101,10 +101,10 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
                                          kwargs.get('strict', False))
         self.unet.train()
-        self.unet = to_device(self.unet, self.device)
-        self.vae = to_device(self.vae, self.device)
-        self.text_encoder = to_device(self.text_encoder, self.device)
-        
+        self.unet = self.unet.to(self.device)
+        self.vae = self.vae.to(self.device)
+        self.text_encoder = self.text_encoder.to(self.device)
+
         self.train_loop(self.train_dataloader)
 
     def train_loop(self, data_loader):
@@ -165,7 +165,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         pixel_values = batch["pixel_values"].to(dtype=torch.float32)
         if self.vae is not None:
             # Convert images to latent space
-            model_input = self.vae.encode(batch["pixel_values"].to(dtype=torch.float32)).latent_dist.sample()
+            model_input = self.vae.encode(batch["pixel_values"]).latent_dist.sample()
             model_input = model_input * self.vae.config.scaling_factor
         else:
             model_input = pixel_values

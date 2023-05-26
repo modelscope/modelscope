@@ -69,11 +69,13 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             subfolder="text_encoder", 
             revision=None)
         if self.vae is not None:
+            self.vae = to_device(self.vae, self.device)
             self.vae.requires_grad_(False)
         if self.text_encoder is not None:
+            self.text_encoder = to_device(self.text_encoder, self.device)
             self.text_encoder.requires_grad_(False)
         
-        return UnetModel(self.unet)
+        return to_device(UnetModel(self.unet), self.device)
         # model = Model.from_pretrained(self.model_dir, cfg_dict=self.cfg)
         # if not isinstance(model, nn.Module) and hasattr(model, 'model'):
         #     return model.model
@@ -163,7 +165,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         # inputs
-        batch = self.data_assemble(inputs)
+        batch = self.data_assemble(inputs).to(dtype=torch.float32)
         pixel_values = batch["pixel_values"].to(dtype=torch.float32)
         if self.vae is not None:
             # Convert images to latent space

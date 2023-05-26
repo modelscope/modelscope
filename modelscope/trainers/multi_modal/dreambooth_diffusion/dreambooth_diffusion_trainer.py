@@ -42,6 +42,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.num_class_images = kwargs['num_class_images']
         # self.with_prior_preservation = kwargs['with_prior_preservation']
         # self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
+        self.with_prior_preservation = False
         self.pretrained_model_name_or_path = "runwayml/stable-diffusion-v1-5"
         self.instance_prompt = kwargs['instance_prompt']
         super().__init__(*args, **kwargs)

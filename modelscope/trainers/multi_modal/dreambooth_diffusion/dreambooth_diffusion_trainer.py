@@ -32,7 +32,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.prior_loss_weight = kwargs['prior_loss_weight']
         # self.num_class_images = kwargs['num_class_images']
         # self.with_prior_preservation = kwargs['with_prior_preservation']
-        self.pretrained_model_name_or_path = kwargs['train']['pretrained_model_name_or_path']
+        self.pretrained_model_name_or_path = kwargs['model']['pretrained_model_name_or_path']
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:

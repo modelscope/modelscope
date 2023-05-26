@@ -28,11 +28,11 @@ from modelscope.utils.torch_utils import is_dist
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
-        self.prompt = kwargs['prompt']
-        self.prior_loss_weight = kwargs['prior_loss_weight']
-        self.num_class_images = kwargs['num_class_images']
-        self.with_prior_preservation = kwargs['with_prior_preservation']
-        self.pretrained_model_name_or_path = kwargs['pretrained_model_name_or_path']
+        # self.prompt = kwargs['prompt']
+        # self.prior_loss_weight = kwargs['prior_loss_weight']
+        # self.num_class_images = kwargs['num_class_images']
+        # self.with_prior_preservation = kwargs['with_prior_preservation']
+        self.pretrained_model_name_or_path = kwargs['train']['pretrained_model_name_or_path']
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -62,6 +62,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         
+        return self.unet
         # model = Model.from_pretrained(self.model_dir, cfg_dict=self.cfg)
         # if not isinstance(model, nn.Module) and hasattr(model, 'model'):
         #     return model.model
@@ -150,6 +151,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # model.train()
         self.unet.train()
         self._mode = ModeKeys.TRAIN
+        print("-------------inputs: ", inputs)
         pixel_values = inputs["pixel_values"].to(dtype=torch.float32)
         if self.vae is not None:
             # Convert images to latent space
@@ -218,7 +220,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
         self.train_outputs = train_outputs
 
-    def import_model_class_from_model_name_or_path(pretrained_model_name_or_path: str):
+    def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):
         text_encoder_config = PretrainedConfig.from_pretrained(
             pretrained_model_name_or_path,
             subfolder="text_encoder",
@@ -241,7 +243,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         else:
             raise ValueError(f"{model_class} is not supported.")
 
-    def encode_prompt(text_encoder, input_ids, attention_mask, text_encoder_use_attention_mask=None):
+    def encode_prompt(self, text_encoder, input_ids, attention_mask, text_encoder_use_attention_mask=None):
         text_input_ids = input_ids.to(text_encoder.device)
 
         if text_encoder_use_attention_mask:

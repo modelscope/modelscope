@@ -41,9 +41,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.prior_loss_weight = kwargs['prior_loss_weight']
         # self.num_class_images = kwargs['num_class_images']
         # self.with_prior_preservation = kwargs['with_prior_preservation']
-        # self.pretrained_model_name_or_path = kwargs['model']['pretrained_model_name_or_path']
         super().__init__(*args, **kwargs)
-        # self.cfg.safe_get('train.')
         self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
         self.instance_prompt = kwargs['instance_prompt']
 
@@ -164,8 +162,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         model.train()
         self._mode = ModeKeys.TRAIN
         # inputs
-        example = self.data_assemble(inputs)
-        batch = self.collate_fn(example)
+        batch = self.data_assemble(inputs)
         pixel_values = batch["pixel_values"].to(dtype=torch.float32)
         if self.vae is not None:
             # Convert images to latent space
@@ -273,16 +270,13 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
         return prompt_embeds
     
-    def data_assemble(self, inputs):
-        example = {}
-        example["instance_images"] = inputs["target"]
+    def data_assemble(self, inputs, with_prior_preservation=False):
+        examples = {}
+        examples["instance_images"] = inputs["target"]
         text_inputs = self.tokenize_prompt(self.tokenizer, self.instance_prompt)
-        example["instance_prompt_ids"] = text_inputs.input_ids
-        example["instance_attention_mask"] = text_inputs.attention_mask
+        examples["instance_prompt_ids"] = text_inputs.input_ids
+        examples["instance_attention_mask"] = text_inputs.attention_mask
 
-        return example
-    
-    def collate_fn(examples, with_prior_preservation=False):
         has_attention_mask = "instance_attention_mask" in examples[0]
 
         input_ids = [example["instance_prompt_ids"] for example in examples]

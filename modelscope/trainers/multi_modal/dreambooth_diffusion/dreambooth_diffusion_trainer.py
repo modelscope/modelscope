@@ -12,16 +12,13 @@ from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        utils)
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
-from modelscope.outputs import ModelOutputBase
-from modelscope.models.base import Model, TorchModel
+from modelscope.outputs import OutputKeys
+from modelscope.models.base import TorchModel
 from modelscope.trainers.builder import TRAINERS
-from modelscope.trainers.optimizer.builder import build_optimizer
-from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.data_utils import to_device
-from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import ModeKeys, TrainerStages
-from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import is_dist
+from modelscope.trainers.trainer import EpochBasedTrainer
+from modelscope.utils.constant import ModeKeys, TrainerStages
 
 
 class UnetModel(TorchModel):
@@ -40,8 +37,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         # self.prompt = kwargs['prompt']
         # self.prior_loss_weight = kwargs['prior_loss_weight']
         # self.num_class_images = kwargs['num_class_images']
-        # self.with_prior_preservation = kwargs['with_prior_preservation']
-        # self.pretrained_model_name_or_path = self.cfg.safe_get('model.pretrained_model_name_or_path')
         self.with_prior_preservation = False
         self.pretrained_model_name_or_path = "runwayml/stable-diffusion-v1-5"
         self.instance_prompt = kwargs['instance_prompt']
@@ -109,8 +104,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.train_loop(self.train_dataloader)
 
     def train_loop(self, data_loader):
-        """ Training loop used by `EpochBasedTrainer.train()`
-        """
         self.invoke_hook(TrainerStages.before_run)
         self.unet.train()
         for _ in range(self._epoch, self._max_epochs):
@@ -158,7 +151,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         Return:
             `torch.Tensor`: The tensor with training loss on this batch.
         """
-        # model.train()
         model.train()
         self._mode = ModeKeys.TRAIN
         # inputs
@@ -207,7 +199,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             loss = loss + self.prior_loss_weight * prior_loss
         else:
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-        train_outputs = {'loss': loss}
+        train_outputs = {OutputKeys.LOSS: loss}
         
         # add model output info to log
         if 'log_vars' not in train_outputs:

@@ -6,11 +6,15 @@ from modelscope.trainers.training_args import TrainingArgs
 
 @dataclass(init=False)
 class StableDiffusionArguments(TrainingArgs):
-    
+    pretrained_model_name_or_path: str = field(
+        default="runwayml/stable-diffusion-v1-5",
+        metadata={
+            'help': 'The pretrained model of stable diffusion',
+            'cfg_node': 'model.pretrained_model_name_or_path'
+        })
 
-
-config, args = StableDiffusionArguments().parse_cli().to_config()
-
+training_args = StableDiffusionArguments().parse_cli()
+config, args = training_args.to_config()
 print(args)
 
 dataset = MsDataset.load(
@@ -24,7 +28,6 @@ def cfg_modify_fn(cfg):
         cfg.merge_from_dict(config)
     else:
         cfg = config
-    cfg.train.lr_scheduler.T_max = training_args.max_epochs
     cfg.model.inference = False
     return cfg
 

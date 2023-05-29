@@ -106,7 +106,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def train_loop(self, data_loader):
         self.invoke_hook(TrainerStages.before_run)
-        self.unet.train()
+        self.model.train()
         for _ in range(self._epoch, self._max_epochs):
             self.invoke_hook(TrainerStages.before_train_epoch)
             for i, data_batch in enumerate(data_loader):
@@ -117,7 +117,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 self.data_batch = data_batch
                 self._inner_iter = i
                 self.invoke_hook(TrainerStages.before_train_iter)
-                self.train_step(self.unet, data_batch)
+                self.train_step(self.model, data_batch)
                 self.invoke_hook(TrainerStages.after_train_iter)
                 # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
                 del self.data_batch

@@ -5,7 +5,10 @@ from typing import Any, Dict
 import cv2
 import numpy as np
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
+from diffusers import (StableDiffusionPipeline, AutoencoderKL, 
+                       DDPMScheduler, UNet2DConditionModel)
+from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -24,7 +27,7 @@ from modelscope.utils.constant import Tasks
     module_name=Pipelines.diffusers_stable_diffusion)
 class StableDiffusionWrapperPipeline(DiffusersPipeline):
 
-    def __init__(self, model: str, device: str = 'gpu', **kwargs):
+    def __init__(self, model: str, unet_folder: str = None, text_encoder_folder: str = None, device: str = 'gpu', **kwargs):
         """
         use `model` to create a stable diffusion pipeline
         Args:
@@ -34,10 +37,32 @@ class StableDiffusionWrapperPipeline(DiffusersPipeline):
         super().__init__(model, device, **kwargs)
 
         torch_dtype = kwargs.get('torch_dtype', torch.float32)
-
-        # build upon the diffuser stable diffusion pipeline
-        self.pipeline = StableDiffusionPipeline.from_pretrained(
-            model, torch_dtype=torch_dtype)
+        # build complete the diffuser stable diffusion pipeline
+        if unet_folder is None and text_encoder_folder is None:
+            self.pipeline = StableDiffusionPipeline.from_pretrained(
+                model, torch_dtype=torch_dtype)
+        # build respectively diffuser stable diffusion pipeline
+        else:
+            if unet_folder is not None:
+                unet = UNet2DConditionModel.from_pretrained(unet_folder)
+            else:
+                unet = UNet2DConditionModel.from_pretrained(model, subfolder='unet')
+            if text_encoder is not None:
+                text_encoder = CLIPTextModel.from_pretrained(text_encoder_folder)
+            else:
+                text_encoder = CLIPTextModel.from_pretrained(model, subfolder="text_encoder")
+            vae = AutoencoderKL.from_pretrained(model, subfolder='vae')
+            tokenizer = CLIPTokenizer.from_pretrained(model, subfolder='tokenizer')
+            scheduler = DDPMScheduler.from_pretrained(model, subfolder='scheduler')
+            self.pipeline = StableDiffusionPipeline(
+                text_encoder=text_encoder,
+                vae=vae,
+                unet=unet,
+                tokenizer=tokenizer,
+                scheduler=scheduler,
+                safety_checker=StableDiffusionSafetyChecker.from_pretrained("CompVis/stable-diffusion-safety-checker"),
+                feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+            )
         self.pipeline.to(self.device)
 
     def forward(self, inputs: Dict[str, Any],

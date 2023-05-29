@@ -47,7 +47,7 @@ class StableDiffusionWrapperPipeline(DiffusersPipeline):
                 unet = UNet2DConditionModel.from_pretrained(unet_folder)
             else:
                 unet = UNet2DConditionModel.from_pretrained(model, subfolder='unet')
-            if text_encoder is not None:
+            if text_encoder_folder is not None:
                 text_encoder = CLIPTextModel.from_pretrained(text_encoder_folder)
             else:
                 text_encoder = CLIPTextModel.from_pretrained(model, subfolder="text_encoder")

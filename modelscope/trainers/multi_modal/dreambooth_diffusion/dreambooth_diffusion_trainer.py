@@ -19,6 +19,7 @@ from modelscope.utils.data_utils import to_device
 from modelscope.utils.torch_utils import is_dist
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.constant import ModeKeys, TrainerStages
+from modelscope.utils.file_utils import func_receive_dict_inputs
 
 
 class UnetModel(TorchModel):
@@ -222,6 +223,20 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             self.log_buffer.update(train_outputs['log_vars'])
 
         self.train_outputs = train_outputs
+
+    def evaluation_step(self, data):
+        self.model.eval()
+
+        receive_dict_inputs = func_receive_dict_inputs(
+            self.unwrap_module(self.model).forward)
+
+        with torch.no_grad():
+            print(f"--------data: {data}")
+            if isinstance(data, Mapping) and not receive_dict_inputs:
+                result = self.model.forward(**data)
+            else:
+                result = self.model.forward(data)
+        return result
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):
         text_encoder_config = PretrainedConfig.from_pretrained(

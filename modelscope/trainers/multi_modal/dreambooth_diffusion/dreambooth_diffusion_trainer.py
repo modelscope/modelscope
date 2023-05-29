@@ -23,12 +23,12 @@ from modelscope.utils.file_utils import func_receive_dict_inputs
 
 
 class UnetModel(TorchModel):
-    def __init__(self, unet, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, model_dir, unet, *args, **kwargs):
+        super().__init__(model_dir, *args, **kwargs)
         self.model = unet
     
     def forward(self, *args, **kwargs):
-        return self.model.forward()
+        return self.model.forward(*args, **kwargs)
 
 
 @TRAINERS.register_module(module_name=Trainers.dreambooth_diffusion)
@@ -70,7 +70,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         
-        return UnetModel(self.unet)
+        return UnetModel(f"{self.pretrained_model_name_or_path}/unet", self.unet)
 
     def train(self,
               checkpoint_path=None,
@@ -201,7 +201,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         else:
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
         train_outputs = {OutputKeys.LOSS: loss}
-        
+        print("loss: ", loss)
+
         # add model output info to log
         if 'log_vars' not in train_outputs:
             default_keys_pattern = ['loss']
@@ -243,7 +244,15 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 text_encoder_use_attention_mask=False,
             )
             # Predict reslut by unet model
-            result = self.model(noisy_model_input, timesteps, encoder_hidden_states).sample
+            model_pred = self.model(noisy_model_input, timesteps, encoder_hidden_states).sample
+            if self.noise_scheduler.config.prediction_type == "epsilon":
+                target = noise
+            elif self.noise_scheduler.config.prediction_type == "v_prediction":
+                target = self.noise_scheduler.get_velocity(model_input, noise, timesteps)
+            else:
+                raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
+            loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+            result = {OutputKeys.LOSS: loss}
         return result
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):

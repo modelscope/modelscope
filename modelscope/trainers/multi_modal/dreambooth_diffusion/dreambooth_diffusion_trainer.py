@@ -177,8 +177,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             batch["attention_mask"],
             text_encoder_use_attention_mask=False,
         )
-        # Predict the noise residual
-        model_pred = self.unet(noisy_model_input, timesteps, encoder_hidden_states).sample
+        # Predict the noise residual by unet model
+        model_pred = model(noisy_model_input, timesteps, encoder_hidden_states).sample
         if model_pred.shape[1] == 6:
             model_pred, _ = torch.chunk(model_pred, 2, dim=1)
         # Get the target for loss depending on the prediction type
@@ -227,15 +227,23 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
     def evaluation_step(self, data):
         self.model.eval()
 
-        receive_dict_inputs = func_receive_dict_inputs(
-            self.unwrap_module(self.model).forward)
-
         with torch.no_grad():
-            print(f"--------data: {data}")
-            if isinstance(data, Mapping) and not receive_dict_inputs:
-                result = self.model.forward(**data)
-            else:
-                result = self.model.forward(data)
+            batch = self.data_assemble(data)
+            model_input = self.vae.encode(batch["pixel_values"]).latent_dist.sample()
+            model_input = model_input * self.vae.config.scaling_factor
+            noise = torch.randn_like(model_input)
+            bsz = model_input.shape[0]
+            timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (bsz,), device=model_input.device)
+            timesteps = timesteps.long()
+            noisy_model_input = self.noise_scheduler.add_noise(model_input, noise, timesteps)
+            encoder_hidden_states = self.encode_prompt(
+                self.text_encoder,
+                batch["input_ids"],
+                batch["attention_mask"],
+                text_encoder_use_attention_mask=False,
+            )
+            # Predict reslut by unet model
+            result = self.model(noisy_model_input, timesteps, encoder_hidden_states).sample
         return result
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):

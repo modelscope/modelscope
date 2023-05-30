@@ -1,6 +1,7 @@
 import sys
 
 from dataclasses import dataclass, field
+from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
@@ -16,20 +17,12 @@ class StableDiffusionDreamboothArguments(TrainingArgs):
             'cfg_node': 'model.pretrained_model_name_or_path'
         })
 
-@dataclass
-class StableDiffusionLoraArguments(TrainingArgs):
-
-    def __call__(self, config):
-        config = super().__call__(config)
-        config.train.lr_scheduler.T_max = self.max_epochs
-        config.model.inference = False
-        return config
 
 # choose finetune stable diffusion method, default choice is Lora
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
     training_args = StableDiffusionDreamboothArguments(task='diffusers-stable-diffusion').parse_cli()
 else:
-    training_args = StableDiffusionLoraArguments(task='efficient-diffusion-tuning').parse_cli()
+    training_args = TrainingArgs(task='efficient-diffusion-tuning').parse_cli()
 
 config, args = training_args.to_config()
 print(args)
@@ -48,26 +41,36 @@ def cfg_modify_fn_lora(cfg):
     return cfg
 
 def cfg_modify_fn_dreambooth(cfg):
-    if args.use_model_config:
-        cfg.merge_from_dict(config)
-    else:
-        cfg = config
+    cfg.train.lr_scheduler = {
+        'type': 'LambdaLR',
+        'lr_lambda': lambda _: 1
+    }
+    cfg.train.optimizer.lr = 5e-6                    
     return cfg
 
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
-    kwargs = dict(
-        model=training_args.model,
-        work_dir=training_args.work_dir,
-        train_dataset=train_dataset,
-        eval_dataset=validation_dataset,
-        cfg_modify_fn=cfg_modify_fn_dreambooth)
+    try:
+        kwargs = dict(
+            model=training_args.model,
+            work_dir=training_args.work_dir,
+            train_dataset=train_dataset,
+            eval_dataset=validation_dataset,
+            cfg_modify_fn=cfg_modify_fn_dreambooth)
+        trainer = build_trainer(name=Trainers.dreambooth_diffusion, default_args=kwargs)
+    except Exception as e:
+        print(f'Build dreambooth trainer error: {e}')
 else:
-    kwargs = dict(
-        model=training_args.model,
-        work_dir=training_args.work_dir,
-        train_dataset=train_dataset,
-        eval_dataset=validation_dataset,
-        cfg_modify_fn=cfg_modify_fn_lora)
-    trainer: EpochBasedTrainer = build_trainer(name='trainer', default_args=kwargs)
+    try:
+        kwargs = dict(
+            model=training_args.model,
+            work_dir=training_args.work_dir,
+            instance_prompt=training_args.instance_prompt,
+            with_prior_preservation=training_args.with_prior_preservation,
+            train_dataset=train_dataset,
+            eval_dataset=validation_dataset,
+            cfg_modify_fn=cfg_modify_fn_lora)
+        trainer: EpochBasedTrainer = build_trainer(name='trainer', default_args=kwargs)
+    except Exception as e:
+        print(f'Build lora trainer error: {e}')
 
 trainer.train()

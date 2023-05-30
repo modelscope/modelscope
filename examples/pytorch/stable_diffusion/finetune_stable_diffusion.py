@@ -27,9 +27,9 @@ class StableDiffusionLoraArguments(TrainingArgs):
 
 # choose finetune stable diffusion method, default choice is Lora
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
-    training_args = StableDiffusionDreamboothArguments().parse_cli()
+    training_args = StableDiffusionDreamboothArguments(task='diffusers-stable-diffusion').parse_cli()
 else:
-    training_args = StableDiffusionLoraArguments().parse_cli()
+    training_args = StableDiffusionLoraArguments(task='efficient-diffusion-tuning').parse_cli()
 
 config, args = training_args.to_config()
 print(args)

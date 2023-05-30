@@ -7,20 +7,9 @@ from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 
 
-@dataclass
-class StableDiffusionDreamboothArguments(TrainingArgs):
-
-    pretrained_model_name_or_path: str = field(
-        default="runwayml/stable-diffusion-v1-5",
-        metadata={
-            'help': 'The pretrained model of stable diffusion',
-            'cfg_node': 'model.pretrained_model_name_or_path'
-        })
-
-
 # choose finetune stable diffusion method, default choice is Lora
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
-    training_args = StableDiffusionDreamboothArguments(task='diffusers-stable-diffusion').parse_cli()
+    training_args = TrainingArgs(task='diffusers-stable-diffusion').parse_cli()
 else:
     training_args = TrainingArgs(task='efficient-diffusion-tuning').parse_cli()
 

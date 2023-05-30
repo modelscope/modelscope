@@ -171,7 +171,21 @@ def import_plugins(plugins: List[str] = None) -> List[str]:
 
     for module_name in plugins:
         try:
-            import_module_and_submodules(module_name)
+            # TODO: include and exclude should be configurable, hard code now
+            import_module_and_submodules(
+                module_name,
+                include={
+                    'easycv.toolkit.modelscope',
+                    'easycv.hooks',
+                    'easycv.models',
+                    'easycv.core',
+                    'easycv.toolkit',
+                    'easycv.predictors',
+                },
+                exclude={
+                    'easycv.toolkit.*',
+                    'easycv.*',
+                })
             logger.info('Plugin %s available', module_name)
             imported_plugins.append(module_name)
         except ModuleNotFoundError as e:
@@ -238,9 +252,10 @@ def import_module_and_submodules(package_name: str,
             path_string = '' if not path else path[0]
 
             # walk_packages only finds immediate children, so need to recurse.
-            for module_finder, name, _ in pkgutil.walk_packages(path):
+            for module_finder, name, _ in pkgutil.iter_modules(path):
                 # Sometimes when you import third-party libraries that are on your path,
                 # `pkgutil.walk_packages` returns those too, so we need to skip them.
+                # `pkgutil.iter_modules` avoid import those package
                 if path_string and module_finder.path != path_string:  # type: ignore[union-attr]
                     continue
                 if name.startswith('_'):
@@ -250,7 +265,8 @@ def import_module_and_submodules(package_name: str,
                     # skip tests
                     continue
                 subpackage = f'{package_name}.{name}'
-                import_module_and_submodules(subpackage, exclude=exclude)
+                import_module_and_submodules(
+                    subpackage, include=include, exclude=exclude)
         except SystemExit as e:
             # this case is specific for easy_cv's tools/predict.py exit
             logger.warning(

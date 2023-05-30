@@ -35,8 +35,9 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
         self.class_prompt = kwargs.pop('class_prompt', "a photo of dog")
         self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
-        self.pretrained_model_name_or_path = kwargs.pop('pretrained_model_name_or_path', "runwayml/stable-diffusion-v1-5")
         self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
+        self.pretrained_model_name_or_path = kwargs.pop('pretrained_model_name_or_path', 
+                                                        "runwayml/stable-diffusion-v1-5")
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -93,8 +94,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.print_hook_info()
         self.set_checkpoint_file_to_hook(checkpoint_path, load_all_state,
                                          kwargs.get('strict', False))
-        self.unet.train()
-        self.unet = self.unet.to(self.device)
+        self.model.train()
+        self.model = self.model.to(self.device)
         self.vae = self.vae.to(self.device)
         self.text_encoder = self.text_encoder.to(self.device)
 
@@ -249,6 +250,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
             result = {OutputKeys.LOSS: loss}
+    
         return result
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):

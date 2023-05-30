@@ -7,9 +7,8 @@ from torch import nn
 import torch.nn.functional as F
 from torch import distributed as dist
 
-from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
-                       DPMSolverMultistepScheduler, UNet2DConditionModel,
-                       utils)
+from diffusers import (AutoencoderKL, DDPMScheduler,
+                       UNet2DConditionModel)
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
@@ -19,12 +18,10 @@ from modelscope.utils.data_utils import to_device
 from modelscope.utils.torch_utils import is_dist
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.constant import ModeKeys, TrainerStages
-from modelscope.utils.file_utils import func_receive_dict_inputs
-
 
 class UnetModel(TorchModel):
-    def __init__(self, model_dir, unet, *args, **kwargs):
-        super().__init__(model_dir, *args, **kwargs)
+    def __init__(self, unet, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.model = unet
     
     def forward(self, *args, **kwargs):
@@ -35,12 +32,11 @@ class UnetModel(TorchModel):
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
-        # self.prompt = kwargs['prompt']
-        # self.prior_loss_weight = kwargs['prior_loss_weight']
-        # self.num_class_images = kwargs['num_class_images']
-        self.with_prior_preservation = False
-        self.pretrained_model_name_or_path = "runwayml/stable-diffusion-v1-5"
-        self.instance_prompt = kwargs['instance_prompt']
+        self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
+        self.class_prompt = kwargs.pop('class_prompt', "a photo of dog")
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
+        self.pretrained_model_name_or_path = kwargs.pop('pretrained_model_name_or_path', "runwayml/stable-diffusion-v1-5")
+        self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -70,7 +66,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         
-        return UnetModel(f"{self.pretrained_model_name_or_path}/unet", self.unet)
+        return UnetModel(self.unet)
 
     def train(self,
               checkpoint_path=None,

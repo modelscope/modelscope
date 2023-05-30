@@ -42,8 +42,7 @@ if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
         kwargs = dict(
             model=training_args.model,
             work_dir=training_args.work_dir,
-            instance_prompt=training_args.instance_prompt,
-            with_prior_preservation=training_args.with_prior_preservation,
+            model_revision="v1.0.4",
             train_dataset=train_dataset,
             eval_dataset=validation_dataset,
             cfg_modify_fn=cfg_modify_fn_dreambooth)

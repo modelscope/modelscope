@@ -1,0 +1,14 @@
+PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/finetune_stable_diffusion.py \
+    --finetune_mode 'dreambooth' \
+    --model 'AI-ModelScope/stable-diffusion-v1-5' \
+    --instance_prompt 'a photo of sks dog' \
+    --with_prior_preservation false \
+    --work_dir './tmp/stable_diffusion_tuning' \
+    --train_dataset_name 'buptwq/lora-stable-diffusion-finetune-dog' \
+    --max_epochs 400 \
+    --save_ckpt_strategy 'by_epoch' \
+    --logging_interval 100 \
+    --train.dataloader.workers_per_gpu 0 \
+    --evaluation.dataloader.workers_per_gpu 0 \
+    --train.optimizer.lr 5e-6 \
+    --use_model_config true

@@ -33,8 +33,7 @@ def cfg_modify_fn_dreambooth(cfg):
     cfg.train.lr_scheduler = {
         'type': 'LambdaLR',
         'lr_lambda': lambda _: 1
-    }
-    cfg.train.optimizer.lr = 5e-6                    
+    }                 
     return cfg
 
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:

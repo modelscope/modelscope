@@ -25,7 +25,8 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
             split='validation',
             download_mode=DownloadMode.FORCE_REDOWNLOAD)
 
-        self.max_epochs = 400
+        self.max_epochs = 500
+        self.lr = 5e-6
 
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
@@ -36,23 +37,28 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_efficient_diffusion_tuning_lora_train(self):
-        model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
+    def test_dreambooth_diffusion_train(self):
+        model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         def cfg_modify_fn(cfg):
             cfg.train.max_epochs = self.max_epochs
-            cfg.model.inference = False
+            cfg.train.lr_scheduler = {
+                'type': 'LambdaLR',
+                'lr_lambda': lambda _: 1
+            }
+            cfg.train.optimizer.lr = self.lr
             return cfg
 
         kwargs = dict(
             model=model_id,
+            model_revision="v1.0.4",
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn)
 
         trainer = build_trainer(
-            name=Trainers.efficient_diffusion_tuning, default_args=kwargs)
+            name=Trainers.dreambooth_diffusion, default_args=kwargs)
         trainer.train()
         result = trainer.evaluate()
         print(f'Dreambooth-diffusion train output: {result}.')
@@ -63,44 +69,44 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_efficient_diffusion_tuning_lora_eval(self):
-        model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
-
-        def cfg_modify_fn(cfg):
-            cfg.model.inference = False
-            return cfg
+    def test_dreambooth_diffusion_eval(self):
+        model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         kwargs = dict(
             model=model_id,
+            model_revision="v1.0.4",
             work_dir=self.tmp_dir,
             train_dataset=None,
-            eval_dataset=self.eval_dataset,
-            cfg_modify_fn=cfg_modify_fn)
+            eval_dataset=self.eval_dataset)
 
         trainer = build_trainer(
-            name=Trainers.efficient_diffusion_tuning, default_args=kwargs)
+            name=Trainers.dreambooth_diffusion, default_args=kwargs)
         result = trainer.evaluate()
         print(f'Dreambooth-diffusion eval output: {result}.')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_efficient_diffusion_tuning_control_lora_train(self):
-        model_id = 'damo/multi-modal_efficient-diffusion-tuning-control-lora'
+    def test_dreambooth_diffusion_train(self):
+        model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         def cfg_modify_fn(cfg):
             cfg.train.max_epochs = self.max_epochs
-            cfg.train.lr_scheduler.T_max = self.max_epochs
-            cfg.model.inference = False
+            cfg.train.lr_scheduler = {
+                'type': 'LambdaLR',
+                'lr_lambda': lambda _: 1
+            }
+            cfg.train.optimizer.lr = self.lr
             return cfg
 
         kwargs = dict(
             model=model_id,
+            model_revision="v1.0.4",
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn)
 
         trainer = build_trainer(
-            name=Trainers.efficient_diffusion_tuning, default_args=kwargs)
+            name=Trainers.dreambooth_diffusion, default_args=kwargs)
         trainer.train()
         result = trainer.evaluate()
         print(
@@ -112,22 +118,18 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_efficient_diffusion_tuning_control_lora_eval(self):
-        model_id = 'damo/multi-modal_efficient-diffusion-tuning-control-lora'
-
-        def cfg_modify_fn(cfg):
-            cfg.model.inference = False
-            return cfg
+    def test_dreambooth_diffusion_eval(self):
+        model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         kwargs = dict(
             model=model_id,
+            model_revision="v1.0.4",
             work_dir=self.tmp_dir,
             train_dataset=None,
-            eval_dataset=self.eval_dataset,
-            cfg_modify_fn=cfg_modify_fn)
+            eval_dataset=self.eval_dataset)
 
         trainer = build_trainer(
-            name=Trainers.efficient_diffusion_tuning, default_args=kwargs)
+            name=Trainers.dreambooth_diffusion, default_args=kwargs)
         result = trainer.evaluate()
         print(
             f'Dreambooth-diffusion eval output: {result}.')

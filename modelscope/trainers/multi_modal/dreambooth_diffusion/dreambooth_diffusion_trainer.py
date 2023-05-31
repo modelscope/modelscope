@@ -6,9 +6,13 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch import distributed as dist
+from torch.utils.data import Dataset
+import hashlib
+from pathlib import Path
+from tqdm.auto import tqdm
 
 from diffusers import (AutoencoderKL, DDPMScheduler,
-                       UNet2DConditionModel)
+                       UNet2DConditionModel, DiffusionPipeline)
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
@@ -28,16 +32,37 @@ class UnetModel(TorchModel):
         return self.model.forward(*args, **kwargs)
 
 
+class PromptDataset(Dataset):
+    "A simple dataset to prepare the prompts to generate class images on multiple GPUs."
+
+    def __init__(self, prompt, num_samples):
+        self.prompt = prompt
+        self.num_samples = num_samples
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, index):
+        example = {}
+        example["prompt"] = self.prompt
+        example["index"] = index
+        return example
+
+
 @TRAINERS.register_module(module_name=Trainers.dreambooth_diffusion)
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
+        self.revision = kwargs.pop("revision", None)
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
         self.class_prompt = kwargs.pop('class_prompt', "a photo of dog")
+        self.sample_batch_size = kwargs.pop('sample_batch_size', 4)
         self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
         self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
         self.pretrained_model_name_or_path = kwargs.pop('pretrained_model_name_or_path', 
                                                         "runwayml/stable-diffusion-v1-5")
+        self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
+        self.num_class_images = kwargs.pop("num_class_images", 200)
         super().__init__(*args, **kwargs)
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
@@ -46,22 +71,22 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.pretrained_model_name_or_path,
             subfolder='tokenizer',
-            revision=None,
+            revision=self.revision,
             use_fast=False)
         self.vae = AutoencoderKL.from_pretrained(
             self.pretrained_model_name_or_path,
             subfolder='vae',
-            revision=None)
+            revision=self.revision)
         self.unet = UNet2DConditionModel.from_pretrained(
             self.pretrained_model_name_or_path,
             subfolder='unet',
-            revision=None)
+            revision=self.revision)
         # import correct text encoder class
         text_encoder_cls = self.import_model_class_from_model_name_or_path(self.pretrained_model_name_or_path)
         self.text_encoder = text_encoder_cls.from_pretrained(
             self.pretrained_model_name_or_path, 
             subfolder="text_encoder", 
-            revision=None)
+            revision=self.revision)
         if self.vae is not None:
             self.vae.requires_grad_(False)
         if self.text_encoder is not None:
@@ -84,7 +109,39 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             kwargs:
                 strict(`boolean`): If strict, any unmatched keys will cause an error.
         """
+        # Generate class images if prior preservation is enabled.
+        if self.with_prior_preservation:
+            class_images_dir = Path(self.class_data_dir)
+            if not class_images_dir.exists():
+                class_images_dir.mkdir(parents=True)
+            cur_class_images = len(list(class_images_dir.iterdir()))
 
+            if cur_class_images < self.num_class_images:
+                pipeline = DiffusionPipeline.from_pretrained(
+                    self.pretrained_model_name_or_path,
+                    torch_dtype=torch.float32,
+                    safety_checker=None,
+                    revision=None,
+                )
+                pipeline.set_progress_bar_config(disable=True)
+
+                num_new_images = self.num_class_images - cur_class_images
+                sample_dataset = PromptDataset(self.class_prompt, num_new_images)
+                sample_dataloader = torch.utils.data.DataLoader(sample_dataset, batch_size=self.sample_batch_size)
+
+                pipeline.to(self.device)
+
+                for example in tqdm(sample_dataloader, desc="Generating class images"):
+                    images = pipeline(example["prompt"]).images
+                    for i, image in enumerate(images):
+                        hash_image = hashlib.sha1(image.tobytes()).hexdigest()
+                        image_filename = class_images_dir / f"{example['index'][i] + cur_class_images}-{hash_image}.jpg"
+                        image.save(image_filename)
+
+                del pipeline
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+        
         self._mode = ModeKeys.TRAIN
         self.train_dataloader = self.get_train_dataloader()
         self.data_loader = self.train_dataloader

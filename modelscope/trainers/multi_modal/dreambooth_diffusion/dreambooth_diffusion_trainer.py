@@ -349,10 +349,9 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                     self.num_class_images = min(len(self.class_images_path), self.num_class_images)
                 else:
                     self.num_class_images = len(self.class_images_path)
-                self._length = max(self.num_class_images, self.num_instance_images)
                 self.class_prompt = self.class_prompt
 
-                index = random.randint(0, self._length)
+                index = random.randint(0, self.num_class_images)
                 class_image = Image.open(self.class_images_path[index % self.num_class_images])
                 class_image = exif_transpose(class_image)
 

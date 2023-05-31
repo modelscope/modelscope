@@ -8,11 +8,15 @@ import torch.nn.functional as F
 from torch import distributed as dist
 from torch.utils.data import Dataset
 import hashlib
+import random
+from PIL import Image
+from PIL.ImageOps import exif_transpose
 from pathlib import Path
 from tqdm.auto import tqdm
 
 from diffusers import (AutoencoderKL, DDPMScheduler,
                        UNet2DConditionModel, DiffusionPipeline)
+import transforms
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
@@ -57,7 +61,9 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
         self.class_prompt = kwargs.pop('class_prompt', "a photo of dog")
         self.sample_batch_size = kwargs.pop('sample_batch_size', 4)
+        self.center_crop = kwargs.pop('center_crop', False)
         self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
+        self.tokenizer_max_length = kwargs.pop('tokenizer_max_length', None)
         self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
         self.pretrained_model_name_or_path = kwargs.pop('pretrained_model_name_or_path', 
                                                         "runwayml/stable-diffusion-v1-5")
@@ -186,6 +192,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             model_input = pixel_values
         noise = torch.randn_like(model_input)
         bsz = model_input.shape[0]
+
         # Sample a random timestep for each image
         timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (bsz,), device=model_input.device)
         timesteps = timesteps.long()
@@ -202,6 +209,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         model_pred = model(noisy_model_input, timesteps, encoder_hidden_states).sample
         if model_pred.shape[1] == 6:
             model_pred, _ = torch.chunk(model_pred, 2, dim=1)
+        
         # Get the target for loss depending on the prediction type
         if self.noise_scheduler.config.prediction_type == "epsilon":
             target = noise
@@ -316,13 +324,56 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
         return prompt_embeds
     
-    def data_assemble(self, inputs, with_prior_preservation=False):
+    def data_assemble(self, inputs):
         batch = {}
         batch["pixel_values"] = inputs["target"]
         text_inputs = self.tokenize_prompt(self.tokenizer, self.instance_prompt)
         batch["input_ids"] = text_inputs.input_ids
         batch["attention_mask"] = text_inputs.attention_mask
 
+        # prepare prior loss dataset
+        if self.with_prior_preservation: 
+            if self.class_data_dir is not None:
+                image_transforms = transforms.Compose(
+                    [
+                        transforms.Resize(512, interpolation=transforms.InterpolationMode.BILINEAR),
+                        transforms.CenterCrop(512) if self.center_crop else transforms.RandomCrop(512),
+                        transforms.ToTensor(),
+                        transforms.Normalize([0.5], [0.5]),
+                    ]
+                )
+                self.class_data_root = Path(self.class_data_dir)
+                self.class_data_root.mkdir(parents=True, exist_ok=True)
+                self.class_images_path = list(self.class_data_root.iterdir())
+                if self.num_class_images is not None:
+                    self.num_class_images = min(len(self.class_images_path), self.num_class_images)
+                else:
+                    self.num_class_images = len(self.class_images_path)
+                self._length = max(self.num_class_images, self.num_instance_images)
+                self.class_prompt = self.class_prompt
+
+                index = random.randint(0, self._length)
+                class_image = Image.open(self.class_images_path[index % self.num_class_images])
+                class_image = exif_transpose(class_image)
+
+                if not class_image.mode == "RGB":
+                    class_image = class_image.convert("RGB")
+                
+                pixel_values += image_transforms(class_image)
+                batch["pixel_values"] = torch.stack(pixel_values)
+
+                class_text_inputs = self.tokenize_prompt(
+                    self.tokenizer, self.class_prompt, tokenizer_max_length=self.tokenizer_max_length
+                )
+                input_ids += class_text_inputs.input_ids
+                batch["input_ids"] = torch.cat(input_ids, dim=0)
+
+                batch["attention_mask"] += class_text_inputs.attention_mask
+            else:
+                raise ValueError(
+                    f"Prepare prior preservation dataset error."
+                    f"Parameter with_prior_preservation is True but class_data_dir is None")
+        
         return batch
 
     def tokenize_prompt(self, tokenizer, prompt, tokenizer_max_length=None):

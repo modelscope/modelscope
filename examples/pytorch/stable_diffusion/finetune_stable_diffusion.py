@@ -32,7 +32,8 @@ def cfg_modify_fn_lora(cfg):
 def cfg_modify_fn_dreambooth(cfg):
     cfg.train.lr_scheduler = {
         'type': 'LambdaLR',
-        'lr_lambda': lambda _: 1
+        'lr_lambda': lambda _: 1,
+        'last_epoch': -1
     }                 
     return cfg
 

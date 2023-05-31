@@ -16,7 +16,7 @@ from tqdm.auto import tqdm
 
 from diffusers import (AutoencoderKL, DDPMScheduler,
                        UNet2DConditionModel, DiffusionPipeline)
-import transforms
+from torchvision import transforms
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys

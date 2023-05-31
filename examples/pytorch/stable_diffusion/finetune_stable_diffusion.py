@@ -1,4 +1,4 @@
-import sys
+import argparse
 
 from dataclasses import dataclass, field
 from modelscope.metainfo import Trainers
@@ -6,9 +6,15 @@ from modelscope.msdatasets import MsDataset
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--finetune_mode",
+                    type=str,
+                    help="dreambooth or lora",
+                    default='lora')
+args = parser.parse_args()
 
 # choose finetune stable diffusion method, default choice is Lora
-if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
+if args.finetune_mode == "dreambooth":
     training_args = TrainingArgs(task='diffusers-stable-diffusion').parse_cli()
 else:
     training_args = TrainingArgs(task='efficient-diffusion-tuning').parse_cli()
@@ -36,7 +42,7 @@ def cfg_modify_fn_dreambooth(cfg):
     }                 
     return cfg
 
-if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
+if args.finetune_mode == "dreambooth":
     try:
         kwargs = dict(
             model=training_args.model,

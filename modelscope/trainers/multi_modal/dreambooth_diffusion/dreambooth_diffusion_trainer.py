@@ -358,14 +358,17 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 if not class_image.mode == "RGB":
                     class_image = class_image.convert("RGB")
                 
-                pixel_values += image_transforms(class_image)
+                pixel_values = []
+                for pixel_value in batch["pixel_values"]:
+                    pixel_values.append(pixel_value)
+                pixel_values.append(image_transforms(class_image).to(self.device))
                 batch["pixel_values"] = torch.stack(pixel_values)
 
                 class_text_inputs = self.tokenize_prompt(
                     self.tokenizer, self.class_prompt, tokenizer_max_length=self.tokenizer_max_length
                 )
-                input_ids += class_text_inputs.input_ids
-                batch["input_ids"] = torch.cat(input_ids, dim=0)
+                input_ids = class_text_inputs.input_ids
+                batch["input_ids"] = torch.cat((batch["input_ids"], input_ids), dim=0)
 
                 batch["attention_mask"] += class_text_inputs.attention_mask
             else:

@@ -63,7 +63,7 @@ class PromptDataset(Dataset):
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
     @staticmethod
-    def _bin_file():
+    def _bin_file(model):
         """Get bin file path for diffuser.
         """
         default_bin_file = 'diffusion_pytorch_model.bin'
@@ -335,13 +335,13 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
     
         return result
 
-    # def state_dict(self, destination=None, prefix='', keep_vars=False):
-    #     return self.model.state_dict(destination, prefix, keep_vars)
+    def state_dict(self, destination=None, prefix='', keep_vars=False):
+        return self.model.state_dict(destination, prefix, keep_vars)
 
-    # def load_state_dict(self,
-    #                     state_dict: 'OrderedDict[str, Tensor]',
-    #                     strict: bool = True):
-    #     return self.model.load_state_dict(state_dict, strict)
+    def load_state_dict(self,
+                        state_dict: 'OrderedDict[str, Tensor]',
+                        strict: bool = True):
+        return self.model.load_state_dict(state_dict, strict)
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):
         text_encoder_config = PretrainedConfig.from_pretrained(

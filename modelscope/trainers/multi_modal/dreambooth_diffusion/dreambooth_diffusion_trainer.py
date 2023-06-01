@@ -24,6 +24,7 @@ from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
 from modelscope.models.base import TorchModel
+from modelscope.trainers.hooks.checkpoint import CheckpointProcessor
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.torch_utils import is_dist
 from modelscope.utils.constant import ModeKeys
@@ -39,44 +40,6 @@ class UnetModel(TorchModel):
     def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
 
-    def save_pretrained(self,
-                        target_folder: Union[str, os.PathLike],
-                        save_checkpoint_names: Union[str, List[str]] = None,
-                        save_function: Callable = partial(
-                            save_checkpoint, with_meta=False),
-                        config: Optional[dict] = None,
-                        save_config_function: Callable = save_configuration,
-                        **kwargs):
-        """save the pretrained model, its configuration and other related files to a directory,
-            so that it can be re-loaded
-
-        Args:
-            target_folder (Union[str, os.PathLike]):
-            Directory to which to save. Will be created if it doesn't exist.
-
-            save_checkpoint_names (Union[str, List[str]]):
-            The checkpoint names to be saved in the target_folder
-
-            save_function (Callable, optional):
-            The function to use to save the state dictionary.
-
-            config (Optional[dict], optional):
-            The config for the configuration.json, might not be identical with model.config
-
-            save_config_function (Callble, optional):
-            The function to use to save the configuration.
-
-        """
-        if config is None and hasattr(self, 'cfg'):
-            config = self.cfg
-
-        save_checkpoint_names = "diffusion_pytorch_model.bin"
-
-        save_pretrained(self, target_folder, save_checkpoint_names,
-                        save_function, **kwargs)
-
-        if config is not None:
-            save_config_function(target_folder, config)
 
 
 class PromptDataset(Dataset):
@@ -96,6 +59,16 @@ class PromptDataset(Dataset):
         return example
 
 
+class DreamboothCheckpointProcessor(CheckpointProcessor):
+
+    @staticmethod
+    def _bin_file(model):
+        """Get bin file path for diffuser.
+        """
+        default_bin_file = 'diffusion_pytorch_model.bin'
+        return default_bin_file
+
+
 @TRAINERS.register_module(module_name=Trainers.dreambooth_diffusion)
 class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
@@ -113,6 +86,9 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
         self.num_class_images = kwargs.pop("num_class_images", 200)
         super().__init__(*args, **kwargs)
+        print("-------self.hooks: ", self.hooks)
+        ckpt_hook = filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks)[0]
+        ckpt_hook.set_processor(DreamboothCheckpointProcessor())
 
     def build_model(self) -> Union[nn.Module, TorchModel]:
         self.noise_scheduler = DDPMScheduler.from_pretrained(
@@ -350,6 +326,14 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             result = {OutputKeys.LOSS: loss}
     
         return result
+
+    # def state_dict(self, destination=None, prefix='', keep_vars=False):
+    #     return self.model.state_dict(destination, prefix, keep_vars)
+
+    # def load_state_dict(self,
+    #                     state_dict: 'OrderedDict[str, Tensor]',
+    #                     strict: bool = True):
+    #     return self.model.load_state_dict(state_dict, strict)
 
     def import_model_class_from_model_name_or_path(self, pretrained_model_name_or_path: str):
         text_encoder_config = PretrainedConfig.from_pretrained(

@@ -24,7 +24,8 @@ from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
 from modelscope.models.base import TorchModel
-from modelscope.trainers.hooks.checkpoint import CheckpointProcessor
+from modelscope.trainers.hooks.checkpoint.checkpoint_processor import CheckpointProcessor
+from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.torch_utils import is_dist
 from modelscope.utils.constant import ModeKeys
@@ -39,7 +40,6 @@ class UnetModel(TorchModel):
     
     def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
-
 
 
 class PromptDataset(Dataset):
@@ -86,8 +86,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
         self.num_class_images = kwargs.pop("num_class_images", 200)
         super().__init__(*args, **kwargs)
-        print("-------self.hooks: ", self.hooks)
-        ckpt_hook = filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks)[0]
+
+        ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
         ckpt_hook.set_processor(DreamboothCheckpointProcessor())
 
     def build_model(self) -> Union[nn.Module, TorchModel]:

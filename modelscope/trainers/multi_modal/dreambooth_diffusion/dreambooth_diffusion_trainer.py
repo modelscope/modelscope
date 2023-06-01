@@ -34,9 +34,10 @@ from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
                                          save_pretrained)
 
 class UnetModel(TorchModel):
-    def __init__(self, unet, *args, **kwargs):
+    def __init__(self, unet, model_dir, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model = unet
+        self.model_dir = model_dir
     
     def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
@@ -62,7 +63,7 @@ class PromptDataset(Dataset):
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
     @staticmethod
-    def _bin_file(model):
+    def _bin_file():
         """Get bin file path for diffuser.
         """
         default_bin_file = 'diffusion_pytorch_model.bin'
@@ -106,18 +107,25 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             self.pretrained_model_name_or_path,
             subfolder='unet',
             revision=self.revision)
+        
         # import correct text encoder class
         text_encoder_cls = self.import_model_class_from_model_name_or_path(self.pretrained_model_name_or_path)
         self.text_encoder = text_encoder_cls.from_pretrained(
             self.pretrained_model_name_or_path, 
             subfolder="text_encoder", 
             revision=self.revision)
+
         if self.vae is not None:
             self.vae.requires_grad_(False)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         
-        return UnetModel(self.unet)
+        # Copy configuration files from the original folder
+        self.model_dir += '/unet'
+        if not os.path.exists(self.model_dir):
+            raise ValueError(f"File address does not exist {self.model_dir}")
+
+        return UnetModel(self.unet, self.model_dir)
 
     def train(self,
               checkpoint_path=None,

@@ -1,7 +1,4 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Union
-from collections.abc import Mapping
-
 import os
 import torch
 from torch import nn
@@ -14,8 +11,7 @@ from PIL import Image
 from PIL.ImageOps import exif_transpose
 from pathlib import Path
 from tqdm.auto import tqdm
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Union
 
 from diffusers import (AutoencoderKL, DDPMScheduler,
                        UNet2DConditionModel, DiffusionPipeline)
@@ -30,8 +26,6 @@ from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.torch_utils import is_dist
 from modelscope.utils.constant import ModeKeys
 from modelscope.trainers.trainer import EpochBasedTrainer
-from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
-                                         save_pretrained)
 
 class UnetModel(TorchModel):
     def __init__(self, unet, model_dir, *args, **kwargs):
@@ -247,6 +241,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             target = self.noise_scheduler.get_velocity(model_input, noise, timesteps)
         else:
             raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
+        
         if self.with_prior_preservation:
             # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
             model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)

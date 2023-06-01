@@ -7,9 +7,19 @@ from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 
 
+@dataclass(init=False)
+class DreamboothDiffusionArguments(TrainingArgs):
+
+    revision: str = field(
+        default=None,
+        metadata={
+            'help': 'The model revision of stable diffusion.'
+        })
+
+
 # choose finetune stable diffusion method, default choice is Lora
 if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
-    training_args = TrainingArgs(task='diffusers-stable-diffusion').parse_cli()
+    training_args = DreamboothDiffusionArguments(task='diffusers-stable-diffusion').parse_cli()
 else:
     training_args = TrainingArgs(task='efficient-diffusion-tuning').parse_cli()
 
@@ -42,7 +52,8 @@ if "--finetune_mode" in sys.argv and "dreambooth" in sys.argv:
         kwargs = dict(
             model=training_args.model,
             work_dir=training_args.work_dir,
-            model_revision="v1.0.4",
+            # model_revision="v1.0.4",
+            model_revision=args.revision,
             train_dataset=train_dataset,
             eval_dataset=validation_dataset,
             cfg_modify_fn=cfg_modify_fn_dreambooth)
@@ -60,5 +71,5 @@ else:
         trainer: EpochBasedTrainer = build_trainer(name='trainer', default_args=kwargs)
     except Exception as e:
         print(f'Build lora trainer error: {e}')
-
+print("-------revision: ",args.revision)
 trainer.train()

@@ -22,10 +22,9 @@ from modelscope.metainfo import Trainers
 from modelscope.outputs import OutputKeys
 from modelscope.models.base import TorchModel
 from modelscope.trainers.builder import TRAINERS
-from modelscope.utils.data_utils import to_device
 from modelscope.utils.torch_utils import is_dist
+from modelscope.utils.constant import ModeKeys
 from modelscope.trainers.trainer import EpochBasedTrainer
-from modelscope.utils.constant import ModeKeys, TrainerStages
 
 class UnetModel(TorchModel):
     def __init__(self, unet, *args, **kwargs):
@@ -127,7 +126,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                     self.pretrained_model_name_or_path,
                     torch_dtype=torch.float32,
                     safety_checker=None,
-                    revision=None,
+                    revision=self.revision,
                 )
                 pipeline.set_progress_bar_config(disable=True)
 
@@ -181,6 +180,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         """
         model.train()
         self._mode = ModeKeys.TRAIN
+
         # inputs
         batch = self.data_assemble(inputs)
         pixel_values = batch["pixel_values"].to(dtype=torch.float32)
@@ -190,6 +190,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             model_input = model_input * self.vae.config.scaling_factor
         else:
             model_input = pixel_values
+
         noise = torch.randn_like(model_input)
         bsz = model_input.shape[0]
 
@@ -205,6 +206,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             batch["attention_mask"],
             text_encoder_use_attention_mask=False,
         )
+
         # Predict the noise residual by unet model
         model_pred = model(noisy_model_input, timesteps, encoder_hidden_states).sample
         if model_pred.shape[1] == 6:
@@ -228,6 +230,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             # Add the prior loss to the instance loss.
             loss = loss + self.prior_loss_weight * prior_loss
         else:
+            # Compute instance loss
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
         train_outputs = {OutputKeys.LOSS: loss}
         print("loss: ", loss)
@@ -272,15 +275,34 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 batch["attention_mask"],
                 text_encoder_use_attention_mask=False,
             )
+
             # Predict reslut by unet model
             model_pred = self.model(noisy_model_input, timesteps, encoder_hidden_states).sample
+            if model_pred.shape[1] == 6:
+                model_pred, _ = torch.chunk(model_pred, 2, dim=1)
+            
+            # Get the target for loss depending on the prediction type
             if self.noise_scheduler.config.prediction_type == "epsilon":
                 target = noise
             elif self.noise_scheduler.config.prediction_type == "v_prediction":
                 target = self.noise_scheduler.get_velocity(model_input, noise, timesteps)
             else:
                 raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
-            loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+            
+            if self.with_prior_preservation:
+                # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
+                model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
+                target, target_prior = torch.chunk(target, 2, dim=0)
+                # Compute instance loss
+                loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                # Compute prior loss
+                prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+                # Add the prior loss to the instance loss.
+                loss = loss + self.prior_loss_weight * prior_loss
+            else:
+                # Compute instance loss
+                loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+            
             result = {OutputKeys.LOSS: loss}
     
         return result
@@ -289,7 +311,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         text_encoder_config = PretrainedConfig.from_pretrained(
             pretrained_model_name_or_path,
             subfolder="text_encoder",
-            revision=None
+            revision=self.revision
         )
         model_class = text_encoder_config.architectures[0]
 

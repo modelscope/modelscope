@@ -2,6 +2,7 @@
 from typing import Union
 from collections.abc import Mapping
 
+import os
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -13,6 +14,8 @@ from PIL import Image
 from PIL.ImageOps import exif_transpose
 from pathlib import Path
 from tqdm.auto import tqdm
+from functools import partial
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from diffusers import (AutoencoderKL, DDPMScheduler,
                        UNet2DConditionModel, DiffusionPipeline)
@@ -25,6 +28,8 @@ from modelscope.trainers.builder import TRAINERS
 from modelscope.utils.torch_utils import is_dist
 from modelscope.utils.constant import ModeKeys
 from modelscope.trainers.trainer import EpochBasedTrainer
+from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
+                                         save_pretrained)
 
 class UnetModel(TorchModel):
     def __init__(self, unet, *args, **kwargs):
@@ -33,6 +38,45 @@ class UnetModel(TorchModel):
     
     def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
+
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = partial(
+                            save_checkpoint, with_meta=False),
+                        config: Optional[dict] = None,
+                        save_config_function: Callable = save_configuration,
+                        **kwargs):
+        """save the pretrained model, its configuration and other related files to a directory,
+            so that it can be re-loaded
+
+        Args:
+            target_folder (Union[str, os.PathLike]):
+            Directory to which to save. Will be created if it doesn't exist.
+
+            save_checkpoint_names (Union[str, List[str]]):
+            The checkpoint names to be saved in the target_folder
+
+            save_function (Callable, optional):
+            The function to use to save the state dictionary.
+
+            config (Optional[dict], optional):
+            The config for the configuration.json, might not be identical with model.config
+
+            save_config_function (Callble, optional):
+            The function to use to save the configuration.
+
+        """
+        if config is None and hasattr(self, 'cfg'):
+            config = self.cfg
+
+        save_checkpoint_names = "diffusion_pytorch_model.bin"
+
+        save_pretrained(self, target_folder, save_checkpoint_names,
+                        save_function, **kwargs)
+
+        if config is not None:
+            save_config_function(target_folder, config)
 
 
 class PromptDataset(Dataset):

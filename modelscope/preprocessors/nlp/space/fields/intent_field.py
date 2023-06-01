@@ -344,7 +344,7 @@ class BPETextField(object):
             print(f'Saved {len(examples)} examples (elapsed {elapsed:.2f}s)')
         else:
             print(f"Saving examples to '{filename}' ...")
-            raise ValueError(f'Unsport file format: {filename}')
+            raise ValueError(f'Unsupport file format: {filename}')
 
     def load_examples(self, filename):
         start = time.time()

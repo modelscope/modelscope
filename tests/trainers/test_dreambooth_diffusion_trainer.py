@@ -51,7 +51,7 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
 
         kwargs = dict(
             model=model_id,
-            model_revision="v1.0.4",
+            model_revision="v1.0.5",
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
@@ -74,7 +74,7 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
 
         kwargs = dict(
             model=model_id,
-            model_revision="v1.0.4",
+            model_revision="v1.0.5",
             work_dir=self.tmp_dir,
             train_dataset=None,
             eval_dataset=self.eval_dataset)
@@ -99,7 +99,7 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
 
         kwargs = dict(
             model=model_id,
-            model_revision="v1.0.4",
+            model_revision="v1.0.5",
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
@@ -123,7 +123,7 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
 
         kwargs = dict(
             model=model_id,
-            model_revision="v1.0.4",
+            model_revision="v1.0.5",
             work_dir=self.tmp_dir,
             train_dataset=None,
             eval_dataset=self.eval_dataset)

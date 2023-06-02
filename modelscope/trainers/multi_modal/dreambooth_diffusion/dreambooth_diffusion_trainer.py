@@ -256,7 +256,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             # Compute instance loss
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
         train_outputs = {OutputKeys.LOSS: loss}
-        print("loss: ", loss)
 
         # add model output info to log
         if 'log_vars' not in train_outputs:

@@ -892,6 +892,7 @@ class MultiModalTrainers(object):
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    stable_diffusion = 'stable_diffusion'
 
 
 class AudioTrainers(object):

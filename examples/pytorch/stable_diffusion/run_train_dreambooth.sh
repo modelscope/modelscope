@@ -1,7 +1,7 @@
 PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/finetune_stable_diffusion.py \
     --finetune_mode 'dreambooth' \
     --model 'AI-ModelScope/stable-diffusion-v1-5' \
-    --model_revision 'v1.0.4' \
+    --model_revision 'v1.0.5' \
     --instance_prompt 'a photo of sks dog' \
     --with_prior_preservation false \
     --prior_loss_weight 1.0 \

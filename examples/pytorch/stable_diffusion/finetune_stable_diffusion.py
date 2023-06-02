@@ -17,7 +17,7 @@ class DreamboothDiffusionArguments(TrainingArgs):
         })
     
     model_revision: str = field(
-        default='v1.0.4',
+        default='v1.0.5',
         metadata={
             'help': 'The model revision of stable diffusion.'
         })

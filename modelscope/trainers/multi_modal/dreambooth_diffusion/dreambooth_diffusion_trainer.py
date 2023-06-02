@@ -18,7 +18,7 @@ from diffusers import (AutoencoderKL, DDPMScheduler,
 from torchvision import transforms
 from transformers import AutoTokenizer, PretrainedConfig
 from modelscope.metainfo import Trainers
-from modelscope.outputs import OutputKeys
+from modelscope.outputs import OutputKeys, ModelOutputBase
 from modelscope.models.base import TorchModel
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import CheckpointProcessor
 from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
@@ -255,7 +255,13 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         else:
             # Compute instance loss
             loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+
         train_outputs = {OutputKeys.LOSS: loss}
+
+        if isinstance(train_outputs, ModelOutputBase):
+            train_outputs = train_outputs.to_dict()
+        if not isinstance(train_outputs, dict):
+            raise TypeError('"model.forward()" must return a dict')
 
         # add model output info to log
         if 'log_vars' not in train_outputs:

@@ -75,26 +75,6 @@ class StableDiffusion(TorchModel):
         if self.unet is not None:
             self.unet.requires_grad_(False)
 
-    # def train(self, mode: bool = True):
-    #     self.training = mode
-    #     if hasattr(self, 'tuner'):
-    #         self.tuner.train(mode=mode)
-
-    # def load_state_dict(self,
-    #                     state_dict: Mapping[str, Any],
-    #                     strict: bool = True):
-    #     if hasattr(self, 'tuner'):
-    #         self.tuner.load_state_dict(state_dict=state_dict, strict=strict)
-    #     else:
-    #         return super().load_state_dict(
-    #             state_dict=state_dict, strict=strict)
-
-    # def state_dict(self):
-    #     if hasattr(self, 'tuner'):
-    #         return self.tuner.state_dict()
-    #     else:
-    #         return super().state_dict()
-
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.
 
@@ -154,43 +134,3 @@ class StableDiffusion(TorchModel):
             model_pred.float(), target.float(), reduction='mean')
         output = {OutputKeys.LOSS: loss}
         return output
-
-    # def parameters(self, recurse: bool = True):
-    #     if hasattr(self, 'tuner'):
-    #         return self.tuner.parameters(recurse=recurse)
-    #     else:
-    #         return super().parameters(recurse=recurse)
-
-    # def save_pretrained(self,
-    #                     target_folder: Union[str, os.PathLike],
-    #                     save_checkpoint_names: Union[str, List[str]] = None,
-    #                     save_function: Callable = partial(
-    #                         save_checkpoint, with_meta=False),
-    #                     config: Optional[dict] = None,
-    #                     save_config_function: Callable = save_configuration,
-    #                     **kwargs):
-
-    #     if config is None and hasattr(self, 'cfg'):
-    #         config = self.cfg
-
-    #     config['model']['inference'] = True
-    #     super().save_pretrained(target_folder, save_checkpoint_names,
-    #                             save_function, config, save_config_function,
-    #                             **kwargs)
-
-    # @classmethod
-    # def _instantiate(cls, model_dir, **kwargs):
-    #     config = Config.from_file(osp.join(model_dir, ModelFile.CONFIGURATION))
-    #     for k, v in kwargs.items():
-    #         config.model[k] = v
-
-    #     model = EfficientStableDiffusion(
-    #         model_dir,
-    #         pretrained_model_name_or_path=config.model.
-    #         pretrained_model_name_or_path,
-    #         tuner_name=config.model.tuner_name,
-    #         tuner_config=config.model.tuner_config,
-    #         pretrained_tuner=config.model.get('pretrained_tuner', None),
-    #         inference=config.model.get('inference', False))
-    #     model.config = config
-    #     return model

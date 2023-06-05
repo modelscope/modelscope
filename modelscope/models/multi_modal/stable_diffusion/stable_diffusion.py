@@ -1,6 +1,4 @@
 # Copyright 2023-2024 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-# The implementation is adopted from HighCWu,
-# made pubicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
 import os
 import os.path as osp
 from functools import partial
@@ -19,8 +17,6 @@ from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
-from modelscope.tuners.control_sd_lora import ControlLoRATuner
-from modelscope.tuners.sd_lora import LoRATuner
 from modelscope.utils.checkpoint import save_checkpoint, save_configuration
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks

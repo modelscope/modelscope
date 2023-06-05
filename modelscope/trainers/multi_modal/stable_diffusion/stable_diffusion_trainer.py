@@ -17,3 +17,27 @@ class StableDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
+        try:
+            return build_optimizer(
+                self.model.parameters(),
+                cfg=cfg,
+                default_args=default_args)
+        except KeyError as e:
+            self.logger.error(
+                f'Build optimizer error, the optimizer {cfg} is a torch native component, '
+                f'please check if your torch with version: {torch.__version__} matches the config.'
+            )
+            raise e
+    
+    # def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
+    #     try:
+    #         return build_optimizer(
+    #             self.model.tuner, cfg=cfg, default_args=default_args)
+    #     except KeyError as e:
+    #         self.logger.error(
+    #             f'Build optimizer error, the optimizer {cfg} is a torch native component, '
+    #             f'please check if your torch with version: {torch.__version__} matches the config.'
+    #         )
+    #         raise e

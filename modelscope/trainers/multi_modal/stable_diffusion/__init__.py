@@ -1,3 +1,3 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from .stable_diffusion_trainer import MPlugTrainer
+from .stable_diffusion_trainer import StableDiffusionTrainer

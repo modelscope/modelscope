@@ -205,6 +205,7 @@ class Models(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
+    stable_diffusion = 'stable-diffusion'
 
     # science models
     unifold = 'unifold'

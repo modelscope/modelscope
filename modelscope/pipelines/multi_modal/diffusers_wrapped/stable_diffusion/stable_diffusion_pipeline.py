@@ -22,7 +22,7 @@ from modelscope.utils.constant import Tasks
 @PIPELINES.register_module(
     Tasks.text_to_image_synthesis,
     module_name=Pipelines.diffusers_stable_diffusion)
-class StableDiffusionWrapperPipeline(DiffusersPipeline):
+class StableDiffusionPipeline(DiffusersPipeline):
 
     def __init__(self, model: str, device: str = 'gpu', **kwargs):
         """

@@ -1,14 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import random
-import time
+import shutil
 from typing import Optional
 
+import json
 import numpy as np
 import torch
 
 from modelscope.hub.check_model import check_model_is_id
-from modelscope.hub.push_to_hub import push_to_hub_async
+from modelscope.hub.push_to_hub import (UploadStrategy, push_to_hub_in_queue,
+                                        wait_for_done)
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
@@ -45,7 +47,9 @@ class CheckpointHook(Hook):
         hub_repo_id (str): The hub repo id.
         hub_token (str): The token of the modelhub. You can also set the environment variable `MODELSCOPE_API_TOKEN`.
         private_hub (bool): Whether push to a private hub, default True.
-        hub_revision (str): Which branch to push the model to, default is `master`
+        hub_revision (str): Which branch to push the model to, default is `master`.
+        upload_strategy (str): The action adopted when the previous uploading is not done
+        and the next one is coming, can be `cancel` or `wait`.
         kwargs:
             by_epoch (bool): Same with `save_strategy`, but has a higher priority, legacy argument.
             output_sub_dir (str): The folder under the `save_dir` to save the output checkpoint for inference.
@@ -55,6 +59,8 @@ class CheckpointHook(Hook):
     PRIORITY = Priority.LOW
 
     EVAL_RESULT_FILE = 'eval_result.txt'
+
+    PUSH_TO_HUB_QUEUE_NAME = 'train.checkpoint'
 
     def __init__(self,
                  save_strategy: Optional[str] = CheckpointStrategy.by_epoch,
@@ -68,6 +74,7 @@ class CheckpointHook(Hook):
                  hub_token: Optional[str] = None,
                  private_hub: Optional[bool] = True,
                  hub_revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+                 upload_strategy: Optional[str] = UploadStrategy.cancel,
                  **kwargs):
         self.interval = interval
         self.save_dir = save_dir
@@ -89,9 +96,9 @@ class CheckpointHook(Hook):
         self.hub_token = hub_token
         self.private_hub = private_hub
         self.hub_revision = hub_revision
+        self.upload_strategy = upload_strategy
         self.tag = -1
         self.is_model_id = None
-        self.push_to_hub_future = None
         self.max_checkpoint_num = None
         if max_checkpoint_num is not None:
             self.max_checkpoint_num = max(int(max_checkpoint_num), 1)
@@ -149,13 +156,15 @@ class CheckpointHook(Hook):
                         f'Saving checkpoint at {trainer.iter + 1} iter')
             self._save_checkpoint(trainer, prefix)
         if is_master() and self.push_to_hub:
-            if self.push_to_hub_future is not None and not self.push_to_hub_future.done(
-            ):
-                self.logger.error(
-                    f'Another uploading is running, '
-                    f'this uploading with message {prefix} will be canceled.')
-                return
-            self.push_to_hub_future = self._push_to_hub(trainer, prefix)
+            if self.upload_strategy == UploadStrategy.cancel:
+                output_dir = self.output_dir
+                delete_dir = False
+            else:
+                output_dir = self.output_dir + '_upload_' + prefix
+                shutil.copytree(
+                    self.output_dir, output_dir, dirs_exist_ok=True)
+                delete_dir = True
+            self._push_to_hub(trainer, prefix, output_dir, delete_dir)
 
     def after_train_epoch(self, trainer):
         if self.save_strategy != CheckpointStrategy.by_epoch:
@@ -172,32 +181,36 @@ class CheckpointHook(Hook):
             self._do_save(trainer, CheckpointStrategy.by_step)
 
     def after_run(self, trainer):
-        if self.push_to_hub_future is not None and not self.push_to_hub_future.done(
-        ):
-            self.logger.info('Train finished. Uploading models, waiting...')
-            while not self.push_to_hub_future.done():
-                time.sleep(1)
-            self.logger.info('Uploading models done.')
+        self.logger.info('Train finished. Uploading models, waiting...')
+        push_to_hub_in_queue(
+            self.PUSH_TO_HUB_QUEUE_NAME,
+            strategy=self.upload_strategy,
+            done=True)
+        wait_for_done(self.PUSH_TO_HUB_QUEUE_NAME)
+        self.logger.info('Uploading models done.')
 
-    def _push_to_hub(self, trainer, prefix):
+    def _push_to_hub(self, trainer, prefix, output_dir, delete_dir=False):
         if self.is_model_id is None:
             self.is_model_id = check_model_is_id(trainer.input_model_id,
                                                  self.hub_token)
         self.tag += 1
-        return push_to_hub_async(
-            self.hub_repo_id,
-            self.output_dir,
+        return push_to_hub_in_queue(
+            self.PUSH_TO_HUB_QUEUE_NAME,
+            strategy=self.upload_strategy,
+            repo_name=self.hub_repo_id,
+            output_dir=output_dir,
             token=self.hub_token,
             private=self.private_hub,
             commit_message=prefix,
             tag=f'v1.{self.tag}',
             revision=self.hub_revision,
-            source_repo=trainer.input_model_id if self.is_model_id else '')
+            source_repo=trainer.input_model_id if self.is_model_id else '',
+            delete_dir=delete_dir)
 
     def save_evaluate_results(self, trainer):
         with open(os.path.join(self.output_dir, self.EVAL_RESULT_FILE),
                   'w') as f:
-            f.write(str(trainer.metric_values))
+            f.write(json.dumps(trainer.metric_values))
 
     def _save_checkpoint(self, trainer, prefix):
         """Save checkpoint files and remove obsolete ones

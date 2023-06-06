@@ -4,7 +4,8 @@ datasets>=2.7.0,<=2.8.0
 einops
 filelock>=3.3.0
 gast>=0.2.2
-numpy<1.24.0
+# for python3.7 python3.8 compatible
+numpy<=1.22.0
 oss2
 # for datasets compatible
 pandas<=1.5.3

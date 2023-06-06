@@ -225,7 +225,7 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
 def apply_mask(image, mask, color, transparency=0.7):
     mask = mask[..., np.newaxis].repeat(repeats=3, axis=2)
     mask = mask * transparency
-    color_matrix = np.ones(image.shape, dtype=np.float) * color
+    color_matrix = np.ones(image.shape, dtype=np.float64) * color
     out_image = color_matrix * mask + image * (1.0 - mask)
     return out_image
 

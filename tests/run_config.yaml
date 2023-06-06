@@ -67,7 +67,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
 envs:
   default: # default env, case not in other env will in default, pytorch.
     dependencies: # requirement packages，pip install before test case run.
-      - numpy>=1.20
+      - numpy>=1.20,<=1.21.0
       - protobuf<4,>=3.20.2
   tensorflow1x: #  cases excuted  tensorflow1.x framework.
     requirements: # requirements files run before test case run.
@@ -87,3 +87,21 @@ envs:
       - test_image_style_transfer.py
       - test_image_portrait_stylization_trainer.py
       - test_language_identification.py
+      - test_language_guided_video_summarization_trainer.py
+      - test_motion_generation.py
+      - test_universal_matting.py
+      - test_dialog_modeling.py
+      - test_trainer.py
+      - test_abnormal_object_detection.py
+      - test_image_face_fusion.py
+      - test_ocr_detection_db_trainer.py
+      - test_language_guided_video_summarization.py
+      - test_interactive_translation_pipeline.py
+      - test_image_defrcn_fewshot_trainer.py
+      - test_automatic_post_editing.py
+      - test_human_reconstruction.py
+      - test_nerf_recon_acc_trainer.py
+      - test_nerf_recon_acc.py
+      - test_speech_signal_process.py
+      - test_tensorboard_hook.py
+      - test_efficient_diffusion_tuning_trainer.py

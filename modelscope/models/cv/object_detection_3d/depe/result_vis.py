@@ -169,7 +169,7 @@ def plot_result(res_path,
                 check_point_in_img(corners_img, img.shape[0], img.shape[1]))
             valid = valid.reshape(
                 -1, 8)  # valid means: d>0 and visible in current view
-            corners_img = corners_img.reshape(-1, 8, 2).astype(np.int)
+            corners_img = corners_img.reshape(-1, 8, 2).astype(int)
             for aid in range(valid.shape[0]):
                 if scores[aid] < vis_thred and pred_flag[aid]:
                     continue

@@ -20,6 +20,21 @@ class OCRRecognitionTest(unittest.TestCase):
         result = pipeline(input_location)
         print('ocr recognition results: ', result)
 
+    def pipeline_inference_batch(self, pipeline: Pipeline,
+                                 input_location: str):
+        result = pipeline(
+            [input_location, input_location, input_location, input_location],
+            batch_size=4)
+        print('ocr recognition results: ', result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_from_modelhub_batch(self):
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition,
+            model=self.model_id,
+            model_revision='v2.3.0')
+        self.pipeline_inference_batch(ocr_recognition, self.test_image)
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         ocr_recognition = pipeline(
@@ -66,6 +81,14 @@ class OCRRecognitionTest(unittest.TestCase):
             Tasks.ocr_recognition,
             model='damo/cv_crnn_ocr-recognition-general_damo',
             model_revision='v2.2.2')
+        self.pipeline_inference(ocr_recognition, self.test_image)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_from_modelhub_lightweightedge(self):
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition,
+            model='damo/cv_LightweightEdge_ocr-recognitoin-general_damo',
+            model_revision='v1.0.0')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -134,6 +157,15 @@ class OCRRecognitionTest(unittest.TestCase):
             Tasks.ocr_recognition,
             model='damo/cv_crnn_ocr-recognition-general_damo',
             model_revision='v2.2.2',
+            device='cpu')
+        self.pipeline_inference(ocr_recognition, self.test_image)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_model_from_modelhub_lightweightedge_cpu(self):
+        ocr_recognition = pipeline(
+            Tasks.ocr_recognition,
+            model='damo/cv_LightweightEdge_ocr-recognitoin-general_damo',
+            model_revision='v1.0.0',
             device='cpu')
         self.pipeline_inference(ocr_recognition, self.test_image)
 

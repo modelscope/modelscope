@@ -14,7 +14,11 @@ class ConvNextViT(nn.Module):
         self.vitstr = vitstr_tiny(num_tokens=7644)
 
     def forward(self, input):
-        """ Transformation stage """
+        # RGB2GRAY
+        input = input[:, 0:
+                      1, :, :] * 0.2989 + input[:, 1:
+                                                2, :, :] * 0.5870 + input[:, 2:
+                                                                          3, :, :] * 0.1140
         features = self.cnn_model(input)
         output = self.vitstr(features)
         return output

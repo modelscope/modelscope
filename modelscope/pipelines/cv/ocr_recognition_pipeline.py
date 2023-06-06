@@ -66,7 +66,7 @@ class OCRRecognitionPipeline(Pipeline):
         return outputs
 
     def forward(self, inputs):
-        outputs = self.ocr_recognizer(inputs)
+        outputs = self.ocr_recognizer(inputs['image'])
         return outputs
 
     def postprocess(self, inputs):

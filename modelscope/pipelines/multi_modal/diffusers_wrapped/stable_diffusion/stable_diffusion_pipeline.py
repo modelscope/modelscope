@@ -5,7 +5,7 @@ from typing import Any, Dict, Union
 import cv2
 import numpy as np
 import torch
-import diffusers.StableDiffusionPipeline as DiffuserStableDiffusionPipeline
+from diffusers import StableDiffusionPipeline as DiffuserStableDiffusionPipeline
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -33,12 +33,12 @@ class StableDiffusionPipeline(DiffusersPipeline):
             device: str = 'gpu'
         """
         super().__init__(model, device, **kwargs)
-
-        torch_dtype = kwargs.get('torch_dtype', torch.float32)
-        # build upon the diffuser stable diffusion pipeline
-        self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
-            model, torch_dtype=torch_dtype)
-        self.pipeline.to(self.device)
+        if isinstance(model, str):
+            torch_dtype = kwargs.get('torch_dtype', torch.float32)
+            # build upon the diffuser stable diffusion pipeline
+            self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
+                model, torch_dtype=torch_dtype)
+            self.pipeline.to(self.device)
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -48,22 +48,25 @@ class StableDiffusionPipeline(DiffusersPipeline):
             )
         if 'text' not in inputs:
             raise ValueError('input should contain "text", but not found')
-
-        return self.pipeline(
-            prompt=inputs.get('text'),
-            height=inputs.get('height'),
-            width=inputs.get('width'),
-            num_inference_steps=inputs.get('num_inference_steps', 50),
-            guidance_scale=inputs.get('guidance_scale', 7.5),
-            negative_prompt=inputs.get('negative_prompt'),
-            num_images_per_prompt=inputs.get('num_images_per_prompt', 1),
-            eta=inputs.get('eta', 0.0),
-            generator=inputs.get('generator'),
-            latents=inputs.get('latents'),
-            output_type=inputs.get('output_type', 'pil'),
-            return_dict=inputs.get('return_dict', True),
-            callback=inputs.get('callback'),
-            callback_steps=inputs.get('callback_steps', 1))
+        if isinstance(self.model, str):
+            return self.pipeline(
+                prompt=inputs.get('text'),
+                height=inputs.get('height'),
+                width=inputs.get('width'),
+                num_inference_steps=inputs.get('num_inference_steps', 50),
+                guidance_scale=inputs.get('guidance_scale', 7.5),
+                negative_prompt=inputs.get('negative_prompt'),
+                num_images_per_prompt=inputs.get('num_images_per_prompt', 1),
+                eta=inputs.get('eta', 0.0),
+                generator=inputs.get('generator'),
+                latents=inputs.get('latents'),
+                output_type=inputs.get('output_type', 'pil'),
+                return_dict=inputs.get('return_dict', True),
+                callback=inputs.get('callback'),
+                callback_steps=inputs.get('callback_steps', 1))
+        else:
+            with torch.no_grad():
+                return super().forward(inputs, **forward_params)
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         images = []

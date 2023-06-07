@@ -5,7 +5,7 @@ from typing import Any, Dict, Union
 import cv2
 import numpy as np
 import torch
-from diffusers import StableDiffusionPipeline
+import diffusers.StableDiffusionPipeline as DiffuserStableDiffusionPipeline
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -36,7 +36,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
         torch_dtype = kwargs.get('torch_dtype', torch.float32)
         # build upon the diffuser stable diffusion pipeline
-        self.pipeline = StableDiffusionPipeline.from_pretrained(
+        self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
             model, torch_dtype=torch_dtype)
         self.pipeline.to(self.device)
 

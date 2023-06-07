@@ -16,7 +16,7 @@ class DiffusersPipeline(Pipeline):
         """
         use `model` to create a diffusers pipeline
         Args:
-            model: model id on modelscope hub.
+            model: model id on modelscope hub or a model
             device: str = 'gpu'
         """
 

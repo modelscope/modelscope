@@ -5,13 +5,14 @@ from typing import Any, Dict, Generator, List, Union
 
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.utils.constant import Hubs
+from modelscope.models.base import Model
 from modelscope.utils.device import create_device
 from modelscope.utils.hub import snapshot_download
 
 
 class DiffusersPipeline(Pipeline):
 
-    def __init__(self, model: str, device: str = 'gpu', **kwargs):
+    def __init__(self, model: Union[Model, str], device: str = 'gpu', **kwargs):
         """
         use `model` to create a diffusers pipeline
         Args:
@@ -26,18 +27,21 @@ class DiffusersPipeline(Pipeline):
         self.device = create_device(self.device_name)
         self.hubs = kwargs.get('hubs', Hubs.modelscope)
 
-        # make sure we download the model from modelscope hub
-        model_folder = model
-        if not os.path.isdir(model_folder):
-            if self.hubs != Hubs.modelscope:
-                raise NotImplementedError(
-                    'Only support model retrieval from ModelScope hub for now.'
-                )
-            model_folder = snapshot_download(model)
+        if isinstance(model, str):
+            # make sure we download the model from modelscope hub
+            model_folder = model
+            if not os.path.isdir(model_folder):
+                if self.hubs != Hubs.modelscope:
+                    raise NotImplementedError(
+                        'Only support model retrieval from ModelScope hub for now.'
+                    )
+                model_folder = snapshot_download(model)
 
-        self.model = model_folder
-        self.models = [self.model]
-        self.has_multiple_models = len(self.models) > 1
+            self.model = model_folder
+            self.models = [self.model]
+            self.has_multiple_models = len(self.models) > 1
+        else:
+            super().__init__(model=model, device=device)
 
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs

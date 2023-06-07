@@ -1,6 +1,6 @@
 # Copyright © Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import cv2
 import numpy as np
@@ -11,6 +11,7 @@ from PIL import Image
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.models.base import Model
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
     DiffusersPipeline
 from modelscope.utils.constant import Tasks
@@ -24,7 +25,7 @@ from modelscope.utils.constant import Tasks
     module_name=Pipelines.diffusers_stable_diffusion)
 class StableDiffusionPipeline(DiffusersPipeline):
 
-    def __init__(self, model: str, device: str = 'gpu', **kwargs):
+    def __init__(self, model: Union[Model, str], device: str = 'gpu', **kwargs):
         """
         use `model` to create a stable diffusion pipeline
         Args:
@@ -34,7 +35,6 @@ class StableDiffusionPipeline(DiffusersPipeline):
         super().__init__(model, device, **kwargs)
 
         torch_dtype = kwargs.get('torch_dtype', torch.float32)
-
         # build upon the diffuser stable diffusion pipeline
         self.pipeline = StableDiffusionPipeline.from_pretrained(
             model, torch_dtype=torch_dtype)

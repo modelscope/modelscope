@@ -22,6 +22,13 @@ class TextGPT3GenerationTest(unittest.TestCase):
         pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
         print(pipe(self.input))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_gpt3_1_3B_with_streaming(self):
+        pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
+        for output in pipe.stream(self.input, max_length=64):
+            print(output, end='\r')
+        print()
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_gpt3_2_7B(self):
         pipe = pipeline(Tasks.text_generation, model=self.model_id_2_7B)

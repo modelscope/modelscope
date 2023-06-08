@@ -108,7 +108,7 @@ class StableDiffusion(TorchModel):
         if self.inference:
             generator = torch.Generator(device=self.device).manual_seed(0)
             images = self.pipe(
-                prompt, num_inference_steps=30, generator=generator).images
+                prompt, num_inference_steps=30, generator=generator)
             return images
         else:
             with torch.no_grad():

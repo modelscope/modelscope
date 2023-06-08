@@ -3,6 +3,7 @@
 from typing import Any, Dict, Union
 
 import cv2
+import os
 import numpy as np
 import torch
 from diffusers import StableDiffusionPipeline as DiffuserStableDiffusionPipeline
@@ -15,7 +16,8 @@ from modelscope.models.base import Model
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
     DiffusersPipeline
 from modelscope.utils.constant import Tasks
-
+from modelscope.tuners.lora import LoRATuner
+                                    
 
 # Wrap around the diffusers stable diffusion pipeline implementation
 # for a unified ModelScope pipeline experience. Native stable diffusion
@@ -25,11 +27,13 @@ from modelscope.utils.constant import Tasks
     module_name=Pipelines.diffusers_stable_diffusion)
 class StableDiffusionPipeline(DiffusersPipeline):
 
-    def __init__(self, model: Union[Model, str], device: str = 'gpu', **kwargs):
+    def __init__(self, model: Union[Model, str], device: str = 'gpu', 
+                 lora_model: str = None, **kwargs):
         """
         use `model` to create a stable diffusion pipeline
         Args:
             model: model id on modelscope hub.
+            lora_model: lora model. 
             device: str = 'gpu'
         """
         super().__init__(model, device, **kwargs)
@@ -39,6 +43,13 @@ class StableDiffusionPipeline(DiffusersPipeline):
             self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
                 model, torch_dtype=torch_dtype)
             self.pipeline.to(self.device)
+        if lora_model is not None:
+            # model = Model.from_pretrained(model)
+            LoRATuner.tune(self.model, replace_modules=['to_q', 'to_k', 'to_v'])
+            if not os.path.isdir(lora_model):
+                raise ValueError('lora_model path is not exits')
+            self.model.load_state_dict(torch.load(os.path.join(lora_model, 'pytorch_model.bin')))
+            self.model.eval()
 
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

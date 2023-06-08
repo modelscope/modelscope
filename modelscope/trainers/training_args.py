@@ -117,6 +117,11 @@ class ModelArgs:
             'help': 'A model id or model dir',
         })
 
+    model_revision: str = field(
+        default=None, metadata={
+            'help': 'the revision of model',
+        })
+
     model_type: str = field(
         default=None,
         metadata={

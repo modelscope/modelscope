@@ -192,8 +192,9 @@ class LanguageModelPipeline(Pipeline):
         ]
 
         for user_args in user_args_dict:
-            if user_args in extra_args and extra_args[user_args] is not None:
-                cmd[user_args] = extra_args[user_args]
+            if user_args in extra_args:
+                if extra_args.get(user_args) is not None:
+                    cmd[user_args] = extra_args[user_args]
                 del extra_args[user_args]
 
         return cmd

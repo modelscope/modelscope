@@ -6,12 +6,14 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
+import torchvision.transforms as transforms
 
+from modelscope.models import Model
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.constant import Tasks
+from modelscope.utils.constant import Tasks, ModelFile
 from modelscope.preprocessors import Preprocessor
 
 
@@ -21,7 +23,7 @@ from modelscope.preprocessors import Preprocessor
 class StableDiffusionPipeline(Pipeline):
 
     def __init__(self, model: str, 
-                  device: str = 'gpu',
+                 device: str = 'gpu',
                  config_file: str = None, 
                  preprocessor: Optional[Preprocessor] = None,
                  auto_collate=True,
@@ -36,11 +38,20 @@ class StableDiffusionPipeline(Pipeline):
                          config_file=config_file,
                          preprocessor=preprocessor,
                          auto_collate=auto_collate)
-
+        
+        assert isinstance(self.model, Model), \
+            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
+        
         # torch_dtype = kwargs.get('torch_dtype', torch.float32)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # self.model = self.model.to(self.device)
         # self.model.eval()
+        self.preprocessor = transforms.Compose([
+            transforms.Resize(
+                512, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ])
     
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

@@ -40,8 +40,9 @@ class StableDiffusion(TorchModel):
           model_dir: model id or path, where model_dir/pytorch_model.bin
         """
         super().__init__(model_dir, *args, **kwargs)
-        pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
+        pretrained_model_name_or_path = model_dir
+        # pretrained_model_name_or_path = kwargs.pop(
+        #     'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
         revision = kwargs.pop('revision', None)
         inference = kwargs.pop('inference', True)
 

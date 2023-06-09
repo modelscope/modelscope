@@ -5,7 +5,6 @@ from typing import Any, Dict, Generator, List, Union
 
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.utils.constant import Hubs
-from modelscope.models.base import Model
 from modelscope.utils.device import create_device
 from modelscope.utils.hub import snapshot_download
 

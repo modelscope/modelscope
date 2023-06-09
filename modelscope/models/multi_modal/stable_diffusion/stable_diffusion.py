@@ -68,13 +68,20 @@ class StableDiffusion(TorchModel):
             pretrained_model_name_or_path,
             subfolder='unet',
             revision=revision)
-
+        
         if self.vae is not None:
             self.vae.requires_grad_(False)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
         if self.unet is not None:
             self.unet.requires_grad_(False)
+
+        self.noise_scheduler = self.noise_scheduler.to(self.device)
+        self.tokenizer = self.tokenizer.to(self.device)
+        self.text_encoder = self.text_encoder.to(self.device)
+        self.vae = self.vae.to(self.device)
+        self.unet = self.unet.to(self.device)
+
 
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.

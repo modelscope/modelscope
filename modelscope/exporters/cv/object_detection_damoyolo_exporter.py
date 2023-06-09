@@ -14,6 +14,9 @@ from modelscope.utils.constant import ModelFile, Tasks
 
 
 @EXPORTERS.register_module(
+    Tasks.domain_specific_object_detection,
+    module_name=Models.tinynas_damoyolo)
+@EXPORTERS.register_module(
     Tasks.image_object_detection, module_name=Models.tinynas_damoyolo)
 class ObjectDetectionDamoyoloExporter(TorchModelExporter):
 

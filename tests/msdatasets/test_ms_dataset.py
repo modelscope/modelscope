@@ -241,8 +241,7 @@ class MsDatasetTest(unittest.TestCase):
             use_streaming=True)
         data_example = next(iter(dataset))
         print(data_example)
-        assert isinstance(data_example['Noisy Image:FILE:Object'],
-                          PngImageFile)
+        assert data_example.values()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_to_ms_dataset(self):

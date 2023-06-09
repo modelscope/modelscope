@@ -388,10 +388,14 @@ class TokenClassificationTransformersPreprocessor(
                 f'tokenizer {tokenizer_name}, please use a fast tokenizer instead, or '
                 f'try to implement a `{method}` method')
         label_mask, offset_mapping = getattr(self, method)(tokens)
-        padding = self.nlp_tokenizer.get_tokenizer_kwarg('padding')
-        max_length = self.nlp_tokenizer.get_tokenizer_kwarg('max_length')
-        special_token = 1 if self.nlp_tokenizer.get_tokenizer_kwarg(
-            'add_special_tokens') else 0
+        padding = kwargs.get('padding',
+                             self.nlp_tokenizer.get_tokenizer_kwarg('padding'))
+        max_length = kwargs.get(
+            'max_length', self.nlp_tokenizer.get_tokenizer_kwarg('max_length'))
+        special_token = 1 if kwargs.get(
+            'add_special_tokens',
+            self.nlp_tokenizer.get_tokenizer_kwarg(
+                'add_special_tokens')) else 0
         if len(label_mask) > max_length - 2 * special_token:
             label_mask = label_mask[:(max_length - 2 * special_token)]
         offset_mapping = offset_mapping[:sum(label_mask)]

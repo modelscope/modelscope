@@ -9,6 +9,7 @@ import json
 
 from modelscope.trainers.cli_argument_parser import CliArgumentParser
 from modelscope.utils.config import Config
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
 
 
 def set_flatten_value(values: Union[str, List[str]]):
@@ -62,13 +63,13 @@ class DatasetArgs:
         })
 
     train_dataset_namespace: str = field(
-        default=None,
+        default=DEFAULT_DATASET_NAMESPACE,
         metadata={
             'help': 'The dataset namespace used for training',
         })
 
     val_dataset_namespace: str = field(
-        default=None,
+        default=DEFAULT_DATASET_NAMESPACE,
         metadata={
             'help': 'The dataset namespace used for evaluating',
         })
@@ -450,7 +451,7 @@ class TrainingArgs(DatasetArgs, TrainArgs, ModelArgs):
             _unknown[unknown[i].replace('-', '')] = parse_value(unknown[i + 1])
         args_dict = vars(args)
         self.manual_args += parser.manual_args
-
+        self._unknown_args.update(_unknown)
         for key, value in deepcopy(args_dict).items():
             if key is not None and hasattr(self, key):
                 setattr(self, key, value)
@@ -506,7 +507,7 @@ def build_dataset_from_file(filename):
                 "text2": "sequence2",
                 "label": "label",
             }
-            "split": 0.8,
+            "usage": 0.8,
         }
     ]
     """
@@ -540,16 +541,16 @@ def build_dataset_from_file(filename):
                 lambda x: x,
                 remove_columns=remove_columns,
                 features=new_features).rename_columns(ds['column_mapping'])
-            split = ds['split']
-            if isinstance(split, str):
-                assert split in ('train', 'val')
-                if split == 'train':
+            usage = ds['usage']
+            if isinstance(usage, str):
+                assert usage in ('train', 'val')
+                if usage == 'train':
                     train_set.append(dataset)
                 else:
                     eval_set.append(dataset)
             else:
-                assert isinstance(split, float) and 0 < split < 1
-                ds_dict = dataset.train_test_split(train_size=split)
+                assert isinstance(usage, float) and 0 < usage < 1
+                ds_dict = dataset.train_test_split(train_size=usage)
                 train_set.append(ds_dict['train'])
                 eval_set.append(ds_dict['test'])
 

@@ -127,15 +127,15 @@ class RemoteDataLoaderManager(DataLoaderManager):
             return dataset_ret
         # To use the modelscope data loader
         elif data_loader_type == RemoteDataLoaderType.MS_DATA_LOADER:
-            oss_data_loader = OssDownloader(
+            oss_downloader = OssDownloader(
                 dataset_context_config=self.dataset_context_config)
-            oss_data_loader.process()
+            oss_downloader.process()
             # download statistics
             self.api.dataset_download_statistics(
                 dataset_name=dataset_name,
                 namespace=namespace,
                 use_streaming=use_streaming)
-            return oss_data_loader.dataset
+            return oss_downloader.dataset
         else:
             raise f'Expected remote data loader type: {RemoteDataLoaderType.HF_DATA_LOADER.value}/' \
                   f'{RemoteDataLoaderType.MS_DATA_LOADER.value}, but got {data_loader_type} .'

@@ -41,7 +41,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
         # load lora moudle to unet
         if lora_dir is not None:
             assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
-            self.pipeline.unet.load_attn_procs(self.lora_tune)
+            self.pipeline.unet.load_attn_procs(lora_dir)
 
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs

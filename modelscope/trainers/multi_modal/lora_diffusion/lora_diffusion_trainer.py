@@ -34,11 +34,29 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
         super().__init__(*args, **kwargs)
         ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
         ckpt_hook.set_processor(LoraDiffusionCheckpointProcessor())
+        # Set correct lora layers
+        lora_attn_procs = {}
+        for name in self.model.unet.attn_processors.keys():
+            cross_attention_dim = None if name.endswith("attn1.processor") else self.model.unet.config.cross_attention_dim
+            if name.startswith("mid_block"):
+                hidden_size = self.model.unet.config.block_out_channels[-1]
+            elif name.startswith("up_blocks"):
+                block_id = int(name[len("up_blocks.")])
+                hidden_size = list(reversed(self.model.unet.config.block_out_channels))[block_id]
+            elif name.startswith("down_blocks"):
+                block_id = int(name[len("down_blocks.")])
+                hidden_size = self.model.unet.config.block_out_channels[block_id]
+
+            lora_attn_procs[name] = LoRAAttnProcessor(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim)
+
+        self.model.unet.set_attn_processor(lora_attn_procs)
+        
+        self.lora_layers = AttnProcsLayers(self.model.unet.attn_processors)
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
-                self.model.tuner, cfg=cfg, default_args=default_args)
+                self.lora_layers.parameters(), cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
                 f'Build optimizer error, the optimizer {cfg} is a torch native component, '
@@ -46,10 +64,6 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
             )
             raise e
 
-    def train(self, *args, **kwargs):
-        
-        super().train(*args, **kwargs)
-
-    def evaluate(self, *args, **kwargs):
-        eval_res = super().evaluate(*args, **kwargs)
-        return eval_res
+    def save_pretrained(self, **kwargs):
+        self.model.unet = self.model.unet.to(torch.float32)
+        self.model.unet.save_attn_procs(self.work_dir)

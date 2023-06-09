@@ -55,6 +55,7 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
             transforms.Resize(
                 self.preprocessor_resolution,
                 interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(self.preprocessor_mean,
                                  self.preprocessor_std),

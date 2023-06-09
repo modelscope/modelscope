@@ -92,6 +92,7 @@ class StableDiffusion(TorchModel):
         return inputs.input_ids
 
     def forward(self, prompt='', target=None):
+        self.unet.train()
         with torch.no_grad():
             latents = self.vae.encode(
                 target.to(dtype=self.weight_dtype)).latent_dist.sample()

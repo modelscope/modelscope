@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        DPMSolverMultistepScheduler, UNet2DConditionModel,
-                       utils)
+                       StableDiffusionPipeline, utils)
 from diffusers.models import cross_attention
 from diffusers.utils import deprecation_utils
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -49,18 +49,18 @@ class StableDiffusion(TorchModel):
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.inference = inference
-        self.lora_tune = True if 'efficient_tuners' in kwargs else False
-        
+        # self.efficient_tuners = True if 'efficient_tuners' in kwargs else False
+        self.lora_tune = kwargs.pop('lora_tune', None)
+
         if self.inference:
             # load pipeline
-            self.pipe = DiffusionPipeline.from_pretrained(
+            self.pipeline = StableDiffusionPipeline.from_pretrained(
                 pretrained_model_name_or_path,
-                revision=revision,
-                torch_dtype=self.weight_dtype,
-                safety_checker=None)
-            self.pipe.scheduler = DPMSolverMultistepScheduler.from_config(
-                self.pipe.scheduler.config)
-            self.pipe = self.pipe.to(self.device)
+                torch_dtype=self.weight_dtype)
+            self.pipeline = self.pipeline.to(self.device)
+            # load lora moudle to unet
+            if self.lora_tune is not None:
+                self.pipeline.unet.load_attn_procs(self.lora_tune)
         else:
             # Load scheduler, tokenizer and models.
             self.noise_scheduler = DDPMScheduler.from_pretrained(
@@ -106,9 +106,8 @@ class StableDiffusion(TorchModel):
 
     def forward(self, prompt='', target=None):
         if self.inference:
-            generator = torch.Generator(device=self.device).manual_seed(0)
-            images = self.pipe(
-                prompt, num_inference_steps=30, generator=generator)
+            images = self.pipeline(
+                prompt, num_inference_steps=30, guidance_scale=7.5)
             return images
         else:
             with torch.no_grad():
@@ -155,24 +154,3 @@ class StableDiffusion(TorchModel):
             output = {OutputKeys.LOSS: loss}
             return output
         
-    def save_pretrained(self,
-                        target_folder: Union[str, os.PathLike],
-                        save_checkpoint_names: Union[str, List[str]] = None,
-                        save_function: Callable = partial(
-                            save_checkpoint, with_meta=False),
-                        config: Optional[dict] = None,
-                        save_config_function: Callable = save_configuration,
-                        **kwargs):
-        """save the pretrained models. 
-        """
-        if self.lora_tune:
-            pass
-        else:
-            if config is None and hasattr(self, 'cfg'):
-                config = self.cfg
-
-            save_pretrained(self, target_folder, save_checkpoint_names,
-                            save_function, **kwargs)
-
-            if config is not None:
-                save_config_function(target_folder, config)

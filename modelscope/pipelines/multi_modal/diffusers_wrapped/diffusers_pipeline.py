@@ -27,21 +27,18 @@ class DiffusersPipeline(Pipeline):
         self.device = create_device(self.device_name)
         self.hubs = kwargs.get('hubs', Hubs.modelscope)
 
-        if isinstance(model, str):
-            # make sure we download the model from modelscope hub
-            model_folder = model
-            if not os.path.isdir(model_folder):
-                if self.hubs != Hubs.modelscope:
-                    raise NotImplementedError(
-                        'Only support model retrieval from ModelScope hub for now.'
-                    )
-                model_folder = snapshot_download(model)
+        # make sure we download the model from modelscope hub
+        model_folder = model
+        if not os.path.isdir(model_folder):
+            if self.hubs != Hubs.modelscope:
+                raise NotImplementedError(
+                    'Only support model retrieval from ModelScope hub for now.'
+                )
+            model_folder = snapshot_download(model)
 
-            self.model = model_folder
-            self.models = [self.model]
-            self.has_multiple_models = len(self.models) > 1
-        else:
-            super().__init__(model=model, device=device)
+        self.model = model_folder
+        self.models = [self.model]
+        self.has_multiple_models = len(self.models) > 1
 
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs

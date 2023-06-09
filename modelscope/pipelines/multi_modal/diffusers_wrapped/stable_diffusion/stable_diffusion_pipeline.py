@@ -3,61 +3,61 @@
 from typing import Any, Dict, Optional
 
 import cv2
+import os
 import numpy as np
 import torch
 from PIL import Image
 import torchvision.transforms as transforms
+from diffusers import StableDiffusionPipeline as DiffuserStableDiffusionPipeline
 
 from modelscope.models import Model
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.constant import Tasks, ModelFile
-from modelscope.preprocessors import Preprocessor
+from modelscope.utils.constant import Tasks
+from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
+    DiffusersPipeline
 
 
 @PIPELINES.register_module(
     Tasks.text_to_image_synthesis,
     module_name=Pipelines.diffusers_stable_diffusion)
-class StableDiffusionPipeline(Pipeline):
+class StableDiffusionPipeline(DiffusersPipeline):
 
-    def __init__(self, model: str, 
-                 device: str = 'gpu',
-                 config_file: str = None, 
-                 preprocessor: Optional[Preprocessor] = None,
-                 auto_collate=True,
-                 **kwargs):
+    def __init__(self, model: str, lora_dir: str = None, **kwargs):
         """
         use `model` to create a stable diffusion pipeline
         Args:
             model: model id on modelscope hub or local model dir.
         """
-        super().__init__(model=model,
-                         device=device,
-                         config_file=config_file,
-                         preprocessor=preprocessor,
-                         auto_collate=auto_collate)
         
-        assert isinstance(self.model, Model), \
-            f'please check whether model config exists in {ModelFile.CONFIGURATION}'
-        
-        # torch_dtype = kwargs.get('torch_dtype', torch.float32)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        # self.model = self.model.to(self.device)
-        # self.model.eval()
-        self.preprocessor = transforms.Compose([
-            transforms.Resize(
-                512, interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]),
-        ])
+        # load pipeline
+        self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
+                model,
+                torch_dtype=torch.float16)
+        self.pipeline = self.pipeline.to(self.device)
+        # load lora moudle to unet
+        if lora_dir is not None:
+            assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
+            self.pipeline.unet.load_attn_procs(self.lora_tune)
+
+    def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        return inputs
     
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
-        with torch.no_grad():
-            results = self.model(**inputs)
-            return results
+        if not isinstance(inputs, dict):
+            raise ValueError(
+                f'Expected the input to be a dictionary, but got {type(input)}'
+            )
+        if 'prompt' not in inputs:
+            raise ValueError('input should contain "prompt", but not found')
+        
+        images = self.pipeline(inputs['prompt'], num_inference_steps=30, guidance_scale=7.5)
+
+        return images
 
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         images = []

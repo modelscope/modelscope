@@ -12,11 +12,11 @@ from modelscope.utils.hub import snapshot_download
 
 class DiffusersPipeline(Pipeline):
 
-    def __init__(self, model: Union[Model, str], device: str = 'gpu', **kwargs):
+    def __init__(self, model: str, device: str = 'gpu', **kwargs):
         """
         use `model` to create a diffusers pipeline
         Args:
-            model: model id on modelscope hub or a model
+            model: model id on modelscope hub.
             device: str = 'gpu'
         """
 

@@ -132,7 +132,7 @@ echo -e "Building image with:\npython$python_version\npytorch$torch_version\nten
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir  modelscope==$modelscope_version -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
+    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir modelscope==$modelscope_version -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
 fi
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
@@ -140,6 +140,8 @@ if [ "$is_dsw" == "False" ]; then
 else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
+    # pre compile extension
+    docker_file_content="${docker_file_content} \nRUN python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"

@@ -16,6 +16,43 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_hook import \
     CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor \
     import CheckpointProcessor
+
+
+class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
+
+    # @staticmethod
+    # def _bin_file(model):
+    #     """Get bin file path for diffuser.
+    #     """
+    #     default_bin_file = 'pytorch_lora_weights.bin'
+    #     return default_bin_file
+    def save_checkpoints(self,
+                         trainer,
+                         checkpoint_path_prefix,
+                         output_dir,
+                         meta=None):
+        """Save the state dict for trainer and model.
+
+        This is a strategic function which can be registered by other hook's function.
+
+        Args:
+            trainer(`EpochBasedTrainer`): The trainer instance.
+            checkpoint_path_prefix(`str`): The saving dir with a prefix.
+                like: /tmp/test/epoch_0
+            output_dir(`str`): The output dir for inference.
+            meta: (`dict`): The meta info needed to be saved into files.
+        """
+        # model = trainer.unwrap_module(trainer.model)
+        # _model_file, _train_state_file = self._get_state_file_name(
+        #     checkpoint_path_prefix)
+
+        # # Save pth file without model state_dict
+        # self.save_trainer_state(trainer, model, _train_state_file, meta)
+        # self.save_model_state(model, _model_file)
+        # self.link(model, _model_file, output_dir)
+        print("--------save checkpoints output_dir: ", output_dir)
+        self.model.unet = self.model.unet.to(torch.float32)
+        self.model.unet.save_attn_procs(output_dir)
     
 
 @TRAINERS.register_module(module_name=Trainers.lora_diffusion)
@@ -23,6 +60,8 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
+        ckpt_hook.set_processor(LoraDiffusionCheckpointProcessor())
         # Set correct lora layers
         lora_attn_procs = {}
         for name in self.model.unet.attn_processors.keys():

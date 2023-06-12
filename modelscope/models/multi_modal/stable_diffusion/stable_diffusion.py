@@ -151,8 +151,10 @@ class StableDiffusion(TorchModel):
                         **kwargs):
         
         if self.lora_tune:
-            self.unet = self.unet.to(torch.float32)
-            self.unet.save_attn_procs(target_folder)
+            print("----------save lora tune")
+            pass
+            # self.unet = self.unet.to(torch.float32)
+            # self.unet.save_attn_procs(target_folder)
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,
                         save_function, config, save_config_function,

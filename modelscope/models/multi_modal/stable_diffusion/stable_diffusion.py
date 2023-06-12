@@ -1,25 +1,19 @@
 # Copyright 2023-2024 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import os
-import os.path as osp
 from functools import partial
-from typing import Any, Callable, List, Mapping, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 import torch.nn.functional as F
-from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
-                       DPMSolverMultistepScheduler, UNet2DConditionModel,
-                       StableDiffusionPipeline, utils)
-from diffusers.models import cross_attention
-from diffusers.utils import deprecation_utils
+from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
-from modelscope.utils.checkpoint import save_checkpoint, save_configuration, save_pretrained
-from modelscope.utils.config import Config
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.checkpoint import save_checkpoint, save_configuration
+from modelscope.utils.constant import Tasks
 
 
 @MODELS.register_module(
@@ -149,12 +143,9 @@ class StableDiffusion(TorchModel):
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):
-        
+        # Save only the lora model, skip saving and copying the original weights
         if self.lora_tune:
-            print("----------save lora tune")
             pass
-            # self.unet = self.unet.to(torch.float32)
-            # self.unet.save_attn_procs(target_folder)
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,
                         save_function, config, save_config_function,

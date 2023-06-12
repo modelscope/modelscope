@@ -63,7 +63,4 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
-
-    def save_pretrained(self, **kwargs):
-        self.model.unet = self.model.unet.to(torch.float32)
-        self.model.unet.save_attn_procs(self.work_dir)
+        

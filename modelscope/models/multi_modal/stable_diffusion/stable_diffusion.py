@@ -43,6 +43,7 @@ class StableDiffusion(TorchModel):
         pretrained_model_name_or_path = kwargs.pop(
             'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
         revision = kwargs.pop('revision', None)
+        self.lora_tune = kwargs.pop('lora_tune', True)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -140,3 +141,19 @@ class StableDiffusion(TorchModel):
         output = {OutputKeys.LOSS: loss}
         return output
         
+    def save_pretrained(self,
+                        target_folder: Union[str, os.PathLike],
+                        save_checkpoint_names: Union[str, List[str]] = None,
+                        save_function: Callable = partial(
+                            save_checkpoint, with_meta=False),
+                        config: Optional[dict] = None,
+                        save_config_function: Callable = save_configuration,
+                        **kwargs):
+        
+        if self.lora_tune:
+            self.unet = self.unet.to(torch.float32)
+            self.unet.save_attn_procs(target_folder)
+        else:
+            super().save_pretrained(target_folder, save_checkpoint_names,
+                        save_function, config, save_config_function,
+                        **kwargs)

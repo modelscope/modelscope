@@ -47,7 +47,6 @@ class StableDiffusion(TorchModel):
         self.weight_dtype = torch.float32
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
-        self.lora_tune = kwargs.pop('lora_tune', None)
 
         # Load scheduler, tokenizer and models.
         self.noise_scheduler = DDPMScheduler.from_pretrained(
@@ -71,17 +70,13 @@ class StableDiffusion(TorchModel):
         
         if self.vae is not None:
             self.vae.requires_grad_(False)
+            self.vae = self.vae.to(self.device)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
+            self.text_encoder = self.text_encoder.to(self.device)
         if self.unet is not None:
             self.unet.requires_grad_(False)
-
-        self.noise_scheduler = self.noise_scheduler.to(self.device)
-        self.tokenizer = self.tokenizer.to(self.device)
-        self.text_encoder = self.text_encoder.to(self.device)
-        self.vae = self.vae.to(self.device)
-        self.unet = self.unet.to(self.device)
-
+            self.unet = self.unet.to(self.device)
 
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.
@@ -100,6 +95,7 @@ class StableDiffusion(TorchModel):
 
     def forward(self, prompt='', target=None):
         self.unet.train()
+        self.unet = self.unet.to(self.device)
         with torch.no_grad():
             latents = self.vae.encode(
                 target.to(dtype=self.weight_dtype)).latent_dist.sample()

@@ -23,7 +23,7 @@ class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
     def _bin_file(model):
         """Get bin file path for diffuser.
         """
-        default_bin_file = 'diffusion_pytorch_model.bin'
+        default_bin_file = 'pytorch_lora_weights.bin'
         return default_bin_file
     
 

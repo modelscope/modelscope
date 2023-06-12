@@ -16,15 +16,6 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_hook import \
     CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor \
     import CheckpointProcessor
-
-class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
-
-    @staticmethod
-    def _bin_file(model):
-        """Get bin file path for diffuser.
-        """
-        default_bin_file = 'pytorch_lora_weights.bin'
-        return default_bin_file
     
 
 @TRAINERS.register_module(module_name=Trainers.lora_diffusion)
@@ -32,8 +23,6 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
-        ckpt_hook.set_processor(LoraDiffusionCheckpointProcessor())
         # Set correct lora layers
         lora_attn_procs = {}
         for name in self.model.unet.attn_processors.keys():

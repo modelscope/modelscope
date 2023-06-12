@@ -9,7 +9,7 @@ from modelscope.models.base import Model, TorchModel
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import ConfigDict
 
 
 @TRAINERS.register_module(module_name=Trainers.stable_diffusion)
@@ -21,7 +21,7 @@ class StableDiffusionTrainer(EpochBasedTrainer):
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
-                self.model.parameters(),
+                self.model.unet,
                 cfg=cfg,
                 default_args=default_args)
         except KeyError as e:

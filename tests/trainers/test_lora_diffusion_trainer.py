@@ -11,7 +11,7 @@ from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import test_level
 
 
-class TestStableDiffusionTrainer(unittest.TestCase):
+class TestLoraDiffusionTrainer(unittest.TestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -36,7 +36,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_stable_diffusion_train(self):
+    def test_lora_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         def cfg_modify_fn(cfg):
@@ -52,10 +52,10 @@ class TestStableDiffusionTrainer(unittest.TestCase):
             cfg_modify_fn=cfg_modify_fn)
 
         trainer = build_trainer(
-            name=Trainers.stable_diffusion, default_args=kwargs)
+            name=Trainers.lora_diffusion, default_args=kwargs)
         trainer.train()
         result = trainer.evaluate()
-        print(f'Stable-diffusion train output: {result}.')
+        print(f'Lora-diffusion train output: {result}.')
 
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
@@ -63,7 +63,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_stable_diffusion_eval(self):
+    def test_lora_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
         kwargs = dict(
@@ -73,9 +73,9 @@ class TestStableDiffusionTrainer(unittest.TestCase):
             eval_dataset=self.eval_dataset)
 
         trainer = build_trainer(
-            name=Trainers.stable_diffusion, default_args=kwargs)
+            name=Trainers.lora_diffusion, default_args=kwargs)
         result = trainer.evaluate()
-        print(f'Stable-diffusion eval output: {result}.')
+        print(f'Lora-diffusion eval output: {result}.')
 
 
 if __name__ == '__main__':

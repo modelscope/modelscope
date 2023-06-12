@@ -43,7 +43,7 @@ class StableDiffusion(TorchModel):
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
 
-        # Load scheduler, tokenizer and models.
+        # Load scheduler, tokenizer and models
         self.noise_scheduler = DDPMScheduler.from_pretrained(
             pretrained_model_name_or_path, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
@@ -63,14 +63,16 @@ class StableDiffusion(TorchModel):
             subfolder='unet',
             revision=revision)
         
+        # Freeze gradient calculation and move to device
         if self.vae is not None:
             self.vae.requires_grad_(False)
             self.vae = self.vae.to(self.device)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
             self.text_encoder = self.text_encoder.to(self.device)
-        if self.unet is not None:
-            self.unet.requires_grad_(False)
+        if self.unet is not None: 
+            if self.lora_tune:
+                self.unet.requires_grad_(False)
             self.unet = self.unet.to(self.device)
 
     def tokenize_caption(self, captions):
@@ -91,10 +93,12 @@ class StableDiffusion(TorchModel):
     def forward(self, prompt='', target=None):
         self.unet.train()
         self.unet = self.unet.to(self.device)
+
         with torch.no_grad():
             latents = self.vae.encode(
                 target.to(dtype=self.weight_dtype)).latent_dist.sample()
         latents = latents * self.vae.config.scaling_factor
+
         # Sample noise that we'll add to the latents
         noise = torch.randn_like(latents)
         bsz = latents.shape[0]
@@ -130,8 +134,10 @@ class StableDiffusion(TorchModel):
         # Predict the noise residual and compute loss
         model_pred = self.unet(noisy_latents, timesteps,
                                 encoder_hidden_states).sample
+        
         loss = F.mse_loss(
             model_pred.float(), target.float(), reduction='mean')
+        
         output = {OutputKeys.LOSS: loss}
         return output
         

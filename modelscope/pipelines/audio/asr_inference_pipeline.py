@@ -127,7 +127,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             minlenratio=self.cmd['minlenratio'],
             batch_size=self.cmd['batch_size'],
             beam_size=self.cmd['beam_size'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             ctc_weight=self.cmd['ctc_weight'],
             lm_weight=self.cmd['lm_weight'],
             penalty=self.cmd['penalty'],

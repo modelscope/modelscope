@@ -24,3 +24,4 @@ transformers>=4.27.1
 unicodedata2
 zhconv
 decord>=0.6.0
+fairseq

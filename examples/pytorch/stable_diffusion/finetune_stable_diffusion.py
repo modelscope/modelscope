@@ -11,13 +11,17 @@ train_dataset = MsDataset.load(args.train_dataset_name, split='train')
 validation_dataset = MsDataset.load(args.train_dataset_name, split='validation')
 
 def cfg_modify_fn(cfg):
+    if args.use_model_config:
+        cfg.merge_from_dict(config)
+    else:
+        cfg = config
     cfg.train.max_epochs = args.max_epochs
     cfg.train.lr_scheduler = {
         'type': 'LambdaLR',
         'lr_lambda': lambda _: 1,
         'last_epoch': -1
     }
-    cfg.train.optimizer.lr = args.train.optimizer.lr
+    cfg.train.optimizer.lr = 1e-4
     return cfg
 
 kwargs = dict(

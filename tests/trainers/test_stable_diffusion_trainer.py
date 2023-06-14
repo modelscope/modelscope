@@ -53,6 +53,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         kwargs = dict(
             model=model_id,
             model_revision=model_revision,
+            lora_tune=False,
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
@@ -75,6 +76,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         kwargs = dict(
             model=model_id,
             model_revision=model_revision,
+            lora_tune=False,
             work_dir=self.tmp_dir,
             train_dataset=None,
             eval_dataset=self.eval_dataset)

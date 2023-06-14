@@ -7,9 +7,8 @@ training_args = TrainingArgs(task='lora-diffusion').parse_cli()
 config, args = training_args.to_config()
 print(args)
 
-dataset = MsDataset.load(args.train_dataset_name)
-train_dataset = dataset['train']
-validation_dataset = dataset['validation']
+train_dataset = MsDataset.load(args.train_dataset_name, split='train')
+validation_dataset = MsDataset.load(args.train_dataset_name, split='validation')
 
 def cfg_modify_fn(cfg):
     cfg.train.max_epochs = args.max_epochs

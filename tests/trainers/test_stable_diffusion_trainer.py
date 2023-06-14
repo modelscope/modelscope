@@ -38,7 +38,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_stable_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
-        model_revision='v1.0.6'
+        model_revision='v1.0.7'
         
         def cfg_modify_fn(cfg):
             cfg.train.max_epochs = self.max_epochs
@@ -53,7 +53,6 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         kwargs = dict(
             model=model_id,
             model_revision=model_revision,
-            lora_tune=False,
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
@@ -71,12 +70,11 @@ class TestStableDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_stable_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
-        model_revision='v1.0.6'
+        model_revision='v1.0.7'
 
         kwargs = dict(
             model=model_id,
             model_revision=model_revision,
-            lora_tune=False,
             work_dir=self.tmp_dir,
             train_dataset=None,
             eval_dataset=self.eval_dataset)

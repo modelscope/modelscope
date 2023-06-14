@@ -39,6 +39,20 @@ class LrSchedulerProcessor:
         else:
             trainer.lr_scheduler.step()
 
+    def get_current_lr(self, trainer):
+        import torch
+
+        if isinstance(trainer.optimizer, torch.optim.Optimizer):
+            lr = [group['lr'] for group in trainer.optimizer.param_groups]
+        elif isinstance(trainer.optimizer, dict):
+            lr = dict()
+            for name, optim in trainer.optimizer.items():
+                lr[name] = [group['lr'] for group in optim.param_groups]
+        else:
+            raise RuntimeError(
+                'lr is not applicable because optimizer does not exist.')
+        return lr
+
 
 class LrStrategy:
     by_epoch = 'by_epoch'
@@ -84,20 +98,6 @@ class LrSchedulerHook(Hook):
 
         self.processor.initialize_lr_scheduler(trainer)
 
-    def get_current_lr(self, trainer):
-        import torch
-
-        if isinstance(trainer.optimizer, torch.optim.Optimizer):
-            lr = [group['lr'] for group in trainer.optimizer.param_groups]
-        elif isinstance(trainer.optimizer, dict):
-            lr = dict()
-            for name, optim in trainer.optimizer.items():
-                lr[name] = [group['lr'] for group in optim.param_groups]
-        else:
-            raise RuntimeError(
-                'lr is not applicable because optimizer does not exist.')
-        return lr
-
     def after_train_iter(self, trainer):
         if self.lr_strategy == LrStrategy.by_step and trainer.iter >= getattr(
                 trainer, 'cumulative_iters', 1) - 1:
@@ -112,7 +112,7 @@ class LrSchedulerHook(Hook):
             self.processor.step(trainer)
 
     def _get_log_lr(self, trainer):
-        cur_lr = self.get_current_lr(trainer)
+        cur_lr = self.processor.get_current_lr(trainer)
         # only record lr of the first param group
         if isinstance(cur_lr, list):
             lr = cur_lr[0]

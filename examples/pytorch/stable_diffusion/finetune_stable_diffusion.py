@@ -7,8 +7,7 @@ training_args = TrainingArgs(task='lora-diffusion').parse_cli()
 config, args = training_args.to_config()
 print(args)
 
-dataset = MsDataset.load(
-    args.train_dataset_name, namespace=args.train_dataset_namespace)
+dataset = MsDataset.load(args.train_dataset_name)
 train_dataset = dataset['train']
 validation_dataset = dataset['validation']
 
@@ -19,7 +18,7 @@ def cfg_modify_fn(cfg):
         'lr_lambda': lambda _: 1,
         'last_epoch': -1
     }
-    cfg.train.optimizer.lr = 1e-4
+    cfg.train.optimizer.lr = args.train.optimizer.lr
     return cfg
 
 kwargs = dict(

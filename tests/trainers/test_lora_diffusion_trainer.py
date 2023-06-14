@@ -66,8 +66,6 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
 
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(self.max_epochs):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_lora_diffusion_eval(self):

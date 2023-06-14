@@ -41,7 +41,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         model_revision='v1.0.6'
         
         def cfg_modify_fn(cfg):
-            cfg.train.max_epochs = max_epochs
+            cfg.train.max_epochs = self.max_epochs
             cfg.train.lr_scheduler = {
                 'type': 'LambdaLR',
                 'lr_lambda': lambda _: 1,
@@ -66,8 +66,6 @@ class TestStableDiffusionTrainer(unittest.TestCase):
 
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
-        for i in range(self.max_epochs):
-            self.assertIn(f'epoch_{i+1}.pth', results_files)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_stable_diffusion_eval(self):

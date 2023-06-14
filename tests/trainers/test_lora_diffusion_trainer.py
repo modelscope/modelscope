@@ -41,7 +41,7 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
         model_revision='v1.0.6'
 
         def cfg_modify_fn(cfg):
-            cfg.train.max_epochs = max_epochs
+            cfg.train.max_epochs = self.max_epochs
             cfg.train.lr_scheduler = {
                 'type': 'LambdaLR',
                 'lr_lambda': lambda _: 1,

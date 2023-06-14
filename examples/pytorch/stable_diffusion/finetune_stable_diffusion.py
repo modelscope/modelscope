@@ -12,7 +12,6 @@ dataset = MsDataset.load(
 train_dataset = dataset['train']
 validation_dataset = dataset['validation']
 
-
 def cfg_modify_fn(cfg):
     cfg.train.max_epochs = args.max_epochs
     cfg.train.lr_scheduler = {
@@ -23,10 +22,9 @@ def cfg_modify_fn(cfg):
     cfg.train.optimizer.lr = 1e-4
     return cfg
 
-
 kwargs = dict(
     model=training_args.model,
-    model_revision=args.model_revision,
+    model_revision='v1.0.6',
     work_dir=training_args.work_dir,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,

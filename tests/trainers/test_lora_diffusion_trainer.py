@@ -17,15 +17,15 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
 
         self.train_dataset = MsDataset.load(
-            'buptwq/lora-stable-diffusion-finetune-dog',
+            'buptwq/lora-stable-diffusion-finetune',
             split='train',
             download_mode=DownloadMode.FORCE_REDOWNLOAD)
         self.eval_dataset = MsDataset.load(
-            'buptwq/lora-stable-diffusion-finetune-dog',
+            'buptwq/lora-stable-diffusion-finetune',
             split='validation',
             download_mode=DownloadMode.FORCE_REDOWNLOAD)
 
-        self.max_epochs = 200
+        self.max_epochs = 100
 
         self.tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(self.tmp_dir):
@@ -38,14 +38,21 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_lora_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
+        model_revision='v1.0.6'
 
         def cfg_modify_fn(cfg):
-            cfg.train.max_epochs = self.max_epochs
-            cfg.train.lr_scheduler.T_max = self.max_epochs
+            cfg.train.max_epochs = max_epochs
+            cfg.train.lr_scheduler = {
+                'type': 'LambdaLR',
+                'lr_lambda': lambda _: 1,
+                'last_epoch': -1
+            }
+            cfg.train.optimizer.lr = 1e-4
             return cfg
 
         kwargs = dict(
             model=model_id,
+            model_revision=model_revision,
             work_dir=self.tmp_dir,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
@@ -65,9 +72,11 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_lora_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
+        model_revision='v1.0.6'
 
         kwargs = dict(
             model=model_id,
+            model_revision=model_revision,
             work_dir=self.tmp_dir,
             train_dataset=None,
             eval_dataset=self.eval_dataset)

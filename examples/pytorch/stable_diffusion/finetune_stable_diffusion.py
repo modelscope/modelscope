@@ -1,21 +1,25 @@
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
-from modelscope.trainers import EpochBasedTrainer, build_trainer
+from modelscope.utils.constant import DownloadMode
 from modelscope.trainers.training_args import TrainingArgs
+from modelscope.trainers import EpochBasedTrainer, build_trainer
 
-training_args = TrainingArgs(task='lora-diffusion').parse_cli()
+training_args = TrainingArgs(task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 print(args)
 
-train_dataset = MsDataset.load(args.train_dataset_name, split='train')
-validation_dataset = MsDataset.load(args.train_dataset_name, split='validation')
+train_dataset = MsDataset.load(args.train_dataset_name, 
+                               split='train',
+                               download_mode=DownloadMode.FORCE_REDOWNLOAD)
+validation_dataset = MsDataset.load(args.train_dataset_name, 
+                                    split='validation',
+                                    download_mode=DownloadMode.FORCE_REDOWNLOAD)
 
 def cfg_modify_fn(cfg):
     if args.use_model_config:
         cfg.merge_from_dict(config)
     else:
         cfg = config
-    cfg.train.max_epochs = args.max_epochs
     cfg.train.lr_scheduler = {
         'type': 'LambdaLR',
         'lr_lambda': lambda _: 1,

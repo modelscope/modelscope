@@ -21,9 +21,7 @@ class StableDiffusionTrainer(EpochBasedTrainer):
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
-                self.model.unet,
-                cfg=cfg,
-                default_args=default_args)
+                self.model.unet, cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
                 f'Build optimizer error, the optimizer {cfg} is a torch native component, '

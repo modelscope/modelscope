@@ -1,23 +1,24 @@
 # Copyright © Alibaba, Inc. and its affiliates.
 
+import os
 from typing import Any, Dict, Optional
 
 import cv2
-import os
 import numpy as np
 import torch
-from PIL import Image
 import torchvision.transforms as transforms
-from diffusers import StableDiffusionPipeline as DiffuserStableDiffusionPipeline
+from diffusers import \
+    StableDiffusionPipeline as DiffuserStableDiffusionPipeline
+from PIL import Image
 
-from modelscope.models import Model
 from modelscope.metainfo import Pipelines
+from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.constant import Tasks
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
     DiffusersPipeline
+from modelscope.utils.constant import Tasks
 
 
 @PIPELINES.register_module(
@@ -31,12 +32,11 @@ class StableDiffusionPipeline(DiffusersPipeline):
         Args:
             model: model id on modelscope hub or local model dir.
         """
-        
+
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
         self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
-                model,
-                torch_dtype=torch.float16)
+            model, torch_dtype=torch.float16)
         self.pipeline = self.pipeline.to(self.device)
         # load lora moudle to unet
         if lora_dir is not None:
@@ -45,7 +45,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
-    
+
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         if not isinstance(inputs, dict):
@@ -54,8 +54,9 @@ class StableDiffusionPipeline(DiffusersPipeline):
             )
         if 'prompt' not in inputs:
             raise ValueError('input should contain "prompt", but not found')
-        
-        images = self.pipeline(inputs['prompt'], num_inference_steps=30, guidance_scale=7.5)
+
+        images = self.pipeline(
+            inputs['prompt'], num_inference_steps=30, guidance_scale=7.5)
 
         return images
 

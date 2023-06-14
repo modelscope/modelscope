@@ -17,8 +17,7 @@ from modelscope.utils.constant import Tasks
 
 
 @MODELS.register_module(
-    Tasks.text_to_image_synthesis,
-    module_name=Models.stable_diffusion)
+    Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
 class StableDiffusion(TorchModel):
     """ The implementation of efficient diffusion tuning model based on TorchModel.
 
@@ -55,14 +54,10 @@ class StableDiffusion(TorchModel):
             subfolder='text_encoder',
             revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
-            pretrained_model_name_or_path,
-            subfolder='vae',
-            revision=revision)
+            pretrained_model_name_or_path, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
-            pretrained_model_name_or_path,
-            subfolder='unet',
-            revision=revision)
-        
+            pretrained_model_name_or_path, subfolder='unet', revision=revision)
+
         # Freeze gradient calculation and move to device
         if self.vae is not None:
             self.vae.requires_grad_(False)
@@ -70,7 +65,7 @@ class StableDiffusion(TorchModel):
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
             self.text_encoder = self.text_encoder.to(self.device)
-        if self.unet is not None: 
+        if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
             self.unet = self.unet.to(self.device)
@@ -111,8 +106,8 @@ class StableDiffusion(TorchModel):
 
         # Add noise to the latents according to the noise magnitude at each timestep
         # (this is the forward diffusion process)
-        noisy_latents = self.noise_scheduler.add_noise(
-            latents, noise, timesteps)
+        noisy_latents = self.noise_scheduler.add_noise(latents, noise,
+                                                       timesteps)
 
         input_ids = self.tokenize_caption(prompt).to(self.device)
 
@@ -124,8 +119,8 @@ class StableDiffusion(TorchModel):
         if self.noise_scheduler.config.prediction_type == 'epsilon':
             target = noise
         elif self.noise_scheduler.config.prediction_type == 'v_prediction':
-            target = self.noise_scheduler.get_velocity(
-                latents, noise, timesteps)
+            target = self.noise_scheduler.get_velocity(latents, noise,
+                                                       timesteps)
         else:
             raise ValueError(
                 f'Unknown prediction type {self.noise_scheduler.config.prediction_type}'
@@ -133,14 +128,13 @@ class StableDiffusion(TorchModel):
 
         # Predict the noise residual and compute loss
         model_pred = self.unet(noisy_latents, timesteps,
-                                encoder_hidden_states).sample
-        
-        loss = F.mse_loss(
-            model_pred.float(), target.float(), reduction='mean')
-        
+                               encoder_hidden_states).sample
+
+        loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
+
         output = {OutputKeys.LOSS: loss}
         return output
-        
+
     def save_pretrained(self,
                         target_folder: Union[str, os.PathLike],
                         save_checkpoint_names: Union[str, List[str]] = None,
@@ -154,5 +148,5 @@ class StableDiffusion(TorchModel):
             pass
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,
-                        save_function, config, save_config_function,
-                        **kwargs)
+                                    save_function, config,
+                                    save_config_function, **kwargs)

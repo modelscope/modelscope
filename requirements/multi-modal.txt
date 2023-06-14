@@ -1,5 +1,7 @@
 accelerate
+decord>=0.6.0
 diffusers>=0.17.1
+fairseq
 ftfy>=6.0.3
 librosa==0.9.2
 opencv-python
@@ -23,5 +25,3 @@ transformers>=4.27.1
 # triton==2.0.0.dev20221120
 unicodedata2
 zhconv
-decord>=0.6.0
-fairseq

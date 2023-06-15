@@ -60,7 +60,8 @@ class MsDataset:
     _dataset_context_config: DatasetContextConfig = None
 
     def __init__(self,
-                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset],
+                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset,
+                                    NativeIterableDataset],
                  target: Optional[str] = None):
         self._hf_ds = ds_instance
         if target is not None and target not in self._hf_ds.features:

@@ -6,6 +6,7 @@ import os
 import datasets
 import pandas as pd
 from datasets import IterableDataset
+from tqdm import tqdm
 
 from modelscope.msdatasets.utils.maxcompute_utils import MaxComputeUtil
 from modelscope.utils.constant import (DEFAULT_MAXCOMPUTE_ENDPOINT,
@@ -23,15 +24,18 @@ class ExternalDataset(object):
     def __init__(self, split_path_dict, config_kwargs):
         self.split_path_dict = split_path_dict
         self.config_kwargs = copy.deepcopy(config_kwargs)
-        self.config_kwargs.update({'split_config': split_path_dict})
+        self.config_kwargs.update({'split_config': self.split_path_dict})
         # dataset for specific extensions
         self.spec_extension_dataset = None
-        self.split_data_files = {k: [] for k, _ in split_path_dict.items()}
+        self.split_data_files = {
+            k: []
+            for k, _ in self.split_path_dict.items()
+        }
         self.custom_map = {}
 
         # the extension of file
         file_ext = ''
-        for split_name, split_dir in split_path_dict.items():
+        for split_name, split_dir in self.split_path_dict.items():
             if isinstance(split_dir, str) and os.path.isdir(split_dir):
                 split_file_names = os.listdir(split_dir)
                 set_files_exts = set([
@@ -91,28 +95,52 @@ class NativeIterableDataset(IterableDataset):
         super().__init__(ex_iterable=ex_iterable, info=info, split=split)
 
     def __iter__(self):
-        for key, entity in self._iter():
+        for key, entity in tqdm(
+                self._iter(),
+                desc='Overall progress',
+                total=self.n_shards,
+                dynamic_ncols=True):
             if isinstance(entity, dict):
                 ret = {}
-                for k, v in entity.items():
-                    ret[k] = v
-                    if k.endswith(':FILE'):
-                        dl_manager = self._ex_iterable.kwargs.get('dl_manager')
-                        ex_cache_path = dl_manager.download_and_extract(v)
-                        ret[k] = ex_cache_path
-                        if k.endswith('Image:FILE'):
-                            from PIL import Image
-                            ret[k + ':Object'] = Image.open(fp=ex_cache_path)
-                        if k.endswith('Audio:FILE'):
-                            import torchaudio
-                            waveform_and_rate = torchaudio.load(ex_cache_path)
-                            ret[k + ':Object'] = waveform_and_rate
+                try:
+                    for k, v in entity.items():
+                        ret[k] = v
+                        if k.endswith(':FILE'):
+                            dl_manager = self._ex_iterable.kwargs.get(
+                                'dl_manager')
+                            ex_cache_path = dl_manager.download_and_extract(v)
+                            ret[k] = ex_cache_path
+                            if k.endswith('Image:FILE'):
+                                from PIL import Image
+                                ret[k
+                                    + ':Object'] = Image.open(fp=ex_cache_path)
+                            if k.endswith('Audio:FILE'):
+                                import torchaudio
+                                waveform_and_rate = torchaudio.load(
+                                    ex_cache_path)
+                                ret[k + ':Object'] = waveform_and_rate
+                except Exception as e:
+                    logger.error(e)
+                    ret = {}
+
                 entity = ret
 
             yield entity
 
     def __len__(self):
-        return 1
+        return self.n_shards
+
+    def head(self, n=5):
+        """
+        Returns the first n rows of the dataset.
+
+        Args:
+            n (int): Number of rows to return.
+
+        Returns:
+            Dict[str, list]: e.g. {'col1': [val11, val12, ...], 'col2': [val21, val22, ...]}
+        """
+        return self._head(n=n)
 
 
 class VirgoDataset(object):

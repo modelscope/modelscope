@@ -4,7 +4,6 @@ from typing import Union
 import torch
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
-from torch import nn
 
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS

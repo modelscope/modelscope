@@ -52,11 +52,12 @@ class StableDiffusionPipeline(DiffusersPipeline):
             raise ValueError(
                 f'Expected the input to be a dictionary, but got {type(input)}'
             )
-        if 'prompt' not in inputs:
-            raise ValueError('input should contain "prompt", but not found')
+
+        if 'text' not in inputs:
+            raise ValueError('input should contain "text", but not found')
 
         images = self.pipeline(
-            inputs['prompt'], num_inference_steps=30, guidance_scale=7.5)
+            inputs['text'], num_inference_steps=30, guidance_scale=7.5)
 
         return images
 

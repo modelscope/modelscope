@@ -85,7 +85,7 @@ class StableDiffusion(TorchModel):
             return_tensors='pt')
         return inputs.input_ids
 
-    def forward(self, prompt='', target=None):
+    def forward(self, text='', target=None):
         self.unet.train()
         self.unet = self.unet.to(self.device)
 
@@ -109,7 +109,7 @@ class StableDiffusion(TorchModel):
         noisy_latents = self.noise_scheduler.add_noise(latents, noise,
                                                        timesteps)
 
-        input_ids = self.tokenize_caption(prompt).to(self.device)
+        input_ids = self.tokenize_caption(text).to(self.device)
 
         # Get the text embedding for conditioning
         with torch.no_grad():

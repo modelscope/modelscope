@@ -40,6 +40,5 @@ kwargs = dict(
     eval_dataset=validation_dataset,
     cfg_modify_fn=cfg_modify_fn)
 
-trainer = build_trainer(
-    name=Trainers.lora_diffusion, default_args=kwargs)
+trainer = build_trainer(name=Trainers.lora_diffusion, default_args=kwargs)
 trainer.train()

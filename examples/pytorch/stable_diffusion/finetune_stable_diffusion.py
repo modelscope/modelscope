@@ -40,6 +40,6 @@ kwargs = dict(
     eval_dataset=validation_dataset,
     cfg_modify_fn=cfg_modify_fn)
 
-trainer: EpochBasedTrainer = build_trainer(
+trainer = build_trainer(
     name=Trainers.lora_diffusion, default_args=kwargs)
 trainer.train()

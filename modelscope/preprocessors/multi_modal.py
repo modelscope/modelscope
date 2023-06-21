@@ -48,13 +48,14 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.preprocessor_resolution = kwargs.pop('resolution', 512)
-        self.preprocessor_mean = kwargs.pop('mean', [0.5, 0.5, 0.5])
-        self.preprocessor_std = kwargs.pop('std', [0.5, 0.5, 0.5])
+        self.preprocessor_mean = kwargs.pop('mean', [0.5])
+        self.preprocessor_std = kwargs.pop('std', [0.5])
         self.preprocessor_image_keys = set(kwargs.pop('image_keys', []))
         self.transform_input = transforms.Compose([
             transforms.Resize(
                 self.preprocessor_resolution,
                 interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(self.preprocessor_mean,
                                  self.preprocessor_std),

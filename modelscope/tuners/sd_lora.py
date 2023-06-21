@@ -90,9 +90,10 @@ class LoRACrossAttnProcessor(nn.Module):
                  attention_mask=None,
                  scale=1.0):
         batch_size, sequence_length, _ = hidden_states.shape
-        attention_mask = attn.prepare_attention_mask(attention_mask,
-                                                     sequence_length,
-                                                     batch_size)
+        attention_mask = attn.prepare_attention_mask(
+            attention_mask=attention_mask,
+            target_length=sequence_length,
+            batch_size=batch_size)
 
         query = attn.to_q(hidden_states)
         query = query + scale * self.to_q_lora(

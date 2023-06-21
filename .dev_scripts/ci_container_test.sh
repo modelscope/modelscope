@@ -32,6 +32,8 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
 else
     echo "Running case in release image, run case directly!"
 fi
+# remove torch_extensions folder to avoid ci hang.
+rm -rf ~/.cache/torch_extensions
 if [ $# -eq 0 ]; then
     ci_command="python tests/run.py --subprocess"
 else

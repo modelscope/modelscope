@@ -86,7 +86,6 @@ class OssDownloader(BaseDownloader):
     def _authorize(self) -> None:
         """ Authorization of target dataset.
         Get credentials from cache and send to the modelscope-hub in the future. """
-        # TODO: obtain credentials from loacl cache when available.
         cookies = ModelScopeConfig.get_cookies()
         git_token = ModelScopeConfig.get_token()
         user_info = ModelScopeConfig.get_user_info()

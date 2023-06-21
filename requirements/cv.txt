@@ -16,6 +16,7 @@ fastai>=1.0.51
 ffmpeg>=1.4
 ffmpeg-python>=0.2.0
 ftfy
+fvcore
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0
@@ -44,16 +45,19 @@ pandas
 panopticapi
 plyfile>=0.7.4
 psutil
+pyclipper
 PyMCubes
 pytorch-lightning
 regex
-scikit-image>=0.19.3
+# <0.20.0 for compatible python3.7 python3.8
+scikit-image>=0.19.3,<0.20.0
 scikit-learn>=0.20.1
 shapely
 shotdetect_scenedetect_lgss>=0.0.4
 smplx
 tensorflow-estimator>=1.15.1
 tf_slim
+thop
 timm>=0.4.9
 torchmetrics>=0.6.2
 torchsummary>=1.5.1

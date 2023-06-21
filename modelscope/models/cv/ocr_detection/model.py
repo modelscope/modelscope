@@ -12,7 +12,7 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .modules.dbnet import DBModel, VLPTModel
+from .modules.dbnet import DBModel, DBNasModel, VLPTModel
 from .utils import boxes_from_bitmap, polygons_from_bitmap
 
 LOGGER = get_logger()
@@ -40,6 +40,8 @@ class OCRDetection(TorchModel):
             self.detector = VLPTModel()
         elif self.backbone == 'resnet18':
             self.detector = DBModel()
+        elif self.backbone == 'proxylessnas':
+            self.detector = DBNasModel()
         else:
             raise TypeError(
                 f'detector backbone should be either resnet18, resnet50, but got {cfgs.model.backbone}'

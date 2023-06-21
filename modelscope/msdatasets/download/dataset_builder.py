@@ -6,8 +6,9 @@ from typing import Dict, Union
 import datasets
 import pandas as pd
 import pyarrow as pa
-from datasets import (ArrowBasedBuilder, GeneratorBasedBuilder,
-                      IterableDataset, IterableDatasetDict)
+from datasets import (ArrowBasedBuilder, Dataset, DatasetDict,
+                      GeneratorBasedBuilder, IterableDataset,
+                      IterableDatasetDict)
 from datasets.filesystems import is_remote_filesystem
 from datasets.info import DatasetInfo
 from datasets.naming import camelcase_to_snakecase
@@ -47,6 +48,7 @@ class CsvDatasetBuilder(csv.Csv):
         self.meta_data_files = dataset_context_config.data_meta_config.meta_data_files
         self.zip_data_files = dataset_context_config.data_meta_config.zip_data_files
         self.input_config_kwargs = dataset_context_config.config_kwargs
+        self.split_path_dict = dict({})
 
         self.cache_build_dir = os.path.join(self.cache_root_dir,
                                             self.namespace, self.dataset_name,
@@ -61,15 +63,24 @@ class CsvDatasetBuilder(csv.Csv):
         sub_dir_hash = get_subdir_hash_from_split(
             split=split, version=self.version)
 
+        from datasets.data_files import DataFilesDict, DataFilesList
+        data_files = {
+            k: DataFilesList([v], origin_metadata=None)
+            for k, v in self.meta_data_files.items()
+        }
+        data_files = DataFilesDict.from_local_or_remote(data_files)
+
         super().__init__(
             cache_dir=self.cache_build_dir,
             config_name=self.namespace,
             hash=sub_dir_hash,
-            data_files=self.meta_data_files,
+            data_files=data_files,
             **self.input_config_kwargs)
 
         self.info.builder_name = self.dataset_name
         self.name = camelcase_to_snakecase(self.dataset_name)
+
+        self.local_meta_csv_paths: dict = dict({})
 
     def _build_cache_dir(self, namespace=DEFAULT_DATASET_NAMESPACE):
         builder_data_dir = os.path.join(
@@ -147,6 +158,87 @@ class CsvDatasetBuilder(csv.Csv):
                     f"Failed to read file '{file}' with error {type(e)}: {e}")
                 raise
 
+    def download_and_prepare(self, download_mode, dl_manager,
+                             **download_kwargs):
+
+        target_cache_dir = dl_manager.download_config.cache_dir
+
+        split_name = dl_manager.download_config.split
+        if not split_name:
+            split_name = DatasetPathName.LOCK_FILE_NAME_ANY
+        version_name = dl_manager.download_config.version
+        if not version_name:
+            version_name = DatasetPathName.LOCK_FILE_NAME_ANY
+        subset_name = self.subset_name
+        if not subset_name:
+            subset_name = DatasetPathName.LOCK_FILE_NAME_ANY
+
+        # Prevent parallel disk operations
+        lock_file_names = []
+        lock_file_names.append(DatasetPathName.DATA_FILES_NAME)
+        lock_file_names.append(dl_manager.download_config.dataset_name)
+        lock_file_names.append(version_name)
+        lock_file_names.append(subset_name)
+        lock_file_names.append(split_name)
+
+        lock_file_name = DatasetPathName.LOCK_FILE_NAME_DELIMITER.join(
+            lock_file_names)
+
+        lock_path = os.path.join(
+            target_cache_dir.strip(DatasetPathName.DATA_FILES_NAME),
+            lock_file_name + '.lock')
+        with FileLock(lock_path):
+            data_exists = os.path.exists(target_cache_dir)
+            if data_exists and download_mode == DownloadMode.REUSE_DATASET_IF_EXISTS.value:
+                logger.warning(
+                    f'Reusing dataset {self.name} ({target_cache_dir})')
+            logger.info(f'Generating dataset {self.name} ({target_cache_dir})')
+
+            self._download_and_prepare(
+                dl_manager=dl_manager, download_mode=download_mode)
+
+    def _download_and_prepare(self, dl_manager, download_mode):
+        import shutil
+
+        target_cache_dir = dl_manager.download_config.cache_dir
+        if download_mode == DownloadMode.FORCE_REDOWNLOAD.value:
+            shutil.rmtree(target_cache_dir, ignore_errors=True)
+            os.makedirs(target_cache_dir, exist_ok=True)
+
+        self.local_meta_csv_paths = {
+            k: HubApi.fetch_csv_from_url(v, target_cache_dir)
+            for k, v in self.meta_data_files.items()
+        }
+
+        self.split_path_dict = dl_manager.download_and_extract(
+            self.zip_data_files)
+
+    def _convert_csv_to_dataset(self, split_name, csv_file_path):
+
+        df = pd.read_csv(
+            csv_file_path, iterator=False, delimiter=self.csv_delimiter)
+
+        transform_fields = []
+        for field_name in df.columns.tolist():
+            if field_name.endswith(':FILE'):
+                transform_fields.append(field_name)
+
+        base_extracted_dir = self.split_path_dict.get(split_name, '')
+        for field_name in transform_fields:
+            if base_extracted_dir:
+                df[field_name] = df[field_name].apply(
+                    lambda x: os.path.join(base_extracted_dir, x))
+
+        pa_data = pa.Table.from_pandas(df)
+        return Dataset(arrow_table=pa_data)
+
+    def as_dataset(self) -> DatasetDict:
+
+        return DatasetDict({
+            k: self._convert_csv_to_dataset(k, v)
+            for k, v in self.local_meta_csv_paths.items()
+        })
+
 
 class TaskSpecificDatasetBuilder(CsvDatasetBuilder):
 
@@ -181,7 +273,7 @@ class TaskSpecificDatasetBuilder(CsvDatasetBuilder):
             self._cache_dir.replace(os.sep, '_') + '.lock')
         with FileLock(lock_path):
             data_exists = os.path.exists(self._cache_dir)
-            if data_exists and download_mode == DownloadMode.REUSE_DATASET_IF_EXISTS:
+            if data_exists and download_mode == DownloadMode.REUSE_DATASET_IF_EXISTS:  # TODO: .value??
                 logger.warning(
                     f'Reusing dataset {self.name} ({self._cache_dir})')
                 return
@@ -232,6 +324,9 @@ class IterableDatasetBuilder(csv.Csv):
 
         self.info.builder_name = self.dataset_name
         self.name = camelcase_to_snakecase(self.dataset_name)
+
+        self.meta_csv_df = None
+        self.meta_cache_dir = dataset_context_config.data_meta_config.meta_cache_dir
 
     @staticmethod
     def get_builder_instance(
@@ -357,17 +452,13 @@ class IterableDatasetBuilder(csv.Csv):
                 zip_file_name = os.path.splitext(zip_file)[0]
 
         if meta_file_url and not files:
-            headers, texts = hub_api.fetch_single_csv_script(meta_file_url)
-            meta_csv_mapping = IterableDatasetBuilder.trans_data_to_mapping(
-                headers, texts, self.csv_delimiter)
-            pa_table = pa.Table.from_pydict(meta_csv_mapping)
+            self._get_meta_csv_df(meta_file_url)
+            pa_table = pa.Table.from_pandas(self.meta_csv_df)
             yield 0, pa_table
 
         elif meta_file_url and files:
             # Get meta file
-            headers, texts = hub_api.fetch_single_csv_script(meta_file_url)
-            meta_csv_mapping = IterableDatasetBuilder.trans_data_to_mapping(
-                headers, texts, self.csv_delimiter)
+            self._get_meta_csv_df(meta_file_url)
 
             if is_zip:
                 oss_config_for_unzipped = hub_api.get_dataset_access_config_for_unzipped(
@@ -375,7 +466,7 @@ class IterableDatasetBuilder(csv.Csv):
                     zip_file_name)
                 dl_manager.download_config.oss_config = oss_config_for_unzipped
 
-            pa_table = pa.Table.from_pydict(meta_csv_mapping)
+            pa_table = pa.Table.from_pandas(self.meta_csv_df)
             yield 0, pa_table
 
         elif not meta_file_url and files:
@@ -384,6 +475,15 @@ class IterableDatasetBuilder(csv.Csv):
 
         else:
             raise f'Neither column meta nor data file found in {self.dataset_name}.json .'
+
+    def _get_meta_csv_df(self, meta_file_url: str) -> None:
+        if not self.meta_csv_df:
+            meta_csv_file_path = HubApi.fetch_csv_from_url(
+                meta_file_url, self.meta_cache_dir)
+            self.meta_csv_df = pd.read_csv(
+                meta_csv_file_path,
+                iterator=False,
+                delimiter=self.csv_delimiter)
 
     @staticmethod
     def trans_data_to_mapping(headers: str, texts: list, delimiter: str):

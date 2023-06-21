@@ -57,7 +57,7 @@ def update_cfg(cfg: Config) -> Config:
         key_chain_map[_HOOK_KEY_CHAIN_MAP[key]] = value
         hook.clear()
     cfg.train.hooks = list(filter(bool, cfg.train.hooks))
-    cfg.merge_from_dict(key_chain_map)
+    cfg.merge_from_dict(key_chain_map, force=False)
     return cfg
 
 

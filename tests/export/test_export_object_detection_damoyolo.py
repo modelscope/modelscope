@@ -27,6 +27,15 @@ class TestExportObjectDetectionDamoyolo(unittest.TestCase):
         Exporter.from_model(model).export_onnx(
             input_shape=(1, 3, 640, 640), output_dir=self.tmp_dir)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_export_domain_specific_object_detection_damoyolo(self):
+
+        model_id = 'damo/cv_tinynas_human-detection_damoyolo'
+        model = Model.from_pretrained(model_id)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            Exporter.from_model(model).export_onnx(
+                input_shape=(1, 3, 640, 640), output_dir=tmp_dir)
+
 
 if __name__ == '__main__':
     unittest.main()

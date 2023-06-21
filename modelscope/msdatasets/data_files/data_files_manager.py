@@ -58,6 +58,7 @@ class DataFilesManager(object):
 
         # Set context. Note: no need to update context_config.
         download_config.oss_config = self.oss_config
+        download_config.num_proc = self.input_config_kwargs.get('num_proc', 4)
         dataset_context_config.download_config = download_config
         self.dataset_context_config = dataset_context_config
         os.makedirs(download_config.cache_dir, exist_ok=True)

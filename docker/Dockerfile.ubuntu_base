@@ -1,0 +1,136 @@
+ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+FROM $BASE_IMAGE
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+ENV CONDA_DIR /opt/conda
+ENV PATH="${CONDA_DIR}/bin:${PATH}"
+ENV arch=x86_64
+SHELL ["/bin/bash", "-c"]
+COPY docker/rcfiles /tmp/resources
+COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
+RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
+    apt-get clean && \
+    cp /tmp/resources/sources.list.aliyun /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y locales wget git strace gdb sox libopenmpi-dev curl \
+    libgeos-dev strace vim ffmpeg libsm6 tzdata language-pack-zh-hans \
+    ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
+    wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
+    dpkg -i ./git-lfs_3.2.0_amd64.deb && \
+    rm -f ./git-lfs_3.2.0_amd64.deb && \
+    locale-gen zh_CN && \
+    locale-gen zh_CN.utf8 && \
+    update-locale LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 && \
+    ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
+
+#install and config python
+ARG PYTHON_VERSION=3.7.13
+# Miniconda3-py37_23.1.0-1-Linux-x86_64.sh is last python3.7 version
+RUN if [ "$PYTHON_VERSION" = "3.7.13" ] ; then \
+    wget --quiet https://mirrors.aliyun.com/anaconda/miniconda/Miniconda3-py37_23.1.0-1-Linux-x86_64.sh -O ./miniconda.sh && \
+    /bin/bash  miniconda.sh -b -p /opt/conda && \
+    rm  -f miniconda.sh && \
+    ln  -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    cp /tmp/resources/conda.tuna  ~/.condarc && \
+    source /root/.bashrc && \
+    conda install --yes python==${PYTHON_VERSION} && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set install.trusted-host mirrors.aliyun.com;\
+else \
+    wget --quiet https://mirrors.aliyun.com/anaconda/miniconda/Miniconda3-latest-Linux-${arch}.sh -O ./miniconda.sh && \
+    /bin/bash  miniconda.sh -b -p /opt/conda && \
+    rm  -f miniconda.sh && \
+    ln  -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    cp /tmp/resources/conda.tuna  ~/.condarc && \
+    source /root/.bashrc && \
+    conda install --yes python==${PYTHON_VERSION} && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set install.trusted-host mirrors.aliyun.com;\
+fi
+
+ARG USE_GPU=True
+
+# install pytorch
+ARG TORCH_VERSION=1.12.0
+ARG CUDATOOLKIT_VERSION=cu113
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113; \
+    else \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
+    fi
+
+# install tensorflow
+ARG TENSORFLOW_VERSION=1.15.5
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+    else \
+        # only python 3.7 has tensorflow 1.15.5
+        if [ "$PYTHON_VERSION" = "3.7.13" ] ; then \
+            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
+        else \
+            pip install --no-cache-dir numpy==1.18.5 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/tensorflow-1.15.5-cp38-cp38-linux_x86_64.whl; \
+         fi \
+    fi
+
+# mmcv-full<=1.7.0 for mmdet3d compatible
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="5.0 5.2 6.0 6.1 7.0 7.5 8.0 8.6" MMCV_WITH_OPS=1 MAX_JOBS=8 FORCE_CUDA=1 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
+    else \
+        MMCV_WITH_OPS=1 MAX_JOBS=8 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
+    fi
+
+# default shell bash
+ENV SHELL=/bin/bash
+# install special package
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
+    else \
+        pip install --no-cache-dir dgl==0.9.0 dglgo -f https://data.dgl.ai/wheels/repo.html; \
+    fi
+
+# copy install scripts
+COPY docker/scripts/install_unifold.sh docker/scripts/install_colmap.sh docker/scripts/install_pytorch3d_nvdiffrast.sh docker/scripts/install_tiny_cuda_nn.sh docker/scripts/install_apex.sh /tmp/
+
+# for uniford
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_unifold.sh; \
+    else \
+     echo 'cpu unsupport uniford'; \
+    fi
+
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
+    else \
+     echo 'cpu unsupport Pointnet2'; \
+    fi
+
+# 3d supports
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_colmap.sh; \
+    else \
+     echo 'cpu unsupport colmap'; \
+    fi
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_tiny_cuda_nn.sh \
+    else \
+     echo 'cpu unsupport tiny_cudann'; \
+    fi
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_pytorch3d_nvdiffrast.sh; \
+    else \
+     echo 'cpu unsupport pytorch3d nvdiffrast'; \
+    fi
+# end of 3D
+# install apex after deepspeed
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_apex.sh; \
+    else \
+     echo 'cpu unsupport apex'; \
+    fi

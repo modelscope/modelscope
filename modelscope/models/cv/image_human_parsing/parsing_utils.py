@@ -18,7 +18,7 @@ def center_to_target_size_test(img, target_size):
     new_h, new_w = 0, 0
     tfm_list = []
     if src_h > trg_h and src_w > trg_w:
-        if src_h > src_w:
+        if src_h >= src_w:
             new_h = trg_h
             new_w = int(new_h * src_w / src_h)
             if new_w > trg_w:

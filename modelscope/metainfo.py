@@ -184,6 +184,7 @@ class Models(object):
     campplus_sv = 'cam++-sv'
     eres2net_sv = 'eres2net-sv'
     scl_sd = 'scl-sd'
+    cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
@@ -487,6 +488,7 @@ class Pipelines(object):
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
     speaker_change_locating = 'speaker-change-locating'
+    segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 

@@ -346,6 +346,7 @@ def merge_outputs(detections):
 def filter(results, logi, ps):
     # this function select boxes
     batch_size, feat_dim = logi.shape[0], logi.shape[2]
+
     num_valid = sum(results[1][:, 8] >= 0.15)
 
     slct_logi = np.zeros((batch_size, num_valid, feat_dim), dtype=np.float32)
@@ -356,6 +357,14 @@ def filter(results, logi, ps):
             slct_dets[i, j, :] = ps[i, j, :].cpu()
 
     return torch.Tensor(slct_logi).cuda(), torch.Tensor(slct_dets).cuda()
+
+
+def normalized_ps(ps, vocab_size):
+    ps = torch.round(ps).to(torch.int64)
+    ps = torch.where(ps < vocab_size, ps, (vocab_size - 1)
+                     * torch.ones(ps.shape).to(torch.int64).cuda())
+    ps = torch.where(ps >= 0, ps, torch.zeros(ps.shape).to(torch.int64).cuda())
+    return ps
 
 
 def process_detect_output(output, meta):
@@ -390,6 +399,7 @@ def process_detect_output(output, meta):
     logi = logi + cr
     results = merge_outputs(detections)
     slct_logi_feat, slct_dets_feat = filter(results, logi, raw_dets[:, :, :8])
+    slct_dets_feat = normalized_ps(slct_dets_feat, 256)
     slct_output_dets = results[1][:slct_logi_feat.shape[1], :8]
 
     return slct_logi_feat, slct_dets_feat, slct_output_dets

@@ -117,7 +117,8 @@ class OssUtilities:
                 if e.__dict__.get('status') == 403:
                     self._reload_sts()
                 if retry_count >= self.max_retries:
-                    raise
+                    logger.warning(f'Failed to download {oss_file_name}')
+                    raise e
 
         return local_path
 

@@ -60,7 +60,8 @@ class MsDataset:
     _dataset_context_config: DatasetContextConfig = None
 
     def __init__(self,
-                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset],
+                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset,
+                                    NativeIterableDataset],
                  target: Optional[str] = None):
         self._hf_ds = ds_instance
         if target is not None and target not in self._hf_ds.features:
@@ -170,6 +171,7 @@ class MsDataset:
         cache_dir: Optional[str] = MS_DATASETS_CACHE,
         use_streaming: Optional[bool] = False,
         custom_cfg: Optional[Config] = Config(),
+        token: Optional[str] = None,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -197,11 +199,17 @@ class MsDataset:
                                                 NativeIterableDataset or a dict of NativeIterableDataset.
                 custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
+                token (str, Optional): SDK token of ModelScope.
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
                 MsDataset (MsDataset): MsDataset object for a certain dataset.
             """
+
+        if token:
+            from modelscope.hub.api import HubApi
+            api = HubApi()
+            api.login(token)
 
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
@@ -647,7 +655,7 @@ class MsDataset:
 
             def type_converter(self, x):
                 if self.to_tensor:
-                    return torch.tensor(x)
+                    return torch.as_tensor(x)
                 else:
                     return x
 

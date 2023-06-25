@@ -17,11 +17,11 @@ class DiffusersStableDiffusionTest(unittest.TestCase):
 
     test_input = 'a photo of an astronaut riding a horse on mars'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run(self):
         diffusers_pipeline = pipeline(task=self.task, model=self.model_id)
         output = diffusers_pipeline({
-            'text': self.test_input,
+            'prompt': self.test_input,
             'height': 512,
             'width': 512
         })

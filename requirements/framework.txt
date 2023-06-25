@@ -7,8 +7,8 @@ gast>=0.2.2
 # for python3.7 python3.8 compatible
 numpy<=1.22.0
 oss2
-# for datasets compatible
-pandas<=1.5.3
+# for datasets compatible and py37 py38 compatible
+pandas<1.4.0
 Pillow>=6.2.0
 # pyarrow 9.0.0 introduced event_loop core dump
 pyarrow>=6.0.0,!=9.0.0

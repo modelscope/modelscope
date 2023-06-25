@@ -1,7 +1,6 @@
 kaldiio
 kwsbp>=0.0.6
 matplotlib
-numpy
 py_sound_connect>=0.1
 scipy
 SoundFile>0.10

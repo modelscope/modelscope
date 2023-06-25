@@ -10,8 +10,9 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .modules.convnextvit import ConvNextViT
-from .modules.crnn import CRNN
+from .modules.ConvNextViT.main_model import ConvNextViT
+from .modules.CRNN.main_model import CRNN
+from .modules.LightweightEdge.main_model import LightweightEdge
 
 LOGGER = get_logger()
 
@@ -85,6 +86,8 @@ class OCRRecognition(TorchModel):
             self.recognizer = ConvNextViT()
         elif cfgs.model.recognizer == 'CRNN':
             self.recognizer = CRNN()
+        elif cfgs.model.recognizer == 'LightweightEdge':
+            self.recognizer = LightweightEdge()
         else:
             raise TypeError(
                 f'recognizer should be either ConvNextViT, CRNN, but got {cfgs.model.recognizer}'
@@ -94,7 +97,7 @@ class OCRRecognition(TorchModel):
             model_dict = self.recognizer.state_dict()
             # remove prefix for finetuned models
             check_point = {
-                k.replace('recognizer.', ''): v
+                k.replace('recognizer.', '').replace('module.', ''): v
                 for k, v in params_pretrained.items()
             }
             model_dict.update(check_point)
@@ -134,9 +137,9 @@ class OCRRecognition(TorchModel):
         labels = batch['labels']
         bs = inputs.shape[0]
         if self.do_chunking:
-            inputs = inputs.view(bs * 3, 1, self.target_height, 300)
+            inputs = inputs.view(bs * 3, 3, self.target_height, 300)
         else:
-            inputs = inputs.view(bs, 1, self.target_height, self.target_width)
+            inputs = inputs.view(bs, 3, self.target_height, self.target_width)
         output = self(inputs)
         probs = output['probs'].permute(1, 0, 2)
         _, label_length, label_flatten = self.encdec.encode(labels)

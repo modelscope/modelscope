@@ -353,7 +353,7 @@ class GPT3Model(PreTrainedModel):
         model.load_state_dict(state_dict)
         return model
 
-    def generate(self, tokens, temperature=1.0, **kwargs):
+    def streaming_generate(self, tokens, temperature=1.0, **kwargs):
         top_k = kwargs.pop('top_k', self.config.top_k)
         top_p = kwargs.pop('top_p', self.config.top_p)
         max_length = kwargs.pop('max_length', tokens.size(1) + 100)
@@ -410,6 +410,9 @@ class GPT3Model(PreTrainedModel):
                 # Update the tokens.
                 tokens[started, context_length] = new_sample[started]
 
+                yield TokenGeneratorOutput(sequences=tokens[:, :(context_length
+                                                                 + 1)])
+
                 done_token = (new_sample == termination_id).byte() & \
                     started.byte()
 
@@ -419,5 +422,8 @@ class GPT3Model(PreTrainedModel):
                 if done:
                     break
 
-        tokens = tokens[:, :(context_length + 1)]
-        return TokenGeneratorOutput(sequences=tokens)
+    def generate(self, tokens, temperature=1.0, **kwargs):
+        last_output = None
+        for output in self.streaming_generate(tokens, temperature, **kwargs):
+            last_output = output
+        return last_output

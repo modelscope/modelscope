@@ -205,6 +205,7 @@ class Models(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
+    stable_diffusion = 'stable-diffusion'
 
     # science models
     unifold = 'unifold'
@@ -892,6 +893,8 @@ class MultiModalTrainers(object):
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    stable_diffusion = 'stable-diffusion'
+    lora_diffusion = 'lora-diffusion'
 
 
 class AudioTrainers(object):

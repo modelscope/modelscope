@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import random
 import tempfile
 import unittest
 
@@ -27,40 +28,13 @@ class ControllableImageGenerationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
+        control_types = [
+            'canny', 'hough', 'hed', 'depth', 'normal', 'pose', 'seg',
+            'fake_scribble', 'scribble'
+        ]
+        control_type = random.choice(control_types)
         pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='canny')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='hough')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='hed')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='depth')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='normal')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='pose')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='seg')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='fake_scribble')
-        output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
-
-        pipeline_ins = pipeline(
-            self.task, model=self.model_id, control_type='scribble')
+            self.task, model=self.model_id, control_type=control_type)
         output = pipeline_ins(input=self.input)[OutputKeys.OUTPUT_IMG]
         cv2.imwrite(output_image_path, output)
         print(

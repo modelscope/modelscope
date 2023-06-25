@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Generator
 
 import torch
 from transformers import BertTokenizer
@@ -11,12 +11,13 @@ from modelscope.models.builder import MODELS
 from modelscope.models.nlp.gpt3 import GPT3Model
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import read_config
+from modelscope.utils.streaming_output import StreamingOutputMixin
 
 __all__ = ['GPT3ForTextGeneration']
 
 
 @MODELS.register_module(Tasks.text_generation, module_name=Models.gpt3)
-class GPT3ForTextGeneration(TorchModel):
+class GPT3ForTextGeneration(TorchModel, StreamingOutputMixin):
 
     def __init__(self, model_dir: str, *args, **kwargs):
         """initialize the text generation model from the `model_dir` path.
@@ -77,3 +78,9 @@ class GPT3ForTextGeneration(TorchModel):
                         state_dict: 'OrderedDict[str, Tensor]',
                         strict: bool = True):
         return self.model.load_state_dict(state_dict, strict)
+
+    def stream(self, inputs, **kwargs) -> Generator:
+        tokens = inputs['input_ids']
+        lengths = self._get_length(inputs['attention_mask'])
+        return self.model.streaming_generate(
+            tokens, prompt_length=lengths, **kwargs)

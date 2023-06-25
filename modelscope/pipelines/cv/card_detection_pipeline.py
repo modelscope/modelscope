@@ -6,8 +6,8 @@ from modelscope.models.base.base_model import Model
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
+from modelscope.utils.input_output_typing import Image
 from modelscope.utils.logger import get_logger
-from modelscope.utils.typing import Image
 
 logger = get_logger()
 

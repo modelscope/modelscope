@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import unittest
 
 import json
@@ -21,7 +22,7 @@ class TestCli(unittest.TestCase):
                 'sentence2': 'sentence2',
                 'label': 'label',
             },
-            'split': 0.8,
+            'usage': 0.8,
         }, {
             'dataset': {
                 'dataset_name': 'glue',
@@ -33,10 +34,14 @@ class TestCli(unittest.TestCase):
                 'hypothesis': 'sentence2',
                 'label': 'label',
             },
-            'split': 'val',
+            'usage': 'val',
         }]
         with open('./dataset.json', 'w') as f:
             json.dump(content, f)
+
+    def tearDown(self) -> None:
+        if os.path.exists('./dataset.json'):
+            os.remove('./dataset.json')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_merge_dataset_from_file(self):

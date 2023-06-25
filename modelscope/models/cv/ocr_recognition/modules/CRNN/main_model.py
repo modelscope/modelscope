@@ -79,6 +79,11 @@ class CRNN(nn.Module):
         self.cls = nn.Linear(512, 7644, bias=False)
 
     def forward(self, input):
+        # RGB2GRAY
+        input = input[:, 0:
+                      1, :, :] * 0.2989 + input[:, 1:
+                                                2, :, :] * 0.5870 + input[:, 2:
+                                                                          3, :, :] * 0.1140
         feats = self.conv0(input)
         feats = self.p0(feats)
         feats = self.conv1(feats)

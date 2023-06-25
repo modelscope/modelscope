@@ -127,7 +127,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             minlenratio=self.cmd['minlenratio'],
             batch_size=self.cmd['batch_size'],
             beam_size=self.cmd['beam_size'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             ctc_weight=self.cmd['ctc_weight'],
             lm_weight=self.cmd['lm_weight'],
             penalty=self.cmd['penalty'],
@@ -387,8 +387,9 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         ]
 
         for user_args in user_args_dict:
-            if user_args in extra_args and extra_args[user_args] is not None:
-                cmd[user_args] = extra_args[user_args]
+            if user_args in extra_args:
+                if extra_args.get(user_args) is not None:
+                    cmd[user_args] = extra_args[user_args]
                 del extra_args[user_args]
 
         return cmd

@@ -13,7 +13,7 @@ class EfficientDiffusionTuningTest(unittest.TestCase):
     def setUp(self) -> None:
         self.task = Tasks.efficient_diffusion_tuning
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_lora_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
         inputs = {'prompt': 'pale golden rod circle with old lace background'}

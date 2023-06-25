@@ -33,6 +33,7 @@ from modelscope.models.nlp.gpt3 import GPT3Config
 from modelscope.outputs import TextGenerationModelOutput, TokenGeneratorOutput
 from modelscope.utils.megatron_utils import init_megatron_util
 from modelscope.utils.nlp.load_checkpoint import pre_load
+from modelscope.utils.streaming_output import StreamingOutputMixin
 
 
 class GPT3ParallelMLP(nn.Module):
@@ -945,7 +946,7 @@ def split_state_dict(state_dict: Dict[str, torch.Tensor], model: GPT3Model,
     return state_dict
 
 
-class DistributedGPT3(TorchModel):
+class DistributedGPT3(TorchModel, StreamingOutputMixin):
 
     def __init__(self,
                  model_dir,
@@ -1022,7 +1023,11 @@ class DistributedGPT3(TorchModel):
 
             losses = losses.float()
             loss_mask = loss_mask.view(-1).float()
-            loss = torch.sum(losses.view(-1) * loss_mask) / loss_mask.sum()
+            mask_sum = loss_mask.sum()
+            if mask_sum == 0:
+                loss = torch.sum(losses.view(-1)).zero_()
+            else:
+                loss = torch.sum(losses.view(-1) * loss_mask) / mask_sum
 
         return TextGenerationModelOutput(logits=logits, loss=loss)
 
@@ -1104,6 +1109,10 @@ class DistributedGPT3(TorchModel):
             # Update the tokens.
             tokens[started, context_length] = new_sample[started]
 
+            # streaming output
+            yield TokenGeneratorOutput(sequences=tokens[:, :(context_length
+                                                             + 1)])
+
             # Update the context length for the next token generation.
             prev_context_length = context_length
 
@@ -1127,9 +1136,6 @@ class DistributedGPT3(TorchModel):
 
             if use_eod_token_for_early_termination and done:
                 break
-
-        tokens = tokens[:, :(context_length + 1)]
-        return TokenGeneratorOutput(sequences=tokens)
 
     def beam_search(self, tokens, beam_size=5, num_return_gen=1, **kwargs):
         batch_size = tokens.size(0)
@@ -1247,9 +1253,16 @@ class DistributedGPT3(TorchModel):
     @torch.no_grad()
     def generate(self, tokens, do_sample=True, *args, **kwargs):
         if do_sample:
-            return self.sample(tokens, *args, **kwargs)
+            last_output = None
+            for output in self.sample(tokens, *args, **kwargs):
+                last_output = output
+            return last_output
         else:
             return self.beam_search(tokens, *args, **kwargs)
+
+    @torch.no_grad()
+    def stream(self, tokens, *args, **kwargs):
+        return self.sample(tokens, *args, **kwargs)
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         return self.dist_model.state_dict(destination, prefix, keep_vars)

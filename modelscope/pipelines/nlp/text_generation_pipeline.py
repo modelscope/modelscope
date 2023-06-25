@@ -15,13 +15,14 @@ from modelscope.preprocessors import Preprocessor
 from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
+from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
 
 __all__ = ['TextGenerationPipeline', 'TextGenerationT5Pipeline']
 
 
 @PIPELINES.register_module(
     Tasks.text_generation, module_name=Pipelines.text_generation)
-class TextGenerationPipeline(Pipeline):
+class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def __init__(self,
                  model: Union[Model, str],

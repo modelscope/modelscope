@@ -4,6 +4,9 @@ PYTHONPATH=. torchrun examples/pytorch/text_generation/finetune_text_generation.
     --task 'text2text-generation' \
     --model 'damo/nlp_mt5_zero-shot-augment_chinese-base' \
     --train_dataset_name 'DuReader_robust-QG' \
+    --val_dataset_name 'DuReader_robust-QG' \
+    --train_split 'train' \
+    --val_split 'validation' \
     --src_txt 'text1' \
     --tgt_txt 'text2' \
     --max_epochs 1 \

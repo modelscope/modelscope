@@ -183,6 +183,7 @@ class Models(object):
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
     eres2net_sv = 'eres2net-sv'
+    eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'

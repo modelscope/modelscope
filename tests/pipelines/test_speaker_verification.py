@@ -25,6 +25,7 @@ class SpeakerVerificationTest(unittest.TestCase):
     speaker_change_locating_cn_model_id = 'damo/speech_campplus-transformer_scl_zh-cn_16k-common'
     eres2net_voxceleb_16k_model_id = 'damo/speech_eres2net_sv_en_voxceleb_16k'
     speaker_diarization_model_id = 'damo/speech_campplus_speaker-diarization_common'
+    eres2net_aug_zh_cn_16k_common_model_id = 'damo/speech_eres2net_sv_zh-cn_16k-common'
 
     def setUp(self) -> None:
         self.task = Tasks.speaker_verification
@@ -90,6 +91,16 @@ class SpeakerVerificationTest(unittest.TestCase):
             model_id=self.eres2net_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
             model_revision='v1.0.2')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_eres2net_aug_zh_cn_common_16k(self):
+        logger.info('Run speaker verification for eres2net_voxceleb_16k model')
+        result = self.run_pipeline(
+            model_id=self.eres2net_aug_zh_cn_16k_common_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.1')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 

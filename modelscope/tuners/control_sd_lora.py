@@ -12,8 +12,8 @@ import torch.nn.functional as F
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.cross_attention import CrossAttention, LoRALinearLayer
 from diffusers.models.modeling_utils import ModelMixin
-from diffusers.models.resnet import (Downsample2D, Mish, Upsample2D,
-                                     downsample_2d, partial, upsample_2d)
+from diffusers.models.resnet import (Downsample2D, Upsample2D, downsample_2d,
+                                     partial, upsample_2d)
 from diffusers.models.unet_2d_blocks import \
     get_down_block as get_down_block_default
 from diffusers.utils.outputs import BaseOutput
@@ -477,8 +477,10 @@ class ControlLoRACrossAttnProcessor(LoRACrossAttnProcessor):
         assert self.control_states is not None
 
         batch_size, sequence_length, _ = hidden_states.shape
-        attention_mask = attn.prepare_attention_mask(attention_mask,
-                                                     sequence_length)
+        attention_mask = attn.prepare_attention_mask(
+            attention_mask=attention_mask,
+            target_length=sequence_length,
+            batch_size=batch_size)
         query = attn.to_q(hidden_states)
         for pre_lora in self.pre_loras:
             lora_in = query if pre_lora.post_add else hidden_states
@@ -627,8 +629,10 @@ class ControlLoRACrossAttnProcessorV2(LoRACrossAttnProcessor):
         assert self.control_states is not None
 
         batch_size, sequence_length, _ = hidden_states.shape
-        attention_mask = attn.prepare_attention_mask(attention_mask,
-                                                     sequence_length)
+        attention_mask = attn.prepare_attention_mask(
+            attention_mask=attention_mask,
+            target_length=sequence_length,
+            batch_size=batch_size)
         for pre_lora in self.pre_loras:
             if isinstance(pre_lora, ControlLoRACrossAttnProcessorV2):
                 hidden_states = hidden_states + pre_lora.process_control_states(
@@ -783,7 +787,7 @@ class ConvBlock2D(nn.Module):
         if non_linearity == 'swish':
             self.nonlinearity = lambda x: F.silu(x)
         elif non_linearity == 'mish':
-            self.nonlinearity = Mish()
+            self.nonlinearity = nn.Mish()
         elif non_linearity == 'silu':
             self.nonlinearity = nn.SiLU()
 

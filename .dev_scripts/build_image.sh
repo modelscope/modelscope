@@ -1,7 +1,9 @@
 #!/bin/bash
 # default values.
-BASE_CPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04
-BASE_GPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+BASE_PY38_CPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-py38-torch1.11.0-tf1.15.5-base-1.6.1
+BASE_PY38_GPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py38-torch1.11.0-tf1.15.5-base-1.6.1
+BASE_PY37_CPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-py37-torch1.11.0-tf1.15.5-base-1.6.1
+BASE_PY37_GPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-base-1.6.1
 MODELSCOPE_REPO_ADDRESS=reg.docker.alibaba-inc.com/modelscope/modelscope
 python_version=3.7.13
 torch_version=1.11.0
@@ -86,20 +88,30 @@ if [ "$modelscope_version" == "None" ]; then
     exit 1
 fi
 if [ "$is_cpu" == "True" ]; then
-    export BASE_IMAGE=$BASE_CPU_IMAGE
     base_tag=ubuntu20.04
     export USE_GPU=False
 else
-    export BASE_IMAGE=$BASE_GPU_IMAGE
     base_tag=ubuntu20.04-cuda11.3.0
     export USE_GPU=True
 fi
 if [[ $python_version == 3.7* ]]; then
+    if [ "$is_cpu" == "True" ]; then
+        echo "Building python3.7 cpu image"
+        export BASE_IMAGE=$BASE_PY37_CPU_IMAGE
+    else
+        echo "Building python3.7 gpu image"
+        export BASE_IMAGE=$BASE_PY37_GPU_IMAGE
+    fi
     base_tag=$base_tag-py37
 elif [[ $python_version == 3.8* ]]; then
+    if [ "$is_cpu" == "True" ]; then
+        echo "Building python3.8 cpu image"
+        export BASE_IMAGE=$BASE_PY38_CPU_IMAGE
+    else
+        echo "Building python3.8 gpu image"
+        export BASE_IMAGE=$BASE_PY38_GPU_IMAGE
+    fi
     base_tag=$base_tag-py38
-elif [[ $python_version == 3.9* ]]; then
-    base_tag=$base_tag-py39
 else
     echo "Unsupport python version: $python_version"
     exit 1
@@ -120,7 +132,7 @@ echo -e "Building image with:\npython$python_version\npytorch$torch_version\nten
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir  modelscope==$modelscope_version -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
+    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir modelscope==$modelscope_version -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
 fi
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
@@ -128,6 +140,8 @@ if [ "$is_dsw" == "False" ]; then
 else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
+    # pre compile extension
+    docker_file_content="${docker_file_content} \nRUN python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"

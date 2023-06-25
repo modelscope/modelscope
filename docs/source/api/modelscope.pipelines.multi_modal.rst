@@ -18,7 +18,7 @@ modelscope.pipelines.multi_modal
     ImageCaptioningPipeline
     MGeoRankingPipeline
     MultiModalEmbeddingPipeline
-    StableDiffusionWrapperPipeline
+    StableDiffusionPipeline
     TextToImageSynthesisPipeline
     VideoCaptioningPipeline
     VideoMultiModalEmbeddingPipeline

@@ -16,8 +16,8 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.input_output_typing import Image
 from modelscope.utils.logger import get_logger
-from modelscope.utils.typing import Image
 
 logger = get_logger()
 

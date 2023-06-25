@@ -68,7 +68,7 @@ class OCRRecognitionDataset(TorchCustomDataset):
             buf.seek(0)
             img = Image.open(buf).convert('L')
             if self.reco_preprocess is not None:
-                img = self.reco_preprocess(img)
+                img = self.reco_preprocess(img)['image']
 
             label_key = 'label-%09d' % index
             label = txn.get(label_key.encode()).decode('utf-8')

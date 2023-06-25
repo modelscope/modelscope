@@ -1,102 +1,5 @@
-ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.6.1
 FROM $BASE_IMAGE
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Asia/Shanghai
-ENV CONDA_DIR /opt/conda
-ENV PATH="${CONDA_DIR}/bin:${PATH}"
-ENV arch=x86_64
-SHELL ["/bin/bash", "-c"]
-COPY docker/rcfiles /tmp/resources
-COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
-RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
-    apt-get clean && \
-    cp /tmp/resources/ubuntu20.04_sources.tuna /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y locales wget git strace gdb sox libopenmpi-dev curl strace vim ffmpeg libsm6 tzdata language-pack-zh-hans ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
-    wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
-    dpkg -i ./git-lfs_3.2.0_amd64.deb && \
-    rm -f ./git-lfs_3.2.0_amd64.deb && \
-    locale-gen zh_CN && \
-    locale-gen zh_CN.utf8 && \
-    update-locale LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 && \
-    ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
-
-#install and config python
-ARG PYTHON_VERSION=3.7.13
-RUN wget --quiet https://mirrors.aliyun.com/anaconda/miniconda/Miniconda3-latest-Linux-${arch}.sh -O ./miniconda.sh && \
-    /bin/bash  miniconda.sh -b -p /opt/conda && \
-    rm  -f miniconda.sh && \
-    ln  -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    cp /tmp/resources/conda.tuna  ~/.condarc && \
-    source /root/.bashrc && \
-    conda install --yes python==${PYTHON_VERSION} && \
-    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set install.trusted-host mirrors.aliyun.com
-
-ARG USE_GPU=True
-
-# install pytorch
-ARG TORCH_VERSION=1.12.0
-ARG CUDATOOLKIT_VERSION=11.3
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113; \
-    else \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
-    fi
-
-# install tensorflow
-ARG TENSORFLOW_VERSION=1.15.5
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
-    else \
-        pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-    fi
-
-# mmcv-full<=1.7.0 for mmdet3d compatible
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="5.0 5.2 6.0 6.1 7.0 7.5 8.0 8.6" MMCV_WITH_OPS=1 MAX_JOBS=8 FORCE_CUDA=1 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
-    else \
-        MMCV_WITH_OPS=1 MAX_JOBS=8 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
-    fi
-
-# default shell bash
-ENV SHELL=/bin/bash
-# install special package
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    else \
-        pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    fi
-
-# copy install scripts
-COPY docker/scripts/install_unifold.sh docker/scripts/install_colmap.sh docker/scripts/install_pytorch3d_nvdiffrast.sh docker/scripts/install_tiny_cuda_nn.sh docker/scripts/install_apex.sh /tmp/
-
-# for uniford
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_unifold.sh; \
-    else \
-     echo 'cpu unsupport uniford'; \
-    fi
-
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
-    else \
-     echo 'cpu unsupport Pointnet2'; \
-    fi
-
-RUN pip install --no-cache-dir detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-
-# 3d supports
-RUN bash /tmp/install_colmap.sh
-RUN bash /tmp/install_tiny_cuda_nn.sh
-RUN bash /tmp/install_pytorch3d_nvdiffrast.sh
-# end of 3D
 
 # install modelscope
 COPY requirements /var/modelscope
@@ -115,12 +18,25 @@ RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
     cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/
 
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
-RUN pip install --no-cache-dir xtcocotools==1.12  detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --force
+# python3.8 pip install git+https://github.com/jin-s13/xtcocoapi.git@v1.13
+# pip install git+https://github.com/gatagat/lap.git@v0.4.0
+RUN pip install --no-cache-dir text2sql_lgesql==1.3.0 \
+         git+https://github.com/jin-s13/xtcocoapi.git@v1.13 \
+         git+https://github.com/gatagat/lap.git@v0.4.0 \
+         detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --force --no-deps
 
-# speechbrain==0.5.7 for audio compatible
-RUN pip install --no-cache-dir speechbrain==0.5.7 adaseq>=0.5.0 mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 numpy==1.18.5 wenetruntime==1.11.0 ipykernel fairseq fasttext deepspeed
+RUN pip install --no-cache-dir mpi4py paint_ldm adaseq>=0.5.0 \
+         mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 wenetruntime==1.11.0 \
+         ipykernel fairseq fasttext deepspeed -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+
+# for cpu install cpu version faiss, faiss depends on blas lib, we install libopenblas TODO rename gpu or cpu version faiss
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_apex.sh; \
+        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 faiss==1.7.2 safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0' pai-easycv librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     else \
-     echo 'cpu unsupport apex'; \
+        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/faiss-1.7.2-py37-none-linux_x86_64.whl safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0' pai-easycv librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     fi
+
+COPY examples /modelscope/examples
+
+# for pai-easycv setup compatiblity issue
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib

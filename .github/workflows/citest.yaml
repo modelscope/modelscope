@@ -40,7 +40,7 @@ jobs:
   unittest:
     # The type of runner that the job will run on
     runs-on: [modelscope-self-hosted]
-    timeout-minutes: 720
+    timeout-minutes: 240
     steps:
       - name: ResetFileMode
         shell: bash

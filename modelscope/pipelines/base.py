@@ -54,7 +54,8 @@ class Pipeline(ABC):
                 model,
                 device=self.device_name,
                 model_prefetched=True,
-                invoked_by=Invoke.PIPELINE) if is_model(model) else model
+                invoked_by=Invoke.PIPELINE,
+                device_map=self.device_map) if is_model(model) else model
         else:
             return model
 
@@ -70,6 +71,7 @@ class Pipeline(ABC):
                  preprocessor: Union[Preprocessor, List[Preprocessor]] = None,
                  device: str = 'gpu',
                  auto_collate=True,
+                 device_map=None,
                  **kwargs):
         """ Base class for pipeline.
 
@@ -87,6 +89,9 @@ class Pipeline(ABC):
             compile_options (dict, optional): The compile options if compile=True,
                 default None to use the default params of 'TorchModel.compile'.
         """
+        if device_map is not None:
+            assert device == 'gpu', '`device` and `device_map` cannot be input at the same time!'
+        self.device_map = device_map
         verify_device(device)
         self.device_name = device
 
@@ -133,13 +138,14 @@ class Pipeline(ABC):
         self._model_prepare_lock.acquire(timeout=600)
 
         def _prepare_single(model):
-            if isinstance(model, torch.nn.Module):
+            if not isinstance(model, torch.nn.Module) and hasattr(
+                    model, 'model'):
+                model = model.model
+            if not isinstance(model, torch.nn.Module):
+                return
+            model.eval()
+            if self.device_map is None:
                 model.to(self.device)
-                model.eval()
-            elif hasattr(model, 'model') and isinstance(
-                    model.model, torch.nn.Module):
-                model.model.to(self.device)
-                model.model.eval()
 
         if not self._model_prepare:
             # prepare model for pytorch

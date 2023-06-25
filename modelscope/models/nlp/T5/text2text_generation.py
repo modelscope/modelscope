@@ -57,7 +57,7 @@ class T5ForConditionalGeneration(T5PreTrainedModel):
         r'decoder\.block\.0\.layer\.1\.EncDecAttention\.relative_attention_bias\.weight',
     ]
 
-    def __init__(self, config: T5Config, **kwargs):
+    def __init__(self, config: T5Config, device_map=None, **kwargs):
         super().__init__(config)
         self.model_dim = config.d_model
 
@@ -82,7 +82,8 @@ class T5ForConditionalGeneration(T5PreTrainedModel):
 
         # Model parallel
         self.model_parallel = False
-        self.device_map = None
+        if device_map == 'auto':
+            self.parallelize()
 
     def parallelize(self, device_map=None):
         self.device_map = (

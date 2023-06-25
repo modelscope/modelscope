@@ -203,12 +203,20 @@ To allow out-of-box usage for all the models on ModelScope, official docker imag
 
 CPU docker image
 ```shell
+# py37
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py37-torch1.11.0-tf1.15.5-1.6.1
+
+# py38
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py38-torch1.11.0-tf1.15.5-1.6.1
 ```
 
 GPU docker image
 ```shell
+# py37
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.6.1
+
+# py38
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py38-torch1.11.0-tf1.15.5-1.6.1
 ```
 
 ## Setup Local Python Environment

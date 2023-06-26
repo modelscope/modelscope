@@ -33,8 +33,6 @@ class StableDiffusion(TorchModel):
           model_dir: model id or path
         """
         super().__init__(model_dir, *args, **kwargs)
-        pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
         revision = kwargs.pop('revision', None)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)

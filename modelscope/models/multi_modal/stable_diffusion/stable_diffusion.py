@@ -36,8 +36,6 @@ class StableDiffusion(TorchModel):
         revision = kwargs.pop('revision', None)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation',
-                                                  True)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(

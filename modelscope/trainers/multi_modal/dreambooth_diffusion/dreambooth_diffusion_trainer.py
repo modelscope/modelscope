@@ -229,13 +229,11 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 size=self.resolution,
                 center_crop=False,
             )
-
             class_dataloader = torch.utils.data.DataLoader(
                 class_dataset,
                 batch_size=1,
                 shuffle=True,
             )
-            
             self.iter_class_dataloader = itertools.cycle(class_dataloader)
 
     def collate_fn(examples):

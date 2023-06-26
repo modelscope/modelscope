@@ -17,13 +17,8 @@ from diffusers import DiffusionPipeline
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
 
-from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
-                                       ConfigKeys, DistributedParallelType,
-                                       ModeKeys, ModelFile, ThirdParty,
-                                       TrainerStages)
-from modelscope.utils.torch_utils import (compile_model, get_dist_info,
-                                          get_local_rank, init_dist, is_dist,
-                                          is_master, set_random_seed)
+from modelscope.utils.constant import ModeKeys                                    
+from modelscope.utils.torch_utils import is_dist
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
@@ -149,11 +144,11 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation', True)
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
         self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
         self.class_prompt = kwargs.pop('instance_prompt', "a photo of dog")
         self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
-        self.num_class_images = kwargs.pop("num_class_images", 2)
+        self.num_class_images = kwargs.pop("num_class_images", 200)
         self.resolution = kwargs.pop("resolution", 512)
         self.prior_loss_weight = kwargs.pop("prior_loss_weight", 1.0)
 

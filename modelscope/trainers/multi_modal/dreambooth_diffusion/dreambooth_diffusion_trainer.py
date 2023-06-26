@@ -235,7 +235,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 batch_size=1,
                 shuffle=True,
             )
-
+            
             self.iter_class_dataloader = itertools.cycle(class_dataloader)
 
     def collate_fn(examples):
@@ -297,6 +297,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             train_outputs = model.forward(inputs)
 
         if self.with_prior_preservation:
+            # Convert to latent space
             batch = next(self.iter_class_dataloader)
             target_prior = batch['pixel_values'].to(self.device)
             input_ids = batch['input_ids'].to(self.device)

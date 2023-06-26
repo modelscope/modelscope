@@ -88,6 +88,7 @@ class StableDiffusion(TorchModel):
         self.unet.train()
         self.unet = self.unet.to(self.device)
 
+        # Convert to latent space
         with torch.no_grad():
             latents = self.vae.encode(
                 target.to(dtype=self.weight_dtype)).latent_dist.sample()

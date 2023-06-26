@@ -38,7 +38,8 @@ class StableDiffusion(TorchModel):
         revision = kwargs.pop('revision', None)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation', True)
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation',
+                                                  True)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -48,13 +49,9 @@ class StableDiffusion(TorchModel):
         self.noise_scheduler = DDPMScheduler.from_pretrained(
             model_dir, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_dir,
-            subfolder='tokenizer',
-            revision=revision)
+            model_dir, subfolder='tokenizer', revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_dir,
-            subfolder='text_encoder',
-            revision=revision)
+            model_dir, subfolder='text_encoder', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
             model_dir, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
@@ -127,11 +124,11 @@ class StableDiffusion(TorchModel):
             raise ValueError(
                 f'Unknown prediction type {self.noise_scheduler.config.prediction_type}'
             )
-        
+
         # Predict the noise residual and compute loss
         model_pred = self.unet(noisy_latents, timesteps,
                                encoder_hidden_states).sample
-        
+
         if model_pred.shape[1] == 6:
             model_pred, _ = torch.chunk(model_pred, 2, dim=1)
 
@@ -148,7 +145,7 @@ class StableDiffusion(TorchModel):
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):
-        config['pipeline']['type'] = "diffusers-stable-diffusion"
+        config['pipeline']['type'] = 'diffusers-stable-diffusion'
         # Skip copying the original weights for lora and dreambooth method
         if self.lora_tune or self.dreambooth_tune:
             pass

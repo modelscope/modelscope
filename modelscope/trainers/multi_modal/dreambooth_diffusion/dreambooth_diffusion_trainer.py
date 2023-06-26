@@ -1,35 +1,35 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import hashlib
+import itertools
+import shutil
+from collections.abc import Mapping
+from pathlib import Path
 from typing import Union
 
 import torch
-import itertools
-from torchvision import transforms
-from pathlib import Path
-from tqdm.auto import tqdm
-import hashlib
-from collections.abc import Mapping
-from torch.utils.data import Dataset
-import shutil
-from PIL import Image
 import torch.nn.functional as F
-from PIL.ImageOps import exif_transpose
 from diffusers import DiffusionPipeline
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
+from PIL import Image
+from PIL.ImageOps import exif_transpose
+from torch.utils.data import Dataset
+from torchvision import transforms
+from tqdm.auto import tqdm
 
-from modelscope.utils.constant import ModeKeys                                    
-from modelscope.utils.torch_utils import is_dist
-from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.metainfo import Trainers
+from modelscope.outputs import ModelOutputBase, OutputKeys
 from modelscope.trainers.builder import TRAINERS
-from modelscope.outputs import ModelOutputBase
 from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
     CheckpointProcessor
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
-from modelscope.outputs import OutputKeys
+from modelscope.utils.constant import ModeKeys
+from modelscope.utils.file_utils import func_receive_dict_inputs
+from modelscope.utils.torch_utils import is_dist
+
 
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
@@ -45,15 +45,16 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         """
         pipeline_args = {}
         if trainer.model.text_encoder is not None:
-            pipeline_args["text_encoder"] = trainer.model.text_encoder
+            pipeline_args['text_encoder'] = trainer.model.text_encoder
         pipeline = DiffusionPipeline.from_pretrained(
             self.model_dir,
             unet=trainer.model.unet,
             **pipeline_args,
         )
         scheduler_args = {}
-        pipeline.scheduler = pipeline.scheduler.from_config(pipeline.scheduler.config, **scheduler_args)
-        pipeline.save_pretrained(output_dir)  
+        pipeline.scheduler = pipeline.scheduler.from_config(
+            pipeline.scheduler.config, **scheduler_args)
+        pipeline.save_pretrained(output_dir)
 
 
 class ClassDataset(Dataset):
@@ -70,7 +71,7 @@ class ClassDataset(Dataset):
         class_num=None,
         size=512,
         center_crop=False,
-        ):
+    ):
 
         self.size = size
         self.center_crop = center_crop
@@ -81,21 +82,24 @@ class ClassDataset(Dataset):
             self.class_data_root.mkdir(parents=True, exist_ok=True)
             self.class_images_path = list(self.class_data_root.iterdir())
             if class_num is not None:
-                self.num_class_images = min(len(self.class_images_path), class_num)
+                self.num_class_images = min(
+                    len(self.class_images_path), class_num)
             else:
                 self.num_class_images = len(self.class_images_path)
             self.class_prompt = class_prompt
         else:
-            raise ValueError(f"Class {self.class_data_root} class data root doesn't exists.")
+            raise ValueError(
+                f"Class {self.class_data_root} class data root doesn't exists."
+            )
 
-        self.image_transforms = transforms.Compose(
-            [
-                transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
-                transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
-                transforms.ToTensor(),
-                transforms.Normalize([0.5], [0.5]),
-            ]
-        )
+        self.image_transforms = transforms.Compose([
+            transforms.Resize(
+                size, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(size)
+            if center_crop else transforms.RandomCrop(size),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ])
 
     def __len__(self):
         return self.num_class_images
@@ -104,26 +108,28 @@ class ClassDataset(Dataset):
         example = {}
 
         if self.class_data_root:
-            class_image = Image.open(self.class_images_path[index % self.num_class_images])
+            class_image = Image.open(
+                self.class_images_path[index % self.num_class_images])
             class_image = exif_transpose(class_image)
 
-            if not class_image.mode == "RGB":
-                class_image = class_image.convert("RGB")
-            example["pixel_values"] = self.image_transforms(class_image)
+            if not class_image.mode == 'RGB':
+                class_image = class_image.convert('RGB')
+            example['pixel_values'] = self.image_transforms(class_image)
 
-            class_text_inputs = self.tokenizer(self.class_prompt, 
-                                                max_length=self.tokenizer.model_max_length,
-                                                truncation=True,
-                                                padding="max_length",
-                                                return_tensors="pt")
+            class_text_inputs = self.tokenizer(
+                self.class_prompt,
+                max_length=self.tokenizer.model_max_length,
+                truncation=True,
+                padding='max_length',
+                return_tensors='pt')
             input_ids = torch.squeeze(class_text_inputs.input_ids)
-            example["input_ids"] = input_ids
-            
+            example['input_ids'] = input_ids
+
         return example
 
 
 class PromptDataset(Dataset):
-    "A simple dataset to prepare the prompts to generate class images on multiple GPUs."
+    'A simple dataset to prepare the prompts to generate class images on multiple GPUs.'
 
     def __init__(self, prompt, num_samples):
         self.prompt = prompt
@@ -134,8 +140,8 @@ class PromptDataset(Dataset):
 
     def __getitem__(self, index):
         example = {}
-        example["prompt"] = self.prompt
-        example["index"] = index
+        example['prompt'] = self.prompt
+        example['index'] = index
         return example
 
 
@@ -144,30 +150,39 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
-        self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
-        self.class_prompt = kwargs.pop('instance_prompt', "a photo of dog")
-        self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
-        self.num_class_images = kwargs.pop("num_class_images", 200)
-        self.resolution = kwargs.pop("resolution", 512)
-        self.prior_loss_weight = kwargs.pop("prior_loss_weight", 1.0)
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation',
+                                                  False)
+        self.instance_prompt = kwargs.pop('instance_prompt',
+                                          'a photo of sks dog')
+        self.class_prompt = kwargs.pop('instance_prompt', 'a photo of dog')
+        self.class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
+        self.num_class_images = kwargs.pop('num_class_images', 200)
+        self.resolution = kwargs.pop('resolution', 512)
+        self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
 
         # Save checkpoint and configurate files.
-        ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
+        ckpt_hook = list(
+            filter(lambda hook: isinstance(hook, CheckpointHook),
+                   self.hooks))[0]
         ckpt_hook.set_processor(DreamboothCheckpointProcessor(self.model_dir))
 
         # Check for conflicts and conflicts
         if self.with_prior_preservation:
             if self.class_data_dir is None:
-                raise ValueError("You must specify a data directory for class images.")
+                raise ValueError(
+                    'You must specify a data directory for class images.')
             if self.class_prompt is None:
-                raise ValueError("You must specify prompt for class images.")
+                raise ValueError('You must specify prompt for class images.')
         else:
             # logger is not available yet
             if self.class_data_dir is not None:
-                warnings.warn("You need not use --class_data_dir without --with_prior_preservation.")
+                warnings.warn(
+                    'You need not use --class_data_dir without --with_prior_preservation.'
+                )
             if self.class_prompt is not None:
-                warnings.warn("You need not use --class_prompt without --with_prior_preservation.")
+                warnings.warn(
+                    'You need not use --class_prompt without --with_prior_preservation.'
+                )
 
         # Generate class images if prior preservation is enabled.
         if self.with_prior_preservation:
@@ -186,13 +201,15 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 pipeline.set_progress_bar_config(disable=True)
 
                 num_new_images = self.num_class_images - cur_class_images
-                sample_dataset = PromptDataset(self.instance_prompt, num_new_images)
+                sample_dataset = PromptDataset(self.instance_prompt,
+                                               num_new_images)
                 sample_dataloader = torch.utils.data.DataLoader(sample_dataset)
 
                 pipeline.to(self.device)
 
-                for example in tqdm(sample_dataloader, desc="Generating class images"):
-                    images = pipeline(example["prompt"]).images
+                for example in tqdm(
+                        sample_dataloader, desc='Generating class images'):
+                    images = pipeline(example['prompt']).images
                     for i, image in enumerate(images):
                         hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                         image_filename = class_images_dir / f"{example['index'][i] + cur_class_images}-{hash_image}.jpg"
@@ -202,36 +219,38 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
-        # Class Dataset and DataLoaders creation
-        class_dataset = ClassDataset(
-            class_data_root=self.class_data_dir if self.with_prior_preservation else None,
-            class_prompt=self.class_prompt,
-            class_num=self.num_class_images,
-            tokenizer=self.model.tokenizer,
-            size=self.resolution,
-            center_crop=False,
-        )
+            # Class Dataset and DataLoaders creation
+            class_dataset = ClassDataset(
+                class_data_root=self.class_data_dir
+                if self.with_prior_preservation else None,
+                class_prompt=self.class_prompt,
+                class_num=self.num_class_images,
+                tokenizer=self.model.tokenizer,
+                size=self.resolution,
+                center_crop=False,
+            )
 
-        class_dataloader = torch.utils.data.DataLoader(
-            class_dataset,
-            batch_size=1,
-            shuffle=True,
-        )
-        
-        self.iter_class_dataloader = itertools.cycle(class_dataloader)
+            class_dataloader = torch.utils.data.DataLoader(
+                class_dataset,
+                batch_size=1,
+                shuffle=True,
+            )
+
+            self.iter_class_dataloader = itertools.cycle(class_dataloader)
 
     def collate_fn(examples):
 
-        input_ids = [example["class_prompt_ids"] for example in examples]
-        pixel_values = [example["class_images"] for example in examples]
+        input_ids = [example['class_prompt_ids'] for example in examples]
+        pixel_values = [example['class_images'] for example in examples]
 
-        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+        pixel_values = pixel_values.to(
+            memory_format=torch.contiguous_format).float()
 
         input_ids = torch.cat(input_ids, dim=0)
 
         batch = {
-            "input_ids": input_ids,
-            "pixel_values": pixel_values,
+            'input_ids': input_ids,
+            'pixel_values': pixel_values,
         }
 
         return batch
@@ -248,7 +267,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
-        
+
     def train_step(self, model, inputs):
         """ Perform a training step on a batch of inputs.
 
@@ -279,8 +298,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
         if self.with_prior_preservation:
             batch = next(self.iter_class_dataloader)
-            target_prior = batch["pixel_values"].to(self.device)
-            input_ids = batch["input_ids"].to(self.device)
+            target_prior = batch['pixel_values'].to(self.device)
+            input_ids = batch['input_ids'].to(self.device)
             with torch.no_grad():
                 latents = self.model.vae.encode(
                     target_prior.to(dtype=torch.float32)).latent_dist.sample()
@@ -298,8 +317,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = self.model.noise_scheduler.add_noise(latents, noise,
-                                                        timesteps)
+            noisy_latents = self.model.noise_scheduler.add_noise(
+                latents, noise, timesteps)
 
             # Get the text embedding for conditioning
             with torch.no_grad():
@@ -309,21 +328,25 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             if self.model.noise_scheduler.config.prediction_type == 'epsilon':
                 target_prior = noise
             elif self.model.noise_scheduler.config.prediction_type == 'v_prediction':
-                target_prior = self.model.noise_scheduler.get_velocity(latents, noise,
-                                                        timesteps)
+                target_prior = self.model.noise_scheduler.get_velocity(
+                    latents, noise, timesteps)
             else:
                 raise ValueError(
                     f'Unknown prediction type {self.model.noise_scheduler.config.prediction_type}'
                 )
-            
+
             # Predict the noise residual and compute loss
             model_pred_prior = self.model.unet(noisy_latents, timesteps,
-                                encoder_hidden_states).sample
-            
+                                               encoder_hidden_states).sample
+
             # Compute prior loss
-            prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+            prior_loss = F.mse_loss(
+                model_pred_prior.float(),
+                target_prior.float(),
+                reduction='mean')
             # Add the prior loss to the instance loss.
-            train_outputs[OutputKeys.LOSS] += self.prior_loss_weight * prior_loss
+            train_outputs[
+                OutputKeys.LOSS] += self.prior_loss_weight * prior_loss
 
         if isinstance(train_outputs, ModelOutputBase):
             train_outputs = train_outputs.to_dict()
@@ -349,5 +372,5 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             self.log_buffer.update(log_vars)
         else:
             self.log_buffer.update(train_outputs['log_vars'])
-        
+
         self.train_outputs = train_outputs

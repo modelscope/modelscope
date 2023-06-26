@@ -13,8 +13,8 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-curren_path = os.path.dirname(os.path.abspath(__file__))
-template_path = os.path.join(curren_path, 'template')
+current_path = os.path.dirname(os.path.abspath(__file__))
+template_path = os.path.join(current_path, 'template')
 
 
 def subparser_func(args):

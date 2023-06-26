@@ -39,7 +39,7 @@ def run_auto_label(input_wav,
     if not os.path.exists(work_dir):
         raise ValueError(f'work_dir: {work_dir} not exists')
 
-    def _download_and_unzip_resousrce(model, model_revision=None):
+    def _download_and_unzip_resource(model, model_revision=None):
         if os.path.exists(model):
             model_cache_dir = model if os.path.isdir(
                 model) else os.path.dirname(model)
@@ -52,7 +52,7 @@ def run_auto_label(input_wav,
                 revision=model_revision,
                 user_agent={ThirdParty.KEY: 'speech_tts_autolabel'})
         if not os.path.exists(model_cache_dir):
-            raise ValueError(f'mdoel_cache_dir: {model_cache_dir} not exists')
+            raise ValueError(f'model_cache_dir: {model_cache_dir} not exists')
         zip_file = os.path.join(model_cache_dir, 'model.zip')
         if not os.path.exists(zip_file):
             raise ValueError(f'zip_file: {zip_file} not exists')
@@ -61,8 +61,8 @@ def run_auto_label(input_wav,
         target_resource = os.path.join(model_cache_dir, 'model')
         return target_resource
 
-    model_resource = _download_and_unzip_resousrce(resource_model_id,
-                                                   resource_revision)
+    model_resource = _download_and_unzip_resource(resource_model_id,
+                                                  resource_revision)
     auto_labeling = AutoLabeling(
         os.path.abspath(input_wav),
         model_resource,

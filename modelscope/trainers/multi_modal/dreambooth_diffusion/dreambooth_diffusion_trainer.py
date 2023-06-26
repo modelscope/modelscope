@@ -2,13 +2,29 @@
 from typing import Union
 
 import torch
+import itertools
+from torchvision import transforms
+from pathlib import Path
+from tqdm.auto import tqdm
+import hashlib
 from collections.abc import Mapping
 from torch.utils.data import Dataset
 import shutil
+from PIL import Image
+import torch.nn.functional as F
+from PIL.ImageOps import exif_transpose
 from diffusers import DiffusionPipeline
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
 
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
+                                       ConfigKeys, DistributedParallelType,
+                                       ModeKeys, ModelFile, ThirdParty,
+                                       TrainerStages)
+from modelscope.utils.torch_utils import (compile_model, get_dist_info,
+                                          get_local_rank, init_dist, is_dist,
+                                          is_master, set_random_seed)
+from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
 from modelscope.outputs import ModelOutputBase
@@ -18,8 +34,12 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
+from modelscope.outputs import OutputKeys
 
 class DreamboothCheckpointProcessor(CheckpointProcessor):
+
+    def __init__(self, model_dir):
+        self.model_dir = model_dir
 
     def save_checkpoints(self,
                          trainer,
@@ -32,13 +52,79 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         if trainer.model.text_encoder is not None:
             pipeline_args["text_encoder"] = trainer.model.text_encoder
         pipeline = DiffusionPipeline.from_pretrained(
-            './dreambooth_diffusion_model',
+            self.model_dir,
             unet=trainer.model.unet,
             **pipeline_args,
         )
         scheduler_args = {}
         pipeline.scheduler = pipeline.scheduler.from_config(pipeline.scheduler.config, **scheduler_args)
         pipeline.save_pretrained(output_dir)  
+
+
+class ClassDataset(Dataset):
+    """
+    A dataset to prepare  class images with the prompts for fine-tuning the model.
+    It pre-processes the images and the tokenizes prompts.
+    """
+
+    def __init__(
+        self,
+        tokenizer,
+        class_data_root=None,
+        class_prompt=None,
+        class_num=None,
+        size=512,
+        center_crop=False,
+        ):
+
+        self.size = size
+        self.center_crop = center_crop
+        self.tokenizer = tokenizer
+
+        if class_data_root is not None:
+            self.class_data_root = Path(class_data_root)
+            self.class_data_root.mkdir(parents=True, exist_ok=True)
+            self.class_images_path = list(self.class_data_root.iterdir())
+            if class_num is not None:
+                self.num_class_images = min(len(self.class_images_path), class_num)
+            else:
+                self.num_class_images = len(self.class_images_path)
+            self.class_prompt = class_prompt
+        else:
+            raise ValueError(f"Class {self.class_data_root} class data root doesn't exists.")
+
+        self.image_transforms = transforms.Compose(
+            [
+                transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
+                transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5], [0.5]),
+            ]
+        )
+
+    def __len__(self):
+        return self.num_class_images
+
+    def __getitem__(self, index):
+        example = {}
+
+        if self.class_data_root:
+            class_image = Image.open(self.class_images_path[index % self.num_class_images])
+            class_image = exif_transpose(class_image)
+
+            if not class_image.mode == "RGB":
+                class_image = class_image.convert("RGB")
+            example["pixel_values"] = self.image_transforms(class_image)
+
+            class_text_inputs = self.tokenizer(self.class_prompt, 
+                                                max_length=self.tokenizer.model_max_length,
+                                                truncation=True,
+                                                padding="max_length",
+                                                return_tensors="pt")
+            input_ids = torch.squeeze(class_text_inputs.input_ids)
+            example["input_ids"] = input_ids
+            
+        return example
 
 
 class PromptDataset(Dataset):
@@ -63,14 +149,30 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation', True)
         self.instance_prompt = kwargs.pop('instance_prompt', "a photo of sks dog")
+        self.class_prompt = kwargs.pop('instance_prompt', "a photo of dog")
         self.class_data_dir = kwargs.pop("class_data_dir", "/tmp/class_data")
-        self.num_class_images = kwargs.pop("num_class_images", 200)
+        self.num_class_images = kwargs.pop("num_class_images", 2)
+        self.resolution = kwargs.pop("resolution", 512)
+        self.prior_loss_weight = kwargs.pop("prior_loss_weight", 1.0)
 
-        # save checkpoint and configurate files.
+        # Save checkpoint and configurate files.
         ckpt_hook = list(filter(lambda hook: isinstance(hook, CheckpointHook), self.hooks))[0]
-        ckpt_hook.set_processor(DreamboothCheckpointProcessor())
+        ckpt_hook.set_processor(DreamboothCheckpointProcessor(self.model_dir))
+
+        # Check for conflicts and conflicts
+        if self.with_prior_preservation:
+            if self.class_data_dir is None:
+                raise ValueError("You must specify a data directory for class images.")
+            if self.class_prompt is None:
+                raise ValueError("You must specify prompt for class images.")
+        else:
+            # logger is not available yet
+            if self.class_data_dir is not None:
+                warnings.warn("You need not use --class_data_dir without --with_prior_preservation.")
+            if self.class_prompt is not None:
+                warnings.warn("You need not use --class_prompt without --with_prior_preservation.")
 
         # Generate class images if prior preservation is enabled.
         if self.with_prior_preservation:
@@ -81,16 +183,16 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
             if cur_class_images < self.num_class_images:
                 pipeline = DiffusionPipeline.from_pretrained(
-                    self.pretrained_model_name_or_path,
+                    self.model_dir,
                     torch_dtype=torch.float32,
                     safety_checker=None,
-                    revision=self.revision,
+                    revision=None,
                 )
                 pipeline.set_progress_bar_config(disable=True)
 
                 num_new_images = self.num_class_images - cur_class_images
-                sample_dataset = PromptDataset(self.class_prompt, num_new_images)
-                sample_dataloader = torch.utils.data.DataLoader(sample_dataset, batch_size=self.sample_batch_size)
+                sample_dataset = PromptDataset(self.instance_prompt, num_new_images)
+                sample_dataloader = torch.utils.data.DataLoader(sample_dataset)
 
                 pipeline.to(self.device)
 
@@ -105,6 +207,40 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
+        # Class Dataset and DataLoaders creation
+        class_dataset = ClassDataset(
+            class_data_root=self.class_data_dir if self.with_prior_preservation else None,
+            class_prompt=self.class_prompt,
+            class_num=self.num_class_images,
+            tokenizer=self.model.tokenizer,
+            size=self.resolution,
+            center_crop=False,
+        )
+
+        class_dataloader = torch.utils.data.DataLoader(
+            class_dataset,
+            batch_size=1,
+            shuffle=True,
+        )
+        
+        self.iter_class_dataloader = itertools.cycle(class_dataloader)
+
+    def collate_fn(examples):
+
+        input_ids = [example["class_prompt_ids"] for example in examples]
+        pixel_values = [example["class_images"] for example in examples]
+
+        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+
+        input_ids = torch.cat(input_ids, dim=0)
+
+        batch = {
+            "input_ids": input_ids,
+            "pixel_values": pixel_values,
+        }
+
+        return batch
+
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
@@ -117,3 +253,106 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
+        
+    def train_step(self, model, inputs):
+        """ Perform a training step on a batch of inputs.
+
+        Subclass and override to inject custom behavior.
+
+        Args:
+            model (`TorchModel`): The model to train.
+            inputs (`Dict[str, Union[torch.Tensor, Any]]`):
+                The inputs and targets of the model.
+
+                The dictionary will be unpacked before being fed to the model. Most models expect the targets under the
+                argument `labels`. Check your model's documentation for all accepted arguments.
+
+        Return:
+            `torch.Tensor`: The tensor with training loss on this batch.
+        """
+        model.train()
+        self._mode = ModeKeys.TRAIN
+        # call model forward but not __call__ to skip postprocess
+
+        receive_dict_inputs = func_receive_dict_inputs(
+            self.unwrap_module(self.model).forward)
+
+        if isinstance(inputs, Mapping) and not receive_dict_inputs:
+            train_outputs = model.forward(**inputs)
+        else:
+            train_outputs = model.forward(inputs)
+
+        if self.with_prior_preservation:
+            batch = next(self.iter_class_dataloader)
+            target_prior = batch["pixel_values"].to(self.device)
+            input_ids = batch["input_ids"].to(self.device)
+            with torch.no_grad():
+                latents = self.model.vae.encode(
+                    target_prior.to(dtype=torch.float32)).latent_dist.sample()
+            latents = latents * self.model.vae.config.scaling_factor
+
+            # Sample noise that we'll add to the latents
+            noise = torch.randn_like(latents)
+            bsz = latents.shape[0]
+            # Sample a random timestep for each image
+            timesteps = torch.randint(
+                0,
+                self.model.noise_scheduler.num_train_timesteps, (bsz, ),
+                device=latents.device)
+            timesteps = timesteps.long()
+
+            # Add noise to the latents according to the noise magnitude at each timestep
+            # (this is the forward diffusion process)
+            noisy_latents = self.model.noise_scheduler.add_noise(latents, noise,
+                                                        timesteps)
+
+            # Get the text embedding for conditioning
+            with torch.no_grad():
+                encoder_hidden_states = self.model.text_encoder(input_ids)[0]
+
+            # Get the target for loss depending on the prediction type
+            if self.model.noise_scheduler.config.prediction_type == 'epsilon':
+                target_prior = noise
+            elif self.model.noise_scheduler.config.prediction_type == 'v_prediction':
+                target_prior = self.model.noise_scheduler.get_velocity(latents, noise,
+                                                        timesteps)
+            else:
+                raise ValueError(
+                    f'Unknown prediction type {self.model.noise_scheduler.config.prediction_type}'
+                )
+            
+            # Predict the noise residual and compute loss
+            model_pred_prior = self.model.unet(noisy_latents, timesteps,
+                                encoder_hidden_states).sample
+            
+            # Compute prior loss
+            prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+            # Add the prior loss to the instance loss.
+            train_outputs[OutputKeys.LOSS] += self.prior_loss_weight * prior_loss
+
+        if isinstance(train_outputs, ModelOutputBase):
+            train_outputs = train_outputs.to_dict()
+        if not isinstance(train_outputs, dict):
+            raise TypeError('"model.forward()" must return a dict')
+
+        # add model output info to log
+        if 'log_vars' not in train_outputs:
+            default_keys_pattern = ['loss']
+            match_keys = set([])
+            for key_p in default_keys_pattern:
+                match_keys.update(
+                    [key for key in train_outputs.keys() if key_p in key])
+
+            log_vars = {}
+            for key in match_keys:
+                value = train_outputs.get(key, None)
+                if value is not None:
+                    if is_dist():
+                        value = value.data.clone().to('cuda')
+                        dist.all_reduce(value.div_(dist.get_world_size()))
+                    log_vars.update({key: value.item()})
+            self.log_buffer.update(log_vars)
+        else:
+            self.log_buffer.update(train_outputs['log_vars'])
+        
+        self.train_outputs = train_outputs

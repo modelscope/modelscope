@@ -38,7 +38,7 @@ class StableDiffusion(TorchModel):
         revision = kwargs.pop('revision', None)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
-        self.with_prior_preservation = kwargs.pop('with_prior_preservation', False)
+        self.with_prior_preservation = kwargs.pop('with_prior_preservation', True)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -132,18 +132,10 @@ class StableDiffusion(TorchModel):
         model_pred = self.unet(noisy_latents, timesteps,
                                encoder_hidden_states).sample
         
-        if self.with_prior_preservation and self.dreambooth_tune:
-            # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
-            model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
-            target, target_prior = torch.chunk(target, 2, dim=0)
-            # Compute instance loss
-            loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-            # Compute prior loss
-            prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
-            # Add the prior loss to the instance loss.
-            loss = loss + self.prior_loss_weight * prior_loss
-        else:
-            loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
+        if model_pred.shape[1] == 6:
+            model_pred, _ = torch.chunk(model_pred, 2, dim=1)
+
+        loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
 
         output = {OutputKeys.LOSS: loss}
         return output

@@ -12,6 +12,7 @@ from PIL import Image
 from timm.data import create_transform
 from torchvision import transforms
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from torchvision.datasets import ImageFolder
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
@@ -55,7 +56,6 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
             transforms.Resize(
                 self.preprocessor_resolution,
                 interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(self.preprocessor_mean,
                                  self.preprocessor_std),

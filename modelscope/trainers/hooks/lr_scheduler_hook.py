@@ -112,6 +112,9 @@ class LrSchedulerHook(Hook):
             self.processor.step(trainer)
 
     def _get_log_lr(self, trainer):
+        # forward compatibility with AddLrLogHook in EasyCV
+        if not hasattr(self, 'processor'):
+            self.processor = LrSchedulerProcessor()
         cur_lr = self.processor.get_current_lr(trainer)
         # only record lr of the first param group
         if isinstance(cur_lr, list):

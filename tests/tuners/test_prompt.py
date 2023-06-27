@@ -7,19 +7,20 @@ import unittest
 import numpy as np
 import torch
 
+from modelscope import read_config
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
 from modelscope.swift import Swift
-from modelscope.swift.lora import (Linear, LoRA, LoRAConfig,
-                                   mark_only_lora_as_trainable)
+from modelscope.swift.adapter import AdapterConfig
+from modelscope.swift.prompt import PromptConfig
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class TestLora(unittest.TestCase):
+class TestPrompt(unittest.TestCase):
 
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
@@ -32,35 +33,7 @@ class TestLora(unittest.TestCase):
         super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip in this level')
-    def test_lora_base(self):
-
-        class TestModel(torch.nn.Module):
-
-            def __init__(self):
-                super().__init__()
-                self.lora = Linear(16, 16, r=4)
-
-        model = TestModel()
-        mark_only_lora_as_trainable(model)
-        model.train()
-        loss = model.lora(torch.ones(16, 16))
-        loss = loss.sum()
-        loss.backward()
-
-        model = TestModel()
-        mark_only_lora_as_trainable(model)
-        model.eval()
-        loss = model.lora(torch.ones(16, 16))
-        loss = loss.sum()
-        try:
-            loss.backward()
-        except Exception:
-            pass
-        else:
-            raise Exception('No tensor needs grad, should throw en error here')
-
-    @unittest.skipUnless(test_level() >= 0, 'skip in this level')
-    def test_lora_smoke_test(self):
+    def test_prompt_smoke_test(self):
         dataset = MsDataset.load(
             'clue', subset_name='afqmc',
             split='train').to_hf_dataset().select(range(2))
@@ -70,8 +43,16 @@ class TestLora(unittest.TestCase):
         model = Model.from_pretrained(model_dir, adv_grad_factor=None)
 
         cfg_file = os.path.join(model_dir, 'configuration.json')
-        lora_config = LoRAConfig(replace_modules=['query', 'key', 'value'])
-        model = Swift.prepare_model(model, lora_config)
+        model_cfg = os.path.join(model_dir, 'config.json')
+        model_cfg = read_config(model_cfg)
+
+        prompt_config = PromptConfig(
+            dim=model_cfg.hidden_size,
+            module_layer_name=r'.*layer\.\d+$',
+            embedding_pos=0,
+            attention_mask_pos=1)
+
+        model = Swift.prepare_model(model, prompt_config)
 
         kwargs = dict(
             model=model,
@@ -86,10 +67,8 @@ class TestLora(unittest.TestCase):
 
         def pipeline_sentence_similarity(model_dir):
             model = Model.from_pretrained(model_dir)
-            lora_config.pretrained_weights = output_dir
-            Swift.prepare_model(model, lora_config)
-            model.load_state_dict(
-                torch.load(os.path.join(output_dir, 'pytorch_model.bin')))
+            prompt_config.pretrained_weights = output_dir
+            Swift.prepare_model(model, prompt_config)
             model.eval()
             pipeline_ins = pipeline(
                 task=Tasks.sentence_similarity, model=model)
@@ -97,21 +76,7 @@ class TestLora(unittest.TestCase):
 
         output1 = pipeline_sentence_similarity(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny')
-
-        LoRA.unpatch_lora(model, lora_config)
-        model.save_pretrained(
-            output_dir, save_checkpoint_names='pytorch_model.bin')
-
-        def pipeline_sentence_similarity_origin():
-            model = Model.from_pretrained(output_dir)
-            model.eval()
-            pipeline_ins = pipeline(
-                task=Tasks.sentence_similarity, model=model)
-            return pipeline_ins(input=('test', 'this is a test'))
-
-        output2 = pipeline_sentence_similarity_origin()
-        print(output1, output2)
-        self.assertTrue(all(np.isclose(output1['scores'], output2['scores'])))
+        print(output1)
 
 
 if __name__ == '__main__':

@@ -206,7 +206,7 @@ class CsvDatasetBuilder(csv.Csv):
             os.makedirs(target_cache_dir, exist_ok=True)
 
         self.local_meta_csv_paths = {
-            k: HubApi.fetch_csv_from_url(v, target_cache_dir)
+            k: HubApi.fetch_meta_files_from_url(v, target_cache_dir)
             for k, v in self.meta_data_files.items()
         }
 
@@ -478,7 +478,7 @@ class IterableDatasetBuilder(csv.Csv):
 
     def _get_meta_csv_df(self, meta_file_url: str) -> None:
         if not self.meta_csv_df:
-            meta_csv_file_path = HubApi.fetch_csv_from_url(
+            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
                 meta_file_url, self.meta_cache_dir)
             self.meta_csv_df = pd.read_csv(
                 meta_csv_file_path,

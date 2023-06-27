@@ -8,18 +8,17 @@ from modelscope.metainfo import Preprocessors, Trainers
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
+from modelscope.swift.optimizers.child_tuning_adamw_optimizer import \
+    calculate_fisher
 from modelscope.trainers import build_trainer
 from modelscope.trainers.hooks import Hook
 from modelscope.trainers.nlp_trainer import (EpochBasedTrainer,
                                              NlpEpochBasedTrainer)
-from modelscope.trainers.optimizer.child_tuning_adamw_optimizer import \
-    calculate_fisher
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.regress_test_utils import (MsRegressTool,
                                                  compare_arguments_nested)
-from modelscope.utils.test_utils import test_level
 
 
 class TestFinetuneSequenceClassification(unittest.TestCase):

@@ -54,7 +54,7 @@ def multiclass_nms(multi_bboxes,
     if score_factors is not None:
         scores = scores * score_factors[:, None]
 
-    labels = torch.arange(num_classes, dtype=torch.long)
+    labels = torch.arange(num_classes, dtype=torch.long, device=scores.device)
     labels = labels.view(1, -1).expand_as(scores)
 
     bboxes = bboxes.reshape(-1, 4)

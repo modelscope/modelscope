@@ -191,7 +191,7 @@ class BlockPETL(nn.Module):
             self.prompt = None
 
     def forward(self, x):
-        if self.prompt is not None:
+        if self.prompt is not None and self.prompt_length and self.prompt_length > 0:
             x = self.prompt(x)
 
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))

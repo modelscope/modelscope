@@ -165,6 +165,8 @@ class Models(object):
     doc2bot = 'doc2bot'
     peer = 'peer'
     llama = 'llama'
+    chatglm_6b = 'chatglm6b'
+    chatglm2_6b = 'chatglm2-6b'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

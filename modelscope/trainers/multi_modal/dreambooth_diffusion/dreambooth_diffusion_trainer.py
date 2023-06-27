@@ -2,6 +2,7 @@
 import hashlib
 import itertools
 import shutil
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Union
@@ -58,20 +59,28 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
 
 
 class ClassDataset(Dataset):
-    """
-    A dataset to prepare  class images with the prompts for fine-tuning the model.
-    It pre-processes the images and the tokenizes prompts.
-    """
 
     def __init__(
         self,
         tokenizer,
         class_data_root=None,
         class_prompt=None,
-        class_num=None,
+        class_num_images=None,
         size=512,
         center_crop=False,
     ):
+        """A dataset to prepare  class images with the prompts for fine-tuning the model.
+           It pre-processes the images and the tokenizes prompts.
+
+        Args:
+            tokenizer:  The tokenizer to use for tokenization.
+            class_data_root: The path to the class data.
+            class_prompt: The prompt to use for class images.
+            class_num_images: The number of class images to use.
+            size: The size to resize the images.
+            center_crop: Whether to do center crop or random crop.
+
+        """
 
         self.size = size
         self.center_crop = center_crop
@@ -81,9 +90,9 @@ class ClassDataset(Dataset):
             self.class_data_root = Path(class_data_root)
             self.class_data_root.mkdir(parents=True, exist_ok=True)
             self.class_images_path = list(self.class_data_root.iterdir())
-            if class_num is not None:
+            if class_num_images is not None:
                 self.num_class_images = min(
-                    len(self.class_images_path), class_num)
+                    len(self.class_images_path), class_num_images)
             else:
                 self.num_class_images = len(self.class_images_path)
             self.class_prompt = class_prompt
@@ -129,9 +138,15 @@ class ClassDataset(Dataset):
 
 
 class PromptDataset(Dataset):
-    'A simple dataset to prepare the prompts to generate class images on multiple GPUs.'
 
     def __init__(self, prompt, num_samples):
+        """Dataset to prepare the prompts to generate class images.
+
+        Args:
+            prompt: Class prompt.
+            num_samples: The number sample for class images.
+
+        """
         self.prompt = prompt
         self.num_samples = num_samples
 
@@ -154,7 +169,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                                                   False)
         self.instance_prompt = kwargs.pop('instance_prompt',
                                           'a photo of sks dog')
-        self.class_prompt = kwargs.pop('instance_prompt', 'a photo of dog')
+        self.class_prompt = kwargs.pop('class_prompt', 'a photo of dog')
         self.class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
         self.num_class_images = kwargs.pop('num_class_images', 200)
         self.resolution = kwargs.pop('resolution', 512)
@@ -191,6 +206,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             cur_class_images = len(list(class_images_dir.iterdir()))
 
             if cur_class_images < self.num_class_images:
+                if torch.cuda.device_count() > 1:
+                    warnings.warn('Multiple GPU inference not yet supported.')
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
                     torch_dtype=torch.float32,
@@ -223,7 +240,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 class_data_root=self.class_data_dir
                 if self.with_prior_preservation else None,
                 class_prompt=self.class_prompt,
-                class_num=self.num_class_images,
+                class_num_images=self.num_class_images,
                 tokenizer=self.model.tokenizer,
                 size=self.resolution,
                 center_crop=False,

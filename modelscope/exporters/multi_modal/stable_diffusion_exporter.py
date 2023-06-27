@@ -26,10 +26,10 @@ from modelscope.utils.hub import snapshot_download
 class StableDiffuisonExporter(TorchModelExporter):
 
     @torch.no_grad()
-    def export_onnx(self, 
-                    model_path: str, 
-                    output_path: str, 
-                    opset: int = 14, 
+    def export_onnx(self,
+                    model_path: str,
+                    output_path: str,
+                    opset: int = 14,
                     fp16: bool = False):
         """Export the model as onnx format files.
 
@@ -39,7 +39,6 @@ class StableDiffuisonExporter(TorchModelExporter):
             opset: The version of the ONNX operator set to use.
             fp16: Whether to use float16.
         """
-        
         # Conversion weight accuracy.
         dtype = torch.float16 if fp16 else torch.float32
         if fp16 and torch.cuda.is_available():
@@ -48,7 +47,6 @@ class StableDiffuisonExporter(TorchModelExporter):
             raise ValueError("`float16` model export is only supported on GPUs with CUDA")
         else:
             device = "cpu"
-        
         # download and load models
         if not os.path.isdir(model_path):
             model_path = snapshot_download(model_path)
@@ -67,7 +65,6 @@ class StableDiffuisonExporter(TorchModelExporter):
         )
         self.export_help(
             pipeline.text_encoder,
-            # casting to torch.int32 until the CLIP fix is released: https://github.com/huggingface/transformers/pull/18515/files
             model_args=(text_input.input_ids.to(device=device, dtype=torch.int32)),
             output_path=output_path / "text_encoder" / "model.onnx",
             ordered_input_names=["input_ids"],
@@ -253,4 +250,3 @@ class StableDiffuisonExporter(TorchModelExporter):
                 do_constant_folding=True,
                 opset_version=opset,
             )
-

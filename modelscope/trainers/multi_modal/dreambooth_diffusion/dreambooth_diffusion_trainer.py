@@ -59,18 +59,6 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
 
 
 class ClassDataset(Dataset):
-    """A dataset to prepare  class images with the prompts for fine-tuning the model.
-        It pre-processes the images and the tokenizes prompts.
-
-    Args:
-        tokenizer: The tokenizer to use for tokenization.
-        class_data_root: The saved class data path.
-        class_prompt: The prompt to use for class images.
-        class_num_images: The number of class images to use.
-        size: The size to resize the images.
-        center_crop: Whether to do center crop or random crop.
-
-    """
 
     def __init__(
         self,
@@ -81,6 +69,18 @@ class ClassDataset(Dataset):
         size=512,
         center_crop=False,
     ):
+        """A dataset to prepare  class images with the prompts for fine-tuning the model.
+            It pre-processes the images and the tokenizes prompts.
+
+        Args:
+            tokenizer: The tokenizer to use for tokenization.
+            class_data_root: The saved class data path.
+            class_prompt: The prompt to use for class images.
+            class_num_images: The number of class images to use.
+            size: The size to resize the images.
+            center_crop: Whether to do center crop or random crop.
+
+        """
         self.size = size
         self.center_crop = center_crop
         self.tokenizer = tokenizer
@@ -164,6 +164,17 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        """Dreambooth trainers for fine-tuning stable diffusion
+
+        Args:
+            with_prior_preservation: a boolean indicating whether to enable prior loss.
+            instance_prompt: a string specifying the instance prompt.
+            class_prompt: a string specifying the class prompt.
+            class_data_dir: the path to the class data directory.
+            num_class_images: the number of class images to generate.
+            prior_loss_weight: the weight of the prior loss.
+
+        """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   False)
         self.instance_prompt = kwargs.pop('instance_prompt',

@@ -57,6 +57,7 @@ class StableDiffusion(TorchModel):
             pretrained_model_name_or_path, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
             pretrained_model_name_or_path, subfolder='unet', revision=revision)
+        self.safety_checker = None
 
         # Freeze gradient calculation and move to device
         if self.vae is not None:

@@ -13,8 +13,8 @@ from modelscope.msdatasets.download.dataset_builder import (
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
 from modelscope.msdatasets.download.download_manager import (
     DataDownloadManager, DataStreamingDownloadManager)
-from modelscope.utils.constant import (DatasetPathName, DownloadMode,
-                                       MetaDataFields)
+from modelscope.utils.constant import (META_FILES_FORMAT, DatasetPathName,
+                                       DownloadMode, MetaDataFields)
 
 
 class DataFilesManager(object):
@@ -85,7 +85,8 @@ class DataFilesManager(object):
 
             builder = TaskSpecificDatasetBuilder(
                 dataset_context_config=self.dataset_context_config)
-        elif meta_data_file.endswith('.csv'):
+        elif meta_data_file and os.path.splitext(
+                meta_data_file)[-1] in META_FILES_FORMAT:
             builder = CsvDatasetBuilder(
                 dataset_context_config=self.dataset_context_config)
         else:

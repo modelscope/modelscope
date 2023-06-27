@@ -44,8 +44,8 @@ from modelscope.hub.repository import Repository
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
-                                       MASTER_MODEL_BRANCH, DatasetFormations,
-                                       DatasetMetaFormats,
+                                       MASTER_MODEL_BRANCH, META_FILES_FORMAT,
+                                       DatasetFormations, DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
                                        DownloadMode, ModelFile,
                                        VirgoDatasetConfig)
@@ -643,42 +643,57 @@ class HubApi:
         return local_paths, dataset_formation
 
     @staticmethod
-    def fetch_csv_from_url(url, out_path, chunk_size=100000, mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
-        from io import StringIO
+    def fetch_meta_files_from_url(url, out_path, chunk_size=1024, mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
+        """
+        Fetch the meta-data files from the url, e.g. csv/jsonl files.
+        """
         import hashlib
+        import json
+        from tqdm import tqdm
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
             os.remove(out_path)
         if os.path.exists(out_path):
-            logger.info(f'Reusing cached meta-csv file: {out_path}')
+            logger.info(f'Reusing cached meta-data file: {out_path}')
             return out_path
         cookies = ModelScopeConfig.get_cookies()
 
         # Make the request and get the response content as TextIO
-        logger.info('Loading meta-csv file ...')
+        logger.info('Loading meta-data file ...')
+        response = requests.get(url, cookies=cookies, stream=True)
+        total_size = int(response.headers.get('content-length', 0))
+        progress = tqdm(total=total_size, dynamic_ncols=True)
 
-        response = requests.get(url, cookies=cookies)
-        data = StringIO(response.text)
+        def get_chunk(resp):
+            chunk_data = []
+            for data in resp.iter_lines():
+                data = data.decode('utf-8')
+                chunk_data.append(data)
+                if len(chunk_data) >= chunk_size:
+                    yield chunk_data
+                    chunk_data = []
+            yield chunk_data
 
-        # Use read_csv with the TextIO object
-        csv_file_reader = pd.read_csv(data, iterator=True, dtype=str, delimiter=None)
-
-        loop = True
         iter_num = 0
-        while loop:
-            try:
-                chunk = csv_file_reader.get_chunk(size=chunk_size)
-                logger.info(f'Receiving chunk {iter_num}, shape: {chunk.shape}')
-                if iter_num == 0:
-                    with_header = True
+        with open(out_path, 'a') as f:
+            for chunk in get_chunk(response):
+                progress.update(len(chunk))
+                if url.endswith('jsonl'):
+                    chunk = [json.loads(line) for line in chunk if line.strip()]
+                    if len(chunk) == 0:
+                        continue
+                    if iter_num == 0:
+                        with_header = True
+                    else:
+                        with_header = False
+                    chunk_df = pd.DataFrame(chunk)
+                    chunk_df.to_csv(f, index=False, header=with_header)
+                    iter_num += 1
                 else:
-                    with_header = False
-
-                chunk.to_csv(out_path, mode='a', index=False, header=with_header)
-                iter_num += 1
-            except StopIteration:
-                loop = False
-                logger.info('stop chunk iteration')
+                    # csv or others
+                    for line in chunk:
+                        f.write(line + '\n')
+        progress.close()
 
         return out_path
 
@@ -688,7 +703,7 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION):
-        if file_name.endswith('.csv'):
+        if file_name and os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
             file_name = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
                         f'Revision={revision}&FilePath={file_name}'
         return file_name

@@ -38,7 +38,7 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_lora_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
-        model_revision = 'v1.0.6'
+        model_revision = 'v1.0.9'
 
         def cfg_modify_fn(cfg):
             cfg.train.max_epochs = self.max_epochs
@@ -70,7 +70,7 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_lora_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
-        model_revision = 'v1.0.6'
+        model_revision = 'v1.0.9'
 
         kwargs = dict(
             model=model_id,

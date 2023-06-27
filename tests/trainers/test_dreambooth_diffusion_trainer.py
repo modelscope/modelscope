@@ -74,7 +74,7 @@ class TestDreamboothDiffusionTrainer(unittest.TestCase):
         pipe = pipeline(
             task=Tasks.text_to_image_synthesis, model=f'{self.tmp_dir}/output')
         output = pipe({'text': prompt})
-        cv2.imwrite(f'./dreambooth_result.png', output['output_imgs'][0])
+        cv2.imwrite('./dreambooth_result.png', output['output_imgs'][0])
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_dreambooth_diffusion_eval(self):

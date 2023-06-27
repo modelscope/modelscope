@@ -59,6 +59,18 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
 
 
 class ClassDataset(Dataset):
+    """A dataset to prepare  class images with the prompts for fine-tuning the model.
+        It pre-processes the images and the tokenizes prompts.
+
+    Args:
+        tokenizer: The tokenizer to use for tokenization.
+        class_data_root: The saved class data path.
+        class_prompt: The prompt to use for class images.
+        class_num_images: The number of class images to use.
+        size: The size to resize the images.
+        center_crop: Whether to do center crop or random crop.
+
+    """
 
     def __init__(
         self,
@@ -69,19 +81,6 @@ class ClassDataset(Dataset):
         size=512,
         center_crop=False,
     ):
-        """A dataset to prepare  class images with the prompts for fine-tuning the model.
-           It pre-processes the images and the tokenizes prompts.
-
-        Args:
-            tokenizer: The tokenizer to use for tokenization.
-            class_data_root: The saved class data path.
-            class_prompt: The prompt to use for class images.
-            class_num_images: The number of class images to use.
-            size: The size to resize the images.
-            center_crop: Whether to do center crop or random crop.
-
-        """
-
         self.size = size
         self.center_crop = center_crop
         self.tokenizer = tokenizer

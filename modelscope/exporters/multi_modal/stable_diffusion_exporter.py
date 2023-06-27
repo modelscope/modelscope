@@ -1,18 +1,17 @@
-from collections import OrderedDict
-from typing import Any, Dict, Mapping, Tuple
-
-from torch.utils.data.dataloader import default_collate
 import argparse
 import os
 import shutil
+from collections import OrderedDict
 from pathlib import Path
+from typing import Any, Dict, Mapping, Tuple
 
 import onnx
 import torch
+from diffusers import (OnnxRuntimeModel, OnnxStableDiffusionPipeline,
+                       StableDiffusionPipeline)
 from packaging import version
 from torch.onnx import export
-
-from diffusers import OnnxRuntimeModel, OnnxStableDiffusionPipeline, StableDiffusionPipeline
+from torch.utils.data.dataloader import default_collate
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter
@@ -22,7 +21,8 @@ from modelscope.utils.constant import ModeKeys, Tasks
 from modelscope.utils.hub import snapshot_download
 
 
-@EXPORTERS.register_module(Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
+@EXPORTERS.register_module(
+    Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
 class StableDiffuisonExporter(TorchModelExporter):
 
     @torch.no_grad()
@@ -43,31 +43,36 @@ class StableDiffuisonExporter(TorchModelExporter):
         # Conversion weight accuracy and device.
         dtype = torch.float16 if fp16 else torch.float32
         if fp16 and torch.cuda.is_available():
-            device = "cuda"
+            device = 'cuda'
         elif fp16 and not torch.cuda.is_available():
-            raise ValueError("`float16` model export is only supported on GPUs with CUDA")
+            raise ValueError(
+                '`float16` model export is only supported on GPUs with CUDA')
         else:
-            device = "cpu"
+            device = 'cpu'
         self.model = self.model.to(device)
 
         # Text encoder
         num_tokens = self.model.text_encoder.config.max_position_embeddings
         text_hidden_size = self.model.text_encoder.config.hidden_size
         text_input = self.model.tokenizer(
-            "A sample prompt",
-            padding="max_length",
+            'A sample prompt',
+            padding='max_length',
             max_length=self.model.tokenizer.model_max_length,
             truncation=True,
-            return_tensors="pt",
+            return_tensors='pt',
         )
         self.export_help(
             self.model.text_encoder,
-            model_args=(text_input.input_ids.to(device=device, dtype=torch.int32)),
-            output_path=output_path / "text_encoder" / "model.onnx",
-            ordered_input_names=["input_ids"],
-            output_names=["last_hidden_state", "pooler_output"],
+            model_args=(text_input.input_ids.to(
+                device=device, dtype=torch.int32)),
+            output_path=output_path / 'text_encoder' / 'model.onnx',
+            ordered_input_names=['input_ids'],
+            output_names=['last_hidden_state', 'pooler_output'],
             dynamic_axes={
-                "input_ids": {0: "batch", 1: "sequence"},
+                'input_ids': {
+                    0: 'batch',
+                    1: 'sequence'
+                },
             },
             opset=opset,
         )
@@ -76,25 +81,42 @@ class StableDiffuisonExporter(TorchModelExporter):
         # UNET
         unet_in_channels = self.model.unet.config.in_channels
         unet_sample_size = self.model.unet.config.sample_size
-        unet_path = output_path / "unet" / "model.onnx"
+        unet_path = output_path / 'unet' / 'model.onnx'
         self.export_help(
             self.model.unet,
             model_args=(
-                torch.randn(2, unet_in_channels, unet_sample_size, unet_sample_size).to(device=device, dtype=dtype),
+                torch.randn(2, unet_in_channels, unet_sample_size,
+                            unet_sample_size).to(device=device, dtype=dtype),
                 torch.randn(2).to(device=device, dtype=dtype),
-                torch.randn(2, num_tokens, text_hidden_size).to(device=device, dtype=dtype),
+                torch.randn(2, num_tokens,
+                            text_hidden_size).to(device=device, dtype=dtype),
                 False,
             ),
             output_path=unet_path,
-            ordered_input_names=["sample", "timestep", "encoder_hidden_states", "return_dict"],
-            output_names=["out_sample"],  # has to be different from "sample" for correct tracing
+            ordered_input_names=[
+                'sample', 'timestep', 'encoder_hidden_states', 'return_dict'
+            ],
+            output_names=[
+                'out_sample'
+            ],  # has to be different from "sample" for correct tracing
             dynamic_axes={
-                "sample": {0: "batch", 1: "channels", 2: "height", 3: "width"},
-                "timestep": {0: "batch"},
-                "encoder_hidden_states": {0: "batch", 1: "sequence"},
+                'sample': {
+                    0: 'batch',
+                    1: 'channels',
+                    2: 'height',
+                    3: 'width'
+                },
+                'timestep': {
+                    0: 'batch'
+                },
+                'encoder_hidden_states': {
+                    0: 'batch',
+                    1: 'sequence'
+                },
             },
             opset=opset,
-            use_external_data_format=True,  # UNet is > 2GB, so the weights need to be split
+            use_external_data_format=
+            True,  # UNet is > 2GB, so the weights need to be split
         )
         unet_model_path = str(unet_path.absolute().as_posix())
         unet_dir = os.path.dirname(unet_model_path)
@@ -108,7 +130,7 @@ class StableDiffuisonExporter(TorchModelExporter):
             unet_model_path,
             save_as_external_data=True,
             all_tensors_to_one_file=True,
-            location="weights.pb",
+            location='weights.pb',
             convert_attribute=False,
         )
         del self.model.unet
@@ -118,18 +140,25 @@ class StableDiffuisonExporter(TorchModelExporter):
         vae_in_channels = vae_encoder.config.in_channels
         vae_sample_size = vae_encoder.config.sample_size
         # need to get the raw tensor output (sample) from the encoder
-        vae_encoder.forward = lambda sample, return_dict: vae_encoder.encode(sample, return_dict)[0].sample()
+        vae_encoder.forward = lambda sample, return_dict: vae_encoder.encode(
+            sample, return_dict)[0].sample()
         self.export_help(
             vae_encoder,
             model_args=(
-                torch.randn(1, vae_in_channels, vae_sample_size, vae_sample_size).to(device=device, dtype=dtype),
+                torch.randn(1, vae_in_channels, vae_sample_size,
+                            vae_sample_size).to(device=device, dtype=dtype),
                 False,
             ),
-            output_path=output_path / "vae_encoder" / "model.onnx",
-            ordered_input_names=["sample", "return_dict"],
-            output_names=["latent_sample"],
+            output_path=output_path / 'vae_encoder' / 'model.onnx',
+            ordered_input_names=['sample', 'return_dict'],
+            output_names=['latent_sample'],
             dynamic_axes={
-                "sample": {0: "batch", 1: "channels", 2: "height", 3: "width"},
+                'sample': {
+                    0: 'batch',
+                    1: 'channels',
+                    2: 'height',
+                    3: 'width'
+                },
             },
             opset=opset,
         )
@@ -143,14 +172,20 @@ class StableDiffuisonExporter(TorchModelExporter):
         self.export_help(
             vae_decoder,
             model_args=(
-                torch.randn(1, vae_latent_channels, unet_sample_size, unet_sample_size).to(device=device, dtype=dtype),
+                torch.randn(1, vae_latent_channels, unet_sample_size,
+                            unet_sample_size).to(device=device, dtype=dtype),
                 False,
             ),
-            output_path=output_path / "vae_decoder" / "model.onnx",
-            ordered_input_names=["latent_sample", "return_dict"],
-            output_names=["sample"],
+            output_path=output_path / 'vae_decoder' / 'model.onnx',
+            ordered_input_names=['latent_sample', 'return_dict'],
+            output_names=['sample'],
             dynamic_axes={
-                "latent_sample": {0: "batch", 1: "channels", 2: "height", 3: "width"},
+                'latent_sample': {
+                    0: 'batch',
+                    1: 'channels',
+                    2: 'height',
+                    3: 'width'
+                },
             },
             opset=opset,
         )
@@ -171,43 +206,60 @@ class StableDiffuisonExporter(TorchModelExporter):
                         clip_image_size,
                         clip_image_size,
                     ).to(device=device, dtype=dtype),
-                    torch.randn(1, vae_sample_size, vae_sample_size, vae_out_channels).to(device=device, dtype=dtype),
+                    torch.randn(1, vae_sample_size, vae_sample_size,
+                                vae_out_channels).to(
+                                    device=device, dtype=dtype),
                 ),
-                output_path=output_path / "safety_checker" / "model.onnx",
-                ordered_input_names=["clip_input", "images"],
-                output_names=["out_images", "has_nsfw_concepts"],
+                output_path=output_path / 'safety_checker' / 'model.onnx',
+                ordered_input_names=['clip_input', 'images'],
+                output_names=['out_images', 'has_nsfw_concepts'],
                 dynamic_axes={
-                    "clip_input": {0: "batch", 1: "channels", 2: "height", 3: "width"},
-                    "images": {0: "batch", 1: "height", 2: "width", 3: "channels"},
+                    'clip_input': {
+                        0: 'batch',
+                        1: 'channels',
+                        2: 'height',
+                        3: 'width'
+                    },
+                    'images': {
+                        0: 'batch',
+                        1: 'height',
+                        2: 'width',
+                        3: 'channels'
+                    },
                 },
                 opset=opset,
             )
             del self.model.safety_checker
-            safety_checker = OnnxRuntimeModel.from_pretrained(output_path / "safety_checker")
+            safety_checker = OnnxRuntimeModel.from_pretrained(
+                output_path / 'safety_checker')
             feature_extractor = self.model.feature_extractor
         else:
             safety_checker = None
             feature_extractor = None
 
         onnx_pipeline = OnnxStableDiffusionPipeline(
-            vae_encoder=OnnxRuntimeModel.from_pretrained(output_path / "vae_encoder"),
-            vae_decoder=OnnxRuntimeModel.from_pretrained(output_path / "vae_decoder"),
-            text_encoder=OnnxRuntimeModel.from_pretrained(output_path / "text_encoder"),
+            vae_encoder=OnnxRuntimeModel.from_pretrained(output_path
+                                                         / 'vae_encoder'),
+            vae_decoder=OnnxRuntimeModel.from_pretrained(output_path
+                                                         / 'vae_decoder'),
+            text_encoder=OnnxRuntimeModel.from_pretrained(output_path
+                                                          / 'text_encoder'),
             tokenizer=self.model.tokenizer,
-            unet=OnnxRuntimeModel.from_pretrained(output_path / "unet"),
-            scheduler=self.model.scheduler,
+            unet=OnnxRuntimeModel.from_pretrained(output_path / 'unet'),
+            scheduler=self.model.noise_scheduler,
             safety_checker=safety_checker,
             feature_extractor=feature_extractor,
             requires_safety_checker=safety_checker is not None,
         )
 
         onnx_pipeline.save_pretrained(output_path)
-        print("ONNX pipeline model saved to", output_path)
+        print('ONNX pipeline model saved to', output_path)
 
         del self.model
         del onnx_pipeline
-        _ = OnnxStableDiffusionPipeline.from_pretrained(output_path, provider="CPUExecutionProvider")
-        print("ONNX pipeline model is loadable")
+        _ = OnnxStableDiffusionPipeline.from_pretrained(
+            output_path, provider='CPUExecutionProvider')
+        print('ONNX pipeline model is loadable')
 
     def export_help(
         self,
@@ -222,7 +274,9 @@ class StableDiffuisonExporter(TorchModelExporter):
     ):
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        is_torch_less_than_1_11 = version.parse(version.parse(torch.__version__).base_version) < version.parse("1.11")
+        is_torch_less_than_1_11 = version.parse(
+            version.parse(
+                torch.__version__).base_version) < version.parse('1.11')
         if is_torch_less_than_1_11:
             export(
                 model,

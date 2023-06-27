@@ -174,7 +174,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             if self.class_prompt is None:
                 raise ValueError('You must specify prompt for class images.')
         else:
-            # logger is not available yet
             if self.class_data_dir is not None:
                 warnings.warn(
                     'You need not use --class_data_dir without --with_prior_preservation.'
@@ -235,23 +234,6 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                 shuffle=True,
             )
             self.iter_class_dataloader = itertools.cycle(class_dataloader)
-
-    def collate_fn(examples):
-
-        input_ids = [example['class_prompt_ids'] for example in examples]
-        pixel_values = [example['class_images'] for example in examples]
-
-        pixel_values = pixel_values.to(
-            memory_format=torch.contiguous_format).float()
-
-        input_ids = torch.cat(input_ids, dim=0)
-
-        batch = {
-            'input_ids': input_ids,
-            'pixel_values': pixel_values,
-        }
-
-        return batch
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:

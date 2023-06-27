@@ -82,18 +82,19 @@ class LinearAECPipeline(Pipeline):
         window = torch.hamming_window(winlen, periodic=False)
 
         def stft(x):
-            return torch.stft(
-                x,
-                n_fft,
-                hop_length,
-                winlen,
-                center=False,
-                window=window.to(x.device),
-                return_complex=False)
+            return torch.view_as_real(
+                torch.stft(
+                    x,
+                    n_fft,
+                    hop_length,
+                    winlen,
+                    center=False,
+                    window=window.to(x.device),
+                    return_complex=True))
 
         def istft(x, slen):
             return torch.istft(
-                x,
+                torch.view_as_complex(x),
                 n_fft,
                 hop_length,
                 winlen,

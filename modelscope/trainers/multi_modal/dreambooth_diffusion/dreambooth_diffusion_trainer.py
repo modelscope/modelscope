@@ -73,8 +73,8 @@ class ClassDataset(Dataset):
            It pre-processes the images and the tokenizes prompts.
 
         Args:
-            tokenizer:  The tokenizer to use for tokenization.
-            class_data_root: The path to the class data.
+            tokenizer: The tokenizer to use for tokenization.
+            class_data_root: The saved class data path.
             class_prompt: The prompt to use for class images.
             class_num_images: The number of class images to use.
             size: The size to resize the images.

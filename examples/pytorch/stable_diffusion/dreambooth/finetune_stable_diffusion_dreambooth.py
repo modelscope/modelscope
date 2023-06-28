@@ -1,24 +1,23 @@
-import cv2
 from dataclasses import dataclass, field
 
-from modelscope.pipelines import pipeline
+import cv2
+
 from modelscope.metainfo import Trainers
-from modelscope.utils.constant import Tasks
 from modelscope.msdatasets import MsDataset
+from modelscope.pipelines import pipeline
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
-from modelscope.utils.constant import DownloadMode
+from modelscope.utils.constant import DownloadMode, Tasks
 
 
 # Load configuration file and dataset
 @dataclass(init=False)
 class StableDiffusionDreamboothArguments(TrainingArgs):
     with_prior_preservation: bool = field(
-        default=False,
-        metadata={
+        default=False, metadata={
             'help': 'Whether to enable prior loss.',
         })
-    
+
     instance_prompt: str = field(
         default='a photo of sks dog',
         metadata={
@@ -44,8 +43,7 @@ class StableDiffusionDreamboothArguments(TrainingArgs):
         })
 
     resolution: int = field(
-        default=512,
-        metadata={
+        default=512, metadata={
             'help': 'The class images resolution.',
         })
 
@@ -56,12 +54,13 @@ class StableDiffusionDreamboothArguments(TrainingArgs):
         })
 
     prompt: str = field(
-        default='dog',
-        metadata={
+        default='dog', metadata={
             'help': 'The pipeline prompt.',
         })
 
-training_args = StableDiffusionDreamboothArguments(task='text-to-image-synthesis').parse_cli()
+
+training_args = StableDiffusionDreamboothArguments(
+    task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 
 train_dataset = MsDataset.load(
@@ -103,13 +102,15 @@ kwargs = dict(
     cfg_modify_fn=cfg_modify_fn)
 
 # build trainer and training
-trainer = build_trainer(name=Trainers.dreambooth_diffusion, default_args=kwargs)
+trainer = build_trainer(
+    name=Trainers.dreambooth_diffusion, default_args=kwargs)
 trainer.train()
 
 # pipeline after training and save result
-pipe = pipeline(task=Tasks.text_to_image_synthesis,
-                model=training_args.work_dir+"/output",
-                model_revision=args.model_revision)
+pipe = pipeline(
+    task=Tasks.text_to_image_synthesis,
+    model=training_args.work_dir + '/output',
+    model_revision=args.model_revision)
 
 output = pipe({'text': args.prompt})
 cv2.imwrite('./dreambooth_result.png', output['output_imgs'][0])

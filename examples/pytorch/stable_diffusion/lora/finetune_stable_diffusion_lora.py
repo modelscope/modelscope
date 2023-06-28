@@ -1,25 +1,26 @@
-import cv2
 from dataclasses import dataclass, field
 
-from modelscope.pipelines import pipeline
+import cv2
+
 from modelscope.metainfo import Trainers
-from modelscope.utils.constant import Tasks
 from modelscope.msdatasets import MsDataset
+from modelscope.pipelines import pipeline
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.trainers.training_args import TrainingArgs
-from modelscope.utils.constant import DownloadMode
+from modelscope.utils.constant import DownloadMode, Tasks
 
 
 # Load configuration file and dataset
 @dataclass(init=False)
 class StableDiffusionLoraArguments(TrainingArgs):
     prompt: str = field(
-        default='dog',
-        metadata={
+        default='dog', metadata={
             'help': 'The pipeline prompt.',
         })
 
-training_args = StableDiffusionLoraArguments(task='text-to-image-synthesis').parse_cli()
+
+training_args = StableDiffusionLoraArguments(
+    task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 
 train_dataset = MsDataset.load(
@@ -58,10 +59,11 @@ trainer = build_trainer(name=Trainers.lora_diffusion, default_args=kwargs)
 trainer.train()
 
 # pipeline after training and save result
-pipe = pipeline(task=Tasks.text_to_image_synthesis,
-                model=training_args.model,
-                lora_dir=training_args.work_dir+"/output",
-                model_revision=args.model_revision)
+pipe = pipeline(
+    task=Tasks.text_to_image_synthesis,
+    model=training_args.model,
+    lora_dir=training_args.work_dir + '/output',
+    model_revision=args.model_revision)
 
 output = pipe({'text': args.prompt})
 cv2.imwrite('./lora_result.png', output['output_imgs'][0])

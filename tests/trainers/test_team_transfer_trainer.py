@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 import json
@@ -80,6 +81,10 @@ def train_worker(device_id):
 
 
 class TEAMTransferTrainerTest(unittest.TestCase):
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        shutil.rmtree('./ckpt')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):

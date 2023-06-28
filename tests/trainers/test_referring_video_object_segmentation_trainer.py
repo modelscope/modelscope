@@ -60,6 +60,10 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
 
         self.max_epochs = max_epochs
 
+    def tearDown(self):
+        shutil.rmtree('./work_dir')
+        super().tearDown()
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer(self):
         kwargs = dict(

@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import shutil
 import unittest
 
 import torch
@@ -16,6 +17,11 @@ class TestDialogModelingTrainer(unittest.TestCase):
 
     model_id = 'damo/nlp_space_pretrained-dialog-model'
     output_dir = './dialog_fintune_result'
+
+    def tearDown(self):
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
+        super().tearDown()
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):

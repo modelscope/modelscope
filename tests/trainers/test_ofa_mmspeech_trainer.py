@@ -69,11 +69,17 @@ class TestMMSpeechTrainer(unittest.TestCase):
                             'metrics': [{'type': 'accuracy'}]},
              'preprocessor': []}
 
+        self.WORKSPACE = './workspace/ckpts/asr_recognition'
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.WORKSPACE):
+            shutil.rmtree(self.WORKSPACE, ignore_errors=True)
+        super().tearDown()
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_std(self):
-        WORKSPACE = './workspace/ckpts/asr_recognition'
-        os.makedirs(WORKSPACE, exist_ok=True)
-        config_file = os.path.join(WORKSPACE, ModelFile.CONFIGURATION)
+        os.makedirs(self.WORKSPACE, exist_ok=True)
+        config_file = os.path.join(self.WORKSPACE, ModelFile.CONFIGURATION)
         with open(config_file, 'w') as writer:
             json.dump(self.finetune_cfg, writer)
 
@@ -81,7 +87,7 @@ class TestMMSpeechTrainer(unittest.TestCase):
 
         args = dict(
             model=pretrained_model,
-            work_dir=WORKSPACE,
+            work_dir=self.WORKSPACE,
             train_dataset=MsDataset.load(
                 'aishell1_subset',
                 subset_name='default',
@@ -100,8 +106,8 @@ class TestMMSpeechTrainer(unittest.TestCase):
 
         self.assertIn(
             ModelFile.TORCH_MODEL_BIN_FILE,
-            os.listdir(os.path.join(WORKSPACE, ModelFile.TRAIN_OUTPUT_DIR)))
-        shutil.rmtree(WORKSPACE)
+            os.listdir(
+                os.path.join(self.WORKSPACE, ModelFile.TRAIN_OUTPUT_DIR)))
 
 
 if __name__ == '__main__':

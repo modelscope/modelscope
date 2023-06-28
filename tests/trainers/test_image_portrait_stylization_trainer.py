@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import shutil
 import unittest
 
 import cv2
@@ -19,6 +20,10 @@ class TestImagePortraitStylizationTrainer(unittest.TestCase):
     def setUp(self) -> None:
         self.task = Tasks.image_portrait_stylization
         self.test_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_cartoon.png'
+
+    def tearDown(self):
+        shutil.rmtree('exp_localtoon')
+        super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

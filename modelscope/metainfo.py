@@ -900,6 +900,7 @@ class MultiModalTrainers(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     stable_diffusion = 'stable-diffusion'
     lora_diffusion = 'lora-diffusion'
+    dreambooth_diffusion = 'dreambooth-diffusion'
 
 
 class AudioTrainers(object):

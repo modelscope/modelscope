@@ -13,11 +13,13 @@ if TYPE_CHECKING:
     from .nlp import SbertForSequenceClassificationExporter, SbertForZeroShotClassificationExporter
     from .torch_model_exporter import TorchModelExporter
     from .cv import FaceDetectionSCRFDExporter
+    from .multi_modal import StableDiffuisonExporter
 else:
     _import_structure = {
         'base': ['Exporter'],
         'builder': ['build_exporter'],
         'cv': ['CartoonTranslationExporter', 'FaceDetectionSCRFDExporter'],
+        'multi_modal': ['StableDiffuisonExporter'],
         'nlp': [
             'CsanmtForTranslationExporter',
             'SbertForSequenceClassificationExporter',

@@ -21,7 +21,7 @@ class DiffusersStableDiffusionTest(unittest.TestCase):
     def test_run(self):
         diffusers_pipeline = pipeline(task=self.task, model=self.model_id)
         output = diffusers_pipeline({
-            'prompt': self.test_input,
+            'text': self.test_input,
             'height': 512,
             'width': 512
         })

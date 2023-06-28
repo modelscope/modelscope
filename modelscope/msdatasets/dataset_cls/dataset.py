@@ -91,41 +91,37 @@ class ExternalDataset(object):
 class NativeIterableDataset(IterableDataset):
     """The modelscope iterable dataset class."""
 
-    def __init__(self, ex_iterable, info, split):
+    def __init__(self, ex_iterable, info, split, stream_batch_size=1):
         super().__init__(ex_iterable=ex_iterable, info=info, split=split)
+        self.stream_batch_size = stream_batch_size
 
     def __iter__(self):
-        for key, entity in tqdm(
-                self._iter(),
+        for item in tqdm(
+                self.iter(
+                    batch_size=self.stream_batch_size, drop_last_batch=False),
                 desc='Overall progress',
                 total=self.n_shards,
                 dynamic_ncols=True):
-            if isinstance(entity, dict):
-                ret = {}
+            ret = {}
+            if isinstance(item, dict):
                 try:
-                    for k, v in entity.items():
+                    for k, v in item.items():
                         ret[k] = v
                         if k.endswith(':FILE'):
                             dl_manager = self._ex_iterable.kwargs.get(
                                 'dl_manager')
                             ex_cache_path = dl_manager.download_and_extract(v)
+                            if isinstance(ex_cache_path, str):
+                                ex_cache_path = [ex_cache_path]
                             ret[k] = ex_cache_path
-                            if k.endswith('Image:FILE'):
-                                from PIL import Image
-                                ret[k
-                                    + ':Object'] = Image.open(fp=ex_cache_path)
-                            if k.endswith('Audio:FILE'):
-                                import torchaudio
-                                waveform_and_rate = torchaudio.load(
-                                    ex_cache_path)
-                                ret[k + ':Object'] = waveform_and_rate
+
                 except Exception as e:
                     logger.error(e)
-                    ret = {}
+                    ret = item
+            else:
+                ret = item
 
-                entity = ret
-
-            yield entity
+            yield ret
 
     def __len__(self):
         return self.n_shards
@@ -138,9 +134,19 @@ class NativeIterableDataset(IterableDataset):
             n (int): Number of rows to return.
 
         Returns:
-            Dict[str, list]: e.g. {'col1': [val11, val12, ...], 'col2': [val21, val22, ...]}
+            list: The list of results, e.g. [{'id': 'abc123', 'text': 'hello world'}, ...]
         """
-        return self._head(n=n)
+        # return self._head(n=n)
+        res = []
+        if n <= 0:
+            return res
+        iter_num = 0
+        for item in self.__iter__():
+            if iter_num >= n:
+                break
+            res.append(item)
+            iter_num += 1
+        return res
 
 
 class VirgoDataset(object):

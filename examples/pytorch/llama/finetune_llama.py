@@ -4,14 +4,10 @@
 import copy
 import logging
 import os
-import shutil
-import tempfile
-import unittest
 from dataclasses import dataclass, field
 
 import json
 import torch
-import utils
 
 from modelscope import TrainingArgs
 from modelscope.hub.snapshot_download import snapshot_download
@@ -19,6 +15,8 @@ from modelscope.metainfo import Trainers
 from modelscope.models.nlp.llama import LlamaForTextGeneration, LlamaTokenizer
 from modelscope.msdatasets.dataset_cls.custom_datasets.torch_custom_dataset import \
     TorchCustomDataset
+from modelscope.swift import Swift
+from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers import build_trainer
 
 IGNORE_INDEX = -100
@@ -54,10 +52,34 @@ class TextGenerationArguments(TrainingArgs):
             'help': 'The location of DeepSpeed json config file.',
         })
 
-    work_dir: str = field(
-        default=None, metadata={
-            'help': 'The location of work dir',
+    use_lora: int = field(
+        default=0,
+        metadata={'help': 'Whether to use lora to train the model.'},
+    )
+
+    lora_rank: int = field(
+        default=32,
+        metadata={'help': 'The lora rank'},
+    )
+
+    lora_alpha: int = field(
+        default=32,
+        metadata={'help': 'The lora alpha'},
+    )
+
+    lora_dropout: float = field(
+        default=0.05,
+        metadata={'help': 'The lora dropout'},
+    )
+
+    device_map: str = field(
+        default=None,
+        metadata={
+            'help': 'A map that specifies where each submodule should go.'
         })
+
+    zero_stage: int = field(
+        default=None, metadata={'help': 'The stage of zero_optimization'})
 
 
 def _tokenize_fn(strings, tokenizer):
@@ -211,12 +233,15 @@ if __name__ == '__main__':
         cfg.train.dataloader = {'batch_size_per_gpu': 4, 'workers_per_gpu': 1}
         if 'hooks' not in cfg.train:
             cfg.train['hooks'] = []
-        cfg.train.hooks.append({
-            'type': 'DeepspeedHook',
-            'config': args.deepspeed,
-            'save_zero_checkpoint': True,
-            'with_mpu': False,
-        })
+        if args.deepspeed is not None:
+            cfg.train.hooks.append({
+                'type': 'DeepspeedHook',
+                'config': args.deepspeed,
+                'save_zero_checkpoint': True,
+                'with_mpu': False,
+            })
+        if args.zero_stage is not None:
+            cfg.train.hooks[-1]['zero_stage'] = args.zero_stage
 
         cfg.preprocessor.sequence_length = 512
         return cfg
@@ -225,7 +250,17 @@ if __name__ == '__main__':
         args.model) else snapshot_download(args.model)
     data_path = args.src_txt if args.src_txt else os.path.join(
         model_path, 'alpaca_data.json')
-    model = LlamaForTextGeneration.from_pretrained(model_path)
+    model = LlamaForTextGeneration.from_pretrained(
+        model_path, device_map=args.device_map)
+
+    if args.use_lora != 0:
+        lora_config = LoRAConfig(
+            replace_modules=['q_proj', 'k_proj', 'v_proj'],
+            rank=args.lora_rank,
+            lora_alpha=args.lora_alpha,
+            lora_dropout=args.lora_dropout)
+        model = model.bfloat16()
+        Swift.prepare_model(model, lora_config)
 
     tokenizer = LlamaTokenizer.from_pretrained(
         model_path,
@@ -234,10 +269,14 @@ if __name__ == '__main__':
     )
 
     special_tokens_dict = dict()
-    special_tokens_dict['pad_token'] = DEFAULT_PAD_TOKEN
-    special_tokens_dict['eos_token'] = DEFAULT_EOS_TOKEN
-    special_tokens_dict['bos_token'] = DEFAULT_BOS_TOKEN
-    special_tokens_dict['unk_token'] = DEFAULT_UNK_TOKEN
+    if tokenizer.pad_token is None or tokenizer.pad_token == '':
+        special_tokens_dict['pad_token'] = DEFAULT_PAD_TOKEN
+    if tokenizer.eos_token is None or tokenizer.eos_token == '':
+        special_tokens_dict['eos_token'] = DEFAULT_EOS_TOKEN
+    if tokenizer.bos_token is None or tokenizer.bos_token == '':
+        special_tokens_dict['bos_token'] = DEFAULT_BOS_TOKEN
+    if tokenizer.unk_token is None or tokenizer.unk_token == '':
+        special_tokens_dict['unk_token'] = DEFAULT_UNK_TOKEN
 
     smart_tokenizer_and_embedding_resize(
         special_tokens_dict=special_tokens_dict,
@@ -263,7 +302,7 @@ if __name__ == '__main__':
     trainer.train()
 
     # prepare for inference
-    if int(os.environ.get('LOCAL_RANK', 0)) == 0:
+    if args.deepspeed and int(os.environ.get('LOCAL_RANK', 0)) == 0:
         tokenizer.save_pretrained(os.path.join(args.work_dir, 'output'))
         os.system(f'rm {args.work_dir}/output/pytorch_model*')
         os.system(

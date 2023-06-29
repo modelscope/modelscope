@@ -34,8 +34,9 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
+        torch_type = torch.float16 if self.device == 'cuda' else torch.float32
         self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
-            model, torch_dtype=torch.float16)
+            model, torch_dtype=torch_type)
         self.pipeline = self.pipeline.to(self.device)
         # load lora moudle to unet
         if lora_dir is not None:

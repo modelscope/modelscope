@@ -139,8 +139,15 @@ class TextGenerationTransformersPreprocessor(TextGenerationPreprocessorBase):
         model_type = None
         if model_dir is not None:
             model_type = get_model_type(model_dir)
-        self.nlp_tokenizer = NLPTokenizerForRoberta(
-            model_dir, model_type, use_fast=use_fast, tokenize_kwargs=kwargs)
+        if tokenizer is not None:
+            self.nlp_tokenizer = NLPTokenizer(tokenize_kwargs=kwargs)
+            self.nlp_tokenizer._tokenizer = tokenizer
+        else:
+            self.nlp_tokenizer = NLPTokenizerForRoberta(
+                model_dir,
+                model_type,
+                use_fast=use_fast,
+                tokenize_kwargs=kwargs)
 
     def decode(self, tokens, **kwargs):
         """Decode the tokens to real text.

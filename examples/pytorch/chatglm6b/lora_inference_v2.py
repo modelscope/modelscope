@@ -11,17 +11,17 @@ lora_config = LoRAConfig(
     lora_dropout=0.05,
     pretrained_weights='./lora_dureader_target/iter_600.pth')
 
-model_dir = 'ZhipuAI/ChatGLM-6B'
+model_dir = 'ZhipuAI/chatglm2-6b'
 model_config = read_config(model_dir)
 model_config['model'] = ConfigDict({
-    'type': Models.chatglm_6b,
+    'type': Models.chatglm2_6b,
 })
 
 model = Model.from_pretrained(model_dir, cfg_dict=model_config)
 model = model.bfloat16()
 Swift.prepare_model(model, lora_config)
 
-pipe = pipeline('chat', model, pipeline_name='chatglm6b-text-generation')
+pipe = pipeline('chat', model, pipeline_name='chatglm2_6b-text-generation')
 
 print(
     pipe({

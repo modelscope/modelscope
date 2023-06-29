@@ -30,13 +30,12 @@ class StableDiffusion(TorchModel):
         """ Initialize a vision efficient diffusion tuning model.
 
         Args:
-          model_dir: model id or path, where model_dir/pytorch_model.bin
+          model_dir: model id or path
         """
         super().__init__(model_dir, *args, **kwargs)
-        pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
         revision = kwargs.pop('revision', None)
-        self.lora_tune = kwargs.pop('lora_tune', True)
+        self.lora_tune = kwargs.pop('lora_tune', False)
+        self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -44,19 +43,16 @@ class StableDiffusion(TorchModel):
 
         # Load scheduler, tokenizer and models
         self.noise_scheduler = DDPMScheduler.from_pretrained(
-            pretrained_model_name_or_path, subfolder='scheduler')
+            model_dir, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            pretrained_model_name_or_path,
-            subfolder='tokenizer',
-            revision=revision)
+            model_dir, subfolder='tokenizer', revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
-            pretrained_model_name_or_path,
-            subfolder='text_encoder',
-            revision=revision)
+            model_dir, subfolder='text_encoder', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
-            pretrained_model_name_or_path, subfolder='vae', revision=revision)
+            model_dir, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
-            pretrained_model_name_or_path, subfolder='unet', revision=revision)
+            model_dir, subfolder='unet', revision=revision)
+        self.safety_checker = None
 
         # Freeze gradient calculation and move to device
         if self.vae is not None:
@@ -89,6 +85,7 @@ class StableDiffusion(TorchModel):
         self.unet.train()
         self.unet = self.unet.to(self.device)
 
+        # Convert to latent space
         with torch.no_grad():
             latents = self.vae.encode(
                 target.to(dtype=self.weight_dtype)).latent_dist.sample()
@@ -130,6 +127,9 @@ class StableDiffusion(TorchModel):
         model_pred = self.unet(noisy_latents, timesteps,
                                encoder_hidden_states).sample
 
+        if model_pred.shape[1] == 6:
+            model_pred, _ = torch.chunk(model_pred, 2, dim=1)
+
         loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
 
         output = {OutputKeys.LOSS: loss}
@@ -143,8 +143,9 @@ class StableDiffusion(TorchModel):
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):
-        # Save only the lora model, skip saving and copying the original weights
-        if self.lora_tune:
+        config['pipeline']['type'] = 'diffusers-stable-diffusion'
+        # Skip copying the original weights for lora and dreambooth method
+        if self.lora_tune or self.dreambooth_tune:
             pass
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,

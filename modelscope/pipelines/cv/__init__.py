@@ -106,7 +106,7 @@ if TYPE_CHECKING:
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
-
+    from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -261,7 +261,10 @@ else:
         ],
         'pedestrian_attribute_recognition_pipeline': [
             'PedestrainAttributeRecognitionPipeline'
-        ]
+        ],
+        'image_panoptic_segmentation_pipeline': [
+            'ImagePanopticSegmentationPipeline',
+        ],
     }
 
     import sys

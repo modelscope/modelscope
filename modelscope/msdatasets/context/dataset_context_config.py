@@ -17,7 +17,7 @@ class DatasetContextConfig:
                  data_files: Union[str, Sequence[str],
                                    Mapping[str, Union[str, Sequence[str]]]],
                  download_mode: DownloadMode, cache_root_dir: str,
-                 use_streaming: bool, **kwargs):
+                 use_streaming: bool, stream_batch_size: int, **kwargs):
 
         self._download_config = None
         self._data_meta_config = None
@@ -42,6 +42,7 @@ class DatasetContextConfig:
         self.data_files = data_files
         self.cache_root_dir = cache_root_dir
         self.use_streaming = use_streaming
+        self.stream_batch_size = stream_batch_size
         self.download_virgo_files: bool = False
 
     @property

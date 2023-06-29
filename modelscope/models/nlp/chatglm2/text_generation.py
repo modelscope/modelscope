@@ -1003,6 +1003,8 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=-100)
+            if shift_logits.device != shift_labels.device:
+                shift_labels = shift_labels.to(shift_logits.device())
             loss = loss_fct(
                 shift_logits.view(-1, shift_logits.size(-1)),
                 shift_labels.view(-1))

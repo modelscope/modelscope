@@ -192,7 +192,7 @@ if config['model']['type'] == 'chatglm6b':
     model_config['model']['prefix_projection'] = args.prefix_projection
 
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
-model = Model.from_pretrained(model_dir, cfg_dict=model_config)
+model = Model.from_pretrained(model_dir, cfg_dict=model_config, device_map='auto')
 
 if args.ptuning_checkpoint is not None:
     # Evaluation
@@ -213,7 +213,7 @@ if args.pre_seq_len is not None:
     # P-tuning v2
     model = model.half()
     model.transformer.prefix_encoder.float()
-else:
+elif not args.use_lora:
     # Finetune
     model = model.float()
 
@@ -367,6 +367,8 @@ model.gradient_checkpointing_enable()
 if config['model']['type'] == 'chatglm6b':
     model.enable_input_require_grads()
 
+# import torch
+# model = torch.nn.DataParallel(model).cuda()
 trainer = Seq2SeqTrainer(
     model=model,
     cfg_file='./configuration.json',
@@ -375,6 +377,7 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
+    device='cpu',
     cfg_modify_fn=cfg_modify_fn)
 trainer.tokenizer = tokenizer
 trainer.train()

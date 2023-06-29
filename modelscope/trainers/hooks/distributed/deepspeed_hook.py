@@ -144,10 +144,13 @@ class DeepspeedProcessor(CheckpointProcessor, LrSchedulerProcessor,
         except (ImportError, AssertionError):
             return ''
 
-    def get_bin_file(self):
-        mp_rank = mpu.get_tensor_model_parallel_rank()
-        rank = '{:02d}'.format(mp_rank)
-        return f'mp_rank_{rank}_model_states.pt'
+    def get_bin_filename(self, with_mpu=True):
+        if not with_mpu:
+            return 'pytorch_model.bin'
+        else:
+            mp_rank = mpu.get_tensor_model_parallel_rank()
+            rank = '{:02d}'.format(mp_rank)
+            return f'mp_rank_{rank}_model_states.pt'
 
     def save_checkpoints(self,
                          trainer,
@@ -163,13 +166,21 @@ class DeepspeedProcessor(CheckpointProcessor, LrSchedulerProcessor,
 
         save_dir = os.path.dirname(checkpoint_path_prefix)
         prefix = os.path.basename(checkpoint_path_prefix)
-        trainer.model.save_checkpoint(save_dir, prefix)
-
-        if not self.stage3_gather_16bit_weights_on_model_save:
-            return
-        bin_file = self.get_bin_file()
+        with_mpu = not mpu.is_unitialized()
+        bin_file = self.get_bin_filename(with_mpu)
         src_file = os.path.join(checkpoint_path_prefix, bin_file)
-        dest_file = os.path.join(output_dir, self._BIN_FILE_DIR, bin_file)
+        if self.zero_stage == 3 or with_mpu:
+            trainer.model.save_checkpoint(save_dir, prefix)
+        else:
+            save_checkpoint(
+                model, src_file, None, None, meta=None, with_meta=False)
+
+        if self.zero_stage == 3:
+            return
+        if with_mpu:
+            dest_file = os.path.join(output_dir, self._BIN_FILE_DIR, bin_file)
+        else:
+            dest_file = os.path.join(output_dir, bin_file)
         if os.path.isfile(dest_file):
             os.unlink(dest_file)
 
@@ -214,7 +225,7 @@ class DeepspeedProcessor(CheckpointProcessor, LrSchedulerProcessor,
         else:
             # in eval or prediction
             save_dir = checkpoint_path_prefix
-            bin_file = self.get_bin_file()
+            bin_file = self.get_bin_filename()
             model_file = os.path.join(save_dir, bin_file)
             checkpoint = torch.load(
                 model_file, map_location=lambda storage, loc: storage)
@@ -273,11 +284,16 @@ class DeepspeedHook(Hook):
                  config=None,
                  deepspeed_activation_checkpointing=True,
                  save_zero_checkpoint=False,
-                 with_mpu=True):
+                 with_mpu=True,
+                 zero_stage=None):
         self.save_zero_checkpoint = save_zero_checkpoint
         self.deepspeed_activation_checkpointing = deepspeed_activation_checkpointing
         self.with_mpu = with_mpu
         self.deepspeed_config = config
+        if zero_stage is not None:
+            assert zero_stage in (0, 1, 2,
+                                  3), 'zero_stage must in (0, 1, 2, 3)!'
+        self.zero_stage = zero_stage
 
     def register_processor(self, trainer):
         processor = DeepspeedProcessor()
@@ -376,9 +392,9 @@ class DeepspeedHook(Hook):
         optimizer, lr_scheduler = deepspeed_optim_sched(
             trainer, ds_config, max_steps)
         config = ds_config.config
-        self.processor.stage3_gather_16bit_weights_on_model_save = config[
-            'zero_optimization'].get(
-                'stage3_gather_16bit_weights_on_model_save', True)
+        if self.zero_stage is not None:
+            config['zero_optimization']['stage'] = self.zero_stage
+        self.processor.zero_stage = config['zero_optimization'].get('stage', 0)
 
         trainer.model, trainer.optimizer, _, trainer.lr_scheduler = deepspeed.initialize(
             model=trainer.model,

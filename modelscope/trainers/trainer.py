@@ -232,7 +232,7 @@ class EpochBasedTrainer(BaseTrainer):
             # A logic to fit the current code
             # Put a DDPHook in if launcher is provided.
             if 'hooks' not in self.cfg.train:
-                self.cfg.train['hooks'] = ConfigDict([])
+                self.cfg.train['hooks'] = []
             self.cfg.train['hooks'].append({
                 'type': 'DDPHook',
                 'launcher': self.launcher

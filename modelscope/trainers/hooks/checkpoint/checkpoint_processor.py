@@ -26,7 +26,6 @@ class CheckpointProcessor:
             trainer: The trainer instance.
             output_dir: The target folder used in inference.
         """
-        model = trainer.unwrap_module(trainer.model)
         config = trainer.cfg
 
         # override pipeline by tasks name after finetune done,
@@ -38,8 +37,7 @@ class CheckpointProcessor:
             # TODO a temp fix to avoid pipeline_name and task mismatch
             config['pipeline'] = {'type': config['task']}
 
-        self.copy_files_and_dump_config(trainer, output_dir, config,
-                                        self._bin_file(model))
+        self.copy_files_and_dump_config(trainer, output_dir, config, '*.bin')
 
     @staticmethod
     def copy_files_and_dump_config(trainer, output_dir, config, bin_file):

@@ -1,0 +1,21 @@
+export PYTHONPATH=$PYTHONPATH:./
+torchrun examples/pytorch/baichuan/finetune_baichuan.py \
+    --trainer 'text-generation-trainer' \
+    --work_dir './tmp' \
+    --model 'baichuan-inc/baichuan-7B' \
+    --train_dataset_name 'chinese-poetry-collection' \
+    --val_dataset_name 'chinese-poetry-collection' \
+    --train_split 'train' \
+    --val_split 'test' \
+    --src_txt 'text1' \
+    --tgt_txt 'text2' \
+    --max_epochs 1 \
+    --per_device_train_batch_size 8 \
+    --lr 2e-5 \
+    --lr_scheduler 'CosineAnnealingLR' \
+    --eval_strategy 'no' \
+    --bf16 1 \
+    --use_lora 1 \
+    --eval_metrics 'text-gen-metric' \
+    --T_max 1 \
+    --device_map 'auto' \

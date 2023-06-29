@@ -187,7 +187,8 @@ class CheckpointHook(Hook):
             strategy=self.upload_strategy,
             done=True)
         wait_for_done(self.PUSH_TO_HUB_QUEUE_NAME)
-        self.logger.info('Uploading models done.')
+        if self.push_to_hub:
+            self.logger.info('Uploading models done.')
 
     def _push_to_hub(self, trainer, prefix, output_dir, delete_dir=False):
         if self.is_model_id is None:

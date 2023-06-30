@@ -63,6 +63,8 @@ def cfg_modify_fn(cfg):
     else:
         cfg = config
     cfg.model['num_labels'] = len(cfg.preprocessor.label2id)
+    if cfg.evaluation.period.eval_strategy == 'by_epoch':
+        cfg.evaluation.period.by_epoch = True
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \
             int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs

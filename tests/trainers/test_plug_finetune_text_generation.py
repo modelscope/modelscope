@@ -45,6 +45,7 @@ def test_trainer_with_model_and_args():
     trainer = build_trainer(
         name=Trainers.nlp_plug_trainer, default_args=kwargs)
     trainer.train()
+    shutil.rmtree(tmp_dir)
 
 
 if __name__ == '__main__':

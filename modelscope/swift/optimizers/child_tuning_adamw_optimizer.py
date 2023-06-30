@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
-import types
 from typing import Callable, Iterable, Tuple
 
 import numpy as np
@@ -22,7 +21,6 @@ from torch.distributions.bernoulli import Bernoulli
 from torch.optim import Optimizer
 
 from modelscope.utils.logger import get_logger
-from .builder import OPTIMIZERS, default_group
 
 logger = get_logger()
 
@@ -72,8 +70,6 @@ def calculate_fisher(model: torch.nn.Module,
     return gradient_mask
 
 
-@OPTIMIZERS.register_module(
-    group_key=default_group, module_name='ChildTuningAdamW')
 class ChildTuningAdamW(Optimizer):
 
     def __init__(self,

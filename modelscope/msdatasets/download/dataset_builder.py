@@ -206,7 +206,7 @@ class CsvDatasetBuilder(csv.Csv):
             os.makedirs(target_cache_dir, exist_ok=True)
 
         self.local_meta_csv_paths = {
-            k: HubApi.fetch_csv_from_url(v, target_cache_dir)
+            k: HubApi.fetch_meta_files_from_url(v, target_cache_dir)
             for k, v in self.meta_data_files.items()
         }
 
@@ -301,6 +301,7 @@ class IterableDatasetBuilder(csv.Csv):
         self.meta_data_files = dataset_context_config.data_meta_config.meta_data_files
         self.zip_data_files = dataset_context_config.data_meta_config.zip_data_files
         self.input_config_kwargs = dataset_context_config.config_kwargs
+        self.stream_batch_size = dataset_context_config.stream_batch_size
 
         self.cache_build_dir = os.path.join(self.cache_root_dir,
                                             self.namespace, self.dataset_name,
@@ -433,7 +434,10 @@ class IterableDatasetBuilder(csv.Csv):
 
         ex_iterable = self._get_examples_iterable_for_split(splits_generator)
         return NativeIterableDataset(
-            ex_iterable, info=self.info, split=splits_generator.name)
+            ex_iterable,
+            info=self.info,
+            split=splits_generator.name,
+            stream_batch_size=self.stream_batch_size)
 
     def _generate_tables(self, **gen_kwargs):
 
@@ -477,8 +481,8 @@ class IterableDatasetBuilder(csv.Csv):
             raise f'Neither column meta nor data file found in {self.dataset_name}.json .'
 
     def _get_meta_csv_df(self, meta_file_url: str) -> None:
-        if not self.meta_csv_df:
-            meta_csv_file_path = HubApi.fetch_csv_from_url(
+        if self.meta_csv_df is None or self.meta_csv_df.empty:
+            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
                 meta_file_url, self.meta_cache_dir)
             self.meta_csv_df = pd.read_csv(
                 meta_csv_file_path,

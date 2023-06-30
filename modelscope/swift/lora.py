@@ -4,93 +4,148 @@
 import logging
 import math
 import os.path
+import re
 import types
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from modelscope import snapshot_download
+from modelscope.utils.constant import ModelFile
+from .base import SwiftConfig
+
 logger = logging.getLogger(__name__)
 
 
-class LoRATuner:
+@dataclass
+class LoRAConfig(SwiftConfig):
+    """
+    The configuration class for the loRA module.
+
+    Args:
+        rank: The rank of the LoRA module
+        replace_modules: The modules to be replaced by LoRA, can be the end of the module name or a regex string
+        lora_alpha: The factor to add the lora weights
+        lora_dropout: The dropout rate of the lora module
+        merge_weights: Whether to merge weights when validating
+        use_merged_linear: Whether to replace with merged linear layer
+        enable_lora: The modules need to be turned on when using the merged linear layer
+        fan_in_fan_out: Set this to True if the layer to replace stores weight like (fan_in, fan_out)
+        bias: Bias type. Values ca be "none", "all" or "lora_only"
+        only_lora_trainable: Whether to train only lora
+        pretrained_weights: The pretrained lora weights.
+            Can be a local dir, local file, or a model id from modelscope
+    """
+
+    rank: int = field(
+        default=6, metadata={'help': 'The rank of the LoRA module'})
+    replace_modules: List = field(
+        default=None,
+        metadata={
+            'help':
+            'The modules to be replaced by LoRA, can be the end of the module name or a regex string'
+        })
+    lora_alpha: float = field(
+        default=1., metadata={'help': 'The factor to add the lora weights'})
+    lora_dropout: float = field(
+        default=0., metadata={'help': 'The dropout rate of the lora module'})
+    merge_weights: bool = field(
+        default=True,
+        metadata={'help': 'Whether to merge weights when validating'})
+    use_merged_linear: bool = field(
+        default=False,
+        metadata={'help': 'Whether to replace with merged linear layer'})
+    enable_lora: List = field(
+        default=None,
+        metadata={
+            'help':
+            'The modules need to be turned on when using the merged linear layer'
+        })
+    fan_in_fan_out: bool = field(
+        default=False,
+        metadata={
+            'help':
+            'Set this to True if the layer to replace stores weight like (fan_in, fan_out)'
+        })
+    bias: str = field(
+        default='none',
+        metadata={
+            'help': 'Bias type. Values ca be "none", "all" or "lora_only"'
+        })
+    only_lora_trainable: bool = field(
+        default=True, metadata={'help': 'Whether to train only lora'})
+    pretrained_weights: str = field(
+        default=None,
+        metadata={
+            'help':
+            'The pretrained lora weights. Can be a local dir, local file, or a model id from modelscope'
+        })
+
+
+class LoRA:
 
     @staticmethod
-    def tune(model: nn.Module,
-             rank=6,
-             replace_modules=None,
-             lora_alpha=1.,
-             lora_dropout=0.,
-             merge_weights=True,
-             fan_in_fan_out=False,
-             bias='none',
-             pretrained_tuner=None):
-        """Tune a model with lora.
+    def prepare_model(model: nn.Module, config: LoRAConfig):
+        """Tune a model with LoRA.
 
         Args:
-            model: The torch.nn.Module containing the target module to be patched.
-            rank: The lora rank.
-            replace_modules: The module names to be replaced, the replacing strategy is `end with`.
-            lora_alpha: The alpha value for lora module.
-            lora_dropout: The dropout value for lora module.
-            merge_weights: If merge_weights set to True, when the module turns to `eval`, the lora weights
-                will be added into the origin weight to reduce calculation.
-            fan_in_fan_out: Set this to True if the layer to replace stores weight like (fan_in, fan_out).
-            bias: The grad strategy for bias, can be `none`, 'all' or 'lora_only'.
-            pretrained_tuner: The pretrained file of lora.
+            config: The LoRAConfig instance.
 
         Returns:
             The lora modules
         """
-        modules = LoRATuner._dynamic_patch_lora(
+        LoRA._dynamic_patch_lora(
             model,
-            replace_modules=replace_modules,
-            r=rank,
-            lora_alpha=lora_alpha,
-            lora_dropout=lora_dropout,
-            merge_weights=merge_weights,
-            fan_in_fan_out=fan_in_fan_out)
+            replace_modules=config.replace_modules,
+            r=config.rank,
+            lora_alpha=config.lora_alpha,
+            lora_dropout=config.lora_dropout,
+            merge_weights=config.merge_weights,
+            use_merged_linear=config.use_merged_linear,
+            enable_lora=config.enable_lora,
+            fan_in_fan_out=config.fan_in_fan_out)
 
-        mark_only_lora_as_trainable(model, bias)
+        if config.only_lora_trainable:
+            mark_only_lora_as_trainable(model, config.bias)
 
         def state_dict_hook(module, destination, prefix, local_metadata):
-            return lora_state_dict(destination, bias)
+            return lora_state_dict(destination, config.bias)
 
         model.state_dict_hook_handle = model._register_state_dict_hook(
             state_dict_hook)
 
-        def warning_hook(module, incompatible_keys):
-            logger.info(
-                f'The {module.__class__.__name__} module has unmatched keys: {incompatible_keys},'
-                f'this is converted to a notice with respect to LoRA')
-            for ik in incompatible_keys:
-                ik.clear()
+        def load_state_dict(self, state_dict, strict=True):
+            return self.load_state_dict_origin(state_dict, False)
 
-        if hasattr(model, 'register_load_state_dict_post_hook'):
-            model.load_state_dict_hook_handle = model.register_load_state_dict_post_hook(
-                warning_hook)
-        else:
+        model.load_state_dict_origin = model.load_state_dict
+        model.load_state_dict = types.MethodType(load_state_dict, model)
 
-            def load_state_dict(self, state_dict, strict=True):
-                return self.load_state_dict_origin(state_dict, False)
+        if config.pretrained_weights is not None:
+            if not os.path.exists(config.pretrained_weights):
+                model_dir = snapshot_download(config.pretrained_weights)
+                pretrained_weights = os.path.join(
+                    model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
+            elif os.path.isfile(config.pretrained_weights):
+                pretrained_weights = config.pretrained_weights
+            else:
+                pretrained_weights = os.path.join(
+                    config.pretrained_weights, ModelFile.TORCH_MODEL_BIN_FILE)
+            model.load_state_dict(torch.load(pretrained_weights))
 
-            model.load_state_dict_origin = model.load_state_dict
-            model.load_state_dict = types.MethodType(load_state_dict, model)
-
-        if pretrained_tuner is not None and os.path.isfile(pretrained_tuner):
-            logger.info(f'Loading LoRA weights from file: {pretrained_tuner}')
-            model.load_state_dict(torch.load(pretrained_tuner))
-
-        return modules
+        return model
 
     @staticmethod
-    def _dynamic_patch_lora(model, replace_modules, **kwargs):
+    def _dynamic_patch_lora(model, replace_modules, use_merged_linear,
+                            **kwargs):
         """Dynamic patch lora to model
 
         Args:
             model: The torch.nn.Module containing the target module to be patched.
             replace_modules: The module names to be replaced, the replacing strategy is `end with`.
+            use_merged_linear: Whether to replace with merged linear layer
             **kwargs: The arguments passed from `tune` which are needed by lora.
 
         Returns:
@@ -103,8 +158,13 @@ class LoRATuner:
             replace_modules = [replace_modules]
 
         for module_key in module_keys:
-            if any([module_key.endswith(name)
-                    for name in replace_modules]):  # noqa
+            if isinstance(replace_modules, str):
+                target_module_found = re.fullmatch(replace_modules, module_key)
+            else:
+                target_module_found = any(
+                    module_key.endswith(target_key)
+                    for target_key in replace_modules)
+            if target_module_found:  # noqa
                 parts = module_key.split('.')
                 module = model.get_submodule('.'.join(parts[:-1]))
                 sub_module = model.get_submodule(module_key)
@@ -112,11 +172,19 @@ class LoRATuner:
 
                 lora_module = None
                 if isinstance(sub_module, torch.nn.Linear):
-                    lora_module = Linear(
-                        sub_module.in_features,
-                        sub_module.out_features,
-                        bias=sub_module.bias is not None,
-                        **kwargs)
+                    if use_merged_linear:
+                        lora_module = MergedLinear(
+                            sub_module.in_features,
+                            sub_module.out_features,
+                            bias=sub_module.bias is not None,
+                            **kwargs)
+                    else:
+                        kwargs.pop('enable_lora', None)
+                        lora_module = Linear(
+                            sub_module.in_features,
+                            sub_module.out_features,
+                            bias=sub_module.bias is not None,
+                            **kwargs)
                 elif isinstance(sub_module, torch.nn.Conv2d):
                     kwargs.pop('fan_in_fan_out', None)
                     lora_module = Conv2d(
@@ -140,8 +208,12 @@ class LoRATuner:
         return modules
 
     @staticmethod
-    def unpatch_lora(model, replace_modules):
+    def unpatch_lora(model, config: LoRAConfig):
         """Unpatch lora modules and merge the weights to original modules.
+
+        LoRA constructs an additional layer with low-rank decomposition matrices of the weights in the network.
+        'LoRA: Low-Rank Adaptation of Large Language Models' by Hu et al.(2021)
+        See https://arxiv.org/abs/2106.09685
 
         Args:
             model: The model called with `tune` function.
@@ -152,13 +224,17 @@ class LoRATuner:
         """
         modules = []
         module_keys = [key for key, _ in model.named_modules()]
-        assert isinstance(replace_modules, (str, list))
-        if isinstance(replace_modules, str):
-            replace_modules = [replace_modules]
+        assert isinstance(config.replace_modules, (str, list))
+        replace_modules = config.replace_modules
 
         for module_key in module_keys:
-            if any([module_key.endswith(name)
-                    for name in replace_modules]):  # noqa
+            if isinstance(replace_modules, str):
+                target_module_found = re.fullmatch(replace_modules, module_key)
+            else:
+                target_module_found = any(
+                    module_key.endswith(target_key)
+                    for target_key in replace_modules)
+            if target_module_found:  # noqa
                 parts = module_key.split('.')
                 module = model.get_submodule('.'.join(parts[:-1]))
                 sub_module = model.get_submodule(module_key)

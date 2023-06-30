@@ -207,7 +207,7 @@ def get_dataset_files(subset_split_into: dict,
         if args_dict and args_dict.get(MetaDataFields.ARGS_BIG_DATA):
             meta_csv_file_url = meta_map[split]
 
-            meta_csv_file_path = HubApi.fetch_csv_from_url(
+            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
                 meta_csv_file_url, meta_cache_dir)
 
             csv_delimiter = context_config.config_kwargs.get('delimiter', ',')

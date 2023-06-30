@@ -5,6 +5,7 @@ import math
 import os
 from typing import Any, Dict, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,6 +14,7 @@ import torchaudio.compliance.kaldi as Kaldi
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel
 from modelscope.utils.constant import Tasks
+from modelscope.utils.device import create_device
 
 
 def length_to_mask(length, max_len=None, dtype=None, device=None):
@@ -470,35 +472,44 @@ class SpeakerVerificationECAPATDNN(TorchModel):
 
         self.feature_dim = 80
         channels_config = [1024, 1024, 1024, 1024, 3072]
+        self.device = create_device(self.other_config['device'])
+        print(self.device)
 
         self.embedding_model = ECAPA_TDNN(
             self.feature_dim, channels=channels_config)
-
         pretrained_model_name = kwargs['pretrained_model']
         self.__load_check_point(pretrained_model_name)
 
+        self.embedding_model.to(self.device)
         self.embedding_model.eval()
 
     def forward(self, audio):
-        assert len(audio.shape) == 2 and audio.shape[
-            0] == 1, 'modelscope error: the shape of input audio to model needs to be [1, T]'
-        # audio shape: [1, T]
+        if isinstance(audio, np.ndarray):
+            audio = torch.from_numpy(audio)
+        if len(audio.shape) == 1:
+            audio = audio.unsqueeze(0)
+        assert len(
+            audio.shape
+        ) == 2, 'modelscope error: the shape of input audio to model needs to be [N, T]'
+        # audio shape: [N, T]
         feature = self.__extract_feature(audio)
-        embedding = self.embedding_model(feature)
+        embedding = self.embedding_model(feature.to(self.device))
 
-        return embedding
+        return embedding.detach().cpu()
 
     def __extract_feature(self, audio):
-        feature = Kaldi.fbank(audio, num_mel_bins=self.feature_dim)
-        feature = feature - feature.mean(dim=0, keepdim=True)
-        feature = feature.unsqueeze(0)
-        return feature
+        features = []
+        for au in audio:
+            feature = Kaldi.fbank(
+                au.unsqueeze(0), num_mel_bins=self.feature_dim)
+            feature = feature - feature.mean(dim=0, keepdim=True)
+            features.append(feature.unsqueeze(0))
+        features = torch.cat(features)
+        return features
 
-    def __load_check_point(self, pretrained_model_name, device=None):
-        if not device:
-            device = torch.device('cpu')
+    def __load_check_point(self, pretrained_model_name):
         self.embedding_model.load_state_dict(
             torch.load(
                 os.path.join(self.model_dir, pretrained_model_name),
-                map_location=device),
+                map_location=torch.device('cpu')),
             strict=True)

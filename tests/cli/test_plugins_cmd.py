@@ -4,6 +4,7 @@ import unittest
 from modelscope.utils.plugins import PluginsManager
 
 
+@unittest.skipUnless(False, reason='For it modify torch version')
 class PluginsCMDTest(unittest.TestCase):
 
     def setUp(self):

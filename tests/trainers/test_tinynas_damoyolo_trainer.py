@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import shutil
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -20,6 +21,10 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
     def setUp(self):
         self.model_id = 'damo/cv_tinynas_object-detection_damoyolo'
         self.cache_path = _setup()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        shutil.rmtree('./workdirs')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_from_scratch_singleGPU(self):

@@ -44,6 +44,7 @@ from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           get_local_rank, init_dist, is_dist,
                                           is_master, set_random_seed)
+from ..swift import Swift
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks, update_cfg
@@ -231,7 +232,7 @@ class EpochBasedTrainer(BaseTrainer):
             # A logic to fit the current code
             # Put a DDPHook in if launcher is provided.
             if 'hooks' not in self.cfg.train:
-                self.cfg.train['hooks'] = ConfigDict([])
+                self.cfg.train['hooks'] = []
             self.cfg.train['hooks'].append({
                 'type': 'DDPHook',
                 'launcher': self.launcher
@@ -264,10 +265,7 @@ class EpochBasedTrainer(BaseTrainer):
     def tune_module(self, efficient_tuners):
         if efficient_tuners is not None:
             for tuner in efficient_tuners:
-                type = tuner.pop('type')
-                if type == 'lora':
-                    from modelscope.tuners.lora import LoRATuner
-                    LoRATuner.tune(self.model, **tuner)
+                self.model = Swift.prepare_model(self.model, tuner)
 
     def place_model(self):
         """Place model to device, or to DDP

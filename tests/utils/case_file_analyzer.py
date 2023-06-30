@@ -395,8 +395,12 @@ def get_pipelines_trainers_test_info(register_modules):
         if os.path.splitext(f)[1] == '.py'
     ]
     for test_file in all_pipeline_cases:
-        tested_pipelines = analysis_pipeline_test_suite(
-            test_file, register_modules)
+        try:
+            tested_pipelines = analysis_pipeline_test_suite(
+                test_file, register_modules)
+        except Exception:
+            logger.warn('test_suite: %s analysis failed, skipt it' % test_file)
+            continue
         if len(tested_pipelines) == 0:
             logger.warn('test_suite: %s has no pipeline task' % test_file)
         else:

@@ -301,17 +301,19 @@ if __name__ == '__main__':
     trainer.train()
 
     # prepare for inference
-    if args.deepspeed and int(os.environ.get('LOCAL_RANK', 0)) == 0:
-        tokenizer.save_pretrained(os.path.join(args.work_dir, 'output'))
-        os.system(f'rm {args.work_dir}/output/pytorch_model*')
+    if args.deepspeed and args.zero_stage is None and int(
+            os.environ.get('LOCAL_RANK', 0)) == 0:
+        work_dir = config.train.work_dir
+        tokenizer.save_pretrained(os.path.join(work_dir, 'output'))
+        os.system(f'rm {work_dir}/output/pytorch_model*')
         os.system(
-            f'python3 {args.work_dir}/zero_to_fp32.py {args.work_dir} {args.work_dir}/output/pytorch_model.bin'
+            f'python3 {work_dir}/zero_to_fp32.py {work_dir} {work_dir}/output/pytorch_model.bin'
         )
         os.system(
-            f'cp {model_path}/configuration.json {args.work_dir}/output/configuration.json'
+            f'cp {model_path}/configuration.json {work_dir}/output/configuration.json'
         )
         with open(f'{model_path}/config.json', 'r') as f:
             config = json.load(f)
             config['vocab_size'] = len(tokenizer)
-        with open(f'{args.work_dir}/output/config.json', 'w') as f:
+        with open(f'{work_dir}/output/config.json', 'w') as f:
             json.dump(config, f)

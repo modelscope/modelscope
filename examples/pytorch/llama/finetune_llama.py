@@ -293,7 +293,6 @@ if __name__ == '__main__':
         train_dataset=train_dataset,
         data_collator=data_collator,
         max_epochs=3,
-        work_dir=args.work_dir,
         cfg_modify_fn=cfg_modify_fn)
 
     # Construct trainer and train

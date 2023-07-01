@@ -14,10 +14,11 @@ Pillow>=6.2.0
 pyarrow>=6.0.0,!=9.0.0
 python-dateutil>=2.1
 pyyaml
-requests
+requests>=2.25
 scipy
 setuptools
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
 tqdm>=4.64.0
+urllib3>=1.26
 yapf

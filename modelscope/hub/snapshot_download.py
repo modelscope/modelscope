@@ -10,8 +10,10 @@ from typing import Dict, List, Optional, Union
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .constants import FILE_HASH
-from .file_download import get_file_download_url, http_get_file
+from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
+                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
+from .file_download import (get_file_download_url, http_get_file,
+                            parallel_download)
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_cache_dir,
                           model_id_to_group_owner_name)
@@ -133,13 +135,24 @@ def snapshot_download(model_id: str,
                     file_path=model_file['Path'],
                     revision=revision)
 
-                # First download to /tmp
-                http_get_file(
-                    url=url,
-                    local_dir=temp_cache_dir,
-                    file_name=model_file['Name'],
-                    headers=headers,
-                    cookies=cookies)
+                if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < model_file[
+                        'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:
+                    parallel_download(
+                        url,
+                        temp_cache_dir,
+                        model_file['Name'],
+                        headers=headers,
+                        cookies=None
+                        if cookies is None else cookies.get_dict(),
+                        file_size=model_file['Size'])
+                else:
+                    http_get_file(
+                        url,
+                        temp_cache_dir,
+                        model_file['Name'],
+                        headers=headers,
+                        cookies=cookies)
+
                 # check file integrity
                 temp_file = os.path.join(temp_cache_dir, model_file['Name'])
                 if FILE_HASH in model_file:

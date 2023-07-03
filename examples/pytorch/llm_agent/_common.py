@@ -45,7 +45,7 @@ from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
 from modelscope.utils.config import ConfigDict
 
 
-# 常量
+# 
 SYSTEM_TEXT = """{system}"""
 USER_TEXT = """\n\n### 用户
 {user}"""

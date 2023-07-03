@@ -10,6 +10,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.outputs import (ModelOutputBase, OutputKeys,
                                 TokenGeneratorOutput)
+from modelscope import snapshot_download
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
@@ -192,9 +193,13 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration
-        model = ChatGLMForConditionalGeneration(model) if isinstance(
-            model, str) else model
+        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration, ChatGLMConfig
+        if isinstance(model, str):
+            model_dir = snapshot_download(model) if not os.path.exists(model) else model
+            config = ChatGLMConfig.from_pretrained(model_dir)
+            model = ChatGLMForConditionalGeneration(config).half()
+            if torch.cuda.is_available():
+                model = model.cuda()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
         if use_bf16:
@@ -225,9 +230,13 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer
-        model = ChatGLM2ForConditionalGeneration(model) if isinstance(
-            model, str) else model
+        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
+        if isinstance(model, str):
+            model_dir = snapshot_download(model) if not os.path.exists(model) else model
+            config = ChatGLM2Config.from_pretrained(model_dir)
+            model = ChatGLM2ForConditionalGeneration(config)
+            if torch.cuda.is_available():
+                model = model.cuda()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
         if use_bf16:

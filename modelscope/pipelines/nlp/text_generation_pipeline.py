@@ -197,8 +197,8 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
-            config = ChatGLMConfig.from_pretrained(model_dir)
-            model = ChatGLMForConditionalGeneration(config).half()
+            model = ChatGLMForConditionalGeneration.from_pretrained(
+                model_dir).half()
             if torch.cuda.is_available():
                 model = model.cuda()
         if quantization_bit is not None:
@@ -235,8 +235,7 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
-            config = ChatGLM2Config.from_pretrained(model_dir)
-            model = ChatGLM2ForConditionalGeneration(config)
+            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
             if torch.cuda.is_available():
                 model = model.cuda()
         if quantization_bit is not None:

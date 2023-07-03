@@ -192,8 +192,15 @@ if config['model']['type'] == 'chatglm6b':
     model_config['model']['prefix_projection'] = args.prefix_projection
 
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
+
+device_map_kwargs = {}
+device_kwargs = {}
+if args.use_lora != 0:
+    device_kwargs['device_map'] = 'auto'
+    # No placement for model, leave the model to `device_map`
+    device_kwargs['device'] = 'cpu'
 model = Model.from_pretrained(
-    model_dir, cfg_dict=model_config, device_map='auto')
+    model_dir, cfg_dict=model_config, **device_map_kwargs)
 
 if args.ptuning_checkpoint is not None:
     # Evaluation
@@ -378,8 +385,7 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
-    # No placement for model, leave the model to `device_map`
-    device='cpu',
-    cfg_modify_fn=cfg_modify_fn)
+    cfg_modify_fn=cfg_modify_fn,
+    **device_kwargs)
 trainer.tokenizer = tokenizer
 trainer.train()

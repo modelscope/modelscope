@@ -6,11 +6,11 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.outputs import (ModelOutputBase, OutputKeys,
                                 TokenGeneratorOutput)
-from modelscope import snapshot_download
 from modelscope.pipelines.base import Pipeline, Tensor
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
@@ -195,7 +195,8 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  **kwargs):
         from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration, ChatGLMConfig
         if isinstance(model, str):
-            model_dir = snapshot_download(model) if not os.path.exists(model) else model
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
             config = ChatGLMConfig.from_pretrained(model_dir)
             model = ChatGLMForConditionalGeneration(config).half()
             if torch.cuda.is_available():
@@ -232,7 +233,8 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  **kwargs):
         from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
         if isinstance(model, str):
-            model_dir = snapshot_download(model) if not os.path.exists(model) else model
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
             config = ChatGLM2Config.from_pretrained(model_dir)
             model = ChatGLM2ForConditionalGeneration(config)
             if torch.cuda.is_available():

@@ -6,7 +6,7 @@ import math
 import json
 import ast
 import datetime as dt
-from typing import List, Tuple, Dict, Callable, Optional, Union, Any, Literal
+from typing import List, Tuple, Dict, Callable, Optional, Union, Any
 from functools import partial
 # 
 from tqdm import tqdm
@@ -52,6 +52,7 @@ USER_TEXT = """\n\n### 用户
 ASSISTANT_PROMPT = """\n\n### 助手
 """
 MAX_LENGTH = 2048
+TEST_MAX_LENGTH = MAX_LENGTH
 # 
 COLOR, COLOR_S = "#FFE2D9", "#FF7043"
 logger = get_logger()
@@ -86,7 +87,9 @@ def get_work_dir(work_dir: str) -> str:
 # 
 
 def select_device(device_ids: List[int]) -> Device:
-    """请在cuda被初始化前, 调用此函数. 返回master device"""
+    """Call this function before cuda is initialized.
+    Return: master device
+    """
     if torch.cuda.is_initialized():
         logger.warning("CUDA has been initialized! Device selection fails!")
         return torch.device("cuda:0")
@@ -132,7 +135,7 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int, drop_last: boo
 # 
 
 def tokenize_function(system: str, user: str, assistant: Optional[str], tokenizer) -> Dict[str, Any]:
-    """只适用baichuan和chatglm2. 其他模型需进行test"""
+    """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     system_text = SYSTEM_TEXT.format(system=system)
     user_text = USER_TEXT.format(user=user)
     system_text_ids: List[int] = tokenizer(system_text, return_attention_mask=False, 
@@ -142,7 +145,7 @@ def tokenize_function(system: str, user: str, assistant: Optional[str], tokenize
     assistant_p_input_ids: List[int] = tokenizer(ASSISTANT_PROMPT, return_attention_mask=False, 
                                           add_special_tokens=False)["input_ids"]
 
-    # tokenizer.bos_token_id: 避免assistant为空
+    # tokenizer.bos_token_id: Avoid `assistant` being empty
     assistant_input_ids: List[int] = [tokenizer.bos_token_id] 
     if assistant is not None:
         assistant_input_ids += tokenizer(assistant, return_attention_mask=False, add_special_tokens=False)["input_ids"] 
@@ -155,7 +158,7 @@ def tokenize_function(system: str, user: str, assistant: Optional[str], tokenize
         len_mask = len(input_ids) - len(assistant_input_ids)
         labels = [-100] * len_mask + assistant_input_ids
     else:  # test
-        input_ids = input_ids[-MAX_LENGTH:]
+        input_ids = input_ids[-TEST_MAX_LENGTH:]
         labels = None
 
     #
@@ -179,7 +182,7 @@ class MyDataset(TorchCustomDataset):
         return len(self._data)
 
 def stat_dataset(dataset: "MyDataset") -> None:
-    """对数据集进行统计分析"""
+    """Statistical analysis was performed on the data set"""
     _token_len = []
     for d in dataset:
         _token_len.append(len(d["input_ids"]))
@@ -261,7 +264,7 @@ class MyMetric(Metric):
         }
     
     def merge(self, other: "MyMetric")->None:
-        """暂不支持ddp"""
+        """This script does not support ddp"""
         raise NotImplementedError
 
 # 
@@ -304,8 +307,11 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None, load_model: bo
     return model, tokenizer
 
 
-def make_dataset(split: Literal["train", "validation"], 
+def make_dataset(split: str, 
                  tokenize_function: Callable[[str, str, Optional[str]], Dict[str, Any]]) -> MyDataset:
+    """
+    split: Literal["train", "validation"]
+    """
     dataset = MsDataset.load('modelscope/ms_hackathon_23_agent_train_dev', split=split)
     system = []
     user = []

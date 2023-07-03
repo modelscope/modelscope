@@ -196,7 +196,7 @@ tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 device_map_kwargs = {}
 device_kwargs = {}
 if args.use_lora != 0:
-    device_kwargs['device_map'] = 'auto'
+    device_map_kwargs['device_map'] = 'auto'
     # No placement for model, leave the model to `device_map`
     device_kwargs['device'] = 'cpu'
 model = Model.from_pretrained(

@@ -113,4 +113,6 @@ pipe = pipeline(
     model_revision=args.model_revision)
 
 output = pipe({'text': args.prompt})
+# visualize the result on ipynb and save it
+output
 cv2.imwrite('./dreambooth_result.png', output['output_imgs'][0])

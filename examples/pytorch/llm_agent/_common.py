@@ -8,14 +8,14 @@ import ast
 import datetime as dt
 from typing import List, Tuple, Dict, Callable, Optional, Union, Any
 from functools import partial
-# 
+#
 from tqdm import tqdm
 import numpy as np
 from numpy import ndarray
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-# 
+#
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -24,14 +24,13 @@ from torch.nn import Module
 from torch.optim import Optimizer
 from torch.utils.data import Dataset
 from torch.nn.parameter import Parameter
-from torch.nn.modules.module import _IncompatibleKeys as IncompatibleKeys
 from torch.optim import lr_scheduler as lrs
 from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 from torch.nn.utils.rnn import pad_sequence
 #
 from torchmetrics import Accuracy, MeanMetric
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-# 
+#
 from modelscope import get_logger
 from modelscope import MsDataset, snapshot_download, Model, read_config
 from modelscope.utils.config import Config, ConfigDict
@@ -42,10 +41,8 @@ from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
 from modelscope.utils.registry import default_group
 from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
-from modelscope.utils.config import ConfigDict
 
-
-# 
+#
 SYSTEM_TEXT = """{system}"""
 USER_TEXT = """\n\n### 用户
 {user}"""
@@ -53,13 +50,16 @@ ASSISTANT_PROMPT = """\n\n### 助手
 """
 MAX_LENGTH = 2048
 TEST_MAX_LENGTH = MAX_LENGTH
-# 
+
 COLOR, COLOR_S = "#FFE2D9", "#FF7043"
 logger = get_logger()
-# 
+#
+
+
 def get_model_dir(model_id: str, model_revision: Optional[str] = None) -> str:
     model_dir = snapshot_download(model_id, model_revision)
     return model_dir
+
 
 def _get_version(work_dir: str) -> int:
     if os.path.isdir(work_dir):
@@ -75,16 +75,17 @@ def _get_version(work_dir: str) -> int:
         v_list.append(int(v))
     return max(v_list) + 1
 
+
 def get_work_dir(work_dir: str) -> str:
     """add version"""
     work_dir = os.path.abspath(work_dir)
     version = _get_version(work_dir)
     time = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    # 
+    #
     work_dir = os.path.join(work_dir, f"v{version}-{time}")
     logger.info(f"work_dir: {work_dir}")
     return work_dir
-# 
+
 
 def select_device(device_ids: List[int]) -> Device:
     """Call this function before cuda is initialized.
@@ -106,6 +107,7 @@ def select_device(device_ids: List[int]) -> Device:
         device = "cuda:0"
     logger.info(log_s)
     return torch.device(device)
+
 
 def seed_everything(seed: Optional[int] = None, gpu_dtm: bool = False) -> int:
     if seed is None:
@@ -132,25 +134,25 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int, drop_last: boo
         T_max = math.ceil(dataset_len / batch_size)
     T_max *= max_epochs
     return T_max
-# 
+
 
 def tokenize_function(system: str, user: str, assistant: Optional[str], tokenizer) -> Dict[str, Any]:
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     system_text = SYSTEM_TEXT.format(system=system)
     user_text = USER_TEXT.format(user=user)
-    system_text_ids: List[int] = tokenizer(system_text, return_attention_mask=False, 
-                                          add_special_tokens=True)["input_ids"]
-    user_text_ids: List[int] = tokenizer(user_text, return_attention_mask=False, 
-                                          add_special_tokens=False)["input_ids"]
-    assistant_p_input_ids: List[int] = tokenizer(ASSISTANT_PROMPT, return_attention_mask=False, 
-                                          add_special_tokens=False)["input_ids"]
+    system_text_ids: List[int] = tokenizer(system_text, return_attention_mask=False,
+                                           add_special_tokens=True)["input_ids"]
+    user_text_ids: List[int] = tokenizer(user_text, return_attention_mask=False,
+                                         add_special_tokens=False)["input_ids"]
+    assistant_p_input_ids: List[int] = tokenizer(ASSISTANT_PROMPT, return_attention_mask=False,
+                                                 add_special_tokens=False)["input_ids"]
 
     # tokenizer.bos_token_id: Avoid `assistant` being empty
-    assistant_input_ids: List[int] = [tokenizer.bos_token_id] 
+    assistant_input_ids: List[int] = [tokenizer.bos_token_id]
     if assistant is not None:
-        assistant_input_ids += tokenizer(assistant, return_attention_mask=False, add_special_tokens=False)["input_ids"] 
+        assistant_input_ids += tokenizer(assistant, return_attention_mask=False, add_special_tokens=False)["input_ids"]
         assistant_input_ids += [tokenizer.eos_token_id]
-    # 
+    #
     input_ids = system_text_ids + user_text_ids + assistant_p_input_ids + assistant_input_ids
     if assistant is not None:   # train, val
         if len(input_ids) > MAX_LENGTH:
@@ -166,7 +168,7 @@ def tokenize_function(system: str, user: str, assistant: Optional[str], tokenize
 
 
 class MyDataset(TorchCustomDataset):
-    def __init__(self, system: List[str], user: List[str], assistant: List[str], 
+    def __init__(self, system: List[str], user: List[str], assistant: List[str],
                  tokenize_function) -> None:
         self._data = []
         for i in tqdm(range(len(system))):
@@ -181,6 +183,7 @@ class MyDataset(TorchCustomDataset):
     def __len__(self) -> int:
         return len(self._data)
 
+
 def stat_dataset(dataset: "MyDataset") -> None:
     """Statistical analysis was performed on the data set"""
     _token_len = []
@@ -191,7 +194,9 @@ def stat_dataset(dataset: "MyDataset") -> None:
     std = _token_len.std().item()
     min_ = _token_len.min().item()
     max_ = _token_len.max().item()
-    logger.info(f"Dataset Token Length: {mean:.6f}±{std:.6f}, min={min_:.6f}, max={max_:.6f}, size={_token_len.shape[0]}")
+    logger.info(
+        f"Dataset Token Length: {mean:.6f}±{std:.6f}, min={min_:.6f}, max={max_:.6f}, size={_token_len.shape[0]}")
+
 
 def print_examples(examples: Dict[str, Any], tokenizer) -> None:
     input_ids, labels = examples["input_ids"], examples["labels"]
@@ -199,7 +204,7 @@ def print_examples(examples: Dict[str, Any], tokenizer) -> None:
     print()
     print(f"[LABLES] {tokenizer.decode([l if l != -100 else 0 for l in labels])}")
 
-# 
+
 def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
     input_ids = [torch.tensor(b["input_ids"]) for b in batch]
     labels = [torch.tensor(b["labels"]) for b in batch]
@@ -230,6 +235,7 @@ def print_model_info(model: Module, name: Optional[str] = None) -> None:
     s += "."
     logger.info("".join(s))
 
+
 def show_freeze_layers(model: Module, max_lines: int = 20) -> None:
     named_p = list(model.named_parameters())
     for i, (n, p) in enumerate(named_p):
@@ -237,6 +243,7 @@ def show_freeze_layers(model: Module, max_lines: int = 20) -> None:
             logger.info("...")
             break
         logger.info(f"{n}: requires_grad={p.requires_grad}")
+
 
 @METRICS.register_module(group_key=default_group, module_name='my_metric')
 class MyMetric(Metric):
@@ -247,7 +254,7 @@ class MyMetric(Metric):
     def add(self, outputs: Dict[str, Any], inputs: Dict[str, Any]) -> None:
         loss: Tensor = outputs.loss
         self.loss.update(loss)
-        # 
+        #
         labels: Tensor = inputs["labels"]
         labels = labels[:, 1:]
         labels_mask = labels != -100
@@ -262,17 +269,17 @@ class MyMetric(Metric):
             "acc": self.acc.compute().item(),
             "loss": self.loss.compute().item()
         }
-    
-    def merge(self, other: "MyMetric")->None:
+
+    def merge(self, other: "MyMetric") -> None:
         """This script does not support ddp"""
         raise NotImplementedError
 
-# 
+
 def get_baichuan_model_tokenizer(model_dir: Optional[str] = None, load_model: bool = True):
     if model_dir is None:
         model_id = "baichuan-inc/baichuan-7B"
         model_dir = get_model_dir(model_id, None)
-    # 
+    #
     sys.path.insert(0, model_dir)
     from configuration_baichuan import BaiChuanConfig
     from tokenization_baichuan import BaiChuanTokenizer
@@ -283,9 +290,9 @@ def get_baichuan_model_tokenizer(model_dir: Optional[str] = None, load_model: bo
     tokenizer = BaiChuanTokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
-        model = BaiChuanForCausalLM.from_pretrained(model_dir, config=model_config, 
-                                                device_map="auto", torch_dtype=torch.float16)
-    # 
+        model = BaiChuanForCausalLM.from_pretrained(model_dir, config=model_config,
+                                                    device_map="auto", torch_dtype=torch.float16)
+    #
     return model, tokenizer
 
 
@@ -294,7 +301,7 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None, load_model: bo
         model_id = "ZhipuAI/chatglm2-6b"
         model_revision = "v1.0.3"
         model_dir = snapshot_download(model_id, model_revision)
-    # 
+    #
     config = read_config(model_dir)
     config["model"] = ConfigDict({
         "type": "chatglm2-6b"
@@ -303,11 +310,11 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None, load_model: bo
     model = None
     if load_model:
         model = Model.from_pretrained(
-                model_dir, cfg_dict=config, device_map='auto', torch_dtype=torch.float16)    
+            model_dir, cfg_dict=config, device_map='auto', torch_dtype=torch.float16)
     return model, tokenizer
 
 
-def make_dataset(split: str, 
+def make_dataset(split: str,
                  tokenize_function: Callable[[str, str, Optional[str]], Dict[str, Any]]) -> MyDataset:
     """
     split: Literal["train", "validation"]
@@ -322,12 +329,14 @@ def make_dataset(split: str,
         assert len(content) % 2 == 1
         for i in range(len(content) // 2):
             system.append(s)
-            user.append(content[2*i+1]["value"])
-            assistant.append(content[2*i+2]["value"])
+            user.append(content[2 * i + 1]["value"])
+            assistant.append(content[2 * i + 2]["value"])
     return MyDataset(system, user, assistant, tokenize_function)
 
 
 Item = Dict[str, float]
+
+
 def read_tensorboard_file(fpath: str) -> Dict[str, List[Item]]:
     if not os.path.isfile(fpath):
         raise FileNotFoundError(f"fpath: {fpath}")
@@ -355,6 +364,7 @@ def tensorboard_smoothing(values: List[float], smooth: float = 0.9) -> List[floa
         norm_factor *= smooth
         norm_factor += 1
     return res
+
 
 def plot_image(data: Dict[str, List[Item]], key_name: str, smooth: float) -> Figure:
     _data = data[key_name]

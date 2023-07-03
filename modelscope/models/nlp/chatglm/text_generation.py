@@ -931,7 +931,6 @@ class ChatGLMModel(ChatGLMPreTrainedModel):
             self.num_attention_heads,
             self.hidden_size // self.num_attention_heads)
         # seq_len, b, nh, hidden_size
-        print('#########################:', past_key_values.device)
         past_key_values = self.dropout(past_key_values)
         past_key_values = past_key_values.permute([2, 1, 0, 3, 4]).split(2)
         # past_key_values = [(v[0], v[1]) for v in past_key_values]

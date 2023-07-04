@@ -1076,17 +1076,17 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
         return inputs
 
     @torch.no_grad()
-    def chat(self,
-             tokenizer,
-             query: str,
-             history: List[Tuple[str, str]] = None,
-             max_length: int = 2048,
-             num_beams=1,
-             do_sample=True,
-             top_p=0.8,
-             temperature=0.8,
-             logits_processor=None,
-             **kwargs):
+    def _chat(self,
+              tokenizer,
+              query: str,
+              history: List[Tuple[str, str]] = None,
+              max_length: int = 2048,
+              num_beams=1,
+              do_sample=True,
+              top_p=0.8,
+              temperature=0.8,
+              logits_processor=None,
+              **kwargs):
         if history is None:
             history = []
         if logits_processor is None:
@@ -1107,7 +1107,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
         response = tokenizer.decode(outputs)
         response = self.process_response(response)
         history = history + [(query, response)]
-        return {OutputKeys.RESPONSE: response, OutputKeys.HISTORY: history}
+        return response, history
 
     @torch.no_grad()
     def stream_chat(self,
@@ -1295,6 +1295,41 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
             self.transformer.encoder,
             bits,
             empty_init=empty_init,
-            device=device,
-            **kwargs)
+            device=device)
         return self
+
+    def chat(self, input: Dict, tokenizer) -> Dict:
+        text = input['text']
+        history = input['history']
+        # args
+        if 'max_length' in input:
+            max_length = input['max_length']
+        else:
+            max_length = 2048
+
+        if 'temperature' in input:
+            temperature = input['temperature']
+        else:
+            temperature = 0.95
+
+        if 'num_beams' in input:
+            num_beams = input['num_beams']
+        else:
+            num_beams = 1
+
+        if 'do_sample' in input:
+            do_sample = input['do_sample']
+        else:
+            do_sample = True
+
+        if type(history) == torch.Tensor:
+            history = history.tolist()
+        response, history = self._chat(
+            tokenizer,
+            text,
+            history,
+            max_length=max_length,
+            temperature=temperature,
+            num_beams=num_beams,
+            do_sample=do_sample)
+        return {OutputKeys.RESPONSE: response, OutputKeys.HISTORY: history}

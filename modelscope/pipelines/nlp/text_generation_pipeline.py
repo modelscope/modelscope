@@ -262,8 +262,8 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
-        return self.model.chat(self.tokenizer, inputs['text'],
-                               **forward_params)
+        inputs.update(forward_params)
+        return self.model.chat(inputs, self.tokenizer)
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

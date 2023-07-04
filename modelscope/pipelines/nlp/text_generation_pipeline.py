@@ -211,11 +211,15 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
 
         super().__init__(model=model, **kwargs)
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
+        inputs.update(forward_params)
         return self.model.chat(inputs)
 
     # format the outputs from pipeline
@@ -250,12 +254,16 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
         super().__init__(model=model, **kwargs)
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
-        return self.model.chat(self.tokenizer, inputs['text'])
+        return self.model.chat(self.tokenizer, inputs['text'],
+                               **forward_params)
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

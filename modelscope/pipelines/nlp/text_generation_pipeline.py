@@ -211,6 +211,9 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
 
         super().__init__(model=model, **kwargs)
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs
 
@@ -250,6 +253,9 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
             self.model.model_dir)
 
         super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
 
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs

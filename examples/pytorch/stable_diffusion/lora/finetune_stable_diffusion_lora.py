@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 
 import cv2
@@ -23,14 +24,20 @@ training_args = StableDiffusionLoraArguments(
     task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 
-train_dataset = MsDataset.load(
-    args.train_dataset_name,
-    split='train',
-    download_mode=DownloadMode.FORCE_REDOWNLOAD)
-validation_dataset = MsDataset.load(
-    args.train_dataset_name,
-    split='validation',
-    download_mode=DownloadMode.FORCE_REDOWNLOAD)
+if os.path.exists(args.train_dataset_name):
+    # Load local dataset
+    train_dataset = MsDataset.load(args.train_dataset_name)
+    validation_dataset = MsDataset.load(args.train_dataset_name)
+else:
+    # Load online dataset
+    train_dataset = MsDataset.load(
+        args.train_dataset_name,
+        split='train',
+        download_mode=DownloadMode.FORCE_REDOWNLOAD)
+    validation_dataset = MsDataset.load(
+        args.train_dataset_name,
+        split='validation',
+        download_mode=DownloadMode.FORCE_REDOWNLOAD)
 
 
 def cfg_modify_fn(cfg):

@@ -1,25 +1,28 @@
 import ast
 import datetime as dt
+import json
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import random
 import re
 import sys
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
-import json
-import matplotlib.pyplot as plt
-import numpy as np
 #
 import torch
 import torch.nn as nn
 import torch.optim as optim
+#
+from functools import partial
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+#
+from tqdm import tqdm
+from numpy import ndarray
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from numpy import ndarray
-from tensorboard.backend.event_processing.event_accumulator import \
+from tensorboard.backend.event_processing.event_accumulator import (
     EventAccumulator
+)
 from torch import Tensor
 from torch import device as Device
 from torch import dtype as Dtype
@@ -30,19 +33,17 @@ from torch.optim import Optimizer
 from torch.optim import lr_scheduler as lrs
 from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 from torch.utils.data import Dataset
-#
 from torchmetrics import Accuracy, MeanMetric
 #
-from tqdm import tqdm
-
-#
-from modelscope import (Model, MsDataset, get_logger, read_config,
-                        snapshot_download)
+from modelscope import (
+    Model, MsDataset, get_logger, read_config, snapshot_download
+)
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
 from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
-from modelscope.msdatasets.dataset_cls.custom_datasets import \
+from modelscope.msdatasets.dataset_cls.custom_datasets import (
     TorchCustomDataset
+)
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
@@ -109,9 +110,9 @@ def select_device(device_ids: List[int]) -> Device:
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(
             [str(d) for d in device_ids])
-        assert torch.cuda.is_available(
-        ) and torch.cuda.device_count() >= len(device_ids)
-        log_s += f"cuda:{','.join([str(d) for d in device_ids])}"  # e.g. "cuda:1,7,8"
+        assert torch.cuda.is_available() and torch.cuda.device_count() >= len(device_ids)
+        # e.g. 'cuda:1,7,8'
+        log_s += f'cuda:{",".join([str(d) for d in device_ids])}'
         device = 'cuda:0'
     logger.info(log_s)
     return torch.device(device)
@@ -150,26 +151,22 @@ def tokenize_function(system: str, user: str, assistant: Optional[str],
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     system_text = SYSTEM_TEXT.format(system=system)
     user_text = USER_TEXT.format(user=user)
-    system_text_ids: List[int] = tokenizer(
-        system_text, return_attention_mask=False,
-        add_special_tokens=True)['input_ids']
-    user_text_ids: List[int] = tokenizer(
-        user_text, return_attention_mask=False,
-        add_special_tokens=False)['input_ids']
-    assistant_p_input_ids: List[int] = tokenizer(
-        ASSISTANT_PROMPT,
-        return_attention_mask=False,
-        add_special_tokens=False)['input_ids']
+    system_text_ids: List[int] = tokenizer(system_text, return_attention_mask=False,
+                                           add_special_tokens=True)['input_ids']
+    user_text_ids: List[int] = tokenizer(user_text, return_attention_mask=False,
+                                         add_special_tokens=False)['input_ids']
+    assistant_p_input_ids: List[int] = tokenizer(ASSISTANT_PROMPT, return_attention_mask=False,
+                                                 add_special_tokens=False)['input_ids']
 
     # tokenizer.bos_token_id: Avoid `assistant` being empty
     assistant_input_ids: List[int] = [tokenizer.bos_token_id]
     if assistant is not None:
-        assistant_input_ids += tokenizer(
-            assistant, return_attention_mask=False,
-            add_special_tokens=False)['input_ids']
+        assistant_input_ids += tokenizer(assistant, return_attention_mask=False,
+                                         add_special_tokens=False)['input_ids']
         assistant_input_ids += [tokenizer.eos_token_id]
     #
-    input_ids = system_text_ids + user_text_ids + assistant_p_input_ids + assistant_input_ids
+    input_ids = (system_text_ids + user_text_ids +
+                 assistant_p_input_ids + assistant_input_ids)
     if assistant is not None:  # train, val
         if len(input_ids) > MAX_LENGTH:
             return {}
@@ -220,23 +217,20 @@ def print_examples(examples: Dict[str, Any], tokenizer) -> None:
     input_ids, labels = examples['input_ids'], examples['labels']
     print(f'[INPUT_IDS] {tokenizer.decode(input_ids)}')
     print()
-    print(
-        f'[LABLES] {tokenizer.decode([l if l != -100 else 0 for l in labels])}'
-    )
+    labels = tokenizer.decode([l if l != -100 else 0 for l in labels])
+    print(f'[LABLES] {labels}')
 
 
 def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
     input_ids = [torch.tensor(b['input_ids']) for b in batch]
     labels = [torch.tensor(b['labels']) for b in batch]
-    attention_mask = [
-        torch.ones(len(input_ids[i]), dtype=torch.int64)
-        for i in range(len(input_ids))
-    ]
+    attention_mask = [torch.ones(len(input_ids[i]), dtype=torch.int64)
+                      for i in range(len(input_ids))]
     #
-    input_ids = pad_sequence(
-        input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
-    attention_mask = pad_sequence(
-        attention_mask, batch_first=True, padding_value=0)
+    input_ids = pad_sequence(input_ids, batch_first=True,
+                             padding_value=tokenizer.pad_token_id)
+    attention_mask = pad_sequence(attention_mask, batch_first=True,
+                                  padding_value=0)
     labels = pad_sequence(labels, batch_first=True, padding_value=-100)
     return {
         'input_ids': input_ids,
@@ -313,19 +307,16 @@ def get_baichuan_model_tokenizer(model_dir: Optional[str] = None,
     #
     sys.path.insert(0, model_dir)
     from configuration_baichuan import BaiChuanConfig
-    from tokenization_baichuan import BaiChuanTokenizer
     from modeling_baichuan import BaiChuanForCausalLM
+    from tokenization_baichuan import BaiChuanTokenizer
     model_config = BaiChuanConfig.from_pretrained(model_dir)
     model_config.torch_dtype = torch.float16
     logger.info(f'model_config: {model_config}')
     tokenizer = BaiChuanTokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
-        model = BaiChuanForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch.float16)
+        model = BaiChuanForCausalLM.from_pretrained(model_dir, config=model_config,
+                                                    device_map='auto', torch_dtype=torch.float16)
     #
     return model, tokenizer
 
@@ -334,28 +325,23 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None,
                                  load_model: bool = True):
     if model_dir is None:
         model_id = 'ZhipuAI/chatglm2-6b'
-        model_revision = 'v1.0.3'
-        model_dir = snapshot_download(model_id, model_revision)
+        model_dir = snapshot_download(model_id, None)
     #
     config = read_config(model_dir)
     config['model'] = ConfigDict({'type': 'chatglm2-6b'})
     tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
-        model = Model.from_pretrained(
-            model_dir,
-            cfg_dict=config,
-            device_map='auto',
-            torch_dtype=torch.float16)
+        model = Model.from_pretrained(model_dir, cfg_dict=config,
+                                      device_map='auto', torch_dtype=torch.float16)
     return model, tokenizer
 
 
 def make_dataset(
-    split: str, tokenize_function: Callable[[str, str, Optional[str]],
-                                            Dict[str, Any]]
+    split: str, tokenize_function: Callable[[str, str, Optional[str]], Dict[str, Any]]
 ) -> MyDataset:
     """
-    split: Literal["train", "validation"]
+    split: Literal['train, 'validation']
     """
     dataset = MsDataset.load(
         'modelscope/ms_hackathon_23_agent_train_dev', split=split)

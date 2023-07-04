@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import soundfile as sf
 import torch
+import torchaudio
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines
@@ -46,10 +47,14 @@ class SpeakerChangeLocatingPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_config = self.model.model_config
-        self.config = self.model.model_config
-        self.anchor_size = self.config['anchor_size']
+        self.anchor_size = self.model_config['anchor_size']
 
-    def __call__(self, audio: str, embds: List = None) -> Dict[str, Any]:
+    def __call__(
+        self,
+        audio: Union[str, np.ndarray],
+        embds: Union[list, np.ndarray] = None,
+        output_res=False,
+    ):
         if embds is not None:
             assert len(embds) == 2
             assert isinstance(embds[0], np.ndarray) and isinstance(
@@ -65,41 +70,58 @@ class SpeakerChangeLocatingPipeline(Pipeline):
                 np.stack([embd1, embd2], axis=1).flatten(),
                 np.stack([embd3, embd4], axis=1).flatten(),
             ]
-        anchors = torch.from_numpy(np.stack(embds,
-                                            axis=0)).float().unsqueeze(0)
+        if isinstance(embds, list):
+            anchors = np.stack(embds, axis=0)
+        anchors = torch.from_numpy(anchors).unsqueeze(0).float()
 
         output = self.preprocess(audio)
         output = self.forward(output, anchors)
-        output = self.postprocess(output)
+        output, p = self.postprocess(output)
 
-        return output
+        if output_res:
+            return output, p
+        else:
+            return output
 
     def forward(self, input: torch.Tensor, anchors: torch.Tensor):
         output = self.model(input, anchors)
         return output
 
-    def postprocess(self, input: torch.Tensor) -> Dict[str, Any]:
+    def postprocess(self, input: torch.Tensor):
         predict = np.where(np.diff(input.argmax(-1).numpy()))
         try:
             predict = predict[0][0] * 0.01 + 0.02
             predict = round(predict, 2)
-            return {OutputKeys.TEXT: f'The change point is at {predict}s.'}
+            return {
+                OutputKeys.TEXT: f'The change point is at {predict}s.'
+            }, predict
         except Exception:
-            return {OutputKeys.TEXT: 'No change point is found.'}
+            return {OutputKeys.TEXT: 'No change point is found.'}, None
 
-    def preprocess(self, input: str) -> torch.Tensor:
+    def preprocess(self, input: Union[str, np.ndarray]) -> torch.Tensor:
         if isinstance(input, str):
             file_bytes = File.read(input)
             data, fs = sf.read(io.BytesIO(file_bytes), dtype='float32')
             if len(data.shape) == 2:
                 data = data[:, 0]
-            if fs != self.model_config['sample_rate']:
-                raise ValueError(
-                    'modelscope error: Only support %d sample rate files'
-                    % self.model_cfg['sample_rate'])
             data = torch.from_numpy(data).unsqueeze(0)
+            if fs != self.model_config['sample_rate']:
+                logger.warning(
+                    'The sample rate of audio is not %d, resample it.'
+                    % self.model_config['sample_rate'])
+                data, fs = torchaudio.sox_effects.apply_effects_tensor(
+                    data,
+                    fs,
+                    effects=[['rate',
+                              str(self.model_config['sample_rate'])]])
+        elif isinstance(input, np.ndarray):
+            if input.dtype in ['int16', 'int32', 'int64']:
+                input = (input / (1 << 15)).astype('float32')
+            data = torch.from_numpy(input)
+            if len(data.shape) == 1:
+                data = data.unsqueeze(0)
         else:
             raise ValueError(
-                'modelscope error: The input type is restricted to audio file address'
-                % i)
+                'modelscope error: The input type is restricted to audio file address and numpy array.'
+            )
         return data

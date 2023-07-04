@@ -75,7 +75,7 @@ class TimestampPipeline(Pipeline):
             mode=self.cmd['mode'],
             batch_size=self.cmd['batch_size'],
             dtype=self.cmd['dtype'],
-            ngpu=self.cmd['ngpu'],
+            ngpu=ngpu,
             seed=self.cmd['seed'],
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
@@ -267,8 +267,9 @@ class TimestampPipeline(Pipeline):
         ]
 
         for user_args in user_args_dict:
-            if user_args in extra_args and extra_args[user_args] is not None:
-                cmd[user_args] = extra_args[user_args]
+            if user_args in extra_args:
+                if extra_args.get(user_args) is not None:
+                    cmd[user_args] = extra_args[user_args]
                 del extra_args[user_args]
 
         return cmd

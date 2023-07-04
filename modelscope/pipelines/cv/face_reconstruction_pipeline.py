@@ -103,7 +103,7 @@ class FaceReconstructionPipeline(Pipeline):
             os.path.join(model_root, 'face_alignment', 'depth-6c4283c0e0.zip'),
             save_ckpt_dir)
         self.lm_sess = face_alignment.FaceAlignment(
-            face_alignment.LandmarksType._3D, flip_input=False)
+            face_alignment.LandmarksType.THREE_D, flip_input=False)
 
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.per_process_gpu_memory_fraction = 0.2

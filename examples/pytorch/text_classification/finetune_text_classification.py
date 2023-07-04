@@ -63,6 +63,8 @@ def cfg_modify_fn(cfg):
     else:
         cfg = config
     cfg.model['num_labels'] = len(cfg.preprocessor.label2id)
+    if cfg.evaluation.period.eval_strategy == 'by_epoch':
+        cfg.evaluation.period.by_epoch = True
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \
             int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
@@ -70,16 +72,23 @@ def cfg_modify_fn(cfg):
 
 
 if args.dataset_json_file is None:
-    dataset = MsDataset.load(
-        args.train_dataset_name, subset_name=args.train_subset_name)
-    train_dataset = dataset['train']
-    validation_dataset = dataset['validation']
+    train_dataset = MsDataset.load(
+        args.train_dataset_name,
+        subset_name=args.train_subset_name,
+        split=args.train_split,
+        namespace=args.train_dataset_namespace)
+    validation_dataset = MsDataset.load(
+        args.val_dataset_name,
+        subset_name=args.val_subset_name,
+        split=args.val_split,
+        namespace=args.val_dataset_namespace)
 else:
     train_dataset, validation_dataset = build_dataset_from_file(
         args.dataset_json_file)
 
 kwargs = dict(
     model=args.model,
+    model_revision=args.model_revision,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     seed=args.seed,

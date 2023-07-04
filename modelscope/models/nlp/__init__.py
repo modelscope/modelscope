@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from .csanmt import CsanmtForTranslation
     from .canmt import CanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
+    from .chatglm import ChatGLMForConditionalGeneration, ChatGLMTokenizer, ChatGLMConfig
+    from .chatglm2 import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
     from .gpt_neo import GPTNeoModel
     from .gpt2 import GPT2Model
     from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
@@ -95,6 +97,14 @@ else:
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'glm_130b': ['GLM130bForTextGeneration'],
         'deberta_v2': ['DebertaV2ForMaskedLM', 'DebertaV2Model'],
+        'chatglm': [
+            'ChatGLMForConditionalGeneration', 'ChatGLMTokenizer',
+            'ChatGLMConfig'
+        ],
+        'chatglm2': [
+            'ChatGLM2ForConditionalGeneration', 'ChatGLM2Tokenizer',
+            'ChatGLM2Config'
+        ],
         'heads': ['TextClassificationHead'],
         'hf_transformers': ['TransformersModel'],
         'gpt2': ['GPT2Model'],

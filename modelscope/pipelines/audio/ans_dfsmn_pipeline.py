@@ -70,7 +70,8 @@ class ANSDFSMNPipeline(Pipeline):
                 HOP_LENGTH,
                 STFT_WIN_LEN,
                 center=False,
-                window=window)
+                window=window,
+                return_complex=False)
 
         def istft(x, slen):
             return librosa.istft(

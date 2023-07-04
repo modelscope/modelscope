@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import shutil
 import unittest
 
 import json
@@ -18,6 +19,10 @@ class TestDialogIntentTrainer(unittest.TestCase):
 
     def setUp(self):
         self.model_id = 'DAMO_ConvAI/nlp_convai_ranking_pretrain'
+
+    def tearDown(self):
+        shutil.rmtree('./model')
+        super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):

@@ -35,7 +35,7 @@ class MpuProcessor(CheckpointProcessor):
         except (ImportError, AssertionError):
             return ''
 
-    def get_bin_file(self):
+    def get_bin_filename(self):
         mp_rank = mpu.get_tensor_model_parallel_rank()
         rank = '{:02d}'.format(mp_rank)
         return f'mp_rank_{rank}_model_states.pt'
@@ -72,7 +72,7 @@ class MpuProcessor(CheckpointProcessor):
 
         save_dir = os.path.dirname(checkpoint_path_prefix)
         prefix = os.path.basename(checkpoint_path_prefix)
-        bin_file = self.get_bin_file()
+        bin_file = self.get_bin_filename()
         prefix_bin_file = os.path.join(save_dir, prefix + '_' + bin_file)
         save_checkpoint(model, prefix_bin_file, with_meta=False)
 
@@ -98,7 +98,7 @@ class MpuProcessor(CheckpointProcessor):
 
         save_dir = os.path.dirname(checkpoint_path_prefix)
         prefix = os.path.basename(checkpoint_path_prefix)
-        bin_file = self.get_bin_file()
+        bin_file = self.get_bin_filename()
         absolute_file = os.path.join(save_dir, prefix + '_' + bin_file)
         if os.path.isfile(absolute_file):
             os.remove(absolute_file)
@@ -108,7 +108,7 @@ class MpuProcessor(CheckpointProcessor):
         model = trainer.unwrap_module(trainer.model)
         if os.path.isdir(checkpoint_path_prefix):
             save_dir = checkpoint_path_prefix
-            bin_file = self.get_bin_file()
+            bin_file = self.get_bin_filename()
             model_file = os.path.join(save_dir, bin_file)
             load_checkpoint(model_file, model, None, None)
         else:
@@ -119,7 +119,7 @@ class MpuProcessor(CheckpointProcessor):
 
             save_dir = os.path.dirname(checkpoint_path_prefix)
             prefix = os.path.basename(checkpoint_path_prefix)
-            bin_file = self.get_bin_file()
+            bin_file = self.get_bin_filename()
 
             model_file = os.path.join(save_dir, prefix + '_' + bin_file)
             load_checkpoint(model_file, model, None, None)

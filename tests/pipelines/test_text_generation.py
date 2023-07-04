@@ -8,6 +8,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationPipeline
 from modelscope.preprocessors import TextGenerationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.streaming_output import StreamingOutputMixin
 from modelscope.utils.test_utils import test_level
 
 
@@ -60,6 +61,20 @@ class TextGenerationTest(unittest.TestCase):
         pipeline_ins = pipeline(
             task=Tasks.text_generation, model=model_id, **init_kwargs)
         print(pipeline_ins(input, **run_kwargs))
+
+    def run_streaming_pipeline_with_model_id(self,
+                                             model_id,
+                                             input,
+                                             init_kwargs={},
+                                             run_kwargs={}):
+        pipeline_ins = pipeline(
+            task=Tasks.text_generation, model=model_id, **init_kwargs)
+
+        # set stream inputs
+        assert isinstance(pipeline_ins, StreamingOutputMixin)
+        for output in pipeline_ins.stream(input, **run_kwargs):
+            print(output, end='\r')
+        print()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_palm_zh_base_with_model_name(self):
@@ -122,6 +137,23 @@ class TextGenerationTest(unittest.TestCase):
             self.gpt3_base_model_id,
             [self.gpt3_input, self.gpt3_input[:10], self.gpt3_input[10:]],
             run_kwargs={'batch_size': 2})
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_gpt_base_with_model_name_with_streaming(self):
+        self.run_streaming_pipeline_with_model_id(
+            self.gpt3_base_model_id,
+            self.gpt3_input,
+            run_kwargs={'max_length': 64})
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_gpt_base_with_model_name_with_streaming_batch(self):
+        self.run_streaming_pipeline_with_model_id(
+            self.gpt3_base_model_id,
+            [self.gpt3_input, self.gpt3_input[:10], self.gpt3_input[10:]],
+            run_kwargs={
+                'batch_size': 2,
+                'max_length': 32
+            })
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_gpt_base_with_model_name_batch_iter(self):

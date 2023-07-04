@@ -1,4 +1,5 @@
 boto3
+embeddings
 en_core_web_sm>=2.3.5
 filelock
 ftfy
@@ -18,6 +19,7 @@ scikit_learn
 sentencepiece
 seqeval
 spacy>=2.3.5
+stanza
 subword_nmt>=0.3.8
 termcolor
 tokenizers

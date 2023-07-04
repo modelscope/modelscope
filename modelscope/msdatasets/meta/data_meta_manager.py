@@ -130,7 +130,8 @@ class DataMetaManager(object):
             target_subset_name, target_dataset_structure = get_target_dataset_structure(
                 dataset_json, subset_name, split)
             meta_map, file_map, args_map, type_map = get_dataset_files(
-                target_dataset_structure, dataset_name, namespace, version)
+                target_dataset_structure, dataset_name, namespace,
+                self.dataset_context_config, version)
 
             data_meta_config.meta_data_files = meta_map
             data_meta_config.zip_data_files = file_map

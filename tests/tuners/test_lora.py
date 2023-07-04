@@ -11,9 +11,10 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
+from modelscope.swift import Swift
+from modelscope.swift.lora import (Linear, LoRA, LoRAConfig,
+                                   mark_only_lora_as_trainable)
 from modelscope.trainers import build_trainer
-from modelscope.tuners.lora import (Linear, LoRATuner,
-                                    mark_only_lora_as_trainable)
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.test_utils import test_level
 
@@ -66,22 +67,18 @@ class TestLora(unittest.TestCase):
 
         model_dir = snapshot_download(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny')
-        model = Model.from_pretrained(
-            'damo/nlp_structbert_sentence-similarity_chinese-tiny',
-            adv_grad_factor=None)
+        model = Model.from_pretrained(model_dir, adv_grad_factor=None)
 
         cfg_file = os.path.join(model_dir, 'configuration.json')
+        lora_config = LoRAConfig(replace_modules=['query', 'key', 'value'])
+        model = Swift.prepare_model(model, lora_config)
 
         kwargs = dict(
             model=model,
             cfg_file=cfg_file,
             train_dataset=dataset,
             eval_dataset=dataset,
-            work_dir=self.tmp_dir,
-            efficient_tuners=[{
-                'type': 'lora',
-                'replace_modules': ['query', 'key', 'value']
-            }])
+            work_dir=self.tmp_dir)
 
         trainer = build_trainer(default_args=kwargs)
         trainer.train()
@@ -89,7 +86,8 @@ class TestLora(unittest.TestCase):
 
         def pipeline_sentence_similarity(model_dir):
             model = Model.from_pretrained(model_dir)
-            LoRATuner.tune(model, replace_modules=['query', 'key', 'value'])
+            lora_config.pretrained_weights = output_dir
+            Swift.prepare_model(model, lora_config)
             model.load_state_dict(
                 torch.load(os.path.join(output_dir, 'pytorch_model.bin')))
             model.eval()
@@ -100,7 +98,7 @@ class TestLora(unittest.TestCase):
         output1 = pipeline_sentence_similarity(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny')
 
-        LoRATuner.unpatch_lora(model, ['query', 'key', 'value'])
+        LoRA.unpatch_lora(model, lora_config)
         model.save_pretrained(
             output_dir, save_checkpoint_names='pytorch_model.bin')
 

@@ -15,6 +15,7 @@ class DataDownloadConfig(DownloadConfig):
         self.data_dir: Optional[str] = None
         self.oss_config: Optional[dict] = {}
         self.meta_args_map: Optional[dict] = {}
+        self.num_proc: int = 4
 
     def copy(self) -> 'DataDownloadConfig':
         return self

@@ -112,6 +112,7 @@ else:
 
 kwargs = dict(
     model=args.model,
+    model_revision=args.model_revision,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     seed=args.seed,

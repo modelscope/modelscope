@@ -517,6 +517,8 @@ EXTENSIONS_TO_LOAD = {
     'txt': 'text'
 }
 
+META_FILES_FORMAT = ('.csv', '.jsonl')
+
 
 class DatasetPathName:
     META_NAME = 'meta'

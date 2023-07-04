@@ -165,6 +165,8 @@ class Models(object):
     doc2bot = 'doc2bot'
     peer = 'peer'
     llama = 'llama'
+    chatglm_6b = 'chatglm6b'
+    chatglm2_6b = 'chatglm2-6b'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -183,7 +185,9 @@ class Models(object):
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
     eres2net_sv = 'eres2net-sv'
+    eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
+    cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
 
@@ -205,6 +209,7 @@ class Models(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
+    stable_diffusion = 'stable-diffusion'
 
     # science models
     unifold = 'unifold'
@@ -486,6 +491,7 @@ class Pipelines(object):
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
     speaker_change_locating = 'speaker-change-locating'
+    segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
 
@@ -892,6 +898,9 @@ class MultiModalTrainers(object):
     mplug = 'mplug'
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    stable_diffusion = 'stable-diffusion'
+    lora_diffusion = 'lora-diffusion'
+    dreambooth_diffusion = 'dreambooth-diffusion'
 
 
 class AudioTrainers(object):

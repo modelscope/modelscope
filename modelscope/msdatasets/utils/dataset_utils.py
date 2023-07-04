@@ -4,7 +4,11 @@ import os
 from collections import defaultdict
 from typing import Optional, Union
 
+import pandas as pd
+
 from modelscope.hub.api import HubApi
+from modelscope.msdatasets.context.dataset_context_config import \
+    DatasetContextConfig
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION, MetaDataFields
 from modelscope.utils.logger import get_logger
 
@@ -169,6 +173,7 @@ def get_split_objects_map(file_map, objects):
 def get_dataset_files(subset_split_into: dict,
                       dataset_name: str,
                       namespace: str,
+                      context_config: DatasetContextConfig,
                       revision: Optional[str] = DEFAULT_DATASET_REVISION):
     """
     Return:
@@ -186,6 +191,7 @@ def get_dataset_files(subset_split_into: dict,
     args_map = defaultdict(dict)
     custom_type_map = defaultdict(dict)
     modelscope_api = HubApi()
+    meta_cache_dir = context_config.data_meta_config.meta_cache_dir
 
     for split, info in subset_split_into.items():
         custom_type_map[split] = info.get('custom', '')
@@ -200,16 +206,23 @@ def get_dataset_files(subset_split_into: dict,
     for split, args_dict in args_map.items():
         if args_dict and args_dict.get(MetaDataFields.ARGS_BIG_DATA):
             meta_csv_file_url = meta_map[split]
-            _, script_content = modelscope_api.fetch_single_csv_script(
-                meta_csv_file_url)
-            if not script_content:
-                raise 'Meta-csv file cannot be empty when meta-args `big_data` is true.'
-            for item in script_content:
-                if not item:
-                    continue
-                item = item.strip().split(',')[0]
-                if item:
-                    objects.append(item)
+
+            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
+                meta_csv_file_url, meta_cache_dir)
+
+            csv_delimiter = context_config.config_kwargs.get('delimiter', ',')
+            csv_df = pd.read_csv(
+                meta_csv_file_path, iterator=False, delimiter=csv_delimiter)
+            target_col = csv_df.columns[csv_df.columns.str.contains(
+                ':FILE')].to_list()
+            if len(target_col) == 0:
+                logger.error(
+                    f'No column contains ":FILE" in {meta_csv_file_path}.')
+                target_col = csv_df.columns[0]
+            else:
+                target_col = target_col[0]
+            objects = csv_df[target_col].to_list()
+
             file_map[split] = objects
     # More general but low-efficiency.
     if not objects:

@@ -36,6 +36,10 @@ class TestOCRDetectionDBTrainerSingleGPU(unittest.TestCase):
         self.saved_infer_model = os.path.join(self.saved_dir,
                                               'pytorch_model.pt')
 
+    def tearDown(self):
+        shutil.rmtree(self.saved_dir)
+        super().tearDown()
+
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_finetune_singleGPU(self):
 

@@ -13,8 +13,8 @@ from modelscope.msdatasets.download.dataset_builder import (
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
 from modelscope.msdatasets.download.download_manager import (
     DataDownloadManager, DataStreamingDownloadManager)
-from modelscope.utils.constant import (DatasetPathName, DownloadMode,
-                                       MetaDataFields)
+from modelscope.utils.constant import (META_FILES_FORMAT, DatasetPathName,
+                                       DownloadMode, MetaDataFields)
 
 
 class DataFilesManager(object):
@@ -58,6 +58,7 @@ class DataFilesManager(object):
 
         # Set context. Note: no need to update context_config.
         download_config.oss_config = self.oss_config
+        download_config.num_proc = self.input_config_kwargs.get('num_proc', 4)
         dataset_context_config.download_config = download_config
         self.dataset_context_config = dataset_context_config
         os.makedirs(download_config.cache_dir, exist_ok=True)
@@ -84,7 +85,8 @@ class DataFilesManager(object):
 
             builder = TaskSpecificDatasetBuilder(
                 dataset_context_config=self.dataset_context_config)
-        elif meta_data_file.endswith('.csv'):
+        elif meta_data_file and os.path.splitext(
+                meta_data_file)[-1] in META_FILES_FORMAT:
             builder = CsvDatasetBuilder(
                 dataset_context_config=self.dataset_context_config)
         else:

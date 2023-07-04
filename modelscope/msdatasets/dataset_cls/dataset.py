@@ -6,6 +6,7 @@ import os
 import datasets
 import pandas as pd
 from datasets import IterableDataset
+from tqdm import tqdm
 
 from modelscope.msdatasets.utils.maxcompute_utils import MaxComputeUtil
 from modelscope.utils.constant import (DEFAULT_MAXCOMPUTE_ENDPOINT,
@@ -23,15 +24,18 @@ class ExternalDataset(object):
     def __init__(self, split_path_dict, config_kwargs):
         self.split_path_dict = split_path_dict
         self.config_kwargs = copy.deepcopy(config_kwargs)
-        self.config_kwargs.update({'split_config': split_path_dict})
+        self.config_kwargs.update({'split_config': self.split_path_dict})
         # dataset for specific extensions
         self.spec_extension_dataset = None
-        self.split_data_files = {k: [] for k, _ in split_path_dict.items()}
+        self.split_data_files = {
+            k: []
+            for k, _ in self.split_path_dict.items()
+        }
         self.custom_map = {}
 
         # the extension of file
         file_ext = ''
-        for split_name, split_dir in split_path_dict.items():
+        for split_name, split_dir in self.split_path_dict.items():
             if isinstance(split_dir, str) and os.path.isdir(split_dir):
                 split_file_names = os.listdir(split_dir)
                 set_files_exts = set([
@@ -87,32 +91,62 @@ class ExternalDataset(object):
 class NativeIterableDataset(IterableDataset):
     """The modelscope iterable dataset class."""
 
-    def __init__(self, ex_iterable, info, split):
+    def __init__(self, ex_iterable, info, split, stream_batch_size=1):
         super().__init__(ex_iterable=ex_iterable, info=info, split=split)
+        self.stream_batch_size = stream_batch_size
 
     def __iter__(self):
-        for key, entity in self._iter():
-            if isinstance(entity, dict):
-                ret = {}
-                for k, v in entity.items():
-                    ret[k] = v
-                    if k.endswith(':FILE'):
-                        dl_manager = self._ex_iterable.kwargs.get('dl_manager')
-                        ex_cache_path = dl_manager.download_and_extract(v)
-                        ret[k] = ex_cache_path
-                        if k.endswith('Image:FILE'):
-                            from PIL import Image
-                            ret[k + ':Object'] = Image.open(fp=ex_cache_path)
-                        if k.endswith('Audio:FILE'):
-                            import torchaudio
-                            waveform_and_rate = torchaudio.load(ex_cache_path)
-                            ret[k + ':Object'] = waveform_and_rate
-                entity = ret
+        for item in tqdm(
+                self.iter(
+                    batch_size=self.stream_batch_size, drop_last_batch=False),
+                desc='Overall progress',
+                total=self.n_shards,
+                dynamic_ncols=True):
+            ret = {}
+            if isinstance(item, dict):
+                try:
+                    for k, v in item.items():
+                        ret[k] = v
+                        if k.endswith(':FILE'):
+                            dl_manager = self._ex_iterable.kwargs.get(
+                                'dl_manager')
+                            ex_cache_path = dl_manager.download_and_extract(v)
+                            if isinstance(ex_cache_path, str):
+                                ex_cache_path = [ex_cache_path]
+                            ret[k] = ex_cache_path
 
-            yield entity
+                except Exception as e:
+                    logger.error(e)
+                    ret = item
+            else:
+                ret = item
+
+            yield ret
 
     def __len__(self):
-        return 1
+        return self.n_shards
+
+    def head(self, n=5):
+        """
+        Returns the first n rows of the dataset.
+
+        Args:
+            n (int): Number of rows to return.
+
+        Returns:
+            list: The list of results, e.g. [{'id': 'abc123', 'text': 'hello world'}, ...]
+        """
+        # return self._head(n=n)
+        res = []
+        if n <= 0:
+            return res
+        iter_num = 0
+        for item in self.__iter__():
+            if iter_num >= n:
+                break
+            res.append(item)
+            iter_num += 1
+        return res
 
 
 class VirgoDataset(object):

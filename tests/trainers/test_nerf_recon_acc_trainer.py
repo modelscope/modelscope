@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import shutil
 import unittest
 
 from modelscope.msdatasets import MsDataset
@@ -9,6 +10,10 @@ from modelscope.utils.test_utils import test_level
 
 
 class TestNeRFReconAccTrainer(unittest.TestCase):
+
+    def tearDown(self):
+        shutil.rmtree('exp_nerf')
+        super().tearDown()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

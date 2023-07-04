@@ -19,8 +19,8 @@ from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
-from modelscope.tuners.control_sd_lora import ControlLoRATuner
-from modelscope.tuners.sd_lora import LoRATuner
+from modelscope.swift.control_sd_lora import ControlLoRATuner
+from modelscope.swift.sd_lora import LoRATuner
 from modelscope.utils.checkpoint import save_checkpoint, save_configuration
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks

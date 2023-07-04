@@ -14,6 +14,7 @@ from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel
 from modelscope.models.audio.sv.DTDNN import CAMPPlus
 from modelscope.utils.constant import Tasks
+from modelscope.utils.device import create_device
 
 
 class MultiHeadSelfAttention(nn.Module):
@@ -83,6 +84,7 @@ class PosEncoding(nn.Module):
             for len in input_len
         ])
 
+        input_pos = input_pos.to(list(self.pos_enc.parameters())[0].device)
         return self.pos_enc(input_pos)
 
 
@@ -265,6 +267,7 @@ class SpeakerChangeLocatorTransformer(TorchModel):
         self.feature_dim = self.model_config['fbank_dim']
         frame_size = self.model_config['frame_size']
         anchor_size = self.model_config['anchor_size']
+        self.device = create_device(kwargs['device'])
 
         self.encoder = CAMPPlus(self.feature_dim, output_level='frame')
         self.backend = TransformerDetector(
@@ -275,10 +278,16 @@ class SpeakerChangeLocatorTransformer(TorchModel):
 
         self.__load_check_point(pretrained_encoder, pretrained_backend)
 
+        self.encoder.to(self.device)
+        self.backend.to(self.device)
         self.encoder.eval()
         self.backend.eval()
 
     def forward(self, audio, anchors):
+        if isinstance(audio, np.ndarray):
+            audio = torch.from_numpy(audio)
+        if isinstance(anchors, np.ndarray):
+            anchors = torch.from_numpy(anchors)
         assert len(audio.shape) == 2 and audio.shape[
             0] == 1, 'modelscope error: the shape of input audio to model needs to be [1, T]'
         assert len(
@@ -287,8 +296,8 @@ class SpeakerChangeLocatorTransformer(TorchModel):
             1] == 2, 'modelscope error: the shape of input anchors to model needs to be [1, 2, D]'
         # audio shape: [1, T]
         feature = self.__extract_feature(audio)
-        frame_state = self.encoder(feature)
-        output = self.backend(frame_state, anchors)
+        frame_state = self.encoder(feature.to(self.device))
+        output = self.backend(frame_state, anchors.to(self.device))
         output = output.squeeze(0).detach().cpu().sigmoid()
 
         time_scale_factor = int(np.ceil(feature.shape[1] / output.shape[0]))
@@ -302,18 +311,17 @@ class SpeakerChangeLocatorTransformer(TorchModel):
         feature = feature.unsqueeze(0)
         return feature
 
-    def __load_check_point(self,
-                           pretrained_encoder,
-                           pretrained_backend,
-                           device=None):
-        if not device:
-            device = torch.device('cpu')
+    def __load_check_point(
+        self,
+        pretrained_encoder,
+        pretrained_backend,
+    ):
         self.encoder.load_state_dict(
             torch.load(
                 os.path.join(self.model_dir, pretrained_encoder),
-                map_location=device))
+                map_location=torch.device('cpu')))
 
         self.backend.load_state_dict(
             torch.load(
                 os.path.join(self.model_dir, pretrained_backend),
-                map_location=device))
+                map_location=torch.device('cpu')))

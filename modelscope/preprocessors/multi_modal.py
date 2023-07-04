@@ -11,6 +11,7 @@ import torch
 from PIL import Image
 from timm.data import create_transform
 from torchvision import transforms
+from torchvision.datasets import ImageFolder
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -48,8 +49,8 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.preprocessor_resolution = kwargs.pop('resolution', 512)
-        self.preprocessor_mean = kwargs.pop('mean', [0.5, 0.5, 0.5])
-        self.preprocessor_std = kwargs.pop('std', [0.5, 0.5, 0.5])
+        self.preprocessor_mean = kwargs.pop('mean', [0.5])
+        self.preprocessor_std = kwargs.pop('std', [0.5])
         self.preprocessor_image_keys = set(kwargs.pop('image_keys', []))
         self.transform_input = transforms.Compose([
             transforms.Resize(

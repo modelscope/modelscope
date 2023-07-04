@@ -60,7 +60,8 @@ class MsDataset:
     _dataset_context_config: DatasetContextConfig = None
 
     def __init__(self,
-                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset],
+                 ds_instance: Union[Dataset, IterableDataset, ExternalDataset,
+                                    NativeIterableDataset],
                  target: Optional[str] = None):
         self._hf_ds = ds_instance
         if target is not None and target not in self._hf_ds.features:
@@ -81,12 +82,6 @@ class MsDataset:
         return self._hf_ds[key]
 
     def __len__(self):
-        if isinstance(self._hf_ds, IterableDataset) or isinstance(
-                self._hf_ds, NativeIterableDataset):
-            logger.warning(
-                f'object of type `{self._hf_ds.__class__.__name__}` has default length 1'
-            )
-            return 1
         return len(self._hf_ds)
 
     @property
@@ -169,6 +164,7 @@ class MsDataset:
         REUSE_DATASET_IF_EXISTS,
         cache_dir: Optional[str] = MS_DATASETS_CACHE,
         use_streaming: Optional[bool] = False,
+        stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
         **config_kwargs,
@@ -196,6 +192,7 @@ class MsDataset:
                 use_streaming (bool, Optional): If set to True, no need to download all data files.
                                                 Instead, it streams the data progressively, and returns
                                                 NativeIterableDataset or a dict of NativeIterableDataset.
+                stream_batch_size (int, Optional): The batch size of the streaming data.
                 custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
@@ -250,6 +247,7 @@ class MsDataset:
             download_mode=download_mode,
             cache_root_dir=cache_dir,
             use_streaming=use_streaming,
+            stream_batch_size=stream_batch_size,
             **config_kwargs)
 
         # Load from local disk
@@ -272,11 +270,12 @@ class MsDataset:
                 dataset_context_config).load_dataset(
                     RemoteDataLoaderType.HF_DATA_LOADER)
             dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
-            dataset_inst._dataset_context_config = dataset_context_config
-            if custom_cfg:
-                dataset_inst.to_custom_dataset(
-                    custom_cfg=custom_cfg, **config_kwargs)
-                dataset_inst.is_custom = True
+            if isinstance(dataset_inst, MsDataset):
+                dataset_inst._dataset_context_config = dataset_context_config
+                if custom_cfg:
+                    dataset_inst.to_custom_dataset(
+                        custom_cfg=custom_cfg, **config_kwargs)
+                    dataset_inst.is_custom = True
             return dataset_inst
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
@@ -654,7 +653,7 @@ class MsDataset:
 
             def type_converter(self, x):
                 if self.to_tensor:
-                    return torch.tensor(x)
+                    return torch.as_tensor(x)
                 else:
                     return x
 

@@ -27,7 +27,8 @@ class UserSatisfactionEstimation(TorchModel):
     def __init__(self,
                  model_dir: str,
                  bert_name: str = None,
-                 device: str = None):
+                 device: str = None,
+                 **kwargs):
         """initialize the user satisfaction estimation model from the `model_dir` path. The default preprocessor
         for this task is DialogueClassificationUsePreprocessor.
 
@@ -36,7 +37,7 @@ class UserSatisfactionEstimation(TorchModel):
             bert_name: The pretrained model, default bert-base-chinese
             device: The device of running model, default cpu
         """
-        super().__init__(model_dir)
+        super().__init__(model_dir, **kwargs)
         self.model_dir = model_dir
         self.bert_name = bert_name if bert_name is not None else 'bert-base-chinese'
         self.device = 'cpu'

@@ -35,7 +35,7 @@ class AstScaningTest(unittest.TestCase):
     def test_ast_scaning_class(self):
         astScaner = AstScanning()
         pipeline_file = os.path.join(MODELSCOPE_PATH, 'pipelines', 'nlp',
-                                     'text_generation_pipeline.py')
+                                     'fill_mask_pipeline.py')
         output = astScaner.generate_ast(pipeline_file)
         self.assertTrue(output['imports'] is not None)
         self.assertTrue(output['from_imports'] is not None)
@@ -45,24 +45,19 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(imports, dict)
         self.assertIsInstance(from_imports, dict)
         self.assertIsInstance(decorators, list)
-        self.assertListEqual(
-            list(set(imports.keys()) - set(['torch', 'os'])), [])
-        self.assertEqual(len(from_imports.keys()), 10)
+        self.assertListEqual(list(set(imports.keys()) - set(['numpy'])), [])
+        self.assertEqual(len(from_imports.keys()), 8)
         self.assertTrue(from_imports['modelscope.metainfo'] is not None)
         self.assertEqual(from_imports['modelscope.metainfo'], ['Pipelines'])
-        self.assertEqual(
-            decorators,
-            [('PIPELINES', 'text-generation', 'text-generation'),
-             ('PIPELINES', 'text2text-generation', 'translation_en_to_de'),
-             ('PIPELINES', 'text2text-generation', 'translation_en_to_ro'),
-             ('PIPELINES', 'text2text-generation', 'translation_en_to_fr'),
-             ('PIPELINES', 'text2text-generation', 'text2text-generation')])
+        self.assertEqual(decorators,
+                         [('PIPELINES', 'fill-mask', 'fill-mask'),
+                          ('PIPELINES', 'fill-mask', 'fill-mask-ponet')])
 
     def test_files_scaning_method(self):
         fileScaner = FilesAstScanning()
         # case of pass in files directly
         pipeline_file = os.path.join(MODELSCOPE_PATH, 'pipelines', 'nlp',
-                                     'text_generation_pipeline.py')
+                                     'fill_mask_pipeline.py')
         file_list = [pipeline_file]
         output = fileScaner.get_files_scan_results(file_list)
         self.assertTrue(output[INDEX_KEY] is not None)

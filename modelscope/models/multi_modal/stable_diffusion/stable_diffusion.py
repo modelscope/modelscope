@@ -5,7 +5,9 @@ from typing import Callable, List, Optional, Union
 
 import torch
 import torch.nn.functional as F
+import xformers
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
+from packaging import version
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from modelscope.metainfo import Models
@@ -34,6 +36,7 @@ class StableDiffusion(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         revision = kwargs.pop('revision', None)
+        xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
@@ -65,6 +68,16 @@ class StableDiffusion(TorchModel):
             if self.lora_tune:
                 self.unet.requires_grad_(False)
             self.unet = self.unet.to(self.device)
+
+        # xformers accelerate memory efficient attention
+        if xformers_enable:
+            xformers_version = version.parse(xformers.__version__)
+            if xformers_version == version.parse('0.0.16'):
+                logger.warn(
+                    'xFormers 0.0.16 cannot be used for training in some GPUs. '
+                    'If you observe problems during training, please update xFormers to at least 0.0.17.'
+                )
+            self.unet.enable_xformers_memory_efficient_attention()
 
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.

@@ -181,7 +181,7 @@ class SpeakerVerificationPipeline(Pipeline):
         """Decoding
         """
         logger.info(
-            'Speaker Verification Processing: {0} ...'.format(audio_in))
+            'Speaker Verification Processing: {0} ...'.format(audio_in[500]))
 
         data_cmd, raw_inputs = None, None
         if isinstance(audio_in, tuple) or isinstance(audio_in, list):

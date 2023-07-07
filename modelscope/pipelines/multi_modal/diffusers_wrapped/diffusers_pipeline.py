@@ -66,8 +66,6 @@ class DiffusersPipeline(Pipeline):
     def __call__(
             self,
             input: Union[Input, List[Input]],
-            #  num_inference_steps: int = 30,
-            #  guidance_scale: float = 7.5,
             *args,
             **kwargs) -> Union[Dict[str, Any], Generator]:
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(

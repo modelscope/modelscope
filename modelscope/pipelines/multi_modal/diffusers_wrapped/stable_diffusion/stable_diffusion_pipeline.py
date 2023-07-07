@@ -55,7 +55,6 @@ class StableDiffusionPipeline(DiffusersPipeline):
             num_inference_steps: numbers of pipeline steps.
             guidance_scale: guide to classifier free scale guidance.
         """
-        print("--------num_inference_steps: ", num_inference_steps, "guidance_scale: ", guidance_scale)
         if not isinstance(inputs, dict):
             raise ValueError(
                 f'Expected the input to be a dictionary, but got {type(input)}'

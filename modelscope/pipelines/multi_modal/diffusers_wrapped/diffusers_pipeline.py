@@ -15,7 +15,7 @@ class DiffusersPipeline(Pipeline):
         """
         use `model` to create a diffusers pipeline
         Args:
-            model: model id on modelscope hub.
+            model: model id on modelscope hub or local dir.
             device: str = 'gpu'
         """
 
@@ -45,13 +45,15 @@ class DiffusersPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
 
-    def __call__(self, input: Union[Input, List[Input]], *args,
-                 **kwargs) -> Union[Dict[str, Any], Generator]:
+    def __call__(self, input: Union[Input, List[Input]], 
+                num_inference_steps: int = 30, 
+                guidance_scale: float = 7.5,
+                *args, **kwargs) -> Union[Dict[str, Any], Generator]:
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
             **kwargs)
         self._check_input(input)
         out = self.preprocess(input, **preprocess_params)
-        out = self.forward(out, **forward_params)
+        out = self.forward(out, num_inference_steps, guidance_scale, **forward_params)
         out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out

@@ -45,18 +45,33 @@ class DiffusersPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        """
+        this method should sanitize the keyword args to preprocessor params,
+        forward params and postprocess params on '__call__' or '_process_single' method
+        considered to be a normal classmethod with default implementation / output
+
+        Default Returns:
+            Dict[str, str]:  preprocess_params = {}
+            Dict[str, str]:  forward_params = {'num_inference_steps': 30, 'guidance_scale': 7.5}
+            Dict[str, str]:  postprocess_params = pipeline_parameters
+        """
+        forward_params = {}
+        forward_params['num_inference_steps'] = pipeline_parameters.pop('num_inference_steps', 30)
+        forward_params['guidance_scale'] = pipeline_parameters.pop('guidance_scale', 7.5)
+        return {}, forward_params, pipeline_parameters
+
     def __call__(self,
                  input: Union[Input, List[Input]],
-                 num_inference_steps: int = 30,
-                 guidance_scale: float = 7.5,
+                #  num_inference_steps: int = 30,
+                #  guidance_scale: float = 7.5,
                  *args,
                  **kwargs) -> Union[Dict[str, Any], Generator]:
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
             **kwargs)
         self._check_input(input)
         out = self.preprocess(input, **preprocess_params)
-        out = self.forward(out, num_inference_steps, guidance_scale,
-                           **forward_params)
+        out = self.forward(out, **forward_params)
         out = self.postprocess(out, **postprocess_params)
         self._check_output(out)
         return out

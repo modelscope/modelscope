@@ -57,16 +57,19 @@ class DiffusersPipeline(Pipeline):
             Dict[str, str]:  postprocess_params = pipeline_parameters
         """
         forward_params = {}
-        forward_params['num_inference_steps'] = pipeline_parameters.pop('num_inference_steps', 30)
-        forward_params['guidance_scale'] = pipeline_parameters.pop('guidance_scale', 7.5)
+        forward_params['num_inference_steps'] = pipeline_parameters.pop(
+            'num_inference_steps', 30)
+        forward_params['guidance_scale'] = pipeline_parameters.pop(
+            'guidance_scale', 7.5)
         return {}, forward_params, pipeline_parameters
 
-    def __call__(self,
-                 input: Union[Input, List[Input]],
-                #  num_inference_steps: int = 30,
-                #  guidance_scale: float = 7.5,
-                 *args,
-                 **kwargs) -> Union[Dict[str, Any], Generator]:
+    def __call__(
+            self,
+            input: Union[Input, List[Input]],
+            #  num_inference_steps: int = 30,
+            #  guidance_scale: float = 7.5,
+            *args,
+            **kwargs) -> Union[Dict[str, Any], Generator]:
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
             **kwargs)
         self._check_input(input)

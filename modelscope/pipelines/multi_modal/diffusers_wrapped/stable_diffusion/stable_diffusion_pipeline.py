@@ -46,8 +46,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs
 
-    def forward(self,
-                inputs: Dict[str, Any],
+    def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         """
         Args:

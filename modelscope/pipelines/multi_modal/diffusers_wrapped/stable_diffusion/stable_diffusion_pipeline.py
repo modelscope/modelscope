@@ -32,7 +32,6 @@ class StableDiffusionPipeline(DiffusersPipeline):
             model: model id on modelscope hub or local model dir.
         """
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
         torch_type = torch.float16 if self.device == 'cuda' else torch.float32
         self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
@@ -47,7 +46,15 @@ class StableDiffusionPipeline(DiffusersPipeline):
         return inputs
 
     def forward(self, inputs: Dict[str, Any],
+                num_inference_steps: int = 30, 
+                guidance_scale: float = 7.5,
                 **forward_params) -> Dict[str, Any]:
+        """
+        Args:
+            inputs: input dict including text key.
+            num_inference_steps: numbers of pipeline steps.
+            guidance_scale: guide to classifier free scale guidance.
+        """
         if not isinstance(inputs, dict):
             raise ValueError(
                 f'Expected the input to be a dictionary, but got {type(input)}'
@@ -57,7 +64,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
             raise ValueError('input should contain "text", but not found')
 
         images = self.pipeline(
-            inputs['text'], num_inference_steps=30, guidance_scale=7.5)
+            inputs['text'], num_inference_steps=num_inference_steps, guidance_scale=guidance_scale)
 
         return images
 

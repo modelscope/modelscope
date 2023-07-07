@@ -63,11 +63,8 @@ class DiffusersPipeline(Pipeline):
             'guidance_scale', 7.5)
         return {}, forward_params, pipeline_parameters
 
-    def __call__(
-            self,
-            input: Union[Input, List[Input]],
-            *args,
-            **kwargs) -> Union[Dict[str, Any], Generator]:
+    def __call__(self, input: Union[Input, List[Input]], *args,
+                 **kwargs) -> Union[Dict[str, Any], Generator]:
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
             **kwargs)
         self._check_input(input)

@@ -1,13 +1,14 @@
 import os
-from typing import List, Optional, Union, Dict
+from typing import Dict, List, Optional, Union
 
 from sentencepiece import SentencePieceProcessor
 from transformers import PreTrainedTokenizer
-from transformers.tokenization_utils_base import EncodedInput, BatchEncoding
+from transformers.tokenization_utils_base import BatchEncoding, EncodedInput
 from transformers.utils import PaddingStrategy
 
 
 class SPTokenizer:
+
     def __init__(self, model_path: str):
         # reload tokenizer
         assert os.path.isfile(model_path), model_path
@@ -20,7 +21,7 @@ class SPTokenizer:
         self.pad_id: int = self.sp_model.unk_id()
         assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
 
-        special_tokens = ["[MASK]", "[gMASK]", "[sMASK]", "sop", "eop"]
+        special_tokens = ['[MASK]', '[gMASK]', '[sMASK]', 'sop', 'eop']
         self.special_tokens = {}
         self.index_special_tokens = {}
         for token in special_tokens:
@@ -31,7 +32,10 @@ class SPTokenizer:
     def tokenize(self, s: str):
         return self.sp_model.EncodeAsPieces(s)
 
-    def encode(self, s: str, bos: bool = False, eos: bool = False) -> List[int]:
+    def encode(self,
+               s: str,
+               bos: bool = False,
+               eos: bool = False) -> List[int]:
         assert type(s) is str
         t = self.sp_model.encode(s)
         if bos:
@@ -55,49 +59,51 @@ class SPTokenizer:
 
     def convert_id_to_token(self, index):
         """Converts an index (integer) in a token (str) using the vocab."""
-        if index in self.index_special_tokens or index in [self.eos_id, self.bos_id, self.pad_id] or index < 0:
-            return ""
+        if index in self.index_special_tokens or index in [
+                self.eos_id, self.bos_id, self.pad_id
+        ] or index < 0:
+            return ''
         return self.sp_model.IdToPiece(index)
 
 
 class ChatGLM2Tokenizer(PreTrainedTokenizer):
-    vocab_files_names = {"vocab_file": "tokenizer.model"}
+    vocab_files_names = {'vocab_file': 'tokenizer.model'}
 
-    model_input_names = ["input_ids", "attention_mask", "position_ids"]
+    model_input_names = ['input_ids', 'attention_mask', 'position_ids']
 
-    def __init__(self, vocab_file, padding_side="left", **kwargs):
+    def __init__(self, vocab_file, padding_side='left', **kwargs):
         super().__init__(padding_side=padding_side, **kwargs)
-        self.name = "GLMTokenizer"
+        self.name = 'GLMTokenizer'
 
         self.vocab_file = vocab_file
         self.tokenizer = SPTokenizer(vocab_file)
         self.special_tokens = {
-            "<bos>": self.tokenizer.bos_id,
-            "<eos>": self.tokenizer.eos_id,
-            "<pad>": self.tokenizer.pad_id
+            '<bos>': self.tokenizer.bos_id,
+            '<eos>': self.tokenizer.eos_id,
+            '<pad>': self.tokenizer.pad_id
         }
 
     def get_command(self, token):
         if token in self.special_tokens:
             return self.special_tokens[token]
-        assert token in self.tokenizer.special_tokens, f"{token} is not a special token for {self.name}"
+        assert token in self.tokenizer.special_tokens, f'{token} is not a special token for {self.name}'
         return self.tokenizer.special_tokens[token]
 
     @property
     def pad_token(self) -> str:
-        return "<unk>"
+        return '<unk>'
 
     @property
     def pad_token_id(self):
-        return self.get_command("<pad>")
+        return self.get_command('<pad>')
 
     @property
     def eos_token(self) -> str:
-        return "</s>"
+        return '</s>'
 
     @property
     def eos_token_id(self):
-        return self.get_command("<eos>")
+        return self.get_command('<eos>')
 
     @property
     def vocab_size(self):
@@ -105,7 +111,10 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
 
     def get_vocab(self):
         """ Returns vocab as a dict """
-        vocab = {self._convert_id_to_token(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self._convert_id_to_token(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -137,36 +146,37 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
             `Tuple(str)`: Paths to the files saved.
         """
         if os.path.isdir(save_directory):
-            vocab_file = os.path.join(
-                save_directory, self.vocab_files_names["vocab_file"]
-            )
+            vocab_file = os.path.join(save_directory,
+                                      self.vocab_files_names['vocab_file'])
         else:
             vocab_file = save_directory
 
         with open(self.vocab_file, 'rb') as fin:
             proto_str = fin.read()
 
-        with open(vocab_file, "wb") as writer:
+        with open(vocab_file, 'wb') as writer:
             writer.write(proto_str)
 
-        return (vocab_file,)
+        return (vocab_file, )
 
     def get_prefix_tokens(self):
-        prefix_tokens = [self.get_command("[gMASK]"), self.get_command("sop")]
+        prefix_tokens = [self.get_command('[gMASK]'), self.get_command('sop')]
         return prefix_tokens
 
     def build_prompt(self, query, history=None):
         if history is None:
             history = []
-        prompt = ""
+        prompt = ''
         for i, (old_query, response) in enumerate(history):
-            prompt += "[Round {}]\n\n问：{}\n\n答：{}\n\n".format(i + 1, old_query, response)
-        prompt += "[Round {}]\n\n问：{}\n\n答：".format(len(history) + 1, query)
+            prompt += '[Round {}]\n\n问：{}\n\n答：{}\n\n'.format(
+                i + 1, old_query, response)
+        prompt += '[Round {}]\n\n问：{}\n\n答：'.format(len(history) + 1, query)
         return prompt
 
     def build_inputs_with_special_tokens(
-            self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A BERT sequence has the following format:
@@ -186,16 +196,18 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
         prefix_tokens = self.get_prefix_tokens()
         token_ids_0 = prefix_tokens + token_ids_0
         if token_ids_1 is not None:
-            token_ids_0 = token_ids_0 + token_ids_1 + [self.get_command("<eos>")]
+            token_ids_0 = token_ids_0 + token_ids_1 + [
+                self.get_command('<eos>')
+            ]
         return token_ids_0
 
     def _pad(
-            self,
-            encoded_inputs: Union[Dict[str, EncodedInput], BatchEncoding],
-            max_length: Optional[int] = None,
-            padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-            pad_to_multiple_of: Optional[int] = None,
-            return_attention_mask: Optional[bool] = None,
+        self,
+        encoded_inputs: Union[Dict[str, EncodedInput], BatchEncoding],
+        max_length: Optional[int] = None,
+        padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
+        pad_to_multiple_of: Optional[int] = None,
+        return_attention_mask: Optional[bool] = None,
     ) -> dict:
         """
         Pad encoded inputs (on left/right and up to predefined length or max length in the batch)
@@ -221,7 +233,7 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
                 (optional) Set to False to avoid returning attention mask (default: set to model specifics)
         """
         # Load from model defaults
-        assert self.padding_side == "left"
+        assert self.padding_side == 'left'
 
         required_input = encoded_inputs[self.model_input_names[0]]
         seq_length = len(required_input)
@@ -229,25 +241,33 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
         if padding_strategy == PaddingStrategy.LONGEST:
             max_length = len(required_input)
 
-        if max_length is not None and pad_to_multiple_of is not None and (max_length % pad_to_multiple_of != 0):
-            max_length = ((max_length // pad_to_multiple_of) + 1) * pad_to_multiple_of
+        if max_length is not None and pad_to_multiple_of is not None and (
+                max_length % pad_to_multiple_of != 0):
+            max_length = (
+                (max_length // pad_to_multiple_of) + 1) * pad_to_multiple_of
 
-        needs_to_be_padded = padding_strategy != PaddingStrategy.DO_NOT_PAD and len(required_input) != max_length
+        needs_to_be_padded = padding_strategy != PaddingStrategy.DO_NOT_PAD and len(
+            required_input) != max_length
 
         # Initialize attention mask if not present.
-        if "attention_mask" not in encoded_inputs:
-            encoded_inputs["attention_mask"] = [1] * seq_length
+        if 'attention_mask' not in encoded_inputs:
+            encoded_inputs['attention_mask'] = [1] * seq_length
 
-        if "position_ids" not in encoded_inputs:
-            encoded_inputs["position_ids"] = list(range(seq_length))
+        if 'position_ids' not in encoded_inputs:
+            encoded_inputs['position_ids'] = list(range(seq_length))
 
         if needs_to_be_padded:
             difference = max_length - len(required_input)
 
-            if "attention_mask" in encoded_inputs:
-                encoded_inputs["attention_mask"] = [0] * difference + encoded_inputs["attention_mask"]
-            if "position_ids" in encoded_inputs:
-                encoded_inputs["position_ids"] = [0] * difference + encoded_inputs["position_ids"]
-            encoded_inputs[self.model_input_names[0]] = [self.pad_token_id] * difference + required_input
+            if 'attention_mask' in encoded_inputs:
+                encoded_inputs['attention_mask'] = [
+                    0
+                ] * difference + encoded_inputs['attention_mask']
+            if 'position_ids' in encoded_inputs:
+                encoded_inputs['position_ids'] = [
+                    0
+                ] * difference + encoded_inputs['position_ids']
+            encoded_inputs[self.model_input_names[
+                0]] = [self.pad_token_id] * difference + required_input
 
         return encoded_inputs

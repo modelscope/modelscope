@@ -142,8 +142,7 @@ class SpeakerVerificationTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_diarization_common(self):
-        logger.info(
-            'Run speaker change locating for campplus-transformer model')
+        logger.info('Run speaker diarization task')
         result = self.run_pipeline(
             model_id=self.speaker_diarization_model_id,
             task=Tasks.speaker_diarization,

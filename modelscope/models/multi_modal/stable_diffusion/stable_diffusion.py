@@ -71,7 +71,7 @@ class StableDiffusion(TorchModel):
         # xformers accelerate memory efficient attention
         if xformers_enable:
             import xformers
-            
+
             xformers_version = version.parse(xformers.__version__)
             if xformers_version == version.parse('0.0.16'):
                 logger.warn(

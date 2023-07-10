@@ -661,7 +661,7 @@ class MplugOwlPreprocessor(Preprocessor):
 
         self._tokenizer = None
         self._patch_resize_transform = None
-        self.media_token = {'<image>': 65}
+        self.media_token = {'<|image|>': 65}
         self._image_map = {}
 
     @property
@@ -745,14 +745,15 @@ class MplugOwlPreprocessor(Preprocessor):
                     if isinstance(t, str):
                         text = f'{role}{t}'
                     else:
-                        text = f'{role}<image>'
+                        text = f'{role}<|image|>'
                         image.append(t['image'])
                     texts.append(text)
         texts = '\n'.join(texts)
         texts += '\nAI: '
         return image, texts
 
-    def __call__(self, messages: Dict[str, Any]) -> Dict[str, Any]:
+    def __call__(self, messages: Dict[str, Any],
+                 **forward_params) -> Dict[str, Any]:
         """
         Args:
             messages: {[
@@ -783,6 +784,7 @@ class MplugOwlPreprocessor(Preprocessor):
         output = {
             'pixel_values': pixel_values,
             'input_ids': input_ids,
+            **forward_params
         }
 
         return output

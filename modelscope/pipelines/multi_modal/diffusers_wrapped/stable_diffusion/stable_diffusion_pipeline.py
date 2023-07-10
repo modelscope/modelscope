@@ -109,8 +109,8 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
         if 'text' not in inputs:
             raise ValueError('input should contain "text", but not found')
-        
-        image = self.pipeline(
+
+        images = self.pipeline(
             prompt=inputs.get('text'),
             height=inputs.get('height'),
             width=inputs.get('width'),

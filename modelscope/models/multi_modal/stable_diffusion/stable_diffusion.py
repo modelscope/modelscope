@@ -5,7 +5,6 @@ from typing import Callable, List, Optional, Union
 
 import torch
 import torch.nn.functional as F
-import xformers
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
 from packaging import version
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -71,6 +70,8 @@ class StableDiffusion(TorchModel):
 
         # xformers accelerate memory efficient attention
         if xformers_enable:
+            import xformers
+            
             xformers_version = version.parse(xformers.__version__)
             if xformers_version == version.parse('0.0.16'):
                 logger.warn(

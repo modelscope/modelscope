@@ -27,8 +27,7 @@ if __name__ == '__main__':
     from funasr.utils.modelscope_param import modelscope_args
 
     params = modelscope_args(
-        model=
-        'damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+        model='damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     )
     params.output_dir = './checkpoint'  # 模型保存路径
     params.data_path = 'speech_asr_aishell1_trainsets'  # 数据路径，可以为modelscope中已上传数据，也可以是本地数据

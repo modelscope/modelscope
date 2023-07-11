@@ -10,7 +10,7 @@ def modelscope_finetune(params):
     if not os.path.exists(params.output_dir):
         os.makedirs(params.output_dir, exist_ok=True)
     # dataset split ["train", "validation"]
-    ds_dict = MsDataset.load(params.data_path, namespace='speech_asr', download_mode=None)
+    ds_dict = ASRDataset.load(params.data_path, namespace='speech_asr', download_mode=None)
     kwargs = dict(
         model=params.model,
         data_dir=ds_dict,

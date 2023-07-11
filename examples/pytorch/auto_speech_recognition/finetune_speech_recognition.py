@@ -1,15 +1,16 @@
 import os
 
-from modelscope.metainfo import Trainers
-from modelscope.msdatasets.audio.asr_dataset import ASRDataset
+from modelscope.msdatasets.dataset_cls.custom_datasets import ASRDataset
+from modelscope.utils.constant import DownloadMode
 from modelscope.trainers import build_trainer
+from modelscope.metainfo import Trainers
 
 
 def modelscope_finetune(params):
     if not os.path.exists(params.output_dir):
         os.makedirs(params.output_dir, exist_ok=True)
     # dataset split ["train", "validation"]
-    ds_dict = ASRDataset.load(params.data_path, namespace='speech_asr')
+    ds_dict = MsDataset.load(params.data_path, namespace='speech_asr', download_mode=None)
     kwargs = dict(
         model=params.model,
         data_dir=ds_dict,

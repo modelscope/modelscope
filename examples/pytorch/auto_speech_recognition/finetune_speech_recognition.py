@@ -37,6 +37,6 @@ if __name__ == '__main__':
     # 如果dataset_type="large"，batch_bins单位为毫秒，
     params.max_epoch = 50  # 最大训练轮数
     params.lr = 0.00005  # 设置学习率
-    params.download_mode = DownloadMode.FORCE_REDOWNLOAD  # 重新下载数据，否则不设置，使用默认值DownloadMode.REUSE_DATASET_IF_EXISTS
+    params.download_mode = DownloadMode.FORCE_REDOWNLOAD  # 重新下载数据，否则设置为默认值DownloadMode.REUSE_DATASET_IF_EXISTS
 
     modelscope_finetune(params)

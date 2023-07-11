@@ -10,7 +10,7 @@ def modelscope_finetune(params):
     if not os.path.exists(params.output_dir):
         os.makedirs(params.output_dir, exist_ok=True)
     # dataset split ["train", "validation"]
-    ds_dict = ASRDataset.load(params.data_path, namespace='speech_asr', download_mode=None)
+    ds_dict = ASRDataset.load(params.data_path, namespace='speech_asr', download_mode=params.download_mode)
     kwargs = dict(
         model=params.model,
         data_dir=ds_dict,
@@ -37,5 +37,6 @@ if __name__ == '__main__':
     # 如果dataset_type="large"，batch_bins单位为毫秒，
     params.max_epoch = 50  # 最大训练轮数
     params.lr = 0.00005  # 设置学习率
+    params.download_mode = DownloadMode.FORCE_REDOWNLOAD  # 重新下载数据，否则设置为None
 
     modelscope_finetune(params)

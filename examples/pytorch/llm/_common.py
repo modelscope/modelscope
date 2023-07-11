@@ -15,7 +15,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from datasets import Dataset as HFDataset, concatenate_datasets
+from datasets import Dataset as HFDataset
+from datasets import concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy import ndarray
@@ -159,13 +160,15 @@ def tokenize_function(example: Dict[str, str], tokenizer) -> Dict[str, Any]:
             instruction = instruction + input_
     output = example['output']
     src_text = PROMPT.format(instruction=instruction, add_special_tokens=False)
-    src_input_ids: List[int] = tokenizer(src_text, return_attention_mask=False,
-                                         add_special_tokens=True)['input_ids']
+    src_input_ids: List[int] = tokenizer(
+        src_text, return_attention_mask=False,
+        add_special_tokens=True)['input_ids']
     # tokenizer.bos_token_id: Avoid `tgt_input_ids` being empty
     tgt_input_ids = [tokenizer.bos_token_id]
     if output is not None:
-        tgt_input_ids += tokenizer(output, return_attention_mask=False,
-                                   add_special_tokens=False)['input_ids']
+        tgt_input_ids += tokenizer(
+            output, return_attention_mask=False,
+            add_special_tokens=False)['input_ids']
         tgt_input_ids += [tokenizer.eos_token_id]
         labels = [-100] * len(src_input_ids) + tgt_input_ids
     else:
@@ -313,7 +316,7 @@ def get_baichuan13B_model_tokenizer(model_dir: Optional[str] = None,
                                     load_model: bool = True):
     if model_dir is None:
         model_id = 'baichuan-inc/Baichuan-13B-Base'
-        model_dir = get_model_dir(model_id, 'v1.0.0')
+        model_dir = get_model_dir(model_id, 'v1.0.1')
     #
     sys.path.insert(0, model_dir)
     from configuration_baichuan import BaichuanConfig
@@ -353,7 +356,9 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None,
     return model, tokenizer
 
 
-def get_alpaca_en_zh_dataset(tokenize_function, only_val: bool = False) -> Tuple[HFDataset, HFDataset]:
+def get_alpaca_en_zh_dataset(
+        tokenize_function,
+        only_val: bool = False) -> Tuple[HFDataset, HFDataset]:
     """
     split: Literal['train', 'validation', None]
     """
@@ -412,8 +417,11 @@ def tensorboard_smoothing(values: List[float],
     return res
 
 
-def plot_image(tb_dir: str, smooth_key: List[str], smooth_val: float = 0.9,
-               figsize: Tuple[int, int] = (8, 5), dpi: int = 100) -> None:
+def plot_image(tb_dir: str,
+               smooth_key: List[str],
+               smooth_val: float = 0.9,
+               figsize: Tuple[int, int] = (8, 5),
+               dpi: int = 100) -> None:
     image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
     os.makedirs(image_dir, exist_ok=True)
     #

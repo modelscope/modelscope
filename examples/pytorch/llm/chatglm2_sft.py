@@ -1,5 +1,4 @@
 # ### Setting up experimental environment.
-
 """
 pip install modelscope
 pip install numpy pandas matplotlib scikit-learn
@@ -15,6 +14,7 @@ pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
 """
 
 from _common import *
+
 device_ids = [0, 1, 2, 3]
 logger.info(device_ids)
 select_device(device_ids)
@@ -38,8 +38,9 @@ if tokenizer.eos_token_id is None:
 if tokenizer.bos_token_id is None:
     tokenizer.bos_token_id = 1
 #
-logger.info(f'bos_token_id: {tokenizer.bos_token_id}, eos_token_id: {tokenizer.eos_token_id}, '
-            f'pad_token_id: {tokenizer.pad_token_id}')
+logger.info(
+    f'bos_token_id: {tokenizer.bos_token_id}, eos_token_id: {tokenizer.eos_token_id}, '
+    f'pad_token_id: {tokenizer.pad_token_id}')
 
 # ### Preparing lora
 LORA_RANK = 8
@@ -85,14 +86,17 @@ CONFIG = Config({
             'drop_last': True,
             'pin_memory': True
         },
-        'max_epochs': MAX_EPOCHS,
-        'work_dir': WORK_DIR,
+        'max_epochs':
+        MAX_EPOCHS,
+        'work_dir':
+        WORK_DIR,
         'optimizer': {
             'type': 'AdamW',
             'lr': 1e-4,
             'weight_decay': 0.01,
             'options': {
-                'cumulative_iters': 16, 'grad_clip': {
+                'cumulative_iters': 16,
+                'grad_clip': {
                     'norm_type': 2,
                     'max_norm': 2.0
                 }
@@ -112,15 +116,34 @@ CONFIG = Config({
             }
         },
         'hooks': [
-            {'type': 'CheckpointHook', 'by_epoch': False, 'interval': EVAL_INTERVAL, 'max_checkpoint_num': 1},
-            {'type': 'EvaluationHook', 'by_epoch': False, 'interval': EVAL_INTERVAL},
-            {'type': 'BestCkptSaverHook',
+            {
+                'type': 'CheckpointHook',
+                'by_epoch': False,
+                'interval': EVAL_INTERVAL,
+                'max_checkpoint_num': 1
+            },
+            {
+                'type': 'EvaluationHook',
+                'by_epoch': False,
+                'interval': EVAL_INTERVAL
+            },
+            {
+                'type': 'BestCkptSaverHook',
                 'metric_key': 'acc',
-                'save_best': True, 'rule': 'max', 'max_checkpoint_num': 1},
-            {'type': 'TextLoggerHook',
+                'save_best': True,
+                'rule': 'max',
+                'max_checkpoint_num': 1
+            },
+            {
+                'type': 'TextLoggerHook',
                 'by_epoch': True,  # Whether EpochBasedTrainer is used
-                'interval': 5},
-            {'type': 'TensorboardHook', 'by_epoch': False, 'interval': 5}
+                'interval': 5
+            },
+            {
+                'type': 'TensorboardHook',
+                'by_epoch': False,
+                'interval': 5
+            }
         ]
     },
     'evaluation': {
@@ -131,9 +154,10 @@ CONFIG = Config({
             'drop_last': False,
             'pin_memory': True
         },
-        'metrics': [
-            {'type': 'my_metric', 'vocab_size': tokenizer.vocab_size}
-        ]
+        'metrics': [{
+            'type': 'my_metric',
+            'vocab_size': tokenizer.vocab_size
+        }]
     }
 })
 

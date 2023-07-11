@@ -1,6 +1,7 @@
 # ### Setting up experimental environment.
 from _common import *
 from transformers import TextStreamer
+
 device_ids = [0, 1]
 logger.info(device_ids)
 select_device(device_ids)
@@ -36,17 +37,24 @@ _, test_dataset = get_alpaca_en_zh_dataset(None, True)
 # ### Inference
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 for d in test_dataset[:5]:
-    output = d["output"]
-    d["output"] = None
+    output = d['output']
+    d['output'] = None
     input_ids = tokenize_function(d, tokenizer)['input_ids']
     print(f'[TEST]{tokenizer.decode(input_ids)}', end='')
     input_ids = torch.tensor(input_ids)[None].cuda()
     attention_mask = torch.ones_like(input_ids)
-    generate_ids = model.generate(input_ids=input_ids, max_new_tokens=512,
-                                  attention_mask=attention_mask,
-                                  streamer=streamer, pad_token_id=tokenizer.pad_token_id,
-                                  temperature=0.7, top_k=50, do_sample=True)
+    generate_ids = model.generate(
+        input_ids=input_ids,
+        max_new_tokens=512,
+        attention_mask=attention_mask,
+        streamer=streamer,
+        pad_token_id=tokenizer.pad_token_id,
+        temperature=0.7,
+        top_k=50,
+        do_sample=True)
     print()
     print(f'[LABELS]{output}')
-    print('-----------------------------------------------------------------------------------')
+    print(
+        '-----------------------------------------------------------------------------------'
+    )
     # input('next[ENTER]')

@@ -15,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from datasets import Dataset as HFDataset, concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy import ndarray
@@ -49,15 +50,16 @@ from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
 #
-SYSTEM_TEXT = """{system}"""
-USER_TEXT = """\n\n### 用户
-{user}"""
-ASSISTANT_PROMPT = """\n\n### 助手
-"""
-MAX_LENGTH = 2048
-TEST_MAX_LENGTH = MAX_LENGTH
-
+TEST_SPLIT_P = 0.01
+SPLIT_SEED = 42
+MAX_LENGTH: Optional[int] = 2048
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
+
+PROMPT = """### 用户
+{instruction}
+### AI助手
+"""
+
 logger = get_logger()
 #
 
@@ -145,63 +147,40 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
     return T_max
 
 
-def tokenize_function(system: str, user: str, assistant: Optional[str],
-                      tokenizer) -> Dict[str, Any]:
+def tokenize_function(example: Dict[str, str], tokenizer) -> Dict[str, Any]:
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
-    system_text = SYSTEM_TEXT.format(system=system)
-    user_text = USER_TEXT.format(user=user)
-    system_text_ids: List[int] = tokenizer(
-        system_text, return_attention_mask=False,
-        add_special_tokens=True)['input_ids']
-    user_text_ids: List[int] = tokenizer(
-        user_text, return_attention_mask=False,
-        add_special_tokens=False)['input_ids']
-    assistant_p_input_ids: List[int] = tokenizer(
-        ASSISTANT_PROMPT,
-        return_attention_mask=False,
-        add_special_tokens=False)['input_ids']
-
-    # tokenizer.bos_token_id: Avoid `assistant` being empty
-    assistant_input_ids: List[int] = [tokenizer.bos_token_id]
-    if assistant is not None:
-        assistant_input_ids += tokenizer(
-            assistant, return_attention_mask=False,
-            add_special_tokens=False)['input_ids']
-        assistant_input_ids += [tokenizer.eos_token_id]
-    #
-    input_ids = system_text_ids + user_text_ids + assistant_p_input_ids + assistant_input_ids
-    if assistant is not None:  # train, val
-        if len(input_ids) > MAX_LENGTH:
-            return {}
-        len_mask = len(input_ids) - len(assistant_input_ids)
-        labels = [-100] * len_mask + assistant_input_ids
-    else:  # test
-        input_ids = input_ids[-TEST_MAX_LENGTH:]
+    instruction = example['instruction']
+    input_: str = example['input']
+    if input_ is not None and input_ != '':
+        # instruction = instruction + '\n'
+        if input_.startswith('输入：'):
+            instruction = instruction + input_[3:]
+        else:
+            instruction = instruction + input_
+    output = example['output']
+    src_text = PROMPT.format(instruction=instruction, add_special_tokens=False)
+    src_input_ids: List[int] = tokenizer(src_text, return_attention_mask=False,
+                                         add_special_tokens=True)['input_ids']
+    # tokenizer.bos_token_id: Avoid `tgt_input_ids` being empty
+    tgt_input_ids = [tokenizer.bos_token_id]
+    if output is not None:
+        tgt_input_ids += tokenizer(output, return_attention_mask=False,
+                                   add_special_tokens=False)['input_ids']
+        tgt_input_ids += [tokenizer.eos_token_id]
+        labels = [-100] * len(src_input_ids) + tgt_input_ids
+    else:
         labels = None
-
+    input_ids = src_input_ids + tgt_input_ids
+    #
+    if MAX_LENGTH is not None:
+        input_ids = input_ids[-MAX_LENGTH:]
+        if labels is not None:
+            labels = labels[-MAX_LENGTH:]
     #
     return {'input_ids': input_ids, 'labels': labels}
 
 
-class MyDataset(TorchCustomDataset):
-
-    def __init__(self, system: List[str], user: List[str],
-                 assistant: List[str], tokenize_function) -> None:
-        self._data = []
-        for i in tqdm(range(len(system))):
-            _d = tokenize_function(system[i], user[i], assistant[i])
-            if len(_d) == 0:
-                continue
-            self._data.append(_d)
-
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        return self._data[idx]
-
-    def __len__(self) -> int:
-        return len(self._data)
-
-
-def stat_dataset(dataset: 'MyDataset') -> None:
+def stat_dataset(dataset: HFDataset) -> None:
     """Statistical analysis was performed on the data set"""
     _token_len = []
     for d in dataset:
@@ -305,8 +284,8 @@ class MyMetric(Metric):
         raise NotImplementedError
 
 
-def get_baichuan_model_tokenizer(model_dir: Optional[str] = None,
-                                 load_model: bool = True):
+def get_baichuan7B_model_tokenizer(model_dir: Optional[str] = None,
+                                   load_model: bool = True):
     if model_dir is None:
         model_id = 'baichuan-inc/baichuan-7B'
         model_dir = get_model_dir(model_id, None)
@@ -322,6 +301,31 @@ def get_baichuan_model_tokenizer(model_dir: Optional[str] = None,
     model = None
     if load_model:
         model = BaiChuanForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            device_map='auto',
+            torch_dtype=torch.float16)
+    #
+    return model, tokenizer
+
+
+def get_baichuan13B_model_tokenizer(model_dir: Optional[str] = None,
+                                    load_model: bool = True):
+    if model_dir is None:
+        model_id = 'baichuan-inc/Baichuan-13B-Base'
+        model_dir = get_model_dir(model_id, 'v1.0.0')
+    #
+    sys.path.insert(0, model_dir)
+    from configuration_baichuan import BaichuanConfig
+    from tokenization_baichuan import BaichuanTokenizer
+    from modeling_baichuan import BaichuanForCausalLM
+    model_config = BaichuanConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch.float16
+    logger.info(f'model_config: {model_config}')
+    tokenizer = BaichuanTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = BaichuanForCausalLM.from_pretrained(
             model_dir,
             config=model_config,
             device_map='auto',
@@ -349,27 +353,30 @@ def get_chatglm2_model_tokenizer(model_dir: Optional[str] = None,
     return model, tokenizer
 
 
-def make_dataset(
-    split: str, tokenize_function: Callable[[str, str, Optional[str]],
-                                            Dict[str, Any]]
-) -> MyDataset:
+def get_alpaca_en_zh_dataset(tokenize_function, only_val: bool = False) -> Tuple[HFDataset, HFDataset]:
     """
-    split: Literal['train', 'validation']
+    split: Literal['train', 'validation', None]
     """
-    dataset = MsDataset.load(
-        'modelscope/ms_hackathon_23_agent_train_dev', split=split)
-    system = []
-    user = []
-    assistant = []
-    for d in dataset:
-        content = ast.literal_eval(d['conversations'])
-        s = content[0]['value']
-        assert len(content) % 2 == 1
-        for i in range(len(content) // 2):
-            system.append(s)
-            user.append(content[2 * i + 1]['value'])
-            assistant.append(content[2 * i + 2]['value'])
-    return MyDataset(system, user, assistant, tokenize_function)
+
+    dataset_en: HFDataset = MsDataset.load(
+        'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
+    dataset_zh: HFDataset = MsDataset.load(
+        'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
+    dataset_en = dataset_en.remove_columns(['text'])
+    dataset: HFDataset = concatenate_datasets([dataset_zh, dataset_en])
+    #
+    # dataset = dataset.select(range(1000))  # for debug
+    dataset = dataset.train_test_split(TEST_SPLIT_P, seed=SPLIT_SEED)
+    if only_val:
+        dataset = dataset['test']
+    if tokenize_function is not None:
+        dataset = dataset.map(tokenize_function)
+        dataset = dataset.remove_columns(['instruction', 'input', 'output'])
+    #
+    if only_val:
+        return None, dataset
+    else:
+        return dataset['train'], dataset['test']
 
 
 Item = Dict[str, float]
@@ -405,17 +412,30 @@ def tensorboard_smoothing(values: List[float],
     return res
 
 
-def plot_image(data: Dict[str, List[Item]], key_name: str,
-               smooth: float) -> Figure:
-    _data = data[key_name]
-    steps = [d['step'] for d in _data]
-    values = [d['value'] for d in _data]
-    fig, ax = plt.subplots(1, 1, squeeze=True, figsize=(8, 5), dpi=100)
-    ax.set_title(key_name)
-    if smooth != 0:
-        ax.plot(steps, values, color=COLOR)
-        values_s = tensorboard_smoothing(values, smooth)
-        ax.plot(steps, values_s, color=COLOR_S)
-    else:
-        ax.plot(steps, values, color=COLOR_S)
-    return fig
+def plot_image(tb_dir: str, smooth_key: List[str], smooth_val: float = 0.9,
+               figsize: Tuple[int, int] = (8, 5), dpi: int = 100) -> None:
+    image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
+    os.makedirs(image_dir, exist_ok=True)
+    #
+    fname = os.listdir(tb_dir)[0]
+    tb_path = os.path.join(tb_dir, fname)
+    data = read_tensorboard_file(tb_path)
+    #
+    for k in data.keys():
+        _data = data[k]
+        steps = [d['step'] for d in _data]
+        values = [d['value'] for d in _data]
+        if len(values) == 0:
+            continue
+        _, ax = plt.subplots(1, 1, squeeze=True, figsize=figsize, dpi=dpi)
+        ax.set_title(k)
+        if len(values) == 1:
+            ax.scatter(steps, values, color=COLOR_S)
+        elif k in smooth_key:
+            ax.plot(steps, values, color=COLOR)
+            values_s = tensorboard_smoothing(values, smooth_val)
+            ax.plot(steps, values_s, color=COLOR_S)
+        else:
+            ax.plot(steps, values, color=COLOR_S)
+        fpath = os.path.join(image_dir, k.replace('/', '_'))
+        plt.savefig(fpath, dpi=dpi, bbox_inches='tight')

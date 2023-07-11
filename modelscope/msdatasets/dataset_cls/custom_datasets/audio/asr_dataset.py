@@ -37,17 +37,15 @@ class ASRDataset(MsDataset):
              dev_set='validation',
              download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
         if os.path.exists(dataset_name):
-            if download_mode != DownloadMode.FORCE_REDOWNLOAD:
-                data_dir = dataset_name
-                ds_dict = {}
-                ds_dict['train'] = cls.load_core(data_dir, train_set)
-                ds_dict['validation'] = cls.load_core(data_dir, dev_set)
-                ds_dict['raw_data_dir'] = data_dir
-            else:
-                ds_dict = MsDataset.load(
-                dataset_name=dataset_name, namespace=namespace, download_mode=download_mode)
+            data_dir = dataset_name
+            ds_dict = {}
+            ds_dict['train'] = cls.load_core(data_dir, train_set)
+            ds_dict['validation'] = cls.load_core(data_dir, dev_set)
+            ds_dict['raw_data_dir'] = data_dir
+            return ds_dict
         else:
+            from modelscope.msdatasets import MsDataset
             ds_dict = MsDataset.load(
                 dataset_name=dataset_name, namespace=namespace, download_mode=download_mode)
-        return ds_dict 
+            return ds_dict
         

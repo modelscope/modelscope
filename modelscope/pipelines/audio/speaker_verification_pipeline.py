@@ -181,13 +181,16 @@ class SpeakerVerificationPipeline(Pipeline):
         """Decoding
         """
         if isinstance(audio_in, str):
-            if os.path.isfile(audio_in) or audio_in.startswith("http") :
+            if os.path.isfile(audio_in) or audio_in.startswith('http'):
                 # 如果是文件路径或 URL，则输出 audio_in
                 logger.info(f'Speaker Verification Processing: {audio_in} ...')
-            else: # bytes
-                 logger.info(f'Speaker Verification Processing: {str(audio_in)[:50]} ...')
-        else: # tuple (str, str) or (bytes, bytes)
-            logger.info(f'Speaker Verification Processing: {str(audio_in)[:500]} ...')
+            else:  # bytes
+                logger.info(
+                    f'Speaker Verification Processing: {str(audio_in)[:50]} ...'
+                )
+        else:  # tuple (str, str) or (bytes, bytes)
+            logger.info(
+                f'Speaker Verification Processing: {str(audio_in)[:500]} ...')
 
         data_cmd, raw_inputs = None, None
         if isinstance(audio_in, tuple) or isinstance(audio_in, list):

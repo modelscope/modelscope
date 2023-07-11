@@ -35,7 +35,7 @@ class ASRDataset(MsDataset):
              namespace='speech_asr',
              train_set='train',
              dev_set='validation',
-             download_mode: Optional[DownloadMode] = None):
+             download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
         if os.path.exists(dataset_name):
             if download_mode != DownloadMode.FORCE_REDOWNLOAD:
                 data_dir = dataset_name

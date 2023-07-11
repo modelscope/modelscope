@@ -223,11 +223,20 @@ class CsvDatasetBuilder(csv.Csv):
             if field_name.endswith(':FILE'):
                 transform_fields.append(field_name)
 
-        base_extracted_dir = self.split_path_dict.get(split_name, '')
+        base_extracted_dir: Union[str, list] = self.split_path_dict.get(split_name, '')
         for field_name in transform_fields:
-            if base_extracted_dir:
-                df[field_name] = df[field_name].apply(
-                    lambda x: os.path.join(base_extracted_dir, x))
+            if isinstance(base_extracted_dir, list) and len(base_extracted_dir) > 0:
+                if df.shape[0] != len(base_extracted_dir):
+                    logger.error(
+                        f"Number of lines in meta-csv file for split '{split_name}' ({df.shape[0]}) "
+                        f"does not match number of data-files({len(base_extracted_dir)})!"
+                    )
+                else:
+                    df[field_name] = base_extracted_dir
+            elif isinstance(base_extracted_dir, str) and base_extracted_dir:
+                df[field_name] = df[field_name].apply(lambda x: os.path.join(base_extracted_dir, x))
+            else:
+                logger.warning(f'Nothing to do for field {field_name}')
 
         pa_data = pa.Table.from_pandas(df)
         return Dataset(arrow_table=pa_data)

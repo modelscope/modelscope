@@ -4,7 +4,6 @@ import os
 
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.utils.constant import DownloadMode
-from typing import Optional
 
 
 class ASRDataset(MsDataset):
@@ -37,19 +36,18 @@ class ASRDataset(MsDataset):
              train_set='train',
              dev_set='validation',
             download_mode: Optional[DownloadMode] = None):
-        if download_mode is not None:
-            ds_dict = MsDataset.load(
-                dataset_name=dataset_name, namespace=namespace, download_mode=download_mode)
-            return ds_dict
-        else:
-            if os.path.exists(dataset_name):
+        if os.path.exists(dataset_name):
+            if download_mode != DownloadMode.FORCE_REDOWNLOAD:
                 data_dir = dataset_name
                 ds_dict = {}
                 ds_dict['train'] = cls.load_core(data_dir, train_set)
                 ds_dict['validation'] = cls.load_core(data_dir, dev_set)
                 ds_dict['raw_data_dir'] = data_dir
-                return ds_dict
             else:
                 ds_dict = MsDataset.load(
-                    dataset_name=dataset_name, namespace=namespace)
-                return ds_dict
+                dataset_name=dataset_name, namespace=namespace, download_mode=download_mode)
+        else:
+            ds_dict = MsDataset.load(
+                dataset_name=dataset_name, namespace=namespace, download_mode=download_mode)
+        return ds_dict 
+        

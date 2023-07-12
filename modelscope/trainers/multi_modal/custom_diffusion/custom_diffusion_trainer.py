@@ -2,12 +2,14 @@
 import hashlib
 import itertools
 import os
+import random
 import shutil
 import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from diffusers import DiffusionPipeline
@@ -329,7 +331,12 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             class_data_dir: the path to the class data directory.
             num_class_images: the number of class images to generate.
             prior_loss_weight: the weight of the prior loss.
-
+            modifier_token:
+            initializer_token:
+            freeze_model:
+            sample_batch_size:
+            train_batch_size:
+            center_crop:
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   True)
@@ -346,6 +353,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         self.freeze_model = kwargs.pop('freeze_model', 'crossattn_kv')
         self.sample_batch_size = kwargs.pop('sample_batch_size', 4)
         self.train_batch_size = kwargs.pop('train_batch_size', 2)
+        self.center_crop = kwargs.pop('center_crop', False)
         instance_data_name = kwargs.pop(
             'instance_data_name', 'buptwq/lora-stable-diffusion-finetune-dog')
 
@@ -354,8 +362,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             self.instance_data_dir = instance_data_name
         else:
             ds = MsDataset.load(instance_data_name)
-            self.instance_data_dir = os.path.dirname(
-                next(iter(ds))['Target:FILE'])
+            # print("--------next(iter(ds)): ", next(iter(ds)))
+            self.instance_data_dir = next(iter(ds))[-1] + '/data'
 
         self.concepts_list = [{
             'instance_prompt': self.instance_prompt,
@@ -419,14 +427,14 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             self.model.text_encoder.text_model.embeddings.position_embedding.
             parameters(),
         )
-        freeze_params(params_to_freeze)
+        self.freeze_params(params_to_freeze)
 
         # Save checkpoint and configurate files
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
         ckpt_hook.set_processor(
-            CustomCheckpointProcessor(modifier_token_id, modifier_token))
+            CustomCheckpointProcessor(self.modifier_token_id, modifier_token))
 
         # Add new Custom Diffusion weights to the attention layers
         attention_class = CustomDiffusionAttnProcessor
@@ -440,14 +448,16 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 'attn1.processor'
             ) else self.model.unet.config.cross_attention_dim
             if name.startswith('mid_block'):
-                hidden_size = unet.config.block_out_channels[-1]
+                hidden_size = self.model.unet.config.block_out_channels[-1]
             elif name.startswith('up_blocks'):
                 block_id = int(name[len('up_blocks.')])
-                hidden_size = list(reversed(
-                    unet.config.block_out_channels))[block_id]
+                hidden_size = list(
+                    reversed(
+                        self.model.unet.config.block_out_channels))[block_id]
             elif name.startswith('down_blocks'):
                 block_id = int(name[len('down_blocks.')])
-                hidden_size = unet.config.block_out_channels[block_id]
+                hidden_size = self.model.unet.config.block_out_channels[
+                    block_id]
             layer_name = name.split('.processor')[0]
             weights = {
                 'to_k_custom_diffusion.weight':
@@ -501,7 +511,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
 
         # Generate class images if prior preservation is enabled.
         if self.with_prior_preservation:
-            generate_image()
+            self.generate_image()
 
         # Dataset and DataLoaders creation:
         train_dataset = CustomDiffusionDataset(
@@ -522,7 +532,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             train_dataset,
             batch_size=self.train_batch_size,
             shuffle=True,
-            collate_fn=lambda examples: collate_fn(examples),
+            collate_fn=lambda examples: self.collate_fn(examples),
             num_workers=2,
         )
         self.iter_train_dataloader = itertools.cycle(train_dataloader)
@@ -576,8 +586,6 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 pipeline.set_progress_bar_config(disable=True)
 
                 num_new_images = self.num_class_images - cur_class_images
-                logger.info(
-                    f'Number of class images to sample: {num_new_images}.')
 
                 sample_dataset = PromptDataset(self.class_prompt,
                                                num_new_images)
@@ -710,11 +718,11 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             ).weight.grad
             # Get the index for tokens that we want to zero the grads for
             index_grads_to_zero = torch.arange(len(
-                self.model.tokenizer)) != modifier_token_id[0]
+                self.model.tokenizer)) != self.modifier_token_id[0]
             for i in range(len(modifier_token_id[1:])):
                 index_grads_to_zero = index_grads_to_zero & (
                     torch.arange(len(self.model.tokenizer)) !=
-                    modifier_token_id[i])
+                    self.modifier_token_id[i])
             grads_text_encoder.data[
                 index_grads_to_zero, :] = grads_text_encoder.data[
                     index_grads_to_zero, :].fill_(0)

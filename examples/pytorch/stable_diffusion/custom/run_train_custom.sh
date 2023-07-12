@@ -6,7 +6,7 @@ PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/custom/finetune_stable_d
     --work_dir './tmp/custom_diffusion' \
     --class_data_dir './tmp/class_data' \
     --train_dataset_name 'buptwq/lora-stable-diffusion-finetune-dog' \
-    --max_epochs 2 \
+    --max_epochs 1 \
     --modifier_token "<new1>" \
     --num_class_images=200 \
     --save_ckpt_strategy 'by_epoch' \

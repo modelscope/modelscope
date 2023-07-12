@@ -29,9 +29,10 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
     CheckpointProcessor
 from modelscope.trainers.optimizer.builder import build_optimizer
+from modelscope.utils.data_utils import to_device
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
-from modelscope.utils.constant import ModeKeys
+from modelscope.utils.constant import ModeKeys, TrainerStages
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import is_dist
 
@@ -56,12 +57,13 @@ class CustomCheckpointProcessor(CheckpointProcessor):
         """Save the state dict for custom diffusion model.
         """
         trainer.model.unet = trainer.model.unet.to(torch.float32)
-        unet.save_attn_procs(output_dir)
-        learned_embeds = text_encoder.get_input_embeddings().weight
-        for x, y in zip(self.modifier_token_id, self.modifier_token):
+        trainer.model.unet.save_attn_procs(output_dir)
+
+        learned_embeds = trainer.model.text_encoder.get_input_embeddings().weight
+        for x, y in zip([self.modifier_token_id], self.modifier_token):
             learned_embeds_dict = {}
             learned_embeds_dict[y] = learned_embeds[x]
-            torch.save(learned_embeds_dict, f'{output_dir}/{y}.bin')
+            torch.save(learned_embeds_dict, f"{output_dir}/{y}.bin")
 
 
 class CustomDiffusionDataset(Dataset):
@@ -337,6 +339,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             sample_batch_size:
             train_batch_size:
             center_crop:
+
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   True)
@@ -433,7 +436,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
         ckpt_hook.set_processor(
-            CustomCheckpointProcessor(self.modifier_token_id, modifier_token))
+            CustomCheckpointProcessor(self.modifier_token, self.modifier_token_id))
 
         # Add new Custom Diffusion weights to the attention layers
         attention_class = CustomDiffusionAttnProcessor
@@ -558,9 +561,9 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         mask = mask.to(memory_format=torch.contiguous_format).float()
 
         batch = {
-            'input_ids': input_ids.to(self.device),
-            'pixel_values': pixel_values.to(self.device),
-            'mask': mask.unsqueeze(1).to(self.device)
+            'input_ids': input_ids,
+            'pixel_values': pixel_values,
+            'mask': mask.unsqueeze(1)
         }
         return batch
 
@@ -625,6 +628,55 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
+    
+    def train_loop(self, data_loader):
+        """ Training loop used by `EpochBasedTrainer.train()`
+        """
+        self.invoke_hook(TrainerStages.before_run)
+        self.model.train()
+        for _ in range(self._epoch, self._max_epochs):
+            self.invoke_hook(TrainerStages.before_train_epoch)
+            for i, data_batch in enumerate(data_loader):
+                if i < self.inner_iter:
+                    # inner_iter may be read out from the checkpoint file, so skip the trained iters in the epoch.
+                    continue
+                data_batch = to_device(data_batch, self.device)
+                self.data_batch = data_batch
+                self._inner_iter = i
+                self.invoke_hook(TrainerStages.before_train_iter)
+                self.train_step(self.model, data_batch)
+                self.invoke_hook(TrainerStages.after_train_iter)
+                # Zero out the gradients for all token embeddings except the newly added
+                # embeddings for the concept to optimize the concept embeddings.
+                if self.modifier_token is not None:
+                    grads_text_encoder = self.model.text_encoder.get_input_embeddings(
+                    ).weight.grad
+                    # Get the index for tokens that we want to zero the grads.
+                    index_grads_to_zero = torch.arange(len(
+                        self.model.tokenizer)) != self.modifier_token_id[0]
+                    for i in range(len(self.modifier_token_id[1:])):
+                        index_grads_to_zero = index_grads_to_zero & (
+                            torch.arange(len(self.model.tokenizer)) !=
+                            self.modifier_token_id[i])
+                    grads_text_encoder.data[
+                        index_grads_to_zero, :] = grads_text_encoder.data[
+                            index_grads_to_zero, :].fill_(0)
+                # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
+                del self.data_batch
+                self._iter += 1
+                self._mode = ModeKeys.TRAIN
+
+                if i + 1 >= self.iters_per_epoch:
+                    break
+
+            self.invoke_hook(TrainerStages.after_train_epoch)
+            # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
+            self._inner_iter = 0
+            self._epoch += 1
+            if self._stop_training:
+                break
+
+        self.invoke_hook(TrainerStages.after_run)
 
     def train_step(self, model, inputs):
         """ Perform a training step on a batch of inputs.
@@ -642,13 +694,15 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         Return:
             `torch.Tensor`: The tensor with training loss on this batch.
         """
-        model.train()
+        self.model.unet.train()
+        if self.modifier_token is not None:
+            self.model.text_encoder.train()
         self._mode = ModeKeys.TRAIN
 
         batch = next(self.iter_train_dataloader)
         # Convert images to latent space
         latents = self.model.vae.encode(batch['pixel_values'].to(
-            dtype=torch.float32)).latent_dist.sample()
+            dtype=torch.float32).to(self.device)).latent_dist.sample()
         latents = latents * self.model.vae.config.scaling_factor
 
         # Sample noise that we'll add to the latents
@@ -657,36 +711,36 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         # Sample a random timestep for each image
         timesteps = torch.randint(
             0,
-            noise_scheduler.config.num_train_timesteps, (bsz, ),
+            self.model.noise_scheduler.config.num_train_timesteps, (bsz, ),
             device=latents.device)
         timesteps = timesteps.long()
 
         # Add noise to the latents according to the noise magnitude at each timestep
         # (this is the forward diffusion process)
-        noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+        noisy_latents = self.model.noise_scheduler.add_noise(latents, noise, timesteps)
 
         # Get the text embedding for conditioning
-        encoder_hidden_states = self.model.text_encoder(batch['input_ids'])[0]
+        encoder_hidden_states = self.model.text_encoder(batch['input_ids'].to(self.device))[0]
 
         # Predict the noise residual
         model_pred = self.model.unet(noisy_latents, timesteps,
                                      encoder_hidden_states).sample
 
         # Get the target for loss depending on the prediction type
-        if noise_scheduler.config.prediction_type == 'epsilon':
+        if self.model.noise_scheduler.config.prediction_type == 'epsilon':
             target = noise
-        elif noise_scheduler.config.prediction_type == 'v_prediction':
-            target = noise_scheduler.get_velocity(latents, noise, timesteps)
+        elif self.model.noise_scheduler.config.prediction_type == 'v_prediction':
+            target = self.model.noise_scheduler.get_velocity(latents, noise, timesteps)
         else:
             raise ValueError(
-                f'Unknown prediction type {noise_scheduler.config.prediction_type}'
+                f'Unknown prediction type {self.model.noise_scheduler.config.prediction_type}'
             )
 
         if self.with_prior_preservation:
             # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
             model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
             target, target_prior = torch.chunk(target, 2, dim=0)
-            mask = torch.chunk(batch['mask'], 2, dim=0)[0]
+            mask = torch.chunk(batch['mask'].to(self.device), 2, dim=0)[0]
             # Compute instance loss
             loss = F.mse_loss(
                 model_pred.float(), target.float(), reduction='none')
@@ -701,29 +755,13 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             # Add the prior loss to the instance loss.
             loss = loss + self.prior_loss_weight * prior_loss
         else:
-            mask = batch['mask']
+            mask = batch['mask'].to(self.device)
             loss = F.mse_loss(
                 model_pred.float(), target.float(), reduction='none')
             loss = ((loss * mask).sum([1, 2, 3]) / mask.sum([1, 2, 3])).mean()
 
         train_outputs = {}
         train_outputs[OutputKeys.LOSS] = loss
-
-        # Zero out the gradients for all token embeddings except the newly added
-        # embeddings for the concept, as we only want to optimize the concept embeddings
-        if self.modifier_token is not None:
-            grads_text_encoder = self.model.text_encoder.get_input_embeddings(
-            ).weight.grad
-            # Get the index for tokens that we want to zero the grads for
-            index_grads_to_zero = torch.arange(len(
-                self.model.tokenizer)) != self.modifier_token_id[0]
-            for i in range(len(modifier_token_id[1:])):
-                index_grads_to_zero = index_grads_to_zero & (
-                    torch.arange(len(self.model.tokenizer)) !=
-                    self.modifier_token_id[i])
-            grads_text_encoder.data[
-                index_grads_to_zero, :] = grads_text_encoder.data[
-                    index_grads_to_zero, :].fill_(0)
 
         # add model output info to log
         if 'log_vars' not in train_outputs:

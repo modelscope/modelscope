@@ -35,7 +35,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_stable_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
         model_revision = 'v1.0.7'
@@ -67,7 +67,7 @@ class TestStableDiffusionTrainer(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_stable_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
         model_revision = 'v1.0.7'

@@ -3,7 +3,6 @@ import hashlib
 import itertools
 import os
 import random
-import shutil
 import warnings
 from pathlib import Path
 from typing import Union
@@ -296,8 +295,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         if os.path.isdir(instance_data_name):
             self.instance_data_dir = instance_data_name
         else:
-            ds = MsDataset.load(instance_data_name)
-            self.instance_data_dir = next(iter(ds))[-1] + '/data'
+            ds = MsDataset.load(instance_data_name, split='train')
+            self.instance_data_dir = os.path.dirname(next(iter(ds))['Target:FILE'])
 
         self.concepts_list = [{
             'instance_prompt': self.instance_prompt,

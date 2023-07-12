@@ -362,7 +362,6 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             self.instance_data_dir = instance_data_name
         else:
             ds = MsDataset.load(instance_data_name)
-            # print("--------next(iter(ds)): ", next(iter(ds)))
             self.instance_data_dir = next(iter(ds))[-1] + '/data'
 
         self.concepts_list = [{
@@ -545,8 +544,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         input_ids = [example['instance_prompt_ids'] for example in examples]
         pixel_values = [example['instance_images'] for example in examples]
         mask = [example['mask'] for example in examples]
-        # Concat class and instance examples for prior preservation.
-        # We do this to avoid doing two forward passes.
+        # Concat class and instance examples which avoid doing two forward passes.
         if self.with_prior_preservation:
             input_ids += [example['class_prompt_ids'] for example in examples]
             pixel_values += [example['class_images'] for example in examples]
@@ -560,9 +558,9 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         mask = mask.to(memory_format=torch.contiguous_format).float()
 
         batch = {
-            'input_ids': input_ids,
-            'pixel_values': pixel_values,
-            'mask': mask.unsqueeze(1)
+            'input_ids': input_ids.to(self.device),
+            'pixel_values': pixel_values.to(self.device),
+            'mask': mask.unsqueeze(1).to(self.device)
         }
         return batch
 
@@ -726,64 +724,6 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             grads_text_encoder.data[
                 index_grads_to_zero, :] = grads_text_encoder.data[
                     index_grads_to_zero, :].fill_(0)
-
-        # if self.with_prior_preservation:
-        #     # Convert to latent space
-        #     batch = next(self.iter_class_dataloader)
-        #     target_prior = batch['pixel_values'].to(self.device)
-        #     input_ids = batch['input_ids'].to(self.device)
-        #     with torch.no_grad():
-        #         latents = self.model.vae.encode(
-        #             target_prior.to(dtype=torch.float32)).latent_dist.sample()
-        #     latents = latents * self.model.vae.config.scaling_factor
-
-        #     # Sample noise that we'll add to the latents
-        #     noise = torch.randn_like(latents)
-        #     bsz = latents.shape[0]
-        #     # Sample a random timestep for each image
-        #     timesteps = torch.randint(
-        #         0,
-        #         self.model.noise_scheduler.num_train_timesteps, (bsz, ),
-        #         device=latents.device)
-        #     timesteps = timesteps.long()
-
-        #     # Add noise to the latents according to the noise magnitude at each timestep
-        #     # (this is the forward diffusion process)
-        #     noisy_latents = self.model.noise_scheduler.add_noise(
-        #         latents, noise, timesteps)
-
-        #     # Get the text embedding for conditioning
-        #     with torch.no_grad():
-        #         encoder_hidden_states = self.model.text_encoder(input_ids)[0]
-
-        #     # Get the target for loss depending on the prediction type
-        #     if self.model.noise_scheduler.config.prediction_type == 'epsilon':
-        #         target_prior = noise
-        #     elif self.model.noise_scheduler.config.prediction_type == 'v_prediction':
-        #         target_prior = self.model.noise_scheduler.get_velocity(
-        #             latents, noise, timesteps)
-        #     else:
-        #         raise ValueError(
-        #             f'Unknown prediction type {self.model.noise_scheduler.config.prediction_type}'
-        #         )
-
-        #     # Predict the noise residual and compute loss
-        #     model_pred_prior = self.model.unet(noisy_latents, timesteps,
-        #                                        encoder_hidden_states).sample
-
-        #     # Compute prior loss
-        #     prior_loss = F.mse_loss(
-        #         model_pred_prior.float(),
-        #         target_prior.float(),
-        #         reduction='mean')
-        #     # Add the prior loss to the instance loss.
-        #     train_outputs[
-        #         OutputKeys.LOSS] += self.prior_loss_weight * prior_loss
-
-        # if isinstance(train_outputs, ModelOutputBase):
-        #     train_outputs = train_outputs.to_dict()
-        # if not isinstance(train_outputs, dict):
-        #     raise TypeError('"model.forward()" must return a dict')
 
         # # add model output info to log
         # if 'log_vars' not in train_outputs:

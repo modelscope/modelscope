@@ -1,16 +1,19 @@
 import os
 
-from modelscope.msdatasets.dataset_cls.custom_datasets import ASRDataset
-from modelscope.utils.constant import DownloadMode
-from modelscope.trainers import build_trainer
 from modelscope.metainfo import Trainers
+from modelscope.msdatasets.dataset_cls.custom_datasets import ASRDataset
+from modelscope.trainers import build_trainer
+from modelscope.utils.constant import DownloadMode
 
 
 def modelscope_finetune(params):
     if not os.path.exists(params.output_dir):
         os.makedirs(params.output_dir, exist_ok=True)
     # dataset split ["train", "validation"]
-    ds_dict = ASRDataset.load(params.data_path, namespace='speech_asr', download_mode=params.download_mode)
+    ds_dict = ASRDataset.load(
+        params.data_path,
+        namespace='speech_asr',
+        download_mode=params.download_mode)
     kwargs = dict(
         model=params.model,
         data_dir=ds_dict,
@@ -27,7 +30,8 @@ if __name__ == '__main__':
     from funasr.utils.modelscope_param import modelscope_args
 
     params = modelscope_args(
-        model='damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+        model=
+        'damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
     )
     params.output_dir = './checkpoint'  # 模型保存路径
     params.data_path = 'speech_asr_aishell1_trainsets'  # 数据路径，可以为modelscope中已上传数据，也可以是本地数据

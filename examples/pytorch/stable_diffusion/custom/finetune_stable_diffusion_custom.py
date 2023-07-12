@@ -85,7 +85,7 @@ class StableDiffusionCustomArguments(TrainingArgs):
         })
 
     instance_data_name: str = field(
-        default='buptwq/custom-stable-diffusion-cat',
+        default='buptwq/lora-stable-diffusion-finetune-dog',
         metadata={
             'help': 'The instance data local dir or online ID.',
         })

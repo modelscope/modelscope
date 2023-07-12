@@ -265,12 +265,13 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             class_data_dir: the path to the class data directory.
             num_class_images: the number of class images to generate.
             prior_loss_weight: the weight of the prior loss.
-            modifier_token:
-            initializer_token:
-            freeze_model:
-            sample_batch_size:
-            train_batch_size:
-            center_crop:
+            modifier_token: A token to use as a modifier for the concept.
+            initializer_token: A token to use as initializer word.
+            freeze_model: crossattn to enable fine-tuning of all params in the cross attention.
+            sample_batch_size: Batch size (per device) for sampling images.
+            train_batch_size: Batch size (per device) for the training dataloader.
+            center_crop: execute center crop or not.
+            instance_data_name: The instance data local dir or online ID.
 
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',

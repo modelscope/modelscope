@@ -68,6 +68,7 @@ class CustomCheckpointProcessor(CheckpointProcessor):
 
 
 class CustomDiffusionDataset(Dataset):
+
     def __init__(
         self,
         concepts_list,

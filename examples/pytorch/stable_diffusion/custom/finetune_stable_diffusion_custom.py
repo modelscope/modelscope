@@ -36,8 +36,7 @@ class StableDiffusionCustomArguments(TrainingArgs):
     num_class_images: int = field(
         default=200,
         metadata={
-            'help':
-            'Minimal class images for prior preservation loss. If there are not enough images already present in class_data_dir, additional images will be sampled with class_prompt.',
+            'help': 'Minimal class images for prior preservation loss.',
         })
 
     train_batch_size: int = field(

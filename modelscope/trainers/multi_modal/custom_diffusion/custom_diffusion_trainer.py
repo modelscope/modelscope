@@ -29,10 +29,10 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
     CheckpointProcessor
 from modelscope.trainers.optimizer.builder import build_optimizer
-from modelscope.utils.data_utils import to_device
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.constant import ModeKeys, TrainerStages
+from modelscope.utils.data_utils import to_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import is_dist
 
@@ -59,11 +59,12 @@ class CustomCheckpointProcessor(CheckpointProcessor):
         trainer.model.unet = trainer.model.unet.to(torch.float32)
         trainer.model.unet.save_attn_procs(output_dir)
 
-        learned_embeds = trainer.model.text_encoder.get_input_embeddings().weight
+        learned_embeds = trainer.model.text_encoder.get_input_embeddings(
+        ).weight
         for x, y in zip([self.modifier_token_id], self.modifier_token):
             learned_embeds_dict = {}
             learned_embeds_dict[y] = learned_embeds[x]
-            torch.save(learned_embeds_dict, f"{output_dir}/{y}.bin")
+            torch.save(learned_embeds_dict, f'{output_dir}/{y}.bin')
 
 
 class CustomDiffusionDataset(Dataset):
@@ -436,7 +437,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
         ckpt_hook.set_processor(
-            CustomCheckpointProcessor(self.modifier_token, self.modifier_token_id))
+            CustomCheckpointProcessor(self.modifier_token,
+                                      self.modifier_token_id))
 
         # Add new Custom Diffusion weights to the attention layers
         attention_class = CustomDiffusionAttnProcessor
@@ -628,7 +630,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 f'please check if your torch with version: {torch.__version__} matches the config.'
             )
             raise e
-    
+
     def train_loop(self, data_loader):
         """ Training loop used by `EpochBasedTrainer.train()`
         """
@@ -652,8 +654,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                     grads_text_encoder = self.model.text_encoder.get_input_embeddings(
                     ).weight.grad
                     # Get the index for tokens that we want to zero the grads.
-                    index_grads_to_zero = torch.arange(len(
-                        self.model.tokenizer)) != self.modifier_token_id[0]
+                    index_grads_to_zero = torch.arange(
+                        len(self.model.tokenizer)) != self.modifier_token_id[0]
                     for i in range(len(self.modifier_token_id[1:])):
                         index_grads_to_zero = index_grads_to_zero & (
                             torch.arange(len(self.model.tokenizer)) !=
@@ -717,10 +719,12 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
 
         # Add noise to the latents according to the noise magnitude at each timestep
         # (this is the forward diffusion process)
-        noisy_latents = self.model.noise_scheduler.add_noise(latents, noise, timesteps)
+        noisy_latents = self.model.noise_scheduler.add_noise(
+            latents, noise, timesteps)
 
         # Get the text embedding for conditioning
-        encoder_hidden_states = self.model.text_encoder(batch['input_ids'].to(self.device))[0]
+        encoder_hidden_states = self.model.text_encoder(batch['input_ids'].to(
+            self.device))[0]
 
         # Predict the noise residual
         model_pred = self.model.unet(noisy_latents, timesteps,
@@ -730,7 +734,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         if self.model.noise_scheduler.config.prediction_type == 'epsilon':
             target = noise
         elif self.model.noise_scheduler.config.prediction_type == 'v_prediction':
-            target = self.model.noise_scheduler.get_velocity(latents, noise, timesteps)
+            target = self.model.noise_scheduler.get_velocity(
+                latents, noise, timesteps)
         else:
             raise ValueError(
                 f'Unknown prediction type {self.model.noise_scheduler.config.prediction_type}'

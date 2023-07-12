@@ -156,7 +156,7 @@ pipe = pipeline(
     modifier_token='<new1>',
     model_revision=args.model_revision)
 
-output = pipe({'text': args.prompt})
+output = pipe({'text': args.instance_prompt})
 # visualize the result on ipynb and save it
 output
 cv2.imwrite('./custom_result.png', output['output_imgs'][0])

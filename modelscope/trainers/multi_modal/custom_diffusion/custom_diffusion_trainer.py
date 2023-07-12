@@ -5,7 +5,6 @@ import os
 import random
 import shutil
 import warnings
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Union
 
@@ -23,7 +22,7 @@ from tqdm.auto import tqdm
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
-from modelscope.outputs import ModelOutputBase, OutputKeys
+from modelscope.outputs import OutputKeys
 from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
@@ -33,7 +32,6 @@ from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.constant import ModeKeys, TrainerStages
 from modelscope.utils.data_utils import to_device
-from modelscope.utils.file_utils import func_receive_dict_inputs
 from modelscope.utils.torch_utils import is_dist
 
 

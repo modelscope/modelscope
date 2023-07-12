@@ -539,10 +539,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
 
                     for i, image in enumerate(images):
                         hash_image = hashlib.sha1(image.tobytes()).hexdigest()
-                        image_filename = (
-                            class_images_dir /
-                            f"{example['index'][i] + cur_class_images}-{hash_image}.jpg"
-                        )
+                        save_index = example['index'][i] + cur_class_images
+                        image_filename = class_images_dir / f'{save_index}-{hash_image}.jpg'
                         image.save(image_filename)
 
                 del pipeline
@@ -593,9 +591,10 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                         index_grads_to_zero = index_grads_to_zero & (
                             torch.arange(len(self.model.tokenizer)) !=
                             self.modifier_token_id[i])
+                    grads_data = grads_text_encoder.data[
+                        index_grads_to_zero, :].fill_(0)
                     grads_text_encoder.data[
-                        index_grads_to_zero, :] = grads_text_encoder.data[
-                            index_grads_to_zero, :].fill_(0)
+                        index_grads_to_zero, :] = grads_data
                 # Value changed after the hooks are invoked, do not move them above the invoke_hook code.
                 del self.data_batch
                 self._iter += 1

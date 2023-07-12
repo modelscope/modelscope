@@ -296,7 +296,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             self.instance_data_dir = instance_data_name
         else:
             ds = MsDataset.load(instance_data_name, split='train')
-            self.instance_data_dir = os.path.dirname(next(iter(ds))['Target:FILE'])
+            self.instance_data_dir = os.path.dirname(
+                next(iter(ds))['Target:FILE'])
 
         self.concepts_list = [{
             'instance_prompt': self.instance_prompt,
@@ -585,7 +586,9 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                     index_grads_to_zero = torch.arange(
                         len(self.model.tokenizer)) != self.modifier_token_id[0]
                     for i in range(len(self.modifier_token_id[1:])):
-                        modifier_flag = torch.arange(len(self.model.tokenizer)) != self.modifier_token_id[i]
+                        modifier_flag = torch.arange(
+                            len(self.model.tokenizer)
+                        ) != self.modifier_token_id[i]
                         index_grads_to_zero = index_grads_to_zero & modifier_flag
                     grads_data = grads_text_encoder.data[
                         index_grads_to_zero, :].fill_(0)

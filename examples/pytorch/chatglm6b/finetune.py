@@ -8,7 +8,6 @@ from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq
 
 from modelscope import snapshot_download
-from modelscope.metainfo import Models
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.swift import Swift
@@ -187,10 +186,8 @@ model_config['model'] = ConfigDict({
     'type': config['model']['type'],
 })
 
-if config['model']['type'] == 'chatglm6b':
-    model_config['model']['pre_seq_len'] = args.pre_seq_len
-    model_config['model']['prefix_projection'] = args.prefix_projection
-
+model_config['model']['pre_seq_len'] = args.pre_seq_len
+model_config['model']['prefix_projection'] = args.prefix_projection
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 
 device_map_kwargs = {}
@@ -334,13 +331,10 @@ def preprocess_function_train(examples):
 
             pad_len = max_seq_length - len(input_ids)
             input_ids = input_ids + [tokenizer.pad_token_id] * pad_len
-            if config['model']['type'] == 'chatglm6b':
-                labels = labels + [tokenizer.pad_token_id] * pad_len
-                if args.ignore_pad_token_for_loss:
-                    labels = [(lb if lb != tokenizer.pad_token_id else -100)
-                              for lb in labels]
-            else:
-                labels = labels + [-100] * pad_len
+            labels = labels + [tokenizer.pad_token_id] * pad_len
+            if args.ignore_pad_token_for_loss:
+                labels = [(lb if lb != tokenizer.pad_token_id else -100)
+                          for lb in labels]
 
             model_inputs['input_ids'].append(input_ids)
             model_inputs['labels'].append(labels)
@@ -372,8 +366,7 @@ data_collator = DataCollatorForSeq2Seq(
     padding=False)
 
 model.gradient_checkpointing_enable()
-if config['model']['type'] == 'chatglm6b':
-    model.enable_input_require_grads()
+model.enable_input_require_grads()
 
 # import torch
 # model = torch.nn.DataParallel(model).cuda()

@@ -306,6 +306,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('mpi4py', (is_package_available('mpi4py'), MPI4PY_IMPORT_ERROR)),
     ('open_clip', (is_package_available('open_clip'), OPENCLIP_IMPORT_ERROR)),
     ('taming', (is_package_available('taming'), TAMING_IMPORT_ERROR)),
+    ('xformers', (is_package_available('xformers'), XFORMERS_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

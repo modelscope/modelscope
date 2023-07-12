@@ -168,3 +168,9 @@ TAMING_IMPORT_ERROR = """
 {0} requires the timm library but it was not found in your environment. You can install it with pip:
 `pip install taming-transformers-rom1504`
 """
+
+# docstyle-ignore
+XFORMERS_IMPORT_ERROR = """
+{0} requires the timm library but it was not found in your environment. You can install it with pip:
+`pip install xformers>=0.0.17`
+"""

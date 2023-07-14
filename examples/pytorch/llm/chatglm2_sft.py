@@ -3,44 +3,29 @@
 pip install modelscope
 pip install numpy pandas matplotlib scikit-learn
 pip install transformers datasets
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install tqdm
-pip install tensorboard
-pip install torchmetrics
-pip install sentencepiece
-pip install accelerate
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer accelerate
 
 pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
 """
 
 from _common import *
 
-device_ids = [0, 1, 2, 3]
-logger.info(device_ids)
+device_ids = [0, 1]
 select_device(device_ids)
 seed_everything(42)
 
 # ### Loading Model and Tokenizer
-model_id = 'ZhipuAI/chatglm2-6b'
 WORK_DIR = 'runs/chatglm2'
 LORA_TARGET_MODULES = ['query_key_value']
 #
-model_dir = get_model_dir(model_id, None)
+model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
 model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
-# chatglm2 does not support gradient_checkpointing
-GRADIENT_CHECKPOINTING = False
+#
+GRADIENT_CHECKPOINTING = True
 if GRADIENT_CHECKPOINTING:
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
-logger.info(tokenizer.special_tokens)
-if tokenizer.eos_token_id is None:
-    tokenizer.eos_token_id = tokenizer.pad_token_id
-if tokenizer.bos_token_id is None:
-    tokenizer.bos_token_id = 1
-#
-logger.info(
-    f'bos_token_id: {tokenizer.bos_token_id}, eos_token_id: {tokenizer.eos_token_id}, '
-    f'pad_token_id: {tokenizer.pad_token_id}')
 
 # ### Preparing lora
 LORA_RANK = 8

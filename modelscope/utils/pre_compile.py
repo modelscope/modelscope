@@ -20,6 +20,8 @@ def pre_compile_all():
     if torch.cuda.is_available():  # extension require cuda.
         pre_compile_megatron_util()
 
+    # pre compile pai-easycv
+    from easycv.thirdparty.deformable_attention.functions import ms_deform_attn_func
     # extension for all platform.
 
 

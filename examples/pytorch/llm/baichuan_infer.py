@@ -4,13 +4,11 @@ from transformers import TextStreamer
 
 device_ids = [0, 1]
 select_device(device_ids)
+# Note: You need to set the value of `CKPT_FPATH`
+CKPT_FAPTH = '/path/to/your/iter_xxx.pth'
 
 # ### Loading Model and Tokenizer
-# Note: You need to set the value of `CKPT_FPATH`
 BAICHUAN_TYPE = '13B'  # Literal['7B', '13B']
-CKPT_FAPTH = '/path/to/your/iter_xxx.pth'
-LORA_TARGET_MODULES = ['W_pack']
-
 if BAICHUAN_TYPE == '7B':
     model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
     model, tokenizer = get_baichuan7B_model_tokenizer(model_dir)
@@ -20,6 +18,7 @@ else:
 model.bfloat16()  # Consistent with training
 
 # ### Preparing lora
+LORA_TARGET_MODULES = ['W_pack']
 LORA_RANK = 8
 LORA_ALPHA = 32
 LORA_DROPOUT_P = 0  # Arbitrary value

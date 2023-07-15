@@ -18,7 +18,6 @@ seed_everything(42)
 # ### Loading Model and Tokenizer
 BAICHUAN_TYPE = '13B'  # Literal['7B', '13B']
 WORK_DIR = f'runs/baichuan_{BAICHUAN_TYPE}'
-LORA_TARGET_MODULES = ['W_pack']
 #
 if BAICHUAN_TYPE == '7B':
     model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
@@ -41,6 +40,7 @@ if GRADIENT_CHECKPOINTING:
     model.enable_input_require_grads()
 
 # ### Preparing lora
+LORA_TARGET_MODULES = ['W_pack']
 LORA_RANK = 8
 LORA_ALPHA = 32
 LORA_DROPOUT_P = 0.1

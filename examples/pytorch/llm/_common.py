@@ -152,7 +152,7 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
 
 def tokenize_function(example: Dict[str, str],
                       tokenizer,
-                      max_length: int = 2048) -> Dict[str, Any]:
+                      max_length: Optional[int] = 2048) -> Dict[str, Any]:
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     instruction = example['instruction']
     input_: str = example['input']
@@ -204,8 +204,10 @@ def stat_dataset(dataset: HFDataset) -> None:
 
 def print_examples(examples: Dict[str, Any], tokenizer) -> None:
     input_ids, labels = examples['input_ids'], examples['labels']
-    print(f'[INPUT_IDS] {tokenizer.decode(input_ids)}')
+    print(f'[INPUT_IDS] {input_ids}')
+    print(f'[INPUT] {tokenizer.decode(input_ids)}')
     print()
+    print(f'[LABLES_IDS] {labels}')
     print(
         f'[LABLES] {tokenizer.decode([lb if lb != -100 else 0 for lb in labels])}'
     )
@@ -287,7 +289,7 @@ class MyMetric(Metric):
         }
 
     def merge(self, other: 'MyMetric') -> None:
-        """This script does not support ddp"""
+        """This script does not support ddp. TODO"""
         raise NotImplementedError
 
 

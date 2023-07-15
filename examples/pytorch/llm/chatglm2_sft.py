@@ -17,7 +17,6 @@ seed_everything(42)
 
 # ### Loading Model and Tokenizer
 WORK_DIR = 'runs/chatglm2'
-LORA_TARGET_MODULES = ['query_key_value']
 #
 model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
 model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
@@ -28,6 +27,7 @@ if GRADIENT_CHECKPOINTING:
     model.enable_input_require_grads()
 
 # ### Preparing lora
+LORA_TARGET_MODULES = ['query_key_value']
 LORA_RANK = 8
 LORA_ALPHA = 32
 LORA_DROPOUT_P = 0.1

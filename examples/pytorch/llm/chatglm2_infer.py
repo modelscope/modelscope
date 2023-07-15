@@ -4,17 +4,16 @@ from transformers import TextStreamer
 
 device_ids = [0, 1]
 select_device(device_ids)
-
-# ### Loading Model and Tokenizer
 # Note: You need to set the value of `CKPT_FPATH`
 CKPT_FAPTH = '/path/to/your/iter_xxx.pth'
-LORA_TARGET_MODULES = ['query_key_value']
 
+# ### Loading Model and Tokenizer
 model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
 model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
 model.bfloat16()  # Consistent with training
 
 # ### Preparing lora
+LORA_TARGET_MODULES = ['query_key_value']
 LORA_RANK = 8
 LORA_ALPHA = 32
 LORA_DROPOUT_P = 0  # Arbitrary value

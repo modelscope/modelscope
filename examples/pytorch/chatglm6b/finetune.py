@@ -172,6 +172,7 @@ def cfg_modify_fn(cfg):
             cfg.train.hooks = []
         cfg.train.hooks.append({
             'type': 'TorchAMPOptimizerHook',
+            # Optional loss_scale parameter here.
         })
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \

@@ -187,7 +187,7 @@ class CheckpointProcessor:
             model: The model instance.
             train_state_file: The target file name for saving trainer states.
             meta: Some extra meta info.
-            save_optimizers: Save optimizers
+            save_optimizers: Save optimizers state or not.
         """
         save_checkpoint(
             model,

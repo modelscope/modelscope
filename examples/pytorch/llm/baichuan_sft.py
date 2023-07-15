@@ -3,35 +3,27 @@
 pip install modelscope
 pip install numpy pandas matplotlib scikit-learn
 pip install transformers datasets
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install tqdm
-pip install tensorboard
-pip install torchmetrics
-pip install sentencepiece
-pip install accelerate
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer accelerate
 
 pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
 """
 
 from _common import *
 
-device_ids = [0, 1, 2, 3]
-logger.info(device_ids)
+device_ids = [0, 1]
 select_device(device_ids)
 seed_everything(42)
 
 # ### Loading Model and Tokenizer
 BAICHUAN_TYPE = '13B'  # Literal['7B', '13B']
 WORK_DIR = f'runs/baichuan_{BAICHUAN_TYPE}'
-LORA_TARGET_MODULES = ['W_pack']
 #
 if BAICHUAN_TYPE == '7B':
-    model_id = 'baichuan-inc/baichuan-7B'
-    model_dir = get_model_dir(model_id, None)
+    model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
     model, tokenizer = get_baichuan7B_model_tokenizer(model_dir)
 else:
-    model_id = 'baichuan-inc/Baichuan-13B-Base'
-    model_dir = get_model_dir(model_id, 'v1.0.1')
+    model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base', 'v1.0.2')
     model, tokenizer = get_baichuan13B_model_tokenizer(model_dir)
 #
 GRADIENT_CHECKPOINTING = True
@@ -46,14 +38,9 @@ if GRADIENT_CHECKPOINTING:
             model)
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
-if tokenizer.pad_token_id is None:
-    tokenizer.pad_token_id = tokenizer.eos_token_id
-#
-logger.info(
-    f'bos_token_id: {tokenizer.bos_token_id}, eos_token_id: {tokenizer.eos_token_id}, '
-    f'pad_token_id: {tokenizer.pad_token_id}')
 
 # ### Preparing lora
+LORA_TARGET_MODULES = ['W_pack']
 LORA_RANK = 8
 LORA_ALPHA = 32
 LORA_DROPOUT_P = 0.1

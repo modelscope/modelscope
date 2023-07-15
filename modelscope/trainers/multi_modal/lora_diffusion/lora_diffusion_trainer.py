@@ -21,7 +21,8 @@ class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         """Save the state dict for lora tune model.
         """
         trainer.model.unet = trainer.model.unet.to(torch.float32)

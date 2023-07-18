@@ -41,9 +41,9 @@ render_dir = 'exp'
 ### when use nerf-synthesis dataset, data_type should specify as 'blender'
 nerf_recon_4k = pipeline(
     Tasks.nerf_recon_4k,
-    model='./damo_4knerf',
-    enc_ckpt_path="/home/admin/wzs/4K-NeRF/logs/llff/joint_fern_l1+gan/ckpt_saved/fine_100000.tar",
-    dec_ckpt_path="/home/admin/wzs/4K-NeRF/logs/llff/joint_fern_l1+gan/ckpt_saved/sresrnet_100000.pth",
+    model='../cv_nerf-3d-reconstruction-4k-nerf_damo',
+    enc_ckpt_path="../cv_nerf-3d-reconstruction-4k-nerf_damo/fine_100000.tar",
+    dec_ckpt_path="../cv_nerf-3d-reconstruction-4k-nerf_damo/sresrnet_100000.pth",
     # enc_ckpt_path="/home/admin/wzs/4K-NeRF/logs/syn/drums_4k/fine_180000.tar",
     # dec_ckpt_path="/home/admin/wzs/4K-NeRF/logs/syn/drums_4k/sresrnet_180000.pth",
     # model_dir='../4K-NeRF/logs/llff/joint_fern_l1+gan',

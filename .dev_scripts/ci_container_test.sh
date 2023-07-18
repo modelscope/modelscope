@@ -1,4 +1,6 @@
 if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+    pip config set install.trusted-host mirrors.aliyun.com
     pip install -r requirements/tests.txt
     git config --global --add safe.directory /Maas-lib
     git config --global user.email tmp

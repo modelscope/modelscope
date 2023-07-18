@@ -10,6 +10,14 @@ from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import GenerationConfig as GenerationConfigHF
 
 from modelscope import snapshot_download
+from modelscope.utils.constant import Invoke
+
+
+def user_agent(invoked_by=None):
+    if invoked_by is None:
+        invoked_by = Invoke.PRETRAINED
+    uagent = '%s/%s' % (Invoke.KEY, invoked_by)
+    return uagent
 
 
 class AutoModel(AutoModelHF):
@@ -20,7 +28,9 @@ class AutoModel(AutoModelHF):
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
-                pretrained_model_name_or_path, revision=revision)
+                pretrained_model_name_or_path,
+                revision=revision,
+                user_agent=user_agent())
         else:
             model_dir = pretrained_model_name_or_path
 
@@ -35,7 +45,9 @@ class AutoModelForCausalLM(AutoModelForCausalLMHF):
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
-                pretrained_model_name_or_path, revision=revision)
+                pretrained_model_name_or_path,
+                revision=revision,
+                user_agent=user_agent())
         else:
             model_dir = pretrained_model_name_or_path
 
@@ -50,7 +62,9 @@ class AutoModelForSeq2SeqLM(AutoModelForSeq2SeqLMHF):
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
-                pretrained_model_name_or_path, revision=revision)
+                pretrained_model_name_or_path,
+                revision=revision,
+                user_agent=user_agent())
         else:
             model_dir = pretrained_model_name_or_path
 

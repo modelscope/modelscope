@@ -1,0 +1,16 @@
+{
+    "framework": "pytorch",
+    "task": "nerf-recon-4k",
+    "pipeline": {
+        "type": "nerf-recon-4k"
+
+    },
+    "model": {
+        "type": "nerf-recon-4k",
+        "test_ray_chunk": 8192,
+        "test_tile": 510,
+        "stepsize": 1.0,
+        "factor": 4,
+        "load_sr": 1
+    }
+}

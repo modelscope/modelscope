@@ -111,6 +111,7 @@ class Models(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
@@ -403,6 +404,7 @@ class Pipelines(object):
     image_human_parsing = 'm2fp-image-human-parsing'
     object_detection_3d_depe = 'object-detection-3d-depe'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     fast_instance_segmentation = 'fast-instance-segmentation'
@@ -842,6 +844,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_mobilenet-v2_bad-image-detecting'),
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
+    Tasks.nerf_recon_4k: (Pipelines.nerf_recon_4k,
+                           'damo/cv_nerf-3d-reconstruction-4k-nerf_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (
@@ -866,6 +870,7 @@ class CVTrainers(object):
     ocr_recognition = 'ocr-recognition'
     ocr_detection_db = 'ocr-detection-db'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
     action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
@@ -981,6 +986,7 @@ class Preprocessors(object):
     ocr_detection = 'ocr-detection'
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
+    nerf_recon_4k_preprocessor = 'nerf-recon-4k-preprocessor'
     controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
     image_classification_preprocessor = 'image-classification-preprocessor'
 

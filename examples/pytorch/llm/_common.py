@@ -5,6 +5,7 @@ import os
 import random
 import re
 import sys
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -15,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from datasets import Dataset as HFDataset
+from datasets import Dataset as HfDataset
 from datasets import concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -36,6 +37,8 @@ from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 #
 from tqdm import tqdm
+from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
+                          GenerationConfig, HfArgumentParser, TextStreamer)
 
 #
 from modelscope import (Model, MsDataset, get_logger, read_config,
@@ -57,6 +60,7 @@ PROMPT = """Human: {instruction}
 AI: """
 
 logger = get_logger()
+os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 #
 
 
@@ -150,12 +154,12 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
     return T_max
 
 
-def tokenize_function(example: Dict[str, str],
+def tokenize_function(example: Dict[str, Optional[str]],
                       tokenizer,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
-    instruction = example['instruction']
-    input_: str = example['input']
+    instruction: str = example['instruction']
+    input_ = example['input']
     if input_ is not None and input_ != '':
         # instruction = instruction + '\n'
         if input_.startswith('输入：'):
@@ -187,7 +191,7 @@ def tokenize_function(example: Dict[str, str],
     return {'input_ids': input_ids, 'labels': labels}
 
 
-def stat_dataset(dataset: HFDataset) -> None:
+def stat_dataset(dataset: HfDataset) -> None:
     """Statistical analysis was performed on the data set"""
     _token_len = []
     for d in dataset:
@@ -202,8 +206,8 @@ def stat_dataset(dataset: HFDataset) -> None:
     )
 
 
-def print_examples(examples: Dict[str, Any], tokenizer) -> None:
-    input_ids, labels = examples['input_ids'], examples['labels']
+def print_example(example: Dict[str, Any], tokenizer) -> None:
+    input_ids, labels = example['input_ids'], example['labels']
     print(f'[INPUT_IDS] {input_ids}')
     print(f'[INPUT] {tokenizer.decode(input_ids)}')
     print()
@@ -305,48 +309,24 @@ def _add_special_token(tokenizer):
                 f'pad_token_id: {tokenizer.pad_token_id}')
 
 
-def get_baichuan7B_model_tokenizer(model_dir: str,
-                                   load_model: bool = True,
-                                   add_special_token: bool = True):
+def get_baichuan_model_tokenizer(model_dir: str,
+                                 load_model: bool = True,
+                                 add_special_token: bool = True):
     sys.path.insert(0, model_dir)
-    from configuration_baichuan import BaiChuanConfig
-    from tokenization_baichuan import BaiChuanTokenizer
-    from modeling_baichuan import BaiChuanForCausalLM
-    model_config = BaiChuanConfig.from_pretrained(model_dir)
+    model_config = AutoConfig.from_pretrained(
+        model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch.float16
     logger.info(f'model_config: {model_config}')
-    tokenizer = BaiChuanTokenizer.from_pretrained(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_dir, trust_remote_code=True)
     model = None
     if load_model:
-        model = BaiChuanForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             model_dir,
             config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16)
-    #
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_baichuan13B_model_tokenizer(model_dir: str,
-                                    load_model: bool = True,
-                                    add_special_token: bool = True):
-    sys.path.insert(0, model_dir)
-    from configuration_baichuan import BaichuanConfig
-    from tokenization_baichuan import BaichuanTokenizer
-    from modeling_baichuan import BaichuanForCausalLM
-    model_config = BaichuanConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch.float16
-    logger.info(f'model_config: {model_config}')
-    tokenizer = BaichuanTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = BaichuanForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            trust_remote_code=True)
     #
     if add_special_token:
         _add_special_token(tokenizer)
@@ -371,23 +351,43 @@ def get_chatglm2_model_tokenizer(model_dir: str,
     return model, tokenizer
 
 
+def get_llama2_model_tokenizer(model_dir: str,
+                               load_model: bool = True,
+                               add_special_token: bool = True):
+    config = AutoConfig.from_pretrained(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=config,
+            device_map='auto',
+            torch_dtype=torch.float16,
+        )
+    if add_special_token:
+        _add_special_token(tokenizer)
+    return model, tokenizer
+
+
 def get_alpaca_en_zh_dataset(
         tokenize_function,
         only_val: bool = False,
         test_split_p: float = 0.01,
-        split_seed: int = 42) -> Tuple[HFDataset, HFDataset]:
+        split_seed: int = 42,
+        data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
     """
     split: Literal['train', 'validation', None]
     """
 
-    dataset_en: HFDataset = MsDataset.load(
+    dataset_en: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
-    dataset_zh: HFDataset = MsDataset.load(
+    dataset_zh: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
     dataset_en = dataset_en.remove_columns(['text'])
-    dataset: HFDataset = concatenate_datasets([dataset_zh, dataset_en])
+    dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
     #
-    # dataset = dataset.select(range(1000))  # for debug
+    if data_sample is not None:
+        dataset = dataset.select(range(data_sample))
     dataset = dataset.train_test_split(test_split_p, seed=split_seed)
     if only_val:
         dataset = dataset['test']

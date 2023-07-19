@@ -2,10 +2,9 @@
 
 import copy
 import math
-import re
 import sys
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -22,10 +21,11 @@ from transformers.modeling_outputs import (BaseModelOutputWithPast,
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
 
+from modelscope import Model, TorchModel
 from modelscope.metainfo import Models
-from modelscope.models import MODELS, Model, TorchModel
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
+from ... import MODELS
 from .configuration import ChatGLM2Config
 
 # flags required to enable jit fusion kernels
@@ -61,17 +61,50 @@ class InvalidScoreLogitsProcessor(LogitsProcessor):
         return scores
 
 
+class PrefixEncoder(torch.nn.Module):
+    """
+    The torch.nn model to encode the prefix
+    Input shape: (batch-size, prefix-length)
+    Output shape: (batch-size, prefix-length, 2*layers*hidden)
+    """
+
+    def __init__(self, config: ChatGLM2Config):
+        super().__init__()
+        self.prefix_projection = config.prefix_projection
+        if self.prefix_projection:
+            # Use a two-layer MLP to encode the prefix
+            kv_size = config.num_layers * config.kv_channels * config.multi_query_group_num * 2
+            self.embedding = torch.nn.Embedding(config.pre_seq_len, kv_size)
+            self.trans = torch.nn.Sequential(
+                torch.nn.Linear(kv_size, config.hidden_size), torch.nn.Tanh(),
+                torch.nn.Linear(config.hidden_size, kv_size))
+        else:
+            self.embedding = torch.nn.Embedding(
+                config.pre_seq_len, config.num_layers * config.kv_channels
+                * config.multi_query_group_num * 2)
+
+    def forward(self, prefix: torch.Tensor):
+        if self.prefix_projection:
+            prefix_tokens = self.embedding(prefix)
+            past_key_values = self.trans(prefix_tokens)
+        else:
+            past_key_values = self.embedding(prefix)
+        return past_key_values
+
+
 def split_tensor_along_last_dim(
     tensor: torch.Tensor,
     num_partitions: int,
     contiguous_split_chunks: bool = False,
 ) -> List[torch.Tensor]:
     """Split a tensor along its last dimension.
+
     Arguments:
         tensor: input tensor.
         num_partitions: number of partitions to split the tensor
         contiguous_split_chunks: If True, make each chunk contiguous
                                  in memory.
+
     Returns:
         A list of Tensors
     """
@@ -92,7 +125,7 @@ class RotaryEmbedding(nn.Module):
     def __init__(self, dim, original_impl=False, device=None, dtype=None):
         super().__init__()
         inv_freq = 1.0 / (10000**(
-            torch.arange(0, dim, 2, device=device, dtype=dtype) / dim))
+            torch.arange(0, dim, 2, device=device).to(dtype=dtype) / dim))
         self.register_buffer('inv_freq', inv_freq)
         self.dim = dim
         self.original_impl = original_impl
@@ -104,6 +137,7 @@ class RotaryEmbedding(nn.Module):
                      device: torch.device,
                      base: int = 10000):
         """Enhanced Transformer with Rotary Position Embedding.
+
         Derived from: https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/
         transformers/rope/__init__.py. MIT License:
         https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/license.
@@ -325,6 +359,7 @@ class CoreAttention(torch.nn.Module):
 
 class SelfAttention(torch.nn.Module):
     """Parallel self-attention layer abstract class.
+
     Self-attention layer takes input with size [s, b, h]
     and returns output of the same size.
     """
@@ -421,9 +456,9 @@ class SelfAttention(torch.nn.Module):
                 self.num_multi_query_groups_per_partition,
                 self.hidden_size_per_attention_head))
         else:
-            new_tensor_shape = mixed_x_layer.size()[:-1] + (
-                self.num_attention_heads_per_partition,  # noqa
-                3 * self.hidden_size_per_attention_head)  # noqa
+            new_tensor_shape = mixed_x_layer.size()[:-1] + \
+                               (self.num_attention_heads_per_partition, # noqa
+                                3 * self.hidden_size_per_attention_head) # noqa
             mixed_x_layer = mixed_x_layer.view(*new_tensor_shape)
 
             # [sq, b, np, 3 * hn] --> 3 [sq, b, np, hn]
@@ -436,11 +471,11 @@ class SelfAttention(torch.nn.Module):
             key_layer = apply_rotary_pos_emb(key_layer, rotary_pos_emb)
 
         # adjust key and value for inference
+        if kv_cache is not None:
+            cache_k, cache_v = kv_cache
+            key_layer = torch.cat((cache_k, key_layer), dim=0)
+            value_layer = torch.cat((cache_v, value_layer), dim=0)
         if use_cache:
-            if kv_cache is not None:
-                cache_k, cache_v = kv_cache
-                key_layer = torch.cat((cache_k, key_layer), dim=0)
-                value_layer = torch.cat((cache_v, value_layer), dim=0)
             kv_cache = (key_layer, value_layer)
         else:
             kv_cache = None
@@ -487,6 +522,7 @@ def _config_to_kwargs(args):
 
 class MLP(torch.nn.Module):
     """MLP.
+
     MLP will take the input with h hidden state, project it to 4*h
     hidden dimension, perform nonlinear transformation, and project the
     state back into h hidden dimension.
@@ -530,6 +566,7 @@ class MLP(torch.nn.Module):
 
 class GLMBlock(torch.nn.Module):
     """A single transformer layer.
+
     Transformer layer takes input with size [s, b, h] and returns an
     output of the same size.
     """
@@ -642,6 +679,8 @@ class GLMTransformer(torch.nn.Module):
                 device=device,
                 dtype=config.torch_dtype)
 
+        self.gradient_checkpointing = False
+
     def _get_layer(self, layer_number):
         return self.layers[layer_number]
 
@@ -657,6 +696,13 @@ class GLMTransformer(torch.nn.Module):
         if not kv_caches:
             kv_caches = [None for _ in range(self.num_layers)]
         presents = () if use_cache else None
+        if self.gradient_checkpointing and self.training:
+            if use_cache:
+                logger.warning_once(
+                    '`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`...'
+                )
+                use_cache = False
+
         all_self_attentions = None
         all_hidden_states = () if output_hidden_states else None
         for index in range(self.num_layers):
@@ -664,13 +710,18 @@ class GLMTransformer(torch.nn.Module):
                 all_hidden_states = all_hidden_states + (hidden_states, )
 
             layer = self._get_layer(index)
-
-            hidden_states, kv_cache = layer(
-                hidden_states,
-                attention_mask,
-                rotary_pos_emb,
-                kv_cache=kv_caches[index],
-                use_cache=use_cache)
+            if self.gradient_checkpointing and self.training:
+                layer_ret = torch.utils.checkpoint.checkpoint(
+                    layer, hidden_states, attention_mask, rotary_pos_emb,
+                    kv_caches[index], use_cache)
+            else:
+                layer_ret = layer(
+                    hidden_states,
+                    attention_mask,
+                    rotary_pos_emb,
+                    kv_cache=kv_caches[index],
+                    use_cache=use_cache)
+            hidden_states, kv_cache = layer_ret
             if use_cache:
                 presents = presents + (kv_cache, )
 
@@ -724,7 +775,7 @@ class ChatGLMPreTrainedModel(TorchModel, PreTrainedModel):
                 dim=-1)  # noqa
         if padding_mask is not None:
             full_attention_mask = full_attention_mask * padding_mask.unsqueeze(
-                1)  # noqa
+                1)
         if not past_length and padding_mask is not None:
             full_attention_mask -= padding_mask.unsqueeze(-1) - 1
         full_attention_mask = (full_attention_mask < 0.5).bool()
@@ -739,7 +790,7 @@ class ChatGLMPreTrainedModel(TorchModel, PreTrainedModel):
         return position_ids
 
     def _set_gradient_checkpointing(self, module, value=False):
-        if isinstance(module, ChatGLMModel):
+        if isinstance(module, GLMTransformer):
             module.gradient_checkpointing = value
 
     @classmethod
@@ -801,6 +852,9 @@ class ChatGLMModel(ChatGLMPreTrainedModel):
         if device is not None:
             init_kwargs['device'] = device
         self.embedding = init_method(Embedding, config, **init_kwargs)
+        self.num_layers = config.num_layers
+        self.multi_query_group_num = config.multi_query_group_num
+        self.kv_channels = config.kv_channels
 
         # Rotary positional embeddings
         self.seq_length = config.seq_length
@@ -821,7 +875,30 @@ class ChatGLMModel(ChatGLMPreTrainedModel):
             bias=False,
             dtype=config.torch_dtype,
             **init_kwargs)
-        self.gradient_checkpointing = False
+        self.pre_seq_len = config.pre_seq_len
+        self.prefix_projection = config.prefix_projection
+        if self.pre_seq_len is not None:
+            for param in self.parameters():
+                param.requires_grad = False
+            self.prefix_tokens = torch.arange(self.pre_seq_len).long()
+            self.prefix_encoder = PrefixEncoder(config)
+            self.dropout = torch.nn.Dropout(0.1)
+
+    def get_input_embeddings(self):
+        return self.embedding.word_embeddings
+
+    def get_prompt(self, batch_size, device, dtype=torch.half):
+        prefix_tokens = self.prefix_tokens.unsqueeze(0).expand(batch_size,
+                                                               -1).to(device)
+        past_key_values = self.prefix_encoder(prefix_tokens).type(dtype)
+        past_key_values = past_key_values.view(batch_size, self.pre_seq_len,
+                                               self.num_layers * 2,
+                                               self.multi_query_group_num,
+                                               self.kv_channels)
+        # seq_len, b, nh, hidden_size
+        past_key_values = self.dropout(past_key_values)
+        past_key_values = past_key_values.permute([2, 1, 0, 3, 4]).split(2)
+        return past_key_values
 
     def forward(
         self,
@@ -846,6 +923,21 @@ class ChatGLMModel(ChatGLMPreTrainedModel):
 
         if inputs_embeds is None:
             inputs_embeds = self.embedding(input_ids)
+
+        if self.pre_seq_len is not None:
+            if past_key_values is None:
+                past_key_values = self.get_prompt(
+                    batch_size=batch_size,
+                    device=input_ids.device,
+                    dtype=inputs_embeds.dtype)
+            if attention_mask is not None:
+                attention_mask = torch.cat(
+                    [
+                        attention_mask.new_ones(  # noqa
+                            (batch_size, self.pre_seq_len)),
+                        attention_mask  # noqa
+                    ],  # noqa
+                    dim=-1)  # noqa
 
         if full_attention_mask is None:
             if (attention_mask is not None
@@ -923,7 +1015,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
                     attention_mask,  # noqa
                     attention_mask.new_ones(
                         (attention_mask.shape[0], 1))  # noqa
-                ],
+                ],  # noqa
                 dim=-1)  # noqa
 
         # update position ids
@@ -1032,6 +1124,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
         This function is used to re-order the `past_key_values` cache if [`~PreTrainedModel.beam_search`] or
         [`~PreTrainedModel.beam_sample`] is called. This is required to match `past_key_values` with the correct
         beam_idx at every generation step.
+
         Output shares the same memory storage as `past`.
         """
         return tuple((
@@ -1048,11 +1141,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
                      tokenizer,
                      query: str,
                      history: List[Tuple[str, str]] = None):
-        prompt = ''
-        for i, (old_query, response) in enumerate(history):
-            prompt += '[Round {}]\n\n问：{}\n\n答：{}\n\n'.format(
-                i + 1, old_query, response)
-        prompt += '[Round {}]\n\n问：{}\n\n答：'.format(len(history) + 1, query)
+        prompt = tokenizer.build_prompt(query, history=history)
         inputs = tokenizer([prompt], return_tensors='pt')
         inputs = inputs.to(self.device)
         return inputs
@@ -1080,7 +1169,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
               tokenizer,
               query: str,
               history: List[Tuple[str, str]] = None,
-              max_length: int = 2048,
+              max_length: int = 8192,
               num_beams=1,
               do_sample=True,
               top_p=0.8,
@@ -1115,7 +1204,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
                     query: str,
                     history: List[Tuple[str, str]] = None,
                     past_key_values=None,
-                    max_length: int = 2048,
+                    max_length: int = 8192,
                     do_sample=True,
                     top_p=0.8,
                     temperature=0.8,
@@ -1142,6 +1231,8 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
                 tokenizer, query, history=history)
         if past_key_values is not None:
             past_length = past_key_values[0][0].shape[0]
+            if self.transformer.pre_seq_len is not None:
+                past_length -= self.transformer.pre_seq_len
             inputs.position_ids += past_length
             attention_mask = inputs.attention_mask
             attention_mask = torch.cat(
@@ -1157,12 +1248,13 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
                 outputs, past_key_values = outputs
             outputs = outputs.tolist()[0][len(inputs['input_ids'][0]):]
             response = tokenizer.decode(outputs)
-            response = self.process_response(response)
-            new_history = history + [(query, response)]
-            if return_past_key_values:
-                yield response, new_history, past_key_values
-            else:
-                yield response, new_history
+            if response and response[-1] != '�':
+                response = self.process_response(response)
+                new_history = history + [(query, response)]
+                if return_past_key_values:
+                    yield response, new_history, past_key_values
+                else:
+                    yield response, new_history
 
     @torch.no_grad()
     def stream_generate(
@@ -1295,7 +1387,8 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
             self.transformer.encoder,
             bits,
             empty_init=empty_init,
-            device=device)
+            device=device,
+            **kwargs)
         return self
 
     def chat(self, input: Dict, tokenizer) -> Dict:

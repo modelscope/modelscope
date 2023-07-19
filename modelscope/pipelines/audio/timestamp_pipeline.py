@@ -93,7 +93,7 @@ class TimestampPipeline(Pipeline):
 
     def __call__(self,
                  audio_in: Union[str, bytes],
-                 text_in: str = None,
+                 text_in: str,
                  audio_fs: int = None,
                  recog_type: str = None,
                  audio_format: str = None,

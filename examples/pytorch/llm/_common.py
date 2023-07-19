@@ -5,6 +5,7 @@ import os
 import random
 import re
 import sys
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -15,6 +16,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from datasets import Dataset as HfDataset
+from datasets import concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy import ndarray
@@ -34,6 +37,8 @@ from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 #
 from tqdm import tqdm
+from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
+                          GenerationConfig, HfArgumentParser, TextStreamer)
 
 #
 from modelscope import (Model, MsDataset, get_logger, read_config,
@@ -49,14 +54,13 @@ from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
 #
-PROMPT = """System: {system}
-Human: {user}
-AI: """
-MAX_LENGTH = 2048
-TEST_MAX_LENGTH = MAX_LENGTH
-
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
+
+PROMPT = """Human: {instruction}
+AI: """
+
 logger = get_logger()
+os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 #
 
 
@@ -150,18 +154,28 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
     return T_max
 
 
-def tokenize_function(system: str, user: str, assistant: Optional[str],
-                      tokenizer) -> Dict[str, Any]:
+def tokenize_function(example: Dict[str, Optional[str]],
+                      tokenizer,
+                      max_length: Optional[int] = 2048) -> Dict[str, Any]:
     """Only applicable to baichuan and chatglm2. Other models need to be tested"""
-    src_text = PROMPT.format(system=system, user=user)
+    instruction: str = example['instruction']
+    input_ = example['input']
+    if input_ is not None and input_ != '':
+        # instruction = instruction + '\n'
+        if input_.startswith('输入：'):
+            instruction = instruction + input_[3:]
+        else:
+            instruction = instruction + input_
+    output = example['output']
+    src_text = PROMPT.format(instruction=instruction)
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
         add_special_tokens=True)['input_ids']
     #
-    tgt_input_ids: List[int] = []
-    if assistant is not None:
+    tgt_input_ids = []
+    if output is not None:
         tgt_input_ids += tokenizer(
-            assistant, return_attention_mask=False,
+            output, return_attention_mask=False,
             add_special_tokens=False)['input_ids']
         tgt_input_ids += [tokenizer.eos_token_id]
         labels = [-100] * len(src_input_ids) + tgt_input_ids
@@ -169,34 +183,15 @@ def tokenize_function(system: str, user: str, assistant: Optional[str],
         labels = None
     input_ids = src_input_ids + tgt_input_ids
     #
-    if assistant is not None:
-        if len(input_ids) > MAX_LENGTH:
-            return {}
-    else:
-        input_ids = input_ids[-TEST_MAX_LENGTH:]
+    if max_length is not None:
+        input_ids = input_ids[-max_length:]
+        if labels is not None:
+            labels = labels[-max_length:]
     #
     return {'input_ids': input_ids, 'labels': labels}
 
 
-class MyDataset(TorchCustomDataset):
-
-    def __init__(self, system: List[str], user: List[str],
-                 assistant: List[str], tokenize_function) -> None:
-        self._data = []
-        for i in tqdm(range(len(system))):
-            _d = tokenize_function(system[i], user[i], assistant[i])
-            if len(_d) == 0:
-                continue
-            self._data.append(_d)
-
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        return self._data[idx]
-
-    def __len__(self) -> int:
-        return len(self._data)
-
-
-def stat_dataset(dataset: 'MyDataset') -> None:
+def stat_dataset(dataset: HfDataset) -> None:
     """Statistical analysis was performed on the data set"""
     _token_len = []
     for d in dataset:
@@ -211,10 +206,12 @@ def stat_dataset(dataset: 'MyDataset') -> None:
     )
 
 
-def print_examples(examples: Dict[str, Any], tokenizer) -> None:
-    input_ids, labels = examples['input_ids'], examples['labels']
-    print(f'[INPUT_IDS] {tokenizer.decode(input_ids)}')
+def print_example(example: Dict[str, Any], tokenizer) -> None:
+    input_ids, labels = example['input_ids'], example['labels']
+    print(f'[INPUT_IDS] {input_ids}')
+    print(f'[INPUT] {tokenizer.decode(input_ids)}')
     print()
+    print(f'[LABLES_IDS] {labels}')
     print(
         f'[LABLES] {tokenizer.decode([lb if lb != -100 else 0 for lb in labels])}'
     )
@@ -296,7 +293,7 @@ class MyMetric(Metric):
         }
 
     def merge(self, other: 'MyMetric') -> None:
-        """This script does not support ddp"""
+        """This script does not support ddp. TODO"""
         raise NotImplementedError
 
 
@@ -312,24 +309,24 @@ def _add_special_token(tokenizer):
                 f'pad_token_id: {tokenizer.pad_token_id}')
 
 
-def get_baichuan7B_model_tokenizer(model_dir: str,
-                                   load_model: bool = True,
-                                   add_special_token: bool = True):
+def get_baichuan_model_tokenizer(model_dir: str,
+                                 load_model: bool = True,
+                                 add_special_token: bool = True):
     sys.path.insert(0, model_dir)
-    from configuration_baichuan import BaiChuanConfig
-    from tokenization_baichuan import BaiChuanTokenizer
-    from modeling_baichuan import BaiChuanForCausalLM
-    model_config = BaiChuanConfig.from_pretrained(model_dir)
+    model_config = AutoConfig.from_pretrained(
+        model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch.float16
     logger.info(f'model_config: {model_config}')
-    tokenizer = BaiChuanTokenizer.from_pretrained(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_dir, trust_remote_code=True)
     model = None
     if load_model:
-        model = BaiChuanForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             model_dir,
             config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            trust_remote_code=True)
     #
     if add_special_token:
         _add_special_token(tokenizer)
@@ -354,27 +351,54 @@ def get_chatglm2_model_tokenizer(model_dir: str,
     return model, tokenizer
 
 
-def make_dataset(
-    split: str, tokenize_function: Callable[[str, str, Optional[str]],
-                                            Dict[str, Any]]
-) -> MyDataset:
+def get_llama2_model_tokenizer(model_dir: str,
+                               load_model: bool = True,
+                               add_special_token: bool = True):
+    config = AutoConfig.from_pretrained(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=config,
+            device_map='auto',
+            torch_dtype=torch.float16,
+        )
+    if add_special_token:
+        _add_special_token(tokenizer)
+    return model, tokenizer
+
+
+def get_alpaca_en_zh_dataset(
+        tokenize_function,
+        only_val: bool = False,
+        test_split_p: float = 0.01,
+        split_seed: int = 42,
+        data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
     """
-    split: Literal['train', 'validation']
+    split: Literal['train', 'validation', None]
     """
-    dataset = MsDataset.load(
-        'modelscope/ms_hackathon_23_agent_train_dev', split=split)
-    system = []
-    user = []
-    assistant = []
-    for d in dataset:
-        content = ast.literal_eval(d['conversations'])
-        s = content[0]['value']
-        assert len(content) % 2 == 1
-        for i in range(len(content) // 2):
-            system.append(s)
-            user.append(content[2 * i + 1]['value'])
-            assistant.append(content[2 * i + 2]['value'])
-    return MyDataset(system, user, assistant, tokenize_function)
+
+    dataset_en: HfDataset = MsDataset.load(
+        'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
+    dataset_zh: HfDataset = MsDataset.load(
+        'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
+    dataset_en = dataset_en.remove_columns(['text'])
+    dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
+    #
+    if data_sample is not None:
+        dataset = dataset.select(range(data_sample))
+    dataset = dataset.train_test_split(test_split_p, seed=split_seed)
+    if only_val:
+        dataset = dataset['test']
+    if tokenize_function is not None:
+        dataset = dataset.map(tokenize_function)
+        dataset = dataset.remove_columns(['instruction', 'input', 'output'])
+    #
+    if only_val:
+        return None, dataset
+    else:
+        return dataset['train'], dataset['test']
 
 
 Item = Dict[str, float]
@@ -410,17 +434,33 @@ def tensorboard_smoothing(values: List[float],
     return res
 
 
-def plot_image(data: Dict[str, List[Item]], key_name: str,
-               smooth: float) -> Figure:
-    _data = data[key_name]
-    steps = [d['step'] for d in _data]
-    values = [d['value'] for d in _data]
-    fig, ax = plt.subplots(1, 1, squeeze=True, figsize=(8, 5), dpi=100)
-    ax.set_title(key_name)
-    if smooth != 0:
-        ax.plot(steps, values, color=COLOR)
-        values_s = tensorboard_smoothing(values, smooth)
-        ax.plot(steps, values_s, color=COLOR_S)
-    else:
-        ax.plot(steps, values, color=COLOR_S)
-    return fig
+def plot_image(tb_dir: str,
+               smooth_key: List[str],
+               smooth_val: float = 0.9,
+               figsize: Tuple[int, int] = (8, 5),
+               dpi: int = 100) -> None:
+    image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
+    os.makedirs(image_dir, exist_ok=True)
+    #
+    fname = os.listdir(tb_dir)[0]
+    tb_path = os.path.join(tb_dir, fname)
+    data = read_tensorboard_file(tb_path)
+    #
+    for k in data.keys():
+        _data = data[k]
+        steps = [d['step'] for d in _data]
+        values = [d['value'] for d in _data]
+        if len(values) == 0:
+            continue
+        _, ax = plt.subplots(1, 1, squeeze=True, figsize=figsize, dpi=dpi)
+        ax.set_title(k)
+        if len(values) == 1:
+            ax.scatter(steps, values, color=COLOR_S)
+        elif k in smooth_key:
+            ax.plot(steps, values, color=COLOR)
+            values_s = tensorboard_smoothing(values, smooth_val)
+            ax.plot(steps, values_s, color=COLOR_S)
+        else:
+            ax.plot(steps, values, color=COLOR_S)
+        fpath = os.path.join(image_dir, k.replace('/', '_'))
+        plt.savefig(fpath, dpi=dpi, bbox_inches='tight')

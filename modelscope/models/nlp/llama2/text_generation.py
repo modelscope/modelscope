@@ -28,18 +28,18 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
-from .backbone import LlamaPreTrainedModel, LlamaModel
+from .backbone import LlamaPreTrainedModel, Llama2Model
 from ... import MODELS
 
 
 # This file is mainly copied from the llama code of transformers
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
-class LlamaForTextGeneration(LlamaPreTrainedModel):
+class Llama2ForTextGeneration(LlamaPreTrainedModel):
     _tied_weights_keys = ["lm_head.weight"]
 
     def __init__(self, config):
         super().__init__(config)
-        self.model = LlamaModel(config)
+        self.model = Llama2Model(config)
         self.pretraining_tp = config.pretraining_tp
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
@@ -87,22 +87,7 @@ class LlamaForTextGeneration(LlamaPreTrainedModel):
 
         Returns:
 
-        Example:
-
-        ```python
-        >>> from transformers import AutoTokenizer, LlamaForCausalLM
-
-        >>> model = LlamaForCausalLM.from_pretrained(PATH_TO_CONVERTED_WEIGHTS)
-        >>> tokenizer = AutoTokenizer.from_pretrained(PATH_TO_CONVERTED_TOKENIZER)
-
-        >>> prompt = "Hey, are you conscious? Can you talk to me?"
-        >>> inputs = tokenizer(prompt, return_tensors="pt")
-
-        >>> # Generate
-        >>> generate_ids = model.generate(inputs.input_ids, max_length=30)
-        >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-        "Hey, are you conscious? Can you talk to me?\nI'm not conscious, but I can talk to you."
-        ```"""
+        """
 
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (

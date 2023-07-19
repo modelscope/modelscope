@@ -33,12 +33,12 @@ from modelscope import TorchModel, Model
 from modelscope.metainfo import Models
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
-from .configuration import LlamaConfig
+from .configuration import Llama2Config
 from ... import MODELS
 
 logger = get_logger(__name__)
 
-_CONFIG_FOR_DOC = 'LlamaConfig'
+_CONFIG_FOR_DOC = 'Llama2Config'
 
 
 # This file is mainly copied from the llama code of transformers
@@ -236,7 +236,7 @@ def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
 class LlamaAttention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 
-    def __init__(self, config: LlamaConfig):
+    def __init__(self, config: Llama2Config):
         super().__init__()
         self.config = config
         self.hidden_size = config.hidden_size
@@ -372,7 +372,7 @@ class LlamaAttention(nn.Module):
 
 
 class LlamaDecoderLayer(nn.Module):
-    def __init__(self, config: LlamaConfig):
+    def __init__(self, config: Llama2Config):
         super().__init__()
         self.hidden_size = config.hidden_size
         self.self_attn = LlamaAttention(config=config)
@@ -436,7 +436,7 @@ class LlamaDecoderLayer(nn.Module):
 
 
 class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
-    config_class = LlamaConfig
+    config_class = Llama2Config
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
     _no_split_modules = ["LlamaDecoderLayer"]
@@ -478,7 +478,7 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
 
         model_dir = kwargs.pop('model_dir', None)
         if model_dir is None:
-            config = LlamaConfig(**kwargs)
+            config = Llama2Config(**kwargs)
             model = cls(config)
         else:
             model = super(Model, cls).from_pretrained(
@@ -488,15 +488,15 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
 
 
 @MODELS.register_module(Tasks.backbone, module_name=Models.llama)
-class LlamaModel(LlamaPreTrainedModel):
+class Llama2Model(LlamaPreTrainedModel):
     """
     Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]
 
     Args:
-        config: LlamaConfig
+        config: Llama2Config
     """
 
-    def __init__(self, config: LlamaConfig):
+    def __init__(self, config: Llama2Config):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size

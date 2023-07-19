@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 LLAMA_PRETRAINED_CONFIG_ARCHIVE_MAP = {}
 
 
-class LlamaConfig(PretrainedConfig):
+class Llama2Config(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`LlamaModel`]. It is used to instantiate an LLaMA
     model according to the specified arguments, defining the model architecture. Instantiating a configuration with the
@@ -86,21 +86,7 @@ class LlamaConfig(PretrainedConfig):
             these scaling strategies behave:
             https://www.reddit.com/r/LocalLLaMA/comments/14mrgpr/dynamically_scaled_rope_further_increases/. This is an
             experimental feature, subject to breaking API changes in future versions.
-
-        Example:
-
-    ```python
-    >>> from transformers import LlamaModel, LlamaConfig
-
-    >>> # Initializing a LLaMA llama-7b style configuration
-    >>> configuration = LlamaConfig()
-
-    >>> # Initializing a model from the llama-7b style configuration
-    >>> model = LlamaModel(configuration)
-
-    >>> # Accessing the model configuration
-    >>> configuration = model.config
-    ```"""
+    """
     model_type = "llama"
     keys_to_ignore_at_inference = ["past_key_values"]
 

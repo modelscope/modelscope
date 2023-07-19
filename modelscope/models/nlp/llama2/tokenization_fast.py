@@ -50,7 +50,7 @@ correct. If you don't know the answer to a question, please don't share false in
 # fmt: on
 
 
-class LlamaTokenizerFast(PreTrainedTokenizerFast):
+class Llama2TokenizerFast(PreTrainedTokenizerFast):
     """
     Construct a Llama tokenizer. Based on byte-level Byte-Pair-Encoding.
 

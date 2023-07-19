@@ -63,7 +63,7 @@ correct. If you don't know the answer to a question, please don't share false in
 # fmt: on
 
 
-class LlamaTokenizer(PreTrainedTokenizer):
+class Llama2Tokenizer(PreTrainedTokenizer):
     """
     Construct a Llama tokenizer. Based on byte-level Byte-Pair-Encoding. The default padding token is unset as there is
     no padding token in the original model.

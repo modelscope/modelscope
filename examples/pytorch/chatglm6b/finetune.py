@@ -206,11 +206,8 @@ model_config['model']['prefix_projection'] = args.prefix_projection
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 
 device_map_kwargs = {}
-device_kwargs = {}
 if args.use_lora != 0 and torch.cuda.device_count() > 1:
     device_map_kwargs['device_map'] = 'auto'
-    # No placement for model, leave the model to `device_map`
-    device_kwargs['device'] = 'cpu'
 model = Model.from_pretrained(
     model_dir, cfg_dict=model_config, **device_map_kwargs)
 
@@ -396,7 +393,6 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
-    cfg_modify_fn=cfg_modify_fn,
-    **device_kwargs)
+    cfg_modify_fn=cfg_modify_fn)
 trainer.tokenizer = tokenizer
 trainer.train()

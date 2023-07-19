@@ -5,6 +5,7 @@ import os
 import random
 import re
 import sys
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -15,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from datasets import Dataset as HFDataset
+from datasets import Dataset as HfDataset
 from datasets import concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -36,6 +37,7 @@ from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 #
 from tqdm import tqdm
+from transformers import HfArgumentParser, TextStreamer
 
 #
 from modelscope import (Model, MsDataset, get_logger, read_config,
@@ -187,7 +189,7 @@ def tokenize_function(example: Dict[str, str],
     return {'input_ids': input_ids, 'labels': labels}
 
 
-def stat_dataset(dataset: HFDataset) -> None:
+def stat_dataset(dataset: HfDataset) -> None:
     """Statistical analysis was performed on the data set"""
     _token_len = []
     for d in dataset:
@@ -202,8 +204,8 @@ def stat_dataset(dataset: HFDataset) -> None:
     )
 
 
-def print_examples(examples: Dict[str, Any], tokenizer) -> None:
-    input_ids, labels = examples['input_ids'], examples['labels']
+def print_example(example: Dict[str, Any], tokenizer) -> None:
+    input_ids, labels = example['input_ids'], example['labels']
     print(f'[INPUT_IDS] {input_ids}')
     print(f'[INPUT] {tokenizer.decode(input_ids)}')
     print()
@@ -375,19 +377,21 @@ def get_alpaca_en_zh_dataset(
         tokenize_function,
         only_val: bool = False,
         test_split_p: float = 0.01,
-        split_seed: int = 42) -> Tuple[HFDataset, HFDataset]:
+        split_seed: int = 42,
+        debug: bool = False) -> Tuple[HfDataset, HfDataset]:
     """
     split: Literal['train', 'validation', None]
     """
 
-    dataset_en: HFDataset = MsDataset.load(
+    dataset_en: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
-    dataset_zh: HFDataset = MsDataset.load(
+    dataset_zh: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
     dataset_en = dataset_en.remove_columns(['text'])
-    dataset: HFDataset = concatenate_datasets([dataset_zh, dataset_en])
+    dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
     #
-    # dataset = dataset.select(range(1000))  # for debug
+    if debug:
+        dataset = dataset.select(range(1000))
     dataset = dataset.train_test_split(test_split_p, seed=split_seed)
     if only_val:
         dataset = dataset['test']

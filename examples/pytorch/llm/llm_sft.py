@@ -11,25 +11,73 @@ pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
 
 from _common import *
 
-device_ids = [0, 1]
-select_device(device_ids)
-seed_everything(42)
+
+@dataclass
+class Arguments:
+    device: str = '0,1'  # e.g. '-1'; '0'; '0,1'
+    seed: int = 42
+    model_type: str = field(
+        default='baichuan-7B',
+        metadata={'choices': ['baichuan-7B', 'baichuan-13B', 'chatglm2']})
+    debug: bool = False
+    #
+    lora_target_modules: Optional[List[str]] = None
+    lora_rank: int = 8
+    lora_alpha: int = 32
+    lora_dropout_p: float = 0.1
+    #
+    gradient_checkpoint: bool = True
+    batch_size: int = 1
+    max_epochs: int = 1
+    eval_interval: int = 500
+    learning_rate: float = 1e-4
+    weight_decay: float = 0.01
+    n_accumulate_grad: int = 16
+    grad_clip_norm: float = 1.
+    warmup_iters: int = 200
+    last_max_checkpoint_num: int = 1
+    best_max_checkpoint_num: int = 1
+    #
+    logging_interval: int = 5
+    tb_interval: int = 5
+
+    def __post_init__(self):
+        if self.lora_target_modules is None:
+            if self.model_type in {'baichuan-7B', 'baichuan-13B'}:
+                self.lora_target_modules = ['W_pack']
+            elif self.model_type == 'chatglm2':
+                self.lora_target_modules = ['query_key_value']
+            else:
+                raise ValueError(f'model_type: {self.model_type}')
+
+
+def parse_args() -> Arguments:
+    args, = HfArgumentParser([Arguments]).parse_args_into_dataclasses()
+    return args
+
+
+args = parse_args()
+select_device(args.device)
+seed_everything(args.seed)
 
 # ### Loading Model and Tokenizer
-BAICHUAN_TYPE = '13B'  # Literal['7B', '13B']
-WORK_DIR = f'runs/baichuan_{BAICHUAN_TYPE}'
-#
-if BAICHUAN_TYPE == '7B':
+work_dir = f'runs/{args.model_type}'
+if args.model_type == 'baichuan-7B':
     model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
     model, tokenizer = get_baichuan7B_model_tokenizer(model_dir)
-else:
+elif args.model_type == 'baichuan-13B':
     model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base', 'v1.0.2')
     model, tokenizer = get_baichuan13B_model_tokenizer(model_dir)
+elif args.model_type == 'chatglm2':
+    model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
+    model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
+else:
+    raise ValueError(f'model_type: {args.model_type}')
+
 #
-GRADIENT_CHECKPOINTING = True
-if GRADIENT_CHECKPOINTING:
+if args.gradient_checkpoint:
     # baichuan13B does not implement the `get_input_embeddings` function
-    if BAICHUAN_TYPE == '13B':
+    if args.model_type == 'baichuan-13B':
 
         def get_input_embeddings(self):
             return self.model.embed_tokens
@@ -40,76 +88,70 @@ if GRADIENT_CHECKPOINTING:
     model.enable_input_require_grads()
 
 # ### Preparing lora
-LORA_TARGET_MODULES = ['W_pack']
-LORA_RANK = 8
-LORA_ALPHA = 32
-LORA_DROPOUT_P = 0.1
 lora_config = LoRAConfig(
-    replace_modules=LORA_TARGET_MODULES,
-    rank=LORA_RANK,
-    lora_alpha=LORA_ALPHA,
-    lora_dropout=LORA_DROPOUT_P)
+    replace_modules=args.lora_target_modules,
+    rank=args.lora_rank,
+    lora_alpha=args.lora_alpha,
+    lora_dropout=args.lora_dropout_p)
 logger.info(f'lora_config: {lora_config}')
 Swift.prepare_model(model, lora_config)
 #
 show_freeze_layers(model)
 print_model_info(model)
-_p = list(model.parameters())[100]
+_p: Parameter = list(model.parameters())[100]
 logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 model.bfloat16()
 
 # ### Loading Dataset
 tokenize_function = partial(tokenize_function, tokenizer=tokenizer)
-train_dataset, val_dataset = get_alpaca_en_zh_dataset(tokenize_function)
+train_dataset, val_dataset = get_alpaca_en_zh_dataset(
+    tokenize_function, split_seed=42, debug=args.debug)
 # Data analysis
 stat_dataset(train_dataset)
 stat_dataset(val_dataset)
 data_collate_fn = partial(data_collate_fn, tokenizer=tokenizer)
-print_examples(train_dataset[0], tokenizer)
+print_example(train_dataset[0], tokenizer)
 
 # ### Setting Config
 cfg_file = os.path.join(model_dir, 'configuration.json')
 #
-BATCH_SIZE = 1
-MAX_EPOCHS = 1
-T_max = get_T_max(len(train_dataset), BATCH_SIZE, MAX_EPOCHS, True)
-WORK_DIR = get_work_dir(WORK_DIR)
-EVAL_INTERVAL = 500
-CONFIG = Config({
+T_max = get_T_max(len(train_dataset), args.batch_size, args.max_epochs, True)
+work_dir = get_work_dir(work_dir)
+config = Config({
     'train': {
         'dataloader': {
-            'batch_size_per_gpu': BATCH_SIZE,
+            'batch_size_per_gpu': args.batch_size,
             'workers_per_gpu': 1,
             'shuffle': True,
             'drop_last': True,
             'pin_memory': True
         },
         'max_epochs':
-        MAX_EPOCHS,
+        args.max_epochs,
         'work_dir':
-        WORK_DIR,
+        work_dir,
         'optimizer': {
             'type': 'AdamW',
-            'lr': 1e-4,
-            'weight_decay': 0.01,
+            'lr': args.learning_rate,
+            'weight_decay': args.weight_decay,
             'options': {
-                'cumulative_iters': 16,
+                'cumulative_iters': args.n_accumulate_grad,
                 'grad_clip': {
                     'norm_type': 2,
-                    'max_norm': 2.0
+                    'max_norm': args.grad_clip_norm
                 }
             }
         },
         'lr_scheduler': {
             'type': 'CosineAnnealingLR',
             'T_max': T_max,
-            'eta_min': 1e-5,
+            'eta_min': 0,
             'options': {
                 'by_epoch': False,
                 'warmup': {
                     'type': 'LinearWarmup',
                     'warmup_ratio': 0.1,
-                    'warmup_iters': 200
+                    'warmup_iters': args.warmup_iters
                 }
             }
         },
@@ -117,36 +159,36 @@ CONFIG = Config({
             {
                 'type': 'CheckpointHook',
                 'by_epoch': False,
-                'interval': EVAL_INTERVAL,
-                'max_checkpoint_num': 1
+                'interval': args.eval_interval,
+                'max_checkpoint_num': args.last_max_checkpoint_num
             },
             {
                 'type': 'EvaluationHook',
                 'by_epoch': False,
-                'interval': EVAL_INTERVAL
+                'interval': args.eval_interval
             },
             {
                 'type': 'BestCkptSaverHook',
-                'metric_key': 'acc',
+                'metric_key': 'loss',
                 'save_best': True,
-                'rule': 'max',
-                'max_checkpoint_num': 1
+                'rule': 'min',
+                'max_checkpoint_num': args.best_max_checkpoint_num
             },
             {
                 'type': 'TextLoggerHook',
                 'by_epoch': True,  # Whether EpochBasedTrainer is used
-                'interval': 5
+                'interval': args.logging_interval
             },
             {
                 'type': 'TensorboardHook',
                 'by_epoch': False,
-                'interval': 5
+                'interval': args.tb_interval
             }
         ]
     },
     'evaluation': {
         'dataloader': {
-            'batch_size_per_gpu': BATCH_SIZE,
+            'batch_size_per_gpu': args.batch_size,
             'workers_per_gpu': 1,
             'shuffle': False,
             'drop_last': False,
@@ -163,7 +205,7 @@ CONFIG = Config({
 
 
 def cfg_modify_fn(cfg: Config) -> Config:
-    cfg.update(CONFIG)
+    cfg.update(config)
     return cfg
 
 
@@ -182,5 +224,5 @@ trainer = EpochBasedTrainer(
 trainer.train()
 
 # ### Visualization
-tb_dir = os.path.join(WORK_DIR, 'tensorboard_output')
+tb_dir = os.path.join(work_dir, 'tensorboard_output')
 plot_image(tb_dir, ['loss'], 0.9)

@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2022 EleutherAI and the HuggingFace Inc. team. All rights reserved.
 #
@@ -18,40 +17,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tokenization classes for LLaMA."""
 import os
 from shutil import copyfile
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import sentencepiece as spm
-
 from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer
-from modelscope.utils.logger import get_logger
 
+from modelscope.utils.logger import get_logger
 
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
 
 logger = get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "tokenizer.model"}
+VOCAB_FILES_NAMES = {'vocab_file': 'tokenizer.model'}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {
-        "hf-internal-testing/llama-tokenizer": "https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.model",
+    'vocab_file': {
+        'hf-internal-testing/llama-tokenizer':
+        'https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.model',
     },
-    "tokenizer_file": {
-        "hf-internal-testing/llama-tokenizer": "https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer_config.json",
+    'tokenizer_file': {
+        'hf-internal-testing/llama-tokenizer':
+        'https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer_config.json',
     },
 }
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
-    "hf-internal-testing/llama-tokenizer": 2048,
+    'hf-internal-testing/llama-tokenizer': 2048,
 }
-SPIECE_UNDERLINE = "▁"
+SPIECE_UNDERLINE = '▁'
 
-B_INST, E_INST = "[INST]", "[/INST]"
-B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+B_INST, E_INST = '[INST]', '[/INST]'
+B_SYS, E_SYS = '<<SYS>>\n', '\n<</SYS>>\n\n'
 
 # fmt: off
 DEFAULT_SYSTEM_PROMPT = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your\
@@ -99,14 +98,14 @@ class Llama2Tokenizer(PreTrainedTokenizer):
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
-    model_input_names = ["input_ids", "attention_mask"]
+    model_input_names = ['input_ids', 'attention_mask']
 
     def __init__(
         self,
         vocab_file,
-        unk_token="<unk>",
-        bos_token="<s>",
-        eos_token="</s>",
+        unk_token='<unk>',
+        bos_token='<s>',
+        eos_token='</s>',
         pad_token=None,
         sp_model_kwargs: Optional[Dict[str, Any]] = None,
         add_bos_token=True,
@@ -116,10 +115,18 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         **kwargs,
     ):
         self.sp_model_kwargs = {} if sp_model_kwargs is None else sp_model_kwargs
-        bos_token = AddedToken(bos_token, lstrip=False, rstrip=False) if isinstance(bos_token, str) else bos_token
-        eos_token = AddedToken(eos_token, lstrip=False, rstrip=False) if isinstance(eos_token, str) else eos_token
-        unk_token = AddedToken(unk_token, lstrip=False, rstrip=False) if isinstance(unk_token, str) else unk_token
-        pad_token = AddedToken(pad_token, lstrip=False, rstrip=False) if isinstance(pad_token, str) else pad_token
+        bos_token = AddedToken(
+            bos_token, lstrip=False, rstrip=False) if isinstance(
+                bos_token, str) else bos_token
+        eos_token = AddedToken(
+            eos_token, lstrip=False, rstrip=False) if isinstance(
+                eos_token, str) else eos_token
+        unk_token = AddedToken(
+            unk_token, lstrip=False, rstrip=False) if isinstance(
+                unk_token, str) else unk_token
+        pad_token = AddedToken(
+            pad_token, lstrip=False, rstrip=False) if isinstance(
+                pad_token, str) else pad_token
         super().__init__(
             bos_token=bos_token,
             eos_token=eos_token,
@@ -134,8 +141,10 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         )
         if legacy:
             logger.warning_once(
-                f"You are using the legacy behaviour of the {self.__class__}. This means that tokens that come after special tokens will not be properly handled. We recommend you to"
-                " read the related pull request available at https://github.com/huggingface/transformers/pull/24565"
+                f'You are using the legacy behaviour of the {self.__class__}. '
+                f'This means that tokens that come after special '
+                f'tokens will not be properly handled. We recommend you to'
+                ' read the related pull request available at https://github.com/huggingface/transformers/pull/24565'
             )
         self.legacy = legacy
         self.vocab_file = vocab_file
@@ -146,8 +155,8 @@ class Llama2Tokenizer(PreTrainedTokenizer):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["sp_model"] = None
-        state["sp_model_proto"] = self.sp_model.serialized_model_proto()
+        state['sp_model'] = None
+        state['sp_model_proto'] = self.sp_model.serialized_model_proto()
         return state
 
     def __setstate__(self, d):
@@ -162,7 +171,10 @@ class Llama2Tokenizer(PreTrainedTokenizer):
 
     def get_vocab(self):
         """Returns vocab as a dict"""
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -171,7 +183,7 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         # Replace the SPIECE_UNDERLINE with a space to make sure SPIECE_UNDERLINE is only used at
         # the beginning of the text
         if not self.legacy:
-            text = SPIECE_UNDERLINE + text.replace(SPIECE_UNDERLINE, " ")
+            text = SPIECE_UNDERLINE + text.replace(SPIECE_UNDERLINE, ' ')
         return super().tokenize(text, **kwargs)
 
     # Copied from transformers.models.t5.tokenization_t5.T5Tokenizer._tokenize
@@ -192,8 +204,10 @@ class Llama2Tokenizer(PreTrainedTokenizer):
 
         tokens = self.sp_model.encode(text, out_type=str)
 
-        if not self.legacy and not is_first and not text.startswith(" ") and tokens[0].startswith(SPIECE_UNDERLINE):
-            tokens = ([tokens[0][1:]] if len(tokens[0]) > 1 else []) + tokens[1:]
+        if not self.legacy and not is_first and not text.startswith(
+                ' ') and tokens[0].startswith(SPIECE_UNDERLINE):
+            tokens = ([tokens[0][1:]]
+                      if len(tokens[0]) > 1 else []) + tokens[1:]
         return tokens
 
     def _convert_token_to_id(self, token):
@@ -208,13 +222,13 @@ class Llama2Tokenizer(PreTrainedTokenizer):
     def convert_tokens_to_string(self, tokens):
         """Converts a sequence of tokens (string) in a single string."""
         current_sub_tokens = []
-        out_string = ""
+        out_string = ''
         prev_is_special = False
         for i, token in enumerate(tokens):
             # make sure that special tokens are not decoded using sentencepiece model
             if token in self.all_special_tokens:
                 if not prev_is_special and i != 0:
-                    out_string += " "
+                    out_string += ' '
                 out_string += self.sp_model.decode(current_sub_tokens) + token
                 prev_is_special = True
                 current_sub_tokens = []
@@ -224,7 +238,9 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         out_string += self.sp_model.decode(current_sub_tokens)
         return out_string
 
-    def save_vocabulary(self, save_directory, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         """
         Save the vocabulary and special tokens file to a directory.
 
@@ -236,20 +252,22 @@ class Llama2Tokenizer(PreTrainedTokenizer):
             `Tuple(str)`: Paths to the files saved.
         """
         if not os.path.isdir(save_directory):
-            logger.error(f"Vocabulary path ({save_directory}) should be a directory")
+            logger.error(
+                f'Vocabulary path ({save_directory}) should be a directory')
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
-        )
+            save_directory, (filename_prefix + '-' if filename_prefix else '')
+            + VOCAB_FILES_NAMES['vocab_file'])
 
-        if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file) and os.path.isfile(self.vocab_file):
+        if os.path.abspath(self.vocab_file) != os.path.abspath(
+                out_vocab_file) and os.path.isfile(self.vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
         elif not os.path.isfile(self.vocab_file):
-            with open(out_vocab_file, "wb") as fi:
+            with open(out_vocab_file, 'wb') as fi:
                 content_spiece_model = self.sp_model.serialized_model_proto()
                 fi.write(content_spiece_model)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
         bos_token_id = [self.bos_token_id] if self.add_bos_token else []
@@ -263,8 +281,10 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         return output
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None,
+            already_has_special_tokens: bool = False) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
         special tokens using the tokenizer `prepare_for_model` method.
@@ -282,26 +302,23 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         """
         if already_has_special_tokens:
             return super().get_special_tokens_mask(
-                token_ids_0=token_ids_0, token_ids_1=token_ids_1, already_has_special_tokens=True
-            )
+                token_ids_0=token_ids_0,
+                token_ids_1=token_ids_1,
+                already_has_special_tokens=True)
 
         bos_token_id = [1] if self.add_bos_token else []
         eos_token_id = [1] if self.add_eos_token else []
 
         if token_ids_1 is None:
             return bos_token_id + ([0] * len(token_ids_0)) + eos_token_id
-        return (
-            bos_token_id
-            + ([0] * len(token_ids_0))
-            + eos_token_id
-            + bos_token_id
-            + ([0] * len(token_ids_1))
-            + eos_token_id
-        )
+        return bos_token_id + (
+            [0] * len(token_ids_0)) + eos_token_id + bos_token_id + (
+                [0] * len(token_ids_1)) + eos_token_id  # noqa
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Creates a mask from the two sequences passed to be used in a sequence-pair classification task. An ALBERT
         sequence pair mask has the following format:
@@ -332,7 +349,8 @@ class Llama2Tokenizer(PreTrainedTokenizer):
 
         return output
 
-    def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
+    def _build_conversation_input_ids(
+            self, conversation: 'Conversation') -> List[int]:
         """Builds the input ids for a conversation.
         This is the format used in the provided examples. System prompts should be manually added at the beginning of
         the conversation. If no system prompt is given, the `DEFAULT_SYSTEM_PROMPT` will be used.
@@ -359,35 +377,34 @@ class Llama2Tokenizer(PreTrainedTokenizer):
         """
         dialogue = list(conversation.iter_texts())
         if not all([is_user for is_user, msg in dialogue[::2]]) or not all(
-            [not is_user for is_user, msg in dialogue[1::2]]
-        ):
+            [not is_user for is_user, msg in dialogue[1::2]]):  # noqa
             raise ValueError(
-                "The model only supports 'user' and 'assistant' roles, starting with user and alternating (u/a/u/a/u...)"
-            )
+                "The model only supports 'user' and 'assistant' roles, "
+                'starting with user and alternating (u/a/u/a/u...)')
 
         dialog_tokens: List[int] = []
         if len(conversation.past_user_inputs) > 0:
-            if not conversation.past_user_inputs[0].startswith(B_SYS) or E_SYS not in conversation.past_user_inputs[0]:
+            if not conversation.past_user_inputs[0].startswith(
+                    B_SYS) or E_SYS not in conversation.past_user_inputs[0]:
                 conversation.past_user_inputs[0] = (
-                    B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS + conversation.past_user_inputs[0]
-                )
-        elif not dialogue[0][1].startswith(B_SYS) or E_SYS not in dialogue[0][1]:
-            dialogue[0] = (dialogue[0][0], B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS + dialogue[0][1])
+                    B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS
+                    + conversation.past_user_inputs[0])
+        elif not dialogue[0][1].startswith(
+                B_SYS) or E_SYS not in dialogue[0][1]:
+            dialogue[0] = (dialogue[0][0], B_SYS + DEFAULT_SYSTEM_PROMPT
+                           + E_SYS + dialogue[0][1])
 
         dialog_tokens += sum(
-            [
-                [self.bos_token_id]
-                + self.encode(
-                    f"{B_INST} {(prompt[1]).strip()} {E_INST} {(answer[1]).strip()} ", add_special_tokens=False
-                )
-                + [self.eos_token_id]
-                for prompt, answer in zip(dialogue[::2], dialogue[1::2])
-            ],
+            [[self.bos_token_id] + self.encode(
+                f'{B_INST} {(prompt[1]).strip()} {E_INST} {(answer[1]).strip()} ',
+                add_special_tokens=False) + [self.eos_token_id]
+             for prompt, answer in zip(dialogue[::2], dialogue[1::2])],
             [],
         )
         if not (dialogue[-1][0]):
-            raise ValueError(f"Last message must be from user, got {dialogue[-1]['role']}")
+            raise ValueError(
+                f"Last message must be from user, got {dialogue[-1]['role']}")
         dialog_tokens += [self.bos_token_id] + self.encode(
-            f"{B_INST} {(dialogue[-1][1]).strip()} {E_INST}", add_special_tokens=False
-        )
+            f'{B_INST} {(dialogue[-1][1]).strip()} {E_INST}',
+            add_special_tokens=False)
         return dialog_tokens

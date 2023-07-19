@@ -4,7 +4,8 @@ pip install modelscope
 pip install numpy pandas matplotlib scikit-learn
 pip install transformers datasets
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer accelerate
+pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer
+pip install accelerate transformers_stream_generator
 
 pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
 """
@@ -17,9 +18,12 @@ class Arguments:
     device: str = '0,1'  # e.g. '-1'; '0'; '0,1'
     seed: int = 42
     model_type: str = field(
-        default='baichuan-7B',
-        metadata={'choices': ['baichuan-7B', 'baichuan-13B', 'chatglm2']})
-    debug: bool = False
+        default='baichuan-7b',
+        metadata={
+            'choices':
+            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
+        })
+    data_sample: Optional[int] = None
     #
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -43,10 +47,12 @@ class Arguments:
 
     def __post_init__(self):
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7B', 'baichuan-13B'}:
+            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
                 self.lora_target_modules = ['W_pack']
             elif self.model_type == 'chatglm2':
                 self.lora_target_modules = ['query_key_value']
+            elif self.model_type == 'llama2-7b':
+                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
             else:
                 raise ValueError(f'model_type: {self.model_type}')
 
@@ -57,27 +63,30 @@ def parse_args() -> Arguments:
 
 
 args = parse_args()
+logger.info(args)
 select_device(args.device)
 seed_everything(args.seed)
 
 # ### Loading Model and Tokenizer
-work_dir = f'runs/{args.model_type}'
-if args.model_type == 'baichuan-7B':
+if args.model_type == 'baichuan-7b':
     model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
-    model, tokenizer = get_baichuan7B_model_tokenizer(model_dir)
-elif args.model_type == 'baichuan-13B':
+    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
+elif args.model_type == 'baichuan-13b':
     model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base', 'v1.0.2')
-    model, tokenizer = get_baichuan13B_model_tokenizer(model_dir)
+    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
 elif args.model_type == 'chatglm2':
     model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
     model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
+elif args.model_type == 'llama2-7b':
+    model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.0')
+    model, tokenizer = get_llama2_model_tokenizer(model_dir)
 else:
     raise ValueError(f'model_type: {args.model_type}')
 
 #
 if args.gradient_checkpoint:
     # baichuan13B does not implement the `get_input_embeddings` function
-    if args.model_type == 'baichuan-13B':
+    if args.model_type == 'baichuan-13b':
 
         def get_input_embeddings(self):
             return self.model.embed_tokens
@@ -105,7 +114,7 @@ model.bfloat16()
 # ### Loading Dataset
 tokenize_function = partial(tokenize_function, tokenizer=tokenizer)
 train_dataset, val_dataset = get_alpaca_en_zh_dataset(
-    tokenize_function, split_seed=42, debug=args.debug)
+    tokenize_function, split_seed=42, data_sample=args.data_sample)
 # Data analysis
 stat_dataset(train_dataset)
 stat_dataset(val_dataset)
@@ -116,7 +125,7 @@ print_example(train_dataset[0], tokenizer)
 cfg_file = os.path.join(model_dir, 'configuration.json')
 #
 T_max = get_T_max(len(train_dataset), args.batch_size, args.max_epochs, True)
-work_dir = get_work_dir(work_dir)
+work_dir = get_work_dir(f'runs/{args.model_type}')
 config = Config({
     'train': {
         'dataloader': {

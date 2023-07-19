@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2022 EleutherAI and the HuggingFace Inc. team. All rights reserved.
 #
@@ -21,8 +20,8 @@
 """ LLaMA model configuration"""
 
 from transformers.configuration_utils import PretrainedConfig
-from modelscope.utils.logger import get_logger
 
+from modelscope.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -87,8 +86,8 @@ class Llama2Config(PretrainedConfig):
             https://www.reddit.com/r/LocalLLaMA/comments/14mrgpr/dynamically_scaled_rope_further_increases/. This is an
             experimental feature, subject to breaking API changes in future versions.
     """
-    model_type = "llama"
-    keys_to_ignore_at_inference = ["past_key_values"]
+    model_type = 'llama'
+    keys_to_ignore_at_inference = ['past_key_values']
 
     def __init__(
         self,
@@ -98,7 +97,7 @@ class Llama2Config(PretrainedConfig):
         num_hidden_layers=32,
         num_attention_heads=32,
         num_key_value_heads=None,
-        hidden_act="silu",
+        hidden_act='silu',
         max_position_embeddings=2048,
         initializer_range=0.02,
         rms_norm_eps=1e-6,
@@ -146,16 +145,21 @@ class Llama2Config(PretrainedConfig):
         if self.rope_scaling is None:
             return
 
-        if not isinstance(self.rope_scaling, dict) or len(self.rope_scaling) != 2:
+        if not isinstance(self.rope_scaling,
+                          dict) or len(self.rope_scaling) != 2:
             raise ValueError(
-                "`rope_scaling` must be a dictionary with with two fields, `name` and `factor`, "
-                f"got {self.rope_scaling}"
-            )
-        rope_scaling_type = self.rope_scaling.get("type", None)
-        rope_scaling_factor = self.rope_scaling.get("factor", None)
-        if rope_scaling_type is None or rope_scaling_type not in ["linear", "dynamic"]:
+                '`rope_scaling` must be a dictionary with with two fields, `name` and `factor`, '
+                f'got {self.rope_scaling}')
+        rope_scaling_type = self.rope_scaling.get('type', None)
+        rope_scaling_factor = self.rope_scaling.get('factor', None)
+        if rope_scaling_type is None or rope_scaling_type not in [
+                'linear', 'dynamic'
+        ]:
             raise ValueError(
                 f"`rope_scaling`'s name field must be one of ['linear', 'dynamic'], got {rope_scaling_type}"
             )
-        if rope_scaling_factor is None or not isinstance(rope_scaling_factor, float) or rope_scaling_factor <= 1.0:
-            raise ValueError(f"`rope_scaling`'s factor field must be an float > 1, got {rope_scaling_factor}")
+        if rope_scaling_factor is None or not isinstance(
+                rope_scaling_factor, float) or rope_scaling_factor <= 1.0:
+            raise ValueError(
+                f"`rope_scaling`'s factor field must be an float > 1, got {rope_scaling_factor}"
+            )

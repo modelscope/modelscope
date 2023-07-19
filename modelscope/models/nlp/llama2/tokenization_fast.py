@@ -30,9 +30,9 @@ if TYPE_CHECKING:
 require_version("tokenizers>=0.13.3")
 
 if is_sentencepiece_available():
-    from .tokenization import LlamaTokenizer
+    from .tokenization import Llama2Tokenizer
 else:
-    LlamaTokenizer = None
+    Llama2Tokenizer = None
 
 logger = logging.get_logger(__name__)
 VOCAB_FILES_NAMES = {"vocab_file": "tokenizer.model", "tokenizer_file": "tokenizer.json"}
@@ -97,7 +97,7 @@ class Llama2TokenizerFast(PreTrainedTokenizerFast):
     """
 
     vocab_files_names = VOCAB_FILES_NAMES
-    slow_tokenizer_class = LlamaTokenizer
+    slow_tokenizer_class = Llama2Tokenizer
     padding_side = "left"
     model_input_names = ["input_ids", "attention_mask"]
 

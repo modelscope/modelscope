@@ -487,7 +487,7 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
         return model
 
 
-@MODELS.register_module(Tasks.backbone, module_name=Models.llama)
+@MODELS.register_module(Tasks.backbone, module_name=Models.llama2)
 class Llama2Model(LlamaPreTrainedModel):
     """
     Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]

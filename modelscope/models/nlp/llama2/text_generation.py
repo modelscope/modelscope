@@ -33,7 +33,7 @@ from ... import MODELS
 
 
 # This file is mainly copied from the llama code of transformers
-@MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
+@MODELS.register_module(Tasks.text_generation, module_name=Models.llama2)
 class Llama2ForTextGeneration(LlamaPreTrainedModel):
     _tied_weights_keys = ["lm_head.weight"]
 

@@ -90,6 +90,8 @@ class EpochBasedTrainer(BaseTrainer):
             default None to use the default params of 'TorchModel.compile'.
         efficient_tuners (dict, optional): The tuners to use to train the model
         samplers: (:obj:`Sampler` or `Dict[Sampler]`, *optional*): samplers used in the train/eval DataLoader.
+        use_device_map(bool, optional): Use device_map or not.
+            If True, the model will not placed to any device. Default False
         Examples of cfg_modify_fn:
             >>> def cfg_modify_fn(cfg):
             >>>     cfg.preprocessor.first_sequence= 'text1'
@@ -257,7 +259,7 @@ class EpochBasedTrainer(BaseTrainer):
             # If not working in parallel scenario, put model to device as a default logic.
             device_name = self.device if self.device is not None else 'gpu'
             self.device = create_device(device_name)
-            if self.device.type == 'cuda':
+            if self.device.type == 'cuda' and not kwargs.get('use_device_map', False):
                 self.model.to(self.device)
 
         self.print_cfg()

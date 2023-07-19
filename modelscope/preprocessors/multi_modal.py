@@ -666,7 +666,7 @@ class MplugOwlPreprocessor(Preprocessor):
 
     @property
     def tokenizer(self):
-        from modelscope.models.nlp.llama2 import LlamaTokenizer
+        from modelscope.models.nlp.llama import LlamaTokenizer
 
         if self._tokenizer is None:
             self._tokenizer = LlamaTokenizer.from_pretrained(self.model_dir)

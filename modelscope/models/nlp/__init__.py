@@ -74,7 +74,8 @@ if TYPE_CHECKING:
                        DocumentGroundedDialogRetrievalModel,
                        DocumentGroundedDialogRerankModel)
     from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
-    from .llama2 import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
+    from .llama import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
+    from .llama2 import Llama2ForTextGeneration, Llama2Config, Llama2Model, Llama2Tokenizer, Llama2TokenizerFast
 
 else:
     _import_structure = {
@@ -169,6 +170,10 @@ else:
         'llama': [
             'LlamaForTextGeneration', 'LlamaConfig', 'LlamaModel',
             'LlamaTokenizer', 'LlamaTokenizerFast'
+        ],
+        'llama2': [
+            'Llama2ForTextGeneration', 'Llama2Config', 'Llama2Model',
+            'Llama2Tokenizer', 'Llama2TokenizerFast'
         ],
     }
 

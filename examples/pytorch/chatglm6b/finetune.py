@@ -209,7 +209,6 @@ device_map_kwargs = {}
 device_kwargs = {}
 if args.use_lora != 0 and torch.cuda.device_count() > 1:
     device_map_kwargs['device_map'] = 'auto'
-    # No placement for model, leave the model to `device_map`
     device_kwargs['use_device_map'] = True
 model = Model.from_pretrained(
     model_dir, cfg_dict=model_config, **device_map_kwargs)

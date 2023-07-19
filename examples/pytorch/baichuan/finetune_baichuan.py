@@ -227,8 +227,7 @@ kwargs = dict(
     eval_dataset=validation_dataset,
     seed=args.seed,
     cfg_modify_fn=cfg_modify_fn,
-    # No placement for model, leave the model to `device_map`
-    device='cpu')
+    use_device_map=True)
 
 trainer: EpochBasedTrainer = build_trainer(
     name=args.trainer, default_args=kwargs)

@@ -226,7 +226,7 @@ trainer = EpochBasedTrainer(
     eval_dataset=val_dataset,
     remove_unused_data=True,
     seed=42,
-    device='cpu',  # No placement for model, leave the model to `device_map`
+    use_device_map=True,
     cfg_modify_fn=cfg_modify_fn,
 )
 

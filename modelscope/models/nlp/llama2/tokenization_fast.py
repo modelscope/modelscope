@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Inc. team.
 #
@@ -18,16 +17,14 @@ from shutil import copyfile
 from typing import TYPE_CHECKING, Optional, Tuple
 
 from tokenizers import processors
-
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 from transformers.utils import is_sentencepiece_available, logging
 from transformers.utils.versions import require_version
 
-
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
 
-require_version("tokenizers>=0.13.3")
+require_version('tokenizers>=0.13.3')
 
 if is_sentencepiece_available():
     from .tokenization import Llama2Tokenizer
@@ -35,10 +32,13 @@ else:
     Llama2Tokenizer = None
 
 logger = logging.get_logger(__name__)
-VOCAB_FILES_NAMES = {"vocab_file": "tokenizer.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    'vocab_file': 'tokenizer.model',
+    'tokenizer_file': 'tokenizer.json'
+}
 
-B_INST, E_INST = "[INST]", "[/INST]"
-B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+B_INST, E_INST = '[INST]', '[/INST]'
+B_SYS, E_SYS = '<<SYS>>\n', '\n<</SYS>>\n\n'
 
 # fmt: off
 DEFAULT_SYSTEM_PROMPT = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your\
@@ -98,17 +98,17 @@ class Llama2TokenizerFast(PreTrainedTokenizerFast):
 
     vocab_files_names = VOCAB_FILES_NAMES
     slow_tokenizer_class = Llama2Tokenizer
-    padding_side = "left"
-    model_input_names = ["input_ids", "attention_mask"]
+    padding_side = 'left'
+    model_input_names = ['input_ids', 'attention_mask']
 
     def __init__(
         self,
         vocab_file=None,
         tokenizer_file=None,
         clean_up_tokenization_spaces=False,
-        unk_token="<unk>",
-        bos_token="<s>",
-        eos_token="</s>",
+        unk_token='<unk>',
+        bos_token='<s>',
+        eos_token='</s>',
         add_bos_token=True,
         add_eos_token=False,
         **kwargs,
@@ -148,8 +148,7 @@ class Llama2TokenizerFast(PreTrainedTokenizerFast):
         if self.add_eos_token:
             special_tokens.append((eos, eos_token_id))
         self._tokenizer.post_processor = processors.TemplateProcessing(
-            single=single, pair=pair, special_tokens=special_tokens
-        )
+            single=single, pair=pair, special_tokens=special_tokens)
 
     @property
     def add_eos_token(self):
@@ -169,26 +168,28 @@ class Llama2TokenizerFast(PreTrainedTokenizerFast):
         self._add_bos_token = value
         self.update_post_processor()
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not self.can_save_slow_tokenizer:
             raise ValueError(
-                "Your fast tokenizer does not have the necessary information to save the vocabulary for a slow "
-                "tokenizer."
-            )
+                'Your fast tokenizer does not have the necessary information to save the vocabulary for a slow '
+                'tokenizer.')
 
         if not os.path.isdir(save_directory):
-            logger.error(f"Vocabulary path ({save_directory}) should be a directory")
+            logger.error(
+                f'Vocabulary path ({save_directory}) should be a directory')
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
-        )
+            save_directory, (filename_prefix + '-' if filename_prefix else '')
+            + VOCAB_FILES_NAMES['vocab_file'])
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
-    def _build_conversation_input_ids(self, conversation: "Conversation"):
+    def _build_conversation_input_ids(self, conversation: 'Conversation'):
         """Builds the input ids for a conversation.
         This is the format used in the provided examples. System prompts should be manually added at the beginning of
         the conversation. If no system prompt is given, the `DEFAULT_SYSTEM_PROMPT` will be used.
@@ -215,35 +216,34 @@ class Llama2TokenizerFast(PreTrainedTokenizerFast):
         """
         dialogue = list(conversation.iter_texts())
         if not all([is_user for is_user, msg in dialogue[::2]]) or not all(
-            [not is_user for is_user, msg in dialogue[1::2]]
-        ):
+            [not is_user for is_user, msg in dialogue[1::2]]):  # noqa
             raise ValueError(
-                "The model only supports 'user' and 'assistant' roles, starting with user and alternating (u/a/u/a/u...)"
-            )
+                "The model only supports 'user' and 'assistant' roles, "
+                'starting with user and alternating (u/a/u/a/u...)')
 
         dialog_tokens = []
         if len(conversation.past_user_inputs) > 0:
-            if not conversation.past_user_inputs[0].startswith(B_SYS) or E_SYS not in conversation.past_user_inputs[0]:
+            if not conversation.past_user_inputs[0].startswith(
+                    B_SYS) or E_SYS not in conversation.past_user_inputs[0]:
                 conversation.past_user_inputs[0] = (
-                    B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS + conversation.past_user_inputs[0]
-                )
-        elif not dialogue[0][1].startswith(B_SYS) or E_SYS not in dialogue[0][1]:
-            dialogue[0] = (dialogue[0][0], B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS + dialogue[0][1])
+                    B_SYS + DEFAULT_SYSTEM_PROMPT + E_SYS
+                    + conversation.past_user_inputs[0])
+        elif not dialogue[0][1].startswith(
+                B_SYS) or E_SYS not in dialogue[0][1]:
+            dialogue[0] = (dialogue[0][0], B_SYS + DEFAULT_SYSTEM_PROMPT
+                           + E_SYS + dialogue[0][1])
 
         dialog_tokens += sum(
-            [
-                [self.bos_token_id]
-                + self.encode(
-                    f"{B_INST} {(prompt[1]).strip()} {E_INST} {(answer[1]).strip()} ", add_special_tokens=False
-                )
-                + [self.eos_token_id]
-                for prompt, answer in zip(dialogue[::2], dialogue[1::2])
-            ],
+            [[self.bos_token_id] + self.encode(
+                f'{B_INST} {(prompt[1]).strip()} {E_INST} {(answer[1]).strip()} ',
+                add_special_tokens=False) + [self.eos_token_id]
+             for prompt, answer in zip(dialogue[::2], dialogue[1::2])],
             [],
         )
         if not (dialogue[-1][0]):
-            raise ValueError(f"Last message must be from user, got {dialogue[-1]['role']}")
+            raise ValueError(
+                f"Last message must be from user, got {dialogue[-1]['role']}")
         dialog_tokens += [self.bos_token_id] + self.encode(
-            f"{B_INST} {(dialogue[-1][1]).strip()} {E_INST}", add_special_tokens=False
-        )
+            f'{B_INST} {(dialogue[-1][1]).strip()} {E_INST}',
+            add_special_tokens=False)
         return dialog_tokens

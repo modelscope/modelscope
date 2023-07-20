@@ -211,9 +211,11 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if isinstance(audio_in, str):
             # for funasr code, generate wav.scp from url or local path
             if audio_in.startswith('http') or os.path.isfile(audio_in):
-                self.audio_in, self.raw_inputs = generate_scp_from_url(audio_in)
+                self.audio_in, self.raw_inputs = generate_scp_from_url(
+                    audio_in)
             else:
-                raise FileNotFoundError(f"file {audio_in} NOT FOUND, please CHECK!")
+                raise FileNotFoundError(
+                    f'file {audio_in} NOT FOUND, please CHECK!')
         elif isinstance(audio_in, bytes):
             self.audio_in = audio_in
             self.raw_inputs = None

@@ -27,9 +27,7 @@ class HFUtilTest(unittest.TestCase):
 
     def test_auto_model(self):
         model = AutoModelForCausalLM.from_pretrained(
-            'baichuan-inc/baichuan-7B',
-            trust_remote_code=True,
-            revision='v1.0.5')
+            'baichuan-inc/baichuan-7B', trust_remote_code=True)
         self.assertTrue(model is not None)
 
     def test_auto_config(self):

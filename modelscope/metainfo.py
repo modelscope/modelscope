@@ -495,6 +495,7 @@ class Pipelines(object):
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
     speaker_change_locating = 'speaker-change-locating'
+    speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'

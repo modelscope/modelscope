@@ -1232,6 +1232,14 @@ TASK_OUTPUTS = {
     # speaker verification for single compare task
     # {'score': 84.2332}
     Tasks.speaker_verification: [OutputKeys.SCORES],
+    # speaker diarization dialogue detection for binary results: dialogue or non_dialogue
+    # {
+    #   "scores": [0.98, 0.02],
+    #   "labels": ["dialogue", "non_dialogue"],
+    # }
+    Tasks.speaker_diarization_dialogue_detection: [
+        OutputKeys.SCORES, OutputKeys.LABELS
+    ],
 
     # punctuation result for single sample
     # { "text": "你好，明天！"}

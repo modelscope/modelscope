@@ -329,6 +329,8 @@ TASK_INPUTS = {
     InputType.AUDIO,
     Tasks.inverse_text_processing:
     InputType.TEXT,
+    Tasks.speaker_diarization_dialogue_detection:
+    InputType.TEXT,
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {

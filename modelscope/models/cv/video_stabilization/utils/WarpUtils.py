@@ -46,8 +46,9 @@ def mesh_warp_frame(frame, x_motion, y_motion, cap_width, cap_height):
             homo,
             origin_kp.contiguous().view(2, -1).permute(1, 0)).permute(1, 0)
 
-        projection.append(projected_kp.contiguous().view(
-            *origin_kp.shape).permute(1, 2, 0))  # 2, H, W --> H, W, 2
+        projection.append(
+            projected_kp.contiguous().view(*origin_kp.shape).permute(
+                1, 2, 0))  # 2, H, W --> H, W, 2
     projection = torch.stack(projection, 0)
 
     projection[:, :, :, 0] = projection[:, :, :, 0] / cfg.MODEL.WIDTH * 2. - 1.

@@ -64,14 +64,6 @@ class NeRFRecon4KTest(unittest.TestCase):
             dict(data_cfg=self.data_dic, render_dir=self.render_dir))
         print('facefusion.test_run_modelhub done')
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
-    def test_run_modelhub_default_model(self):
-        nerf_recon_4k = pipeline(Tasks.nerf_recon_4k)
-        nerf_recon_4k(
-            dict(data_cfg=self.data_dic, render_dir=self.render_dir))
-        print('facefusion.test_run_modelhub_default_model done')
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -33,17 +33,16 @@ class NeRFRecon4K(TorchModel):
         # self.use_mask = kwargs['use_mask']
         # self.num_samples_per_ray = kwargs['num_samples_per_ray']
         self.test_ray_chunk = kwargs['test_ray_chunk']
-        self.enc_ckpt_path = kwargs['enc_ckpt_path']
-        self.dec_ckpt_path = kwargs['dec_ckpt_path']
+        # self.enc_ckpt_path = kwargs['enc_ckpt_path']
+        # self.dec_ckpt_path = kwargs['dec_ckpt_path']
 
-        if self.enc_ckpt_path == '':
-            self.enc_ckpt_path = os.path.join(model_dir, 'ckpt_saved/fine_100000.tar')
-            if not os.path.exists(self.enc_ckpt_path):
-                raise Exception('encoder ckpt path not found')
-        if self.dec_ckpt_path == '':
-            self.dec_ckpt_path = os.path.join(model_dir, 'ckpt_saved/sresrnet_100000.tar')
-            if not os.path.exists(self.dec_ckpt_path):
-                raise Exception('decoder ckpt path not found')
+        self.enc_ckpt_path = os.path.join(model_dir, 'fine_100000.tar')
+        if not os.path.exists(self.enc_ckpt_path):
+            raise Exception('encoder ckpt path not found')
+        # if self.dec_ckpt_path == '':
+        self.dec_ckpt_path = os.path.join(model_dir, 'sresrnet_100000.pth')
+        if not os.path.exists(self.dec_ckpt_path):
+            raise Exception('decoder ckpt path not found')
 
         self.ckpt_name = self.dec_ckpt_path.split('/')[-1][:-4]
         self.ndc = True if self.data_type == 'llff' else False

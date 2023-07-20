@@ -1,23 +1,21 @@
 import os
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.msdatasets import MsDataset
 
+
+data_ms = MsDataset.load('DAMOXR/nerf_llff_data', subset_name='default', split='test')
+data_path = data_ms.config_kwargs['split_config']['test']
+scene = 'nerf_llff_data/fern'
+datadir = os.path.join(data_path, scene)
 
 data_dic = dict(
-    datadir='../datasets_nerf/nerf_llff_data/fern',
+    datadir=datadir,
     dataset_type='llff',
     load_sr=1,
-    llffhold=8,
     factor=4,
     ndc=True,
-    white_bkgd=False,
-    bd_factor=.75,
-    width=None,
-    height=None,
-    spherify=False,
-    movie_render_kwargs=dict(),
-    load_depths=False
+    white_bkgd=False
 )
 
 # data_dic = dict(
@@ -41,12 +39,7 @@ render_dir = 'exp'
 ### when use nerf-synthesis dataset, data_type should specify as 'blender'
 nerf_recon_4k = pipeline(
     Tasks.nerf_recon_4k,
-    model='../cv_nerf-3d-reconstruction-4k-nerf_damo',
-    enc_ckpt_path="../cv_nerf-3d-reconstruction-4k-nerf_damo/fine_100000.tar",
-    dec_ckpt_path="../cv_nerf-3d-reconstruction-4k-nerf_damo/sresrnet_100000.pth",
-    # enc_ckpt_path="/home/admin/wzs/4K-NeRF/logs/syn/drums_4k/fine_180000.tar",
-    # dec_ckpt_path="/home/admin/wzs/4K-NeRF/logs/syn/drums_4k/sresrnet_180000.pth",
-    # model_dir='../4K-NeRF/logs/llff/joint_fern_l1+gan',
+    model='DAMOXR/cv_nerf-3d-reconstruction-4k-nerf_damo',
     data_type='llff'
     )
 

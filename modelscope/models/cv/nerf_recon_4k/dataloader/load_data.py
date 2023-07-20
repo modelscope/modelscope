@@ -13,21 +13,22 @@ def load_data(args):
 
     if args.dataset_type == 'llff':
         images, depths, poses, bds, render_poses, i_test, *srgt = load_llff_data(
-                args.datadir, args.factor, args.width, args.height,
-                recenter=True, bd_factor=args.bd_factor,
-                spherify=args.spherify,
-                load_depths=args.load_depths,
+                args.datadir, args.factor, None, None,
+                recenter=True, bd_factor=0.75,
+                spherify=False,
+                load_depths=False,
                 load_SR=args.load_sr,
-                movie_render_kwargs=args.movie_render_kwargs)
+                movie_render_kwargs=dict())
         hwf = poses[0,:3,-1]
         poses = poses[:,:3,:4]
         print('Loaded llff', images.shape, render_poses.shape, hwf, args.datadir)
         if not isinstance(i_test, list):
             i_test = [i_test]
 
-        if args.llffhold > 0:
-            print('Auto LLFF holdout,', args.llffhold)
-            i_test = np.arange(images.shape[0])[::args.llffhold]
+        llffhold = 8
+        if llffhold > 0:
+            print('Auto LLFF holdout,', llffhold)
+            i_test = np.arange(images.shape[0])[::llffhold]
 
         i_val = [i_test[0]]
         i_train = np.array([i for i in np.arange(int(images.shape[0])) if

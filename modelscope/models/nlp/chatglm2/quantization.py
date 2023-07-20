@@ -1,11 +1,9 @@
 import base64
 import bz2
 import ctypes
-from functools import partial
 from typing import List
 
 import torch
-from torch.nn import Linear
 from torch.nn.parameter import Parameter
 from transformers.utils import logging
 

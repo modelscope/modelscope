@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .glm_130b import GLM130bForTextGeneration
     from .csanmt import CsanmtForTranslation
     from .canmt import CanmtForTranslation
+    from .polylm import PolyLMForTextGeneration
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .chatglm import ChatGLMForConditionalGeneration, ChatGLMTokenizer, ChatGLMConfig
     from .chatglm2 import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
@@ -93,6 +94,7 @@ else:
         'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
         'canmt': ['CanmtForTranslation'],
+        'polylm': ['PolyLMForTextGeneration'],
         'codegeex':
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'glm_130b': ['GLM130bForTextGeneration'],

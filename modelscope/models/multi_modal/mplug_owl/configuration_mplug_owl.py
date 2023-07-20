@@ -74,6 +74,7 @@ class MplugOwlVisionConfig(PretrainedConfig):
         initializer_range=0.02,
         initializer_factor=1.0,
         use_flash_attn=False,
+        use_fp32_layernorm=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -92,6 +93,7 @@ class MplugOwlVisionConfig(PretrainedConfig):
         self.layer_norm_eps = layer_norm_eps
         self.hidden_act = hidden_act
         self.use_flash_attn = use_flash_attn
+        self.use_fp32_layernorm = use_fp32_layernorm
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Union[str,
@@ -129,6 +131,7 @@ class MplugOwlVisualAbstractorConfig(PretrainedConfig):
         initializer_range=0.02,
         layer_norm_eps=1e-6,
         encoder_hidden_size=1024,
+        use_fp32_layernorm=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -141,6 +144,7 @@ class MplugOwlVisualAbstractorConfig(PretrainedConfig):
         self.initializer_range = initializer_range
         self.layer_norm_eps = layer_norm_eps
         self.encoder_hidden_size = encoder_hidden_size
+        self.use_fp32_layernorm = use_fp32_layernorm
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Union[str,

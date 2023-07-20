@@ -309,10 +309,13 @@ class SpeakerVerificationERes2Net(TorchModel):
                  **kwargs):
         super().__init__(model_dir, model_config, *args, **kwargs)
         self.model_config = model_config
+        self.embed_dim = self.model_config['embed_dim']
+        self.m_channels = self.model_config['channels']
         self.other_config = kwargs
         self.feature_dim = 80
 
-        self.embedding_model = ERes2Net()
+        self.embedding_model = ERes2Net(
+            embed_dim=self.embed_dim, m_channels=self.m_channels)
 
         pretrained_model_name = kwargs['pretrained_model']
         self.__load_check_point(pretrained_model_name)

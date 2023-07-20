@@ -121,6 +121,8 @@ class ClusterBackend(TorchModel):
         assert len(
             X.shape
         ) == 2, 'modelscope error: the shape of input should be [N, C]'
+        if X.shape[0] < 20:
+            return np.zeros(X.shape[0], dtype='int')
         if self.model_config['cluster_type'] == 'spectral':
             if X.shape[0] * pval < 6:
                 pval = 6. / X.shape[0]
@@ -159,6 +161,6 @@ class ClusterBackend(TorchModel):
             for i in range(len(labels)):
                 if labels[i] == spks[1]:
                     labels[i] = spks[0]
-                elif labels[i] > merge_spks[1]:
+                elif labels[i] > spks[1]:
                     labels[i] -= 1
         return labels

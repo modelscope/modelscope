@@ -109,6 +109,7 @@ class NeRFRecon4K(TorchModel):
 
             rgb_srsave = rgb_srtest.squeeze().movedim(0, -1).detach().clamp(0, 1).numpy()
             rgbsr.append(rgb_srsave)
+        print('all inference process has done, saving images... because our result is 4K (), so this porcess maybe timecost.')
         rgbsr = np.array(rgbsr)
         for i in trange(len(rgbsr)):
             rgb8 = to8b(rgbsr[i])

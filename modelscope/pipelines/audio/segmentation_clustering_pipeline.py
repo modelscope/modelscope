@@ -181,8 +181,8 @@ class SegmentationClusteringPipeline(Pipeline):
         vad_time = self.vad_pipeline(audio, audio_fs=self.fs)
         vad_segments = []
         for t in vad_time['text']:
-            st = t[0] / 1000
-            ed = t[1] / 1000
+            st = int(t[0]) / 1000
+            ed = int(t[1]) / 1000
             vad_segments.append(
                 [st, ed, audio[int(st * self.fs):int(ed * self.fs)]])
 

@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import sys
 
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoModel as AutoModelHF

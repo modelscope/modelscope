@@ -12,19 +12,14 @@ from torch.utils.cpp_extension import load
 from torch_scatter import segment_coo
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
+parent_list = parent_dir.split('/')
+del parent_list[-4:]
+parent_dir = "/".join(parent_list)
 render_utils_cuda = load(
     name='render_utils_cuda',
     sources=[
         os.path.join(parent_dir, path)
-        for path in ['cuda/render_utils.cpp', 'cuda/render_utils_kernel.cu']
-    ],
-    verbose=True)
-
-total_variation_cuda = load(
-    name='total_variation_cuda',
-    sources=[
-        os.path.join(parent_dir, path) for path in
-        ['cuda/total_variation.cpp', 'cuda/total_variation_kernel.cu']
+        for path in ['ops/4knerf/render_utils.cpp', 'ops/4knerf/render_utils_kernel.cu']
     ],
     verbose=True)
 

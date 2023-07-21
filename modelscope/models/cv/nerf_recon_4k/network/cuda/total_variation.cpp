@@ -22,4 +22,3 @@ void total_variation_add_grad(torch::Tensor param, torch::Tensor grad, float wx,
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("total_variation_add_grad", &total_variation_add_grad, "Add total variation grad");
 }
-

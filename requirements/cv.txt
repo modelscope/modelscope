@@ -59,6 +59,7 @@ tensorflow-estimator>=1.15.1
 tf_slim
 thop
 timm>=0.4.9
+torch-scatter
 torchmetrics>=0.6.2
 torchsummary>=1.5.1
 torchvision

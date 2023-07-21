@@ -1,21 +1,24 @@
-import os, time, random, argparse
-from tqdm import tqdm, trange
-import mmcv
-import imageio
-import numpy as np
+import argparse
+import os
+import random
+import time
 
+import imageio
+import mmcv
+import numpy as np
 import torch
+from tqdm import tqdm, trange
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .network.dvgo import DirectVoxGO, DirectMPIGO, SFTNet, get_rays_of_a_view
 from .dataloader.load_data import load_data
+from .network.dvgo import DirectMPIGO, DirectVoxGO, SFTNet, get_rays_of_a_view
 
 logger = get_logger()
-to8b = lambda x : (255*np.clip(x,0,1)).astype(np.uint8)
+to8b = lambda x: (255 * np.clip(x, 0, 1)).astype(np.uint8)
 __all__ = ['NeRFRecon4K']
 
 
@@ -64,13 +67,21 @@ class NeRFRecon4K(TorchModel):
         self.encoder.load_state_dict(ckpt['model_state_dict'])
         self.encoder = self.encoder.to(self.device)
 
-        self.decoder = SFTNet(n_in_colors=3, scale=self.sr_ratio, num_feat=64, num_block=5, num_grow_ch=32, num_cond=1, dswise=False).to(self.device)
-        self.decoder.load_network(load_path=self.dec_ckpt_path, device=self.device)
+        self.decoder = SFTNet(
+            n_in_colors=3,
+            scale=self.sr_ratio,
+            num_feat=64,
+            num_block=5,
+            num_grow_ch=32,
+            num_cond=1,
+            dswise=False).to(self.device)
+        self.decoder.load_network(
+            load_path=self.dec_ckpt_path, device=self.device)
         self.decoder.eval()
 
     def nerf_reconstruction(self, data_cfg, render_dir):
         data_dict = load_everything(cfg_data=data_cfg)
-        
+
         self.render_viewpoints_kwargs = {
             'render_kwargs': {
                 'near': data_dict['near'],
@@ -87,51 +98,73 @@ class NeRFRecon4K(TorchModel):
         os.makedirs(render_dir, exist_ok=True)
         print('All results are dumped into', render_dir)
         rgbs, depths, bgmaps, _, _, rgb_features = self.render_viewpoints(
-                render_poses=data_dict['poses'][data_dict['i_test']],
-                HW=data_dict['HW'][data_dict['i_test']],
-                Ks=data_dict['Ks'][data_dict['i_test']],
-                gt_imgs=[data_dict['images'][i].cpu().numpy() for i in data_dict['i_test']],
-                savedir=render_dir, dump_images=False,
-                **self.render_viewpoints_kwargs)
+            render_poses=data_dict['poses'][data_dict['i_test']],
+            HW=data_dict['HW'][data_dict['i_test']],
+            Ks=data_dict['Ks'][data_dict['i_test']],
+            gt_imgs=[
+                data_dict['images'][i].cpu().numpy()
+                for i in data_dict['i_test']
+            ],
+            savedir=render_dir,
+            dump_images=False,
+            **self.render_viewpoints_kwargs)
 
         rgbsr = []
         for idx, rgbsave in enumerate(tqdm(rgb_features)):
-            rgbtest = torch.from_numpy(rgbsave).movedim(-1, 0).unsqueeze(0).to(self.device)
+            rgbtest = torch.from_numpy(rgbsave).movedim(-1, 0).unsqueeze(0).to(
+                self.device)
             # rgb = torch.from_numpy(rgbs[idx]).movedim(-1, 0).unsqueeze(0).to(self.device)
 
             input_cond = torch.from_numpy(depths).movedim(-1, 1)
             input_cond = input_cond[idx, :, :, :].to(self.device)
 
             if self.test_tile:
-                rgb_srtest = self.decoder.tile_process(rgbtest, input_cond, tile_size=self.test_tile)
+                rgb_srtest = self.decoder.tile_process(
+                    rgbtest, input_cond, tile_size=self.test_tile)
             else:
-                rgb_srtest = self.decoder(rgbtest, input_cond).detach().to('cpu')
+                rgb_srtest = self.decoder(rgbtest,
+                                          input_cond).detach().to('cpu')
 
-            rgb_srsave = rgb_srtest.squeeze().movedim(0, -1).detach().clamp(0, 1).numpy()
+            rgb_srsave = rgb_srtest.squeeze().movedim(0, -1).detach().clamp(
+                0, 1).numpy()
             rgbsr.append(rgb_srsave)
-        print('all inference process has done, saving images... because our result is 4K (), so this porcess maybe timecost.')
+        print(
+            'all inference process has done, saving images... because our images are 4K (4032x3024), the saving process may be time-consuming.'
+        )
         rgbsr = np.array(rgbsr)
         for i in trange(len(rgbsr)):
             rgb8 = to8b(rgbsr[i])
             filename = os.path.join(render_dir, '{:03d}_dec.png'.format(i))
             imageio.imwrite(filename, rgb8)
 
-        imageio.mimwrite(os.path.join(render_dir, f'result_dec.mp4'), to8b(rgbsr), fps=25, codec='libx264', quality=8)
-
+        imageio.mimwrite(
+            os.path.join(render_dir, f'result_dec.mp4'),
+            to8b(rgbsr),
+            fps=25,
+            codec='libx264',
+            quality=8)
 
     @torch.no_grad()
-    def render_viewpoints(self, render_poses, HW, Ks, render_kwargs,
-                        gt_imgs=None, savedir=None, dump_images=False,
-                        render_factor=0, eval_ssim=False, eval_lpips_alex=False, 
-                        eval_lpips_vgg=False):
+    def render_viewpoints(self,
+                          render_poses,
+                          HW,
+                          Ks,
+                          render_kwargs,
+                          gt_imgs=None,
+                          savedir=None,
+                          dump_images=False,
+                          render_factor=0,
+                          eval_ssim=False,
+                          eval_lpips_alex=False,
+                          eval_lpips_vgg=False):
         '''Render images for the given viewpoints; run evaluation if gt given.
         '''
         assert len(render_poses) == len(HW) and len(HW) == len(Ks)
 
-        if render_factor!=0:
+        if render_factor != 0:
             HW = np.copy(HW)
             Ks = np.copy(Ks)
-            HW = (HW/render_factor).astype(int)
+            HW = (HW / render_factor).astype(int)
             Ks[:, :2, :3] /= render_factor
 
         rgbs = []
@@ -149,21 +182,32 @@ class NeRFRecon4K(TorchModel):
             H, W = HW[i]
             K = Ks[i]
             c2w = torch.Tensor(c2w)
-            rays_o, rays_d, viewdirs = get_rays_of_a_view(H, W, K, c2w, self.ndc,
-                                                          inverse_y=False, flip_x=False, flip_y=False)
+            rays_o, rays_d, viewdirs = get_rays_of_a_view(
+                H,
+                W,
+                K,
+                c2w,
+                self.ndc,
+                inverse_y=False,
+                flip_x=False,
+                flip_y=False)
             keys = ['rgb_marched', 'depth', 'alphainv_last', 'rgb_feature']
-            rays_o = rays_o.flatten(0,-2).to('cuda')
-            rays_d = rays_d.flatten(0,-2).to('cuda')
-            viewdirs = viewdirs.flatten(0,-2).to('cuda')
+            rays_o = rays_o.flatten(0, -2).to('cuda')
+            rays_d = rays_d.flatten(0, -2).to('cuda')
+            viewdirs = viewdirs.flatten(0, -2).to('cuda')
             time_rdstart = time.time()
-            render_result_chunks = [
-                    {k: v for k, v in self.encoder(ro, rd, vd, **render_kwargs).items() if k in keys}
-                    for ro, rd, vd in zip(rays_o.split(self.test_ray_chunk, 0), 
-                                          rays_d.split(self.test_ray_chunk, 0), 
-                                          viewdirs.split(self.test_ray_chunk, 0))
-                ]
+            render_result_chunks = [{
+                k: v
+                for k, v in self.encoder(ro, rd, vd, **render_kwargs).items()
+                if k in keys
+            } for ro, rd, vd in zip(
+                rays_o.split(self.test_ray_chunk, 0),
+                rays_d.split(self.test_ray_chunk, 0),
+                viewdirs.split(self.test_ray_chunk, 0))]
             render_result = {
-                k: torch.cat([ret[k] for ret in render_result_chunks]).reshape(H,W,-1)
+                k:
+                torch.cat([ret[k]
+                           for ret in render_result_chunks]).reshape(H, W, -1)
                 for k in render_result_chunks[0].keys()
             }
             print(f'render time is: {time.time() - time_rdstart}')
@@ -177,18 +221,20 @@ class NeRFRecon4K(TorchModel):
             depths.append(depth)
             bgmaps.append(bgmap)
             viewdirs_all.append(viewdirs)
-            if i==0:
+            if i == 0:
                 print('Testing', rgb.shape)
 
-            if gt_imgs is not None and render_factor==0:
+            if gt_imgs is not None and render_factor == 0:
                 p = -10. * np.log10(np.mean(np.square(rgb - gt_imgs[i])))
                 psnrs.append(p)
 
         if len(psnrs):
             print('Testing psnr', np.mean(psnrs), '(avg)')
             if eval_ssim: print('Testing ssim', np.mean(ssims), '(avg)')
-            if eval_lpips_vgg: print('Testing lpips (vgg)', np.mean(lpips_vgg), '(avg)')
-            if eval_lpips_alex: print('Testing lpips (alex)', np.mean(lpips_alex), '(avg)')
+            if eval_lpips_vgg:
+                print('Testing lpips (vgg)', np.mean(lpips_vgg), '(avg)')
+            if eval_lpips_alex:
+                print('Testing lpips (alex)', np.mean(lpips_alex), '(avg)')
 
         if savedir is not None and dump_images:
             for i in trange(len(rgbs)):
@@ -212,9 +258,10 @@ def load_everything(cfg_data):
 
     # remove useless field
     kept_keys = {
-            'hwf', 'HW', 'Ks', 'near', 'far', 'near_clip',
-            'i_train', 'i_val', 'i_test', 'irregular_shape',
-            'poses', 'render_poses', 'images', 'white_bkgd'}
+        'hwf', 'HW', 'Ks', 'near', 'far', 'near_clip', 'i_train', 'i_val',
+        'i_test', 'irregular_shape', 'poses', 'render_poses', 'images',
+        'white_bkgd'
+    }
     # if cfg.data.load_sr:
     kept_keys.add('srgt')
     kept_keys.add('w2c')
@@ -226,9 +273,11 @@ def load_everything(cfg_data):
 
     # construct data tensor
     if data_dict['irregular_shape']:
-        data_dict['images'] = [torch.FloatTensor(im, device='cpu') for im in data_dict['images']]
+        data_dict['images'] = [
+            torch.FloatTensor(im, device='cpu') for im in data_dict['images']
+        ]
     else:
-        data_dict['images'] = torch.FloatTensor(data_dict['images'], device='cpu')
+        data_dict['images'] = torch.FloatTensor(
+            data_dict['images'], device='cpu')
     data_dict['poses'] = torch.Tensor(data_dict['poses'])
     return data_dict
-

@@ -705,4 +705,3 @@ torch::Tensor alpha2weight_backward_cuda(
 
   return grad;
 }
-

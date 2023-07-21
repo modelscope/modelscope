@@ -65,4 +65,3 @@ void total_variation_add_grad_cuda(torch::Tensor param, torch::Tensor grad, floa
     }));
   }
 }
-

@@ -20,7 +20,7 @@ class NeRFRecon4KTest(unittest.TestCase):
             'DAMOXR/nerf_llff_data',
             subset_name='default',
             split='test',
-            # download_mode=DownloadMode.FORCE_REDOWNLOAD
+            download_mode=DownloadMode.FORCE_REDOWNLOAD
         ).config_kwargs['split_config']['test']
         nerf_llff = os.path.join(data_dir, 'nerf_llff_data')
         scene = 'fern'
@@ -32,24 +32,23 @@ class NeRFRecon4KTest(unittest.TestCase):
             load_sr=1,
             factor=4,
             ndc=True,
-            white_bkgd=False
-        )
+            white_bkgd=False)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
+    # @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    # @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
 
-    def test_run_by_direct_model_download(self):
-        snapshot_path = snapshot_download(self.model_id)
-        print('snapshot_path: {}'.format(snapshot_path))
+    # def test_run_by_direct_model_download(self):
+    #     snapshot_path = snapshot_download(self.model_id)
+    #     print('snapshot_path: {}'.format(snapshot_path))
 
-        nerf_recon_4k = pipeline(
-            Tasks.nerf_recon_4k,
-            model=snapshot_path,
-            data_type='llff',
-        )
+    #     nerf_recon_4k = pipeline(
+    #         Tasks.nerf_recon_4k,
+    #         model=snapshot_path,
+    #         data_type='llff',
+    #     )
 
-        nerf_recon_4k(
-            dict(data_cfg=self.data_dic, render_dir=self.render_dir))
+    #     nerf_recon_4k(
+    #         dict(data_cfg=self.data_dic, render_dir=self.render_dir))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
@@ -60,9 +59,8 @@ class NeRFRecon4KTest(unittest.TestCase):
             data_type='llff',
         )
 
-        nerf_recon_4k(
-            dict(data_cfg=self.data_dic, render_dir=self.render_dir))
-        print('facefusion.test_run_modelhub done')
+        nerf_recon_4k(dict(data_cfg=self.data_dic, render_dir=self.render_dir))
+        print('4k-nerf_damo.test_run_modelhub done')
 
 
 if __name__ == '__main__':

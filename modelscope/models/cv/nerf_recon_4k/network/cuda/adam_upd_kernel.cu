@@ -130,4 +130,3 @@ void adam_upd_with_perlr_cuda(
         N, step_size, beta1, beta2, eps);
   }));
 }
-

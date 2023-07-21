@@ -20,4 +20,3 @@ torch::Tensor cumdist_thres(torch::Tensor dist, float thres) {
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("cumdist_thres", &cumdist_thres, "Generate mask for cumulative dist.");
 }
-

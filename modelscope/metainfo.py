@@ -845,7 +845,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
     Tasks.nerf_recon_4k: (Pipelines.nerf_recon_4k,
-                           'damo/cv_nerf-3d-reconstruction-4k-nerf_damo'),
+                          'damo/cv_nerf-3d-reconstruction-4k-nerf_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (

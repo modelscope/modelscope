@@ -32,24 +32,7 @@ class NeRFRecon4KTest(unittest.TestCase):
             load_sr=1,
             factor=4,
             ndc=True,
-            white_bkgd=False
-        )
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
-
-    def test_run_by_direct_model_download(self):
-        snapshot_path = snapshot_download(self.model_id)
-        print('snapshot_path: {}'.format(snapshot_path))
-
-        nerf_recon_4k = pipeline(
-            Tasks.nerf_recon_4k,
-            model=snapshot_path,
-            data_type='llff',
-        )
-
-        nerf_recon_4k(
-            dict(data_cfg=self.data_dic, render_dir=self.render_dir))
+            white_bkgd=False)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
@@ -59,10 +42,8 @@ class NeRFRecon4KTest(unittest.TestCase):
             model=self.model_id,
             data_type='llff',
         )
-
-        nerf_recon_4k(
-            dict(data_cfg=self.data_dic, render_dir=self.render_dir))
-        print('facefusion.test_run_modelhub done')
+        nerf_recon_4k(dict(data_cfg=self.data_dic, render_dir=self.render_dir))
+        print('4k-nerf_damo.test_run_modelhub done')
 
 
 if __name__ == '__main__':

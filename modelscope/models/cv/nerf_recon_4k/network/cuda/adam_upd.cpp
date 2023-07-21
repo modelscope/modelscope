@@ -84,4 +84,3 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("adam_upd_with_perlr", &adam_upd_with_perlr,
           "Adam update ignoring zero grad with per-voxel lr");
 }
-

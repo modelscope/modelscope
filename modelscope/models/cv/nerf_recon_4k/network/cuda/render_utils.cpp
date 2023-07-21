@@ -182,4 +182,3 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("alpha2weight", &alpha2weight, "Per-point alpha to accumulated blending weight");
   m.def("alpha2weight_backward", &alpha2weight_backward, "Backward pass of alpha2weight");
 }
-

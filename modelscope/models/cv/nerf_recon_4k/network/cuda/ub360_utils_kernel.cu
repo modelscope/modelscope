@@ -45,4 +45,3 @@ torch::Tensor cumdist_thres_cuda(torch::Tensor dist, float thres) {
   }));
   return mask;
 }
-

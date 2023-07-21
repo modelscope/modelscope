@@ -10,7 +10,7 @@ import torch
 ##########  see https://github.com/Fyusion/LLFF for original
 def imread(f):
     if f.endswith('png'):
-        return imageio.imread(f, ignoregamma=True)
+        return imageio.imread(f, format='PNG-PIL', ignoregamma=True)
     else:
         return imageio.imread(f)
 

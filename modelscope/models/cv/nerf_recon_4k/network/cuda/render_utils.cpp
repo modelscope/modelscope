@@ -2,7 +2,6 @@
 
 #include <vector>
 
-// CUDA forward declarations
 
 std::vector<torch::Tensor> infer_t_minmax_cuda(
         torch::Tensor rays_o, torch::Tensor rays_d, torch::Tensor xyz_min, torch::Tensor xyz_max,
@@ -41,7 +40,6 @@ torch::Tensor alpha2weight_backward_cuda(
         torch::Tensor i_start, torch::Tensor i_end, const int n_rays,
         torch::Tensor grad_weights, torch::Tensor grad_last);
 
-// C++ interface
 
 #define CHECK_CUDA(x) TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")

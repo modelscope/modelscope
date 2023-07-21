@@ -2,11 +2,9 @@
 
 #include <vector>
 
-// CUDA forward declarations
 
 torch::Tensor cumdist_thres_cuda(torch::Tensor dist, float thres);
 
-// C++ interface
 
 #define CHECK_CUDA(x) TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")

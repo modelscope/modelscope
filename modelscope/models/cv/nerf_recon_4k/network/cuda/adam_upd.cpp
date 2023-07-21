@@ -2,7 +2,6 @@
 
 #include <vector>
 
-// CUDA forward declarations
 
 void adam_upd_cuda(
     torch::Tensor param,

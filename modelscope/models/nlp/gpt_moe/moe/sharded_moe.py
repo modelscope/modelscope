@@ -430,9 +430,9 @@ class MOELayer(Base):
         self.use_expert_residual_network = use_expert_residual_network
 
         if self.use_expert_residual_network:
-            self.expert_network = nn.Sequential(
-                *([ExpertResidualLayer(self.gate.model_dim)
-                   for _ in range(6)]))  # noqa
+            self.expert_network = nn.Sequential(*([
+                ExpertResidualLayer(self.gate.model_dim) for _ in range(6)
+            ]))  # noqa
 
         self.use_tutel = use_tutel and TUTEL_INSTALLED
 

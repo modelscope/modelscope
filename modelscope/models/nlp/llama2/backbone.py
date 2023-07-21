@@ -36,7 +36,7 @@ from modelscope.utils.logger import get_logger
 from ... import MODELS
 from .configuration import Llama2Config
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 _CONFIG_FOR_DOC = 'Llama2Config'
 

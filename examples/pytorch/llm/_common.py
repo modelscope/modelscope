@@ -1,4 +1,3 @@
-import ast
 import datetime as dt
 import math
 import os
@@ -7,6 +6,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from functools import partial
+from types import MethodType
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import json
@@ -46,8 +46,7 @@ from modelscope import (Model, MsDataset, get_logger, read_config,
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
 from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
-from modelscope.msdatasets.dataset_cls.custom_datasets import \
-    TorchCustomDataset
+from modelscope.models.nlp.llama2 import Llama2Tokenizer
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
@@ -56,8 +55,14 @@ from modelscope.utils.registry import default_group
 #
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
 
-PROMPT = """Human: {instruction}
-AI: """
+PROMPT = """Here's a conversation between a human and an AI assistant. \
+The AI assistant provides detailed, friendly answers for the human.
+
+### Human:
+{instruction}
+
+### AI:
+"""
 
 logger = get_logger()
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
@@ -157,7 +162,6 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
 def tokenize_function(example: Dict[str, Optional[str]],
                       tokenizer,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
-    """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     instruction: str = example['instruction']
     input_ = example['input']
     if input_ is not None and input_ != '':
@@ -192,7 +196,7 @@ def tokenize_function(example: Dict[str, Optional[str]],
 
 
 def stat_dataset(dataset: HfDataset) -> None:
-    """Statistical analysis was performed on the data set"""
+    """Statistical analysis was performed on the dataset"""
     _token_len = []
     for d in dataset:
         _token_len.append(len(d['input_ids']))
@@ -312,7 +316,6 @@ def _add_special_token(tokenizer):
 def get_baichuan_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
                                  add_special_token: bool = True):
-    sys.path.insert(0, model_dir)
     model_config = AutoConfig.from_pretrained(
         model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch.float16
@@ -337,7 +340,6 @@ def get_chatglm2_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
                                  add_special_token: bool = True):
     config = read_config(model_dir)
-    config['model'] = ConfigDict({'type': 'chatglm2-6b'})
     tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
@@ -354,18 +356,37 @@ def get_chatglm2_model_tokenizer(model_dir: str,
 def get_llama2_model_tokenizer(model_dir: str,
                                load_model: bool = True,
                                add_special_token: bool = True):
-    config = AutoConfig.from_pretrained(model_dir)
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    config = read_config(model_dir)
+    tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
+        model = Model.from_pretrained(
             model_dir,
-            config=config,
+            cfg_dict=config,
             device_map='auto',
-            torch_dtype=torch.float16,
-        )
+            torch_dtype=torch.float16)
     if add_special_token:
         _add_special_token(tokenizer)
+    return model, tokenizer
+
+
+def get_model_tokenizer(model_type: str):
+    # ### Loading Model and Tokenizer
+    if model_type == 'baichuan-7b':
+        model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.7')
+        model, tokenizer = get_baichuan_model_tokenizer(model_dir)
+    elif model_type == 'baichuan-13b':
+        model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base',
+                                      'v1.0.3')
+        model, tokenizer = get_baichuan_model_tokenizer(model_dir)
+    elif model_type == 'chatglm2':
+        model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
+        model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
+    elif model_type == 'llama2-7b':
+        model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.2')
+        model, tokenizer = get_llama2_model_tokenizer(model_dir)
+    else:
+        raise ValueError(f'model_type: {model_type}')
     return model, tokenizer
 
 
@@ -375,10 +396,6 @@ def get_alpaca_en_zh_dataset(
         test_split_p: float = 0.01,
         split_seed: int = 42,
         data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
-    """
-    split: Literal['train', 'validation', None]
-    """
-
     dataset_en: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
     dataset_zh: HfDataset = MsDataset.load(

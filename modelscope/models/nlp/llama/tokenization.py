@@ -29,7 +29,7 @@ from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer
 from modelscope.utils.logger import get_logger
 
 # This file is mainly copied from the llama code of transformers
-logger = get_logger(__name__)
+logger = get_logger()
 
 VOCAB_FILES_NAMES = {'vocab_file': 'tokenizer.model'}
 

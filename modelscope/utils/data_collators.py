@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Tuple
 
 from .logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class RemoveColumnsCollator:

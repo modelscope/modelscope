@@ -1,13 +1,18 @@
 # ### Setting up experimental environment.
 """
-pip install modelscope
 pip install numpy pandas matplotlib scikit-learn
 pip install transformers datasets
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer
 pip install accelerate transformers_stream_generator
 
-pip install numpy -U  # Resolve torchmetrics dependencies and update numpy
+# Install the latest version of modelscope from source
+git clone https://github.com/modelscope/modelscope.git
+cd modelscope
+pip install .
+
+# Resolve torchmetrics dependencies and update numpy
+pip install numpy -U
 """
 
 from _common import *
@@ -62,37 +67,25 @@ def parse_args() -> Arguments:
     return args
 
 
-args = parse_args()
+COMMAND_LINE_MODE = True
+if COMMAND_LINE_MODE:
+    args = parse_args()
+else:  # e.g. notebook
+    args = Arguments()
+
 logger.info(args)
 select_device(args.device)
 seed_everything(args.seed)
 
 # ### Loading Model and Tokenizer
-if args.model_type == 'baichuan-7b':
-    model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
-    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
-elif args.model_type == 'baichuan-13b':
-    model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base', 'v1.0.2')
-    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
-elif args.model_type == 'chatglm2':
-    model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
-    model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
-elif args.model_type == 'llama2-7b':
-    model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.0')
-    model, tokenizer = get_llama2_model_tokenizer(model_dir)
-else:
-    raise ValueError(f'model_type: {args.model_type}')
+model, tokenizer = get_model_tokenizer(args.model_type)
 
 #
 if args.gradient_checkpoint:
-    # baichuan13B does not implement the `get_input_embeddings` function
+    # baichuan-13b does not implement the `get_input_embeddings` function
     if args.model_type == 'baichuan-13b':
-
-        def get_input_embeddings(self):
-            return self.model.embed_tokens
-
-        model.__class__.get_input_embeddings = get_input_embeddings.__get__(
-            model)
+        model.__class__.get_input_embeddings = MethodType(
+            lambda self: self.model.embed_tokens, model)
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
 

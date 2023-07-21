@@ -31,7 +31,7 @@ if is_sentencepiece_available():
 else:
     LlamaTokenizer = None
 
-logger = get_logger(__name__)
+logger = get_logger()
 VOCAB_FILES_NAMES = {
     'vocab_file': 'tokenizer.model',
     'tokenizer_file': 'tokenizer.json'

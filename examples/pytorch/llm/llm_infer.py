@@ -45,25 +45,17 @@ def parse_args() -> Arguments:
     return args
 
 
-args = parse_args()
+COMMAND_LINE_MODE = True
+if COMMAND_LINE_MODE:
+    args = parse_args()
+else:  # e.g. notebook
+    args = Arguments()
+
 logger.info(args)
 select_device(args.device)
 
 # ### Loading Model and Tokenizer
-if args.model_type == 'baichuan-7b':
-    model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.5')
-    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
-elif args.model_type == 'baichuan-13b':
-    model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base', 'v1.0.2')
-    model, tokenizer = get_baichuan_model_tokenizer(model_dir)
-elif args.model_type == 'chatglm2':
-    model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
-    model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
-elif args.model_type == 'llama2-7b':
-    model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.0')
-    model, tokenizer = get_llama2_model_tokenizer(model_dir)
-else:
-    raise ValueError(f'model_type: {args.model_type}')
+model, tokenizer = get_model_tokenizer(args.model_type)
 
 # ### Preparing lora
 lora_config = LoRAConfig(
@@ -110,7 +102,7 @@ if args.eval_human:
         print('-' * 80)
 else:
     _, test_dataset = get_alpaca_en_zh_dataset(
-        None, True, split_seed=42, data_sample=None)
+        None, True, split_seed=42, data_sample=args.data_sample)
     mini_test_dataset = test_dataset.select(range(10))
     for data in mini_test_dataset:
         output = data['output']

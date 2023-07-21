@@ -237,7 +237,8 @@ class SpeakerDiarizationPipeline(Pipeline):
                 (isinstance(audio_in, tuple) and all(isinstance(item, str) for item in audio_in)):
             logger.info(f'Speaker Verification Processing: {audio_in} ...')
         else:
-            logger.info(f'Speaker Verification Processing: {str(audio_in)[:100]} ...')
+            logger.info(
+                f'Speaker Verification Processing: {str(audio_in)[:100]} ...')
 
         data_cmd, raw_inputs = None, None
         if isinstance(audio_in, tuple) or isinstance(audio_in, list):

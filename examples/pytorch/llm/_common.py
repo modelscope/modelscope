@@ -445,7 +445,7 @@ def plot_image(tb_dir: str,
     fname = os.listdir(tb_dir)[0]
     tb_path = os.path.join(tb_dir, fname)
     data = read_tensorboard_file(tb_path)
-    #
+
     for k in data.keys():
         _data = data[k]
         steps = [d['step'] for d in _data]

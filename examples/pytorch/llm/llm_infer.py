@@ -41,14 +41,15 @@ class Arguments:
 
 
 def parse_args() -> Arguments:
-    args, _ = HfArgumentParser(
+    args, remaining_args = HfArgumentParser(
         [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
+    logger.info(args)
+    if len(remaining_args) > 0:
+        logger.warning(f'remaining_args: {remaining_args}')
     return args
 
 
 args = parse_args()
-
-logger.info(args)
 select_device(args.device)
 
 # ### Loading Model and Tokenizer

@@ -18,8 +18,10 @@ from typing import TYPE_CHECKING, Optional, Tuple
 
 from tokenizers import processors
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
-from transformers.utils import is_sentencepiece_available, logging
+from transformers.utils import is_sentencepiece_available
 from transformers.utils.versions import require_version
+
+from modelscope.utils import logger as logging
 
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
@@ -31,7 +33,7 @@ if is_sentencepiece_available():
 else:
     Llama2Tokenizer = None
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 VOCAB_FILES_NAMES = {
     'vocab_file': 'tokenizer.model',
     'tokenizer_file': 'tokenizer.json'

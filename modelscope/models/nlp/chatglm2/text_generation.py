@@ -19,11 +19,11 @@ from transformers.generation.utils import (GenerationConfig,
 from transformers.modeling_outputs import (BaseModelOutputWithPast,
                                            CausalLMOutputWithPast)
 from transformers.modeling_utils import PreTrainedModel
-from transformers.utils import logging
 
 from modelscope import Model, TorchModel
 from modelscope.metainfo import Models
 from modelscope.outputs import OutputKeys
+from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from ... import MODELS
 from .configuration import ChatGLM2Config
@@ -36,7 +36,7 @@ if sys.platform != 'darwin':
     torch._C._jit_override_can_fuse_on_cpu(True)
     torch._C._jit_override_can_fuse_on_gpu(True)
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 _CHECKPOINT_FOR_DOC = 'THUDM/ChatGLM2-6B'
 _CONFIG_FOR_DOC = 'ChatGLM6BConfig'

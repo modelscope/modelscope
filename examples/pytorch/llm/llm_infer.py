@@ -52,7 +52,7 @@ logger.info(args)
 select_device(args.device)
 
 # ### Loading Model and Tokenizer
-model, tokenizer = get_model_tokenizer(args.model_type)
+model, tokenizer, _ = get_model_tokenizer(args.model_type)
 
 # ### Preparing lora
 lora_config = LoRAConfig(

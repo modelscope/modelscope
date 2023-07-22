@@ -75,7 +75,7 @@ select_device(args.device)
 seed_everything(args.seed)
 
 # ### Loading Model and Tokenizer
-model, tokenizer = get_model_tokenizer(args.model_type)
+model, tokenizer, model_dir = get_model_tokenizer(args.model_type)
 
 #
 if args.gradient_checkpoint:

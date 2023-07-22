@@ -340,6 +340,7 @@ def get_chatglm2_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
                                  add_special_token: bool = True):
     config = read_config(model_dir)
+    logger.info(config)
     tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
@@ -357,6 +358,7 @@ def get_llama2_model_tokenizer(model_dir: str,
                                load_model: bool = True,
                                add_special_token: bool = True):
     config = read_config(model_dir)
+    logger.info(config)
     tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
@@ -387,7 +389,7 @@ def get_model_tokenizer(model_type: str):
         model, tokenizer = get_llama2_model_tokenizer(model_dir)
     else:
         raise ValueError(f'model_type: {model_type}')
-    return model, tokenizer
+    return model, tokenizer, model_dir
 
 
 def get_alpaca_en_zh_dataset(

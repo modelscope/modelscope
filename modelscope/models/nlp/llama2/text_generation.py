@@ -17,7 +17,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -27,9 +27,22 @@ from torch.nn import CrossEntropyLoss
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modelscope.metainfo import Models
+from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
 from ... import MODELS
 from .backbone import Llama2Model, LlamaPreTrainedModel
+
+
+def get_chat_prompt(system: str, utterance: str,
+                    history: List[Tuple[str, str]]) -> str:
+    chat_prompt = [f'[INST] <<SYS>>\n{system}\n<</SYS>>\n\n']
+    for user, bot in history:
+        assert isinstance(user, str)
+        assert isinstance(bot, str)
+        chat_prompt.append(
+            f'{user.strip()} [/INST] {bot.strip()} </s><s> [INST] ')
+    chat_prompt.append(f'{utterance.strip()} [/INST]')
+    return ''.join(chat_prompt)
 
 
 # This file is mainly copied from the llama code of transformers
@@ -186,3 +199,35 @@ class Llama2ForTextGeneration(LlamaPreTrainedModel):
                 past_state.index_select(0, beam_idx.to(past_state.device))
                 for past_state in layer_past), )
         return reordered_past
+
+    def chat(self, input: Dict, tokenizer) -> Dict:
+        if 'utterance' not in input:
+            utterance: str = input['text']
+        else:
+            utterance: str = input['utterance']
+
+        if 'system' not in input:
+            system: str = ''
+        else:
+            system: str = input['system']
+        if 'history' not in input:
+            history = []
+        else:
+            history: List[Tuple] = input['history']
+        if 'max_length' in input:
+            max_length = input['max_length']
+        else:
+            max_length = 2048
+
+        prompt = get_chat_prompt(
+            system=system, utterance=utterance, history=history)
+        inputs = tokenizer(prompt, return_tensors='pt')
+        generate_ids = self.generate(inputs.input_ids, max_length=max_length)
+        response = tokenizer.batch_decode(
+            generate_ids,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False)[0]
+        response = response[len(prompt):].strip()
+        history.append((utterance, response))
+
+        return {OutputKeys.RESPONSE: response, OutputKeys.HISTORY: history}

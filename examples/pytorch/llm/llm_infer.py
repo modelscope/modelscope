@@ -41,15 +41,12 @@ class Arguments:
 
 
 def parse_args() -> Arguments:
-    args, = HfArgumentParser([Arguments]).parse_args_into_dataclasses()
+    args, _ = HfArgumentParser(
+        [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
     return args
 
 
-COMMAND_LINE_MODE = True
-if COMMAND_LINE_MODE:
-    args = parse_args()
-else:  # e.g. notebook
-    args = Arguments()
+args = parse_args()
 
 logger.info(args)
 select_device(args.device)

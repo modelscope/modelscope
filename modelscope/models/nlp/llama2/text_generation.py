@@ -201,28 +201,35 @@ class Llama2ForTextGeneration(LlamaPreTrainedModel):
         return reordered_past
 
     def chat(self, input: Dict, tokenizer) -> Dict:
+        import copy
+        gen_kwargs = copy.copy(input)
         if 'utterance' not in input:
             utterance: str = input['text']
+            gen_kwargs.pop('text')
         else:
             utterance: str = input['utterance']
+            gen_kwargs.pop('utterance')
 
         if 'system' not in input:
             system: str = ''
         else:
             system: str = input['system']
+            gen_kwargs.pop('system')
+
         if 'history' not in input:
             history = []
         else:
-            history: List[Tuple] = input['history']
-        if 'max_length' in input:
-            max_length = input['max_length']
-        else:
-            max_length = 2048
+            history: List[Tuple] = copy.copy(input['history'])
+            gen_kwargs.pop('history')
+
+        if 'max_length' not in gen_kwargs:
+            gen_kwargs['max_length'] = 2048
 
         prompt = get_chat_prompt(
             system=system, utterance=utterance, history=history)
         inputs = tokenizer(prompt, return_tensors='pt')
-        generate_ids = self.generate(inputs.input_ids, max_length=max_length)
+        input_ids = inputs.input_ids.to(self.device)
+        generate_ids = self.generate(input_ids, **gen_kwargs)
         response = tokenizer.batch_decode(
             generate_ids,
             skip_special_tokens=True,

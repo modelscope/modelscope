@@ -45,8 +45,8 @@ from modelscope import (Model, MsDataset, get_logger, read_config,
                         snapshot_download)
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
-from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
-from modelscope.models.nlp.llama2 import Llama2Tokenizer
+from modelscope.models.nlp.chatglm2 import ChatGLM2Config, ChatGLM2Tokenizer
+from modelscope.models.nlp.llama2 import Llama2Config, Llama2Tokenizer
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
@@ -315,10 +315,11 @@ def _add_special_token(tokenizer):
 
 def get_baichuan_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
-                                 add_special_token: bool = True):
+                                 add_special_token: bool = True,
+                                 torch_dtype: Dtype = torch.float16):
     model_config = AutoConfig.from_pretrained(
         model_dir, trust_remote_code=True)
-    model_config.torch_dtype = torch.float16
+    model_config.torch_dtype = torch_dtype
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(
         model_dir, trust_remote_code=True)
@@ -328,7 +329,7 @@ def get_baichuan_model_tokenizer(model_dir: str,
             model_dir,
             config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16,
+            torch_dtype=torch_dtype,
             trust_remote_code=True)
     #
     if add_special_token:
@@ -338,17 +339,22 @@ def get_baichuan_model_tokenizer(model_dir: str,
 
 def get_chatglm2_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
-                                 add_special_token: bool = True):
+                                 add_special_token: bool = True,
+                                 torch_dtype: Dtype = torch.float16):
     config = read_config(model_dir)
     logger.info(config)
+    model_config = ChatGLM2Config.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(model_config)
     tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
         model = Model.from_pretrained(
             model_dir,
             cfg_dict=config,
+            config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch_dtype)
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
@@ -356,37 +362,50 @@ def get_chatglm2_model_tokenizer(model_dir: str,
 
 def get_llama2_model_tokenizer(model_dir: str,
                                load_model: bool = True,
-                               add_special_token: bool = True):
+                               add_special_token: bool = True,
+                               torch_dtype: Dtype = torch.float16):
     config = read_config(model_dir)
     logger.info(config)
+    model_config = Llama2Config.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(model_config)
     tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
         model = Model.from_pretrained(
             model_dir,
             cfg_dict=config,
+            config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch_dtype)
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
 
 
-def get_model_tokenizer(model_type: str):
+def get_model_tokenizer(model_type: str,
+                        load_model: bool = True,
+                        add_special_token: bool = True,
+                        torch_dtype: Dtype = torch.float16):
     # ### Loading Model and Tokenizer
     if model_type == 'baichuan-7b':
         model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.7')
-        model, tokenizer = get_baichuan_model_tokenizer(model_dir)
+        model, tokenizer = get_baichuan_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
     elif model_type == 'baichuan-13b':
         model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base',
                                       'v1.0.3')
-        model, tokenizer = get_baichuan_model_tokenizer(model_dir)
+        model, tokenizer = get_baichuan_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
     elif model_type == 'chatglm2':
         model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
-        model, tokenizer = get_chatglm2_model_tokenizer(model_dir)
+        model, tokenizer = get_chatglm2_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
     elif model_type == 'llama2-7b':
         model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.2')
-        model, tokenizer = get_llama2_model_tokenizer(model_dir)
+        model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
+                                                      add_special_token,
+                                                      torch_dtype)
     else:
         raise ValueError(f'model_type: {model_type}')
     return model, tokenizer, model_dir

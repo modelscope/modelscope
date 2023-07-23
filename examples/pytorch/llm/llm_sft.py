@@ -28,8 +28,11 @@ class Arguments:
             'choices':
             ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
         })
+    # baichuan-7b: 'lora': 16G; 'full': 80G
+    sft_type: str = field(
+        default='lora', metadata={'choices': ['lora', 'full']})
     data_sample: Optional[int] = None
-    #
+    # sft_type: lora
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
     lora_alpha: int = 32
@@ -38,19 +41,39 @@ class Arguments:
     gradient_checkpoint: bool = True
     batch_size: int = 1
     max_epochs: int = 1
-    eval_interval: int = 500
-    learning_rate: float = 1e-4
+    learning_rate: Optional[float] = None
     weight_decay: float = 0.01
     n_accumulate_grad: int = 16
     grad_clip_norm: float = 1.
     warmup_iters: int = 200
+    #
+    save_trainer_state: Optional[bool] = None
+    eval_interval: int = 500
+    last_save_interval: Optional[bool] = None
     last_max_checkpoint_num: int = 1
     best_max_checkpoint_num: int = 1
-    #
     logging_interval: int = 5
     tb_interval: int = 5
 
     def __post_init__(self):
+        if self.sft_type == 'lora':
+            if self.learning_rate is None:
+                self.learning_rate = 1e-4
+            if self.save_trainer_state is None:
+                self.save_trainer_state = True
+            if self.last_save_interval is None:
+                self.last_save_interval = self.eval_interval
+        elif self.sft_type == 'full':
+            if self.learning_rate is None:
+                self.learning_rate = 1e-5
+            if self.save_trainer_state is None:
+                self.save_trainer_state = False  # save disk space
+            if self.last_save_interval is None:
+                # Saving the model takes a long time
+                self.last_save_interval = self.eval_interval * 4
+        else:
+            raise ValueError(f'sft_type: {self.sft_type}')
+        #
         if self.lora_target_modules is None:
             if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
                 self.lora_target_modules = ['W_pack']
@@ -63,6 +86,7 @@ class Arguments:
 
 
 def parse_args() -> Arguments:
+    # return_remaining_strings=True for notebook compatibility
     args, remaining_args = HfArgumentParser(
         [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
     logger.info(args)
@@ -76,7 +100,8 @@ select_device(args.device)
 seed_everything(args.seed)
 
 # ### Loading Model and Tokenizer
-model, tokenizer, model_dir = get_model_tokenizer(args.model_type)
+model, tokenizer, model_dir = get_model_tokenizer(
+    args.model_type, torch_dtype=torch.bfloat16)
 
 #
 if args.gradient_checkpoint:
@@ -88,19 +113,20 @@ if args.gradient_checkpoint:
     model.enable_input_require_grads()
 
 # ### Preparing lora
-lora_config = LoRAConfig(
-    replace_modules=args.lora_target_modules,
-    rank=args.lora_rank,
-    lora_alpha=args.lora_alpha,
-    lora_dropout=args.lora_dropout_p)
-logger.info(f'lora_config: {lora_config}')
-Swift.prepare_model(model, lora_config)
+if args.sft_type == 'lora':
+    lora_config = LoRAConfig(
+        replace_modules=args.lora_target_modules,
+        rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout_p)
+    logger.info(f'lora_config: {lora_config}')
+    Swift.prepare_model(model, lora_config)
 #
 show_freeze_layers(model)
 print_model_info(model)
+# check the device and dtype of the model
 _p: Parameter = list(model.parameters())[100]
 logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
-model.bfloat16()
 
 # ### Loading Dataset
 tokenize_function = partial(tokenize_function, tokenizer=tokenizer)
@@ -145,7 +171,7 @@ config = Config({
         'lr_scheduler': {
             'type': 'CosineAnnealingLR',
             'T_max': T_max,
-            'eta_min': 0,
+            'eta_min': args.learning_rate * 0.1,
             'options': {
                 'by_epoch': False,
                 'warmup': {
@@ -159,8 +185,9 @@ config = Config({
             {
                 'type': 'CheckpointHook',
                 'by_epoch': False,
-                'interval': args.eval_interval,
-                'max_checkpoint_num': args.last_max_checkpoint_num
+                'interval': args.last_save_interval,
+                'max_checkpoint_num': args.last_max_checkpoint_num,
+                'save_trainer_state': args.save_trainer_state
             },
             {
                 'type': 'EvaluationHook',
@@ -172,7 +199,8 @@ config = Config({
                 'metric_key': 'loss',
                 'save_best': True,
                 'rule': 'min',
-                'max_checkpoint_num': args.best_max_checkpoint_num
+                'max_checkpoint_num': args.best_max_checkpoint_num,
+                'save_trainer_state': args.save_trainer_state
             },
             {
                 'type': 'TextLoggerHook',

@@ -11,10 +11,12 @@ class Arguments:
             'choices':
             ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
         })
-    ckpt_fpath: str = ''  # e.g. '/path/to/your/iter_xxx.pth'
+    sft_type: str = field(
+        default='lora', metadata={'choices': ['lora', 'full']})
+    ckpt_fpath: str = '/path/to/your/iter_xxx.pth'
     eval_human: bool = False  # False: eval test_dataset
     data_sample: Optional[int] = None
-    #
+    # sft_type: lora
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
     lora_alpha: int = 32
@@ -41,6 +43,7 @@ class Arguments:
 
 
 def parse_args() -> Arguments:
+    # return_remaining_strings=True for notebook compatibility
     args, remaining_args = HfArgumentParser(
         [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
     logger.info(args)
@@ -53,18 +56,24 @@ args = parse_args()
 select_device(args.device)
 
 # ### Loading Model and Tokenizer
-model, tokenizer, _ = get_model_tokenizer(args.model_type)
+model, tokenizer, _ = get_model_tokenizer(
+    args.model_type, torch_dtype=torch.bfloat16)
 
 # ### Preparing lora
-lora_config = LoRAConfig(
-    replace_modules=args.lora_target_modules,
-    rank=args.lora_rank,
-    lora_alpha=args.lora_alpha,
-    lora_dropout=args.lora_dropout_p,
-    pretrained_weights=args.ckpt_fpath)
-logger.info(f'lora_config: {lora_config}')
-Swift.prepare_model(model, lora_config)
-model.bfloat16()  # Consistent with training
+if args.sft_type == 'lora':
+    lora_config = LoRAConfig(
+        replace_modules=args.lora_target_modules,
+        rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout_p,
+        pretrained_weights=args.ckpt_fpath)
+    logger.info(f'lora_config: {lora_config}')
+    Swift.prepare_model(model, lora_config)
+elif args.sft_type == 'full':
+    state_dict = torch.load(args.ckpt_fpath, map_location='cpu')
+    model.load_state_dict(state_dict)
+else:
+    raise ValueError(f'args.sft_type: {args.sft_type}')
 
 # ### Inference
 streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)

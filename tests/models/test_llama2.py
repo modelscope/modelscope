@@ -6,8 +6,6 @@ from modelscope import Model, snapshot_download
 from modelscope.models.nlp.llama2 import Llama2Tokenizer
 from modelscope.utils.test_utils import test_level
 
-print('lala')
-
 
 class Llama2Test(unittest.TestCase):
 

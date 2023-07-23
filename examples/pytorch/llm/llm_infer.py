@@ -58,6 +58,9 @@ select_device(args.device)
 # ### Loading Model and Tokenizer
 model, tokenizer, _ = get_model_tokenizer(
     args.model_type, torch_dtype=torch.bfloat16)
+support_bf16 = torch.cuda.is_bf16_supported()
+if not support_bf16:
+    logger.warning(f'support_bf16: {support_bf16}')
 
 # ### Preparing lora
 if args.sft_type == 'lora':

@@ -102,7 +102,9 @@ seed_everything(args.seed)
 # ### Loading Model and Tokenizer
 model, tokenizer, model_dir = get_model_tokenizer(
     args.model_type, torch_dtype=torch.bfloat16)
-
+support_bf16 = torch.cuda.is_bf16_supported()
+if not support_bf16:
+    logger.warning(f'support_bf16: {support_bf16}')
 #
 if args.gradient_checkpoint:
     # baichuan-13b does not implement the `get_input_embeddings` function

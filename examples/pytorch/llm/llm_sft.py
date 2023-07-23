@@ -49,7 +49,7 @@ class Arguments:
     #
     save_trainer_state: Optional[bool] = None
     eval_interval: int = 500
-    last_save_interval: Optional[bool] = None
+    last_save_interval: Optional[int] = None
     last_max_checkpoint_num: int = 1
     best_max_checkpoint_num: int = 1
     logging_interval: int = 5
@@ -89,7 +89,7 @@ def parse_args() -> Arguments:
     # return_remaining_strings=True for notebook compatibility
     args, remaining_args = HfArgumentParser(
         [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
-    logger.info(args)
+    logger.info(f'args: {args}')
     if len(remaining_args) > 0:
         logger.warning(f'remaining_args: {remaining_args}')
     return args
@@ -127,7 +127,7 @@ if args.sft_type == 'lora':
 show_freeze_layers(model)
 print_model_info(model)
 # check the device and dtype of the model
-_p: Parameter = list(model.parameters())[100]
+_p: Parameter = list(model.parameters())[-1]
 logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
 # ### Loading Dataset

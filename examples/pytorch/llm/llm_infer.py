@@ -46,7 +46,7 @@ def parse_args() -> Arguments:
     # return_remaining_strings=True for notebook compatibility
     args, remaining_args = HfArgumentParser(
         [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
-    logger.info(args)
+    logger.info(f'args: {args}')
     if len(remaining_args) > 0:
         logger.warning(f'remaining_args: {remaining_args}')
     return args
@@ -87,7 +87,7 @@ generation_config = GenerationConfig(
     top_p=args.top_p,
     do_sample=True,
     pad_token_id=tokenizer.eos_token_id)
-logger.info(generation_config)
+logger.info(f'generation_config: {generation_config}')
 
 
 def inference(data: Dict[str, Optional[str]]) -> str:

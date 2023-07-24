@@ -260,7 +260,7 @@ def llm_sft(args: SftArguments) -> None:
 
     # ### Visualization
     tb_dir = os.path.join(work_dir, 'tensorboard_output')
-    plot_image(tb_dir, ['loss'], 0.9)
+    plot_images(tb_dir, ['loss'], 0.9)
 
 
 if __name__ == '__main__':

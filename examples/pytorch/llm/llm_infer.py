@@ -13,10 +13,10 @@ class InferArguments:
         })
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
-    ckpt_fpath: str = '/path/to/your/iter_xxx.pth'
+    ckpt_path: str = '/path/to/your/iter_xxx.pth'
     eval_human: bool = False  # False: eval test_dataset
     data_sample: Optional[int] = None
-    # sft_type: lora
+
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
     lora_alpha: int = 32
@@ -38,8 +38,9 @@ class InferArguments:
             else:
                 raise ValueError(f'model_type: {self.model_type}')
 
-        if not os.path.isfile(self.ckpt_fpath):
-            raise ValueError(f'Please enter a valid fpath: {self.ckpt_fpath}')
+        if not os.path.isfile(self.ckpt_path):
+            raise ValueError(
+                f'Please enter a valid ckpt_path: {self.ckpt_path}')
 
 
 def parse_args() -> InferArguments:
@@ -69,11 +70,11 @@ def llm_infer(args: InferArguments) -> None:
             rank=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p,
-            pretrained_weights=args.ckpt_fpath)
+            pretrained_weights=args.ckpt_path)
         logger.info(f'lora_config: {lora_config}')
         Swift.prepare_model(model, lora_config)
     elif args.sft_type == 'full':
-        state_dict = torch.load(args.ckpt_fpath, map_location='cpu')
+        state_dict = torch.load(args.ckpt_path, map_location='cpu')
         model.load_state_dict(state_dict)
     else:
         raise ValueError(f'args.sft_type: {args.sft_type}')

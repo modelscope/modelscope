@@ -30,7 +30,7 @@ from modelscope.utils.logger import get_logger
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 VOCAB_FILES_NAMES = {'vocab_file': 'tokenizer.model'}
 

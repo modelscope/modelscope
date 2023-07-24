@@ -25,7 +25,8 @@ def rot_phi(phi):
 
 def rot_theta(th):
     return torch.Tensor([[np.cos(th), 0, -np.sin(th), 0], [0, 1, 0, 0],
-                         [np.sin(th), 0, np.cos(th), 0], [0, 0, 0, 1]]).float()
+                         [np.sin(th), 0, np.cos(th), 0], [0, 0, 0,
+                                                          1]]).float()
 
 
 def pose_spherical(theta, phi, radius):

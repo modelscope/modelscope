@@ -215,6 +215,11 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.bad_image_detecting:
     InputType.IMAGE,
+    Tasks.image_try_on: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: {

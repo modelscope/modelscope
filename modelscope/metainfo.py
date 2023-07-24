@@ -119,6 +119,7 @@ class Models(object):
     longshortnet = 'longshortnet'
     fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
+    image_try_on = 'image-try-on'
 
     # nlp models
     bert = 'bert'
@@ -415,6 +416,7 @@ class Pipelines(object):
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
+    image_try_on = 'image-try-on'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -852,6 +854,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.pedestrian_attribute_recognition: (
         Pipelines.pedestrian_attribute_recognition,
         'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
+    Tasks.image_try_on: (Pipelines.image_try_on,
+                         'damo/cv_SAL-VTON_virtual-try-on')
 }
 
 

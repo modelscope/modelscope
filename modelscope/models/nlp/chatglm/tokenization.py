@@ -6,9 +6,11 @@ import numpy as np
 import sentencepiece as spm
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.tokenization_utils_base import BatchEncoding, EncodedInput
-from transformers.utils import PaddingStrategy, logging
+from transformers.utils import PaddingStrategy
 
-logger = logging.get_logger(__name__)
+from modelscope.utils import logger as logging
+
+logger = logging.get_logger()
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     'THUDM/chatglm-6b': 2048,

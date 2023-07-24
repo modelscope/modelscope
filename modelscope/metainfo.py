@@ -525,6 +525,7 @@ class Pipelines(object):
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
+    llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

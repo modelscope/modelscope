@@ -269,6 +269,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             sample_batch_size: Batch size (per device) for sampling images.
             train_batch_size: Batch size (per device) for the training dataloader.
             center_crop: execute center crop or not.
+            concepts_list: Path to json containing multiple concepts, will overwrite parameters like instance_prompt etc.
             instance_data_name: The instance data local dir or online ID.
 
         """
@@ -288,6 +289,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         self.sample_batch_size = kwargs.pop('sample_batch_size', 4)
         self.train_batch_size = kwargs.pop('train_batch_size', 2)
         self.center_crop = kwargs.pop('center_crop', False)
+        self.concepts_list = kwargs.pop('concepts_list', None)
         instance_data_name = kwargs.pop(
             'instance_data_name', 'buptwq/lora-stable-diffusion-finetune-dog')
 
@@ -299,12 +301,17 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             self.instance_data_dir = os.path.dirname(
                 next(iter(ds))['Target:FILE'])
 
-        self.concepts_list = [{
-            'instance_prompt': self.instance_prompt,
-            'class_prompt': self.class_prompt,
-            'instance_data_dir': self.instance_data_dir,
-            'class_data_dir': self.class_data_dir,
-        }]
+        if self.concepts_list is None:
+            self.concepts_list = [{
+                'instance_prompt': self.instance_prompt,
+                'class_prompt': self.class_prompt,
+                'instance_data_dir': self.instance_data_dir,
+                'class_data_dir': self.class_data_dir,
+            }]
+        else:
+            with open(args.concepts_list, "r") as f:
+                self.concepts_list = json.load(f)
+        print("--------self.concepts_list: ", self.concepts_list)
 
         # Adding a modifier token which is optimized
         self.modifier_token_id = []

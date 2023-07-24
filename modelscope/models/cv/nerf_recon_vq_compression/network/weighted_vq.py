@@ -404,7 +404,7 @@ class VectorQuantize(nn.Module):
         self.orthogonal_reg_active_codes_only = orthogonal_reg_active_codes_only
         self.orthogonal_reg_max_codes = orthogonal_reg_max_codes
 
-        codebook_class = EuclideanCodebook if not use_cosine_sim else CosineSimCodebook
+        codebook_class = EuclideanCodebook
 
         self._codebook = codebook_class(
             dim=codebook_dim,

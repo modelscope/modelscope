@@ -303,7 +303,8 @@ class TensorBase(torch.nn.Module):
 
         rays_pts = rays_o[...,
                           None, :] + rays_d[..., None, :] * interpx[..., None]
-        mask_outbbox = ((self.aabb[0] > rays_pts) | (rays_pts > self.aabb[1])).any(dim=-1)
+        mask_outbbox = ((self.aabb[0] > rays_pts)
+                        | (rays_pts > self.aabb[1])).any(dim=-1)
         return rays_pts, interpx, ~mask_outbbox
 
     def sample_ray(self, rays_o, rays_d, is_train=True, N_samples=-1):
@@ -324,7 +325,8 @@ class TensorBase(torch.nn.Module):
 
         rays_pts = rays_o[...,
                           None, :] + rays_d[..., None, :] * interpx[..., None]
-        mask_outbbox = ((self.aabb[0] > rays_pts) | (rays_pts > self.aabb[1])).any(dim=-1)
+        mask_outbbox = ((self.aabb[0] > rays_pts)
+                        | (rays_pts > self.aabb[1])).any(dim=-1)
 
         return rays_pts, interpx, ~mask_outbbox
 

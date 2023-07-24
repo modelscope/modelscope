@@ -845,8 +845,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_mobilenet-v2_bad-image-detecting'),
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
-    Tasks.nerf_recon_vq_compression: (Pipelines.nerf_recon_vq_compression,
-                                      'damo/cv_nerf-3d-reconstruction-vq-compression_damo'),
+    Tasks.nerf_recon_vq_compression: (
+        Pipelines.nerf_recon_vq_compression,
+        'damo/cv_nerf-3d-reconstruction-vq-compression_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (

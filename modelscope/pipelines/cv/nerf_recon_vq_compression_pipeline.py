@@ -13,7 +13,8 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.nerf_recon_vq_compression, module_name=Pipelines.nerf_recon_vq_compression)
+    Tasks.nerf_recon_vq_compression,
+    module_name=Pipelines.nerf_recon_vq_compression)
 class NeRFReconVQCompressionPipeline(Pipeline):
     """ NeRF reconstruction VQ compression pipeline
     Example:

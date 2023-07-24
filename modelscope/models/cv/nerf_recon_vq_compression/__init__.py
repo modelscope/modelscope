@@ -8,7 +8,9 @@ if TYPE_CHECKING:
     # from .nerf_preprocess import NeRFReconPreprocessor
 
 else:
-    _import_structure = {'nerf_recon_vq_compression': ['NeRFReconVQCompression']}
+    _import_structure = {
+        'nerf_recon_vq_compression': ['NeRFReconVQCompression']
+    }
     # _import_structure = {'nerf_preprocess': ['NeRFReconPreprocessor']}
 
     import sys

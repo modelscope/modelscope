@@ -20,7 +20,8 @@ class StableDiffusionLoraArguments(TrainingArgs):
         })
 
     lora_rank: int = field(
-        default=4, metadata={
+        default=4,
+        metadata={
             'help': 'The rank size of lora intermediate linear.',
         })
 

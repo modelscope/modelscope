@@ -34,6 +34,14 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        """Lora trainers for fine-tuning stable diffusion
+
+        Args:
+            lora_rank: The rank size of lora intermediate linear.
+
+        """
+        lora_rank = kwargs.pop('lora_rank', 4)
+
         # set lora save checkpoint processor
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
@@ -59,7 +67,8 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
 
             lora_attn_procs[name] = LoRAAttnProcessor(
                 hidden_size=hidden_size,
-                cross_attention_dim=cross_attention_dim)
+                cross_attention_dim=cross_attention_dim,
+                rank=lora_rank)
 
         self.model.unet.set_attn_processor(lora_attn_procs)
 

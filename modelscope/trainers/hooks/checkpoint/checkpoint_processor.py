@@ -104,7 +104,8 @@ class CheckpointProcessor:
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         """Save the state dict for trainer and model.
 
         This is a strategic function which can be registered by other hook's function.
@@ -115,13 +116,15 @@ class CheckpointProcessor:
                 like: /tmp/test/epoch_0
             output_dir(`str`): The output dir for inference.
             meta: (`dict`): The meta info needed to be saved into files.
+            save_optimizers: (`bool`): Do save the optimizers state
         """
         model = trainer.unwrap_module(trainer.model)
         _model_file, _train_state_file = self._get_state_file_name(
             checkpoint_path_prefix)
 
         # Save pth file without model state_dict
-        self.save_trainer_state(trainer, model, _train_state_file, meta)
+        self.save_trainer_state(trainer, model, _train_state_file, meta,
+                                save_optimizers)
         self.save_model_state(model, _model_file)
         self.link(model, _model_file, output_dir)
 
@@ -175,7 +178,8 @@ class CheckpointProcessor:
                 'changing to copy the bin file, this may use more disk space.')
             shutil.copyfile(src_file, dest_file)
 
-    def save_trainer_state(self, trainer, model, train_state_file, meta):
+    def save_trainer_state(self, trainer, model, train_state_file, meta,
+                           save_optimizers):
         """Save the trainer state, including optimizer/lr_scheduler's state dict, random states etc.
 
         Args:
@@ -183,12 +187,13 @@ class CheckpointProcessor:
             model: The model instance.
             train_state_file: The target file name for saving trainer states.
             meta: Some extra meta info.
+            save_optimizers: Save optimizers state or not.
         """
         save_checkpoint(
             model,
             train_state_file,
-            trainer.optimizer,
-            trainer.lr_scheduler,
+            trainer.optimizer if save_optimizers else None,
+            trainer.lr_scheduler if save_optimizers else None,
             meta=meta,
             with_model=False)
 

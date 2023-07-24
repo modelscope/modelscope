@@ -41,7 +41,8 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         """Save the state dict for dreambooth model.
         """
         pipeline_args = {}

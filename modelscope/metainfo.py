@@ -165,6 +165,7 @@ class Models(object):
     doc2bot = 'doc2bot'
     peer = 'peer'
     llama = 'llama'
+    llama2 = 'llama2'
     chatglm_6b = 'chatglm6b'
     chatglm2_6b = 'chatglm2-6b'
 
@@ -522,6 +523,7 @@ class Pipelines(object):
     soonet_video_temporal_grounding = 'soonet-video-temporal-grounding'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
+    llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

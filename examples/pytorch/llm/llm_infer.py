@@ -3,7 +3,7 @@ from _common import *
 
 
 @dataclass
-class Arguments:
+class InferArguments:
     device: str = '0'  # e.g. '-1'; '0'; '0,1'
     model_type: str = field(
         default='baichuan-7b',
@@ -21,7 +21,7 @@ class Arguments:
     lora_rank: int = 8
     lora_alpha: int = 32
     lora_dropout_p: float = 0.1
-    #
+
     max_new_tokens: int = 512
     temperature: float = 0.9
     top_k: int = 50
@@ -37,88 +37,79 @@ class Arguments:
                 self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
             else:
                 raise ValueError(f'model_type: {self.model_type}')
-        #
+
         if not os.path.isfile(self.ckpt_fpath):
-            raise ValueError('Please enter a valid fpath')
+            raise ValueError(f'Please enter a valid fpath: {self.ckpt_fpath}')
 
 
-def parse_args() -> Arguments:
+def parse_args() -> InferArguments:
     # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser(
-        [Arguments]).parse_args_into_dataclasses(return_remaining_strings=True)
+    args, remaining_args = HfArgumentParser([
+        InferArguments
+    ]).parse_args_into_dataclasses(return_remaining_strings=True)
     logger.info(f'args: {args}')
     if len(remaining_args) > 0:
         logger.warning(f'remaining_args: {remaining_args}')
     return args
 
 
-args = parse_args()
-select_device(args.device)
+def llm_infer(args: InferArguments) -> None:
+    select_device(args.device)
+    # ### Loading Model and Tokenizer
+    support_bf16 = torch.cuda.is_bf16_supported()
+    if not support_bf16:
+        logger.warning(f'support_bf16: {support_bf16}')
+    model, tokenizer, _ = get_model_tokenizer(
+        args.model_type, torch_dtype=torch.bfloat16)
 
-# ### Loading Model and Tokenizer
-model, tokenizer, _ = get_model_tokenizer(
-    args.model_type, torch_dtype=torch.bfloat16)
-support_bf16 = torch.cuda.is_bf16_supported()
-if not support_bf16:
-    logger.warning(f'support_bf16: {support_bf16}')
+    # ### Preparing lora
+    if args.sft_type == 'lora':
+        lora_config = LoRAConfig(
+            replace_modules=args.lora_target_modules,
+            rank=args.lora_rank,
+            lora_alpha=args.lora_alpha,
+            lora_dropout=args.lora_dropout_p,
+            pretrained_weights=args.ckpt_fpath)
+        logger.info(f'lora_config: {lora_config}')
+        Swift.prepare_model(model, lora_config)
+    elif args.sft_type == 'full':
+        state_dict = torch.load(args.ckpt_fpath, map_location='cpu')
+        model.load_state_dict(state_dict)
+    else:
+        raise ValueError(f'args.sft_type: {args.sft_type}')
 
-# ### Preparing lora
-if args.sft_type == 'lora':
-    lora_config = LoRAConfig(
-        replace_modules=args.lora_target_modules,
-        rank=args.lora_rank,
-        lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout_p,
-        pretrained_weights=args.ckpt_fpath)
-    logger.info(f'lora_config: {lora_config}')
-    Swift.prepare_model(model, lora_config)
-elif args.sft_type == 'full':
-    state_dict = torch.load(args.ckpt_fpath, map_location='cpu')
-    model.load_state_dict(state_dict)
-else:
-    raise ValueError(f'args.sft_type: {args.sft_type}')
+    # ### Inference
+    streamer = TextStreamer(
+        tokenizer, skip_prompt=True, skip_special_tokens=True)
+    generation_config = GenerationConfig(
+        max_new_tokens=args.max_new_tokens,
+        temperature=args.temperature,
+        top_k=args.top_k,
+        top_p=args.top_p,
+        do_sample=True,
+        pad_token_id=tokenizer.eos_token_id)
+    logger.info(f'generation_config: {generation_config}')
 
-# ### Inference
-streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-generation_config = GenerationConfig(
-    max_new_tokens=args.max_new_tokens,
-    temperature=args.temperature,
-    top_k=args.top_k,
-    top_p=args.top_p,
-    do_sample=True,
-    pad_token_id=tokenizer.eos_token_id)
-logger.info(f'generation_config: {generation_config}')
-
-
-def inference(data: Dict[str, Optional[str]]) -> str:
-    input_ids = tokenize_function(data, tokenizer)['input_ids']
-    print(f'[TEST]{tokenizer.decode(input_ids)}', end='')
-    input_ids = torch.tensor(input_ids)[None].cuda()
-    attention_mask = torch.ones_like(input_ids)
-    generate_ids = model.generate(
-        input_ids=input_ids,
-        attention_mask=attention_mask,
-        streamer=streamer,
-        generation_config=generation_config)
-    output_text = tokenizer.decode(generate_ids[0])
-    return output_text
+    if args.eval_human:
+        while True:
+            instruction = input('<<< ')
+            data = {'instruction': instruction, 'input': None, 'output': None}
+            inference(data, model, tokenizer, streamer, generation_config)
+            print('-' * 80)
+    else:
+        _, test_dataset = get_alpaca_en_zh_dataset(
+            None, True, split_seed=42, data_sample=args.data_sample)
+        mini_test_dataset = test_dataset.select(range(10))
+        for data in mini_test_dataset:
+            output = data['output']
+            data['output'] = None
+            inference(data, model, tokenizer, streamer, generation_config)
+            print()
+            print(f'[LABELS]{output}')
+            print('-' * 80)
+            # input('next[ENTER]')
 
 
-if args.eval_human:
-    while True:
-        instruction = input('<<< ')
-        data = {'instruction': instruction, 'input': None, 'output': None}
-        inference(data)
-        print('-' * 80)
-else:
-    _, test_dataset = get_alpaca_en_zh_dataset(
-        None, True, split_seed=42, data_sample=args.data_sample)
-    mini_test_dataset = test_dataset.select(range(10))
-    for data in mini_test_dataset:
-        output = data['output']
-        data['output'] = None
-        inference(data)
-        print()
-        print(f'[LABELS]{output}')
-        print('-' * 80)
-        # input('next[ENTER]')
+if __name__ == '__main__':
+    args = parse_args()
+    llm_infer(args)

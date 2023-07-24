@@ -570,7 +570,7 @@ class LlamaPreTrainedModel(TorchModel, PreTrainedModel):
                 module.weight.data[module.padding_idx].zero_()
 
     def _set_gradient_checkpointing(self, module, value=False):
-        if isinstance(module, LlamaModel):
+        if isinstance(module, Llama2Model):
             module.gradient_checkpointing = value
 
     @classmethod

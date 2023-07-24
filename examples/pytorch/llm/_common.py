@@ -12,7 +12,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-#
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -33,14 +32,11 @@ from torch.optim import Optimizer
 from torch.optim import lr_scheduler as lrs
 from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 from torch.utils.data import Dataset
-#
 from torchmetrics import Accuracy, MeanMetric
-#
 from tqdm import tqdm
 from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
                           GenerationConfig, HfArgumentParser, TextStreamer)
 
-#
 from modelscope import (Model, MsDataset, get_logger, read_config,
                         snapshot_download)
 from modelscope.metrics.base import Metric
@@ -52,7 +48,6 @@ from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
-#
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
 
 PROMPT = """Here's a conversation between a human and an AI assistant. \
@@ -66,7 +61,6 @@ The AI assistant provides detailed, friendly answers for the human.
 
 logger = get_logger()
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
-#
 
 
 def _get_version(work_dir: str) -> int:
@@ -89,7 +83,7 @@ def get_work_dir(work_dir: str) -> str:
     work_dir = os.path.abspath(work_dir)
     version = _get_version(work_dir)
     time = dt.datetime.now().strftime('%Y%m%d-%H%M%S')
-    #
+
     work_dir = os.path.join(work_dir, f'v{version}-{time}')
     logger.info(f'work_dir: {work_dir}')
     return work_dir
@@ -114,9 +108,8 @@ def select_device(device: Union[List[int], str]) -> Device:
     if torch.cuda.is_initialized():
         logger.warning('CUDA has been initialized! Device selection fails!')
         return torch.device('cuda:0')
-    #
+
     device_ids, device_str = _format_device(device)
-    #
     os.environ['CUDA_VISIBLE_DEVICES'] = device_str
     log_s = 'Using device: '
     if len(device_ids) == 0:
@@ -165,7 +158,6 @@ def tokenize_function(example: Dict[str, Optional[str]],
     instruction: str = example['instruction']
     input_ = example['input']
     if input_ is not None and input_ != '':
-        # instruction = instruction + '\n'
         if input_.startswith('输入：'):
             instruction = instruction + input_[3:]
         else:
@@ -175,7 +167,7 @@ def tokenize_function(example: Dict[str, Optional[str]],
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
         add_special_tokens=True)['input_ids']
-    #
+
     tgt_input_ids = []
     if output is not None:
         tgt_input_ids += tokenizer(
@@ -186,12 +178,12 @@ def tokenize_function(example: Dict[str, Optional[str]],
     else:
         labels = None
     input_ids = src_input_ids + tgt_input_ids
-    #
+
     if max_length is not None:
         input_ids = input_ids[-max_length:]
         if labels is not None:
             labels = labels[-max_length:]
-    #
+
     return {'input_ids': input_ids, 'labels': labels}
 
 
@@ -228,7 +220,7 @@ def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
         torch.ones(len(input_ids[i]), dtype=torch.int64)
         for i in range(len(input_ids))
     ]
-    #
+
     input_ids = pad_sequence(
         input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
     attention_mask = pad_sequence(
@@ -244,11 +236,11 @@ def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
 def print_model_info(model: Module, name: Optional[str] = None) -> None:
     if name is None:
         name = model.__class__.__name__
-    #
+
     n_params = sum(p.numel() for p in model.parameters())
     n_grads = sum(p.numel() for p in model.parameters() if p.requires_grad)
     n_buffers = sum(p.numel() for p in model.buffers())
-    #
+
     n_params /= 1e6
     n_grads /= 1e6
     n_buffers /= 1e6
@@ -280,7 +272,7 @@ class MyMetric(Metric):
     def add(self, outputs: Dict[str, Any], inputs: Dict[str, Any]) -> None:
         loss: Tensor = outputs.loss
         self.loss.update(loss)
-        #
+
         labels: Tensor = inputs['labels']
         labels = labels[:, 1:]
         labels_mask = labels != -100
@@ -331,7 +323,7 @@ def get_baichuan_model_tokenizer(model_dir: str,
             device_map='auto',
             torch_dtype=torch_dtype,
             trust_remote_code=True)
-    #
+
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
@@ -423,7 +415,7 @@ def get_alpaca_en_zh_dataset(
         'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
     dataset_en = dataset_en.remove_columns(['text'])
     dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
-    #
+
     if data_sample is not None:
         dataset = dataset.select(range(data_sample))
     dataset = dataset.train_test_split(test_split_p, seed=split_seed)
@@ -432,7 +424,7 @@ def get_alpaca_en_zh_dataset(
     if tokenize_function is not None:
         dataset = dataset.map(tokenize_function)
         dataset = dataset.remove_columns(['instruction', 'input', 'output'])
-    #
+
     if only_val:
         return None, dataset
     else:
@@ -466,7 +458,7 @@ def tensorboard_smoothing(values: List[float],
     for i in range(len(values)):
         x = x * smooth + values[i]  # Exponential decay
         res.append(x / norm_factor)
-        #
+
         norm_factor *= smooth
         norm_factor += 1
     return res
@@ -479,11 +471,11 @@ def plot_image(tb_dir: str,
                dpi: int = 100) -> None:
     image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
     os.makedirs(image_dir, exist_ok=True)
-    #
+
     fname = os.listdir(tb_dir)[0]
     tb_path = os.path.join(tb_dir, fname)
     data = read_tensorboard_file(tb_path)
-    #
+
     for k in data.keys():
         _data = data[k]
         steps = [d['step'] for d in _data]
@@ -502,3 +494,22 @@ def plot_image(tb_dir: str,
             ax.plot(steps, values, color=COLOR_S)
         fpath = os.path.join(image_dir, k.replace('/', '_'))
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
+
+
+def inference(data: Dict[str, Optional[str]],
+              model,
+              tokenizer,
+              streamer: Optional[TextStreamer] = None,
+              generation_config: Optional[GenerationConfig] = None,
+              tag: str = '[INFERENCE]') -> str:
+    input_ids = tokenize_function(data, tokenizer)['input_ids']
+    print(f'{tag}{tokenizer.decode(input_ids)}', end='')
+    input_ids = torch.tensor(input_ids)[None].cuda()
+    attention_mask = torch.ones_like(input_ids)
+    generate_ids = model.generate(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        streamer=streamer,
+        generation_config=generation_config)
+    output_text = tokenizer.decode(generate_ids[0])
+    return output_text

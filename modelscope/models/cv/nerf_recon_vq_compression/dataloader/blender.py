@@ -13,24 +13,19 @@ from .ray_utils import *
 
 
 def trans_t(t):
-    return torch.Tensor([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, t],
+    return torch.Tensor([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, t],
                         [0, 0, 0, 1]]).float()
 
 
 def rot_phi(phi):
-    return torch.Tensor([[1, 0, 0, 0],
-                        [0, np.cos(phi), -np.sin(phi), 0],
-                        [0, np.sin(phi), np.cos(phi), 0],
-                        [0, 0, 0, 1]]).float()
+    return torch.Tensor([[1, 0, 0, 0], [0, np.cos(phi), -np.sin(phi), 0],
+                        [0, np.sin(phi), np.cos(phi), 0], [0, 0, 0,
+                                                           1]]).float()
 
 
 def rot_theta(th):
-    return torch.Tensor([[np.cos(th), 0, -np.sin(th), 0],
-                        [0, 1, 0, 0],
-                        [np.sin(th), 0, np.cos(th), 0],
-                        [0, 0, 0, 1]]).float()
+    return torch.Tensor([[np.cos(th), 0, -np.sin(th), 0], [0, 1, 0, 0],
+                        [np.sin(th), 0, np.cos(th), 0], [0, 0, 0, 1]]).float()
 
 
 def pose_spherical(theta, phi, radius):
@@ -107,9 +102,7 @@ class BlenderDataset(Dataset):
         img_eval_interval = 1 if self.N_vis < 0 else len(
             self.meta['frames']) // self.N_vis
         idxs = list(range(0, len(self.meta['frames']), img_eval_interval))
-        for i in tqdm(
-                idxs,
-                desc=f'Loading data {self.split} ({len(idxs)})'):
+        for i in tqdm(idxs, desc=f'Loading data {self.split} ({len(idxs)})'):
 
             frame = self.meta['frames'][i]
             pose = np.array(frame['transform_matrix']) @ self.blender2opencv

@@ -124,8 +124,10 @@ def rgb_ssim(img0,
         return scipy.signal.convolve2d(z, f, mode='valid')
 
     def filt_fn(z):
-        return np.stack([convolve2d(convolve2d(z[..., i], filt[:, None]), filt[None, :])
-                         for i in range(z.shape[-1])], -1)
+        return np.stack([
+            convolve2d(convolve2d(z[..., i], filt[:, None]), filt[None, :])
+            for i in range(z.shape[-1])
+        ], -1)
     mu0 = filt_fn(img0)
     mu1 = filt_fn(img1)
     mu00 = mu0 * mu0

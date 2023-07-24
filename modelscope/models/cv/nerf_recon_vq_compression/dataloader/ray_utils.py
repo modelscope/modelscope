@@ -237,7 +237,8 @@ def ray_marcher(rays, N_samples=64, lindisp=False, perturb=0, bbox_3D=None):
         z_vals = lower + (upper - lower) * perturb_rand
 
     # (N_rays, N_samples, 3)
-    xyz_coarse_sampled = rays_o.unsqueeze(1) + rays_d.unsqueeze(1) * z_vals.unsqueeze(2)
+    xyz_coarse_sampled = rays_o.unsqueeze(
+        1) + rays_d.unsqueeze(1) * z_vals.unsqueeze(2)
 
     return xyz_coarse_sampled, rays_o, rays_d, z_vals
 

@@ -418,10 +418,8 @@ class TensorBase(torch.nn.Module):
 
         mask_filtered = torch.cat(mask_filtered).view(all_rgbs.shape[:-1])
 
-        print(
-            f'Ray filtering done! takes {time.time()-tt} s.'
-            f' ray mask ratio: {torch.sum(mask_filtered) / N}'
-        )
+        print(f'Ray filtering done! takes {time.time()-tt} s.'
+              f' ray mask ratio: {torch.sum(mask_filtered) / N}')
         return all_rays[mask_filtered], all_rgbs[mask_filtered]
 
     def feature2density(self, density_features):

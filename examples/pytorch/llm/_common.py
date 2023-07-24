@@ -394,7 +394,11 @@ def get_model_tokenizer(model_type: str,
         model, tokenizer = get_chatglm2_model_tokenizer(
             model_dir, load_model, add_special_token, torch_dtype)
     elif model_type == 'llama2-7b':
-        model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.2')
+        # use `.safetensors`
+        model_dir = snapshot_download(
+            'modelscope/Llama-2-7b-ms',
+            'v1.0.2',
+            ignore_file_pattern=[r'.+\.bin$'])
         model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
                                                       add_special_token,
                                                       torch_dtype)

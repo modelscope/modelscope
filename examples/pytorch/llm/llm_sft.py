@@ -110,7 +110,7 @@ def llm_sft(args: SftArguments) -> None:
     if args.gradient_checkpoint:
         # baichuan-13b does not implement the `get_input_embeddings` function
         if args.model_type == 'baichuan-13b':
-            model.__class__.get_input_embeddings = MethodType(
+            model.get_input_embeddings = MethodType(
                 lambda self: self.model.embed_tokens, model)
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
@@ -239,6 +239,11 @@ def llm_sft(args: SftArguments) -> None:
         cfg.update(config)
         return cfg
 
+    device_kwargs = {}
+    if torch.cuda.device_count() > 1:
+        # No placement for model, leave the model to `device_map`
+        device_kwargs['device'] = 'cpu'
+
     trainer = EpochBasedTrainer(
         model=model,
         cfg_file=cfg_file,
@@ -247,8 +252,8 @@ def llm_sft(args: SftArguments) -> None:
         eval_dataset=val_dataset,
         remove_unused_data=True,
         seed=42,
-        device='cpu',  # No placement for model, leave the model to `device_map`
         cfg_modify_fn=cfg_modify_fn,
+        **device_kwargs,
     )
 
     trainer.train()

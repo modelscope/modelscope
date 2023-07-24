@@ -148,8 +148,8 @@ def kmeans(samples,
            use_cosine_sim=False,
            sample_fn=batched_sample_vectors,
            all_reduce_fn=noop):
-    num_codebooks, dim, dtype, device = samples.shape[0], samples.shape[
-        -1], samples.dtype, samples.device
+    num_codebooks, dim, dtype = samples.shape[0], samples.shape[
+        -1], samples.dtype
 
     means = sample_fn(samples, num_clusters)
 
@@ -433,7 +433,7 @@ class VectorQuantize(nn.Module):
         return rearrange(codebook, '1 ... -> ...')
 
     def forward(self, x, weight=None, verbose=False):
-        shape, device, heads, is_multiheaded, codebook_size = x.shape, x.device, self.heads, self.heads > 1, self.codebook_size
+        device, heads, is_multiheaded = x.device, self.heads, self.heads > 1
 
         need_transpose = not self.channel_last and not self.accept_image_fmap
 

@@ -8,16 +8,26 @@ from tqdm import tqdm
 
 from .ray_utils import *
 
-trans_t = lambda t: torch.Tensor([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, t],
-                                  [0, 0, 0, 1]]).float()
 
-rot_phi = lambda phi: torch.Tensor(
-    [[1, 0, 0, 0], [0, np.cos(phi), -np.sin(phi), 0],
-     [0, np.sin(phi), np.cos(phi), 0], [0, 0, 0, 1]]).float()
+def trans_t(t):
+    return torch.Tensor([[1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, t],
+                        [0, 0, 0, 1]]).float()
 
-rot_theta = lambda th: torch.Tensor(
-    [[np.cos(th), 0, -np.sin(th), 0], [0, 1, 0, 0],
-     [np.sin(th), 0, np.cos(th), 0], [0, 0, 0, 1]]).float()
+
+def rot_phi(phi):
+    return torch.Tensor([[1, 0, 0, 0],
+                        [0, np.cos(phi), -np.sin(phi), 0],
+                        [0, np.sin(phi), np.cos(phi), 0],
+                        [0, 0, 0, 1]]).float()
+
+
+def rot_theta(th):
+    return torch.Tensor([[np.cos(th), 0, -np.sin(th), 0],
+                        [0, 1, 0, 0],
+                        [np.sin(th), 0, np.cos(th), 0],
+                        [0, 0, 0, 1]]).float()
 
 
 def pose_spherical(theta, phi, radius):
@@ -122,36 +132,28 @@ class NSVF(Dataset):
                                                   )  # blend A to RGB
             self.all_rgbs += [img]
 
-            c2w = np.loadtxt(os.path.join(self.root_dir, 'pose',
-                                          pose_fname))  #@ self.blender2opencv
+            c2w = np.loadtxt(os.path.join(self.root_dir, 'pose', pose_fname))
             c2w = torch.FloatTensor(c2w)
             self.poses.append(c2w)  # C2W
             rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
             self.all_rays += [torch.cat([rays_o, rays_d], 1)]  # (h*w, 8)
 
-
-#             w2c = torch.inverse(c2w)
-#
-
         self.poses = torch.stack(self.poses)
         if 'train' == self.split:
             if self.is_stack:
-                self.all_rays = torch.stack(self.all_rays, 0).reshape(
-                    -1, *self.img_wh[::-1],
-                    6)  # (len(self.meta['frames])*h*w, 3)
-                self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(
-                    -1, *self.img_wh[::-1],
-                    3)  # (len(self.meta['frames])*h*w, 3)
+                self.all_rays = torch.stack(self.all_rays,
+                                            0).reshape(-1, *self.img_wh[::-1],
+                                                       6)
+                self.all_rgbs = torch.stack(self.all_rgbs,
+                                            0).reshape(-1, *self.img_wh[::-1],
+                                                       3)
             else:
-                self.all_rays = torch.cat(
-                    self.all_rays, 0)  # (len(self.meta['frames])*h*w, 3)
-                self.all_rgbs = torch.cat(
-                    self.all_rgbs, 0)  # (len(self.meta['frames])*h*w, 3)
+                self.all_rays = torch.cat(self.all_rays, 0)
+                self.all_rgbs = torch.cat(self.all_rgbs, 0)
         else:
-            self.all_rays = torch.stack(self.all_rays,
-                                        0)  # (len(self.meta['frames]),h*w, 3)
-            self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(
-                -1, *self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_rays = torch.stack(self.all_rays, 0)
+            self.all_rgbs = torch.stack(self.all_rgbs,
+                                        0).reshape(-1, *self.img_wh[::-1], 3)
 
     def define_transforms(self):
         self.transform = T.ToTensor()

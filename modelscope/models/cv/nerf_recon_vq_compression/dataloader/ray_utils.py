@@ -236,8 +236,8 @@ def ray_marcher(rays, N_samples=64, lindisp=False, perturb=0, bbox_3D=None):
         perturb_rand = perturb * torch.rand(z_vals.shape, device=rays.device)
         z_vals = lower + (upper - lower) * perturb_rand
 
-    xyz_coarse_sampled = rays_o.unsqueeze(1) + \
-                         rays_d.unsqueeze(1) * z_vals.unsqueeze(2)  # (N_rays, N_samples, 3)
+    # (N_rays, N_samples, 3)
+    xyz_coarse_sampled = rays_o.unsqueeze(1) + rays_d.unsqueeze(1) * z_vals.unsqueeze(2)
 
     return xyz_coarse_sampled, rays_o, rays_d, z_vals
 

@@ -11,16 +11,26 @@ from tqdm import tqdm
 
 from .ray_utils import *
 
-trans_t = lambda t: torch.Tensor([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, t],
-                                  [0, 0, 0, 1]]).float()
 
-rot_phi = lambda phi: torch.Tensor(
-    [[1, 0, 0, 0], [0, np.cos(phi), -np.sin(phi), 0],
-     [0, np.sin(phi), np.cos(phi), 0], [0, 0, 0, 1]]).float()
+def trans_t(t):
+    return torch.Tensor([[1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, t],
+                        [0, 0, 0, 1]]).float()
 
-rot_theta = lambda th: torch.Tensor(
-    [[np.cos(th), 0, -np.sin(th), 0], [0, 1, 0, 0],
-     [np.sin(th), 0, np.cos(th), 0], [0, 0, 0, 1]]).float()
+
+def rot_phi(phi):
+    return torch.Tensor([[1, 0, 0, 0],
+                        [0, np.cos(phi), -np.sin(phi), 0],
+                        [0, np.sin(phi), np.cos(phi), 0],
+                        [0, 0, 0, 1]]).float()
+
+
+def rot_theta(th):
+    return torch.Tensor([[np.cos(th), 0, -np.sin(th), 0],
+                        [0, 1, 0, 0],
+                        [np.sin(th), 0, np.cos(th), 0],
+                        [0, 0, 0, 1]]).float()
 
 
 def pose_spherical(theta, phi, radius):
@@ -74,10 +84,8 @@ class BlenderDataset(Dataset):
             self.meta = json.load(f)
 
         w, h = self.img_wh
-        self.focal = 0.5 * 800 / np.tan(
-            0.5 * self.meta['camera_angle_x'])  # original focal length
-        self.focal *= self.img_wh[
-            0] / 800  # modify focal length to match size self.img_wh
+        self.focal = 0.5 * 800 / np.tan(0.5 * self.meta['camera_angle_x'])
+        self.focal *= self.img_wh[0] / 800
 
         # ray directions for all pixels, same for all images (same H, W, focal)
         self.directions = get_ray_directions(
@@ -101,7 +109,7 @@ class BlenderDataset(Dataset):
         idxs = list(range(0, len(self.meta['frames']), img_eval_interval))
         for i in tqdm(
                 idxs,
-                desc=f'Loading data {self.split} ({len(idxs)})'):  #img_list:#
+                desc=f'Loading data {self.split} ({len(idxs)})'):
 
             frame = self.meta['frames'][i]
             pose = np.array(frame['transform_matrix']) @ self.blender2opencv
@@ -117,8 +125,7 @@ class BlenderDataset(Dataset):
                 img = img.resize(self.img_wh, Image.LANCZOS)
             img = self.transform(img)  # (4, h, w)
             img = img.view(4, -1).permute(1, 0)  # (h*w, 4) RGBA
-            img = img[:, :3] * img[:, -1:] + (1 - img[:, -1:]
-                                              )  # blend A to RGB
+            img = img[:, :3] * img[:, -1:] + (1 - img[:, -1:])
             self.all_rgbs += [img]
 
             rays_o, rays_d = get_rays(self.directions, c2w)  # both (h*w, 3)
@@ -126,17 +133,13 @@ class BlenderDataset(Dataset):
 
         self.poses = torch.stack(self.poses)
         if not self.is_stack:
-            self.all_rays = torch.cat(self.all_rays,
-                                      0)  # (len(self.meta['frames])*h*w, 3)
-            self.all_rgbs = torch.cat(self.all_rgbs,
-                                      0)  # (len(self.meta['frames])*h*w, 3)
-
+            self.all_rays = torch.cat(self.all_rays, 0)
+            self.all_rgbs = torch.cat(self.all_rgbs, 0)
 
         else:
-            self.all_rays = torch.stack(self.all_rays,
-                                        0)  # (len(self.meta['frames]),h*w, 3)
-            self.all_rgbs = torch.stack(self.all_rgbs, 0).reshape(
-                -1, *self.img_wh[::-1], 3)  # (len(self.meta['frames]),h,w,3)
+            self.all_rays = torch.stack(self.all_rays, 0)
+            self.all_rgbs = torch.stack(self.all_rgbs,
+                                        0).reshape(-1, *self.img_wh[::-1], 3)
 
     def define_transforms(self):
         self.transform = T.ToTensor()

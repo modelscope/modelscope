@@ -129,16 +129,13 @@ class TensorVM(TensorBase):
         total = 0
 
         for idx in range(len(vector_comps)):
-            # print(self.line_coef.shape, vector_comps[idx].shape)
             n_comp, n_size = vector_comps[idx].shape[:-1]
 
             dotp = torch.matmul(
                 vector_comps[idx].view(n_comp, n_size),
                 vector_comps[idx].view(n_comp, n_size).transpose(-1, -2))
-            # print(vector_comps[idx].shape, vector_comps[idx].view(n_comp,n_size).transpose(-1,-2).shape, dotp.shape)
             non_diagonal = dotp.view(-1)[1:].view(n_comp - 1,
                                                   n_comp + 1)[..., :-1]
-            # print(vector_comps[idx].shape, vector_comps[idx].view(n_comp,n_size).transpose(-1,-2).shape, dotp.shape,non_diagonal.shape)
             total = total + torch.mean(torch.abs(non_diagonal))
         return total
 
@@ -167,32 +164,12 @@ class TensorVM(TensorBase):
                     size=(res_target[vec_id], 1),
                     mode='bilinear',
                     align_corners=True))
-
-        # plane_coef[0] = torch.nn.Parameter(
-        #     F.interpolate(plane_coef[0].data, size=(res_target[1], res_target[0]), mode='bilinear',
-        #                   align_corners=True))
-        # line_coef[0] = torch.nn.Parameter(
-        #     F.interpolate(line_coef[0].data, size=(res_target[2], 1), mode='bilinear', align_corners=True))
-        # plane_coef[1] = torch.nn.Parameter(
-        #     F.interpolate(plane_coef[1].data, size=(res_target[2], res_target[0]), mode='bilinear',
-        #                   align_corners=True))
-        # line_coef[1] = torch.nn.Parameter(
-        #     F.interpolate(line_coef[1].data, size=(res_target[1], 1), mode='bilinear', align_corners=True))
-        # plane_coef[2] = torch.nn.Parameter(
-        #     F.interpolate(plane_coef[2].data, size=(res_target[2], res_target[1]), mode='bilinear',
-        #                   align_corners=True))
-        # line_coef[2] = torch.nn.Parameter(
-        #     F.interpolate(line_coef[2].data, size=(res_target[0], 1), mode='bilinear', align_corners=True))
-
         return plane_coef, line_coef
 
     @torch.no_grad()
     def upsample_volume_grid(self, res_target):
-        # self.app_plane, self.app_line = self.up_sampling_VM(self.app_plane, self.app_line, res_target)
-        # self.density_plane, self.density_line = self.up_sampling_VM(self.density_plane, self.density_line, res_target)
-
-        scale = res_target[0] / self.line_coef.shape[
-            2]  #assuming xyz have the same scale
+        # assuming xyz have the same scale
+        scale = res_target[0] / self.line_coef.shape[2]
         plane_coef = F.interpolate(
             self.plane_coef.detach().data,
             scale_factor=scale,
@@ -286,25 +263,21 @@ class TensorVMSplit(TensorBase):
     def density_L1(self):
         total = 0
         for idx in range(len(self.density_plane)):
-            total = total + torch.mean(
-                torch.abs(self.density_plane[idx])
-            ) + torch.mean(
-                torch.abs(self.density_line[idx])
-            )  # + torch.mean(torch.abs(self.app_plane[idx])) + torch.mean(torch.abs(self.density_plane[idx]))
+            total = total + torch.mean(torch.abs(
+                self.density_plane[idx])) + torch.mean(
+                    torch.abs(self.density_line[idx]))
         return total
 
     def TV_loss_density(self, reg):
         total = 0
         for idx in range(len(self.density_plane)):
-            total = total + reg(self.density_plane[idx]
-                                ) * 1e-2  #+ reg(self.density_line[idx]) * 1e-3
+            total = total + reg(self.density_plane[idx]) * 1e-2
         return total
 
     def TV_loss_app(self, reg):
         total = 0
         for idx in range(len(self.app_plane)):
-            total = total + reg(
-                self.app_plane[idx]) * 1e-2  #+ reg(self.app_line[idx]) * 1e-3
+            total = total + reg(self.app_plane[idx]) * 1e-2
         return total
 
     def compute_densityfeature(self, xyz_sampled):

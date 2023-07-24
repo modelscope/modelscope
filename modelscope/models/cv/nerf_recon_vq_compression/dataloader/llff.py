@@ -149,13 +149,12 @@ class LLFFDataset(Dataset):
         self.downsample = downsample
         self.define_transforms()
 
-        self.blender2opencv = np.eye(
-            4
-        )  #np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        self.blender2opencv = np.eye(4)
+        # np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
         self.read_meta()
         self.white_bg = False
 
-        #         self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
+        # self.near_far = [np.min(self.near_fars[:,0]),np.max(self.near_fars[:,1])]
         self.near_far = [0.0, 1.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.67, -1.0], [1.5, 1.67, 1.0]])
         # self.scene_bbox = torch.tensor([[-1.67, -1.5, -1.0], [1.67, 1.5, 1.0]])
@@ -176,7 +175,7 @@ class LLFFDataset(Dataset):
 
         poses = poses_bounds[:, :15].reshape(-1, 3, 5)  # (N_images, 3, 5)
         self.near_fars = poses_bounds[:, -2:]  # (N_images, 2)
-        hwf = poses[:, :, -1]
+        # hwf = poses[:, :, -1]
 
         # Step 1: rescale focal length according to training resolution
         H, W, self.focal = poses[
@@ -205,10 +204,11 @@ class LLFFDataset(Dataset):
         self.poses[..., 3] /= scale_factor
 
         # build rendering path
-        N_views, N_rots = 120, 2
-        tt = self.poses[:, :3, 3]  # ptstocam(poses[:3,3,:].T, c2w).T
-        up = normalize(self.poses[:, :3, 1].sum(0))
-        rads = np.percentile(np.abs(tt), 90, 0)
+        N_views = 120
+        # N_rots = 2
+        # tt = self.poses[:, :3, 3]  # ptstocam(poses[:3,3,:].T, c2w).T
+        # up = normalize(self.poses[:, :3, 1].sum(0))
+        # rads = np.percentile(np.abs(tt), 90, 0)
 
         self.render_path = get_spiral(
             self.poses, self.near_fars, N_views=N_views)
@@ -222,9 +222,9 @@ class LLFFDataset(Dataset):
         self.directions = get_ray_directions_blender(H, W,
                                                      self.focal)  # (H, W, 3)
 
-        average_pose = average_poses(self.poses)
-        dists = np.sum(
-            np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
+        # average_pose = average_poses(self.poses)
+        # dists = np.sum(
+        #     np.square(average_pose[:3, 3] - self.poses[:, :3, 3]), -1)
         i_test = np.arange(0, self.poses.shape[0],
                            self.hold_every)  # [np.argmin(dists)]
         img_list = i_test if self.split != 'train' else list(

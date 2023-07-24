@@ -9,7 +9,9 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from PIL import Image
 
-mse2psnr = lambda x: -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
+
+def mse2psnr(x):
+    return -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
 
 
 def visualize_depth_numpy(depth, minmax=None, cmap=cv2.COLORMAP_JET):
@@ -121,10 +123,9 @@ def rgb_ssim(img0,
     def convolve2d(z, f):
         return scipy.signal.convolve2d(z, f, mode='valid')
 
-    filt_fn = lambda z: np.stack([
-        convolve2d(convolve2d(z[..., i], filt[:, None]), filt[None, :])
-        for i in range(z.shape[-1])
-    ], -1)
+    def filt_fn(z):
+        return np.stack([convolve2d(convolve2d(z[..., i], filt[:, None]), filt[None, :])
+                         for i in range(z.shape[-1])], -1)
     mu0 = filt_fn(img0)
     mu1 = filt_fn(img1)
     mu00 = mu0 * mu0

@@ -5,8 +5,6 @@ import torch
 import torch.nn
 import torch.nn.functional as F
 
-from .sh import eval_sh_bases
-
 
 def positional_encoding(positions, freqs):
 
@@ -28,13 +26,6 @@ def raw2alpha(sigma, dist):
 
     weights = alpha * T[:, :-1]  # [N_rays, N_samples]
     return alpha, weights, T[:, -1:]
-
-
-def SHRender(xyz_sampled, viewdirs, features):
-    sh_mult = eval_sh_bases(2, viewdirs)[:, None]
-    rgb_sh = features.view(-1, 3, sh_mult.shape[-1])
-    rgb = torch.relu(torch.sum(sh_mult * rgb_sh, dim=-1) + 0.5)
-    return rgb
 
 
 def RGBRender(xyz_sampled, viewdirs, features):
@@ -208,7 +199,8 @@ class TensorBase(torch.nn.Module):
 
         self.init_svd_volume(gridSize[0], device)
 
-        self.shadingMode, self.pos_pe, self.view_pe, self.fea_pe, self.featureC = shadingMode, pos_pe, view_pe, fea_pe, featureC
+        self.shadingMode, self.pos_pe, self.view_pe = shadingMode, pos_pe, view_pe
+        self.fea_pe, self.featureC = fea_pe, featureC
         self.init_render_func(shadingMode, pos_pe, view_pe, fea_pe, featureC,
                               device)
 
@@ -223,20 +215,15 @@ class TensorBase(torch.nn.Module):
         elif shadingMode == 'MLP':
             self.renderModule = MLPRender(self.app_dim, view_pe,
                                           featureC).to(device)
-        elif shadingMode == 'SH':
-            self.renderModule = SHRender
         elif shadingMode == 'RGB':
             assert self.app_dim == 3
             self.renderModule = RGBRender
         else:
             print('Unrecognized shading module')
             exit()
-        # print("pos_pe", pos_pe, "view_pe", view_pe, "fea_pe", fea_pe)
         print(self.renderModule)
 
     def update_stepSize(self, gridSize):
-        # print("aabb", self.aabb.view(-1))
-        # print("grid size", gridSize)
         self.aabbSize = self.aabb[1] - self.aabb[0]
         self.invaabbSize = 2.0 / self.aabbSize
         self.gridSize = torch.LongTensor(gridSize).to(self.device)
@@ -244,8 +231,6 @@ class TensorBase(torch.nn.Module):
         self.stepSize = torch.mean(self.units) * self.step_ratio
         self.aabbDiag = torch.sqrt(torch.sum(torch.square(self.aabbSize)))
         self.nSamples = int((self.aabbDiag / self.stepSize).item()) + 1
-        # print("sampling step size: ", self.stepSize)
-        # print("sampling number: ", self.nSamples)
 
     def init_svd_volume(self, res, device):
         pass
@@ -318,8 +303,7 @@ class TensorBase(torch.nn.Module):
 
         rays_pts = rays_o[...,
                           None, :] + rays_d[..., None, :] * interpx[..., None]
-        mask_outbbox = ((self.aabb[0] > rays_pts) |
-                        (rays_pts > self.aabb[1])).any(dim=-1)
+        mask_outbbox = ((self.aabb[0] > rays_pts) | (rays_pts > self.aabb[1])).any(dim=-1)
         return rays_pts, interpx, ~mask_outbbox
 
     def sample_ray(self, rays_o, rays_d, is_train=True, N_samples=-1):
@@ -340,8 +324,7 @@ class TensorBase(torch.nn.Module):
 
         rays_pts = rays_o[...,
                           None, :] + rays_d[..., None, :] * interpx[..., None]
-        mask_outbbox = ((self.aabb[0] > rays_pts) |
-                        (rays_pts > self.aabb[1])).any(dim=-1)
+        mask_outbbox = ((self.aabb[0] > rays_pts) | (rays_pts > self.aabb[1])).any(dim=-1)
 
         return rays_pts, interpx, ~mask_outbbox
 
@@ -360,8 +343,6 @@ class TensorBase(torch.nn.Module):
             ), -1).to(self.device)
         dense_xyz = self.aabb[0] * (1 - samples) + self.aabb[1] * samples
 
-        # dense_xyz = dense_xyz
-        # print(self.stepSize, self.distance_scale*self.aabbDiag)
         alpha = torch.zeros_like(dense_xyz[..., 0])
         for i in range(gridSize[0]):
             alpha[i] = self.compute_alpha(dense_xyz[i].view(-1, 3),
@@ -421,10 +402,8 @@ class TensorBase(torch.nn.Module):
                                   rays_d)
                 rate_a = (self.aabb[1] - rays_o) / vec
                 rate_b = (self.aabb[0] - rays_o) / vec
-                t_min = torch.minimum(rate_a, rate_b).amax(
-                    -1)  #.clamp(min=near, max=far)
-                t_max = torch.maximum(rate_a, rate_b).amin(
-                    -1)  #.clamp(min=near, max=far)
+                t_min = torch.minimum(rate_a, rate_b).amax(-1)
+                t_max = torch.maximum(rate_a, rate_b).amin(-1)
                 mask_inbbox = t_max > t_min
 
             else:
@@ -438,7 +417,8 @@ class TensorBase(torch.nn.Module):
         mask_filtered = torch.cat(mask_filtered).view(all_rgbs.shape[:-1])
 
         print(
-            f'Ray filtering done! takes {time.time()-tt} s. ray mask ratio: {torch.sum(mask_filtered) / N}'
+            f'Ray filtering done! takes {time.time()-tt} s.'
+            f' ray mask ratio: {torch.sum(mask_filtered) / N}'
         )
         return all_rays[mask_filtered], all_rgbs[mask_filtered]
 
@@ -543,4 +523,4 @@ class TensorBase(torch.nn.Module):
             depth_map = torch.sum(weight * z_vals, -1)
             depth_map = depth_map + (1. - acc_map) * rays_chunk[..., -1]
 
-        return rgb_map, depth_map  # rgb, sigma, alpha, weight, bg_weight
+        return rgb_map, depth_map

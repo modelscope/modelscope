@@ -6,8 +6,8 @@ import scipy
 import torch
 
 
-########## Slightly modified version of LLFF data loading code
-##########  see https://github.com/Fyusion/LLFF for original
+# Slightly modified version of LLFF data loading code
+# see https://github.com/Fyusion/LLFF for original
 def imread(f):
     if f.endswith('png'):
         return imageio.imread(f, format='PNG-PIL', ignoregamma=True)
@@ -108,8 +108,11 @@ def _load_data(basedir,
         raise NotImplementedError
     bds = poses_arr[:, -2:].transpose([1, 0])
 
-    img0 = [os.path.join(basedir, 'images', f) for f in sorted(os.listdir(os.path.join(basedir, 'images'))) \
-            if f.endswith('JPG') or f.endswith('jpg') or f.endswith('png')][0]
+    img0 = [
+        os.path.join(basedir, 'images', f)
+        for f in sorted(os.listdir(os.path.join(basedir, 'images')))
+        if f.endswith('JPG') or f.endswith('jpg') or f.endswith('png')
+    ][0]
     sh = imageio.imread(img0).shape
 
     sfx = ''
@@ -334,10 +337,12 @@ def rerotate_poses(poses):
 
 def spherify_poses(poses, bds, depths):
 
-    p34_to_44 = lambda p: np.concatenate([
-        p,
-        np.tile(np.reshape(np.eye(4)[-1, :], [1, 1, 4]), [p.shape[0], 1, 1])
-    ], 1)
+    def p34_to_44(p):
+        return np.concatenate([
+            p,
+            np.tile(
+                np.reshape(np.eye(4)[-1, :], [1, 1, 4]), [p.shape[0], 1, 1])
+        ], 1)
 
     rays_d = poses[:, :3, 2:3]
     rays_o = poses[:, :3, 3:4]
@@ -435,7 +440,7 @@ def load_llff_data(basedir,
         if rerotate:
             poses = rerotate_poses(poses)
 
-        ### generate spiral poses for rendering fly-through movie
+        # generate spiral poses for rendering fly-through movie
         centroid = poses[:, :3, 3].mean(0)
         radcircle = movie_render_kwargs.get('scale_r', 1) * np.linalg.norm(
             poses[:, :3, 3] - centroid, axis=-1).mean()
@@ -481,7 +486,7 @@ def load_llff_data(basedir,
         print('recentered', c2w.shape)
         print(c2w[:3, :4])
 
-        ## Get spiral
+        # Get spiral
         # Get average pose
         up = normalize(poses[:, :3, 1].sum(0))
 
@@ -501,7 +506,7 @@ def load_llff_data(basedir,
         N_views = 120
         N_rots = movie_render_kwargs.get('N_rots', 1)
         if path_zflat:
-            #             zloc = np.percentile(tt, 10, 0)[2]
+            # zloc = np.percentile(tt, 10, 0)[2]
             zloc = -close_depth * .1
             c2w_path[:3, 3] = c2w_path[:3, 3] + zloc * c2w_path[:3, 2]
             rads[2] = 0.

@@ -18,7 +18,12 @@ from .dataloader.load_data import load_data
 from .network.dvgo import DirectMPIGO, DirectVoxGO, SFTNet, get_rays_of_a_view
 
 logger = get_logger()
-to8b = lambda x: (255 * np.clip(x, 0, 1)).astype(np.uint8)
+
+
+def to8b(x):
+    return (255 * np.clip(x, 0, 1)).astype(np.uint8)
+
+
 __all__ = ['NeRFRecon4K']
 
 
@@ -129,8 +134,8 @@ class NeRFRecon4K(TorchModel):
                 0, 1).numpy()
             rgbsr.append(rgb_srsave)
         print(
-            'all inference process has done, saving images... because our images are 4K (4032x3024), the saving process may be time-consuming.'
-        )
+            '''all inference process has done, saving images... because our images are
+            4K (4032x3024), the saving process may be time-consuming.''')
         rgbsr = np.array(rgbsr)
         for i in trange(len(rgbsr)):
             rgb8 = to8b(rgbsr[i])
@@ -138,7 +143,7 @@ class NeRFRecon4K(TorchModel):
             imageio.imwrite(filename, rgb8)
 
         imageio.mimwrite(
-            os.path.join(render_dir, f'result_dec.mp4'),
+            os.path.join(render_dir, 'result_dec.mp4'),
             to8b(rgbsr),
             fps=25,
             codec='libx264',
@@ -230,7 +235,8 @@ class NeRFRecon4K(TorchModel):
 
         if len(psnrs):
             print('Testing psnr', np.mean(psnrs), '(avg)')
-            if eval_ssim: print('Testing ssim', np.mean(ssims), '(avg)')
+            if eval_ssim:
+                print('Testing ssim', np.mean(ssims), '(avg)')
             if eval_lpips_vgg:
                 print('Testing lpips (vgg)', np.mean(lpips_vgg), '(avg)')
             if eval_lpips_alex:

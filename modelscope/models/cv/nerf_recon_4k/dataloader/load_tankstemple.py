@@ -31,7 +31,7 @@ def load_tankstemple_data(basedir, movie_render_kwargs={}):
     K = np.loadtxt(path_intrinsics)
     focal = float(K[0, 0])
 
-    ### generate spiral poses for rendering fly-through movie
+    # generate spiral poses for rendering fly-through movie
     centroid = poses[:, :3, 3].mean(0)
     radcircle = movie_render_kwargs.get('scale_r', 1.0) * np.linalg.norm(
         poses[:, :3, 3] - centroid, axis=-1).mean()

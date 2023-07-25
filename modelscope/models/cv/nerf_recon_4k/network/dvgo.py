@@ -14,12 +14,12 @@ from torch_scatter import segment_coo
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 parent_list = parent_dir.split('/')
 del parent_list[-4:]
-parent_dir = "/".join(parent_list)
+parent_dir = '/'.join(parent_list)
 render_utils_cuda = load(
     name='render_utils_cuda',
     sources=[
-        os.path.join(parent_dir, path)
-        for path in ['ops/4knerf/render_utils.cpp', 'ops/4knerf/render_utils_kernel.cu']
+        os.path.join(parent_dir, path) for path in
+        ['ops/4knerf/render_utils.cpp', 'ops/4knerf/render_utils_kernel.cu']
     ],
     verbose=True)
 
@@ -67,12 +67,6 @@ class DenseGrid(nn.Module):
                     size=tuple(new_world_size),
                     mode='trilinear',
                     align_corners=True))
-
-    def total_variation_add_grad(self, wx, wy, wz, dense_mode):
-        '''Add gradients by total variation loss in-place'''
-        total_variation_cuda.total_variation_add_grad(self.grid,
-                                                      self.grid.grad, wx, wy,
-                                                      wz, dense_mode)
 
     def get_dense_grid(self):
         return self.grid
@@ -139,7 +133,7 @@ class MaskGrid(nn.Module):
         return mask
 
     def extra_repr(self):
-        return f'mask.shape=list(self.mask.shape)'
+        return 'mask.shape=list(self.mask.shape)'
 
 
 '''Model'''
@@ -386,8 +380,8 @@ class DirectVoxGO(torch.nn.Module):
                 stride=1)[0, 0]
             self.mask_cache = MaskGrid(
                 path=None,
-                mask=self.mask_cache(self_grid_xyz) &
-                (self_alpha > self.fast_color_thres),
+                mask=self.mask_cache(self_grid_xyz)
+                & (self_alpha > self.fast_color_thres),
                 xyz_min=self.xyz_min,
                 xyz_max=self.xyz_max)
 
@@ -446,8 +440,8 @@ class DirectVoxGO(torch.nn.Module):
                 rate_b = (self.xyz_min - rays_o) / vec
                 t_min = torch.minimum(rate_a, rate_b).amax(-1).clamp(
                     min=near, max=far)
-                t_max = torch.maximum(rate_a, rate_b).amin(-1).clamp(
-                    min=near, max=far)
+                # t_max = torch.maximum(rate_a, rate_b).amin(-1).clamp(
+                #     min=near, max=far)
                 step = stepsize * self.voxel_size * rng
                 interpx = (
                     t_min[..., None]
@@ -460,14 +454,6 @@ class DirectVoxGO(torch.nn.Module):
         eps_time = time.time() - eps_time
         print('dvgo: voxel_count_views finish (eps time:', eps_time, 'sec)')
         return count
-
-    def density_total_variation_add_grad(self, weight, dense_mode):
-        w = weight * self.world_size.max() / 128
-        self.density.total_variation_add_grad(w, w, w, dense_mode)
-
-    def k0_total_variation_add_grad(self, weight, dense_mode):
-        w = weight * self.world_size.max() / 128
-        self.k0.total_variation_add_grad(w, w, w, dense_mode)
 
     def activate_density(self, density, interval=None):
         interval = interval if interval is not None else self.voxel_size_ratio
@@ -818,8 +804,8 @@ class DirectMPIGO(torch.nn.Module):
         # Determine grid resolution
         self.num_voxels = num_voxels
         self.mpi_depth = mpi_depth
-        r = (num_voxels / self.mpi_depth /
-             (self.xyz_max - self.xyz_min)[:2].prod()).sqrt()
+        r = num_voxels / self.mpi_depth
+        r = (r / (self.xyz_max - self.xyz_min)[:2].prod()).sqrt()
         self.world_size = torch.zeros(3, dtype=torch.long)
         self.world_size[:2] = (self.xyz_max - self.xyz_min)[:2] * r
         self.world_size[2] = self.mpi_depth
@@ -877,8 +863,8 @@ class DirectMPIGO(torch.nn.Module):
                 stride=1)[0, 0]
             self.mask_cache = MaskGrid(
                 path=None,
-                mask=self.mask_cache(self_grid_xyz) &
-                (self_alpha > self.fast_color_thres),
+                mask=self.mask_cache(self_grid_xyz)
+                & (self_alpha > self.fast_color_thres),
                 xyz_min=self.xyz_min,
                 xyz_max=self.xyz_max)
 
@@ -927,18 +913,8 @@ class DirectMPIGO(torch.nn.Module):
         print(f'dmpigo: update mask_cache {ori_p:.4f} => {new_p:.4f}')
         torch.cuda.empty_cache()
         eps_time = time.time() - eps_time
-        print(f'dmpigo: update mask_cache lt_nviews finish (eps time:',
+        print('dmpigo: update mask_cache lt_nviews finish (eps time:',
               eps_time, 'sec)')
-
-    def density_total_variation_add_grad(self, weight, dense_mode):
-        wxy = weight * self.world_size[:2].max() / 128
-        wz = weight * self.mpi_depth / 128
-        self.density.total_variation_add_grad(wxy, wxy, wz, dense_mode)
-
-    def k0_total_variation_add_grad(self, weight, dense_mode):
-        wxy = weight * self.world_size[:2].max() / 128
-        wz = weight * self.mpi_depth / 128
-        self.k0.total_variation_add_grad(wxy, wxy, wz, dense_mode)
 
     def activate_density(self, density, interval=None):
         interval = interval if interval is not None else self.voxel_size_ratio
@@ -1030,8 +1006,8 @@ class DirectMPIGO(torch.nn.Module):
         # query for color
         vox_emb = self.k0(ray_pts)
 
-        pe_spa = ((ray_pts - self.xyz_min) /
-                  (self.xyz_max - self.xyz_min)).flip((-1, )) * 2 - 1
+        pe_spa = ((ray_pts - self.xyz_min) / (self.xyz_max - self.xyz_min))
+        pe_spa = pe_spa.flip((-1, )) * 2 - 1
         # B_gau = torch.normal(mean=0, std=1, size=(128, 3)).to(rays_o.device) * 10
         # pe_emb = input_mapping(pe_spa.detach().clone(), B_gau)
 
@@ -1849,33 +1825,28 @@ class SFTNet(nn.Module):
                 # upscale tile
                 # try:
                 with torch.no_grad():
-                    output_tile = self(input_tile, cond_tile)
+                    out_t = self(input_tile, cond_tile)
                 # except Exception as error:
                 #     print('Error', error)
                 print(f'\tTile {tile_idx}/{tiles_x * tiles_y}')
 
                 # output tile area on total image
-                output_start_x = input_start_x * self.scale
-                output_end_x = input_end_x * self.scale
-                output_start_y = input_start_y * self.scale
-                output_end_y = input_end_y * self.scale
+                out_s_x = input_start_x * self.scale
+                out_e_x = input_end_x * self.scale
+                out_s_y = input_start_y * self.scale
+                out_e_y = input_end_y * self.scale
 
                 # output tile area without padding
-                output_start_x_tile = (input_start_x
-                                       - input_start_x_pad) * self.scale
-                output_end_x_tile = output_start_x_tile + input_tile_width * self.scale
-                output_start_y_tile = (input_start_y
-                                       - input_start_y_pad) * self.scale
-                output_end_y_tile = output_start_y_tile + input_tile_height * self.scale
+                out_s_x_t = (input_start_x - input_start_x_pad) * self.scale
+                out_e_x_t = out_s_x_t + input_tile_width * self.scale
+                out_s_y_t = (input_start_y - input_start_y_pad) * self.scale
+                out_e_y_t = out_s_y_t + input_tile_height * self.scale
 
                 # put tile into output image
-                output[:, :, output_start_y:output_end_y, output_start_x:
-                       output_end_x] = output_tile[:, :, output_start_y_tile:
-                                                   output_end_y_tile,
-                                                   output_start_x_tile:
-                                                   output_end_x_tile].detach(
-                                                   ).to('cpu')
-        return output
+                output[:, :, out_s_y:out_e_y,
+                       out_s_x:out_e_x] = out_t[:, :, out_s_y_t:out_e_y_t,
+                                                out_s_x_t:out_e_x_t]
+        return output.detach().to('cpu')
 
     def load_network(self,
                      load_path,

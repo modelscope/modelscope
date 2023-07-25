@@ -28,12 +28,15 @@ from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import AttentionTextGenerationModelOutput
 from modelscope.utils.constant import Tasks
+from modelscope.utils.streaming_output import \
+    PretrainedModelStreamingOutputMixin
 from .backbone import LlamaModel, LlamaPreTrainedModel
 
 
 # This file is mainly copied from the llama code of transformers
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
-class LlamaForTextGeneration(LlamaPreTrainedModel):
+class LlamaForTextGeneration(LlamaPreTrainedModel,
+                             PretrainedModelStreamingOutputMixin):
     _keys_to_ignore_on_load_missing = [r'lm_head.weight']
 
     def __init__(self, config, **kwargs):

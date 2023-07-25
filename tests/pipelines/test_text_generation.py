@@ -8,7 +8,8 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextGenerationPipeline
 from modelscope.preprocessors import TextGenerationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
-from modelscope.utils.streaming_output import StreamingOutputMixin
+from modelscope.utils.streaming_output import (StreamingOutputMixin,
+                                               add_stream_generate)
 from modelscope.utils.test_utils import test_level
 
 
@@ -42,6 +43,9 @@ class TextGenerationTest(unittest.TestCase):
         self.gpt3_input = '《故乡》。深蓝的天空中挂着一轮金黄的圆月，下面是海边的沙地，'
         self.gpt3_poetry_input = '天生我材必有用，'
 
+        self.llama_model_id = 'skyline2006/llama-7b'
+        self.llama_input = 'My name is Merve and my favorite'
+
     def run_pipeline_with_model_instance(self, model_id, input):
         model = Model.from_pretrained(model_id)
         preprocessor = TextGenerationTransformersPreprocessor(
@@ -72,7 +76,7 @@ class TextGenerationTest(unittest.TestCase):
 
         # set stream inputs
         assert isinstance(pipeline_ins, StreamingOutputMixin)
-        for output in pipeline_ins.stream(input, **run_kwargs):
+        for output in pipeline_ins.stream_generate(input, **run_kwargs):
             print(output, end='\r')
         print()
 
@@ -165,6 +169,19 @@ class TextGenerationTest(unittest.TestCase):
     def test_gpt_large_with_model_name(self):
         self.run_pipeline_with_model_id(self.gpt3_large_model_id,
                                         self.gpt3_input)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_hf_model_stream_generate(self):
+        from transformers import AutoTokenizer, GPT2LMHeadModel
+        tokenizer = AutoTokenizer.from_pretrained('gpt2')
+        model = GPT2LMHeadModel.from_pretrained('gpt2')
+        model = add_stream_generate(model)
+        inputs = tokenizer(self.llama_input, return_tensors='pt')
+        output1 = model.generate(**inputs)
+        output2 = None
+        for tensor in model.stream_generate(**inputs):
+            output2 = tensor
+        self.assertTrue(output1.equal(output2))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_palm_zh_large_with_model_name(self):
@@ -291,6 +308,17 @@ class TextGenerationTest(unittest.TestCase):
             task=Tasks.text_generation,
             model='damo/nlp_gpt2_text-generation_english-base')
         print(pipe('My name is Teven and I am'))
+
+    @unittest.skip('oom error for 7b model')
+    def test_llama_with_model_name(self):
+        self.run_pipeline_with_model_id(self.llama_model_id, self.llama_input)
+
+    @unittest.skip('oom error for 7b model')
+    def test_llama_with_model_name_with_streaming(self):
+        self.run_streaming_pipeline_with_model_id(
+            self.llama_model_id,
+            self.llama_input,
+            run_kwargs={'max_length': 64})
 
 
 if __name__ == '__main__':

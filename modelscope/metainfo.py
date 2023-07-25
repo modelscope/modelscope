@@ -54,6 +54,7 @@ class Models(object):
     newcrfs_depth_estimation = 'newcrfs-depth-estimation'
     panovit_layout_estimation = 'panovit-layout-estimation'
     unifuse_depth_estimation = 'unifuse-depth-estimation'
+    s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
@@ -118,6 +119,7 @@ class Models(object):
     longshortnet = 'longshortnet'
     fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
+    image_try_on = 'image-try-on'
 
     # nlp models
     bert = 'bert'
@@ -148,6 +150,7 @@ class Models(object):
     bert_for_ds = 'bert-for-document-segmentation'
     ponet_for_ds = 'ponet-for-document-segmentation'
     ponet = 'ponet'
+    polylm = 'polylm'
     T5 = 'T5'
     mglm = 'mglm'
     codegeex = 'codegeex'
@@ -358,6 +361,7 @@ class Pipelines(object):
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
+    panorama_depth_estimation_s2net = 'panorama-depth-estimation-s2net'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
     image_paintbyexample = 'stablediffusion-paintbyexample'
@@ -412,6 +416,7 @@ class Pipelines(object):
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
+    image_try_on = 'image-try-on'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -445,6 +450,7 @@ class Pipelines(object):
     word_alignment = 'word-alignment'
     plug_generation = 'plug-generation'
     gpt3_generation = 'gpt3-generation'
+    polylm_text_generation = 'polylm-text-generation'
     gpt_moe_generation = 'gpt-moe-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
@@ -491,6 +497,7 @@ class Pipelines(object):
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
     speaker_change_locating = 'speaker-change-locating'
+    speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
@@ -847,6 +854,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.pedestrian_attribute_recognition: (
         Pipelines.pedestrian_attribute_recognition,
         'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
+    Tasks.image_try_on: (Pipelines.image_try_on,
+                         'damo/cv_SAL-VTON_virtual-try-on')
 }
 
 

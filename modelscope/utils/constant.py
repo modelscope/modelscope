@@ -96,6 +96,7 @@ class CVTasks(object):
     image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
     controllable_image_generation = 'controllable-image-generation'
+    image_try_on = 'image-try-on'
 
     # video recognition
     live_category = 'live-category'
@@ -227,6 +228,7 @@ class AudioTasks(object):
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
+    speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
 
 
 class MultiModalTasks(object):

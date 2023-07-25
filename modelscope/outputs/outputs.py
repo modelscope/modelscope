@@ -1233,6 +1233,14 @@ TASK_OUTPUTS = {
     # speaker verification for single compare task
     # {'score': 84.2332}
     Tasks.speaker_verification: [OutputKeys.SCORES],
+    # speaker diarization dialogue detection for binary results: dialogue or non_dialogue
+    # {
+    #   "scores": [0.98, 0.02],
+    #   "labels": ["dialogue", "non_dialogue"],
+    # }
+    Tasks.speaker_diarization_dialogue_detection: [
+        OutputKeys.SCORES, OutputKeys.LABELS
+    ],
 
     # punctuation result for single sample
     # { "text": "你好，明天！"}
@@ -1486,6 +1494,12 @@ TASK_OUTPUTS = {
     Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
     Tasks.video_temporal_grounding: [OutputKeys.SCORES, OutputKeys.TBOUNDS],
     Tasks.text_to_video_synthesis: [OutputKeys.OUTPUT_VIDEO],
+
+    # Tasks.image_try_on result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.image_try_on: [OutputKeys.OUTPUT_IMG],
 }
 
 

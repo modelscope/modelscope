@@ -219,6 +219,11 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.bad_image_detecting:
     InputType.IMAGE,
+    Tasks.image_try_on: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: {
@@ -332,6 +337,8 @@ TASK_INPUTS = {
     Tasks.keyword_spotting:
     InputType.AUDIO,
     Tasks.inverse_text_processing:
+    InputType.TEXT,
+    Tasks.speaker_diarization_dialogue_detection:
     InputType.TEXT,
 
     # ============ multi-modal tasks ===================

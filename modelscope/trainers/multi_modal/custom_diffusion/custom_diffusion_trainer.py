@@ -7,6 +7,7 @@ import warnings
 from pathlib import Path
 from typing import Union
 
+import json
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -309,9 +310,9 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 'class_data_dir': self.class_data_dir,
             }]
         else:
-            with open(args.concepts_list, "r") as f:
+            with open(self.concepts_list, 'r') as f:
                 self.concepts_list = json.load(f)
-        print("--------self.concepts_list: ", self.concepts_list)
+        print('--------self.concepts_list: ', self.concepts_list)
 
         # Adding a modifier token which is optimized
         self.modifier_token_id = []

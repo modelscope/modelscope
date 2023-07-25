@@ -94,7 +94,6 @@ class StableDiffusionCustomArguments(TrainingArgs):
         metadata={
             'help': 'Path to json containing multiple concepts.',
         })
-    
 
 
 training_args = StableDiffusionCustomArguments(
@@ -160,7 +159,7 @@ pipe = pipeline(
     task=Tasks.text_to_image_synthesis,
     model=training_args.model,
     custom_dir=training_args.work_dir + '/output',
-    modifier_token='<new1>',
+    modifier_token='<new1>+<new2>',
     model_revision=args.model_revision)
 
 output = pipe({'text': args.instance_prompt})

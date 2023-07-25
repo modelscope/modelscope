@@ -1,26 +1,29 @@
 # ### Setting up experimental environment.
 """
-pip install numpy pandas matplotlib scikit-learn
-pip install transformers datasets
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer
-pip install accelerate transformers_stream_generator
-
 # Install the latest version of modelscope from source
 git clone https://github.com/modelscope/modelscope.git
 cd modelscope
 pip install .
 
-# Resolve torchmetrics dependencies and update numpy
-pip install numpy -U
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install numpy pandas -U  # Resolve torchmetrics dependencies and update numpy
+pip install matplotlib scikit-learn -U
+pip install transformers datasets -U
+pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer -U
+pip install accelerate transformers_stream_generator -U
 """
+
+if __name__ == '__main__':
+    # Avoid cuda initialization caused by library import
+    from _parse_device import *
+    device, args = parse_device()
+    select_device(device)
 
 from _common import *
 
 
 @dataclass
 class SftArguments:
-    device: str = '0,1'  # e.g. '-1'; '0'; '0,1'
     seed: int = 42
     model_type: str = field(
         default='baichuan-7b',
@@ -85,11 +88,11 @@ class SftArguments:
                 raise ValueError(f'model_type: {self.model_type}')
 
 
-def parse_args() -> SftArguments:
+def parse_args(args: Optional[List[str]] = None) -> SftArguments:
     # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser([
-        SftArguments
-    ]).parse_args_into_dataclasses(return_remaining_strings=True)
+    parser = HfArgumentParser([SftArguments])
+    args, remaining_args = parser.parse_args_into_dataclasses(
+        args, return_remaining_strings=True)
     logger.info(f'args: {args}')
     if len(remaining_args) > 0:
         logger.warning(f'remaining_args: {remaining_args}')
@@ -97,7 +100,6 @@ def parse_args() -> SftArguments:
 
 
 def llm_sft(args: SftArguments) -> None:
-    select_device(args.device)
     seed_everything(args.seed)
 
     # ### Loading Model and Tokenizer
@@ -239,11 +241,6 @@ def llm_sft(args: SftArguments) -> None:
         cfg.update(config)
         return cfg
 
-    device_kwargs = {}
-    if torch.cuda.device_count() > 1:
-        # No placement for model, leave the model to `device_map`
-        device_kwargs['device'] = 'cpu'
-
     trainer = EpochBasedTrainer(
         model=model,
         cfg_file=cfg_file,
@@ -253,7 +250,6 @@ def llm_sft(args: SftArguments) -> None:
         remove_unused_data=True,
         seed=42,
         cfg_modify_fn=cfg_modify_fn,
-        **device_kwargs,
     )
 
     trainer.train()
@@ -264,5 +260,5 @@ def llm_sft(args: SftArguments) -> None:
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args = parse_args(args)
     llm_sft(args)

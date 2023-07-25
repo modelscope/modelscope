@@ -1,4 +1,11 @@
 # ### Setting up experimental environment.
+
+if __name__ == '__main__':
+    # Avoid cuda initialization caused by library import
+    from _parse_device import *
+    device, args = parse_device()
+    select_device(device)
+
 from _common import *
 
 
@@ -43,11 +50,11 @@ class InferArguments:
                 f'Please enter a valid ckpt_path: {self.ckpt_path}')
 
 
-def parse_args() -> InferArguments:
+def parse_args(args: Optional[List[str]] = None) -> InferArguments:
     # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser([
-        InferArguments
-    ]).parse_args_into_dataclasses(return_remaining_strings=True)
+    parser = HfArgumentParser([InferArguments])
+    args, remaining_args = parser.parse_args_into_dataclasses(
+        args, return_remaining_strings=True)
     logger.info(f'args: {args}')
     if len(remaining_args) > 0:
         logger.warning(f'remaining_args: {remaining_args}')
@@ -112,5 +119,5 @@ def llm_infer(args: InferArguments) -> None:
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args = parse_args(args)
     llm_infer(args)

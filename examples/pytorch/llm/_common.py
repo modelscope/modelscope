@@ -1,4 +1,3 @@
-import ast
 import datetime as dt
 import math
 import os
@@ -7,12 +6,12 @@ import re
 import sys
 from dataclasses import dataclass, field
 from functools import partial
+from types import MethodType
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-#
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -33,35 +32,35 @@ from torch.optim import Optimizer
 from torch.optim import lr_scheduler as lrs
 from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 from torch.utils.data import Dataset
-#
 from torchmetrics import Accuracy, MeanMetric
-#
 from tqdm import tqdm
 from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
                           GenerationConfig, HfArgumentParser, TextStreamer)
 
-#
 from modelscope import (Model, MsDataset, get_logger, read_config,
                         snapshot_download)
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
-from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
-from modelscope.msdatasets.dataset_cls.custom_datasets import \
-    TorchCustomDataset
+from modelscope.models.nlp.chatglm2 import ChatGLM2Config, ChatGLM2Tokenizer
+from modelscope.models.nlp.llama2 import Llama2Config, Llama2Tokenizer
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
-#
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
 
-PROMPT = """Human: {instruction}
-AI: """
+PROMPT = """Here's a conversation between a human and an AI assistant. \
+The AI assistant provides detailed, friendly answers for the human.
+
+### Human:
+{instruction}
+
+### AI:
+"""
 
 logger = get_logger()
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
-#
 
 
 def _get_version(work_dir: str) -> int:
@@ -84,7 +83,7 @@ def get_work_dir(work_dir: str) -> str:
     work_dir = os.path.abspath(work_dir)
     version = _get_version(work_dir)
     time = dt.datetime.now().strftime('%Y%m%d-%H%M%S')
-    #
+
     work_dir = os.path.join(work_dir, f'v{version}-{time}')
     logger.info(f'work_dir: {work_dir}')
     return work_dir
@@ -109,9 +108,8 @@ def select_device(device: Union[List[int], str]) -> Device:
     if torch.cuda.is_initialized():
         logger.warning('CUDA has been initialized! Device selection fails!')
         return torch.device('cuda:0')
-    #
+
     device_ids, device_str = _format_device(device)
-    #
     os.environ['CUDA_VISIBLE_DEVICES'] = device_str
     log_s = 'Using device: '
     if len(device_ids) == 0:
@@ -157,11 +155,9 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
 def tokenize_function(example: Dict[str, Optional[str]],
                       tokenizer,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
-    """Only applicable to baichuan and chatglm2. Other models need to be tested"""
     instruction: str = example['instruction']
     input_ = example['input']
     if input_ is not None and input_ != '':
-        # instruction = instruction + '\n'
         if input_.startswith('输入：'):
             instruction = instruction + input_[3:]
         else:
@@ -171,7 +167,7 @@ def tokenize_function(example: Dict[str, Optional[str]],
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
         add_special_tokens=True)['input_ids']
-    #
+
     tgt_input_ids = []
     if output is not None:
         tgt_input_ids += tokenizer(
@@ -182,17 +178,17 @@ def tokenize_function(example: Dict[str, Optional[str]],
     else:
         labels = None
     input_ids = src_input_ids + tgt_input_ids
-    #
+
     if max_length is not None:
         input_ids = input_ids[-max_length:]
         if labels is not None:
             labels = labels[-max_length:]
-    #
+
     return {'input_ids': input_ids, 'labels': labels}
 
 
 def stat_dataset(dataset: HfDataset) -> None:
-    """Statistical analysis was performed on the data set"""
+    """Statistical analysis was performed on the dataset"""
     _token_len = []
     for d in dataset:
         _token_len.append(len(d['input_ids']))
@@ -224,7 +220,7 @@ def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
         torch.ones(len(input_ids[i]), dtype=torch.int64)
         for i in range(len(input_ids))
     ]
-    #
+
     input_ids = pad_sequence(
         input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
     attention_mask = pad_sequence(
@@ -240,11 +236,11 @@ def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:
 def print_model_info(model: Module, name: Optional[str] = None) -> None:
     if name is None:
         name = model.__class__.__name__
-    #
+
     n_params = sum(p.numel() for p in model.parameters())
     n_grads = sum(p.numel() for p in model.parameters() if p.requires_grad)
     n_buffers = sum(p.numel() for p in model.buffers())
-    #
+
     n_params /= 1e6
     n_grads /= 1e6
     n_buffers /= 1e6
@@ -276,7 +272,7 @@ class MyMetric(Metric):
     def add(self, outputs: Dict[str, Any], inputs: Dict[str, Any]) -> None:
         loss: Tensor = outputs.loss
         self.loss.update(loss)
-        #
+
         labels: Tensor = inputs['labels']
         labels = labels[:, 1:]
         labels_mask = labels != -100
@@ -311,11 +307,11 @@ def _add_special_token(tokenizer):
 
 def get_baichuan_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
-                                 add_special_token: bool = True):
-    sys.path.insert(0, model_dir)
+                                 add_special_token: bool = True,
+                                 torch_dtype: Dtype = torch.float16):
     model_config = AutoConfig.from_pretrained(
         model_dir, trust_remote_code=True)
-    model_config.torch_dtype = torch.float16
+    model_config.torch_dtype = torch_dtype
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(
         model_dir, trust_remote_code=True)
@@ -325,9 +321,9 @@ def get_baichuan_model_tokenizer(model_dir: str,
             model_dir,
             config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16,
+            torch_dtype=torch_dtype,
             trust_remote_code=True)
-    #
+
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
@@ -335,17 +331,22 @@ def get_baichuan_model_tokenizer(model_dir: str,
 
 def get_chatglm2_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
-                                 add_special_token: bool = True):
+                                 add_special_token: bool = True,
+                                 torch_dtype: Dtype = torch.float16):
     config = read_config(model_dir)
-    config['model'] = ConfigDict({'type': 'chatglm2-6b'})
+    logger.info(config)
+    model_config = ChatGLM2Config.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(model_config)
     tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
         model = Model.from_pretrained(
             model_dir,
             cfg_dict=config,
+            config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch_dtype)
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
@@ -353,20 +354,53 @@ def get_chatglm2_model_tokenizer(model_dir: str,
 
 def get_llama2_model_tokenizer(model_dir: str,
                                load_model: bool = True,
-                               add_special_token: bool = True):
-    config = AutoConfig.from_pretrained(model_dir)
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+                               add_special_token: bool = True,
+                               torch_dtype: Dtype = torch.float16):
+    config = read_config(model_dir)
+    logger.info(config)
+    model_config = Llama2Config.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(model_config)
+    tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
     model = None
     if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
+        model = Model.from_pretrained(
             model_dir,
-            config=config,
+            cfg_dict=config,
+            config=model_config,
             device_map='auto',
-            torch_dtype=torch.float16,
-        )
+            torch_dtype=torch_dtype)
     if add_special_token:
         _add_special_token(tokenizer)
     return model, tokenizer
+
+
+def get_model_tokenizer(model_type: str,
+                        load_model: bool = True,
+                        add_special_token: bool = True,
+                        torch_dtype: Dtype = torch.float16):
+    # ### Loading Model and Tokenizer
+    if model_type == 'baichuan-7b':
+        model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.7')
+        model, tokenizer = get_baichuan_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
+    elif model_type == 'baichuan-13b':
+        model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base',
+                                      'v1.0.3')
+        model, tokenizer = get_baichuan_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
+    elif model_type == 'chatglm2':
+        model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
+        model, tokenizer = get_chatglm2_model_tokenizer(
+            model_dir, load_model, add_special_token, torch_dtype)
+    elif model_type == 'llama2-7b':
+        model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.2')
+        model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
+                                                      add_special_token,
+                                                      torch_dtype)
+    else:
+        raise ValueError(f'model_type: {model_type}')
+    return model, tokenizer, model_dir
 
 
 def get_alpaca_en_zh_dataset(
@@ -375,17 +409,13 @@ def get_alpaca_en_zh_dataset(
         test_split_p: float = 0.01,
         split_seed: int = 42,
         data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
-    """
-    split: Literal['train', 'validation', None]
-    """
-
     dataset_en: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
     dataset_zh: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
     dataset_en = dataset_en.remove_columns(['text'])
     dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
-    #
+
     if data_sample is not None:
         dataset = dataset.select(range(data_sample))
     dataset = dataset.train_test_split(test_split_p, seed=split_seed)
@@ -394,7 +424,7 @@ def get_alpaca_en_zh_dataset(
     if tokenize_function is not None:
         dataset = dataset.map(tokenize_function)
         dataset = dataset.remove_columns(['instruction', 'input', 'output'])
-    #
+
     if only_val:
         return None, dataset
     else:
@@ -428,7 +458,7 @@ def tensorboard_smoothing(values: List[float],
     for i in range(len(values)):
         x = x * smooth + values[i]  # Exponential decay
         res.append(x / norm_factor)
-        #
+
         norm_factor *= smooth
         norm_factor += 1
     return res
@@ -441,7 +471,7 @@ def plot_image(tb_dir: str,
                dpi: int = 100) -> None:
     image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
     os.makedirs(image_dir, exist_ok=True)
-    #
+
     fname = os.listdir(tb_dir)[0]
     tb_path = os.path.join(tb_dir, fname)
     data = read_tensorboard_file(tb_path)
@@ -464,3 +494,22 @@ def plot_image(tb_dir: str,
             ax.plot(steps, values, color=COLOR_S)
         fpath = os.path.join(image_dir, k.replace('/', '_'))
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
+
+
+def inference(data: Dict[str, Optional[str]],
+              model,
+              tokenizer,
+              streamer: Optional[TextStreamer] = None,
+              generation_config: Optional[GenerationConfig] = None,
+              tag: str = '[INFERENCE]') -> str:
+    input_ids = tokenize_function(data, tokenizer)['input_ids']
+    print(f'{tag}{tokenizer.decode(input_ids)}', end='')
+    input_ids = torch.tensor(input_ids)[None].cuda()
+    attention_mask = torch.ones_like(input_ids)
+    generate_ids = model.generate(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        streamer=streamer,
+        generation_config=generation_config)
+    output_text = tokenizer.decode(generate_ids[0])
+    return output_text

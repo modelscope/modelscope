@@ -23,7 +23,7 @@ from transformers.configuration_utils import PretrainedConfig
 
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 LLAMA_PRETRAINED_CONFIG_ARCHIVE_MAP = {}
 

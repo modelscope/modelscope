@@ -89,6 +89,13 @@ class StableDiffusionCustomArguments(TrainingArgs):
             'help': 'The instance data local dir or online ID.',
         })
 
+    concepts_list: str = field(
+        default=None,
+        metadata={
+            'help': 'Path to json containing multiple concepts.',
+        })
+    
+
 
 training_args = StableDiffusionCustomArguments(
     task='text-to-image-synthesis').parse_cli()
@@ -134,6 +141,7 @@ kwargs = dict(
     sample_batch_size=args.sample_batch_size,
     initializer_token=args.initializer_token,
     class_data_dir=args.class_data_dir,
+    concepts_list=args.concepts_list,
     resolution=args.resolution,
     prior_loss_weight=args.prior_loss_weight,
     freeze_model=args.freeze_model,

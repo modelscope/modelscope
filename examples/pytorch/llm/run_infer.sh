@@ -1,3 +1,5 @@
+#!/bin/bash
+
 python llm_infer.py \
     --device 0 \
     --model_type llama2-7b \

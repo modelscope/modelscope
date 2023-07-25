@@ -1,9 +1,11 @@
 import os
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from typing import List, Optional, Tuple, Type, TypeVar, Union
 
 import torch
 from torch import device as Device
+from transformers import HfArgumentParser
 
 from modelscope import get_logger
 
@@ -45,11 +47,24 @@ def select_device(device: Union[List[int], str]) -> Device:
     return torch.device(master_device)
 
 
-def parse_device(
-        args: Optional[List[str]] = None) -> Tuple[Namespace, List[str]]:
-    # Avoid cuda initialization
-    parser = ArgumentParser()
-    parser.add_argument(
-        '--device', '-d', type=str, default='0', help='e.g. -1; 0; 0,1,2')
-    opt, args = parser.parse_known_args(args)  # options
-    return opt.device, args
+T = TypeVar('T')
+
+
+def parse_args(class_type: Type[T],
+               argv: Optional[List[str]] = None) -> Tuple[T, List[str]]:
+    parser = HfArgumentParser([class_type])
+    args, remaining_args = parser.parse_args_into_dataclasses(
+        argv, return_remaining_strings=True)
+    logger.info(f'args: {args}')
+    return args, remaining_args
+
+
+@dataclass
+class DeviceArguments:
+    device: str = '0'  # e.g. '-1'; '0'; '0,1'
+
+
+def parse_device(argv: Optional[List[str]] = None) -> List[str]:
+    args, remaining_args = parse_args(DeviceArguments, argv)
+    select_device(args.device)
+    return remaining_args

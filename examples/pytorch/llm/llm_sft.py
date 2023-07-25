@@ -14,12 +14,12 @@ pip install accelerate transformers_stream_generator -U
 """
 
 if __name__ == '__main__':
-    # Avoid cuda initialization caused by library import
-    from _parse_device import *
-    device, args = parse_device()
-    select_device(device)
+    # Avoid cuda initialization caused by library import (e.g. peft, accelerate)
+    from _parser import *
+    # argv = parse_device(['--device', '1'])
+    argv = parse_device()
 
-from _common import *
+from _utils import *
 
 
 @dataclass
@@ -34,7 +34,13 @@ class SftArguments:
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
-    data_sample: Optional[int] = None
+
+    dataset: str = 'alpaca-en,alpaca-zh'
+    dataset_seed: int = 42
+    dataset_sample: Optional[int] = None
+    dataset_test_size: float = 0.01
+    prompt: str = DEFAULT_PROMPT
+    max_length: Optional[int] = 2048
 
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -88,17 +94,6 @@ class SftArguments:
                 raise ValueError(f'model_type: {self.model_type}')
 
 
-def parse_args(args: Optional[List[str]] = None) -> SftArguments:
-    # return_remaining_strings=True for notebook compatibility
-    parser = HfArgumentParser([SftArguments])
-    args, remaining_args = parser.parse_args_into_dataclasses(
-        args, return_remaining_strings=True)
-    logger.info(f'args: {args}')
-    if len(remaining_args) > 0:
-        logger.warning(f'remaining_args: {remaining_args}')
-    return args
-
-
 def llm_sft(args: SftArguments) -> None:
     seed_everything(args.seed)
 
@@ -134,9 +129,19 @@ def llm_sft(args: SftArguments) -> None:
     logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
     # ### Loading Dataset
-    tokenize_func = partial(tokenize_function, tokenizer=tokenizer)
-    train_dataset, val_dataset = get_alpaca_en_zh_dataset(
-        tokenize_func, split_seed=42, data_sample=args.data_sample)
+    dataset = get_dataset(args.dataset)
+    train_dataset, val_dataset = process_dataset(dataset,
+                                                 args.dataset_test_size,
+                                                 args.dataset_sample,
+                                                 args.dataset_seed)
+    tokenize_func = partial(
+        tokenize_function,
+        tokenizer=tokenizer,
+        prompt=args.prompt,
+        max_length=args.max_length)
+    train_dataset = train_dataset.map(tokenize_func)
+    val_dataset = val_dataset.map(tokenize_func)
+    del dataset
     # Data analysis
     stat_dataset(train_dataset)
     stat_dataset(val_dataset)
@@ -149,6 +154,7 @@ def llm_sft(args: SftArguments) -> None:
     T_max = get_T_max(
         len(train_dataset), args.batch_size, args.max_epochs, True)
     work_dir = get_work_dir(f'runs/{args.model_type}')
+    logger.info(f'work_dir: {work_dir}')
     config = Config({
         'train': {
             'dataloader': {
@@ -260,5 +266,9 @@ def llm_sft(args: SftArguments) -> None:
 
 
 if __name__ == '__main__':
-    args = parse_args(args)
+    args, remaining_argv = parse_args(SftArguments, argv)
+    if len(remaining_argv) > 0:
+        logger.warning(f'remaining_argv: {remaining_argv}')
+    logger.info(f'model_choices: {list(MODEL_MAPPER.keys())}')
+    logger.info(f'dataset_choices: {list(DATASET_MAPPER.keys())}')
     llm_sft(args)

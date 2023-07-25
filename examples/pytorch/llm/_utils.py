@@ -15,11 +15,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from _parser import *
 from datasets import Dataset as HfDataset
 from datasets import concatenate_datasets
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy import ndarray
+from numpy.random import RandomState
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
 from torch import Tensor
@@ -34,11 +36,10 @@ from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 from tqdm import tqdm
-from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          GenerationConfig, HfArgumentParser, TextStreamer)
+from transformers import GenerationConfig, HfArgumentParser, TextStreamer
 
-from modelscope import (Model, MsDataset, get_logger, read_config,
-                        snapshot_download)
+from modelscope import (AutoConfig, AutoModelForCausalLM, AutoTokenizer, Model,
+                        MsDataset, get_logger, read_config, snapshot_download)
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
 from modelscope.models.nlp.chatglm2 import ChatGLM2Config, ChatGLM2Tokenizer
@@ -48,9 +49,9 @@ from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
-COLOR, COLOR_S = '#FFE2D9', '#FF7043'
+_COLOR, _COLOR_S = '#FFE2D9', '#FF7043'
 
-PROMPT = """Here's a conversation between a human and an AI assistant. \
+DEFAULT_PROMPT = """Here's a conversation between a human and an AI assistant. \
 The AI assistant provides detailed, friendly answers for the human.
 
 ### Human:
@@ -119,16 +120,11 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
 
 def tokenize_function(example: Dict[str, Optional[str]],
                       tokenizer,
+                      prompt: str = DEFAULT_PROMPT,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
     instruction: str = example['instruction']
-    input_ = example['input']
-    if input_ is not None and input_ != '':
-        if input_.startswith('输入：'):
-            instruction = instruction + input_[3:]
-        else:
-            instruction = instruction + input_
     output = example['output']
-    src_text = PROMPT.format(instruction=instruction)
+    src_text = prompt.format(instruction=instruction)
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
         add_special_tokens=True)['input_ids']
@@ -236,7 +232,7 @@ class MyMetric(Metric):
 
     def add(self, outputs: Dict[str, Any], inputs: Dict[str, Any]) -> None:
         loss: Tensor = outputs.loss
-        self.loss.update(loss)
+        self.loss.update(loss.cpu())
 
         labels: Tensor = inputs['labels']
         labels = labels[:, 1:]
@@ -245,7 +241,7 @@ class MyMetric(Metric):
         logits = logits[labels_mask].contiguous().view(-1, logits.shape[-1])
         pred = logits.argmax(dim=-1)
         labels = labels[labels_mask].to(logits.device)
-        self.acc.update(pred, labels)
+        self.acc.update(pred.cpu(), labels.cpu())
 
     def evaluate(self):
         return {
@@ -274,6 +270,7 @@ def get_baichuan_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
                                  add_special_token: bool = True,
                                  torch_dtype: Dtype = torch.float16):
+    """load from an independent repository"""
     model_config = AutoConfig.from_pretrained(
         model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
@@ -298,6 +295,7 @@ def get_chatglm2_model_tokenizer(model_dir: str,
                                  load_model: bool = True,
                                  add_special_token: bool = True,
                                  torch_dtype: Dtype = torch.float16):
+    """load from ms library"""
     config = read_config(model_dir)
     logger.info(config)
     model_config = ChatGLM2Config.from_pretrained(model_dir)
@@ -340,64 +338,111 @@ def get_llama2_model_tokenizer(model_dir: str,
     return model, tokenizer
 
 
+MODEL_MAPPER = {
+    'baichuan-7b': {
+        'model_id': 'baichuan-inc/baichuan-7B',
+        'revision': 'v1.0.7',
+        'get_function': get_baichuan_model_tokenizer,
+    },
+    'baichuan-13b': {
+        'model_id': 'baichuan-inc/Baichuan-13B-Base',
+        'revision': 'v1.0.3',
+        'get_function': get_baichuan_model_tokenizer,
+    },
+    'chatglm2': {
+        'model_id': 'ZhipuAI/chatglm2-6b',
+        'revision': 'v1.0.6',
+        'get_function': get_chatglm2_model_tokenizer,
+    },
+    'llama2-7b': {
+        'model_id': 'modelscope/Llama-2-7b-ms',
+        'revision': 'v1.0.2',
+        'ignore_file_pattern': [r'.+\.bin$'],
+        'get_function': get_llama2_model_tokenizer,
+    },
+}
+
+
 def get_model_tokenizer(model_type: str,
                         load_model: bool = True,
                         add_special_token: bool = True,
                         torch_dtype: Dtype = torch.float16):
-    # ### Loading Model and Tokenizer
-    if model_type == 'baichuan-7b':
-        model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.7')
-        model, tokenizer = get_baichuan_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'baichuan-13b':
-        model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base',
-                                      'v1.0.3')
-        model, tokenizer = get_baichuan_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'chatglm2':
-        model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
-        model, tokenizer = get_chatglm2_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'llama2-7b':
-        # use `.safetensors`
-        model_dir = snapshot_download(
-            'modelscope/Llama-2-7b-ms',
-            'v1.0.2',
-            ignore_file_pattern=[r'.+\.bin$'])
-        model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
-                                                      add_special_token,
-                                                      torch_dtype)
-    else:
+    data = MODEL_MAPPER.get(model_type)
+    if data is None:
         raise ValueError(f'model_type: {model_type}')
+    model_id = data['model_id']
+    revision = data['revision']
+    get_function = data['get_function']
+    ignore_file_pattern = data.get('ignore_file_pattern', [])
+    model_dir = snapshot_download(
+        model_id, revision, ignore_file_pattern=ignore_file_pattern)
+    model, tokenizer = get_function(model_dir, load_model, add_special_token,
+                                    torch_dtype)
     return model, tokenizer, model_dir
 
 
-def get_alpaca_en_zh_dataset(
-        tokenize_function,
-        only_val: bool = False,
-        test_split_p: float = 0.01,
-        split_seed: int = 42,
-        data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
+def _processing_alpaca(dataset: HfDataset) -> HfDataset:
+    instruction = dataset['instruction']
+    input_ = dataset['input']
+    res = []
+    for inst, inp in zip(instruction, input_):
+        if inp is not None and inp != '':
+            if inp.startswith('输入：'):
+                inp = inp[3:]
+            inst = f'{inst}\n{inp}'
+        res.append(inst)
+    dataset = HfDataset.from_dict({
+        'instruction': res,
+        'output': dataset['output']
+    })
+    return dataset
+
+
+def get_alpaca_en_dataset() -> HfDataset:
     dataset_en: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
+    dataset_en = dataset_en.remove_columns(['text'])
+    return _processing_alpaca(dataset_en)
+
+
+def get_alpaca_zh_dataset() -> HfDataset:
     dataset_zh: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
-    dataset_en = dataset_en.remove_columns(['text'])
-    dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
+    return _processing_alpaca(dataset_zh)
 
-    if data_sample is not None:
-        dataset = dataset.select(range(data_sample))
-    dataset = dataset.train_test_split(test_split_p, seed=split_seed)
-    if only_val:
-        dataset = dataset['test']
-    if tokenize_function is not None:
-        dataset = dataset.map(tokenize_function)
-        dataset = dataset.remove_columns(['instruction', 'input', 'output'])
 
-    if only_val:
-        return None, dataset
-    else:
-        return dataset['train'], dataset['test']
+def process_dataset(dataset: HfDataset, dataset_test_size: float,
+                    dataset_sample: Optional[int],
+                    dataset_seed: int) -> Tuple[HfDataset, HfDataset]:
+    random_state = np.random.RandomState(dataset_seed)
+    if dataset_sample is not None:
+        index = random_state.permutation(len(dataset))[:dataset_sample]
+        dataset = dataset.select(index)
+    dataset = dataset.train_test_split(
+        dataset_test_size, seed=get_seed(random_state))
+    return dataset['train'], dataset['test']
+
+
+DATASET_MAPPER = {
+    'alpaca-en': get_alpaca_en_dataset,
+    'alpaca-zh': get_alpaca_zh_dataset,
+}
+
+
+def get_dataset(dataset_names: str) -> HfDataset:
+    dataset_name_list = dataset_names.split(',')
+    dataset_list = []
+    for dataset_name in dataset_name_list:
+        get_function = DATASET_MAPPER[dataset_name]
+        dataset_list.append(get_function())
+    dataset = concatenate_datasets(dataset_list)
+    return dataset
+
+
+def get_seed(random_state: RandomState) -> int:
+    seed_max = np.iinfo(np.int32).max
+    seed = random_state.randint(0, seed_max)
+    return seed
 
 
 Item = Dict[str, float]
@@ -454,24 +499,23 @@ def plot_images(tb_dir: str,
         _, ax = plt.subplots(1, 1, squeeze=True, figsize=figsize, dpi=dpi)
         ax.set_title(k)
         if len(values) == 1:
-            ax.scatter(steps, values, color=COLOR_S)
+            ax.scatter(steps, values, color=_COLOR_S)
         elif k in smooth_key:
-            ax.plot(steps, values, color=COLOR)
+            ax.plot(steps, values, color=_COLOR)
             values_s = tensorboard_smoothing(values, smooth_val)
-            ax.plot(steps, values_s, color=COLOR_S)
+            ax.plot(steps, values_s, color=_COLOR_S)
         else:
-            ax.plot(steps, values, color=COLOR_S)
+            ax.plot(steps, values, color=_COLOR_S)
         fpath = os.path.join(images_dir, k.replace('/', '_'))
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
 
 
-def inference(data: Dict[str, Optional[str]],
+def inference(input_ids: List[int],
               model,
               tokenizer,
               streamer: Optional[TextStreamer] = None,
               generation_config: Optional[GenerationConfig] = None,
               tag: str = '[INFERENCE]') -> str:
-    input_ids = tokenize_function(data, tokenizer)['input_ids']
     print(f'{tag}{tokenizer.decode(input_ids)}', end='')
     input_ids = torch.tensor(input_ids)[None].cuda()
     attention_mask = torch.ones_like(input_ids)

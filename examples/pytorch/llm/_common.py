@@ -394,7 +394,11 @@ def get_model_tokenizer(model_type: str,
         model, tokenizer = get_chatglm2_model_tokenizer(
             model_dir, load_model, add_special_token, torch_dtype)
     elif model_type == 'llama2-7b':
-        model_dir = snapshot_download('modelscope/Llama-2-7b-ms', 'v1.0.2')
+        # use `.safetensors`
+        model_dir = snapshot_download(
+            'modelscope/Llama-2-7b-ms',
+            'v1.0.2',
+            ignore_file_pattern=[r'.+\.bin$'])
         model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
                                                       add_special_token,
                                                       torch_dtype)
@@ -464,13 +468,13 @@ def tensorboard_smoothing(values: List[float],
     return res
 
 
-def plot_image(tb_dir: str,
-               smooth_key: List[str],
-               smooth_val: float = 0.9,
-               figsize: Tuple[int, int] = (8, 5),
-               dpi: int = 100) -> None:
-    image_dir = os.path.join(os.path.dirname(tb_dir), 'images')
-    os.makedirs(image_dir, exist_ok=True)
+def plot_images(tb_dir: str,
+                smooth_key: List[str],
+                smooth_val: float = 0.9,
+                figsize: Tuple[int, int] = (8, 5),
+                dpi: int = 100) -> None:
+    images_dir = os.path.join(os.path.dirname(tb_dir), 'images')
+    os.makedirs(images_dir, exist_ok=True)
 
     fname = os.listdir(tb_dir)[0]
     tb_path = os.path.join(tb_dir, fname)
@@ -492,7 +496,7 @@ def plot_image(tb_dir: str,
             ax.plot(steps, values_s, color=COLOR_S)
         else:
             ax.plot(steps, values, color=COLOR_S)
-        fpath = os.path.join(image_dir, k.replace('/', '_'))
+        fpath = os.path.join(images_dir, k.replace('/', '_'))
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
 
 

@@ -293,7 +293,8 @@ if __name__ == '__main__':
         train_dataset=train_dataset,
         data_collator=data_collator,
         max_epochs=3,
-        cfg_modify_fn=cfg_modify_fn)
+        cfg_modify_fn=cfg_modify_fn,
+        device='cpu')
 
     # Construct trainer and train
     trainer = build_trainer(

@@ -124,7 +124,10 @@ class LlamaForTextGeneration(LlamaPreTrainedModel):
             output = (logits, ) + outputs[1:]
             return (loss, ) + output if loss is not None else output
 
-        return AttentionTextGenerationModelOutput(
+        # There is a conflict between the `ModelOutputBase` in the modelscope
+        # and the `send_to_device` function in the accelerate library.
+        # Temporarily change AttentionTextGenerationModelOutput to dict
+        return dict(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,

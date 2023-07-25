@@ -1245,6 +1245,16 @@ TASK_OUTPUTS = {
     # { "text": "你好，明天！"}
     Tasks.punctuation: [OutputKeys.TEXT],
 
+    # speaker diarization semantic speaker-turn detection
+    # {
+    #    "logits": [[0.7, 0.3], ..., [0.88, 0.12]],
+    #    "text": "您好。您好，初次见面请多指教。",
+    #    "prediction": [-100, -100, -100, 1, -100,..., -100, 0]
+    # }
+    Tasks.speaker_diarization_semantic_speaker_turn_detection: [
+        OutputKeys.LOGITS, OutputKeys.TEXT, OutputKeys.PREDICTION
+    ],
+
     # language model result for single sample
     # { "text": " hel@@ lo 大 家 好 呀 </s>
     #               p( hel@@ | <s> ) = 0.00057767 [ -7.45650959 ]

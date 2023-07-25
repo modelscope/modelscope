@@ -48,6 +48,8 @@ PREPROCESSOR_MAP = {
     Preprocessors.token_cls_tokenizer,
     (Models.bert, Tasks.token_classification):
     Preprocessors.token_cls_tokenizer,
+    (Models.bert, Tasks.speaker_diarization_semantic_speaker_turn_detection):
+    Preprocessors.token_cls_tokenizer,
     (Models.bert, Tasks.word_segmentation):
     Preprocessors.token_cls_tokenizer,
 

@@ -332,9 +332,11 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.keyword_spotting:
     InputType.AUDIO,
-    Tasks.inverse_text_processing:
-    InputType.TEXT,
     Tasks.speaker_diarization_dialogue_detection:
+    InputType.TEXT,
+    Tasks.speaker_diarization_semantic_speaker_turn_detection:
+    InputType.TEXT,
+    Tasks.inverse_text_processing:
     InputType.TEXT,
 
     # ============ multi-modal tasks ===================

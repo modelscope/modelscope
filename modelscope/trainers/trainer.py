@@ -258,7 +258,7 @@ class EpochBasedTrainer(BaseTrainer):
             # If not working in parallel scenario, put model to device as a default logic.
             device_name = self.device if self.device is not None else 'gpu'
             self.device = create_device(device_name)
-            if self.device.type == 'cuda' and is_on_same_device(model):
+            if self.device.type == 'cuda' and is_on_same_device(self.model):
                 self.model.to(self.device)
 
         self.print_cfg()

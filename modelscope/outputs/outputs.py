@@ -1240,6 +1240,7 @@ TASK_OUTPUTS = {
     Tasks.speaker_diarization_dialogue_detection: [
         OutputKeys.SCORES, OutputKeys.LABELS
     ],
+    Tasks.language_recognition: [OutputKeys.TEXT],
 
     # punctuation result for single sample
     # { "text": "你好，明天！"}

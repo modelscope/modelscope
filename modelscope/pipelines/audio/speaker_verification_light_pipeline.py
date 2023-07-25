@@ -142,7 +142,7 @@ class SpeakerVerificationPipeline(Pipeline):
             else:
                 raise ValueError(
                     'modelscope error: The input type is restricted to audio address and nump array.'
-                    % i)
+                )
             output.append(data)
         return output
 

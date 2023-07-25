@@ -232,7 +232,13 @@ class SpeakerDiarizationPipeline(Pipeline):
     def forward(self, audio_in: Union[tuple, str, Any] = None) -> list:
         """Decoding
         """
-        logger.info('Speaker Diarization Processing: {0} ...'.format(audio_in))
+        # log  file_path/url or tuple (str, str)
+        if isinstance(audio_in, str) or \
+                (isinstance(audio_in, tuple) and all(isinstance(item, str) for item in audio_in)):
+            logger.info(f'Speaker Verification Processing: {audio_in} ...')
+        else:
+            logger.info(
+                f'Speaker Verification Processing: {str(audio_in)[:100]} ...')
 
         data_cmd, raw_inputs = None, None
         if isinstance(audio_in, tuple) or isinstance(audio_in, list):

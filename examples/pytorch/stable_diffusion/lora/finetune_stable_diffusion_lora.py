@@ -19,6 +19,12 @@ class StableDiffusionLoraArguments(TrainingArgs):
             'help': 'The pipeline prompt.',
         })
 
+    lora_rank: int = field(
+        default=4,
+        metadata={
+            'help': 'The rank size of lora intermediate linear.',
+        })
+
 
 training_args = StableDiffusionLoraArguments(
     task='text-to-image-synthesis').parse_cli()
@@ -59,6 +65,7 @@ kwargs = dict(
     work_dir=training_args.work_dir,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
+    lora_rank=args.lora_rank,
     cfg_modify_fn=cfg_modify_fn)
 
 # build trainer and training

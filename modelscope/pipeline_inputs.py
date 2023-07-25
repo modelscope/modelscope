@@ -169,6 +169,10 @@ TASK_INPUTS = {
         'image': InputType.IMAGE,
         'prompt': InputType.TEXT,
     },
+    Tasks.image_face_fusion: {
+        'template': InputType.IMAGE,
+        'user': InputType.IMAGE,
+    },
     Tasks.video_colorization:
     InputType.VIDEO,
 

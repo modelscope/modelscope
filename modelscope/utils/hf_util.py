@@ -70,109 +70,47 @@ patch_tokenizer_base()
 patch_model_base()
 
 
-class AutoModel(AutoModelHF):
+def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
+    """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
+    Args:
+        module_class: The actual module class
+        ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
+            Any file pattern to be ignored in downloading, like exact file names or file extensions.
+    Returns:
+        The wrapper
+    """
 
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern,
-                user_agent=user_agent())
-        else:
-            model_dir = pretrained_model_name_or_path
+    class ClassWrapper(module_class):
 
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            if not os.path.exists(pretrained_model_name_or_path):
+                revision = kwargs.pop('revision', None)
+                model_dir = snapshot_download(
+                    pretrained_model_name_or_path,
+                    revision=revision,
+                    ignore_file_pattern=ignore_file_pattern,
+                    user_agent=user_agent())
+            else:
+                model_dir = pretrained_model_name_or_path
 
+            return module_class.from_pretrained(model_dir, *model_args,
+                                                **kwargs)
 
-class AutoModelForCausalLM(AutoModelForCausalLMHF):
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern,
-                user_agent=user_agent())
-        else:
-            model_dir = pretrained_model_name_or_path
-
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
+    return ClassWrapper
 
 
-class AutoModelForSeq2SeqLM(AutoModelForSeq2SeqLMHF):
+AutoModel = get_wrapped_class(
+    AutoModelHF, ignore_file_pattern=[r'\w+\.safetensors'])
+AutoModelForCausalLM = get_wrapped_class(
+    AutoModelForCausalLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
+AutoModelForSeq2SeqLM = get_wrapped_class(
+    AutoModelForSeq2SeqLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
 
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern,
-                user_agent=user_agent())
-        else:
-            model_dir = pretrained_model_name_or_path
-
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
-
-
-class AutoTokenizer(AutoTokenizerHF):
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
-
-
-class AutoConfig(AutoConfigHF):
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.py']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
-
-
-class GenerationConfig(GenerationConfigHF):
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.py']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return super().from_pretrained(model_dir, *model_args, **kwargs)
+AutoTokenizer = get_wrapped_class(
+    AutoTokenizerHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+AutoConfig = get_wrapped_class(
+    AutoConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+GenerationConfig = get_wrapped_class(
+    GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])

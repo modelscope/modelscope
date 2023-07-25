@@ -69,7 +69,7 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
                 img = self.transform_input(image)
                 results[key.replace(':FILE', '').lower()] = img
             else:
-                results[key.lower()] = value
+                results[key.lower()] = value if value else ''
         return results
 
 

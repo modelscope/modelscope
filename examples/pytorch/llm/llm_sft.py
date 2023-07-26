@@ -19,23 +19,22 @@ if __name__ == '__main__':
     # argv = parse_device(['--device', '1'])
     argv = parse_device()
 
-from _utils import *
+from utils import *
 
 
 @dataclass
 class SftArguments:
     seed: int = 42
     model_type: str = field(
-        default='baichuan-7b',
-        metadata={
-            'choices':
-            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
-        })
+        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
+    ignore_args_error: bool = True  # False: notebook compatibility
 
-    dataset: str = 'alpaca-en,alpaca-zh'
+    dataset: str = field(
+        default='alpaca-en,alpaca-zh',
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
     dataset_seed: int = 42
     dataset_sample: Optional[int] = None
     dataset_test_size: float = 0.01
@@ -84,14 +83,7 @@ class SftArguments:
             raise ValueError(f'sft_type: {self.sft_type}')
 
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
-                self.lora_target_modules = ['W_pack']
-            elif self.model_type == 'chatglm2':
-                self.lora_target_modules = ['query_key_value']
-            elif self.model_type == 'llama2-7b':
-                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
-            else:
-                raise ValueError(f'model_type: {self.model_type}')
+            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
 
 
 def llm_sft(args: SftArguments) -> None:
@@ -125,7 +117,7 @@ def llm_sft(args: SftArguments) -> None:
     show_freeze_layers(model)
     print_model_info(model)
     # check the device and dtype of the model
-    _p: Parameter = list(model.parameters())[-1]
+    _p: Tensor = list(model.parameters())[-1]
     logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
     # ### Loading Dataset
@@ -267,7 +259,8 @@ def llm_sft(args: SftArguments) -> None:
 if __name__ == '__main__':
     args, remaining_argv = parse_args(SftArguments, argv)
     if len(remaining_argv) > 0:
-        logger.warning(f'remaining_argv: {remaining_argv}')
-    logger.info(f'model_choices: {list(MODEL_MAPPER.keys())}')
-    logger.info(f'dataset_choices: {list(DATASET_MAPPER.keys())}')
+        if args.ignore_args_error:
+            logger.warning(f'remaining_argv: {remaining_argv}')
+        else:
+            raise ValueError(f'remaining_argv: {remaining_argv}')
     llm_sft(args)

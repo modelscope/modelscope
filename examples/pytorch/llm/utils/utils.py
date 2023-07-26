@@ -9,41 +9,25 @@ from functools import partial
 from types import MethodType
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from _parser import *
 from datasets import Dataset as HfDataset
-from datasets import concatenate_datasets
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from numpy import ndarray
-from numpy.random import RandomState
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
 from torch import Tensor
 from torch import device as Device
 from torch import dtype as Dtype
 from torch.nn import Module
-from torch.nn.parameter import Parameter
 from torch.nn.utils.rnn import pad_sequence
-from torch.optim import Optimizer
-from torch.optim import lr_scheduler as lrs
-from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
-from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 from tqdm import tqdm
-from transformers import GenerationConfig, HfArgumentParser, TextStreamer
+from transformers import GenerationConfig, TextStreamer
 
-from modelscope import (AutoConfig, AutoModelForCausalLM, AutoTokenizer, Model,
-                        MsDataset, get_logger, read_config, snapshot_download)
+from modelscope import get_logger
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
-from modelscope.models.nlp.chatglm2 import ChatGLM2Config, ChatGLM2Tokenizer
-from modelscope.models.nlp.llama2 import Llama2Config, Llama2Tokenizer
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
@@ -252,197 +236,6 @@ class MyMetric(Metric):
     def merge(self, other: 'MyMetric') -> None:
         """This script does not support ddp. TODO"""
         raise NotImplementedError
-
-
-def _add_special_token(tokenizer):
-    if tokenizer.eos_token_id is None:
-        tokenizer.eos_token_id = 2
-    if tokenizer.bos_token_id is None:
-        tokenizer.bos_token_id = 1
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token_id = 0
-    logger.info(f'bos_token_id: {tokenizer.bos_token_id}, '
-                f'eos_token_id: {tokenizer.eos_token_id}, '
-                f'pad_token_id: {tokenizer.pad_token_id}')
-
-
-def get_baichuan_model_tokenizer(model_dir: str,
-                                 load_model: bool = True,
-                                 add_special_token: bool = True,
-                                 torch_dtype: Dtype = torch.float16):
-    """load from an independent repository"""
-    model_config = AutoConfig.from_pretrained(
-        model_dir, trust_remote_code=True)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_dir, trust_remote_code=True)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype,
-            trust_remote_code=True)
-
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_chatglm2_model_tokenizer(model_dir: str,
-                                 load_model: bool = True,
-                                 add_special_token: bool = True,
-                                 torch_dtype: Dtype = torch.float16):
-    """load from ms library"""
-    config = read_config(model_dir)
-    logger.info(config)
-    model_config = ChatGLM2Config.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(model_config)
-    tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = Model.from_pretrained(
-            model_dir,
-            cfg_dict=config,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype)
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_llama2_model_tokenizer(model_dir: str,
-                               load_model: bool = True,
-                               add_special_token: bool = True,
-                               torch_dtype: Dtype = torch.float16):
-    config = read_config(model_dir)
-    logger.info(config)
-    model_config = Llama2Config.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(model_config)
-    tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = Model.from_pretrained(
-            model_dir,
-            cfg_dict=config,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype)
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-MODEL_MAPPER = {
-    'baichuan-7b': {
-        'model_id': 'baichuan-inc/baichuan-7B',
-        'revision': 'v1.0.7',
-        'get_function': get_baichuan_model_tokenizer,
-    },
-    'baichuan-13b': {
-        'model_id': 'baichuan-inc/Baichuan-13B-Base',
-        'revision': 'v1.0.3',
-        'get_function': get_baichuan_model_tokenizer,
-    },
-    'chatglm2': {
-        'model_id': 'ZhipuAI/chatglm2-6b',
-        'revision': 'v1.0.6',
-        'get_function': get_chatglm2_model_tokenizer,
-    },
-    'llama2-7b': {
-        'model_id': 'modelscope/Llama-2-7b-ms',
-        'revision': 'v1.0.2',
-        'ignore_file_pattern': [r'.+\.bin$'],
-        'get_function': get_llama2_model_tokenizer,
-    },
-}
-
-
-def get_model_tokenizer(model_type: str,
-                        load_model: bool = True,
-                        add_special_token: bool = True,
-                        torch_dtype: Dtype = torch.float16):
-    data = MODEL_MAPPER.get(model_type)
-    if data is None:
-        raise ValueError(f'model_type: {model_type}')
-    model_id = data['model_id']
-    revision = data['revision']
-    get_function = data['get_function']
-    ignore_file_pattern = data.get('ignore_file_pattern', [])
-    model_dir = snapshot_download(
-        model_id, revision, ignore_file_pattern=ignore_file_pattern)
-    model, tokenizer = get_function(model_dir, load_model, add_special_token,
-                                    torch_dtype)
-    return model, tokenizer, model_dir
-
-
-def _processing_alpaca(dataset: HfDataset) -> HfDataset:
-    instruction = dataset['instruction']
-    input_ = dataset['input']
-    res = []
-    for inst, inp in zip(instruction, input_):
-        if inp is not None and inp != '':
-            if inp.startswith('输入：'):
-                inp = inp[3:]
-            inst = f'{inst}\n{inp}'
-        res.append(inst)
-    dataset = HfDataset.from_dict({
-        'instruction': res,
-        'output': dataset['output']
-    })
-    return dataset
-
-
-def get_alpaca_en_dataset() -> HfDataset:
-    dataset_en: HfDataset = MsDataset.load(
-        'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
-    dataset_en = dataset_en.remove_columns(['text'])
-    return _processing_alpaca(dataset_en)
-
-
-def get_alpaca_zh_dataset() -> HfDataset:
-    dataset_zh: HfDataset = MsDataset.load(
-        'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
-    return _processing_alpaca(dataset_zh)
-
-
-def process_dataset(dataset: HfDataset, dataset_test_size: float,
-                    dataset_sample: Optional[int],
-                    dataset_seed: int) -> Tuple[HfDataset, HfDataset]:
-    random_state = np.random.RandomState(dataset_seed)
-    if dataset_sample is not None:
-        index = random_state.permutation(len(dataset))[:dataset_sample]
-        dataset = dataset.select(index)
-    dataset = dataset.train_test_split(
-        dataset_test_size, seed=get_seed(random_state))
-    return dataset['train'], dataset['test']
-
-
-DATASET_MAPPER = {
-    'alpaca-en': get_alpaca_en_dataset,
-    'alpaca-zh': get_alpaca_zh_dataset,
-}
-
-
-def get_dataset(dataset_names: str) -> HfDataset:
-    dataset_name_list = dataset_names.split(',')
-    dataset_list = []
-    for dataset_name in dataset_name_list:
-        get_function = DATASET_MAPPER[dataset_name]
-        dataset_list.append(get_function())
-    dataset = concatenate_datasets(dataset_list)
-    return dataset
-
-
-def get_seed(random_state: RandomState) -> int:
-    seed_max = np.iinfo(np.int32).max
-    seed = random_state.randint(0, seed_max)
-    return seed
 
 
 Item = Dict[str, float]

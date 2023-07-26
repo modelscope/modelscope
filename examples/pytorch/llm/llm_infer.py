@@ -6,23 +6,22 @@ if __name__ == '__main__':
     # argv = parse_device(['--device', '1'])
     argv = parse_device()
 
-from _utils import *
+from utils import *
 
 
 @dataclass
 class InferArguments:
     model_type: str = field(
-        default='baichuan-7b',
-        metadata={
-            'choices':
-            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
-        })
+        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
     ckpt_path: str = '/path/to/your/iter_xxx.pth'
     eval_human: bool = False  # False: eval test_dataset
+    ignore_args_error: bool = True  # False: notebook compatibility
 
-    dataset: str = 'alpaca-en,alpaca-zh'
+    dataset: str = field(
+        default='alpaca-en,alpaca-zh',
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
     dataset_seed: int = 42
     dataset_sample: Optional[int] = None
     dataset_test_size: float = 0.01
@@ -41,14 +40,7 @@ class InferArguments:
 
     def __post_init__(self):
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
-                self.lora_target_modules = ['W_pack']
-            elif self.model_type == 'chatglm2':
-                self.lora_target_modules = ['query_key_value']
-            elif self.model_type == 'llama2-7b':
-                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
-            else:
-                raise ValueError(f'model_type: {self.model_type}')
+            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
 
         if not os.path.isfile(self.ckpt_path):
             raise ValueError(
@@ -124,5 +116,8 @@ def llm_infer(args: InferArguments) -> None:
 if __name__ == '__main__':
     args, remaining_argv = parse_args(InferArguments, argv)
     if len(remaining_argv) > 0:
-        logger.warning(f'remaining_argv: {remaining_argv}')
+        if args.ignore_args_error:
+            logger.warning(f'remaining_argv: {remaining_argv}')
+        else:
+            raise ValueError(f'remaining_argv: {remaining_argv}')
     llm_infer(args)

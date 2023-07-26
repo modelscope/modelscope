@@ -272,7 +272,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             sample_batch_size: Batch size (per device) for sampling images.
             train_batch_size: Batch size (per device) for the training dataloader.
             center_crop: execute center crop or not.
-            concepts_list: Path to json containing multiple concepts, will overwrite parameters like instance_prompt etc.
+            concepts_list: Path to json containing multiple concepts, will overwrite parameters.
             instance_data_name: The instance data local dir or online ID.
 
         """
@@ -315,7 +315,6 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         else:
             with open(self.concepts_list, 'r') as f:
                 self.concepts_list = json.load(f)
-        print('--------self.concepts_list: ', self.concepts_list)
 
         for concept in self.concepts_list:
             if not os.path.exists(concept['class_data_dir']):
@@ -527,7 +526,6 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         """
         for i, concept in enumerate(self.concepts_list):
             class_images_dir = Path(concept['class_data_dir'])
-            print('-------class_images_dir: ', class_images_dir)
             if not class_images_dir.exists():
                 class_images_dir.mkdir(parents=True, exist_ok=True)
 

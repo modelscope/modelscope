@@ -1,37 +1,45 @@
 # ### Setting up experimental environment.
 """
-pip install numpy pandas matplotlib scikit-learn
-pip install transformers datasets
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer
-pip install accelerate transformers_stream_generator
-
 # Install the latest version of modelscope from source
 git clone https://github.com/modelscope/modelscope.git
 cd modelscope
 pip install .
 
-# Resolve torchmetrics dependencies and update numpy
-pip install numpy -U
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install numpy pandas -U  # Resolve torchmetrics dependencies and update numpy
+pip install matplotlib scikit-learn -U
+pip install transformers datasets -U
+pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer -U
+pip install accelerate transformers_stream_generator -U
 """
 
-from _common import *
+if __name__ == '__main__':
+    # Avoid cuda initialization caused by library import (e.g. peft, accelerate)
+    from _parser import *
+    # argv = parse_device(['--device', '1'])
+    argv = parse_device()
+
+from utils import *
 
 
 @dataclass
 class SftArguments:
-    device: str = '0,1'  # e.g. '-1'; '0'; '0,1'
     seed: int = 42
     model_type: str = field(
-        default='baichuan-7b',
-        metadata={
-            'choices':
-            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
-        })
+        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
-    data_sample: Optional[int] = None
+    ignore_args_error: bool = True  # False: notebook compatibility
+
+    dataset: str = field(
+        default='alpaca-en,alpaca-zh',
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+    dataset_seed: int = 42
+    dataset_sample: Optional[int] = None
+    dataset_test_size: float = 0.01
+    prompt: str = DEFAULT_PROMPT
+    max_length: Optional[int] = 2048
 
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -75,29 +83,10 @@ class SftArguments:
             raise ValueError(f'sft_type: {self.sft_type}')
 
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
-                self.lora_target_modules = ['W_pack']
-            elif self.model_type == 'chatglm2':
-                self.lora_target_modules = ['query_key_value']
-            elif self.model_type == 'llama2-7b':
-                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
-            else:
-                raise ValueError(f'model_type: {self.model_type}')
-
-
-def parse_args() -> SftArguments:
-    # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser([
-        SftArguments
-    ]).parse_args_into_dataclasses(return_remaining_strings=True)
-    logger.info(f'args: {args}')
-    if len(remaining_args) > 0:
-        logger.warning(f'remaining_args: {remaining_args}')
-    return args
+            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
 
 
 def llm_sft(args: SftArguments) -> None:
-    select_device(args.device)
     seed_everything(args.seed)
 
     # ### Loading Model and Tokenizer
@@ -123,18 +112,28 @@ def llm_sft(args: SftArguments) -> None:
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p)
         logger.info(f'lora_config: {lora_config}')
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     show_freeze_layers(model)
     print_model_info(model)
     # check the device and dtype of the model
-    _p: Parameter = list(model.parameters())[-1]
+    _p: Tensor = list(model.parameters())[-1]
     logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
     # ### Loading Dataset
-    tokenize_func = partial(tokenize_function, tokenizer=tokenizer)
-    train_dataset, val_dataset = get_alpaca_en_zh_dataset(
-        tokenize_func, split_seed=42, data_sample=args.data_sample)
+    dataset = get_dataset(args.dataset)
+    train_dataset, val_dataset = process_dataset(dataset,
+                                                 args.dataset_test_size,
+                                                 args.dataset_sample,
+                                                 args.dataset_seed)
+    tokenize_func = partial(
+        tokenize_function,
+        tokenizer=tokenizer,
+        prompt=args.prompt,
+        max_length=args.max_length)
+    train_dataset = train_dataset.map(tokenize_func)
+    val_dataset = val_dataset.map(tokenize_func)
+    del dataset
     # Data analysis
     stat_dataset(train_dataset)
     stat_dataset(val_dataset)
@@ -239,11 +238,6 @@ def llm_sft(args: SftArguments) -> None:
         cfg.update(config)
         return cfg
 
-    device_kwargs = {}
-    if torch.cuda.device_count() > 1:
-        # No placement for model, leave the model to `device_map`
-        device_kwargs['device'] = 'cpu'
-
     trainer = EpochBasedTrainer(
         model=model,
         cfg_file=cfg_file,
@@ -253,7 +247,6 @@ def llm_sft(args: SftArguments) -> None:
         remove_unused_data=True,
         seed=42,
         cfg_modify_fn=cfg_modify_fn,
-        **device_kwargs,
     )
 
     trainer.train()
@@ -264,5 +257,10 @@ def llm_sft(args: SftArguments) -> None:
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args, remaining_argv = parse_args(SftArguments, argv)
+    if len(remaining_argv) > 0:
+        if args.ignore_args_error:
+            logger.warning(f'remaining_argv: {remaining_argv}')
+        else:
+            raise ValueError(f'remaining_argv: {remaining_argv}')
     llm_sft(args)

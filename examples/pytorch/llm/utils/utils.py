@@ -9,16 +9,10 @@ from functools import partial
 from types import MethodType
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from datasets import Dataset as HfDataset
-from datasets import concatenate_datasets
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from numpy import ndarray
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
@@ -26,23 +20,14 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as Dtype
 from torch.nn import Module
-from torch.nn.parameter import Parameter
 from torch.nn.utils.rnn import pad_sequence
-from torch.optim import Optimizer
-from torch.optim import lr_scheduler as lrs
-from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
-from torch.utils.data import Dataset
 from torchmetrics import Accuracy, MeanMetric
 from tqdm import tqdm
-from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          GenerationConfig, HfArgumentParser, TextStreamer)
+from transformers import GenerationConfig, TextStreamer
 
-from modelscope import (Model, MsDataset, get_logger, read_config,
-                        snapshot_download)
+from modelscope import get_logger
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
-from modelscope.models.nlp.chatglm2 import ChatGLM2Config, ChatGLM2Tokenizer
-from modelscope.models.nlp.llama2 import Llama2Config, Llama2Tokenizer
 from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
@@ -50,7 +35,7 @@ from modelscope.utils.registry import default_group
 
 COLOR, COLOR_S = '#FFE2D9', '#FF7043'
 
-PROMPT = """Here's a conversation between a human and an AI assistant. \
+DEFAULT_PROMPT = """Here's a conversation between a human and an AI assistant. \
 The AI assistant provides detailed, friendly answers for the human.
 
 ### Human:
@@ -89,41 +74,6 @@ def get_work_dir(work_dir: str) -> str:
     return work_dir
 
 
-def _format_device(device: Union[List[int], str]) -> Tuple[List[int], str]:
-    if isinstance(device, list):
-        device_ids = device
-        device_str = ','.join([str(d) for d in device])
-    else:
-        device_ids = [int(d) for d in device.split(',') if d != '-1']
-        device_str = device
-    device_str = device_str.replace(' ', '')
-    return device_ids, device_str
-
-
-def select_device(device: Union[List[int], str]) -> Device:
-    """Call this function before cuda is initialized.
-    device: e.g. []: 'cpu', [0], [0, 1, 2]
-        e.g. '-1': 'cpu', '0', '0,1,2'
-    """
-    if torch.cuda.is_initialized():
-        logger.warning('CUDA has been initialized! Device selection fails!')
-        return torch.device('cuda:0')
-
-    device_ids, device_str = _format_device(device)
-    os.environ['CUDA_VISIBLE_DEVICES'] = device_str
-    log_s = 'Using device: '
-    if len(device_ids) == 0:
-        master_device: str = 'cpu'
-        log_s += 'cpu'
-    else:
-        assert torch.cuda.is_available(
-        ) and torch.cuda.device_count() >= len(device_ids)
-        master_device = 'cuda:0'
-        log_s += f'cuda:{device_str}'
-    logger.info(log_s)
-    return torch.device(master_device)
-
-
 def seed_everything(seed: Optional[int] = None, gpu_dtm: bool = False) -> int:
     if seed is None:
         seed_max = np.iinfo(np.int32).max
@@ -154,16 +104,11 @@ def get_T_max(dataset_len: int, batch_size: int, max_epochs: int,
 
 def tokenize_function(example: Dict[str, Optional[str]],
                       tokenizer,
+                      prompt: str = DEFAULT_PROMPT,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
     instruction: str = example['instruction']
-    input_ = example['input']
-    if input_ is not None and input_ != '':
-        if input_.startswith('输入：'):
-            instruction = instruction + input_[3:]
-        else:
-            instruction = instruction + input_
-    output = example['output']
-    src_text = PROMPT.format(instruction=instruction)
+    output = example.get('output')
+    src_text = prompt.format(instruction=instruction)
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
         add_special_tokens=True)['input_ids']
@@ -271,7 +216,7 @@ class MyMetric(Metric):
 
     def add(self, outputs: Dict[str, Any], inputs: Dict[str, Any]) -> None:
         loss: Tensor = outputs.loss
-        self.loss.update(loss)
+        self.loss.update(loss.cpu())
 
         labels: Tensor = inputs['labels']
         labels = labels[:, 1:]
@@ -280,7 +225,7 @@ class MyMetric(Metric):
         logits = logits[labels_mask].contiguous().view(-1, logits.shape[-1])
         pred = logits.argmax(dim=-1)
         labels = labels[labels_mask].to(logits.device)
-        self.acc.update(pred, labels)
+        self.acc.update(pred.cpu(), labels.cpu())
 
     def evaluate(self):
         return {
@@ -291,148 +236,6 @@ class MyMetric(Metric):
     def merge(self, other: 'MyMetric') -> None:
         """This script does not support ddp. TODO"""
         raise NotImplementedError
-
-
-def _add_special_token(tokenizer):
-    if tokenizer.eos_token_id is None:
-        tokenizer.eos_token_id = 2
-    if tokenizer.bos_token_id is None:
-        tokenizer.bos_token_id = 1
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token_id = 0
-    logger.info(f'bos_token_id: {tokenizer.bos_token_id}, '
-                f'eos_token_id: {tokenizer.eos_token_id}, '
-                f'pad_token_id: {tokenizer.pad_token_id}')
-
-
-def get_baichuan_model_tokenizer(model_dir: str,
-                                 load_model: bool = True,
-                                 add_special_token: bool = True,
-                                 torch_dtype: Dtype = torch.float16):
-    model_config = AutoConfig.from_pretrained(
-        model_dir, trust_remote_code=True)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_dir, trust_remote_code=True)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype,
-            trust_remote_code=True)
-
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_chatglm2_model_tokenizer(model_dir: str,
-                                 load_model: bool = True,
-                                 add_special_token: bool = True,
-                                 torch_dtype: Dtype = torch.float16):
-    config = read_config(model_dir)
-    logger.info(config)
-    model_config = ChatGLM2Config.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(model_config)
-    tokenizer = ChatGLM2Tokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = Model.from_pretrained(
-            model_dir,
-            cfg_dict=config,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype)
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_llama2_model_tokenizer(model_dir: str,
-                               load_model: bool = True,
-                               add_special_token: bool = True,
-                               torch_dtype: Dtype = torch.float16):
-    config = read_config(model_dir)
-    logger.info(config)
-    model_config = Llama2Config.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(model_config)
-    tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = Model.from_pretrained(
-            model_dir,
-            cfg_dict=config,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype)
-    if add_special_token:
-        _add_special_token(tokenizer)
-    return model, tokenizer
-
-
-def get_model_tokenizer(model_type: str,
-                        load_model: bool = True,
-                        add_special_token: bool = True,
-                        torch_dtype: Dtype = torch.float16):
-    # ### Loading Model and Tokenizer
-    if model_type == 'baichuan-7b':
-        model_dir = snapshot_download('baichuan-inc/baichuan-7B', 'v1.0.7')
-        model, tokenizer = get_baichuan_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'baichuan-13b':
-        model_dir = snapshot_download('baichuan-inc/Baichuan-13B-Base',
-                                      'v1.0.3')
-        model, tokenizer = get_baichuan_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'chatglm2':
-        model_dir = snapshot_download('ZhipuAI/chatglm2-6b', 'v1.0.6')
-        model, tokenizer = get_chatglm2_model_tokenizer(
-            model_dir, load_model, add_special_token, torch_dtype)
-    elif model_type == 'llama2-7b':
-        # use `.safetensors`
-        model_dir = snapshot_download(
-            'modelscope/Llama-2-7b-ms',
-            'v1.0.2',
-            ignore_file_pattern=[r'.+\.bin$'])
-        model, tokenizer = get_llama2_model_tokenizer(model_dir, load_model,
-                                                      add_special_token,
-                                                      torch_dtype)
-    else:
-        raise ValueError(f'model_type: {model_type}')
-    return model, tokenizer, model_dir
-
-
-def get_alpaca_en_zh_dataset(
-        tokenize_function,
-        only_val: bool = False,
-        test_split_p: float = 0.01,
-        split_seed: int = 42,
-        data_sample: Optional[int] = None) -> Tuple[HfDataset, HfDataset]:
-    dataset_en: HfDataset = MsDataset.load(
-        'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
-    dataset_zh: HfDataset = MsDataset.load(
-        'AI-ModelScope/alpaca-gpt4-data-zh', split='train').to_hf_dataset()
-    dataset_en = dataset_en.remove_columns(['text'])
-    dataset: HfDataset = concatenate_datasets([dataset_zh, dataset_en])
-
-    if data_sample is not None:
-        dataset = dataset.select(range(data_sample))
-    dataset = dataset.train_test_split(test_split_p, seed=split_seed)
-    if only_val:
-        dataset = dataset['test']
-    if tokenize_function is not None:
-        dataset = dataset.map(tokenize_function)
-        dataset = dataset.remove_columns(['instruction', 'input', 'output'])
-
-    if only_val:
-        return None, dataset
-    else:
-        return dataset['train'], dataset['test']
 
 
 Item = Dict[str, float]
@@ -500,13 +303,12 @@ def plot_images(tb_dir: str,
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
 
 
-def inference(data: Dict[str, Optional[str]],
+def inference(input_ids: List[int],
               model,
               tokenizer,
               streamer: Optional[TextStreamer] = None,
               generation_config: Optional[GenerationConfig] = None,
               tag: str = '[INFERENCE]') -> str:
-    input_ids = tokenize_function(data, tokenizer)['input_ids']
     print(f'{tag}{tokenizer.decode(input_ids)}', end='')
     input_ids = torch.tensor(input_ids)[None].cuda()
     attention_mask = torch.ones_like(input_ids)

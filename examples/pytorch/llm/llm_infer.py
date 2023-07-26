@@ -1,21 +1,32 @@
 # ### Setting up experimental environment.
-from _common import *
+
+if __name__ == '__main__':
+    # Avoid cuda initialization caused by library import (e.g. peft, accelerate)
+    from _parser import *
+    # argv = parse_device(['--device', '1'])
+    argv = parse_device()
+
+from utils import *
 
 
 @dataclass
 class InferArguments:
-    device: str = '0'  # e.g. '-1'; '0'; '0,1'
     model_type: str = field(
-        default='baichuan-7b',
-        metadata={
-            'choices':
-            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
-        })
+        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
     ckpt_path: str = '/path/to/your/iter_xxx.pth'
     eval_human: bool = False  # False: eval test_dataset
-    data_sample: Optional[int] = None
+    ignore_args_error: bool = True  # False: notebook compatibility
+
+    dataset: str = field(
+        default='alpaca-en,alpaca-zh',
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+    dataset_seed: int = 42
+    dataset_sample: Optional[int] = None
+    dataset_test_size: float = 0.01
+    prompt: str = DEFAULT_PROMPT
+    max_length: Optional[int] = 2048
 
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -29,33 +40,14 @@ class InferArguments:
 
     def __post_init__(self):
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
-                self.lora_target_modules = ['W_pack']
-            elif self.model_type == 'chatglm2':
-                self.lora_target_modules = ['query_key_value']
-            elif self.model_type == 'llama2-7b':
-                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
-            else:
-                raise ValueError(f'model_type: {self.model_type}')
+            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
 
         if not os.path.isfile(self.ckpt_path):
             raise ValueError(
                 f'Please enter a valid ckpt_path: {self.ckpt_path}')
 
 
-def parse_args() -> InferArguments:
-    # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser([
-        InferArguments
-    ]).parse_args_into_dataclasses(return_remaining_strings=True)
-    logger.info(f'args: {args}')
-    if len(remaining_args) > 0:
-        logger.warning(f'remaining_args: {remaining_args}')
-    return args
-
-
 def llm_infer(args: InferArguments) -> None:
-    select_device(args.device)
     # ### Loading Model and Tokenizer
     support_bf16 = torch.cuda.is_bf16_supported()
     if not support_bf16:
@@ -72,7 +64,7 @@ def llm_infer(args: InferArguments) -> None:
             lora_dropout=args.lora_dropout_p,
             pretrained_weights=args.ckpt_path)
         logger.info(f'lora_config: {lora_config}')
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
     elif args.sft_type == 'full':
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
         model.load_state_dict(state_dict)
@@ -80,6 +72,11 @@ def llm_infer(args: InferArguments) -> None:
         raise ValueError(f'args.sft_type: {args.sft_type}')
 
     # ### Inference
+    tokenize_func = partial(
+        tokenize_function,
+        tokenizer=tokenizer,
+        prompt=args.prompt,
+        max_length=args.max_length)
     streamer = TextStreamer(
         tokenizer, skip_prompt=True, skip_special_tokens=True)
     generation_config = GenerationConfig(
@@ -94,17 +91,22 @@ def llm_infer(args: InferArguments) -> None:
     if args.eval_human:
         while True:
             instruction = input('<<< ')
-            data = {'instruction': instruction, 'input': None, 'output': None}
-            inference(data, model, tokenizer, streamer, generation_config)
+            data = {'instruction': instruction}
+            input_ids = tokenize_func(data)['input_ids']
+            inference(input_ids, model, tokenizer, streamer, generation_config)
             print('-' * 80)
     else:
-        _, test_dataset = get_alpaca_en_zh_dataset(
-            None, True, split_seed=42, data_sample=args.data_sample)
+        dataset = get_dataset(args.dataset)
+        _, test_dataset = process_dataset(dataset, args.dataset_test_size,
+                                          args.dataset_sample,
+                                          args.dataset_seed)
         mini_test_dataset = test_dataset.select(range(10))
+        del dataset
         for data in mini_test_dataset:
             output = data['output']
             data['output'] = None
-            inference(data, model, tokenizer, streamer, generation_config)
+            input_ids = tokenize_func(data)['input_ids']
+            inference(input_ids, model, tokenizer, streamer, generation_config)
             print()
             print(f'[LABELS]{output}')
             print('-' * 80)
@@ -112,5 +114,10 @@ def llm_infer(args: InferArguments) -> None:
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args, remaining_argv = parse_args(InferArguments, argv)
+    if len(remaining_argv) > 0:
+        if args.ignore_args_error:
+            logger.warning(f'remaining_argv: {remaining_argv}')
+        else:
+            raise ValueError(f'remaining_argv: {remaining_argv}')
     llm_infer(args)

@@ -91,7 +91,6 @@ def get_llama2_model_tokenizer(model_dir: str,
     return model, tokenizer
 
 
-# 'reference': 'https://modelscope.cn/models/{model_id}/summary'
 class LoRATM(NamedTuple):
     # default lora target modules
     baichuan = ['W_pack']
@@ -99,6 +98,7 @@ class LoRATM(NamedTuple):
     llama2 = ['q_proj', 'k_proj', 'v_proj']
 
 
+# Reference: 'https://modelscope.cn/models/{model_id}/summary'
 MODEL_MAPPER = {
     'baichuan-7b': {
         'model_id': 'baichuan-inc/baichuan-7B',

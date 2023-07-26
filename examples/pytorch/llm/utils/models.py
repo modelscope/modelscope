@@ -99,7 +99,7 @@ MODEL_MAPPER = {
     'llama2-7b': {
         'model_id': 'modelscope/Llama-2-7b-ms',
         'revision': 'v1.0.2',
-        'ignore_file_pattern': [r'.+\.bin$'],
+        'ignore_file_pattern': [r'.+\.bin$'],  # use safetensors
         'lora_TM': LoRATM.llama2
     },
     'llama2-13b': {
@@ -110,7 +110,6 @@ MODEL_MAPPER = {
     },
     'openbuddy-llama2-13b': {
         'model_id': 'OpenBuddy/openbuddy-llama2-13b-v8.1-fp16',
-        'revision': 'master',
         'lora_TM': LoRATM.llama2
     }
 }
@@ -124,7 +123,7 @@ def get_model_tokenizer(model_type: str,
     if data is None:
         raise ValueError(f'model_type: {model_type}')
     model_id = data['model_id']
-    revision = data['revision']
+    revision = data.get('revision', 'master')
     get_function = data.get('get_function', get_model_tokenizer_default)
     ignore_file_pattern = data.get('ignore_file_pattern', [])
     model_dir = snapshot_download(

@@ -5,5 +5,5 @@ nohup python llm_sft.py \
     --device 0 \
     --model_type llama2-7b \
     --dataset alpaca-en \
-    --data_sample 25000 \
+    --dataset_sample 25000 \
 &> train_$DATE.out &

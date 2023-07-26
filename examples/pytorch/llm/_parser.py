@@ -47,11 +47,11 @@ def select_device(device: Union[List[int], str]) -> Device:
     return torch.device(master_device)
 
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
-def parse_args(class_type: Type[T],
-               argv: Optional[List[str]] = None) -> Tuple[T, List[str]]:
+def parse_args(class_type: Type[_T],
+               argv: Optional[List[str]] = None) -> Tuple[_T, List[str]]:
     parser = HfArgumentParser([class_type])
     args, remaining_args = parser.parse_args_into_dataclasses(
         argv, return_remaining_strings=True)

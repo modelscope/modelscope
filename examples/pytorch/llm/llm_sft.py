@@ -120,7 +120,7 @@ def llm_sft(args: SftArguments) -> None:
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p)
         logger.info(f'lora_config: {lora_config}')
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     show_freeze_layers(model)
     print_model_info(model)
@@ -154,7 +154,6 @@ def llm_sft(args: SftArguments) -> None:
     T_max = get_T_max(
         len(train_dataset), args.batch_size, args.max_epochs, True)
     work_dir = get_work_dir(f'runs/{args.model_type}')
-    logger.info(f'work_dir: {work_dir}')
     config = Config({
         'train': {
             'dataloader': {

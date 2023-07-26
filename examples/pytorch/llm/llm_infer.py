@@ -27,7 +27,7 @@ class InferArguments:
     dataset_sample: Optional[int] = None
     dataset_test_size: float = 0.01
     prompt: str = DEFAULT_PROMPT
-    max_length: Optional[int] = 4096
+    max_length: Optional[int] = 2048
 
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -72,7 +72,7 @@ def llm_infer(args: InferArguments) -> None:
             lora_dropout=args.lora_dropout_p,
             pretrained_weights=args.ckpt_path)
         logger.info(f'lora_config: {lora_config}')
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
     elif args.sft_type == 'full':
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
         model.load_state_dict(state_dict)

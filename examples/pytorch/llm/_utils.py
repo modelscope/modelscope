@@ -49,7 +49,7 @@ from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.registry import default_group
 
-_COLOR, _COLOR_S = '#FFE2D9', '#FF7043'
+COLOR, COLOR_S = '#FFE2D9', '#FF7043'
 
 DEFAULT_PROMPT = """Here's a conversation between a human and an AI assistant. \
 The AI assistant provides detailed, friendly answers for the human.
@@ -123,7 +123,7 @@ def tokenize_function(example: Dict[str, Optional[str]],
                       prompt: str = DEFAULT_PROMPT,
                       max_length: Optional[int] = 2048) -> Dict[str, Any]:
     instruction: str = example['instruction']
-    output = example['output']
+    output = example.get('output')
     src_text = prompt.format(instruction=instruction)
     src_input_ids: List[int] = tokenizer(
         src_text, return_attention_mask=False,
@@ -499,13 +499,13 @@ def plot_images(tb_dir: str,
         _, ax = plt.subplots(1, 1, squeeze=True, figsize=figsize, dpi=dpi)
         ax.set_title(k)
         if len(values) == 1:
-            ax.scatter(steps, values, color=_COLOR_S)
+            ax.scatter(steps, values, color=COLOR_S)
         elif k in smooth_key:
-            ax.plot(steps, values, color=_COLOR)
+            ax.plot(steps, values, color=COLOR)
             values_s = tensorboard_smoothing(values, smooth_val)
-            ax.plot(steps, values_s, color=_COLOR_S)
+            ax.plot(steps, values_s, color=COLOR_S)
         else:
-            ax.plot(steps, values, color=_COLOR_S)
+            ax.plot(steps, values, color=COLOR_S)
         fpath = os.path.join(images_dir, k.replace('/', '_'))
         plt.savefig(fpath, dpi=dpi, bbox_inches='tight')
 

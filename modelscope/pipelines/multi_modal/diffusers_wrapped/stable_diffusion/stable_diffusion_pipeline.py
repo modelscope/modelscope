@@ -63,8 +63,10 @@ class StableDiffusionPipeline(DiffusersPipeline):
             assert os.path.exists(custom_dir), f"{custom_dir} isn't exist"
             self.pipeline.unet.load_attn_procs(
                 custom_dir, weight_name='pytorch_custom_diffusion_weights.bin')
-            self.pipeline.load_textual_inversion(
-                custom_dir, weight_name=f'{modifier_token}.bin')
+            modifier_token = modifier_token.split('+')
+            for modifier_token_name in modifier_token:
+                self.pipeline.load_textual_inversion(
+                    custom_dir, weight_name=f'{modifier_token_name}.bin')
 
     def preprocess(self, inputs: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         return inputs

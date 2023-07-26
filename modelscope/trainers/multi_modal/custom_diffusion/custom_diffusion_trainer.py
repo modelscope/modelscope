@@ -59,7 +59,9 @@ class CustomCheckpointProcessor(CheckpointProcessor):
 
         learned_embeds = trainer.model.text_encoder.get_input_embeddings(
         ).weight
-        for x, y in zip([self.modifier_token_id], self.modifier_token):
+        if not isinstance(self.modifier_token_id, list):
+            self.modifier_token_id = [self.modifier_token_id]
+        for x, y in zip(self.modifier_token_id, self.modifier_token):
             learned_embeds_dict = {}
             learned_embeds_dict[y] = learned_embeds[x]
             torch.save(learned_embeds_dict, f'{output_dir}/{y}.bin')
@@ -276,11 +278,11 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   True)
-        self.instance_prompt = kwargs.pop('instance_prompt',
+        instance_prompt = kwargs.pop('instance_prompt',
                                           'a photo of sks dog')
-        self.class_prompt = kwargs.pop('class_prompt', 'dog')
+        class_prompt = kwargs.pop('class_prompt', 'dog')
+        class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
         self.real_prior = kwargs.pop('real_prior', False)
-        self.class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
         self.num_class_images = kwargs.pop('num_class_images', 200)
         self.resolution = kwargs.pop('resolution', 512)
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
@@ -294,25 +296,26 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         instance_data_name = kwargs.pop(
             'instance_data_name', 'buptwq/lora-stable-diffusion-finetune-dog')
 
-        # Extract downloaded image folder
-        if os.path.isdir(instance_data_name):
-            self.instance_data_dir = instance_data_name
-        else:
-            ds = MsDataset.load(instance_data_name, split='train')
-            self.instance_data_dir = os.path.dirname(
-                next(iter(ds))['Target:FILE'])
-
         if self.concepts_list is None:
             self.concepts_list = [{
-                'instance_prompt': self.instance_prompt,
-                'class_prompt': self.class_prompt,
-                'instance_data_dir': self.instance_data_dir,
-                'class_data_dir': self.class_data_dir,
+                'instance_prompt': instance_prompt,
+                'class_prompt': class_prompt,
+                'instance_data_dir': instance_data_dir,
+                'class_data_dir': class_data_dir,
             }]
         else:
             with open(self.concepts_list, 'r') as f:
                 self.concepts_list = json.load(f)
         print('--------self.concepts_list: ', self.concepts_list)
+
+        # Extract downloaded image folder
+        for concept in self.concepts_list:
+            if os.path.isdir(instance_data_name):
+                concept['instance_data_dir'] = instance_data_name
+            else:
+                ds = MsDataset.load(instance_data_name, split='train')
+                concept['instance_data_dir'] = os.path.dirname(
+                    next(iter(ds))['Target:FILE'])
 
         # Adding a modifier token which is optimized
         self.modifier_token_id = []
@@ -437,20 +440,22 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
 
         # Check for conflicts and conflicts
         if self.with_prior_preservation:
-            if self.class_data_dir is None:
-                raise ValueError(
-                    'You must specify a data directory for class images.')
-            if self.class_prompt is None:
-                raise ValueError('You must specify prompt for class images.')
+            for concept in self.concepts_list:
+                if concept['class_data_dir'] is None:
+                    raise ValueError(
+                        'You must specify a data directory for class images.')
+                if concept['class_prompt'] is None:
+                    raise ValueError('You must specify prompt for class images.')
         else:
-            if self.class_data_dir is not None:
-                warnings.warn(
-                    'You need not use --class_data_dir without --with_prior_preservation.'
-                )
-            if self.class_prompt is not None:
-                warnings.warn(
-                    'You need not use --class_prompt without --with_prior_preservation.'
-                )
+            for concept in self.concepts_list:
+                if concept['class_data_dir'] is not None:
+                    warnings.warn(
+                        'You need not use --class_data_dir without --with_prior_preservation.'
+                    )
+                if concept['class_prompt'] is not None:
+                    warnings.warn(
+                        'You need not use --class_prompt without --with_prior_preservation.'
+                    )
 
         # Generate class images if prior preservation is enabled.
         if self.with_prior_preservation:
@@ -529,7 +534,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
 
                 num_new_images = self.num_class_images - cur_class_images
 
-                sample_dataset = PromptDataset(self.class_prompt,
+                sample_dataset = PromptDataset(concept['class_prompt'],
                                                num_new_images)
                 sample_dataloader = torch.utils.data.DataLoader(
                     sample_dataset, batch_size=self.sample_batch_size)

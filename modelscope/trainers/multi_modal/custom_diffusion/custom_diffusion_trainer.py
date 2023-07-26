@@ -278,8 +278,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   True)
-        instance_prompt = kwargs.pop('instance_prompt',
-                                          'a photo of sks dog')
+        instance_prompt = kwargs.pop('instance_prompt', 'a photo of sks dog')
         class_prompt = kwargs.pop('class_prompt', 'dog')
         class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
         self.real_prior = kwargs.pop('real_prior', False)
@@ -445,7 +444,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                     raise ValueError(
                         'You must specify a data directory for class images.')
                 if concept['class_prompt'] is None:
-                    raise ValueError('You must specify prompt for class images.')
+                    raise ValueError(
+                        'You must specify prompt for class images.')
         else:
             for concept in self.concepts_list:
                 if concept['class_data_dir'] is not None:

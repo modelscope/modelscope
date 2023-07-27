@@ -53,7 +53,7 @@ class TextGenerationMetric(Metric):
         }
         for pred, label in zip(preds, labels):
             hypothesis = list(jieba.cut(pred))
-            if len(hypothesis) == 0:
+            if len(hypothesis) == 0 or ''.join(hypothesis) == '.':
                 hypothesis = ['</s>']
             reference = list(jieba.cut(label))
             rouge = Rouge()

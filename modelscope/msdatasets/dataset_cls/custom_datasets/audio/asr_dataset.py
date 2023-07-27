@@ -3,6 +3,7 @@
 import os
 
 from modelscope.msdatasets.ms_dataset import MsDataset
+from modelscope.utils.constant import DownloadMode
 
 
 class ASRDataset(MsDataset):
@@ -29,11 +30,14 @@ class ASRDataset(MsDataset):
         return data_list
 
     @classmethod
-    def load(cls,
-             dataset_name,
-             namespace='speech_asr',
-             train_set='train',
-             dev_set='validation'):
+    def load(
+        cls,
+        dataset_name,
+        namespace='speech_asr',
+        train_set='train',
+        dev_set='validation',
+        download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+    ):
         if os.path.exists(dataset_name):
             data_dir = dataset_name
             ds_dict = {}
@@ -43,6 +47,10 @@ class ASRDataset(MsDataset):
             return ds_dict
         else:
             from modelscope.msdatasets import MsDataset
+
             ds_dict = MsDataset.load(
-                dataset_name=dataset_name, namespace=namespace)
+                dataset_name=dataset_name,
+                namespace=namespace,
+                download_mode=download_mode,
+            )
             return ds_dict

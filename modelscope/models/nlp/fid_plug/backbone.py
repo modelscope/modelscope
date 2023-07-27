@@ -26,10 +26,11 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.nn.init import xavier_uniform_
 from transformers import (BertConfig, BertModel, BertTokenizer, RobertaConfig,
-                          RobertaModel, RobertaTokenizer, logging)
+                          RobertaModel, RobertaTokenizer)
 from transformers.activations import ACT2FN
 from transformers.modeling_utils import PreTrainedModel
 
+from modelscope.utils import logger as logging
 from .configuration import PlugConfig
 
 CONFIG_NAME = 'config.json'
@@ -729,7 +730,7 @@ class PlugForConditionalGeneration(PlugPreTrainedModel):
 
     def __init__(self, config, checkpoint=None, dataset: str = 'default'):
         super().__init__(config)
-        self.logger = logging.get_logger(__name__)
+        self.logger = logging.get_logger()
         self.config = config
         if config.encoder == 'roberta':
             tokenizer = RobertaTokenizer.from_pretrained(

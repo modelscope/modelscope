@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.outputs import (ModelOutputBase, OutputKeys,
@@ -65,7 +66,8 @@ class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
             device=device,
             auto_collate=auto_collate,
             compile=kwargs.pop('compile', False),
-            compile_options=kwargs.pop('compile_options', {}))
+            compile_options=kwargs.pop('compile_options', {}),
+            **kwargs)
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'
@@ -192,9 +194,14 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration
-        model = ChatGLMForConditionalGeneration(model) if isinstance(
-            model, str) else model
+        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration, ChatGLMConfig
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+            model = ChatGLMForConditionalGeneration.from_pretrained(
+                model_dir).half()
+            if torch.cuda.is_available():
+                model = model.cuda()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
         if use_bf16:
@@ -204,11 +211,15 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
 
         super().__init__(model=model, **kwargs)
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
+        inputs.update(forward_params)
         return self.model.chat(inputs)
 
     # format the outputs from pipeline
@@ -225,9 +236,13 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer
-        model = ChatGLM2ForConditionalGeneration(model) if isinstance(
-            model, str) else model
+        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
+            if torch.cuda.is_available():
+                model = model.cuda()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
         if use_bf16:
@@ -239,12 +254,16 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
         super().__init__(model=model, **kwargs)
 
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
     def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
         return inputs
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
-        return self.model.chat(self.tokenizer, inputs['text'])
+        inputs.update(forward_params)
+        return self.model.chat(inputs, self.tokenizer)
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

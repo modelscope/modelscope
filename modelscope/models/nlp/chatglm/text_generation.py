@@ -24,11 +24,12 @@ from transformers.modeling_outputs import (
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import (add_code_sample_docstrings,
                                 add_start_docstrings,
-                                add_start_docstrings_to_model_forward, logging)
+                                add_start_docstrings_to_model_forward)
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, Model, TorchModel
 from modelscope.outputs import OutputKeys
+from modelscope.utils import logger as logging
 from modelscope.utils.constant import Tasks
 from .configuration import ChatGLMConfig
 from .tokenization import ChatGLMTokenizer
@@ -41,7 +42,7 @@ if sys.platform != 'darwin':
     torch._C._jit_override_can_fuse_on_cpu(True)
     torch._C._jit_override_can_fuse_on_gpu(True)
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 _CHECKPOINT_FOR_DOC = 'THUDM/ChatGLM-6B'
 _CONFIG_FOR_DOC = 'ChatGLM6BConfig'
@@ -931,7 +932,6 @@ class ChatGLMModel(ChatGLMPreTrainedModel):
             self.num_attention_heads,
             self.hidden_size // self.num_attention_heads)
         # seq_len, b, nh, hidden_size
-        print('#########################:', past_key_values.device)
         past_key_values = self.dropout(past_key_values)
         past_key_values = past_key_values.permute([2, 1, 0, 3, 4]).split(2)
         # past_key_values = [(v[0], v[1]) for v in past_key_values]

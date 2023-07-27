@@ -154,6 +154,7 @@ class CVTasks(object):
     motion_generation = 'motion-generation'
     # 3d reconstruction
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_vq_compression = 'nerf-recon-vq-compression'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'

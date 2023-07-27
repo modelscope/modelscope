@@ -10,8 +10,6 @@ from typing import Union
 import torch
 import torch.nn.functional as F
 from diffusers import DiffusionPipeline
-from diffusers.loaders import AttnProcsLayers
-from diffusers.models.attention_processor import LoRAAttnProcessor
 from PIL import Image
 from PIL.ImageOps import exif_transpose
 from torch.utils.data import Dataset
@@ -41,7 +39,8 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         """Save the state dict for dreambooth model.
         """
         pipeline_args = {}

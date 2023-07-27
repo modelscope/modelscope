@@ -37,7 +37,7 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, DistributedParallelType,
-                                       ModeKeys, ModelFile, ThirdParty,
+                                       Invoke, ModeKeys, ModelFile, ThirdParty,
                                        TrainerStages)
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
@@ -154,6 +154,10 @@ class EpochBasedTrainer(BaseTrainer):
             assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
             self.model_dir = os.path.dirname(cfg_file)
             self.input_model_id = None
+            if hasattr(model, 'model_dir'):
+                check_local_model_is_latest(
+                    model.model_dir,
+                    user_agent={Invoke.KEY: Invoke.LOCAL_TRAINER})
 
         super().__init__(cfg_file, arg_parse_fn)
         self.cfg_modify_fn = cfg_modify_fn
@@ -168,11 +172,6 @@ class EpochBasedTrainer(BaseTrainer):
             self.model = model
         else:
             self.model = self.build_model()
-
-        if kwargs.get('check_model', True) and hasattr(self.model,
-                                                       'model_dir'):
-            check_local_model_is_latest(self.model.model_dir,
-                                        {INFERENCE: 'false'})
 
         if self._compile:
             # Compile the model with torch 2.0

@@ -31,7 +31,6 @@ MODELSCOPE_SDK_DEBUG = 'MODELSCOPE_SDK_DEBUG'
 ONE_YEAR_SECONDS = 24 * 365 * 60 * 60
 MODEL_META_FILE_NAME = '.mdl'
 MODEL_META_MODEL_ID = 'id'
-INFERENCE = 'inference'
 
 
 class Licenses(object):

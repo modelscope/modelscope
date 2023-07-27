@@ -156,7 +156,7 @@ class SpeakerVerificationTest(unittest.TestCase):
         logger.info('Run language recognition for campplus_en_cn_16k')
         result = self.run_pipeline(
             model_id=self.lre_campplus_en_cn_16k_model_id,
-            task=Tasks.language_recognition,
+            task=Tasks.speech_language_recognition,
             audios=SPEAKER1_A_EN_16K_WAV)
         print(result)
         self.assertTrue(OutputKeys.TEXT in result)

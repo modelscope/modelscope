@@ -23,7 +23,8 @@ __all__ = ['LanguageRecognitionPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.language_recognition, module_name=Pipelines.language_recognition)
+    Tasks.speech_language_recognition,
+    module_name=Pipelines.speech_language_recognition)
 class LanguageRecognitionPipeline(Pipeline):
     """Language Recognition Inference Pipeline
     use `model` to create a Language Recognition pipeline.
@@ -36,7 +37,7 @@ class LanguageRecognitionPipeline(Pipeline):
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
     >>> p = pipeline(
-    >>>    task=Tasks.language_recognition, model='damo/speech_campplus_lre_en-cn_16k')
+    >>>    task=Tasks.speech_language_recognition, model='damo/speech_campplus_lre_en-cn_16k')
     >>> print(p(audio_in))
 
     """

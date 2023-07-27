@@ -46,9 +46,9 @@ class LinearClassifier(nn.Module):
 
 
 @MODELS.register_module(
-    Tasks.language_recognition, module_name=Models.campplus_lre)
+    Tasks.speech_language_recognition, module_name=Models.campplus_lre)
 class LanguageRecognitionCAMPPlus(TorchModel):
-    r"""A language recognition model using the CAM++ architecture as the backbone.
+    r"""A speech language recognition model using the CAM++ architecture as the backbone.
     Args:
         model_dir: A model dir.
         model_config: The model config.

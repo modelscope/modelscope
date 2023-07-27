@@ -913,6 +913,7 @@ class MultiModalTrainers(object):
     stable_diffusion = 'stable-diffusion'
     lora_diffusion = 'lora-diffusion'
     dreambooth_diffusion = 'dreambooth-diffusion'
+    custom_diffusion = 'custom-diffusion'
 
 
 class AudioTrainers(object):

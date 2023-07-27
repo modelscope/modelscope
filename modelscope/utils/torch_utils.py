@@ -354,3 +354,9 @@ def all_gather(data, group=None):
         data_list.append(pickle.loads(buffer))
 
     return data_list
+
+
+def is_on_same_device(model: torch.nn.Module) -> bool:
+    device_set = set(map(lambda p: p.device.type,
+                         model.parameters())) - {'cpu'}
+    return len(device_set) <= 1

@@ -35,7 +35,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from .configuration import LlamaConfig
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 _CONFIG_FOR_DOC = 'LlamaConfig'
 

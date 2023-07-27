@@ -6,7 +6,7 @@ from transformers.deepspeed import is_deepspeed_zero3_enabled
 
 from modelscope import EpochBasedTrainer, get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class Seq2SeqTrainer(EpochBasedTrainer):
@@ -16,6 +16,8 @@ class Seq2SeqTrainer(EpochBasedTrainer):
         if ignore_pad_token_for_loss:
             tokens = np.where(tokens != -100, tokens,
                               self.tokenizer.pad_token_id)
+        tokens = np.where(tokens < self.tokenizer.vocab_size, tokens,
+                          self.tokenizer.pad_token_id)
         return [
             t for t in self.tokenizer.batch_decode(
                 tokens, skip_special_tokens=True) if t != '</s>'
@@ -59,7 +61,9 @@ class Seq2SeqTrainer(EpochBasedTrainer):
 
         gen_kwargs['input_ids'] = generation_inputs
         gen_kwargs['pad_token_id'] = self.tokenizer.pad_token_id
-        generated_tokens = self.model.generate(**gen_kwargs)
+        self.model.eval()
+        with torch.no_grad():
+            generated_tokens = self.model.generate(**gen_kwargs)
         generated_tokens = generated_tokens[:, generation_inputs.size()[-1]:]
 
         # in case the batch is shorter than max length, the output should be padded

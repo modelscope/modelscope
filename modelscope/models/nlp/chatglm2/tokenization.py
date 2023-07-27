@@ -1,13 +1,10 @@
-"""Tokenization classes for ChatGLM."""
 import os
 from typing import Dict, List, Optional, Union
 
 from sentencepiece import SentencePieceProcessor
-from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers import PreTrainedTokenizer
 from transformers.tokenization_utils_base import BatchEncoding, EncodedInput
-from transformers.utils import PaddingStrategy, logging
-
-logger = logging.get_logger(__name__)
+from transformers.utils import PaddingStrategy
 
 
 class SPTokenizer:
@@ -21,7 +18,7 @@ class SPTokenizer:
         self.n_words: int = self.sp_model.vocab_size()
         self.bos_id: int = self.sp_model.bos_id()
         self.eos_id: int = self.sp_model.eos_id()
-        self.pad_id: int = self.sp_model.eos_id()
+        self.pad_id: int = self.sp_model.unk_id()
         assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
 
         special_tokens = ['[MASK]', '[gMASK]', '[sMASK]', 'sop', 'eop']
@@ -62,7 +59,9 @@ class SPTokenizer:
 
     def convert_id_to_token(self, index):
         """Converts an index (integer) in a token (str) using the vocab."""
-        if index in self.index_special_tokens:
+        if index in self.index_special_tokens or index in [
+                self.eos_id, self.bos_id, self.pad_id
+        ] or index < 0:
             return ''
         return self.sp_model.IdToPiece(index)
 
@@ -76,6 +75,7 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
         super().__init__(padding_side=padding_side, **kwargs)
         self.name = 'GLMTokenizer'
 
+        self.vocab_file = vocab_file
         self.tokenizer = SPTokenizer(vocab_file)
         self.special_tokens = {
             '<bos>': self.tokenizer.bos_id,
@@ -91,11 +91,15 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
 
     @property
     def pad_token(self) -> str:
-        return '</s>'
+        return '<unk>'
 
     @property
     def pad_token_id(self):
         return self.get_command('<pad>')
+
+    @property
+    def eos_token(self) -> str:
+        return '</s>'
 
     @property
     def eos_token_id(self):
@@ -131,11 +135,13 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
     def save_vocabulary(self, save_directory, filename_prefix=None):
         """
         Save the vocabulary and special tokens file to a directory.
+
         Args:
             save_directory (`str`):
                 The directory in which to save the vocabulary.
             filename_prefix (`str`, *optional*):
                 An optional prefix to add to the named of the saved files.
+
         Returns:
             `Tuple(str)`: Paths to the files saved.
         """
@@ -157,6 +163,16 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
         prefix_tokens = [self.get_command('[gMASK]'), self.get_command('sop')]
         return prefix_tokens
 
+    def build_prompt(self, query, history=None):
+        if history is None:
+            history = []
+        prompt = ''
+        for i, (old_query, response) in enumerate(history):
+            prompt += '[Round {}]\n\n问：{}\n\n答：{}\n\n'.format(
+                i + 1, old_query, response)
+        prompt += '[Round {}]\n\n问：{}\n\n答：'.format(len(history) + 1, query)
+        return prompt
+
     def build_inputs_with_special_tokens(
             self,
             token_ids_0: List[int],
@@ -164,13 +180,16 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A BERT sequence has the following format:
+
         - single sequence: `[CLS] X [SEP]`
         - pair of sequences: `[CLS] A [SEP] B [SEP]`
+
         Args:
             token_ids_0 (`List[int]`):
                 List of IDs to which the special tokens will be added.
             token_ids_1 (`List[int]`, *optional*):
                 Optional second list of IDs for sequence pairs.
+
         Returns:
             `List[int]`: List of [input IDs](../glossary#input-ids) with the appropriate special tokens.
         """
@@ -192,16 +211,19 @@ class ChatGLM2Tokenizer(PreTrainedTokenizer):
     ) -> dict:
         """
         Pad encoded inputs (on left/right and up to predefined length or max length in the batch)
+
         Args:
             encoded_inputs:
                 Dictionary of tokenized inputs (`List[int]`) or batch of tokenized inputs (`List[List[int]]`).
             max_length: maximum length of the returned list and optionally padding length (see below).
                 Will truncate by taking into account the special tokens.
             padding_strategy: PaddingStrategy to use for padding.
+
                 - PaddingStrategy.LONGEST Pad to the longest sequence in the batch
                 - PaddingStrategy.MAX_LENGTH: Pad to the max length (default)
                 - PaddingStrategy.DO_NOT_PAD: Do not pad
                 The tokenizer padding sides are defined in self.padding_side:
+
                     - 'left': pads on the left of the sequences
                     - 'right': pads on the right of the sequences
             pad_to_multiple_of: (optional) Integer if set will pad the sequence to a multiple of the provided value.

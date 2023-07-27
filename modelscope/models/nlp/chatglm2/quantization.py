@@ -1,15 +1,14 @@
 import base64
 import bz2
 import ctypes
-from functools import partial
 from typing import List
 
 import torch
-from torch.nn import Linear
 from torch.nn.parameter import Parameter
-from transformers.utils import logging
 
-logger = logging.get_logger(__name__)
+from modelscope.utils import logger as logging
+
+logger = logging.get_logger()
 
 try:
     from cpm_kernels.kernels.base import LazyKernelCModule, KernelFunction, round_up

@@ -143,6 +143,14 @@ class Chatglm6bArguments(TrainingArgs):
         metadata={'help': 'The lora alpha'},
     )
 
+    use_amp: int = field(
+        default=0,
+        metadata={
+            'help':
+            'Whether to use amp(automatic mixed precision) to train the model.'
+        },
+    )
+
 
 args = Chatglm6bArguments(eval_metrics='chatglm').parse_cli()
 print(args)
@@ -160,6 +168,13 @@ def cfg_modify_fn(cfg):
         cfg.merge_from_dict(config)
     else:
         cfg = config
+    if args.use_amp:
+        if not getattr(cfg.train, 'hooks', None):
+            cfg.train.hooks = []
+        cfg.train.hooks.append({
+            'type': 'TorchAMPOptimizerHook',
+            # Optional loss_scale parameter here.
+        })
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \
             int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
@@ -193,13 +208,15 @@ model_config['model'] = ConfigDict({
     'type': config['model']['type'],
 })
 
-if config['model']['type'] == 'chatglm6b':
-    model_config['model']['pre_seq_len'] = args.pre_seq_len
-    model_config['model']['prefix_projection'] = args.prefix_projection
-
+model_config['model']['pre_seq_len'] = args.pre_seq_len
+model_config['model']['prefix_projection'] = args.prefix_projection
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
+
+device_map_kwargs = {}
+if args.use_lora != 0 and torch.cuda.device_count() > 1:
+    device_map_kwargs['device_map'] = 'auto'
 model = Model.from_pretrained(
-    model_dir, cfg_dict=model_config, device_map='auto')
+    model_dir, cfg_dict=model_config, **device_map_kwargs)
 
 if args.ptuning_checkpoint is not None:
     # Evaluation
@@ -230,7 +247,10 @@ if args.use_lora != 0:
         rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
-    model = model.bfloat16()
+    if args.use_amp:
+        model = model.float()
+    else:
+        model = model.bfloat16()
     Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
@@ -333,13 +353,10 @@ def preprocess_function_train(examples):
 
             pad_len = max_seq_length - len(input_ids)
             input_ids = input_ids + [tokenizer.pad_token_id] * pad_len
-            if config['model']['type'] == 'chatglm6b':
-                labels = labels + [tokenizer.pad_token_id] * pad_len
-                if args.ignore_pad_token_for_loss:
-                    labels = [(lb if lb != tokenizer.pad_token_id else -100)
-                              for lb in labels]
-            else:
-                labels = labels + [-100] * pad_len
+            labels = labels + [tokenizer.pad_token_id] * pad_len
+            if args.ignore_pad_token_for_loss:
+                labels = [(lb if lb != tokenizer.pad_token_id else -100)
+                          for lb in labels]
 
             model_inputs['input_ids'].append(input_ids)
             model_inputs['labels'].append(labels)
@@ -371,8 +388,7 @@ data_collator = DataCollatorForSeq2Seq(
     padding=False)
 
 model.gradient_checkpointing_enable()
-if config['model']['type'] == 'chatglm6b':
-    model.enable_input_require_grads()
+model.enable_input_require_grads()
 
 # import torch
 # model = torch.nn.DataParallel(model).cuda()
@@ -384,8 +400,6 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
-    # No placement for model, leave the model to `device_map`
-    device='cpu',
     cfg_modify_fn=cfg_modify_fn)
 trainer.tokenizer = tokenizer
 trainer.train()

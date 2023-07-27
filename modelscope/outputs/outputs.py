@@ -720,6 +720,7 @@ TASK_OUTPUTS = {
     Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
     Tasks.nerf_recon_acc: [OutputKeys.OUTPUT],
+    Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
     # image quality assessment degradation result for single image

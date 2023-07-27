@@ -57,7 +57,8 @@ class MpuProcessor(CheckpointProcessor):
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         model = trainer.unwrap_module(trainer.model)
         _train_state_file = checkpoint_path_prefix + self.rank_name(
         ) + CheckpointProcessor.TRAINER_STATE_SUFFIX
@@ -65,8 +66,8 @@ class MpuProcessor(CheckpointProcessor):
         save_checkpoint(
             model,
             _train_state_file,
-            trainer.optimizer,
-            trainer.lr_scheduler,
+            trainer.optimizer if save_optimizers else None,
+            trainer.lr_scheduler if save_optimizers else None,
             meta=meta,
             with_model=False)
 

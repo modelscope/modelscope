@@ -36,7 +36,7 @@ from modelscope.utils.nlp.utils import parse_labels_in_order
 from .configuration import PeerConfig
 from .sas_utils import SequenceSideInfo
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 PEER_PRETRAINED_MODEL_ARCHIVE_LIST = [
     'google/peer-small-generator',

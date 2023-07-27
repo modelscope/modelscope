@@ -6,7 +6,7 @@ from transformers.deepspeed import is_deepspeed_zero3_enabled
 
 from modelscope import EpochBasedTrainer, get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class Seq2SeqTrainer(EpochBasedTrainer):

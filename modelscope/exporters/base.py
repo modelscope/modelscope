@@ -9,7 +9,7 @@ from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
 from .builder import build_exporter
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class Exporter(ABC):

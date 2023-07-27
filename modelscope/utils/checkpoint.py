@@ -622,6 +622,7 @@ def save_pretrained(model,
     origin_file_to_be_ignored = [save_checkpoint_name]
     ignore_file_set = set(origin_file_to_be_ignored)
     ignore_file_set.add(ModelFile.CONFIGURATION)
+    ignore_file_set.add('*.safetensors')
     ignore_file_set.add('.*')
     if hasattr(model,
                'model_dir') and model.model_dir is not None and is_master():

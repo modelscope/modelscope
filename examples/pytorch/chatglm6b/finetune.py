@@ -142,6 +142,14 @@ class Chatglm6bArguments(TrainingArgs):
         metadata={'help': 'The lora alpha'},
     )
 
+    use_amp: int = field(
+        default=0,
+        metadata={
+            'help':
+            'Whether to use amp(automatic mixed precision) to train the model.'
+        },
+    )
+
 
 args = Chatglm6bArguments(eval_metrics='chatglm').parse_cli()
 print(args)
@@ -159,6 +167,13 @@ def cfg_modify_fn(cfg):
         cfg.merge_from_dict(config)
     else:
         cfg = config
+    if args.use_amp:
+        if not getattr(cfg.train, 'hooks', None):
+            cfg.train.hooks = []
+        cfg.train.hooks.append({
+            'type': 'TorchAMPOptimizerHook',
+            # Optional loss_scale parameter here.
+        })
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \
             int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
@@ -191,11 +206,8 @@ model_config['model']['prefix_projection'] = args.prefix_projection
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 
 device_map_kwargs = {}
-device_kwargs = {}
-if args.use_lora != 0:
+if args.use_lora != 0 and torch.cuda.device_count() > 1:
     device_map_kwargs['device_map'] = 'auto'
-    # No placement for model, leave the model to `device_map`
-    device_kwargs['device'] = 'cpu'
 model = Model.from_pretrained(
     model_dir, cfg_dict=model_config, **device_map_kwargs)
 
@@ -228,7 +240,10 @@ if args.use_lora != 0:
         rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
-    model = model.bfloat16()
+    if args.use_amp:
+        model = model.float()
+    else:
+        model = model.bfloat16()
     Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
@@ -378,7 +393,6 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
-    cfg_modify_fn=cfg_modify_fn,
-    **device_kwargs)
+    cfg_modify_fn=cfg_modify_fn)
 trainer.tokenizer = tokenizer
 trainer.train()

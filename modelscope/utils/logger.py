@@ -25,7 +25,7 @@ def get_logger(log_file: Optional[str] = None,
 
     logger_name = __name__.split('.')[0]
     logger = logging.getLogger(logger_name)
-
+    logger.propagate = False
     if logger_name in init_loggers:
         add_file_handler_if_needed(logger, log_file, file_mode, log_level)
         return logger

@@ -9,7 +9,7 @@ from modelscope.exporters.tf_model_exporter import TfModelExporter
 from modelscope.models.cv.cartoon import CartoonModel
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 if version.parse(tf.__version__) < version.parse('2'):
     pass

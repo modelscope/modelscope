@@ -13,7 +13,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import compare_arguments_nested
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1

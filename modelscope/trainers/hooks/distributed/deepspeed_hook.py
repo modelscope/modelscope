@@ -156,7 +156,8 @@ class DeepspeedProcessor(CheckpointProcessor, LrSchedulerProcessor,
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         model = trainer.unwrap_module(trainer.model)
         _train_state_file = checkpoint_path_prefix + self.rank_name(
         ) + CheckpointProcessor.TRAINER_STATE_SUFFIX

@@ -88,6 +88,8 @@ class Model(ABC):
                 equal to the model saved.
                 For example, load a `backbone` into a `text-classification` model.
                 Other kwargs will be directly fed into the `model` key, to replace the default configs.
+                use_hf(bool): If set True, will use AutoModel in hf to initialize the model to keep compatibility
+                    with huggingface transformers.
         Returns:
             A model instance.
 
@@ -116,6 +118,11 @@ class Model(ABC):
             local_model_dir = snapshot_download(
                 model_name_or_path, revision, user_agent=invoked_by)
         logger.info(f'initialize model from {local_model_dir}')
+
+        if kwargs.pop('use_hf', False):
+            from modelscope import AutoModel
+            return AutoModel.from_pretrained(local_model_dir)
+
         if cfg_dict is not None:
             cfg = cfg_dict
         else:

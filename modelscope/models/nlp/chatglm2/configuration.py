@@ -1,9 +1,10 @@
 """ ChatGLM model configuration """
 
 from transformers import PretrainedConfig
-from transformers.utils import logging
 
-logger = logging.get_logger(__name__)
+from modelscope.utils import logger as logging
+
+logger = logging.get_logger()
 
 
 class ChatGLM2Config(PretrainedConfig):

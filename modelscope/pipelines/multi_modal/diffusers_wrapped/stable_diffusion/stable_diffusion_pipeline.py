@@ -6,8 +6,7 @@ import cv2
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from diffusers import \
-    StableDiffusionPipeline as DiffuserStableDiffusionPipeline
+from diffusers import DiffusionPipeline
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
@@ -35,7 +34,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
         torch_type = torch.float16 if self.device == 'cuda' else torch.float32
-        self.pipeline = DiffuserStableDiffusionPipeline.from_pretrained(
+        self.pipeline = DiffusionPipeline.from_pretrained(
             model, torch_dtype=torch_type)
         self.pipeline = self.pipeline.to(self.device)
         # load lora moudle to unet

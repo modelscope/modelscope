@@ -95,8 +95,10 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
             else:
                 model_dir = pretrained_model_name_or_path
 
-            return module_class.from_pretrained(model_dir, *model_args,
-                                                **kwargs)
+            model = module_class.from_pretrained(model_dir, *model_args,
+                                                 **kwargs)
+            model.model_dir = model_dir
+            return model
 
     return ClassWrapper
 

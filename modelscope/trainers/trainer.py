@@ -15,6 +15,8 @@ from torch.utils.data import DataLoader, Dataset, Sampler
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
+from modelscope.hub.check_model import check_local_model_is_latest
+from modelscope.hub.constants import INFERENCE
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.metrics.prediction_saving_wrapper import \
@@ -27,6 +29,7 @@ from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.swift import Swift
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -45,7 +48,6 @@ from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           get_local_rank, init_dist, is_dist,
                                           is_master, is_on_same_device,
                                           set_random_seed)
-from ..swift import Swift
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks, update_cfg
@@ -166,6 +168,11 @@ class EpochBasedTrainer(BaseTrainer):
             self.model = model
         else:
             self.model = self.build_model()
+
+        if kwargs.get('check_model', True) and hasattr(self.model,
+                                                       'model_dir'):
+            check_local_model_is_latest(self.model.model_dir,
+                                        {INFERENCE: 'false'})
 
         if self._compile:
             # Compile the model with torch 2.0

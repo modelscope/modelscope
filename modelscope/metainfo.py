@@ -502,7 +502,7 @@ class Pipelines(object):
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
-    language_recognition = 'language-recognition'
+    speech_language_recognition = 'speech-language-recognition'
     speaker_change_locating = 'speaker-change-locating'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'

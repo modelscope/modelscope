@@ -334,7 +334,7 @@ TASK_INPUTS = {
     InputType.AUDIO,
     Tasks.speaker_diarization_dialogue_detection:
     InputType.TEXT,
-    Tasks.language_recognition:
+    Tasks.speech_language_recognition:
     InputType.AUDIO,
     Tasks.speaker_diarization_semantic_speaker_turn_detection:
     InputType.TEXT,

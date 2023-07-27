@@ -106,7 +106,7 @@ if [ "$is_cpu" == "True" ]; then
     base_tag=ubuntu20.04
     export USE_GPU=False
 else
-    base_tag=ubuntu20.04-$cuda_version
+    base_tag=ubuntu20.04-cuda$cuda_version
     export USE_GPU=True
 fi
 

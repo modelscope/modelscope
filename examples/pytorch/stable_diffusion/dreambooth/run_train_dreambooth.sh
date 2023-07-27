@@ -1,5 +1,5 @@
 PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/dreambooth/finetune_stable_diffusion_dreambooth.py \
-    --model 'AI-ModelScope/stable-diffusion-v1-5' \
+    --model 'AI-ModelScope/stable-diffusion-v2-1' \
     --model_revision 'v1.0.8' \
     --work_dir './tmp/dreambooth_diffusion' \
     --train_dataset_name 'buptwq/lora-stable-diffusion-finetune' \

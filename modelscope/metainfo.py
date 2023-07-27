@@ -214,6 +214,7 @@ class Models(object):
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
+    text_to_360panorama_image = 'text-to-360panorama-image'
 
     # science models
     unifold = 'unifold'
@@ -417,6 +418,7 @@ class Pipelines(object):
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
+    text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
 
     # nlp tasks
@@ -857,6 +859,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.pedestrian_attribute_recognition: (
         Pipelines.pedestrian_attribute_recognition,
         'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
+    Tasks.text_to_360panorama_image: (
+        Pipelines.text_to_360panorama_image,
+        'damo/cv_diffusion_text-to-360panorama-image_generation'),
     Tasks.image_try_on: (Pipelines.image_try_on,
                          'damo/cv_SAL-VTON_virtual-try-on')
 }

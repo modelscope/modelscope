@@ -1504,6 +1504,7 @@ TASK_OUTPUTS = {
     Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
     Tasks.video_temporal_grounding: [OutputKeys.SCORES, OutputKeys.TBOUNDS],
     Tasks.text_to_video_synthesis: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.text_to_360panorama_image: [OutputKeys.OUTPUT_IMG],
 
     # Tasks.image_try_on result for a single sample
     # {

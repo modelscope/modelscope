@@ -398,4 +398,7 @@ TASK_INPUTS = {
         'text': InputType.TEXT
     },
     Tasks.video_summarization: InputType.TEXT,
+    Tasks.text_to_360panorama_image: {
+        'prompt': InputType.TEXT,
+    },
 }

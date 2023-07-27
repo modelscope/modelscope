@@ -96,6 +96,7 @@ class CVTasks(object):
     image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
     controllable_image_generation = 'controllable-image-generation'
+    text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
 
     # video recognition

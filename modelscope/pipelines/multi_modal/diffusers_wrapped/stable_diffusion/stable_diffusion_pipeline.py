@@ -39,7 +39,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
             modifier_token: token to use as a modifier for the concept of custom diffusion.
             use_safetensors: load safetensors weights.
         """
-        use_safetensors = kwargs.pop("use_safetensors", False)
+        use_safetensors = kwargs.pop('use_safetensors', False)
         # check custom diffusion input value
         if custom_dir is None and modifier_token is not None:
             raise ValueError(

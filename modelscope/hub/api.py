@@ -585,8 +585,6 @@ class HubApi:
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
         cookies = ModelScopeConfig.get_cookies()
         r = self.session.get(datahub_url, cookies=cookies, headers=self.headers)
-        r = self.session.get(
-            datahub_url, cookies=cookies, headers=self.headers)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']

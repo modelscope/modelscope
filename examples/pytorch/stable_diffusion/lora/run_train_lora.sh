@@ -1,5 +1,5 @@
 PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/lora/finetune_stable_diffusion_lora.py \
-    --model 'AI-ModelScope/stable-diffusion-v1-5' \
+    --model 'AI-ModelScope/stable-diffusion-v2-1' \
     --model_revision 'v1.0.9' \
     --prompt "a dog" \
     --work_dir './tmp/lora_diffusion' \

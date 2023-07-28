@@ -17,7 +17,7 @@ class InferArguments:
         default='lora', metadata={'choices': ['lora', 'full']})
     ckpt_path: str = '/path/to/your/iter_xxx.pth'
     eval_human: bool = False  # False: eval test_dataset
-    ignore_args_error: bool = True  # False: notebook compatibility
+    ignore_args_error: bool = False  # True: notebook compatibility
 
     dataset: str = field(
         default='alpaca-en,alpaca-zh',
@@ -96,7 +96,7 @@ def llm_infer(args: InferArguments) -> None:
             inference(input_ids, model, tokenizer, streamer, generation_config)
             print('-' * 80)
     else:
-        dataset = get_dataset(args.dataset)
+        dataset = get_dataset(args.dataset.split(','))
         _, test_dataset = process_dataset(dataset, args.dataset_test_size,
                                           args.dataset_sample,
                                           args.dataset_seed)

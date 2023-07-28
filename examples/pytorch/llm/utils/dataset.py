@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from datasets import Dataset as HfDataset
@@ -62,8 +62,7 @@ DATASET_MAPPER = {
 }
 
 
-def get_dataset(dataset_names: str) -> HfDataset:
-    dataset_name_list = dataset_names.split(',')
+def get_dataset(dataset_name_list: List[str]) -> HfDataset:
     dataset_list = []
     for dataset_name in dataset_name_list:
         get_function = DATASET_MAPPER[dataset_name]

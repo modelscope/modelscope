@@ -16,7 +16,6 @@ from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
 from modelscope.hub.check_model import check_local_model_is_latest
-from modelscope.hub.constants import INFERENCE
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.metrics.prediction_saving_wrapper import \

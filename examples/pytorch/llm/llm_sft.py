@@ -30,7 +30,7 @@ class SftArguments:
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
-    ignore_args_error: bool = True  # False: notebook compatibility
+    ignore_args_error: bool = False  # True: notebook compatibility
 
     dataset: str = field(
         default='alpaca-en,alpaca-zh',
@@ -121,7 +121,7 @@ def llm_sft(args: SftArguments) -> None:
     logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
     # ### Loading Dataset
-    dataset = get_dataset(args.dataset)
+    dataset = get_dataset(args.dataset.split(','))
     train_dataset, val_dataset = process_dataset(dataset,
                                                  args.dataset_test_size,
                                                  args.dataset_sample,

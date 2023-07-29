@@ -32,6 +32,8 @@ PREPROCESSOR_MAP = {
     Preprocessors.sentence_embedding,
     (Models.bert, Tasks.text_classification):
     Preprocessors.sen_cls_tokenizer,
+    (Models.bert, Tasks.speaker_diarization_dialogue_detection):
+    Preprocessors.sen_cls_tokenizer,
     (Models.bert, Tasks.nli):
     Preprocessors.sen_cls_tokenizer,
     (Models.bert, Tasks.sentiment_classification):
@@ -45,6 +47,8 @@ PREPROCESSOR_MAP = {
     (Models.bert, Tasks.part_of_speech):
     Preprocessors.token_cls_tokenizer,
     (Models.bert, Tasks.token_classification):
+    Preprocessors.token_cls_tokenizer,
+    (Models.bert, Tasks.speaker_diarization_semantic_speaker_turn_detection):
     Preprocessors.token_cls_tokenizer,
     (Models.bert, Tasks.word_segmentation):
     Preprocessors.token_cls_tokenizer,

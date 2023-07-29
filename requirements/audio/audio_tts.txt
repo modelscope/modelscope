@@ -15,7 +15,7 @@ protobuf
 ptflops
 ptyprocess>=0.7.0
 pygments>=2.12.0
-pysptk>=0.1.15,<0.2.0
+pysptk>=0.1.15,<0.1.19
 pytorch_wavelets
 PyWavelets>=1.0.0
 scikit-learn

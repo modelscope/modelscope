@@ -70,14 +70,11 @@ class SpeakerVerificationPipeline(Pipeline):
         else:
             return outputs
 
-    def forward(self, inputs: Union[torch.Tensor, list]):
-        if isinstance(inputs, list):
-            embs = []
-            for x in inputs:
-                embs.append(self.model(x))
-            embs = torch.cat(embs)
-        else:
-            embs = self.model(inputs)
+    def forward(self, inputs: list):
+        embs = []
+        for x in inputs:
+            embs.append(self.model(x))
+        embs = torch.cat(embs)
         return embs
 
     def postprocess(self,
@@ -111,7 +108,7 @@ class SpeakerVerificationPipeline(Pipeline):
 
         return output
 
-    def preprocess(self, inputs: Union[np.ndarray, list], **preprocess_params):
+    def preprocess(self, inputs: Union[np.ndarray, list]):
         output = []
         for i in range(len(inputs)):
             if isinstance(inputs[i], str):
@@ -139,16 +136,14 @@ class SpeakerVerificationPipeline(Pipeline):
                 data = inputs[i]
                 if data.dtype in ['int16', 'int32', 'int64']:
                     data = (data / (1 << 15)).astype('float32')
+                else:
+                    data = data.astype('float32')
                 data = torch.from_numpy(data)
             else:
                 raise ValueError(
                     'modelscope error: The input type is restricted to audio address and nump array.'
-                    % i)
+                )
             output.append(data)
-        try:
-            output = torch.stack(output)
-        except RuntimeError:
-            pass
         return output
 
     def compute_cos_similarity(self, emb1: Union[np.ndarray, torch.Tensor],

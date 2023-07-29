@@ -91,12 +91,16 @@ class DocumentSegmentationPipeline(Pipeline):
         example_ids = predict_dataset.pop(
             self.preprocessor.example_id_column_name)
 
+        if (self.model or (self.has_multiple_models and self.models[0])):
+            if not self._model_prepare:
+                self.prepare_model()
+
         with torch.no_grad():
             input = {
-                key: torch.tensor(val)
+                key: torch.tensor(val).to(self.device)
                 for key, val in predict_dataset.items()
             }
-            predictions = self.model.forward(**input).logits
+            predictions = self.model.forward(**input).logits.cpu()
 
         predictions = np.argmax(predictions, axis=2)
         assert len(sentences) == len(

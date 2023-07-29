@@ -1,13 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from collections.abc import Mapping
+from typing import Any, Dict
 
 import torch
 
-from modelscope.metainfo import Trainers
+from modelscope.metainfo import Metrics, Trainers
+from modelscope.outputs.outputs import ModelOutputBase
 from modelscope.trainers import NlpEpochBasedTrainer
 from modelscope.trainers.builder import TRAINERS
-from modelscope.utils.file_utils import func_receive_dict_inputs
 
 
 @TRAINERS.register_module(module_name=Trainers.text_generation_trainer)
@@ -20,12 +20,19 @@ class TextGenerationTrainer(NlpEpochBasedTrainer):
     def evaluation_step(self, data):
         model = self.model.module if self._dist else self.model
         model.eval()
+        output = dict()
 
         with torch.no_grad():
-            result = model.generate(data)
+            output.update(self._eval_genarate(model, data))
+            if Metrics.PPL in self.metrics or Metrics.loss_metric in self.metrics:
+                output.update(model.forward(**data))
+        return output
 
+    def _eval_genarate(self, model, data) -> Dict[str, Any]:
+        result = model.generate(data)
+        if isinstance(result, ModelOutputBase):
+            result = result.to_dict()
         result['preds'] = [self._decode(seq) for seq in result['sequences']]
         data['tgts'] = [self._decode(seq) for seq in data['labels']]
         assert len(result['preds']) == len(data['tgts'])
-
         return result

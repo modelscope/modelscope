@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.6.1
+ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-base
 FROM $BASE_IMAGE
 
 # install modelscope
@@ -25,18 +25,21 @@ RUN pip install --no-cache-dir text2sql_lgesql==1.3.0 \
          git+https://github.com/gatagat/lap.git@v0.4.0 \
          detectron2==0.3 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --force --no-deps
 
-RUN pip install --no-cache-dir mpi4py paint_ldm adaseq>=0.5.0 \
-         mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 wenetruntime==1.11.0 \
-         ipykernel fairseq fasttext deepspeed -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+RUN pip install --no-cache-dir mpi4py paint_ldm \
+         mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 pai-easycv \
+         ipykernel fasttext fairseq deepspeed -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
 # for cpu install cpu version faiss, faiss depends on blas lib, we install libopenblas TODO rename gpu or cpu version faiss
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 faiss==1.7.2 safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0' pai-easycv librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 faiss==1.7.2 safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0'  librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     else \
-        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/faiss-1.7.2-py37-none-linux_x86_64.whl safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0' pai-easycv librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/faiss-1.7.2-py37-none-linux_x86_64.whl safetensors typeguard==2.13.3 scikit-learn 'pandas<1.4.0'  librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     fi
 
+RUN pip install --no-cache-dir wenetruntime==1.11.0 adaseq --no-deps
 COPY examples /modelscope/examples
 
 # for pai-easycv setup compatiblity issue
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+
+RUN CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6" pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'

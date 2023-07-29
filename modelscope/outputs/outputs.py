@@ -1233,10 +1233,29 @@ TASK_OUTPUTS = {
     # speaker verification for single compare task
     # {'score': 84.2332}
     Tasks.speaker_verification: [OutputKeys.SCORES],
+    # speaker diarization dialogue detection for binary results: dialogue or non_dialogue
+    # {
+    #   "scores": [0.98, 0.02],
+    #   "labels": ["dialogue", "non_dialogue"],
+    # }
+    Tasks.speaker_diarization_dialogue_detection: [
+        OutputKeys.SCORES, OutputKeys.LABELS
+    ],
+    Tasks.speech_language_recognition: [OutputKeys.TEXT],
 
     # punctuation result for single sample
     # { "text": "你好，明天！"}
     Tasks.punctuation: [OutputKeys.TEXT],
+
+    # speaker diarization semantic speaker-turn detection
+    # {
+    #    "logits": [[0.7, 0.3], ..., [0.88, 0.12]],
+    #    "text": "您好。您好，初次见面请多指教。",
+    #    "prediction": [-100, -100, -100, 1, -100,..., -100, 0]
+    # }
+    Tasks.speaker_diarization_semantic_speaker_turn_detection: [
+        OutputKeys.LOGITS, OutputKeys.TEXT, OutputKeys.PREDICTION
+    ],
 
     # language model result for single sample
     # { "text": " hel@@ lo 大 家 好 呀 </s>
@@ -1486,6 +1505,13 @@ TASK_OUTPUTS = {
     Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
     Tasks.video_temporal_grounding: [OutputKeys.SCORES, OutputKeys.TBOUNDS],
     Tasks.text_to_video_synthesis: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.text_to_360panorama_image: [OutputKeys.OUTPUT_IMG],
+
+    # Tasks.image_try_on result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.image_try_on: [OutputKeys.OUTPUT_IMG],
 }
 
 

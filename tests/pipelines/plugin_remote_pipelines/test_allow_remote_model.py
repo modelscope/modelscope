@@ -35,3 +35,7 @@ class AllowRemoteModelTest(unittest.TestCase):
 
         output = inference(file_path, tile_mode=0, cache_mode=1, alpha=1)
         print(output)
+
+
+if __name__ == '__main__':
+    unittest.main()

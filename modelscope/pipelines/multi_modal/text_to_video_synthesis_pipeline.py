@@ -52,7 +52,14 @@ class TextToVideoSynthesisPipeline(Pipeline):
         text_emb_zero = self.model.clip_encoder('')
         if self.model.config.model.model_args.tiny_gpu == 1:
             self.model.clip_encoder.to('cpu')
-        return {'text_emb': text_emb, 'text_emb_zero': text_emb_zero}
+        out_height = input['height'] if 'height' in input else 256
+        out_width = input['width'] if 'height' in input else 256
+        return {
+            'text_emb': text_emb,
+            'text_emb_zero': text_emb_zero,
+            'out_height': out_height,
+            'out_width': out_width
+        }
 
     def forward(self, input: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

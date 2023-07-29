@@ -33,6 +33,7 @@ class PromptConfig(SwiftConfig):
         prompt_length: The length of the prompt tokens
         only_prompt_trainable: Whether to train only prompt
         attach_front: When set to True, prompt is attached in front of the embedding
+        extract_embedding: Whether the embedding is extracted at final stage to keep the same dims with inputs
         pretrained_weights: The pretrained prompt weights. Can be a local dir, local file,
             or a model id from modelscope
     """
@@ -65,6 +66,13 @@ class PromptConfig(SwiftConfig):
             'When set to True, prompt is attached in front of the embedding'
         })
 
+    extract_embedding: bool = field(
+        default=False,
+        metadata={
+            'help':
+            'Whether the embedding is extracted at final stage to keep the same dims with inputs'
+        })
+
     pretrained_weights: str = field(
         default=None,
         metadata={
@@ -78,6 +86,7 @@ class Prompt:
     @staticmethod
     def prepare_model(model: nn.Module, config: PromptConfig):
         module_keys = [key for key, _ in model.named_modules()]
+        match_module_keys = []
         for module_key in module_keys:
             if re.fullmatch(config.module_layer_name, module_key):  # noqa
                 module = model.get_submodule(module_key)
@@ -116,16 +125,28 @@ class Prompt:
                         else:
                             kwargs[config.attention_mask_pos] = attention_mask
 
-                    return self.forward_origin(*args, **kwargs)
+                    forward_output = self.forward_origin(*args, **kwargs)
+                    if config.extract_embedding:
+                        forward_output = getattr(
+                            self, 'prompt').extract(forward_output)
+
+                    return forward_output
 
                 module.forward_origin = module.forward
                 module.forward = types.MethodType(_forward, module)
-                prompt_module = PromptModule(config.dim,
+
+                if isinstance(config.dim, list):
+                    input_dim = config.dim[len(match_module_keys)]
+                else:
+                    input_dim = config.dim
+
+                prompt_module = PromptModule(input_dim,
                                              int(module_key.rsplit('.')[-1]),
                                              config.prompt_length,
                                              config.attention_mask_value,
                                              config.attach_front)
                 setattr(module, 'prompt', prompt_module)
+                match_module_keys.append(module_key)
 
         if config.only_prompt_trainable:
             for n, p in model.named_parameters():
@@ -212,3 +233,9 @@ class PromptModule(nn.Module):
         prefix_attention_mask = torch.full((*m.shape[:-1], self.prompt_length),
                                            self.mask_values).to(m.device)
         return torch.cat((prefix_attention_mask, m), dim=-1)
+
+    def extract(self, x):
+        if self.attach_front:
+            return x[:, self.prompt_length:, :]
+        else:
+            return x[:, :-self.prompt_length, :]

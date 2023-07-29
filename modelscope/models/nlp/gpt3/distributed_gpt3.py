@@ -1261,7 +1261,7 @@ class DistributedGPT3(TorchModel, StreamingOutputMixin):
             return self.beam_search(tokens, *args, **kwargs)
 
     @torch.no_grad()
-    def stream(self, tokens, *args, **kwargs):
+    def stream_generate(self, tokens, *args, **kwargs):
         return self.sample(tokens, *args, **kwargs)
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):

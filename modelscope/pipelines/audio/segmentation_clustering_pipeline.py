@@ -51,16 +51,13 @@ class SegmentationClusteringPipeline(Pipeline):
         config = {
             'seg_dur': 1.5,
             'seg_shift': 0.75,
-            'batch_size': 128,
         }
         self.config.update(config)
         self.fs = self.config['sample_rate']
         self.sv_pipeline = pipeline(
             task='speaker-verification', model=self.config['speaker_model'])
 
-    def __call__(self,
-                 audio: Union[str, np.ndarray, list],
-                 output_res=False,
+    def __call__(self, audio: Union[str, np.ndarray, list],
                  **params) -> Dict[str, Any]:
         """ extract the speaker embeddings of input audio and do cluster
         Args:
@@ -92,21 +89,10 @@ class SegmentationClusteringPipeline(Pipeline):
         return {OutputKeys.TEXT: output}
 
     def forward(self, input: list) -> np.ndarray:
-        bs = self.config['batch_size']
-        x = []
         embeddings = []
-        for i, s in enumerate(input):
-            x.append(s[2])
-            if len(x) >= bs:
-                x = np.stack(x)
-                _, embs = self.sv_pipeline(x, output_emb=True)
-                embeddings.append(embs)
-                x = []
-        if len(x) > 0:
-            x = np.stack(x)
-            _, embs = self.sv_pipeline(x, output_emb=True)
+        for s in input:
+            _, embs = self.sv_pipeline([s[2]], output_emb=True)
             embeddings.append(embs)
-            x = []
         embeddings = np.concatenate(embeddings)
         return embeddings
 
@@ -186,6 +172,8 @@ class SegmentationClusteringPipeline(Pipeline):
         assert len(audio.shape) == 1, 'modelscope error: Wrong audio format.'
         if audio.dtype in ['int16', 'int32', 'int64']:
             audio = (audio / (1 << 15)).astype('float32')
+        else:
+            audio = audio.astype('float32')
         if not hasattr(self, 'vad_pipeline'):
             self.vad_pipeline = pipeline(
                 task=Tasks.voice_activity_detection,
@@ -193,8 +181,8 @@ class SegmentationClusteringPipeline(Pipeline):
         vad_time = self.vad_pipeline(audio, audio_fs=self.fs)
         vad_segments = []
         for t in vad_time['text']:
-            st = t[0] / 1000
-            ed = t[1] / 1000
+            st = int(t[0]) / 1000
+            ed = int(t[1]) / 1000
             vad_segments.append(
                 [st, ed, audio[int(st * self.fs):int(ed * self.fs)]])
 
@@ -215,9 +203,7 @@ class SegmentationClusteringPipeline(Pipeline):
                 assert seg[0] >= audio[
                     i - 1][1], 'modelscope error: Wrong time stamps.'
             audio_dur += seg[1] - seg[0]
-            if audio[i][2].dtype in ['int16', 'int32', 'int64']:
-                audio[i][2] = (audio[i][2] / (1 << 15)).astype('float32')
-        assert audio_dur > 10, 'modelscope error: The effective audio duration is too short.'
+        assert audio_dur > 5, 'modelscope error: The effective audio duration is too short.'
 
     def chunk(self, vad_segments: list) -> list:
 

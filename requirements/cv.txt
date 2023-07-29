@@ -1,12 +1,13 @@
 accelerate
 albumentations>=1.0.3
 av>=9.2.0
+basicsr>=1.4.2
 bmt_clipit>=1.0
 chumpy
 clip>=1.0
 control_ldm
 ddpm_guided_diffusion
-diffusers>=0.13.1,<=0.15.0
+diffusers==0.18.0
 easydict
 easyrobust
 edit_distance
@@ -17,6 +18,7 @@ ffmpeg>=1.4
 ffmpeg-python>=0.2.0
 ftfy
 fvcore
+healpy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0
@@ -48,6 +50,7 @@ psutil
 pyclipper
 PyMCubes
 pytorch-lightning
+realesrgan==0.3.0
 regex
 # <0.20.0 for compatible python3.7 python3.8
 scikit-image>=0.19.3,<0.20.0
@@ -63,8 +66,10 @@ torch-scatter
 torchmetrics>=0.6.2
 torchsummary>=1.5.1
 torchvision
+tqdm
 transformers>=4.26.0
 trimesh
 ujson
 utils
 videofeatures_clipit>=1.0
+yacs

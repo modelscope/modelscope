@@ -124,7 +124,3 @@ class PluginTest(unittest.TestCase):
 
         result = self.plugins_manager.list_plugins(show_all=True)
         self.assertEqual(len(result.items()), len(OFFICIAL_PLUGINS))
-
-
-if __name__ == '__main__':
-    unittest.main()

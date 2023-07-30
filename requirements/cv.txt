@@ -63,7 +63,7 @@ tf_slim
 thop
 timm>=0.4.9
 torch-scatter
-torchmetrics>=0.6.2
+torchmetrics>=0.6.2,<=0.11.4
 torchsummary>=1.5.1
 torchvision
 tqdm

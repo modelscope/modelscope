@@ -619,10 +619,16 @@ def service_base64_input_to_pipeline_input(task_name, body):
         parameters = {}
     pipeline_input = {}
 
+    if isinstance(service_input, (str, int, float)):
+        return service_input, parameters
     task_input_info = TASK_INPUTS[task_name]
     if isinstance(task_input_info, str):  # no input key default
-        return base64_decoder_map[task_input_info](list(
-            service_input.values())[0]), parameters
+        if isinstance(service_input, dict):
+            return base64_decoder_map[task_input_info](list(
+                service_input.values())[0]), parameters
+        else:
+            return base64_decoder_map[task_input_info](
+                service_input), parameters
     elif isinstance(task_input_info, tuple):
         pipeline_input = tuple(service_input)
         return pipeline_input, parameters
@@ -653,8 +659,7 @@ def service_base64_input_to_pipeline_input(task_name, body):
                     pipeline_input[key] = base64_decoder_map[input_type](value)
                 return pipeline_input, parameters
     else:
-        raise IndexError('Task %s input invalid: %s' %
-                         (task_name, task_input_info))
+        return service_input, parameters
 
 
 def encode_numpy_image_to_base64(image):
@@ -742,7 +747,8 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
                 else:
                     output_item_type = OutputKeys.OUTPUT_PCM
                 for item in value:
-                    items.append(base64_encoder_map[output_item_type](item))
+                    items.append(base64_encoder_map[
+                        OutputTypes[output_item_type]](item))
                 json_serializable_output[key] = items
             else:
                 json_serializable_output[key] = base64_encoder_map[

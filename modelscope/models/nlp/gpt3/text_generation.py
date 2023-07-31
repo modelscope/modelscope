@@ -79,7 +79,7 @@ class GPT3ForTextGeneration(TorchModel, StreamingOutputMixin):
                         strict: bool = True):
         return self.model.load_state_dict(state_dict, strict)
 
-    def stream(self, inputs, **kwargs) -> Generator:
+    def stream_generate(self, inputs, **kwargs) -> Generator:
         tokens = inputs['input_ids']
         lengths = self._get_length(inputs['attention_mask'])
         return self.model.streaming_generate(

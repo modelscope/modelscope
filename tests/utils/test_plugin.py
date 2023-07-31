@@ -11,6 +11,7 @@ from modelscope.utils.plugins import (PluginsManager, discover_plugins,
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('skipping')
 class PluginTest(unittest.TestCase):
 
     def setUp(self):

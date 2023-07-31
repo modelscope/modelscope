@@ -611,10 +611,6 @@ def save_pretrained(model,
         raise Exception(
             'At least pass in one checkpoint name for saving method')
 
-    # Clean the folder from a previous save
-    if os.path.exists(target_folder):
-        rmtree(target_folder)
-
     # Single ckpt path, sharded ckpt logic will be added later
     output_ckpt_path = os.path.join(target_folder, save_checkpoint_name)
 
@@ -629,7 +625,8 @@ def save_pretrained(model,
         copytree(
             model.model_dir,
             target_folder,
-            ignore=ignore_patterns(*ignore_file_set))
+            ignore=ignore_patterns(*ignore_file_set),
+            dirs_exist_ok=True)
 
     # Save the ckpt to the save directory
     try:

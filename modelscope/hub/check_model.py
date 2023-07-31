@@ -21,20 +21,20 @@ def check_local_model_is_latest(
     """Check local model repo is latest.
     Check local model repo is same as hub latest version.
     """
-    model_cache = None
-    # download with git
-    if os.path.exists(os.path.join(model_root_path, '.git')):
-        git_cmd_wrapper = GitCommandWrapper()
-        git_url = git_cmd_wrapper.get_repo_remote_url(model_root_path)
-        if git_url.endswith('.git'):
-            git_url = git_url[:-4]
-        u_parse = urlparse(git_url)
-        model_id = u_parse.path[1:]
-    else:  # snapshot_download
-        model_cache = ModelFileSystemCache(model_root_path)
-        model_id = model_cache.get_model_id()
-
     try:
+        model_cache = None
+        # download with git
+        if os.path.exists(os.path.join(model_root_path, '.git')):
+            git_cmd_wrapper = GitCommandWrapper()
+            git_url = git_cmd_wrapper.get_repo_remote_url(model_root_path)
+            if git_url.endswith('.git'):
+                git_url = git_url[:-4]
+            u_parse = urlparse(git_url)
+            model_id = u_parse.path[1:]
+        else:  # snapshot_download
+            model_cache = ModelFileSystemCache(model_root_path)
+            model_id = model_cache.get_model_id()
+
         # make headers
         headers = {
             'user-agent':
@@ -75,7 +75,8 @@ def check_local_model_is_latest(
                     continue
                 else:
                     logger.info(
-                        'Model is updated from modelscope hub, you can verify from https://www.modelscope.cn.'
+                        f'Model file {model_file["Name"]} is different from the latest version `{latest_revision}`,'
+                        f'This is because you are using an older version or the file is updated manually.'
                     )
                     break
             else:
@@ -86,7 +87,8 @@ def check_local_model_is_latest(
                         continue
                     else:
                         logger.info(
-                            'Model is updated from modelscope hub, you can verify from https://www.modelscope.cn.'
+                            f'Model file {model_file["Name"]} is different from the latest version `{latest_revision}`,'
+                            f'This is because you are using an older version or the file is updated manually.'
                         )
                         break
     except:  # noqa: E722

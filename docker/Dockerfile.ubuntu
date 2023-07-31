@@ -43,3 +43,6 @@ COPY examples /modelscope/examples
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 
 RUN CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6" pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
+
+# add basicsr
+RUN pip install --no-cache-dir basicsr

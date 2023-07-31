@@ -70,11 +70,10 @@ def handle_http_post_error(response, url, request_body):
     try:
         response.raise_for_status()
     except HTTPError as error:
-        logger.error('Request %s with body: %s exception' %
-                     (url, request_body))
         message = _decode_response_error(response)
-        logger.error('Response details: %s' % message)
-        raise error
+        raise HTTPError('Request %s with body: %s exception, '
+                        'Response details: %s' %
+                        (url, request_body, message)) from error
 
 
 def handle_http_response(response, logger, cookies, model_id):
@@ -86,8 +85,7 @@ def handle_http_response(response, logger, cookies, model_id):
                 f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
                 private. Please login first.')
         message = _decode_response_error(response)
-        logger.error('Response details: %s' % message)
-        raise error
+        raise HTTPError('Response details: %s' % message) from error
 
 
 def raise_on_error(rsp):

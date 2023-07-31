@@ -106,7 +106,7 @@ if [ "$is_cpu" == "True" ]; then
     base_tag=ubuntu20.04
     export USE_GPU=False
 else
-    base_tag=ubuntu20.04-$cuda_version
+    base_tag=ubuntu20.04-cuda$cuda_version
     export USE_GPU=True
 fi
 
@@ -158,6 +158,12 @@ else
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
     docker_file_content="${docker_file_content} \nRUN python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
+    if [ "$is_cpu" == "True" ]; then
+        echo 'build cpu image'
+    else
+        # fix easycv extension and tinycudann conflict.
+        docker_file_content="${docker_file_content} \nRUN bash /tmp/install_tiny_cuda_nn.sh"
+    fi
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"

@@ -2,9 +2,11 @@
 
 from typing import Any, Dict, Union
 
+import hdbscan
 import numpy as np
 import scipy
 import sklearn
+import umap
 from sklearn.cluster._kmeans import k_means
 
 from modelscope.metainfo import Models
@@ -17,16 +19,17 @@ class SpectralCluster:
     This implementation is adapted from https://github.com/speechbrain/speechbrain.
     """
 
-    def __init__(self, min_num_spks=0, max_num_spks=30):
+    def __init__(self, min_num_spks=1, max_num_spks=15, pval=0.022):
         self.min_num_spks = min_num_spks
         self.max_num_spks = max_num_spks
+        self.pval = pval
 
-    def __call__(self, X, pval, oracle_num=None):
+    def __call__(self, X, oracle_num=None):
         # Similarity matrix computation
         sim_mat = self.get_sim_mat(X)
 
         # Refining similarity matrix with pval
-        prunned_sim_mat = self.p_pruning(sim_mat, pval)
+        prunned_sim_mat = self.p_pruning(sim_mat)
 
         # Symmetrization
         sym_prund_sim_mat = 0.5 * (prunned_sim_mat + prunned_sim_mat.T)
@@ -47,7 +50,12 @@ class SpectralCluster:
         M = sklearn.metrics.pairwise.cosine_similarity(X, X)
         return M
 
-    def p_pruning(self, A, pval):
+    def p_pruning(self, A):
+        if A.shape[0] * self.pval < 6:
+            pval = 6. / A.shape[0]
+        else:
+            pval = self.pval
+
         n_elems = int((1 - pval) * A.shape[0])
 
         # For each row in a affinity matrix
@@ -66,14 +74,14 @@ class SpectralCluster:
         L = D - M
         return L
 
-    def get_spec_embs(self, L, k_oracle=4):
+    def get_spec_embs(self, L, k_oracle=None):
         lambdas, eig_vecs = scipy.linalg.eigh(L)
 
         if k_oracle is not None:
             num_of_spk = k_oracle
         else:
             lambda_gap_list = self.getEigenGaps(
-                lambdas[self.min_num_spks - 1:self.max_num_spks - 1])
+                lambdas[self.min_num_spks - 1:self.max_num_spks + 1])
             num_of_spk = np.argmax(lambda_gap_list) + self.min_num_spks
 
         emb = eig_vecs[:, :num_of_spk]
@@ -91,6 +99,39 @@ class SpectralCluster:
         return eig_vals_gap_list
 
 
+class UmapHdbscan:
+    r"""
+    Reference:
+    - Siqi Zheng, Hongbin Suo. Reformulating Speaker Diarization as Community Detection With
+      Emphasis On Topological Structure. ICASSP2022
+    """
+
+    def __init__(self,
+                 n_neighbors=20,
+                 n_components=60,
+                 min_samples=10,
+                 min_cluster_size=10,
+                 metric='cosine'):
+        self.n_neighbors = n_neighbors
+        self.n_components = n_components
+        self.min_samples = min_samples
+        self.min_cluster_size = min_cluster_size
+        self.metric = metric
+
+    def __call__(self, X):
+        umap_X = umap.UMAP(
+            n_neighbors=self.n_neighbors,
+            min_dist=0.0,
+            n_components=min(self.n_components, X.shape[0] - 2),
+            metric=self.metric,
+        ).fit_transform(X)
+        labels = hdbscan.HDBSCAN(
+            min_samples=self.min_samples,
+            min_cluster_size=self.min_cluster_size,
+            allow_single_cluster=True).fit_predict(umap_X)
+        return labels
+
+
 @MODELS.register_module(
     Tasks.speaker_diarization, module_name=Models.cluster_backend)
 class ClusterBackend(TorchModel):
@@ -106,29 +147,21 @@ class ClusterBackend(TorchModel):
         self.model_config = model_config
         self.other_config = kwargs
 
-        if self.model_config['cluster_type'] == 'spectral':
-            self.cluster = SpectralCluster(self.model_config['min_num_spks'],
-                                           self.model_config['max_num_spks'])
-        else:
-            raise ValueError(
-                'modelscope error: Only spectral clustering is currently supported.'
-            )
+        self.spectral_cluster = SpectralCluster()
+        self.umap_hdbscan_cluster = UmapHdbscan()
 
     def forward(self, X, **params):
         # clustering and return the labels
         k = params['oracle_num'] if 'oracle_num' in params else None
-        pval = params['pval'] if 'pval' in params else self.model_config['pval']
         assert len(
             X.shape
         ) == 2, 'modelscope error: the shape of input should be [N, C]'
-        if self.model_config['cluster_type'] == 'spectral':
-            if X.shape[0] * pval < 6:
-                pval = 6. / X.shape[0]
-            labels = self.cluster(X, pval, k)
+        if X.shape[0] < 20:
+            return np.zeros(X.shape[0], dtype='int')
+        if X.shape[0] < 2048 or k is not None:
+            labels = self.spectral_cluster(X, k)
         else:
-            raise ValueError(
-                'modelscope error: Only spectral clustering is currently supported.'
-            )
+            labels = self.umap_hdbscan_cluster(X)
 
         if k is None and 'merge_thr' in self.model_config:
             labels = self.merge_by_cos(labels, X,
@@ -159,6 +192,6 @@ class ClusterBackend(TorchModel):
             for i in range(len(labels)):
                 if labels[i] == spks[1]:
                     labels[i] = spks[0]
-                elif labels[i] > merge_spks[1]:
+                elif labels[i] > spks[1]:
                     labels[i] -= 1
         return labels

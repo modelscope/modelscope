@@ -33,8 +33,12 @@ class EfficientDiffusionTuningTrainer(EpochBasedTrainer):
 
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
-            return build_optimizer(
-                self.model.tuner, cfg=cfg, default_args=default_args)
+            if hasattr(self, 'tuner'):
+                return build_optimizer(
+                    self.model.tuner, cfg=cfg, default_args=default_args)
+            else:
+                return build_optimizer(
+                    self.model, cfg=cfg, default_args=default_args)
         except KeyError as e:
             self.logger.error(
                 f'Build optimizer error, the optimizer {cfg} is a torch native component, '

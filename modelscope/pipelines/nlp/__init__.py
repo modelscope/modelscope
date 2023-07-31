@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .dialog_state_tracking_pipeline import DialogStateTrackingPipeline
     from .document_segmentation_pipeline import DocumentSegmentationPipeline
     from .extractive_summarization_pipeline import ExtractiveSummarizationPipeline
+    from .polylm_text_generation_pipeline import PolyLMTextGenerationPipeline
     from .fasttext_text_classification_pipeline import FasttextSequenceClassificationPipeline
     from .faq_question_answering_pipeline import FaqQuestionAnsweringPipeline
     from .feature_extraction_pipeline import FeatureExtractionPipeline
@@ -50,6 +51,7 @@ else:
         'automatic_post_editing_pipeline': ['AutomaticPostEditingPipeline'],
         'conversational_text_to_sql_pipeline':
         ['ConversationalTextToSqlPipeline'],
+        'polylm_text_generation_pipeline': ['PolyLMTextGenerationPipeline'],
         'dialog_intent_prediction_pipeline':
         ['DialogIntentPredictionPipeline'],
         'dialog_modeling_pipeline': ['DialogModelingPipeline'],

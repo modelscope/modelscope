@@ -108,6 +108,7 @@ if TYPE_CHECKING:
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
+    from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -266,6 +267,9 @@ else:
         ],
         'image_panoptic_segmentation_pipeline': [
             'ImagePanopticSegmentationPipeline',
+        ],
+        'text_to_360panorama_image_pipeline': [
+            'Text2360PanoramaImagePipeline'
         ],
     }
 

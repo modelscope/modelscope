@@ -117,6 +117,8 @@ class SpeakerChangeLocatingPipeline(Pipeline):
         elif isinstance(input, np.ndarray):
             if input.dtype in ['int16', 'int32', 'int64']:
                 input = (input / (1 << 15)).astype('float32')
+            else:
+                input = input.astype('float32')
             data = torch.from_numpy(input)
             if len(data.shape) == 1:
                 data = data.unsqueeze(0)

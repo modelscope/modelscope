@@ -7,7 +7,8 @@ from chatglm_trainer import Seq2SeqTrainer
 from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq
 
-from modelscope import snapshot_download
+from modelscope import build_dataset_from_file, snapshot_download
+from modelscope.metainfo import Models
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.swift import Swift
@@ -186,14 +187,20 @@ def cfg_modify_fn(cfg):
     return cfg
 
 
-train_dataset = MsDataset.load(
-    args.train_dataset_name,
-    subset_name=args.train_subset_name,
-    split=args.train_split)
-validation_dataset = MsDataset.load(
-    args.val_dataset_name,
-    subset_name=args.val_subset_name,
-    split=args.val_split)
+if args.dataset_json_file is None:
+    train_dataset = MsDataset.load(
+        args.train_dataset_name,
+        subset_name=args.train_subset_name,
+        split=args.train_split,
+        namespace=args.train_dataset_namespace).to_hf_dataset()
+    validation_dataset = MsDataset.load(
+        args.val_dataset_name,
+        subset_name=args.val_subset_name,
+        split=args.val_split,
+        namespace=args.val_dataset_namespace).to_hf_dataset()
+else:
+    train_dataset, validation_dataset = build_dataset_from_file(
+        args.dataset_json_file)
 
 model_dir = snapshot_download(args.model)
 model_config = read_config(model_dir)
@@ -357,14 +364,14 @@ def preprocess_function_train(examples):
     return model_inputs
 
 
-train_dataset = train_dataset.to_hf_dataset().map(
+train_dataset = train_dataset.map(
     preprocess_function_train,
     batched=True,
     num_proc=args.preprocessing_num_workers,
     desc='Running tokenizer on train dataset',
 )
 
-validation_dataset = validation_dataset.to_hf_dataset().map(
+validation_dataset = validation_dataset.map(
     preprocess_function_eval,
     batched=True,
     num_proc=args.preprocessing_num_workers,

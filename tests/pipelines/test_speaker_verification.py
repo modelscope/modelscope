@@ -25,7 +25,11 @@ class SpeakerVerificationTest(unittest.TestCase):
     speaker_change_locating_cn_model_id = 'damo/speech_campplus-transformer_scl_zh-cn_16k-common'
     eres2net_voxceleb_16k_model_id = 'damo/speech_eres2net_sv_en_voxceleb_16k'
     speaker_diarization_model_id = 'damo/speech_campplus_speaker-diarization_common'
+    lre_campplus_en_cn_16k_model_id = 'damo/speech_campplus_lre_en-cn_16k'
     eres2net_aug_zh_cn_16k_common_model_id = 'damo/speech_eres2net_sv_zh-cn_16k-common'
+    rdino_3dspeaker_16k_model_id = 'damo/speech_rdino_ecapa_tdnn_sv_zh-cn_3dspeaker_16k'
+    eres2net_base_3dspeaker_16k_model_id = 'damo/speech_eres2net_base_sv_zh-cn_3dspeaker_16k'
+    eres2net_large_3dspeaker_16k_model_id = 'damo/speech_eres2net_large_sv_zh-cn_3dspeaker_16k'
 
     def setUp(self) -> None:
         self.task = Tasks.speaker_verification
@@ -74,6 +78,38 @@ class SpeakerVerificationTest(unittest.TestCase):
         self.assertTrue(OutputKeys.SCORE in result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_eres2net_base_3dspeaker_16k(self):
+        logger.info(
+            'Run speaker verification for eres2net_base_3dspeaker_16k model')
+        result = self.run_pipeline(
+            model_id=self.eres2net_base_3dspeaker_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.1')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_eres2net_large_3dspeaker_16k(self):
+        logger.info(
+            'Run speaker verification for eres2net_large_3dspeaker_16k model')
+        result = self.run_pipeline(
+            model_id=self.eres2net_large_3dspeaker_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.0')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_rdino_3dspeaker_16k(self):
+        logger.info('Run speaker verification for rdino_3dspeaker_16k model')
+        result = self.run_pipeline(
+            model_id=self.rdino_3dspeaker_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.1')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_change_locating_cn_16k(self):
         logger.info(
             'Run speaker change locating for campplus-transformer model')
@@ -90,28 +126,38 @@ class SpeakerVerificationTest(unittest.TestCase):
         result = self.run_pipeline(
             model_id=self.eres2net_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
-            model_revision='v1.0.2')
+            model_revision='v1.0.3')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_verification_eres2net_aug_zh_cn_common_16k(self):
-        logger.info('Run speaker verification for eres2net_voxceleb_16k model')
+        logger.info(
+            'Run speaker verification for eres2net_zh_cn_common_16k model')
         result = self.run_pipeline(
             model_id=self.eres2net_aug_zh_cn_16k_common_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
-            model_revision='v1.0.1')
+            model_revision='v1.0.4')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_diarization_common(self):
-        logger.info(
-            'Run speaker change locating for campplus-transformer model')
+        logger.info('Run speaker diarization task')
         result = self.run_pipeline(
             model_id=self.speaker_diarization_model_id,
             task=Tasks.speaker_diarization,
             audios=SD_EXAMPLE_WAV)
+        print(result)
+        self.assertTrue(OutputKeys.TEXT in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_language_recognition_campplus_en_cn_16k(self):
+        logger.info('Run language recognition for campplus_en_cn_16k')
+        result = self.run_pipeline(
+            model_id=self.lre_campplus_en_cn_16k_model_id,
+            task=Tasks.speech_language_recognition,
+            audios=SPEAKER1_A_EN_16K_WAV)
         print(result)
         self.assertTrue(OutputKeys.TEXT in result)
 

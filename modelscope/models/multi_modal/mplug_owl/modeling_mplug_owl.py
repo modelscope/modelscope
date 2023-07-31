@@ -85,6 +85,148 @@ class MplugOwlForConditionalGenerationModelOutput(ModelOutput):
             for k in self.keys())
 
 
+# Hack for bloomz
+def bloom_forward(
+    self,
+    input_ids: Optional[torch.LongTensor] = None,
+    past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor],
+                                    ...]] = None,
+    attention_mask: Optional[torch.Tensor] = None,
+    head_mask: Optional[torch.LongTensor] = None,
+    inputs_embeds: Optional[torch.LongTensor] = None,
+    use_cache: Optional[bool] = None,
+    output_attentions: Optional[bool] = None,
+    output_hidden_states: Optional[bool] = None,
+    return_dict: Optional[bool] = None,
+    **deprecated_arguments,
+) -> Union[Tuple[torch.Tensor, ...],
+           BaseModelOutputWithPastAndCrossAttentions]:
+    if len(deprecated_arguments) > 0:
+        raise ValueError(f'Got unexpected arguments: {deprecated_arguments}')
+
+    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+    output_hidden_states = (
+        output_hidden_states if output_hidden_states is not None else
+        self.config.output_hidden_states)
+    use_cache = use_cache if use_cache is not None else self.config.use_cache
+    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+    if input_ids is not None and inputs_embeds is not None:
+        raise ValueError(
+            'You cannot specify both input_ids and inputs_embeds at the same time'
+        )
+    elif input_ids is not None:
+        batch_size, seq_length = input_ids.shape
+    elif inputs_embeds is not None:
+        batch_size, seq_length, _ = inputs_embeds.shape
+    else:
+        raise ValueError(
+            'You have to specify either input_ids or inputs_embeds')
+
+    if past_key_values is None:
+        past_key_values = tuple([None] * len(self.h))
+
+    # Prepare head mask if needed
+    # 1.0 in head_mask indicate we keep the head
+    # attention_probs has shape batch_size x num_heads x N x N
+    # head_mask has shape n_layer x batch x num_heads x N x N
+    head_mask = self.get_head_mask(head_mask, self.config.n_layer)
+
+    if inputs_embeds is None:
+        inputs_embeds = self.word_embeddings(input_ids)
+        inputs_embeds = self.word_embeddings_layernorm(inputs_embeds)
+
+    hidden_states = inputs_embeds
+
+    presents = () if use_cache else None
+    all_self_attentions = () if output_attentions else None
+    all_hidden_states = () if output_hidden_states else None
+
+    # Compute alibi tensor: check build_alibi_tensor documentation
+    seq_length_with_past = seq_length
+    past_key_values_length = 0
+    if past_key_values[0] is not None:
+        past_key_values_length = past_key_values[0][0].shape[2]
+        seq_length_with_past = seq_length_with_past + past_key_values_length
+    if attention_mask is None:
+        attention_mask = torch.ones((batch_size, seq_length_with_past),
+                                    device=hidden_states.device)
+    else:
+        attention_mask = attention_mask.to(hidden_states.device)
+
+    alibi = self.build_alibi_tensor(
+        attention_mask, self.num_heads, dtype=hidden_states.dtype)
+
+    causal_mask = self._prepare_attn_mask(
+        attention_mask,
+        input_shape=(batch_size, seq_length),
+        past_key_values_length=past_key_values_length,
+    )
+
+    for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
+        if output_hidden_states:
+            all_hidden_states = all_hidden_states + (hidden_states, )
+
+        if self.gradient_checkpointing and self.training:
+
+            def create_custom_forward(module):
+
+                def custom_forward(*inputs):
+                    # None for past_key_value
+                    return module(
+                        *inputs,
+                        use_cache=use_cache,
+                        output_attentions=output_attentions)
+
+                return custom_forward
+
+            outputs = torch.utils.checkpoint.checkpoint(
+                create_custom_forward(block),
+                hidden_states,
+                alibi,
+                causal_mask,
+                layer_past,
+                head_mask[i],
+            )
+        else:
+            outputs = block(
+                hidden_states,
+                layer_past=layer_past,
+                attention_mask=causal_mask,
+                head_mask=head_mask[i],
+                use_cache=use_cache,
+                output_attentions=output_attentions,
+                alibi=alibi,
+            )
+
+        hidden_states = outputs[0]
+        if use_cache is True:
+            presents = presents + (outputs[1], )
+
+        if output_attentions:
+            all_self_attentions = all_self_attentions + (
+                outputs[2 if use_cache else 1], )
+
+    # Add last hidden state
+    hidden_states = self.ln_f(hidden_states)
+
+    if output_hidden_states:
+        all_hidden_states = all_hidden_states + (hidden_states, )
+
+    if not return_dict:
+        return tuple(
+            v for v in
+            [hidden_states, presents, all_hidden_states, all_self_attentions]
+            if v is not None)
+
+    return BaseModelOutputWithPastAndCrossAttentions(
+        last_hidden_state=hidden_states,
+        past_key_values=presents,
+        hidden_states=all_hidden_states,
+        attentions=all_self_attentions,
+    )
+
+
 def get_ltor_masks_and_position_ids_from_embeddings(data):
     """Build masks and position id for left to right model."""
 
@@ -136,7 +278,8 @@ class MplugOwlVisionEmbeddings(nn.Module):
         self.position_embedding = nn.Parameter(
             torch.randn(1, self.num_patches + 1, self.hidden_size))
 
-        self.pre_layernorm = LayerNormFp32(
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.pre_layernorm = layernorm_func(
             self.hidden_size, eps=config.layer_norm_eps)
 
     def forward(self, pixel_values: torch.FloatTensor) -> torch.Tensor:
@@ -277,10 +420,11 @@ class MplugOwlVisionEncoderLayer(nn.Module):
         super().__init__()
         self.hidden_size = config.hidden_size
         self.self_attn = MplugOwlVisionAttention(config)
-        self.input_layernorm = LayerNormFp32(
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.input_layernorm = layernorm_func(
             self.hidden_size, eps=config.layer_norm_eps)
         self.mlp = MplugOwlMLP(config)
-        self.post_attention_layernorm = LayerNormFp32(
+        self.post_attention_layernorm = layernorm_func(
             self.hidden_size, eps=config.layer_norm_eps)
 
     def forward(
@@ -588,7 +732,8 @@ class MplugOwlVisionModel(MplugOwlPreTrainedModel):
 
         self.embeddings = MplugOwlVisionEmbeddings(config)
         self.encoder = MplugOwlVisionEncoder(config)
-        self.post_layernorm = LayerNormFp32(
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.post_layernorm = layernorm_func(
             self.hidden_size, eps=config.layer_norm_eps)
 
         self.post_init()
@@ -658,7 +803,9 @@ class MplugOwlVisualAbstractorMLP(nn.Module):
         self.w1 = nn.Linear(in_features, hidden_features)
         self.w2 = nn.Linear(hidden_features, in_features)
         self.w3 = nn.Linear(in_features, hidden_features)
-        self.ffn_ln = LayerNormFp32(hidden_features, eps=config.layer_norm_eps)
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.ffn_ln = layernorm_func(
+            hidden_features, eps=config.layer_norm_eps)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         hidden_states = self.act(
@@ -778,7 +925,8 @@ class MplugOwlVisualAbstractorCrossOutput(nn.Module):
         super().__init__()
         dim = config.hidden_size
         self.out_proj = nn.Linear(dim, dim, bias=True)
-        self.norm2 = LayerNormFp32(dim)
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.norm2 = layernorm_func(dim)
         self.mlp = MplugOwlVisualAbstractorMLP(config)
 
     def forward(self, hidden_states: torch.Tensor,
@@ -795,8 +943,9 @@ class MplugOwlVisualAbstractorAttention(nn.Module):
         self.attention = MplugOwlVisualAbstractorMultiHeadAttention(config)
         self.output = MplugOwlVisualAbstractorCrossOutput(config)
         self.pruned_heads = set()
-        self.norm1 = LayerNormFp32(config.hidden_size)
-        self.normk = LayerNormFp32(config.hidden_size)
+        layernorm_func = LayerNormFp32 if config.use_fp32_layernorm else nn.LayerNorm
+        self.norm1 = layernorm_func(config.hidden_size)
+        self.normk = layernorm_func(config.hidden_size)
 
     def prune_heads(self, heads):
         if len(heads) == 0:
@@ -1158,6 +1307,12 @@ class MplugOwlModel(MplugOwlPreTrainedModel):
         # if config.use_decoder_only_language_model:
         language_model = AutoModelForCausalLM.from_config(config.text_config)
         self.language_model = language_model
+
+        if config.text_config.model_type == 'bloom':
+            bound_method = bloom_forward.__get__(
+                self.language_model.transformer,
+                self.language_model.transformer.__class__)
+            setattr(self.language_model.transformer, 'forward', bound_method)
 
         # Initialize weights and apply final processing
         self.post_init()

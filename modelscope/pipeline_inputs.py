@@ -215,6 +215,11 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.bad_image_detecting:
     InputType.IMAGE,
+    Tasks.image_try_on: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.IMAGE: InputType.IMAGE
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: {
@@ -327,6 +332,12 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.keyword_spotting:
     InputType.AUDIO,
+    Tasks.speaker_diarization_dialogue_detection:
+    InputType.TEXT,
+    Tasks.speech_language_recognition:
+    InputType.AUDIO,
+    Tasks.speaker_diarization_semantic_speaker_turn_detection:
+    InputType.TEXT,
     Tasks.inverse_text_processing:
     InputType.TEXT,
 
@@ -387,4 +398,7 @@ TASK_INPUTS = {
         'text': InputType.TEXT
     },
     Tasks.video_summarization: InputType.TEXT,
+    Tasks.text_to_360panorama_image: {
+        'prompt': InputType.TEXT,
+    },
 }

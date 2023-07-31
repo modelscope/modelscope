@@ -66,13 +66,12 @@ class MultimodalDialoguePipeline(Pipeline):
             if isinstance(self.model, MplugOwlForConditionalGeneration):
                 self.preprocessor = MplugOwlPreprocessor(self.model.model_dir)
 
-    def forward(self, inputs: Dict[str, Any],
-                **forward_params) -> Dict[str, Any]:
-        """
-        the `forward_params` can be the generation configurations listed in transformers library.
-        """
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return pipeline_parameters, {}, {}
+
+    def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         with torch.no_grad():
-            return super().forward(inputs, **forward_params)
+            return super().forward(inputs)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """process the prediction results

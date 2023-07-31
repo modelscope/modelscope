@@ -28,12 +28,15 @@ from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import AttentionTextGenerationModelOutput
 from modelscope.utils.constant import Tasks
+from modelscope.utils.streaming_output import \
+    PretrainedModelStreamingOutputMixin
 from .backbone import LlamaModel, LlamaPreTrainedModel
 
 
 # This file is mainly copied from the llama code of transformers
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
-class LlamaForTextGeneration(LlamaPreTrainedModel):
+class LlamaForTextGeneration(LlamaPreTrainedModel,
+                             PretrainedModelStreamingOutputMixin):
     _keys_to_ignore_on_load_missing = [r'lm_head.weight']
 
     def __init__(self, config, **kwargs):
@@ -124,7 +127,10 @@ class LlamaForTextGeneration(LlamaPreTrainedModel):
             output = (logits, ) + outputs[1:]
             return (loss, ) + output if loss is not None else output
 
-        return AttentionTextGenerationModelOutput(
+        # There is a conflict between the `ModelOutputBase` in the modelscope
+        # and the `send_to_device` function in the accelerate library.
+        # Temporarily change AttentionTextGenerationModelOutput to dict
+        return dict(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,

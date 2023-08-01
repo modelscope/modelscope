@@ -1,10 +1,11 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import math
 import os
 import random
 from datetime import datetime
 
 import numpy as np
-# import cv2
 import scipy
 import scipy.stats as stats
 import torch
@@ -155,9 +156,6 @@ def channel_convert(in_c, tar_type, img_list):
 # PSNR
 # --------------------------------------------
 def calculate_psnr(img1, img2, border=0):
-    # img1 and img2 have range [0, 255]
-    #img1 = img1.squeeze()
-    #img2 = img2.squeeze()
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     h, w = img1.shape[:2]
@@ -180,8 +178,6 @@ def calculate_ssim(img1, img2, border=0):
     the same outputs as MATLAB's
     img1, img2: [0, 255]
     '''
-    #img1 = img1.squeeze()
-    #img2 = img2.squeeze()
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     h, w = img1.shape[:2]

@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import base64
 import binascii
 import copy
@@ -18,7 +20,6 @@ from multiprocessing.pool import ThreadPool as Pool
 
 import imageio
 import json
-# import cv2
 import numpy as np
 import oss2 as oss
 import requests

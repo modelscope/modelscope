@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import math
 
 import torch
@@ -15,34 +17,64 @@ def _i(tensor, t, x):
     shape = (x.size(0), ) + (1, ) * (x.ndim - 1)
     return tensor[t].view(shape).to(x)
 
-
-def beta_schedule(schedule,
-                  num_timesteps=1000,
-                  init_beta=None,
-                  last_beta=None):
+def beta_schedule(schedule, num_timesteps=1000, init_beta=None, last_beta=None):
+    '''
+    This code defines a function beta_schedule that generates a sequence of beta values based on the given input parameters. These beta values can be used in video diffusion processes. The function has the following parameters:
+        schedule(str): Determines the type of beta schedule to be generated. It can be 'linear', 'linear_sd', 'quadratic', or 'cosine'.
+        num_timesteps(int, optional): The number of timesteps for the generated beta schedule. Default is 1000.
+        init_beta(float, optional): The initial beta value. If not provided, a default value is used based on the chosen schedule.
+        last_beta(float, optional): The final beta value. If not provided, a default value is used based on the chosen schedule.
+    The function returns a PyTorch tensor containing the generated beta values. The beta schedule is determined by the schedule parameter:
+        1.Linear: Generates a linear sequence of beta values betweeninit_betaandlast_beta.
+        2.Linear_sd: Generates a linear sequence of beta values between the square root of init_beta and the square root oflast_beta, and then squares the result.
+        3.Quadratic: Similar to the 'linear_sd' schedule, but with different default values forinit_betaandlast_beta.
+        4.Cosine: Generates a sequence of beta values based on a cosine function, ensuring the values are between 0 and 0.999.
+    If an unsupported schedule is provided, a ValueError is raised with a message indicating the issue.
+    '''
     if schedule == 'linear':
         scale = 1000.0 / num_timesteps
         init_beta = init_beta or scale * 0.0001
         last_beta = last_beta or scale * 0.02
-        return torch.linspace(
-            init_beta, last_beta, num_timesteps, dtype=torch.float64)
+        return torch.linspace(init_beta, last_beta, num_timesteps, dtype=torch.float64)
+    elif schedule == 'linear_sd':
+        return torch.linspace(init_beta ** 0.5, last_beta ** 0.5, num_timesteps, dtype=torch.float64) ** 2
     elif schedule == 'quadratic':
         init_beta = init_beta or 0.0015
         last_beta = last_beta or 0.0195
-        return torch.linspace(
-            init_beta**0.5, last_beta**0.5, num_timesteps,
-            dtype=torch.float64)**2
+        return torch.linspace(init_beta ** 0.5, last_beta ** 0.5, num_timesteps, dtype=torch.float64) ** 2
     elif schedule == 'cosine':
         betas = []
         for step in range(num_timesteps):
             t1 = step / num_timesteps
             t2 = (step + 1) / num_timesteps
-            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
+            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2) ** 2
             betas.append(min(1.0 - fn(t2) / fn(t1), 0.999))
         return torch.tensor(betas, dtype=torch.float64)
     else:
         raise ValueError(f'Unsupported schedule: {schedule}')
 
+def load_stable_diffusion_pretrained(state_dict, temporal_attention):
+    import collections
+    sd_new = collections.OrderedDict()
+    keys = list(state_dict.keys())
+
+    # "input_blocks.3.op.weight", "input_blocks.3.op.bias", "input_blocks.6.op.weight", "input_blocks.6.op.bias", "input_blocks.9.op.weight", "input_blocks.9.op.bias". 
+    # "input_blocks.3.0.op.weight", "input_blocks.3.0.op.bias", "input_blocks.6.0.op.weight", "input_blocks.6.0.op.bias", "input_blocks.9.0.op.weight", "input_blocks.9.0.op.bias".
+    for k in keys:
+        if k.find('diffusion_model') >= 0:
+            k_new = k.split('diffusion_model.')[-1]
+            if k_new in ["input_blocks.3.0.op.weight", "input_blocks.3.0.op.bias", "input_blocks.6.0.op.weight", "input_blocks.6.0.op.bias", "input_blocks.9.0.op.weight", "input_blocks.9.0.op.bias"]:
+                k_new = k_new.replace('0.op','op')
+            if temporal_attention:
+                if k_new.find('middle_block.2') >= 0:
+                    k_new = k_new.replace('middle_block.2','middle_block.3')
+                if k_new.find('output_blocks.5.2') >= 0:
+                    k_new = k_new.replace('output_blocks.5.2','output_blocks.5.3')
+                if k_new.find('output_blocks.8.2') >= 0:
+                    k_new = k_new.replace('output_blocks.8.2','output_blocks.8.3')
+            sd_new[k_new] = state_dict[k]
+
+    return sd_new
 
 class GaussianDiffusion(object):
 

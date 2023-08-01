@@ -13,8 +13,7 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.text_to_video_synthesis,
-    module_name=Pipelines.videocomposer)
+    Tasks.text_to_video_synthesis, module_name=Pipelines.videocomposer)
 class VideoComposerPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):

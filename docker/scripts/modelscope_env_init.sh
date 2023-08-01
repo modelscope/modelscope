@@ -45,3 +45,6 @@ else
     git config --system --add http.http://www.modelscope.cn.extraHeader "Modelscope_Havanaid: $MODELSCOPE_HAVANAID"
     git config --system --add http.https://www.modelscope.cn.extraHeader "Modelscope_Havanaid: $MODELSCOPE_HAVANAID"
 fi
+
+pip config set global.index-url https://mirrors.cloud.aliyuncs.com/pypi/simple
+pip config set install.trusted-host mirrors.cloud.aliyuncs.com

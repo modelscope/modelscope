@@ -179,7 +179,7 @@ class ReferringVideoObjectSegmentationPipeline(Pipeline):
 
                 for i, (text_query, color) in enumerate(
                         zip(self.text_queries, colors), start=1):
-                    w, h = draw.textsize(text_query, font=font)
+                    _, _, w, h = draw.textbbox([0, 0], text_query, font=font)
                     draw.text(((W - w) / 2,
                                (text_border_height_per_query * i) - h - 3),
                               text_query,

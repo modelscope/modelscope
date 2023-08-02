@@ -1,13 +1,15 @@
 import warnings
-from typing import Callable, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch.nn import CrossEntropyLoss
-from transformers import PreTrainedTokenizer
+from transformers import (GenerationConfig, PreTrainedTokenizer,
+                          StoppingCriteriaList)
 from transformers.generation.logits_process import LogitsProcessorList
+from transformers.generation.utils import GenerateOutput
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modelscope.metainfo import Models
@@ -21,6 +23,9 @@ from .qwen_generation_utils import (BatchTokensType, HistoryType,
                                     get_batch, get_stop_words_ids,
                                     make_context, pad_batch, switch,
                                     top_k_logits)
+
+if TYPE_CHECKING:
+    from transformers.generation.streamers import BaseStreamer
 
 logger = get_logger()
 
@@ -174,15 +179,9 @@ class QWenForTextGeneration(QWenPreTrainedModel):
                                             tokenizer)
         input_ids = torch.tensor([context_tokens]).to(self.device)
 
-        logits_processor_list = LogitsProcessorList([
-            StopWordsLogitsProcessor(
-                stop_words_ids=stop_words_ids,
-                eos_token_id=self.generation_config.eos_token_id)
-        ])
-
         outputs = self.generate(
             input_ids,
-            logits_processor=logits_processor_list,
+            stop_words_ids=stop_words_ids,
             return_dict_in_generate=False,
         )
 
@@ -199,3 +198,44 @@ class QWenForTextGeneration(QWenPreTrainedModel):
             history.append((query, response))
 
         return {OutputKeys.RESPONSE: response, OutputKeys.HISTORY: history}
+
+    def generate(
+        self,
+        inputs: Optional[torch.Tensor] = None,
+        generation_config: Optional[GenerationConfig] = None,
+        logits_processor: Optional[LogitsProcessorList] = None,
+        stopping_criteria: Optional[StoppingCriteriaList] = None,
+        prefix_allowed_tokens_fn: Optional[Callable[[int, torch.Tensor],
+                                                    List[int]]] = None,
+        synced_gpus: Optional[bool] = None,
+        streamer: Optional['BaseStreamer'] = None,
+        **kwargs,
+    ) -> Union[GenerateOutput, torch.LongTensor]:
+        # Process stop_words_ids
+        stop_words_ids = kwargs.pop('stop_words_ids', None)
+        if stop_words_ids is None and generation_config is not None:
+            stop_words_ids = getattr(generation_config, 'stop_words_ids', None)
+        if stop_words_ids is None:
+            stop_words_ids = getattr(self.generation_config, 'stop_words_ids',
+                                     None)
+
+        if stop_words_ids is not None:
+            stop_words_logits_processor = StopWordsLogitsProcessor(
+                stop_words_ids=stop_words_ids,
+                eos_token_id=self.generation_config.eos_token_id)
+            if logits_processor is None:
+                logits_processor = LogitsProcessorList(
+                    [stop_words_logits_processor])
+            else:
+                logits_processor.append(stop_words_logits_processor)
+
+        return super().generate(
+            inputs,
+            generation_config,
+            logits_processor,
+            stopping_criteria,
+            prefix_allowed_tokens_fn,
+            synced_gpus,
+            streamer,
+            **kwargs,
+        )

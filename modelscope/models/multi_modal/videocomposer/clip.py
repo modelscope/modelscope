@@ -1,24 +1,26 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import torch.nn as nn
 import open_clip
+import torch.nn as nn
+
 
 class FrozenOpenCLIPEmbedder(nn.Module):
     """
     Uses the OpenCLIP transformer encoder for text
     """
-    LAYERS = [
-        #"pooled",
-        "last",
-        "penultimate"
-    ]
-    def __init__(self, arch="ViT-H-14", pretrained="laion2b_s32b_b79k", device="cuda", max_length=77,
-                 freeze=True, layer="last"):
+    LAYERS = ['last', 'penultimate']
+
+    def __init__(self,
+                 arch='ViT-H-14',
+                 pretrained='laion2b_s32b_b79k',
+                 device='cuda',
+                 max_length=77,
+                 freeze=True,
+                 layer='last'):
         super().__init__()
         assert layer in self.LAYERS
-        # 
-        model, _, _ = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained=pretrained)
-        # 
+        model, _, _ = open_clip.create_model_and_transforms(
+            arch, device=torch.device('cpu'), pretrained=pretrained)
         del model.visual
         self.model = model
 
@@ -27,9 +29,9 @@ class FrozenOpenCLIPEmbedder(nn.Module):
         if freeze:
             self.freeze()
         self.layer = layer
-        if self.layer == "last":
+        if self.layer == 'last':
             self.layer_idx = 0
-        elif self.layer == "penultimate":
+        elif self.layer == 'penultimate':
             self.layer_idx = 1
         else:
             raise NotImplementedError()
@@ -53,11 +55,12 @@ class FrozenOpenCLIPEmbedder(nn.Module):
         x = self.model.ln_final(x)
         return x
 
-    def text_transformer_forward(self, x: torch.Tensor, attn_mask = None):
+    def text_transformer_forward(self, x: torch.Tensor, attn_mask=None):
         for i, r in enumerate(self.model.transformer.resblocks):
             if i == len(self.model.transformer.resblocks) - self.layer_idx:
                 break
-            if self.model.transformer.grad_checkpointing and not torch.jit.is_scripting():
+            if self.model.transformer.grad_checkpointing and not torch.jit.is_scripting(
+            ):
                 x = checkpoint(r, x, attn_mask)
             else:
                 x = r(x, attn_mask=attn_mask)
@@ -73,33 +76,41 @@ class FrozenOpenCLIPVisualEmbedder(nn.Module):
     """
     LAYERS = [
         #"pooled",
-        "last",
-        "penultimate"
+        'last',
+        'penultimate'
     ]
-    def __init__(self, arch="ViT-H-14", pretrained="laion2b_s32b_b79k", device="cuda", max_length=77,
-                 freeze=True, layer="last", input_shape=(224, 224, 3)):
+
+    def __init__(self,
+                 arch='ViT-H-14',
+                 pretrained='laion2b_s32b_b79k',
+                 device='cuda',
+                 max_length=77,
+                 freeze=True,
+                 layer='last',
+                 input_shape=(224, 224, 3)):
         super().__init__()
         assert layer in self.LAYERS
-        model, _, preprocess = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained=pretrained)
-        del model.transformer 
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            arch, device=torch.device('cpu'), pretrained=pretrained)
+        del model.transformer
         self.model = model
-        data_white=np.ones(input_shape, dtype=np.uint8) * 255
+        data_white = np.ones(input_shape, dtype=np.uint8) * 255
         self.black_image = preprocess(T.ToPILImage()(data_white)).unsqueeze(0)
         self.preprocess = preprocess
 
         self.device = device
-        self.max_length = max_length # 77
+        self.max_length = max_length  # 77
         if freeze:
             self.freeze()
-        self.layer = layer # 'penultimate'
-        if self.layer == "last":
+        self.layer = layer  # 'penultimate'
+        if self.layer == 'last':
             self.layer_idx = 0
-        elif self.layer == "penultimate":
+        elif self.layer == 'penultimate':
             self.layer_idx = 1
         else:
             raise NotImplementedError()
 
-    def freeze(self): 
+    def freeze(self):
         self.model = self.model.eval()
         for param in self.parameters():
             param.requires_grad = False
@@ -118,11 +129,12 @@ class FrozenOpenCLIPVisualEmbedder(nn.Module):
         x = self.model.ln_final(x)
         return x
 
-    def text_transformer_forward(self, x: torch.Tensor, attn_mask = None):
+    def text_transformer_forward(self, x: torch.Tensor, attn_mask=None):
         for i, r in enumerate(self.model.transformer.resblocks):
             if i == len(self.model.transformer.resblocks) - self.layer_idx:
                 break
-            if self.model.transformer.grad_checkpointing and not torch.jit.is_scripting():
+            if self.model.transformer.grad_checkpointing and not torch.jit.is_scripting(
+            ):
                 x = checkpoint(r, x, attn_mask)
             else:
                 x = r(x, attn_mask=attn_mask)

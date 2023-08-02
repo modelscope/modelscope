@@ -27,7 +27,6 @@ import skvideo.io
 import torch
 import torch.nn.functional as F
 import torchvision.utils as tvutils
-from artist import DOWNLOAD_TO_CACHE
 from einops import rearrange
 from PIL import Image
 
@@ -46,6 +45,33 @@ __all__ = [
 
 TFS_CLIENT = None
 
+def DOWNLOAD_TO_CACHE(oss_key,
+                      file_or_dirname=None,
+                      cache_dir=osp.join('/'.join(osp.abspath(__file__).split('/')[:-2]), 'model_weights')):
+    r"""Download OSS [file or folder] to the cache folder.
+        Only the 0th process on each node will run the downloading.
+        Barrier all processes until the downloading is completed.
+    """
+    # source and target paths
+    base_path = osp.join(cache_dir, file_or_dirname or osp.basename(oss_key))
+    
+    return base_path
+
+def find_free_port():
+    """https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number"""
+    import socket
+    from contextlib import closing
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
+
+def setup_seed(seed):
+     torch.manual_seed(seed)
+     torch.cuda.manual_seed_all(seed)
+     np.random.seed(seed)
+     random.seed(seed)
+     torch.backends.cudnn.deterministic = True
 
 def parse_oss_url(path):
     if path.startswith('oss://'):
@@ -461,10 +487,6 @@ def save_video_multiple_conditions_with_data(bucket,
 
     model_kwargs_channel3 = {}
     for key, conditions in model_kwargs[0].items():
-        # if key == 'masked':
-        #     print(conditions.shape)
-        #     print(conditions[:, 0:3].max(), conditions[:, 0:3].min())
-        #     print(conditions[:, 3:].max(), conditions[:, 3:].min())
         if len(conditions.shape) == 3:  # which means that it is histogram.
             conditions_np = conditions.cpu().numpy()
             conditions = []
@@ -506,7 +528,6 @@ def save_video_multiple_conditions_with_data(bucket,
             vid_gif = rearrange(
                 video_tensor, '(i j) c f h w -> c f (i h) (j w)',
                 i=nrow)  #num_sample_rows=8
-            # con_gif = rearrange(conditions, '(i j) c f h w -> c f (i h) (j w)', i = nrow)#num_sample_rows=8
             cons_list = [
                 rearrange(con, '(i j) c f h w -> c f (i h) (j w)', j=nrow)
                 for _, con in model_kwargs_channel3.items()
@@ -595,7 +616,6 @@ def save_video_vs_conditions(bucket,
     if conditions.size(1) == 1:
         conditions = torch.cat([conditions, conditions, conditions], dim=1)
         conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
-        # conditions = conditions * 255
 
     filename = rand_name(suffix='.gif')
     for _ in [None] * retry:
@@ -638,9 +658,9 @@ def save_video_grid_mp4(bucket,
                         fps=5,
                         retry=5):
     mean = torch.tensor(
-        mean, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    tensor = tensor.mul_(std).add_(mean)  ####unnormalize back to [0,1]
+        mean, device=tensor.device).view(1, -1, 1, 1, 1)  # ncfhw
+    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)  # ncfhw
+    tensor = tensor.mul_(std).add_(mean)  # unnormalize back to [0,1]
     tensor.clamp_(0, 1)
     b, c, t, h, w = tensor.shape
     tensor = tensor.permute(0, 2, 3, 4, 1)

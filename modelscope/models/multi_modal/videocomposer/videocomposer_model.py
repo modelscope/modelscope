@@ -23,6 +23,20 @@ from modelscope.utils.constant import ModelFile, Tasks
 __all__ = ['VideoComposer']
 
 
+@torch.no_grad()
+def get_first_stage_encoding(encoder_posterior):
+    scale_factor = 0.18215
+    if isinstance(encoder_posterior, DiagonalGaussianDistribution):
+        z = encoder_posterior.sample()
+    elif isinstance(encoder_posterior, torch.Tensor):
+        z = encoder_posterior
+    else:
+        raise NotImplementedError(
+            f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented"
+        )
+    return scale_factor * z
+
+
 @MODELS.register_module(
     Tasks.text_to_video_synthesis, module_name=Models.videocomposer)
 class VideoComposer(Model):

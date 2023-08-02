@@ -13,9 +13,7 @@ cd modelscope
 pip install -r requirements.txt
 pip install .
 """
-
 import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 from dataclasses import dataclass, field
 from functools import partial
 from types import MethodType

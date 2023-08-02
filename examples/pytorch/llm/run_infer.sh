@@ -1,7 +1,5 @@
-#!/bin/bash
-
+CUDA_VISIBLE_DEVICES=0,1 \
 python llm_infer.py \
-    --device 0,1 \
-    --model_type openbuddy-llama2-13b \
-    --ckpt_path "runs/openbuddy-llama2-13b/vx_xxx/output_best/pytorch_model.bin" \
+    --model_type qwen-7b \
+    --ckpt_path "runs/qwen-7b/vx_xxx/output_best/pytorch_model.bin" \
     --eval_human true

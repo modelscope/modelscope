@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import cv2
 from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
@@ -87,6 +88,7 @@ class VideoComposerPipeline(Pipeline):
 
         total_frames = None
 
+        feature_framerate = self.feature_framerate
         if os.path.exists(video_key):
             try:
                 ref_frame, vit_image, video_data, misc_data, mv_data = self._get_video_traindata(video_key, self.feature_framerate, total_frames, self.mvs_visual)

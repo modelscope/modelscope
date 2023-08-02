@@ -1,35 +1,52 @@
 # ### Setting up experimental environment.
 """
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
+pip install sentencepiece charset_normalizer cpm_kernels tiktoken -U
+pip install matplotlib scikit-learn -U
+pip install transformers datasets -U
+pip install tqdm tensorboard torchmetrics -U
+pip install accelerate transformers_stream_generator -U
+
 # Install the latest version of modelscope from source
 git clone https://github.com/modelscope/modelscope.git
 cd modelscope
+pip install -r requirements.txt
 pip install .
-
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install numpy pandas -U  # Resolve torchmetrics dependencies and update numpy
-pip install matplotlib scikit-learn -U
-pip install transformers datasets -U
-pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer -U
-pip install accelerate transformers_stream_generator -U
 """
 
-if __name__ == '__main__':
-    # Avoid cuda initialization caused by library import (e.g. peft, accelerate)
-    from _parser import *
-    # argv = parse_device(['--device', '1'])
-    argv = parse_device()
+import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+from dataclasses import dataclass, field
+from functools import partial
+from types import MethodType
+from typing import List, Optional
 
-from utils import *
+import torch
+from torch import Tensor
+from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER,
+                   data_collate_fn, get_dataset, get_model_tokenizer,
+                   get_T_max, get_work_dir, parse_args, plot_images,
+                   print_example, print_model_info, process_dataset,
+                   seed_everything, show_freeze_layers, stat_dataset,
+                   tokenize_function)
+
+from modelscope import get_logger
+from modelscope.swift import LoRAConfig, Swift
+from modelscope.trainers import EpochBasedTrainer
+from modelscope.utils.config import Config
+
+logger = get_logger()
 
 
 @dataclass
 class SftArguments:
     seed: int = 42
     model_type: str = field(
-        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
+    output_dir: Optional[str] = None
     ignore_args_error: bool = False  # True: notebook compatibility
 
     dataset: str = field(
@@ -81,6 +98,10 @@ class SftArguments:
                 self.last_save_interval = self.eval_interval * 4
         else:
             raise ValueError(f'sft_type: {self.sft_type}')
+
+        if self.output_dir is None:
+            self.output_dir = 'runs'
+        self.output_dir = os.path.join(self.output_dir, self.model_type)
 
         if self.lora_target_modules is None:
             self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
@@ -145,7 +166,7 @@ def llm_sft(args: SftArguments) -> None:
 
     T_max = get_T_max(
         len(train_dataset), args.batch_size, args.max_epochs, True)
-    work_dir = get_work_dir(f'runs/{args.model_type}')
+    work_dir = get_work_dir(args.output_dir)
     config = Config({
         'train': {
             'dataloader': {
@@ -257,7 +278,7 @@ def llm_sft(args: SftArguments) -> None:
 
 
 if __name__ == '__main__':
-    args, remaining_argv = parse_args(SftArguments, argv)
+    args, remaining_argv = parse_args(SftArguments)
     if len(remaining_argv) > 0:
         if args.ignore_args_error:
             logger.warning(f'remaining_argv: {remaining_argv}')

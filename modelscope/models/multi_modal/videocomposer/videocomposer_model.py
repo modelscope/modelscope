@@ -19,6 +19,8 @@ from modelscope.models.multi_modal.video_synthesis.diffusion import (
 from modelscope.models.multi_modal.video_synthesis.unet_sd import UNetSD
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.models.multi_modal.videocomposer.clip import (FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
+from modelscope.models.multi_modal.videocomposer.utils import DOWNLOAD_TO_CACHE
 
 __all__ = ['VideoComposer']
 
@@ -71,90 +73,25 @@ class VideoComposer(Model):
         super().__init__(model_dir=model_dir, *args, **kwargs)
         self.device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
-        self.config = Config.from_file(
-            osp.join(model_dir, ModelFile.CONFIGURATION))
-        cfg = self.config.model.model_cfg
-        cfg['temporal_attention'] = True if cfg[
-            'temporal_attention'] == 'True' else False
+        self.clip_checkpoint = kwargs.pop("clip_checkpoint", 'open_clip_pytorch_model.bin')
+        self.clip_encoder = FrozenOpenCLIPEmbedder(layer='penultimate', pretrained = DOWNLOAD_TO_CACHE(self.clip_checkpoint))
+        self.clip_encoder = self.clip_encoder.to(self.device)
+        self.clip_encoder_visual = FrozenOpenCLIPVisualEmbedder(layer='penultimate',pretrained = DOWNLOAD_TO_CACHE(self.clip_checkpoint))
+        self.clip_encoder_visual.model.to(self.device)
 
-        # Initialize unet
-        self.sd_model = UNetSD(
-            in_dim=cfg['unet_in_dim'],
-            dim=cfg['unet_dim'],
-            y_dim=cfg['unet_y_dim'],
-            context_dim=cfg['unet_context_dim'],
-            out_dim=cfg['unet_out_dim'],
-            dim_mult=cfg['unet_dim_mult'],
-            num_heads=cfg['unet_num_heads'],
-            head_dim=cfg['unet_head_dim'],
-            num_res_blocks=cfg['unet_res_blocks'],
-            attn_scales=cfg['unet_attn_scales'],
-            dropout=cfg['unet_dropout'],
-            temporal_attention=cfg['temporal_attention'])
-        self.sd_model.load_state_dict(
-            torch.load(
-                osp.join(model_dir, self.config.model.model_args.ckpt_unet)),
-            strict=True)
-        self.sd_model.eval()
-        self.sd_model.to(self.device)
 
-        # Initialize diffusion
-        betas = beta_schedule(
-            'linear_sd',
-            cfg['num_timesteps'],
-            init_beta=0.00085,
-            last_beta=0.0120)
-        self.diffusion = GaussianDiffusion(
-            betas=betas,
-            mean_type=cfg['mean_type'],
-            var_type=cfg['var_type'],
-            loss_type=cfg['loss_type'],
-            rescale_timesteps=False)
-
-        # Initialize autoencoder
-        ddconfig = {
-            'double_z': True,
-            'z_channels': 4,
-            'resolution': 256,
-            'in_channels': 3,
-            'out_ch': 3,
-            'ch': 128,
-            'ch_mult': [1, 2, 4, 4],
-            'num_res_blocks': 2,
-            'attn_resolutions': [],
-            'dropout': 0.0
-        }
-        self.autoencoder = AutoencoderKL(
-            ddconfig, 4,
-            osp.join(model_dir, self.config.model.model_args.ckpt_autoencoder))
-        if self.config.model.model_args.tiny_gpu == 1:
-            self.autoencoder.to('cpu')
-        else:
-            self.autoencoder.to(self.device)
-        self.autoencoder.eval()
-
-        # Initialize Open clip
-        self.clip_encoder = FrozenOpenCLIPEmbedder(
-            version=osp.join(model_dir,
-                             self.config.model.model_args.ckpt_clip),
-            layer='penultimate')
-        if self.config.model.model_args.tiny_gpu == 1:
-            self.clip_encoder.to('cpu')
-        else:
-            self.clip_encoder.to(self.device)
 
     def forward(self, input: Dict[str, Any]):
-        r"""
-        The entry function of text to image synthesis task.
-        1. Using diffusion model to generate the video's latent representation.
-        2. Using vqgan model (autoencoder) to decode the video's latent representation to visual space.
+        print("--------videocomposer model forward input: ", input)
+        zero_y = self.clip_encoder("").detach()
+        black_image_feature = self.clip_encoder_visual(clip_encoder_visual.black_image).unsqueeze(1)
+        black_image_feature = torch.zeros_like(black_image_feature)
 
-        Args:
-            input (`Dict[Str, Any]`):
-                The input of the task
-        Returns:
-            A generated video (as pytorch tensor).
-        """
+
+
+
+
+
         y = input['text_emb']
         zero_y = input['text_emb_zero']
         context = torch.cat([zero_y, y], dim=0).to(self.device)

@@ -45,17 +45,21 @@ __all__ = [
 
 TFS_CLIENT = None
 
+
 def DOWNLOAD_TO_CACHE(oss_key,
                       file_or_dirname=None,
-                      cache_dir=osp.join('/'.join(osp.abspath(__file__).split('/')[:-2]), 'model_weights')):
+                      cache_dir=osp.join(
+                          '/'.join(osp.abspath(__file__).split('/')[:-2]),
+                          'model_weights')):
     r"""Download OSS [file or folder] to the cache folder.
         Only the 0th process on each node will run the downloading.
         Barrier all processes until the downloading is completed.
     """
     # source and target paths
     base_path = osp.join(cache_dir, file_or_dirname or osp.basename(oss_key))
-    
+
     return base_path
+
 
 def find_free_port():
     """https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number"""
@@ -66,12 +70,14 @@ def find_free_port():
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return str(s.getsockname()[1])
 
+
 def setup_seed(seed):
-     torch.manual_seed(seed)
-     torch.cuda.manual_seed_all(seed)
-     np.random.seed(seed)
-     random.seed(seed)
-     torch.backends.cudnn.deterministic = True
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+
 
 def parse_oss_url(path):
     if path.startswith('oss://'):

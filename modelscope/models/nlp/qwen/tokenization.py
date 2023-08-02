@@ -150,7 +150,7 @@ class QWenTokenizer(PreTrainedTokenizer):
                 format(len(ids), self.max_len))
         return ids
 
-    def save_vocabulary(self, save_directory: str) -> Tuple[str]:
+    def save_vocabulary(self, save_directory: str, **kwargs) -> Tuple[str]:
         """
         Save only the vocabulary of the tokenizer (vocabulary + added tokens).
 

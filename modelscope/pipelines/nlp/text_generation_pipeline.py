@@ -199,7 +199,8 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration, ChatGLMConfig
+        from modelscope.models.nlp.chatglm.text_generation import (
+            ChatGLMConfig, ChatGLMForConditionalGeneration)
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
@@ -241,7 +242,9 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
+        from modelscope.models.nlp import (ChatGLM2Config,
+                                           ChatGLM2ForConditionalGeneration,
+                                           ChatGLM2Tokenizer)
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
@@ -279,9 +282,19 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 class QWenChatPipeline(Pipeline):
 
     def __init__(self, model: Union[Model, str], **kwargs):
-        from modelscope.models.nlp import QWenConfig, QWenTokenizer, QWenForTextGeneration
+        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
+                                           QWenTokenizer)
         torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
         device_map = kwargs.get('device_map', 'auto')
+        use_max_memory = kwargs.get('use_max_memory', False)
+        quantization_config = kwargs.get('quantization_config', None)
+
+        if use_max_memory:
+            max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
+            n_gpus = torch.cuda.device_count()
+            max_memory = {i: max_memory for i in range(n_gpus)}
+        else:
+            max_memory = None
 
         if isinstance(model, str):
             model_dir = snapshot_download(
@@ -296,7 +309,9 @@ class QWenChatPipeline(Pipeline):
                 cfg_dict=config,
                 config=model_config,
                 device_map=device_map,
-                torch_dtype=torch_dtype)
+                torch_dtype=torch_dtype,
+                quantization_config=quantization_config,
+                max_memory=max_memory)
             model.generation_config = GenerationConfig.from_pretrained(
                 model_dir)
 
@@ -330,9 +345,19 @@ class QWenChatPipeline(Pipeline):
 class QWenTextGenerationPipeline(Pipeline):
 
     def __init__(self, model: Union[Model, str], **kwargs):
-        from modelscope.models.nlp import QWenConfig, QWenTokenizer, QWenForTextGeneration
+        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
+                                           QWenTokenizer)
         torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
         device_map = kwargs.get('device_map', 'auto')
+        use_max_memory = kwargs.get('use_max_memory', False)
+        quantization_config = kwargs.get('quantization_config', None)
+
+        if use_max_memory:
+            max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
+            n_gpus = torch.cuda.device_count()
+            max_memory = {i: max_memory for i in range(n_gpus)}
+        else:
+            max_memory = None
 
         if isinstance(model, str):
             model_dir = snapshot_download(
@@ -347,7 +372,9 @@ class QWenTextGenerationPipeline(Pipeline):
                 cfg_dict=config,
                 config=model_config,
                 device_map=device_map,
-                torch_dtype=torch_dtype)
+                torch_dtype=torch_dtype,
+                quantization_config=quantization_config,
+                max_memory=max_memory)
             model.generation_config = GenerationConfig.from_pretrained(
                 model_dir)
 

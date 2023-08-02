@@ -3,6 +3,7 @@
 import unittest
 
 import torch
+from transformers import BitsAndBytesConfig
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -65,6 +66,37 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
                 'device_map': 'auto',
             })
 
+    # 7B_ms_base
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    def test_qwen_base_with_text_generation_quant_int8(self):
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        self.run_pipeline_with_model_id(
+            self.qwen_base,
+            self.qwen_base_input,
+            init_kwargs={
+                'device_map': 'auto',
+                'use_max_memory': True,
+                'quantization_config': quantization_config,
+            })
+
+    # 7B_ms_base
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    def test_qwen_base_with_text_generation_quant_int4(self):
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type='nf4',
+            bnb_4bit_compute_dtype=torch.bfloat16)
+
+        self.run_pipeline_with_model_id(
+            self.qwen_base,
+            self.qwen_base_input,
+            init_kwargs={
+                'device_map': 'auto',
+                'use_max_memory': True,
+                'quantization_config': quantization_config,
+            })
+
     # 7B_ms_chat
     @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
     def test_qwen_chat_with_chat(self):
@@ -74,6 +106,39 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             self.qwen_chat_system,
             init_kwargs={
                 'device_map': 'auto',
+            })
+
+    # 7B_ms_chat
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    def test_qwen_chat_with_chat_quant_int8(self):
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        self.run_chat_pipeline_with_model_id(
+            self.qwen_chat,
+            self.qwen_chat_input,
+            self.qwen_chat_system,
+            init_kwargs={
+                'device_map': 'auto',
+                'use_max_memory': True,
+                'quantization_config': quantization_config,
+            })
+
+    # 7B_ms_base
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    def test_qwen_chat_with_chat_quant_int4(self):
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type='nf4',
+            bnb_4bit_compute_dtype=torch.bfloat16)
+
+        self.run_chat_pipeline_with_model_id(
+            self.qwen_chat,
+            self.qwen_chat_input,
+            self.qwen_chat_system,
+            init_kwargs={
+                'device_map': 'auto',
+                'use_max_memory': True,
+                'quantization_config': quantization_config,
             })
 
 

@@ -29,7 +29,7 @@ class Config(object):
             "--cfg",
             dest="cfg_file",
             help="Path to the configuration file",
-            default='configs/exp01_vidcomposer_full.yaml'
+            default='configs/multi_modal/exp06_text_depths_vs_style.yaml'
         )
         parser.add_argument(
             "--init_method",

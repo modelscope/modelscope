@@ -1,0 +1,26 @@
+TASK_TYPE: SINGLE_TASK
+read_image: False 
+read_style: True
+read_sketch: False
+save_origin_video: True
+ENABLE: true
+DATASET: webvid10m
+video_compositions: ['text', 'mask', 'depthmap', 'sketch', 'motion', 'image', 'local_image', 'single_sketch']
+guidances: ['y', 'image', 'depth'] # You NEED Open It
+batch_sizes: {
+    "1": 1,
+    "4": 1,
+    "8": 1,
+    "16": 1,
+}
+vit_image_size: 224
+network_name: UNetSD_temporal
+resume: true
+resume_step: 228000
+seed: 182
+num_workers: 0
+mvs_visual: False
+chunk_size: 1
+resume_checkpoint: "model_weights/non_ema_228000.pth"
+log_dir: 'outputs'
+num_steps: 1

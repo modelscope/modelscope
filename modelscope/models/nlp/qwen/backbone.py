@@ -164,7 +164,7 @@ class QWenAttention(nn.Module):
         self.c_proj = nn.Linear(
             config.hidden_size, self.projection_size, bias=not config.no_bias)
 
-        if self.use_flash_attn:
+        if self.use_flash_attn and flash_attn_unpadded_func is not None:
             self.core_attention_flash = FlashSelfAttention(
                 causal=True, attention_dropout=config.attn_pdrop)
 
@@ -329,7 +329,7 @@ class QWenAttention(nn.Module):
         else:
             present = None
 
-        if self.use_flash_attn:
+        if self.use_flash_attn and flash_attn_unpadded_func is not None:
             q, k, v = query, key, value
             context_layer = self.core_attention_flash(q, k, v)
 
@@ -347,7 +347,7 @@ class QWenAttention(nn.Module):
         attn_output = self.c_proj(context_layer)
         outputs = (attn_output, present)
         if output_attentions:
-            if self.use_flash_attn:
+            if self.use_flash_attn and flash_attn_unpadded_func is not None:
                 raise ValueError(
                     'Cannot output attentions while using flash-attn')
             else:
@@ -713,8 +713,7 @@ class RotaryEmbedding(torch.nn.Module):
     def __init__(self, dim, base=10000, ntk_alpha=1.0):
         super().__init__()
         base = base * ntk_alpha**(dim / (dim - 2))
-        inv_freq = 1.0 / (base**(torch.arange(0, dim, 2).float() / dim))
-        self.register_buffer('inv_freq', inv_freq)
+        self.inv_freq = 1.0 / (base**(torch.arange(0, dim, 2).float() / dim))
         if importlib.util.find_spec('einops') is None:
             raise RuntimeError('einops is required for Rotary Embedding')
 

@@ -13,8 +13,8 @@ from modelscope.utils.test_utils import test_level
 class QWenTextGenerationPipelineTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.qwen_base = '../qwen_7b_ckpt_modelscope/'  # local test only
-        self.qwen_chat = '../qwen_7b_ckpt_chat_modelscope/'  # local test only
+        self.qwen_base = 'qwen/Qwen-7B'
+        self.qwen_chat = 'qwen/Qwen-7B-Chat'
 
         self.qwen_base_input = '蒙古国的首都是乌兰巴托（Ulaanbaatar）\n冰岛的首都是雷克雅未克（Reykjavik）\n埃塞俄比亚的首都是'
         self.qwen_chat_input = [
@@ -54,7 +54,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             print('Response:', response, end='\n')
 
     # 7B_ms_base
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_qwen_base_with_text_generation(self):
         self.run_pipeline_with_model_id(
             self.qwen_base,
@@ -64,7 +64,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             })
 
     # 7B_ms_base
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_base_with_text_generation_quant_int8(self):
         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
 
@@ -78,7 +78,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             })
 
     # 7B_ms_base
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_base_with_text_generation_quant_int4(self):
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
@@ -95,7 +95,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             })
 
     # 7B_ms_chat
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_qwen_chat_with_chat(self):
         self.run_chat_pipeline_with_model_id(
             self.qwen_chat,
@@ -105,7 +105,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             })
 
     # 7B_ms_chat
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_chat_with_chat_quant_int8(self):
         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
 
@@ -119,7 +119,7 @@ class QWenTextGenerationPipelineTest(unittest.TestCase):
             })
 
     # 7B_ms_base
-    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_chat_with_chat_quant_int4(self):
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,

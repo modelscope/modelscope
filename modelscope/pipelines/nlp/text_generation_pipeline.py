@@ -320,6 +320,8 @@ class QWenChatPipeline(Pipeline):
         self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
 
         super().__init__(model=model, **kwargs)
+        # skip pipeline model placement
+        self._model_prepare = True
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}
@@ -383,6 +385,8 @@ class QWenTextGenerationPipeline(Pipeline):
         self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
 
         super().__init__(model=model, **kwargs)
+        # skip pipeline model placement
+        self._model_prepare = True
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}

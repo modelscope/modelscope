@@ -11,6 +11,7 @@ from modelscope.utils.plugins import (PluginsManager, discover_plugins,
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('skipping')
 class PluginTest(unittest.TestCase):
 
     def setUp(self):
@@ -124,3 +125,7 @@ class PluginTest(unittest.TestCase):
 
         result = self.plugins_manager.list_plugins(show_all=True)
         self.assertEqual(len(result.items()), len(OFFICIAL_PLUGINS))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -336,9 +336,13 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.keyword_spotting:
     InputType.AUDIO,
-    Tasks.inverse_text_processing:
-    InputType.TEXT,
     Tasks.speaker_diarization_dialogue_detection:
+    InputType.TEXT,
+    Tasks.speech_language_recognition:
+    InputType.AUDIO,
+    Tasks.speaker_diarization_semantic_speaker_turn_detection:
+    InputType.TEXT,
+    Tasks.inverse_text_processing:
     InputType.TEXT,
 
     # ============ multi-modal tasks ===================
@@ -398,4 +402,7 @@ TASK_INPUTS = {
         'text': InputType.TEXT
     },
     Tasks.video_summarization: InputType.TEXT,
+    Tasks.text_to_360panorama_image: {
+        'prompt': InputType.TEXT,
+    },
 }

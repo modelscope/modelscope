@@ -1,3 +1,4 @@
+hdbscan
 hyperpyyaml
 librosa==0.9.2
 MinDAEC
@@ -8,3 +9,4 @@ SoundFile>0.10
 speechbrain>=0.5.12
 torchaudio
 tqdm
+umap-learn

@@ -3,6 +3,7 @@
 # Part of the implementation is borrowed from wimglenn/johnnydep
 
 import copy
+import filecmp
 import importlib
 import os
 import pkgutil
@@ -28,6 +29,9 @@ logger = get_logger()
 storage = LocalStorage()
 
 MODELSCOPE_FILE_DIR = get_default_cache_dir()
+MODELSCOPE_DYNAMIC_MODULE = 'modelscope_modules'
+BASE_MODULE_DIR = os.path.join(MODELSCOPE_FILE_DIR, MODELSCOPE_DYNAMIC_MODULE)
+
 PLUGINS_FILENAME = '.modelscope_plugins'
 OFFICIAL_PLUGINS = [
     {
@@ -322,6 +326,41 @@ def import_module_from_file(module_name, file_path):
     return module
 
 
+def create_module_from_files(file_list, file_prefix, module_name):
+    """
+    Create a python module from a list of files by copying them to the destination directory.
+
+    Args:
+        file_list (List[str]): List of relative file paths to be copied.
+        file_prefix (str): Path prefix for each file in file_list.
+        module_name (str): Name of the module.
+
+    Returns:
+        None
+    """
+
+    def create_empty_file(file_path):
+        with open(file_path, 'w') as _:
+            pass
+
+    dest_dir = os.path.join(BASE_MODULE_DIR, module_name)
+    for file_path in file_list:
+        file_dir = os.path.dirname(file_path)
+        target_dir = os.path.join(dest_dir, file_dir)
+        os.makedirs(target_dir, exist_ok=True)
+        init_file = os.path.join(target_dir, '__init__.py')
+        if not os.path.exists(init_file):
+            create_empty_file(init_file)
+
+        target_file = os.path.join(target_dir, os.path.basename(file_path))
+        src_file = os.path.join(file_prefix, file_path)
+        if not os.path.exists(target_file) or not filecmp.cmp(
+                src_file, target_file):
+            shutil.copyfile(src_file, target_file)
+
+    importlib.invalidate_caches()
+
+
 def import_module_from_model_dir(model_dir):
     """ import all the necessary module from a model dir
 
@@ -340,12 +379,26 @@ def import_module_from_model_dir(model_dir):
     # install the requirements firstly
     install_requirements_by_files(requirements)
 
-    # then import the modules
-    import sys
-    sys.path.insert(0, model_dir)
-    for file in file_dirs:
-        module_name = Path(file).stem
-        import_module_from_file(module_name, file)
+    if BASE_MODULE_DIR not in sys.path:
+        sys.path.append(BASE_MODULE_DIR)
+
+    module_name = Path(model_dir).stem
+
+    # in order to keep forward compatibility, we add module path to
+    # sys.path so that submodule can be imported directly as before
+    MODULE_PATH = os.path.join(BASE_MODULE_DIR, module_name)
+    if MODULE_PATH not in sys.path:
+        sys.path.append(MODULE_PATH)
+
+    relative_file_dirs = [
+        file.replace(model_dir.rstrip(os.sep) + os.sep, '')
+        for file in file_dirs
+    ]
+    create_module_from_files(relative_file_dirs, model_dir, module_name)
+    for file in relative_file_dirs:
+        submodule = module_name + '.' + file.replace(os.sep, '.').replace(
+            '.py', '')
+        importlib.import_module(submodule)
 
 
 def install_requirements_by_names(plugins: List[str]):

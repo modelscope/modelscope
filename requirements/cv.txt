@@ -6,7 +6,7 @@ chumpy
 clip>=1.0
 control_ldm
 ddpm_guided_diffusion
-diffusers>=0.13.1,<=0.15.0
+diffusers==0.18.0
 easydict
 easyrobust
 edit_distance
@@ -60,9 +60,11 @@ tensorflow-estimator>=1.15.1
 tf_slim
 thop
 timm>=0.4.9
-torchmetrics>=0.6.2
+torch-scatter
+torchmetrics>=0.6.2,<=0.11.4
 torchsummary>=1.5.1
 torchvision
+tqdm
 transformers>=4.26.0
 trimesh
 ujson

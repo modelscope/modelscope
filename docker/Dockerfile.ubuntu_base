@@ -59,9 +59,9 @@ ARG USE_GPU=True
 
 # install pytorch
 ARG TORCH_VERSION=1.12.0
-ARG CUDATOOLKIT_VERSION=cu113
+ARG CUDATOOLKIT_VERSION=cu117
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/$CUDATOOLKIT_VERSION; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi
@@ -90,7 +90,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 ENV SHELL=/bin/bash
 # install special package
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir dgl-cu113 dglgo -f https://data.dgl.ai/wheels/repo.html; \
+        pip install  dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
     else \
         pip install --no-cache-dir dgl==0.9.0 dglgo -f https://data.dgl.ai/wheels/repo.html; \
     fi
@@ -106,7 +106,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
+       export TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.6+PTX" && pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
     else \
      echo 'cpu unsupport Pointnet2'; \
     fi
@@ -134,3 +134,5 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     else \
      echo 'cpu unsupport apex'; \
     fi
+
+ENTRYPOINT []

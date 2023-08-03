@@ -50,6 +50,7 @@ class CheckpointHook(Hook):
         hub_revision (str): Which branch to push the model to, default is `master`.
         upload_strategy (str): The action adopted when the previous uploading is not done
         and the next one is coming, can be `cancel` or `wait`.
+        save_trainer_state (bool): Save the trainer state for continue training, default True.
         kwargs:
             by_epoch (bool): Same with `save_strategy`, but has a higher priority, legacy argument.
             output_sub_dir (str): The folder under the `save_dir` to save the output checkpoint for inference.
@@ -75,6 +76,7 @@ class CheckpointHook(Hook):
                  private_hub: Optional[bool] = True,
                  hub_revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                  upload_strategy: Optional[str] = UploadStrategy.cancel,
+                 save_trainer_state: bool = True,
                  **kwargs):
         self.interval = interval
         self.save_dir = save_dir
@@ -97,6 +99,7 @@ class CheckpointHook(Hook):
         self.private_hub = private_hub
         self.hub_revision = hub_revision
         self.upload_strategy = upload_strategy
+        self.save_trainer_state = save_trainer_state
         self.tag = -1
         self.is_model_id = None
         self.max_checkpoint_num = None
@@ -219,7 +222,8 @@ class CheckpointHook(Hook):
         checkpoint_path_prefix = os.path.join(self.save_dir, prefix)
         meta = self._create_training_state(trainer)
         self.processor.save_checkpoints(trainer, checkpoint_path_prefix,
-                                        self.output_dir, meta)
+                                        self.output_dir, meta,
+                                        self.save_trainer_state)
         self.save_evaluate_results(trainer)
         self.history_checkpoints.append(checkpoint_path_prefix)
         self._remove_obsolete_checkpoints(trainer)
@@ -298,6 +302,7 @@ class BestCkptSaverHook(CheckpointHook):
         max_checkpoint_num (int): The max number of checkpoint files, default None which means never delete anything.
             If the number exceeding the limit, checkpoints with worse metric will be deleted, which is judged by the
             `rule` and `metric_key` arguments.
+        save_trainer_state (bool): Save the trainer state for continue training, default True.
 
     The `BestCkptSaverHook` class accepts `output_sub_dir` and `output_dir` argument as its super class do.
     If neither of them are passed, the default value is `{save_dir}/output_best`.
@@ -316,6 +321,7 @@ class BestCkptSaverHook(CheckpointHook):
                  save_file_name: Optional[str] = None,
                  restore_best: Optional[bool] = False,
                  max_checkpoint_num: Optional[int] = 1,
+                 save_trainer_state: bool = True,
                  **kwargs):
         assert rule in ['max', 'min'], 'Only support "max" or "min" rule now.'
         output_kwargs = {}
@@ -325,6 +331,7 @@ class BestCkptSaverHook(CheckpointHook):
         kwargs.pop('save_strategy', None)
         super().__init__(
             max_checkpoint_num=max_checkpoint_num,
+            save_trainer_state=save_trainer_state,
             **kwargs,
             **output_kwargs,
         )
@@ -399,7 +406,8 @@ class BestCkptSaverHook(CheckpointHook):
         self._best_ckpt_file = checkpoint_path_prefix
         meta = self._create_training_state(trainer)
         self.processor.save_checkpoints(trainer, checkpoint_path_prefix,
-                                        self.output_dir, meta)
+                                        self.output_dir, meta,
+                                        self.save_trainer_state)
         self.save_evaluate_results(trainer)
         self.history_checkpoints.add(checkpoint_path_prefix)
         self._remove_obsolete_checkpoints(trainer)

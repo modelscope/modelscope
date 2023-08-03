@@ -1,10 +1,12 @@
 #!/bin/bash
 # default values.
 BASE_CPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04
-BASE_GPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+BASE_GPU_CUDA113_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+BASE_GPU_CUDA117_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.7.1-cudnn8-devel
 MODELSCOPE_REPO_ADDRESS=reg.docker.alibaba-inc.com/modelscope/modelscope
 python_version=3.7.13
 torch_version=1.11.0
+cuda_version=11.7.1
 cudatoolkit_version=11.3
 tensorflow_version=1.15.5
 version=None
@@ -12,13 +14,11 @@ is_cpu=False
 function usage(){
     echo "usage: build.sh "
     echo "       --python=python_version set python version, default: $python_version"
+    echo "       --cuda=cuda_version set cuda version,only[11.3.0, 11.7.1], fefault: $cuda_version"
     echo "       --torch=torch_version set pytorch version, fefault: $torch_version"
     echo "       --tensorflow=tensorflow_version set tensorflow version, default: $tensorflow_version"
-    echo "       --version=version set image version, default: $version"
     echo "       --test option for run test before push image, only push on ci test pass"
     echo "       --cpu option for build cpu version"
-    echo "       --dsw option for build dsw version"
-    echo "       --ci  option for build ci version"
     echo "       --push option for push image to remote repo"
 }
 for i in "$@"; do
@@ -26,6 +26,10 @@ for i in "$@"; do
     --python=*)
       python_version="${i#*=}"
       shift
+      ;;
+    --cuda=*)
+      cuda_version="${i#*=}"
+      shift # pytorch version
       ;;
     --torch=*)
       torch_version="${i#*=}"
@@ -61,31 +65,38 @@ for i in "$@"; do
   esac
 done
 
-if [ "$version" == "None" ]; then
-    echo "version must specify!"
+if [ "$cuda_version" == 11.3.0 ]; then
+    echo "Building base image cuda11.3.0"
+    BASE_GPU_IMAGE=$BASE_GPU_CUDA113_IMAGE
+    cudatoolkit_version=cu113
+elif [ "$cuda_version" == 11.7.1 ]; then
+    echo "Building base image cuda11.7.1"
+    cudatoolkit_version=cu117
+    BASE_GPU_IMAGE=$BASE_GPU_CUDA117_IMAGE
+else
+    echo "Unsupport cuda version: $cuda_version"
     exit 1
 fi
+
 if [ "$is_cpu" == "True" ]; then
     export BASE_IMAGE=$BASE_CPU_IMAGE
     base_tag=ubuntu20.04
     export USE_GPU=False
 else
     export BASE_IMAGE=$BASE_GPU_IMAGE
-    base_tag=ubuntu20.04-cuda11.3.0
+    base_tag=ubuntu20.04-cuda$cuda_version
     export USE_GPU=True
 fi
 if [[ $python_version == 3.7* ]]; then
     base_tag=$base_tag-py37
 elif [[ $python_version == 3.8* ]]; then
     base_tag=$base_tag-py38
-elif [[ $python_version == 3.9* ]]; then
-    base_tag=$base_tag-py39
 else
     echo "Unsupport python version: $python_version"
     exit 1
 fi
 
-target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-base-$version
+target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-base
 export IMAGE_TO_BUILD=$MODELSCOPE_REPO_ADDRESS:$target_image_tag
 export PYTHON_VERSION=$python_version
 export TORCH_VERSION=$torch_version

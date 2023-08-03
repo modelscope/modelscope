@@ -112,7 +112,13 @@ class Adapter:
                 else:
                     setattr(module, config.method_name,
                             types.MethodType(_forward, module))
-                adapter_module = AdapterModule(config.dim,
+
+                if isinstance(module, torch.nn.Linear):
+                    input_dim = module.out_features
+                else:
+                    input_dim = config.dim
+
+                adapter_module = AdapterModule(input_dim,
                                                config.adapter_length,
                                                config.act_layer)
                 setattr(module, 'adapter', adapter_module)

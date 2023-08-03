@@ -721,6 +721,7 @@ TASK_OUTPUTS = {
     Tasks.video_super_resolution: [OutputKeys.OUTPUT_VIDEO],
     Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
     Tasks.nerf_recon_acc: [OutputKeys.OUTPUT],
+    Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
     # image quality assessment degradation result for single image
@@ -1241,10 +1242,21 @@ TASK_OUTPUTS = {
     Tasks.speaker_diarization_dialogue_detection: [
         OutputKeys.SCORES, OutputKeys.LABELS
     ],
+    Tasks.speech_language_recognition: [OutputKeys.TEXT],
 
     # punctuation result for single sample
     # { "text": "你好，明天！"}
     Tasks.punctuation: [OutputKeys.TEXT],
+
+    # speaker diarization semantic speaker-turn detection
+    # {
+    #    "logits": [[0.7, 0.3], ..., [0.88, 0.12]],
+    #    "text": "您好。您好，初次见面请多指教。",
+    #    "prediction": [-100, -100, -100, 1, -100,..., -100, 0]
+    # }
+    Tasks.speaker_diarization_semantic_speaker_turn_detection: [
+        OutputKeys.LOGITS, OutputKeys.TEXT, OutputKeys.PREDICTION
+    ],
 
     # language model result for single sample
     # { "text": " hel@@ lo 大 家 好 呀 </s>
@@ -1494,6 +1506,7 @@ TASK_OUTPUTS = {
     Tasks.document_grounded_dialog_retrieval: [OutputKeys.OUTPUT],
     Tasks.video_temporal_grounding: [OutputKeys.SCORES, OutputKeys.TBOUNDS],
     Tasks.text_to_video_synthesis: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.text_to_360panorama_image: [OutputKeys.OUTPUT_IMG],
 
     # Tasks.image_try_on result for a single sample
     # {

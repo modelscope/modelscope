@@ -62,6 +62,8 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_bad_image_detecting.py
   - test_controllable_image_generation.py
   - test_image_colorization_trainer.py
+  - test_text_to_360panorama_image.py
+
 
 envs:
   default: # default env, case not in other env will in default, pytorch.

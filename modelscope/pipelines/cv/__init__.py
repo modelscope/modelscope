@@ -103,10 +103,12 @@ if TYPE_CHECKING:
     from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
+    from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
+    from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -253,6 +255,7 @@ else:
         'bad_image_detecting_pipeline': ['BadImageDetecingPipeline'],
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
+        'nerf_recon_4k_pipeline': ['NeRFRecon4KPipeline'],
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],
@@ -264,6 +267,9 @@ else:
         ],
         'image_panoptic_segmentation_pipeline': [
             'ImagePanopticSegmentationPipeline',
+        ],
+        'text_to_360panorama_image_pipeline': [
+            'Text2360PanoramaImagePipeline'
         ],
     }
 

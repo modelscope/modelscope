@@ -7,7 +7,7 @@ from chatglm_trainer import Seq2SeqTrainer
 from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq
 
-from modelscope import snapshot_download
+from modelscope import build_dataset_from_file, snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
@@ -143,6 +143,14 @@ class Chatglm6bArguments(TrainingArgs):
         metadata={'help': 'The lora alpha'},
     )
 
+    use_amp: int = field(
+        default=0,
+        metadata={
+            'help':
+            'Whether to use amp(automatic mixed precision) to train the model.'
+        },
+    )
+
 
 args = Chatglm6bArguments(eval_metrics='chatglm').parse_cli()
 print(args)
@@ -160,6 +168,13 @@ def cfg_modify_fn(cfg):
         cfg.merge_from_dict(config)
     else:
         cfg = config
+    if args.use_amp:
+        if not getattr(cfg.train, 'hooks', None):
+            cfg.train.hooks = []
+        cfg.train.hooks.append({
+            'type': 'TorchAMPOptimizerHook',
+            # Optional loss_scale parameter here.
+        })
     if cfg.train.lr_scheduler.type == 'LinearLR':
         cfg.train.lr_scheduler['total_iters'] = \
             int(len(train_dataset) / cfg.train.dataloader.batch_size_per_gpu) * cfg.train.max_epochs
@@ -172,14 +187,20 @@ def cfg_modify_fn(cfg):
     return cfg
 
 
-train_dataset = MsDataset.load(
-    args.train_dataset_name,
-    subset_name=args.train_subset_name,
-    split=args.train_split)
-validation_dataset = MsDataset.load(
-    args.val_dataset_name,
-    subset_name=args.val_subset_name,
-    split=args.val_split)
+if args.dataset_json_file is None:
+    train_dataset = MsDataset.load(
+        args.train_dataset_name,
+        subset_name=args.train_subset_name,
+        split=args.train_split,
+        namespace=args.train_dataset_namespace).to_hf_dataset()
+    validation_dataset = MsDataset.load(
+        args.val_dataset_name,
+        subset_name=args.val_subset_name,
+        split=args.val_split,
+        namespace=args.val_dataset_namespace).to_hf_dataset()
+else:
+    train_dataset, validation_dataset = build_dataset_from_file(
+        args.dataset_json_file)
 
 model_dir = snapshot_download(args.model)
 model_config = read_config(model_dir)
@@ -187,13 +208,15 @@ model_config['model'] = ConfigDict({
     'type': config['model']['type'],
 })
 
-if config['model']['type'] == 'chatglm6b':
-    model_config['model']['pre_seq_len'] = args.pre_seq_len
-    model_config['model']['prefix_projection'] = args.prefix_projection
-
+model_config['model']['pre_seq_len'] = args.pre_seq_len
+model_config['model']['prefix_projection'] = args.prefix_projection
 tokenizer = ChatGLMTokenizer.from_pretrained(model_dir, trust_remote_code=True)
+
+device_map_kwargs = {}
+if args.use_lora != 0 and torch.cuda.device_count() > 1:
+    device_map_kwargs['device_map'] = 'auto'
 model = Model.from_pretrained(
-    model_dir, cfg_dict=model_config, device_map='auto')
+    model_dir, cfg_dict=model_config, **device_map_kwargs)
 
 if args.ptuning_checkpoint is not None:
     # Evaluation
@@ -224,7 +247,10 @@ if args.use_lora != 0:
         rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
-    model = model.bfloat16()
+    if args.use_amp:
+        model = model.float()
+    else:
+        model = model.bfloat16()
     Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
@@ -327,13 +353,10 @@ def preprocess_function_train(examples):
 
             pad_len = max_seq_length - len(input_ids)
             input_ids = input_ids + [tokenizer.pad_token_id] * pad_len
-            if config['model']['type'] == 'chatglm6b':
-                labels = labels + [tokenizer.pad_token_id] * pad_len
-                if args.ignore_pad_token_for_loss:
-                    labels = [(lb if lb != tokenizer.pad_token_id else -100)
-                              for lb in labels]
-            else:
-                labels = labels + [-100] * pad_len
+            labels = labels + [tokenizer.pad_token_id] * pad_len
+            if args.ignore_pad_token_for_loss:
+                labels = [(lb if lb != tokenizer.pad_token_id else -100)
+                          for lb in labels]
 
             model_inputs['input_ids'].append(input_ids)
             model_inputs['labels'].append(labels)
@@ -341,14 +364,14 @@ def preprocess_function_train(examples):
     return model_inputs
 
 
-train_dataset = train_dataset.to_hf_dataset().map(
+train_dataset = train_dataset.map(
     preprocess_function_train,
     batched=True,
     num_proc=args.preprocessing_num_workers,
     desc='Running tokenizer on train dataset',
 )
 
-validation_dataset = validation_dataset.to_hf_dataset().map(
+validation_dataset = validation_dataset.map(
     preprocess_function_eval,
     batched=True,
     num_proc=args.preprocessing_num_workers,
@@ -365,8 +388,7 @@ data_collator = DataCollatorForSeq2Seq(
     padding=False)
 
 model.gradient_checkpointing_enable()
-if config['model']['type'] == 'chatglm6b':
-    model.enable_input_require_grads()
+model.enable_input_require_grads()
 
 # import torch
 # model = torch.nn.DataParallel(model).cuda()
@@ -378,8 +400,6 @@ trainer = Seq2SeqTrainer(
     seed=args.seed,
     data_collator=data_collator,
     remove_unused_data=True,
-    # No placement for model, leave the model to `device_map`
-    device='cpu',
     cfg_modify_fn=cfg_modify_fn)
 trainer.tokenizer = tokenizer
 trainer.train()

@@ -96,6 +96,7 @@ class CVTasks(object):
     image_face_fusion = 'image-face-fusion'
     product_retrieval_embedding = 'product-retrieval-embedding'
     controllable_image_generation = 'controllable-image-generation'
+    text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
 
     # video recognition
@@ -153,6 +154,8 @@ class CVTasks(object):
     motion_generation = 'motion-generation'
     # 3d reconstruction
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
+    nerf_recon_vq_compression = 'nerf-recon-vq-compression'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
@@ -224,11 +227,13 @@ class AudioTasks(object):
     inverse_text_processing = 'inverse-text-processing'
     punctuation = 'punctuation'
     speaker_verification = 'speaker-verification'
+    speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
+    speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
 
 
 class MultiModalTasks(object):

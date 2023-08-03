@@ -9,13 +9,23 @@ torchrun examples/pytorch/baichuan/finetune_baichuan.py \
     --val_split 'test' \
     --src_txt 'text1' \
     --tgt_txt 'text2' \
-    --max_epochs 1 \
+    --sequence_length 128 \
+    --max_epochs 2 \
     --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 32 \
+    --train_data_worker 0 \
+    --eval_data_worker 0 \
+    --optimizer 'AdamW' \
     --lr 2e-5 \
     --lr_scheduler 'CosineAnnealingLR' \
-    --eval_strategy 'no' \
+    --eval_strategy 'by_epoch' \
     --bf16 1 \
     --use_lora 1 \
-    --eval_metrics 'text-gen-metric' \
+    --use_model_config 1 \
+    --eval_metrics 'ppl' \
     --T_max 1 \
+    --save_strategy no \
+    --save_best true \
+    --metric_for_best_model ppl \
+    --metric_rule_for_best_model min \
     --device_map 'auto' \

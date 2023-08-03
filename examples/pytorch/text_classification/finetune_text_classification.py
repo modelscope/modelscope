@@ -8,8 +8,14 @@ from modelscope.trainers import build_trainer
 
 def set_labels(labels):
     if isinstance(labels, str):
-        labels = labels.split(',')
-    return {label: id for id, label in enumerate(labels)}
+        label_list = labels.split(',')
+    else:
+        unique_labels = set(labels)
+        label_list = list(unique_labels)
+        label_list.sort()
+        label_list = list(
+            map(lambda x: x if isinstance(x, str) else str(x), label_list))
+    return {label: id for id, label in enumerate(label_list)}
 
 
 @dataclass(init=False)
@@ -52,7 +58,8 @@ class TextClassificationArguments(TrainingArgs):
         })
 
 
-config, args = TextClassificationArguments().parse_cli().to_config()
+training_args = TextClassificationArguments().parse_cli()
+config, args = training_args.to_config()
 
 print(config, args)
 
@@ -62,6 +69,10 @@ def cfg_modify_fn(cfg):
         cfg.merge_from_dict(config)
     else:
         cfg = config
+    if training_args.labels is None:
+        labels = train_dataset[training_args.label] + validation_dataset[
+            training_args.label]
+        cfg.merge_from_dict({'preprocessor.label2id': set_labels(labels)})
     cfg.model['num_labels'] = len(cfg.preprocessor.label2id)
     if cfg.evaluation.period.eval_strategy == 'by_epoch':
         cfg.evaluation.period.by_epoch = True

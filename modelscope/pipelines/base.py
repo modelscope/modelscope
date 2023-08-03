@@ -144,7 +144,8 @@ class Pipeline(ABC):
             if not isinstance(model, torch.nn.Module):
                 return
             model.eval()
-            if self.device_map is None:
+            from modelscope.utils.torch_utils import is_on_same_device
+            if is_on_same_device(model):
                 model.to(self.device)
 
         if not self._model_prepare:

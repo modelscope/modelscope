@@ -63,7 +63,7 @@ class EfficientDiffusionTuningPipeline(Pipeline):
     def forward(self, inputs: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            results = self.model(**inputs)
+            results = self.model(**inputs, **forward_params)
             return results
 
     def postprocess(self, inputs: Dict[str, Any],
@@ -75,3 +75,6 @@ class EfficientDiffusionTuningPipeline(Pipeline):
                 images.append(img)
                 cv2.imwrite(f'{self.model.tuner_name}_{idx}.jpg', img)
         return {OutputKeys.OUTPUT_IMGS: images}
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return pipeline_parameters, pipeline_parameters, pipeline_parameters

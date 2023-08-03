@@ -9,8 +9,6 @@ PYTHONPATH=. python examples/pytorch/text_classification/finetune_text_classific
     --val_split 'validation' \
     --first_sequence 'sentence' \
     --label label \
-    --num_labels 15 \
-    --labels '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14' \
     --preprocessor 'sen-cls-tokenizer' \
     --use_model_config True \
     --max_epochs 1 \

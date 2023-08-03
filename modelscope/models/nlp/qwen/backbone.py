@@ -1,5 +1,7 @@
-# Copyright 2023 Alibaba Group. All rights reserved.
-"""Model classes for QWen."""
+# Copyright (c) Alibaba Cloud.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
 
 import importlib
 import math

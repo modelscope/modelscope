@@ -6,8 +6,8 @@ import json
 import numpy as np
 from torch.utils.data.sampler import Sampler
 
-from ..distributed import get_rank, get_world_size, shared_random_seed
-from ..utils import ceil_divide, read
+from modelscope.models.multi_modal.videocomposer.distributed import get_rank, get_world_size, shared_random_seed
+from modelscope.models.multi_modal.videocomposer.ops.utils import ceil_divide, read
 
 __all__ = ['BatchSampler', 'GroupSampler', 'ImgGroupSampler']
 

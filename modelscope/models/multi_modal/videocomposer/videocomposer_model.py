@@ -123,7 +123,6 @@ class VideoComposer(Model):
         ).to(gpu)
 
     def forward(self, input: Dict[str, Any]):
-        # print("--------model input: ", input)
         # input: ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
         zero_y = self.clip_encoder('').detach()
         black_image_feature = self.clip_encoder_visual(
@@ -132,7 +131,7 @@ class VideoComposer(Model):
 
         frame_in = None
         if self.read_image:
-            image_key = cfg.image_path  #
+            image_key = cfg.image_path
             frame = Image.open(open(image_key, mode='rb')).convert('RGB')
             frame_in = misc_transforms([frame])
 
@@ -178,5 +177,6 @@ class VideoComposer(Model):
         for param in autoencoder.parameters():
             param.requires_grad = False
         self.autoencoder.cuda()
+        
 
         return video_data.type(torch.float32).cpu()

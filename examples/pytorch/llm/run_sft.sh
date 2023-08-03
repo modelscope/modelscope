@@ -1,9 +1,6 @@
-#!/bin/bash
-
-DATE=$(date +"%Y%m%d-%H%M%S")
-nohup python llm_sft.py \
-    --device 0,1 \
-    --model_type openbuddy-llama2-13b \
+CUDA_VISIBLE_DEVICES=0,1 \
+python llm_sft.py \
+    --model_type qwen-7b \
+    --output_dir runs \
     --dataset alpaca-en,alpaca-zh \
-    --dataset_sample 20000 \
-&> train_$DATE.out &
+    --dataset_sample 20000

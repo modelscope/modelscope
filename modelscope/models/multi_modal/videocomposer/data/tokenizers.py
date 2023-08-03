@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import gzip
 import html
 import os

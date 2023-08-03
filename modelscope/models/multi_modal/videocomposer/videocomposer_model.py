@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import open_clip
 import torch
+import torch.nn as nn
 import torch.cuda.amp as amp
 import Image
 from einops import rearrange
@@ -13,6 +14,7 @@ from einops import rearrange
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 import modelscope.models.multi_modal.videocomposer.models as models
+from modelscope.models.multi_modal.videocomposer.autoencoder import (AutoencoderKL, DiagonalGaussianDistribution)
 from modelscope.models.builder import MODELS
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
@@ -70,6 +72,7 @@ class VideoComposer(Model):
         self.device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
         clip_checkpoint = kwargs.pop("clip_checkpoint", 'open_clip_pytorch_model.bin')
+        sd_checkpoint = kwargs.pop("sd_checkpoint", 'v2-1_512-ema-pruned.ckpt')
         self.read_image = kwargs.pop("read_image", False)
         self.read_style = kwargs.pop("read_style", True)
         self.read_sketch = kwargs.pop("read_sketch", False)
@@ -79,7 +82,33 @@ class VideoComposer(Model):
         self.clip_encoder = self.clip_encoder.to(self.device)
         self.clip_encoder_visual = FrozenOpenCLIPVisualEmbedder(layer='penultimate', pretrained=os.path.join(model_dir, clip_checkpoint))
         self.clip_encoder_visual.model.to(self.device)
-
+        self.autoencoder = AutoencoderKL(ddconfig, 4, ckpt_path=os.path.join(model_dir, sd_checkpoint))
+        self.model = UNetSD_temporal(
+            cfg=cfg,
+            in_dim=cfg.unet_in_dim,
+            concat_dim= cfg.unet_concat_dim,
+            dim=cfg.unet_dim,
+            y_dim=cfg.unet_y_dim,
+            context_dim=cfg.unet_context_dim,
+            out_dim=cfg.unet_out_dim,
+            dim_mult=cfg.unet_dim_mult,
+            num_heads=cfg.unet_num_heads,
+            head_dim=cfg.unet_head_dim,
+            num_res_blocks=cfg.unet_res_blocks,
+            attn_scales=cfg.unet_attn_scales,
+            dropout=cfg.unet_dropout,
+            temporal_attention = cfg.temporal_attention,
+            temporal_attn_times = cfg.temporal_attn_times,
+            use_checkpoint=cfg.use_checkpoint,
+            use_fps_condition=cfg.use_fps_condition,
+            use_sim_mask=cfg.use_sim_mask,
+            video_compositions=cfg.video_compositions,
+            misc_dropout=cfg.misc_dropout,
+            p_all_zero=cfg.p_all_zero,
+            p_all_keep=cfg.p_all_zero,
+            zero_y = zero_y,
+            black_image_feature = black_image_feature,
+            ).to(gpu)
 
 
     def forward(self, input: Dict[str, Any]):
@@ -124,11 +153,14 @@ class VideoComposer(Model):
                     'resolution': 256, 'in_channels': 3, \
                     'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \
                     'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
-        autoencoder = AutoencoderKL(ddconfig, 4, ckpt_path=DOWNLOAD_TO_CACHE(cfg.sd_checkpoint))
-        autoencoder.eval()
+        # autoencoder = AutoencoderKL(ddconfig, 4, ckpt_path=DOWNLOAD_TO_CACHE(cfg.sd_checkpoint))
+        self.autoencoder.eval()
         for param in autoencoder.parameters():
             param.requires_grad = False
-        autoencoder.cuda()
+        self.autoencoder.cuda()
+
+
+
 
 
 

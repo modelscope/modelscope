@@ -101,6 +101,7 @@ class VideoComposerPipeline(Pipeline):
 
         video_key = input['Video:FILE']
         cap_txt = input['text']
+        style_image = input['Image:FILE']
 
         total_frames = None
 
@@ -157,15 +158,25 @@ class VideoComposerPipeline(Pipeline):
 
         mask = mask.unsqueeze(0).repeat_interleave(
             repeats=self.max_frames, dim=0)
-        print(
-            '---------ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data',
-            ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask,
-            mv_data)
-        return ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data
+        # print(
+        #     '---------ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data',
+        #     ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask,
+        #     mv_data)
+        video_input = {"ref_frame": ref_frame,
+                       "cap_txt": cap_txt,
+                       "video_data": video_data,
+                       "misc_data": misc_data,
+                       "feature_framerate": feature_framerate,
+                       "mask": mask,
+                       "mv_data": mv_data,
+                       "style_image": style_image}
+        return video_input
+        # return ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
         # return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        print('-------forward input: ', input)
+        # print('-------forward input: ', input)
+        print("-------self.model: ", self.model)
         return self.model(input)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

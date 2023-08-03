@@ -7,6 +7,7 @@ from typing import Any, Dict
 import open_clip
 import torch
 import torch.cuda.amp as amp
+import Image
 from einops import rearrange
 
 from modelscope.metainfo import Models
@@ -20,7 +21,6 @@ from modelscope.models.multi_modal.video_synthesis.unet_sd import UNetSD
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.models.multi_modal.videocomposer.clip import (FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
-from modelscope.models.multi_modal.videocomposer.utils import DOWNLOAD_TO_CACHE
 
 __all__ = ['VideoComposer']
 
@@ -73,59 +73,69 @@ class VideoComposer(Model):
         super().__init__(model_dir=model_dir, *args, **kwargs)
         self.device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
-        self.clip_checkpoint = kwargs.pop("clip_checkpoint", 'open_clip_pytorch_model.bin')
-        self.clip_encoder = FrozenOpenCLIPEmbedder(layer='penultimate', pretrained = DOWNLOAD_TO_CACHE(self.clip_checkpoint))
+        clip_checkpoint = kwargs.pop("clip_checkpoint", 'open_clip_pytorch_model.bin')
+        self.read_image = kwargs.pop("read_image", False)
+        self.read_style = kwargs.pop("read_style", True)
+        self.read_sketch = kwargs.pop("read_sketch", False)
+        self.save_origin_video = kwargs.pop("save_origin_video", True)
+        self.video_compositions = kwargs.pop("video_compositions", ['text', 'mask', 'depthmap', 'sketch', 'motion', 'image', 'local_image', 'single_sketch'])
+        self.clip_encoder = FrozenOpenCLIPEmbedder(layer='penultimate', pretrained=os.path.join(model_dir, clip_checkpoint))
         self.clip_encoder = self.clip_encoder.to(self.device)
-        self.clip_encoder_visual = FrozenOpenCLIPVisualEmbedder(layer='penultimate',pretrained = DOWNLOAD_TO_CACHE(self.clip_checkpoint))
+        self.clip_encoder_visual = FrozenOpenCLIPVisualEmbedder(layer='penultimate', pretrained=os.path.join(model_dir, clip_checkpoint))
         self.clip_encoder_visual.model.to(self.device)
 
 
 
     def forward(self, input: Dict[str, Any]):
-        print("--------videocomposer model forward input: ", input)
+        # print("--------model input: ", input)
+        # input: ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
         zero_y = self.clip_encoder("").detach()
-        black_image_feature = self.clip_encoder_visual(clip_encoder_visual.black_image).unsqueeze(1)
+        black_image_feature = self.clip_encoder_visual(self.clip_encoder_visual.black_image).unsqueeze(1)
         black_image_feature = torch.zeros_like(black_image_feature)
 
+        frame_in = None
+        if self.read_image:
+            image_key = cfg.image_path # 
+            frame = Image.open(open(image_key, mode='rb')).convert('RGB')
+            frame_in = misc_transforms([frame]) 
+        
+        frame_sketch = None
+        if self.read_sketch:
+            sketch_key = cfg.sketch_path
+            frame_sketch = Image.open(open(sketch_key, mode='rb')).convert('RGB')
+            frame_sketch = misc_transforms([frame_sketch]) # 
+
+        frame_style = None
+        if self.read_style:
+            frame_style = Image.open(open(input["style_image"], mode='rb')).convert('RGB')
+
+        # Generators for various conditions
+        if 'depthmap' in self.video_compositions:
+            midas = models.midas_v3(pretrained=True).eval().requires_grad_(False).to(
+                memory_format=torch.channels_last).half().to(self.device)
+        if 'canny' in self.video_compositions:
+            canny_detector = CannyDetector()
+        if 'sketch' in self.video_compositions:
+            pidinet = pidinet_bsd(pretrained=True, vanilla_cnn=True).eval().requires_grad_(False).to(self.device)
+            cleaner = sketch_simplification_gan(pretrained=True).eval().requires_grad_(False).to(self.device)
+            pidi_mean = torch.tensor(self.sketch_mean).view(1, -1, 1, 1).to(self.device)
+            pidi_std = torch.tensor(self.sketch_std).view(1, -1, 1, 1).to(self.device)
+        # Placeholder for color inference
+        palette = None
+
+        # [model] auotoencoder
+        ddconfig = {'double_z': True, 'z_channels': 4, \
+                    'resolution': 256, 'in_channels': 3, \
+                    'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \
+                    'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
+        autoencoder = AutoencoderKL(ddconfig, 4, ckpt_path=DOWNLOAD_TO_CACHE(cfg.sd_checkpoint))
+        autoencoder.eval()
+        for param in autoencoder.parameters():
+            param.requires_grad = False
+        autoencoder.cuda()
 
 
 
 
 
-        y = input['text_emb']
-        zero_y = input['text_emb_zero']
-        context = torch.cat([zero_y, y], dim=0).to(self.device)
-        # synthesis
-        with torch.no_grad():
-            num_sample = 1  # here let b = 1
-            max_frames = self.config.model.model_args.max_frames
-            latent_h, latent_w = input['out_height'] // 8, input[
-                'out_width'] // 8
-            with amp.autocast(enabled=True):
-                x0 = self.diffusion.ddim_sample_loop(
-                    noise=torch.randn(num_sample, 4, max_frames, latent_h,
-                                      latent_w).to(
-                                          self.device),  # shape: b c f h w
-                    model=self.sd_model,
-                    model_kwargs=[{
-                        'y':
-                        context[1].unsqueeze(0).repeat(num_sample, 1, 1)
-                    }, {
-                        'y':
-                        context[0].unsqueeze(0).repeat(num_sample, 1, 1)
-                    }],
-                    guide_scale=9.0,
-                    ddim_timesteps=50,
-                    eta=0.0)
-
-                scale_factor = 0.18215
-                video_data = 1. / scale_factor * x0
-                bs_vd = video_data.shape[0]
-                video_data = rearrange(video_data, 'b c f h w -> (b f) c h w')
-                self.autoencoder.to(self.device)
-                video_data = self.autoencoder.decode(video_data)
-                if self.config.model.model_args.tiny_gpu == 1:
-                    self.autoencoder.to('cpu')
-                video_data = rearrange(
-                    video_data, '(b f) c h w -> b c f h w', b=bs_vd)
         return video_data.type(torch.float32).cpu()

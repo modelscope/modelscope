@@ -7,7 +7,7 @@ from modelscope.utils.constant import DownloadMode, Tasks
 pipe = pipeline(
     task=Tasks.text_to_video_synthesis,
     model='buptwq/videocomposer',
-    model_revision='v1.0.0')
+    model_revision='v1.0.1')
 ds = MsDataset.load(
     'buptwq/videocomposer-depths-style',
     split='train',

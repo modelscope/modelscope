@@ -12,12 +12,8 @@ from einops import rearrange
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
+import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.models.builder import MODELS
-from modelscope.models.multi_modal.video_synthesis.autoencoder import \
-    AutoencoderKL
-from modelscope.models.multi_modal.video_synthesis.diffusion import (
-    GaussianDiffusion, beta_schedule)
-from modelscope.models.multi_modal.video_synthesis.unet_sd import UNetSD
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.models.multi_modal.videocomposer.clip import (FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
@@ -123,7 +119,7 @@ class VideoComposer(Model):
         # Placeholder for color inference
         palette = None
 
-        # [model] auotoencoder
+        # auotoencoder
         ddconfig = {'double_z': True, 'z_channels': 4, \
                     'resolution': 256, 'in_channels': 3, \
                     'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \

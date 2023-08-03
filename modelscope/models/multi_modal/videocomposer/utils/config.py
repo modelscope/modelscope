@@ -3,11 +3,17 @@ import copy
 import os
 
 import json
-import utils.logging as logging
+import modelscope.models.multi_modal.videocomposer.utils.logging as logging
 import yaml
 
 logger = logging.get_logger(__name__)
 
+def setup_seed(seed):
+    print('Seed: ', seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 class Config(object):
 
@@ -90,13 +96,11 @@ class Config(object):
     def _initialize_cfg(self):
         if self.need_initialization:
             self.need_initialization = False
-            if os.path.exists('./configs/base.yaml'):
-                with open('./configs/base.yaml', 'r') as f:
+            if os.path.exists('./configs/multi_modal/base.yaml'):
+                with open('./configs/multi_modal/base.yaml', 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
             else:
-                with open(
-                        os.path.realpath(__file__).split('/')[-3]
-                        + '/configs/base.yaml', 'r') as f:
+                with open('./configs/multi_modal/base.yaml', 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
         return cfg
 
@@ -122,7 +126,6 @@ class Config(object):
 
         if '_BASE_RUN' not in cfg.keys() and '_BASE_MODEL' not in cfg.keys(
         ) and '_BASE' not in cfg.keys():
-            # return cfg if the base file is being accessed
             return cfg
 
         if '_BASE' in cfg.keys():

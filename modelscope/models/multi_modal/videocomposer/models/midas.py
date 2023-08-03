@@ -13,11 +13,13 @@ r"""A much cleaner re-implementation of ``https://github.com/isl-org/MiDaS''.
         input = input.to(memory_format=torch.channels_last).half()
         output = model(input)
 """
+import os
 import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import os.path as osp
 
 __all__ = ['MiDaS', 'midas_v3']
 
@@ -313,7 +315,7 @@ class MiDaS(nn.Module):
         return x
 
 
-def midas_v3(pretrained=False, **kwargs):
+def midas_v3(model_dir, pretrained=False, **kwargs):
     cfg = dict(
         image_size=384,
         patch_size=16,
@@ -328,5 +330,5 @@ def midas_v3(pretrained=False, **kwargs):
         # model.load_state_dict(torch.load(DOWNLOAD_TO_CACHE('experiments/models/midas/midas_v3_dpt_large.pth'), map_location='cpu'))
         model.load_state_dict(
             torch.load(
-                './model_weights/midas_v3_dpt_large.pth', map_location='cpu'))
+                os.path.join(model_dir, 'midas_v3_dpt_large.pth'), map_location='cpu'))
     return model

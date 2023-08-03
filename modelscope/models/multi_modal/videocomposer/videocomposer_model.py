@@ -4,13 +4,15 @@ import os
 from os import path as osp
 from typing import Any, Dict
 
-import Image
+from PIL import Image
+import logging
 import open_clip
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 from einops import rearrange
-from utils.config import Config
+from modelscope.models.multi_modal.videocomposer.utils.config import Config
+from modelscope.models.multi_modal.videocomposer.utils.utils import find_free_port
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
@@ -22,9 +24,10 @@ from modelscope.models.multi_modal.videocomposer.clip import (
     FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
 from modelscope.models.multi_modal.videocomposer.diffusion import (
     GaussianDiffusion, beta_schedule)
-from modelscope.models.multi_modal.videocomposer.utils import (setup_seed,
+from modelscope.models.multi_modal.videocomposer.utils.utils import (setup_seed,
                                                                to_device)
-from modelscope.utils.config import Config
+from modelscope.models.multi_modal.videocomposer.unet_sd import UNetSD_temporal
+from modelscope.models.multi_modal.videocomposer.utils.utils import DOWNLOAD_TO_CACHE
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
 
@@ -84,9 +87,14 @@ class VideoComposer(Model):
         sd_checkpoint = kwargs.pop('sd_checkpoint', 'v2-1_512-ema-pruned.ckpt')
         _cfg = Config(load=True)
         cfg.update(_cfg.cfg_dict)
+        # rank-wise params
+        l1 = len(cfg.frame_lens)
+        l2 = len(cfg.feature_framerates)
+        cfg.max_frames = cfg.frame_lens[0 % (l1*l2)// l2]
+        cfg.batch_size = cfg.batch_sizes[str(cfg.max_frames)]
         # Copy update input parameter to current task
-        for k, v in cfg_update.items():
-            cfg[k] = v
+        # for k, v in _cfg.items():
+        #     cfg[k] = v
         self.cfg = cfg
         if not 'MASTER_ADDR' in os.environ:
             os.environ['MASTER_ADDR'] = 'localhost'
@@ -102,6 +110,7 @@ class VideoComposer(Model):
             'text', 'mask', 'depthmap', 'sketch', 'motion', 'image',
             'local_image', 'single_sketch'
         ])
+        # print("------self.cfg.batch_size", self.cfg.batch_size)
         self.viz_num = self.cfg.batch_size
         self.clip_encoder = FrozenOpenCLIPEmbedder(
             layer='penultimate',
@@ -111,8 +120,20 @@ class VideoComposer(Model):
             layer='penultimate',
             pretrained=os.path.join(model_dir, clip_checkpoint))
         self.clip_encoder_visual.model.to(self.device)
+        ddconfig = {'double_z': True, 'z_channels': 4, \
+                    'resolution': 256, 'in_channels': 3, \
+                    'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \
+                    'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
         self.autoencoder = AutoencoderKL(
             ddconfig, 4, ckpt_path=os.path.join(model_dir, sd_checkpoint))
+        zero_y = self.clip_encoder('').detach()
+        black_image_feature = self.clip_encoder_visual(
+        self.clip_encoder_visual.black_image).unsqueeze(1)
+        black_image_feature = torch.zeros_like(black_image_feature)
+        self.autoencoder.eval()
+        for param in self.autoencoder.parameters():
+            param.requires_grad = False
+        self.autoencoder.cuda()
         self.model = UNetSD_temporal(
             cfg=self.cfg,
             in_dim=self.cfg.unet_in_dim,
@@ -145,24 +166,23 @@ class VideoComposer(Model):
         if self.cfg.resume and self.cfg.resume_checkpoint:
             if hasattr(self.cfg, 'text_to_video_pretrain'
                        ) and self.cfg.text_to_video_pretrain:
-                ss = torch.load(DOWNLOAD_TO_CACHE(cfg.resume_checkpoint))
+                checkpoint_name = cfg.resume_checkpoint.split('/')[-1]
+                ss = torch.load(os.path.join(self.model_dir, cfg.resume_checkpoint))
                 ss = {
                     key: p
                     for key, p in ss.items() if 'input_blocks.0.0' not in key
                 }
-                model.load_state_dict(ss, strict=False)
+                self.model.load_state_dict(ss, strict=False)
             else:
-                model.load_state_dict(
+                checkpoint_name = cfg.resume_checkpoint.split('/')[-1]
+                self.model.load_state_dict(
                     torch.load(
-                        DOWNLOAD_TO_CACHE(cfg.resume_checkpoint),
+                        os.path.join(self.model_dir, checkpoint_name),
                         map_location='cpu'),
                     strict=False)
             if self.cfg.resume_step:
                 resume_step = self.cfg.resume_step
 
-            logging.info(
-                f'Successfully load step {resume_step} model from {self.cfg.resume_checkpoint}'
-            )
             torch.cuda.empty_cache()
         else:
             logging.error(
@@ -185,11 +205,6 @@ class VideoComposer(Model):
 
     def forward(self, input: Dict[str, Any]):
         # input: ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
-        zero_y = self.clip_encoder('').detach()
-        black_image_feature = self.clip_encoder_visual(
-            self.clip_encoder_visual.black_image).unsqueeze(1)
-        black_image_feature = torch.zeros_like(black_image_feature)
-
         frame_in = None
         if self.read_image:
             image_key = self.cfg.image_path
@@ -201,7 +216,7 @@ class VideoComposer(Model):
             sketch_key = self.cfg.sketch_path
             frame_sketch = Image.open(open(sketch_key,
                                            mode='rb')).convert('RGB')
-            frame_sketch = misc_transforms([frame_sketch])  #
+            frame_sketch = misc_transforms([frame_sketch])
 
         frame_style = None
         if self.read_style:
@@ -211,7 +226,7 @@ class VideoComposer(Model):
         # Generators for various conditions
         if 'depthmap' in self.video_compositions:
             midas = models.midas_v3(
-                pretrained=True).eval().requires_grad_(False).to(
+                pretrained=True, model_dir=self.model_dir).eval().requires_grad_(False).to(
                     memory_format=torch.channels_last).half().to(self.device)
         if 'canny' in self.video_compositions:
             canny_detector = CannyDetector()
@@ -227,17 +242,6 @@ class VideoComposer(Model):
                                                           1).to(self.device)
         # Placeholder for color inference
         palette = None
-
-        # auotoencoder
-        ddconfig = {'double_z': True, 'z_channels': 4, \
-                    'resolution': 256, 'in_channels': 3, \
-                    'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \
-                    'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
-        # autoencoder = AutoencoderKL(ddconfig, 4, ckpt_path=DOWNLOAD_TO_CACHE(cfg.sd_checkpoint))
-        self.autoencoder.eval()
-        for param in autoencoder.parameters():
-            param.requires_grad = False
-        self.autoencoder.cuda()
 
         self.model.eval()
         caps = input['cap_txt']

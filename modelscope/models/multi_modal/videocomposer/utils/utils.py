@@ -20,6 +20,7 @@ from multiprocessing.pool import ThreadPool as Pool
 
 import imageio
 import json
+import random
 import numpy as np
 import oss2 as oss
 import requests
@@ -44,15 +45,6 @@ __all__ = [
 ]
 
 TFS_CLIENT = None
-
-
-def setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.deterministic = True
-
 
 def DOWNLOAD_TO_CACHE(oss_key,
                       file_or_dirname=None,
@@ -85,7 +77,6 @@ def setup_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
-
 
 def parse_oss_url(path):
     if path.startswith('oss://'):

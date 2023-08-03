@@ -8,6 +8,7 @@ from typing import Any, Dict
 import cv2
 import torch
 import torchvision.transforms as T
+from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.data as data
 from modelscope.metainfo import Pipelines
@@ -177,8 +178,6 @@ class VideoComposerPipeline(Pipeline):
         # return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        # print('-------forward input: ', input)
-        print('-------self.model: ', self.model)
         return self.model(input)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:

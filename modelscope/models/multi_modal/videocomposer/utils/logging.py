@@ -10,9 +10,7 @@ import os
 import sys
 
 import simplejson
-import utils.distributed as du
-
-# from fvcore.common.file_io import PathManager
+import modelscope.models.multi_modal.videocomposer.utils.distributed as du
 
 
 def _suppress_print():
@@ -24,11 +22,6 @@ def _suppress_print():
         pass
 
     builtins.print = print_pass
-
-
-# @functools.lru_cache(maxsize=None)
-# def _cached_log_stream(filename):
-#     return PathManager.open(filename, "a")
 
 
 def setup_logging(cfg, log_file):

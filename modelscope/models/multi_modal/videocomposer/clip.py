@@ -1,9 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import open_clip
 import torch
 import torch.nn as nn
-import numpy as np
 import torchvision.transforms as T
 
 

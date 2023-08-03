@@ -13,14 +13,15 @@ r"""A much cleaner re-implementation of ``https://github.com/isl-org/MiDaS''.
         input = input.to(memory_format=torch.channels_last).half()
         output = model(input)
 """
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-
 from artist import DOWNLOAD_TO_CACHE
 
 __all__ = ['MiDaS', 'midas_v3']
+
 
 class SelfAttention(nn.Module):
 
@@ -35,7 +36,7 @@ class SelfAttention(nn.Module):
         # layers
         self.to_qkv = nn.Linear(dim, dim * 3)
         self.proj = nn.Linear(dim, dim)
-    
+
     def forward(self, x):
         b, l, c, n, d = *x.size(), self.num_heads, self.head_dim
 
@@ -45,7 +46,7 @@ class SelfAttention(nn.Module):
         # compute attention
         attn = self.scale * torch.einsum('binc,bjnc->bnij', q, k)
         attn = F.softmax(attn.float(), dim=-1).type_as(attn)
-        
+
         # gather context
         x = torch.einsum('bnij,bjnc->binc', attn, v)
         x = x.reshape(b, l, c)
@@ -54,26 +55,26 @@ class SelfAttention(nn.Module):
         x = self.proj(x)
         return x
 
+
 class AttentionBlock(nn.Module):
 
     def __init__(self, dim, num_heads):
         super(AttentionBlock, self).__init__()
         self.dim = dim
         self.num_heads = num_heads
-        
+
         # layers
         self.norm1 = nn.LayerNorm(dim)
         self.attn = SelfAttention(dim, num_heads)
         self.norm2 = nn.LayerNorm(dim)
         self.mlp = nn.Sequential(
-            nn.Linear(dim, dim * 4),
-            nn.GELU(),
-            nn.Linear(dim * 4, dim))
-    
+            nn.Linear(dim, dim * 4), nn.GELU(), nn.Linear(dim * 4, dim))
+
     def forward(self, x):
         x = x + self.attn(self.norm1(x))
         x = x + self.mlp(self.norm2(x))
         return x
+
 
 class VisionTransformer(nn.Module):
 
@@ -92,20 +93,23 @@ class VisionTransformer(nn.Module):
         self.out_dim = out_dim
         self.num_heads = num_heads
         self.num_layers = num_layers
-        self.num_patches = (image_size // patch_size) ** 2
+        self.num_patches = (image_size // patch_size)**2
 
         # embeddings
-        self.patch_embedding = nn.Conv2d(3, dim, kernel_size=patch_size, stride=patch_size)
+        self.patch_embedding = nn.Conv2d(
+            3, dim, kernel_size=patch_size, stride=patch_size)
         self.cls_embedding = nn.Parameter(torch.zeros(1, 1, dim))
-        self.pos_embedding = nn.Parameter(torch.empty(1, self.num_patches + 1, dim).normal_(std=0.02))
+        self.pos_embedding = nn.Parameter(
+            torch.empty(1, self.num_patches + 1, dim).normal_(std=0.02))
 
         # blocks
-        self.blocks = nn.Sequential(*[AttentionBlock(dim, num_heads) for _ in range(num_layers)])
+        self.blocks = nn.Sequential(
+            *[AttentionBlock(dim, num_heads) for _ in range(num_layers)])
         self.norm = nn.LayerNorm(dim)
 
         # head
         self.head = nn.Linear(dim, out_dim)
-    
+
     def forward(self, x):
         b = x.size(0)
 
@@ -122,21 +126,23 @@ class VisionTransformer(nn.Module):
         x = self.head(x)
         return x
 
+
 class ResidualBlock(nn.Module):
 
     def __init__(self, dim):
         super(ResidualBlock, self).__init__()
         self.dim = dim
-        
+
         # layers
         self.residual = nn.Sequential(
             nn.ReLU(inplace=False),  # NOTE: avoid modifying the input
             nn.Conv2d(dim, dim, 3, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(dim, dim, 3, padding=1))
-    
+
     def forward(self, x):
         return x + self.residual(x)
+
 
 class FusionBlock(nn.Module):
 
@@ -148,21 +154,24 @@ class FusionBlock(nn.Module):
         self.layer1 = ResidualBlock(dim)
         self.layer2 = ResidualBlock(dim)
         self.conv_out = nn.Conv2d(dim, dim, 1)
-    
+
     def forward(self, *xs):
         assert len(xs) in (1, 2), 'invalid number of inputs'
         if len(xs) == 1:
             x = self.layer2(xs[0])
         else:
             x = self.layer2(xs[0] + self.layer1(xs[1]))
-        x = F.interpolate(x, scale_factor=2, mode='bilinear', align_corners=True)
+        x = F.interpolate(
+            x, scale_factor=2, mode='bilinear', align_corners=True)
         x = self.conv_out(x)
         return x
+
 
 class MiDaS(nn.Module):
     r"""MiDaS v3.0 DPT-Large from ``https://github.com/isl-org/MiDaS''.
         Monocular depth estimation using dense prediction transformers.
     """
+
     def __init__(self,
                  image_size=384,
                  patch_size=16,
@@ -181,51 +190,46 @@ class MiDaS(nn.Module):
         self.fusion_dim = fusion_dim
         self.num_heads = num_heads
         self.num_layers = num_layers
-        self.num_patches = (image_size // patch_size) ** 2
+        self.num_patches = (image_size // patch_size)**2
 
         # embeddings
-        self.patch_embedding = nn.Conv2d(3, dim, kernel_size=patch_size, stride=patch_size)
+        self.patch_embedding = nn.Conv2d(
+            3, dim, kernel_size=patch_size, stride=patch_size)
         self.cls_embedding = nn.Parameter(torch.zeros(1, 1, dim))
-        self.pos_embedding = nn.Parameter(torch.empty(1, self.num_patches + 1, dim).normal_(std=0.02))
+        self.pos_embedding = nn.Parameter(
+            torch.empty(1, self.num_patches + 1, dim).normal_(std=0.02))
 
         # blocks
         stride = num_layers // 4
-        self.blocks = nn.Sequential(*[AttentionBlock(dim, num_heads) for _ in range(num_layers)])
+        self.blocks = nn.Sequential(
+            *[AttentionBlock(dim, num_heads) for _ in range(num_layers)])
         self.slices = [slice(i * stride, (i + 1) * stride) for i in range(4)]
 
         # stage1 (4x)
-        self.fc1 = nn.Sequential(
-            nn.Linear(dim * 2, dim),
-            nn.GELU())
+        self.fc1 = nn.Sequential(nn.Linear(dim * 2, dim), nn.GELU())
         self.conv1 = nn.Sequential(
             nn.Conv2d(dim, neck_dims[0], 1),
             nn.ConvTranspose2d(neck_dims[0], neck_dims[0], 4, stride=4),
             nn.Conv2d(neck_dims[0], fusion_dim, 3, padding=1, bias=False))
         self.fusion1 = FusionBlock(fusion_dim)
-        
+
         # stage2 (8x)
-        self.fc2 = nn.Sequential(
-            nn.Linear(dim * 2, dim),
-            nn.GELU())
+        self.fc2 = nn.Sequential(nn.Linear(dim * 2, dim), nn.GELU())
         self.conv2 = nn.Sequential(
             nn.Conv2d(dim, neck_dims[1], 1),
             nn.ConvTranspose2d(neck_dims[1], neck_dims[1], 2, stride=2),
             nn.Conv2d(neck_dims[1], fusion_dim, 3, padding=1, bias=False))
         self.fusion2 = FusionBlock(fusion_dim)
-        
+
         # stage3 (16x)
-        self.fc3 = nn.Sequential(
-            nn.Linear(dim * 2, dim),
-            nn.GELU())
+        self.fc3 = nn.Sequential(nn.Linear(dim * 2, dim), nn.GELU())
         self.conv3 = nn.Sequential(
             nn.Conv2d(dim, neck_dims[2], 1),
             nn.Conv2d(neck_dims[2], fusion_dim, 3, padding=1, bias=False))
         self.fusion3 = FusionBlock(fusion_dim)
 
         # stage4 (32x)
-        self.fc4 = nn.Sequential(
-            nn.Linear(dim * 2, dim),
-            nn.GELU())
+        self.fc4 = nn.Sequential(nn.Linear(dim * 2, dim), nn.GELU())
         self.conv4 = nn.Sequential(
             nn.Conv2d(dim, neck_dims[3], 1),
             nn.Conv2d(neck_dims[3], neck_dims[3], 3, stride=2, padding=1),
@@ -237,10 +241,9 @@ class MiDaS(nn.Module):
             nn.Conv2d(fusion_dim, fusion_dim // 2, 3, padding=1),
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
             nn.Conv2d(fusion_dim // 2, 32, 3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(32, 1, 1),
+            nn.ReLU(inplace=True), nn.ConvTranspose2d(32, 1, 1),
             nn.ReLU(inplace=True))
-    
+
     def forward(self, x):
         b, c, h, w, p = *x.size(), self.patch_size
         assert h % p == 0 and w % p == 0, f'Image size ({w}, {h}) is not divisible by patch size ({p}, {p})'
@@ -250,10 +253,14 @@ class MiDaS(nn.Module):
         pos_embedding = torch.cat([
             self.pos_embedding[:, :1],
             F.interpolate(
-                self.pos_embedding[:, 1:].reshape(1, grid, grid, -1).permute(0, 3, 1, 2),
+                self.pos_embedding[:, 1:].reshape(1, grid, grid, -1).permute(
+                    0, 3, 1, 2),
                 size=(hp, wp),
                 mode='bilinear',
-                align_corners=False).permute(0, 2, 3, 1).reshape(1, hp * wp, -1)], dim=1)
+                align_corners=False).permute(0, 2, 3, 1).reshape(
+                    1, hp * wp, -1)
+        ],
+                                  dim=1)
         x = self.patch_embedding(x).flatten(2).permute(0, 2, 1)
         x = torch.cat([self.cls_embedding.repeat(b, 1, 1), x], dim=1)
         x = x + pos_embedding
@@ -292,6 +299,7 @@ class MiDaS(nn.Module):
         x = self.head(x1)
         return x
 
+
 def midas_v3(pretrained=False, **kwargs):
     cfg = dict(
         image_size=384,
@@ -305,5 +313,7 @@ def midas_v3(pretrained=False, **kwargs):
     model = MiDaS(**cfg)
     if pretrained:
         # model.load_state_dict(torch.load(DOWNLOAD_TO_CACHE('experiments/models/midas/midas_v3_dpt_large.pth'), map_location='cpu'))
-        model.load_state_dict(torch.load("./model_weights/midas_v3_dpt_large.pth", map_location='cpu'))
+        model.load_state_dict(
+            torch.load(
+                './model_weights/midas_v3_dpt_large.pth', map_location='cpu'))
     return model

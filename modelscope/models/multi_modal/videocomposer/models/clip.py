@@ -1,12 +1,16 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import math
 
 import artist.ops as ops  # for using differentiable all_gather
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from artist import DOWNLOAD_TO_CACHE
 
-__all__ = ['CLIP', 'clip_vit_b_32', 'clip_vit_b_16', 'clip_vit_l_14', 'clip_vit_l_14_336px', 'clip_vit_h_16']
+__all__ = [
+    'CLIP', 'clip_vit_b_32', 'clip_vit_b_16', 'clip_vit_l_14',
+    'clip_vit_l_14_336px', 'clip_vit_h_16'
+]
+
 
 def to_fp16(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -17,16 +21,20 @@ def to_fp16(m):
         p = getattr(m, 'head')
         p.data = p.data.half()
 
+
 class QuickGELU(nn.Module):
 
     def forward(self, x):
         return x * torch.sigmoid(1.702 * x)
 
+
 class LayerNorm(nn.LayerNorm):
     r"""Subclass of nn.LayerNorm to handle fp16.
     """
+
     def forward(self, x):
         return super(LayerNorm, self).forward(x.float()).type_as(x)
+
 
 class SelfAttention(nn.Module):
 
@@ -43,7 +51,7 @@ class SelfAttention(nn.Module):
         self.attn_dropout = nn.Dropout(attn_dropout)
         self.proj = nn.Linear(dim, dim)
         self.proj_dropout = nn.Dropout(proj_dropout)
-    
+
     def forward(self, x, mask=None):
         r"""x:      [B, L, C].
             mask:   [*, L, L].
@@ -72,6 +80,7 @@ class SelfAttention(nn.Module):
         x = self.proj_dropout(x)
         return x
 
+
 class AttentionBlock(nn.Module):
 
     def __init__(self, dim, num_heads, attn_dropout=0.0, proj_dropout=0.0):
@@ -84,15 +93,14 @@ class AttentionBlock(nn.Module):
         self.attn = SelfAttention(dim, num_heads, attn_dropout, proj_dropout)
         self.norm2 = LayerNorm(dim)
         self.mlp = nn.Sequential(
-            nn.Linear(dim, dim * 4),
-            QuickGELU(),
-            nn.Linear(dim * 4, dim),
+            nn.Linear(dim, dim * 4), QuickGELU(), nn.Linear(dim * 4, dim),
             nn.Dropout(proj_dropout))
-    
+
     def forward(self, x, mask=None):
         x = x + self.attn(self.norm1(x), mask)
         x = x + self.mlp(self.norm2(x))
         return x
+
 
 class VisionTransformer(nn.Module):
 
@@ -114,32 +122,36 @@ class VisionTransformer(nn.Module):
         self.out_dim = out_dim
         self.num_heads = num_heads
         self.num_layers = num_layers
-        self.num_patches = (image_size // patch_size) ** 2
+        self.num_patches = (image_size // patch_size)**2
 
         # embeddings
         gain = 1.0 / math.sqrt(dim)
-        self.patch_embedding = nn.Conv2d(3, dim, kernel_size=patch_size, stride=patch_size, bias=False)
+        self.patch_embedding = nn.Conv2d(
+            3, dim, kernel_size=patch_size, stride=patch_size, bias=False)
         self.cls_embedding = nn.Parameter(gain * torch.randn(1, 1, dim))
-        self.pos_embedding = nn.Parameter(gain * torch.randn(1, self.num_patches + 1, dim))
+        self.pos_embedding = nn.Parameter(
+            gain * torch.randn(1, self.num_patches + 1, dim))
         self.dropout = nn.Dropout(embedding_dropout)
 
         # transformer
         self.pre_norm = LayerNorm(dim)
         self.transformer = nn.Sequential(*[
             AttentionBlock(dim, num_heads, attn_dropout, proj_dropout)
-            for _ in range(num_layers)])
+            for _ in range(num_layers)
+        ])
         self.post_norm = LayerNorm(dim)
-        
+
         # head
         self.head = nn.Parameter(gain * torch.randn(dim, out_dim))
-    
+
     def forward(self, x):
         b, dtype = x.size(0), self.head.dtype
         x = x.type(dtype)
 
         # patch-embedding
         x = self.patch_embedding(x).flatten(2).permute(0, 2, 1)  # [b, n, c]
-        x = torch.cat([self.cls_embedding.repeat(b, 1, 1).type(dtype), x], dim=1)
+        x = torch.cat([self.cls_embedding.repeat(b, 1, 1).type(dtype), x],
+                      dim=1)
         x = self.dropout(x + self.pos_embedding.type(dtype))
         x = self.pre_norm(x)
 
@@ -150,9 +162,10 @@ class VisionTransformer(nn.Module):
         x = self.post_norm(x)
         x = torch.mm(x[:, 0, :], self.head)
         return x
-    
+
     def fp16(self):
         return self.apply(to_fp16)
+
 
 class TextTransformer(nn.Module):
 
@@ -182,7 +195,8 @@ class TextTransformer(nn.Module):
         # transformer
         self.transformer = nn.ModuleList([
             AttentionBlock(dim, num_heads, attn_dropout, proj_dropout)
-            for _ in range(num_layers)])
+            for _ in range(num_layers)
+        ])
         self.norm = LayerNorm(dim)
 
         # head
@@ -190,13 +204,16 @@ class TextTransformer(nn.Module):
         self.head = nn.Parameter(gain * torch.randn(dim, out_dim))
 
         # causal attention mask
-        self.register_buffer('attn_mask', torch.tril(torch.ones(1, text_len, text_len)))
-    
+        self.register_buffer('attn_mask',
+                             torch.tril(torch.ones(1, text_len, text_len)))
+
     def forward(self, x):
         eot, dtype = x.argmax(dim=-1), self.head.dtype
 
         # embeddings
-        x = self.dropout(self.token_embedding(x).type(dtype) + self.pos_embedding.type(dtype))
+        x = self.dropout(
+            self.token_embedding(x).type(dtype)
+            + self.pos_embedding.type(dtype))
 
         # transformer
         for block in self.transformer:
@@ -206,9 +223,10 @@ class TextTransformer(nn.Module):
         x = self.norm(x)
         x = torch.mm(x[torch.arange(x.size(0)), eot], self.head)
         return x
-    
+
     def fp16(self):
         return self.apply(to_fp16)
+
 
 class CLIP(nn.Module):
 
@@ -290,7 +308,7 @@ class CLIP(nn.Module):
             dtype=torch.long,
             device=xi.device)
         return logits_i2t, logits_t2i, labels
-    
+
     def init_weights(self):
         # embeddings
         nn.init.normal_(self.textual.token_embedding.weight, std=0.02)
@@ -300,7 +318,8 @@ class CLIP(nn.Module):
         for modality in ['visual', 'textual']:
             dim = self.vision_dim if modality == 'visual' else 'textual'
             transformer = getattr(self, modality).transformer
-            proj_gain = (1.0 / math.sqrt(dim)) * (1.0 / math.sqrt(2 * transformer.num_layers))
+            proj_gain = (1.0 / math.sqrt(dim)) * (
+                1.0 / math.sqrt(2 * transformer.num_layers))
             attn_gain = 1.0 / math.sqrt(dim)
             mlp_gain = 1.0 / math.sqrt(2.0 * dim)
             for block in transformer.layers:
@@ -310,19 +329,34 @@ class CLIP(nn.Module):
                 nn.init.normal_(block.mlp[2].weight, std=proj_gain)
 
     def param_groups(self):
-        groups = [
-            {'params': [p for n, p in self.named_parameters() if 'norm' in n or n.endswith('bias')], 'weight_decay': 0.0},
-            {'params': [p for n, p in self.named_parameters() if not ('norm' in n or n.endswith('bias'))]}]
+        groups = [{
+            'params': [
+                p for n, p in self.named_parameters()
+                if 'norm' in n or n.endswith('bias')
+            ],
+            'weight_decay':
+            0.0
+        }, {
+            'params': [
+                p for n, p in self.named_parameters()
+                if not ('norm' in n or n.endswith('bias'))
+            ]
+        }]
         return groups
-    
+
     def fp16(self):
         return self.apply(to_fp16)
+
 
 def _clip(name, pretrained=False, **kwargs):
     model = CLIP(**kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(DOWNLOAD_TO_CACHE(f'models/clip/{name}.pth'), map_location='cpu'))
+        model.load_state_dict(
+            torch.load(
+                DOWNLOAD_TO_CACHE(f'models/clip/{name}.pth'),
+                map_location='cpu'))
     return model
+
 
 def clip_vit_b_32(pretrained=False, **kwargs):
     cfg = dict(
@@ -340,6 +374,7 @@ def clip_vit_b_32(pretrained=False, **kwargs):
     cfg.update(**kwargs)
     return _clip('openai-clip-vit-base-32', pretrained, **cfg)
 
+
 def clip_vit_b_16(pretrained=False, **kwargs):
     cfg = dict(
         embed_dim=512,
@@ -355,6 +390,7 @@ def clip_vit_b_16(pretrained=False, **kwargs):
         text_layers=12)
     cfg.update(**kwargs)
     return _clip('openai-clip-vit-base-16', pretrained, **cfg)
+
 
 def clip_vit_l_14(pretrained=False, **kwargs):
     cfg = dict(
@@ -372,6 +408,7 @@ def clip_vit_l_14(pretrained=False, **kwargs):
     cfg.update(**kwargs)
     return _clip('openai-clip-vit-large-14', pretrained, **cfg)
 
+
 def clip_vit_l_14_336px(pretrained=False, **kwargs):
     cfg = dict(
         embed_dim=768,
@@ -387,6 +424,7 @@ def clip_vit_l_14_336px(pretrained=False, **kwargs):
         text_layers=12)
     cfg.update(**kwargs)
     return _clip('openai-clip-vit-large-14-336px', pretrained, **cfg)
+
 
 def clip_vit_h_16(pretrained=False, **kwargs):
     assert not pretrained, 'pretrained model for openai-clip-vit-huge-16 is not available!'

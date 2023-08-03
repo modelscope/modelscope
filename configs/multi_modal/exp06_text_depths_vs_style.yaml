@@ -1,5 +1,5 @@
 TASK_TYPE: SINGLE_TASK
-read_image: False 
+read_image: False
 read_style: True
 read_sketch: False
 save_origin_video: True

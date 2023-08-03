@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
-
 """Logging."""
 
 import builtins
@@ -9,10 +8,11 @@ import functools
 import logging
 import os
 import sys
-import simplejson
-# from fvcore.common.file_io import PathManager
 
+import simplejson
 import utils.distributed as du
+
+# from fvcore.common.file_io import PathManager
 
 
 def _suppress_print():
@@ -20,7 +20,7 @@ def _suppress_print():
     Suppresses printing from the current process.
     """
 
-    def print_pass(*objects, sep=" ", end="\n", file=sys.stdout, flush=False):
+    def print_pass(*objects, sep=' ', end='\n', file=sys.stdout, flush=False):
         pass
 
     builtins.print = print_pass
@@ -47,8 +47,8 @@ def setup_logging(cfg, log_file):
     logger.setLevel(logging.INFO)
     logger.propagate = False
     plain_formatter = logging.Formatter(
-        "[%(asctime)s][%(levelname)s] %(name)s: %(lineno)4d: %(message)s",
-        datefmt="%m/%d %H:%M:%S",
+        '[%(asctime)s][%(levelname)s] %(name)s: %(lineno)4d: %(message)s',
+        datefmt='%m/%d %H:%M:%S',
     )
 
     if du.is_master_proc():
@@ -82,9 +82,9 @@ def log_json_stats(stats):
         stats (dict): a dictionary of statistical information to log.
     """
     stats = {
-        k: decimal.Decimal("{:.6f}".format(v)) if isinstance(v, float) else v
+        k: decimal.Decimal('{:.6f}'.format(v)) if isinstance(v, float) else v
         for k, v in stats.items()
     }
     json_stats = simplejson.dumps(stats, sort_keys=True, use_decimal=True)
     logger = get_logger(__name__)
-    logger.info("{:s}".format(json_stats))
+    logger.info('{:s}'.format(json_stats))

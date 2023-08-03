@@ -1,4 +1,8 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
+# Copyright (c) Alibaba Cloud.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule

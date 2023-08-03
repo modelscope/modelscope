@@ -241,6 +241,6 @@ class QWenForTextGeneration(QWenPreTrainedModel):
             stopping_criteria,
             prefix_allowed_tokens_fn,
             synced_gpus,
-            streamer,
+            streamer=streamer,
             **kwargs,
         )

@@ -165,7 +165,7 @@ class QWenForTextGeneration(QWenPreTrainedModel):
         tokenizer: PreTrainedTokenizer,
         query: str,
         history: Optional[HistoryType],
-        system: str = '',
+        system: str = 'You are a helpful assistant.',
         append_history: bool = True,
     ) -> Tuple[str, HistoryType]:
 

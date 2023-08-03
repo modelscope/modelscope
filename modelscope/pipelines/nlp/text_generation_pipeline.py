@@ -330,7 +330,7 @@ class QWenChatPipeline(Pipeline):
     # define the forward pass
     def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
         history = forward_params.get('history', None)
-        system = forward_params.get('system', '')
+        system = forward_params.get('system', 'You are a helpful assistant.')
         append_history = forward_params.get('append_history', True)
         return self.model.chat(self.tokenizer, inputs, history, system,
                                append_history)

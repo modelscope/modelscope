@@ -10,6 +10,7 @@ import os
 import sys
 
 import simplejson
+
 import modelscope.models.multi_modal.videocomposer.utils.distributed as du
 
 

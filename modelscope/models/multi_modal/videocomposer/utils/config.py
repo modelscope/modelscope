@@ -3,10 +3,12 @@ import copy
 import os
 
 import json
-import modelscope.models.multi_modal.videocomposer.utils.logging as logging
 import yaml
 
+import modelscope.models.multi_modal.videocomposer.utils.logging as logging
+
 logger = logging.get_logger(__name__)
+
 
 def setup_seed(seed):
     print('Seed: ', seed)
@@ -14,6 +16,7 @@ def setup_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+
 
 class Config(object):
 

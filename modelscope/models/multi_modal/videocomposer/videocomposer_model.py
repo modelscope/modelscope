@@ -1,33 +1,34 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import logging
 import os
+from copy import copy, deepcopy
 from os import path as osp
 from typing import Any, Dict
 
-from PIL import Image
-import logging
 import open_clip
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 from einops import rearrange
-from modelscope.models.multi_modal.videocomposer.utils.config import Config
-from modelscope.models.multi_modal.videocomposer.utils.utils import find_free_port
+from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
+from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
+    pidinet_bsd, sketch_simplification_gan)
 from modelscope.models.multi_modal.videocomposer.autoencoder import (
     AutoencoderKL, DiagonalGaussianDistribution)
 from modelscope.models.multi_modal.videocomposer.clip import (
     FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
 from modelscope.models.multi_modal.videocomposer.diffusion import (
     GaussianDiffusion, beta_schedule)
-from modelscope.models.multi_modal.videocomposer.utils.utils import (setup_seed,
-                                                               to_device)
 from modelscope.models.multi_modal.videocomposer.unet_sd import UNetSD_temporal
-from modelscope.models.multi_modal.videocomposer.utils.utils import DOWNLOAD_TO_CACHE
+from modelscope.models.multi_modal.videocomposer.utils.config import Config
+from modelscope.models.multi_modal.videocomposer.utils.utils import (
+    find_free_port, setup_seed, to_device)
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
 
@@ -90,7 +91,7 @@ class VideoComposer(Model):
         # rank-wise params
         l1 = len(cfg.frame_lens)
         l2 = len(cfg.feature_framerates)
-        cfg.max_frames = cfg.frame_lens[0 % (l1*l2)// l2]
+        cfg.max_frames = cfg.frame_lens[0 % (l1 * l2) // l2]
         cfg.batch_size = cfg.batch_sizes[str(cfg.max_frames)]
         # Copy update input parameter to current task
         # for k, v in _cfg.items():
@@ -110,7 +111,6 @@ class VideoComposer(Model):
             'text', 'mask', 'depthmap', 'sketch', 'motion', 'image',
             'local_image', 'single_sketch'
         ])
-        # print("------self.cfg.batch_size", self.cfg.batch_size)
         self.viz_num = self.cfg.batch_size
         self.clip_encoder = FrozenOpenCLIPEmbedder(
             layer='penultimate',
@@ -128,7 +128,7 @@ class VideoComposer(Model):
             ddconfig, 4, ckpt_path=os.path.join(model_dir, sd_checkpoint))
         zero_y = self.clip_encoder('').detach()
         black_image_feature = self.clip_encoder_visual(
-        self.clip_encoder_visual.black_image).unsqueeze(1)
+            self.clip_encoder_visual.black_image).unsqueeze(1)
         black_image_feature = torch.zeros_like(black_image_feature)
         self.autoencoder.eval()
         for param in self.autoencoder.parameters():
@@ -167,7 +167,8 @@ class VideoComposer(Model):
             if hasattr(self.cfg, 'text_to_video_pretrain'
                        ) and self.cfg.text_to_video_pretrain:
                 checkpoint_name = cfg.resume_checkpoint.split('/')[-1]
-                ss = torch.load(os.path.join(self.model_dir, cfg.resume_checkpoint))
+                ss = torch.load(
+                    os.path.join(self.model_dir, cfg.resume_checkpoint))
                 ss = {
                     key: p
                     for key, p in ss.items() if 'input_blocks.0.0' not in key
@@ -226,20 +227,22 @@ class VideoComposer(Model):
         # Generators for various conditions
         if 'depthmap' in self.video_compositions:
             midas = models.midas_v3(
-                pretrained=True, model_dir=self.model_dir).eval().requires_grad_(False).to(
+                pretrained=True,
+                model_dir=self.model_dir).eval().requires_grad_(False).to(
                     memory_format=torch.channels_last).half().to(self.device)
         if 'canny' in self.video_compositions:
             canny_detector = CannyDetector()
         if 'sketch' in self.video_compositions:
             pidinet = pidinet_bsd(
-                pretrained=True,
+                self.model_dir, pretrained=True,
                 vanilla_cnn=True).eval().requires_grad_(False).to(self.device)
             cleaner = sketch_simplification_gan(
+                self.model_dir,
                 pretrained=True).eval().requires_grad_(False).to(self.device)
-            pidi_mean = torch.tensor(self.sketch_mean).view(1, -1, 1,
-                                                            1).to(self.device)
-            pidi_std = torch.tensor(self.sketch_std).view(1, -1, 1,
-                                                          1).to(self.device)
+            pidi_mean = torch.tensor(self.cfg.sketch_mean).view(
+                1, -1, 1, 1).to(self.device)
+            pidi_std = torch.tensor(self.cfg.sketch_std).view(1, -1, 1, 1).to(
+                self.device)
         # Placeholder for color inference
         palette = None
 
@@ -469,5 +472,5 @@ class VideoComposer(Model):
                     caps=caps,
                     palette=palette,
                     cfg=self.cfg)
-
+        return video_output.type(torch.float32).cpu()
         # return video_data.type(torch.float32).cpu()

@@ -1,15 +1,17 @@
 import math
+import os.path as osp
 
-import modelscope.models.multi_modal.videocomposer.ops as ops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os.path as osp
+
+import modelscope.models.multi_modal.videocomposer.ops as ops
 
 __all__ = [
     'CLIP', 'clip_vit_b_32', 'clip_vit_b_16', 'clip_vit_l_14',
     'clip_vit_l_14_336px', 'clip_vit_h_16'
 ]
+
 
 def DOWNLOAD_TO_CACHE(oss_key,
                       file_or_dirname=None,
@@ -24,6 +26,7 @@ def DOWNLOAD_TO_CACHE(oss_key,
     base_path = osp.join(cache_dir, file_or_dirname or osp.basename(oss_key))
 
     return base_path
+
 
 def to_fp16(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):

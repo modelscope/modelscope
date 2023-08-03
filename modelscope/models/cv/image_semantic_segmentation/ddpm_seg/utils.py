@@ -26,6 +26,7 @@ import numpy as np
 import torch
 from PIL import Image
 
+
 def multi_acc(y_pred, y_test):
     y_pred_softmax = torch.log_softmax(y_pred, dim=1)
     _, y_pred_tags = torch.max(y_pred_softmax, dim=1)
@@ -37,17 +38,20 @@ def multi_acc(y_pred, y_test):
 
     return acc
 
+
 def oht_to_scalar(y_pred):
     y_pred_softmax = torch.log_softmax(y_pred, dim=1)
     _, y_pred_tags = torch.max(y_pred_softmax, dim=1)
 
     return y_pred_tags
 
+
 def colorize_mask(mask, palette):
     # mask: numpy array of the mask
     new_mask = Image.fromarray(mask.astype(np.uint8)).convert('P')
     new_mask.putpalette(palette)
     return np.array(new_mask.convert('RGB'))
+
 
 def to_labels(masks, palette):
     results = np.zeros((len(masks), 256, 256), dtype=np.int32)
@@ -57,6 +61,7 @@ def to_labels(masks, palette):
         results[idxs] = label
         label += 1
     return results
+
 
 def setup_seed(seed):
     print('Seed: ', seed)

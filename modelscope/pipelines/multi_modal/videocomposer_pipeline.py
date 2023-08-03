@@ -96,10 +96,6 @@ class VideoComposerPipeline(Pipeline):
         ]),
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        # {'Image:FILE': '/root/.cache/modelscope/hub/datasets/buptwq/videocomposer-depths-style/master/data_files/extracted/c1194e3af99ad016cd490c07740a2ba9c6e0a0e8b11e3becc56b956b9f4ffbbf/data/qibaishi_01.png',
-        #  'Video:FILE': '/root/.cache/modelscope/hub/datasets/buptwq/videocomposer-depths-style/master/data_files/extracted/c1194e3af99ad016cd490c07740a2ba9c6e0a0e8b11e3becc56b956b9f4ffbbf/data/video_8800.mp4'}
-        print('------prepocess input: ', input)
-
         video_key = input['Video:FILE']
         cap_txt = input['text']
         style_image = input['Image:FILE']
@@ -159,10 +155,6 @@ class VideoComposerPipeline(Pipeline):
 
         mask = mask.unsqueeze(0).repeat_interleave(
             repeats=self.max_frames, dim=0)
-        # print(
-        #     '---------ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data',
-        #     ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask,
-        #     mv_data)
         video_input = {
             'ref_frame': ref_frame,
             'cap_txt': cap_txt,
@@ -174,8 +166,6 @@ class VideoComposerPipeline(Pipeline):
             'style_image': style_image
         }
         return video_input
-        # return ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
-        # return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         return self.model(input)
@@ -230,7 +220,6 @@ class VideoComposerPipeline(Pipeline):
             frames = self.transforms(frames)
             mvs = self.mv_transforms(mvs)
         else:
-            # ref_frame = Image.fromarray(np.zeros((3, self.image_resolution, self.image_resolution)))
             vit_image = torch.zeros(3, self.vit_image_size,
                                     self.vit_image_size)
 
@@ -241,8 +230,7 @@ class VideoComposerPipeline(Pipeline):
         misc_data = torch.zeros(self.max_frames, 3, self.misc_size,
                                 self.misc_size)
         if have_frames:
-            video_data[:len(frames),
-                       ...] = frames  # [[XX...],[...], ..., [0,0...], [], ...]
+            video_data[:len(frames), ...] = frames
             misc_data[:len(frames), ...] = misc_imgs
             mv_data[:len(frames), ...] = mvs
 
@@ -351,7 +339,6 @@ class VideoComposerPipeline(Pipeline):
             frame_types.append(frame_type)
             frames.append(frame)
             mvs.append(mv)
-            # mvs_visual.append(frame_save)
         if verbose:
             print('average dt: ', np.mean(times))
         cap.release()

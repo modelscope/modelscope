@@ -13,29 +13,15 @@ r"""A much cleaner re-implementation of ``https://github.com/isl-org/MiDaS''.
         input = input.to(memory_format=torch.channels_last).half()
         output = model(input)
 """
-import os
 import math
+import os
+import os.path as osp
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os.path as osp
 
 __all__ = ['MiDaS', 'midas_v3']
-
-def DOWNLOAD_TO_CACHE(oss_key,
-                      file_or_dirname=None,
-                      cache_dir=osp.join(
-                          '/'.join(osp.abspath(__file__).split('/')[:-2]),
-                          'model_weights')):
-    r"""Download OSS [file or folder] to the cache folder.
-        Only the 0th process on each node will run the downloading.
-        Barrier all processes until the downloading is completed.
-    """
-    # source and target paths
-    base_path = osp.join(cache_dir, file_or_dirname or osp.basename(oss_key))
-
-    return base_path
 
 
 class SelfAttention(nn.Module):
@@ -327,8 +313,8 @@ def midas_v3(model_dir, pretrained=False, **kwargs):
     cfg.update(**kwargs)
     model = MiDaS(**cfg)
     if pretrained:
-        # model.load_state_dict(torch.load(DOWNLOAD_TO_CACHE('experiments/models/midas/midas_v3_dpt_large.pth'), map_location='cpu'))
         model.load_state_dict(
             torch.load(
-                os.path.join(model_dir, 'midas_v3_dpt_large.pth'), map_location='cpu'))
+                os.path.join(model_dir, 'midas_v3_dpt_large.pth'),
+                map_location='cpu'))
     return model

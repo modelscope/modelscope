@@ -58,6 +58,7 @@ def DOWNLOAD_TO_CACHE(oss_key,
 
     return base_path
 
+
 def parse_oss_url(path):
     if path.startswith('oss://'):
         path = path[len('oss://'):]

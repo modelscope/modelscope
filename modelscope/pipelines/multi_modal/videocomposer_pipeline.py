@@ -2,30 +2,30 @@
 
 import os
 import random
+import subprocess
+import time
 from functools import partial
 from typing import Any, Dict
 
 import cv2
-import time
-import torch
 import numpy as np
-import subprocess
-from mvextractor.videocap import VideoCap
+import torch
 import torchvision.transforms as T
+from mvextractor.videocap import VideoCap
 from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.data as data
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal.videocomposer.data.transforms import (
-    CenterCrop, random_resize)
+    CenterCropV3, random_resize)
 from modelscope.models.multi_modal.videocomposer.random_mask import (
     make_irregular_mask, make_rectangle_mask, make_uncrop)
+from modelscope.models.multi_modal.videocomposer.utils.utils import rand_name
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
-from modelscope.models.multi_modal.videocomposer.utils.utils import rand_name
 
 logger = get_logger()
 
@@ -95,16 +95,14 @@ class VideoComposerPipeline(Pipeline):
              T.CenterCrop(self.resolution)])
 
         self.vit_transforms = T.Compose([
-            CenterCrop(self.vit_image_size),
+            CenterCropV3(self.vit_image_size),
             T.ToTensor(),
             T.Normalize(mean=self.vit_mean, std=self.vit_std)
-        ]),
+        ])
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        # print("---------input['Video:FILE']:", input['Video:FILE'])
         video_key = input['Video:FILE']
         cap_txt = input['text']
-        print("----------cap_txt: ", cap_txt)
         style_image = input['Image:FILE']
 
         total_frames = None
@@ -224,7 +222,7 @@ class VideoComposerPipeline(Pipeline):
             vit_image = self.vit_transforms(ref_frame)
             misc_imgs_np = self.misc_transforms[:2](frames)
             misc_imgs = self.misc_transforms[2:](misc_imgs_np)
-            frames = self.transforms(frames)
+            frames = self.infer_trans(frames)
             mvs = self.mv_transforms(mvs)
         else:
             vit_image = torch.zeros(3, self.vit_image_size,

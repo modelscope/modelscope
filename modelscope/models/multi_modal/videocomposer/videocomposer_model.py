@@ -15,24 +15,27 @@ from einops import rearrange
 from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
-from modelscope.models.multi_modal.videocomposer.ops.utils import (make_masked_images, get_first_stage_encoding, prepare_model_kwargs, visualize_with_model_kwargs)
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
     pidinet_bsd, sketch_simplification_gan)
-from modelscope.models.multi_modal.videocomposer.autoencoder import AutoencoderKL
+from modelscope.models.multi_modal.videocomposer.autoencoder import \
+    AutoencoderKL
 from modelscope.models.multi_modal.videocomposer.clip import (
     FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
 from modelscope.models.multi_modal.videocomposer.diffusion import (
     GaussianDiffusion, beta_schedule)
+from modelscope.models.multi_modal.videocomposer.ops.utils import (
+    get_first_stage_encoding, make_masked_images, prepare_model_kwargs,
+    visualize_with_model_kwargs)
 from modelscope.models.multi_modal.videocomposer.unet_sd import UNetSD_temporal
 from modelscope.models.multi_modal.videocomposer.utils.config import Config
 from modelscope.models.multi_modal.videocomposer.utils.utils import (
     find_free_port, setup_seed, to_device)
+from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
-from modelscope.outputs import OutputKeys
 
 __all__ = ['VideoComposer']
 
@@ -82,8 +85,6 @@ class VideoComposer(Model):
         cfg.max_frames = cfg.frame_lens[0 % (l1 * l2) // l2]
         cfg.batch_size = cfg.batch_sizes[str(cfg.max_frames)]
         # Copy update input parameter to current task
-        # for k, v in _cfg.items():
-        #     cfg[k] = v
         self.cfg = cfg
         if not 'MASTER_ADDR' in os.environ:
             os.environ['MASTER_ADDR'] = 'localhost'
@@ -193,7 +194,6 @@ class VideoComposer(Model):
             rescale_timesteps=False)
 
     def forward(self, input: Dict[str, Any]):
-        # input: ref_frame, cap_txt, video_data, misc_data, feature_framerate, mask, mv_data, style_image
         frame_in = None
         if self.read_image:
             image_key = self.cfg.image_path
@@ -338,7 +338,8 @@ class VideoComposer(Model):
             if 'sketch' in self.cfg.video_compositions:
                 sketch_list = misc_data_list
                 if self.cfg.read_sketch:
-                    sketch_repeat = frame_sketch.repeat(frames_num, 1, 1, 1).cuda()
+                    sketch_repeat = frame_sketch.repeat(frames_num, 1, 1,
+                                                        1).cuda()
                     sketch_list = [sketch_repeat]
 
                 for misc_imgs in sketch_list:
@@ -363,8 +364,8 @@ class VideoComposer(Model):
             with torch.no_grad():
                 if self.cfg.read_style:
                     y_visual = self.clip_encoder_visual(
-                        self.clip_encoder_visual.preprocess(frame_style).unsqueeze(
-                            0).cuda()).unsqueeze(0)
+                        self.clip_encoder_visual.preprocess(
+                            frame_style).unsqueeze(0).cuda()).unsqueeze(0)
                     y_visual0 = y_visual.clone()
                 else:
                     ref_imgs = ref_imgs.squeeze(1)
@@ -380,7 +381,8 @@ class VideoComposer(Model):
             with amp.autocast(enabled=self.cfg.use_fp16):
                 if self.cfg.share_noise:
                     b, c, f, h, w = video_data.shape
-                    noise = torch.randn((self.viz_num, c, h, w), device=self.device)
+                    noise = torch.randn((self.viz_num, c, h, w),
+                                        device=self.device)
                     noise = noise.repeat_interleave(repeats=f, dim=0)
                     noise = rearrange(
                         noise, '(b f) c h w->b c f h w', b=self.viz_num)
@@ -392,20 +394,25 @@ class VideoComposer(Model):
                     'y':
                     y0[:self.viz_num],
                     'local_image':
-                    None if len(image_local) == 0 else image_local[:self.viz_num],
+                    None
+                    if len(image_local) == 0 else image_local[:self.viz_num],
                     'image':
                     None if len(y_visual) == 0 else y_visual0[:self.viz_num],
                     'depth':
-                    None if len(depth_data) == 0 else depth_data[:self.viz_num],
-                    'canny':
-                    None if len(canny_data) == 0 else canny_data[:self.viz_num],
-                    'sketch':
-                    None if len(sketch_data) == 0 else sketch_data[:self.viz_num],
-                    'masked':
-                    None if len(masked_video) == 0 else masked_video[:self.viz_num],
-                    'motion':
                     None
-                    if len(mv_data_video) == 0 else mv_data_video[:self.viz_num],
+                    if len(depth_data) == 0 else depth_data[:self.viz_num],
+                    'canny':
+                    None
+                    if len(canny_data) == 0 else canny_data[:self.viz_num],
+                    'sketch':
+                    None
+                    if len(sketch_data) == 0 else sketch_data[:self.viz_num],
+                    'masked':
+                    None
+                    if len(masked_video) == 0 else masked_video[:self.viz_num],
+                    'motion':
+                    None if len(mv_data_video) == 0 else
+                    mv_data_video[:self.viz_num],
                     'single_sketch':
                     None if len(single_sketch_data) == 0 else
                     single_sketch_data[:self.viz_num],
@@ -417,21 +424,26 @@ class VideoComposer(Model):
                     if not self.cfg.use_fps_condition else
                     torch.zeros_like(y0)[:self.viz_num],
                     'local_image':
-                    None if len(image_local) == 0 else image_local[:self.viz_num],
+                    None
+                    if len(image_local) == 0 else image_local[:self.viz_num],
                     'image':
                     None if len(y_visual) == 0 else torch.zeros_like(
                         y_visual0[:self.viz_num]),
                     'depth':
-                    None if len(depth_data) == 0 else depth_data[:self.viz_num],
-                    'canny':
-                    None if len(canny_data) == 0 else canny_data[:self.viz_num],
-                    'sketch':
-                    None if len(sketch_data) == 0 else sketch_data[:self.viz_num],
-                    'masked':
-                    None if len(masked_video) == 0 else masked_video[:self.viz_num],
-                    'motion':
                     None
-                    if len(mv_data_video) == 0 else mv_data_video[:self.viz_num],
+                    if len(depth_data) == 0 else depth_data[:self.viz_num],
+                    'canny':
+                    None
+                    if len(canny_data) == 0 else canny_data[:self.viz_num],
+                    'sketch':
+                    None
+                    if len(sketch_data) == 0 else sketch_data[:self.viz_num],
+                    'masked':
+                    None
+                    if len(masked_video) == 0 else masked_video[:self.viz_num],
+                    'motion':
+                    None if len(mv_data_video) == 0 else
+                    mv_data_video[:self.viz_num],
                     'single_sketch':
                     None if len(single_sketch_data) == 0 else
                     single_sketch_data[:self.viz_num],
@@ -465,4 +477,6 @@ class VideoComposer(Model):
                     palette=palette,
                     cfg=self.cfg)
 
-        return {OutputKeys.OUTPUT_VIDEO: video_output.type(torch.float32).cpu()}
+        return {
+            OutputKeys.OUTPUT_VIDEO: video_output.type(torch.float32).cpu()
+        }

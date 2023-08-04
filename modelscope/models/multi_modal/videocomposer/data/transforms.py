@@ -8,6 +8,7 @@ import torch
 import torchvision.transforms.functional as F
 import torchvision.transforms.functional as TF
 from PIL import Image, ImageFilter
+from torchvision.transforms.functional import InterpolationMode
 
 __all__ = ['Compose', 'Resize', 'Rescale', 'CenterCrop', 'CenterCropV2', 'RandomCrop', 'RandomCropV2', 'RandomHFlip',\
     'GaussianBlur', 'ColorJitter', 'RandomGray', 'ToTensor', 'Normalize', 'ResizeRandomCrop', 'ExtractResizeRandomCrop', 'ExtractResizeAssignCrop']
@@ -26,7 +27,7 @@ def random_resize(img, size):
     return img
 
 
-class CenterCrop(object):
+class CenterCropV3(object):
 
     def __init__(self, size):
         self.size = size

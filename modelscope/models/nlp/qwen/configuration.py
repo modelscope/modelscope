@@ -3,9 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List, Optional
-
-from transformers import GenerationConfig, PretrainedConfig
+from transformers import PretrainedConfig
 
 from modelscope.utils.logger import get_logger
 
@@ -43,7 +41,8 @@ class QWenConfig(PretrainedConfig):
         kv_channels=128,
         rotary_pct=1.0,
         rotary_emb_base=10000,
-        ntk_alpha=1.0,
+        use_dynamic_ntk=False,
+        use_logn_attn=False,
         use_flash_attn=True,
         ffn_hidden_size=22016,
         no_bias=True,
@@ -72,7 +71,8 @@ class QWenConfig(PretrainedConfig):
         self.kv_channels = kv_channels
         self.rotary_pct = rotary_pct
         self.rotary_emb_base = rotary_emb_base
-        self.ntk_alpha = ntk_alpha
+        self.use_dynamic_ntk = use_dynamic_ntk
+        self.use_logn_attn = use_logn_attn
         self.use_flash_attn = use_flash_attn
         self.ffn_hidden_size = ffn_hidden_size
         self.no_bias = no_bias

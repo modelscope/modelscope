@@ -44,6 +44,14 @@ __all__ = [
 
 TFS_CLIENT = None
 
+def rand_name(length=8, suffix=''):
+    name = binascii.b2a_hex(os.urandom(length)).decode('utf-8')
+    if suffix:
+        if not suffix.startswith('.'):
+            suffix = '.' + suffix
+        name += suffix
+    return name
+
 def visualize_with_model_kwargs(model_kwargs,
                                 video_data,
                                 autoencoder,

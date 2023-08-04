@@ -6,7 +6,11 @@ from functools import partial
 from typing import Any, Dict
 
 import cv2
+import time
 import torch
+import numpy as np
+import subprocess
+from mvextractor.videocap import VideoCap
 import torchvision.transforms as T
 from PIL import Image
 
@@ -21,6 +25,7 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
+from modelscope.models.multi_modal.videocomposer.utils.utils import rand_name
 
 logger = get_logger()
 
@@ -96,8 +101,10 @@ class VideoComposerPipeline(Pipeline):
         ]),
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
+        # print("---------input['Video:FILE']:", input['Video:FILE'])
         video_key = input['Video:FILE']
         cap_txt = input['text']
+        print("----------cap_txt: ", cap_txt)
         style_image = input['Image:FILE']
 
         total_frames = None
@@ -260,7 +267,7 @@ class VideoComposerPipeline(Pipeline):
         frames_num = videocapture.get(cv2.CAP_PROP_FRAME_COUNT)
         fps_video = videocapture.get(cv2.CAP_PROP_FPS)
         # check if enough frames
-        if frames_num / fps_video * fps > 16:  #
+        if frames_num / fps_video * fps > 16:
             fps = max(fps, 1)
         else:
             fps = int(16 / (frames_num / fps_video)) + 1

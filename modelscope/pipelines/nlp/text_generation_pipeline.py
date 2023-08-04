@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict, Optional, Union
 
 import torch
+from transformers import GenerationConfig
 
 from modelscope import snapshot_download
 from modelscope.metainfo import Pipelines
@@ -20,8 +21,12 @@ from modelscope.utils.hub import Config, read_config
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
 
 __all__ = [
-    'TextGenerationPipeline', 'TextGenerationT5Pipeline',
-    'ChatGLM6bTextGenerationPipeline', 'ChatGLM6bV2TextGenerationPipeline'
+    'TextGenerationPipeline',
+    'TextGenerationT5Pipeline',
+    'ChatGLM6bTextGenerationPipeline',
+    'ChatGLM6bV2TextGenerationPipeline',
+    'QWenChatPipeline',
+    'QWenTextGenerationPipeline',
 ]
 
 
@@ -194,7 +199,8 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp.chatglm.text_generation import ChatGLMForConditionalGeneration, ChatGLMConfig
+        from modelscope.models.nlp.chatglm.text_generation import (
+            ChatGLMConfig, ChatGLMForConditionalGeneration)
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
@@ -236,7 +242,9 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
+        from modelscope.models.nlp import (ChatGLM2Config,
+                                           ChatGLM2ForConditionalGeneration,
+                                           ChatGLM2Tokenizer)
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
@@ -264,6 +272,131 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
         inputs.update(forward_params)
         return self.model.chat(inputs, self.tokenizer)
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(group_key=Tasks.chat, module_name='qwen-chat')
+class QWenChatPipeline(Pipeline):
+
+    def __init__(self, model: Union[Model, str], **kwargs):
+        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
+                                           QWenTokenizer)
+        torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
+        device_map = kwargs.get('device_map', 'auto')
+        use_max_memory = kwargs.get('use_max_memory', False)
+        quantization_config = kwargs.get('quantization_config', None)
+
+        if use_max_memory:
+            max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
+            n_gpus = torch.cuda.device_count()
+            max_memory = {i: max_memory for i in range(n_gpus)}
+        else:
+            max_memory = None
+
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+
+            config = read_config(model_dir)
+            model_config = QWenConfig.from_pretrained(model_dir)
+            model_config.torch_dtype = torch_dtype
+
+            model = QWenForTextGeneration.from_pretrained(
+                model_dir,
+                cfg_dict=config,
+                config=model_config,
+                device_map=device_map,
+                torch_dtype=torch_dtype,
+                quantization_config=quantization_config,
+                max_memory=max_memory)
+            model.generation_config = GenerationConfig.from_pretrained(
+                model_dir)
+
+        self.model = model
+        self.model.eval()
+        self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
+
+        super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    # define the forward pass
+    def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
+        history = forward_params.get('history', None)
+        system = forward_params.get('system', 'You are a helpful assistant.')
+        append_history = forward_params.get('append_history', True)
+        return self.model.chat(self.tokenizer, inputs, history, system,
+                               append_history)
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    group_key=Tasks.text_generation, module_name='qwen-text-generation')
+class QWenTextGenerationPipeline(Pipeline):
+
+    def __init__(self, model: Union[Model, str], **kwargs):
+        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
+                                           QWenTokenizer)
+        torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
+        device_map = kwargs.get('device_map', 'auto')
+        use_max_memory = kwargs.get('use_max_memory', False)
+        quantization_config = kwargs.get('quantization_config', None)
+
+        if use_max_memory:
+            max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
+            n_gpus = torch.cuda.device_count()
+            max_memory = {i: max_memory for i in range(n_gpus)}
+        else:
+            max_memory = None
+
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+
+            config = read_config(model_dir)
+            model_config = QWenConfig.from_pretrained(model_dir)
+            model_config.torch_dtype = torch_dtype
+
+            model = QWenForTextGeneration.from_pretrained(
+                model_dir,
+                cfg_dict=config,
+                config=model_config,
+                device_map=device_map,
+                torch_dtype=torch_dtype,
+                quantization_config=quantization_config,
+                max_memory=max_memory)
+            model.generation_config = GenerationConfig.from_pretrained(
+                model_dir)
+
+        self.model = model
+        self.model.eval()
+        self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
+
+        super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    # define the forward pass
+    def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
+        return {
+            OutputKeys.TEXT:
+            self.model.chat(self.tokenizer, inputs,
+                            history=None)[OutputKeys.RESPONSE]
+        }
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

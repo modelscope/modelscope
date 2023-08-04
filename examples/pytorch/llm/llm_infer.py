@@ -1,18 +1,26 @@
 # ### Setting up experimental environment.
+import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+from dataclasses import dataclass, field
+from functools import partial
+from typing import List, Optional
 
-if __name__ == '__main__':
-    # Avoid cuda initialization caused by library import (e.g. peft, accelerate)
-    from _parser import *
-    # argv = parse_device(['--device', '1'])
-    argv = parse_device()
+import torch
+from transformers import GenerationConfig, TextStreamer
+from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER, get_dataset,
+                   get_model_tokenizer, inference, parse_args, process_dataset,
+                   tokenize_function)
 
-from utils import *
+from modelscope import get_logger
+from modelscope.swift import LoRAConfig, Swift
+
+logger = get_logger()
 
 
 @dataclass
 class InferArguments:
     model_type: str = field(
-        default='baichuan-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
     ckpt_path: str = '/path/to/your/iter_xxx.pth'
@@ -114,7 +122,7 @@ def llm_infer(args: InferArguments) -> None:
 
 
 if __name__ == '__main__':
-    args, remaining_argv = parse_args(InferArguments, argv)
+    args, remaining_argv = parse_args(InferArguments)
     if len(remaining_argv) > 0:
         if args.ignore_args_error:
             logger.warning(f'remaining_argv: {remaining_argv}')

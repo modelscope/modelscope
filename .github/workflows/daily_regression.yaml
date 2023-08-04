@@ -12,7 +12,7 @@ concurrency:
 jobs:
   unittest:
     # The type of runner that the job will run on
-    runs-on: [modelscope-self-hosted]
+    runs-on: [modelscope-self-hosted-us]
     steps:
       - name: ResetFileMode
         shell: bash

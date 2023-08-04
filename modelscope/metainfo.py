@@ -173,6 +173,7 @@ class Models(object):
     llama2 = 'llama2'
     chatglm_6b = 'chatglm6b'
     chatglm2_6b = 'chatglm2-6b'
+    qwen_7b = 'qwen-7b'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'

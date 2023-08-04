@@ -84,11 +84,11 @@ def get_ltor_masks_and_position_ids(
                     attention_mask[b, 0, (i + 1):, :(i + 1)] = 0
                 # Reset positions.
                 if reset_position_ids:
-                    position_ids[b, (i + 1):] -= (i + 1 - prev_index)
+                    position_ids[b, (i + 1):] -= i + 1 - prev_index
                     prev_index = i + 1
 
     # Convert attention mask to binary:
-    attention_mask = (attention_mask < 0.5)
+    attention_mask = attention_mask < 0.5
 
     return attention_mask, loss_mask, position_ids
 
@@ -103,7 +103,8 @@ def get_batch(context_tokens: torch.LongTensor, eod_id: int):
         eod_id,
         reset_position_ids=False,
         reset_attention_mask=False,
-        eod_mask_loss=False)
+        eod_mask_loss=False,
+    )
     return tokens, attention_mask, position_ids
 
 
@@ -120,11 +121,13 @@ def get_stop_words_ids(chat_format, tokenizer):
 def make_context(
     tokenizer: PreTrainedTokenizer,
     query: str,
-    history: List[Tuple[str, str]] = [],
+    history: List[Tuple[str, str]] = None,
     system: str = '',
     max_window_size: int = 6144,
     chat_format: str = 'chatml',
 ):
+    if history is None:
+        history = []
 
     if chat_format == 'chatml':
         im_start, im_end = '<|im_start|>', '<|im_end|>'
@@ -150,10 +153,13 @@ def make_context(
             response_tokens = im_start_tokens + response_tokens_part + im_end_tokens
 
             next_context_tokens = nl_tokens + query_tokens + nl_tokens + response_tokens
-            prev_chat = f'\n{im_start}{query_text}{im_end}\n{im_start}{response_text}{im_end}'
+            prev_chat = (
+                f'\n{im_start}{query_text}{im_end}\n{im_start}{response_text}{im_end}'
+            )
 
-            current_context_size = len(system_tokens) + len(
-                next_context_tokens) + len(context_tokens)
+            current_context_size = (
+                len(system_tokens) + len(next_context_tokens)
+                + len(context_tokens))
             if current_context_size < max_window_size:
                 context_tokens = next_context_tokens + context_tokens
                 raw_text = prev_chat + raw_text
@@ -322,9 +328,9 @@ class StopWordsLogitsProcessor(LogitsProcessor):
                    stop_words_ids))
         self.eos_token_id = eos_token_id
         for stop_token_seq in self.stop_words_ids:
-            assert len(
-                stop_token_seq
-            ) > 0, 'Stop words token sequences {} cannot have an empty list'.format(
+            assert (
+                len(stop_token_seq) > 0
+            ), 'Stop words token sequences {} cannot have an empty list'.format(
                 stop_words_ids)
 
     def __call__(self, input_ids: torch.LongTensor,
@@ -332,7 +338,7 @@ class StopWordsLogitsProcessor(LogitsProcessor):
         stopped_samples = self._calc_stopped_samples(input_ids)
         for i, should_stop in enumerate(stopped_samples):
             if should_stop:
-                scores[i, self.eos_token_id] = float(2**30)
+                scores[i, self.eos_token_id] = float(2**15)
         return scores
 
     def _tokens_match(self, prev_tokens: torch.LongTensor,
@@ -365,10 +371,10 @@ class StopWordsLogitsProcessor(LogitsProcessor):
 
 
 def top_k_logits(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
-    """ This function has been mostly taken from huggingface conversational
-     ai code at
-         https://medium.com/huggingface/how-to-build-a-state-of-the-art-
-              conversational-ai-with-transfer-learning-2d818ac26313 """
+    """This function has been mostly taken from huggingface conversational
+    ai code at
+        https://medium.com/huggingface/how-to-build-a-state-of-the-art-
+             conversational-ai-with-transfer-learning-2d818ac26313"""
 
     if top_k > 0:
         # Remove all tokens with a probability less than the
@@ -388,8 +394,8 @@ def top_k_logits(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
         sorted_indices_to_remove = cumulative_probs > top_p
         # Shift the indices to the right to keep also the first token
         # above the threshold
-        sorted_indices_to_remove[..., 1:] \
-            = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[
+            ..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
         for i in range(sorted_indices.size(0)):
             indices_to_remove = sorted_indices[i][sorted_indices_to_remove[i]]

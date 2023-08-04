@@ -45,6 +45,14 @@ class QWenForTextGeneration(QWenPreTrainedModel):
         super().__init__(config)
         self.transformer = QWenModel(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        assert not (config.bf16 and config.fp16
+                    ), 'In config, bf16 and fp16 cannot both be true'
+        if config.bf16:
+            self.transformer.bfloat16()
+            self.lm_head.bfloat16()
+        if config.fp16:
+            self.transformer.half()
+            self.lm_head.half()
         self.post_init()
 
     def get_output_embeddings(self):
@@ -241,6 +249,6 @@ class QWenForTextGeneration(QWenPreTrainedModel):
             stopping_criteria,
             prefix_allowed_tokens_fn,
             synced_gpus,
-            streamer,
+            streamer=streamer,
             **kwargs,
         )

@@ -136,8 +136,7 @@ class VideoComposerPipeline(Pipeline):
             print('The video path does not exist or no video dir provided!')
             ref_frame = torch.zeros(3, self.vit_image_size,
                                     self.vit_image_size)
-            vit_image = torch.zeros(3, self.vit_image_size,
-                                    self.vit_image_size)
+            _ = torch.zeros(3, self.vit_image_size, self.vit_image_size)
             video_data = torch.zeros(self.max_frames, 3, self.image_resolution,
                                      self.image_resolution)
             misc_data = torch.zeros(self.max_frames, 3, self.misc_size,
@@ -269,7 +268,8 @@ class VideoComposerPipeline(Pipeline):
             fps = max(fps, 1)
         else:
             fps = int(16 / (frames_num / fps_video)) + 1
-        ffmpeg_cmd = f'ffmpeg -threads 8 -loglevel error -i {input_video} -filter:v fps={fps} -c:v mpeg4 -f rawvideo {tmp_video}'
+        ffmpeg_cmd = f'ffmpeg -threads 8 -loglevel error -i {input_video} -filter:v \
+                        fps={fps} -c:v mpeg4 -f rawvideo {tmp_video}'
 
         if os.path.exists(tmp_video):
             os.remove(tmp_video)
@@ -319,14 +319,14 @@ class VideoComposerPipeline(Pipeline):
                 w_half = (frame.shape[1] - frame.shape[0]) // 2
                 if dump:
                     cv2.imwrite(
-                        os.path.join(f'./mv_visual/', f'frame-{step}.jpg'),
+                        os.path.join('./mv_visual/', f'frame-{step}.jpg'),
                         frame_save[:, w_half:-w_half])
                 mvs_visual.append(frame_save[:, w_half:-w_half])
             else:
                 h_half = (frame.shape[0] - frame.shape[1]) // 2
                 if dump:
                     cv2.imwrite(
-                        os.path.join(f'./mv_visual/', f'frame-{step}.jpg'),
+                        os.path.join('./mv_visual/', f'frame-{step}.jpg'),
                         frame_save[h_half:-h_half, :])
                 mvs_visual.append(frame_save[h_half:-h_half, :])
 

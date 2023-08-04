@@ -657,7 +657,6 @@ class GaussianDiffusion(object):
         if self.rescale_timesteps:
             return t.float() * 1000.0 / self.num_timesteps
         return t
-        #return t.float()
 
 
 class GaussianDiffusion_style(object):

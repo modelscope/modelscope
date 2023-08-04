@@ -377,8 +377,9 @@ def save_video_multiple_conditions(oss_key,
     video_tensor = video_tensor.mul_(std).add_(mean)
     try:
         video_tensor.clamp_(0, 1)
-    except:
+    except Exception as e:
         video_tensor = video_tensor.float().clamp_(0, 1)
+        print(e)
     video_tensor = video_tensor.cpu()
 
     b, c, n, h, w = video_tensor.shape
@@ -553,7 +554,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(video_save_key, filename_pred)
             break
         except Exception as e:
-            print('error! ', video_save_key)
+            print('error! ', video_save_key, e)
             continue
 
     # remove temporary file
@@ -568,7 +569,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(gt_video_save_key, filename_gt)
             break
         except Exception as e:
-            print('error! ', gt_video_save_key)
+            print('error! ', gt_video_save_key, e)
             continue
 
     # remove temporary file
@@ -795,15 +796,15 @@ def load_state_dict(module, state_dict, drop_prefix=''):
             (k[len(drop_prefix):] if k.startswith(drop_prefix) else k, v)
             for k, v in src.items()
         ])
-    missing = [k for k in dst if not k in src]
-    unexpected = [k for k in src if not k in dst]
+    missing = [k for k in dst if k not in src]
+    unexpected = [k for k in src if k not in dst]
     unmatched = [
         k for k in src.keys() & dst.keys() if src[k].shape != dst[k].shape
     ]
 
     # keep only compatible key-vals
     incompatible = set(unexpected + unmatched)
-    src = type(src)([(k, v) for k, v in src.items() if not k in incompatible])
+    src = type(src)([(k, v) for k, v in src.items() if k not in incompatible])
     module.load_state_dict(src, strict=False)
 
     # report incompatible key-vals

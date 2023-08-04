@@ -856,7 +856,7 @@ def pidinet_bsd_tiny(pretrained=False, vanilla_cnn=True):
     model = PiDiNet(20, pdcs, dil=8, sa=True, convert=vanilla_cnn)
     if pretrained:
         state = torch.load(
-            DOWNLOAD_TO_CACHE(f'models/pidinet/table5_pidinet-tiny.pth'),
+            DOWNLOAD_TO_CACHE('models/pidinet/table5_pidinet-tiny.pth'),
             map_location='cpu')['state_dict']
         if vanilla_cnn:
             state = convert_pidinet(state, 'carv4')
@@ -874,7 +874,7 @@ def pidinet_bsd_small(pretrained=False, vanilla_cnn=True):
     model = PiDiNet(30, pdcs, dil=12, sa=True, convert=vanilla_cnn)
     if pretrained:
         state = torch.load(
-            DOWNLOAD_TO_CACHE(f'models/pidinet/table5_pidinet-small.pth'),
+            DOWNLOAD_TO_CACHE('models/pidinet/table5_pidinet-small.pth'),
             map_location='cpu')['state_dict']
         if vanilla_cnn:
             state = convert_pidinet(state, 'carv4')
@@ -910,7 +910,7 @@ def pidinet_nyud(pretrained=False, vanilla_cnn=True):
     model = PiDiNet(60, pdcs, dil=24, sa=True, convert=vanilla_cnn)
     if pretrained:
         state = torch.load(
-            DOWNLOAD_TO_CACHE(f'models/pidinet/table6_pidinet.pth'),
+            DOWNLOAD_TO_CACHE('models/pidinet/table6_pidinet.pth'),
             map_location='cpu')['state_dict']
         if vanilla_cnn:
             state = convert_pidinet(state, 'carv4')
@@ -928,7 +928,7 @@ def pidinet_multicue(pretrained=False, vanilla_cnn=True):
     model = PiDiNet(60, pdcs, dil=24, sa=True, convert=vanilla_cnn)
     if pretrained:
         state = torch.load(
-            DOWNLOAD_TO_CACHE(f'models/pidinet/table7_pidinet.pth'),
+            DOWNLOAD_TO_CACHE('models/pidinet/table7_pidinet.pth'),
             map_location='cpu')['state_dict']
         if vanilla_cnn:
             state = convert_pidinet(state, 'carv4')

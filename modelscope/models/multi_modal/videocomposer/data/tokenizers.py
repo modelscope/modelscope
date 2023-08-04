@@ -117,8 +117,9 @@ class SimpleTokenizer(object):
                     j = word.index(first, i)
                     new_word.extend(word[i:j])
                     i = j
-                except:
+                except Exception as e:
                     new_word.extend(word[i:])
+                    print(e)
                     break
 
                 if word[i] == first and i < len(word) - 1 and word[

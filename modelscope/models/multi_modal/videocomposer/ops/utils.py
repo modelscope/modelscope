@@ -692,14 +692,11 @@ def save_video_vs_conditions(bucket,
     for _ in [None] * retry:
         try:
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             con_gif = rearrange(
-                conditions, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                conditions, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             vid_gif = torch.cat([vid_gif, con_gif, source_imgs], dim=2)
 
             video_tensor_to_gif(vid_gif, filename)
@@ -882,15 +879,15 @@ def load_state_dict(module, state_dict, drop_prefix=''):
             (k[len(drop_prefix):] if k.startswith(drop_prefix) else k, v)
             for k, v in src.items()
         ])
-    missing = [k for k in dst if not k in src]
-    unexpected = [k for k in src if not k in dst]
+    missing = [k for k in dst if k not in src]
+    unexpected = [k for k in src if k not in dst]
     unmatched = [
         k for k in src.keys() & dst.keys() if src[k].shape != dst[k].shape
     ]
 
     # keep only compatible key-vals
     incompatible = set(unexpected + unmatched)
-    src = type(src)([(k, v) for k, v in src.items() if not k in incompatible])
+    src = type(src)([(k, v) for k, v in src.items() if k not in incompatible])
     module.load_state_dict(src, strict=False)
 
     # report incompatible key-vals

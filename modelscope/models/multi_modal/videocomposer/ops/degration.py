@@ -18,9 +18,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 __all__ = ['degradation_bsrgan_light', 'degradation_bsrgan']
 
 
-# --------------------------------------------
 # get uint8 image of size HxWxn_channles (RGB)
-# --------------------------------------------
 def imread_uint(path, n_channels=3):
     # input: path
     # output: HxWx3(RGB or GGG), or HxWx1 (G)
@@ -34,11 +32,6 @@ def imread_uint(path, n_channels=3):
         else:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
-
-
-# --------------------------------------------
-# numpy(single) [0, 1] <--->  numpy(unit)
-# --------------------------------------------
 
 
 def uint2single(img):
@@ -144,20 +137,9 @@ def channel_convert(in_c, tar_type, img_list):
         return img_list
 
 
-'''
-# --------------------------------------------
-# metric, PSNR and SSIM
-# --------------------------------------------
-'''
-
-
-# --------------------------------------------
 # PSNR
-# --------------------------------------------
 def calculate_psnr(img1, img2, border=0):
     # img1 and img2 have range [0, 255]
-    #img1 = img1.squeeze()
-    #img2 = img2.squeeze()
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     h, w = img1.shape[:2]
@@ -172,16 +154,12 @@ def calculate_psnr(img1, img2, border=0):
     return 20 * math.log10(255.0 / math.sqrt(mse))
 
 
-# --------------------------------------------
 # SSIM
-# --------------------------------------------
 def calculate_ssim(img1, img2, border=0):
     '''calculate SSIM
     the same outputs as MATLAB's
     img1, img2: [0, 255]
     '''
-    #img1 = img1.squeeze()
-    #img2 = img2.squeeze()
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     h, w = img1.shape[:2]
@@ -224,13 +202,6 @@ def ssim(img1, img2):
                 (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) *
                                        (sigma1_sq + sigma2_sq + C2))
     return ssim_map.mean()
-
-
-'''
-# --------------------------------------------
-# matlab's bicubic imresize (numpy and torch) [0, 1]
-# --------------------------------------------
-'''
 
 
 # matlab 'imresize' function, now only support 'bicubic'
@@ -298,9 +269,7 @@ def calculate_weights_indices(in_length, out_length, scale, kernel,
     return weights, indices, int(sym_len_s), int(sym_len_e)
 
 
-# --------------------------------------------
 # imresize for tensor image [0, 1]
-# --------------------------------------------
 def imresize(img, scale, antialiasing=True):
     # Now the scale should be the same for H and W
     # input: img: pytorch tensor, CHW or HW [0,1]
@@ -374,9 +343,7 @@ def imresize(img, scale, antialiasing=True):
     return out_2
 
 
-# --------------------------------------------
 # imresize for numpy image [0, 1]
-# --------------------------------------------
 def imresize_np(img, scale, antialiasing=True):
     # Now the scale should be the same for H and W
     # input: img: Numpy, HWC or HW [0,1]
@@ -453,18 +420,6 @@ def imresize_np(img, scale, antialiasing=True):
     return out_2.numpy()
 
 
-"""
-# --------------------------------------------
-# Super-Resolution
-# --------------------------------------------
-#
-# Kai Zhang (cskaizhang@gmail.com)
-# https://github.com/cszn
-# From 2019/03--2021/08
-# --------------------------------------------
-"""
-
-
 def modcrop_np(img, sf):
     '''
     Args:
@@ -476,13 +431,6 @@ def modcrop_np(img, sf):
     w, h = img.shape[:2]
     im = np.copy(img)
     return im[:w - w % sf, :h - h % sf, ...]
-
-
-"""
-# --------------------------------------------
-# anisotropic Gaussian kernels
-# --------------------------------------------
-"""
 
 
 def analytic_kernel(k):
@@ -657,21 +605,10 @@ def fspecial_laplacian(alpha):
 
 
 def fspecial(filter_type, *args, **kwargs):
-    '''
-    python code from:
-    https://github.com/ronaldosena/imagens-medicas-2/blob/40171a6c259edec7827a6693a93955de2bd39e76/Aulas/aula_2_-_uniform_filter/matlab_fspecial.py
-    '''
     if filter_type == 'gaussian':
         return fspecial_gaussian(*args, **kwargs)
     if filter_type == 'laplacian':
         return fspecial_laplacian(*args, **kwargs)
-
-
-"""
-# --------------------------------------------
-# degradation models
-# --------------------------------------------
-"""
 
 
 def bicubic_degradation(x, sf=3):
@@ -740,7 +677,6 @@ def classical_degradation(x, k, sf=3):
         downsampled LR image
     '''
     x = ndimage.filters.convolve(x, np.expand_dims(k, axis=2), mode='wrap')
-    # x = filters.correlate(x, np.expand_dims(np.flip(k), axis=2))
     st = 0
     return x[st::sf, st::sf, ...]
 
@@ -893,11 +829,9 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
     """
     This is the variant of the degradation model of BSRGAN from the paper
     "Designing a Practical Degradation Model for Deep Blind Image Super-Resolution"
-    ----------
     sf: scale factor
     isp_model: camera ISP model
     Returns
-    -------
     img: low-quality patch, size: lq_patchsizeXlq_patchsizeXC, range: [0, 1]
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """
@@ -992,11 +926,9 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
     """
     This is the variant of the degradation model of BSRGAN from the paper
     "Designing a Practical Degradation Model for Deep Blind Image Super-Resolution"
-    ----------
     sf: scale factor
     isp_model: camera ISP model
     Returns
-    -------
     img: low-quality patch, size: lq_patchsizeXlq_patchsizeXC, range: [0, 1]
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """

@@ -10,8 +10,12 @@ import torchvision.transforms.functional as TF
 from PIL import Image, ImageFilter
 from torchvision.transforms.functional import InterpolationMode
 
-__all__ = ['Compose', 'Resize', 'Rescale', 'CenterCrop', 'CenterCropV2', 'RandomCrop', 'RandomCropV2', 'RandomHFlip',\
-    'GaussianBlur', 'ColorJitter', 'RandomGray', 'ToTensor', 'Normalize', 'ResizeRandomCrop', 'ExtractResizeRandomCrop', 'ExtractResizeAssignCrop']
+__all__ = [
+    'Compose', 'Resize', 'Rescale', 'CenterCrop', 'CenterCropV2', 'RandomCrop',
+    'RandomCropV2', 'RandomHFlip', 'GaussianBlur', 'ColorJitter', 'RandomGray',
+    'ToTensor', 'Normalize', 'ResizeRandomCrop', 'ExtractResizeRandomCrop',
+    'ExtractResizeAssignCrop'
+]
 
 
 def random_resize(img, size):

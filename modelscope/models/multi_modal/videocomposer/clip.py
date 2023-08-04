@@ -77,11 +77,7 @@ class FrozenOpenCLIPVisualEmbedder(nn.Module):
     """
     Uses the OpenCLIP transformer encoder for text
     """
-    LAYERS = [
-        #"pooled",
-        'last',
-        'penultimate'
-    ]
+    LAYERS = ['last', 'penultimate']
 
     def __init__(self,
                  arch='ViT-H-14',

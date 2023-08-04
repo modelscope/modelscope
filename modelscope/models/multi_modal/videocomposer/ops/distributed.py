@@ -361,10 +361,6 @@ class DiffScatter(Function):
     """
 
     @staticmethod
-    def symbolic(graph, input):
-        return _split(input)
-
-    @staticmethod
     def symbolic(ctx, input):
         return _split(input)
 
@@ -402,7 +398,6 @@ def spherical_kmeans(feats, num_clusters, num_iters=10):
     ones = feats.new_ones(n, dtype=torch.long)
 
     # distributed settings
-    rank = get_rank()
     world_size = get_world_size()
 
     # init clusters

@@ -207,7 +207,7 @@ def ssim(img1, img2):
     kernel = cv2.getGaussianKernel(11, 1.5)
     window = np.outer(kernel, kernel.transpose())
 
-    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]  # valid
+    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]
     mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
     mu1_sq = mu1**2
     mu2_sq = mu2**2
@@ -234,8 +234,10 @@ def cubic(x):
     absx = torch.abs(x)
     absx2 = absx**2
     absx3 = absx**3
-    return (1.5*absx3 - 2.5*absx2 + 1) * ((absx <= 1).type_as(absx)) + \
-        (-0.5*absx3 + 2.5*absx2 - 4*absx + 2) * (((absx > 1)*(absx <= 2)).type_as(absx))
+    return (1.5 * absx3 - 2.5 * absx2 + 1) * (
+        (absx <= 1).type_as(absx)) + (-0.5 * absx3 + 2.5 * absx2 - 4 * absx
+                                      + 2) * (((absx > 1) *
+                                               (absx <= 2)).type_as(absx))
 
 
 def calculate_weights_indices(in_length, out_length, scale, kernel,
@@ -900,14 +902,12 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """
     image = uint2single(image)
-    isp_prob, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
-    sf_ori = sf
+    _, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
+    _ = sf
 
     h1, w1 = image.shape[:2]
     image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]  # mod crop
     h, w = image.shape[:2]
-
-    hq = image.copy()
 
     if sf == 4 and random.random() < scale2_prob:  # downsample1
         if np.random.rand() < 0.5:
@@ -1000,14 +1000,11 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """
     image = uint2single(image)
-    isp_prob, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
-    sf_ori = sf
+    _, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
 
     h1, w1 = image.shape[:2]
     image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]  # mod crop
     h, w = image.shape[:2]
-
-    hq = image.copy()
 
     if sf == 4 and random.random() < scale2_prob:  # downsample1
         if np.random.rand() < 0.5:

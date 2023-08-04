@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from tools.annotator.util import HWC3
 
+
 class CannyDetector:
 
     def __call__(self,

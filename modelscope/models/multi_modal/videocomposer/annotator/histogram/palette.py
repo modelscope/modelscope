@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 r"""Modified from ``https://github.com/sergeyk/rayleigh''.
 """
 import os

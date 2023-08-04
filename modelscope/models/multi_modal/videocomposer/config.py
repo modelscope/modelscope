@@ -27,7 +27,6 @@ cfg.depth_std = 20.0
 cfg.depth_clamp = 10.0
 cfg.hist_sigma = 10.0
 
-#
 cfg.use_image_dataset = False
 cfg.alpha_img = 0.7
 
@@ -67,9 +66,9 @@ cfg.seed = 8888
 # diffusion
 cfg.num_timesteps = 1000
 cfg.mean_type = 'eps'
-cfg.var_type = 'fixed_small'  # NOTE: to stabilize training and avoid NaN
+cfg.var_type = 'fixed_small'
 cfg.loss_type = 'mse'
-cfg.ddim_timesteps = 50  # official: 250
+cfg.ddim_timesteps = 50
 cfg.ddim_eta = 0.0
 cfg.clamp = 1.0
 cfg.share_noise = False
@@ -93,6 +92,7 @@ cfg.vit_mean = [0.48145466, 0.4578275, 0.40821073]
 cfg.vit_std = [0.26862954, 0.26130258, 0.27577711]
 cfg.clip_checkpoint = 'open_clip_pytorch_model.bin'
 cfg.mvs_visual = False
+
 # unet
 cfg.unet_in_dim = 4
 cfg.unet_concat_dim = 8
@@ -100,7 +100,6 @@ cfg.unet_y_dim = cfg.vit_out_dim
 cfg.unet_context_dim = 1024
 cfg.unet_out_dim = 8 if cfg.var_type.startswith('learned') else 4
 cfg.unet_dim = 320
-#cfg.unet_dim_mult = [1, 2, 3, 5]
 cfg.unet_dim_mult = [1, 2, 4, 4]
 cfg.unet_res_blocks = 2
 cfg.unet_num_heads = 8
@@ -117,19 +116,17 @@ cfg.temporal_attention = True
 cfg.use_fps_condition = False
 cfg.use_sim_mask = False
 
-## Default: load 2d pretrain
+# Default: load 2d pretrain
 cfg.pretrained = False
 cfg.fix_weight = False
 
-## Default resume
-#
+# Default resume
 cfg.resume = True
 cfg.resume_step = 148000
 cfg.resume_check_dir = '.'
 cfg.resume_checkpoint = os.path.join(
     cfg.resume_check_dir,
     f'step_{cfg.resume_step}/non_ema_{cfg.resume_step}.pth')
-#
 cfg.resume_optimizer = False
 if cfg.resume_optimizer:
     cfg.resume_optimizer = os.path.join(
@@ -155,5 +152,5 @@ cfg.save_ckp_interval = 1000
 # logging
 cfg.log_interval = 100
 composition_strings = '_'.join(cfg.video_compositions)
-### Default log_dir
+# Default log_dir
 cfg.log_dir = f'outputs/'

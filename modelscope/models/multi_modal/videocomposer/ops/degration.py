@@ -22,17 +22,17 @@ __all__ = ['degradation_bsrgan_light', 'degradation_bsrgan']
 # get uint8 image of size HxWxn_channles (RGB)
 # --------------------------------------------
 def imread_uint(path, n_channels=3):
-    #  input: path
+    # input: path
     # output: HxWx3(RGB or GGG), or HxWx1 (G)
     if n_channels == 1:
-        img = cv2.imread(path, 0)  # cv2.IMREAD_GRAYSCALE
-        img = np.expand_dims(img, axis=2)  # HxWx1
+        img = cv2.imread(path, 0)
+        img = np.expand_dims(img, axis=2)
     elif n_channels == 3:
-        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)  # BGR or G
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         if img.ndim == 2:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)  # GGG
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         else:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # RGB
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
 
@@ -132,13 +132,13 @@ def bgr2ycbcr(img, only_y=True):
 
 def channel_convert(in_c, tar_type, img_list):
     # conversion among BGR, gray and y
-    if in_c == 3 and tar_type == 'gray':  # BGR to gray
+    if in_c == 3 and tar_type == 'gray':
         gray_list = [cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) for img in img_list]
         return [np.expand_dims(img, axis=2) for img in gray_list]
-    elif in_c == 3 and tar_type == 'y':  # BGR to y
+    elif in_c == 3 and tar_type == 'y':
         y_list = [bgr2ycbcr(img, only_y=True) for img in img_list]
         return [np.expand_dims(img, axis=2) for img in y_list]
-    elif in_c == 1 and tar_type == 'RGB':  # gray/y to BGR
+    elif in_c == 1 and tar_type == 'RGB':
         return [cv2.cvtColor(img, cv2.COLOR_GRAY2BGR) for img in img_list]
     else:
         return img_list
@@ -211,7 +211,7 @@ def ssim(img1, img2):
     kernel = cv2.getGaussianKernel(11, 1.5)
     window = np.outer(kernel, kernel.transpose())
 
-    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]  # valid
+    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]
     mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
     mu1_sq = mu1**2
     mu2_sq = mu2**2
@@ -611,8 +611,7 @@ def gen_kernel(
     INV_SIGMA = np.linalg.inv(SIGMA)[None, None, :, :]
 
     # Set expectation position (shifting kernel for aligned image)
-    MU = k_size // 2 - 0.5 * (scale_factor - 1
-                              )  # - 0.5 * (scale_factor - k_size % 2)
+    MU = k_size // 2 - 0.5 * (scale_factor - 1)
     MU = MU[None, None, :, None]
 
     # Create meshgrid for Gaussian
@@ -704,8 +703,7 @@ def srmd_degradation(x, k, sf=3):
           year={2018}
         }
     '''
-    x = ndimage.filters.convolve(
-        x, np.expand_dims(k, axis=2), mode='wrap')  # 'nearest' | 'mirror'
+    x = ndimage.filters.convolve(x, np.expand_dims(k, axis=2), mode='wrap')
     x = bicubic_degradation(x, sf=sf)
     return x
 
@@ -799,9 +797,9 @@ def add_blur_1(img, sf=4):
 
 def add_resize(img, sf=4):
     rnum = np.random.rand()
-    if rnum > 0.8:  # up
+    if rnum > 0.8:
         sf1 = random.uniform(1, 2)
-    elif rnum < 0.7:  # down
+    elif rnum < 0.7:
         sf1 = random.uniform(0.5 / sf, 1)
     else:
         sf1 = 1.0
@@ -816,13 +814,13 @@ def add_resize(img, sf=4):
 def add_Gaussian_noise(img, noise_level1=2, noise_level2=25):
     noise_level = random.randint(noise_level1, noise_level2)
     rnum = np.random.rand()
-    if rnum > 0.6:  # add color Gaussian noise
+    if rnum > 0.6:
         img = img + np.random.normal(0, noise_level / 255.0, img.shape).astype(
             np.float32)
-    elif rnum < 0.4:  # add grayscale Gaussian noise
+    elif rnum < 0.4:
         img = img + np.random.normal(0, noise_level / 255.0,
                                      (*img.shape[:2], 1)).astype(np.float32)
-    else:  # add  noise
+    else:
         L = noise_level2 / 255.
         D = np.diag(np.random.rand(3))
         U = orth(np.random.rand(3, 3))
@@ -856,7 +854,7 @@ def add_speckle_noise(img, noise_level1=2, noise_level2=25):
 
 def add_Poisson_noise(img):
     img = np.clip((img * 255.0).round(), 0, 255) / 255.
-    vals = 10**(2 * random.random() + 2.0)  # [2, 4]
+    vals = 10**(2 * random.random() + 2.0)
     if random.random() < 0.5:
         img = np.random.poisson(img * vals).astype(np.float32) / vals
     else:
@@ -908,12 +906,12 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
     sf_ori = sf
 
     h1, w1 = image.shape[:2]
-    image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]  # mod crop
+    image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]
     h, w = image.shape[:2]
 
     hq = image.copy()
 
-    if sf == 4 and random.random() < scale2_prob:  # downsample1
+    if sf == 4 and random.random() < scale2_prob:
         if np.random.rand() < 0.5:
             image = cv2.resize(
                 image,
@@ -926,7 +924,7 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
 
     shuffle_order = random.sample(range(7), 7)
     idx1, idx2 = shuffle_order.index(2), shuffle_order.index(3)
-    if idx1 > idx2:  # keep downsample3 last
+    if idx1 > idx2:
         shuffle_order[idx1], shuffle_order[idx2] = shuffle_order[
             idx2], shuffle_order[idx1]
 
@@ -946,11 +944,10 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
             else:
                 k = fspecial('gaussian', 25, random.uniform(0.1, 0.6 * sf))
                 k_shifted = shift_pixel(k, sf)
-                k_shifted = k_shifted / k_shifted.sum(
-                )  # blur with shifted kernel
+                k_shifted = k_shifted / k_shifted.sum()
                 image = ndimage.filters.convolve(
                     image, np.expand_dims(k_shifted, axis=2), mode='mirror')
-                image = image[0::sf, 0::sf, ...]  # nearest downsampling
+                image = image[0::sf, 0::sf, ...]
             image = np.clip(image, 0.0, 1.0)
         elif i == 3:
             # downsample3
@@ -1008,12 +1005,12 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
     sf_ori = sf
 
     h1, w1 = image.shape[:2]
-    image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]  # mod crop
+    image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]
     h, w = image.shape[:2]
 
     hq = image.copy()
 
-    if sf == 4 and random.random() < scale2_prob:  # downsample1
+    if sf == 4 and random.random() < scale2_prob:
         if np.random.rand() < 0.5:
             image = cv2.resize(
                 image,
@@ -1026,7 +1023,7 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
 
     shuffle_order = random.sample(range(7), 7)
     idx1, idx2 = shuffle_order.index(2), shuffle_order.index(3)
-    if idx1 > idx2:  # keep downsample3 last
+    if idx1 > idx2:
         shuffle_order[idx1], shuffle_order[idx2] = shuffle_order[
             idx2], shuffle_order[idx1]
 
@@ -1048,11 +1045,10 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
             else:
                 k = fspecial('gaussian', 25, random.uniform(0.1, 0.6 * sf))
                 k_shifted = shift_pixel(k, sf)
-                k_shifted = k_shifted / k_shifted.sum(
-                )  # blur with shifted kernel
+                k_shifted = k_shifted / k_shifted.sum()
                 image = ndimage.filters.convolve(
                     image, np.expand_dims(k_shifted, axis=2), mode='mirror')
-                image = image[0::sf, 0::sf, ...]  # nearest downsampling
+                image = image[0::sf, 0::sf, ...]
             image = np.clip(image, 0.0, 1.0)
         elif i == 3:
             # downsample3

@@ -333,8 +333,7 @@ def save_video(bucket,
                std=[0.5, 0.5, 0.5],
                nrow=8,
                retry=5):
-    mean = torch.tensor(
-        mean, device=tensor.device).view(1, -1, 1, 1, 1)
+    mean = torch.tensor(mean, device=tensor.device).view(1, -1, 1, 1, 1)
     std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)
     tensor = tensor.mul_(std).add_(mean)
     tensor.clamp_(0, 1)
@@ -343,8 +342,7 @@ def save_video(bucket,
     for _ in [None] * retry:
         try:
             one_gif = rearrange(
-                tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             video_tensor_to_gif(one_gif, filename)
             bucket.put_object_from_file(oss_key, filename)
             exception = None
@@ -374,12 +372,9 @@ def save_video_multiple_conditions(oss_key,
                                    retry=5,
                                    save_origin_video=True,
                                    bucket=None):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     try:
         video_tensor.clamp_(0, 1)
     except:
@@ -405,8 +400,7 @@ def save_video_multiple_conditions(oss_key,
                         palette.get_palette_image(
                             j, percentile=90, width=256, height=256))
                 conditions.append(np.stack(vis_i))
-            conditions = torch.from_numpy(
-                np.stack(conditions))
+            conditions = torch.from_numpy(np.stack(conditions))
             conditions = rearrange(conditions, 'b n h w c -> b c n h w')
         else:
             if conditions.size(1) == 1:
@@ -431,15 +425,13 @@ def save_video_multiple_conditions(oss_key,
     for _ in [None] * retry:
         try:
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             cons_list = [
                 rearrange(con, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
                 for _, con in model_kwargs_channel3.items()
             ]
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
 
             if save_origin_video:
                 vid_gif = torch.cat(
@@ -478,12 +470,9 @@ def save_video_multiple_conditions_with_data(bucket,
                                              std=[0.5, 0.5, 0.5],
                                              nrow=8,
                                              retry=5):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     video_tensor.clamp_(0, 1)
 
     b, c, n, h, w = video_tensor.shape
@@ -502,8 +491,7 @@ def save_video_multiple_conditions_with_data(bucket,
                         palette.get_palette_image(
                             j, percentile=90, width=256, height=256))
                 conditions.append(np.stack(vis_i))
-            conditions = torch.from_numpy(
-                np.stack(conditions))
+            conditions = torch.from_numpy(np.stack(conditions))
             conditions = rearrange(conditions, 'b n h w c -> b c n h w')
         else:
             if conditions.size(1) == 1:
@@ -531,15 +519,13 @@ def save_video_multiple_conditions_with_data(bucket,
     for _ in [None] * retry:
         try:
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             cons_list = [
                 rearrange(con, '(i j) c f h w -> c f (i h) (j w)', j=nrow)
                 for _, con in model_kwargs_channel3.items()
             ]
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             vid_gif = torch.cat(
                 [
                     source_imgs,
@@ -606,12 +592,9 @@ def save_video_vs_conditions(bucket,
                              std=[0.5, 0.5, 0.5],
                              nrow=8,
                              retry=5):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     video_tensor.clamp_(0, 1)
 
     b, c, n, h, w = video_tensor.shape
@@ -626,14 +609,11 @@ def save_video_vs_conditions(bucket,
     for _ in [None] * retry:
         try:
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             con_gif = rearrange(
-                conditions, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                conditions, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             vid_gif = torch.cat([vid_gif, con_gif, source_imgs], dim=2)
 
             video_tensor_to_gif(vid_gif, filename)
@@ -662,8 +642,7 @@ def save_video_grid_mp4(bucket,
                         nrow=None,
                         fps=5,
                         retry=5):
-    mean = torch.tensor(
-        mean, device=tensor.device).view(1, -1, 1, 1, 1)
+    mean = torch.tensor(mean, device=tensor.device).view(1, -1, 1, 1, 1)
     std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)
     tensor = tensor.mul_(std).add_(mean)
     tensor.clamp_(0, 1)
@@ -951,7 +930,7 @@ def breakup_grid(img, grid_size):
     # params
     nrow = img.height // grid_size
     ncol = img.width // grid_size
-    wrow = wcol = 2 
+    wrow = wcol = 2
 
     # collect grids
     grids = []

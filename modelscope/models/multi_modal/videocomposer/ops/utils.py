@@ -312,18 +312,16 @@ def save_video(bucket,
                std=[0.5, 0.5, 0.5],
                nrow=8,
                retry=5):
-    mean = torch.tensor(
-        mean, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    tensor = tensor.mul_(std).add_(mean)  ####unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)
+    tensor = tensor.mul_(std).add_(mean)
     tensor.clamp_(0, 1)
 
     filename = rand_name(suffix='.gif')
     for _ in [None] * retry:
         try:
             one_gif = rearrange(
-                tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             video_tensor_to_gif(one_gif, filename)
             bucket.put_object_from_file(oss_key, filename)
             exception = None
@@ -353,12 +351,9 @@ def save_video_multiple_conditions(oss_key,
                                    retry=5,
                                    save_origin_video=True,
                                    bucket=None):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)  #### unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     try:
         video_tensor.clamp_(0, 1)
     except:
@@ -374,7 +369,7 @@ def save_video_multiple_conditions(oss_key,
         if conditions.shape[-1] == 1024:
             # Skip for style embeding
             continue
-        if len(conditions.shape) == 3:  # which means that it is histogram.
+        if len(conditions.shape) == 3:
             conditions_np = conditions.cpu().numpy()
             conditions = []
             for i in conditions_np:
@@ -384,8 +379,7 @@ def save_video_multiple_conditions(oss_key,
                         palette.get_palette_image(
                             j, percentile=90, width=256, height=256))
                 conditions.append(np.stack(vis_i))
-            conditions = torch.from_numpy(
-                np.stack(conditions))  # (8, 16, 256, 256, 3)
+            conditions = torch.from_numpy(np.stack(conditions))
             conditions = rearrange(conditions, 'b n h w c -> b c n h w')
         else:
             if conditions.size(1) == 1:
@@ -398,29 +392,25 @@ def save_video_multiple_conditions(oss_key,
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
             elif conditions.size(1) == 3:
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
-            elif conditions.size(1) == 4:  # means it is a mask.
-                color = ((conditions[:, 0:3] + 1.) / 2.)  # .astype(np.float32)
-                alpha = conditions[:, 3:4]  # .astype(np.float32)
+            elif conditions.size(1) == 4:
+                color = ((conditions[:, 0:3] + 1.) / 2.)
+                alpha = conditions[:, 3:4]
                 conditions = color * alpha + 1.0 * (1.0 - alpha)
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
         model_kwargs_channel3[key] = conditions.cpu(
         ) if conditions.is_cuda else conditions
 
-    filename = oss_key  # "output/output_" + rand_name(suffix='.gif')
+    filename = oss_key
     for _ in [None] * retry:
         try:
-            # set_trace()
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
-            # con_gif = rearrange(conditions, '(i j) c f h w -> c f (i h) (j w)', i = nrow)#num_sample_rows=8
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             cons_list = [
                 rearrange(con, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
                 for _, con in model_kwargs_channel3.items()
             ]
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
 
             if save_origin_video:
                 vid_gif = torch.cat(
@@ -459,12 +449,9 @@ def save_video_multiple_conditions_with_data(bucket,
                                              std=[0.5, 0.5, 0.5],
                                              nrow=8,
                                              retry=5):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)  #### unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     video_tensor.clamp_(0, 1)
 
     b, c, n, h, w = video_tensor.shape
@@ -473,11 +460,7 @@ def save_video_multiple_conditions_with_data(bucket,
 
     model_kwargs_channel3 = {}
     for key, conditions in model_kwargs[0].items():
-        # if key == 'masked':
-        #     print(conditions.shape)
-        #     print(conditions[:, 0:3].max(), conditions[:, 0:3].min())
-        #     print(conditions[:, 3:].max(), conditions[:, 3:].min())
-        if len(conditions.shape) == 3:  # which means that it is histogram.
+        if len(conditions.shape) == 3:
             conditions_np = conditions.cpu().numpy()
             conditions = []
             for i in conditions_np:
@@ -487,8 +470,7 @@ def save_video_multiple_conditions_with_data(bucket,
                         palette.get_palette_image(
                             j, percentile=90, width=256, height=256))
                 conditions.append(np.stack(vis_i))
-            conditions = torch.from_numpy(
-                np.stack(conditions))  # (8, 16, 256, 256, 3)
+            conditions = torch.from_numpy(np.stack(conditions))
             conditions = rearrange(conditions, 'b n h w c -> b c n h w')
         else:
             if conditions.size(1) == 1:
@@ -501,9 +483,9 @@ def save_video_multiple_conditions_with_data(bucket,
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
             elif conditions.size(1) == 3:
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
-            elif conditions.size(1) == 4:  # means it is a mask.
-                color = ((conditions[:, 0:3] + 1.) / 2.)  # .astype(np.float32)
-                alpha = conditions[:, 3:4]  # .astype(np.float32)
+            elif conditions.size(1) == 4:
+                color = ((conditions[:, 0:3] + 1.) / 2.)
+                alpha = conditions[:, 3:4]
                 conditions = color * alpha + 1.0 * (1.0 - alpha)
                 conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
         model_kwargs_channel3[key] = conditions.cpu(
@@ -516,16 +498,13 @@ def save_video_multiple_conditions_with_data(bucket,
     for _ in [None] * retry:
         try:
             vid_gif = rearrange(
-                video_tensor, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
-            # con_gif = rearrange(conditions, '(i j) c f h w -> c f (i h) (j w)', i = nrow)#num_sample_rows=8
+                video_tensor, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             cons_list = [
                 rearrange(con, '(i j) c f h w -> c f (i h) (j w)', j=nrow)
                 for _, con in model_kwargs_channel3.items()
             ]
             source_imgs = rearrange(
-                source_imgs, '(i j) c f h w -> c f (i h) (j w)',
-                i=nrow)  #num_sample_rows=8
+                source_imgs, '(i j) c f h w -> c f (i h) (j w)', i=nrow)
             vid_gif = torch.cat(
                 [
                     source_imgs,
@@ -592,12 +571,9 @@ def save_video_vs_conditions(bucket,
                              std=[0.5, 0.5, 0.5],
                              nrow=8,
                              retry=5):
-    mean = torch.tensor(
-        mean, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(
-        std, device=video_tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    video_tensor = video_tensor.mul_(std).add_(
-        mean)  ####unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
+    video_tensor = video_tensor.mul_(std).add_(mean)
     video_tensor.clamp_(0, 1)
 
     b, c, n, h, w = video_tensor.shape
@@ -607,7 +583,6 @@ def save_video_vs_conditions(bucket,
     if conditions.size(1) == 1:
         conditions = torch.cat([conditions, conditions, conditions], dim=1)
         conditions = F.adaptive_avg_pool3d(conditions, (n, h, w))
-        # conditions = conditions * 255
 
     filename = rand_name(suffix='.gif')
     for _ in [None] * retry:
@@ -649,10 +624,9 @@ def save_video_grid_mp4(bucket,
                         nrow=None,
                         fps=5,
                         retry=5):
-    mean = torch.tensor(
-        mean, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)  #ncfhw
-    tensor = tensor.mul_(std).add_(mean)  ####unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=tensor.device).view(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=tensor.device).view(1, -1, 1, 1, 1)
+    tensor = tensor.mul_(std).add_(mean)
     tensor.clamp_(0, 1)
     b, c, t, h, w = tensor.shape
     tensor = tensor.permute(0, 2, 3, 4, 1)
@@ -939,7 +913,7 @@ def breakup_grid(img, grid_size):
     # params
     nrow = img.height // grid_size
     ncol = img.width // grid_size
-    wrow = wcol = 2  # NOTE: use default values here
+    wrow = wcol = 2
 
     # collect grids
     grids = []
@@ -952,12 +926,12 @@ def breakup_grid(img, grid_size):
 
 
 def huggingface_tokenizer(name='google/mt5-xxl', **kwargs):
-    from transformers import AutoTokenizer  # v4.18.0 by default
+    from transformers import AutoTokenizer
     return AutoTokenizer.from_pretrained(
         DOWNLOAD_TO_CACHE(f'huggingface/tokenizers/{name}', name), **kwargs)
 
 
 def huggingface_model(name='google/mt5-xxl', model_type='AutoModel', **kwargs):
-    import transformers  # v4.18.0 by default
+    import transformers
     return getattr(transformers, model_type).from_pretrained(
         DOWNLOAD_TO_CACHE(f'huggingface/models/{name}', name), **kwargs)

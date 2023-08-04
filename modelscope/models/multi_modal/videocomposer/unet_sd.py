@@ -43,8 +43,6 @@ def load_2d_pretrained_state_dict(state, cfg):
 
     dim = cfg.unet_dim
     num_res_blocks = cfg.unet_res_blocks
-    temporal_attention = cfg.temporal_attention
-    temporal_conv = cfg.temporal_conv
     dim_mult = cfg.unet_dim_mult
     attn_scales = cfg.unet_attn_scales
 
@@ -54,16 +52,16 @@ def load_2d_pretrained_state_dict(state, cfg):
     shortcut_dims = []
     scale = 1.0
 
-    #embeddings
-    state_dict = load_Block(state, prefix=f'time_embedding')
+    # embeddings
+    state_dict = load_Block(state, prefix='time_embedding')
     new_state_dict.update(state_dict)
-    state_dict = load_Block(state, prefix=f'y_embedding')
+    state_dict = load_Block(state, prefix='y_embedding')
     new_state_dict.update(state_dict)
-    state_dict = load_Block(state, prefix=f'context_embedding')
+    state_dict = load_Block(state, prefix='context_embedding')
     new_state_dict.update(state_dict)
 
     encoder_idx = 0
-    ### init block
+    # init block
     state_dict = load_Block(
         state,
         prefix=f'encoder.{encoder_idx}',
@@ -99,11 +97,10 @@ def load_2d_pretrained_state_dict(state, cfg):
 
             # downsample
             if i != len(dim_mult) - 1 and j == num_res_blocks - 1:
-                # downsample = ResidualBlock(out_dim, embed_dim, out_dim, use_scale_shift_norm, 0.5, dropout)
                 state_dict = load_Block(
                     state,
-                    prefix=f'encoder.{encoder_idx}',
-                    new_prefix=f'encoder.{encoder_idx}.0')
+                    prefix='encoder.{encoder_idx}',
+                    new_prefix='encoder.{encoder_idx}.0')
                 new_state_dict.update(state_dict)
 
                 shortcut_dims.append(out_dim)
@@ -118,7 +115,7 @@ def load_2d_pretrained_state_dict(state, cfg):
     middle_idx += 2
 
     state_dict = load_Block(
-        state, prefix=f'middle.1', new_prefix=f'middle.{middle_idx}')
+        state, prefix='middle.1', new_prefix=f'middle.{middle_idx}')
     new_state_dict.update(state_dict)
     middle_idx += 1
 
@@ -126,7 +123,7 @@ def load_2d_pretrained_state_dict(state, cfg):
         middle_idx += 1
 
     state_dict = load_Block(
-        state, prefix=f'middle.2', new_prefix=f'middle.{middle_idx}')
+        state, prefix='middle.2', new_prefix=f'middle.{middle_idx}')
     new_state_dict.update(state_dict)
     middle_idx += 2
 
@@ -144,7 +141,6 @@ def load_2d_pretrained_state_dict(state, cfg):
             idx += 1
             idx_ += 2
             if scale in attn_scales:
-                # block.append(AttentionBlock(out_dim, context_dim, num_heads, head_dim))
                 state_dict = load_Block(
                     state,
                     prefix=f'decoder.{decoder_idx}.{idx}',
@@ -155,11 +151,8 @@ def load_2d_pretrained_state_dict(state, cfg):
                 for _ in range(cfg.temporal_attn_times):
                     idx_ += 1
 
-            in_dim = out_dim
-
             # upsample
             if i != len(dim_mult) - 1 and j == num_res_blocks:
-                # upsample = ResidualBlock(out_dim, embed_dim, out_dim, use_scale_shift_norm, 2.0, dropout)
                 state_dict = load_Block(
                     state,
                     prefix=f'decoder.{decoder_idx}.{idx}',
@@ -171,7 +164,7 @@ def load_2d_pretrained_state_dict(state, cfg):
                 scale *= 2.0
             decoder_idx += 1
 
-    state_dict = load_Block(state, prefix=f'head')
+    state_dict = load_Block(state, prefix='head')
     new_state_dict.update(state_dict)
 
     return new_state_dict
@@ -216,7 +209,7 @@ def prob_mask_like(shape, prob, device):
 
 
 class MemoryEfficientCrossAttention(nn.Module):
-    # https://github.com/MatthieuTPHR/diffusers/blob/d80b531ff8060ec1ea982b65a1b8df70f73aa67c/src/diffusers/models/attention.py#L223
+
     def __init__(self,
                  query_dim,
                  context_dim=None,
@@ -466,15 +459,14 @@ class BasicTransformerBlock(nn.Module):
             heads=n_heads,
             dim_head=d_head,
             dropout=dropout,
-            context_dim=context_dim if self.disable_self_attn else
-            None)  # is a self-attention if not self.disable_self_attn
+            context_dim=context_dim if self.disable_self_attn else None)
         self.ff = FeedForward(dim, dropout=dropout, glu=gated_ff)
         self.attn2 = attn_cls(
             query_dim=dim,
             context_dim=context_dim,
             heads=n_heads,
             dim_head=d_head,
-            dropout=dropout)  # is self-attn if context is none
+            dropout=dropout)
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.norm3 = nn.LayerNorm(dim)
@@ -922,9 +914,8 @@ class TemporalAttentionBlock(nn.Module):
             sim = sim + pos_bias
 
         if (focus_present_mask is None and video_mask is not None):
-            #video_mask: [B, n]
-            mask = video_mask[:, None, :] * video_mask[:, :, None]  # [b,n,n]
-            mask = mask.unsqueeze(1).unsqueeze(1)  #[b,1,1,n,n]
+            mask = video_mask[:, None, :] * video_mask[:, :, None]
+            mask = mask.unsqueeze(1).unsqueeze(1)
             sim = sim.masked_fill(~mask, -torch.finfo(sim.dtype).max)
         elif exists(focus_present_mask) and not (~focus_present_mask).all():
             attend_all_mask = torch.ones((n, n),
@@ -1054,7 +1045,8 @@ class TemporalTransformer(nn.Module):
                 context[i] = rearrange(
                     context[i], '(b f) l con -> b f l con',
                     f=self.frames).contiguous()
-                # calculate each batch one by one (since number in shape could not greater then 65,535 for some package)
+                # calculate each batch one by one
+                # (since number in shape could not greater then 65,535 for some package)
                 for j in range(b):
                     context_i_j = repeat(
                         context[i][j],
@@ -1067,7 +1059,6 @@ class TemporalTransformer(nn.Module):
             x = self.proj_out(x)
             x = rearrange(x, 'b (h w) f c -> b f c h w', h=h, w=w).contiguous()
         if not self.use_linear:
-            # x = rearrange(x, 'bhw f c -> bhw c f').contiguous()
             x = rearrange(x, 'b hw f c -> (b hw) c f').contiguous()
             x = self.proj_out(x)
             x = rearrange(
@@ -1118,7 +1109,7 @@ class InitTemporalConvBlock(nn.Module):
                  use_image_dataset=False):
         super(InitTemporalConvBlock, self).__init__()
         if out_dim is None:
-            out_dim = in_dim  #int(1.5*in_dim)
+            out_dim = in_dim
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.use_image_dataset = use_image_dataset
@@ -1452,8 +1443,7 @@ class UNetSD_temporal(nn.Module):
         if temporal_attention and not USE_TEMPORAL_TRANSFORMER:
             self.rotary_emb = RotaryEmbedding(min(32, head_dim))
             self.time_rel_pos_bias = RelativePositionBias(
-                heads=num_heads, max_distance=32
-            )  # realistically will not be able to generate that many frames of video... yet
+                heads=num_heads, max_distance=32)
 
         if self.use_fps_condition:
             self.fps_embedding = nn.Sequential(
@@ -1850,7 +1840,7 @@ class UNetSD_temporal(nn.Module):
         e = e.repeat_interleave(repeats=f, dim=0)
         context = context.repeat_interleave(repeats=f, dim=0)
 
-        ## always in shape (b f) c h w, except for temporal layer
+        # always in shape (b f) c h w, except for temporal layer
         x = rearrange(x, 'b c f h w -> (b f) c h w')
         # encoder
         xs = []
@@ -2007,7 +1997,7 @@ class Attention(nn.Module):
             nn.Dropout(dropout)) if project_out else nn.Identity()
 
     def forward(self, x):
-        b, n, _, h = *x.shape, self.heads
+        _, _, _, h = *x.shape, self.heads
         qkv = self.to_qkv(x).chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
 
@@ -2040,7 +2030,7 @@ class Attention_qkv(nn.Module):
             nn.Dropout(dropout)) if project_out else nn.Identity()
 
     def forward(self, q, k, v):
-        b, n, _, h = *q.shape, self.heads
+        _, _, _, h = *q.shape, self.heads
         bk = k.shape[0]
         q = self.to_q(q)
         k = self.to_k(k)
@@ -2167,7 +2157,7 @@ if __name__ == '__main__':
         temporal_attn_times=0,
         use_checkpoint=cfg.use_checkpoint,
         use_image_dataset=True,
-        use_fps_condition=cfg.use_fps_condition)  #.to(gpu)
+        use_fps_condition=cfg.use_fps_condition)
 
     print(
         int(sum(p.numel() for k, p in model.named_parameters()) / (1024**2)),

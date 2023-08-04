@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 r"""Modified from ``https://github.com/zhuoinoulu/pidinet''.
     Image augmentation: T.Compose([
         T.ToTensor(),

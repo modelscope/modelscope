@@ -614,15 +614,9 @@ class GaussianDiffusion(object):
                 x0_ = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out
 
-                # # derive xt_1, set eta=0 as ddim
-                # alphas_prev = _i(self.alphas_cumprod, (t - 1).clamp(0), xt)
-                # direction = torch.sqrt(1 - alphas_prev) * out
-                # xt_1 = torch.sqrt(alphas_prev) * x0_ + direction
-
                 # ncfhw, std on f
                 div_loss = 0.001 / (
                     x0_.std(dim=2).flatten(1).mean(dim=1) + 1e-4)
-                # print(div_loss,loss)
                 loss = loss + div_loss
 
             # total loss
@@ -634,9 +628,7 @@ class GaussianDiffusion(object):
             loss_vlb = 0.0
             if self.var_type in ['learned', 'learned_range']:
                 out, var = out.chunk(2, dim=1)
-                frozen = torch.cat([
-                    out.detach(), var
-                ], dim=1)  # learn var without affecting the prediction of mean
+                frozen = torch.cat([out.detach(), var], dim=1)
                 loss_vlb, _ = self.variational_lower_bound(
                     x0, xt, t, model=lambda *args, **kwargs: frozen)
                 if self.loss_type.startswith('rescaled_'):

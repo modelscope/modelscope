@@ -20,8 +20,6 @@ __all__ = [
     'spherical_kmeans', 'sinkhorn'
 ]
 
-#-------------------------------- Distributed operations --------------------------------#
-
 
 def is_dist_initialized():
     return dist.is_available() and dist.is_initialized()
@@ -67,7 +65,7 @@ def reduce(tensor, dst, op=dist.ReduceOp.SUM, group=None, **kwargs):
 
 
 def gather(tensor, dst=0, group=None, **kwargs):
-    rank = get_rank()  # global rank
+    rank = get_rank()
     world_size = get_world_size(group)
     if world_size == 1:
         return [tensor]
@@ -223,7 +221,7 @@ def generalized_gather(data, dst=0, group=None):
         return [data]
     if group is None:
         group = get_global_gloo_group()
-    rank = dist.get_rank()  # global rank
+    rank = dist.get_rank()
 
     tensor = _serialize_to_tensor(data, group)
     size_list, tensor = _pad_to_largest_tensor(tensor, group)
@@ -295,9 +293,6 @@ def shared_random_seed(group=None):
     seed = np.random.randint(2**31)
     all_seeds = generalized_all_gather(seed, group)
     return all_seeds[0]
-
-
-#-------------------------------- Differentiable operations --------------------------------#
 
 
 def _all_gather(x):
@@ -401,8 +396,6 @@ diff_all_gather = DiffAllGather.apply
 diff_all_reduce = DiffAllReduce.apply
 diff_scatter = DiffScatter.apply
 diff_copy = DiffCopy.apply
-
-#-------------------------------- Distributed algorithms --------------------------------#
 
 
 @torch.no_grad()

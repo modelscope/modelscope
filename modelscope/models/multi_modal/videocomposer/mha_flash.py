@@ -40,13 +40,11 @@ class FlashAttentionBlock(nn.Module):
         self.proj = nn.Conv2d(dim, dim, 1)
 
         if self.head_dim <= 128 and (self.head_dim % 8) == 0:
-            new_scale = math.pow(head_dim, -0.5)
             self.flash_attn = FlashAttention(
                 softmax_scale=None, attention_dropout=0.0)
 
         # zero out the last layer params
         nn.init.zeros_(self.proj.weight)
-        # self.apply(self._init_weight)
 
     def _init_weight(self, module):
         if isinstance(module, nn.Linear):

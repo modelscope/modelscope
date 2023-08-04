@@ -246,7 +246,7 @@ class MiDaS(nn.Module):
             nn.ReLU(inplace=True))
 
     def forward(self, x):
-        b, c, h, w, p = *x.size(), self.patch_size
+        b, _, h, w, p = *x.size(), self.patch_size
         assert h % p == 0 and w % p == 0, f'Image size ({w}, {h}) is not divisible by patch size ({p}, {p})'
         hp, wp, grid = h // p, w // p, self.image_size // p
 
@@ -261,7 +261,7 @@ class MiDaS(nn.Module):
                 align_corners=False).permute(0, 2, 3, 1).reshape(
                     1, hp * wp, -1)
         ],
-                                  dim=1)
+                                  dim=1)  # noqa
         x = self.patch_embedding(x).flatten(2).permute(0, 2, 1)
         x = torch.cat([self.cls_embedding.repeat(b, 1, 1), x], dim=1)
         x = x + pos_embedding

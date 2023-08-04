@@ -23,7 +23,8 @@ def beta_schedule(schedule,
                   init_beta=None,
                   last_beta=None):
     '''
-    This code defines a function beta_schedule that generates a sequence of beta values based on the given input parameters.
+    This code defines a function beta_schedule that generates a sequence of beta
+    values based on the given input parameters.
     These beta values can be used in video diffusion processes. The function has the following parameters:
         schedule(str): Determines the type of beta schedule to be generated.
             It can be 'linear', 'linear_sd', 'quadratic', or 'cosine'.
@@ -63,7 +64,8 @@ def beta_schedule(schedule,
         for step in range(num_timesteps):
             t1 = step / num_timesteps
             t2 = (step + 1) / num_timesteps
-            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
+            fn = lambda u: math.cos(  # noqa
+                (u + 0.008) / 1.008 * math.pi / 2)**2  # noqa
             betas.append(min(1.0 - fn(t2) / fn(t1), 0.999))
         return torch.tensor(betas, dtype=torch.float64)
     else:
@@ -183,7 +185,7 @@ class GaussianDiffusion(object):
         """
         noise = torch.randn_like(x0) if noise is None else noise
         return _i(self.sqrt_alphas_cumprod, t, x0) * x0 + \
-               _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise
+               _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise  # noqa
 
     def q_mean_variance(self, x0, t):
         r"""Distribution of q(x_t | x_0).
@@ -223,9 +225,10 @@ class GaussianDiffusion(object):
 
         # random sample (with optional conditional function)
         noise = torch.randn_like(xt)
-        mask = t.ne(0).float().view(-1,
-                                    *((1, ) *
-                                      (xt.ndim - 1)))  # no noise when t == 0
+        mask = t.ne(0).float().view(
+            -1,
+            *((1, ) *  # noqa
+              (xt.ndim - 1)))
         if condition_fn is not None:
             grad = condition_fn(xt, self._scale_timesteps(t), **model_kwargs)
             mu = mu.float() + var * grad.float()
@@ -275,11 +278,13 @@ class GaussianDiffusion(object):
             u_out = model(xt, self._scale_timesteps(t), **model_kwargs[1])
             dim = y_out.size(1) if self.var_type.startswith(
                 'fixed') else y_out.size(1) // 2
-            out = torch.cat([
-                u_out[:, :dim] + guide_scale *
-                (y_out[:, :dim] - u_out[:, :dim]), y_out[:, dim:]
-            ],
-                            dim=1)  # guide_scale=9.0
+            out = torch.cat(
+                [
+                    u_out[:, :dim] + guide_scale *  # noqa
+                    (y_out[:, :dim] - u_out[:, :dim]),
+                    y_out[:, dim:]
+                ],
+                dim=1)  # noqa
 
         # compute variance
         if self.var_type == 'learned':
@@ -305,13 +310,13 @@ class GaussianDiffusion(object):
         if self.mean_type == 'x_{t-1}':
             mu = out  # x_{t-1}
             x0 = _i(1.0 / self.posterior_mean_coef1, t, xt) * mu - \
-                 _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t, xt) * xt
+                 _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t, xt) * xt  # noqa
         elif self.mean_type == 'x0':
             x0 = out
             mu, _, _ = self.q_posterior_mean_variance(x0, xt, t)
         elif self.mean_type == 'eps':
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out  # noqa
             mu, _, _ = self.q_posterior_mean_variance(x0, xt, t)
 
         # restrict the range of x0
@@ -350,20 +355,20 @@ class GaussianDiffusion(object):
             # x0 -> eps
             alpha = _i(self.alphas_cumprod, t, xt)
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
             eps = eps - (1 - alpha).sqrt() * condition_fn(
                 xt, self._scale_timesteps(t), **model_kwargs)
 
             # eps -> x0
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
         # derive variables
         eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
         alphas = _i(self.alphas_cumprod, t, xt)
         alphas_prev = _i(self.alphas_cumprod, (t - stride).clamp(0), xt)
-        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *
+        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *  # noqa
                                   (1 - alphas / alphas_prev))
 
         # random sample
@@ -419,7 +424,7 @@ class GaussianDiffusion(object):
 
         # derive variables
         eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
         alphas_next = _i(
             torch.cat(
                 [self.alphas_cumprod,
@@ -481,29 +486,28 @@ class GaussianDiffusion(object):
                 # x0 -> eps
                 alpha = _i(self.alphas_cumprod, t, xt)
                 eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                      _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                      _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
                 eps = eps - (1 - alpha).sqrt() * condition_fn(
                     xt, self._scale_timesteps(t), **model_kwargs)
 
                 # eps -> x0
                 x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
             # derive eps
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
             return eps
 
         # function for compute x_0 and x_{t-1}
         def compute_x0(eps, t):
             # eps -> x0
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
             # deterministic sample
             alphas_prev = _i(self.alphas_cumprod, (t - stride).clamp(0), xt)
             direction = torch.sqrt(1 - alphas_prev) * eps
-            mask = t.ne(0).float().view(-1, *((1, ) * (xt.ndim - 1)))
             xt_1 = torch.sqrt(alphas_prev) * x0 + direction
             return xt_1, x0
 
@@ -699,7 +703,7 @@ class GaussianDiffusion(object):
 
             # predict eps from x0
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
 
             # collect metrics
             metrics['vlb'].append(vlb)
@@ -721,10 +725,9 @@ class GaussianDiffusion(object):
         return metrics
 
     def _scale_timesteps(self, t):
-        if self.rescale_timesteps:
+        if self.rescale_timesteps:  # noqa
             return t.float() * 1000.0 / self.num_timesteps
         return t
-        #return t.float()
 
 
 class GaussianDiffusion_style(object):
@@ -788,7 +791,7 @@ class GaussianDiffusion_style(object):
         """
         noise = torch.randn_like(x0) if noise is None else noise
         xt = _i(self.sqrt_alphas_cumprod, t, x0) * x0 + \
-             _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise
+             _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise  # noqa
         return xt.type_as(x0)
 
     def q_mean_variance(self, x0, t):
@@ -831,9 +834,10 @@ class GaussianDiffusion_style(object):
 
         # random sample (with optional conditional function)
         noise = torch.randn_like(xt)
-        t_mask = t.ne(0).float().view(-1,
-                                      *((1, ) *
-                                        (xt.ndim - 1)))  # no noise when t == 0
+        t_mask = t.ne(0).float().view(
+            -1,
+            *((1, ) *  # noqa
+              (xt.ndim - 1)))
         if condition_fn is not None:
             grad = condition_fn(xt, self._scale_timesteps(t), **model_kwargs)
             mu = mu.float() + var * grad.float()
@@ -885,11 +889,13 @@ class GaussianDiffusion_style(object):
                     xt, t=self._scale_timesteps(t), **model_kwargs[1])
                 dim = y_out.size(1) if self.var_type.startswith(
                     'fixed') else y_out.size(1) // 2
-                out = torch.cat([
-                    u_out[:, :dim] + guide_scale *
-                    (y_out[:, :dim] - u_out[:, :dim]), y_out[:, dim:]
-                ],
-                                dim=1)
+                out = torch.cat(
+                    [
+                        u_out[:, :dim] + guide_scale *  # noqa
+                        (y_out[:, :dim] - u_out[:, :dim]),
+                        y_out[:, dim:]
+                    ],
+                    dim=1)  # noqa
             else:
                 out = y_out
 
@@ -917,12 +923,12 @@ class GaussianDiffusion_style(object):
         if self.mean_type == 'x_{t-1}':
             mu = out  # x_{t-1}
             x0 = _i(1.0 / self.posterior_mean_coef1, t, xt) * mu - \
-                 _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t, xt) * xt
+                 _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t, xt) * xt  # noqa
         elif self.mean_type == 'x0':
             x0 = out
         elif self.mean_type == 'eps':
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out  # noqa
 
         # restrict the range of x0
         if percentile is not None:
@@ -965,20 +971,20 @@ class GaussianDiffusion_style(object):
             # x0 -> eps
             alpha = _i(self.alphas_cumprod, t, xt)
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
             eps = eps - (1 - alpha).sqrt() * condition_fn(
                 xt, self._scale_timesteps(t), **model_kwargs)
 
             # eps -> x0
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
         # derive variables
         eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
         alphas = _i(self.alphas_cumprod, t, xt)
         alphas_prev = _i(self.alphas_cumprod, t_prev, xt)
-        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *
+        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *  # noqa
                                   (1 - alphas / alphas_prev))
 
         # random sample
@@ -1040,7 +1046,7 @@ class GaussianDiffusion_style(object):
 
         # derive variables
         eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
         alphas_next = _i(
             torch.cat(
                 [self.alphas_cumprod,
@@ -1111,17 +1117,17 @@ class GaussianDiffusion_style(object):
                 # x0 -> eps
                 alpha = _i(self.alphas_cumprod, t, xt)
                 eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                      _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                      _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
                 eps = eps - (1 - alpha).sqrt() * condition_fn(
                     xt, self._scale_timesteps(t), **model_kwargs)
 
                 # eps -> x0
                 x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
             # derive eps
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
             return eps.type(dtype)
 
         # function for compute x_0 and x_{t-1}
@@ -1130,7 +1136,7 @@ class GaussianDiffusion_style(object):
 
             # eps -> x0
             x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps  # noqa
 
             # deterministic sample
             alphas_prev = _i(self.alphas_cumprod, t_prev, xt)
@@ -1277,9 +1283,10 @@ class GaussianDiffusion_style(object):
                                                     guide_scale)
 
         # random sample
-        t_mask = t.ne(0).float().view(-1,
-                                      *((1, ) *
-                                        (xt.ndim - 1)))  # no noise when t == 0
+        t_mask = t.ne(0).float().view(
+            -1,
+            *((1, ) *  # noqa
+              (xt.ndim - 1)))
         xt_1 = mu + t_mask * torch.exp(0.5 * log_var) * torch.randn_like(xt)
         return xt_1.type(dtype), x0.type(dtype)
 
@@ -1331,9 +1338,10 @@ class GaussianDiffusion_style(object):
             grad = torch.autograd.grad(loss, xt)[0]
 
         # random sample
-        t_mask = t.ne(0).float().view(-1,
-                                      *((1, ) *
-                                        (xt.ndim - 1)))  # no noise when t == 0
+        t_mask = t.ne(0).float().view(
+            -1,
+            *((1, ) *  # noqa
+              (xt.ndim - 1)))
         xt_1 = mu + t_mask * torch.exp(0.5 * log_var) * torch.randn_like(xt)
         xt_1 = xt_1 - mcg_scale * grad
 
@@ -1476,7 +1484,7 @@ class GaussianDiffusion_style(object):
 
             # predict eps from x0
             eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)  # noqa
 
             # collect metrics
             metrics['vlb'].append(vlb)

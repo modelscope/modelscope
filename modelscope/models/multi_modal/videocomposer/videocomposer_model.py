@@ -86,7 +86,7 @@ class VideoComposer(Model):
         cfg.batch_size = cfg.batch_sizes[str(cfg.max_frames)]
         # Copy update input parameter to current task
         self.cfg = cfg
-        if not 'MASTER_ADDR' in os.environ:
+        if 'MASTER_ADDR' not in os.environ:
             os.environ['MASTER_ADDR'] = 'localhost'
             os.environ['MASTER_PORT'] = find_free_port()
         self.cfg.pmi_rank = int(os.getenv('RANK', 0))
@@ -109,10 +109,18 @@ class VideoComposer(Model):
             layer='penultimate',
             pretrained=os.path.join(model_dir, clip_checkpoint))
         self.clip_encoder_visual.model.to(self.device)
-        ddconfig = {'double_z': True, 'z_channels': 4, \
-                    'resolution': 256, 'in_channels': 3, \
-                    'out_ch': 3, 'ch': 128, 'ch_mult': [1, 2, 4, 4], \
-                    'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
+        ddconfig = {
+            'double_z': True,
+            'z_channels': 4,
+            'resolution': 256,
+            'in_channels': 3,
+            'out_ch': 3,
+            'ch': 128,
+            'ch_mult': [1, 2, 4, 4],
+            'num_res_blocks': 2,
+            'attn_resolutions': [],
+            'dropout': 0.0
+        }
         self.autoencoder = AutoencoderKL(
             ddconfig, 4, ckpt_path=os.path.join(model_dir, sd_checkpoint))
         self.zero_y = self.clip_encoder('').detach()
@@ -151,7 +159,6 @@ class VideoComposer(Model):
         ).to(self.device)
 
         # Load checkpoint
-        resume_step = 1
         if self.cfg.resume and self.cfg.resume_checkpoint:
             if hasattr(self.cfg, 'text_to_video_pretrain'
                        ) and self.cfg.text_to_video_pretrain:
@@ -170,8 +177,6 @@ class VideoComposer(Model):
                         os.path.join(self.model_dir, checkpoint_name),
                         map_location='cpu'),
                     strict=False)
-            if self.cfg.resume_step:
-                resume_step = self.cfg.resume_step
 
             torch.cuda.empty_cache()
         else:
@@ -288,7 +293,6 @@ class VideoComposer(Model):
 
         # encode the video_data
         bs_vd = video_data.shape[0]
-        video_data_origin = video_data.clone()
         video_data = rearrange(video_data, 'b f c h w -> (b f) c h w')
         misc_data = rearrange(misc_data, 'b f c h w -> (b f) c h w')
 
@@ -375,8 +379,6 @@ class VideoComposer(Model):
         with torch.no_grad():
             # Log memory
             pynvml.nvmlInit()
-            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-            meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
             # Sample images (DDIM)
             with amp.autocast(enabled=self.cfg.use_fp16):
                 if self.cfg.share_noise:

@@ -74,7 +74,8 @@ class Config(object):
         parser.add_argument(
             '--input_text_desc',
             default=
-            'A colorful and beautiful fish swimming in a small glass bowl with multicolored piece of stone, Macro Video',
+            'A colorful and beautiful fish swimming in a small glass bowl with \
+             multicolored piece of stone, Macro Video',
             type=str,
         ),
         parser.add_argument(
@@ -120,12 +121,13 @@ class Config(object):
                 with open(args.cfg_file, 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
                     file_name = args.cfg_file
-            except:
+            except Exception as e:
                 args.cfg_file = os.path.realpath(__file__).split(
                     '/')[-3] + '/' + args.cfg_file
                 with open(args.cfg_file, 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
                     file_name = args.cfg_file
+                print(e)
 
         if '_BASE_RUN' not in cfg.keys() and '_BASE_MODEL' not in cfg.keys(
         ) and '_BASE' not in cfg.keys():

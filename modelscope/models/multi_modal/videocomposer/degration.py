@@ -98,7 +98,7 @@ def ycbcr2rgb(img):
                           [0, -0.00153632, 0.00791071],
                           [0.00625893, -0.00318811, 0]]) * 255.0 + [
                               -222.921, 135.576, -276.836
-                          ]
+                          ]  # noqa
     if in_img_type == np.uint8:
         rlt = rlt.round()
     else:
@@ -216,8 +216,8 @@ def ssim(img1, img2):
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
     sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
-    ssim_map = ((2 * mu1_mu2 + C1) *
-                (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) *
+    ssim_map = ((2 * mu1_mu2 + C1) *  # noqa
+                (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) *  # noqa
                                        (sigma1_sq + sigma2_sq + C2))
     return ssim_map.mean()
 
@@ -236,7 +236,7 @@ def cubic(x):
     absx3 = absx**3
     return (1.5 * absx3 - 2.5 * absx2 + 1) * (
         (absx <= 1).type_as(absx)) + (-0.5 * absx3 + 2.5 * absx2 - 4 * absx
-                                      + 2) * (((absx > 1) *
+                                      + 2) * (((absx > 1) *  # noqa
                                                (absx <= 2)).type_as(absx))
 
 

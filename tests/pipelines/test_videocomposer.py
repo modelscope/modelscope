@@ -31,7 +31,7 @@ class VideoDeinterlaceTest(unittest.TestCase):
             download_mode=DownloadMode.FORCE_REDOWNLOAD)
         inputs = next(iter(ds))
         inputs.update({'text': self.text})
-        output = pipe(inputs)
+        _ = pipe(inputs)
 
 
 if __name__ == '__main__':

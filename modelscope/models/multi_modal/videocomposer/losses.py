@@ -6,8 +6,9 @@ __all__ = ['kl_divergence', 'discretized_gaussian_log_likelihood']
 
 
 def kl_divergence(mu1, logvar1, mu2, logvar2):
-    return 0.5 * (-1.0 + logvar2 - logvar1 + torch.exp(logvar1 - logvar2) +
-                  ((mu1 - mu2)**2) * torch.exp(-logvar2))
+    return 0.5 * (
+        -1.0 + logvar2 - logvar1 + torch.exp(logvar1 - logvar2) +  # noqa
+        ((mu1 - mu2)**2) * torch.exp(-logvar2))
 
 
 def standard_normal_cdf(x):

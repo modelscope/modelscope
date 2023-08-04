@@ -90,7 +90,7 @@ def ycbcr2rgb(img):
                           [0, -0.00153632, 0.00791071],
                           [0.00625893, -0.00318811, 0]]) * 255.0 + [
                               -222.921, 135.576, -276.836
-                          ]
+                          ]  # noqa
     if in_img_type == np.uint8:
         rlt = rlt.round()
     else:
@@ -198,9 +198,10 @@ def ssim(img1, img2):
     sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
     sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
-    ssim_map = ((2 * mu1_mu2 + C1) *
-                (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) *
-                                       (sigma1_sq + sigma2_sq + C2))
+    ssim_map = ((2 * mu1_mu2 + C1)  # noqa
+                * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1)  # noqa
+                                         *  # noqa
+                                         (sigma1_sq + sigma2_sq + C2))  # noqa
     return ssim_map.mean()
 
 
@@ -209,8 +210,8 @@ def cubic(x):
     absx = torch.abs(x)
     absx2 = absx**2
     absx3 = absx**3
-    return (1.5*absx3 - 2.5*absx2 + 1) * ((absx <= 1).type_as(absx)) + \
-        (-0.5*absx3 + 2.5*absx2 - 4*absx + 2) * (((absx > 1)*(absx <= 2)).type_as(absx))
+    return (1.5 * absx3 - 2.5 * absx2 + 1) * ((absx <= 1).type_as(absx)) + \
+        (-0.5 * absx3 + 2.5 * absx2 - 4*absx + 2) * (((absx > 1) * (absx <= 2)).type_as(absx))  # noqa
 
 
 def calculate_weights_indices(in_length, out_length, scale, kernel,
@@ -836,14 +837,11 @@ def degradation_bsrgan_light(image, sf=4, isp_model=None):
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """
     image = uint2single(image)
-    isp_prob, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
-    sf_ori = sf
+    _, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
 
     h1, w1 = image.shape[:2]
     image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]
     h, w = image.shape[:2]
-
-    hq = image.copy()
 
     if sf == 4 and random.random() < scale2_prob:
         if np.random.rand() < 0.5:
@@ -933,14 +931,11 @@ def degradation_bsrgan(image, sf=4, isp_model=None):
     hq: corresponding high-quality patch, size: (lq_patchsizexsf)X(lq_patchsizexsf)XC, range: [0, 1]
     """
     image = uint2single(image)
-    isp_prob, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
-    sf_ori = sf
+    _, jpeg_prob, scale2_prob = 0.25, 0.9, 0.25
 
     h1, w1 = image.shape[:2]
     image = image.copy()[:w1 - w1 % sf, :h1 - h1 % sf, ...]
     h, w = image.shape[:2]
-
-    hq = image.copy()
 
     if sf == 4 and random.random() < scale2_prob:
         if np.random.rand() < 0.5:

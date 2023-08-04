@@ -74,7 +74,7 @@ def visualize_with_model_kwargs(model_kwargs, video_data, autoencoder,
     video_data = rearrange(video_data, '(b f) c h w -> b c f h w', b=bs_vd)
     ori_video = ori_video[:viz_num]
 
-    oss_key = os.path.join(cfg.log_dir, f'rank.gif')
+    oss_key = os.path.join(cfg.log_dir, 'rank.gif')
     text_key = osp.join(cfg.log_dir, 'text_description.txt')
 
     if not os.path.exists(cfg.log_dir):
@@ -361,15 +361,6 @@ def get_object_to_file(bucket, oss_key, filename, retry=5):
             flush=True)
 
 
-def rand_name(length=8, suffix=''):
-    name = binascii.b2a_hex(os.urandom(length)).decode('utf-8')
-    if suffix:
-        if not suffix.startswith('.'):
-            suffix = '.' + suffix
-        name += suffix
-    return name
-
-
 @torch.no_grad()
 def save_image(bucket,
                oss_key,
@@ -460,7 +451,8 @@ def save_video_multiple_conditions(oss_key,
     video_tensor = video_tensor.mul_(std).add_(mean)
     try:
         video_tensor.clamp_(0, 1)
-    except:
+    except Exception as e:
+        print(e)
         video_tensor = video_tensor.float().clamp_(0, 1)
     video_tensor = video_tensor.cpu()
 
@@ -636,7 +628,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(video_save_key, filename_pred)
             break
         except Exception as e:
-            print('error! ', video_save_key)
+            print('error! ', video_save_key, e)
             continue
 
     # remove temporary file
@@ -651,7 +643,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(gt_video_save_key, filename_gt)
             break
         except Exception as e:
-            print('error! ', gt_video_save_key)
+            print('error! ', gt_video_save_key, e)
             continue
 
     # remove temporary file
@@ -705,6 +697,7 @@ def save_video_vs_conditions(bucket,
             break
         except Exception as e:
             exception = e
+            print(exception)
             continue
 
     # remove temporary file
@@ -758,6 +751,7 @@ def save_video_grid_mp4(bucket,
             break
         except Exception as e:
             exception = e
+            print(exception)
             continue
 
     # remove temporary file
@@ -788,6 +782,7 @@ def save_text(bucket, oss_key, tensor, nrow=8, retry=5):
             break
         except Exception as e:
             exception = e
+            print(exception)
             continue
     if exception is not None:
         print(
@@ -801,7 +796,6 @@ def save_caps(bucket, oss_key, caps, retry=5):
     for cap in caps:
         texts += cap
         texts += '\n'
-    # print('save_caps ', texts)
 
     for _ in [None] * retry:
         try:
@@ -810,6 +804,7 @@ def save_caps(bucket, oss_key, caps, retry=5):
             break
         except Exception as e:
             exception = e
+            print(exception)
             continue
     if exception is not None:
         print(

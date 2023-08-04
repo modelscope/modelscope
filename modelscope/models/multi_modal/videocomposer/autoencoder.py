@@ -190,7 +190,7 @@ class AttnBlock(nn.Module):
         return x + h_
 
 
-class AttnBlock(nn.Module):
+class AttnBlock(nn.Module):  # noqa
 
     def __init__(self, in_channels):
         super().__init__()
@@ -251,7 +251,7 @@ class Upsample(nn.Module):
         return x
 
 
-class Downsample(nn.Module):
+class Downsample(nn.Module):  # noqa
 
     def __init__(self, in_channels, with_conv):
         super().__init__()
@@ -290,7 +290,6 @@ class Encoder(nn.Module):
                  attn_type='vanilla',
                  **ignore_kwargs):
         super().__init__()
-        if use_linear_attn: attn_type = 'linear'
         self.ch = ch
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
@@ -400,7 +399,6 @@ class Decoder(nn.Module):
                  attn_type='vanilla',
                  **ignorekwargs):
         super().__init__()
-        if use_linear_attn: attn_type = 'linear'
         self.ch = ch
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
@@ -411,7 +409,6 @@ class Decoder(nn.Module):
         self.tanh_out = tanh_out
 
         # compute in_ch_mult, block_in and curr_res at lowest res
-        in_ch_mult = (1, ) + tuple(ch_mult)
         block_in = ch * ch_mult[self.num_resolutions - 1]
         curr_res = resolution // 2**(self.num_resolutions - 1)
         self.z_shape = (1, z_channels, curr_res, curr_res)
@@ -466,7 +463,6 @@ class Decoder(nn.Module):
             block_in, out_ch, kernel_size=3, stride=1, padding=1)
 
     def forward(self, z):
-        #assert z.shape[1:] == self.z_shape[1:]
         self.last_z_shape = z.shape
 
         # timestep embedding

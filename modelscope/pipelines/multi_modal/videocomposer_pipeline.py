@@ -121,8 +121,6 @@ class VideoComposerPipeline(Pipeline):
 
                 ref_frame = torch.zeros(3, self.vit_image_size,
                                         self.vit_image_size)
-                vit_image = torch.zeros(3, self.vit_image_size,
-                                        self.vit_image_size)
                 video_data = torch.zeros(self.max_frames, 3,
                                          self.image_resolution,
                                          self.image_resolution)

@@ -153,4 +153,4 @@ cfg.save_ckp_interval = 1000
 cfg.log_interval = 100
 composition_strings = '_'.join(cfg.video_compositions)
 # Default log_dir
-cfg.log_dir = f'outputs/'
+cfg.log_dir = 'outputs/'

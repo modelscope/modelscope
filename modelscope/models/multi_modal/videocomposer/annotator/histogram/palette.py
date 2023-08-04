@@ -18,7 +18,7 @@ def rgb2hex(rgb):
 
 def hex2rgb(hex):
     rgb = hex.strip('#')
-    fn = lambda u: round(int(u, 16) / 255.0, 5)
+    fn = lambda u: round(int(u, 16) / 255.0, 5)  # noqa
     return fn(rgb[:2]), fn(rgb[2:4]), fn(rgb[4:6])
 
 
@@ -58,9 +58,12 @@ class Palette(object):
             hues = np.tile(np.linspace(0, 1, num_hues + 1)[:-1], (n, 1))
 
         # saturations
-        sats = np.hstack(
-            (np.linspace(0, 1, num_sat + 2)[1:-1], 1, [1] * num_light, [0.4] *
-             (num_light - 1)))
+        sats = np.hstack((
+            np.linspace(0, 1, num_sat + 2)[1:-1],
+            1,
+            [1] * num_light,
+            [0.4] *  # noqa
+            (num_light - 1)))
         sats = np.tile(np.atleast_2d(sats).T, (1, num_hues))
 
         # lights

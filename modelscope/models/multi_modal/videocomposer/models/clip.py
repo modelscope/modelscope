@@ -72,7 +72,7 @@ class SelfAttention(nn.Module):
         r"""x:      [B, L, C].
             mask:   [*, L, L].
         """
-        b, l, c, n = *x.size(), self.num_heads
+        b, l, _, n = *x.size(), self.num_heads
 
         # compute query, key, and value
         q, k, v = self.to_qkv(x.transpose(0, 1)).chunk(3, dim=-1)

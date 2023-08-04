@@ -27,6 +27,7 @@ import torch.nn.functional as F
 import torchvision.utils as tvutils
 from einops import rearrange
 from PIL import Image
+from modelscope.models.multi_modal.videocomposer.autoencoder import DiagonalGaussianDistribution
 
 __all__ = [
     'parse_oss_url', 'parse_bucket', 'read', 'read_image', 'read_gzip',
@@ -43,6 +44,93 @@ __all__ = [
 
 TFS_CLIENT = None
 
+def visualize_with_model_kwargs(model_kwargs,
+                                video_data,
+                                autoencoder,
+                                ori_video,
+                                viz_num,
+                                step,
+                                caps,
+                                palette,
+                                cfg):
+    scale_factor = 0.18215
+    video_data = 1. / scale_factor * video_data
+
+    bs_vd = video_data.shape[0]
+    video_data = rearrange(video_data, 'b c f h w -> (b f) c h w')
+    chunk_size = min(16, video_data.shape[0])
+    video_data_list = torch.chunk(video_data, video_data.shape[0]//chunk_size, dim=0)
+    decode_data = []
+    for vd_data in video_data_list:
+        tmp = autoencoder.decode(vd_data)
+        decode_data.append(tmp)
+    video_data = torch.cat(decode_data,dim=0)
+    video_data = rearrange(video_data, '(b f) c h w -> b c f h w', b = bs_vd)
+    ori_video = ori_video[:viz_num]
+    
+    oss_key = os.path.join(cfg.log_dir, f"rank.gif")
+    text_key = osp.join(cfg.log_dir, 'text_description.txt')
+    
+    if not os.path.exists(cfg.log_dir):
+        os.mkdir(cfg.log_dir)
+
+    # Save videos and text inputs.
+    try:
+        del model_kwargs[0][list(model_kwargs[0].keys())[0]]
+        del model_kwargs[1][list(model_kwargs[1].keys())[0]]
+        save_video_multiple_conditions(
+            oss_key, 
+            video_data, 
+            model_kwargs, 
+            ori_video, 
+            palette,
+            cfg.mean, 
+            cfg.std, 
+            nrow=1, 
+            save_origin_video=cfg.save_origin_video)
+
+        texts = '\n'.join(caps[:viz_num])
+        open(text_key, 'w').writelines(texts)
+    except Exception as e:
+        # logging.info(f'Save text or video error. {e}')
+        print(f'Save text or video error. {e}')
+    
+    # logging.info(f'Save videos to {oss_key}')
+    print(f'Save videos to {oss_key}')
+
+def prepare_model_kwargs(partial_keys, full_model_kwargs, use_fps_condition):
+    for partial_key in partial_keys:
+        assert partial_key in ['y', 'depth', 'canny', 'masked', 'sketch', "image", "motion", "local_image", "single_sketch"]
+    
+    if use_fps_condition is True:
+        partial_keys.append('fps')
+    
+    partial_model_kwargs = [{}, {}]
+    for partial_key in partial_keys:
+        partial_model_kwargs[0][partial_key] = full_model_kwargs[0][partial_key]
+        partial_model_kwargs[1][partial_key] = full_model_kwargs[1][partial_key]
+
+    return partial_model_kwargs
+
+@torch.no_grad()
+def get_first_stage_encoding(encoder_posterior):
+    scale_factor = 0.18215
+    if isinstance(encoder_posterior, DiagonalGaussianDistribution):
+        z = encoder_posterior.sample()
+    elif isinstance(encoder_posterior, torch.Tensor):
+        z = encoder_posterior
+    else:
+        raise NotImplementedError(
+            f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented"
+        )
+    return scale_factor * z
+
+def make_masked_images(imgs, masks):
+    masked_imgs = []
+    for i, mask in enumerate(masks):        
+        # concatenation
+        masked_imgs.append(torch.cat([imgs[i] * (1 - mask), (1 - mask)], dim=1))
+    return torch.stack(masked_imgs, dim=0)
 
 def DOWNLOAD_TO_CACHE(oss_key,
                       file_or_dirname=None,

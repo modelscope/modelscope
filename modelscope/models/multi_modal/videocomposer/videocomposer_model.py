@@ -7,6 +7,7 @@ from os import path as osp
 from typing import Any, Dict
 
 import open_clip
+import pynvml
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
@@ -14,13 +15,13 @@ from einops import rearrange
 from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
+from modelscope.models.multi_modal.videocomposer.ops.utils import (make_masked_images, get_first_stage_encoding, prepare_model_kwargs, visualize_with_model_kwargs)
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
     pidinet_bsd, sketch_simplification_gan)
-from modelscope.models.multi_modal.videocomposer.autoencoder import (
-    AutoencoderKL, DiagonalGaussianDistribution)
+from modelscope.models.multi_modal.videocomposer.autoencoder import AutoencoderKL
 from modelscope.models.multi_modal.videocomposer.clip import (
     FrozenOpenCLIPEmbedder, FrozenOpenCLIPVisualEmbedder)
 from modelscope.models.multi_modal.videocomposer.diffusion import (
@@ -31,22 +32,9 @@ from modelscope.models.multi_modal.videocomposer.utils.utils import (
     find_free_port, setup_seed, to_device)
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
+from modelscope.outputs import OutputKeys
 
 __all__ = ['VideoComposer']
-
-
-@torch.no_grad()
-def get_first_stage_encoding(encoder_posterior):
-    scale_factor = 0.18215
-    if isinstance(encoder_posterior, DiagonalGaussianDistribution):
-        z = encoder_posterior.sample()
-    elif isinstance(encoder_posterior, torch.Tensor):
-        z = encoder_posterior
-    else:
-        raise NotImplementedError(
-            f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented"
-        )
-    return scale_factor * z
 
 
 @MODELS.register_module(
@@ -126,7 +114,7 @@ class VideoComposer(Model):
                     'num_res_blocks': 2, 'attn_resolutions': [], 'dropout': 0.0}
         self.autoencoder = AutoencoderKL(
             ddconfig, 4, ckpt_path=os.path.join(model_dir, sd_checkpoint))
-        zero_y = self.clip_encoder('').detach()
+        self.zero_y = self.clip_encoder('').detach()
         black_image_feature = self.clip_encoder_visual(
             self.clip_encoder_visual.black_image).unsqueeze(1)
         black_image_feature = torch.zeros_like(black_image_feature)
@@ -157,7 +145,7 @@ class VideoComposer(Model):
             misc_dropout=self.cfg.misc_dropout,
             p_all_zero=self.cfg.p_all_zero,
             p_all_keep=self.cfg.p_all_zero,
-            zero_y=zero_y,
+            zero_y=self.zero_y,
             black_image_feature=black_image_feature,
         ).to(self.device)
 
@@ -264,6 +252,11 @@ class VideoComposer(Model):
             misc_data = input['misc_data']
             mask = input['mask']
             mv_data = input['mv_data']
+            # add fps test
+            fps = torch.tensor(
+                [self.cfg.feature_framerate] * self.cfg.batch_size,
+                dtype=torch.long,
+                device=self.device)
 
         # save for visualization
         misc_backups = copy(misc_data)
@@ -307,7 +300,7 @@ class VideoComposer(Model):
         with torch.no_grad():
             decode_data = []
             for vd_data in video_data_list:
-                encoder_posterior = autoencoder.encode(vd_data)
+                encoder_posterior = self.autoencoder.encode(vd_data)
                 tmp = get_first_stage_encoding(encoder_posterior).detach()
                 decode_data.append(tmp)
             video_data = torch.cat(decode_data, dim=0)
@@ -345,8 +338,7 @@ class VideoComposer(Model):
             if 'sketch' in self.cfg.video_compositions:
                 sketch_list = misc_data_list
                 if self.cfg.read_sketch:
-                    sketch_repeat = frame_sketch.repeat(frames_num, 1, 1,
-                                                        1).cuda()
+                    sketch_repeat = frame_sketch.repeat(frames_num, 1, 1, 1).cuda()
                     sketch_list = [sketch_repeat]
 
                 for misc_imgs in sketch_list:
@@ -363,20 +355,20 @@ class VideoComposer(Model):
                     1, 1, frames_num, 1, 1)
 
         # preprocess for input text descripts
-        y = clip_encoder(caps).detach()
+        y = self.clip_encoder(caps).detach()
         y0 = y.clone()
 
         y_visual = []
         if 'image' in self.cfg.video_compositions:
             with torch.no_grad():
                 if self.cfg.read_style:
-                    y_visual = clip_encoder_visual(
-                        clip_encoder_visual.preprocess(frame_style).unsqueeze(
+                    y_visual = self.clip_encoder_visual(
+                        self.clip_encoder_visual.preprocess(frame_style).unsqueeze(
                             0).cuda()).unsqueeze(0)
                     y_visual0 = y_visual.clone()
                 else:
                     ref_imgs = ref_imgs.squeeze(1)
-                    y_visual = clip_encoder_visual(ref_imgs).unsqueeze(1)
+                    y_visual = self.clip_encoder_visual(ref_imgs).unsqueeze(1)
                     y_visual0 = y_visual.clone()
 
         with torch.no_grad():
@@ -388,63 +380,63 @@ class VideoComposer(Model):
             with amp.autocast(enabled=self.cfg.use_fp16):
                 if self.cfg.share_noise:
                     b, c, f, h, w = video_data.shape
-                    noise = torch.randn((viz_num, c, h, w), device=self.device)
+                    noise = torch.randn((self.viz_num, c, h, w), device=self.device)
                     noise = noise.repeat_interleave(repeats=f, dim=0)
                     noise = rearrange(
-                        noise, '(b f) c h w->b c f h w', b=viz_num)
+                        noise, '(b f) c h w->b c f h w', b=self.viz_num)
                     noise = noise.contiguous()
                 else:
-                    noise = torch.randn_like(video_data[:viz_num])
+                    noise = torch.randn_like(video_data[:self.viz_num])
 
                 full_model_kwargs = [{
                     'y':
-                    y0[:viz_num],
+                    y0[:self.viz_num],
                     'local_image':
-                    None if len(image_local) == 0 else image_local[:viz_num],
+                    None if len(image_local) == 0 else image_local[:self.viz_num],
                     'image':
-                    None if len(y_visual) == 0 else y_visual0[:viz_num],
+                    None if len(y_visual) == 0 else y_visual0[:self.viz_num],
                     'depth':
-                    None if len(depth_data) == 0 else depth_data[:viz_num],
+                    None if len(depth_data) == 0 else depth_data[:self.viz_num],
                     'canny':
-                    None if len(canny_data) == 0 else canny_data[:viz_num],
+                    None if len(canny_data) == 0 else canny_data[:self.viz_num],
                     'sketch':
-                    None if len(sketch_data) == 0 else sketch_data[:viz_num],
+                    None if len(sketch_data) == 0 else sketch_data[:self.viz_num],
                     'masked':
-                    None if len(masked_video) == 0 else masked_video[:viz_num],
+                    None if len(masked_video) == 0 else masked_video[:self.viz_num],
                     'motion':
                     None
-                    if len(mv_data_video) == 0 else mv_data_video[:viz_num],
+                    if len(mv_data_video) == 0 else mv_data_video[:self.viz_num],
                     'single_sketch':
                     None if len(single_sketch_data) == 0 else
-                    single_sketch_data[:viz_num],
+                    single_sketch_data[:self.viz_num],
                     'fps':
-                    fps[:viz_num]
+                    fps[:self.viz_num]
                 }, {
                     'y':
-                    zero_y.repeat(viz_num, 1, 1)
+                    self.zero_y.repeat(self.viz_num, 1, 1)
                     if not self.cfg.use_fps_condition else
-                    torch.zeros_like(y0)[:viz_num],
+                    torch.zeros_like(y0)[:self.viz_num],
                     'local_image':
-                    None if len(image_local) == 0 else image_local[:viz_num],
+                    None if len(image_local) == 0 else image_local[:self.viz_num],
                     'image':
                     None if len(y_visual) == 0 else torch.zeros_like(
-                        y_visual0[:viz_num]),
+                        y_visual0[:self.viz_num]),
                     'depth':
-                    None if len(depth_data) == 0 else depth_data[:viz_num],
+                    None if len(depth_data) == 0 else depth_data[:self.viz_num],
                     'canny':
-                    None if len(canny_data) == 0 else canny_data[:viz_num],
+                    None if len(canny_data) == 0 else canny_data[:self.viz_num],
                     'sketch':
-                    None if len(sketch_data) == 0 else sketch_data[:viz_num],
+                    None if len(sketch_data) == 0 else sketch_data[:self.viz_num],
                     'masked':
-                    None if len(masked_video) == 0 else masked_video[:viz_num],
+                    None if len(masked_video) == 0 else masked_video[:self.viz_num],
                     'motion':
                     None
-                    if len(mv_data_video) == 0 else mv_data_video[:viz_num],
+                    if len(mv_data_video) == 0 else mv_data_video[:self.viz_num],
                     'single_sketch':
                     None if len(single_sketch_data) == 0 else
-                    single_sketch_data[:viz_num],
+                    single_sketch_data[:self.viz_num],
                     'fps':
-                    fps[:viz_num]
+                    fps[:self.viz_num]
                 }]
 
                 # Save generated videos
@@ -456,7 +448,7 @@ class VideoComposer(Model):
                     use_fps_condition=self.cfg.use_fps_condition)
                 video_output = self.diffusion.ddim_sample_loop(
                     noise=noise_motion,
-                    model=model.eval(),
+                    model=self.model.eval(),
                     model_kwargs=model_kwargs,
                     guide_scale=9.0,
                     ddim_timesteps=self.cfg.ddim_timesteps,
@@ -465,12 +457,12 @@ class VideoComposer(Model):
                 visualize_with_model_kwargs(
                     model_kwargs=model_kwargs,
                     video_data=video_output,
-                    autoencoder=autoencoder,
+                    autoencoder=self.autoencoder,
                     ori_video=misc_backups,
-                    viz_num=viz_num,
-                    step=step,
+                    viz_num=self.viz_num,
+                    step=0,
                     caps=caps,
                     palette=palette,
                     cfg=self.cfg)
-        return video_output.type(torch.float32).cpu()
-        # return video_data.type(torch.float32).cpu()
+
+        return {OutputKeys.OUTPUT_VIDEO: video_output.type(torch.float32).cpu()}

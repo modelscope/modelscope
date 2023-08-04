@@ -156,13 +156,13 @@ class VideoComposerPipeline(Pipeline):
         mask = mask.unsqueeze(0).repeat_interleave(
             repeats=self.max_frames, dim=0)
         video_input = {
-            'ref_frame': ref_frame,
+            'ref_frame': ref_frame.unsqueeze(0),
             'cap_txt': cap_txt,
-            'video_data': video_data,
-            'misc_data': misc_data,
+            'video_data': video_data.unsqueeze(0),
+            'misc_data': misc_data.unsqueeze(0),
             'feature_framerate': feature_framerate,
-            'mask': mask,
-            'mv_data': mv_data,
+            'mask': mask.unsqueeze(0),
+            'mv_data': mv_data.unsqueeze(0),
             'style_image': style_image
         }
         return video_input

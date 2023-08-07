@@ -48,13 +48,25 @@ class StableDiffusion(TorchModel):
         self.noise_scheduler = DDPMScheduler.from_pretrained(
             model_dir, torch_type=torch_type, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_dir, torch_type=torch_type, subfolder='tokenizer', revision=revision)
+            model_dir,
+            torch_type=torch_type,
+            subfolder='tokenizer',
+            revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_dir, torch_type=torch_type, subfolder='text_encoder', revision=revision)
+            model_dir,
+            torch_type=torch_type,
+            subfolder='text_encoder',
+            revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
-            model_dir, torch_type=torch_type, subfolder='vae', revision=revision)
+            model_dir,
+            torch_type=torch_type,
+            subfolder='vae',
+            revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
-            model_dir, torch_type=torch_type, subfolder='unet', revision=revision)
+            model_dir,
+            torch_type=torch_type,
+            subfolder='unet',
+            revision=revision)
         self.safety_checker = None
 
         # Freeze gradient calculation and move to device

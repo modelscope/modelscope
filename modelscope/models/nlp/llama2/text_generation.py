@@ -266,3 +266,21 @@ class Llama2ForTextGeneration(LlamaPreTrainedModel):
         history.append((text, response))
 
         return {OutputKeys.RESPONSE: response, OutputKeys.HISTORY: history}
+
+    @torch.no_grad()
+    def generate(self,
+                 inputs=None,
+                 generation_config=None,
+                 logits_processor=None,
+                 stopping_criteria=None,
+                 prefix_allowed_tokens_fn=None,
+                 synced_gpus=None,
+                 assistant_model=None,
+                 streamer=None,
+                 **kwargs):
+        if inputs.device.type != self.device.type:
+            inputs = inputs.to(self.device)
+        return super().generate(inputs, generation_config, logits_processor,
+                                stopping_criteria, prefix_allowed_tokens_fn,
+                                synced_gpus, assistant_model, streamer,
+                                **kwargs)

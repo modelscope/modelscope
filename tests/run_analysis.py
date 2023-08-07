@@ -127,7 +127,7 @@ def get_current_branch():
 def get_modified_files():
     if 'GITHUB_JOB' in os.environ:
         # get modify file from environment
-        changed_files = os.environ["RP_CHANGED_FILES"]
+        changed_files = os.environ['RP_CHANGED_FILES']
         print(changed_files)
         return changed_files.splitlines()
     else:

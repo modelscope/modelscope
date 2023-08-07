@@ -35,6 +35,7 @@ class StableDiffusion(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         revision = kwargs.pop('revision', None)
+        torch_type = kwargs.pop('torch_type', torch.float32)
         xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
@@ -45,15 +46,15 @@ class StableDiffusion(TorchModel):
 
         # Load scheduler, tokenizer and models
         self.noise_scheduler = DDPMScheduler.from_pretrained(
-            model_dir, subfolder='scheduler')
+            model_dir, torch_type=torch_type, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_dir, subfolder='tokenizer', revision=revision)
+            model_dir, torch_type=torch_type, subfolder='tokenizer', revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_dir, subfolder='text_encoder', revision=revision)
+            model_dir, torch_type=torch_type, subfolder='text_encoder', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
-            model_dir, subfolder='vae', revision=revision)
+            model_dir, torch_type=torch_type, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
-            model_dir, subfolder='unet', revision=revision)
+            model_dir, torch_type=torch_type, subfolder='unet', revision=revision)
         self.safety_checker = None
 
         # Freeze gradient calculation and move to device

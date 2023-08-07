@@ -32,8 +32,9 @@ from modelscope.utils.torch_utils import is_dist
 
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, model_dir):
+    def __init__(self, model_dir, torch_type=torch.float32):
         self.model_dir = model_dir
+        self.torch_type = torch_type
 
     def save_checkpoints(self,
                          trainer,
@@ -49,6 +50,7 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         pipeline = DiffusionPipeline.from_pretrained(
             self.model_dir,
             unet=trainer.model.unet,
+            torch_type=torch_type,
             **pipeline_args,
         )
         scheduler_args = {}
@@ -174,6 +176,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             prior_loss_weight: the weight of the prior loss.
 
         """
+        torch_type = kwargs.pop('torch_type', torch.float32)
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   False)
         self.instance_prompt = kwargs.pop('instance_prompt',
@@ -219,7 +222,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                     warnings.warn('Multiple GPU inference not yet supported.')
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
-                    torch_dtype=torch.float32,
+                    torch_dtype=torch_type,
                     safety_checker=None,
                     revision=None,
                 )

@@ -37,15 +37,21 @@ from modelscope.utils.torch_utils import is_dist
 
 class CustomCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, modifier_token, modifier_token_id):
+    def __init__(self,
+                 modifier_token,
+                 modifier_token_id,
+                 torch_type=torch.float32):
         """Checkpoint processor for custom diffusion.
 
         Args:
             modifier_token: The token to use as a modifier for the concept.
             modifier_token_id: The modifier token id for the concept.
+            torch_type: The torch type, default is float32.
+
         """
         self.modifier_token = modifier_token
         self.modifier_token_id = modifier_token_id
+        self.torch_type = torch_type
 
     def save_checkpoints(self,
                          trainer,
@@ -54,7 +60,7 @@ class CustomCheckpointProcessor(CheckpointProcessor):
                          meta=None):
         """Save the state dict for custom diffusion model.
         """
-        trainer.model.unet = trainer.model.unet.to(torch.float32)
+        trainer.model.unet = trainer.model.unet.to(self.torch_type)
         trainer.model.unet.save_attn_procs(output_dir)
 
         learned_embeds = trainer.model.text_encoder.get_input_embeddings(
@@ -69,18 +75,17 @@ class CustomCheckpointProcessor(CheckpointProcessor):
 
 class CustomDiffusionDataset(Dataset):
 
-    def __init__(
-        self,
-        concepts_list,
-        tokenizer,
-        size=512,
-        mask_size=64,
-        center_crop=False,
-        with_prior_preservation=False,
-        num_class_images=200,
-        hflip=False,
-        aug=True,
-    ):
+    def __init__(self,
+                 concepts_list,
+                 tokenizer,
+                 size=512,
+                 mask_size=64,
+                 center_crop=False,
+                 with_prior_preservation=False,
+                 num_class_images=200,
+                 hflip=False,
+                 aug=True,
+                 torch_type=torch.float32):
         """A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
         It pre-processes the images and the tokenizes prompts.
 
@@ -93,6 +98,7 @@ class CustomDiffusionDataset(Dataset):
             with_prior_preservation: flag to add prior preservation loss.
             hflip: whether to flip horizontally.
             aug: perform data augmentation.
+            torch_type: The torch type, default is float32.
 
         """
         self.size = size
@@ -101,6 +107,7 @@ class CustomDiffusionDataset(Dataset):
         self.tokenizer = tokenizer
         self.interpolation = Image.BILINEAR
         self.aug = aug
+        self.torch_type = torch_type
 
         self.instance_images_path = []
         self.class_images_path = []
@@ -161,8 +168,14 @@ class CustomDiffusionDataset(Dataset):
             0, outer - inner + 1)
         image = image.resize((scale, scale), resample=resample)
         image = np.array(image).astype(np.uint8)
-        image = (image / 127.5 - 1.0).astype(np.float32)
-        instance_image = np.zeros((self.size, self.size, 3), dtype=np.float32)
+        if self.torch_type is torch.float16:
+            image = (image / 127.5 - 1.0).astype(np.float16)
+            instance_image = np.zeros((self.size, self.size, 3),
+                                      dtype=np.float16)
+        else:
+            image = (image / 127.5 - 1.0).astype(np.float32)
+            instance_image = np.zeros((self.size, self.size, 3),
+                                      dtype=np.float32)
         mask = np.zeros((self.size // factor, self.size // factor))
         if scale > self.size:
             instance_image = image[top:top + inner, left:left + inner, :]
@@ -274,6 +287,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             center_crop: execute center crop or not.
             concepts_list: Path to json containing multiple concepts, will overwrite parameters.
             instance_data_name: The instance data local dir or online ID.
+            torch_type: The torch type, default is float32.
 
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
@@ -281,6 +295,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         instance_prompt = kwargs.pop('instance_prompt', 'a photo of sks dog')
         class_prompt = kwargs.pop('class_prompt', 'dog')
         class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
+        self.torch_type = kwargs.pop('torch_type', torch.float32)
         self.real_prior = kwargs.pop('real_prior', False)
         self.num_class_images = kwargs.pop('num_class_images', 200)
         self.resolution = kwargs.pop('resolution', 512)
@@ -477,12 +492,13 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             size=self.resolution,
             mask_size=self.model.vae.encode(
                 torch.randn(1, 3, self.resolution,
-                            self.resolution).to(dtype=torch.float32).to(
+                            self.resolution).to(dtype=self.torch_type).to(
                                 self.device)).latent_dist.sample().size()[-1],
             center_crop=self.center_crop,
             num_class_images=self.num_class_images,
             hflip=False,
             aug=True,
+            torch_type=self.torch_type,
         )
         train_dataloader = torch.utils.data.DataLoader(
             train_dataset,
@@ -534,7 +550,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             if cur_class_images < self.num_class_images:
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
-                    torch_dtype=torch.float32,
+                    torch_dtype=self.torch_type,
                     safety_checker=None,
                     revision=None,
                 )
@@ -656,7 +672,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         batch = next(self.iter_train_dataloader)
         # Convert images to latent space
         latents = self.model.vae.encode(batch['pixel_values'].to(
-            dtype=torch.float32).to(self.device)).latent_dist.sample()
+            dtype=self.torch_type).to(self.device)).latent_dist.sample()
         latents = latents * self.model.vae.config.scaling_factor
 
         # Sample noise that we'll add to the latents

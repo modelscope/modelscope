@@ -33,6 +33,13 @@ from modelscope.utils.torch_utils import is_dist
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
     def __init__(self, model_dir, torch_type=torch.float32):
+        """Checkpoint processor for dreambooth diffusion.
+
+        Args:
+            model_dir: The model id or local model dir.
+            torch_type: The torch type, default is float32.
+
+        """
         self.model_dir = model_dir
         self.torch_type = torch_type
 
@@ -50,7 +57,7 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         pipeline = DiffusionPipeline.from_pretrained(
             self.model_dir,
             unet=trainer.model.unet,
-            torch_type=torch_type,
+            torch_type=self.torch_type,
             **pipeline_args,
         )
         scheduler_args = {}

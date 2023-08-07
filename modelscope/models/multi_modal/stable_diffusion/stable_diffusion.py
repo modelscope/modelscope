@@ -53,10 +53,7 @@ class StableDiffusion(TorchModel):
             subfolder='tokenizer',
             revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_dir,
-            torch_type=torch_type,
-            subfolder='text_encoder',
-            revision=revision)
+            model_dir, subfolder='text_encoder', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
             model_dir,
             torch_type=torch_type,

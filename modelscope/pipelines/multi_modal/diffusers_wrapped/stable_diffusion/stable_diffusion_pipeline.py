@@ -41,6 +41,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
         """
         use_safetensors = kwargs.pop('use_safetensors', False)
         torch_type = kwargs.pop('torch_type', torch.float32)
+        torch_type = torch.float16
         # check custom diffusion input value
         if custom_dir is None and modifier_token is not None:
             raise ValueError(

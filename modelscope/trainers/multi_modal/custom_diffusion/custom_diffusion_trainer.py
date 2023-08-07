@@ -70,17 +70,18 @@ class CustomCheckpointProcessor(CheckpointProcessor):
 
 class CustomDiffusionDataset(Dataset):
 
-    def __init__(self,
-                concepts_list,
-                tokenizer,
-                size=512,
-                mask_size=64,
-                center_crop=False,
-                with_prior_preservation=False,
-                num_class_images=200,
-                hflip=False,
-                aug=True,
-            ):
+    def __init__(
+        self,
+        concepts_list,
+        tokenizer,
+        size=512,
+        mask_size=64,
+        center_crop=False,
+        with_prior_preservation=False,
+        num_class_images=200,
+        hflip=False,
+        aug=True,
+    ):
         """A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
         It pre-processes the images and the tokenizes prompts.
 

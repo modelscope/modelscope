@@ -90,9 +90,9 @@ OutputTypes = {
     OutputKeys.OUTPUT_IMG: 'image',  # checked
     OutputKeys.OUTPUT_IMGS: List[np.ndarray],  # checked
     OutputKeys.OUTPUT_VIDEO: 'bytes',
-    OutputKeys.OUTPUT_PCM: np.ndarray,
+    OutputKeys.OUTPUT_PCM: 'pcm',
     OutputKeys.OUTPUT_PCM_LIST: List[np.ndarray],
-    OutputKeys.OUTPUT_WAV: np.ndarray,
+    OutputKeys.OUTPUT_WAV: 'pcm',
     OutputKeys.OUTPUT_OBJ: Dict,
     OutputKeys.OUTPUT_MESH: np.ndarray,
     OutputKeys.IMG_EMBEDDING: np.ndarray,
@@ -688,6 +688,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_face_fusion: [OutputKeys.OUTPUT_IMG],
 
     # image_quality_assessment_mos result for a single image is a score in range [0, 1]
     # {0.5}

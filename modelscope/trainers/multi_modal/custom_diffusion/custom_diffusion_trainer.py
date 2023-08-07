@@ -71,16 +71,16 @@ class CustomCheckpointProcessor(CheckpointProcessor):
 class CustomDiffusionDataset(Dataset):
 
     def __init__(self,
-                 concepts_list,
-                 tokenizer,
-                 size=512,
-                 mask_size=64,
-                 center_crop=False,
-                 with_prior_preservation=False,
-                 num_class_images=200,
-                 hflip=False,
-                 aug=True,
-                ):
+                concepts_list,
+                tokenizer,
+                size=512,
+                mask_size=64,
+                center_crop=False,
+                with_prior_preservation=False,
+                num_class_images=200,
+                hflip=False,
+                aug=True,
+            ):
         """A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
         It pre-processes the images and the tokenizes prompts.
 
@@ -162,8 +162,7 @@ class CustomDiffusionDataset(Dataset):
         image = image.resize((scale, scale), resample=resample)
         image = np.array(image).astype(np.uint8)
         image = (image / 127.5 - 1.0).astype(np.float32)
-        instance_image = np.zeros((self.size, self.size, 3),
-                                    dtype=np.float32)
+        instance_image = np.zeros((self.size, self.size, 3), dtype=np.float32)
         mask = np.zeros((self.size // factor, self.size // factor))
         if scale > self.size:
             instance_image = image[top:top + inner, left:left + inner, :]
@@ -656,7 +655,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         batch = next(self.iter_train_dataloader)
         # Convert images to latent space
         latents = self.model.vae.encode(batch['pixel_values'].to(
-            dtype=dtype=torch.float32).to(self.device)).latent_dist.sample()
+            dtype=torch.float32).to(self.device)).latent_dist.sample()
         latents = latents * self.model.vae.config.scaling_factor
 
         # Sample noise that we'll add to the latents

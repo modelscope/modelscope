@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader, Dataset, Sampler
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
 
+from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.metainfo import Trainers
 from modelscope.metrics import build_metric, task_default_metrics
 from modelscope.metrics.prediction_saving_wrapper import \
@@ -27,6 +28,7 @@ from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
+from modelscope.swift import Swift
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -34,7 +36,7 @@ from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.utils.config import Config, ConfigDict, JSONIteratorEncoder
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
                                        ConfigKeys, DistributedParallelType,
-                                       ModeKeys, ModelFile, ThirdParty,
+                                       Invoke, ModeKeys, ModelFile, ThirdParty,
                                        TrainerStages)
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
@@ -43,8 +45,8 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           get_local_rank, init_dist, is_dist,
-                                          is_master, set_random_seed)
-from ..swift import Swift
+                                          is_master, is_on_same_device,
+                                          set_random_seed)
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks, update_cfg
@@ -151,6 +153,10 @@ class EpochBasedTrainer(BaseTrainer):
             assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
             self.model_dir = os.path.dirname(cfg_file)
             self.input_model_id = None
+            if hasattr(model, 'model_dir'):
+                check_local_model_is_latest(
+                    model.model_dir,
+                    user_agent={Invoke.KEY: Invoke.LOCAL_TRAINER})
 
         super().__init__(cfg_file, arg_parse_fn)
         self.cfg_modify_fn = cfg_modify_fn
@@ -257,7 +263,7 @@ class EpochBasedTrainer(BaseTrainer):
             # If not working in parallel scenario, put model to device as a default logic.
             device_name = self.device if self.device is not None else 'gpu'
             self.device = create_device(device_name)
-            if self.device.type == 'cuda':
+            if self.device.type == 'cuda' and is_on_same_device(self.model):
                 self.model.to(self.device)
 
         self.print_cfg()

@@ -1,37 +1,60 @@
 # ### Setting up experimental environment.
 """
-pip install numpy pandas matplotlib scikit-learn
-pip install transformers datasets
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install tqdm tensorboard torchmetrics sentencepiece charset_normalizer
-pip install accelerate transformers_stream_generator
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
+pip install sentencepiece charset_normalizer cpm_kernels tiktoken -U
+pip install matplotlib scikit-learn -U
+pip install transformers datasets -U
+pip install tqdm tensorboard torchmetrics -U
+pip install accelerate transformers_stream_generator -U
 
 # Install the latest version of modelscope from source
 git clone https://github.com/modelscope/modelscope.git
 cd modelscope
+pip install -r requirements.txt
 pip install .
-
-# Resolve torchmetrics dependencies and update numpy
-pip install numpy -U
 """
+import os
+from dataclasses import dataclass, field
+from functools import partial
+from types import MethodType
+from typing import List, Optional
 
-from _common import *
+import torch
+from torch import Tensor
+from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER,
+                   data_collate_fn, get_dataset, get_model_tokenizer,
+                   get_T_max, get_work_dir, parse_args, plot_images,
+                   print_example, print_model_info, process_dataset,
+                   seed_everything, show_freeze_layers, stat_dataset,
+                   tokenize_function)
+
+from modelscope import get_logger
+from modelscope.swift import LoRAConfig, Swift
+from modelscope.trainers import EpochBasedTrainer
+from modelscope.utils.config import Config
+
+logger = get_logger()
 
 
 @dataclass
 class SftArguments:
-    device: str = '0,1'  # e.g. '-1'; '0'; '0,1'
     seed: int = 42
     model_type: str = field(
-        default='baichuan-7b',
-        metadata={
-            'choices':
-            ['baichuan-7b', 'baichuan-13b', 'chatglm2', 'llama2-7b']
-        })
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
-    data_sample: Optional[int] = None
+    output_dir: Optional[str] = None
+    ignore_args_error: bool = False  # True: notebook compatibility
+
+    dataset: str = field(
+        default='alpaca-en,alpaca-zh',
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+    dataset_seed: int = 42
+    dataset_sample: Optional[int] = None
+    dataset_test_size: float = 0.01
+    prompt: str = DEFAULT_PROMPT
+    max_length: Optional[int] = 2048
 
     lora_target_modules: Optional[List[str]] = None
     lora_rank: int = 8
@@ -74,30 +97,15 @@ class SftArguments:
         else:
             raise ValueError(f'sft_type: {self.sft_type}')
 
+        if self.output_dir is None:
+            self.output_dir = 'runs'
+        self.output_dir = os.path.join(self.output_dir, self.model_type)
+
         if self.lora_target_modules is None:
-            if self.model_type in {'baichuan-7b', 'baichuan-13b'}:
-                self.lora_target_modules = ['W_pack']
-            elif self.model_type == 'chatglm2':
-                self.lora_target_modules = ['query_key_value']
-            elif self.model_type == 'llama2-7b':
-                self.lora_target_modules = ['q_proj', 'k_proj', 'v_proj']
-            else:
-                raise ValueError(f'model_type: {self.model_type}')
-
-
-def parse_args() -> SftArguments:
-    # return_remaining_strings=True for notebook compatibility
-    args, remaining_args = HfArgumentParser([
-        SftArguments
-    ]).parse_args_into_dataclasses(return_remaining_strings=True)
-    logger.info(f'args: {args}')
-    if len(remaining_args) > 0:
-        logger.warning(f'remaining_args: {remaining_args}')
-    return args
+            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
 
 
 def llm_sft(args: SftArguments) -> None:
-    select_device(args.device)
     seed_everything(args.seed)
 
     # ### Loading Model and Tokenizer
@@ -110,7 +118,7 @@ def llm_sft(args: SftArguments) -> None:
     if args.gradient_checkpoint:
         # baichuan-13b does not implement the `get_input_embeddings` function
         if args.model_type == 'baichuan-13b':
-            model.__class__.get_input_embeddings = MethodType(
+            model.get_input_embeddings = MethodType(
                 lambda self: self.model.embed_tokens, model)
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
@@ -123,18 +131,28 @@ def llm_sft(args: SftArguments) -> None:
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p)
         logger.info(f'lora_config: {lora_config}')
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     show_freeze_layers(model)
     print_model_info(model)
     # check the device and dtype of the model
-    _p: Parameter = list(model.parameters())[-1]
+    _p: Tensor = list(model.parameters())[-1]
     logger.info(f'device: {_p.device}, dtype: {_p.dtype}')
 
     # ### Loading Dataset
-    tokenize_func = partial(tokenize_function, tokenizer=tokenizer)
-    train_dataset, val_dataset = get_alpaca_en_zh_dataset(
-        tokenize_func, split_seed=42, data_sample=args.data_sample)
+    dataset = get_dataset(args.dataset.split(','))
+    train_dataset, val_dataset = process_dataset(dataset,
+                                                 args.dataset_test_size,
+                                                 args.dataset_sample,
+                                                 args.dataset_seed)
+    tokenize_func = partial(
+        tokenize_function,
+        tokenizer=tokenizer,
+        prompt=args.prompt,
+        max_length=args.max_length)
+    train_dataset = train_dataset.map(tokenize_func)
+    val_dataset = val_dataset.map(tokenize_func)
+    del dataset
     # Data analysis
     stat_dataset(train_dataset)
     stat_dataset(val_dataset)
@@ -146,7 +164,7 @@ def llm_sft(args: SftArguments) -> None:
 
     T_max = get_T_max(
         len(train_dataset), args.batch_size, args.max_epochs, True)
-    work_dir = get_work_dir(f'runs/{args.model_type}')
+    work_dir = get_work_dir(args.output_dir)
     config = Config({
         'train': {
             'dataloader': {
@@ -247,7 +265,6 @@ def llm_sft(args: SftArguments) -> None:
         eval_dataset=val_dataset,
         remove_unused_data=True,
         seed=42,
-        device='cpu',  # No placement for model, leave the model to `device_map`
         cfg_modify_fn=cfg_modify_fn,
     )
 
@@ -255,9 +272,14 @@ def llm_sft(args: SftArguments) -> None:
 
     # ### Visualization
     tb_dir = os.path.join(work_dir, 'tensorboard_output')
-    plot_image(tb_dir, ['loss'], 0.9)
+    plot_images(tb_dir, ['loss'], 0.9)
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args, remaining_argv = parse_args(SftArguments)
+    if len(remaining_argv) > 0:
+        if args.ignore_args_error:
+            logger.warning(f'remaining_argv: {remaining_argv}')
+        else:
+            raise ValueError(f'remaining_argv: {remaining_argv}')
     llm_sft(args)

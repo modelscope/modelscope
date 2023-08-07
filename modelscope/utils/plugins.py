@@ -352,7 +352,7 @@ def create_module_from_files(file_list, file_prefix, module_name):
         if not os.path.exists(init_file):
             create_empty_file(init_file)
 
-        target_file = os.path.join(target_dir, file_path)
+        target_file = os.path.join(target_dir, os.path.basename(file_path))
         src_file = os.path.join(file_prefix, file_path)
         if not os.path.exists(target_file) or not filecmp.cmp(
                 src_file, target_file):

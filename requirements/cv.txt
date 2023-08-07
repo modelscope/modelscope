@@ -6,7 +6,7 @@ chumpy
 clip>=1.0
 control_ldm
 ddpm_guided_diffusion
-diffusers>=0.13.1,<=0.15.0
+diffusers==0.18.0
 easydict
 easyrobust
 edit_distance
@@ -17,6 +17,7 @@ ffmpeg>=1.4
 ffmpeg-python>=0.2.0
 ftfy
 fvcore
+healpy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0
@@ -59,11 +60,14 @@ tensorflow-estimator>=1.15.1
 tf_slim
 thop
 timm>=0.4.9
+torch-scatter
 torchmetrics>=0.6.2
 torchsummary>=1.5.1
 torchvision
+tqdm
 transformers>=4.26.0
 trimesh
 ujson
 utils
 videofeatures_clipit>=1.0
+yacs

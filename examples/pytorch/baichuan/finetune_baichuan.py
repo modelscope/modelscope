@@ -1,10 +1,11 @@
 import os
 import sys
+import types
 from dataclasses import dataclass, field
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from modelscope import (EpochBasedTrainer, MsDataset, TrainingArgs,
+from modelscope import (EpochBasedTrainer, MsDataset, TorchModel, TrainingArgs,
                         build_dataset_from_file, snapshot_download)
 from modelscope.metainfo import Trainers
 from modelscope.preprocessors import TextGenerationTransformersPreprocessor
@@ -40,11 +41,11 @@ class TextGenerationArguments(TrainingArgs):
             'cfg_node': 'preprocessor.tgt_txt'
         })
 
-    preprocessor: str = field(
+    sequence_length: int = field(
         default=None,
         metadata={
-            'help': 'The preprocessor type',
-            'cfg_node': 'preprocessor.type'
+            'help': 'The sequence length of preprocessor',
+            'cfg_node': 'preprocessor.sequence_length'
         })
 
     lr_scheduler: str = field(
@@ -52,25 +53,6 @@ class TextGenerationArguments(TrainingArgs):
         metadata={
             'help': 'The lr scheduler type',
             'cfg_node': 'train.lr_scheduler.type'
-        })
-
-    world_size: int = field(
-        default=None,
-        metadata={
-            'help': 'The parallel world size',
-            'cfg_node': 'megatron.world_size'
-        })
-
-    tensor_model_parallel_size: int = field(
-        default=None,
-        metadata={
-            'help': 'The tensor model parallel size',
-            'cfg_node': 'megatron.tensor_model_parallel_size'
-        })
-
-    use_megatron: bool = field(
-        default=None, metadata={
-            'help': 'Whether to use MegatronHook',
         })
 
     bf16: bool = field(
@@ -144,17 +126,18 @@ def smart_tokenizer_and_embedding_resize(special_tokens_dict, tokenizer,
 
 config, args = TextGenerationArguments().parse_cli().to_config()
 print(config, args)
+pipeline_type = None
 
 
 def cfg_modify_fn(cfg):
+    global pipeline_type
+    pipeline_type = cfg.pipeline.type
     if args.use_model_config:
         cfg.merge_from_dict(config)
     else:
         cfg = config
     if 'hooks' not in cfg.train:
         cfg.train['hooks'] = []
-    if args.use_megatron:
-        cfg.train.hooks.append({'type': 'MegatronHook'})
     if args.deepspeed:
         cfg.train.hooks.append({
             'type': 'DeepspeedHook',
@@ -164,6 +147,13 @@ def cfg_modify_fn(cfg):
         })
 
     return cfg
+
+
+def custom_save_pretrained(self, *args, **kwargs):
+    config = kwargs.pop('config')
+    if config is not None:
+        config.pipeline = {'type': pipeline_type}
+    TorchModel.save_pretrained(self, *args, config=config, **kwargs)
 
 
 if args.dataset_json_file is None:
@@ -185,6 +175,8 @@ model_dir = snapshot_download(args.model)
 sys.path.append(model_dir)
 model = AutoModelForCausalLM.from_pretrained(
     model_dir, trust_remote_code=True, device_map=args.device_map)
+model.model_dir = model_dir
+model.save_pretrained = types.MethodType(custom_save_pretrained, model)
 cfg_file = os.path.join(model_dir, 'configuration.json')
 tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 
@@ -208,7 +200,8 @@ preprocessor = TextGenerationTransformersPreprocessor(
     model_dir,
     tokenizer=tokenizer,
     src_txt=config.preprocessor.src_txt,
-    tgt_txt=config.preprocessor.tgt_txt)
+    tgt_txt=config.preprocessor.tgt_txt,
+    sequence_length=getattr(config.preprocessor, 'sequence_length', None))
 
 if args.use_lora != 0:
     lora_config = LoRAConfig(
@@ -226,9 +219,7 @@ kwargs = dict(
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     seed=args.seed,
-    cfg_modify_fn=cfg_modify_fn,
-    # No placement for model, leave the model to `device_map`
-    device='cpu')
+    cfg_modify_fn=cfg_modify_fn)
 
 trainer: EpochBasedTrainer = build_trainer(
     name=args.trainer, default_args=kwargs)

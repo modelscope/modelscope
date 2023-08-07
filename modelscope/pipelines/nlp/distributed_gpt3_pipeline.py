@@ -94,7 +94,8 @@ class DistributedGPT3Pipeline(DistributedPipeline,
     def _stream_one(cls, inputs: Dict[str, Any]) -> None:
         tokens = inputs['inputs']['input_ids'].cuda(
             torch.cuda.current_device())
-        cls._stream = cls.model.stream(tokens, **inputs['forward_params'])
+        cls._stream = cls.model.stream_generate(tokens,
+                                                **inputs['forward_params'])
 
     @classmethod
     def _next_one(cls, idx: int) -> Optional[Dict[str, Any]]:

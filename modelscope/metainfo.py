@@ -54,6 +54,7 @@ class Models(object):
     newcrfs_depth_estimation = 'newcrfs-depth-estimation'
     panovit_layout_estimation = 'panovit-layout-estimation'
     unifuse_depth_estimation = 'unifuse-depth-estimation'
+    s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
@@ -111,6 +112,8 @@ class Models(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     m2fp = 'm2fp'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
+    nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
@@ -118,6 +121,7 @@ class Models(object):
     longshortnet = 'longshortnet'
     fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
+    image_try_on = 'image-try-on'
 
     # nlp models
     bert = 'bert'
@@ -148,6 +152,7 @@ class Models(object):
     bert_for_ds = 'bert-for-document-segmentation'
     ponet_for_ds = 'ponet-for-document-segmentation'
     ponet = 'ponet'
+    polylm = 'polylm'
     T5 = 'T5'
     mglm = 'mglm'
     codegeex = 'codegeex'
@@ -168,6 +173,7 @@ class Models(object):
     llama2 = 'llama2'
     chatglm_6b = 'chatglm6b'
     chatglm2_6b = 'chatglm2-6b'
+    qwen_7b = 'qwen-7b'
 
     # audio models
     sambert_hifigan = 'sambert-hifigan'
@@ -188,6 +194,7 @@ class Models(object):
     eres2net_sv = 'eres2net-sv'
     eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
+    campplus_lre = 'cam++-lre'
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
@@ -211,6 +218,7 @@ class Models(object):
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
+    text_to_360panorama_image = 'text-to-360panorama-image'
 
     # science models
     unifold = 'unifold'
@@ -359,6 +367,7 @@ class Pipelines(object):
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
+    panorama_depth_estimation_s2net = 'panorama-depth-estimation-s2net'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
     image_paintbyexample = 'stablediffusion-paintbyexample'
@@ -404,6 +413,8 @@ class Pipelines(object):
     image_human_parsing = 'm2fp-image-human-parsing'
     object_detection_3d_depe = 'object-detection-3d-depe'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
+    nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     fast_instance_segmentation = 'fast-instance-segmentation'
@@ -413,6 +424,8 @@ class Pipelines(object):
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
+    text_to_360panorama_image = 'text-to-360panorama-image'
+    image_try_on = 'image-try-on'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -446,6 +459,7 @@ class Pipelines(object):
     word_alignment = 'word-alignment'
     plug_generation = 'plug-generation'
     gpt3_generation = 'gpt3-generation'
+    polylm_text_generation = 'polylm-text-generation'
     gpt_moe_generation = 'gpt-moe-generation'
     faq_question_answering = 'faq-question-answering'
     conversational_text_to_sql = 'conversational-text-to-sql'
@@ -491,7 +505,10 @@ class Pipelines(object):
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
+    speech_language_recognition = 'speech-language-recognition'
     speaker_change_locating = 'speaker-change-locating'
+    speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
+    speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
@@ -844,11 +861,21 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_mobilenet-v2_bad-image-detecting'),
     Tasks.nerf_recon_acc: (Pipelines.nerf_recon_acc,
                            'damo/cv_nerf-3d-reconstruction-accelerate_damo'),
+    Tasks.nerf_recon_4k: (Pipelines.nerf_recon_4k,
+                          'damo/cv_nerf-3d-reconstruction-4k-nerf_damo'),
+    Tasks.nerf_recon_vq_compression: (
+        Pipelines.nerf_recon_vq_compression,
+        'damo/cv_nerf-3d-reconstruction-vq-compression_damo'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (
         Pipelines.pedestrian_attribute_recognition,
         'damo/cv_resnet50_pedestrian-attribute-recognition_image'),
+    Tasks.text_to_360panorama_image: (
+        Pipelines.text_to_360panorama_image,
+        'damo/cv_diffusion_text-to-360panorama-image_generation'),
+    Tasks.image_try_on: (Pipelines.image_try_on,
+                         'damo/cv_SAL-VTON_virtual-try-on')
 }
 
 
@@ -868,6 +895,7 @@ class CVTrainers(object):
     ocr_recognition = 'ocr-recognition'
     ocr_detection_db = 'ocr-detection-db'
     nerf_recon_acc = 'nerf-recon-acc'
+    nerf_recon_4k = 'nerf-recon-4k'
     action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
 
@@ -903,6 +931,7 @@ class MultiModalTrainers(object):
     stable_diffusion = 'stable-diffusion'
     lora_diffusion = 'lora-diffusion'
     dreambooth_diffusion = 'dreambooth-diffusion'
+    custom_diffusion = 'custom-diffusion'
 
 
 class AudioTrainers(object):
@@ -983,6 +1012,8 @@ class Preprocessors(object):
     ocr_detection = 'ocr-detection'
     bad_image_detecting_preprocessor = 'bad-image-detecting-preprocessor'
     nerf_recon_acc_preprocessor = 'nerf-recon-acc-preprocessor'
+    nerf_recon_4k_preprocessor = 'nerf-recon-4k-preprocessor'
+    nerf_recon_vq_compression_preprocessor = 'nerf-recon-vq-compression-preprocessor'
     controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
     image_classification_preprocessor = 'image-classification-preprocessor'
 

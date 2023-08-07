@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .glm_130b import GLM130bForTextGeneration
     from .csanmt import CsanmtForTranslation
     from .canmt import CanmtForTranslation
+    from .polylm import PolyLMForTextGeneration
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
     from .chatglm import ChatGLMForConditionalGeneration, ChatGLMTokenizer, ChatGLMConfig
     from .chatglm2 import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
@@ -76,6 +77,7 @@ if TYPE_CHECKING:
     from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
     from .llama import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
     from .llama2 import Llama2ForTextGeneration, Llama2Config, Llama2Model, Llama2Tokenizer, Llama2TokenizerFast
+    from .qwen import QWenForTextGeneration, QWenConfig, QWenModel, QWenTokenizer
 
 else:
     _import_structure = {
@@ -94,6 +96,7 @@ else:
         'bloom': ['BloomModel'],
         'csanmt': ['CsanmtForTranslation'],
         'canmt': ['CanmtForTranslation'],
+        'polylm': ['PolyLMForTextGeneration'],
         'codegeex':
         ['CodeGeeXForCodeTranslation', 'CodeGeeXForCodeGeneration'],
         'glm_130b': ['GLM130bForTextGeneration'],
@@ -175,6 +178,8 @@ else:
             'Llama2ForTextGeneration', 'Llama2Config', 'Llama2Model',
             'Llama2Tokenizer', 'Llama2TokenizerFast'
         ],
+        'qwen':
+        ['QWenForTextGeneration', 'QWenConfig', 'QWenModel', 'QWenTokenizer'],
     }
 
     import sys

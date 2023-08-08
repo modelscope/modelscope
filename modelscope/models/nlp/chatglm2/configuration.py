@@ -35,6 +35,7 @@ class ChatGLM2Config(PretrainedConfig):
                  quantization_bit=0,
                  pre_seq_len=None,
                  prefix_projection=False,
+                 rope_ratio=1.0,
                  **kwargs):
         self.num_layers = num_layers
         self.vocab_size = padded_vocab_size
@@ -61,4 +62,5 @@ class ChatGLM2Config(PretrainedConfig):
         self.quantization_bit = quantization_bit
         self.pre_seq_len = pre_seq_len
         self.prefix_projection = prefix_projection
+        self.rope_ratio = rope_ratio
         super().__init__(**kwargs)

@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
     from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRetrievalPreprocessor
     from .document_grounded_dialog_rerank_preprocessor import DocumentGroundedDialogRerankPreprocessor
+    from .machine_reading_comprehension_preprocessor import MachineReadingComprehensionForNERPreprocessor
 else:
     _import_structure = {
         'bert_seq_cls_tokenizer': ['Tokenize'],
@@ -102,7 +103,10 @@ else:
         'document_grounded_dialog_retrieval_preprocessor':
         ['DocumentGroundedDialogRetrievalPreprocessor'],
         'document_grounded_dialog_rerank_preprocessor':
-        ['DocumentGroundedDialogRerankPreprocessor']
+        ['DocumentGroundedDialogRerankPreprocessor'],
+        'machine_reading_comprehension_preprocessor': [
+            'MachineReadingComprehensionForNERPreprocessor'
+        ],
     }
 
     import sys

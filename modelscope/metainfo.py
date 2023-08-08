@@ -234,6 +234,7 @@ class TaskModels(object):
     feature_extraction = 'feature-extraction'
     text_generation = 'text-generation'
     text_ranking = 'text-ranking'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class Heads(object):
@@ -486,6 +487,7 @@ class Pipelines(object):
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
     language_identification = 'language_identification'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -1060,6 +1062,7 @@ class Preprocessors(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

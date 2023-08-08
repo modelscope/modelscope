@@ -464,3 +464,16 @@ class TranslationEvaluationOutput(ModelOutputBase):
     score: Tensor = None
     loss: Tensor = None
     input_format: List[str] = None
+
+
+@dataclass
+class MachineReadingComprehensionOutput(ModelOutputBase):
+    """The output class for machine reading comprehension models.
+    """
+
+    loss: Optional[Tensor] = None
+    match_loss: Optional[Tensor] = None
+    span_logits: Tensor = None
+    hidden_states: Optional[Tuple[Tensor]] = None
+    attentions: Optional[Tuple[Tensor]] = None
+    input_ids: Tensor = None

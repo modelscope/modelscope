@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
     from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
     from .language_identification_pipline import LanguageIdentificationPipeline
+    from .machine_reading_comprehension_pipeline import MachineReadingComprehensionForNERPipeline
 
 else:
     _import_structure = {
@@ -108,7 +109,10 @@ else:
         'document_grounded_dialog_retrieval_pipeline': [
             'DocumentGroundedDialogRetrievalPipeline'
         ],
-        'language_identification_pipline': ['LanguageIdentificationPipeline']
+        'language_identification_pipline': ['LanguageIdentificationPipeline'],
+        'machine_reading_comprehension_pipeline': [
+            'MachineReadingComprehensionForNERPipeline'
+        ],
     }
 
     import sys

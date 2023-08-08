@@ -46,7 +46,8 @@ if TYPE_CHECKING:
         CanmtTranslationPreprocessor, DialogueClassificationUsePreprocessor,
         SiameseUiePreprocessor, DocumentGroundedDialogGeneratePreprocessor,
         DocumentGroundedDialogRetrievalPreprocessor,
-        DocumentGroundedDialogRerankPreprocessor)
+        DocumentGroundedDialogRerankPreprocessor,
+        MachineReadingComprehensionForNERPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -104,7 +105,8 @@ else:
             'DialogueClassificationUsePreprocessor',
             'DocumentGroundedDialogGeneratePreprocessor',
             'DocumentGroundedDialogRetrievalPreprocessor',
-            'DocumentGroundedDialogRerankPreprocessor'
+            'DocumentGroundedDialogRerankPreprocessor',
+            'MachineReadingComprehensionForNERPreprocessor',
         ],
     }
 

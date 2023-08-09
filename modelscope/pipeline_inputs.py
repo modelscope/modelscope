@@ -222,10 +222,13 @@ TASK_INPUTS = {
     },
 
     # ============ nlp tasks ===================
-    Tasks.chat: {
-        'text': InputType.TEXT,
-        'history': InputType.LIST,
-    },
+    Tasks.chat: [
+        InputType.TEXT,
+        {
+            'text': InputType.TEXT,
+            'history': InputType.LIST,
+        }
+    ],
     Tasks.text_classification: [
         InputType.TEXT,
         (InputType.TEXT, InputType.TEXT),

@@ -33,6 +33,23 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.text_to_video_synthesis, module_name=Pipelines.videocomposer)
 class VideoComposerPipeline(Pipeline):
+    r""" Video Composer Pipeline.
+
+    Examples:
+
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
+    >>> pipe = pipeline(
+            task=Tasks.text_to_video_synthesis,
+            model='buptwq/videocomposer',
+            model_revision='v1.0.1')
+    >>> ds = MsDataset.load('buptwq/videocomposer-depths-style', split='train')
+    >>> inputs = next(iter(ds))
+    >>> inputs.update({'text': self.text})
+    >>> text = 'A glittering and translucent fish swimming in a \
+                small glass bowl with multicolored piece of stone, like a glass fish'
+    >>> output = pipe(inputs)
+    """
 
     def __init__(self, model: str, **kwargs):
         """
@@ -114,7 +131,7 @@ class VideoComposerPipeline(Pipeline):
                     video_key, self.feature_framerate, total_frames,
                     self.mvs_visual)
             except Exception as e:
-                print(
+                logger.info(
                     '{} get frames failed... with error: {}'.format(
                         video_key, e),
                     flush=True)
@@ -131,7 +148,8 @@ class VideoComposerPipeline(Pipeline):
                                       self.image_resolution,
                                       self.image_resolution)
         else:
-            print('The video path does not exist or no video dir provided!')
+            logger.info(
+                'The video path does not exist or no video dir provided!')
             ref_frame = torch.zeros(3, self.vit_image_size,
                                     self.vit_image_size)
             _ = torch.zeros(3, self.vit_image_size, self.vit_image_size)
@@ -176,7 +194,7 @@ class VideoComposerPipeline(Pipeline):
         return inputs
 
     def video_data_preprocess(self, video_key, feature_framerate, total_frames,
-                             visual_mv):
+                              visual_mv):
 
         filename = video_key
         for _ in range(5):
@@ -187,7 +205,7 @@ class VideoComposerPipeline(Pipeline):
                     visual_mv=visual_mv)
                 break
             except Exception as e:
-                print(
+                logger.error(
                     '{} read video frames and motion vectors failed with error: {}'
                     .format(video_key, e),
                     flush=True)
@@ -209,7 +227,7 @@ class VideoComposerPipeline(Pipeline):
                 '/')[-1] + '.gif'
             if not os.path.exists(self.self.log_dir + '/visual_mv/'):
                 os.makedirs(self.self.log_dir + '/visual_mv/', exist_ok=True)
-            print('save motion vectors visualization to :', path)
+            logger.info('save motion vectors visualization to :', path)
             imageio.mimwrite(path, images, fps=8)
 
         have_frames = len(frames) > 0
@@ -290,7 +308,7 @@ class VideoComposerPipeline(Pipeline):
         # continuously read and display video frames and motion vectors
         while True:
             if verbose:
-                print('Frame: ', step, end=' ')
+                logger.info('Frame: ', step, end=' ')
 
             tstart = time.perf_counter()
 
@@ -304,7 +322,7 @@ class VideoComposerPipeline(Pipeline):
             # if there is an error reading the frame
             if not ret:
                 if verbose:
-                    print('No frame read. Stopping.')
+                    logger.warning('No frame read. Stopping.')
                 break
 
             frame_save = np.zeros(frame.copy().shape, dtype=np.uint8)  # *255
@@ -343,7 +361,7 @@ class VideoComposerPipeline(Pipeline):
             frames.append(frame)
             mvs.append(mv)
         if verbose:
-            print('average dt: ', np.mean(times))
+            logger.info('average dt: ', np.mean(times))
         cap.release()
 
         if os.path.exists(tmp_video):

@@ -56,8 +56,8 @@ def rand_name(length=8, suffix=''):
     return name
 
 
-def save_with_model_kwargs(model_kwargs, video_data, autoencoder,
-                                ori_video, viz_num, step, caps, palette, cfg):
+def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
+                           viz_num, step, caps, palette, cfg):
     scale_factor = 0.18215
     video_data = 1. / scale_factor * video_data
 

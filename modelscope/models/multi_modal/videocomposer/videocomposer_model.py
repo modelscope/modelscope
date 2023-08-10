@@ -16,8 +16,8 @@ from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
-from modelscope.models.builder import MODELS
 from modelscope.models import TorchModel
+from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
     pidinet_bsd, sketch_simplification_gan)
 from modelscope.models.multi_modal.videocomposer.autoencoder import \

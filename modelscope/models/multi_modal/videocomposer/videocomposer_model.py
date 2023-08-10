@@ -16,8 +16,8 @@ from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
-from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
+from modelscope.models import TorchModel
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
     pidinet_bsd, sketch_simplification_gan)
 from modelscope.models.multi_modal.videocomposer.autoencoder import \
@@ -28,7 +28,7 @@ from modelscope.models.multi_modal.videocomposer.diffusion import (
     GaussianDiffusion, beta_schedule)
 from modelscope.models.multi_modal.videocomposer.ops.utils import (
     get_first_stage_encoding, make_masked_images, prepare_model_kwargs,
-    visualize_with_model_kwargs)
+    save_with_model_kwargs)
 from modelscope.models.multi_modal.videocomposer.unet_sd import UNetSD_temporal
 from modelscope.models.multi_modal.videocomposer.utils.config import Config
 from modelscope.models.multi_modal.videocomposer.utils.utils import (
@@ -42,7 +42,7 @@ __all__ = ['VideoComposer']
 
 @MODELS.register_module(
     Tasks.text_to_video_synthesis, module_name=Models.videocomposer)
-class VideoComposer(Model):
+class VideoComposer(TorchModel):
     r"""
     task for video composer.
 
@@ -58,7 +58,7 @@ class VideoComposer(Model):
         Args:
             model_dir (`str` or `os.PathLike`)
                 Can be either:
-                    - A string, the *model id* of a pretrained model hosted inside a model repo on huggingface.co
+                    - A string, the *model id* of a pretrained model hosted inside a model repo on modelscope
                       or modelscope.cn. Valid model ids can be located at the root-level, like `bert-base-uncased`,
                       or namespaced under a user or organization name, like `dbmdz/bert-base-german-cased`.
                     - A path to a *directory* containing model weights saved using
@@ -468,7 +468,7 @@ class VideoComposer(Model):
                     ddim_timesteps=self.cfg.ddim_timesteps,
                     eta=0.0)
 
-                visualize_with_model_kwargs(
+                save_with_model_kwargs(
                     model_kwargs=model_kwargs,
                     video_data=video_output,
                     autoencoder=self.autoencoder,

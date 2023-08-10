@@ -18,7 +18,7 @@ import modelscope.models.multi_modal.videocomposer.data as data
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal.videocomposer.data.transforms import (
     CenterCropV3, random_resize)
-from modelscope.models.multi_modal.videocomposer.random_mask import (
+from modelscope.models.multi_modal.videocomposer.ops.random_mask import (
     make_irregular_mask, make_rectangle_mask, make_uncrop)
 from modelscope.models.multi_modal.videocomposer.utils.utils import rand_name
 from modelscope.pipelines.base import Input, Pipeline
@@ -110,7 +110,7 @@ class VideoComposerPipeline(Pipeline):
         feature_framerate = self.feature_framerate
         if os.path.exists(video_key):
             try:
-                ref_frame, vit_image, video_data, misc_data, mv_data = self._get_video_traindata(
+                ref_frame, vit_image, video_data, misc_data, mv_data = self.video_data_preprocess(
                     video_key, self.feature_framerate, total_frames,
                     self.mvs_visual)
             except Exception as e:
@@ -175,7 +175,7 @@ class VideoComposerPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs
 
-    def _get_video_traindata(self, video_key, feature_framerate, total_frames,
+    def video_data_preprocess(self, video_key, feature_framerate, total_frames,
                              visual_mv):
 
         filename = video_key

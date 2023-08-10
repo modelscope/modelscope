@@ -42,7 +42,7 @@ class Config(object):
             '--cfg',
             dest='cfg_file',
             help='Path to the configuration file',
-            default='configs/multi_modal/exp06_text_depths_vs_style.yaml')
+            default='./modelscope/models/multi_modal/videocomposer/configs/exp06_text_depths_vs_style.yaml')
         parser.add_argument(
             '--init_method',
             help='Initialization method, includes TCP or shared file-system',
@@ -100,11 +100,11 @@ class Config(object):
     def _initialize_cfg(self):
         if self.need_initialization:
             self.need_initialization = False
-            if os.path.exists('./configs/multi_modal/base.yaml'):
-                with open('./configs/multi_modal/base.yaml', 'r') as f:
+            if os.path.exists('./modelscope/models/multi_modal/videocomposer/configs/base.yaml'):
+                with open('./modelscope/models/multi_modal/videocomposer/configs/base.yaml', 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
             else:
-                with open('./configs/multi_modal/base.yaml', 'r') as f:
+                with open('./modelscope/models/multi_modal/videocomposer/configs/base.yaml', 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
         return cfg
 

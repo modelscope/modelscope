@@ -129,7 +129,7 @@ def get_modified_files():
             'PR_CHANGED_FILES'] != '':
         logger.info('Getting PR modified files.')
         # get modify file from environment
-        diff_files = os.environ['PR_CHANGED_FILES']
+        diff_files = os.environ['PR_CHANGED_FILES'].replace('#', ' ')
         logger.info(diff_files)
     else:
         cmd = ['git', 'diff', '--name-only', 'origin/master...']

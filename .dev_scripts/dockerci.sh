@@ -11,7 +11,8 @@ CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh python tests/run
 echo "ci command: $CI_COMMAND"
 PR_CHANGED_FILES="${PR_CHANGED_FILES:-''}"
 echo "PR modified files: $PR_CHANGED_FILES"
-
+PR_CHANGED_FILES=${PR_CHANGED_FILES//[ ]/#}
+echo "PR_CHANGED_FILES: $PR_CHANGED_FILES"
 idx=0
 for gpu in $gpus
 do

@@ -42,6 +42,8 @@ do
               -e MODELSCOPE_ENVIRONMENT='ci' \
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
+              -e GITHUB_JOB=$GITHUB_JOB \
+              -e PR_CHANGED_FILES=$PR_CHANGED_FILES \
               --workdir=$CODE_DIR_IN_CONTAINER \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
               $CI_COMMAND
@@ -64,6 +66,8 @@ do
               -e MODELSCOPE_ENVIRONMENT='ci' \
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \
+              -e GITHUB_JOB=$GITHUB_JOB \
+              -e PR_CHANGED_FILES=$PR_CHANGED_FILES \
               --workdir=$CODE_DIR_IN_CONTAINER \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
               $CI_COMMAND

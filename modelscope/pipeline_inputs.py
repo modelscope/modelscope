@@ -237,7 +237,13 @@ TASK_INPUTS = {
             'text2': InputType.TEXT
         },
     ],
-    Tasks.sentence_similarity: (InputType.TEXT, InputType.TEXT),
+    Tasks.sentence_similarity: [
+        (InputType.TEXT, InputType.TEXT),
+        {
+            'source_text': InputType.TEXT,
+            'target_text': InputType.TEXT,
+        },
+    ],
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
@@ -278,10 +284,6 @@ TASK_INPUTS = {
     },
     Tasks.fill_mask:
     InputType.TEXT,
-    Tasks.task_oriented_conversation: {
-        'user_input': InputType.TEXT,
-        'history': InputType.DICT,
-    },
     Tasks.table_question_answering: {
         'question': InputType.TEXT,
         'history_sql': InputType.DICT,

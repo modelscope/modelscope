@@ -350,10 +350,9 @@ class Pipeline(ABC):
                 for t, input_ele in zip(input_type, input):
                     check_input_type(t, input_ele)
             elif isinstance(input_type, dict):
-                assert isinstance(input, dict), 'input should be a dict'
                 for k in input_type.keys():
                     # allow single input for multi-modal models
-                    if k in input:
+                    if isinstance(input, dict) and k in input:
                         check_input_type(input_type[k], input[k])
             else:
                 raise ValueError(f'invalid input_type definition {input_type}')

@@ -12,11 +12,9 @@ import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 from einops import rearrange
-# from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
-from modelscope.preprocessors.image import load_image
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
@@ -35,8 +33,11 @@ from modelscope.models.multi_modal.videocomposer.utils.config import Config
 from modelscope.models.multi_modal.videocomposer.utils.utils import (
     find_free_port, setup_seed, to_device)
 from modelscope.outputs import OutputKeys
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
+
+# from PIL import Image
 
 __all__ = ['VideoComposer']
 
@@ -202,7 +203,7 @@ class VideoComposer(TorchModel):
     def forward(self, input: Dict[str, Any]):
         frame_in = None
         if self.read_image:
-            image_key = input["style_image"]
+            image_key = input['style_image']
             frame = load_image(image_key)
             frame_in = misc_transforms([frame])
 

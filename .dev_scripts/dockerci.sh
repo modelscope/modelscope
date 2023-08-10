@@ -9,6 +9,8 @@ cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
 CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh python tests/run.py --parallel 2 --run_config tests/run_config.yaml}
 echo "ci command: $CI_COMMAND"
+echo "github job: $GITHUB_JOB"
+echo "modified files: $PR_CHANGED_FILES"
 idx=0
 for gpu in $gpus
 do

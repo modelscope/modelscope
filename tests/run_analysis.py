@@ -126,22 +126,20 @@ def get_current_branch():
 
 def get_modified_files():
     if 'GITHUB_JOB' in os.environ:
+        logger.info('Running on github')
         # get modify file from environment
-        changed_files = os.environ['RP_CHANGED_FILES']
-        print(changed_files)
-        return changed_files.splitlines()
+        diff_files = os.environ['PR_CHANGED_FILES']
     else:
         cmd = ['git', 'diff', '--name-only', 'origin/master...']
-        cmd_output = run_command_get_output(cmd)
-        logger.info('Modified files: ')
-        logger.info(cmd_output)
-        modified_files = []
-        # remove the deleted file.
-        for diff_file in cmd_output.splitlines():
-            if os.path.exists(diff_file):
-                modified_files.append(diff_file)
-
-        return modified_files
+        diff_files = run_command_get_output(cmd)
+    logger.info('Diff files: ')
+    logger.info(diff_files)
+    modified_files = []
+    # remove the deleted file.
+    for diff_file in diff_files.splitlines():
+        if os.path.exists(diff_file.strip()):
+            modified_files.append(diff_file.strip())
+    return modified_files
 
 
 def analysis_diff():

@@ -61,9 +61,9 @@ jobs:
         id: changed-files
         run: |
             if ${{ github.event_name == 'pull_request' }}; then
-                echo "RP_CHANGED_FILES=$(git diff --name-only -r HEAD^1 HEAD | xargs)" >> $GITHUB_ENV
+                echo "PR_CHANGED_FILES=$(git diff --name-only -r HEAD^1 HEAD | xargs)" >> $GITHUB_ENV
             else
-                echo "RP_CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | xargs)" >> $GITHUB_ENV
+                echo "PR_CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | xargs)" >> $GITHUB_ENV
             fi
       - name: Checkout LFS objects
         run: git lfs checkout

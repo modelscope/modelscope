@@ -311,6 +311,8 @@ TASK_INPUTS = {
         'positive': InputType.LIST,
         'negative': InputType.LIST
     },
+    Tasks.machine_reading_comprehension:
+    InputType.TEXT,
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.

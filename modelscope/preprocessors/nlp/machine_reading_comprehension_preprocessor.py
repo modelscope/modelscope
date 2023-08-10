@@ -53,19 +53,13 @@ class MachineReadingComprehensionForNERPreprocessor(Preprocessor):
                 'span_position': [],
                 'start_position': []
             })
-        dataset = MRCNERDataset(
-            data=all_data,
-            tokenizer=self.tokenizer,
-        )
-        eval_sampler = SequentialSampler(dataset)
-        eval_dataloader = DataLoader(
-            dataset,
-            sampler=eval_sampler,
-            batch_size=32,
-            collate_fn=collate_to_max_length_roberta,
-            num_workers=4)
 
-        output = next(iter(eval_dataloader))
+        all_data = self.prompt(all_data)
+        output = []
+        for data in all_data:
+            output.append(self.encode(data))
+        output = collate_to_max_length_roberta(output)
+
         output = {
             'input_ids': output[0],
             'attention_mask': output[1],
@@ -74,26 +68,9 @@ class MachineReadingComprehensionForNERPreprocessor(Preprocessor):
 
         return output
 
-
-class MRCNERDataset(Dataset):
-
-    def __init__(self,
-                 data,
-                 tokenizer: None,
-                 max_length: int = 512,
-                 max_query_length=64,
-                 var=0):
-        self.all_data = data
-        self.var = var
-        self.prompt()
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.max_query_length = max_query_length
-        self.max_context_length = max_length - max_query_length
-
-    def prompt(self):
+    def prompt(self, all_data, var=0):
         new_datas = []
-        for data in self.all_data:
+        for data in all_data:
             label = data['entity_label']
             details = data['query']
             context = data['context']
@@ -101,12 +78,12 @@ class MRCNERDataset(Dataset):
             end_positions = data['end_position']
             words = context.split()
             assert len(words) == len(context.split(' '))
-            if self.var == 0:
+            if var == 0:
                 query = '"{}". {}'.format(label, details)  # ori
-            elif self.var == 1:
+            elif var == 1:
                 query = 'What are the "{}" entity, where {}'.format(
                     label, details)  # variant 1
-            elif self.var == 2:
+            elif var == 2:
                 query = 'Identify the spans (if any) related to "{}" entity. Details: {}'.format(
                     label, details)  # variant 2
             span_positions = {
@@ -124,25 +101,11 @@ class MRCNERDataset(Dataset):
                 'span_position': span_positions,
                 'start_position': start_positions,
             }
-            # if label == "ORG":
             new_datas.append(new_data)
-        self.all_data = new_datas
+        return new_datas
 
-    def __len__(self):
-        return len(self.all_data)
+    def encode(self, data, max_length=512, max_query_length=64):
 
-    def __getitem__(self, item):
-        """
-        Args:
-            item: int, idx
-        Returns:
-            tokens: tokens of query + context, [seq_len]
-            attention_mask: attention mask, 1 for token, 0 for padding, [seq_len]
-            token_type_ids: token type ids, 0 for query, 1 for context, [seq_len]
-            label_mask: label mask, 1 for counting into loss, 0 for ignoring. [seq_len]
-            match_labels: match labels, [seq_len, seq_len]
-        """
-        data = self.all_data[item]
         tokenizer = self.tokenizer
 
         query = data['query']
@@ -197,13 +160,13 @@ class MRCNERDataset(Dataset):
             query,
             add_special_tokens=False,
             truncation=True,
-            max_length=self.max_query_length)
+            max_length=max_query_length)
         encoded_dict = tokenizer.encode_plus(  # TODO(thom) update this logic
             truncated_query,
             all_doc_tokens,
             truncation=truncation,
             padding=padding_strategy,
-            max_length=self.max_length,
+            max_length=max_length,
             return_overflowing_tokens=True,
             return_token_type_ids=True,
         )
@@ -217,11 +180,11 @@ class MRCNERDataset(Dataset):
         doc_offset = len(truncated_query) + sequence_added_tokens
         new_start_positions = [
             x + doc_offset for x in tok_start_positions
-            if (x + doc_offset) < self.max_length - 1
+            if (x + doc_offset) < max_length - 1
         ]
         new_end_positions = [
             x + doc_offset if
-            (x + doc_offset) < self.max_length - 1 else self.max_length - 2
+            (x + doc_offset) < max_length - 1 else max_length - 2
             for x in tok_end_positions
         ]
         new_end_positions = new_end_positions[:len(new_start_positions)]

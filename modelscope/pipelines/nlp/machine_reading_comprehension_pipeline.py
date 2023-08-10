@@ -18,6 +18,14 @@ class MachineReadingComprehensionForNERPipeline(Pipeline):
     '''
     Pipeline for Pretrained Machine Reader (PMR) finetuned on Named Entity Recognition (NER)
 
+    Examples:
+
+    >>> from modelscope.pipelines import pipeline
+    >>> pipeline_ins = pipeline(
+    >>>        task=Tasks.machine_reading_comprehension,
+    >>>        model='damo/nlp_roberta_machine-reading-comprehension_for-ner')
+    >>> pipeline_ins('Soccer - Japan get lucky win , China in surprise defeat .')
+    >>> {'ORG': [], 'PER': [], 'LOC': [' Japan', ' China'], 'MISC': []}
     '''
 
     def __init__(self,

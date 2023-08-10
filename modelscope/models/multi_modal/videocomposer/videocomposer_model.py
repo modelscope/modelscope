@@ -12,10 +12,11 @@ import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 from einops import rearrange
-from PIL import Image
+# from PIL import Image
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models
+from modelscope.preprocessors.image import load_image
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.videocomposer.annotator.sketch import (
@@ -201,21 +202,19 @@ class VideoComposer(TorchModel):
     def forward(self, input: Dict[str, Any]):
         frame_in = None
         if self.read_image:
-            image_key = self.cfg.image_path
-            frame = Image.open(open(image_key, mode='rb')).convert('RGB')
+            image_key = input["style_image"]
+            frame = load_image(image_key)
             frame_in = misc_transforms([frame])
 
         frame_sketch = None
         if self.read_sketch:
             sketch_key = self.cfg.sketch_path
-            frame_sketch = Image.open(open(sketch_key,
-                                           mode='rb')).convert('RGB')
+            frame_sketch = load_image(sketch_key)
             frame_sketch = misc_transforms([frame_sketch])
 
         frame_style = None
         if self.read_style:
-            frame_style = Image.open(open(input['style_image'],
-                                          mode='rb')).convert('RGB')
+            frame_style = load_image(input['style_image'])
 
         # Generators for various conditions
         if 'depthmap' in self.video_compositions:

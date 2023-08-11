@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import logging
 import os
 from copy import copy, deepcopy
 from os import path as osp
@@ -36,8 +35,6 @@ from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModelFile, Tasks
 from .config import cfg
-
-# from PIL import Image
 
 __all__ = ['VideoComposer']
 
@@ -182,8 +179,6 @@ class VideoComposer(TorchModel):
 
             torch.cuda.empty_cache()
         else:
-            logging.error(
-                f'The checkpoint file {self.cfg.resume_checkpoint} is wrong')
             raise ValueError(
                 f'The checkpoint file {self.cfg.resume_checkpoint} is wrong ')
 

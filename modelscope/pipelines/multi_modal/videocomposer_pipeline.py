@@ -45,9 +45,9 @@ class VideoComposerPipeline(Pipeline):
             model_revision='v1.0.1')
     >>> ds = MsDataset.load('buptwq/videocomposer-depths-style', split='train')
     >>> inputs = next(iter(ds))
-    >>> inputs.update({'text': self.text})
     >>> text = 'A glittering and translucent fish swimming in a \
                 small glass bowl with multicolored piece of stone, like a glass fish'
+    >>> inputs.update({'text': text})
     >>> output = pipe(inputs)
     """
 
@@ -191,7 +191,9 @@ class VideoComposerPipeline(Pipeline):
         return self.model(input)
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        return inputs
+        if not isinstance(inputs, list):
+            inputs = [inputs]
+        return {OutputKeys.OUTPUT_IMGS: inputs}
 
     def video_data_preprocess(self, video_key, feature_framerate, total_frames,
                               visual_mv):
@@ -220,15 +222,15 @@ class VideoComposerPipeline(Pipeline):
         frames = [Image.fromarray(frames[i][:, :, ::-1]) for i in indices]
         mvs = [torch.from_numpy(mvs[i].transpose((2, 0, 1))) for i in indices]
         mvs = torch.stack(mvs)
-        if visual_mv:
-            images = [(mvs_visual[i][:, :, ::-1]).astype('uint8')
-                      for i in indices]
-            path = self.log_dir + '/visual_mv/' + video_key.split(
-                '/')[-1] + '.gif'
-            if not os.path.exists(self.self.log_dir + '/visual_mv/'):
-                os.makedirs(self.self.log_dir + '/visual_mv/', exist_ok=True)
-            logger.info('save motion vectors visualization to :', path)
-            imageio.mimwrite(path, images, fps=8)
+
+        images = [(mvs_visual[i][:, :, ::-1]).astype('uint8')
+                    for i in indices]
+        path = self.log_dir + '/visual_mv/' + video_key.split(
+            '/')[-1] + '.gif'
+        if not os.path.exists(self.self.log_dir + '/visual_mv/'):
+            os.makedirs(self.self.log_dir + '/visual_mv/', exist_ok=True)
+        logger.info('save motion vectors visualization to :', path)
+        imageio.mimwrite(path, images, fps=8)
 
         have_frames = len(frames) > 0
         middle_indix = int(len(frames) / 2)
@@ -325,9 +327,7 @@ class VideoComposerPipeline(Pipeline):
                     logger.warning('No frame read. Stopping.')
                 break
 
-            frame_save = np.zeros(frame.copy().shape, dtype=np.uint8)  # *255
-            if visual_mv:
-                frame_save = draw_motion_vectors(frame_save, motion_vectors)
+            frame_save = np.zeros(frame.copy().shape, dtype=np.uint8)
 
             # store motion vectors, frames, etc. in output directory
             dump = False

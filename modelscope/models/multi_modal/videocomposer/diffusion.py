@@ -6,7 +6,7 @@ import torch
 
 from .dpm_solver import (DPM_Solver, NoiseScheduleVP, model_wrapper,
                          model_wrapper_guided_diffusion)
-from .losses import discretized_gaussian_log_likelihood, kl_divergence
+from .ops.losses import discretized_gaussian_log_likelihood, kl_divergence
 
 __all__ = ['GaussianDiffusion', 'beta_schedule', 'GaussianDiffusion_style']
 

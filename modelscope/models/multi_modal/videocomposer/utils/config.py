@@ -7,6 +7,10 @@ import os
 import json
 import yaml
 
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
+
 
 def setup_seed(seed):
     print('Seed: ', seed)

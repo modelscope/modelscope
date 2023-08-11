@@ -2,9 +2,8 @@
 """
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
 pip install sentencepiece charset_normalizer cpm_kernels tiktoken -U
-pip install matplotlib scikit-learn -U
 pip install transformers datasets -U
-pip install tqdm tensorboard torchmetrics -U
+pip install matplotlib tqdm tensorboard torchmetrics -U
 pip install accelerate transformers_stream_generator -U
 
 # Install the latest version of modelscope from source

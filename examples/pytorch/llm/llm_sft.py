@@ -14,10 +14,10 @@ pip install -r requirements.txt
 pip install .
 """
 import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 import warnings
 from dataclasses import dataclass, field
 from functools import partial
-from types import MethodType
 from typing import List, Optional
 
 import torch
@@ -57,7 +57,7 @@ class SftArguments:
         default='alpaca-en,alpaca-zh',
         metadata={'help': f'dataset choices: {list(DATASET_MAPPING.keys())}'})
     dataset_seed: int = 42
-    dataset_sample: Optional[int] = None
+    dataset_sample: int = 20000  # -1: all dataset
     dataset_test_size: float = 0.01
     prompt: str = DEFAULT_PROMPT
     max_length: Optional[int] = 2048
@@ -83,6 +83,13 @@ class SftArguments:
     best_max_checkpoint_num: int = 1
     logging_interval: int = 5
     tb_interval: int = 5
+
+    # other
+    use_flash_attn: Optional[bool] = field(
+        default=None,
+        metadata={
+            'help': "This parameter is used only when model_type='qwen-7b'"
+        })
 
     def __post_init__(self):
         if self.sft_type == 'lora':
@@ -110,6 +117,8 @@ class SftArguments:
         if self.lora_target_modules is None:
             self.lora_target_modules = MODEL_MAPPING[
                 self.model_type]['lora_TM']
+        if self.use_flash_attn is None:
+            self.use_flash_attn = 'auto'
 
 
 def llm_sft(args: SftArguments) -> None:
@@ -119,14 +128,14 @@ def llm_sft(args: SftArguments) -> None:
     support_bf16 = torch.cuda.is_bf16_supported()
     if not support_bf16:
         logger.warning(f'support_bf16: {support_bf16}')
+
+    kwargs = {'low_cpu_mem_usage': True, 'device_map': 'auto'}
+    if args.model_type == 'qwen-7b':
+        kwargs['use_flash_attn'] = args.use_flash_attn
     model, tokenizer, model_dir = get_model_tokenizer(
-        args.model_type, torch_dtype=torch.bfloat16)
+        args.model_type, torch_dtype=torch.bfloat16, **kwargs)
 
     if args.gradient_checkpoint:
-        # baichuan-13b does not implement the `get_input_embeddings` function
-        if args.model_type == 'baichuan-13b':
-            model.get_input_embeddings = MethodType(
-                lambda self: self.model.embed_tokens, model)
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
 

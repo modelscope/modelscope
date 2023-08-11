@@ -1,7 +1,7 @@
 # ### Setting up experimental environment.
 import os
-import warnings
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+import warnings
 from dataclasses import dataclass, field
 from functools import partial
 from typing import List, Optional
@@ -38,7 +38,7 @@ class InferArguments:
         default='alpaca-en,alpaca-zh',
         metadata={'help': f'dataset choices: {list(DATASET_MAPPING.keys())}'})
     dataset_seed: int = 42
-    dataset_sample: Optional[int] = None
+    dataset_sample: int = 20000  # -1: all dataset
     dataset_test_size: float = 0.01
     prompt: str = DEFAULT_PROMPT
     max_length: Optional[int] = 2048
@@ -68,8 +68,10 @@ def llm_infer(args: InferArguments) -> None:
     support_bf16 = torch.cuda.is_bf16_supported()
     if not support_bf16:
         logger.warning(f'support_bf16: {support_bf16}')
+
+    kwargs = {'low_cpu_mem_usage': True, 'device_map': 'auto'}
     model, tokenizer, _ = get_model_tokenizer(
-        args.model_type, torch_dtype=torch.bfloat16)
+        args.model_type, torch_dtype=torch.bfloat16, **kwargs)
 
     # ### Preparing lora
     if args.sft_type == 'lora':

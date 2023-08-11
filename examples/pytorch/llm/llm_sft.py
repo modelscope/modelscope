@@ -14,6 +14,7 @@ pip install -r requirements.txt
 pip install .
 """
 import os
+import warnings
 from dataclasses import dataclass, field
 from functools import partial
 from types import MethodType
@@ -21,7 +22,7 @@ from typing import List, Optional
 
 import torch
 from torch import Tensor
-from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER,
+from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING,
                    data_collate_fn, get_dataset, get_model_tokenizer,
                    get_T_max, get_work_dir, parse_args, plot_images,
                    print_example, print_model_info, process_dataset,
@@ -33,6 +34,11 @@ from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config
 
+warnings.warn(
+    'This directory has been migrated to '
+    'https://github.com/modelscope/swift/tree/main/examples/pytorch/llm, '
+    'and the files in this directory are no longer maintained.',
+    DeprecationWarning)
 logger = get_logger()
 
 
@@ -40,7 +46,7 @@ logger = get_logger()
 class SftArguments:
     seed: int = 42
     model_type: str = field(
-        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPING.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
@@ -49,7 +55,7 @@ class SftArguments:
 
     dataset: str = field(
         default='alpaca-en,alpaca-zh',
-        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPING.keys())}'})
     dataset_seed: int = 42
     dataset_sample: Optional[int] = None
     dataset_test_size: float = 0.01
@@ -102,7 +108,8 @@ class SftArguments:
         self.output_dir = os.path.join(self.output_dir, self.model_type)
 
         if self.lora_target_modules is None:
-            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
+            self.lora_target_modules = MODEL_MAPPING[
+                self.model_type]['lora_TM']
 
 
 def llm_sft(args: SftArguments) -> None:

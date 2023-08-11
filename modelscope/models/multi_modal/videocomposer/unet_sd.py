@@ -14,7 +14,6 @@ from fairscale.nn.checkpoint import checkpoint_wrapper
 from rotary_embedding_torch import RotaryEmbedding
 from torch import einsum
 
-from .mha_flash import FlashAttentionBlock
 
 __all__ = ['UNetSD_temporal']
 
@@ -453,7 +452,8 @@ class BasicTransformerBlock(nn.Module):
                  checkpoint=True,
                  disable_self_attn=False):
         super().__init__()
-        attn_cls = MemoryEfficientCrossAttention
+        # attn_cls = MemoryEfficientCrossAttention
+        attn_cls = CrossAttention
         self.disable_self_attn = disable_self_attn
         self.attn1 = attn_cls(
             query_dim=dim,

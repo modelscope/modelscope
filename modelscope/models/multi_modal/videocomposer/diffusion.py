@@ -15,6 +15,8 @@ def _i(tensor, t, x):
     r"""Index tensor using t and format the output according to x.
     """
     shape = (x.size(0), ) + (1, ) * (x.ndim - 1)
+    if tensor.device != x.device:
+        tensor = tensor.to(x.device)
     return tensor[t].view(shape).to(x)
 
 
@@ -303,6 +305,7 @@ class GaussianDiffusion(object):
                 xt)
             log_var = torch.log(var)
         elif self.var_type == 'fixed_small':
+            # import ipdb; ipdb.set_trace()
             var = _i(self.posterior_variance, t, xt)
             log_var = _i(self.posterior_log_variance_clipped, t, xt)
 
@@ -397,6 +400,7 @@ class GaussianDiffusion(object):
         steps = (1 + torch.arange(0, self.num_timesteps,
                                   self.num_timesteps // ddim_timesteps)).clamp(
                                       0, self.num_timesteps - 1).flip(0)
+        # import ipdb; ipdb.set_trace()
         for step in steps:
             t = torch.full((b, ), step, dtype=torch.long, device=xt.device)
             xt, _ = self.ddim_sample(xt, t, model, model_kwargs, clamp,
@@ -964,6 +968,7 @@ class GaussianDiffusion_style(object):
         """
         dtype = xt.dtype
 
+        
         # predict distribution of p(x_{t-1} | x_t)
         _, _, _, x0 = self.p_mean_variance(xt, t, model, model_kwargs, clamp,
                                            percentile, guide_scale)

@@ -10,6 +10,8 @@ from typing import Any, Dict
 import cv2
 import numpy as np
 import torch
+import imageio
+import tempfile
 import torchvision.transforms as T
 from mvextractor.videocap import VideoCap
 from PIL import Image
@@ -231,12 +233,12 @@ class VideoComposerPipeline(Pipeline):
         mvs = [torch.from_numpy(mvs[i].transpose((2, 0, 1))) for i in indices]
         mvs = torch.stack(mvs)
 
-        images = [(mvs_visual[i][:, :, ::-1]).astype('uint8') for i in indices]
-        path = self.log_dir + '/visual_mv/' + video_key.split('/')[-1] + '.gif'
-        if not os.path.exists(self.self.log_dir + '/visual_mv/'):
-            os.makedirs(self.self.log_dir + '/visual_mv/', exist_ok=True)
-        logger.info('save motion vectors visualization to :', path)
-        imageio.mimwrite(path, images, fps=8)
+        # images = [(mvs_visual[i][:, :, ::-1]).astype('uint8') for i in indices]
+        # path = self.log_dir + '/visual_mv/' + video_key.split('/')[-1] + '.gif'
+        # if not os.path.exists(self.log_dir + '/visual_mv/'):
+        #     os.makedirs(self.log_dir + '/visual_mv/', exist_ok=True)
+        # logger.info('save motion vectors visualization to :', path)
+        # imageio.mimwrite(path, images, fps=8)
 
         have_frames = len(frames) > 0
         middle_indix = int(len(frames) / 2)

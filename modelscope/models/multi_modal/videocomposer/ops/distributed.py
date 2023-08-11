@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import functools
 import pickle
 from collections import OrderedDict

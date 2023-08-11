@@ -1,3 +1,5 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import base64
 import binascii
 import copy
@@ -30,6 +32,9 @@ from PIL import Image
 
 from modelscope.models.multi_modal.videocomposer.autoencoder import \
     DiagonalGaussianDistribution
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 __all__ = [
     'parse_oss_url', 'parse_bucket', 'read', 'read_image', 'read_gzip',
@@ -98,11 +103,9 @@ def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
         texts = '\n'.join(caps[:viz_num])
         open(text_key, 'w').writelines(texts)
     except Exception as e:
-        # logging.info(f'Save text or video error. {e}')
-        print(f'Save text or video error. {e}')
+        logger.error(f'Save text or video error. {e}')
 
-    # logging.info(f'Save videos to {oss_key}')
-    print(f'Save videos to {oss_key}')
+    logger.info(f'Save videos to {oss_key}')
 
 
 def prepare_model_kwargs(partial_keys, full_model_kwargs, use_fps_condition):
@@ -298,7 +301,7 @@ def put_object(bucket, oss_key, data, retry=5):
             exception = e
             continue
     else:
-        print(
+        logger.info(
             f'put_object to {oss_key} failed with error: {exception}',
             flush=True)
 
@@ -314,7 +317,7 @@ def put_torch_object(bucket, oss_key, data, retry=5):
             exception = e
             continue
     else:
-        print(
+        logger.info(
             f'put_torch_object to {oss_key} failed with error: {exception}',
             flush=True)
 
@@ -328,7 +331,7 @@ def put_object_from_file(bucket, oss_key, filename, retry=5):
             exception = e
             continue
     else:
-        print(
+        logger.error(
             f'put_object_from_file to {oss_key} failed with error: {exception}',
             flush=True)
 
@@ -342,7 +345,7 @@ def get_object(bucket, oss_key, retry=5):
             exception = e
             continue
     else:
-        print(
+        logger.error(
             f'get_object from {oss_key} failed with error: {exception}',
             flush=True)
 
@@ -356,7 +359,7 @@ def get_object_to_file(bucket, oss_key, filename, retry=5):
             exception = e
             continue
     else:
-        print(
+        logger.error(
             f'get_object_to_file from {oss_key} failed with error: {exception}',
             flush=True)
 
@@ -385,7 +388,7 @@ def save_image(bucket,
     if osp.exists(filename):
         os.remove(filename)
     if exception is not None:
-        print(
+        logger.error(
             'save image to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -429,7 +432,7 @@ def save_video(bucket,
     if osp.exists(filename):
         os.remove(filename)
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -452,7 +455,7 @@ def save_video_multiple_conditions(oss_key,
     try:
         video_tensor.clamp_(0, 1)
     except Exception as e:
-        print(e)
+        logger.error(e)
         video_tensor = video_tensor.float().clamp_(0, 1)
     video_tensor = video_tensor.cpu()
 
@@ -628,7 +631,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(video_save_key, filename_pred)
             break
         except Exception as e:
-            print('error! ', video_save_key, e)
+            logger.error('error! ', video_save_key, e)
             continue
 
     # remove temporary file
@@ -643,7 +646,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(gt_video_save_key, filename_gt)
             break
         except Exception as e:
-            print('error! ', gt_video_save_key, e)
+            logger.error('error! ', gt_video_save_key, e)
             continue
 
     # remove temporary file
@@ -651,7 +654,7 @@ def save_video_multiple_conditions_with_data(bucket,
         os.remove(filename_gt)
 
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(
                 vis_oss_key, exception),
             flush=True)
@@ -697,14 +700,14 @@ def save_video_vs_conditions(bucket,
             break
         except Exception as e:
             exception = e
-            print(exception)
+            logger.error(exception)
             continue
 
     # remove temporary file
     if osp.exists(filename):
         os.remove(filename)
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -751,14 +754,14 @@ def save_video_grid_mp4(bucket,
             break
         except Exception as e:
             exception = e
-            print(exception)
+            logger.error(exception)
             continue
 
     # remove temporary file
     if osp.exists(filename):
         os.remove(filename)
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -782,10 +785,10 @@ def save_text(bucket, oss_key, tensor, nrow=8, retry=5):
             break
         except Exception as e:
             exception = e
-            print(exception)
+            logger.error(exception)
             continue
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -804,10 +807,10 @@ def save_caps(bucket, oss_key, caps, retry=5):
             break
         except Exception as e:
             exception = e
-            print(exception)
+            logger.error(exception)
             continue
     if exception is not None:
-        print(
+        logger.error(
             'save video to {} failed, error: {}'.format(oss_key, exception),
             flush=True)
 
@@ -853,7 +856,7 @@ def download(url, filename=None, replace=False, quiet=False):
             else:
                 urllib.request.urlretrieve(url, filename)
             if not quiet:
-                print(f'Downloaded {url} to {filename}', flush=True)
+                logger.error(f'Downloaded {url} to {filename}', flush=True)
         except Exception as e:
             raise ValueError(f'Downloading {filename} failed with error {e}')
     return osp.abspath(filename)
@@ -887,11 +890,11 @@ def load_state_dict(module, state_dict, drop_prefix=''):
 
     # report incompatible key-vals
     if len(missing) != 0:
-        print('  Missing: ' + ', '.join(missing), flush=True)
+        logger.info('  Missing: ' + ', '.join(missing), flush=True)
     if len(unexpected) != 0:
-        print('  Unexpected: ' + ', '.join(unexpected), flush=True)
+        logger.info('  Unexpected: ' + ', '.join(unexpected), flush=True)
     if len(unmatched) != 0:
-        print('  Shape unmatched: ' + ', '.join(unmatched), flush=True)
+        logger.info('  Shape unmatched: ' + ', '.join(unmatched), flush=True)
 
 
 def inverse_indices(indices):

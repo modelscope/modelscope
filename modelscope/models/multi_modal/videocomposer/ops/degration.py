@@ -1,10 +1,11 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import math
 import os
 import random
 from datetime import datetime
 
 import numpy as np
-# import cv2
 import scipy
 import scipy.stats as stats
 import torch

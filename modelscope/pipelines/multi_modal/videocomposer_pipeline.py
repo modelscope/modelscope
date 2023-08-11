@@ -43,11 +43,9 @@ class VideoComposerPipeline(Pipeline):
             task=Tasks.text_to_video_synthesis,
             model='buptwq/videocomposer',
             model_revision='v1.0.1')
-    >>> ds = MsDataset.load('buptwq/videocomposer-depths-style', split='train')
-    >>> inputs = next(iter(ds))
-    >>> text = 'A glittering and translucent fish swimming in a \
-                small glass bowl with multicolored piece of stone, like a glass fish'
-    >>> inputs.update({'text': text})
+    >>> inputs = {'Video:FILE': 'path/input_video.mp4',
+                  'Image:FILE': 'path/input_image.png',
+                  'text': 'the text description'}
     >>> output = pipe(inputs)
     """
 
@@ -190,10 +188,20 @@ class VideoComposerPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         return self.model(input)
 
-    def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **post_params) -> Dict[str, Any]:
+        output_video_path = post_params.get('output_video', None)
         if not isinstance(inputs, list):
             inputs = [inputs]
-        return {OutputKeys.OUTPUT_IMGS: inputs}
+        temp_video_file = False
+        if output_video_path is None:
+            output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
+            temp_video_file = True
+
+        if temp_video_file:
+            return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_VIDEO]}
+        else:
+            return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
 
     def video_data_preprocess(self, video_key, feature_framerate, total_frames,
                               visual_mv):

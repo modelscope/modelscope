@@ -50,15 +50,15 @@ pip install ms-swift modelscope -U
 git clone https://github.com/modelscope/swift.git
 cd swift/examples/pytorch/llm
 
-# 微调(qlora)+推理 qwen-7b
+# 微调(qlora)+推理 qwen-7b, 需要10G显存.
 bash scripts/qwen_7b/qlora/sft.sh
 bash scripts/qwen_7b/qlora/infer.sh
 
-# 微调(qlora+ddp)+推理 qwen-7b
+# 微调(qlora+ddp)+推理 qwen-7b, 需要4卡*10G显存.
 bash scripts/qwen_7b/qlora_ddp/sft.sh
 bash scripts/qwen_7b/qlora_ddp/infer.sh
 
-# 微调(full)+推理 qwen-7b
+# 微调(full)+推理 qwen-7b, 需要95G显存.
 bash scripts/qwen_7b/full/sft.sh
 bash scripts/qwen_7b/full/infer.sh
 

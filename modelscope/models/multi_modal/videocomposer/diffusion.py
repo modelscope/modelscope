@@ -305,7 +305,6 @@ class GaussianDiffusion(object):
                 xt)
             log_var = torch.log(var)
         elif self.var_type == 'fixed_small':
-            # import ipdb; ipdb.set_trace()
             var = _i(self.posterior_variance, t, xt)
             log_var = _i(self.posterior_log_variance_clipped, t, xt)
 
@@ -968,7 +967,6 @@ class GaussianDiffusion_style(object):
         """
         dtype = xt.dtype
 
-        
         # predict distribution of p(x_{t-1} | x_t)
         _, _, _, x0 = self.p_mean_variance(xt, t, model, model_kwargs, clamp,
                                            percentile, guide_scale)

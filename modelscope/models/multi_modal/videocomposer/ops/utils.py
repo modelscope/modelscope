@@ -89,6 +89,7 @@ def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
     try:
         del model_kwargs[0][list(model_kwargs[0].keys())[0]]
         del model_kwargs[1][list(model_kwargs[1].keys())[0]]
+        print('--------save video')
         save_video_multiple_conditions(
             oss_key,
             video_data,

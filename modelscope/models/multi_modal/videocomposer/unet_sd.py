@@ -14,7 +14,6 @@ from fairscale.nn.checkpoint import checkpoint_wrapper
 from rotary_embedding_torch import RotaryEmbedding
 from torch import einsum
 
-
 __all__ = ['UNetSD_temporal']
 
 USE_TEMPORAL_TRANSFORMER = True

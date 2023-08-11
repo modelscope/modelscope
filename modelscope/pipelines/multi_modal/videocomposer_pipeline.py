@@ -3,15 +3,15 @@
 import os
 import random
 import subprocess
+import tempfile
 import time
 from functools import partial
 from typing import Any, Dict
 
 import cv2
+import imageio
 import numpy as np
 import torch
-import imageio
-import tempfile
 import torchvision.transforms as T
 from mvextractor.videocap import VideoCap
 from PIL import Image
@@ -23,6 +23,7 @@ from modelscope.models.multi_modal.videocomposer.data.transforms import (
 from modelscope.models.multi_modal.videocomposer.ops.random_mask import (
     make_irregular_mask, make_rectangle_mask, make_uncrop)
 from modelscope.models.multi_modal.videocomposer.utils.utils import rand_name
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
@@ -192,18 +193,20 @@ class VideoComposerPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any],
                     **post_params) -> Dict[str, Any]:
-        output_video_path = post_params.get('output_video', None)
-        if not isinstance(inputs, list):
-            inputs = [inputs]
-        temp_video_file = False
-        if output_video_path is None:
-            output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
-            temp_video_file = True
+        # output_video_path = post_params.get('output_video', None)
+        # if not isinstance(inputs, list):
+        #     inputs = [inputs]
+        # temp_video_file = False
+        # if output_video_path is None:
+        #     output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
+        #     temp_video_file = True
 
-        if temp_video_file:
-            return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_VIDEO]}
-        else:
-            return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
+        # if temp_video_file:
+        #     return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_VIDEO]}
+        # else:
+        #     return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
+        # return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
+        return inputs
 
     def video_data_preprocess(self, video_key, feature_framerate, total_frames,
                               visual_mv):

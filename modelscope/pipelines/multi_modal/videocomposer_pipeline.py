@@ -223,10 +223,8 @@ class VideoComposerPipeline(Pipeline):
         mvs = [torch.from_numpy(mvs[i].transpose((2, 0, 1))) for i in indices]
         mvs = torch.stack(mvs)
 
-        images = [(mvs_visual[i][:, :, ::-1]).astype('uint8')
-                    for i in indices]
-        path = self.log_dir + '/visual_mv/' + video_key.split(
-            '/')[-1] + '.gif'
+        images = [(mvs_visual[i][:, :, ::-1]).astype('uint8') for i in indices]
+        path = self.log_dir + '/visual_mv/' + video_key.split('/')[-1] + '.gif'
         if not os.path.exists(self.self.log_dir + '/visual_mv/'):
             os.makedirs(self.self.log_dir + '/visual_mv/', exist_ok=True)
         logger.info('save motion vectors visualization to :', path)

@@ -3,6 +3,7 @@
 import io
 import os
 import re
+import sys
 import time
 from collections import OrderedDict
 from shutil import copytree, ignore_patterns, rmtree
@@ -622,12 +623,17 @@ def save_pretrained(model,
     ignore_file_set.add('.*')
     if hasattr(model,
                'model_dir') and model.model_dir is not None and is_master():
+        kwargs = {}
+        if sys.version_info.minor >= 8:
+            kwargs['dirs_exist_ok'] = True
+        else:  # == 7
+            if os.path.exists(target_folder):
+                rmtree(target_folder)
         copytree(
             model.model_dir,
             target_folder,
             ignore=ignore_patterns(*ignore_file_set),
-            dirs_exist_ok=True)
-
+            **kwargs)
     # Save the ckpt to the save directory
     try:
         save_function(model, output_ckpt_path, **kwargs)

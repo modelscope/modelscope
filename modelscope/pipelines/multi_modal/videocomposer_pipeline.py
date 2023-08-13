@@ -195,7 +195,7 @@ class VideoComposerPipeline(Pipeline):
                     **post_params) -> Dict[str, Any]:
         output_video_path = post_params.get('output_video', None)
         temp_video_file = False
-        if output_video_path is None:
+        if output_video_path is not None:
             output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
             temp_video_file = True
 

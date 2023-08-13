@@ -89,7 +89,7 @@ def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
     try:
         del model_kwargs[0][list(model_kwargs[0].keys())[0]]
         del model_kwargs[1][list(model_kwargs[1].keys())[0]]
-        print('--------save video')
+
         save_video_multiple_conditions(
             oss_key,
             video_data,
@@ -399,7 +399,7 @@ def video_tensor_to_gif(tensor, path, duration=120, loop=0, optimize=True):
     tensor = tensor.permute(1, 2, 3, 0)
     images = tensor.unbind(dim=0)
     images = [(image.numpy() * 255).astype('uint8') for image in images]
-    imageio.mimwrite(path, images, fps=8)
+    imageio.mimwrite(path, images, duration=125)
     return images
 
 

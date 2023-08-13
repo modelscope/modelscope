@@ -474,10 +474,10 @@ class VideoComposer(TorchModel):
                     palette=palette,
                     cfg=self.cfg)
 
-        # return {
-        #     OutputKeys.OUTPUT_OBJ: video_output.type(torch.float32).cpu(),
-        #     OutputKeys.OUTPUT_VIDEO: self.cfg
-        # }
         return {
-            OutputKeys.OUTPUT_VIDEO: video_output.type(torch.float32).cpu(),
+            'video': video_output.type(torch.float32).cpu(),
+            'video_path': self.cfg
         }
+        # return {
+        #     OutputKeys.OUTPUT_VIDEO: video_output.type(torch.float32).cpu(),
+        # }

@@ -193,20 +193,16 @@ class VideoComposerPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any],
                     **post_params) -> Dict[str, Any]:
-        # output_video_path = post_params.get('output_video', None)
-        # if not isinstance(inputs, list):
-        #     inputs = [inputs]
-        # temp_video_file = False
-        # if output_video_path is None:
-        #     output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
-        #     temp_video_file = True
+        output_video_path = post_params.get('output_video', None)
+        temp_video_file = False
+        if output_video_path is None:
+            output_video_path = tempfile.NamedTemporaryFile(suffix='.gif').name
+            temp_video_file = True
 
-        # if temp_video_file:
-        #     return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_VIDEO]}
-        # else:
-        #     return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
-        # return {OutputKeys.OUTPUT_VIDEO: inputs[OutputKeys.OUTPUT_OBJ]}
-        return inputs
+        if temp_video_file:
+            return {OutputKeys.OUTPUT_VIDEO: inputs['video_path']}
+        else:
+            return {OutputKeys.OUTPUT_VIDEO: inputs['video']}
 
     def video_data_preprocess(self, video_key, feature_framerate, total_frames,
                               visual_mv):
@@ -236,12 +232,15 @@ class VideoComposerPipeline(Pipeline):
         mvs = [torch.from_numpy(mvs[i].transpose((2, 0, 1))) for i in indices]
         mvs = torch.stack(mvs)
 
-        # images = [(mvs_visual[i][:, :, ::-1]).astype('uint8') for i in indices]
-        # path = self.log_dir + '/visual_mv/' + video_key.split('/')[-1] + '.gif'
-        # if not os.path.exists(self.log_dir + '/visual_mv/'):
-        #     os.makedirs(self.log_dir + '/visual_mv/', exist_ok=True)
-        # logger.info('save motion vectors visualization to :', path)
-        # imageio.mimwrite(path, images, fps=8)
+        if visual_mv:
+            images = [(mvs_visual[i][:, :, ::-1]).astype('uint8')
+                      for i in indices]
+            path = self.log_dir + '/visual_mv/' + video_key.split(
+                '/')[-1] + '.gif'
+            if not os.path.exists(self.log_dir + '/visual_mv/'):
+                os.makedirs(self.log_dir + '/visual_mv/', exist_ok=True)
+            logger.info('save motion vectors visualization to :', path)
+            imageio.mimwrite(path, images, fps=8)
 
         have_frames = len(frames) > 0
         middle_indix = int(len(frames) / 2)
@@ -339,6 +338,8 @@ class VideoComposerPipeline(Pipeline):
                 break
 
             frame_save = np.zeros(frame.copy().shape, dtype=np.uint8)
+            if visual_mv:
+                frame_save = draw_motion_vectors(frame_save, motion_vectors)
 
             # store motion vectors, frames, etc. in output directory
             dump = False

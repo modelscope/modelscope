@@ -15,14 +15,14 @@
 </p>
 
 ## 请注意!!!
-1. 该README_CN.md拷贝自[ms-swift README_CN.md](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/README_CN.md)
-2. 该目录已经迁移至[ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm), 此目录中的文件不再维护.
+1. 该README_CN.md**拷贝**自[ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/README_CN.md)
+2. 该目录已经**迁移**至[ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm), 此目录中的文件**不再维护**.
 
 ## 特性
 1. 支持的sft方法: lora, qlora, 全参数微调, ...
 2. 支持的模型: [**qwen-7b**](https://github.com/QwenLM/Qwen-7B), baichuan-7b, baichuan-13b, chatglm2-6b, llama2-7b, llama2-13b, llama2-70b, openbuddy-llama2-13b, ...
-3. 支持的特性: 模型量化, DDP, 模型并行(device_map), gradient checkpoint, 梯度累加, 支持推送modelscope hub, 支持自定义数据集, 兼容notebook, tensorboard, warmup, lr scheduler, 断点续训, ...
-4. 支持的数据集: alpaca-en(gpt4), alpaca-zh(gpt4), finance-en, multi-alpaca-all, multi-alpaca-ar, multi-alpaca-de, multi-alpaca-es, multi-alpaca-fr, multi-alpaca-id, multi-alpaca-ja, multi-alpaca-ko, multi-alpaca-pt, multi-alpaca-ru, multi-alpaca-th, multi-alpaca-vi, code-en, instinwild-en, instinwild-zh, ...
+3. 支持的特性: 模型量化, DDP, 模型并行(device_map), gradient checkpoint, 梯度累加, 支持推送modelscope hub, 支持自定义数据集, ...
+4. 支持的数据集: alpaca-en(gpt4), alpaca-zh(gpt4), finance-en, multi-alpaca-all, code-en, instinwild-en, instinwild-zh, ...
 
 
 ## 准备实验环境
@@ -68,11 +68,3 @@ bash scripts/qwen_7b/full/infer.sh
 ## 拓展数据集
 1. 如果你想要拓展模型, 你可以修改`utils/models.py`文件中的`MODEL_MAPPING`. `model_id`可以指定为本地路径, 这种情况下, `revision`参数不起作用.
 2. 如果你想要拓展或使用自定义数据集, 你可以修改`utils/datasets.py`文件中的`DATASET_MAPPING`. 你需要自定义`get_*_dataset`函数, 并返回包含`instruction`, `output`两列的数据集.
-
-## TODO
-1. 支持 多轮对话
-2. RLHF
-3. 支持更多的模型: Qwen-7B-Chat (使用相同的prompt)
-4. 支持更多的数据集
-5. 指标与评估
-6. ...

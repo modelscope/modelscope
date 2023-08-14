@@ -15,14 +15,14 @@
 </p>
 
 ## Note!!!
-1. This README.md file is copied from [ms-swift README.md](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/README.md)
-2. This directory has been migrated to [ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm), and the files in this directory are no longer maintained.
+1. This README.md file is **copied from** [ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm/README.md)
+2. This directory has been **migrated** to [ms-swift](https://github.com/modelscope/swift/tree/main/examples/pytorch/llm), and the files in this directory are **no longer maintained**.
 
 ## Features
 1. supported sft method: lora, qlora, full, ...
 2. supported models: [**qwen-7b**](https://github.com/QwenLM/Qwen-7B), baichuan-7b, baichuan-13b, chatglm2-6b, llama2-7b, llama2-13b, llama2-70b, openbuddy-llama2-13b, ...
-3. supported feature: quantization, ddp, model parallelism(device map), gradient checkpoint, gradient accumulation steps, push to modelscope hub, custom datasets, notebook compatibility, tensorboard, warmup, lr scheduler, resume from ckpt, ...
-4. supported datasets: alpaca-en(gpt4), alpaca-zh(gpt4), finance-en, multi-alpaca-all, multi-alpaca-ar, multi-alpaca-de, multi-alpaca-es, multi-alpaca-fr, multi-alpaca-id, multi-alpaca-ja, multi-alpaca-ko, multi-alpaca-pt, multi-alpaca-ru, multi-alpaca-th, multi-alpaca-vi, code-en, instinwild-en, instinwild-zh, ...
+3. supported feature: quantization, ddp, model parallelism(device map), gradient checkpoint, gradient accumulation steps, push to modelscope hub, custom datasets, ...
+4. supported datasets: alpaca-en(gpt4), alpaca-zh(gpt4), finance-en, multi-alpaca-all, code-en, instinwild-en, instinwild-zh, ...
 
 ## Prepare the Environment
 ```bash
@@ -67,12 +67,3 @@ bash scripts/qwen_7b/full/infer.sh
 ## Extend Datasets
 1. If you need to extend the model, you can modify the `MODEL_MAPPING` in `utils/models.py`. `model_id` can be specified as a local path. In this case, `revision` doesn't work.
 2. If you need to extend or customize the dataset, you can modify the `DATASET_MAPPING` in `utils/datasets.py`. You need to customize the `get_*_dataset` function, which returns a dataset with two columns: `instruction`, `output`.
-
-
-## TODO
-1. Support multi-round
-2. RLHF
-3. more models: Qwen-7B-Chat (use same prompt)
-4. more datasets
-5. metrics
-6. ...

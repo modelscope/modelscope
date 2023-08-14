@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 from chatglm_trainer import Seq2SeqTrainer
+from swift import LoRAConfig, Swift
 from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq
 
@@ -11,8 +12,6 @@ from modelscope import build_dataset_from_file, snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.hub import read_config

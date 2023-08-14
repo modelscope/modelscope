@@ -4,6 +4,7 @@ datasets>=2.8.0,<=2.13.0
 einops
 filelock>=3.3.0
 gast>=0.2.2
+ms-swift
 numpy
 oss2
 pandas

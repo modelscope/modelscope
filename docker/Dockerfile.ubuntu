@@ -1,6 +1,14 @@
 ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-base
 FROM $BASE_IMAGE
 
+FROM UBUNTU/REDHAT/
+
+RUN pip install numpy -U
+
+COPY .xxx xxxx
+
+
+
 # install modelscope
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir --upgrade pip && \

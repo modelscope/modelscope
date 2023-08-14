@@ -9,6 +9,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import json
 import torch
+from swift import PeftConfig, Swift, SwiftConfig
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, Sampler
@@ -28,7 +29,6 @@ from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.swift import Swift
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -118,7 +118,8 @@ class EpochBasedTrainer(BaseTrainer):
             seed: int = 42,
             callbacks: Optional[List[Hook]] = None,
             samplers: Optional[Union[Sampler, Dict[str, Sampler]]] = None,
-            efficient_tuners: List[Dict] = None,
+            efficient_tuners: Union[Dict[str, SwiftConfig], SwiftConfig,
+                                    PeftConfig] = None,
             **kwargs):
 
         self._seed = seed
@@ -270,8 +271,7 @@ class EpochBasedTrainer(BaseTrainer):
 
     def tune_module(self, efficient_tuners):
         if efficient_tuners is not None:
-            for tuner in efficient_tuners:
-                self.model = Swift.prepare_model(self.model, tuner)
+            self.model = Swift.prepare_model(self.model, efficient_tuners)
 
     def place_model(self):
         """Place model to device, or to DDP

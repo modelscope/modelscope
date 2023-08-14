@@ -1,10 +1,9 @@
 import os.path as osp
 
 import torch
+from swift import LoRAConfig, Swift
 
 from modelscope.pipelines import pipeline
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.utils.constant import Tasks
 
 # 使用源模型 model_id 初始化 pipeline

@@ -7,13 +7,13 @@ from functools import partial
 from typing import List, Optional
 
 import torch
+from swift import LoRAConfig, Swift
 from transformers import GenerationConfig, TextStreamer
 from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING, get_dataset,
                    get_model_tokenizer, inference, parse_args, process_dataset,
                    tokenize_function)
 
 from modelscope import get_logger
-from modelscope.swift import LoRAConfig, Swift
 
 warnings.warn(
     'This directory has been migrated to '

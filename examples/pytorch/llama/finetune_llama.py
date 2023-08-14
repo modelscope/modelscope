@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 import json
 import torch
+from swift import LoRAConfig, Swift
 
 from modelscope import TrainingArgs
 from modelscope.hub.snapshot_download import snapshot_download
@@ -15,8 +16,6 @@ from modelscope.metainfo import Trainers
 from modelscope.models.nlp.llama import LlamaForTextGeneration, LlamaTokenizer
 from modelscope.msdatasets.dataset_cls.custom_datasets.torch_custom_dataset import \
     TorchCustomDataset
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers import build_trainer
 
 IGNORE_INDEX = -100

@@ -4,12 +4,10 @@ import shutil
 import tempfile
 import unittest
 
+from swift import AdapterConfig, LoRAConfig, PromptConfig
+
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
-from modelscope.swift import Swift
-from modelscope.swift.adapter import AdapterConfig
-from modelscope.swift.lora import LoRAConfig
-from modelscope.swift.prompt import PromptConfig
 from modelscope.trainers import build_trainer
 from modelscope.utils.test_utils import test_level
 

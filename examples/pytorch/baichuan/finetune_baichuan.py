@@ -3,14 +3,13 @@ import sys
 import types
 from dataclasses import dataclass, field
 
+from swift import LoRAConfig, Swift
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from modelscope import (EpochBasedTrainer, MsDataset, TorchModel, TrainingArgs,
                         build_dataset_from_file, snapshot_download)
 from modelscope.metainfo import Trainers
 from modelscope.preprocessors import TextGenerationTransformersPreprocessor
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers import build_trainer
 
 DEFAULT_PAD_TOKEN = '[PAD]'

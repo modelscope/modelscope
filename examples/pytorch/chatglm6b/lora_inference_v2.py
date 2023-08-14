@@ -1,7 +1,7 @@
+from swift import LoRAConfig, Swift
+
 from modelscope import Model, pipeline, read_config
 from modelscope.metainfo import Models
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.utils.config import ConfigDict
 
 lora_config = LoRAConfig(

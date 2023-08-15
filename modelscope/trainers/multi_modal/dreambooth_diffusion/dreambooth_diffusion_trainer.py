@@ -183,7 +183,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             prior_loss_weight: the weight of the prior loss.
 
         """
-        torch_type = kwargs.pop('torch_type', torch.float32)
+        self.torch_type = kwargs.pop('torch_type', torch.float32)
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   False)
         self.instance_prompt = kwargs.pop('instance_prompt',
@@ -229,7 +229,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                     warnings.warn('Multiple GPU inference not yet supported.')
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
-                    torch_dtype=torch_type,
+                    torch_dtype=self.torch_type,
                     safety_checker=None,
                     revision=None,
                 )
@@ -319,7 +319,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             input_ids = batch['input_ids'].to(self.device)
             with torch.no_grad():
                 latents = self.model.vae.encode(
-                    target_prior.to(dtype=torch.float32)).latent_dist.sample()
+                    target_prior.to(
+                        dtype=self.torch_type)).latent_dist.sample()
             latents = latents * self.model.vae.config.scaling_factor
 
             # Sample noise that we'll add to the latents

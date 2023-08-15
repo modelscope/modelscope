@@ -11,4 +11,5 @@ PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/lora/finetune_stable_dif
     --train.dataloader.workers_per_gpu 0 \
     --evaluation.dataloader.workers_per_gpu 0 \
     --train.optimizer.lr 1e-4 \
+    --torch_type 'float32' \
     --use_model_config true

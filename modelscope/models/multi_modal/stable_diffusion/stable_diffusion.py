@@ -39,7 +39,7 @@ class StableDiffusion(TorchModel):
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
-        self.weight_dtype = torch.float32
+        self.weight_dtype = kwargs.pop('torch_type', torch.float32)
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -59,14 +59,15 @@ class StableDiffusion(TorchModel):
         # Freeze gradient calculation and move to device
         if self.vae is not None:
             self.vae.requires_grad_(False)
-            self.vae = self.vae.to(self.device)
+            self.vae = self.vae.to(self.device, dtype=self.weight_dtype)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
-            self.text_encoder = self.text_encoder.to(self.device)
+            self.text_encoder = self.text_encoder.to(
+                self.device, dtype=self.weight_dtype)
         if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
-            self.unet = self.unet.to(self.device)
+            self.unet = self.unet.to(self.device, dtype=self.weight_dtype)
 
         # xformers accelerate memory efficient attention
         if xformers_enable:

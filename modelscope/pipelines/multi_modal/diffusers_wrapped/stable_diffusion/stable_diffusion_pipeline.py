@@ -40,6 +40,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
             use_safetensors: load safetensors weights.
         """
         use_safetensors = kwargs.pop('use_safetensors', False)
+        torch_type = kwargs.pop('torch_type', torch.float32)
         # check custom diffusion input value
         if custom_dir is None and modifier_token is not None:
             raise ValueError(
@@ -50,7 +51,6 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
-        torch_type = torch.float16 if self.device == 'cuda' else torch.float32
         self.pipeline = DiffusionPipeline.from_pretrained(
             model, use_safetensors=use_safetensors, torch_dtype=torch_type)
         self.pipeline = self.pipeline.to(self.device)

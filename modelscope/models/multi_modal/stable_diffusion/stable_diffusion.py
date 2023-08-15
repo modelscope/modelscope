@@ -35,48 +35,39 @@ class StableDiffusion(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         revision = kwargs.pop('revision', None)
-        torch_type = kwargs.pop('torch_type', torch.float32)
         xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
-        self.weight_dtype = torch.float32
+        self.weight_dtype = kwargs.pop('torch_type', torch.float32)
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
 
         # Load scheduler, tokenizer and models
         self.noise_scheduler = DDPMScheduler.from_pretrained(
-            model_dir, torch_type=torch_type, subfolder='scheduler')
+            model_dir, subfolder='scheduler')
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_dir,
-            torch_type=torch_type,
-            subfolder='tokenizer',
-            revision=revision)
+            model_dir, subfolder='tokenizer', revision=revision)
         self.text_encoder = CLIPTextModel.from_pretrained(
             model_dir, subfolder='text_encoder', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
-            model_dir,
-            torch_type=torch_type,
-            subfolder='vae',
-            revision=revision)
+            model_dir, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
-            model_dir,
-            torch_type=torch_type,
-            subfolder='unet',
-            revision=revision)
+            model_dir, subfolder='unet', revision=revision)
         self.safety_checker = None
 
         # Freeze gradient calculation and move to device
         if self.vae is not None:
             self.vae.requires_grad_(False)
-            self.vae = self.vae.to(self.device)
+            self.vae = self.vae.to(self.device, dtype=self.weight_dtype)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
-            self.text_encoder = self.text_encoder.to(self.device)
+            self.text_encoder = self.text_encoder.to(
+                self.device, dtype=self.weight_dtype)
         if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
-            self.unet = self.unet.to(self.device)
+            self.unet = self.unet.to(self.device, dtype=self.weight_dtype)
 
         # xformers accelerate memory efficient attention
         if xformers_enable:

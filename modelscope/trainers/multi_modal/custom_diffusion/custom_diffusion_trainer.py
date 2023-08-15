@@ -37,25 +37,31 @@ from modelscope.utils.torch_utils import is_dist
 
 class CustomCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, modifier_token, modifier_token_id):
+    def __init__(self,
+                 modifier_token,
+                 modifier_token_id,
+                 torch_type=torch.float32):
         """Checkpoint processor for custom diffusion.
 
         Args:
             modifier_token: The token to use as a modifier for the concept.
             modifier_token_id: The modifier token id for the concept.
+            torch_type: The torch type, default is float32.
 
         """
         self.modifier_token = modifier_token
         self.modifier_token_id = modifier_token_id
+        self.torch_type = torch_type
 
     def save_checkpoints(self,
                          trainer,
                          checkpoint_path_prefix,
                          output_dir,
-                         meta=None):
+                         meta=None,
+                         save_optimizers=True):
         """Save the state dict for custom diffusion model.
         """
-        trainer.model.unet = trainer.model.unet.to(torch.float32)
+        trainer.model.unet = trainer.model.unet.to(self.torch_type)
         trainer.model.unet.save_attn_procs(output_dir)
 
         learned_embeds = trainer.model.text_encoder.get_input_embeddings(
@@ -282,6 +288,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         instance_prompt = kwargs.pop('instance_prompt', 'a photo of sks dog')
         class_prompt = kwargs.pop('class_prompt', 'dog')
         class_data_dir = kwargs.pop('class_data_dir', '/tmp/class_data')
+        self.torch_type = kwargs.pop('torch_type', torch.float32)
         self.real_prior = kwargs.pop('real_prior', False)
         self.num_class_images = kwargs.pop('num_class_images', 200)
         self.resolution = kwargs.pop('resolution', 512)
@@ -388,7 +395,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                    self.hooks))[0]
         ckpt_hook.set_processor(
             CustomCheckpointProcessor(self.modifier_token,
-                                      self.modifier_token_id))
+                                      self.modifier_token_id, self.torch_type))
 
         # Add new Custom Diffusion weights to the attention layers
         attention_class = CustomDiffusionAttnProcessor
@@ -478,7 +485,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             size=self.resolution,
             mask_size=self.model.vae.encode(
                 torch.randn(1, 3, self.resolution,
-                            self.resolution).to(dtype=torch.float32).to(
+                            self.resolution).to(dtype=self.torch_type).to(
                                 self.device)).latent_dist.sample().size()[-1],
             center_crop=self.center_crop,
             num_class_images=self.num_class_images,
@@ -536,6 +543,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
                     safety_checker=None,
+                    torch_dtype=self.torch_type,
                     revision=None,
                 )
                 pipeline.set_progress_bar_config(disable=True)
@@ -656,7 +664,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         batch = next(self.iter_train_dataloader)
         # Convert images to latent space
         latents = self.model.vae.encode(batch['pixel_values'].to(
-            dtype=torch.float32).to(self.device)).latent_dist.sample()
+            dtype=self.torch_type).to(self.device)).latent_dist.sample()
         latents = latents * self.model.vae.config.scaling_factor
 
         # Sample noise that we'll add to the latents

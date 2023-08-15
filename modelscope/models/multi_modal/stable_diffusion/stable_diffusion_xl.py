@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
 from packaging import version
-from transformers import CLIPTextModel, CLIPTokenizer
+from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextModelWithProjection
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
@@ -18,17 +18,17 @@ from modelscope.utils.constant import Tasks
 
 
 @MODELS.register_module(
-    Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
-class StableDiffusion(TorchModel):
-    """ The implementation of stable diffusion model based on TorchModel.
+    Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion_xl)
+class StableDiffusionXL(TorchModel):
+    """ The implementation of stable diffusion xl model based on TorchModel.
 
-    This model is constructed with the implementation of stable diffusion model. If you want to
+    This model is constructed with the implementation of stable diffusion xl model. If you want to
     finetune lightweight parameters on your own dataset, you can define you own tuner module
     and load in this cls.
     """
 
     def __init__(self, model_dir, *args, **kwargs):
-        """ Initialize a vision stable diffusion model.
+        """ Initialize a vision stable diffusion xl model.
 
         Args:
           model_dir: model id or path
@@ -37,7 +37,6 @@ class StableDiffusion(TorchModel):
         revision = kwargs.pop('revision', None)
         xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
-        self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -46,10 +45,14 @@ class StableDiffusion(TorchModel):
         # Load scheduler, tokenizer and models
         self.noise_scheduler = DDPMScheduler.from_pretrained(
             model_dir, subfolder='scheduler')
-        self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_dir, subfolder='tokenizer', revision=revision)
-        self.text_encoder = CLIPTextModel.from_pretrained(
-            model_dir, subfolder='text_encoder', revision=revision)
+        self.tokenizer_one = AutoTokenizer.from_pretrained(
+            model_dir, subfolder="tokenizer", revision=revision, use_fast=False)
+        self.tokenizer_two = AutoTokenizer.from_pretrained(
+            model_dir, subfolder="tokenizer_2", revision=revision, use_fast=False)
+        self.text_encoder_one = CLIPTextModel.from_pretrained(model_dir, 
+                                    subfolder='text_encoder', revision=revision)
+        self.text_encoder_two = CLIPTextModelWithProjection.from_pretrained(model_dir, 
+                                    subfolder='text_encoder_2', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
             model_dir, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
@@ -60,9 +63,12 @@ class StableDiffusion(TorchModel):
         if self.vae is not None:
             self.vae.requires_grad_(False)
             self.vae = self.vae.to(self.device)
-        if self.text_encoder is not None:
-            self.text_encoder.requires_grad_(False)
-            self.text_encoder = self.text_encoder.to(self.device)
+        if self.text_encoder_one is not None:
+            self.text_encoder_one.requires_grad_(False)
+            self.text_encoder_one = self.text_encoder_one.to(self.device)
+        if self.text_encoder_two is not None:
+            self.text_encoder_two.requires_grad_(False)
+            self.text_encoder_two = self.text_encoder_two.to(self.device)
         if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
@@ -80,20 +86,56 @@ class StableDiffusion(TorchModel):
                 )
             self.unet.enable_xformers_memory_efficient_attention()
 
-    def tokenize_caption(self, captions):
+    def tokenize_caption(self, tokenizer, captions):
         """ Convert caption text to token data.
 
         Args:
-          captions: a batch of texts.
+            tokenizer: the tokenizer one or two.
+            captions: a batch of texts.
         Returns: token's data as tensor.
         """
-        inputs = self.tokenizer(
+        inputs = tokenizer(
             captions,
-            max_length=self.tokenizer.model_max_length,
+            max_length=tokenizer.model_max_length,
             padding='max_length',
             truncation=True,
             return_tensors='pt')
         return inputs.input_ids
+    
+    def compute_time_ids(self, original_size, crops_coords_top_left):
+        # Adapted from pipeline.StableDiffusionXLPipeline._get_add_time_ids
+        target_size = (self.resolution, self.resolution)
+        add_time_ids = list(original_size + crops_coords_top_left + target_size)
+        add_time_ids = torch.tensor([add_time_ids])
+        add_time_ids = add_time_ids.to(self.device, dtype=self.weight_dtype)
+        return add_time_ids
+    
+    def encode_prompt(text_encoders, tokenizers, prompt, text_input_ids_list=None):
+        prompt_embeds_list = []
+
+        for i, text_encoder in enumerate(text_encoders):
+            if tokenizers is not None:
+                tokenizer = tokenizers[i]
+                text_input_ids = tokenize_prompt(tokenizer, prompt)
+            else:
+                assert text_input_ids_list is not None
+                text_input_ids = text_input_ids_list[i]
+
+            prompt_embeds = text_encoder(
+                text_input_ids.to(text_encoder.device),
+                output_hidden_states=True,
+            )
+
+            # We are only ALWAYS interested in the pooled output of the final text encoder
+            pooled_prompt_embeds = prompt_embeds[0]
+            prompt_embeds = prompt_embeds.hidden_states[-2]
+            bs_embed, seq_len, _ = prompt_embeds.shape
+            prompt_embeds = prompt_embeds.view(bs_embed, seq_len, -1)
+            prompt_embeds_list.append(prompt_embeds)
+
+        prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
+        pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1)
+        return prompt_embeds, pooled_prompt_embeds
 
     def forward(self, text='', target=None):
         self.unet.train()
@@ -120,31 +162,33 @@ class StableDiffusion(TorchModel):
         noisy_latents = self.noise_scheduler.add_noise(latents, noise,
                                                        timesteps)
 
-        input_ids = self.tokenize_caption(text).to(self.device)
-
-        # Get the text embedding for conditioning
-        with torch.no_grad():
-            encoder_hidden_states = self.text_encoder(input_ids)[0]
+        add_time_ids = torch.cat(
+            [self.compute_time_ids(s, c) for s, c in zip(batch["original_sizes"], batch["crop_top_lefts"])]
+        )
+        
+        # Predict the noise residual
+        unet_added_conditions = {"time_ids": add_time_ids}
+        prompt_embeds, pooled_prompt_embeds = self.encode_prompt(
+            text_encoders=[self.text_encoder_one, self.text_encoder_two],
+            tokenizers=None,
+            prompt=None,
+            text_input_ids_list=[batch["input_ids_one"], batch["input_ids_two"]],
+        )
+        unet_added_conditions.update({"text_embeds": pooled_prompt_embeds})
+        # Predict the noise residual and compute loss
+        model_pred = self.unet(
+            noisy_model_input, timesteps, prompt_embeds, added_cond_kwargs=unet_added_conditions
+        ).sample
 
         # Get the target for loss depending on the prediction type
-        if self.noise_scheduler.config.prediction_type == 'epsilon':
+        if self.noise_scheduler.config.prediction_type == "epsilon":
             target = noise
-        elif self.noise_scheduler.config.prediction_type == 'v_prediction':
-            target = self.noise_scheduler.get_velocity(latents, noise,
-                                                       timesteps)
+        elif self.noise_scheduler.config.prediction_type == "v_prediction":
+            target = self.noise_scheduler.get_velocity(model_input, noise, timesteps)
         else:
-            raise ValueError(
-                f'Unknown prediction type {self.noise_scheduler.config.prediction_type}'
-            )
+            raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
 
-        # Predict the noise residual and compute loss
-        model_pred = self.unet(noisy_latents, timesteps,
-                               encoder_hidden_states).sample
-
-        if model_pred.shape[1] == 6:
-            model_pred, _ = torch.chunk(model_pred, 2, dim=1)
-
-        loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
+        loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
         output = {OutputKeys.LOSS: loss}
         return output

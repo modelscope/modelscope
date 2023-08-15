@@ -218,6 +218,7 @@ class Models(object):
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
+    stable_diffusion_xl = 'stable-diffusion-xl'
     text_to_360panorama_image = 'text-to-360panorama-image'
 
     # science models
@@ -930,6 +931,7 @@ class MultiModalTrainers(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     stable_diffusion = 'stable-diffusion'
     lora_diffusion = 'lora-diffusion'
+    lora_diffusion_xl = 'lora-diffusion-xl'
     dreambooth_diffusion = 'dreambooth-diffusion'
     custom_diffusion = 'custom-diffusion'
 

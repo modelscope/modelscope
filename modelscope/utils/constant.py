@@ -213,6 +213,7 @@ class NLPTasks(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class AudioTasks(object):

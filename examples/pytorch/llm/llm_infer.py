@@ -1,18 +1,25 @@
 # ### Setting up experimental environment.
 import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+import warnings
 from dataclasses import dataclass, field
 from functools import partial
 from typing import List, Optional
 
 import torch
 from transformers import GenerationConfig, TextStreamer
-from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER, get_dataset,
+from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING, get_dataset,
                    get_model_tokenizer, inference, parse_args, process_dataset,
                    tokenize_function)
 
 from modelscope import get_logger
 from modelscope.swift import LoRAConfig, Swift
+
+warnings.warn(
+    'This directory has been migrated to '
+    'https://github.com/modelscope/swift/tree/main/examples/pytorch/llm, '
+    'and the files in this directory are no longer maintained.',
+    DeprecationWarning)
 
 logger = get_logger()
 
@@ -20,7 +27,7 @@ logger = get_logger()
 @dataclass
 class InferArguments:
     model_type: str = field(
-        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPING.keys())})
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
     ckpt_path: str = '/path/to/your/iter_xxx.pth'
@@ -29,9 +36,9 @@ class InferArguments:
 
     dataset: str = field(
         default='alpaca-en,alpaca-zh',
-        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPING.keys())}'})
     dataset_seed: int = 42
-    dataset_sample: Optional[int] = None
+    dataset_sample: int = 20000  # -1: all dataset
     dataset_test_size: float = 0.01
     prompt: str = DEFAULT_PROMPT
     max_length: Optional[int] = 2048
@@ -48,7 +55,8 @@ class InferArguments:
 
     def __post_init__(self):
         if self.lora_target_modules is None:
-            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
+            self.lora_target_modules = MODEL_MAPPING[
+                self.model_type]['lora_TM']
 
         if not os.path.isfile(self.ckpt_path):
             raise ValueError(
@@ -60,8 +68,10 @@ def llm_infer(args: InferArguments) -> None:
     support_bf16 = torch.cuda.is_bf16_supported()
     if not support_bf16:
         logger.warning(f'support_bf16: {support_bf16}')
+
+    kwargs = {'low_cpu_mem_usage': True, 'device_map': 'auto'}
     model, tokenizer, _ = get_model_tokenizer(
-        args.model_type, torch_dtype=torch.bfloat16)
+        args.model_type, torch_dtype=torch.bfloat16, **kwargs)
 
     # ### Preparing lora
     if args.sft_type == 'lora':
@@ -93,7 +103,8 @@ def llm_infer(args: InferArguments) -> None:
         top_k=args.top_k,
         top_p=args.top_p,
         do_sample=True,
-        pad_token_id=tokenizer.eos_token_id)
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id)
     logger.info(f'generation_config: {generation_config}')
 
     if args.eval_human:

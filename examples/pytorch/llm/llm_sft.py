@@ -2,9 +2,8 @@
 """
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
 pip install sentencepiece charset_normalizer cpm_kernels tiktoken -U
-pip install matplotlib scikit-learn -U
-pip install transformers datasets -U
-pip install tqdm tensorboard torchmetrics -U
+pip install transformers datasets scikit-learn -U
+pip install matplotlib tqdm tensorboard torchmetrics -U
 pip install accelerate transformers_stream_generator -U
 
 # Install the latest version of modelscope from source
@@ -14,14 +13,15 @@ pip install -r requirements.txt
 pip install .
 """
 import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+import warnings
 from dataclasses import dataclass, field
 from functools import partial
-from types import MethodType
 from typing import List, Optional
 
 import torch
 from torch import Tensor
-from utils import (DATASET_MAPPER, DEFAULT_PROMPT, MODEL_MAPPER,
+from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING,
                    data_collate_fn, get_dataset, get_model_tokenizer,
                    get_T_max, get_work_dir, parse_args, plot_images,
                    print_example, print_model_info, process_dataset,
@@ -33,6 +33,11 @@ from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config
 
+warnings.warn(
+    'This directory has been migrated to '
+    'https://github.com/modelscope/swift/tree/main/examples/pytorch/llm, '
+    'and the files in this directory are no longer maintained.',
+    DeprecationWarning)
 logger = get_logger()
 
 
@@ -40,7 +45,7 @@ logger = get_logger()
 class SftArguments:
     seed: int = 42
     model_type: str = field(
-        default='qwen-7b', metadata={'choices': list(MODEL_MAPPER.keys())})
+        default='qwen-7b', metadata={'choices': list(MODEL_MAPPING.keys())})
     # baichuan-7b: 'lora': 16G; 'full': 80G
     sft_type: str = field(
         default='lora', metadata={'choices': ['lora', 'full']})
@@ -49,9 +54,9 @@ class SftArguments:
 
     dataset: str = field(
         default='alpaca-en,alpaca-zh',
-        metadata={'help': f'dataset choices: {list(DATASET_MAPPER.keys())}'})
+        metadata={'help': f'dataset choices: {list(DATASET_MAPPING.keys())}'})
     dataset_seed: int = 42
-    dataset_sample: Optional[int] = None
+    dataset_sample: int = 20000  # -1: all dataset
     dataset_test_size: float = 0.01
     prompt: str = DEFAULT_PROMPT
     max_length: Optional[int] = 2048
@@ -78,6 +83,13 @@ class SftArguments:
     logging_interval: int = 5
     tb_interval: int = 5
 
+    # other
+    use_flash_attn: Optional[bool] = field(
+        default=None,
+        metadata={
+            'help': "This parameter is used only when model_type='qwen-7b'"
+        })
+
     def __post_init__(self):
         if self.sft_type == 'lora':
             if self.learning_rate is None:
@@ -102,7 +114,10 @@ class SftArguments:
         self.output_dir = os.path.join(self.output_dir, self.model_type)
 
         if self.lora_target_modules is None:
-            self.lora_target_modules = MODEL_MAPPER[self.model_type]['lora_TM']
+            self.lora_target_modules = MODEL_MAPPING[
+                self.model_type]['lora_TM']
+        if self.use_flash_attn is None:
+            self.use_flash_attn = 'auto'
 
 
 def llm_sft(args: SftArguments) -> None:
@@ -112,14 +127,14 @@ def llm_sft(args: SftArguments) -> None:
     support_bf16 = torch.cuda.is_bf16_supported()
     if not support_bf16:
         logger.warning(f'support_bf16: {support_bf16}')
+
+    kwargs = {'low_cpu_mem_usage': True, 'device_map': 'auto'}
+    if args.model_type == 'qwen-7b':
+        kwargs['use_flash_attn'] = args.use_flash_attn
     model, tokenizer, model_dir = get_model_tokenizer(
-        args.model_type, torch_dtype=torch.bfloat16)
+        args.model_type, torch_dtype=torch.bfloat16, **kwargs)
 
     if args.gradient_checkpoint:
-        # baichuan-13b does not implement the `get_input_embeddings` function
-        if args.model_type == 'baichuan-13b':
-            model.get_input_embeddings = MethodType(
-                lambda self: self.model.embed_tokens, model)
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
 

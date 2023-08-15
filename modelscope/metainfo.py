@@ -219,6 +219,7 @@ class Models(object):
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
     stable_diffusion_xl = 'stable-diffusion-xl'
+    videocomposer = 'videocomposer'
     text_to_360panorama_image = 'text-to-360panorama-image'
 
     # science models
@@ -235,6 +236,7 @@ class TaskModels(object):
     feature_extraction = 'feature-extraction'
     text_generation = 'text-generation'
     text_ranking = 'text-ranking'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class Heads(object):
@@ -487,6 +489,7 @@ class Pipelines(object):
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
     language_identification = 'language_identification'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -524,6 +527,7 @@ class Pipelines(object):
     multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    videocomposer = 'videocomposer'
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
@@ -1062,6 +1066,7 @@ class Preprocessors(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'

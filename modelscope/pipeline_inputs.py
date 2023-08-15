@@ -222,10 +222,13 @@ TASK_INPUTS = {
     },
 
     # ============ nlp tasks ===================
-    Tasks.chat: {
-        'text': InputType.TEXT,
-        'history': InputType.LIST,
-    },
+    Tasks.chat: [
+        InputType.TEXT,
+        {
+            'text': InputType.TEXT,
+            'history': InputType.LIST,
+        }
+    ],
     Tasks.text_classification: [
         InputType.TEXT,
         (InputType.TEXT, InputType.TEXT),
@@ -234,7 +237,13 @@ TASK_INPUTS = {
             'text2': InputType.TEXT
         },
     ],
-    Tasks.sentence_similarity: (InputType.TEXT, InputType.TEXT),
+    Tasks.sentence_similarity: [
+        (InputType.TEXT, InputType.TEXT),
+        {
+            'source_text': InputType.TEXT,
+            'target_text': InputType.TEXT,
+        },
+    ],
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
@@ -275,10 +284,6 @@ TASK_INPUTS = {
     },
     Tasks.fill_mask:
     InputType.TEXT,
-    Tasks.task_oriented_conversation: {
-        'user_input': InputType.TEXT,
-        'history': InputType.DICT,
-    },
     Tasks.table_question_answering: {
         'question': InputType.TEXT,
         'history_sql': InputType.DICT,
@@ -311,6 +316,8 @@ TASK_INPUTS = {
         'positive': InputType.LIST,
         'negative': InputType.LIST
     },
+    Tasks.machine_reading_comprehension:
+    InputType.TEXT,
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.

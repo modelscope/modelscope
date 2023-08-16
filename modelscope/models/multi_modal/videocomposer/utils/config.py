@@ -272,4 +272,3 @@ class Config(object):
 
     def deep_copy(self):
         return copy.deepcopy(self)
-

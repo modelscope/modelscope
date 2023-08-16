@@ -1,20 +1,21 @@
-import torch
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import logging
+import os
 import os.path as osp
 from datetime import datetime
+
+import torch
 from easydict import EasyDict
-import os
 
 cfg = EasyDict(__name__='Config: VideoLDM Decoder')
 
 # ---------------------------work dir--------------------------
 cfg.work_dir = 'workspace/'
 
-
 # ---------------------------Global Variable-----------------------------------
 cfg.resolution = [448, 256]
 # -----------------------------------------------------------------------------
-
 
 # ---------------------------Dataset Parameter---------------------------------
 cfg.mean = [0.5, 0.5, 0.5]
@@ -23,27 +24,25 @@ cfg.max_words = 1000
 
 # PlaceHolder
 cfg.vit_out_dim = 1024
-cfg.vit_resolution = [224, 224] #336
+cfg.vit_resolution = [224, 224]
 cfg.depth_clamp = 10.0
 cfg.misc_size = 384
 cfg.depth_std = 20.0
 
-
-cfg.frame_lens = 32 #[32, 32, 32, 1]
-cfg.sample_fps = 8 #[4, ]
+cfg.frame_lens = 32
+cfg.sample_fps = 8
 
 cfg.batch_sizes = 1
 # -----------------------------------------------------------------------------
-
 
 # ---------------------------Mode Parameters-----------------------------------
 # Diffusion
 cfg.schedule = 'cosine'
 cfg.num_timesteps = 1000
-cfg.mean_type = 'v' #'eps'
-cfg.var_type = 'fixed_small'  # NOTE: to stabilize training and avoid NaN
+cfg.mean_type = 'v'
+cfg.var_type = 'fixed_small'
 cfg.loss_type = 'mse'
-cfg.ddim_timesteps = 50  # official: 250
+cfg.ddim_timesteps = 50
 cfg.ddim_eta = 0.0
 cfg.clamp = 1.0
 cfg.share_noise = False
@@ -59,7 +58,7 @@ cfg.vit_mean = [0.48145466, 0.4578275, 0.40821073]
 cfg.vit_std = [0.26862954, 0.26130258, 0.27577711]
 
 # Model
-cfg.scale_factor = 0.18215 
+cfg.scale_factor = 0.18215
 cfg.use_fp16 = True
 cfg.temporal_attention = True
 cfg.decoder_bs = 8
@@ -93,15 +92,15 @@ cfg.guidances = []
 cfg.auto_encoder = {
     'type': 'AutoencoderKL',
     'ddconfig': {
-        'double_z': True, 
+        'double_z': True,
         'z_channels': 4,
-        'resolution': 256, 
+        'resolution': 256,
         'in_channels': 3,
-        'out_ch': 3, 
-        'ch': 128, 
+        'out_ch': 3,
+        'ch': 128,
         'ch_mult': [1, 2, 4, 4],
-        'num_res_blocks': 2, 
-        'attn_resolutions': [], 
+        'num_res_blocks': 2,
+        'attn_resolutions': [],
         'dropout': 0.0
     },
     'embed_dim': 4,
@@ -129,16 +128,14 @@ cfg.alpha = 0.7
 cfg.save_ckp_interval = 1000
 # -----------------------------------------------------------------------------
 
-
 # ----------------------------Pretrain Settings---------------------------------
 ## Default: load 2d pretrain
 cfg.fix_weight = False
 cfg.load_match = False
 cfg.pretrained_checkpoint = 'v2-1_512-ema-pruned.ckpt'
 cfg.pretrained_image_keys = 'stable_diffusion_image_key_temporal_attention_x1.json'
-cfg.resume_checkpoint = "img2video_ldm_0779000.pth"
+cfg.resume_checkpoint = 'img2video_ldm_0779000.pth'
 # -----------------------------------------------------------------------------
-
 
 # -----------------------------Visual-------------------------------------------
 # Visual videos
@@ -155,12 +152,10 @@ cfg.inference_list_path = ''
 cfg.log_interval = 100
 
 ### Default log_dir
-cfg.log_dir = "workspace/output_data" #'workspace/videoldms'
+cfg.log_dir = 'workspace/output_data'
 # -----------------------------------------------------------------------------
-
 
 # ---------------------------Others--------------------------------------------
-# seed 
+# seed
 cfg.seed = 8888
 # -----------------------------------------------------------------------------
-

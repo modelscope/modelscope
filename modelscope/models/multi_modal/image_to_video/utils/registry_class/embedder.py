@@ -1,6 +1,7 @@
-# Copyright 2021 Alibaba Group Holding Limited. All Rights Reserved.
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 from ..registry import Registry, build_from_config
+
 
 def build_embedder(cfg, registry, **kwargs):
     """
@@ -8,4 +9,5 @@ def build_embedder(cfg, registry, **kwargs):
     """
     return build_from_config(cfg, registry, **kwargs)
 
-EMBEDDER = Registry("EMBEDDER", build_func=build_embedder)
+
+EMBEDDER = Registry('EMBEDDER', build_func=build_embedder)

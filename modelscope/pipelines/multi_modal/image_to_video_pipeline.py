@@ -17,8 +17,12 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-@PIPELINES.register_module(Tasks.image_to_video_task, module_name=Pipelines.image_to_video_task_pipeline)
+
+@PIPELINES.register_module(
+    Tasks.image_to_video_task,
+    module_name=Pipelines.image_to_video_task_pipeline)
 class ImageToVideoPipeline(Pipeline):
+
     def __init__(self, model: str, **kwargs):
         """
         use `model` to create a kws pipeline for prediction
@@ -30,11 +34,13 @@ class ImageToVideoPipeline(Pipeline):
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
         return {'img_path': input['img_path']}
 
-    def forward(self, input: Dict[str, Any], **forward_params) -> Dict[str, Any]:
+    def forward(self, input: Dict[str, Any],
+                **forward_params) -> Dict[str, Any]:
         video = self.model(input)
         return {'video': video}
 
-    def postprocess(self, inputs: Dict[str, Any], **post_params) -> Dict[str, Any]:
+    def postprocess(self, inputs: Dict[str, Any],
+                    **post_params) -> Dict[str, Any]:
         video = tensor2vid(inputs['video'])
         output_video_path = post_params.get('output_video', None)
         temp_video_file = False
@@ -61,14 +67,14 @@ class ImageToVideoPipeline(Pipeline):
 
 
 def tensor2vid(video, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
-    mean = torch.tensor(mean, device=video.device).reshape(1, -1, 1, 1, 1)  # ncfhw
-    std = torch.tensor(std, device=video.device).reshape(1, -1, 1, 1, 1)  # ncfhw
-    
-    video = video.mul_(std).add_(mean)  # unnormalize back to [0,1]
+    mean = torch.tensor(mean, device=video.device).reshape(1, -1, 1, 1, 1)
+    std = torch.tensor(std, device=video.device).reshape(1, -1, 1, 1, 1)
+
+    video = video.mul_(std).add_(mean)
     video.clamp_(0, 1)
     video = video * 255.0
-    
+
     images = rearrange(video, 'b c f h w -> b f h w c')[0]
     images = [(img.numpy()).astype('uint8') for img in images]
-    
+
     return images

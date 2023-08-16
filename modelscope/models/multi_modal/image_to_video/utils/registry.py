@@ -39,20 +39,21 @@ def build_from_config(cfg, registry, **kwargs):
         Exception:
     """
     if not isinstance(cfg, dict):
-        raise TypeError(f"config must be type dict, got {type(cfg)}")
-    if "type" not in cfg:
-        raise KeyError(f"config must contain key type, got {cfg}")
+        raise TypeError(f'config must be type dict, got {type(cfg)}')
+    if 'type' not in cfg:
+        raise KeyError(f'config must contain key type, got {cfg}')
     if not isinstance(registry, Registry):
-        raise TypeError(f"registry must be type Registry, got {type(registry)}")
+        raise TypeError(
+            f'registry must be type Registry, got {type(registry)}')
 
     cfg = copy.deepcopy(cfg)
 
-    req_type = cfg.pop("type")
+    req_type = cfg.pop('type')
     req_type_entry = req_type
     if isinstance(req_type, str):
         req_type_entry = registry.get(req_type)
         if req_type_entry is None:
-            raise KeyError(f"{req_type} not found in {registry.name} registry")
+            raise KeyError(f'{req_type} not found in {registry.name} registry')
 
     if kwargs is not None:
         cfg.update(kwargs)
@@ -61,14 +62,16 @@ def build_from_config(cfg, registry, **kwargs):
         try:
             return req_type_entry(**cfg)
         except Exception as e:
-            raise Exception(f"Failed to init class {req_type_entry}, with {e}")
+            raise Exception(f'Failed to init class {req_type_entry}, with {e}')
     elif inspect.isfunction(req_type_entry):
         try:
             return req_type_entry(**cfg)
         except Exception as e:
-            raise Exception(f"Failed to invoke function {req_type_entry}, with {e}")
+            raise Exception(
+                f'Failed to invoke function {req_type_entry}, with {e}')
     else:
-        raise TypeError(f"type must be str or class, got {type(req_type_entry)}")
+        raise TypeError(
+            f'type must be str or class, got {type(req_type_entry)}')
 
 
 class Registry(object):
@@ -93,7 +96,10 @@ class Registry(object):
         allow_types (tuple): Indicates how to construct the instance, by constructing class or invoking function.
     """
 
-    def __init__(self, name, build_func=None, allow_types=("class", "function")):
+    def __init__(self,
+                 name,
+                 build_func=None,
+                 allow_types=('class', 'function')):
         self.name = name
         self.allow_types = allow_types
         self.class_map = {}
@@ -107,30 +113,39 @@ class Registry(object):
         return self.build_func(*args, **kwargs, registry=self)
 
     def register_class(self, name=None):
+
         def _register(cls):
             if not inspect.isclass(cls):
-                raise TypeError(f"Module must be type class, got {type(cls)}")
-            if "class" not in self.allow_types:
-                raise TypeError(f"Register {self.name} only allows type {self.allow_types}, got class")
+                raise TypeError(f'Module must be type class, got {type(cls)}')
+            if 'class' not in self.allow_types:
+                raise TypeError(
+                    f'Register {self.name} only allows type {self.allow_types}, got class'
+                )
             module_name = name or cls.__name__
             if module_name in self.class_map:
-                warnings.warn(f"Class {module_name} already registered by {self.class_map[module_name]}, "
-                              f"will be replaced by {cls}")
+                warnings.warn(
+                    f'Class {module_name} already registered by {self.class_map[module_name]}, '
+                    f'will be replaced by {cls}')
             self.class_map[module_name] = cls
             return cls
 
         return _register
 
     def register_function(self, name=None):
+
         def _register(func):
             if not inspect.isfunction(func):
-                raise TypeError(f"Registry must be type function, got {type(func)}")
-            if "function" not in self.allow_types:
-                raise TypeError(f"Registry {self.name} only allows type {self.allow_types}, got function")
+                raise TypeError(
+                    f'Registry must be type function, got {type(func)}')
+            if 'function' not in self.allow_types:
+                raise TypeError(
+                    f'Registry {self.name} only allows type {self.allow_types}, got function'
+                )
             func_name = name or func.__name__
             if func_name in self.class_map:
-                warnings.warn(f"Function {func_name} already registered by {self.func_map[func_name]}, "
-                              f"will be replaced by {func}")
+                warnings.warn(
+                    f'Function {func_name} already registered by {self.func_map[func_name]}, '
+                    f'will be replaced by {func}')
             self.func_map[func_name] = func
             return func
 
@@ -141,15 +156,14 @@ class Registry(object):
         descriptions = []
         for key in keys:
             if key in self.class_map:
-                descriptions.append(f"{key}: {self.class_map[key]}")
+                descriptions.append(f'{key}: {self.class_map[key]}')
             else:
                 descriptions.append(
-                    f"{key}: <function '{self.func_map[key].__module__}.{self.func_map[key].__name__}'>")
-        return "\n".join(descriptions)
+                    f"{key}: <function '{self.func_map[key].__module__}.{self.func_map[key].__name__}'>"
+                )
+        return '\n'.join(descriptions)
 
     def __repr__(self):
         description = self._list()
         description = '\n'.join(['\t' + s for s in description.split('\n')])
-        return f"{self.__class__.__name__} [{self.name}], \n" + description
-
-
+        return f'{self.__class__.__name__} [{self.name}], \n' + description

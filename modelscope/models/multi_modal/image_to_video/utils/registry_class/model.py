@@ -1,6 +1,7 @@
-# Copyright 2021 Alibaba Group Holding Limited. All Rights Reserved.
+# Copyright (c) Alibaba, Inc. and its affiliates.
 
 from ..registry import Registry, build_from_config
+
 
 def build_model(cfg, registry, **kwargs):
     """
@@ -8,4 +9,5 @@ def build_model(cfg, registry, **kwargs):
     """
     return build_from_config(cfg, registry, **kwargs)
 
-UNET = Registry("UNET", build_func=build_model)
+
+UNET = Registry('UNET', build_func=build_model)

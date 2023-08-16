@@ -1,7 +1,12 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 import torch
 
 
-def beta_schedule(schedule, num_timesteps=1000, init_beta=None, last_beta=None):
+def beta_schedule(schedule,
+                  num_timesteps=1000,
+                  init_beta=None,
+                  last_beta=None):
     '''
     This code defines a function beta_schedule that generates a sequence of beta values based on the given input parameters. These beta values can be used in video diffusion processes. The function has the following parameters:
         schedule(str): Determines the type of beta schedule to be generated. It can be 'linear', 'linear_sd', 'quadratic', or 'cosine'.
@@ -19,19 +24,24 @@ def beta_schedule(schedule, num_timesteps=1000, init_beta=None, last_beta=None):
         scale = 1000.0 / num_timesteps
         init_beta = init_beta or scale * 0.0001
         last_beta = last_beta or scale * 0.02
-        return torch.linspace(init_beta, last_beta, num_timesteps, dtype=torch.float64)
+        return torch.linspace(
+            init_beta, last_beta, num_timesteps, dtype=torch.float64)
     elif schedule == 'linear_sd':
-        return torch.linspace(init_beta ** 0.5, last_beta ** 0.5, num_timesteps, dtype=torch.float64) ** 2
+        return torch.linspace(
+            init_beta**0.5, last_beta**0.5, num_timesteps,
+            dtype=torch.float64)**2
     elif schedule == 'quadratic':
         init_beta = init_beta or 0.0015
         last_beta = last_beta or 0.0195
-        return torch.linspace(init_beta ** 0.5, last_beta ** 0.5, num_timesteps, dtype=torch.float64) ** 2
+        return torch.linspace(
+            init_beta**0.5, last_beta**0.5, num_timesteps,
+            dtype=torch.float64)**2
     elif schedule == 'cosine':
         betas = []
         for step in range(num_timesteps):
             t1 = step / num_timesteps
             t2 = (step + 1) / num_timesteps
-            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2) ** 2
+            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
             betas.append(min(1.0 - fn(t2) / fn(t1), 0.999))
         return torch.tensor(betas, dtype=torch.float64)
     else:

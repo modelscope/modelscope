@@ -1,4 +1,6 @@
-from .model import UNET
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
 from .autoencoder import AUTO_ENCODER
-from .embedder import EMBEDDER
 from .distrubution import DISTRIBUTION
+from .embedder import EMBEDDER
+from .model import UNET

@@ -62,7 +62,7 @@ def rand_name(length=8, suffix=''):
 
 
 def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
-                           viz_num, step, caps, palette, cfg):
+                           viz_num, step, caps, palette, cfg, duration):
     scale_factor = 0.18215
     video_data = 1. / scale_factor * video_data
 
@@ -99,7 +99,8 @@ def save_with_model_kwargs(model_kwargs, video_data, autoencoder, ori_video,
             cfg.mean,
             cfg.std,
             nrow=1,
-            save_origin_video=cfg.save_origin_video)
+            save_origin_video=cfg.save_origin_video,
+            duration=duration)
 
         texts = '\n'.join(caps[:viz_num])
         open(text_key, 'w').writelines(texts)
@@ -395,11 +396,11 @@ def save_image(bucket,
 
 
 @torch.no_grad()
-def video_tensor_to_gif(tensor, path, duration=120, loop=0, optimize=True):
+def video_tensor_to_gif(tensor, path, duration=200, loop=0, optimize=True):
     tensor = tensor.permute(1, 2, 3, 0)
     images = tensor.unbind(dim=0)
     images = [(image.numpy() * 255).astype('uint8') for image in images]
-    imageio.mimwrite(path, images, duration=125)
+    imageio.mimwrite(path, images, duration=duration)
     return images
 
 
@@ -449,7 +450,8 @@ def save_video_multiple_conditions(oss_key,
                                    nrow=8,
                                    retry=5,
                                    save_origin_video=True,
-                                   bucket=None):
+                                   bucket=None,
+                                   duration=200):
     mean = torch.tensor(mean, device=video_tensor.device).view(1, -1, 1, 1, 1)
     std = torch.tensor(std, device=video_tensor.device).view(1, -1, 1, 1, 1)
     video_tensor = video_tensor.mul_(std).add_(mean)
@@ -525,7 +527,7 @@ def save_video_multiple_conditions(oss_key,
                         vid_gif,
                     ], dim=3)
 
-            video_tensor_to_gif(vid_gif, filename)
+            video_tensor_to_gif(vid_gif, filename, duration=duration)
             exception = None
             break
         except Exception as e:

@@ -73,11 +73,20 @@ class VideoComposer(TorchModel):
         super().__init__(model_dir=model_dir, *args, **kwargs)
         self.device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
+        self.duration = kwargs.pop('duration', 200)
         clip_checkpoint = kwargs.pop('clip_checkpoint',
                                      'open_clip_pytorch_model.bin')
         sd_checkpoint = kwargs.pop('sd_checkpoint', 'v2-1_512-ema-pruned.ckpt')
-        _cfg = Config(load=True)
+        cfg_file_name = kwargs.pop('cfg_file_name',
+                                   'exp06_text_depths_vs_style.yaml')
+        _cfg = Config(
+            load=True,
+            cfg_dict=None,
+            cfg_level=None,
+            model_dir=model_dir,
+            cfg_file_name=cfg_file_name)
         cfg.update(_cfg.cfg_dict)
+
         # rank-wise params
         l1 = len(cfg.frame_lens)
         l2 = len(cfg.feature_framerates)
@@ -472,7 +481,8 @@ class VideoComposer(TorchModel):
                     step=0,
                     caps=caps,
                     palette=palette,
-                    cfg=self.cfg)
+                    cfg=self.cfg,
+                    duration=self.duration)
 
         return {
             'video': video_output.type(torch.float32).cpu(),

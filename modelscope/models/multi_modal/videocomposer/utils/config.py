@@ -22,7 +22,17 @@ def setup_seed(seed):
 
 class Config(object):
 
-    def __init__(self, load=True, cfg_dict=None, cfg_level=None):
+    def __init__(self,
+                 load=True,
+                 cfg_dict=None,
+                 cfg_level=None,
+                 model_dir=None,
+                 cfg_file_name='exp06_text_depths_vs_style.yaml'):
+        if model_dir is not None and os.path.isdir(model_dir):
+            self.model_dir = model_dir + '/configs'
+        else:
+            raise Exception(f'model_dir {model_dir} is not exist!')
+        self.cfg_file_name = cfg_file_name
         self._level = 'cfg' + ('.'
                                + cfg_level if cfg_level is not None else '')
         if load:
@@ -44,9 +54,7 @@ class Config(object):
             '--cfg',
             dest='cfg_file',
             help='Path to the configuration file',
-            default=
-            './modelscope/models/multi_modal/videocomposer/configs/exp06_text_depths_vs_style.yaml'
-        )
+            default=os.path.join(self.model_dir, self.cfg_file_name))
         parser.add_argument(
             '--init_method',
             help='Initialization method, includes TCP or shared file-system',
@@ -104,17 +112,11 @@ class Config(object):
     def _initialize_cfg(self):
         if self.need_initialization:
             self.need_initialization = False
-            if os.path.exists(
-                    './modelscope/models/multi_modal/videocomposer/configs/base.yaml'
-            ):
-                with open(
-                        './modelscope/models/multi_modal/videocomposer/configs/base.yaml',
-                        'r') as f:
+            if os.path.exists(os.path.join(self.model_dir, 'base.yaml')):
+                with open(os.path.join(self.model_dir, 'base.yaml'), 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
             else:
-                with open(
-                        './modelscope/models/multi_modal/videocomposer/configs/base.yaml',
-                        'r') as f:
+                with open(os.path.join(self.model_dir, 'base.yaml'), 'r') as f:
                     cfg = yaml.load(f.read(), Loader=yaml.SafeLoader)
         return cfg
 
@@ -245,7 +247,12 @@ class Config(object):
 
         def recur(key, elem):
             if type(elem) is dict:
-                return key, Config(load=False, cfg_dict=elem, cfg_level=key)
+                return key, Config(
+                    load=False,
+                    cfg_dict=elem,
+                    cfg_level=key,
+                    model_dir=self.model_dir,
+                    cfg_file_name=self.cfg_file_name)
             else:
                 if type(elem) is str and elem[1:3] == 'e-':
                     elem = float(elem)
@@ -265,9 +272,3 @@ class Config(object):
 
     def deep_copy(self):
         return copy.deepcopy(self)
-
-
-if __name__ == '__main__':
-    # debug
-    cfg = Config(load=True)
-    print(cfg.DATA)

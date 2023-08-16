@@ -14,7 +14,7 @@ class VideoDeinterlaceTest(unittest.TestCase):
     def setUp(self) -> None:
         self.task = Tasks.text_to_video_synthesis
         self.model_id = 'buptwq/videocomposer'
-        self.model_revision = 'v1.0.1'
+        self.model_revision = 'v1.0.4'
         self.dataset_id = 'buptwq/videocomposer-depths-style'
         self.text = 'A glittering and translucent fish swimming in a \
                      small glass bowl with multicolored piece of stone, like a glass fish'

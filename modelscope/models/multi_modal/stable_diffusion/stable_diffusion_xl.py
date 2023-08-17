@@ -115,7 +115,6 @@ class StableDiffusionXL(TorchModel):
         return inputs.input_ids
 
     def compute_time_ids(self, original_size, crops_coords_top_left):
-        # Adapted from pipeline.StableDiffusionXLPipeline._get_add_time_ids
         target_size = (self.resolution, self.resolution)
         add_time_ids = list(original_size + crops_coords_top_left + target_size)
         add_time_ids = torch.tensor([add_time_ids])

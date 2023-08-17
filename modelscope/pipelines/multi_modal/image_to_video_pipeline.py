@@ -29,9 +29,7 @@ class ImageToVideoPipeline(Pipeline):
     >>> from modelscope.outputs import OutputKeys
 
     >>> p = pipeline('image-to-video', 'damo/Image-to-Video')
-    >>> input = {
-    >>>         'img_path': 'path_to_image',
-    >>>     }
+    >>> input = 'path_to_image'
     >>> p(input,)
 
     >>>  {OutputKeys.OUTPUT_VIDEO: path-to-the-generated-video}
@@ -47,7 +45,7 @@ class ImageToVideoPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
 
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
-        img_path = input['img_path']
+        img_path = input
 
         image = LoadImage.convert_to_img(img_path)
         if image.mode != 'RGB':

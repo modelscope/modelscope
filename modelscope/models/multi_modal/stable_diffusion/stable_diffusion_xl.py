@@ -1,5 +1,6 @@
 # Copyright 2023-2024 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import os
+import random
 from functools import partial
 from typing import Callable, List, Optional, Union
 
@@ -7,7 +8,10 @@ import torch
 import torch.nn.functional as F
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
 from packaging import version
-from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextModelWithProjection
+from torchvision import transforms
+from torchvision.transforms.functional import crop
+from transformers import (AutoTokenizer, CLIPTextModel,
+                          CLIPTextModelWithProjection)
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
@@ -37,6 +41,8 @@ class StableDiffusionXL(TorchModel):
         revision = kwargs.pop('revision', None)
         xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
+        self.resolution = kwargs.pop('resolution', 1024)
+        self.random_flip = kwargs.pop('random_flip', True)
 
         self.weight_dtype = torch.float32
         self.device = torch.device(
@@ -46,13 +52,19 @@ class StableDiffusionXL(TorchModel):
         self.noise_scheduler = DDPMScheduler.from_pretrained(
             model_dir, subfolder='scheduler')
         self.tokenizer_one = AutoTokenizer.from_pretrained(
-            model_dir, subfolder="tokenizer", revision=revision, use_fast=False)
+            model_dir,
+            subfolder='tokenizer',
+            revision=revision,
+            use_fast=False)
         self.tokenizer_two = AutoTokenizer.from_pretrained(
-            model_dir, subfolder="tokenizer_2", revision=revision, use_fast=False)
-        self.text_encoder_one = CLIPTextModel.from_pretrained(model_dir, 
-                                    subfolder='text_encoder', revision=revision)
-        self.text_encoder_two = CLIPTextModelWithProjection.from_pretrained(model_dir, 
-                                    subfolder='text_encoder_2', revision=revision)
+            model_dir,
+            subfolder='tokenizer_2',
+            revision=revision,
+            use_fast=False)
+        self.text_encoder_one = CLIPTextModel.from_pretrained(
+            model_dir, subfolder='text_encoder', revision=revision)
+        self.text_encoder_two = CLIPTextModelWithProjection.from_pretrained(
+            model_dir, subfolder='text_encoder_2', revision=revision)
         self.vae = AutoencoderKL.from_pretrained(
             model_dir, subfolder='vae', revision=revision)
         self.unet = UNet2DConditionModel.from_pretrained(
@@ -101,7 +113,7 @@ class StableDiffusionXL(TorchModel):
             truncation=True,
             return_tensors='pt')
         return inputs.input_ids
-    
+
     def compute_time_ids(self, original_size, crops_coords_top_left):
         # Adapted from pipeline.StableDiffusionXLPipeline._get_add_time_ids
         target_size = (self.resolution, self.resolution)
@@ -109,8 +121,12 @@ class StableDiffusionXL(TorchModel):
         add_time_ids = torch.tensor([add_time_ids])
         add_time_ids = add_time_ids.to(self.device, dtype=self.weight_dtype)
         return add_time_ids
-    
-    def encode_prompt(text_encoders, tokenizers, prompt, text_input_ids_list=None):
+
+    def encode_prompt(self,
+                      text_encoders,
+                      tokenizers,
+                      prompt,
+                      text_input_ids_list=None):
         prompt_embeds_list = []
 
         for i, text_encoder in enumerate(text_encoders):
@@ -136,11 +152,32 @@ class StableDiffusionXL(TorchModel):
         prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
         pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1)
         return prompt_embeds, pooled_prompt_embeds
+    
+    def preprocessing_data(self, text, target):
+        train_crop = transforms.RandomCrop(self.resolution)
+        train_resize = transforms.Resize(self.resolution, interpolation=transforms.InterpolationMode.BILINEAR)
+        train_flip = transforms.RandomHorizontalFlip(p=1.0)
+        image = target
+        original_size = (image.size()[-1], image.size()[-2])
+        image = train_resize(image)
+        y1, x1, h, w = train_crop.get_params(image, (self.resolution, self.resolution))
+        image = crop(image, y1, x1, h, w)
+        if self.random_flip and random.random() < 0.5:
+            # flip
+            x1 = image.size()[-2] - x1
+            image = train_flip(image)
+        crop_top_left = (y1, x1)
+        input_ids_one = self.tokenize_caption(self.tokenizer_one, text)
+        input_ids_two = self.tokenize_caption(self.tokenizer_two, text)
+        
+        return original_size, crop_top_left, image, input_ids_one, input_ids_two
 
     def forward(self, text='', target=None):
         self.unet.train()
         self.unet = self.unet.to(self.device)
 
+        # processing data
+        original_size, crop_top_left, image, input_ids_one, input_ids_two = self.preprocessing_data(text, target)
         # Convert to latent space
         with torch.no_grad():
             latents = self.vae.encode(
@@ -162,33 +199,36 @@ class StableDiffusionXL(TorchModel):
         noisy_latents = self.noise_scheduler.add_noise(latents, noise,
                                                        timesteps)
 
-        add_time_ids = torch.cat(
-            [self.compute_time_ids(s, c) for s, c in zip(batch["original_sizes"], batch["crop_top_lefts"])]
-        )
-        
+        add_time_ids = self.compute_time_ids(original_size, crop_top_left)
+
         # Predict the noise residual
-        unet_added_conditions = {"time_ids": add_time_ids}
+        unet_added_conditions = {'time_ids': add_time_ids}
         prompt_embeds, pooled_prompt_embeds = self.encode_prompt(
             text_encoders=[self.text_encoder_one, self.text_encoder_two],
             tokenizers=None,
             prompt=None,
-            text_input_ids_list=[batch["input_ids_one"], batch["input_ids_two"]],
+            text_input_ids_list=[input_ids_one, input_ids_two]
         )
-        unet_added_conditions.update({"text_embeds": pooled_prompt_embeds})
+        unet_added_conditions.update({'text_embeds': pooled_prompt_embeds})
         # Predict the noise residual and compute loss
         model_pred = self.unet(
-            noisy_model_input, timesteps, prompt_embeds, added_cond_kwargs=unet_added_conditions
-        ).sample
+            noisy_latents,
+            timesteps,
+            prompt_embeds,
+            added_cond_kwargs=unet_added_conditions).sample
 
         # Get the target for loss depending on the prediction type
-        if self.noise_scheduler.config.prediction_type == "epsilon":
+        if self.noise_scheduler.config.prediction_type == 'epsilon':
             target = noise
-        elif self.noise_scheduler.config.prediction_type == "v_prediction":
-            target = self.noise_scheduler.get_velocity(model_input, noise, timesteps)
+        elif self.noise_scheduler.config.prediction_type == 'v_prediction':
+            target = self.noise_scheduler.get_velocity(model_input, noise,
+                                                       timesteps)
         else:
-            raise ValueError(f"Unknown prediction type {self.noise_scheduler.config.prediction_type}")
+            raise ValueError(
+                f'Unknown prediction type {self.noise_scheduler.config.prediction_type}'
+            )
 
-        loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+        loss = F.mse_loss(model_pred.float(), target.float(), reduction='mean')
 
         output = {OutputKeys.LOSS: loss}
         return output
@@ -201,7 +241,7 @@ class StableDiffusionXL(TorchModel):
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):
-        config['pipeline']['type'] = 'diffusers-stable-diffusion'
+        config['pipeline']['type'] = 'diffusers-stable-diffusion-xl'
         # Skip copying the original weights for lora and dreambooth method
         if self.lora_tune or self.dreambooth_tune:
             pass

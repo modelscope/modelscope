@@ -1,11 +1,12 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Union
+from typing import Dict, Union
 
 import torch
-from diffusers.loaders import AttnProcsLayers
-from diffusers.models.attention_processor import (LoRAAttnProcessor, LoRAAttnProcessor2_0)
-from diffusers import StableDiffusionXLPipeline
 import torch.nn.functional as F
+from diffusers import StableDiffusionXLPipeline
+from diffusers.loaders import AttnProcsLayers
+from diffusers.models.attention_processor import (LoRAAttnProcessor,
+                                                  LoRAAttnProcessor2_0)
 
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS
@@ -15,6 +16,7 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
 from modelscope.trainers.optimizer.builder import build_optimizer
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.config import ConfigDict
+
 
 def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
     """
@@ -27,7 +29,8 @@ def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
 
     for attn_processor_key, attn_processor in attn_processors.items():
         for parameter_key, parameter in attn_processor.state_dict().items():
-            attn_processors_state_dict[f"{attn_processor_key}.{parameter_key}"] = parameter
+            attn_processors_state_dict[
+                f'{attn_processor_key}.{parameter_key}'] = parameter
 
     return attn_processors_state_dict
 
@@ -46,13 +49,13 @@ class LoraDiffusionXLCheckpointProcessor(CheckpointProcessor):
         unet_lora_layers_to_save = {}
 
         for attn_processor_key, attn_processor in attn_processors.items():
-            for parameter_key, parameter in attn_processor.state_dict().items():
-                unet_lora_layers_to_save[f"{attn_processor_key}.{parameter_key}"] = parameter
+            for parameter_key, parameter in attn_processor.state_dict().items(
+            ):
+                unet_lora_layers_to_save[
+                    f'{attn_processor_key}.{parameter_key}'] = parameter
 
         StableDiffusionXLPipeline.save_lora_weights(
-            output_dir,
-            unet_lora_layers=unet_lora_layers_to_save
-        )
+            output_dir, unet_lora_layers=unet_lora_layers_to_save)
 
 
 @TRAINERS.register_module(module_name=Trainers.lora_diffusion_xl)
@@ -66,34 +69,40 @@ class LoraDiffusionXLTrainer(EpochBasedTrainer):
             lora_rank: The rank size of lora intermediate linear.
 
         """
-        lora_rank = kwargs.pop('lora_rank', 4)
+        lora_rank = kwargs.pop('lora_rank', 16)
 
         # set lora save checkpoint processor
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
-        ckpt_hook.set_processor(LoraDiffusionCheckpointProcessor())
+        ckpt_hook.set_processor(LoraDiffusionXLCheckpointProcessor())
 
         # Add lora weights to attention layers and set correct lora layers
         unet_lora_attn_procs = {}
         unet_lora_parameters = []
         for name, attn_processor in self.model.unet.attn_processors.items():
-            cross_attention_dim = None if name.endswith("attn1.processor") else self.model.unet.config.cross_attention_dim
-            if name.startswith("mid_block"):
+            cross_attention_dim = None if name.endswith(
+                'attn1.processor'
+            ) else self.model.unet.config.cross_attention_dim
+            if name.startswith('mid_block'):
                 hidden_size = self.model.unet.config.block_out_channels[-1]
-            elif name.startswith("up_blocks"):
-                block_id = int(name[len("up_blocks.")])
-                hidden_size = list(reversed(self.model.unet.config.block_out_channels))[block_id]
-            elif name.startswith("down_blocks"):
-                block_id = int(name[len("down_blocks.")])
-                hidden_size = self.model.unet.config.block_out_channels[block_id]
+            elif name.startswith('up_blocks'):
+                block_id = int(name[len('up_blocks.')])
+                hidden_size = list(
+                    reversed(
+                        self.model.unet.config.block_out_channels))[block_id]
+            elif name.startswith('down_blocks'):
+                block_id = int(name[len('down_blocks.')])
+                hidden_size = self.model.unet.config.block_out_channels[
+                    block_id]
 
             lora_attn_processor_class = (
-                LoRAAttnProcessor2_0 if hasattr(F, "scaled_dot_product_attention") else LoRAAttnProcessor
-            )
+                LoRAAttnProcessor2_0 if hasattr(
+                    F, 'scaled_dot_product_attention') else LoRAAttnProcessor)
             module = lora_attn_processor_class(
-                hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, rank=lora_rank
-            )
+                hidden_size=hidden_size,
+                cross_attention_dim=cross_attention_dim,
+                rank=lora_rank)
             unet_lora_attn_procs[name] = module
             unet_lora_parameters.extend(module.parameters())
 
@@ -102,7 +111,7 @@ class LoraDiffusionXLTrainer(EpochBasedTrainer):
     def build_optimizer(self, cfg: ConfigDict, default_args: dict = None):
         try:
             return build_optimizer(
-                self.unet.parameters(),
+                self.model.unet.parameters(),
                 cfg=cfg,
                 default_args=default_args)
         except KeyError as e:

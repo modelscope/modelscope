@@ -20,13 +20,13 @@ class StableDiffusionXLLoraArguments(TrainingArgs):
         })
 
     lora_rank: int = field(
-        default=4,
+        default=16,
         metadata={
             'help': 'The rank size of lora intermediate linear.',
         })
 
 
-training_args = StableDiffusionLoraXLArguments(
+training_args = StableDiffusionXLLoraArguments(
     task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 
@@ -82,4 +82,4 @@ pipe = pipeline(
 output = pipe({'text': args.prompt})
 # visualize the result on ipynb and save it
 output
-cv2.imwrite('./lora_result.png', output['output_imgs'][0])
+cv2.imwrite('./lora_xl_result.png', output['output_imgs'][0])

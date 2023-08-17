@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .pipelines import Pipeline, pipeline
     from .utils.hub import read_config, create_model_if_not_exist
     from .utils.logger import get_logger
+    from .utils.constant import Tasks
     from .utils.hf_util import AutoConfig, GenerationConfig
     from .utils.hf_util import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
     from .utils.hf_util import AutoTokenizer
@@ -68,6 +69,7 @@ else:
         'pipelines': ['Pipeline', 'pipeline'],
         'utils.hub': ['read_config', 'create_model_if_not_exist'],
         'utils.logger': ['get_logger'],
+        'utils.constant': ['Tasks'],
         'utils.hf_util': [
             'AutoConfig', 'GenerationConfig', 'AutoModel',
             'AutoModelForCausalLM', 'AutoModelForSeq2SeqLM', 'AutoTokenizer'

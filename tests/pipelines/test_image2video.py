@@ -12,9 +12,9 @@ from modelscope.utils.test_utils import test_level
 class Image2VideoTest(unittest.TestCase, DemoCompatibilityCheck):
 
     def setUp(self) -> None:
-        self.task = Tasks.image_to_video_task
+        self.task = Tasks.image_to_video
         self.model_id = 'damo/Image-to-Video'
-        self.path = 'data/test/test.jpeg'
+        self.path = 'https://video-generation-wulanchabu.oss-cn-wulanchabu.aliyuncs.com/baishao/test.jpeg?OSSAccessKeyId=LTAI5tB5SH1BKJqWT19FNMAB&Expires=1692633240&Signature=5XevBz6nCtVJJ8%2BLofhahTrJK9o%3D'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):

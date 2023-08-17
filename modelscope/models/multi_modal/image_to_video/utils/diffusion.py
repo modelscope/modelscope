@@ -117,6 +117,7 @@ class GaussianDiffusion(object):
     def q_sample(self, x0, t, noise=None):
         r"""Sample from q(x_t | x_0).
         """
+        # noise = torch.randn_like(x0) if noise is None else noise
         noise = self.sample_loss(x0, noise)
         return _i(self.sqrt_alphas_cumprod, t, x0) * x0 + \
                _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise

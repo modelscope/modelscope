@@ -82,6 +82,8 @@ class ResizeRandomCrop(object):
         self.size_short = size_short
 
     def __call__(self, rgb):
+
+        # consistent crop between rgb and m
         while min(rgb[0].size) >= 2 * self.size_short:
             rgb = [
                 u.resize((u.width // 2, u.height // 2), resample=Image.BOX)
@@ -99,7 +101,6 @@ class ResizeRandomCrop(object):
         y1 = random.randint(0, h - out_h)
 
         rgb = [u.crop((x1, y1, x1 + out_w, y1 + out_h)) for u in rgb]
-
         return rgb
 
 
@@ -111,6 +112,7 @@ class ExtractResizeRandomCrop(object):
 
     def __call__(self, rgb):
 
+        # consistent crop between rgb and m
         while min(rgb[0].size) >= 2 * self.size_short:
             rgb = [
                 u.resize((u.width // 2, u.height // 2), resample=Image.BOX)
@@ -140,6 +142,7 @@ class ExtractResizeAssignCrop(object):
 
     def __call__(self, rgb, wh):
 
+        # consistent crop between rgb and m
         while min(rgb[0].size) >= 2 * self.size_short:
             rgb = [
                 u.resize((u.width // 2, u.height // 2), resample=Image.BOX)

@@ -9,10 +9,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as T
 
-from ..utils.registry_class import EMBEDDER
 
-
-@EMBEDDER.register_class()
 class FrozenOpenCLIPVisualEmbedder(nn.Module):
     """
     Uses the OpenCLIP transformer encoder for text
@@ -26,7 +23,8 @@ class FrozenOpenCLIPVisualEmbedder(nn.Module):
                  device='cuda',
                  max_length=77,
                  freeze=True,
-                 layer='last'):
+                 layer='last',
+                 **kwargs):
         super().__init__()
         assert layer in self.LAYERS
         model, _, preprocess = open_clip.create_model_and_transforms(

@@ -8,18 +8,17 @@ from typing import Any, Dict
 
 import torch
 import torch.cuda.amp as amp
-from PIL import Image
 
 import modelscope.models.multi_modal.image_to_video.utils.transforms as data
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.image_to_video.modules import *
+from modelscope.models.multi_modal.image_to_video.modules import (
+    AutoencoderKL, FrozenOpenCLIPVisualEmbedder, Img2VidSDUNet)
 from modelscope.models.multi_modal.image_to_video.utils.config import cfg
 from modelscope.models.multi_modal.image_to_video.utils.diffusion import \
     GaussianDiffusion
-from modelscope.models.multi_modal.image_to_video.utils.registry_class import (
-    AUTO_ENCODER, EMBEDDER, UNET)
 from modelscope.models.multi_modal.image_to_video.utils.seed import setup_seed
 from modelscope.models.multi_modal.image_to_video.utils.shedule import \
     beta_schedule
@@ -33,10 +32,15 @@ logger = get_logger()
 
 
 @MODELS.register_module(
-    Tasks.image_to_video_task, module_name=Models.image_to_video_model)
+    Tasks.image_to_video, module_name=Models.image_to_video_model)
 class ImageToVideo(TorchModel):
     r"""
-    task for image to video.
+    Image2Video aims to solve the task of generating high-definition videos based on input images. Image2Video is a video
+    generation basic model developed by Alibaba Cloud, with a parameter size of approximately 2 billion. It has been pre trained on large-scale
+    video and image data and fine-tuned on a small amount of high-quality data. The data is widely distributed and diverse in categories, and the
+    model has good generalization ability for different types of data
+
+    Paper link: https://arxiv.org/abs/2306.02018
 
     Attributes:
         diffusion: diffusion model for DDIM.
@@ -45,17 +49,34 @@ class ImageToVideo(TorchModel):
     """
 
     def __init__(self, model_dir, *args, **kwargs):
+        r"""
+        Args:
+            model_dir (`str` or `os.PathLike`)
+                Can be either:
+                    - A string, the *model id* of a pretrained model hosted inside a model repo on huggingface.co
+                      or modelscope.cn. Valid model ids can be located at the root-level, like `bert-base-uncased`,
+                      or namespaced under a user or organization name, like `dbmdz/bert-base-german-cased`.
+                    - A path to a *directory* containing model weights saved using
+                      [`~PreTrainedModel.save_pretrained`], e.g., `./my_model_directory/`.
+                    - A path or url to a *tensorflow index checkpoint file* (e.g, `./tf_model/model.ckpt.index`). In
+                      this case, `from_tf` should be set to `True` and a configuration object should be provided as
+                      `config` argument. This loading path is slower than converting the TensorFlow checkpoint in a
+                      PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
+                    - A path or url to a model folder containing a *flax checkpoint file* in *.msgpack* format (e.g,
+                      `./flax_model/` containing `flax_model.msgpack`). In this case, `from_flax` should be set to
+                      `True`.
+        """
         super().__init__(model_dir=model_dir, *args, **kwargs)
 
         self.config = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
 
         # assign default value
-        cfg.batch_size = 1
-        cfg.target_fps = 8
-        cfg.max_frames = 32
-        cfg.latent_hei = 32
-        cfg.latent_wid = 56
+        cfg.batch_size = self.config.model.model_cfg.batch_size
+        cfg.target_fps = self.config.model.model_cfg.target_fps
+        cfg.max_frames = self.config.model.model_cfg.max_frames
+        cfg.latent_hei = self.config.model.model_cfg.latent_hei
+        cfg.latent_wid = self.config.model.model_cfg.latent_wid
         cfg.model_path = osp.join(model_dir,
                                   self.config.model.model_args.ckpt_unet)
 
@@ -79,13 +100,13 @@ class ImageToVideo(TorchModel):
 
         cfg.embedder.pretrained = osp.join(
             model_dir, self.config.model.model_args.ckpt_clip)
-        clip_encoder = EMBEDDER.build(cfg.embedder)
+        clip_encoder = FrozenOpenCLIPVisualEmbedder(**cfg.embedder)
         clip_encoder.model.to(self.device)
         self.clip_encoder = clip_encoder
         logger.info(f'Build encoder with {cfg.embedder.type}')
 
         # [unet]
-        generator = UNET.build(cfg.UNet)
+        generator = Img2VidSDUNet(**cfg.UNet)
         generator = generator.to(self.device)
         generator.eval()
         load_dict = torch.load(cfg.model_path, map_location='cpu')
@@ -113,8 +134,8 @@ class ImageToVideo(TorchModel):
         # [auotoencoder]
         cfg.auto_encoder.pretrained = osp.join(
             model_dir, self.config.model.model_args.ckpt_autoencoder)
-        autoencoder = AUTO_ENCODER.build(cfg.auto_encoder)
-        autoencoder.eval()  # freeze
+        autoencoder = AutoencoderKL(**cfg.auto_encoder)
+        autoencoder.eval()
         for param in autoencoder.parameters():
             param.requires_grad = False
         autoencoder.to(self.device)
@@ -129,16 +150,21 @@ class ImageToVideo(TorchModel):
         self.cfg = cfg
 
     def forward(self, input: Dict[str, Any]):
-        img_path = input['img_path']
+        r"""
+        The entry function of image to video task.
+        1. Using diffusion model to generate the video's latent representation.
+        2. Using autoencoder to decode the video's latent representation to visual space.
 
+        Args:
+            input (`Dict[Str, Any]`):
+                The input of the task
+        Returns:
+            A generated video (as pytorch tensor).
+        """
+
+        vit_frame = input['vit_frame']
         cfg = self.cfg
-        image = Image.open(img_path)
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
 
-        vit_frame = self.vid_trans(image)
-        vit_frame = vit_frame.unsqueeze(0)
-        vit_frame = vit_frame.to(self.device)
         img_embedding = self.clip_encoder(vit_frame).unsqueeze(1)
 
         noise = self.build_noise()
@@ -160,7 +186,7 @@ class ImageToVideo(TorchModel):
                     ddim_timesteps=cfg.ddim_timesteps,
                     eta=0.0)
 
-            gen_video = 1. / cfg.scale_factor * gen_video  # [1, 4, 32, 32, 56]
+            gen_video = 1. / cfg.scale_factor * gen_video
             gen_video = rearrange(gen_video, 'b c f h w -> (b f) c h w')
             chunk_size = min(cfg.decoder_bs, gen_video.shape[0])
             gen_video_list = torch.chunk(

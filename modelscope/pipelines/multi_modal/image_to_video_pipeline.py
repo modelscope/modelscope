@@ -12,6 +12,7 @@ from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors.image import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -19,9 +20,23 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_to_video_task,
-    module_name=Pipelines.image_to_video_task_pipeline)
+    Tasks.image_to_video, module_name=Pipelines.image_to_video_task_pipeline)
 class ImageToVideoPipeline(Pipeline):
+    r""" Image To Video Pipeline.
+
+    Examples:
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.outputs import OutputKeys
+
+    >>> p = pipeline('image-to-video', 'damo/Image-to-Video')
+    >>> input = {
+    >>>         'img_path': 'path_to_image',
+    >>>     }
+    >>> p(input,)
+
+    >>>  {OutputKeys.OUTPUT_VIDEO: path-to-the-generated-video}
+    >>>
+    """
 
     def __init__(self, model: str, **kwargs):
         """
@@ -32,7 +47,17 @@ class ImageToVideoPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
 
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
-        return {'img_path': input['img_path']}
+        img_path = input['img_path']
+
+        image = LoadImage.convert_to_img(img_path)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        vit_frame = self.model.vid_trans(image)
+        vit_frame = vit_frame.unsqueeze(0)
+        vit_frame = vit_frame.to(self.model.device)
+
+        return {'vit_frame': vit_frame}
 
     def forward(self, input: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:
@@ -41,7 +66,8 @@ class ImageToVideoPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any],
                     **post_params) -> Dict[str, Any]:
-        video = tensor2vid(inputs['video'])
+        video = tensor2vid(inputs['video'], self.model.cfg.mean,
+                           self.model.cfg.std)
         output_video_path = post_params.get('output_video', None)
         temp_video_file = False
         if output_video_path is None:

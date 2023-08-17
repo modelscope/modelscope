@@ -10,8 +10,6 @@ from einops import rearrange
 from fairscale.nn.checkpoint import checkpoint_wrapper
 from rotary_embedding_torch import RotaryEmbedding
 
-from ..utils.registry_class import UNET
-
 USE_TEMPORAL_TRANSFORMER = True
 
 
@@ -47,7 +45,7 @@ def prob_mask_like(shape, prob, device):
         return torch.zeros(shape, device=device, dtype=torch.bool)
     else:
         mask = torch.zeros(shape, device=device).float().uniform_(0, 1) < prob
-        ### aviod mask all, which will cause find_unused_parameters error
+        # aviod mask all, which will cause find_unused_parameters error
         if mask.all():
             mask[0] = False
         return mask
@@ -684,11 +682,13 @@ class TemporalAttentionBlock(nn.Module):
             return out + identity
 
         # split out heads
+        # shape [b (hw) h n c/h], n=f
         q = rearrange(qkv[0], '... n (h d) -> ... h n d', h=self.heads)
         k = rearrange(qkv[1], '... n (h d) -> ... h n d', h=self.heads)
         v = rearrange(qkv[2], '... n (h d) -> ... h n d', h=self.heads)
 
         # scale
+
         q = q * self.scale
 
         # rotate positions into queries and keys for time attention
@@ -703,7 +703,6 @@ class TemporalAttentionBlock(nn.Module):
         # relative positional bias
 
         if exists(pos_bias):
-            # print(sim.shape,pos_bias.shape)
             sim = sim + pos_bias
 
         if (focus_present_mask is None and video_mask is not None):
@@ -1011,8 +1010,7 @@ class TemporalConvBlock_v2(nn.Module):
         return x
 
 
-@UNET.register_class()
-class UNetSDUNCLIPvsFPS(nn.Module):
+class Img2VidSDUNet(nn.Module):
 
     def __init__(self,
                  in_dim=7,
@@ -1039,7 +1037,7 @@ class UNetSDUNCLIPvsFPS(nn.Module):
                  **kwargs):
         embed_dim = dim * 4
         num_heads = num_heads if num_heads else dim // 32
-        super(UNetSDUNCLIPvsFPS, self).__init__()
+        super(Img2VidSDUNet, self).__init__()
         self.in_dim = in_dim
         self.num_tokens = num_tokens
         self.dim = dim
@@ -1048,9 +1046,9 @@ class UNetSDUNCLIPvsFPS(nn.Module):
         self.embed_dim = embed_dim
         self.out_dim = out_dim
         self.dim_mult = dim_mult
-        ### for temporal attention
+        # for temporal attention
         self.num_heads = num_heads
-        ### for spatial attention
+        # for spatial attention
         self.default_fps = default_fps
         self.head_dim = head_dim
         self.num_res_blocks = num_res_blocks
@@ -1096,7 +1094,7 @@ class UNetSDUNCLIPvsFPS(nn.Module):
         # encoder
         self.input_blocks = nn.ModuleList()
         init_block = nn.ModuleList([nn.Conv2d(self.in_dim, dim, 3, padding=1)])
-        ####need an initial temporal attention?
+        # need an initial temporal attention?
         if temporal_attention:
             if USE_TEMPORAL_TRANSFORMER:
                 init_block.append(
@@ -1306,7 +1304,7 @@ class UNetSDUNCLIPvsFPS(nn.Module):
             fps = torch.tensor(
                 [cfg.default_fps] * batch, dtype=torch.long, device=device)
 
-        #### image and video joint training, if mask_last_frame_num is set, prob_focus_present will be ignored
+        # image and video joint training, if mask_last_frame_num is set, prob_focus_present will be ignored
         if mask_last_frame_num > 0:
             focus_present_mask = None
             video_mask[-mask_last_frame_num:] = False
@@ -1333,7 +1331,7 @@ class UNetSDUNCLIPvsFPS(nn.Module):
         embeddings = embeddings.repeat_interleave(repeats=f, dim=0)
         context = context.repeat_interleave(repeats=f, dim=0)
 
-        ## always in shape (b f) c h w, except for temporal layer
+        # always in shape (b f) c h w, except for temporal layer
         x = rearrange(x, 'b c f h w -> (b f) c h w')
         # encoder
         xs = []

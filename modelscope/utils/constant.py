@@ -256,7 +256,7 @@ class MultiModalTasks(object):
     text_to_video_synthesis = 'text-to-video-synthesis'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
-    image_to_video_task = 'image-to-video-task'
+    image_to_video = 'image-to-video'
 
 
 class ScienceTasks(object):

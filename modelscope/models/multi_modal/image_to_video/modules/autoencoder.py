@@ -8,8 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..utils.registry_class import AUTO_ENCODER, DISTRIBUTION
-
 
 def nonlinearity(x):
     # swish
@@ -21,7 +19,6 @@ def Normalize(in_channels, num_groups=32):
         num_groups=num_groups, num_channels=in_channels, eps=1e-6, affine=True)
 
 
-@DISTRIBUTION.register_class()
 class DiagonalGaussianDistribution(object):
 
     def __init__(self, parameters, deterministic=False):
@@ -148,49 +145,6 @@ class ResnetBlock(nn.Module):
                 x = self.nin_shortcut(x)
 
         return x + h
-
-
-class AttnBlock(nn.Module):
-
-    def __init__(self, in_channels):
-        super().__init__()
-        self.in_channels = in_channels
-
-        self.norm = Normalize(in_channels)
-        self.q = torch.nn.Conv2d(
-            in_channels, in_channels, kernel_size=1, stride=1, padding=0)
-        self.k = torch.nn.Conv2d(
-            in_channels, in_channels, kernel_size=1, stride=1, padding=0)
-        self.v = torch.nn.Conv2d(
-            in_channels, in_channels, kernel_size=1, stride=1, padding=0)
-        self.proj_out = torch.nn.Conv2d(
-            in_channels, in_channels, kernel_size=1, stride=1, padding=0)
-
-    def forward(self, x):
-        h_ = x
-        h_ = self.norm(h_)
-        q = self.q(h_)
-        k = self.k(h_)
-        v = self.v(h_)
-
-        # compute attention
-        b, c, h, w = q.shape
-        q = q.reshape(b, c, h * w)
-        q = q.permute(0, 2, 1)
-        k = k.reshape(b, c, h * w)
-        w_ = torch.bmm(q, k)
-        w_ = w_ * (int(c)**(-0.5))
-        w_ = torch.nn.functional.softmax(w_, dim=2)
-
-        # attend to values
-        v = v.reshape(b, c, h * w)
-        w_ = w_.permute(0, 2, 1)
-        h_ = torch.bmm(v, w_)
-        h_ = h_.reshape(b, c, h, w)
-
-        h_ = self.proj_out(h_)
-
-        return x + h_
 
 
 class AttnBlock(nn.Module):
@@ -502,7 +456,6 @@ class Decoder(nn.Module):
         return h
 
 
-@AUTO_ENCODER.register_class()
 class AutoencoderKL(nn.Module):
 
     def __init__(self,

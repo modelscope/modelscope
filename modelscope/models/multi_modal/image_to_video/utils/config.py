@@ -50,7 +50,7 @@ cfg.use_div_loss = False
 cfg.noise_strength = 0.1
 
 # classifier-free guidance
-cfg.p_zero = 0.9
+cfg.p_zero = 0.1
 cfg.guide_scale = 3.0
 
 # clip vision encoder
@@ -64,7 +64,7 @@ cfg.temporal_attention = True
 cfg.decoder_bs = 8
 
 cfg.UNet = {
-    'type': 'UNetSDUNCLIPvsFPS',
+    'type': 'Img2VidSDUNet',
     'in_dim': 4,
     'dim': 320,
     'y_dim': cfg.vit_out_dim,
@@ -129,7 +129,7 @@ cfg.save_ckp_interval = 1000
 # -----------------------------------------------------------------------------
 
 # ----------------------------Pretrain Settings---------------------------------
-## Default: load 2d pretrain
+# Default: load 2d pretrain
 cfg.fix_weight = False
 cfg.load_match = False
 cfg.pretrained_checkpoint = 'v2-1_512-ema-pruned.ckpt'
@@ -151,7 +151,7 @@ cfg.inference_list_path = ''
 # logging
 cfg.log_interval = 100
 
-### Default log_dir
+# Default log_dir
 cfg.log_dir = 'workspace/output_data'
 # -----------------------------------------------------------------------------
 

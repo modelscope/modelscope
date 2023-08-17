@@ -116,7 +116,8 @@ class StableDiffusionXL(TorchModel):
 
     def compute_time_ids(self, original_size, crops_coords_top_left):
         target_size = (self.resolution, self.resolution)
-        add_time_ids = list(original_size + crops_coords_top_left + target_size)
+        add_time_ids = list(original_size + crops_coords_top_left
+                            + target_size)
         add_time_ids = torch.tensor([add_time_ids])
         add_time_ids = add_time_ids.to(self.device, dtype=self.weight_dtype)
         return add_time_ids
@@ -151,15 +152,18 @@ class StableDiffusionXL(TorchModel):
         prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
         pooled_prompt_embeds = pooled_prompt_embeds.view(bs_embed, -1)
         return prompt_embeds, pooled_prompt_embeds
-    
+
     def preprocessing_data(self, text, target):
         train_crop = transforms.RandomCrop(self.resolution)
-        train_resize = transforms.Resize(self.resolution, interpolation=transforms.InterpolationMode.BILINEAR)
+        train_resize = transforms.Resize(
+            self.resolution,
+            interpolation=transforms.InterpolationMode.BILINEAR)
         train_flip = transforms.RandomHorizontalFlip(p=1.0)
         image = target
         original_size = (image.size()[-1], image.size()[-2])
         image = train_resize(image)
-        y1, x1, h, w = train_crop.get_params(image, (self.resolution, self.resolution))
+        y1, x1, h, w = train_crop.get_params(
+            image, (self.resolution, self.resolution))
         image = crop(image, y1, x1, h, w)
         if self.random_flip and random.random() < 0.5:
             # flip
@@ -168,7 +172,7 @@ class StableDiffusionXL(TorchModel):
         crop_top_left = (y1, x1)
         input_ids_one = self.tokenize_caption(self.tokenizer_one, text)
         input_ids_two = self.tokenize_caption(self.tokenizer_two, text)
-        
+
         return original_size, crop_top_left, image, input_ids_one, input_ids_two
 
     def forward(self, text='', target=None):
@@ -176,7 +180,8 @@ class StableDiffusionXL(TorchModel):
         self.unet = self.unet.to(self.device)
 
         # processing data
-        original_size, crop_top_left, image, input_ids_one, input_ids_two = self.preprocessing_data(text, target)
+        original_size, crop_top_left, image, input_ids_one, input_ids_two = self.preprocessing_data(
+            text, target)
         # Convert to latent space
         with torch.no_grad():
             latents = self.vae.encode(
@@ -206,8 +211,7 @@ class StableDiffusionXL(TorchModel):
             text_encoders=[self.text_encoder_one, self.text_encoder_two],
             tokenizers=None,
             prompt=None,
-            text_input_ids_list=[input_ids_one, input_ids_two]
-        )
+            text_input_ids_list=[input_ids_one, input_ids_two])
         unet_added_conditions.update({'text_embeds': pooled_prompt_embeds})
         # Predict the noise residual and compute loss
         model_pred = self.unet(

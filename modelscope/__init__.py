@@ -28,7 +28,10 @@ if TYPE_CHECKING:
     from .utils.logger import get_logger
     from .utils.constant import Tasks
     from .utils.hf_util import AutoConfig, GenerationConfig
-    from .utils.hf_util import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
+    from .utils.hf_util import (AutoModel, AutoModelForCausalLM,
+                                AutoModelForSeq2SeqLM,
+                                AutoModelForSequenceClassification,
+                                AutoModelForTokenClassification)
     from .utils.hf_util import AutoTokenizer
     from .msdatasets import MsDataset
 
@@ -72,7 +75,9 @@ else:
         'utils.constant': ['Tasks'],
         'utils.hf_util': [
             'AutoConfig', 'GenerationConfig', 'AutoModel',
-            'AutoModelForCausalLM', 'AutoModelForSeq2SeqLM', 'AutoTokenizer'
+            'AutoModelForCausalLM', 'AutoModelForSeq2SeqLM', 'AutoTokenizer',
+            'AutoModelForSequenceClassification',
+            'AutoModelForTokenClassification'
         ],
         'msdatasets': ['MsDataset']
     }

@@ -7,6 +7,10 @@ from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
+from transformers import \
+    AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
+from transformers import \
+    AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
@@ -79,12 +83,15 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
     Returns:
         The wrapper
     """
+    default_ignore_file_pattern = ignore_file_pattern
 
     class ClassWrapper(module_class):
 
         @classmethod
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
+            ignore_file_pattern = kwargs.pop('ignore_file_pattern',
+                                             default_ignore_file_pattern)
             if not os.path.exists(pretrained_model_name_or_path):
                 revision = kwargs.pop('revision', None)
                 model_dir = snapshot_download(
@@ -109,6 +116,12 @@ AutoModelForCausalLM = get_wrapped_class(
     AutoModelForCausalLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
 AutoModelForSeq2SeqLM = get_wrapped_class(
     AutoModelForSeq2SeqLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
+AutoModelForSequenceClassification = get_wrapped_class(
+    AutoModelForSequenceClassificationHF,
+    ignore_file_pattern=[r'\w+\.safetensors'])
+AutoModelForTokenClassification = get_wrapped_class(
+    AutoModelForTokenClassificationHF,
+    ignore_file_pattern=[r'\w+\.safetensors'])
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])

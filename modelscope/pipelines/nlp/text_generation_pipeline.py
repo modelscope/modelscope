@@ -242,23 +242,38 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import (ChatGLM2Config,
-                                           ChatGLM2ForConditionalGeneration,
-                                           ChatGLM2Tokenizer)
+        from modelscope import AutoModel, AutoTokenizer
+        device: str = kwargs.get('device', 'gpu')
         if isinstance(model, str):
+            revision = kwargs.get('revision', None)
             model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
-            if torch.cuda.is_available():
-                model = model.cuda()
+                model,
+                revision=revision) if not os.path.exists(model) else model
+            default_device_map = None
+            if device.startswith('gpu') or device.startswith('cuda'):
+                default_device_map = {'': 0}
+            device_map = kwargs.get('device_map', default_device_map)
+            default_torch_dtype = None
+            if use_bf16:
+                default_torch_dtype = torch.bfloat16
+            torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
+            model = AutoModel.from_pretrained(
+                model_dir,
+                trust_remote_code=True,
+                device_map=device_map,
+                torch_dtype=torch_dtype)
+        else:
+            if device.startswith('gpu') or device.startswith('cuda'):
+                model.cuda()
+            if use_bf16:
+                model.bfloat16()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
-        if use_bf16:
-            model = model.bfloat16()
+
         self.model = model
         self.model.eval()
-        self.tokenizer = ChatGLM2Tokenizer.from_pretrained(
-            self.model.model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model.model_dir, trust_remote_code=True)
 
         super().__init__(model=model, **kwargs)
 
@@ -270,8 +285,13 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
-        inputs.update(forward_params)
-        return self.model.chat(inputs, self.tokenizer)
+        query = inputs['text']
+        history = inputs['history']
+        if isinstance(history, torch.Tensor):
+            history = history.tolist()
+        result = self.model.chat(self.tokenizer, query, history,
+                                 **forward_params)
+        return {'response': result[0], 'history': result[1]}
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

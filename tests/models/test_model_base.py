@@ -24,8 +24,8 @@ class BaseTest(unittest.TestCase):
 
     def test_from_pretrained_baichuan(self):
         model = Model.from_pretrained(
-            'baichuan-inc/baichuan-7B',
-            revision='v1.0.7',
+            'baichuan-inc/Baichuan-13B-Chat',
+            revision='v1.0.8',
             torch_dtype=torch.float16,
             device='gpu')
         print(model.__class__.__name__)

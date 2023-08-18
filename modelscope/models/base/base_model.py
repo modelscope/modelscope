@@ -131,6 +131,10 @@ class Model(ABC):
                     equal to the model saved.
                     For example, load a `backbone` into a `text-classification` model.
                     Other kwargs will be directly fed into the `model` key, to replace the default configs.
+                use_hf(bool, `optional`):
+                    If set to True, it will initialize the model using AutoModel or AutoModelFor* from hf.
+                    If set to False, the model is loaded using the modelscope mode.
+                    If set to None, the loading mode will be automatically selected.
                 ignore_file_pattern(List[str], `optional`):
                     This parameter is passed to snapshot_download
                 device_map(str | Dict[str, str], `optional`):
@@ -182,9 +186,22 @@ class Model(ABC):
             task_name = kwargs.pop('task')
         if isinstance(device, str) and device.startswith('gpu'):
             device = 'cuda' + device[3:]
+        use_hf = kwargs.get('use_hf', None)
+        automodel_class = None
+        if use_hf is None or use_hf:
+            automodel_class = get_automodel_class(local_model_dir, task_name)
+            if use_hf and automodel_class is None:
+                raise ValueError(
+                    f'Model import failed. You used `use_hf={use_hf}`, '
+                    'but the model is not a model of hf')
+            if use_hf is None and automodel_class is not None:
+                ms_wrapper_path = os.path.join(local_model_dir,
+                                               'ms_wrapper.py')
+                if os.path.exists(ms_wrapper_path):
+                    automodel_class = None
 
-        automodel_class = get_automodel_class(local_model_dir, task_name)
         if automodel_class is not None:
+            # use hf
             default_device_map = None
             if isinstance(device, str):
                 if device.startswith('cuda'):
@@ -203,6 +220,7 @@ class Model(ABC):
                 trust_remote_code=True)
             return model
 
+        # use ms
         model_cfg = cfg.model
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type

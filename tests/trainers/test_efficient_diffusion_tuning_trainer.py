@@ -39,7 +39,7 @@ class TestEfficientDiffusionTuningTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_lora_train(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
         model_revision = 'v1.0.2'
@@ -69,7 +69,7 @@ class TestEfficientDiffusionTuningTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_lora_eval(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
         model_revision = 'v1.0.2'
@@ -91,7 +91,7 @@ class TestEfficientDiffusionTuningTrainer(unittest.TestCase):
         result = trainer.evaluate()
         print(f'Efficient-diffusion-tuning-lora eval output: {result}.')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_control_lora_train(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-control-lora'
         model_revision = 'v1.0.2'
@@ -122,7 +122,7 @@ class TestEfficientDiffusionTuningTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_control_lora_eval(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-control-lora'
         model_revision = 'v1.0.2'

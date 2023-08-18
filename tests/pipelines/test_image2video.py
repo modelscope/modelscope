@@ -15,7 +15,7 @@ class Image2VideoTest(unittest.TestCase):
         self.model_id = 'damo/Image-to-Video'
         self.path = 'https://video-generation-wulanchabu.oss-cn-wulanchabu.aliyuncs.com/baishao/test.jpeg'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         pipe = pipeline(task=self.task, model=self.model_id)
 

@@ -4,6 +4,8 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
+from transformers import PretrainedConfig
+
 from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
@@ -18,6 +20,47 @@ from modelscope.utils.plugins import (register_modelhub_repo,
 logger = get_logger()
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
+
+
+def _can_load_by_automodel(automodel_class: type,
+                           config: PretrainedConfig) -> bool:
+    automodel_class_name = automodel_class.__name__
+    if type(config) in automodel_class._model_mapping.keys():
+        return True
+    if hasattr(config, 'auto_map') and automodel_class_name in config.auto_map:
+        return True
+    return False
+
+
+def get_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
+    from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
+                            AutoModelForSeq2SeqLM,
+                            AutoModelForTokenClassification,
+                            AutoModelForSequenceClassification)
+    automodel_mapping = {
+        Tasks.backbone: AutoModel,
+        Tasks.chat: AutoModelForCausalLM,
+        Tasks.text_generation: AutoModelForCausalLM,
+        Tasks.text_classification: AutoModelForSequenceClassification,
+        Tasks.token_classification: AutoModelForTokenClassification,
+    }
+    automodel_class = automodel_mapping.get(task_name, None)
+    if automodel_class is None:
+        return None
+    config_path = os.path.join(model_dir, 'config.json')
+    if not os.path.exists(config_path):
+        return None
+    try:
+        config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+    except (FileNotFoundError, ValueError):
+        return None
+
+    if _can_load_by_automodel(automodel_class, config):
+        return automodel_class
+    if (automodel_class is AutoModelForCausalLM
+            and _can_load_by_automodel(AutoModelForSeq2SeqLM, config)):
+        return AutoModelForSeq2SeqLM
+    return None
 
 
 class Model(ABC):
@@ -84,12 +127,18 @@ class Model(ABC):
             device(str, `optional`): The device to load the model.
             **kwargs:
                 task(str, `optional`): The `Tasks` enumeration value to replace the task value
-                read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
-                equal to the model saved.
-                For example, load a `backbone` into a `text-classification` model.
-                Other kwargs will be directly fed into the `model` key, to replace the default configs.
-                use_hf(bool): If set True, will use AutoModel in hf to initialize the model to keep compatibility
-                    with huggingface transformers.
+                    read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
+                    equal to the model saved.
+                    For example, load a `backbone` into a `text-classification` model.
+                    Other kwargs will be directly fed into the `model` key, to replace the default configs.
+                ignore_file_pattern(List[str], `optional`):
+                    This parameter is passed to snapshot_download
+                device_map(str | Dict[str, str], `optional`):
+                    This parameter is passed to AutoModel or AutoModelForxxx
+                torch_dtype(torch.dtype, `optional`):
+                    This parameter is passed to AutoModel or AutoModelForxxx
+                config(PretrainedConfig, `optional`):
+                    This parameter is passed to AutoModel or AutoModelForxxx
         Returns:
             A model instance.
 
@@ -115,13 +164,13 @@ class Model(ABC):
                 )
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
+            ignore_file_pattern = kwargs.get('ignore_file_pattern', None)
             local_model_dir = snapshot_download(
-                model_name_or_path, revision, user_agent=invoked_by)
+                model_name_or_path,
+                revision,
+                user_agent=invoked_by,
+                ignore_file_pattern=ignore_file_pattern)
         logger.info(f'initialize model from {local_model_dir}')
-
-        if kwargs.pop('use_hf', False):
-            from modelscope import AutoModel
-            return AutoModel.from_pretrained(local_model_dir)
 
         if cfg_dict is not None:
             cfg = cfg_dict
@@ -131,6 +180,29 @@ class Model(ABC):
         task_name = cfg.task
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
+        if isinstance(device, str) and device.startswith('gpu'):
+            device = 'cuda' + device[3:]
+
+        automodel_class = get_automodel_class(local_model_dir, task_name)
+        if automodel_class is not None:
+            default_device_map = None
+            if isinstance(device, str):
+                if device.startswith('cuda'):
+                    default_device_map = {'': 'cuda:0'}
+                elif device == 'cpu':
+                    default_device_map = {'': 'cpu'}
+            device_map = kwargs.get('device_map', default_device_map)
+            torch_dtype = kwargs.get('torch_dtype', None)
+            config = kwargs.get('config', None)
+
+            model = automodel_class.from_pretrained(
+                local_model_dir,
+                device_map=device_map,
+                torch_dtype=torch_dtype,
+                config=config,
+                trust_remote_code=True)
+            return model
+
         model_cfg = cfg.model
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type

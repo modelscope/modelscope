@@ -5,10 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 from modelscope.models.base import Model
 
@@ -25,15 +22,29 @@ class BaseTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    def test_from_pretrained(self):
+    def test_from_pretrained_baichuan(self):
         model = Model.from_pretrained(
-            'baichuan-inc/baichuan-7B', revision='v1.0.5')
+            'baichuan-inc/baichuan-7B',
+            revision='v1.0.7',
+            torch_dtype=torch.float16,
+            device='gpu')
+        print(model.__class__.__name__)
+        self.assertIsNotNone(model)
+
+    def test_from_pretrained_chatglm2(self):
+        model = Model.from_pretrained(
+            'ZhipuAI/chatglm2-6b',
+            revision='v1.0.7',
+            torch_dtype=torch.float16,
+            device='gpu')
+        print(model.__class__.__name__)
         self.assertIsNotNone(model)
 
     def test_from_pretrained_hf(self):
         model = Model.from_pretrained(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny',
-            use_hf=True)
+            device='gpu')
+        print(model.__class__.__name__)
         self.assertIsNotNone(model)
 
 

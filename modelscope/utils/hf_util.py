@@ -3,6 +3,7 @@
 import os
 import sys
 
+from transformers import CONFIG_MAPPING
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
@@ -13,7 +14,10 @@ from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import GenerationConfig as GenerationConfigHF
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import (PretrainedConfig, PreTrainedModel,
+                          PreTrainedTokenizerBase)
+from transformers.models.auto.tokenization_auto import (
+    TOKENIZER_MAPPING_NAMES, get_tokenizer_config)
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import Invoke
@@ -74,6 +78,47 @@ patch_tokenizer_base()
 patch_model_base()
 
 
+def check_hf_code(model_dir: str, auto_class: type) -> None:
+    config_path = os.path.join(model_dir, 'config.json')
+    auto_class_name = auto_class.__name__
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f'{config_path} is not found')
+
+    config_dict = PretrainedConfig.get_config_dict(config_path)[0]
+    model_type = config_dict['model_type']
+    if auto_class is AutoConfigHF:
+        if model_type in CONFIG_MAPPING:
+            return
+    elif auto_class is AutoTokenizerHF:
+        if model_type in TOKENIZER_MAPPING_NAMES:
+            return
+    else:
+        mapping_names = [
+            m.model_type for m in auto_class._model_mapping.keys()
+        ]
+        if model_type in mapping_names:
+            return
+
+    if auto_class is AutoTokenizerHF:
+        tokenizer_config_dict = get_tokenizer_config(model_dir)
+        auto_map = tokenizer_config_dict.get('auto_map', None)
+        if auto_map is None:
+            raise ValueError(f'`auto_map` key is not exists in {config_path}')
+        module_name = auto_map.get(auto_class_name, None)[0]
+    else:
+        auto_map = config_dict.get('auto_map', None)
+        if auto_map is None:
+            raise ValueError(f'`auto_map` key is not exists in {config_path}')
+        module_name = auto_map.get(auto_class_name, None)
+    if module_name is None:
+        raise ValueError(
+            f'`{auto_class_name}` is not exists in `auto_map` of {config_path}'
+        )
+    module_path = os.path.join(model_dir, module_name.split('.')[0] + '.py')
+    if not os.path.exists(module_path):
+        raise FileNotFoundError(f'{module_path} is not found')
+
+
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
     """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
     Args:
@@ -102,11 +147,16 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
             else:
                 model_dir = pretrained_model_name_or_path
 
-            model = module_class.from_pretrained(model_dir, *model_args,
-                                                 **kwargs)
-            model.model_dir = model_dir
-            return model
+            if module_class is not GenerationConfigHF:
+                check_hf_code(model_dir, module_class)
+            module_obj = module_class.from_pretrained(model_dir, *model_args,
+                                                      **kwargs)
+            if module_class.__name__.startswith('AutoModel'):
+                module_obj.model_dir = model_dir
+            return module_obj
 
+    ClassWrapper.__name__ = module_class.__name__
+    ClassWrapper.__qualname__ = module_class.__qualname__
     return ClassWrapper
 
 

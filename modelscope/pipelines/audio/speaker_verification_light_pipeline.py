@@ -90,7 +90,7 @@ class SpeakerVerificationPipeline(Pipeline):
                     (os.path.basename(p).rsplit('.', 1)[0]))
                 np.save(save_path, inputs[i].numpy())
 
-        if len(in_audios) == 2:
+        if len(inputs) == 2:
             # compute the score
             score = self.compute_cos_similarity(inputs[0], inputs[1])
             score = round(score, 5)

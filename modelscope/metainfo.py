@@ -220,6 +220,7 @@ class Models(object):
     stable_diffusion = 'stable-diffusion'
     videocomposer = 'videocomposer'
     text_to_360panorama_image = 'text-to-360panorama-image'
+    image_to_video_model = 'image-to-video-model'
 
     # science models
     unifold = 'unifold'
@@ -545,6 +546,7 @@ class Pipelines(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
     llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
+    image_to_video_task_pipeline = 'image-to-video-task-pipeline'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

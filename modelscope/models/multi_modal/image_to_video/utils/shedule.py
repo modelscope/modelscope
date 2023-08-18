@@ -1,6 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import math
+
 import torch
+
+
+def fn(u):
+    return math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
 
 
 def beta_schedule(schedule,
@@ -8,16 +14,23 @@ def beta_schedule(schedule,
                   init_beta=None,
                   last_beta=None):
     '''
-    This code defines a function beta_schedule that generates a sequence of beta values based on the given input parameters. These beta values can be used in video diffusion processes. The function has the following parameters:
-        schedule(str): Determines the type of beta schedule to be generated. It can be 'linear', 'linear_sd', 'quadratic', or 'cosine'.
+    This code defines a function beta_schedule that generates a sequence of beta values based on the given input
+    parameters. These beta values can be used in video diffusion processes. The function has the following parameters:
+        schedule(str): Determines the type of beta schedule to be generated. It can be 'linear', 'linear_sd',
+                      'quadratic', or 'cosine'.
         num_timesteps(int, optional): The number of timesteps for the generated beta schedule. Default is 1000.
-        init_beta(float, optional): The initial beta value. If not provided, a default value is used based on the chosen schedule.
-        last_beta(float, optional): The final beta value. If not provided, a default value is used based on the chosen schedule.
-    The function returns a PyTorch tensor containing the generated beta values. The beta schedule is determined by the schedule parameter:
+        init_beta(float, optional): The initial beta value. If not provided, a default value is used based on the
+                                    chosen schedule.
+        last_beta(float, optional): The final beta value. If not provided, a default value is used based on the
+                                    chosen schedule.
+    The function returns a PyTorch tensor containing the generated beta values.
+    The beta schedule is determined by the schedule parameter:
         1.Linear: Generates a linear sequence of beta values betweeninit_betaandlast_beta.
-        2.Linear_sd: Generates a linear sequence of beta values between the square root of init_beta and the square root oflast_beta, and then squares the result.
+        2.Linear_sd: Generates a linear sequence of beta values between the square root of init_beta and the square root
+                     oflast_beta, and then squares the result.
         3.Quadratic: Similar to the 'linear_sd' schedule, but with different default values forinit_betaandlast_beta.
-        4.Cosine: Generates a sequence of beta values based on a cosine function, ensuring the values are between 0 and 0.999.
+        4.Cosine: Generates a sequence of beta values based on a cosine function, ensuring the values are between 0
+                  and 0.999.
     If an unsupported schedule is provided, a ValueError is raised with a message indicating the issue.
     '''
     if schedule == 'linear':
@@ -41,7 +54,6 @@ def beta_schedule(schedule,
         for step in range(num_timesteps):
             t1 = step / num_timesteps
             t2 = (step + 1) / num_timesteps
-            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
             betas.append(min(1.0 - fn(t2) / fn(t1), 0.999))
         return torch.tensor(betas, dtype=torch.float64)
     else:

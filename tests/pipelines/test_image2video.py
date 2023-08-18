@@ -5,11 +5,10 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import DownloadMode, Tasks
-from modelscope.utils.demo_utils import DemoCompatibilityCheck
 from modelscope.utils.test_utils import test_level
 
 
-class Image2VideoTest(unittest.TestCase, DemoCompatibilityCheck):
+class Image2VideoTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_to_video
@@ -23,10 +22,6 @@ class Image2VideoTest(unittest.TestCase, DemoCompatibilityCheck):
         output_video_path = pipe(
             self.path, output_video='./output.mp4')[OutputKeys.OUTPUT_VIDEO]
         print(output_video_path)
-
-    @unittest.skip('demo compatibility test is only enabled on a needed-basis')
-    def test_demo_compatibility(self):
-        self.compatibility_check()
 
 
 if __name__ == '__main__':

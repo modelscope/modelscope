@@ -64,26 +64,6 @@ class DiagonalGaussianDistribution(object):
         return self.mean
 
 
-class Downsample(nn.Module):
-
-    def __init__(self, in_channels, with_conv):
-        super().__init__()
-        self.with_conv = with_conv
-        if self.with_conv:
-            # no asymmetric padding in torch conv, must do it ourselves
-            self.conv = torch.nn.Conv2d(
-                in_channels, in_channels, kernel_size=3, stride=2, padding=0)
-
-    def forward(self, x):
-        if self.with_conv:
-            pad = (0, 1, 0, 1)
-            x = torch.nn.functional.pad(x, pad, mode='constant', value=0)
-            x = self.conv(x)
-        else:
-            x = torch.nn.functional.avg_pool2d(x, kernel_size=2, stride=2)
-        return x
-
-
 class ResnetBlock(nn.Module):
 
     def __init__(self,
@@ -246,7 +226,6 @@ class Encoder(nn.Module):
                  attn_type='vanilla',
                  **ignore_kwargs):
         super().__init__()
-        if use_linear_attn: attn_type = 'linear'
         self.ch = ch
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
@@ -356,7 +335,6 @@ class Decoder(nn.Module):
                  attn_type='vanilla',
                  **ignorekwargs):
         super().__init__()
-        if use_linear_attn: attn_type = 'linear'
         self.ch = ch
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
@@ -366,8 +344,7 @@ class Decoder(nn.Module):
         self.give_pre_end = give_pre_end
         self.tanh_out = tanh_out
 
-        # compute in_ch_mult, block_in and curr_res at lowest res
-        in_ch_mult = (1, ) + tuple(ch_mult)
+        # compute block_in and curr_res at lowest res
         block_in = ch * ch_mult[self.num_resolutions - 1]
         curr_res = resolution // 2**(self.num_resolutions - 1)
         self.z_shape = (1, z_channels, curr_res, curr_res)

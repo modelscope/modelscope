@@ -35,10 +35,11 @@ logger = get_logger()
     Tasks.image_to_video, module_name=Models.image_to_video_model)
 class ImageToVideo(TorchModel):
     r"""
-    Image2Video aims to solve the task of generating high-definition videos based on input images. Image2Video is a video
-    generation basic model developed by Alibaba Cloud, with a parameter size of approximately 2 billion. It has been pre trained on large-scale
-    video and image data and fine-tuned on a small amount of high-quality data. The data is widely distributed and diverse in categories, and the
-    model has good generalization ability for different types of data
+    Image2Video aims to solve the task of generating high-definition videos based on input images.
+    Image2Video is a video generation basic model developed by Alibaba Cloud, with a parameter size
+    of approximately 2 billion. It has been pre trained on large-scale video and image data and
+    fine-tuned on a small amount of high-quality data. The data is widely distributed and diverse
+    in categories, and the model has good generalization ability for different types of data
 
     Paper link: https://arxiv.org/abs/2306.02018
 

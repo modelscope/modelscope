@@ -8,8 +8,12 @@ import torch
 import torchvision.transforms.functional as F
 from PIL import Image, ImageFilter
 
-__all__ = ['Compose', 'Resize', 'Rescale', 'CenterCrop', 'CenterCropV2', 'CenterCropWide', 'RandomCrop', 'RandomCropV2', 'RandomHFlip',\
-    'GaussianBlur', 'ColorJitter', 'RandomGray', 'ToTensor', 'Normalize', 'ResizeRandomCrop', 'ExtractResizeRandomCrop', 'ExtractResizeAssignCrop']
+__all__ = [
+    'Compose', 'Resize', 'Rescale', 'CenterCrop', 'CenterCropV2',
+    'CenterCropWide', 'RandomCrop', 'RandomCropV2', 'RandomHFlip',
+    'GaussianBlur', 'ColorJitter', 'RandomGray', 'ToTensor', 'Normalize',
+    'ResizeRandomCrop', 'ExtractResizeRandomCrop', 'ExtractResizeAssignCrop'
+]
 
 
 class Compose(object):

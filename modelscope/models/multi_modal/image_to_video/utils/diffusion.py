@@ -16,6 +16,10 @@ def _i(tensor, t, x):
     return tensor[t].view(shape).to(x)
 
 
+def fn(u):
+    return math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
+
+
 def beta_schedule(schedule,
                   num_timesteps=1000,
                   init_beta=None,
@@ -37,7 +41,6 @@ def beta_schedule(schedule,
         for step in range(num_timesteps):
             t1 = step / num_timesteps
             t2 = (step + 1) / num_timesteps
-            fn = lambda u: math.cos((u + 0.008) / 1.008 * math.pi / 2)**2
             betas.append(min(1.0 - fn(t2) / fn(t1), 0.999))
         return torch.tensor(betas, dtype=torch.float64)
     else:
@@ -119,8 +122,8 @@ class GaussianDiffusion(object):
         """
         # noise = torch.randn_like(x0) if noise is None else noise
         noise = self.sample_loss(x0, noise)
-        return _i(self.sqrt_alphas_cumprod, t, x0) * x0 + \
-               _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise
+        return _i(self.sqrt_alphas_cumprod, t, x0) * x0 + (
+            _i(self.sqrt_one_minus_alphas_cumprod, t, x0) * noise)
 
     def q_mean_variance(self, x0, t):
         r"""Distribution of q(x_t | x_0).
@@ -210,11 +213,13 @@ class GaussianDiffusion(object):
             u_out = model(xt, self._scale_timesteps(t), **model_kwargs[1])
             dim = y_out.size(1) if self.var_type.startswith(
                 'fixed') else y_out.size(1) // 2
-            out = torch.cat([
-                u_out[:, :dim] + guide_scale *
-                (y_out[:, :dim] - u_out[:, :dim]), y_out[:, dim:]
-            ],
-                            dim=1)
+            out = torch.cat(
+                [
+                    u_out[:, :dim] + guide_scale *  # noqa
+                    (y_out[:, :dim] - u_out[:, :dim]),
+                    y_out[:, dim:]
+                ],
+                dim=1)
 
         # compute variance
         if self.var_type == 'learned':
@@ -239,18 +244,19 @@ class GaussianDiffusion(object):
         # compute mean and x0
         if self.mean_type == 'x_{t-1}':
             mu = out
-            x0 = _i(1.0 / self.posterior_mean_coef1, t, xt) * mu - \
-                 _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t, xt) * xt
+            x0 = _i(1.0 / self.posterior_mean_coef1, t, xt) * mu - (
+                _i(self.posterior_mean_coef2 / self.posterior_mean_coef1, t,
+                   xt) * xt)
         elif self.mean_type == 'x0':
             x0 = out
             mu, _, _ = self.q_posterior_mean_variance(x0, xt, t)
         elif self.mean_type == 'eps':
-            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out
+            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - (
+                _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * out)
             mu, _, _ = self.q_posterior_mean_variance(x0, xt, t)
         elif self.mean_type == 'v':
-            x0 = _i(self.sqrt_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_one_minus_alphas_cumprod, t, xt) * out
+            x0 = _i(self.sqrt_alphas_cumprod, t, xt) * xt - (
+                _i(self.sqrt_one_minus_alphas_cumprod, t, xt) * out)
             mu, _, _ = self.q_posterior_mean_variance(x0, xt, t)
 
         # restrict the range of x0
@@ -288,21 +294,21 @@ class GaussianDiffusion(object):
         if condition_fn is not None:
             # x0 -> eps
             alpha = _i(self.alphas_cumprod, t, xt)
-            eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+            eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / (
+                _i(self.sqrt_recipm1_alphas_cumprod, t, xt))
             eps = eps - (1 - alpha).sqrt() * condition_fn(
                 xt, self._scale_timesteps(t), **model_kwargs)
 
             # eps -> x0
-            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - (
+                _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps)
 
         # derive variables
-        eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+        eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / (
+            _i(self.sqrt_recipm1_alphas_cumprod, t, xt))
         alphas = _i(self.alphas_cumprod, t, xt)
         alphas_prev = _i(self.alphas_cumprod, (t - stride).clamp(0), xt)
-        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *
+        sigmas = eta * torch.sqrt((1 - alphas_prev) / (1 - alphas) *  # noqa
                                   (1 - alphas / alphas_prev))
 
         # random sample
@@ -357,8 +363,8 @@ class GaussianDiffusion(object):
                                            percentile, guide_scale)
 
         # derive variables
-        eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-              _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+        eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / (
+            _i(self.sqrt_recipm1_alphas_cumprod, t, xt))
         alphas_next = _i(
             torch.cat(
                 [self.alphas_cumprod,
@@ -419,30 +425,29 @@ class GaussianDiffusion(object):
             if condition_fn is not None:
                 # x0 -> eps
                 alpha = _i(self.alphas_cumprod, t, xt)
-                eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                      _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+                eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / (
+                    _i(self.sqrt_recipm1_alphas_cumprod, t, xt))
                 eps = eps - (1 - alpha).sqrt() * condition_fn(
                     xt, self._scale_timesteps(t), **model_kwargs)
 
                 # eps -> x0
-                x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                     _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+                x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - (
+                    _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps)
 
             # derive eps
-            eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / \
-                  _i(self.sqrt_recipm1_alphas_cumprod, t, xt)
+            eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / (
+                _i(self.sqrt_recipm1_alphas_cumprod, t, xt))
             return eps
 
         # function for compute x_0 and x_{t-1}
         def compute_x0(eps, t):
             # eps -> x0
-            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - \
-                 _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps
+            x0 = _i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - (
+                _i(self.sqrt_recipm1_alphas_cumprod, t, xt) * eps)
 
             # deterministic sample
             alphas_prev = _i(self.alphas_cumprod, (t - stride).clamp(0), xt)
             direction = torch.sqrt(1 - alphas_prev) * eps
-            mask = t.ne(0).float().view(-1, *((1, ) * (xt.ndim - 1)))
             xt_1 = torch.sqrt(alphas_prev) * x0 + direction
             return xt_1, x0
 

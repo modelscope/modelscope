@@ -73,9 +73,10 @@ class RelativePositionBias(nn.Module):
         max_exact = num_buckets // 2
         is_small = n < max_exact
 
-        val_if_large = max_exact + (torch.log(n.float() / max_exact)
-                                    / math.log(max_distance / max_exact) *
-                                    (num_buckets - max_exact)).long()
+        val_if_large = max_exact + (
+            torch.log(n.float() / max_exact)
+            / math.log(max_distance / max_exact) *  # noqa
+            (num_buckets - max_exact)).long()
         val_if_large = torch.min(
             val_if_large, torch.full_like(val_if_large, num_buckets - 1))
 
@@ -706,7 +707,7 @@ class TemporalAttentionBlock(nn.Module):
             sim = sim + pos_bias
 
         if (focus_present_mask is None and video_mask is not None):
-            #video_mask: [B, n]
+            # video_mask: [B, n]
             mask = video_mask[:, None, :] * video_mask[:, :, None]
             mask = mask.unsqueeze(1).unsqueeze(1)
             sim = sim.masked_fill(~mask, -torch.finfo(sim.dtype).max)

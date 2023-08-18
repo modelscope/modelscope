@@ -24,7 +24,8 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             'prompt':
             'a street scene with a cafe and a restaurant sign in anime style'
         }
-        sd_tuner_pipeline = pipeline(self.task, model_id, model_revision=model_revision)
+        sd_tuner_pipeline = pipeline(
+            self.task, model_id, model_revision=model_revision)
         result = sd_tuner_pipeline(inputs, generator_seed=0)
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         cv2.imwrite(output_image_path, result['output_imgs'][0])
@@ -48,7 +49,8 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             'prompt':
             'a street scene with a cafe and a restaurant sign in anime style'
         }
-        sd_tuner_pipeline = pipeline(self.task, model_id, model_revision=model_revision)
+        sd_tuner_pipeline = pipeline(
+            self.task, model_id, model_revision=model_revision)
         result = sd_tuner_pipeline(inputs, generator_seed=0)
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         cv2.imwrite(output_image_path, result['output_imgs'][0])
@@ -72,7 +74,8 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             'prompt':
             'a street scene with a cafe and a restaurant sign in anime style'
         }
-        sd_tuner_pipeline = pipeline(self.task, model_id, model_revision=model_revision)
+        sd_tuner_pipeline = pipeline(
+            self.task, model_id, model_revision=model_revision)
         result = sd_tuner_pipeline(inputs, generator_seed=0)
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         cv2.imwrite(output_image_path, result['output_imgs'][0])

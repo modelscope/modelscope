@@ -18,7 +18,8 @@ class EfficientDiffusionTuningTest(unittest.TestCase):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
         model_revision = 'v1.0.2'
         inputs = {'prompt': 'pale golden rod circle with old lace background'}
-        edt_pipeline = pipeline(self.task, model_id, model_revision=model_revision)
+        edt_pipeline = pipeline(
+            self.task, model_id, model_revision=model_revision)
         result = edt_pipeline(inputs)
         print(f'Efficient-diffusion-tuning-lora output: {result}.')
 
@@ -40,7 +41,8 @@ class EfficientDiffusionTuningTest(unittest.TestCase):
             'cond':
             'data/test/images/efficient_diffusion_tuning_sd_control_lora_source.png'
         }
-        edt_pipeline = pipeline(self.task, model_id, model_revision=model_revision)
+        edt_pipeline = pipeline(
+            self.task, model_id, model_revision=model_revision)
         result = edt_pipeline(inputs)
         print(f'Efficient-diffusion-tuning-control-lora output: {result}.')
 

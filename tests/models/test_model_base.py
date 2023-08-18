@@ -40,7 +40,7 @@ class BaseTest(unittest.TestCase):
         print(model.__class__.__name__)
         self.assertIsNotNone(model)
 
-    def test_from_pretrained_hf(self):
+    def test_from_pretrained_ms(self):
         model = Model.from_pretrained(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny',
             device='gpu')

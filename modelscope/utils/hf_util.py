@@ -85,7 +85,10 @@ def check_hf_code(model_dir: str, auto_class: type) -> None:
         raise FileNotFoundError(f'{config_path} is not found')
 
     config_dict = PretrainedConfig.get_config_dict(config_path)[0]
-    model_type = config_dict['model_type']
+    model_type = config_dict.get('model_type', None)
+    if model_type is None:
+        raise ValueError(f'`model_type` key is not found in {config_path}')
+
     if auto_class is AutoConfigHF:
         if model_type in CONFIG_MAPPING:
             return
@@ -110,6 +113,7 @@ def check_hf_code(model_dir: str, auto_class: type) -> None:
         if auto_map is None:
             raise ValueError(f'`auto_map` key is not exists in {config_path}')
         module_name = auto_map.get(auto_class_name, None)
+
     if module_name is None:
         raise ValueError(
             f'`{auto_class_name}` is not exists in `auto_map` of {config_path}'
@@ -151,6 +155,7 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
                 check_hf_code(model_dir, module_class)
             module_obj = module_class.from_pretrained(model_dir, *model_args,
                                                       **kwargs)
+
             if module_class.__name__.startswith('AutoModel'):
                 module_obj.model_dir = model_dir
             return module_obj

@@ -138,11 +138,11 @@ class Model(ABC):
                 ignore_file_pattern(List[str], `optional`):
                     This parameter is passed to snapshot_download
                 device_map(str | Dict[str, str], `optional`):
-                    This parameter is passed to AutoModel or AutoModelForxxx
+                    This parameter is passed to AutoModel or AutoModelFor*
                 torch_dtype(torch.dtype, `optional`):
-                    This parameter is passed to AutoModel or AutoModelForxxx
+                    This parameter is passed to AutoModel or AutoModelFor*
                 config(PretrainedConfig, `optional`):
-                    This parameter is passed to AutoModel or AutoModelForxxx
+                    This parameter is passed to AutoModel or AutoModelFor*
         Returns:
             A model instance.
 

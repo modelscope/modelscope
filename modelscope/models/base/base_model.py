@@ -4,12 +4,11 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
-from transformers import PretrainedConfig
-
-from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
+from modelscope.utils.automodel_utils import (can_load_by_ms,
+                                              try_to_load_hf_model)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
@@ -20,47 +19,6 @@ from modelscope.utils.plugins import (register_modelhub_repo,
 logger = get_logger()
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
-
-
-def _can_load_by_automodel(automodel_class: type,
-                           config: PretrainedConfig) -> bool:
-    automodel_class_name = automodel_class.__name__
-    if type(config) in automodel_class._model_mapping.keys():
-        return True
-    if hasattr(config, 'auto_map') and automodel_class_name in config.auto_map:
-        return True
-    return False
-
-
-def get_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
-    from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
-                            AutoModelForSeq2SeqLM,
-                            AutoModelForTokenClassification,
-                            AutoModelForSequenceClassification)
-    automodel_mapping = {
-        Tasks.backbone: AutoModel,
-        Tasks.chat: AutoModelForCausalLM,
-        Tasks.text_generation: AutoModelForCausalLM,
-        Tasks.text_classification: AutoModelForSequenceClassification,
-        Tasks.token_classification: AutoModelForTokenClassification,
-    }
-    automodel_class = automodel_mapping.get(task_name, None)
-    if automodel_class is None:
-        return None
-    config_path = os.path.join(model_dir, 'config.json')
-    if not os.path.exists(config_path):
-        return None
-    try:
-        config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
-    except (FileNotFoundError, ValueError):
-        return None
-
-    if _can_load_by_automodel(automodel_class, config):
-        return automodel_class
-    if (automodel_class is AutoModelForCausalLM
-            and _can_load_by_automodel(AutoModelForSeq2SeqLM, config)):
-        return AutoModelForSeq2SeqLM
-    return None
 
 
 class Model(ABC):
@@ -184,46 +142,23 @@ class Model(ABC):
         task_name = cfg.task
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
-        if isinstance(device, str) and device.startswith('gpu'):
-            device = 'cuda' + device[3:]
-        use_hf = kwargs.get('use_hf', None)
-        automodel_class = None
-        if use_hf is None or use_hf:
-            automodel_class = get_automodel_class(local_model_dir, task_name)
-            if use_hf and automodel_class is None:
-                raise ValueError(
-                    f'Model import failed. You used `use_hf={use_hf}`, '
-                    'but the model is not a model of hf')
-            if use_hf is None and automodel_class is not None:
-                ms_wrapper_path = os.path.join(local_model_dir,
-                                               'ms_wrapper.py')
-                if os.path.exists(ms_wrapper_path):
-                    automodel_class = None
-
-        if automodel_class is not None:
-            # use hf
-            default_device_map = None
-            if isinstance(device, str):
-                if device.startswith('cuda'):
-                    default_device_map = {'': 'cuda:0'}
-                elif device == 'cpu':
-                    default_device_map = {'': 'cpu'}
-            device_map = kwargs.get('device_map', default_device_map)
-            torch_dtype = kwargs.get('torch_dtype', None)
-            config = kwargs.get('config', None)
-
-            model = automodel_class.from_pretrained(
-                local_model_dir,
-                device_map=device_map,
-                torch_dtype=torch_dtype,
-                config=config,
-                trust_remote_code=True)
-            return model
-
-        # use ms
         model_cfg = cfg.model
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
+        model_type = model_cfg.type
+        if isinstance(device, str) and device.startswith('gpu'):
+            device = 'cuda' + device[3:]
+        use_hf = kwargs.pop('use_hf', None)
+        if use_hf is None and can_load_by_ms(local_model_dir, task_name,
+                                             model_type):
+            use_hf = False
+        model = None
+        if use_hf in {True, None}:
+            model = try_to_load_hf_model(local_model_dir, task_name, device,
+                                         use_hf, **kwargs)
+        if model is not None:
+            return model
+        # use ms
         model_cfg.model_dir = local_model_dir
 
         # install and import remote repos before build

@@ -19,6 +19,7 @@ from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
+from modelscope.utils.torch_utils import is_on_same_device
 
 __all__ = [
     'TextGenerationPipeline',
@@ -242,7 +243,7 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope import AutoModel, AutoTokenizer
+        from modelscope import AutoTokenizer
         device: str = kwargs.get('device', 'gpu')
         if isinstance(model, str):
             revision = kwargs.get('revision', None)
@@ -257,13 +258,14 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
             if use_bf16:
                 default_torch_dtype = torch.bfloat16
             torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
-            model = AutoModel.from_pretrained(
+            model = Model.from_pretrained(
                 model_dir,
                 trust_remote_code=True,
                 device_map=device_map,
                 torch_dtype=torch_dtype)
         else:
-            if device.startswith('gpu') or device.startswith('cuda'):
+            if ((device.startswith('gpu') or device.startswith('cuda'))
+                    and is_on_same_device(model)):
                 model.cuda()
             if use_bf16:
                 model.bfloat16()
@@ -285,13 +287,8 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
     # define the forward pass
     def forward(self, inputs: Dict, **forward_params) -> Dict[str, Any]:
-        query = inputs['text']
-        history = inputs['history']
-        if isinstance(history, torch.Tensor):
-            history = history.tolist()
-        result = self.model.chat(self.tokenizer, query, history,
-                                 **forward_params)
-        return {'response': result[0], 'history': result[1]}
+        inputs.update(forward_params)
+        return self.model.chat(inputs, self.tokenizer)
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

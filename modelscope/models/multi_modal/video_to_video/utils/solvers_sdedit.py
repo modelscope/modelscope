@@ -5,25 +5,25 @@ import torchsde
 from tqdm.auto import trange
 
 
-def get_ancestral_step(sigma_from,
-                       sigma_to,
-                       eta=1.):
+def get_ancestral_step(sigma_from, sigma_to, eta=1.):
     """
     Calculates the noise level (sigma_down) to step down to and the amount
     of noise to add (sigma_up) when doing an ancestral sampling step.
     """
     if not eta:
         return sigma_to, 0.
-    sigma_up = min(sigma_to, eta * (
-        sigma_to ** 2 * (sigma_from ** 2 - sigma_to ** 2) / sigma_from ** 2
-    ) ** 0.5)
-    sigma_down = (sigma_to ** 2 - sigma_up ** 2) ** 0.5
+    sigma_up = min(
+        sigma_to,
+        eta * (
+            sigma_to**2 *  # noqa
+            (sigma_from**2 - sigma_to**2) / sigma_from**2)**0.5)
+    sigma_down = (sigma_to**2 - sigma_up**2)**0.5
     return sigma_down, sigma_up
 
 
 def get_scalings(sigma):
     c_out = -sigma
-    c_in = 1 / (sigma ** 2 + 1. ** 2) ** 0.5
+    c_in = 1 / (sigma**2 + 1.**2)**0.5
     return c_out, c_in
 
 
@@ -43,11 +43,11 @@ def sample_heun(noise,
     for i in trange(len(sigmas) - 1, disable=not show_progress):
         gamma = 0.
         if s_tmin <= sigmas[i] <= s_tmax and sigmas[i] < float('inf'):
-            gamma = min(s_churn / (len(sigmas) - 1), 2 ** 0.5 - 1)
+            gamma = min(s_churn / (len(sigmas) - 1), 2**0.5 - 1)
         eps = torch.randn_like(x) * s_noise
         sigma_hat = sigmas[i] * (gamma + 1)
         if gamma > 0:
-            x = x + eps * (sigma_hat ** 2 - sigmas[i] ** 2) ** 0.5
+            x = x + eps * (sigma_hat**2 - sigmas[i]**2)**0.5
         if sigmas[i] == float('inf'):
             # Euler method
             denoised = model(noise, sigma_hat)

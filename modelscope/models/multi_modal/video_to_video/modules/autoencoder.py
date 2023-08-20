@@ -27,7 +27,9 @@ def get_first_stage_encoding(encoder_posterior):
     elif isinstance(encoder_posterior, torch.Tensor):
         z = encoder_posterior
     else:
-        raise NotImplementedError(f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented")
+        raise NotImplementedError(
+            f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented"
+        )
     return scale_factor * z
 
 

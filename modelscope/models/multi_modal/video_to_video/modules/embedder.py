@@ -14,18 +14,17 @@ class FrozenOpenCLIPEmbedder(nn.Module):
     """
     Uses the OpenCLIP transformer encoder for text
     """
-    LAYERS = ["last", "penultimate"]
+    LAYERS = ['last', 'penultimate']
 
     def __init__(self,
-                pretrained,
-                arch="ViT-H-14",
-                device="cuda",
-                max_length=77,
-                freeze=True,
-                layer="penultimate"):
+                 pretrained,
+                 arch='ViT-H-14',
+                 device='cuda',
+                 max_length=77,
+                 freeze=True,
+                 layer='penultimate'):
         super().__init__()
         assert layer in self.LAYERS
-        local_path = pretrained
         model, _, preprocess = open_clip.create_model_and_transforms(
             arch, device=torch.device('cpu'), pretrained=pretrained)
 
@@ -37,9 +36,9 @@ class FrozenOpenCLIPEmbedder(nn.Module):
         if freeze:
             self.freeze()
         self.layer = layer
-        if self.layer == "last":
+        if self.layer == 'last':
             self.layer_idx = 0
-        elif self.layer == "penultimate":
+        elif self.layer == 'penultimate':
             self.layer_idx = 1
         else:
             raise NotImplementedError()
@@ -63,7 +62,7 @@ class FrozenOpenCLIPEmbedder(nn.Module):
         x = self.model.ln_final(x)
         return x
 
-    def text_transformer_forward(self, x: torch.Tensor, attn_mask = None):
+    def text_transformer_forward(self, x: torch.Tensor, attn_mask=None):
         for i, r in enumerate(self.model.transformer.resblocks):
             if i == len(self.model.transformer.resblocks) - self.layer_idx:
                 break

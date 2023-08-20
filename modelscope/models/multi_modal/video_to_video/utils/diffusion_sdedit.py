@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import torch
 import random
 
-from .solvers_sdedit import (
-    sample_heun,
-)
+import torch
+
 from .schedules_sdedit import karras_schedule
+from .solvers_sdedit import sample_heun
 
 __all__ = ['GaussianDiffusion_SDEdit']
 
@@ -18,19 +17,14 @@ def _i(tensor, t, x):
 
 class GaussianDiffusion_SDEdit(object):
 
-    def __init__(self,
-                sigmas,
-                prediction_type='eps'):
+    def __init__(self, sigmas, prediction_type='eps'):
         assert prediction_type in {'x0', 'eps', 'v'}
         self.sigmas = sigmas
-        self.alphas = torch.sqrt(1 - sigmas ** 2)
+        self.alphas = torch.sqrt(1 - sigmas**2)
         self.num_timesteps = len(sigmas)
         self.prediction_type = prediction_type
 
-    def diffuse(self,
-                x0,
-                t,
-                noise=None):
+    def diffuse(self, x0, t, noise=None):
         noise = torch.randn_like(x0) if noise is None else noise
         xt = _i(self.alphas, t, x0) * x0 + _i(self.sigmas, t, x0) * noise
         return xt
@@ -52,13 +46,13 @@ class GaussianDiffusion_SDEdit(object):
         alphas = _i(self.alphas, t, xt)
         alphas_s = _i(self.alphas, s.clamp(0), xt)
         alphas_s[s < 0] = 1.
-        sigmas_s = torch.sqrt(1 - alphas_s ** 2)
+        sigmas_s = torch.sqrt(1 - alphas_s**2)
 
         # precompute variables
-        betas = 1 - (alphas / alphas_s) ** 2
-        coef1 = betas * alphas_s / sigmas ** 2
-        coef2 = (alphas * sigmas_s ** 2) / (alphas_s * sigmas ** 2)
-        var = betas * (sigmas_s / sigmas) ** 2
+        betas = 1 - (alphas / alphas_s)**2
+        coef1 = betas * alphas_s / sigmas**2
+        coef2 = (alphas * sigmas_s**2) / (alphas_s * sigmas**2)
+        var = betas * (sigmas_s / sigmas)**2
         log_var = torch.log(var).clamp_(-20, 20)
 
         # prediction
@@ -77,9 +71,10 @@ class GaussianDiffusion_SDEdit(object):
 
                 if guide_rescale is not None:
                     assert guide_rescale >= 0 and guide_rescale <= 1
-                    ratio = (y_out.flatten(1).std(dim=1) / (
-                        out.flatten(1).std(dim=1) + 1e-12
-                    )).view((-1, ) + (1, ) * (y_out.ndim - 1))
+                    ratio = (
+                        y_out.flatten(1).std(dim=1) /  # noqa
+                        (out.flatten(1).std(dim=1) + 1e-12)
+                    ).view((-1, ) + (1, ) * (y_out.ndim - 1))
                     out *= guide_rescale * ratio + (1 - guide_rescale) * 1.0
 
         # compute x0
@@ -91,8 +86,7 @@ class GaussianDiffusion_SDEdit(object):
             x0 = alphas * xt - sigmas * out
         else:
             raise NotImplementedError(
-                f'prediction_type {self.prediction_type} not implemented'
-            )
+                f'prediction_type {self.prediction_type} not implemented')
 
         # restrict the range of x0
         if percentile is not None:
@@ -144,28 +138,22 @@ class GaussianDiffusion_SDEdit(object):
         # options
         schedule = 'karras' if 'karras' in solver else None
         discretization = discretization or 'linspace'
-        seed = seed if seed >= 0 else random.randint(0, 2 ** 31)
+        seed = seed if seed >= 0 else random.randint(0, 2**31)
         if isinstance(steps, torch.LongTensor):
             discard_penultimate_step = False
         if discard_penultimate_step is None:
             discard_penultimate_step = True if solver in (
-                'dpm2',
-                'dpm2_ancestral',
-                'dpmpp_2m_sde',
-                'dpm2_karras',
-                'dpm2_ancestral_karras',
-                'dpmpp_2m_sde_karras'
-            ) else False
+                'dpm2', 'dpm2_ancestral', 'dpmpp_2m_sde', 'dpm2_karras',
+                'dpm2_ancestral_karras', 'dpmpp_2m_sde_karras') else False
 
         # function for denoising xt to get x0
         intermediates = []
+
         def model_fn(xt, sigma):
             # denoising
             t = self._sigma_to_t(sigma).repeat(len(xt)).round().long()
-            x0 = self.denoise(
-                xt, t, None, model, model_kwargs, guide_scale, guide_rescale, clamp,
-                percentile
-            )[-2]
+            x0 = self.denoise(xt, t, None, model, model_kwargs, guide_scale,
+                              guide_rescale, clamp, percentile)[-2]
 
             # collect intermediate outputs
             if return_intermediate == 'xt':
@@ -182,19 +170,19 @@ class GaussianDiffusion_SDEdit(object):
 
             # discretize timesteps
             if discretization == 'leading':
-                steps = torch.arange(
-                    t_min, t_max + 1, (t_max - t_min + 1) / steps
-                ).flip(0)
+                steps = torch.arange(t_min, t_max + 1,
+                                     (t_max - t_min + 1) / steps).flip(0)
             elif discretization == 'linspace':
                 steps = torch.linspace(t_max, t_min, steps)
             elif discretization == 'trailing':
-                steps = torch.arange(t_max, t_min - 1, -((t_max - t_min + 1) / steps))
+                steps = torch.arange(t_max, t_min - 1,
+                                     -((t_max - t_min + 1) / steps))
             else:
                 raise NotImplementedError(
-                    f'{discretization} discretization not implemented'
-                )
+                    f'{discretization} discretization not implemented')
             steps = steps.clamp_(t_min, t_max)
-        steps = torch.as_tensor(steps, dtype=torch.float32, device=noise.device)
+        steps = torch.as_tensor(
+            steps, dtype=torch.float32, device=noise.device)
 
         # get sigmas
         sigmas = self._t_to_sigma(steps)
@@ -205,43 +193,36 @@ class GaussianDiffusion_SDEdit(object):
                     n=len(steps) - 1,
                     sigma_min=sigmas[sigmas > 0].min().item(),
                     sigma_max=sigmas[sigmas < float('inf')].max().item(),
-                    rho=7.
-                ).to(sigmas)
+                    rho=7.).to(sigmas)
                 sigmas = torch.cat([
-                    sigmas.new_tensor([float('inf')]), sigmas, sigmas.new_zeros([1])
+                    sigmas.new_tensor([float('inf')]), sigmas,
+                    sigmas.new_zeros([1])
                 ])
             else:
                 sigmas = karras_schedule(
                     n=len(steps),
                     sigma_min=sigmas[sigmas > 0].min().item(),
                     sigma_max=sigmas.max().item(),
-                    rho=7.
-                ).to(sigmas)
+                    rho=7.).to(sigmas)
                 sigmas = torch.cat([sigmas, sigmas.new_zeros([1])])
         if discard_penultimate_step:
             sigmas = torch.cat([sigmas[:-2], sigmas[-1:]])
 
         # sampling
-        x0 = solver_fn(noise,
-                       model_fn,
-                       sigmas,
-                       show_progress=show_progress,
-                       **kwargs)
+        x0 = solver_fn(
+            noise, model_fn, sigmas, show_progress=show_progress, **kwargs)
         return (x0, intermediates) if return_intermediate is not None else x0
 
-    def _sigma_to_t(self,
-                    sigma):
+    def _sigma_to_t(self, sigma):
         if sigma == float('inf'):
             t = torch.full_like(sigma, len(self.sigmas) - 1)
         else:
-            log_sigmas = torch.sqrt(
-                self.sigmas ** 2 / (1 - self.sigmas ** 2)
-            ).log().to(sigma)
+            log_sigmas = torch.sqrt(self.sigmas**2 /  # noqa
+                                    (1 - self.sigmas**2)).log().to(sigma)
             log_sigma = sigma.log()
             dists = log_sigma - log_sigmas[:, None]
             low_idx = dists.ge(0).cumsum(dim=0).argmax(dim=0).clamp(
-                max=log_sigmas.shape[0] - 2
-            )
+                max=log_sigmas.shape[0] - 2)
             high_idx = low_idx + 1
             low, high = log_sigmas[low_idx], log_sigmas[high_idx]
             w = (low - log_sigma) / (low - high)
@@ -252,11 +233,12 @@ class GaussianDiffusion_SDEdit(object):
             t = t.unsqueeze(0)
         return t
 
-    def _t_to_sigma(self,
-                    t):
+    def _t_to_sigma(self, t):
         t = t.float()
         low_idx, high_idx, w = t.floor().long(), t.ceil().long(), t.frac()
-        log_sigmas = torch.sqrt(self.sigmas ** 2 / (1 - self.sigmas ** 2)).log().to(t)
+        log_sigmas = torch.sqrt(self.sigmas**2 /  # noqa
+                                (1 - self.sigmas**2)).log().to(t)
         log_sigma = (1 - w) * log_sigmas[low_idx] + w * log_sigmas[high_idx]
-        log_sigma[torch.isnan(log_sigma) | torch.isinf(log_sigma)] = float('inf')
+        log_sigma[torch.isnan(log_sigma)
+                  | torch.isinf(log_sigma)] = float('inf')
         return log_sigma.exp()

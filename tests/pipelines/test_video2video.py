@@ -18,7 +18,10 @@ class Video2VideoTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):
         pipe = pipeline(task=self.task, model=self.model_id)
-        p_input = {"video_path": self.path, "text": "A panda is surfing on the sea"}
+        p_input = {
+            'video_path': self.path,
+            'text': 'A panda is surfing on the sea'
+        }
 
         output_video_path = pipe(
             p_input, output_video='./output.mp4')[OutputKeys.OUTPUT_VIDEO]

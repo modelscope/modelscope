@@ -45,12 +45,12 @@ class VideoToVideoPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
 
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
-        vid_path = input["video_path"]
-        if "text" in input.keys():
-            text = input["text"]
+        vid_path = input['video_path']
+        if 'text' in input.keys():
+            text = input['text']
         else:
-            text = ""
-        
+            text = ''
+
         caption = text + self.model.positive_prompt
         y = self.model.clip_encoder(caption).detach()
 
@@ -69,9 +69,12 @@ class VideoToVideoPipeline(Pipeline):
         while len(frame_list) < max_frames:
             ret, frame = capture.read()
             pointer += 1
-            if (not ret) or (frame is None): break
-            if pointer < start_frame: continue
-            if pointer >= end_frame - 1: break
+            if (not ret) or (frame is None):
+                break
+            if pointer < start_frame:
+                continue
+            if pointer >= end_frame - 1:
+                break
             if (pointer - start_frame) % stride == 0:
                 frame = LoadImage.convert_to_img(frame)
                 frame_list.append(frame)
@@ -79,7 +82,7 @@ class VideoToVideoPipeline(Pipeline):
 
         video_data = self.model.vid_trans(frame_list)
 
-        return {'video_data': video_data, "y": y}
+        return {'video_data': video_data, 'y': y}
 
     def forward(self, input: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

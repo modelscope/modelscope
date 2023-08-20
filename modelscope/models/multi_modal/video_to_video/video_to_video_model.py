@@ -16,12 +16,14 @@ from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.multi_modal.video_to_video.modules import *
 from modelscope.models.multi_modal.video_to_video.modules import (
-    AutoencoderKL, FrozenOpenCLIPEmbedder, Vid2VidSDUNet, get_first_stage_encoding)
+    AutoencoderKL, FrozenOpenCLIPEmbedder, Vid2VidSDUNet,
+    get_first_stage_encoding)
 from modelscope.models.multi_modal.video_to_video.utils.config import cfg
+from modelscope.models.multi_modal.video_to_video.utils.diffusion_sdedit import \
+    GaussianDiffusion_SDEdit
+from modelscope.models.multi_modal.video_to_video.utils.schedules_sdedit import \
+    noise_schedule
 from modelscope.models.multi_modal.video_to_video.utils.seed import setup_seed
-from modelscope.models.multi_modal.video_to_video.utils.schedules_sdedit import noise_schedule
-from modelscope.models.multi_modal.video_to_video.utils.diffusion_sdedit import GaussianDiffusion_SDEdit
-
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -35,11 +37,11 @@ logger = get_logger()
     Tasks.video_to_video, module_name=Models.video_to_video_model)
 class VideoToVideo(TorchModel):
     r"""
-    Video2Video aims to solve the task of generating high-definition videos based on input 
+    Video2Video aims to solve the task of generating high-definition videos based on input
     video and text, which is a video generation basic model developed by Alibaba Cloud.
-    
+
     Paper link: https://arxiv.org/abs/2306.02018
-    
+
     Attributes:
         diffusion: diffusion model for DDIM.
         autoencoder: decode the latent representation of input video into visual space.
@@ -88,14 +90,15 @@ class VideoToVideo(TorchModel):
         setup_seed(cfg.seed)
 
         # transform
-        vid_trans = data.Compose([
-            data.ToTensor(),
-            data.Normalize(mean=cfg.mean, std=cfg.std)])
+        vid_trans = data.Compose(
+            [data.ToTensor(),
+             data.Normalize(mean=cfg.mean, std=cfg.std)])
         self.vid_trans = vid_trans
 
         cfg.embedder.pretrained = osp.join(
             model_dir, self.config.model.model_args.ckpt_clip)
-        clip_encoder = FrozenOpenCLIPEmbedder(pretrained=cfg.embedder.pretrained)
+        clip_encoder = FrozenOpenCLIPEmbedder(
+            pretrained=cfg.embedder.pretrained)
         clip_encoder.model.to(self.device)
         self.clip_encoder = clip_encoder
         logger.info(f'Build encoder with {cfg.embedder.type}')
@@ -112,16 +115,13 @@ class VideoToVideo(TorchModel):
 
         # [diffusion]
         sigmas = noise_schedule(
-            schedule = 'logsnr_cosine_interp',
-            n = 1000,
-            zero_terminal_snr = True,
-            scale_min = 2.0,
-            scale_max = 4.0
-        )
+            schedule='logsnr_cosine_interp',
+            n=1000,
+            zero_terminal_snr=True,
+            scale_min=2.0,
+            scale_max=4.0)
         diffusion = GaussianDiffusion_SDEdit(
-            sigmas = sigmas,
-            prediction_type = 'v'
-        )
+            sigmas=sigmas, prediction_type='v')
         self.diffusion = diffusion
         logger.info('Build diffusion with type of GaussianDiffusion_SDEdit')
 
@@ -139,10 +139,10 @@ class VideoToVideo(TorchModel):
         negative_prompt = cfg.negative_prompt
         negative_y = clip_encoder(negative_prompt).detach()
         self.negative_y = negative_y
-        
+
         positive_prompt = cfg.positive_prompt
         self.positive_prompt = positive_prompt
-        
+
         self.cfg = cfg
 
     def forward(self, input: Dict[str, Any]):
@@ -162,15 +162,17 @@ class VideoToVideo(TorchModel):
         video_data = input['video_data']
         y = input['y']
         cfg = self.cfg
-        
-        video_data = F.interpolate(video_data, size=(720, 1280), mode='bilinear')
+
+        video_data = F.interpolate(
+            video_data, size=(720, 1280), mode='bilinear')
         video_data = video_data.unsqueeze(0)
         video_data = video_data.to(self.device)
 
         batch_size, frames_num, _, _, _ = video_data.shape
         video_data = rearrange(video_data, 'b f c h w -> (b f) c h w')
-        
-        video_data_list = torch.chunk(video_data, video_data.shape[0]//2, dim=0)
+
+        video_data_list = torch.chunk(
+            video_data, video_data.shape[0] // 2, dim=0)
         with torch.no_grad():
             decode_data = []
             for vd_data in video_data_list:
@@ -178,41 +180,46 @@ class VideoToVideo(TorchModel):
                 tmp = get_first_stage_encoding(encoder_posterior).detach()
                 decode_data.append(tmp)
             video_data_feature = torch.cat(decode_data, dim=0)
-            video_data_feature = rearrange(video_data_feature, '(b f) c h w -> b c f h w', b = batch_size)
-        
+            video_data_feature = rearrange(
+                video_data_feature, '(b f) c h w -> b c f h w', b=batch_size)
+
         with amp.autocast(enabled=True):
             total_noise_levels = 600
-            t = torch.randint(total_noise_levels-1, total_noise_levels, (1, ), dtype=torch.long).to(self.device)
+            t = torch.randint(
+                total_noise_levels - 1,
+                total_noise_levels, (1, ),
+                dtype=torch.long).to(self.device)
 
             noise = torch.randn_like(video_data_feature)
             noised_lr = self.diffusion.diffuse(video_data_feature, t, noise)
-            model_kwargs=[ {'y': y}, {'y': self.negative_y}]
+            model_kwargs = [{'y': y}, {'y': self.negative_y}]
 
             gen_vid = self.diffusion.sample(
-                            noise=noised_lr,
-                            model=self.generator,
-                            model_kwargs=model_kwargs,
-                            guide_scale=7.5,
-                            guide_rescale=0.2,
-                            solver='heun',
-                            steps=50,
-                            t_max=total_noise_levels-1,
-                            t_min=0,
-                            discretization='trailing'
-                        )
+                noise=noised_lr,
+                model=self.generator,
+                model_kwargs=model_kwargs,
+                guide_scale=7.5,
+                guide_rescale=0.2,
+                solver='heun',
+                steps=50,
+                t_max=total_noise_levels - 1,
+                t_min=0,
+                discretization='trailing')
 
             scale_factor = 0.18215
             vid_tensor_feature = 1. / scale_factor * gen_vid
 
-            bs_vd = vid_tensor_feature.shape[0]
-            vid_tensor_feature = rearrange(vid_tensor_feature, 'b c f h w -> (b f) c h w')
-            vid_tensor_feature_list = torch.chunk(vid_tensor_feature, vid_tensor_feature.shape[0]//2, dim=0)
+            vid_tensor_feature = rearrange(vid_tensor_feature,
+                                           'b c f h w -> (b f) c h w')
+            vid_tensor_feature_list = torch.chunk(
+                vid_tensor_feature, vid_tensor_feature.shape[0] // 2, dim=0)
             decode_data = []
             for vd_data in vid_tensor_feature_list:
                 tmp = self.autoencoder.decode(vd_data)
                 decode_data.append(tmp)
             vid_tensor_gen = torch.cat(decode_data, dim=0)
-        
-        gen_video = rearrange(vid_tensor_gen, '(b f) c h w -> b c f h w', b = cfg.batch_size)
+
+        gen_video = rearrange(
+            vid_tensor_gen, '(b f) c h w -> b c f h w', b=cfg.batch_size)
 
         return gen_video.type(torch.float32).cpu()

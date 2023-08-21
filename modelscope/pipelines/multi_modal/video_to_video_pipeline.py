@@ -58,7 +58,7 @@ class VideoToVideoPipeline(Pipeline):
         caption = text + self.model.positive_prompt
         y = self.model.clip_encoder(caption).detach()
 
-        max_frames = 32
+        max_frames = self.model.cfg.max_frames
 
         capture = cv2.VideoCapture(vid_path)
         _fps = capture.get(cv2.CAP_PROP_FPS)

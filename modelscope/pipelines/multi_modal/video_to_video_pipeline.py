@@ -22,18 +22,22 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.video_to_video, module_name=Pipelines.video_to_video_pipeline)
 class VideoToVideoPipeline(Pipeline):
-    r""" Video To Video Pipeline.
+    r""" Video To Video Pipeline, generating super-resolution videos based on input
+    video and text
 
     Examples:
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.outputs import OutputKeys
 
-    >>> p = pipeline('video-to-video', 'damo/Video-to-Video')
-    >>> input = {"video_path":VIDEOPATH, "text": TEXT}
-    >>> p(input,)
+    >>> # YOUR_VIDEO_PATH:   your video url or local position in low resolution
+    >>> # INPUT_TEXT:        when we do video super-resolution, we will add the text content
+    >>> #                    into results
+    >>> # output_video_path: path-to-the-generated-video
 
-    >>>  {OutputKeys.OUTPUT_VIDEO: path-to-the-generated-video}
-    >>>
+    >>> p = pipeline('video-to-video', 'damo/Video-to-Video')
+    >>> input = {"video_path":YOUR_VIDEO_PATH, "text": INPUT_TEXT}
+    >>> output_video_path = p(input,output_video='./output.mp4')[OutputKeys.OUTPUT_VIDEO]
+
     """
 
     def __init__(self, model: str, **kwargs):

@@ -37,7 +37,7 @@ logger = get_logger()
     Tasks.video_to_video, module_name=Models.video_to_video_model)
 class VideoToVideo(TorchModel):
     r"""
-    Video2Video aims to solve the task of generating high-definition videos based on input
+    Video2Video aims to solve the task of generating super-resolution videos based on input
     video and text, which is a video generation basic model developed by Alibaba Cloud.
 
     Paper link: https://arxiv.org/abs/2306.02018

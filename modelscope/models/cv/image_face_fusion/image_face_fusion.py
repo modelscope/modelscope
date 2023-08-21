@@ -16,9 +16,10 @@ from modelscope.models.builder import MODELS
 from modelscope.models.cv.face_detection.peppa_pig_face.facer import FaceAna
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from .facegan.gan_wrap import GANWrap
+from .facegan.face_gan import GPEN
 from .facelib.align_trans import (get_f5p, get_reference_facial_points,
-                                  warp_and_crop_face)
+                                  warp_and_crop_face,
+                                  warp_and_crop_face_enhance)
 from .network.aei_flow_net import AEI_Net
 from .network.bfm import ParametricFaceModel
 from .network.facerecon_model import ReconNetWrapper
@@ -78,14 +79,6 @@ class ImageFaceFusion(TorchModel):
         self.face_model = ParametricFaceModel(bfm_folder=bfm_dir)
         self.face_model.to(self.device)
 
-        face_enhance_path = os.path.join(model_dir, 'faceEnhance',
-                                         '350000-Ns256.pt')
-        self.ganwrap = GANWrap(
-            model_path=face_enhance_path,
-            size=256,
-            channel_multiplier=1,
-            device=self.device)
-
         self.facer = FaceAna(model_dir)
 
         logger.info('load facefusion models done')
@@ -93,6 +86,27 @@ class ImageFaceFusion(TorchModel):
         self.mask_init = cv2.imread(os.path.join(model_dir, 'alpha.jpg'))
         self.mask_init = cv2.resize(self.mask_init, (256, 256))
         self.mask = self.image_transform(self.mask_init, is_norm=False)
+
+        face_enhance_path = os.path.join(model_dir, 'faceEnhance',
+                                         'GPEN-BFR-1024.pth')
+
+        if not os.path.exists(face_enhance_path):
+            logger.warning(
+                'model path not found, please update the latest model!')
+
+        self.ganwrap_1024 = GPEN(face_enhance_path, 1024, 2, self.device)
+
+        self.mask_enhance = np.zeros((512, 512), np.float32)
+        cv2.rectangle(self.mask_enhance, (26, 26), (486, 486), (1, 1, 1), -1,
+                      cv2.LINE_AA)
+        self.mask_enhance = cv2.GaussianBlur(self.mask_enhance, (101, 101), 11)
+        self.mask_enhance = cv2.GaussianBlur(self.mask_enhance, (101, 101), 11)
+
+        default_square = True
+        inner_padding_factor = 0.25
+        outer_padding = (0, 0)
+        self.reference_5pts_1024 = get_reference_facial_points(
+            (1024, 1024), inner_padding_factor, outer_padding, default_square)
 
         self.test_transform = transforms.Compose([
             transforms.ToTensor(),
@@ -157,7 +171,7 @@ class ImageFaceFusion(TorchModel):
         src_h, src_w, _ = img.shape
         boxes, landmarks, _ = self.facer.run(img)
         if boxes.shape[0] == 0:
-            return None
+            return None, None, None
         elif boxes.shape[0] > 1:
             max_area = 0
             max_index = 0
@@ -168,9 +182,14 @@ class ImageFaceFusion(TorchModel):
                 if area > max_area:
                     max_index = i
                     max_area = area
-            return landmarks[max_index]
+
+            fw = boxes[max_index][2] - boxes[max_index][0]
+            fh = boxes[max_index][3] - boxes[max_index][1]
+            return landmarks[max_index], fw, fh
         else:
-            return landmarks[0]
+            fw = boxes[0][2] - boxes[0][0]
+            fh = boxes[0][3] - boxes[0][1]
+            return landmarks[0], fw, fh
 
     def compute_3d_params(self, Xs, Xt):
         kp_fuse = {}
@@ -198,6 +217,51 @@ class ImageFaceFusion(TorchModel):
 
         return kp_fuse, kp_t
 
+    def process_enhance(self, im, f5p, fh, fw):
+        height, width, _ = im.shape
+
+        of, tfm_inv = warp_and_crop_face_enhance(
+            im,
+            f5p,
+            reference_pts=self.reference_5pts_1024,
+            crop_size=(1024, 1024))
+        ef, pred = self.ganwrap_1024.process(of)
+
+        tmp_mask = self.mask_enhance
+        tmp_mask = cv2.resize(tmp_mask, ef.shape[:2])
+        tmp_mask = cv2.warpAffine(tmp_mask, tfm_inv, (width, height), flags=3)
+
+        full_mask = np.zeros((height, width), dtype=np.float32)
+        full_img = np.zeros(im.shape, dtype=np.uint8)
+
+        if min(fh, fw) < 40:
+            ef = cv2.pyrDown(ef)
+            ef = cv2.pyrDown(ef)
+            ef = cv2.pyrUp(ef)
+            ef = cv2.pyrUp(ef)
+        elif min(fh, fw) < 60:
+            ef = cv2.pyrDown(ef)
+            ef = cv2.resize(ef, (0, 0), fx=2, fy=2)
+            ef = cv2.resize(ef, (0, 0), fx=0.5, fy=0.5)
+            ef = cv2.pyrUp(ef)
+        elif min(fh, fw) < 80:
+            ef = cv2.pyrDown(ef)
+            ef = cv2.pyrUp(ef)
+        elif min(fh, fw) < 100:
+            ef = cv2.pyrDown(ef)
+            ef = cv2.resize(ef, (0, 0), fx=2, fy=2)
+
+        tmp_img = cv2.warpAffine(ef, tfm_inv, (width, height), flags=3)
+
+        mask = tmp_mask - full_mask
+        full_mask[np.where(mask > 0)] = tmp_mask[np.where(mask > 0)]
+        full_img[np.where(mask > 0)] = tmp_img[np.where(mask > 0)]
+
+        full_mask = full_mask[:, :, np.newaxis]
+        im = cv2.convertScaleAbs(im * (1 - full_mask) + full_img * full_mask)
+        im = cv2.resize(im, (width, height))
+        return im
+
     def inference(self, template_img, user_img):
         ori_h, ori_w, _ = template_img.shape
 
@@ -205,14 +269,14 @@ class ImageFaceFusion(TorchModel):
         user_img = user_img.cpu().numpy()
 
         user_img_bgr = user_img[:, :, ::-1]
-        landmark_source = self.detect_face(user_img)
+        landmark_source, _, _ = self.detect_face(user_img)
         if landmark_source is None:
             logger.warning('No face detected in user image!')
             return template_img
         f5p_user = get_f5p(landmark_source, user_img_bgr)
 
         template_img_bgr = template_img[:, :, ::-1]
-        landmark_template = self.detect_face(template_img)
+        landmark_template, fw, fh = self.detect_face(template_img)
         if landmark_template is None:
             logger.warning('No face detected in template image!')
             return template_img
@@ -235,7 +299,6 @@ class ImageFaceFusion(TorchModel):
         with torch.no_grad():
             kp_fuse, kp_t = self.compute_3d_params(Xs, Xt)
             Yt, _, _ = self.netG(Xt, Xs_embeds, kp_fuse, kp_t)
-            Yt = self.ganwrap.process_tensor(Yt)
             Yt = Yt * 0.5 + 0.5
             Yt = torch.clamp(Yt, 0, 1)
 
@@ -247,6 +310,7 @@ class ImageFaceFusion(TorchModel):
                                                           0).cpu().numpy()
             Yt_trans_inv = Yt_trans_inv.astype(np.float32)
             out_img = Yt_trans_inv[:, :, ::-1] * 255.
+            out_img = self.process_enhance(out_img, f5p_template, fh, fw)
 
         logger.info('model inference done')
 

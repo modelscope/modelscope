@@ -98,6 +98,7 @@ class CVTasks(object):
     controllable_image_generation = 'controllable-image-generation'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
 
     # video recognition
     live_category = 'live-category'

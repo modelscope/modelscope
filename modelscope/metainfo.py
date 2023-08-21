@@ -122,6 +122,7 @@ class Models(object):
     fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
 
     # nlp models
     bert = 'bert'
@@ -427,6 +428,7 @@ class Pipelines(object):
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -877,7 +879,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
         Pipelines.text_to_360panorama_image,
         'damo/cv_diffusion_text-to-360panorama-image_generation'),
     Tasks.image_try_on: (Pipelines.image_try_on,
-                         'damo/cv_SAL-VTON_virtual-try-on')
+                         'damo/cv_SAL-VTON_virtual-try-on'),
+    Tasks.human_image_generation: (Pipelines.human_image_generation,
+                                   'damo/cv_FreqHPT_human-image-generation')
 }
 
 

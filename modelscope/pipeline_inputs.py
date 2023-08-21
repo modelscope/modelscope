@@ -224,7 +224,10 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.IMAGE: InputType.IMAGE
     },
-
+    Tasks.human_image_generation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_pose_path': InputType.TEXT
+    },
     # ============ nlp tasks ===================
     Tasks.chat: {
         'text': InputType.TEXT,

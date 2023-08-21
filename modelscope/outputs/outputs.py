@@ -1513,6 +1513,11 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.image_try_on: [OutputKeys.OUTPUT_IMG],
+    # Tasks.human_image_generation result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.human_image_generation: [OutputKeys.OUTPUT_IMG],
 }
 
 

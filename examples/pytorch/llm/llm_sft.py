@@ -141,8 +141,8 @@ def llm_sft(args: SftArguments) -> None:
     # ### Preparing lora
     if args.sft_type == 'lora':
         lora_config = LoRAConfig(
-            replace_modules=args.lora_target_modules,
-            rank=args.lora_rank,
+            target_modules=args.lora_target_modules,
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p)
         logger.info(f'lora_config: {lora_config}')

@@ -11,7 +11,7 @@ model_id = 'baichuan-inc/baichuan-7B'
 pipe = pipeline(
     task=Tasks.text_generation, model=model_id, model_revision='v1.0.2')
 # lora 配置，replace_modules，rank，alpha 需与训练参数相同
-lora_config = LoRAConfig(replace_modules=['pack'], rank=32, lora_alpha=32)
+lora_config = LoRAConfig(target_modules=['pack'], r=32, lora_alpha=32)
 # 转 bf16，需与训练精度相同
 model = pipe.model.bfloat16()
 # model 转 lora

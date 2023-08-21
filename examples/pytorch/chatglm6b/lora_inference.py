@@ -5,8 +5,8 @@ from modelscope.metainfo import Models
 from modelscope.utils.config import ConfigDict
 
 lora_config = LoRAConfig(
-    replace_modules=['attention.query_key_value'],
-    rank=32,
+    target_modules=['attention.query_key_value'],
+    r=32,
     lora_alpha=32,
     lora_dropout=0.05,
     pretrained_weights='./lora_dureader_target/iter_600.pth')

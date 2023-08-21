@@ -12,6 +12,7 @@ import numpy as np
 #
 import torch
 from matplotlib.figure import Figure
+from swift import LoRAConfig, Swift
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
 from torch import Tensor

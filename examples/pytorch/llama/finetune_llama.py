@@ -254,8 +254,8 @@ if __name__ == '__main__':
 
     if args.use_lora != 0:
         lora_config = LoRAConfig(
-            replace_modules=['q_proj', 'k_proj', 'v_proj'],
-            rank=args.lora_rank,
+            target_modules=['q_proj', 'k_proj', 'v_proj'],
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout)
         model = model.bfloat16()

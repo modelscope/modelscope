@@ -113,7 +113,7 @@ class VideoToVideoPipeline(Pipeline):
 
         status = os.system(cmd)
         if status != 0:
-            logger.info('Save Video Error with {}'.format(status))
+            logger.error('Save Video Error with {}'.format(status))
         os.system(f'rm -rf {temp_dir}')
 
         if temp_video_file:

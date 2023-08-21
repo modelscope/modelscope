@@ -1,12 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import collections
-import logging
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 def nonlinearity(x):
@@ -348,7 +351,7 @@ class Decoder(nn.Module):
         block_in = ch * ch_mult[self.num_resolutions - 1]
         curr_res = resolution // 2**(self.num_resolutions - 1)
         self.z_shape = (1, z_channels, curr_res, curr_res)
-        logging.info('Working with z of shape {} = {} dimensions.'.format(
+        logger.info('Working with z of shape {} = {} dimensions.'.format(
             self.z_shape, np.prod(self.z_shape)))
 
         # z to block_in
@@ -478,7 +481,7 @@ class AutoencoderKL(nn.Module):
                 k_new = k.split('first_stage_model.')[-1]
                 sd_new[k_new] = sd[k]
         self.load_state_dict(sd_new, strict=True)
-        logging.info(f'Restored from {path}')
+        logger.info(f'Restored from {path}')
 
     def on_train_batch_end(self, *args, **kwargs):
         if self.use_ema:

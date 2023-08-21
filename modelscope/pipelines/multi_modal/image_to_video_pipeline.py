@@ -72,14 +72,20 @@ class ImageToVideoPipeline(Pipeline):
             output_video_path = tempfile.NamedTemporaryFile(suffix='.mp4').name
             temp_video_file = True
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        h, w, c = video[0].shape
-        video_writer = cv2.VideoWriter(
-            output_video_path, fourcc, fps=8, frameSize=(w, h))
-        for i in range(len(video)):
-            img = cv2.cvtColor(video[i], cv2.COLOR_RGB2BGR)
-            video_writer.write(img)
-        video_writer.release()
+        temp_dir = tempfile.mkdtemp()
+        for fid, frame in enumerate(video):
+            tpth = os.path.join(temp_dir, '%06d.png' % (fid + 1))
+            cv2.imwrite(tpth, frame[:, :, ::-1],
+                        [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+
+        cmd = f'ffmpeg -y -f image2 -loglevel quiet -framerate 8.0 -i {temp_dir}/%06d.png \
+        -vcodec libx264 -crf 17 -pix_fmt yuv420p {output_video_path}'
+
+        status = os.system(cmd)
+        if status != 0:
+            logger.info('Save Video Error with {}'.format(status))
+        os.system(f'rm -rf {temp_dir}')
+
         if temp_video_file:
             video_file_content = b''
             with open(output_video_path, 'rb') as f:

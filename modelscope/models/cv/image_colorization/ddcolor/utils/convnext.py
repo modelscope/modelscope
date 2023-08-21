@@ -116,7 +116,7 @@ class ConvNeXt(nn.Module):
             self.add_module(layer_name, layer)
 
         self.norm = nn.LayerNorm(dims[-1], eps=1e-6)  # final norm layer
-        # self.head_cls = nn.Linear(dims[-1], 4)
+        self.head_cls = nn.Linear(dims[-1], 4)
 
         self.apply(self._init_weights)
         # self.head_cls.weight.data.mul_(head_init_scale)
@@ -141,7 +141,7 @@ class ConvNeXt(nn.Module):
 
     def forward(self, x):
         x = self.forward_features(x)
-        # x = self.head_cls(x)
+        x = self.head_cls(x)
         return x
 
 

@@ -158,7 +158,7 @@ class Encoder(nn.Module):
         return hooks
 
     def forward(self, img):
-        return self.arch(img)
+        return self.arch.forward_features(img)
 
 
 class MultiScaleColorDecoder(nn.Module):

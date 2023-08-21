@@ -213,6 +213,7 @@ class NLPTasks(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class AudioTasks(object):
@@ -255,6 +256,8 @@ class MultiModalTasks(object):
     text_to_video_synthesis = 'text-to-video-synthesis'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
+    image_to_video = 'image-to-video'
+    video_to_video = 'video-to-video'
 
 
 class ScienceTasks(object):

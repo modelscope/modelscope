@@ -65,6 +65,7 @@ if TYPE_CHECKING:
         ModelForTextRanking,
         ModelForTokenClassification,
         ModelForTokenClassificationWithCRF,
+        ModelForMachineReadingComprehension,
     )
     from .unite import UniTEForTranslationEvaluation
     from .use import UserSatisfactionEstimation
@@ -159,6 +160,7 @@ else:
             'ModelForTextRanking',
             'ModelForTokenClassification',
             'ModelForTokenClassificationWithCRF',
+            'ModelForMachineReadingComprehension',
         ],
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],

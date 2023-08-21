@@ -32,8 +32,16 @@ from modelscope.utils.torch_utils import is_dist
 
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, model_dir):
+    def __init__(self, model_dir, torch_type=torch.float32):
+        """Checkpoint processor for dreambooth diffusion.
+
+        Args:
+            model_dir: The model id or local model dir.
+            torch_type: The torch type, default is float32.
+
+        """
         self.model_dir = model_dir
+        self.torch_type = torch_type
 
     def save_checkpoints(self,
                          trainer,
@@ -49,6 +57,7 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         pipeline = DiffusionPipeline.from_pretrained(
             self.model_dir,
             unet=trainer.model.unet,
+            torch_type=self.torch_type,
             **pipeline_args,
         )
         scheduler_args = {}
@@ -174,6 +183,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             prior_loss_weight: the weight of the prior loss.
 
         """
+        self.torch_type = kwargs.pop('torch_type', torch.float32)
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
                                                   False)
         self.instance_prompt = kwargs.pop('instance_prompt',
@@ -219,7 +229,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
                     warnings.warn('Multiple GPU inference not yet supported.')
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.model_dir,
-                    torch_dtype=torch.float32,
+                    torch_dtype=self.torch_type,
                     safety_checker=None,
                     revision=None,
                 )
@@ -309,7 +319,8 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             input_ids = batch['input_ids'].to(self.device)
             with torch.no_grad():
                 latents = self.model.vae.encode(
-                    target_prior.to(dtype=torch.float32)).latent_dist.sample()
+                    target_prior.to(
+                        dtype=self.torch_type)).latent_dist.sample()
             latents = latents * self.model.vae.config.scaling_factor
 
             # Sample noise that we'll add to the latents

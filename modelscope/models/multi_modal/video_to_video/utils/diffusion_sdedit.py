@@ -5,7 +5,7 @@ import random
 import torch
 
 from .schedules_sdedit import karras_schedule
-from .solvers_sdedit import sample_heun
+from .solvers_sdedit import sample_dpmpp_2m_sde, sample_heun
 
 __all__ = ['GaussianDiffusion_SDEdit']
 
@@ -133,7 +133,10 @@ class GaussianDiffusion_SDEdit(object):
         assert return_intermediate in (None, 'x0', 'xt')
 
         # function of diffusion solver
-        solver_fn = {'heun': sample_heun}[solver]
+        solver_fn = {
+            'heun': sample_heun,
+            'dpmpp_2m_sde': sample_dpmpp_2m_sde
+        }[solver]
 
         # options
         schedule = 'karras' if 'karras' in solver else None

@@ -58,7 +58,7 @@ class VideoToVideoPipeline(Pipeline):
         caption = text + self.model.positive_prompt
         y = self.model.clip_encoder(caption).detach()
 
-        max_frames = 8
+        max_frames = 32
 
         capture = cv2.VideoCapture(vid_path)
         _fps = capture.get(cv2.CAP_PROP_FPS)
@@ -66,7 +66,6 @@ class VideoToVideoPipeline(Pipeline):
         _total_frame_num = capture.get(cv2.CAP_PROP_FRAME_COUNT)
         stride = round(_fps / sample_fps)
         start_frame = 0
-        end_frame = _total_frame_num
 
         pointer = 0
         frame_list = []
@@ -77,7 +76,7 @@ class VideoToVideoPipeline(Pipeline):
                 break
             if pointer < start_frame:
                 continue
-            if pointer >= end_frame - 1:
+            if pointer >= _total_frame_num + 1:
                 break
             if (pointer - start_frame) % stride == 0:
                 frame = LoadImage.convert_to_img(frame)
@@ -103,14 +102,20 @@ class VideoToVideoPipeline(Pipeline):
             output_video_path = tempfile.NamedTemporaryFile(suffix='.mp4').name
             temp_video_file = True
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        h, w, c = video[0].shape
-        video_writer = cv2.VideoWriter(
-            output_video_path, fourcc, fps=8, frameSize=(w, h))
-        for i in range(len(video)):
-            img = cv2.cvtColor(video[i], cv2.COLOR_RGB2BGR)
-            video_writer.write(img)
-        video_writer.release()
+        temp_dir = tempfile.mkdtemp()
+        for fid, frame in enumerate(video):
+            tpth = os.path.join(temp_dir, '%06d.png' % (fid + 1))
+            cv2.imwrite(tpth, frame[:, :, ::-1],
+                        [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+
+        cmd = f'ffmpeg -y -f image2 -loglevel quiet -framerate 8.0 -i {temp_dir}/%06d.png \
+        -vcodec libx264 -crf 17 -pix_fmt yuv420p {output_video_path}'
+
+        status = os.system(cmd)
+        if status != 0:
+            logger.info('Save Video Error with {}'.format(status))
+        os.system(f'rm -rf {temp_dir}')
+
         if temp_video_file:
             video_file_content = b''
             with open(output_video_path, 'rb') as f:

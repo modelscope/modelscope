@@ -71,6 +71,8 @@ class VideoToVideo(TorchModel):
         self.config = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))
 
+        cfg.solver_mode = self.config.model.model_args.solver_mode
+
         # assign default value
         cfg.batch_size = self.config.model.model_cfg.batch_size
         cfg.target_fps = self.config.model.model_cfg.target_fps
@@ -200,8 +202,8 @@ class VideoToVideo(TorchModel):
                 model_kwargs=model_kwargs,
                 guide_scale=7.5,
                 guide_rescale=0.2,
-                solver='heun',
-                steps=50,
+                solver='dpmpp_2m_sde' if cfg.solver_mode == 'fast' else 'heun',
+                steps=30 if cfg.solver_mode == 'fast' else 50,
                 t_max=total_noise_levels - 1,
                 t_min=0,
                 discretization='trailing')

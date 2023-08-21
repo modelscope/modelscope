@@ -162,20 +162,9 @@ cfg.negative_prompt = 'worst quality, normal quality, low quality, low res, blur
 watermark, logo, banner, extra digits, cropped, jpeg artifacts, signature, username, error, \
 sketch ,duplicate, ugly, monochrome, horror, geometry, mutation, disgusting'
 
-cfg.positive_prompt = ', sharp focus, cinematic, High Contrast, highly detailed, unreal engine, \
-hyper detailed photo - realistic maximum detail, 32k, Cinematic, Color Grading, portrait Photography, \
-Shot on 22mm lens, Ultra-Wide Angle, Depth of Field, hyper-detailed, beautifully color-coded, \
-insane details, intricate details, beautifully color graded, Unreal Engine, Color Grading, \
-Editorial Photography, Photography, Photoshoot, Shot on 22mm lens, Depth of Field, DOF, Tilt Blur, \
-Shutter Speed 1/1000, F/22, White Balance, 32k, Super-Resolution, Megapixel, ProPhoto RGB, VR, Lonely, \
-Good, Massive, Halfrear Lighting, Backlight, Natural Lighting, Incandescent, Optical Fiber, \
-Moody Lighting, Cinematic Lighting, Studio Lighting, Soft Lighting, Volumetric, Contre-Jour, \
-Beautiful Lighting, Accent Lighting, Global Illumination, Screen Space Global Illumination, \
-Ray Tracing Global Illumination, Optics, Scattering, Glowing, Shadows, Rough, Shimmering, \
-Ray Tracing Reflections, Lumen Reflections, Screen Space Reflections, Diffraction Grading, \
-Chromatic Aberration, GB Displacement, Scan Lines, Ray Traced, Ray Tracing Ambient Occlusion, \
-Anti-Aliasing, FKAA, TXAA, RTX, SSAO, Shaders, OpenGL-Shaders, GLSL-Shaders, Post Processing, \
-Post-Production, Cel Shading, Tone Mapping, CGI, VFX, SFX, insanely detailed and intricate, \
-hypermaximalist, elegant, hyper realistic, super detailed, photography'
+cfg.positive_prompt = ', cinematic, High Contrast, highly detailed, unreal engine, \
+taken using a Canon EOS R camera, hyper detailed photo - realistic maximum detail, \
+32k, Color Grading, ultra HD, extreme meticulous detailing, skin pore detailing, \
+hyper sharpness, perfect without deformations, Unreal Engine 5, 4k render'
 
 # -----------------------------------------------------------------------------

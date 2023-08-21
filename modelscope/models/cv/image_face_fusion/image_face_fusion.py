@@ -89,6 +89,10 @@ class ImageFaceFusion(TorchModel):
 
         face_enhance_path = os.path.join(model_dir, 'faceEnhance',
                                          'GPEN-BFR-1024.pth')
+
+        if not os.path.exists(face_enhance_path):
+            logger.warning('model path not found, please update the latest model!')
+
         self.ganwrap_1024 = GPEN(face_enhance_path, 1024, 2, self.device)
 
         self.mask_enhance = np.zeros((512, 512), np.float32)

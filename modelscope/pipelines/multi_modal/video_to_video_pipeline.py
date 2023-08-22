@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import subprocess
 import tempfile
 from typing import Any, Dict, Optional
 
@@ -111,9 +112,9 @@ class VideoToVideoPipeline(Pipeline):
         cmd = f'ffmpeg -y -f image2 -loglevel quiet -framerate 8.0 -i {temp_dir}/%06d.png \
         -vcodec libx264 -crf 17 -pix_fmt yuv420p {output_video_path}'
 
-        status = os.system(cmd)
+        status, output = subprocess.getstatusoutput(cmd)
         if status != 0:
-            logger.error('Save Video Error with {}'.format(status))
+            logger.error('Save Video Error with {}'.format(output))
         os.system(f'rm -rf {temp_dir}')
 
         if temp_video_file:

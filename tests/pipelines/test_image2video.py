@@ -4,7 +4,7 @@ import unittest
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import DownloadMode, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 

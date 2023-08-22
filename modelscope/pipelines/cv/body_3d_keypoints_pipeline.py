@@ -163,7 +163,7 @@ class Body3DKeypointsPipeline(Pipeline):
             box = kps_2d['boxes'][
                 0]  # box: [[[x1, y1], [x2, y2]]], N human boxes per frame, [0] represent using first detected bbox
             pose = kps_2d['keypoints'][0]  # keypoints: [15, 2]
-            score = kps_2d['scores'][0]  # keypoints: [15, 2]
+            score = np.array(kps_2d['scores'][0]).max()
             all_2d_poses.append(pose)
             all_boxes_with_socre.append(
                 list(np.array(box).reshape(

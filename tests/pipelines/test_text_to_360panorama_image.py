@@ -16,6 +16,7 @@ from modelscope.utils.test_utils import test_level
 logger = get_logger()
 
 
+@unittest.skip('For need realesrgan')
 class Text2360PanoramaImageTest(unittest.TestCase):
 
     def setUp(self) -> None:

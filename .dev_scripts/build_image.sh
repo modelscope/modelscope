@@ -42,6 +42,8 @@ for i in "$@"; do
           cudatoolkit_version=11.3
       elif [ "$cuda_version" == "11.7.1" ]; then
           cudatoolkit_version=11.7
+      elif [ "$cuda_version" == "11.8.0" ]; then
+          cudatoolkit_version=11.8
       else
           echo "Unsupport cuda version $cuda_version"
           exit 1

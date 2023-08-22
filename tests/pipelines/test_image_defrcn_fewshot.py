@@ -14,6 +14,7 @@ from modelscope.utils.test_utils import test_level
 logger = get_logger()
 
 
+@unittest.skip('require detectron2-0.3 and torch 1.11.0')
 class ImageDefrcnFewShotTest(unittest.TestCase):
 
     def setUp(self) -> None:

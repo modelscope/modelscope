@@ -78,49 +78,55 @@ patch_tokenizer_base()
 patch_model_base()
 
 
-def check_hf_code(model_dir: str, auto_class: type) -> None:
+def check_hf_code(model_dir: str, auto_class: type,
+                  trust_remote_code: bool) -> None:
     config_path = os.path.join(model_dir, 'config.json')
-    auto_class_name = auto_class.__name__
     if not os.path.exists(config_path):
         raise FileNotFoundError(f'{config_path} is not found')
-
     config_dict = PretrainedConfig.get_config_dict(config_path)[0]
+    auto_class_name = auto_class.__name__
+    # load from repo
+    if trust_remote_code:
+        has_remote_code = False
+        if auto_class is AutoTokenizerHF:
+            tokenizer_config_dict = get_tokenizer_config(model_dir)
+            auto_map = tokenizer_config_dict.get('auto_map', None)
+            if auto_map is not None:
+                module_name = auto_map.get(auto_class_name, None)[0]
+                has_remote_code = module_name is not None
+        else:
+            auto_map = config_dict.get('auto_map', None)
+            if auto_map is not None:
+                module_name = auto_map.get(auto_class_name, None)
+                has_remote_code = module_name is not None
+
+        if has_remote_code:
+            # has remote code
+            module_path = os.path.join(model_dir,
+                                       module_name.split('.')[0] + '.py')
+            if not os.path.exists(module_path):
+                raise FileNotFoundError(f'{module_path} is not found')
+            return
+
+    # trust_remote_code is False or has_remote_code is False
     model_type = config_dict.get('model_type', None)
     if model_type is None:
         raise ValueError(f'`model_type` key is not found in {config_path}')
 
     if auto_class is AutoConfigHF:
-        if model_type in CONFIG_MAPPING:
-            return
+        if model_type not in CONFIG_MAPPING:
+            raise ValueError(f'{model_type} not found in HF CONFIG_MAPPING')
     elif auto_class is AutoTokenizerHF:
-        if model_type in TOKENIZER_MAPPING_NAMES:
-            return
+        if model_type not in TOKENIZER_MAPPING_NAMES:
+            raise ValueError(
+                f'{model_type} not found in HF TOKENIZER_MAPPING_NAMES')
     else:
         mapping_names = [
             m.model_type for m in auto_class._model_mapping.keys()
         ]
-        if model_type in mapping_names:
-            return
-
-    if auto_class is AutoTokenizerHF:
-        tokenizer_config_dict = get_tokenizer_config(model_dir)
-        auto_map = tokenizer_config_dict.get('auto_map', None)
-        if auto_map is None:
-            raise ValueError(f'`auto_map` key is not exists in {config_path}')
-        module_name = auto_map.get(auto_class_name, None)[0]
-    else:
-        auto_map = config_dict.get('auto_map', None)
-        if auto_map is None:
-            raise ValueError(f'`auto_map` key is not exists in {config_path}')
-        module_name = auto_map.get(auto_class_name, None)
-
-    if module_name is None:
-        raise ValueError(
-            f'`{auto_class_name}` is not exists in `auto_map` of {config_path}'
-        )
-    module_path = os.path.join(model_dir, module_name.split('.')[0] + '.py')
-    if not os.path.exists(module_path):
-        raise FileNotFoundError(f'{module_path} is not found')
+        if model_type not in mapping_names:
+            raise ValueError(
+                f'{model_type} not found in HF auto_class._model_mapping')
 
 
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
@@ -152,7 +158,8 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
                 model_dir = pretrained_model_name_or_path
 
             if module_class is not GenerationConfigHF:
-                check_hf_code(model_dir, module_class)
+                trust_remote_code = kwargs.get('trust_remote_code', False)
+                check_hf_code(model_dir, module_class, trust_remote_code)
             module_obj = module_class.from_pretrained(model_dir, *model_args,
                                                       **kwargs)
 

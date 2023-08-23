@@ -124,6 +124,8 @@ replace.sh
 result.png
 result.jpg
 result.mp4
+runs/
+ckpt/
 
 # Pytorch
 *.pth

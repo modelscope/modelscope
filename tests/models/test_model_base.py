@@ -8,6 +8,7 @@ import unittest
 import torch
 
 from modelscope.models.base import Model
+from modelscope.utils.test_utils import test_level
 
 
 class BaseTest(unittest.TestCase):
@@ -22,6 +23,7 @@ class BaseTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_from_pretrained_baichuan(self):
         model = Model.from_pretrained(
             'baichuan-inc/Baichuan-13B-Chat',
@@ -31,6 +33,7 @@ class BaseTest(unittest.TestCase):
         print(model.__class__.__name__)
         self.assertIsNotNone(model)
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_from_pretrained_chatglm2(self):
         model = Model.from_pretrained(
             'ZhipuAI/chatglm2-6b',

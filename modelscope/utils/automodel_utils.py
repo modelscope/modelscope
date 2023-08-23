@@ -44,21 +44,24 @@ def get_hf_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
     if not os.path.exists(config_path):
         return None
     try:
-        config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
-    except (FileNotFoundError, ValueError):
-        return None
+        try:
+            config = AutoConfig.from_pretrained(
+                model_dir, trust_remote_code=True)
+        except (FileNotFoundError, ValueError):
+            return None
 
-    if _can_load_by_hf_automodel(automodel_class, config):
-        return automodel_class
-    if (automodel_class is AutoModelForCausalLM
-            and _can_load_by_hf_automodel(AutoModelForSeq2SeqLM, config)):
-        return AutoModelForSeq2SeqLM
-    return None
+        if _can_load_by_hf_automodel(automodel_class, config):
+            return automodel_class
+        if (automodel_class is AutoModelForCausalLM
+                and _can_load_by_hf_automodel(AutoModelForSeq2SeqLM, config)):
+            return AutoModelForSeq2SeqLM
+        return None
+    except Exception:
+        return None
 
 
 def try_to_load_hf_model(model_dir: str, task_name: str, device: str,
                          use_hf: Optional[bool], **kwargs):
-    automodel_class = None
     automodel_class = get_hf_automodel_class(model_dir, task_name)
 
     if use_hf and automodel_class is None:
@@ -70,10 +73,8 @@ def try_to_load_hf_model(model_dir: str, task_name: str, device: str,
         # use hf
         default_device_map = None
         if isinstance(device, str):
-            if device.startswith('cuda'):
-                default_device_map = {'': 'cuda:0'}
-            elif device == 'cpu':
-                default_device_map = {'': 'cpu'}
+            if device.startswith('cuda') or device == 'cpu':
+                default_device_map = {'': device}
         device_map = kwargs.get('device_map', default_device_map)
         torch_dtype = kwargs.get('torch_dtype', None)
         config = kwargs.get('config', None)

@@ -154,9 +154,12 @@ class Model(ABC):
             use_hf = False
         model = None
         if use_hf in {True, None}:
-            model = try_to_load_hf_model(local_model_dir, task_name, device,
-                                         use_hf, **kwargs)
+            model = try_to_load_hf_model(local_model_dir, task_name, use_hf,
+                                         **kwargs)
         if model is not None:
+            device_map = kwargs.get('device_map', None)
+            if device_map is None and device is not None:
+                model = model.to(device)
             return model
         # use ms
         model_cfg.model_dir = local_model_dir

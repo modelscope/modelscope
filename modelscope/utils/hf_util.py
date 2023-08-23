@@ -101,7 +101,6 @@ def check_hf_code(model_dir: str, auto_class: type,
                 has_remote_code = module_name is not None
 
         if has_remote_code:
-            # has remote code
             module_path = os.path.join(model_dir,
                                        module_name.split('.')[0] + '.py')
             if not os.path.exists(module_path):

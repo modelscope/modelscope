@@ -60,7 +60,7 @@ def get_hf_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
         return None
 
 
-def try_to_load_hf_model(model_dir: str, task_name: str, device: str,
+def try_to_load_hf_model(model_dir: str, task_name: str,
                          use_hf: Optional[bool], **kwargs):
     automodel_class = get_hf_automodel_class(model_dir, task_name)
 
@@ -71,11 +71,7 @@ def try_to_load_hf_model(model_dir: str, task_name: str, device: str,
     model = None
     if automodel_class is not None:
         # use hf
-        default_device_map = None
-        if isinstance(device, str):
-            if device.startswith('cuda') or device == 'cpu':
-                default_device_map = {'': device}
-        device_map = kwargs.get('device_map', default_device_map)
+        device_map = kwargs.get('device_map', None)
         torch_dtype = kwargs.get('torch_dtype', None)
         config = kwargs.get('config', None)
 

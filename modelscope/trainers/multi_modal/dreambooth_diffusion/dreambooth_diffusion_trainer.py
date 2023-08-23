@@ -32,16 +32,20 @@ from modelscope.utils.torch_utils import is_dist
 
 class DreamboothCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, model_dir, torch_type=torch.float32):
+    def __init__(self,
+                 model_dir,
+                 torch_type=torch.float32,
+                 safe_serialization=False):
         """Checkpoint processor for dreambooth diffusion.
 
         Args:
             model_dir: The model id or local model dir.
             torch_type: The torch type, default is float32.
-
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
         """
         self.model_dir = model_dir
         self.torch_type = torch_type
+        self.safe_serialization = safe_serialization
 
     def save_checkpoints(self,
                          trainer,
@@ -63,7 +67,8 @@ class DreamboothCheckpointProcessor(CheckpointProcessor):
         scheduler_args = {}
         pipeline.scheduler = pipeline.scheduler.from_config(
             pipeline.scheduler.config, **scheduler_args)
-        pipeline.save_pretrained(output_dir)
+        pipeline.save_pretrained(
+            output_dir, safe_serialization=self.safe_serialization)
 
 
 class ClassDataset(Dataset):
@@ -181,6 +186,7 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
             class_data_dir: the path to the class data directory.
             num_class_images: the number of class images to generate.
             prior_loss_weight: the weight of the prior loss.
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
 
         """
         self.torch_type = kwargs.pop('torch_type', torch.float32)
@@ -193,12 +199,17 @@ class DreamboothDiffusionTrainer(EpochBasedTrainer):
         self.num_class_images = kwargs.pop('num_class_images', 200)
         self.resolution = kwargs.pop('resolution', 512)
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
+        safe_serialization = kwargs.pop('safe_serialization', False)
 
         # Save checkpoint and configurate files.
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
-        ckpt_hook.set_processor(DreamboothCheckpointProcessor(self.model_dir))
+        ckpt_hook.set_processor(
+            DreamboothCheckpointProcessor(
+                model_dir=self.model_dir,
+                torch_type=self.torch_type,
+                safe_serialization=safe_serialization))
 
         # Check for conflicts and conflicts
         if self.with_prior_preservation:

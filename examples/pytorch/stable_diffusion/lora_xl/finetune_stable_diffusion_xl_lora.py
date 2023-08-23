@@ -2,7 +2,6 @@ import os
 from dataclasses import dataclass, field
 
 import cv2
-import torch
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
@@ -14,26 +13,20 @@ from modelscope.utils.constant import DownloadMode, Tasks
 
 # Load configuration file and dataset
 @dataclass(init=False)
-class StableDiffusionLoraArguments(TrainingArgs):
+class StableDiffusionXLLoraArguments(TrainingArgs):
     prompt: str = field(
         default='dog', metadata={
             'help': 'The pipeline prompt.',
         })
 
     lora_rank: int = field(
-        default=4,
+        default=16,
         metadata={
             'help': 'The rank size of lora intermediate linear.',
         })
 
-    torch_type: str = field(
-        default='float32',
-        metadata={
-            'help': ' The torch type, default is float32.',
-        })
 
-
-training_args = StableDiffusionLoraArguments(
+training_args = StableDiffusionXLLoraArguments(
     task='text-to-image-synthesis').parse_cli()
 config, args = training_args.to_config()
 
@@ -73,12 +66,10 @@ kwargs = dict(
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     lora_rank=args.lora_rank,
-    torch_type=torch.float16
-    if args.torch_type == 'float16' else torch.float32,
     cfg_modify_fn=cfg_modify_fn)
 
 # build trainer and training
-trainer = build_trainer(name=Trainers.lora_diffusion, default_args=kwargs)
+trainer = build_trainer(name=Trainers.lora_diffusion_xl, default_args=kwargs)
 trainer.train()
 
 # pipeline after training and save result
@@ -91,4 +82,4 @@ pipe = pipeline(
 output = pipe({'text': args.prompt})
 # visualize the result on ipynb and save it
 output
-cv2.imwrite('./lora_result.png', output['output_imgs'][0])
+cv2.imwrite('./lora_xl_result.png', output['output_imgs'][0])

@@ -7,7 +7,7 @@ import torch
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.trainers import EpochBasedTrainer, build_trainer
+from modelscope.trainers import build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.constant import DownloadMode, Tasks
 

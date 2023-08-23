@@ -48,6 +48,7 @@ class VideoToVideoPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
+        self._model_prepare = True
 
     def preprocess(self, input: Input, **preprocess_params) -> Dict[str, Any]:
         vid_path = input['video_path']

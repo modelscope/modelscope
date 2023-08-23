@@ -24,6 +24,7 @@ from modelscope.models.multi_modal.image_to_video.utils.shedule import \
     beta_schedule
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
 
 __all__ = ['ImageToVideo']
@@ -81,8 +82,8 @@ class ImageToVideo(TorchModel):
         cfg.model_path = osp.join(model_dir,
                                   self.config.model.model_args.ckpt_unet)
 
-        self.device = torch.device(
-            'cuda') if torch.cuda.is_available() else torch.device('cpu')
+        required_device = kwargs.pop('device', 'gpu')
+        self.device = create_device(required_device)
 
         if 'seed' in self.config.model.model_args.keys():
             cfg.seed = self.config.model.model_args.seed
@@ -101,7 +102,8 @@ class ImageToVideo(TorchModel):
 
         cfg.embedder.pretrained = osp.join(
             model_dir, self.config.model.model_args.ckpt_clip)
-        clip_encoder = FrozenOpenCLIPVisualEmbedder(**cfg.embedder)
+        clip_encoder = FrozenOpenCLIPVisualEmbedder(
+            device=self.device, **cfg.embedder)
         clip_encoder.model.to(self.device)
         self.clip_encoder = clip_encoder
         logger.info(f'Build encoder with {cfg.embedder.type}')

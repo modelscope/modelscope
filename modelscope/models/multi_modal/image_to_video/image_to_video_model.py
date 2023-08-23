@@ -81,8 +81,14 @@ class ImageToVideo(TorchModel):
         cfg.model_path = osp.join(model_dir,
                                   self.config.model.model_args.ckpt_unet)
 
-        self.device = torch.device(
-            'cuda') if torch.cuda.is_available() else torch.device('cpu')
+        required_device = kwargs['device']
+        if torch.cuda.is_available():
+            if required_device == 'gpu':
+                self.device = torch.device('cuda')
+            else:
+                self.device = torch.device(required_device)
+        else:
+            self.device = torch.device('cpu')
 
         if 'seed' in self.config.model.model_args.keys():
             cfg.seed = self.config.model.model_args.seed
@@ -101,7 +107,8 @@ class ImageToVideo(TorchModel):
 
         cfg.embedder.pretrained = osp.join(
             model_dir, self.config.model.model_args.ckpt_clip)
-        clip_encoder = FrozenOpenCLIPVisualEmbedder(**cfg.embedder)
+        clip_encoder = FrozenOpenCLIPVisualEmbedder(
+            device=self.device, **cfg.embedder)
         clip_encoder.model.to(self.device)
         self.clip_encoder = clip_encoder
         logger.info(f'Build encoder with {cfg.embedder.type}')

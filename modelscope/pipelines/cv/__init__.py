@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
+    from .image_editing_pipeline import ImageEditingPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
@@ -136,6 +137,7 @@ else:
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_deblur_pipeline': ['ImageDeblurPipeline'],
+        'image_editing_pipeline': ['ImageEditingPipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
         'image_colorization_pipeline': ['ImageColorizationPipeline'],
         'image_instance_segmentation_pipeline':

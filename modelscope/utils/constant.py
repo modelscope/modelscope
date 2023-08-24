@@ -85,6 +85,7 @@ class CVTasks(object):
     image_paintbyexample = 'image-paintbyexample'
     image_skychange = 'image-skychange'
     image_demoireing = 'image-demoireing'
+    image_editing = 'image-editing'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'

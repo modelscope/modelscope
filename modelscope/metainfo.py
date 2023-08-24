@@ -279,6 +279,7 @@ class Pipelines(object):
     universal_matting = 'unet-universal-matting'
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
+    image_editing = 'masactrl-image-editing'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
@@ -603,6 +604,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_nafnet_image-denoise_sidd'),
     Tasks.image_deblurring: (Pipelines.image_deblur,
                              'damo/cv_nafnet_image-deblur_gopro'),
+    Tasks.image_editing: (Pipelines.image_editing,
+                          'damo/cv_masactrl_image-editing'),
     Tasks.video_stabilization: (Pipelines.video_stabilization,
                                 'damo/cv_dut-raft_video-stabilization_base'),
     Tasks.video_super_resolution:

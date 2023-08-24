@@ -730,6 +730,7 @@ TASK_OUTPUTS = {
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_editing: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
     Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],

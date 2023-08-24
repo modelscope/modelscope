@@ -453,4 +453,8 @@ TASK_INPUTS = {
     Tasks.text_to_360panorama_image: {
         'prompt': InputType.TEXT,
     },
+    Tasks.image_editing: {
+        'img': InputType.IMAGE,
+        'prompts': InputType.LIST
+    }
 }

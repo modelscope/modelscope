@@ -688,6 +688,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_deblurring: [OutputKeys.OUTPUT_IMG],
     Tasks.image_face_fusion: [OutputKeys.OUTPUT_IMG],
 
     # image_quality_assessment_mos result for a single image is a score in range [0, 1]

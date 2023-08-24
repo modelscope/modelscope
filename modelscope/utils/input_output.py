@@ -716,6 +716,8 @@ def _convert_to_python_type(inputs):
             else:
                 res[k] = _convert_to_python_type(v)
         return res
+    elif isinstance(inputs, np.ndarray):
+        return inputs.tolist()
     else:
         return inputs
 
@@ -754,7 +756,10 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
                 json_serializable_output[key] = base64_encoder_map[
                     OutputTypes[key]](
                         value)
-        elif OutputTypes[key] in [np.ndarray]:
+        elif OutputTypes[key] in [np.ndarray] and isinstance(
+                value, np.ndarray):
+            json_serializable_output[key] = value.tolist()
+        elif isinstance(value, np.ndarray):
             json_serializable_output[key] = value.tolist()
         else:
             json_serializable_output[key] = value

@@ -102,6 +102,18 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_2d_keypoints:
     InputType.IMAGE,
+    Tasks.face_liveness:
+    InputType.IMAGE,
+    Tasks.face_quality_assessment:
+    InputType.IMAGE,
+    Tasks.card_detection:
+    InputType.IMAGE,
+    Tasks.license_plate_detection:
+    InputType.IMAGE,
+    Tasks.lineless_table_recognition:
+    InputType.IMAGE,
+    Tasks.table_recognition:
+    InputType.IMAGE,
     Tasks.face_detection:
     InputType.IMAGE,
     Tasks.facial_expression_recognition:
@@ -118,13 +130,29 @@ TASK_INPUTS = {
     InputType.NUMBER,
     Tasks.image_classification:
     InputType.IMAGE,
+    Tasks.image_quality_assessment_mos:
+    InputType.IMAGE,
+    Tasks.image_quality_assessment_degradation:
+    InputType.IMAGE,
     Tasks.image_object_detection:
     InputType.IMAGE,
     Tasks.domain_specific_object_detection:
     InputType.IMAGE,
+    Tasks.human_wholebody_keypoint:
+    InputType.IMAGE,
     Tasks.image_segmentation:
     InputType.IMAGE,
     Tasks.portrait_matting:
+    InputType.IMAGE,
+    Tasks.universal_matting:
+    InputType.IMAGE,
+    Tasks.product_segmentation:
+    InputType.IMAGE,
+    Tasks.semantic_segmentation:
+    InputType.IMAGE,
+    Tasks.face_human_hand_detection:
+    InputType.IMAGE,
+    Tasks.hand_static:
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
     InputType.IMAGE,
@@ -147,6 +175,8 @@ TASK_INPUTS = {
     Tasks.image_color_enhancement:
     InputType.IMAGE,
     Tasks.image_denoising:
+    InputType.IMAGE,
+    Tasks.image_body_reshaping:
     InputType.IMAGE,
     Tasks.image_portrait_enhancement:
     InputType.IMAGE,
@@ -173,6 +203,8 @@ TASK_INPUTS = {
         'template': InputType.IMAGE,
         'user': InputType.IMAGE,
     },
+    Tasks.image_deblurring:
+    InputType.IMAGE,
     Tasks.video_colorization:
     InputType.VIDEO,
 
@@ -228,6 +260,7 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_pose_path': InputType.TEXT
     },
+
     # ============ nlp tasks ===================
     Tasks.chat: {
         'text': InputType.TEXT,
@@ -245,10 +278,13 @@ TASK_INPUTS = {
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
-    Tasks.zero_shot_classification: InputType.TEXT,
+    Tasks.zero_shot_classification:
+    InputType.TEXT,
     Tasks.relation_extraction:
     InputType.TEXT,
     Tasks.translation:
+    InputType.TEXT,
+    Tasks.text_summarization:
     InputType.TEXT,
     Tasks.competency_aware_translation:
     InputType.TEXT,
@@ -341,12 +377,17 @@ TASK_INPUTS = {
     InputType.AUDIO,
     Tasks.speaker_diarization_dialogue_detection:
     InputType.TEXT,
+    Tasks.language_score_prediction:
+    InputType.TEXT,
+    Tasks.punctuation:
+    InputType.TEXT,
     Tasks.speech_language_recognition:
     InputType.AUDIO,
     Tasks.speaker_diarization_semantic_speaker_turn_detection:
     InputType.TEXT,
     Tasks.inverse_text_processing:
     InputType.TEXT,
+    Tasks.speaker_verification: [InputType.AUDIO, InputType.AUDIO],
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {

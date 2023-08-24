@@ -184,6 +184,7 @@ class Models(object):
     speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
+    speech_mossformer2_separation_temporal_8k = 'speech_mossformer2_separation_temporal_8k'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'

@@ -48,6 +48,11 @@ class OutputKeys(object):
     PROBABILITIES = 'probabilities'
     DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
+    PHRASE_PROTOTYPE = 'phrase_prototype'
+    OBJECT_PROTOTYPE = 'object_prototype'
+    SENTENCE_PROTOTYPE = 'sentence_prototype'
+    EVENT_PROTOTYPE = 'event_prototype'
+    TEXTVIDEO_SIM = 'textvideo_sim'
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
@@ -106,6 +111,11 @@ OutputTypes = {
     OutputKeys.PROBABILITIES: np.ndarray,
     OutputKeys.DIALOG_STATES: object,
     OutputKeys.VIDEO_EMBEDDING: np.ndarray,
+    OutputKeys.PHRASE_PROTOTYPE: np.ndarray,
+    OutputKeys.OBJECT_PROTOTYPE: np.ndarray,
+    OutputKeys.SENTENCE_PROTOTYPE: np.ndarray,
+    OutputKeys.EVENT_PROTOTYPE: np.ndarray,
+    OutputKeys.TEXTVIDEO_SIM: np.ndarray,
     OutputKeys.UUID: str,
     OutputKeys.WORD: str,
     OutputKeys.KWS_LIST: List[str],
@@ -324,6 +334,24 @@ OutputTypeSchema = {
         'type': 'object'
     },
     OutputKeys.VIDEO_EMBEDDING: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.PHRASE_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.OBJECT_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.TEXTVIDEO_SIM: {
         'type': 'array',
         'items': {
             'type': 'number'
@@ -915,6 +943,32 @@ TASK_OUTPUTS = {
     #   "video_embedding": np.array with shape [D],
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
+
+    # phrase prototype result for single sentence
+    # {
+    #   "phrase_prototype": np.array with shape [K*D],
+    # }
+    # sentence prototype result for single sentence
+    # {
+    #   "sentence_prototype": np.array with shape [1*D],
+    # }
+    # object prototype result for single video
+    # {
+    #   "object_prototype": np.array with shape [N*K*D],
+    # }
+    # event prototype result for single video
+    # {
+    #   "event_prototype": np.array with shape [N*M*D],
+    # }
+    # text search video result for single sentence
+    # {
+    #   "textvideo_sim": np.array with shape [N*N],
+    # }
+    Tasks.text_video_retrieval: [
+        OutputKeys.PHRASE_PROTOTYPE, OutputKeys.SENTENCE_PROTOTYPE,
+        OutputKeys.OBJECT_PROTOTYPE, OutputKeys.EVENT_PROTOTYPE,
+        OutputKeys.TEXTVIDEO_SIM
+    ],
 
     # video stabilization task result for a single video
     # {"output_video": "path_to_rendered_video"}

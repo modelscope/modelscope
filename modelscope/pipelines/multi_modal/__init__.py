@@ -4,30 +4,39 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .generative_multi_modal_embedding_pipeline import GEMMMultiModalEmbeddingPipeline
+    from .asr_pipeline import AutomaticSpeechRecognitionPipeline
+    from .diffusers_wrapped import (ChineseStableDiffusionPipeline,
+                                    StableDiffusionPipeline)
+    from .document_vl_embedding_pipeline import DocumentVLEmbeddingPipeline
+    from .generative_multi_modal_embedding_pipeline import \
+        GEMMMultiModalEmbeddingPipeline
     from .image_captioning_pipeline import ImageCaptioningPipeline
-    from .visual_entailment_pipeline import VisualEntailmentPipeline
-    from .visual_grounding_pipeline import VisualGroundingPipeline
+    from .mgeo_ranking_pipeline import MGeoRankingPipeline
     from .multi_modal_embedding_pipeline import MultiModalEmbeddingPipeline
+    from .multimodal_dialogue_pipeline import MultimodalDialoguePipeline
+    from .prost_text_video_retrieval_pipeline import \
+        ProSTTextVideoRetrievalPipeline
+    from .soonet_video_temporal_grounding_pipeline import \
+        SOONetVideoTemporalGroundingPipeline
     from .text_to_image_synthesis_pipeline import TextToImageSynthesisPipeline
+    from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
+    from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_multi_modal_embedding_pipeline import \
         VideoMultiModalEmbeddingPipeline
-    from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
-    from .asr_pipeline import AutomaticSpeechRecognitionPipeline
-    from .mgeo_ranking_pipeline import MGeoRankingPipeline
-    from .document_vl_embedding_pipeline import DocumentVLEmbeddingPipeline
-    from .video_captioning_pipeline import VideoCaptioningPipeline
-    from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
-    from .diffusers_wrapped import StableDiffusionPipeline, ChineseStableDiffusionPipeline
-    from .soonet_video_temporal_grounding_pipeline import SOONetVideoTemporalGroundingPipeline
-    from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
-    from .multimodal_dialogue_pipeline import MultimodalDialoguePipeline
+    from .video_question_answering_pipeline import \
+        VideoQuestionAnsweringPipeline
+    from .visual_entailment_pipeline import VisualEntailmentPipeline
+    from .visual_grounding_pipeline import VisualGroundingPipeline
+    from .visual_question_answering_pipeline import \
+        VisualQuestionAnsweringPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
         'visual_entailment_pipeline': ['VisualEntailmentPipeline'],
         'visual_grounding_pipeline': ['VisualGroundingPipeline'],
         'multi_modal_embedding_pipeline': ['MultiModalEmbeddingPipeline'],
+        'prost_text_video_retrieval_pipeline':
+        ['ProSTTextVideoRetrievalPipeline'],
         'text_to_image_synthesis_pipeline': ['TextToImageSynthesisPipeline'],
         'visual_question_answering_pipeline':
         ['VisualQuestionAnsweringPipeline'],

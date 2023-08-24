@@ -213,6 +213,7 @@ class Models(object):
     video_synthesis = 'latent-text-to-video-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
+    prost = 'prost-clip-text-video-retrieval'
     mgeo = 'mgeo'
     vldoc = 'vldoc'
     hitea = 'hitea'
@@ -528,6 +529,7 @@ class Pipelines(object):
     multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    prost_text_video_retrieval = 'prost-text-video-retrieval'
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
@@ -720,6 +722,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
+    Tasks.text_video_retrieval: (Pipelines.prost_text_video_retrieval,
+                                 'damo/multi_modal_clip_vtretrieval_prost'),
     Tasks.image_color_enhancement:
     (Pipelines.image_color_enhance,
      'damo/cv_csrnet_image-color-enhance-models'),

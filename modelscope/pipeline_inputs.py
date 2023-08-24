@@ -418,6 +418,10 @@ TASK_INPUTS = {
         'img': InputType.IMAGE,
         'text': InputType.TEXT
     },
+    Tasks.text_video_retrieval: {
+        'video': InputType.VIDEO,
+        'text': InputType.TEXT
+    },
     Tasks.visual_question_answering: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT

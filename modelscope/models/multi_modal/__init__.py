@@ -6,22 +6,23 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
 
     from .clip import CLIPForMultiModalEmbedding
-    from .gemm import GEMMForMultiModalEmbedding
-    from .rleg import RLEGForMultiModalEmbedding
-    from .team import TEAMForMultiModalSimilarity
+    from .clip_interrogator import CLIP_Interrogator
     from .diffusion import DiffusionForTextToImageSynthesis
+    from .efficient_diffusion_tuning import EfficientStableDiffusion
+    from .gemm import GEMMForMultiModalEmbedding
     from .mmr import VideoCLIPForMultiModalEmbedding
-    from .mplug_for_all_tasks import MPlugForAllTasks, HiTeAForAllTasks
+    from .mplug_for_all_tasks import HiTeAForAllTasks, MPlugForAllTasks
+    from .mplug_owl import MplugOwlForConditionalGeneration
+    from .multi_stage_diffusion import \
+        MultiStageDiffusionForTextToImageSynthesis
     from .ofa_for_all_tasks import OfaForAllTasks
     from .ofa_for_text_to_image_synthesis_model import \
         OfaForTextToImageSynthesis
-    from .multi_stage_diffusion import \
-        MultiStageDiffusionForTextToImageSynthesis
-    from .vldoc import VLDocForDocVLEmbedding
+    from .prost import ProSTForTVRetrieval
+    from .rleg import RLEGForMultiModalEmbedding
+    from .team import TEAMForMultiModalSimilarity
     from .video_synthesis import TextToVideoSynthesis
-    from .efficient_diffusion_tuning import EfficientStableDiffusion
-    from .mplug_owl import MplugOwlForConditionalGeneration
-    from .clip_interrogator import CLIP_Interrogator
+    from .vldoc import VLDocForDocVLEmbedding
 
 else:
     _import_structure = {
@@ -31,6 +32,7 @@ else:
         'rleg': ['RLEGForMultiModalEmbedding'],
         'team': ['TEAMForMultiModalSimilarity'],
         'mmr': ['VideoCLIPForMultiModalEmbedding'],
+        'prost': ['ProSTForTVRetrieval'],
         'mplug_for_all_tasks': ['MPlugForAllTasks', 'HiTeAForAllTasks'],
         'ofa_for_all_tasks': ['OfaForAllTasks'],
         'ofa_for_text_to_image_synthesis_model':

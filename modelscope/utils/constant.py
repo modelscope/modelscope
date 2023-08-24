@@ -243,6 +243,7 @@ class MultiModalTasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    text_video_retrieval = 'text-video-retrieval'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'

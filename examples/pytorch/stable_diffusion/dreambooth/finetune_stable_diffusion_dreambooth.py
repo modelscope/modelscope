@@ -2,11 +2,12 @@ import os
 from dataclasses import dataclass, field
 
 import cv2
+import torch
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.trainers import EpochBasedTrainer, build_trainer
+from modelscope.trainers import build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.constant import DownloadMode, Tasks
 
@@ -59,6 +60,12 @@ class StableDiffusionDreamboothArguments(TrainingArgs):
             'help': 'The pipeline prompt.',
         })
 
+    torch_type: str = field(
+        default='float32',
+        metadata={
+            'help': ' The torch type, default is float32.',
+        })
+
 
 training_args = StableDiffusionDreamboothArguments(
     task='text-to-image-synthesis').parse_cli()
@@ -106,6 +113,8 @@ kwargs = dict(
     resolution=args.resolution,
     prior_loss_weight=args.prior_loss_weight,
     prompt=args.prompt,
+    torch_type=torch.float16
+    if args.torch_type == 'float16' else torch.float32,
     cfg_modify_fn=cfg_modify_fn)
 
 # build trainer and training

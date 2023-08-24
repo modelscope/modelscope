@@ -17,6 +17,15 @@ from modelscope.utils.config import ConfigDict
 
 class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
 
+    def __init__(self, torch_type=torch.float32):
+        """Checkpoint processor for lora diffusion.
+
+        Args:
+            torch_type: The torch type, default is float32.
+
+        """
+        self.torch_type = torch_type
+
     def save_checkpoints(self,
                          trainer,
                          checkpoint_path_prefix,
@@ -25,7 +34,7 @@ class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
                          save_optimizers=True):
         """Save the state dict for lora tune model.
         """
-        trainer.model.unet = trainer.model.unet.to(torch.float32)
+        trainer.model.unet = trainer.model.unet.to(self.torch_type)
         trainer.model.unet.save_attn_procs(output_dir)
 
 
@@ -38,15 +47,18 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
 
         Args:
             lora_rank: The rank size of lora intermediate linear.
+            torch_type: The torch type, default is float32.
 
         """
         lora_rank = kwargs.pop('lora_rank', 4)
+        torch_type = kwargs.pop('torch_type', torch.float32)
 
         # set lora save checkpoint processor
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
-        ckpt_hook.set_processor(LoraDiffusionCheckpointProcessor())
+        ckpt_hook.set_processor(
+            LoraDiffusionCheckpointProcessor(torch_type=torch_type))
         # Set correct lora layers
         lora_attn_procs = {}
         for name in self.model.unet.attn_processors.keys():

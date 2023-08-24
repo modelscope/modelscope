@@ -92,8 +92,10 @@ def check_hf_code(model_dir: str, auto_class: type,
             tokenizer_config_dict = get_tokenizer_config(model_dir)
             auto_map = tokenizer_config_dict.get('auto_map', None)
             if auto_map is not None:
-                module_name = auto_map.get(auto_class_name, None)[0]
-                has_remote_code = module_name is not None
+                module_name = auto_map.get(auto_class_name, None)
+                if module_name is not None:
+                    module_name = module_name[0]
+                    has_remote_code = True
         else:
             auto_map = config_dict.get('auto_map', None)
             if auto_map is not None:

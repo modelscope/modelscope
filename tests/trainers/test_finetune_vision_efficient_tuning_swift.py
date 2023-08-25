@@ -54,10 +54,9 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             return cfg
 
         lora_config = LoRAConfig(
-            rank=self.tune_length,
-            replace_modules=['qkv'],
+            r=self.tune_length,
+            target_modules=['qkv'],
             merge_weights=False,
-            only_lora_trainable=False,
             use_merged_linear=True,
             enable_lora=[True])
 
@@ -95,9 +94,8 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         adapter_config = AdapterConfig(
             dim=768,
             hidden_pos=0,
-            module_name=r'.*blocks\.\d+\.mlp$',
-            adapter_length=self.tune_length,
-            only_adapter_trainable=False)
+            target_modules=r'.*blocks\.\d+\.mlp$',
+            adapter_length=self.tune_length)
 
         kwargs = dict(
             model=model_id,
@@ -132,10 +130,9 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
 
         prompt_config = PromptConfig(
             dim=768,
-            module_layer_name=r'.*blocks\.\d+$',
+            target_modules=r'.*blocks\.\d+$',
             embedding_pos=0,
             prompt_length=self.tune_length,
-            only_prompt_trainable=False,
             attach_front=False)
 
         kwargs = dict(

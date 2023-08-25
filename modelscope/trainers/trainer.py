@@ -9,7 +9,6 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import json
 import torch
-from swift import PeftConfig, Swift, SwiftConfig
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, Sampler
@@ -47,12 +46,15 @@ from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           get_local_rank, init_dist, is_dist,
                                           is_master, is_on_same_device,
                                           set_random_seed)
+from ..utils.import_utils import is_swift_available
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks, update_cfg
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
+
+TunerConfig = Union['swift.SwiftConfig', 'swift.PeftConfig']
 
 
 @TRAINERS.register_module(module_name=Trainers.default)
@@ -118,8 +120,8 @@ class EpochBasedTrainer(BaseTrainer):
             seed: int = 42,
             callbacks: Optional[List[Hook]] = None,
             samplers: Optional[Union[Sampler, Dict[str, Sampler]]] = None,
-            efficient_tuners: Union[Dict[str, SwiftConfig], SwiftConfig,
-                                    PeftConfig] = None,
+            efficient_tuners: Union[Dict[str, TunerConfig],
+                                    TunerConfig] = None,
             **kwargs):
 
         self._seed = seed
@@ -271,6 +273,11 @@ class EpochBasedTrainer(BaseTrainer):
 
     def tune_module(self, efficient_tuners):
         if efficient_tuners is not None:
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+                )
+            from swift import Swift
             self.model = Swift.prepare_model(self.model, efficient_tuners)
 
     def place_model(self):

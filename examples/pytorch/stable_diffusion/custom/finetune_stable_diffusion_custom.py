@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 
 import cv2
+import torch
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
@@ -95,6 +96,12 @@ class StableDiffusionCustomArguments(TrainingArgs):
             'help': 'Path to json containing multiple concepts.',
         })
 
+    torch_type: str = field(
+        default='float32',
+        metadata={
+            'help': ' The torch type, default is float32.',
+        })
+
 
 training_args = StableDiffusionCustomArguments(
     task='text-to-image-synthesis').parse_cli()
@@ -148,6 +155,8 @@ kwargs = dict(
     work_dir=training_args.work_dir,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
+    torch_type=torch.float16
+    if args.torch_type == 'float16' else torch.float32,
     cfg_modify_fn=cfg_modify_fn)
 
 # build trainer and training
@@ -159,7 +168,7 @@ pipe = pipeline(
     task=Tasks.text_to_image_synthesis,
     model=training_args.model,
     custom_dir=training_args.work_dir + '/output',
-    modifier_token='<new1>+<new2>',
+    modifier_token=args.modifier_token,
     model_revision=args.model_revision)
 
 output = pipe({'text': args.instance_prompt})

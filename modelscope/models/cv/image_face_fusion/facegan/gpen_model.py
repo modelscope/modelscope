@@ -1,17 +1,19 @@
-# The implementation is adopted from stylegan2-pytorch,
-# made public available under the MIT License at https://github.com/rosinality/stylegan2-pytorch/blob/master/model.py
+# The implementation is adopted from InsightFace_Pytorch, made publicly available under the MIT License
+# at https://github.com/yangxy/GPEN
+import functools
+import itertools
 import math
+import operator
 import random
 
 import torch
 from torch import nn
+from torch.autograd import Function
 from torch.nn import functional as F
 
 from .op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
 
 isconcat = True
-sss = 2 if isconcat else 1
-ratio = 2
 
 
 class PixelNorm(nn.Module):
@@ -306,6 +308,7 @@ class NoiseInjection(nn.Module):
     def forward(self, image, noise=None):
 
         if noise is not None:
+            # print(image.shape, noise.shape)
             if isconcat:
                 return torch.cat((image, self.weight * noise), dim=1)  # concat
             return image + self.weight * noise
@@ -356,7 +359,8 @@ class StyledConv(nn.Module):
         )
 
         self.noise = NoiseInjection()
-        self.activate = FusedLeakyReLU(out_channel * sss)
+        feat_multiplier = 2
+        self.activate = FusedLeakyReLU(out_channel * feat_multiplier)
 
     def forward(self, input, style, noise=None):
         out = self.conv(input, style)
@@ -405,12 +409,14 @@ class Generator(nn.Module):
         channel_multiplier=2,
         blur_kernel=[1, 3, 3, 1],
         lr_mlp=0.01,
+        narrow=1,
     ):
         super().__init__()
 
         self.size = size
         self.n_mlp = n_mlp
         self.style_dim = style_dim
+        self.feat_multiplier = 2
 
         layers = [PixelNorm()]
 
@@ -425,15 +431,16 @@ class Generator(nn.Module):
         self.style = nn.Sequential(*layers)
 
         self.channels = {
-            4: 512 // ratio,
-            8: 512 // ratio,
-            16: 512 // ratio,
-            32: 512 // ratio,
-            64: 256 // ratio * channel_multiplier,
-            128: 128 // ratio * channel_multiplier,
-            256: 64 // ratio * channel_multiplier,
-            512: 32 // ratio * channel_multiplier,
-            1024: 16 // ratio * channel_multiplier,
+            4: int(512 * narrow),
+            8: int(512 * narrow),
+            16: int(512 * narrow),
+            32: int(512 * narrow),
+            64: int(256 * channel_multiplier * narrow),
+            128: int(128 * channel_multiplier * narrow),
+            256: int(64 * channel_multiplier * narrow),
+            512: int(32 * channel_multiplier * narrow),
+            1024: int(16 * channel_multiplier * narrow),
+            2048: int(8 * channel_multiplier * narrow)
         }
 
         self.input = ConstantInput(self.channels[4])
@@ -443,7 +450,8 @@ class Generator(nn.Module):
             3,
             style_dim,
             blur_kernel=blur_kernel)
-        self.to_rgb1 = ToRGB(self.channels[4] * sss, style_dim, upsample=False)
+        self.to_rgb1 = ToRGB(
+            self.channels[4] * self.feat_multiplier, style_dim, upsample=False)
 
         self.log_size = int(math.log(size, 2))
 
@@ -458,23 +466,23 @@ class Generator(nn.Module):
 
             self.convs.append(
                 StyledConv(
-                    in_channel * sss,
+                    in_channel * self.feat_multiplier,
                     out_channel,
                     3,
                     style_dim,
                     upsample=True,
-                    blur_kernel=blur_kernel,
-                ))
+                    blur_kernel=blur_kernel))
 
             self.convs.append(
                 StyledConv(
-                    out_channel * sss,
+                    out_channel * self.feat_multiplier,
                     out_channel,
                     3,
                     style_dim,
                     blur_kernel=blur_kernel))
 
-            self.to_rgbs.append(ToRGB(out_channel * sss, style_dim))
+            self.to_rgbs.append(
+                ToRGB(out_channel * self.feat_multiplier, style_dim))
 
             in_channel = out_channel
 
@@ -515,6 +523,9 @@ class Generator(nn.Module):
             styles = [self.style(s) for s in styles]
 
         if noise is None:
+            '''
+            noise = [None] * (2 * (self.log_size - 2) + 1)
+            '''
             noise = []
             batch = styles[0].shape[0]
             for i in range(self.n_mlp + 1):
@@ -557,16 +568,14 @@ class Generator(nn.Module):
         skip = self.to_rgb1(out, latent[:, 1])
 
         i = 1
-        noise_i = 1
-
-        for conv1, conv2, to_rgb in zip(self.convs[::2], self.convs[1::2],
-                                        self.to_rgbs):
-            out = conv1(out, latent[:, i], noise=noise[(noise_i + 1) // 2])
-            out = conv2(out, latent[:, i + 1], noise=noise[(noise_i + 2) // 2])
+        for conv1, conv2, noise1, noise2, to_rgb in zip(
+                self.convs[::2], self.convs[1::2], noise[1::2], noise[2::2],
+                self.to_rgbs):
+            out = conv1(out, latent[:, i], noise=noise1)
+            out = conv2(out, latent[:, i + 1], noise=noise2)
             skip = to_rgb(out, latent[:, i + 2], skip)
 
             i += 2
-            noise_i += 2
 
         image = skip
 
@@ -652,21 +661,106 @@ class ResBlock(nn.Module):
         return out
 
 
+class FullGenerator(nn.Module):
+
+    def __init__(
+        self,
+        size,
+        style_dim,
+        n_mlp,
+        channel_multiplier=2,
+        blur_kernel=[1, 3, 3, 1],
+        lr_mlp=0.01,
+        narrow=1,
+    ):
+        super().__init__()
+        channels = {
+            4: int(512 * narrow),
+            8: int(512 * narrow),
+            16: int(512 * narrow),
+            32: int(512 * narrow),
+            64: int(256 * channel_multiplier * narrow),
+            128: int(128 * channel_multiplier * narrow),
+            256: int(64 * channel_multiplier * narrow),
+            512: int(32 * channel_multiplier * narrow),
+            1024: int(16 * channel_multiplier * narrow),
+            2048: int(8 * channel_multiplier * narrow)
+        }
+
+        self.log_size = int(math.log(size, 2))
+        self.generator = Generator(
+            size,
+            style_dim,
+            n_mlp,
+            channel_multiplier=channel_multiplier,
+            blur_kernel=blur_kernel,
+            lr_mlp=lr_mlp,
+            narrow=narrow)
+
+        conv = [ConvLayer(3, channels[size], 1)]
+        self.ecd0 = nn.Sequential(*conv)
+        in_channel = channels[size]
+
+        self.names = ['ecd%d' % i for i in range(self.log_size - 1)]
+        for i in range(self.log_size, 2, -1):
+            out_channel = channels[2**(i - 1)]
+            conv = [ConvLayer(in_channel, out_channel, 3, downsample=True)]
+            setattr(self, self.names[self.log_size - i + 1],
+                    nn.Sequential(*conv))
+            in_channel = out_channel
+        self.final_linear = nn.Sequential(
+            EqualLinear(
+                channels[4] * 4 * 4, style_dim, activation='fused_lrelu'))
+
+    def forward(
+        self,
+        inputs,
+        return_latents=False,
+        inject_index=None,
+        truncation=1,
+        truncation_latent=None,
+        input_is_latent=False,
+    ):
+        noise = []
+        for i in range(self.log_size - 1):
+            ecd = getattr(self, self.names[i])
+            inputs = ecd(inputs)
+            noise.append(inputs)
+        inputs = inputs.view(inputs.shape[0], -1)
+        outs = self.final_linear(inputs)
+        noise = list(
+            itertools.chain.from_iterable(
+                itertools.repeat(x, 2) for x in noise))[::-1]
+        outs = self.generator([outs],
+                              return_latents,
+                              inject_index,
+                              truncation,
+                              truncation_latent,
+                              input_is_latent,
+                              noise=noise[1:])
+        return outs
+
+
 class Discriminator(nn.Module):
 
-    def __init__(self, size, channel_multiplier=2, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self,
+                 size,
+                 channel_multiplier=2,
+                 blur_kernel=[1, 3, 3, 1],
+                 narrow=1):
         super().__init__()
 
         channels = {
-            4: 512,
-            8: 512,
-            16: 512,
-            32: 512,
-            64: 256 * channel_multiplier,
-            128: 128 * channel_multiplier,
-            256: 64 * channel_multiplier,
-            512: 32 * channel_multiplier,
-            1024: 16 * channel_multiplier,
+            4: int(512 * narrow),
+            8: int(512 * narrow),
+            16: int(512 * narrow),
+            32: int(512 * narrow),
+            64: int(256 * channel_multiplier * narrow),
+            128: int(128 * channel_multiplier * narrow),
+            256: int(64 * channel_multiplier * narrow),
+            512: int(32 * channel_multiplier * narrow),
+            1024: int(16 * channel_multiplier * narrow),
+            2048: int(8 * channel_multiplier * narrow)
         }
 
         convs = [ConvLayer(3, channels[size], 1)]
@@ -713,48 +807,53 @@ class Discriminator(nn.Module):
         return out
 
 
-class FullGenerator(nn.Module):
+class FullGenerator_SR(nn.Module):
 
     def __init__(
         self,
-        size,
+        in_size,
+        out_size,
         style_dim,
         n_mlp,
         channel_multiplier=2,
         blur_kernel=[1, 3, 3, 1],
         lr_mlp=0.01,
+        narrow=1,
     ):
         super().__init__()
         channels = {
-            4: 512 // ratio,
-            8: 512 // ratio,
-            16: 512 // ratio,
-            32: 512 // ratio,
-            64: 256 // ratio * channel_multiplier,
-            128: 128 // ratio * channel_multiplier,
-            256: 64 // ratio * channel_multiplier,
-            512: 32 // ratio * channel_multiplier,
-            1024: 16 // ratio * channel_multiplier,
+            4: int(512 * narrow),
+            8: int(512 * narrow),
+            16: int(512 * narrow),
+            32: int(512 * narrow),
+            64: int(256 * channel_multiplier * narrow),
+            128: int(128 * channel_multiplier * narrow),
+            256: int(64 * channel_multiplier * narrow),
+            512: int(32 * channel_multiplier * narrow),
+            1024: int(16 * channel_multiplier * narrow),
+            2048: int(8 * channel_multiplier * narrow),
         }
 
-        self.log_size = int(math.log(size, 2))
+        self.log_insize = int(math.log(in_size, 2))
+        self.log_outsize = int(math.log(out_size, 2))
         self.generator = Generator(
-            size,
+            out_size,
             style_dim,
             n_mlp,
             channel_multiplier=channel_multiplier,
             blur_kernel=blur_kernel,
-            lr_mlp=lr_mlp)
+            lr_mlp=lr_mlp,
+            narrow=narrow)
 
-        conv = [ConvLayer(3, channels[size], 1)]
+        conv = [ConvLayer(3, channels[in_size], 1)]
         self.ecd0 = nn.Sequential(*conv)
-        in_channel = channels[size]
+        in_channel = channels[in_size]
 
-        self.names = ['ecd%d' % i for i in range(self.log_size - 1)]
-        for i in range(self.log_size, 2, -1):
+        self.names = ['ecd%d' % i for i in range(self.log_insize - 1)]
+        for i in range(self.log_insize, 2, -1):
             out_channel = channels[2**(i - 1)]
             conv = [ConvLayer(in_channel, out_channel, 3, downsample=True)]
-            setattr(self, self.names[self.log_size - i + 1],
+            setattr(self, self.names[self.log_insize - i + 1],
                     nn.Sequential(*conv))
             in_channel = out_channel
         self.final_linear = nn.Sequential(
@@ -771,18 +870,22 @@ class FullGenerator(nn.Module):
         input_is_latent=False,
     ):
         noise = []
-        for i in range(self.log_size - 1):
+        for i in range(self.log_outsize - self.log_insize):
+            noise.append(None)
+        for i in range(self.log_insize - 1):
             ecd = getattr(self, self.names[i])
             inputs = ecd(inputs)
             noise.append(inputs)
         inputs = inputs.view(inputs.shape[0], -1)
         outs = self.final_linear(inputs)
-        outs = self.generator([outs],
-                              return_latents,
-                              inject_index,
-                              truncation,
-                              truncation_latent,
-                              input_is_latent,
-                              noise=noise[::-1])
-
-        return outs
+        noise = list(
+            itertools.chain.from_iterable(
+                itertools.repeat(x, 2) for x in noise))[::-1]
+        image, latent = self.generator([outs],
+                                       return_latents,
+                                       inject_index,
+                                       truncation,
+                                       truncation_latent,
+                                       input_is_latent,
+                                       noise=noise[1:])
+        return image, latent

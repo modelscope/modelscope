@@ -126,7 +126,7 @@ class Model(ABC):
                 )
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            ignore_file_pattern = kwargs.get('ignore_file_pattern', None)
+            ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
             local_model_dir = snapshot_download(
                 model_name_or_path,
                 revision,
@@ -142,10 +142,15 @@ class Model(ABC):
         task_name = cfg.task
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
-        model_cfg = cfg.model
-        if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
-            model_cfg.type = model_cfg.model_type
-        model_type = model_cfg.type
+        try:
+            model_cfg = cfg.model
+            if hasattr(model_cfg,
+                       'model_type') and not hasattr(model_cfg, 'type'):
+                model_cfg.type = model_cfg.model_type
+            model_type = model_cfg.type
+        except Exception:
+            model_cfg = {}
+            model_type = ''
         if isinstance(device, str) and device.startswith('gpu'):
             device = 'cuda' + device[3:]
         use_hf = kwargs.pop('use_hf', None)

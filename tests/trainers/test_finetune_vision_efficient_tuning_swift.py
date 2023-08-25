@@ -4,8 +4,6 @@ import shutil
 import tempfile
 import unittest
 
-from swift import AdapterConfig, LoRAConfig, PromptConfig
-
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
@@ -43,6 +41,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_swift_lora_train(self):
+        from swift import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
 
         def cfg_modify_fn(cfg):
@@ -66,7 +65,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[lora_config])
+            efficient_tuners=lora_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)
@@ -81,6 +80,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_swift_adapter_train(self):
+        from swift import AdapterConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'
 
         def cfg_modify_fn(cfg):
@@ -103,7 +103,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[adapter_config])
+            efficient_tuners=adapter_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)
@@ -118,6 +118,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_vision_efficient_tuning_swift_prompt_train(self):
+        from swift import PromptConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
 
         def cfg_modify_fn(cfg):
@@ -141,7 +142,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[prompt_config])
+            efficient_tuners=prompt_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)

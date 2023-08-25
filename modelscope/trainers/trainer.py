@@ -40,13 +40,13 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
+from modelscope.utils.import_utils import is_swift_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (compile_model, get_dist_info,
                                           get_local_rank, init_dist, is_dist,
                                           is_master, is_on_same_device,
                                           set_random_seed)
-from ..utils.import_utils import is_swift_available
 from .base import BaseTrainer
 from .builder import TRAINERS
 from .default_config import merge_cfg, merge_hooks, update_cfg

@@ -107,7 +107,7 @@ class MemoryEfficientCrossAttention(nn.Module):
         super().__init__()
         inner_dim = dim_head * heads
         context_dim = default(context_dim, query_dim)
-        
+
         self.max_bs = max_bs
         self.heads = heads
         self.dim_head = dim_head
@@ -140,12 +140,13 @@ class MemoryEfficientCrossAttention(nn.Module):
             v_list = torch.chunk(v, v.shape[0] // self.max_bs, dim=0)
             out_list = []
             for q_1, k_1, v_1 in zip(q_list, k_list, v_list):
-                out = xformers.ops.memory_efficient_attention(q_1, k_1, v_1, attn_bias=None, op=self.attention_op)
+                out = xformers.ops.memory_efficient_attention(
+                    q_1, k_1, v_1, attn_bias=None, op=self.attention_op)
                 out_list.append(out)
             out = torch.cat(out_list, dim=0)
         else:
             out = xformers.ops.memory_efficient_attention(
-                    q, k, v, attn_bias=None, op=self.attention_op)
+                q, k, v, attn_bias=None, op=self.attention_op)
 
         if exists(mask):
             raise NotImplementedError
@@ -349,7 +350,6 @@ class BasicTransformerBlock(nn.Module):
                  disable_self_attn=False):
         super().__init__()
         attn_cls = MemoryEfficientCrossAttention
-        # attn_cls = CrossAttention
         self.disable_self_attn = disable_self_attn
         self.attn1 = attn_cls(
             query_dim=dim,

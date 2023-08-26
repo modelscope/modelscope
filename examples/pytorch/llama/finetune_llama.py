@@ -259,7 +259,7 @@ if __name__ == '__main__':
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout)
         model = model.bfloat16()
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     tokenizer = LlamaTokenizer.from_pretrained(
         model_path,

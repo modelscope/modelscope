@@ -15,7 +15,7 @@ lora_config = LoRAConfig(target_modules=['pack'], r=32, lora_alpha=32)
 # 转 bf16，需与训练精度相同
 model = pipe.model.bfloat16()
 # model 转 lora
-Swift.prepare_model(model, lora_config)
+model = Swift.prepare_model(model, lora_config)
 # 加载 lora 参数，默认 link 到于 output/model 路径
 work_dir = './tmp'
 state_dict = torch.load(osp.join(work_dir, 'output/pytorch_model.bin'))

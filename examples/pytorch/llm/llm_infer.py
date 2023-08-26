@@ -83,6 +83,8 @@ def llm_infer(args: InferArguments) -> None:
             pretrained_weights=args.ckpt_path)
         logger.info(f'lora_config: {lora_config}')
         model = Swift.prepare_model(model, lora_config)
+        state_dict = torch.load(args.ckpt_path, map_location='cpu')
+        model.load_state_dict(state_dict)
     elif args.sft_type == 'full':
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
         model.load_state_dict(state_dict)

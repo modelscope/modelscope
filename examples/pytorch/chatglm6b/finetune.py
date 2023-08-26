@@ -250,7 +250,7 @@ if args.use_lora != 0:
         model = model.float()
     else:
         model = model.bfloat16()
-    Swift.prepare_model(model, lora_config)
+    model = Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
 

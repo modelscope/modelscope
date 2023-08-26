@@ -16,6 +16,7 @@ from diffusers.utils import deprecation_utils
 from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
@@ -54,7 +55,10 @@ class EfficientStableDiffusion(TorchModel):
         super().__init__(model_dir, *args, **kwargs)
         tuner_name = kwargs.pop('tuner_name', 'lora')
         pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
+            'pretrained_model_name_or_path',
+            'AI-ModelScope/stable-diffusion-v1-5')
+        pretrained_model_name_or_path = snapshot_download(
+            pretrained_model_name_or_path)
         tuner_config = kwargs.pop('tuner_config', None)
         pretrained_tuner = kwargs.pop('pretrained_tuner', None)
         revision = kwargs.pop('revision', None)

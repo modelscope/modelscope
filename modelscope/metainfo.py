@@ -218,7 +218,10 @@ class Models(object):
     mplug_owl = 'mplug-owl'
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
+    videocomposer = 'videocomposer'
     text_to_360panorama_image = 'text-to-360panorama-image'
+    image_to_video_model = 'image-to-video-model'
+    video_to_video_model = 'video-to-video-model'
 
     # science models
     unifold = 'unifold'
@@ -525,6 +528,7 @@ class Pipelines(object):
     multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    videocomposer = 'videocomposer'
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
@@ -543,6 +547,8 @@ class Pipelines(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
     llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
+    image_to_video_task_pipeline = 'image-to-video-task-pipeline'
+    video_to_video_pipeline = 'video-to-video-pipeline'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'

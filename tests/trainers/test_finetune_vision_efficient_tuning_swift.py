@@ -4,11 +4,10 @@ import shutil
 import tempfile
 import unittest
 
-from swift import AdapterConfig, LoRAConfig, PromptConfig
-
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
+from modelscope.utils.import_utils import is_swift_available
 from modelscope.utils.test_utils import test_level
 
 
@@ -41,8 +40,10 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
+                         'skip test in current test level')
     def test_vision_efficient_tuning_swift_lora_train(self):
+        from swift import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
 
         def cfg_modify_fn(cfg):
@@ -54,10 +55,9 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             return cfg
 
         lora_config = LoRAConfig(
-            rank=self.tune_length,
-            replace_modules=['qkv'],
+            r=self.tune_length,
+            target_modules=['qkv'],
             merge_weights=False,
-            only_lora_trainable=False,
             use_merged_linear=True,
             enable_lora=[True])
 
@@ -67,7 +67,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[lora_config])
+            efficient_tuners=lora_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)
@@ -80,8 +80,10 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
+                         'skip test in current test level')
     def test_vision_efficient_tuning_swift_adapter_train(self):
+        from swift import AdapterConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'
 
         def cfg_modify_fn(cfg):
@@ -95,9 +97,8 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         adapter_config = AdapterConfig(
             dim=768,
             hidden_pos=0,
-            module_name=r'.*blocks\.\d+\.mlp$',
-            adapter_length=self.tune_length,
-            only_adapter_trainable=False)
+            target_modules=r'.*blocks\.\d+\.mlp$',
+            adapter_length=self.tune_length)
 
         kwargs = dict(
             model=model_id,
@@ -105,7 +106,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[adapter_config])
+            efficient_tuners=adapter_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)
@@ -118,8 +119,10 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
+                         'skip test in current test level')
     def test_vision_efficient_tuning_swift_prompt_train(self):
+        from swift import PromptConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
 
         def cfg_modify_fn(cfg):
@@ -132,10 +135,9 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
 
         prompt_config = PromptConfig(
             dim=768,
-            module_layer_name=r'.*blocks\.\d+$',
+            target_modules=r'.*blocks\.\d+$',
             embedding_pos=0,
             prompt_length=self.tune_length,
-            only_prompt_trainable=False,
             attach_front=False)
 
         kwargs = dict(
@@ -144,7 +146,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             cfg_modify_fn=cfg_modify_fn,
-            efficient_tuners=[prompt_config])
+            efficient_tuners=prompt_config)
 
         trainer = build_trainer(
             name=Trainers.vision_efficient_tuning, default_args=kwargs)

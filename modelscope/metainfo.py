@@ -508,6 +508,7 @@ class Pipelines(object):
     sv_inference = 'sv-inference'
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
+    funasr_speech_separation = 'funasr-speech-separation'
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
